@@ -31,6 +31,8 @@ spec:
     daemonset:
       enabled: true
     hostNetwork: true
+    service:
+      enabled: false        # 🛑 disable default LoadBalancer service
     ingressClass:
       enabled: true
       isDefaultClass: true
