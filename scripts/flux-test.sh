@@ -47,7 +47,7 @@ read -p "✅ Schema validated. Press Enter to run kubectl diff…"
 
 # 6) Diff check
 echo "🧪 Running kubectl diff…"
-kubectl diff -f "${FLUX_TEST_PATH}/rendered.yaml"
+kubectl diff -f "${FLUX_TEST_PATH}/rendered.yaml" || true
 read -p "✅ Diff completed. Press Enter to run guardrail checks…"
 
 # 7) Guardrail validation
