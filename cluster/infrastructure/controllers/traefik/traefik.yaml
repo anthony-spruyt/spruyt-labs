@@ -29,6 +29,7 @@ spec:
         kind: HelmRepository
         name: traefik
         namespace: flux-system
+  targetNamespace: traefik
   values:
     deployment:
       enabled: false
