@@ -4,7 +4,7 @@ resources:
   - cilium/cilium.yaml
   - cilium/network-policies/allow-all.yaml
   - traefik/traefik-namespace.yaml
-  - traefik/traefik.yaml
+  - traefik
 generatorOptions:
   disableNameSuffixHash: true
 configMapGenerator:
