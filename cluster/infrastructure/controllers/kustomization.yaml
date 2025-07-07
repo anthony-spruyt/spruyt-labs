@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - cilium/cilium.yaml
   - cilium/network-policies/allow-all.yaml
+  - traefik/traefik-namespace.yaml
   - traefik/traefik.yaml
 generatorOptions:
   disableNameSuffixHash: true
