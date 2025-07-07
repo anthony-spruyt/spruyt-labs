@@ -1,0 +1,33 @@
+critical:
+  # Any change to these kinds or namespaces will block a sync
+  kinds:
+    - HelmRelease
+    - Kustomization
+    - GitRepository
+    - ClusterIssuer
+    - Certificate
+    - NetworkPolicy
+    - CiliumClusterwideNetworkPolicy
+    - Namespace
+    - Service
+    - Deployment
+  namespaces:
+    - kube-system
+    - cert-manager
+    - flux-system
+
+risky:
+  # These are “flagged” for extra eyeballs (optional)
+  kinds:
+    - Ingress
+    - ClusterRole
+    - RoleBinding
+  annotations:
+    - spruyt-labs/guardrail: "true"
+
+safe:
+  # These are low-impact kinds we don’t need to scan
+  kinds:
+    - ConfigMap
+    - Secret
+    - PersistentVolumeClaim

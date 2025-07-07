@@ -1,0 +1,4 @@
+secrets/**.*
+scripts/config.sh
+talos/config/**.*
+flux/**.*

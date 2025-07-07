@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-flux-system-ingress
+  namespace: flux-system
+spec:
+  podSelector: {}         # matches all Flux pods
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: flux-system
+          podSelector: {}  # any pod in flux-system

@@ -1,0 +1,44 @@
+# https://docs.cilium.io/en/stable/helm-reference/
+kubeProxyReplacement: true
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+cluster:
+  name: spruyt-labs
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - 192.168.100.0/24
+    clusterPoolIPv4MaskSize: 24
+k8sServiceHost: localhost
+k8sServicePort: 7445
+operator:
+  replicas: 1
+routingMode: tunnel
+securityContext:
+  capabilities:
+    ciliumAgent:
+    - CHOWN
+    - KILL
+    - NET_ADMIN
+    - NET_RAW
+    - IPC_LOCK
+    - SYS_ADMIN
+    - SYS_RESOURCE
+    - DAC_OVERRIDE
+    - FOWNER
+    - SETGID
+    - SETUID
+    cleanCiliumState:
+    - NET_ADMIN
+    - SYS_ADMIN
+    - SYS_RESOURCE
+tunnelProtocol: vxlan

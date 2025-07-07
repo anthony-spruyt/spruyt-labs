@@ -1,0 +1,14 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: traefik
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://helm.traefik.io/traefik
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traefik

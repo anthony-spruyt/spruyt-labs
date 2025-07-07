@@ -1,0 +1,10 @@
+{
+    "files.exclude": {
+        "secrets/**.*": true,
+        "talos/config/**.*": true,
+    },
+    "search.exclude": {
+        "secrets/**.*": true,
+        "talos/config/**.*": true,
+    }
+}
