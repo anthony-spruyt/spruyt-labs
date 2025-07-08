@@ -25,41 +25,43 @@ spec:
         name: traefik
         namespace: flux-system
   targetNamespace: traefik
+  # https://github.com/traefik/traefik-helm-chart/blob/v36.3.0/traefik/values.yaml
+  # https://github.com/traefik/traefik-helm-chart/blob/v36.3.0/EXAMPLES.md
   values:
-    # use DaemonSet
-    deployment:
-      enabled: true
-      kind: DaemonSet
-
-      # satisfy the hostNetwork validation
-      updateStrategy:
-        type: RollingUpdate
-        rollingUpdate:
-          maxUnavailable: 2
-
-    hostNetwork: true
-
-    # drive the actual DaemonSet spec
-    daemonset:
-      updateStrategy:
-        type: RollingUpdate
-        rollingUpdate:
-          maxUnavailable: 2
-
-    service:
-      enabled: false
-
-    ingressClass:
-      enabled: true
-      isDefaultClass: true
-
-    ports:
-      web:
-        port: 80
-      websecure:
-        port: 443
-
-    providers:
-      kubernetesCRD: {}
-      kubernetesIngress: {}
-
+    #deployment:
+    #  kind: DaemonSet
+    #ingressRoute:
+    #  dashboard:
+        #enabled: true
+        # # Custom match rule with host domain
+        #matchRule: Host(`traefik-dashboard.example.com`)
+        #entryPoints: ["websecure"]
+        ## Add custom middlewares : authentication and redirection
+        #middlewares:
+        #  - name: traefik-dashboard-auth
+    # Create the custom middlewares used by the IngressRoute dashboard (can also be created in another way).
+    # /!\ Yes, you need to replace "changeme" password with a better one. /!\
+    #extraObjects:
+    #  - apiVersion: v1
+    #    kind: Secret
+    #    metadata:
+    #      name: traefik-dashboard-auth-secret
+    #    type: kubernetes.io/basic-auth
+    #    stringData:
+    #      username: admin
+    #      password: changeme
+    #
+    #  - apiVersion: traefik.io/v1alpha1
+    #    kind: Middleware
+    #    metadata:
+    #      name: traefik-dashboard-auth
+    #    spec:
+    #      basicAuth:
+    #        secret: traefik-dashboard-auth-secret
+    #ports:
+    #  web:
+    #    redirections:
+    #      entryPoint:
+    #        to: websecure
+    #        scheme: https
+    #        permanent: true
