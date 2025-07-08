@@ -29,14 +29,23 @@ spec:
   # https://github.com/traefik/traefik-helm-chart/blob/v36.3.0/EXAMPLES.md
   values:
     deployment:
-      # -- Enable deployment
       enabled: true
-      # -- Deployment or DaemonSet
+      # Deployment or DaemonSet
       kind: Deployment
-      # -- Number of pods of the deployment (only applies when kind == Deployment)
+      # Number of pods of the deployment (only applies when kind == Deployment)
       replicas: 1
-    # -- If hostNetwork is true, runs traefik in the host network namespace
+    # If hostNetwork is true, runs traefik in the host network namespace
     # To prevent unschedulable pods due to port collisions, if hostNetwork=true
     # and replicas>1, a pod anti-affinity is recommended and will be set if the
     # affinity is left as default.
     hostNetwork: false
+    # https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1
+    securityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    # https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+
+        
