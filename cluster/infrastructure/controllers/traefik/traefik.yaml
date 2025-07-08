@@ -29,6 +29,10 @@ spec:
     deployment:
       enabled: true
       kind: DaemonSet
+      updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 2
     hostNetwork: true
     service:
       enabled: false
