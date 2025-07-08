@@ -26,16 +26,20 @@ spec:
         namespace: flux-system
   targetNamespace: traefik
   values:
-    deployment: { enabled: false }
-    daemonset: { enabled: true }
+    deployment:
+      enabled: true
+      kind: DaemonSet
     hostNetwork: true
-    service: { enabled: false }
+    service:
+      enabled: false
     ingressClass:
       enabled: true
       isDefaultClass: true
     ports:
-      web: { port: 80 }
-      websecure: { port: 443 }
+      web:
+        port: 80
+      websecure:
+        port: 443
     providers:
       kubernetesCRD: {}
       kubernetesIngress: {}
