@@ -29,11 +29,12 @@ spec:
     deployment:
       enabled: true
       kind: DaemonSet
+    hostNetwork: true
+    daemonset:
       updateStrategy:
         type: RollingUpdate
         rollingUpdate:
           maxUnavailable: 2
-    hostNetwork: true
     service:
       enabled: false
     ingressClass:
