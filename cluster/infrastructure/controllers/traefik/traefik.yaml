@@ -26,24 +26,40 @@ spec:
         namespace: flux-system
   targetNamespace: traefik
   values:
+    # use DaemonSet
     deployment:
       enabled: true
       kind: DaemonSet
+
+      # satisfy the hostNetwork validation
       updateStrategy:
         type: RollingUpdate
         rollingUpdate:
           maxUnavailable: 2
-    hostNetwork: true      
+
+    hostNetwork: true
+
+    # drive the actual DaemonSet spec
+    daemonset:
+      updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 2
+
     service:
       enabled: false
+
     ingressClass:
       enabled: true
       isDefaultClass: true
+
     ports:
       web:
         port: 80
       websecure:
         port: 443
+
     providers:
       kubernetesCRD: {}
       kubernetesIngress: {}
+
