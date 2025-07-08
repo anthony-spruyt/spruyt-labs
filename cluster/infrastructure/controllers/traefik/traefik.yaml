@@ -38,10 +38,6 @@ spec:
     ingressRoute:
       dashboard:
         enabled: false
-    ports:
-      web:
-        redirectTo:
-          port: websecure
     service:
       externalIPs:
         - 159.196.222.36
