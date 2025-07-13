@@ -1,5 +1,9 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
+# Example configs:
+# - https://github.com/budimanjojo/talhelper/blob/master/example/talconfig.yaml
+# - https://github.com/mrwulf/home-cluster/blob/main/talos/talconfig.yaml
+
 clusterName: ${CLUSTER_NAME}
 # renovate: depName=ghcr.io/siderolabs/installer datasource=docker
 talosVersion: v1.10.4
