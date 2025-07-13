@@ -1,0 +1,28 @@
+# Editors
+#.vscode/
+# Trash
+.DS_Store
+Thumbs.db
+# k8s
+kubeconfig
+# vscode-sops
+.decrypted~*.yaml
+.config.env
+*.agekey
+# Ansible
+xanmanning.k3s*
+# Terraform
+.terraform
+.terraform.tfstate*
+terraform.tfstate*
+# Working
+cluster/apps/other/
+# talos/
+testing.sops.yaml
+# go-task build cache
+.task/
+image_list.txt
+
+bootstrap/
+cluster/core/kube-system/kubelet-csr-approver/charts/
+temp

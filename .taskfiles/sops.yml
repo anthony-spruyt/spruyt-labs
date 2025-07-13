@@ -1,0 +1,61 @@
+---
+version: "3"
+
+tasks:
+
+#  init:
+#    vars:
+#      TARGET_PATH: '~/.config/sops/age'
+#      TARGET_FILE: "{{.TARGET_PATH}}/keys.txt"
+#      TEMP_FILE:
+#        sh: mktemp -u
+#    cmds:
+#      - age-keygen -o {{.TEMP_FILE}}
+#      - mkdir -p {{.TARGET_PATH}}
+#      - mv {{.TEMP_FILE}} {{.TARGET_FILE}}
+#      - chmod 400 {{.TARGET_FILE}}
+#      - |
+#        PUBLIC_KEY=$(grep 'public key:' {{.TARGET_FILE}} | awk -F: '{print $(NR)}')
+#
+#      - echo "Add 'export SOPS_AGE_KEY_FILE={{.TARGET_FILE}}' to your shell initialization script and reload"
+#      - echo "Don't forget to BACK IT UP!"
+#    preconditions:
+#      - sh: "[ ! -f {{.TARGET_FILE}} ]"
+#        msg: "Sops key already exists!"
+
+  encrypt-file:
+    desc: encrypt sops file 'to use must include -- before path to file.' eg "task sops:encrypt -- file.yml"
+    cmds:
+      - export SOPS_AGE_KEY_FILE="/workspaces/spruyt-labs/secrets/age.key"
+      - sops --config ".sops.yaml" --encrypt --in-place {{.CLI_ARGS}}
+
+  decrypt-file:
+    desc: decrypt sops file 'to use must include -- before path to file.'  eg "task sops:decrypt -- file.yml"
+    cmds:
+      - export SOPS_AGE_KEY_FILE="/workspaces/spruyt-labs/secrets/age.key"
+      - sops --config ".sops.yaml" --decrypt --in-place {{.CLI_ARGS}}
+
+  encrypt-cluster-secrets:
+    desc: encrypt cluster secrets sops file
+    cmds:
+      - export SOPS_AGE_KEY_FILE="/workspaces/spruyt-labs/secrets/age.key"
+      - sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/flux/meta/cluster-secrets.sops.yaml"
+
+  decrypt-cluster-secrets:
+    desc: decrypt cluster secrets sops file
+    cmds:
+      - export SOPS_AGE_KEY_FILE="/workspaces/spruyt-labs/secrets/age.key"
+      - sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/flux/meta/cluster-secrets.sops.yaml"
+
+  encrypt-talos:
+    desc: encrypt talos sops files
+    cmds:
+      - export SOPS_AGE_KEY_FILE="/workspaces/spruyt-labs/secrets/age.key"
+      - sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/talos/talenv.sops.yaml"
+      - sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/talos/talsecret.sops.yaml"
+
+  decrypt-talos:
+    desc: decrypt talos sops files
+      - export SOPS_AGE_KEY_FILE="/workspaces/spruyt-labs/secrets/age.key"
+      - sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/talos/talenv.sops.yaml"
+      - sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/talos/talsecret.sops.yaml"
