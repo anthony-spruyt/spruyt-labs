@@ -8,6 +8,6 @@ configMapGenerator:
   - name: spegel-values
     namespace: system # Do I need this?
     files:
-      - ./helm-values.yaml
+      - values.yaml=./helm-values.yaml
 configurations:
   - ./kustomizeconfig.yaml

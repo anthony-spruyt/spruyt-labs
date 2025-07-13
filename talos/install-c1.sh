@@ -100,6 +100,7 @@ kubectl get \
 
 kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply -f -
 
+#kubectl delete secret sops-age --namespace=flux-system
 cat /workspaces/spruyt-labs/secrets/age.key | kubectl create secret generic sops-age --namespace=flux-system --from-file=age.agekey=/dev/stdin
 
 #read -rp "Press any key to gh auth login: " continueghanswer
