@@ -1,5 +1,0 @@
-resources:
-  - ../../infrastructure/cilium
-  - ../../infrastructure/cert-manager
-  - ../../infrastructure/caddy
-  - ../../infrastructure/cloudflare-tunnel

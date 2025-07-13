@@ -1,0 +1,27 @@
+{
+  "packageRules": [
+    {
+      matchDatasources: ["docker"],
+      automerge: true,
+      automergeType: "branch",
+      requiredStatusChecks: null,
+      matchUpdateTypes: ["minor", "patch"],
+      matchPackageNames: [
+        "ghcr.io/home-operations/plex",
+        "ghcr.io/home-operations/sonarr-develop",
+        "ghcr.io/home-operations/radarr-nightly",
+        "ghcr.io/home-operations/prowlarr-nightly",
+        "ghcr.io/home-operations/readarr-nightly",
+      ],
+    },
+    {
+      "description": "Auto merge GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "matchDatasources": ["github-tags"],
+      "automerge": true,
+      "automergeType": "branch",
+      "requiredStatusChecks": null,
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ]
+}

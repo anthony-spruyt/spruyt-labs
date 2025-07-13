@@ -2,6 +2,8 @@
 
 This is a WIP setting up a home lab. The aim is to build a cluster on the talos ecosystem with internal ??? ingress, cilium and cloud flare tunneling with SNI-based routing and path based rules to multiplex traffic for external ingress with a focus on security and encryption for local and external traffic.
 
+USE REFERENCE: [https://github.com/mrwulf/home-cluster](https://github.com/mrwulf/home-cluster) <- This guy just saved me a few weeks of struggling with LLMs
+
 Project progress:
 
 - [x] Talos secrets
@@ -20,6 +22,8 @@ Project progress:
 OS of choice for Bossgame e2 controller planes and Raspberry Pi 4 workers
 
 [https://www.talos.dev/](https://www.talos.dev/)
+
+[https://github.com/budimanjojo/talhelper](https://github.com/budimanjojo/talhelper)
 
 ## FluxCD
 

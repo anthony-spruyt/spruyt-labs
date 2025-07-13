@@ -1,10 +1,15 @@
 {
     "files.exclude": {
-        "secrets/**.*": true,
-        "talos/config/**.*": true,
+        //".github": true,
+        //".task": true,
+        //".taskfiles": true,
+        //".devcontainer": true,
+        //"temp": true,
+        //"monitoring": true,
     },
     "search.exclude": {
-        "secrets/**.*": true,
-        "talos/config/**.*": true,
+        "**/*.secret.*": true,
+        "**/temp/**": true,
+        "**/secrets/**": true,
     }
 }
