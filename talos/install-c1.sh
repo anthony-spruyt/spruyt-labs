@@ -92,7 +92,7 @@ helmfile apply \
   -f helmfile/cilium.yaml
 
 echo "⏳ Giving cilium time to fully start up before approving certs..."
-read -rp "Press any key to approve certs: " continuecertsanswer
+read -rp "Press any key to approve certs: " continuecertc1sanswer
 
 kubectl get \
   csr \
