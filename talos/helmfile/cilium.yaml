@@ -13,4 +13,4 @@ releases:
     chart: cilium/cilium
     version: 1.17.5
     disableValidation: true
-    values: ['../../cluster/apps/kube-system/cilium/app/helm-values-bootstrap.yaml']
+    values: ['../../cluster/apps/kube-system/cilium/app/helm-values-bootstrap.v2.yaml']
