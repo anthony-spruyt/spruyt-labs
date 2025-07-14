@@ -1,0 +1,29 @@
+---
+# #yaml-language-server: $schema=TODO
+# Default values for irq-balance: TODO
+controllers:
+  fstrim:
+    type: daemonset
+    containers:
+      app:
+        image:
+          repository: ghcr.io/home-operations/irqbalance
+          tag: 1.9.4
+        env:
+          IRQBALANCE_DEBUG: true
+        resources:
+          requests:
+            cpu: 25m
+            memory: 128Mi
+          limits:
+            memory: 128Mi
+        securityContext:
+          privileged: true
+defaultPodOptions:
+  hostIPC: true
+  hostPID: true
+persistence:
+  run:
+    type: emptyDir
+    globalMounts:
+      - path: /run/irqbalance
