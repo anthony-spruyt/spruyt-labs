@@ -42,6 +42,7 @@ operator:
     serviceMonitor:
       enabled: true
   rollOutPods: true
+  replicas: 2
 prometheus:
   enabled: true
   serviceMonitor:
