@@ -8,7 +8,9 @@
     // Features to add to the dev container. More info: https://containers.dev/features.
     "features": {
         "ghcr.io/devcontainers-extra/features/sops:1.0.15": {},
-        "ghcr.io/devcontainers-extra/features/talosctl:1.0.0": {},
+        "ghcr.io/devcontainers-extra/features/talosctl:1.0.0": {
+            "version": "1.10.5"
+        },
         "ghcr.io/devcontainers-extra/features/helmfile:1.0.0": {},
         "ghcr.io/devcontainers/features/kubectl-helm-minikube:1.2.2":  {},
         "ghcr.io/eitsupi/devcontainer-features/jq-likes:2.1.1": {
