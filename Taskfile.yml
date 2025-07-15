@@ -9,4 +9,3 @@ vars:
 includes:
   pre-commit: .taskfiles/pre-commit.yml
   sops: .taskfiles/sops.yml
-  talos: .taskfiles/talos.yml

@@ -8,6 +8,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/home-operations/irqbalance
+          # TODO:renovate
           tag: 1.9.4
         env:
           IRQBALANCE_DEBUG: true

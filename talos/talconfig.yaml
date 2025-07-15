@@ -24,7 +24,7 @@ cniConfig:
   name: none
 
 nodes:
-  - hostname: ctrl-e2-1
+  - hostname: ${C1_HOST}
     controlPlane: true
     ipAddress: ${C1_IP}
     machineSpec:
@@ -43,7 +43,7 @@ nodes:
         machine:
           install:
              wipe: true
-  - hostname: ctrl-e2-2
+  - hostname: ${C2_HOST}
     controlPlane: true
     ipAddress: ${C2_IP}
     machineSpec:
@@ -62,7 +62,7 @@ nodes:
         machine:
           install:
              wipe: true
-  - hostname: wrk-pi4b4gb-1
+  - hostname: ${W1_HOST}
     controlPlane: false
     ipAddress: ${W1_IP}
     machineSpec:
@@ -76,7 +76,7 @@ nodes:
       node-role.kubernetes.io/worker: ''
     nodeAnnotations:
       installerImage: '{{ .MachineConfig.MachineInstall.InstallImage }}'
-  - hostname: wrk-pi4b8gb-1
+  - hostname: ${W2_HOST}
     controlPlane: false
     ipAddress: ${W2_IP}
     machineSpec:
@@ -122,7 +122,7 @@ patches:
       network:
         disableSearchDomain: true
         nameservers:
-          - 192.168.50.1
+          - ${NAMESERVER_IP}
         extraHostEntries:
           - ip: ${C1_IP}
             aliases:

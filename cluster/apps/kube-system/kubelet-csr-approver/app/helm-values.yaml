@@ -1,0 +1,8 @@
+---
+# #yaml-language-server: $schema=TODO
+# Default values for kubelet-csr-approver: TODO
+providerRegex: |
+  ${KUBELET_CSR_APPROVER_REGEX}
+bypassDnsResolution: true
+providerIpPrefixes: ['${LAN_SUBNET}']
+skipDenyStep: true

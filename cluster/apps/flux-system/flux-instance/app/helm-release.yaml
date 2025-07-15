@@ -10,6 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
+    # TODO:renovate
     tag: 0.24.1
   url: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance
   verify:
