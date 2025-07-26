@@ -1,12 +1,5 @@
 {
-  "files.exclude": {
-    //".github": true,
-    //".task": true,
-    //".taskfiles": true,
-    //".devcontainer": true,
-    //"secrets": true,
-    //".continue": true,
-  },
+  "files.exclude": {},
   "search.exclude": {
     "**/*.secret.*": true,
     "**/temp/**": true,

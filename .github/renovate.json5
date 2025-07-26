@@ -29,18 +29,18 @@
     "ghcr.io/fluxcd/source-controller",
   ],
   flux: {
-    managerFilePatterns: ["/cluster/.+\\.ya?ml$/"],
+    fileMatch: ["/cluster/.+\\.ya?ml$/"],
   },
   "helm-values": {
-    managerFilePatterns: ["/cluster/.+\\.ya?ml$/"],
+    fileMatch: ["/cluster/.+\\.ya?ml$/"],
   },
   kubernetes: {
-    managerFilePatterns: ["/cluster/.+\\.ya?ml$/"],
+    fileMatch: ["/cluster/.+\\.ya?ml$/"],
   },
   customManagers: [
     {
       customType: "regex",
-      managerFilePatterns: ["/cluster/.+\\.ya?ml$/"],
+      fileMatch: ["/cluster/.+\\.ya?ml$/"],
       matchStrings: [
         "registryUrl=(?<registryUrl>.*?)\n *chart: (?<depName>.*?)\n *version: (?<currentValue>.*)\n",
       ],
