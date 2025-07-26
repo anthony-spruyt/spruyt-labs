@@ -94,6 +94,6 @@ fi
 age --version
 age-keygen --version
 
-echo "🔧 Installing flux capacitor now..."
-curl -L "https://github.com/gimlet-io/capacitor/releases/download/capacitor-next/next-$(uname)-$(uname -m)" -o ../capacitor/next
-chmod +x ../capacitor/next
+echo "🔧 Installing tasks now..."
+task pre-commit:init
+task flux:install-capacitor

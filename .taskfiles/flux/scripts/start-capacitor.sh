@@ -2,4 +2,4 @@
 set -euo pipefail
 
 cd /workspaces/spruyt-labs/capacitor
-./next --port 3333
+./next --port 3333 --kubeconfig "/workspaces/spruyt-labs/secrets/kubeconfig"
