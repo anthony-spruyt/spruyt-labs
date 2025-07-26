@@ -20,8 +20,8 @@ resources:
   - ./cert-manager
   - ./traefik
   - ./technitium
-  # monitoring
-  - ./kube-prometheus-stack
+  # observability
+  - ./monitoring
   # workloads
   # vaultwarden
   # minecraft
