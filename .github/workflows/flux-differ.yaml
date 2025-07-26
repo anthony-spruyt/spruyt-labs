@@ -42,11 +42,6 @@ jobs:
           resource: "${{ matrix.resource }}"
 
       - if: ${{ steps.diff.outputs.diff != '' }}
-        name: Truncate diff output
-        run: |
-          echo "${{ steps.diff.outputs.diff }}" | head -c 65000 > diff.txt
-
-      - if: ${{ steps.diff.outputs.diff != '' }}
         name: Add comment
         uses: mshick/add-pr-comment@v2.8.2
         with:
@@ -55,5 +50,5 @@ jobs:
           message-failure: Diff was not successful
           message: |
             ```diff
-            $(cat diff.txt)
+            ${{ join(slice( split(steps.diff.outputs.diff, ''), 0, 65000 ), '') }}
             ```
