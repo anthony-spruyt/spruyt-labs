@@ -46,11 +46,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          read -r -d '' DIFF <<'EOF'
-          ${{ steps.diff.outputs.diff }}
-          EOF
-          TRUNCATED="${DIFF:0:65000}"
-          printf '%s' "$TRUNCATED" > truncated-diff.txt
+          printf '%s' "${{ steps.diff.outputs.diff }}" | base64 > diff.b64
+          head -c 80000 diff.b64 > diff-trunc.b64
+          base64 --decode diff-trunc.b64 > truncated-diff.txt
 
       - if: ${{ steps.diff.outputs.diff != '' }}
         name: Add comment
