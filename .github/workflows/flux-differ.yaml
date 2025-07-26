@@ -46,9 +46,15 @@ jobs:
         shell: bash
         run: |
           set -eo pipefail
-          full_diff="${{ steps.diff.outputs.diff }}"
-          truncated="${full_diff:0:65000}"
-          echo "$truncated" > truncated-diff.txt
+
+          # 1) Slurp the full diff into a file via heredoc
+          cat > full-diff.txt <<'DIFF'
+          ${{ steps.diff.outputs.diff }}
+          DIFF
+
+          # 2) Chop it down to 65 000 bytes
+          head -c 65000 full-diff.txt \
+            > truncated-diff.txt
 
       - name: Comment truncated diff via github-script
         uses: actions/github-script@v6
