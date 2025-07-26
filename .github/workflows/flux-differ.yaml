@@ -42,9 +42,9 @@ jobs:
           resource: "${{ matrix.resource }}"
 
       - if: ${{ steps.diff.outputs.diff != '' }}
-        name: Create artifact
+        name: Truncate diff output
         run: |
-          echo "${{ steps.diff.outputs.diff }}" > ${{matrix.resource}}-diff.txt
+          echo "${{ steps.diff.outputs.diff }}" | head -c 65000 > diff.txt
 
       - if: ${{ steps.diff.outputs.diff != '' }}
         name: Add comment
@@ -55,5 +55,5 @@ jobs:
           message-failure: Diff was not successful
           message: |
             ```diff
-            ${{ steps.diff.outputs.diff.substr(0, 65000) }}
+            $(cat diff.txt)
             ```
