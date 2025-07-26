@@ -10,7 +10,6 @@ on: # yamllint disable-line rule:truthy
 permissions: read-all
 
 env:
-  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
   VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
 
 jobs:
@@ -36,10 +35,10 @@ jobs:
         uses: github/super-linter/slim@v7
         env:
           VALIDATE_ALL_CODEBASE: ${{ env.VALIDATE_ALL_CODEBASE }}
-          DEFAULT_BRANCH: "${{ env.DEFAULT_BRANCH }}"
+          DEFAULT_BRANCH: "origin/main"
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          ANSIBLE_CONFIG_FILE: .gitbub/linters/.ansible-lint
-          MARKDOWN_CONFIG_FILE: .gitbub/linters/.markdownlint.yaml
-          TERRAFORM_TFLINT_CONFIG_FILE: .gitbub/linters/.tflint.hcl
-          YAML_CONFIG_FILE: .gitbub/linters/.yamllint.yaml
+          ANSIBLE_CONFIG_FILE: .ansible-lint
+          MARKDOWN_CONFIG_FILE: .markdownlint.yaml
+          TERRAFORM_TFLINT_CONFIG_FILE: .tflint.hcl
+          YAML_CONFIG_FILE: .yamllint.yaml
           KUBERNETES_KUBECONFORM_OPTIONS: --ignore-missing-schemas
