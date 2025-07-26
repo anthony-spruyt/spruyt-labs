@@ -575,13 +575,13 @@ alertmanager:
   #
   ## An example template:
   #   template_1.tmpl: |-
-  #       {{ define "cluster" }}{{ .ExternalURL | reReplaceAll ".*alertmanager\\.(.*)" "$1" }}{{ end }}
+  #       {{ define "cluster" }}{{ .ExternalURL | reReplaceAll ".*alertmanager\\.(.*)" "(DOLLAR)1" }}{{ end }}
   #
   #       {{ define "slack.myorg.text" }}
-  #       {{- $root := . -}}
+  #       {{- (DOLLAR)root := . -}}
   #       {{ range .Alerts }}
   #         *Alert:* {{ .Annotations.summary }} - `{{ .Labels.severity }}`
-  #         *Cluster:* {{ template "cluster" $root }}
+  #         *Cluster:* {{ template "cluster" (DOLLAR)root }}
   #         *Description:* {{ .Annotations.description }}
   #         *Graph:* <{{ .GeneratorURL }}|:chart_with_upwards_trend:>
   #         *Runbook:* <{{ .Annotations.runbook }}|:spiral_note_pad:>
@@ -687,9 +687,9 @@ alertmanager:
     labels: {}
 
     ## Final form of the hostname for each per replica ingress is
-    ## {{ ingressPerReplica.hostPrefix }}-{{ $replicaNumber }}.{{ ingressPerReplica.hostDomain }}
+    ## {{ ingressPerReplica.hostPrefix }}-{{ (DOLLAR)replicaNumber }}.{{ ingressPerReplica.hostDomain }}
     ##
-    ## Prefix for the per replica ingress that will have `-$replicaNumber`
+    ## Prefix for the per replica ingress that will have `-(DOLLAR)replicaNumber`
     ## appended to the end
     hostPrefix: ""
     ## Domain that will be used for the per replica ingress
@@ -713,7 +713,7 @@ alertmanager:
     tlsSecretPerReplica:
       enabled: false
       ## Final form of the secret for each per replica ingress is
-      ## {{ tlsSecretPerReplica.prefix }}-{{ $replicaNumber }}
+      ## {{ tlsSecretPerReplica.prefix }}-{{ (DOLLAR)replicaNumber }}
       ##
       prefix: "alertmanager"
 
@@ -876,9 +876,9 @@ alertmanager:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional Endpoints
@@ -1209,8 +1209,8 @@ alertmanager:
     annotations: {}
     data: {}
   #   auth: |
-  #     foo:$apr1$OFG3Xybp$ckL0FHDAkoXYIlH9.cysT0
-  #     someoneelse:$apr1$DMZX2Z4q$6SbQIfyuLQd.xmo/P0m2c.
+  #     foo:(DOLLAR)apr1(DOLLAR)OFG3Xybp(DOLLAR)ckL0FHDAkoXYIlH9.cysT0
+  #     someoneelse:(DOLLAR)apr1(DOLLAR)DMZX2Z4q(DOLLAR)6SbQIfyuLQd.xmo/P0m2c.
 
 ## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 ##
@@ -1489,9 +1489,9 @@ grafana:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
 ## Flag to disable all the kubernetes component scrapers
@@ -1710,12 +1710,12 @@ kubelet:
     # - sourceLabels: [__name__, image]
     #   separator: ;
     #   regex: container_([a-z_]+);
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: drop
     # - sourceLabels: [__name__]
     #   separator: ;
     #   regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: drop
 
     ## MetricRelabelConfigs to apply to samples after scraping, but before ingestion.
@@ -1725,12 +1725,12 @@ kubelet:
     # - sourceLabels: [__name__, image]
     #   separator: ;
     #   regex: container_([a-z_]+);
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: drop
     # - sourceLabels: [__name__]
     #   separator: ;
     #   regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: drop
 
     ## RelabelConfigs to apply to samples before scraping
@@ -1743,9 +1743,9 @@ kubelet:
         targetLabel: metrics_path
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## RelabelConfigs to apply to samples before scraping
@@ -1757,9 +1757,9 @@ kubelet:
         targetLabel: metrics_path
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## RelabelConfigs to apply to samples before scraping
@@ -1771,9 +1771,9 @@ kubelet:
         targetLabel: metrics_path
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## MetricRelabelConfigs to apply to samples after scraping, but before ingestion.
@@ -1787,12 +1787,12 @@ kubelet:
     # - sourceLabels: [__name__, image]
     #   separator: ;
     #   regex: container_([a-z_]+);
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: drop
     # - sourceLabels: [__name__]
     #   separator: ;
     #   regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: drop
 
     ## RelabelConfigs to apply to samples before scraping
@@ -1805,9 +1805,9 @@ kubelet:
         targetLabel: metrics_path
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional labels
@@ -1912,9 +1912,9 @@ kubeControllerManager:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional labels
@@ -1994,9 +1994,9 @@ coreDns:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional labels
@@ -2073,9 +2073,9 @@ kubeDns:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## MetricRelabelConfigs to apply to samples after scraping, but before ingestion.
@@ -2092,9 +2092,9 @@ kubeDns:
     dnsmasqRelabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional labels
@@ -2201,9 +2201,9 @@ kubeEtcd:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional labels
@@ -2307,9 +2307,9 @@ kubeScheduler:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional labels
@@ -2488,9 +2488,9 @@ kube-state-metrics:
       relabelings: []
       # - sourceLabels: [__meta_kubernetes_pod_node_name]
       #   separator: ;
-      #   regex: ^(.*)$
+      #   regex: ^(.*)(DOLLAR)
       #   targetLabel: nodename
-      #   replacement: $1
+      #   replacement: (DOLLAR)1
       #   action: replace
 
   selfMonitor:
@@ -2522,8 +2522,8 @@ prometheus-node-exporter:
     jobLabel: node-exporter
   releaseLabel: true
   extraArgs:
-    - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
-    - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)$
+    - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)((DOLLAR)|/)
+    - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)(DOLLAR)
   service:
     portName: http-metrics
     ipDualStack:
@@ -2578,7 +2578,7 @@ prometheus-node-exporter:
       # - sourceLabels: [__name__]
       #   separator: ;
       #   regex: ^node_mountstats_nfs_(event|operations|transport)_.+
-      #   replacement: $1
+      #   replacement: (DOLLAR)1
       #   action: drop
 
       ## RelabelConfigs to apply to samples before scraping
@@ -2587,9 +2587,9 @@ prometheus-node-exporter:
       relabelings: []
       # - sourceLabels: [__meta_kubernetes_pod_node_name]
       #   separator: ;
-      #   regex: ^(.*)$
+      #   regex: ^(.*)(DOLLAR)
       #   targetLabel: nodename
-      #   replacement: $1
+      #   replacement: (DOLLAR)1
       #   action: replace
 
       ## Attach node metadata to discovered targets. Requires Prometheus v2.35.0 and above.
@@ -3179,9 +3179,9 @@ prometheusOperator:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
   ## Resource limits & requests
@@ -3430,9 +3430,9 @@ prometheus:
 
   # Service for thanos service discovery on sidecar
   # Enable this can make Thanos Query can use
-  # `--store=dnssrv+_grpc._tcp.\${kube-prometheus-stack.fullname}-thanos-discovery.\${namespace}.svc.cluster.local` to discovery
+  # `--store=dnssrv+_grpc._tcp.\(DOLLAR){kube-prometheus-stack.fullname}-thanos-discovery.\(DOLLAR){namespace}.svc.cluster.local` to discovery
   # Thanos sidecar on prometheus nodes
-  # (Please remember to change \${kube-prometheus-stack.fullname} and \${namespace}. Not just copy and paste!)
+  # (Please remember to change \(DOLLAR){kube-prometheus-stack.fullname} and \(DOLLAR){namespace}. Not just copy and paste!)
   thanosService:
     enabled: false
     annotations: {}
@@ -3695,8 +3695,8 @@ prometheus:
     annotations: {}
     data: {}
   #   auth: |
-  #     foo:$apr1$OFG3Xybp$ckL0FHDAkoXYIlH9.cysT0
-  #     someoneelse:$apr1$DMZX2Z4q$6SbQIfyuLQd.xmo/P0m2c.
+  #     foo:(DOLLAR)apr1(DOLLAR)OFG3Xybp(DOLLAR)ckL0FHDAkoXYIlH9.cysT0
+  #     someoneelse:(DOLLAR)apr1(DOLLAR)DMZX2Z4q(DOLLAR)6SbQIfyuLQd.xmo/P0m2c.
 
   ingress:
     enabled: false
@@ -3787,9 +3787,9 @@ prometheus:
     labels: {}
 
     ## Final form of the hostname for each per replica ingress is
-    ## {{ ingressPerReplica.hostPrefix }}-{{ $replicaNumber }}.{{ ingressPerReplica.hostDomain }}
+    ## {{ ingressPerReplica.hostPrefix }}-{{ (DOLLAR)replicaNumber }}.{{ ingressPerReplica.hostDomain }}
     ##
-    ## Prefix for the per replica ingress that will have `-$replicaNumber`
+    ## Prefix for the per replica ingress that will have `-(DOLLAR)replicaNumber`
     ## appended to the end
     hostPrefix: ""
     ## Domain that will be used for the per replica ingress
@@ -3813,7 +3813,7 @@ prometheus:
     tlsSecretPerReplica:
       enabled: false
       ## Final form of the secret for each per replica ingress is
-      ## {{ tlsSecretPerReplica.prefix }}-{{ $replicaNumber }}
+      ## {{ tlsSecretPerReplica.prefix }}-{{ (DOLLAR)replicaNumber }}
       ##
       prefix: "prometheus"
 
@@ -3871,9 +3871,9 @@ prometheus:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional Endpoints
@@ -4375,7 +4375,7 @@ prometheus:
     #     action: replace
     #     targetLabel: __address__
     #     regex: ([^:;]+):(\d+)
-    #     replacement: \${1}:2379
+    #     replacement: \(DOLLAR){1}:2379
     #   - source_labels: [__meta_kubernetes_node_name]
     #     action: keep
     #     regex: .*mst.*
@@ -4383,7 +4383,7 @@ prometheus:
     #     action: replace
     #     targetLabel: node
     #     regex: (.*)
-    #     replacement: \${1}
+    #     replacement: \(DOLLAR){1}
     #   metric_relabel_configs:
     #   - regex: (kubernetes_io_hostname|failure_domain_beta_kubernetes_io_region|beta_kubernetes_io_os|beta_kubernetes_io_arch|beta_kubernetes_io_instance_type|failure_domain_beta_kubernetes_io_zone)
     #     action: labeldrop
@@ -4393,9 +4393,9 @@ prometheus:
     # additionalScrapeConfigs: |
     #  - job_name: "node-exporter"
     #    gce_sd_configs:
-    #    {{range $zone := .Values.gcp_zones}}
+    #    {{range (DOLLAR)zone := .Values.gcp_zones}}
     #    - project: "project1"
-    #      zone: "{{$zone}}"
+    #      zone: "{{(DOLLAR)zone}}"
     #      port: 9100
     #    {{end}}
     #    relabel_configs:
@@ -4450,7 +4450,7 @@ prometheus:
     additionalAlertRelabelConfigs: []
     # - separator: ;
     #   regex: prometheus_replica
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: labeldrop
 
     ## If additional alert relabel configurations are already deployed in a single secret, or you want to manage
@@ -4489,7 +4489,7 @@ prometheus:
       #   provider: gcp
       #   parameters:
       #     secrets: |
-      #       - resourceName: "projects/$PROJECT_ID/secrets/testsecret/versions/latest"
+      #       - resourceName: "projects/(DOLLAR)PROJECT_ID/secrets/testsecret/versions/latest"
       #         fileName: "objstore.yaml"
       ## ObjectStorageConfig configures object storage in Thanos.
       # objectStorageConfig:
@@ -4785,9 +4785,9 @@ prometheus:
   # relabelings: []
   # - sourceLabels: [__meta_kubernetes_pod_node_name]
   #   separator: ;
-  #   regex: ^(.*)$
+  #   regex: ^(.*)(DOLLAR)
   #   targetLabel: nodename
-  #   replacement: $1
+  #   replacement: (DOLLAR)1
   #   action: replace
 
   ## Fallback scrape protocol used by Prometheus for scraping metrics
@@ -5060,9 +5060,9 @@ thanosRuler:
     relabelings: []
     # - sourceLabels: [__meta_kubernetes_pod_node_name]
     #   separator: ;
-    #   regex: ^(.*)$
+    #   regex: ^(.*)(DOLLAR)
     #   targetLabel: nodename
-    #   replacement: $1
+    #   replacement: (DOLLAR)1
     #   action: replace
 
     ## Additional Endpoints
@@ -5381,8 +5381,8 @@ thanosRuler:
     annotations: {}
     data: {}
   #   auth: |
-  #     foo:$apr1$OFG3Xybp$ckL0FHDAkoXYIlH9.cysT0
-  #     someoneelse:$apr1$DMZX2Z4q$6SbQIfyuLQd.xmo/P0m2c.
+  #     foo:(DOLLAR)apr1(DOLLAR)OFG3Xybp(DOLLAR)ckL0FHDAkoXYIlH9.cysT0
+  #     someoneelse:(DOLLAR)apr1(DOLLAR)DMZX2Z4q(DOLLAR)6SbQIfyuLQd.xmo/P0m2c.
 
 ## Setting to true produces cleaner resource names, but requires a data migration because the name of the persistent volume changes. Therefore this should only be set once on initial installation.
 ##
@@ -5409,8 +5409,8 @@ extraManifests:
   #   metadata:
   #     name: super-secret
   #     labels:
-  #       {{- range $key, $value := .Values.commonLabels }}
-  #       {{ $key }}: {{ $value }}
+  #       {{- range (DOLLAR)key, (DOLLAR)value := .Values.commonLabels }}
+  #       {{ (DOLLAR)key }}: {{ (DOLLAR)value }}
   #       {{- end }}
   #   data:
   #     plaintext: Zm9vYmFy
