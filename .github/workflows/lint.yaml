@@ -18,6 +18,10 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      checks: read
       statuses: write
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
