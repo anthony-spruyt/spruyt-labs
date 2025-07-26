@@ -6,7 +6,8 @@ on:
     branches: ["*"]
     paths: ["cluster/**.yaml"]
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   flux-differ:
