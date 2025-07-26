@@ -25,7 +25,8 @@
         "tim-koehler.helm-intellisense",
         "redhat.vscode-yaml",
         "mhutchie.git-graph",
-        "blueglassblock.better-json5"
+        "blueglassblock.better-json5",
+        "esbenp.prettier-vscode"
       ]
     }
   },
