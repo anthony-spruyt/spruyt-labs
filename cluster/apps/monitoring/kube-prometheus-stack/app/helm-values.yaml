@@ -3430,9 +3430,9 @@ prometheus:
 
   # Service for thanos service discovery on sidecar
   # Enable this can make Thanos Query can use
-  # `--store=dnssrv+_grpc._tcp.${kube-prometheus-stack.fullname}-thanos-discovery.${namespace}.svc.cluster.local` to discovery
+  # `--store=dnssrv+_grpc._tcp.\${kube-prometheus-stack.fullname}-thanos-discovery.\${namespace}.svc.cluster.local` to discovery
   # Thanos sidecar on prometheus nodes
-  # (Please remember to change ${kube-prometheus-stack.fullname} and ${namespace}. Not just copy and paste!)
+  # (Please remember to change \${kube-prometheus-stack.fullname} and \${namespace}. Not just copy and paste!)
   thanosService:
     enabled: false
     annotations: {}
@@ -4375,7 +4375,7 @@ prometheus:
     #     action: replace
     #     targetLabel: __address__
     #     regex: ([^:;]+):(\d+)
-    #     replacement: ${1}:2379
+    #     replacement: \${1}:2379
     #   - source_labels: [__meta_kubernetes_node_name]
     #     action: keep
     #     regex: .*mst.*
@@ -4383,7 +4383,7 @@ prometheus:
     #     action: replace
     #     targetLabel: node
     #     regex: (.*)
-    #     replacement: ${1}
+    #     replacement: \${1}
     #   metric_relabel_configs:
     #   - regex: (kubernetes_io_hostname|failure_domain_beta_kubernetes_io_region|beta_kubernetes_io_os|beta_kubernetes_io_arch|beta_kubernetes_io_instance_type|failure_domain_beta_kubernetes_io_zone)
     #     action: labeldrop
