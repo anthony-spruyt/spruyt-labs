@@ -57,7 +57,7 @@ jobs:
             > truncated-diff.txt
 
       - name: Comment truncated diff via github-script
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
