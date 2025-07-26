@@ -1,4 +1,5 @@
 ---
+# https://github.com/marketplace/actions/super-linter
 name: Lint
 
 on: # yamllint disable-line rule:truthy
@@ -37,8 +38,5 @@ jobs:
           VALIDATE_ALL_CODEBASE: ${{ env.VALIDATE_ALL_CODEBASE }}
           DEFAULT_BRANCH: "origin/main"
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          ANSIBLE_CONFIG_FILE: .ansible-lint
-          MARKDOWN_CONFIG_FILE: .markdownlint.yaml
-          TERRAFORM_TFLINT_CONFIG_FILE: .tflint.hcl
-          YAML_CONFIG_FILE: .yamllint.yaml
           KUBERNETES_KUBECONFORM_OPTIONS: --ignore-missing-schemas
+          LINTER_RULES_PATH: .github/linters
