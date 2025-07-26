@@ -1,43 +1,43 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
-    "name": "Ubuntu",
-    "image": "mcr.microsoft.com/devcontainers/base:jammy",
-    "features": {
-        "ghcr.io/devcontainers-extra/features/sops:1.0.15": {},
-        "ghcr.io/devcontainers-extra/features/talosctl:1.0.0": {
-            "version": "1.10.5"
-        },
-        "ghcr.io/devcontainers-extra/features/helmfile:1.0.0": {},
-        "ghcr.io/devcontainers/features/kubectl-helm-minikube:1.2.2": {},
-        "ghcr.io/eitsupi/devcontainer-features/jq-likes:2.1.1": {
-            "yqVersion": "latest"
-        },
-        "ghcr.io/devcontainers-extra/features/pre-commit": {},
-        "ghcr.io/devcontainers/features/github-cli": {},
-        "ghcr.io/rio/features/kustomize": {}
+  "name": "Ubuntu",
+  "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/sops:1.0.15": {},
+    "ghcr.io/devcontainers-extra/features/talosctl:1.0.0": {
+      "version": "1.10.5"
     },
-    "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./talos/local-env-setup.sh\"",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "task.vscode-task",
-                "tim-koehler.helm-intellisense",
-                "redhat.vscode-yaml",
-                "mhutchie.git-graph",
-                "blueglassblock.better-json5"
-            ]
-        }
+    "ghcr.io/devcontainers-extra/features/helmfile:1.0.0": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1.2.2": {},
+    "ghcr.io/eitsupi/devcontainer-features/jq-likes:2.1.1": {
+      "yqVersion": "latest"
     },
-    "portsAttributes": {
-        "3333": {
-            "label": "Capacitor",
-            "onAutoForward": "openBrowser"
-        }
-    },
-    "containerEnv": {
-        "SOPS_AGE_KEY_FILE": "/workspaces/spruyt-labs/secrets/age.key",
-        "KUBECONFIG": "/workspaces/spruyt-labs/secrets/kubeconfig",
-        "TALOSCONFIG": "/workspaces/spruyt-labs/secrets/talosconfig"
+    "ghcr.io/devcontainers-extra/features/pre-commit": {},
+    "ghcr.io/devcontainers/features/github-cli": {},
+    "ghcr.io/rio/features/kustomize": {}
+  },
+  "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./talos/local-env-setup.sh\"",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "task.vscode-task",
+        "tim-koehler.helm-intellisense",
+        "redhat.vscode-yaml",
+        "mhutchie.git-graph",
+        "blueglassblock.better-json5"
+      ]
     }
+  },
+  "portsAttributes": {
+    "3333": {
+      "label": "Capacitor",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "containerEnv": {
+    "SOPS_AGE_KEY_FILE": "/workspaces/spruyt-labs/secrets/age.key",
+    "KUBECONFIG": "/workspaces/spruyt-labs/secrets/kubeconfig",
+    "TALOSCONFIG": "/workspaces/spruyt-labs/secrets/talosconfig"
+  }
 }

@@ -32,7 +32,7 @@ jobs:
         with:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
-      - name: Lint
+      - name: Run super linter
         uses: github/super-linter/slim@v7
         env:
           VALIDATE_ALL_CODEBASE: ${{ env.VALIDATE_ALL_CODEBASE }}

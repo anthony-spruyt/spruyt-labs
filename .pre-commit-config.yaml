@@ -34,3 +34,12 @@ repos:
     rev: v8.28.0
     hooks:
       - id: gitleaks
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.0
+    hooks:
+      - id: prettier
+        args:
+          [
+            --config=.github/linters/.prettierrc.yaml,
+            --ignore-path=.github/linters/.prettierignore,
+          ]

@@ -1,154 +1,94 @@
 {
-  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  'extends': [
-    'config:recommended',
-    'docker:enableMajor',
-    ':dependencyDashboard',
-    ':disableRateLimiting',
-    ':semanticCommits',
-    ':enablePreCommit',
-    ':separatePatchReleases',
-    ':automergeDigest',
-    ':automergeBranch',
-    'github>anthony-spruyt/spruyt-labs//.github/renovate/disabledDatasources.json5',
-    'github>anthony-spruyt/spruyt-labs//.github/renovate/autoMerge.json5',
-    'github>anthony-spruyt/spruyt-labs//.github/renovate/customManagers.json5',
-    'github>anthony-spruyt/spruyt-labs//.github/renovate/groups.json5',
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:recommended",
+    "docker:enableMajor",
+    ":dependencyDashboard",
+    ":disableRateLimiting",
+    ":semanticCommits",
+    ":enablePreCommit",
+    ":separatePatchReleases",
+    ":automergeDigest",
+    ":automergeBranch",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/disabledDatasources.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/autoMerge.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/customManagers.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/groups.json5",
   ],
   enabled: true,
-  dependencyDashboardTitle: 'Renovate Dashboard',
-  suppressNotifications: [
-    'prIgnoreNotification',
-  ],
+  dependencyDashboardTitle: "Renovate Dashboard",
+  suppressNotifications: ["prIgnoreNotification"],
   commitBodyTable: true,
-  rebaseWhen: 'conflicted',
+  rebaseWhen: "conflicted",
   ignoreDeps: [
-    'ghcr.io/fluxcd/helm-controller',
-    'ghcr.io/fluxcd/image-automation-controller',
-    'ghcr.io/fluxcd/image-reflector-controller',
-    'ghcr.io/fluxcd/kustomize-controller',
-    'ghcr.io/fluxcd/notification-controller',
-    'ghcr.io/fluxcd/source-controller',
+    "ghcr.io/fluxcd/helm-controller",
+    "ghcr.io/fluxcd/image-automation-controller",
+    "ghcr.io/fluxcd/image-reflector-controller",
+    "ghcr.io/fluxcd/kustomize-controller",
+    "ghcr.io/fluxcd/notification-controller",
+    "ghcr.io/fluxcd/source-controller",
   ],
   flux: {
-    managerFilePatterns: [
-      '/cluster/.+\\.ya?ml$/',
-    ],
+    managerFilePatterns: ["/cluster/.+\\.ya?ml$/"],
   },
-  'helm-values': {
-    managerFilePatterns: [
-      '/cluster/.+\\.ya?ml$/',
-    ],
+  "helm-values": {
+    managerFilePatterns: ["/cluster/.+\\.ya?ml$/"],
   },
   kubernetes: {
-    managerFilePatterns: [
-      '/cluster/.+\\.ya?ml$/',
-    ],
+    managerFilePatterns: ["/cluster/.+\\.ya?ml$/"],
   },
   customManagers: [
     {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/cluster/.+\\.ya?ml$/',
-      ],
+      customType: "regex",
+      managerFilePatterns: ["/cluster/.+\\.ya?ml$/"],
       matchStrings: [
-        'registryUrl=(?<registryUrl>.*?)\n *chart: (?<depName>.*?)\n *version: (?<currentValue>.*)\n',
+        "registryUrl=(?<registryUrl>.*?)\n *chart: (?<depName>.*?)\n *version: (?<currentValue>.*)\n",
       ],
-      datasourceTemplate: 'helm',
+      datasourceTemplate: "helm",
     },
   ],
   packageRules: [
     {
-      matchDatasources: [
-        'helm',
-      ],
+      matchDatasources: ["helm"],
       separateMinorPatch: true,
       ignoreDeprecated: true,
     },
     {
-      matchDatasources: [
-        'docker',
-      ],
+      matchDatasources: ["docker"],
       enabled: true,
-      commitMessageTopic: 'container image {{depName}}',
-      commitMessageExtra: 'to {{#if isSingleVersion}}v{{{newVersion}}}{{else}}{{{newValue}}}{{/if}}',
-      matchUpdateTypes: [
-        'major',
-        'minor',
-        'patch',
-      ],
+      commitMessageTopic: "container image {{depName}}",
+      commitMessageExtra: "to {{#if isSingleVersion}}v{{{newVersion}}}{{else}}{{{newValue}}}{{/if}}",
+      matchUpdateTypes: ["major", "minor", "patch"],
     },
     {
-      matchDatasources: [
-        'docker',
-      ],
-      matchUpdateTypes: [
-        'major',
-      ],
-      labels: [
-        'renovate/image',
-        'dep/major',
-      ],
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["major"],
+      labels: ["renovate/image", "dep/major"],
     },
     {
-      matchDatasources: [
-        'docker',
-      ],
-      matchUpdateTypes: [
-        'minor',
-      ],
-      labels: [
-        'renovate/image',
-        'dep/minor',
-      ],
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["minor"],
+      labels: ["renovate/image", "dep/minor"],
     },
     {
-      matchDatasources: [
-        'docker',
-      ],
-      matchUpdateTypes: [
-        'patch',
-      ],
-      labels: [
-        'renovate/image',
-        'dep/patch',
-      ],
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["patch"],
+      labels: ["renovate/image", "dep/patch"],
     },
     {
-      matchDatasources: [
-        'helm',
-      ],
-      matchUpdateTypes: [
-        'major',
-      ],
-      labels: [
-        'renovate/helm',
-        'dep/major',
-      ],
+      matchDatasources: ["helm"],
+      matchUpdateTypes: ["major"],
+      labels: ["renovate/helm", "dep/major"],
     },
     {
-      matchDatasources: [
-        'helm',
-      ],
-      matchUpdateTypes: [
-        'minor',
-      ],
-      labels: [
-        'renovate/helm',
-        'dep/minor',
-      ],
+      matchDatasources: ["helm"],
+      matchUpdateTypes: ["minor"],
+      labels: ["renovate/helm", "dep/minor"],
     },
     {
-      matchDatasources: [
-        'helm',
-      ],
-      matchUpdateTypes: [
-        'patch',
-      ],
-      labels: [
-        'renovate/helm',
-        'dep/patch',
-      ],
-    }
+      matchDatasources: ["helm"],
+      matchUpdateTypes: ["patch"],
+      labels: ["renovate/helm", "dep/patch"],
+    },
   ],
 }

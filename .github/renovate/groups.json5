@@ -1,44 +1,27 @@
 {
-  "packageRules": [
+  packageRules: [
     {
-      "description": "Rook-Ceph image and chart",
-      "groupName": "Rook Ceph",
-      "matchPackagePatterns": [
-        "rook.ceph",
-        "rook/rook"
-      ],
-      "matchDatasources": [
-        "docker",
-        "helm",
-        "github-tags"
-      ],
-      "group": {
-        "commitMessageTopic": "{{{groupName}}} group"
+      description: "Rook-Ceph image and chart",
+      groupName: "Rook Ceph",
+      matchPackagePatterns: ["rook.ceph", "rook/rook"],
+      matchDatasources: ["docker", "helm", "github-tags"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
       },
-      "separateMinorPatch": true
+      separateMinorPatch: true,
     },
     {
-      "description": "Traefik chart and CRD",
-      "groupName": "Traefik",
-      "matchPackagePatterns": [
-        "traefik",
-        "traefik-crd-source"
-      ],
-      "matchDatasources": [
-        "helm",
-        "regex",
-        "github-tags"
-      ],
-      "group": {
-        "commitMessageTopic": "{{{groupName}}} group"
+      description: "Traefik chart and CRD",
+      groupName: "Traefik",
+      matchPackagePatterns: ["traefik", "traefik-crd-source"],
+      matchDatasources: ["helm", "regex", "github-tags"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
       },
-      "separateMinorPatch": true
+      separateMinorPatch: true,
     },
     {
-      matchDatasources: [
-        "helm",
-        "docker"
-      ],
+      matchDatasources: ["helm", "docker"],
       matchPackageNames: [
         "quay.io/cilium/cilium",
         "quay.io/cilium/operator-generic",
@@ -49,5 +32,5 @@
       separateMinorPatch: true,
       stabilityDays: 2,
     },
-  ]
+  ],
 }

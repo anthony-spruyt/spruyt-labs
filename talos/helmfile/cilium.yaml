@@ -13,4 +13,4 @@ releases:
     chart: cilium/cilium
     version: 1.17.6
     disableValidation: true
-    values: ['helm-values-bootstrap.yaml']
+    values: ["helm-values-bootstrap.yaml"]
