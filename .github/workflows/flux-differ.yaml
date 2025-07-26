@@ -45,13 +45,11 @@ jobs:
         name: Truncate diff into file
         shell: bash
         run: |
-          # Assign the entire diff to a variable—fully quoted
-          DIFF="${{ steps.diff.outputs.diff }}"
-
-          # Take only the first 65000 characters
+          set -euo pipefail
+          read -r -d '' DIFF <<'EOF'
+          ${{ steps.diff.outputs.diff }}
+          EOF
           TRUNCATED="${DIFF:0:65000}"
-
-          # Write out
           printf '%s' "$TRUNCATED" > truncated-diff.txt
 
       - if: ${{ steps.diff.outputs.diff != '' }}
