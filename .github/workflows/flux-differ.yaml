@@ -41,27 +41,36 @@ jobs:
           path: "${{ matrix.path }}"
           resource: "${{ matrix.resource }}"
 
+      - if: ${{ steps.diff.outputs.diff != '' }}
+        name: Truncate diff to file
+        shell: bash
+        run: |
+          printf '%s' "${{ steps.diff.outputs.diff }}" \
+            | head -c 65000 > truncated-diff.txt
+
       - name: Comment truncated diff via github-script
         uses: actions/github-script@v6
-        env:
-          DIFF: ${{ steps.diff.outputs.diff }}
-          TOKEN: ${{ steps.generate-token.outputs.token }}
         with:
-          github-token: ${{ env.TOKEN }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const diff = process.env.DIFF || ''
-            if (!diff) {
-              core.info('No diff to post.')
+            const fs = require('fs')
+            const path = 'truncated-diff.txt'
+
+            if (!fs.existsSync(path)) {
+              core.info('No diff file to post.')
               return
             }
 
-            // trim to first 65k chars
-            const truncated = diff.slice(0, 65000)
+            const diff = fs.readFileSync(path, 'utf8')
+            if (!diff) {
+              core.info('Diff file is empty.')
+              return
+            }
 
             // build the comment body
             const body = [
               '```diff',
-              truncated,
+              diff,
               '```'
             ].join('\n')
 
