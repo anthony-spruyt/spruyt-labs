@@ -20,4 +20,10 @@ resources:
   - ./cert-manager
   - ./traefik
   - ./technitium
+  # observability
+  - ./monitoring
   # workloads
+  # vaultwarden
+  # minecraft
+  # mosquito
+  # homeassistant addons

@@ -1,0 +1,90 @@
+---
+name: Flux differ
+
+on:
+  pull_request:
+    branches: ["*"]
+    paths: ["cluster/**.yaml"]
+
+permissions: read-all
+
+jobs:
+  flux-differ:
+    name: Flux differ
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: write
+      checks: read
+      statuses: write
+    strategy:
+      matrix:
+        path: ["cluster"]
+        resource: ["helmrelease", "kustomization"]
+    steps:
+      - name: Generate token
+        uses: actions/create-github-app-token@v2
+        id: generate-token
+        with:
+          app-id: "${{ secrets.BOT_APP_ID }}"
+          private-key: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
+
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@v2.6.4
+
+      - name: Diff resources
+        uses: allenporter/flux-local/action/diff@7.5.6
+        id: diff
+        with:
+          sources: flux-system
+          path: "${{ matrix.path }}"
+          resource: "${{ matrix.resource }}"
+
+      - if: ${{ steps.diff.outputs.diff != '' }}
+        name: Truncate diff to file
+        shell: bash
+        run: |
+          set -eo pipefail
+
+          # 1) Slurp the full diff into a file via heredoc
+          cat > full-diff.txt <<'DIFF'
+          ${{ steps.diff.outputs.diff }}
+          DIFF
+
+          # 2) Chop it down to 65 000 bytes
+          head -c 65000 full-diff.txt \
+            > truncated-diff.txt
+
+      - name: Comment truncated diff via github-script
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const fs = require('fs')
+            const path = 'truncated-diff.txt'
+
+            if (!fs.existsSync(path)) {
+              core.info('No diff file to post.')
+              return
+            }
+
+            const diff = fs.readFileSync(path, 'utf8')
+            if (!diff) {
+              core.info('Diff file is empty.')
+              return
+            }
+
+            // build the comment body
+            const body = [
+              '```diff',
+              diff,
+              '```'
+            ].join('\n')
+
+            // create or update a comment
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
+              body
+            })

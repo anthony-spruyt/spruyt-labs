@@ -3,6 +3,7 @@
 This is a WIP setting up a home lab.
 
 References:
+
 - [https://github.com/mrwulf/home-cluster](https://github.com/mrwulf/home-cluster)
 - [https://github.com/timtorChen/homelab](https://github.com/timtorChen/homelab)
 - [https://github.com/d4rkfella/home-ops](https://github.com/d4rkfella/home-ops)
@@ -45,7 +46,8 @@ Rook is a storage orchestrator for k8s. Use this on disks that can be fully owne
 
 How to debug via rook-ceph-tools: `kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- bash`
 
-To get the newly generated UI password after bootstrapping a new cluster run the following: `kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo`
+To get the newly generated UI password after bootstrapping a new cluster run the following:
+`kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo`
 
 ## Cloudflare
 
@@ -61,7 +63,10 @@ Cert manager with local self signed certs and cloudflare + lets encrypt ACME for
 
 ## Prometheus Stack
 
-Installs core components of the [kube-prometheus stack](https://github.com/prometheus-operator/kube-prometheus), a collection of Kubernetes manifests, [Grafana](http://grafana.com/) dashboards, and [Prometheus rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) combined with documentation and scripts to provide easy to operate end-to-end Kubernetes cluster monitoring with [Prometheus](https://prometheus.io/) using the [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator).
+Installs core components of the [kube-prometheus stack](https://github.com/prometheus-operator/kube-prometheus), a collection of Kubernetes manifests,
+[Grafana](http://grafana.com/) dashboards, and [Prometheus rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) combined
+with documentation and scripts to provide easy to operate end-to-end Kubernetes cluster monitoring with [Prometheus](https://prometheus.io/)
+using the [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator).
 
 See the kube-prometheus readme for details about components, dashboards, and alerts.
 
@@ -69,4 +74,4 @@ See the kube-prometheus readme for details about components, dashboards, and ale
 
 ## Helm Values
 
-Use the following regex on GitHub to find yaml language server schemas: `/yaml-language-server:\s*[^\n]*appkeyword[^\n]*\.json/`
+Use the following regular expression on GitHub to find YAML language server schemas: `/yaml-language-server:\s*[^\n]*appkeyword[^\n]*\.json/`
