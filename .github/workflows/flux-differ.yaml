@@ -3,8 +3,10 @@ name: Flux differ
 
 on:
   pull_request:
-    branches: ['*']
-    paths: ['cluster/**.yaml']
+    branches: ["*"]
+    paths: ["cluster/**.yaml"]
+
+permissions: read-all
 
 jobs:
   flux-differ:
