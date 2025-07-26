@@ -47,13 +47,6 @@ jobs:
           echo "${{ steps.diff.outputs.diff }}" > ${{matrix.resource}}-diff.txt
 
       - if: ${{ steps.diff.outputs.diff != '' }}
-        name: Upload diff as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.resource}}-diff
-          path: ${{matrix.resource}}-diff.txt
-
-      - if: ${{ steps.diff.outputs.diff != '' }}
         name: Add comment
         uses: mshick/add-pr-comment@v2.8.2
         with:
@@ -61,4 +54,6 @@ jobs:
           message-id: "${{ github.event.pull_request.number }}/${{ matrix.path }}/${{ matrix.resource }}"
           message-failure: Diff was not successful
           message: |
-            Please review the build artifact `${{matrix.resource}}-diff.txt`
+            ```diff
+            ${{ steps.diff.outputs.diff.substr(0, 65000) }}
+            ```
