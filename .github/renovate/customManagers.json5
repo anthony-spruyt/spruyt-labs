@@ -3,7 +3,9 @@
   customManagers: [
     {
       customType: "regex",
-      description: ["Process custom dependencies"],
+      description: [
+        "Process custom dependencies"
+      ],
       fileMatch: [
         "(^|/).taskfiles/.+\\.ya?ml$",
         "(^|/)talos/.+\\.ya?ml$",
@@ -18,14 +20,6 @@
         "depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\n.+/(?<currentValue>(v|\\d)[^/]+)",
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
-    },
-    {
-      customType: "regex",
-      description: ["Process CloudnativePG Postgresql version"],
-      fileMatch: ["(^|/)cluster/.+\\.ya?ml$"],
-      matchStrings: ["imageName: (?<depName>\\S+):(?<currentValue>\\S+)"],
-      datasourceTemplate: "docker",
-      versioningTemplate: "redhat",
     },
   ],
 }

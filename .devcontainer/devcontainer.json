@@ -30,7 +30,8 @@
                 "task.vscode-task",
                 "tim-koehler.helm-intellisense",
                 "redhat.vscode-yaml",
-                "mhutchie.git-graph"
+                "mhutchie.git-graph",
+                "blueglassblock.better-json5"
             ]
         }
     },

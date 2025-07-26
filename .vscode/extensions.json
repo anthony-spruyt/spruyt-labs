@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "task.vscode-task"
+        "task.vscode-task",
+        "blueglassblock.better-json5"
     ]
 }
