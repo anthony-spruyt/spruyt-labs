@@ -42,6 +42,19 @@ jobs:
           resource: "${{ matrix.resource }}"
 
       - if: ${{ steps.diff.outputs.diff != '' }}
+        name: Truncate diff into file
+        shell: bash
+        run: |
+          # Assign the entire diff to a variable—fully quoted
+          DIFF="${{ steps.diff.outputs.diff }}"
+
+          # Take only the first 65000 characters
+          TRUNCATED="${DIFF:0:65000}"
+
+          # Write out
+          printf '%s' "$TRUNCATED" > truncated-diff.txt
+
+      - if: ${{ steps.diff.outputs.diff != '' }}
         name: Add comment
         uses: mshick/add-pr-comment@v2.8.2
         with:
@@ -50,5 +63,5 @@ jobs:
           message-failure: Diff was not successful
           message: |
             ```diff
-            ${{ join(slice( split(steps.diff.outputs.diff, ''), 0, 65000 ), '') }}
+            $(cat truncated-diff.txt)
             ```
