@@ -1,0 +1,20 @@
+{
+    "files.exclude": {
+        ".github": true,
+        //".task": true,
+        //".taskfiles": true,
+        ".devcontainer": true,
+        "temp": true,
+        "secrets": true,
+        ".continue": true,
+    },
+    "search.exclude": {
+        "**/*.secret.*": true,
+        "**/temp/**": true,
+        "**/secrets/**": true,
+    },
+    "files.autoSave": "afterDelay",
+    "files.autoSaveWorkspaceFilesOnly": true,
+    "editor.formatOnSave": true,
+    "editor.codeActions.triggerOnFocusChange": false
+}

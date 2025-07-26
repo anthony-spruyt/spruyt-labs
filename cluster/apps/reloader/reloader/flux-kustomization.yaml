@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app reloader
+  namespace: &fluxnamespace flux-system
+spec:
+  targetNamespace: reloader
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  interval: 1h
+  path: ./cluster/apps/reloader/reloader/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: *fluxnamespace
+    namespace: *fluxnamespace
+  timeout: 5m
+  wait: false
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
+      - kind: Secret
+        name: cluster-secrets

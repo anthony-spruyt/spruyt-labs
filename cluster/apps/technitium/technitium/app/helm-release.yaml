@@ -1,0 +1,81 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &name technitium
+  namespace: technitium
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: bjw-s-labs-app-template
+    namespace: flux-system
+  install:
+    remediation:
+      retries: 10
+  upgrade:
+    remediation:
+      strategy: rollback
+      retries: 10
+  # #yaml-language-server: $schema=TODO
+  values:
+    fullnameOverride: *name
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+    controllers:
+      technitium:
+        containers:
+          technitium:
+            image:
+              # TODO:renovate
+              repository: technitium/dns-server
+              tag: 13.6.0
+            env:
+              DNS_SERVER_DOMAIN: "${DNS_SERVER_DOMAIN}"
+            securityContext:
+              allowPrivilegeEscalation: false
+              #  Error! Read-only file system : '/tmp/'
+              readOnlyRootFilesystem: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+                memory: 300Mi
+              limits:
+                memory: 1000Mi
+    service:
+      technitium:
+        controller: *name
+        ports:
+          http:
+            port: 5380
+      dns:
+        controller: *name
+        type: LoadBalancer
+        annotations:
+          io.cilium/lb-ipam-ips: "${LB_IP_TECHNITIUM}"
+        ports:
+          dns-tcp:
+            enabled: true
+            port: 53
+            protocol: TCP
+          dns-udp:
+            enabled: true
+            port: 53
+            protocol: UDP
+    persistence:
+      config:
+        enabled: true
+        existingClaim: technitium
+        globalMounts:
+          - path: /etc/dns

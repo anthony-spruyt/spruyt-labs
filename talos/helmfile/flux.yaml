@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/helmfile
+releases:
+  - name: flux-operator
+    namespace: flux-system
+    chart: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
+    version: 0.20.0
+    wait: true
+    # Set this to true if your chart contains crds or install-crd hooks.
+    disableValidation: true
+    values: ["../../cluster/apps/flux-system/flux-operator/app/helm-values.yaml"]
+  - name: flux-instance
+    namespace: flux-system
+    chart: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance
+    version: 0.20.0
+    needs: ["flux-system/flux-operator"]
+    # Set this to true if your chart contains crds or install-crd hooks.
+    disableValidation: true
+    values: ["../../cluster/apps/flux-system/flux-instance/app/helm-values.yaml"]

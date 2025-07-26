@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # namespaces
+  - ./namespaces.yaml
+  # fluxcd
+  - ./flux-system
+  # kube system
+  - ./kube-system
+  # system
+  - ./irq-balance
+  - ./spegel
+  - ./kubelet-csr-approver
+  - ./reloader
+  # storage
+  - ./rook-ceph
+  # networking
+  - ./cert-manager
+  - ./traefik
+  - ./technitium
+  # workloads

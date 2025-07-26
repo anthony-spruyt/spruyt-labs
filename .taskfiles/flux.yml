@@ -1,0 +1,34 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  reconAllScript: "{{ .ROOT_DIR }}/.taskfiles/flux/scripts/flux-recon-all.sh"
+  startCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/flux/scripts/start-capacitor.sh"
+
+tasks:
+  recon-all:
+    desc: Reconcile all flux resources
+    cmds:
+      - bash {{ .reconAllScript }}
+  get-events:
+    desc: Get flux events
+    cmds:
+      - kubectl -n flux-system get events
+  list-all:
+    desc: Get all flux resources
+    cmds:
+      - flux get all  -A
+  list-kustomizations:
+    desc: Get all flux kustomizations
+    cmds:
+      - flux get kustomizations  -A
+  install-capacitor:
+    desc: Install flux capacitor UI
+    cmds:
+      - curl -L "https://github.com/gimlet-io/capacitor/releases/download/capacitor-next/next-$(uname)-$(uname -m)" -o {{ .ROOT_DIR }}/capacitor/next
+      - chmod +x {{ .ROOT_DIR }}/capacitor/next
+  start-capacitor:
+    desc: Start flux capacitor UI
+    cmds:
+      - bash {{ .startCapacitorScript }}

@@ -1,0 +1,224 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
+# Example configs:
+# - https://github.com/budimanjojo/talhelper/blob/master/example/talconfig.yaml
+# - https://github.com/mrwulf/home-cluster/blob/main/talos/talconfig.yaml
+
+# renovate: depName=ghcr.io/siderolabs/installer datasource=docker
+talosVersion: v1.10.5
+# renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
+kubernetesVersion: v1.33.3
+
+clusterName: ${CLUSTER_NAME}
+endpoint: https://${DOMAIN_NAME_KUBEAPI}
+#endpoint: https://${C1_IP}:6443 # Change back to this if doing a fresh bootsrap
+domain: ${CLUSTER_DOMAIN}
+
+additionalApiServerCertSans:
+  - 127.0.0.1
+  - ${LB_IP_KUBEAPI}
+  - ${DOMAIN_NAME_KUBEAPI}
+
+cniConfig:
+  name: none
+
+nodes:
+  - hostname: ${C1_HOST}
+    controlPlane: true
+    ipAddress: ${C1_IP}
+    machineSpec: &e2machinespec
+      mode: metal
+      arch: amd64
+      secureboot: true
+      useUKI: true
+    installDiskSelector: &e2installdiskselector
+      size: "<= 300GB"
+      model: RTL9210B-CG
+    networkInterfaces: &networkInterfaces
+      - interface: eth0
+        dhcp: true
+    certSANs: &additionalMachineCertSans
+      - ${C1_IP}
+      - ${C2_IP}
+      - ${C3_IP}
+      - 127.0.0.1
+      - ${LB_IP_KUBEAPI}
+      - ${DOMAIN_NAME_KUBEAPI}
+    nodeLabels: &e2nodelabels
+      node-role.kubernetes.io/control-plane: ""
+      #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
+    nodeAnnotations: &nodeannotations
+      installerImage: "factory.talos.dev/metal-installer-secureboot/777390ee380b57c5589bda8c3c3673d6b1e3252add27737701d216fbd50a3774:v1.10.5"
+    schematic: &e2schematic
+      customization:
+        secureboot:
+          includeWellKnownCertificates: true
+        extraKernelArgs:
+          - -lockdown
+          - lockdown=integrity
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/iscsi-tools
+            - siderolabs/util-linux-tools
+    patches: &e2patches
+      - |-
+        machine:
+          install:
+             wipe: true
+          systemDiskEncryption:
+            ephemeral: &e2encryption
+              provider: luks2
+              keys:
+                - slot: 0
+                  tpm: {}
+                #- slot: 1
+                #  nodeID: {}
+              options:
+                - no_read_workqueue
+                - no_write_workqueue
+            state: *e2encryption
+          network:
+            extraHostEntries:
+              - ip: ${LB_IP_KUBEAPI}
+                aliases:
+                  - ${DOMAIN_NAME_KUBEAPI}
+  - hostname: ${C2_HOST}
+    controlPlane: true
+    ipAddress: ${C2_IP}
+    machineSpec: *e2machinespec
+    installDiskSelector: *e2installdiskselector
+    networkInterfaces: *networkInterfaces
+    certSANs: *additionalMachineCertSans
+    nodeLabels: *e2nodelabels
+    nodeAnnotations: *nodeannotations
+    schematic: *e2schematic
+    patches: *e2patches
+  - hostname: ${C3_HOST}
+    controlPlane: true
+    ipAddress: ${C3_IP}
+    machineSpec: *e2machinespec
+    installDiskSelector: *e2installdiskselector
+    networkInterfaces: *networkInterfaces
+    certSANs: *additionalMachineCertSans
+    nodeLabels: *e2nodelabels
+    nodeAnnotations: *nodeannotations
+    schematic: *e2schematic
+    patches: *e2patches
+  - hostname: ${W1_HOST}
+    controlPlane: false
+    ipAddress: ${W1_IP}
+    machineSpec: &pi4machinespec
+      mode: metal
+      arch: arm64
+    installDisk: &pi4installdisk /dev/sda
+    networkInterfaces: *networkInterfaces
+    certSANs: *additionalMachineCertSans
+    nodeLabels: &pi4nodelabels
+      node-role.kubernetes.io/worker: ""
+    nodeAnnotations: *nodeannotations
+  - hostname: ${W2_HOST}
+    controlPlane: false
+    ipAddress: ${W2_IP}
+    machineSpec: *pi4machinespec
+    installDisk: *pi4installdisk
+    networkInterfaces: *networkInterfaces
+    certSANs: *additionalMachineCertSans
+    nodeLabels: *pi4nodelabels
+    nodeAnnotations: *nodeannotations
+
+patches:
+  - |-
+    machine:
+      features:
+        kubePrism:
+          enabled: true
+          port: 7445
+        hostDNS:
+          enabled: true
+          # Incompatible with Cilium bpf masquerade. https://github.com/siderolabs/talos/issues/8836
+          forwardKubeDNSToHost: false
+          resolveMemberNames: true
+      files:
+        # configure containerd for spegel
+        - content: |
+            [plugins."io.containerd.cri.v1.images"]
+              discard_unpacked_layers = false
+          path: /etc/cri/conf.d/20-customization.part
+          permissions: 0o644
+          op: create
+      kubelet:
+        extraArgs:
+          rotate-server-certificates: true
+          max-pods: 150
+        extraConfig:
+          imageGCLowThresholdPercent: 60
+          imageGCHighThresholdPercent: 70
+          maxParallelImagePulls: 10
+          serializeImagePulls: false
+      network:
+        disableSearchDomain: true
+        nameservers:
+          - ${LB_IP_TECHNITIUM}
+          - ${GATEWAY_IP}
+
+controlPlane:
+  patches:
+    # Disable default API server admission plugins so that
+    # it does not conflict with mutating admission policy.
+    - |-
+      - op: replace
+        path: /cluster/apiServer/admissionControl
+        value: []
+
+    # Enable MutatingAdmissionPolicy feature‐gate
+    - |-
+      cluster:
+        apiServer:
+          extraArgs:
+            runtime-config: admissionregistration.k8s.io/v1alpha1=true
+            feature-gates: MutatingAdmissionPolicy=true
+
+    # Grant Kubernetes‐sidecar access to the Talos API for backups
+    - |-
+      machine:
+        features:
+          kubernetesTalosAPIAccess:
+            enabled: true
+            allowedRoles:
+              - os:etcd:backup
+            allowedKubernetesNamespaces:
+              - backups
+
+    # Core cluster settings & resource tweaks
+    - |-
+      cluster:
+        allowSchedulingOnControlPlanes: true
+        network:
+          cni:
+            name: none
+        proxy:
+          disabled: true
+
+    # Spegel scheduler: disable ImageLocality scoring
+    - |
+      cluster:
+        scheduler:
+          config:
+            apiVersion: kubescheduler.config.k8s.io/v1
+            kind: KubeSchedulerConfiguration
+            profiles:
+              - schedulerName: default-scheduler
+                plugins:
+                  score:
+                    disabled:
+                      - name: ImageLocality
+
+    # Bootstrap manifests
+    - |-
+      cluster:
+        extraManifests:
+          - # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
+            https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
+          - # renovate: datasource=github-releases depName=prometheus-operator/prometheus-operator
+            https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.83.0/stripped-down-crds.yaml

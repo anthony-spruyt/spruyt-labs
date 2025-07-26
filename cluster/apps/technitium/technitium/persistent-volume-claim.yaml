@@ -1,0 +1,14 @@
+---
+# #yaml-language-server: $schema=TODO
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: technitium
+  namespace: technitium
+spec:
+  storageClassName: rbd-fast
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

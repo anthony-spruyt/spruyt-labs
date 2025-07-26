@@ -1,0 +1,45 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+    "name": "Ubuntu",
+    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    "image": "mcr.microsoft.com/devcontainers/base:jammy",
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    "features": {
+        "ghcr.io/devcontainers-extra/features/sops:1.0.15": {},
+        "ghcr.io/devcontainers-extra/features/talosctl:1.0.0": {
+            "version": "1.10.5"
+        },
+        "ghcr.io/devcontainers-extra/features/helmfile:1.0.0": {},
+        "ghcr.io/devcontainers/features/kubectl-helm-minikube:1.2.2": {},
+        "ghcr.io/eitsupi/devcontainer-features/jq-likes:2.1.1": {
+            "yqVersion": "latest"
+        },
+        "ghcr.io/devcontainers-extra/features/pre-commit": {},
+        "ghcr.io/devcontainers/features/github-cli": {},
+        "ghcr.io/rio/features/kustomize": {}
+    },
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    // "forwardPorts": [],
+    // Use 'postCreateCommand' to run commands after the container is created.
+    "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./talos/local-env-setup.sh\"",
+    // Configure tool-specific properties.
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "task.vscode-task",
+                "tim-koehler.helm-intellisense",
+                "redhat.vscode-yaml",
+                "mhutchie.git-graph"
+            ]
+        }
+    },
+    "portsAttributes": {
+        "3333": {
+            "label": "Capacitor",
+            "onAutoForward": "openBrowser"
+        }
+    }
+    // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+    // "remoteUser": "root"
+}

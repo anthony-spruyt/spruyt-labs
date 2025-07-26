@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-lan
+  namespace: rook-ceph
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`ceph.lan.${EXTERNAL_DOMAIN}`)
+      services:
+        - name: rook-ceph-mgr-dashboard
+          namespace: rook-ceph
+          passHostHeader: true
+          port: 8443
+  tls:
+    secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"

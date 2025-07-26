@@ -1,0 +1,68 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/ocirepository_v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: rook-ceph
+spec:
+  interval: 24h
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  ref:
+    # TODO:renovate
+    tag: v1.17.6
+  url: oci://ghcr.io/rook/rook-ceph
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rook-ceph
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: rook-ceph
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  # #yaml-language-server: $schema=TODO
+  # Rook Ceph Operator Helm Reference -> https://rook.io/docs/rook/v1.9/helm-operator.html#configuration
+  # Default values for rook-ceph operator: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph/values.yaml
+  values:
+    crds:
+      enabled: true
+    #resources:
+    #  limits:
+    #    memory: 256Mi # Default was 512Mi
+    #  requests:
+    #    cpu: 100m # Default was 200m
+    #    memory: 256Mi # Default was 128Mi
+    currentNamespaceOnly: true
+    csi:
+      # https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-read-affinity-for-rbd-and-cephfs-volumes
+      readAffinity:
+        enabled: true
+      #enableCephfsDriver: false
+      #enableCephfsSnapshotter: false
+      enableCSIEncryption: true
+      #enableVolumeGroupSnapshot: false
+      # -- Set CephFS Kernel mount options to use https://docs.ceph.com/en/latest/man/8/mount.ceph/#options.
+      # Set to "ms_mode=secure" when connections.encrypted is enabled in CephCluster CR
+      cephFSKernelMountOptions:
+        - ms_mode=secure
+      enableMetadata: true
+      #pluginTolerations:
+      #  - key: node-role.kubernetes.io/control-plane
+      #    operator: Exists
+      #    effect: NoSchedule
+      enableLiveness: true
+    enableDiscoveryDaemon: true
+    monitoring:
+      enabled: false # TODO: Enable when Prometheus is installed

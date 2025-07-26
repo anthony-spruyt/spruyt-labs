@@ -1,0 +1,13 @@
+---
+creation_rules:
+  - path_regex: talos/.*\.secret.sops.ya?ml$
+    encrypted_regex: "^(data|stringData)$"
+    age: >-
+      age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+  - path_regex: talos/.*\.ya?ml$
+    age: >-
+      age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+  - path_regex: .*\.ya?ml$
+    encrypted_regex: "^(data|stringData)$"
+    age: >-
+      age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5

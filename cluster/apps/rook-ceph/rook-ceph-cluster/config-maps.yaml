@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rook-ceph-csi-kms-config
+  namespace: rook-ceph
+data:
+  config.json: |-
+    {
+      "user-secret-metadata": {
+        "encryptionKMSType": "metadata",
+        "secretName": "storage-encryption-secret"
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rook-config-override
+  namespace: rook-ceph
+data:
+  # dev_enable_discard & bdev_async_discard_threads: Enables discard/TRIM operations on storage devices to mark free blocks.
+  # In a home lab, this is essential for SSDs as it helps manage wear leveling and improves long-term performance.
+  # mon clock drift allowed: Tolerates clock drift between Ceph monitors. For a home lab where time sync (e.g., via NTP)
+  # might not be perfect, this reduces unnecessary monitor quorum failures.
+  config: |
+    [global]
+    bdev_enable_discard = true
+    bdev_async_discard_threads = "1"
+    mon clock drift allowed = 0.8
+    [osd]
+    osd_mclock_profile = high_recovery_ops
