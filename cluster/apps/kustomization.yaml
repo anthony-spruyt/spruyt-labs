@@ -20,4 +20,10 @@ resources:
   - ./cert-manager
   - ./traefik
   - ./technitium
+  # monitoring
+  - ./kube-prometheus-stack
   # workloads
+  # vaultwarden
+  # minecraft
+  # mosquito
+  # homeassistant addons

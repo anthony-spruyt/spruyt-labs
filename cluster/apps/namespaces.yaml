@@ -14,6 +14,11 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: kube-prometheus-stack
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: irq-balance
   labels:
     pod-security.kubernetes.io/enforce: privileged
