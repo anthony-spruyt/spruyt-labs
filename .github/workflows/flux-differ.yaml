@@ -41,24 +41,33 @@ jobs:
           path: "${{ matrix.path }}"
           resource: "${{ matrix.resource }}"
 
-      - if: ${{ steps.diff.outputs.diff != '' }}
-        name: Truncate diff into file
-        shell: bash
-        run: |
-          set -eo pipefail
-          printf '%s' "${{ steps.diff.outputs.diff }}" \
-            | base64 \
-            | head -c 80000 \
-            | base64 --decode > truncated-diff.txt
-
-      - if: ${{ steps.diff.outputs.diff != '' }}
-        name: Add comment
-        uses: mshick/add-pr-comment@v2.8.2
+      - name: Comment truncated diff via github-script
+        uses: actions/github-script@v6
+        env:
+          DIFF: ${{ steps.diff.outputs.diff }}
+          TOKEN: ${{ steps.generate-token.outputs.token }}
         with:
-          repo-token: "${{ steps.generate-token.outputs.token }}"
-          message-id: "${{ github.event.pull_request.number }}/${{ matrix.path }}/${{ matrix.resource }}"
-          message-failure: Diff was not successful
-          message: |
-            ```diff
-            $(cat truncated-diff.txt)
-            ```
+          github-token: ${{ env.TOKEN }}
+          script: |
+            const diff = process.env.DIFF || ''
+            if (!diff) {
+              core.info('No diff to post.')
+              return
+            }
+
+            // trim to first 65k chars
+            const truncated = diff.slice(0, 65000)
+
+            // build the comment body
+            const body = [
+              '```diff',
+              truncated,
+              '```'
+            ].join('\n')
+
+            // create or update a comment
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
+              body
+            })
