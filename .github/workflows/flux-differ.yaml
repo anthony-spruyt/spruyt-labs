@@ -45,8 +45,10 @@ jobs:
         name: Truncate diff to file
         shell: bash
         run: |
-          printf '%s' "${{ steps.diff.outputs.diff }}" \
-            | head -c 65000 > truncated-diff.txt
+          set -eo pipefail
+          full_diff="${{ steps.diff.outputs.diff }}"
+          truncated="${full_diff:0:65000}"
+          echo "$truncated" > truncated-diff.txt
 
       - name: Comment truncated diff via github-script
         uses: actions/github-script@v6
