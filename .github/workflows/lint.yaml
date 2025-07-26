@@ -7,6 +7,10 @@ on: # yamllint disable-line rule:truthy
     branches:
       - main
 
+permissions:
+  contents: read
+  statuses: write
+
 env:
   # Currently no way to detect automatically
   DEFAULT_BRANCH: main
