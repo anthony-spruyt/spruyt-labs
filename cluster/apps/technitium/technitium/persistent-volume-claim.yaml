@@ -1,5 +1,6 @@
 ---
-# #yaml-language-server: $schema=TODO
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

@@ -24,7 +24,8 @@
         "redhat.vscode-yaml",
         "mhutchie.git-graph",
         "blueglassblock.better-json5",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "kilocode.kilo-code"
       ]
     }
   },
