@@ -1215,7 +1215,7 @@ alertmanager:
 ## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 ##
 grafana:
-  enabled: false
+  enabled: true
   namespaceOverride: ""
 
   ## ForceDeployDatasources Create datasource configmap even if grafana deployment has been disabled
@@ -1338,13 +1338,13 @@ grafana:
 
   # # To make Grafana persistent (Using Statefulset)
   # #
-  #persistence:
-  #  enabled: true
-  #  type: sts
-  #  storageClassName: "rbd-fast"
-  #  accessModes:
-  #    - ReadWriteOnce
-  #  size: 2Gi
+  persistence:
+    enabled: true
+    type: sts
+    storageClassName: "rbd-fast"
+    accessModes:
+      - ReadWriteOnce
+    size: 2Gi
   #  #finalizers:
   #  #  - kubernetes.io/pvc-protection
 
@@ -3901,9 +3901,9 @@ prometheus:
     ## on scaling down and deleting statefulset, respectively.
     ## Requires Kubernetes version 1.27.0+.
     ## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention
-    persistentVolumeClaimRetentionPolicy: {}
-    #  whenDeleted: Retain
-    #  whenScaled: Retain
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
 
     ## If true, pass --storage.tsdb.max-block-duration=2h to prometheus. This is already done if using Thanos
     ##
