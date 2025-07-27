@@ -1844,8 +1844,8 @@ kubeControllerManager:
       enabled: false
       ipFamilies: ["IPv6", "IPv4"]
       ipFamilyPolicy: "PreferDualStack"
-    # selector:
-    #   component: kube-controller-manager
+      selector:
+        k8s-app: kube-controller-manager
 
   serviceMonitor:
     enabled: true
@@ -2240,8 +2240,8 @@ kubeScheduler:
       enabled: false
       ipFamilies: ["IPv6", "IPv4"]
       ipFamilyPolicy: "PreferDualStack"
-    # selector:
-    #   component: kube-scheduler
+      selector:
+        k8s-app: kube-scheduler
 
   serviceMonitor:
     enabled: true
@@ -2324,7 +2324,7 @@ kubeScheduler:
 ## Component scraping kube proxy
 ##
 kubeProxy:
-  enabled: true
+  enabled: false
 
   ## If your kube proxy is not deployed as a pod, specify IPs it can be found on
   ##
@@ -3186,7 +3186,12 @@ prometheusOperator:
 
   ## Resource limits & requests
   ##
-  resources: {}
+  resources:
+    requests:
+      cpu: 35m
+      memory: 273M
+    limits:
+      memory: 326M
   # limits:
   #   cpu: 200m
   #   memory: 200Mi
@@ -3334,7 +3339,11 @@ prometheusOperator:
 
     # resource config for prometheusConfigReloader
     resources:
-      {}
+      requests:
+        cpu: 5m
+        memory: 32M
+      limits:
+        memory: 32M
       # requests:
       #   cpu: 200m
       #   memory: 50Mi

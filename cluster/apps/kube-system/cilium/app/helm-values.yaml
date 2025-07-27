@@ -49,6 +49,7 @@ prometheus:
   enabled: true
   serviceMonitor:
     enabled: true
+    trustCRDsExist: true
 hubble:
   enabled: true
   relay:
