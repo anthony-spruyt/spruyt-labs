@@ -1279,7 +1279,7 @@ grafana:
   ## Timezone for the default dashboards
   ## Other options are: browser or a specific timezone, i.e. Europe/Luxembourg
   ##
-  defaultDashboardsTimezone: utc
+  defaultDashboardsTimezone: ${TIMEZONE}
 
   ## Editable flag for the default dashboards
   ##
@@ -1290,7 +1290,7 @@ grafana:
   defaultDashboardsInterval: 1m
 
   adminUser: admin
-  adminPassword: prom-operator
+  adminPassword: ${GRAFANA_ADMIN_PASSWORD}
 
   rbac:
     ## If true, Grafana PSPs will be created
@@ -1338,15 +1338,15 @@ grafana:
 
   # # To make Grafana persistent (Using Statefulset)
   # #
-  persistence:
-    enabled: true
-    type: sts
-    storageClassName: "rbd-fast"
-    accessModes:
-      - ReadWriteOnce
-    size: 2Gi
-    finalizers:
-      - kubernetes.io/pvc-protection
+  #persistence:
+  #  enabled: true
+  #  type: sts
+  #  storageClassName: "rbd-fast"
+  #  accessModes:
+  #    - ReadWriteOnce
+  #  size: 2Gi
+  #  finalizers:
+  #    - kubernetes.io/pvc-protection
 
   serviceAccount:
     create: true
