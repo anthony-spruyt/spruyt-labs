@@ -42,7 +42,37 @@ spec:
       # -- Enable Ceph debugging pod deployment. See [toolbox](https://github.com/rook/rook/blob/master/Documentation/Troubleshooting/ceph-toolbox.md)
       enabled: true # TODO: Disable when everything is setup and stable
     monitoring:
-      enabled: false # TODO: Enable when Prometheus is installed
+      # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.
+      # Monitoring requires Prometheus to be pre-installed
+      enabled: true
+      # -- Whether to disable the metrics reported by Ceph. If false, the prometheus mgr module and Ceph exporter are enabled
+      metricsDisabled: false
+      # -- Whether to create the Prometheus rules for Ceph alerts
+      createPrometheusRules: true
+      # -- Edit Prometheus rules for Ceph alerts
+      prometheusRuleOverrides:
+        {}
+        # CephHealthWarning:
+        #   disabled: true
+        # NVMeoFHighWriteLatency:
+        #   for: 3m
+        #   labels:
+        #     severity: critical
+      # -- The namespace in which to create the prometheus rules, if different from the rook cluster namespace.
+      # If you have multiple rook-ceph clusters in the same k8s cluster, choose the same namespace (ideally, namespace with prometheus
+      # deployed) to set rulesNamespaceOverride for all the clusters. Otherwise, you will get duplicate alerts with multiple alert definitions.
+      rulesNamespaceOverride:
+      # Monitoring settings for external clusters:
+      # externalMgrEndpoints: <list of endpoints>
+      # externalMgrPrometheusPort: <port>
+      # Scrape interval for prometheus
+      # interval: 10s
+      # allow adding custom labels and annotations to the prometheus rule
+      prometheusRule:
+        # -- Labels applied to PrometheusRule
+        labels: {}
+        # -- Annotations applied to PrometheusRule
+        annotations: {}
     cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-cluster-crd.html
       mgr:
         modules:
@@ -51,11 +81,16 @@ spec:
           - name: rook
             enabled: true
           - name: prometheus
-            enabled: false # TODO: Enable when Prometheus is installed
+            enabled: true
       dashboard:
-        enabled: true # TODO: configure when Prometheus is ready
+        enabled: true
+        # serve the dashboard under a subpath (useful when you are accessing the dashboard via a reverse proxy)
+        # urlPrefix: /ceph-dashboard
+        # serve the dashboard at the given port.
         port: 8443
-        ssl: false
+        # Serve the dashboard using SSL (if using ingress to expose the dashboard and `ssl: true` you need to set
+        # the corresponding "backend protocol" annotation(s) for your ingress controller of choice)
+        ssl: true
       network:
         connections:
           encryption:
@@ -70,5 +105,3 @@ spec:
         deviceFilter: ^nvme0n1$
         config:
           encryptedDevice: "false"
-    ingress:
-      dashboard: {} # TODO: configure traefik
