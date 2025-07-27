@@ -1,5 +1,19 @@
 {
-  "files.exclude": {},
+  "files.exclude": {
+    ".continue": true,
+    ".devcontainer": false,
+    ".github": true,
+    ".taskfiles": true,
+    "capacitor": true,
+    "secrets": true,
+    ".sops.yaml": true,
+    ".gitattributes": true,
+    ".gitleaksignore": true,
+    ".gitignore": true,
+    ".pre-commit-config.yaml": true,
+    "LICENSE": true,
+    "Taskfile.yml": true
+  },
   "search.exclude": {
     "**/*.secret.*": true,
     "**/temp/**": true,

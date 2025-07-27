@@ -6,3 +6,4 @@ resources:
   - ./kube-system
   - ./rook-ceph
   - ./technitium
+  - ./monitoring
