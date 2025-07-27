@@ -1,6 +1,5 @@
 {
   "files.exclude": {
-    ".continue": true,
     ".devcontainer": false,
     ".github": true,
     ".taskfiles": true,
