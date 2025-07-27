@@ -90,7 +90,7 @@ spec:
         port: 8443
         # Serve the dashboard using SSL (if using ingress to expose the dashboard and `ssl: true` you need to set
         # the corresponding "backend protocol" annotation(s) for your ingress controller of choice)
-        ssl: true
+        ssl: false
       network:
         connections:
           encryption:
