@@ -897,9 +897,9 @@ alertmanager:
     ## on scaling down and deleting statefulset, respectively.
     ## Requires Kubernetes version 1.27.0+.
     ## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention
-    persistentVolumeClaimRetentionPolicy:
-      whenDeleted: Retain
-      whenScaled: Retain
+    persistentVolumeClaimRetentionPolicy: {}
+    #  whenDeleted: Retain
+    #  whenScaled: Retain
 
     ## Standard object's metadata. More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#metadata
     ## Metadata Labels and Annotations gets propagated to the Alertmanager pods.
@@ -1019,15 +1019,15 @@ alertmanager:
     ## Storage is the definition of how storage will be used by the Alertmanager instances.
     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/platform/storage.md
     ##
-    storage:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: rbd-fast-delete
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 2Gi # 2-5
-          #selector: {}
+    storage: {}
+    #  volumeClaimTemplate:
+    #    spec:
+    #      storageClassName: rbd-fast-delete
+    #      accessModes: ["ReadWriteOnce"]
+    #      resources:
+    #        requests:
+    #          storage: 2Gi
+    #      selector: {}
 
     ## The external URL the Alertmanager instances will be available under. This is necessary to generate correct URLs. This is necessary if Alertmanager is not served from root of a DNS name. string  false
     ##
@@ -1341,10 +1341,10 @@ grafana:
   persistence:
     enabled: true
     type: sts
-    storageClassName: "rbd-fast-delete"
+    storageClassName: "rbd-fast"
     accessModes:
       - ReadWriteOnce
-    size: 1Gi # 1-2
+    size: 2Gi
     finalizers:
       - kubernetes.io/pvc-protection
 
@@ -3901,9 +3901,9 @@ prometheus:
     ## on scaling down and deleting statefulset, respectively.
     ## Requires Kubernetes version 1.27.0+.
     ## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention
-    persistentVolumeClaimRetentionPolicy:
-      whenDeleted: Retain
-      whenScaled: Retain
+    persistentVolumeClaimRetentionPolicy: {}
+    #  whenDeleted: Retain
+    #  whenScaled: Retain
 
     ## If true, pass --storage.tsdb.max-block-duration=2h to prometheus. This is already done if using Thanos
     ##
@@ -4232,7 +4232,7 @@ prometheus:
 
     ## Maximum size of metrics
     ##
-    retentionSize: ""
+    retentionSize: 8Gi
 
     ## Allow out-of-order/out-of-bounds samples ingested into Prometheus for a specified duration
     ## See https://prometheus.io/docs/prometheus/latest/configuration/configuration/#tsdb
@@ -4342,7 +4342,7 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 20Gi # 20-40
+              storage: 10Gi
           #selector: {}
 
     ## Using tmpfs volume
@@ -5084,9 +5084,9 @@ thanosRuler:
   ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosrulerspec
   ##
   thanosRulerSpec:
-    persistentVolumeClaimRetentionPolicy:
-      whenDeleted: Retain
-      whenScaled: Retain
+    persistentVolumeClaimRetentionPolicy: {}
+    #  whenDeleted: Retain
+    #  whenScaled: Retain
     ## Standard object's metadata. More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#metadata
     ## Metadata Labels and Annotations gets propagated to the ThanosRuler pods.
     ##
@@ -5158,15 +5158,15 @@ thanosRuler:
     ## Storage is the definition of how storage will be used by the ThanosRuler instances.
     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/platform/storage.md
     ##
-    storage:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: rbd-fast-delete
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 5Gi # 5-10
-          #selector: {}
+    storage: {}
+    #  volumeClaimTemplate:
+    #    spec:
+    #      storageClassName: rbd-fast-delete
+    #      accessModes: ["ReadWriteOnce"]
+    #      resources:
+    #        requests:
+    #          storage: 5Gi
+    #      selector: {}
 
     ## AlertmanagerConfig define configuration for connecting to alertmanager.
     ## Only available with Thanos v0.10.0 and higher. Maps to the alertmanagers.config Thanos Ruler arg.
