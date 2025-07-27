@@ -65,4 +65,6 @@ spec:
       enableLiveness: true
     enableDiscoveryDaemon: true
     monitoring:
-      enabled: false # TODO: Enable when Prometheus is installed
+      # -- Enable monitoring. Requires Prometheus to be pre-installed.
+      # Enabling will also create RBAC rules to allow Operator to create ServiceMonitors
+      enabled: true

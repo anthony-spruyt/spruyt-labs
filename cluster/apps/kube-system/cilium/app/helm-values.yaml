@@ -46,15 +46,34 @@ ipMasqAgent:
 operator:
   rollOutPods: true
 prometheus:
-  enabled: false
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    trustCRDsExist: true
 hubble:
   enabled: true
   relay:
     enabled: true
     rollOutPods: true
+    prometheus:
+      enabled: true
+      serviceMonitor:
+        enabled: true
   ui:
     enabled: true
     rollOutPods: true
+  metrics:
+    dashboards:
+      enabled: true
+      namespace: monitoring
+    enabled:
+      - dns:query;ignoreAAAA
+      - drop
+      - tcp
+      - flow
+      - port-distribution
+      - icmp
+      - http
 socketLB:
   enabled: true
   hostNamespaceOnly: true
