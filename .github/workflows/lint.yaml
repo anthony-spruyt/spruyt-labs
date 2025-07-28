@@ -40,3 +40,4 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           KUBERNETES_KUBECONFORM_OPTIONS: --ignore-missing-schemas
           LINTER_RULES_PATH: .github/linters
+          FILTER_REGEX_EXCLUDE: .*sops.*
