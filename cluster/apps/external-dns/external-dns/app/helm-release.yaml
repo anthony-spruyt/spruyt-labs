@@ -47,9 +47,12 @@ spec:
       - --rfc2136-tsig-axfr
       - --source=traefik-proxy
       - --traefik-disable-legacy
-    envFrom:
-      - secretRef:
-          name: external-dns-secrets
+    env:
+      - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: external-dns-secrets
+            key: EXTERNAL_DNS_RFC2136_TSIG_SECRET
     interval: 2m
     sources:
       - crd
