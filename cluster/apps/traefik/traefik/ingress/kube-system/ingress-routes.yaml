@@ -7,8 +7,10 @@ metadata:
   name: ingress-routes-lan
   namespace: kube-system
   annotations:
+    #kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: "letsencrypt-production"
     external-dns.alpha.kubernetes.io/hostname: hubble.lan.${EXTERNAL_DOMAIN}
+    #external-dns.alpha.kubernetes.io/target: ${LB_IP_TRAEFIK}
 spec:
   entryPoints:
     - websecure
@@ -31,7 +33,9 @@ metadata:
   name: ingress-route-kube-api
   namespace: kube-system
   annotations:
+    #kubernetes.io/ingress.class: traefik
     external-dns.alpha.kubernetes.io/hostname: api.lan.${EXTERNAL_DOMAIN}
+    #external-dns.alpha.kubernetes.io/target: ${LB_IP_KUBEAPI}
 spec:
   entryPoints:
     - websecure
