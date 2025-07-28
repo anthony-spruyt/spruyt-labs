@@ -11,7 +11,7 @@ tasks:
     cmds:
       - curl -L "https://github.com/gimlet-io/capacitor/releases/download/capacitor-next/next-$(uname)-$(uname -m)" -o {{ .ROOT_DIR }}/capacitor/next
       - chmod +x {{ .ROOT_DIR }}/capacitor/next
-  start-capacitor:
+  cap:
     desc: Start flux capacitor
     cmds:
       - bash {{ .startCapacitorScript }}

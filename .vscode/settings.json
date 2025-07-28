@@ -1,6 +1,6 @@
 {
   "files.exclude": {
-    ".devcontainer": false,
+    ".devcontainer": true,
     ".github": true,
     ".taskfiles": true,
     "capacitor": true,
@@ -11,7 +11,9 @@
     ".gitignore": true,
     ".pre-commit-config.yaml": true,
     "LICENSE": true,
-    "Taskfile.yml": true
+    "Taskfile.yml": true,
+    ".kilocodeignore": true,
+    "talos/clusterconfig": true
   },
   "search.exclude": {
     "**/*.secret.*": true,

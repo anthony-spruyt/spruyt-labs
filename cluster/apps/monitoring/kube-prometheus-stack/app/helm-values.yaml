@@ -1290,7 +1290,7 @@ grafana:
   defaultDashboardsInterval: 1m
 
   adminUser: admin
-  adminPassword: ${GRAFANA_ADMIN_PASSWORD}
+  adminPassword: ${GRAFANA_DEFAULT_ADMIN_PASSWORD}
 
   rbac:
     ## If true, Grafana PSPs will be created
