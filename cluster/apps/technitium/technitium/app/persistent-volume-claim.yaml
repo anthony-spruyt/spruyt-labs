@@ -6,6 +6,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: technitium
   namespace: technitium
+  finalizers:
+    - kubernetes.io/pvc-protection
 spec:
   storageClassName: rbd-fast
   accessModes:
