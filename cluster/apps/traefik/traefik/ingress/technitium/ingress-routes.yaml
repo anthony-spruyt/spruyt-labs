@@ -8,11 +8,12 @@ metadata:
   namespace: technitium
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-production"
+    external-dns.alpha.kubernetes.io/hostname: dns.lan.${EXTERNAL_DOMAIN}
 spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`technitium.lan.${EXTERNAL_DOMAIN}`) || Host(`dns.lan.${EXTERNAL_DOMAIN}`)
+    - match: Host(`dns.lan.${EXTERNAL_DOMAIN}`)
       #match: ClientIP("192.168.50.98") # Use this to bootstrap DNS during recovery
       kind: Rule
       services:

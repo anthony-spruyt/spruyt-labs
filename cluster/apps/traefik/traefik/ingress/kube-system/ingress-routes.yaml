@@ -8,6 +8,7 @@ metadata:
   namespace: kube-system
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-production"
+    external-dns.alpha.kubernetes.io/hostname: hubble.lan.${EXTERNAL_DOMAIN}
 spec:
   entryPoints:
     - websecure
@@ -29,6 +30,8 @@ kind: IngressRouteTCP
 metadata:
   name: ingress-route-kube-api
   namespace: kube-system
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: api.lan.${EXTERNAL_DOMAIN}
 spec:
   entryPoints:
     - websecure

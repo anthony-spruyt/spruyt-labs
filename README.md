@@ -75,3 +75,18 @@ See the kube-prometheus readme for details about components, dashboards, and ale
 ## Helm Values
 
 Use the following regular expression on GitHub to find YAML language server schemas: `/yaml-language-server:\s*[^\n]*appkeyword[^\n]*\.json/`
+
+## TODO
+
+- external-dns
+- blackbox exporter
+- cloudflare-operator
+- kube-prometheus-stack crds -> see mrwulf
+- vaultwarden
+- mosquito
+- n8n
+- nodered
+- vscode server
+- ntp server
+- minecraft server
+- home assistant

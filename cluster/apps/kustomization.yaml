@@ -20,6 +20,7 @@ resources:
   - ./cert-manager
   - ./traefik
   - ./technitium
+  - ./external-dns
   # observability
   - ./monitoring
   # workloads
