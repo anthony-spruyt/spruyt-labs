@@ -1345,8 +1345,8 @@ grafana:
     accessModes:
       - ReadWriteOnce
     size: 2Gi
-  #  #finalizers:
-  #  #  - kubernetes.io/pvc-protection
+    finalizers:
+      - kubernetes.io/pvc-protection
 
   serviceAccount:
     create: true

@@ -17,6 +17,8 @@ spec:
   routes:
     - kind: Rule
       match: Host(`grafana.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: redirect-to-https
       services:
         - name: kube-prometheus-stack-grafana
           namespace: monitoring
@@ -43,6 +45,8 @@ spec:
   routes:
     - kind: Rule
       match: Host(`prometheus.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: redirect-to-https
       services:
         - name: kube-prometheus-stack-prometheus
           namespace: monitoring
