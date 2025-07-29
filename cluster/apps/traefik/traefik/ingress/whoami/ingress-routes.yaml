@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-lan-redirect-http-to-https
+  namespace: whoami
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: "HostRegexp(`{host:.+}`)"
+      kind: Rule
+      middlewares:
+        - name: no-cache-headers
+        - name: redirect-to-https
+      services:
+        - name: whoami
+          namespace: whoami
+          passHostHeader: true
+          port: 80

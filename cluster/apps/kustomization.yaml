@@ -21,6 +21,7 @@ resources:
   - ./traefik
   - ./technitium
   - ./external-dns
+  - ./whoami
   # observability
   - ./monitoring
   # workloads

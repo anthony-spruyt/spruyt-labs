@@ -5,7 +5,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-to-https
-  namespace: traefik
+  namespace: whoami
 spec:
   redirectScheme:
     scheme: https
@@ -17,27 +17,8 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: no-cache-headers
-  namespace: traefik
+  namespace: whoami
 spec:
   headers:
     customResponseHeaders:
       Cache-Control: "no-store, no-cache, must-revalidate"
----
-# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
-# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: ingress-routes-lan-redirect-http-to-https
-  namespace: traefik
-spec:
-  entryPoints:
-    - web
-  routes:
-    - match: "HostRegexp(`{host:.+}`)"
-      kind: Rule
-      middlewares:
-        - name: no-cache-headers
-        - name: redirect-to-https
-      services:
-        - name: noop@internal
