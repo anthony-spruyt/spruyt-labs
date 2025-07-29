@@ -34,7 +34,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: HostRegexp(`{host:.+}`) && PathPrefix(`/`) && !HostSNI(`api.lan.${EXTERNAL_DOMAIN}`)
+    - match: "HostRegexp(`{host:.+}`)"
       kind: Rule
       middlewares:
         - name: no-cache-headers
