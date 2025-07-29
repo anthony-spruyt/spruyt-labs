@@ -62,7 +62,7 @@ spec:
     - name: rook-ceph-cluster
   interval: 1h
   path: ./cluster/apps/rook-ceph/rook-ceph-cluster/storage
-  prune: false
+  prune: true
   retryInterval: 2m
   sourceRef:
     kind: GitRepository
