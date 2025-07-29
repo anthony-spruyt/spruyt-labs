@@ -11,6 +11,18 @@ spec:
     scheme: https
     permanent: true
 ---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/middleware_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/middlewares/overview/
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: no-cache-headers
+  namespace: traefik
+spec:
+  headers:
+    customResponseHeaders:
+      Cache-Control: "no-store, no-cache, must-revalidate"
+---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
 # Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
 apiVersion: traefik.io/v1alpha1
@@ -22,9 +34,10 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: "!HostSNI(`api.lan.${EXTERNAL_DOMAIN}`)"
+    - match: HostRegexp(`{host:.+}`) && PathPrefix(`/`) && !HostSNI(`api.lan.${EXTERNAL_DOMAIN}`)
       kind: Rule
       middlewares:
+        - name: no-cache-headers
         - name: redirect-to-https
       services:
         - name: noop@internal
