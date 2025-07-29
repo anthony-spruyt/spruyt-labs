@@ -79,7 +79,7 @@ spec:
           - name: pg_autoscaler
             enabled: true
           - name: rook
-            enabled: true
+            enabled: false
           - name: prometheus
             enabled: true
       dashboard:
