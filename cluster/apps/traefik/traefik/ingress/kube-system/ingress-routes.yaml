@@ -17,7 +17,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`hubble.lan.${EXTERNAL_DOMAIN}`)
+      match: Host(`hubble.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/`)
       middlewares:
         - name: redirect-to-https
         - name: compress

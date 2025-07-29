@@ -17,7 +17,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`grafana.lan.${EXTERNAL_DOMAIN}`)
+      match: Host(`grafana.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/`)
       middlewares:
         - name: redirect-to-https
         - name: compress
@@ -47,7 +47,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`prometheus.lan.${EXTERNAL_DOMAIN}`)
+      match: Host(`prometheus.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/`)
       middlewares:
         - name: redirect-to-https
         - name: compress
