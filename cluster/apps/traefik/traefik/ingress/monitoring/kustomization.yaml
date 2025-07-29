@@ -4,6 +4,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../base/compress.yaml
+  - ../base/redirect-to-https.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
 patches:
@@ -14,3 +15,10 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: monitoring
+  - target:
+      kind: Middleware
+      name: redirect-to-https
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: kube-system

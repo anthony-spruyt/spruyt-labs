@@ -7,4 +7,3 @@ resources:
   - ./rook-ceph
   - ./technitium
   - ./monitoring
-  - ./whoami
