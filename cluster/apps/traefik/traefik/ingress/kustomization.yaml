@@ -7,3 +7,4 @@ resources:
   - ./rook-ceph
   - ./technitium
   - ./monitoring
+  - ./redirect-to-https.yaml

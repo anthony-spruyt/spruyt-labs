@@ -4,9 +4,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: redirect-to-https
+  name: compress
   namespace: placeholder
 spec:
-  redirectScheme:
-    scheme: https
-    permanent: true
+  compress: {}

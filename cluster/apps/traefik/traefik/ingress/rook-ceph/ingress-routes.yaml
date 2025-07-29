@@ -18,7 +18,7 @@ spec:
     - kind: Rule
       match: Host(`ceph.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
-        - name: redirect-to-https
+        - name: compress
       services:
         - name: rook-ceph-mgr-dashboard
           namespace: rook-ceph

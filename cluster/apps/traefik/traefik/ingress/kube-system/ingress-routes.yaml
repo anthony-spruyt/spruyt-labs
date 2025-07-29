@@ -18,7 +18,7 @@ spec:
     - kind: Rule
       match: Host(`hubble.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
-        - name: redirect-to-https
+        - name: compress
       services:
         - name: hubble-ui
           namespace: kube-system
