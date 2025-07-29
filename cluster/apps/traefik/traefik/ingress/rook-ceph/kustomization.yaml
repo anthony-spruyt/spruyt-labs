@@ -21,4 +21,4 @@ patches:
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: kube-system
+        value: rook-ceph
