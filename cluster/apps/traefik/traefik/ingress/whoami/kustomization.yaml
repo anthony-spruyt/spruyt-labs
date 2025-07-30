@@ -10,14 +10,14 @@ resources:
 patches:
   - target:
       kind: Certificate
-      name: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+      name: "wildcard-home-domain-tls"
     patch: |
       - op: replace
         path: /metadata/namespace
         value: whoami
   - target:
       kind: Certificate
-      name: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
+      name: "wildcard-internal-home-domain-tls"
     patch: |
       - op: replace
         path: /metadata/namespace

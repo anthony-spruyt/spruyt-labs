@@ -3,10 +3,10 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+  name: "wildcard-home-domain-tls"
   namespace: placeholder
 spec:
-  secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+  secretName: "wildcard-home-domain-tls"
   issuerRef:
     name: letsencrypt-production # letsencrypt-staging | letsencrypt-production
     kind: ClusterIssuer
