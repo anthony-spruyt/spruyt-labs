@@ -4,20 +4,27 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../base/compress.yaml
-  - ../base/redirect-to-https.yaml
-  - ./certificates.yaml
+  - ../base/external-certificate.yaml
+  - ../base/internal-certificate.yaml
   - ./ingress-routes.yaml
 patches:
   - target:
-      kind: Middleware
-      name: compress
+      kind: Certificate
+      name: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: monitoring
+  - target:
+      kind: Certificate
+      name: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
     patch: |
       - op: replace
         path: /metadata/namespace
         value: monitoring
   - target:
       kind: Middleware
-      name: redirect-to-https
+      name: compress
     patch: |
       - op: replace
         path: /metadata/namespace

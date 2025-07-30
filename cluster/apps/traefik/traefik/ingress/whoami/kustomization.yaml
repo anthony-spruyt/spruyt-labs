@@ -14,18 +14,18 @@ patches:
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: kube-system
+        value: whoami
   - target:
       kind: Certificate
       name: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: kube-system
+        value: whoami
   - target:
       kind: Middleware
       name: compress
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: kube-system
+        value: whoami

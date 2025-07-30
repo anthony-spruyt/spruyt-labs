@@ -4,25 +4,25 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-lan
-  namespace: rook-ceph
+  name: ingress-routes-lan-https
+  namespace: whoami
   annotations:
     #kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: "letsencrypt-production"
-    external-dns.alpha.kubernetes.io/hostname: ceph.lan.${EXTERNAL_DOMAIN}
+    external-dns.alpha.kubernetes.io/hostname: whoami.lan.${EXTERNAL_DOMAIN}
     #external-dns.alpha.kubernetes.io/target: ${LB_IP_TRAEFIK}
 spec:
   entryPoints:
     - websecure
   routes:
-    - kind: Rule
-      match: Host(`ceph.lan.${EXTERNAL_DOMAIN}`) #&& PathPrefix(`/`)
+    - match: Host(`whoami.lan.${EXTERNAL_DOMAIN}`) #&& PathPrefix(`/`)
+      kind: Rule
       middlewares:
         - name: compress
       services:
-        - name: rook-ceph-mgr-dashboard
-          namespace: rook-ceph
+        - name: whoami
+          namespace: whoami
           passHostHeader: true
-          port: 8443
+          port: 80
   tls:
     secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"

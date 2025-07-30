@@ -27,6 +27,13 @@ spec:
   # yaml-language-server: $schema=https://raw.githubusercontent.com/traefik/traefik-helm-chart/refs/heads/master/traefik/values.schema.json
   # Default values for traefik: https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml
   values:
+    ports:
+      web:
+        redirections:
+          entryPoint:
+            to: websecure
+            scheme: https
+            permanent: true
     providers:
       kubernetesCRD:
         allowCrossNamespace: false
