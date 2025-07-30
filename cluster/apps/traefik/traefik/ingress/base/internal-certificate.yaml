@@ -8,7 +8,7 @@ metadata:
 spec:
   secretName: "wildcard-internal-home-domain-tls"
   issuerRef:
-    name: letsencrypt-production # letsencrypt-staging | letsencrypt-production
+    name: letsencrypt-staging # letsencrypt-staging | letsencrypt-production
     kind: ClusterIssuer
   commonName: "${EXTERNAL_DOMAIN}"
   dnsNames:
