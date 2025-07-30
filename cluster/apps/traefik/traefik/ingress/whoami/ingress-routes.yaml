@@ -8,7 +8,7 @@ metadata:
   namespace: whoami
   annotations:
     #kubernetes.io/ingress.class: traefik
-    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    cert-manager.io/cluster-issuer: "zerossl-production"
     external-dns.alpha.kubernetes.io/hostname: whoami.lan.${EXTERNAL_DOMAIN}
     #external-dns.alpha.kubernetes.io/target: ${LB_IP_TRAEFIK}
 spec:
