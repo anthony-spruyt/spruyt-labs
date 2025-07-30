@@ -3,7 +3,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+  name: "wildcard-${EXTERNAL_DOMAIN/./-}-tls-kube-system"
   namespace: kube-system
 spec:
   secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
@@ -19,7 +19,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
+  name: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls-kube-system"
   namespace: kube-system
 spec:
   secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
