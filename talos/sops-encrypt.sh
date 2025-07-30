@@ -7,4 +7,5 @@ sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/worksp
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/flux/meta/cluster-secrets.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/rook-ceph/rook-ceph-cluster/app/storage-encryption-secret.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/cert-manager/cert-manager/app/solver-secrets.sops.yaml"
+sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/cert-manager/cert-manager/app/zerossl-eab-secret.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/external-dns/external-dns/app/external-dns-secrets.sops.yaml"

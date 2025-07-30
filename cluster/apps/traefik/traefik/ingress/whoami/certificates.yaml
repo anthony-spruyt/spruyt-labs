@@ -8,7 +8,7 @@ metadata:
 spec:
   secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
-    name: letsencrypt-production # letsencrypt-staging | letsencrypt-production
+    name: zerossl-production # letsencrypt-staging | letsencrypt-production | zerossl-production
     kind: ClusterIssuer
   commonName: "${EXTERNAL_DOMAIN}"
   dnsNames:
@@ -24,7 +24,7 @@ metadata:
 spec:
   secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
-    name: letsencrypt-production # letsencrypt-staging | letsencrypt-production
+    name: zerossl-production # letsencrypt-staging | letsencrypt-production | zerossl-production
     kind: ClusterIssuer
   commonName: "${EXTERNAL_DOMAIN}"
   dnsNames:
