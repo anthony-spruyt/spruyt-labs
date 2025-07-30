@@ -8,7 +8,7 @@ metadata:
   namespace: monitoring
   annotations:
     #kubernetes.io/ingress.class: traefik
-    cert-manager.io/cluster-issuer: "zerossl-production"
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: grafana.lan.${EXTERNAL_DOMAIN}
     #external-dns.alpha.kubernetes.io/target: ${LB_IP_TRAEFIK}
 spec:
@@ -36,7 +36,7 @@ metadata:
   namespace: monitoring
   annotations:
     #kubernetes.io/ingress.class: traefik
-    cert-manager.io/cluster-issuer: "zerossl-production"
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: prometheus.lan.${EXTERNAL_DOMAIN}
     #external-dns.alpha.kubernetes.io/target: ${LB_IP_TRAEFIK}
 spec:

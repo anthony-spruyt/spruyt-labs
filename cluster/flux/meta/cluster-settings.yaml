@@ -6,3 +6,4 @@ metadata:
   namespace: flux-system
 data:
   TIMEZONE: "Australia/Melbourne"
+  CLUSTER_ISSUER: "zerossl-production" # letsencrypt-staging | letsencrypt-production | zerossl-production
