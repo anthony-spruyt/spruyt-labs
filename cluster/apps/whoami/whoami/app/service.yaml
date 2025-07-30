@@ -7,7 +7,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: whoami
+    app.kubernetes.io/name: whoami
   ports:
     - port: 80
       targetPort: 80
