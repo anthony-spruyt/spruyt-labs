@@ -25,4 +25,4 @@ spec:
           passHostHeader: true
           port: 80
   tls:
-    secretName: "wildcard-internal-home-domain-tls"
+    secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"

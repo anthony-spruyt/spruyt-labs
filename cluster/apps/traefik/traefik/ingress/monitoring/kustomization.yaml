@@ -4,24 +4,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../base/compress.yaml
-  - ../base/external-certificate.yaml
-  - ../base/internal-certificate.yaml
+  - ./certificates.yaml
   - ./ingress-routes.yaml
 patches:
-  - target:
-      kind: Certificate
-      name: "wildcard-home-domain-tls"
-    patch: |
-      - op: replace
-        path: /metadata/namespace
-        value: monitoring
-  - target:
-      kind: Certificate
-      name: "wildcard-internal-home-domain-tls"
-    patch: |
-      - op: replace
-        path: /metadata/namespace
-        value: monitoring
   - target:
       kind: Middleware
       name: compress

@@ -25,7 +25,7 @@ spec:
           passHostHeader: true
           port: 80
   tls:
-    secretName: "wildcard-internal-home-domain-tls"
+    secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
 ---
 # #yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroutetcp_v1alpha1.json
 # Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/tcp/ingressroutetcp/
