@@ -51,7 +51,6 @@ metadata:
 spec:
   acme:
     email: ${SECRET_ACME_EMAIL}
-    profile: tlsserver
     server: https://acme.zerossl.com/v2/DV90
     privateKeySecretRef:
       name: zerossl-production-account-private-key
