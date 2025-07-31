@@ -23,7 +23,7 @@ resources:
   - ./external-dns
   - ./whoami
   # observability
-  - ./monitoring
+  #- ./monitoring
   # workloads
   # vaultwarden
   # minecraft
