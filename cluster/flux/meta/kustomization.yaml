@@ -6,4 +6,3 @@ resources:
   - ./cluster-settings.yaml
   - ./cluster-secrets.sops.yaml
   - ./repositories
-  - ./flux-kustomization.yaml
