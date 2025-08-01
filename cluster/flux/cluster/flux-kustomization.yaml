@@ -28,7 +28,6 @@ metadata:
 spec:
   dependsOn:
     - name: cluster-meta
-      namespace: flux-system
   interval: 1h
   path: ./cluster/apps
   prune: true

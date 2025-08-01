@@ -10,6 +10,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  dependsOn:
+    - name: technitium
   interval: 1h
   path: ./cluster/apps/external-dns/external-dns/app
   prune: false

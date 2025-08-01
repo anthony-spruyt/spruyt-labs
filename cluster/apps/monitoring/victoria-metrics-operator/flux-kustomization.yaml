@@ -10,6 +10,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  dependsOn:
+    - name: rook-ceph-cluster-storage
   interval: 1h
   path: ./cluster/apps/monitoring/victoria-metrics-operator/app
   prune: true
