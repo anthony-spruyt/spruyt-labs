@@ -12,7 +12,7 @@ spec:
       app.kubernetes.io/name: *app
   interval: 1h
   path: ./cluster/apps/external-dns/external-dns/app
-  prune: true
+  prune: false
   retryInterval: 2m
   sourceRef:
     kind: GitRepository

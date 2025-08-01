@@ -12,7 +12,7 @@ spec:
       app.kubernetes.io/name: *app
   interval: 1h
   path: "./cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app"
-  prune: true
+  prune: false
   sourceRef:
     kind: GitRepository
     name: *fluxnamespace

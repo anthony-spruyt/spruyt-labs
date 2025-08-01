@@ -3,16 +3,16 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app cert-manager
+  name: &app victoria-logs-cluster
   namespace: &fluxnamespace flux-system
 spec:
-  targetNamespace: cert-manager
+  targetNamespace: monitoring
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   interval: 1h
-  path: ./cluster/apps/cert-manager/cert-manager/app
-  prune: false
+  path: ./cluster/apps/monitoring/victoria-logs-cluster/app
+  prune: true
   retryInterval: 2m
   sourceRef:
     kind: GitRepository
@@ -20,10 +20,6 @@ spec:
     namespace: *fluxnamespace
   timeout: 5m
   wait: true
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
   postBuild:
     substituteFrom:
       - kind: ConfigMap

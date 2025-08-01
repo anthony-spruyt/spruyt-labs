@@ -14,7 +14,7 @@ spec:
     - name: rook-ceph-cluster-storage
   interval: 1h
   path: ./cluster/apps/technitium/technitium/app
-  prune: true
+  prune: false
   sourceRef:
     kind: GitRepository
     name: *fluxnamespace
