@@ -62,6 +62,10 @@ wait_for_bootstrap() {
 #
 # talosctl config info
 
+#server: https://10.0.10.200:6443
+#server: https://192.168.50.99:6443
+#server: https://api.lan.spruyt.xyz
+
 talosctl config context ${CLUSTER_NAME}
 
 talosctl apply-config \
@@ -71,6 +75,11 @@ talosctl apply-config \
   --file clusterconfig/${CLUSTER_NAME}-${C1_HOST}.yaml
 
 wait_for_talos "${C1_IP}" 300
+
+echo "⏳ Giving node time to fully start up before wiping secondary disks..."
+read -rp "Press any key to wipe secondary disks: " continuewipesanswer
+
+talosctl wipe disk nvme0n1 -n ${C1_IP} --drop-partition
 
 echo "⏳ Giving control plane components time to fully start up before bootstrapping..."
 read -rp "Press any key to continue: " continuebootstrapanswer
@@ -129,8 +138,8 @@ kubectl kustomize https://github.com/kubernetes-csi/external-snapshotter/client/
 echo "⏳ Installing cert-manager CRDs..."
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
 
-read -rp "Press any key to install flux: " continuefluxanswer
-
-helmfile apply \
-  --suppress-diff \
-  -f helmfile/flux.yaml
+#read -rp "Press any key to install flux: " continuefluxanswer
+#
+#helmfile apply \
+#  --suppress-diff \
+#  -f helmfile/flux.yaml

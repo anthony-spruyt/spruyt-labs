@@ -4,7 +4,7 @@
     ".github": true,
     ".taskfiles": true,
     "capacitor": true,
-    "secrets": true,
+    "secrets": false,
     ".sops.yaml": true,
     ".gitattributes": true,
     ".gitleaksignore": true,
