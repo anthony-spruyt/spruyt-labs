@@ -24,5 +24,6 @@ spec:
           namespace: rook-ceph
           passHostHeader: true
           port: 8443
+          scheme: http
   tls:
     secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
