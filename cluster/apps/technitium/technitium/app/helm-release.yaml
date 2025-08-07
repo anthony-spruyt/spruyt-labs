@@ -73,6 +73,10 @@ spec:
             enabled: true
             port: 53
             protocol: UDP
+          dns-over-tls:
+            enabled: true
+            port: 853
+            protocol: TCP
     persistence:
       config:
         enabled: true
