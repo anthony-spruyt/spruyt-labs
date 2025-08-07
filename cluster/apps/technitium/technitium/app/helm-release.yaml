@@ -90,7 +90,7 @@ spec:
       tls:
         enabled: true
         type: secret
-        name: dns-over-tls-technitium
+        name: dns-over-tls
         globalMounts:
           - path: /certs
             readOnly: true
