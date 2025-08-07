@@ -44,8 +44,6 @@ spec:
               tag: 13.6.0
             env:
               DNS_SERVER_DOMAIN: "${DNS_SERVER_DOMAIN}"
-              DNS_OVER_TLS_CERT_FILE: "/certs/tls.crt"
-              DNS_OVER_TLS_KEY_FILE: "/certs/tls.key"
             securityContext:
               allowPrivilegeEscalation: false
               #  Error! Read-only file system : '/tmp/'
