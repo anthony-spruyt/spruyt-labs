@@ -22,8 +22,8 @@ spec:
     crds:
       enabled: true
     enableCertificateOwnerRef: true # When this flag is enabled, secrets will be automatically removed when the certificate resource is deleted.
-    #dns01RecursiveNameservers: 172.64.36.1:853,172.64.36.2:853
-    #dns01RecursiveNameserversOnly: true
+    dns01RecursiveNameservers: 172.64.36.1:853,172.64.36.2:853 # Cloudflare trusted zone
+    dns01RecursiveNameserversOnly: true
     replicaCount: 2
     webhook:
       replicaCount: 2
