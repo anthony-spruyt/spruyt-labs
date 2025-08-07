@@ -92,7 +92,7 @@ spec:
       tls:
         enabled: true
         type: secret
-        name: dns-over-tls
+        name: dns-secure
         globalMounts:
           - path: /certs
             readOnly: true
