@@ -23,7 +23,7 @@ spec:
       enabled: true
     enableCertificateOwnerRef: true # When this flag is enabled, secrets will be automatically removed when the certificate resource is deleted.
     # A comma-separated string with the host and port of the recursive nameservers cert-manager should query.
-    dns01RecursiveNameservers: 172.64.36.1:853,172.64.36.2:853 # Cloudflare trusted zone
+    dns01RecursiveNameservers: 1.1.1.1:53,1.0.0.1:53
     # Forces cert-manager to use only the recursive nameservers for verification.
     # Enabling this option could cause the DNS01 self check to take longer owing to caching performed by the recursive nameservers.
     dns01RecursiveNameserversOnly: true
