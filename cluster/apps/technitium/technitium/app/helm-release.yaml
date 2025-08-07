@@ -34,6 +34,8 @@ spec:
           type: RuntimeDefault
     controllers:
       technitium:
+        annotations:
+          reloader.stakater.com/auto: "true"
         containers:
           technitium:
             image:
@@ -42,6 +44,10 @@ spec:
               tag: 13.6.0
             env:
               DNS_SERVER_DOMAIN: "${DNS_SERVER_DOMAIN}"
+              DNS_OVER_TLS_CERT_FILE: "/certs/tls.crt"
+              DNS_OVER_TLS_KEY_FILE: "/certs/tls.key"
+              DNS_OVER_HTTPS_CERT_FILE: "/certs/tls.crt"
+              DNS_OVER_HTTPS_KEY_FILE: "/certs/tls.key"
             securityContext:
               allowPrivilegeEscalation: false
               #  Error! Read-only file system : '/tmp/'
@@ -83,3 +89,10 @@ spec:
         existingClaim: technitium
         globalMounts:
           - path: /etc/dns
+      tls:
+        enabled: true
+        type: secret
+        name: wildcard-internal-spruyt-xyz-tls
+        globalMounts:
+          - path: /certs
+            readOnly: true
