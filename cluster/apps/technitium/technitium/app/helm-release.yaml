@@ -79,6 +79,10 @@ spec:
             enabled: true
             port: 853
             protocol: TCP
+          dns-over-https:
+            enabled: true
+            port: 443
+            protocol: TCP
     persistence:
       config:
         enabled: true
