@@ -21,6 +21,10 @@ spec:
     namespace: *fluxnamespace
   timeout: 5m
   wait: false
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   postBuild:
     substituteFrom:
       - kind: ConfigMap
