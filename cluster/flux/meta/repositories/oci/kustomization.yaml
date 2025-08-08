@@ -6,6 +6,6 @@ resources:
   - ./bjw-s-labs-app-template.yaml
   - ./rook-ceph-cluster-ocirepo.yaml
   - ./rook-ceph-ocirepo.yaml
-  - ./victoriametrics-victoria-logs-cluster-ocirepo.yaml
-  - ./victoriametrics-victoria-metrics-k8s-stack-ocirepo.yaml
-  - ./victoriametrics-victoria-metrics-operator-ocirepo.yaml
+  - ./victoria-logs-cluster-ocirepo.yaml
+  - ./victoria-metrics-k8s-stack-ocirepo.yaml
+  - ./victoria-metrics-operator-ocirepo.yaml
