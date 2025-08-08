@@ -207,254 +207,254 @@ spec:
         requests:
           cpu: 100m
           memory: 512Mi
-#
-#     probe:
-#       # -- Indicates whether the Container is ready to service requests. If the readiness probe fails, the endpoints controller removes the Pod's IP address from the endpoints of all Services that match the Pod. The default state of readiness before the initial delay is Failure. If a Container does not provide a readiness probe, the default state is Success.
-#       readiness:
-#         httpGet: {}
-#         initialDelaySeconds: 5
-#         periodSeconds: 5
-#         timeoutSeconds: 5
-#         failureThreshold: 3
-#
-#       # -- Indicates whether the Container is running. If the liveness probe fails, the kubelet kills the Container, and the Container is subjected to its restart policy. If a Container does not provide a liveness probe, the default state is Success.
-#       liveness:
-#         tcpSocket: {}
-#         initialDelaySeconds: 30
-#         periodSeconds: 30
-#         timeoutSeconds: 5
-#         failureThreshold: 10
-#
-#       # -- Indicates whether the Container is done with potentially costly initialization. If set it is executed first. If it fails Container is restarted. If it succeeds liveness and readiness probes takes over.
-#       startup: {}
-#        # tcpSocket: {}
-#        # failureThreshold: 30
-#        # periodSeconds: 15
-#        # successThreshold: 1
-#        # timeoutSeconds: 5
-#
-#     # -- Security context to be added to server pods
-#     securityContext:
-#       enabled: true
-#       allowPrivilegeEscalation: false
-#       capabilities:
-#         drop:
-#           - ALL
-#       readOnlyRootFilesystem: true
-#
-#     # -- Pod's security context. Details are [here](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-#     podSecurityContext:
-#       enabled: true
-#       fsGroup: 2000
-#       runAsNonRoot: true
-#       runAsUser: 1000
-#
-#     ingress:
-#       # -- Enable deployment of ingress for server component
-#       enabled: false
-#
-#       # -- Ingress annotations
-#       annotations:
-#       #   kubernetes.io/ingress.class: nginx
-#       #   kubernetes.io/tls-acme: 'true'
-#
-#       # -- Ingress extra labels
-#       extraLabels: {}
-#
-#       # -- Array of host objects
-#       hosts:
-#         - name: vlogs.local
-#           path:
-#             - /
-#           port: http
-#
-#       # -- Array of TLS objects
-#       tls: []
-#       #   - secretName: vmselect-ingress-tls
-#       #     hosts:
-#       #       - vmselect.local
-#
-#       # -- Ingress controller class name
-#       ingressClassName: ""
-#
-#       # -- Ingress path type
-#       pathType: Prefix
-#
-#     service:
-#       # -- Service annotations
-#       annotations: {}
-#       # -- Service labels
-#       labels: {}
-#       # -- Service ClusterIP
-#       clusterIP: None
-#       # -- Service external IPs. Details are [here]( https://kubernetes.io/docs/concepts/services-networking/service/#external-ips)
-#       externalIPs: []
-#       # -- Service load balancer IP
-#       loadBalancerIP: ""
-#       # -- Load balancer source range
-#       loadBalancerSourceRanges: []
-#       # -- Target port
-#       targetPort: http
-#       # -- Service port
-#       servicePort: 9428
-#       # -- Node port
-#       # nodePort: 30000
-#       # -- Service type
-#       type: ClusterIP
-#       # -- Extra service ports
-#       extraPorts: []
-#       # -- Service external traffic policy. Check [here](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip) for details
-#       externalTrafficPolicy: ""
-#       # -- Health check node port for a service. Check [here](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip) for details
-#       healthCheckNodePort: ""
-#       # -- Service IP family policy. Check [here](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services) for details.
-#       ipFamilyPolicy: ""
-#       # -- List of service IP families. Check [here](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services) for details.
-#       ipFamilies: []
-#
-#     # -- VictoriaLogs mode: deployment, statefulSet
-#     mode: statefulSet
-#
-#     # -- [K8s Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) specific variables
-#     deployment:
-#       spec:
-#         strategy:
-#           # Must be "Recreate" when we have a persistent volume
-#           type: Recreate
-#
-#     # -- [K8s StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) specific variables
-#     statefulSet:
-#       spec:
-#         # -- Deploy order policy for StatefulSet pods
-#         podManagementPolicy: OrderedReady
-#         # -- StatefulSet update strategy. Check [here](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies) for details.
-#         updateStrategy: {}
-#           # type: RollingUpdate
-#
-#     # -- Pod's termination grace period in seconds
-#     terminationGracePeriodSeconds: 60
-#     serviceMonitor:
-#       # -- Enable deployment of Service Monitor for server component. This is Prometheus operator object
-#       enabled: false
-#       # -- Service Monitor labels
-#       extraLabels: {}
-#       # -- Service Monitor annotations
-#       annotations: {}
-#       # -- Basic auth params for Service Monitor
-#       basicAuth: {}
-#       # -- Commented. Prometheus scrape interval for server component
-#   #    interval: 15s
-#       # -- Commented. Prometheus pre-scrape timeout for server component
-#   #    scrapeTimeout: 5s
-#       # -- Commented. HTTP scheme to use for scraping.
-#   #    scheme: https
-#       # -- Commented. TLS configuration to use when scraping the endpoint
-#   #    tlsConfig:
-#   #      insecureSkipVerify: true
-#       # -- Service Monitor relabelings
-#       relabelings: []
-#       # -- Service Monitor metricRelabelings
-#       metricRelabelings: []
-#       # -- Service Monitor target port
-#       targetPort: http
-#     vmServiceScrape:
-#       # -- Enable deployment of VMServiceScrape for server component. This is Victoria Metrics operator object
-#       enabled: false
-#       # VMServiceScrape labels
-#       extraLabels: {}
-#       # VMServiceScrape annotations
-#       annotations: {}
-#   # -- Commented. VMServiceScrape scrape interval for server component
-#   #    interval: 15s
-#   # -- Commented. VMServiceScrape pre-scrape timeout for server component
-#   #    scrapeTimeout: 5s
-#   # -- Commented. HTTP scheme to use for scraping.
-#   #    scheme: https
-#   # -- Commented. TLS configuration to use when scraping the endpoint
-#   #    tlsConfig:
-#   #      insecureSkipVerify: true
-#       relabelings: []
-#       metricRelabelings: []
-#       # -- target port
-#       targetPort: http
-#
-#   # -- Values for [vector helm chart](https://github.com/vectordotdev/helm-charts/tree/develop/charts/vector)
-#   vector:
-#     # -- Enable deployment of vector
-#     enabled: false
-#     role: Agent
-#     dataDir: /vector-data-dir
-#     resources: {}
-#     args:
-#       - -w
-#       - --config-dir
-#       - /etc/vector/
-#     containerPorts:
-#       - name: prom-exporter
-#         containerPort: 9090
-#         protocol: TCP
-#     service:
-#       enabled: false
-#     existingConfigMaps:
-#       - vl-config
-#     # -- Forces custom configuration creation in a given namespace even if vector.enabled is false
-#     customConfigNamespace: ""
-#     customConfig:
-#       data_dir: /vector-data-dir
-#       api:
-#         enabled: false
-#         address: 0.0.0.0:8686
-#         playground: true
-#       sources:
-#         k8s:
-#           type: kubernetes_logs
-#         internal_metrics:
-#           type: internal_metrics
-#       transforms:
-#         parser:
-#           type: remap
-#           inputs: [k8s]
-#           source: |
-#             .log = parse_json(.message) ?? .message
-#             del(.message)
-#       sinks:
-#         exporter:
-#           type: prometheus_exporter
-#           address: 0.0.0.0:9090
-#           inputs: [internal_metrics]
-#         vlogs:
-#           type: elasticsearch
-#           inputs: [parser]
-#           mode: bulk
-#           api_version: v8
-#           compression: gzip
-#           healthcheck:
-#             enabled: false
-#           request:
-#             headers:
-#               VL-Time-Field: timestamp
-#               VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
-#               VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
-#               AccountID: "0"
-#               ProjectID: "0"
-#
-#   # -- Add extra specs dynamically to this chart
-#   extraObjects: []
-#
-#   dashboards:
-#     # -- Create VictoriaLogs dashboards
-#     enabled: false
-#     # -- Dashboard labels
-#     labels: {}
-#     #  grafana_dashboard: "1"
-#     # -- Dashboard annotations
-#     annotations: {}
-#     # -- Override default namespace, where to create dashboards
-#     namespace: ""
-#     grafanaOperator:
-#       enabled: false
-#       spec:
-#         instanceSelector:
-#           matchLabels:
-#             dashboards: "grafana"
-#         allowCrossNamespaceImport: false
+
+      #probe:
+      #  # -- Indicates whether the Container is ready to service requests. If the readiness probe fails, the endpoints controller removes the Pod's IP address from the endpoints of all Services that match the Pod. The default state of readiness before the initial delay is Failure. If a Container does not provide a readiness probe, the default state is Success.
+      #  readiness:
+      #    httpGet: {}
+      #    initialDelaySeconds: 5
+      #    periodSeconds: 5
+      #    timeoutSeconds: 5
+      #    failureThreshold: 3
+
+      #  # -- Indicates whether the Container is running. If the liveness probe fails, the kubelet kills the Container, and the Container is subjected to its restart policy. If a Container does not provide a liveness probe, the default state is Success.
+      #  liveness:
+      #    tcpSocket: {}
+      #    initialDelaySeconds: 30
+      #    periodSeconds: 30
+      #    timeoutSeconds: 5
+      #    failureThreshold: 10
+
+      #  # -- Indicates whether the Container is done with potentially costly initialization. If set it is executed first. If it fails Container is restarted. If it succeeds liveness and readiness probes takes over.
+      #  startup: {}
+      #   # tcpSocket: {}
+      #   # failureThreshold: 30
+      #   # periodSeconds: 15
+      #   # successThreshold: 1
+      #   # timeoutSeconds: 5
+
+      ## -- Security context to be added to server pods
+      #securityContext:
+      #  enabled: true
+      #  allowPrivilegeEscalation: false
+      #  capabilities:
+      #    drop:
+      #      - ALL
+      #  readOnlyRootFilesystem: true
+
+      ## -- Pod's security context. Details are [here](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+      #podSecurityContext:
+      #  enabled: true
+      #  fsGroup: 2000
+      #  runAsNonRoot: true
+      #  runAsUser: 1000
+
+      #ingress:
+      #  # -- Enable deployment of ingress for server component
+      #  enabled: false
+
+      #  # -- Ingress annotations
+      #  annotations:
+      #  #   kubernetes.io/ingress.class: nginx
+      #  #   kubernetes.io/tls-acme: 'true'
+
+      #  # -- Ingress extra labels
+      #  extraLabels: {}
+
+      #  # -- Array of host objects
+      #  hosts:
+      #    - name: vlogs.local
+      #      path:
+      #        - /
+      #      port: http
+
+      #  # -- Array of TLS objects
+      #  tls: []
+      #  #   - secretName: vmselect-ingress-tls
+      #  #     hosts:
+      #  #       - vmselect.local
+
+      #  # -- Ingress controller class name
+      #  ingressClassName: ""
+
+      #  # -- Ingress path type
+      #  pathType: Prefix
+
+      #service:
+      #  # -- Service annotations
+      #  annotations: {}
+      #  # -- Service labels
+      #  labels: {}
+      #  # -- Service ClusterIP
+      #  clusterIP: None
+      #  # -- Service external IPs. Details are [here]( https://kubernetes.io/docs/concepts/services-networking/service/#external-ips)
+      #  externalIPs: []
+      #  # -- Service load balancer IP
+      #  loadBalancerIP: ""
+      #  # -- Load balancer source range
+      #  loadBalancerSourceRanges: []
+      #  # -- Target port
+      #  targetPort: http
+      #  # -- Service port
+      #  servicePort: 9428
+      #  # -- Node port
+      #  # nodePort: 30000
+      #  # -- Service type
+      #  type: ClusterIP
+      #  # -- Extra service ports
+      #  extraPorts: []
+      #  # -- Service external traffic policy. Check [here](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip) for details
+      #  externalTrafficPolicy: ""
+      #  # -- Health check node port for a service. Check [here](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip) for details
+      #  healthCheckNodePort: ""
+      #  # -- Service IP family policy. Check [here](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services) for details.
+      #  ipFamilyPolicy: ""
+      #  # -- List of service IP families. Check [here](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services) for details.
+      #  ipFamilies: []
+
+      ## -- VictoriaLogs mode: deployment, statefulSet
+      #mode: statefulSet
+
+      ## -- [K8s Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) specific variables
+      #deployment:
+      #  spec:
+      #    strategy:
+      #      # Must be "Recreate" when we have a persistent volume
+      #      type: Recreate
+
+      ## -- [K8s StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) specific variables
+      #statefulSet:
+      #  spec:
+      #    # -- Deploy order policy for StatefulSet pods
+      #    podManagementPolicy: OrderedReady
+      #    # -- StatefulSet update strategy. Check [here](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies) for details.
+      #    updateStrategy: {}
+      #      # type: RollingUpdate
+
+      ## -- Pod's termination grace period in seconds
+      #terminationGracePeriodSeconds: 60
+      #serviceMonitor:
+      #  # -- Enable deployment of Service Monitor for server component. This is Prometheus operator object
+      #  enabled: false
+      #  # -- Service Monitor labels
+      #  extraLabels: {}
+      #  # -- Service Monitor annotations
+      #  annotations: {}
+      #  # -- Basic auth params for Service Monitor
+      #  basicAuth: {}
+      #  # -- Commented. Prometheus scrape interval for server component
+      #   interval: 15s
+      #  # -- Commented. Prometheus pre-scrape timeout for server component
+      #   scrapeTimeout: 5s
+      #  # -- Commented. HTTP scheme to use for scraping.
+      #   scheme: https
+      #  # -- Commented. TLS configuration to use when scraping the endpoint
+      #   tlsConfig:
+      #     insecureSkipVerify: true
+      #  # -- Service Monitor relabelings
+      #  relabelings: []
+      #  # -- Service Monitor metricRelabelings
+      #  metricRelabelings: []
+      #  # -- Service Monitor target port
+      #  targetPort: http
+      #vmServiceScrape:
+      #  # -- Enable deployment of VMServiceScrape for server component. This is Victoria Metrics operator object
+      #  enabled: false
+      #  # VMServiceScrape labels
+      #  extraLabels: {}
+      #  # VMServiceScrape annotations
+      #  annotations: {}
+      #-- Commented. VMServiceScrape scrape interval for server component
+      #   interval: 15s
+      #-- Commented. VMServiceScrape pre-scrape timeout for server component
+      #   scrapeTimeout: 5s
+      #-- Commented. HTTP scheme to use for scraping.
+      #   scheme: https
+      #-- Commented. TLS configuration to use when scraping the endpoint
+      #   tlsConfig:
+      #     insecureSkipVerify: true
+      #  relabelings: []
+      #  metricRelabelings: []
+      #  # -- target port
+      #  targetPort: http
+
+    # -- Values for [vector helm chart](https://github.com/vectordotdev/helm-charts/tree/develop/charts/vector)
+    vector:
+      # -- Enable deployment of vector
+      enabled: true
+      #role: Agent
+      #dataDir: /vector-data-dir
+      #resources: {}
+      #args:
+      #  - -w
+      #  - --config-dir
+      #  - /etc/vector/
+      #containerPorts:
+      #  - name: prom-exporter
+      #    containerPort: 9090
+      #    protocol: TCP
+      #service:
+      #  enabled: false
+      #existingConfigMaps:
+      #  - vl-config
+      ## -- Forces custom configuration creation in a given namespace even if vector.enabled is false
+      #customConfigNamespace: ""
+      #customConfig:
+      #  data_dir: /vector-data-dir
+      #  api:
+      #    enabled: false
+      #    address: 0.0.0.0:8686
+      #    playground: true
+      #  sources:
+      #    k8s:
+      #      type: kubernetes_logs
+      #    internal_metrics:
+      #      type: internal_metrics
+      #  transforms:
+      #    parser:
+      #      type: remap
+      #      inputs: [k8s]
+      #      source: |
+      #        .log = parse_json(.message) ?? .message
+      #        del(.message)
+      #  sinks:
+      #    exporter:
+      #      type: prometheus_exporter
+      #      address: 0.0.0.0:9090
+      #      inputs: [internal_metrics]
+      #    vlogs:
+      #      type: elasticsearch
+      #      inputs: [parser]
+      #      mode: bulk
+      #      api_version: v8
+      #      compression: gzip
+      #      healthcheck:
+      #        enabled: false
+      #      request:
+      #        headers:
+      #          VL-Time-Field: timestamp
+      #          VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+      #          VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+      #          AccountID: "0"
+      #          ProjectID: "0"
+
+    # -- Add extra specs dynamically to this chart
+    #extraObjects: []
+
+    #dashboards:
+    #  # -- Create VictoriaLogs dashboards
+    #  #enabled: true
+    #  # -- Dashboard labels
+    #  #labels: {}
+    #  #  grafana_dashboard: "1"
+    #  #  -- Dashboard annotations
+    #  #annotations: {}
+    #  # -- Override default namespace, where to create dashboards
+    #  #namespace: ""
+    #  #grafanaOperator:
+    #  #  enabled: true
+    #  #  spec:
+    #  #    instanceSelector:
+    #  #      matchLabels:
+    #  #        dashboards: "grafana"
+    #  #    allowCrossNamespaceImport: false
