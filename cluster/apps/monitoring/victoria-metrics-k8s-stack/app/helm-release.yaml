@@ -1097,10 +1097,10 @@ spec:
     #          component: apiserver
     #          provider: kubernetes
 
-    ## Component scraping the kube controller manager
-    #kubeControllerManager:
-    #  # -- Enable kube controller manager metrics scraping
-    #  enabled: true
+    # Component scraping the kube controller manager
+    kubeControllerManager:
+      # -- Enable kube controller manager metrics scraping
+      enabled: false
 
     #  # -- If your kube controller manager is not deployed as a pod, specify IPs it can be found on
     #  endpoints: []
@@ -1230,10 +1230,10 @@ spec:
     #          tlsConfig:
     #            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 
-    ## Component scraping kube scheduler
-    #kubeScheduler:
-    #  # -- Enable KubeScheduler metrics scraping
-    #  enabled: true
+    # Component scraping kube scheduler
+    kubeScheduler:
+      # -- Enable KubeScheduler metrics scraping
+      enabled: false
 
     #  # -- If your kube scheduler is not deployed as a pod, specify IPs it can be found on
     #  endpoints: []
