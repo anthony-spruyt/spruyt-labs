@@ -1205,9 +1205,9 @@ spec:
     #          bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
 
     ## Component scraping etcd
-    #kubeEtcd:
-    #  # -- Enabled KubeETCD metrics scraping
-    #  enabled: true
+    kubeEtcd:
+      # -- Enabled KubeETCD metrics scraping
+      enabled: false
 
     #  # -- If your etcd is not deployed as a pod, specify IPs it can be found on
     #  endpoints: []
