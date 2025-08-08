@@ -794,31 +794,43 @@ spec:
     #          url_prefix:
     #            - '{{ urlJoin (omit .vm.write "path") }}/'
 
-    #vmagent:
-    #  # -- Create VMAgent CR
-    #  enabled: true
-    #  # -- VMAgent labels
-    #  labels: {}
-    #  # -- VMAgent annotations
-    #  annotations: {}
-    #  # -- Remote write configuration of VMAgent, allowed parameters defined in a [spec](https://docs.victoriametrics.com/operator/api#vmagentremotewritespec)
-    #  additionalRemoteWrites:
-    #    []
-    #    #- url: http://some-remote-write/api/v1/write
-    #  # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
-    #  spec:
-    #    port: "8429"
-    #    selectAllByDefault: true
-    #    scrapeInterval: 20s
-    #    externalLabels: {}
-    #      # For multi-cluster setups it is useful to use "cluster" label to identify the metrics source.
-    #      # For example:
-    #      # cluster: cluster-name
-    #    extraArgs:
-    #      promscrape.streamParse: "true"
-    #      # Do not store original labels in vmagent's memory by default. This reduces the amount of memory used by vmagent
-    #      # but makes vmagent debugging UI less informative. See: https://docs.victoriametrics.com/vmagent/#relabel-debug
-    #      promscrape.dropOriginalLabels: "true"
+    vmagent:
+      # -- Create VMAgent CR
+      #enabled: true
+      # -- VMAgent labels
+      #labels: {}
+      # -- VMAgent annotations
+      #annotations: {}
+      # -- Remote write configuration of VMAgent, allowed parameters defined in a [spec](https://docs.victoriametrics.com/operator/api#vmagentremotewritespec)
+      #additionalRemoteWrites:
+      #  []
+      #  #- url: http://some-remote-write/api/v1/write
+      # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
+      spec:
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 500Mi
+        env:
+          - name: GOGC
+            value: 100
+          - name: GOMAXPROCS
+            value: 1
+        #port: "8429"
+        #selectAllByDefault: true
+        #scrapeInterval: 20s
+        #externalLabels: {}
+        # For multi-cluster setups it is useful to use "cluster" label to identify the metrics source.
+        # For example:
+        # cluster: cluster-name
+        extraArgs:
+          promscrape.streamParse: "true"
+          # Do not store original labels in vmagent's memory by default. This reduces the amount of memory used by vmagent
+          # but makes vmagent debugging UI less informative. See: https://docs.victoriametrics.com/vmagent/#relabel-debug
+          promscrape.dropOriginalLabels: "true"
+          promscrape.disableCompression: "true"
     #  # -- (object) VMAgent ingress configuration
     #  ingress:
     #    enabled: false
