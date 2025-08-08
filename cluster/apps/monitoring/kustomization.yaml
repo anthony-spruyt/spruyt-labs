@@ -5,5 +5,5 @@ kind: Kustomization
 resources:
   #- ./kube-prometheus-stack
   - ./victoria-metrics-operator
-  #- ./victoria-metrics-k8s-stack
+  - ./victoria-metrics-k8s-stack
   #- ./victoria-logs-cluster
