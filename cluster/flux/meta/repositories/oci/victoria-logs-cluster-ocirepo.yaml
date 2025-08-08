@@ -3,7 +3,7 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
-  name: victoriametrics-victoria-logs-cluster-ocirepo.yaml
+  name: victoria-logs-cluster-ocirepo
   namespace: flux-system
 spec:
   interval: 24h

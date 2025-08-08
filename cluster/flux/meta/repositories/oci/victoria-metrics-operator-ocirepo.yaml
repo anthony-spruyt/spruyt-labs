@@ -3,7 +3,7 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
-  name: victoriametrics-victoria-metrics-operator-ocirepo
+  name: victoria-metrics-operator-ocirepo
   namespace: flux-system
 spec:
   interval: 24h
