@@ -20,7 +20,7 @@ spec:
       middlewares:
         - name: compress
       services:
-        - name: kvictoria-metrics-k8s-stack-grafana
+        - name: victoria-metrics-k8s-stack-grafana
           namespace: monitoring
           passHostHeader: true
           port: 80
