@@ -913,32 +913,31 @@ spec:
     #    #   version: 1
 
     ## -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
-    #grafana:
-    #  enabled: true
-    #  # all values for grafana helm chart can be specified here
-    #  sidecar:
-    #    datasources:
-    #      enabled: true
-    #      initDatasources: true
-    #      label: grafana_datasource
-    #    dashboards:
-    #      provider:
-    #        name: default
-    #        orgid: 1
-    #      folder: /var/lib/grafana/dashboards
-    #      defaultFolderName: default
-    #      enabled: true
-    #      multicluster: false
+    grafana:
+      enabled: true
+      # all values for grafana helm chart can be specified here
+      #sidecar:
+      #  #datasources:
+      #    #enabled: true
+      #    #initDatasources: true
+      #    #label: grafana_datasource
+      #  #dashboards:
+      #    #provider:
+      #      #name: default
+      #      #orgid: 1
+      #    #folder: /var/lib/grafana/dashboards
+      #    #defaultFolderName: default
+      #    #enabled: true
+      #    #multicluster: false
 
-    #  # -- Create datasource configmap even if grafana deployment has been disabled
-    #  forceDeployDatasource: false
+      # -- Create datasource configmap even if grafana deployment has been disabled
+      #forceDeployDatasource: false
 
-    #  # Uncomment the block below, if you want to enable VictoriaMetrics Datasource in Grafana:
-    #  # Note that Grafana will need internet access to install the datasource plugin.
-    #  #
-    #  # plugins:
-    #  # - victoriametrics-metrics-datasource
-    #  # - victoriametrics-logs-datasource
+      # Uncomment the block below, if you want to enable VictoriaMetrics Datasource in Grafana:
+      # Note that Grafana will need internet access to install the datasource plugin.
+      plugins:
+        - victoriametrics-metrics-datasource
+        - victoriametrics-logs-datasource
 
     #  ingress:
     #    enabled: false
