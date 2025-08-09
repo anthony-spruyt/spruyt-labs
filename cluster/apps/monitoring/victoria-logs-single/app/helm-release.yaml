@@ -425,15 +425,11 @@ spec:
             type: prometheus_exporter
             address: 0.0.0.0:9090
             inputs: [internal_metrics]
-          vlogs_single_http:
-            type: http
+          vlogs:
+            type: elasticsearch
             inputs: [parser]
-            uri: "http://victoria-logs-single-server.monitoring.svc:9428/v1/logs"
-            batch:
-              max_events: 100
-              timeout_secs: 1
-            encoding:
-              codec: json
+            mode: bulk
+            api_version: v8
             compression: gzip
             healthcheck:
               enabled: false
