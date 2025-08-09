@@ -417,91 +417,38 @@ spec:
             inputs:
               - k8s
             source: |
-              # Parse structured logs or fallback gracefully
-              .log = parse_json(.message) ?? {}
-
-              # Assign usable message field
-              if is_object(.log) {
-                if .log.message != null {
-                  .message = .log.message
-                } else if .log.msg != null {
-                  .message = .log.msg
-                } else if .log._msg != null {
-                  .message = .log._msg
-                } else {
-                  # parsed object exists but no explicit message field; keep original message string
-                  .message = .message
-                }
-              } else {
-                .message = .message
+              # Parse structured logs — detect failures explicitly (don't mask with `?? {}`)
+              .log = parse_json(.message)
+              if .log == null {
                 ._parse_failed = true
+                .log = {}
               }
 
-              # Timestamp — pull from log or fallback to now
-              .timestamp = if .log.timestamp != null {
-                .log.timestamp
-              } else if .timestamp != null {
-                .timestamp
-              } else {
-                now()
+              # Prefer structured message fields if present, otherwise keep original message
+              if is_object(.log) {
+                .message = .log.message ?? .log.msg ?? .log._msg ?? .message
               }
+
+              # Timestamp — prefer parsed timestamp, then existing timestamp, then now()
+              .timestamp = .log.timestamp ?? .timestamp ?? now()
 
               # VictoriaLogs compatibility: ensure message/time fields expected by vlinsert
-              # Mirror our canonical message into _msg so vlinsert (or debug paths) see it
-              if .message != null {
-                ._msg = .message
-              } else {
-                ._msg = ""
-              }
+              ._msg = .message ?? ""
+              ._time = .timestamp ?? now()
 
-              # Mirror timestamp to _time to be safe
-              if .timestamp != null {
-                ._time = .timestamp
-              } else {
-                ._time = now()
-              }
+              # Source enrichment: stream/file metadata
+              .stream = .stream ?? "stderr"
+              .file = .file ?? ""
 
-              # Source enrichment: stream metadata
-              if .stream != null {
-                .stream = .stream
-              } else {
-                .stream = "stderr"
-              }
-              .file = .file
-
-              # Pod metadata (VL loves stream fields)
-              if .kubernetes.pod_name != null {
-                .host = .kubernetes.pod_name
-              } else {
-                .host = "unknown-pod"
-              }
-              if .kubernetes.container_name != null {
-                .container_name = .kubernetes.container_name
-              } else {
-                .container_name = "unknown-container"
-              }
-              if .kubernetes.pod_namespace != null {
-                .namespace = .kubernetes.pod_namespace
-              } else {
-                .namespace = "unknown-namespace"
-              }
-              if .kubernetes.pod_node_name != null {
-                .node = .kubernetes.pod_node_name
-              } else {
-                .node = "unknown-node"
-              }
+              # Pod metadata (accept multiple common kubernetes metadata keys)
+              .host = .kubernetes.pod_name ?? .kubernetes.name ?? "unknown-pod"
+              .container_name = .kubernetes.container_name ?? "unknown-container"
+              .namespace = .kubernetes.pod_namespace ?? .kubernetes.namespace_name ?? "unknown-namespace"
+              .node = .kubernetes.pod_node_name ?? .kubernetes.node_name ?? "unknown-node"
 
               # Collapse noisy labels, extract known fields
-              if .kubernetes.container_image != null {
-                .image = .kubernetes.container_image
-              } else {
-                .image = ""
-              }
-              if .kubernetes.pod_owner != null {
-                .pod_owner = .kubernetes.pod_owner
-              } else {
-                .pod_owner = ""
-              }
+              .image = .kubernetes.container_image ?? ""
+              .pod_owner = .kubernetes.pod_owner ?? ""
 
         sinks:
           #exporter:
@@ -510,7 +457,7 @@ spec:
           #  inputs:
           #    - internal_metrics
           vlogs:
-            #type: elasticsearch
+            type: elasticsearch
             endpoints:
               - "http://victoria-logs-single-server.monitoring.svc:9428/insert/elasticsearch/"
             inputs:
