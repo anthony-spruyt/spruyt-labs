@@ -411,17 +411,40 @@ spec:
         #    type: kubernetes_logs
         #  internal_metrics:
         #    type: internal_metrics
-        #transforms:
-        #  parser:
-        #    type: remap
-        #    inputs:
-        #      - k8s
-        #    source: |
-        #      .log = parse_json(.message) ?? null
-        #      if .log == null {
-        #        .log.message = .message
-        #        .log._parse_failed = true
-        #      }
+        transforms:
+          parser:
+            type: remap
+            inputs:
+              - k8s
+            source: |
+              # Parse structured logs or fallback gracefully
+              .log = parse_json(.message) ?? {}
+
+              # Assign usable message field
+              if is_object(.log) {
+                .message = .log.message ?? .log.msg ?? .log._msg ?? .log ?? .message
+              } else {
+                .message = .message
+                ._parse_failed = true
+              }
+
+              # Timestamp — pull from log or fallback to now
+              .timestamp = .log.timestamp ?? .timestamp ?? now()
+
+              # Source enrichment: stream metadata
+              .stream = .stream ?? "stderr"
+              .file = .file
+
+              # Pod metadata (VL loves stream fields)
+              .host = .kubernetes.pod_name ?? "unknown-pod"
+              .container_name = .kubernetes.container_name ?? "unknown-container"
+              .namespace = .kubernetes.pod_namespace ?? "unknown-namespace"
+              .node = .kubernetes.pod_node_name ?? "unknown-node"
+
+              # Collapse noisy labels, extract known fields
+              .image = .kubernetes.container_image ?? ""
+              .pod_owner = .kubernetes.pod_owner ?? ""
+
         sinks:
           #exporter:
           #  type: prometheus_exporter
