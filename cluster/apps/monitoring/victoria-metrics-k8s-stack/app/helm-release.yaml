@@ -920,7 +920,8 @@ spec:
         datasources:
           enabled: true
           initDatasources: true
-      #    #label: grafana_datasource
+          label: grafana_datasource
+          resource: both
       #  #dashboards:
       #    #provider:
       #      #name: default

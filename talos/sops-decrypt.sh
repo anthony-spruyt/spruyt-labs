@@ -10,3 +10,4 @@ sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/worksp
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/apps/cert-manager/cert-manager/app/zerossl-eab-secret.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/apps/external-dns/external-dns/app/external-dns-secrets.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/apps/technitium/technitium/app/technitium-secrets.sops.yaml"
+sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/apps/monitoring/victoria-logs-single/app/victoria-logs-single-secrets.sops.yaml"
