@@ -415,8 +415,15 @@ spec:
             type: remap
             inputs: [k8s]
             source: |
-              .log = parse_json(.message) ?? .message
-              del(.message)
+              .log = parse_json(.message) ?? null
+              if .log == null {
+                .log.message = .message
+                .log._parse_failed = true
+              }
+
+              .kubernetes = .kubernetes ?? {}
+            #  .log = parse_json(.message) ?? .message
+            #  del(.message)
         sinks:
           debug:
             type: console
