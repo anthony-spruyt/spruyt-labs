@@ -177,7 +177,7 @@ spec:
         #       annotations: {}
         #
         # -- StorageClass to use for persistent volume. Requires server.persistentVolume.enabled: true. If defined, PVC created automatically
-        storageClassName: "ceph-block"
+        storageClassName: "rbd-fast-delete"
         #
         #       # -- Existing Claim name. If defined, PVC must be created manually before volume will be bound
         #       existingClaim: ""
@@ -190,7 +190,7 @@ spec:
         #       # -- Mount subpath
         #       subPath: ""
         # -- Size of the volume. Should be calculated based on the logs you send and retention policy you set.
-        size: 10Gi
+        size: 20Gi
 
       # -- StatefulSet/Deployment additional labels
       #extraLabels: {}
