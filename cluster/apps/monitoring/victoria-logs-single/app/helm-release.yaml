@@ -420,8 +420,6 @@ spec:
                 .log.message = .message
                 .log._parse_failed = true
               }
-
-              .kubernetes = .kubernetes ?? {}
             #  .log = parse_json(.message) ?? .message
             #  del(.message)
         sinks:
