@@ -399,44 +399,48 @@ spec:
       #  - vl-config
       ## -- Forces custom configuration creation in a given namespace even if vector.enabled is false
       #customConfigNamespace: ""
-      #customConfig:
-      #  data_dir: /vector-data-dir
-      #  api:
-      #    enabled: false
-      #    address: 0.0.0.0:8686
-      #    playground: true
-      #  sources:
-      #    k8s:
-      #      type: kubernetes_logs
-      #    internal_metrics:
-      #      type: internal_metrics
-      #  transforms:
-      #    parser:
-      #      type: remap
-      #      inputs: [k8s]
-      #      source: |
-      #        .log = parse_json(.message) ?? .message
-      #        del(.message)
-      #  sinks:
-      #    exporter:
-      #      type: prometheus_exporter
-      #      address: 0.0.0.0:9090
-      #      inputs: [internal_metrics]
-      #    vlogs:
-      #      type: elasticsearch
-      #      inputs: [parser]
-      #      mode: bulk
-      #      api_version: v8
-      #      compression: gzip
-      #      healthcheck:
-      #        enabled: false
-      #      request:
-      #        headers:
-      #          VL-Time-Field: timestamp
-      #          VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
-      #          VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
-      #          AccountID: "0"
-      #          ProjectID: "0"
+      customConfig:
+        data_dir: /vector-data-dir
+        api:
+          enabled: false
+          address: 0.0.0.0:8686
+          playground: true
+        sources:
+          k8s:
+            type: kubernetes_logs
+          internal_metrics:
+            type: internal_metrics
+        transforms:
+          parser:
+            type: remap
+            inputs: [k8s]
+            source: |
+              .log = parse_json(.message) ?? .message
+              del(.message)
+        sinks:
+          debug:
+            type: console
+            inputs: [parser]
+            target: stdout
+          exporter:
+            type: prometheus_exporter
+            address: 0.0.0.0:9090
+            inputs: [internal_metrics]
+          vlogs:
+            type: elasticsearch
+            inputs: [parser]
+            mode: bulk
+            api_version: v8
+            compression: gzip
+            healthcheck:
+              enabled: false
+            request:
+              headers:
+                VL-Time-Field: timestamp
+                VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+                VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+                AccountID: "0"
+                ProjectID: "0"
 
     # -- Add extra specs dynamically to this chart
     #extraObjects: []
