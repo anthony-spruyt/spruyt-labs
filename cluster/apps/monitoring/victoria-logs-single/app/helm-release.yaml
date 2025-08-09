@@ -533,6 +533,7 @@ spec:
             #healthcheck:
             #  enabled: false
             query:
+              debug: "1"
               _msg_field: _msg
               _time_field: _time
               _stream_fields: host,container_name
