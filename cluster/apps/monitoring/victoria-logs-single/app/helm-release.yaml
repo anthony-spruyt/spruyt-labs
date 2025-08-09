@@ -421,29 +421,29 @@ spec:
               .log = parse_json(.message) ?? {}
 
               # Assign usable message field
-              if is_object(.log) {
-                .message = .log.message ?? .log.msg ?? .log._msg ?? .log ?? .message
+              .message = if is_object(.log) {
+                coalesce(.log.message, .log.msg, .log._msg, .log, .message)
               } else {
-                .message = .message
                 ._parse_failed = true
+                .message
               }
 
               # Timestamp — pull from log or fallback to now
-              .timestamp = .log.timestamp ?? .timestamp ?? now()
+              .timestamp = coalesce(.log.timestamp, .timestamp, now())
 
               # Source enrichment: stream metadata
-              .stream = .stream ?? "stderr"
+              .stream = coalesce(.stream, "stderr")
               .file = .file
 
               # Pod metadata (VL loves stream fields)
-              .host = .kubernetes.pod_name ?? "unknown-pod"
-              .container_name = .kubernetes.container_name ?? "unknown-container"
-              .namespace = .kubernetes.pod_namespace ?? "unknown-namespace"
-              .node = .kubernetes.pod_node_name ?? "unknown-node"
+              .host = coalesce(.kubernetes.pod_name, "unknown-pod")
+              .container_name = coalesce(.kubernetes.container_name, "unknown-container")
+              .namespace = coalesce(.kubernetes.pod_namespace, "unknown-namespace")
+              .node = coalesce(.kubernetes.pod_node_name, "unknown-node")
 
               # Collapse noisy labels, extract known fields
-              .image = .kubernetes.container_image ?? ""
-              .pod_owner = .kubernetes.pod_owner ?? ""
+              .image = coalesce(.kubernetes.container_image, "")
+              .pod_owner = coalesce(.kubernetes.pod_owner, "")
 
         sinks:
           #exporter:
