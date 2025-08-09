@@ -418,20 +418,20 @@ spec:
               - k8s
             source: |
               # Try parse message as JSON
-              .obj, parse_err = parse_json(.message)
-              if parse_err == null && is_object(.obj) {
+              .log, parse_err = parse_json(.message)
+              if parse_err == null && is_object(.log) {
                 .parse_failed = false
                 # Extract message from object if present
-                if .obj.message != null {
-                  .message = .obj.message
-                } else if .obj.msg != null {
-                  .message = .obj.msg
-                } else if .obj._msg != null {
-                  .message = .obj._msg
+                if .log.message != null {
+                  .message = .log.message
+                } else if .log.msg != null {
+                  .message = .log.msg
+                } else if .log._msg != null {
+                  .message = .log._msg
                 }
                 # Extract timestamp from object if present
-                if .obj.timestamp != null {
-                  .timestamp = .obj.timestamp
+                if .log.timestamp != null {
+                  .timestamp = .log.timestamp
                 }
               } else {
                 .parse_failed = true
