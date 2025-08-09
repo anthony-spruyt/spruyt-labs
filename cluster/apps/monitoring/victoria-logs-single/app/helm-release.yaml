@@ -429,7 +429,8 @@ spec:
                 } else if .log._msg != null {
                   .message = .log._msg
                 } else {
-                  .message = .log
+                  # parsed object exists but no explicit message field; keep original message string
+                  .message = .message
                 }
               } else {
                 .message = .message
@@ -443,6 +444,21 @@ spec:
                 .timestamp
               } else {
                 now()
+              }
+
+              # VictoriaLogs compatibility: ensure message/time fields expected by vlinsert
+              # Mirror our canonical message into _msg so vlinsert (or debug paths) see it
+              if .message != null {
+                ._msg = .message
+              } else {
+                ._msg = ""
+              }
+
+              # Mirror timestamp to _time to be safe
+              if .timestamp != null {
+                ._time = .timestamp
+              } else {
+                ._time = now()
               }
 
               # Source enrichment: stream metadata
@@ -497,17 +513,16 @@ spec:
             #type: elasticsearch
             endpoints:
               - "http://victoria-logs-single-server.monitoring.svc:9428/insert/elasticsearch/"
-            #inputs:
-            #  - parser
+            inputs:
+              - parser
             #mode: bulk
             #api_version: v8
             #compression: gzip
             #healthcheck:
             #  enabled: false
             query:
-              #debug: "1"
-              _msg_field: message
-              _time_field: timestamp
+              _msg_field: _msg
+              _time_field: _time
               _stream_fields: host,container_name
             #request:
             #  headers:
