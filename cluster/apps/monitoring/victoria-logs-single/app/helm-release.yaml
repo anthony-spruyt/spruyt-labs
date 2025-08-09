@@ -423,12 +423,12 @@ spec:
             #  .log = parse_json(.message) ?? .message
             #  del(.message)
         sinks:
-          debug:
-            type: console
-            inputs: [parser]
-            target: stdout
-            encoding:
-              codec: json
+          #debug:
+          #  type: console
+          #  inputs: [parser]
+          #  target: stdout
+          #  encoding:
+          #    codec: json
           exporter:
             type: prometheus_exporter
             address: 0.0.0.0:9090
