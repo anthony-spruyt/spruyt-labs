@@ -413,7 +413,8 @@ spec:
         transforms:
           parser:
             type: remap
-            inputs: [k8s]
+            inputs:
+              - k8s
             source: |
               .log = parse_json(.message) ?? null
               if .log == null {
@@ -424,10 +425,14 @@ spec:
           exporter:
             type: prometheus_exporter
             address: 0.0.0.0:9090
-            inputs: [internal_metrics]
+            inputs:
+              - internal_metrics
           vlogs:
             type: elasticsearch
-            inputs: [parser]
+            endpoints:
+              - "http://victoria-logs-single-server.monitoring.svc:9428/insert/elasticsearch/"
+            inputs:
+              - parser
             mode: bulk
             api_version: v8
             compression: gzip
