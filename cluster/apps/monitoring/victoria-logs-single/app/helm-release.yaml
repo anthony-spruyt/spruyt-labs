@@ -450,19 +450,6 @@ spec:
                 .timestamp = now()
               }
 
-              # VictoriaLogs compatibility: ensure message/time fields expected by vlinsert
-              if .message != null {
-                ._msg = .message
-              } else {
-                ._msg = ""
-              }
-
-              if .timestamp != null {
-                ._time = .timestamp
-              } else {
-                ._time = now()
-              }
-
               # Source enrichment: stream/file metadata
               if .stream != null {
                 .stream = .stream
@@ -533,9 +520,9 @@ spec:
             #healthcheck:
             #  enabled: false
             query:
-              debug: "1"
-              _msg_field: _msg
-              _time_field: _time
+              #debug: "1"
+              _msg_field: message
+              _time_field: timestamp
               _stream_fields: host,container_name
             #request:
             #  headers:
