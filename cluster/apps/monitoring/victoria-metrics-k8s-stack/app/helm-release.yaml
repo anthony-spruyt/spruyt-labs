@@ -916,10 +916,10 @@ spec:
     grafana:
       enabled: true
       # all values for grafana helm chart can be specified here
-      #sidecar:
-      #  #datasources:
-      #    #enabled: true
-      #    #initDatasources: true
+      sidecar:
+        datasources:
+          enabled: true
+          initDatasources: true
       #    #label: grafana_datasource
       #  #dashboards:
       #    #provider:
