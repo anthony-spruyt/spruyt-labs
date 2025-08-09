@@ -417,38 +417,103 @@ spec:
             inputs:
               - k8s
             source: |
-              # Parse structured logs — detect failures explicitly (don't mask with `?? {}`)
-              .log = parse_json(.message)
-              if .log == null {
+              # Parse structured logs — capture parse error explicitly
+              .log, parse_err = parse_json(.message)
+              if parse_err != null {
                 ._parse_failed = true
                 .log = {}
               }
 
-              # Prefer structured message fields if present, otherwise keep original message
+              # Assign usable message field
               if is_object(.log) {
-                .message = .log.message ?? .log.msg ?? .log._msg ?? .message
+                if .log.message != null {
+                  .message = .log.message
+                } else if .log.msg != null {
+                  .message = .log.msg
+                } else if .log._msg != null {
+                  .message = .log._msg
+                } else {
+                  # parsed object exists but no explicit message field; keep original message string
+                  .message = .message
+                }
+              } else {
+                .message = .message
+                ._parse_failed = true
               }
 
-              # Timestamp — prefer parsed timestamp, then existing timestamp, then now()
-              .timestamp = .log.timestamp ?? .timestamp ?? now()
+              # Timestamp — pull from log or fallback to now
+              if .log.timestamp != null {
+                .timestamp = .log.timestamp
+              } else if .timestamp != null {
+                .timestamp = .timestamp
+              } else {
+                .timestamp = now()
+              }
 
               # VictoriaLogs compatibility: ensure message/time fields expected by vlinsert
-              ._msg = .message ?? ""
-              ._time = .timestamp ?? now()
+              if .message != null {
+                ._msg = .message
+              } else {
+                ._msg = ""
+              }
+
+              if .timestamp != null {
+                ._time = .timestamp
+              } else {
+                ._time = now()
+              }
 
               # Source enrichment: stream/file metadata
-              .stream = .stream ?? "stderr"
-              .file = .file ?? ""
+              if .stream != null {
+                .stream = .stream
+              } else {
+                .stream = "stderr"
+              }
+              if .file != null {
+                .file = .file
+              } else {
+                .file = ""
+              }
 
-              # Pod metadata (accept multiple common kubernetes metadata keys)
-              .host = .kubernetes.pod_name ?? .kubernetes.name ?? "unknown-pod"
-              .container_name = .kubernetes.container_name ?? "unknown-container"
-              .namespace = .kubernetes.pod_namespace ?? .kubernetes.namespace_name ?? "unknown-namespace"
-              .node = .kubernetes.pod_node_name ?? .kubernetes.node_name ?? "unknown-node"
+              # Pod metadata (VL loves stream fields)
+              if .kubernetes.pod_name != null {
+                .host = .kubernetes.pod_name
+              } else if .kubernetes.name != null {
+                .host = .kubernetes.name
+              } else {
+                .host = "unknown-pod"
+              }
+              if .kubernetes.container_name != null {
+                .container_name = .kubernetes.container_name
+              } else {
+                .container_name = "unknown-container"
+              }
+              if .kubernetes.pod_namespace != null {
+                .namespace = .kubernetes.pod_namespace
+              } else if .kubernetes.namespace_name != null {
+                .namespace = .kubernetes.namespace_name
+              } else {
+                .namespace = "unknown-namespace"
+              }
+              if .kubernetes.pod_node_name != null {
+                .node = .kubernetes.pod_node_name
+              } else if .kubernetes.node_name != null {
+                .node = .kubernetes.node_name
+              } else {
+                .node = "unknown-node"
+              }
 
               # Collapse noisy labels, extract known fields
-              .image = .kubernetes.container_image ?? ""
-              .pod_owner = .kubernetes.pod_owner ?? ""
+              if .kubernetes.container_image != null {
+                .image = .kubernetes.container_image
+              } else {
+                .image = ""
+              }
+              if .kubernetes.pod_owner != null {
+                .pod_owner = .kubernetes.pod_owner
+              } else {
+                .pod_owner = ""
+              }
 
         sinks:
           #exporter:
