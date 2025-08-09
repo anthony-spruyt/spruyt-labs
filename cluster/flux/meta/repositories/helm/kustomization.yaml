@@ -7,7 +7,6 @@ resources:
   - ./kubernetes-sigs-charts.yaml
   - ./mojo2600-charts.yaml
   - ./postfinance-charts.yaml
-  - ./prometheus-community-charts.yaml
   - ./spegel-charts.yaml
   - ./stakater-charts.yaml
   - ./traefik-charts.yaml
