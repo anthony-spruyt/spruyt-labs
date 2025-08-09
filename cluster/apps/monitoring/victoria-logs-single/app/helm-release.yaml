@@ -428,12 +428,22 @@ spec:
           vlogs_single_http:
             type: http
             inputs: [parser]
-            uri: "http://victoria-logs-single-server.monitoring.svc:9428/api/v1/import"
+            uri: "http://victoria-logs-single-server.monitoring.svc:9428/v1/logs"
+            batch:
+              max_events: 100
+              timeout_secs: 1
             encoding:
               codec: json
             compression: gzip
             healthcheck:
               enabled: false
+            request:
+              headers:
+                VL-Time-Field: timestamp
+                VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+                VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+                AccountID: "0"
+                ProjectID: "0"
 
     # -- Add extra specs dynamically to this chart
     #extraObjects: []
