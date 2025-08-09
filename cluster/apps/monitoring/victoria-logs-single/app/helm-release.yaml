@@ -433,7 +433,7 @@ spec:
               codec: json
             compression: gzip
             healthcheck:
-              enabled: true
+              enabled: false
 
     # -- Add extra specs dynamically to this chart
     #extraObjects: []
