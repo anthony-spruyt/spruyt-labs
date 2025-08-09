@@ -434,20 +434,28 @@ spec:
             address: 0.0.0.0:9090
             inputs: [internal_metrics]
           vlogs:
-            type: elasticsearch
+            type: http
             inputs: [parser]
-            mode: bulk
-            api_version: v8
+            uri: "http://victoria-logs-single-server.monitoring.svc:9428/insert/json"
+            encoding:
+              codec: json
             compression: gzip
             healthcheck:
-              enabled: false
-            request:
-              headers:
-                VL-Time-Field: timestamp
-                VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
-                VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
-                AccountID: "0"
-                ProjectID: "0"
+              enabled: true
+            #type: elasticsearch
+            #inputs: [parser]
+            #mode: bulk
+            #api_version: v8
+            #compression: gzip
+            #healthcheck:
+            #  enabled: false
+            #request:
+            #  headers:
+            #    VL-Time-Field: timestamp
+            #    VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+            #    VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+            #    AccountID: "0"
+            #    ProjectID: "0"
 
     # -- Add extra specs dynamically to this chart
     #extraObjects: []
