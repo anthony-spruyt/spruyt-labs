@@ -27,6 +27,14 @@ spec:
   # yaml-language-server: $schema=https://raw.githubusercontent.com/traefik/traefik-helm-chart/refs/heads/master/traefik/values.schema.json
   # Default values for traefik: https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml
   values:
+    # -- [Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for `traefik` container.
+    resources:
+      limits:
+        cpu: 50m
+        memory: 1Gi
+      requests:
+        cpu: 8m
+        memory: 300Mi
     ports:
       web:
         redirections:
