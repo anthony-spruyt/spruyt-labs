@@ -161,14 +161,27 @@ spec:
             memory: 32Mi
     # -- A list of CephFileSystem configurations to deploy
     # @default -- See [below](#ceph-file-systems)
-    cephFileSystems:
-      - name: ceph-filesystem
-        # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Shared-Filesystem/ceph-filesystem-crd.md#filesystem-settings for available configuration
-        spec:
-          metadataServer:
-            resources:
-              limits:
-                memory: 4Gi
-              requests:
-                cpu: 35m
-                memory: 64Mi
+    #cephFileSystems:
+    #  - name: ceph-filesystem
+    #    # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Shared-Filesystem/ceph-filesystem-crd.md#filesystem-settings for available configuration
+    #    spec:
+    #      metadataServer:
+    #        resources:
+    #          limits:
+    #            memory: 4Gi
+    #          requests:
+    #            cpu: 35m
+    #            memory: 64Mi
+    ## -- A list of CephObjectStore configurations to deploy
+    ## @default -- See [below](#ceph-object-stores)
+    #cephObjectStores:
+    #  - name: ceph-objectstore
+    #    # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Object-Storage/ceph-object-store-crd.md#object-store-settings for available configuration
+    #    spec:
+    #      gateway:
+    #        resources:
+    #          limits:
+    #            memory: 2Gi
+    #          requests:
+    #            cpu: 20m
+    #            memory: 64Mi
