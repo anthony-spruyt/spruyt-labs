@@ -199,7 +199,6 @@ spec:
       # -- Pod's annotations
       #podAnnotations: {}
 
-      # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
       resources:
         limits:
           cpu: 250m
@@ -383,7 +382,6 @@ spec:
       # -- Enable deployment of vector
       enabled: true
 
-      # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
       resources:
         requests:
           cpu: 20m

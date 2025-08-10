@@ -295,7 +295,6 @@ spec:
       enabled: true
       # -- Full spec for VMSingle CRD. Allowed values describe [here](https://docs.victoriametrics.com/operator/api#vmsinglespec)
       spec:
-        # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
             cpu: 475m
@@ -543,7 +542,6 @@ spec:
       #annotations: {}
       # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
       spec:
-        # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
             cpu: 25m
@@ -726,7 +724,6 @@ spec:
       #remoteWriteVMAgent: false
       # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
       spec:
-        # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
             cpu: 60m
@@ -833,7 +830,6 @@ spec:
       #  #- url: http://some-remote-write/api/v1/write
       # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
       spec:
-        # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
             cpu: 350m
@@ -944,7 +940,6 @@ spec:
     # -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
     grafana:
       enabled: true
-      # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
       resources:
         limits:
           cpu: 400m
@@ -959,14 +954,10 @@ spec:
           initDatasources: true
           label: grafana_datasource
           resource: both
-      #  #dashboards:
-      #    #provider:
-      #      #name: default
-      #      #orgid: 1
-      #    #folder: /var/lib/grafana/dashboards
-      #    #defaultFolderName: default
-      #    #enabled: true
-      #    #multicluster: false
+        alerts:
+          enabled: true
+          label: grafana_alert
+          resource: both
 
       # -- Create datasource configmap even if grafana deployment has been disabled
       #forceDeployDatasource: false
