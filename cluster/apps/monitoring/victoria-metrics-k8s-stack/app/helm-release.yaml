@@ -298,11 +298,11 @@ spec:
         # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            cpu: 375m
+            cpu: 475m
             memory: 1536Mi
           requests:
-            cpu: 150m
-            memory: 1024Mi
+            cpu: 200m
+            memory: 1088Mi
 
     #    port: "8428"
     #    # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
@@ -836,7 +836,7 @@ spec:
         # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            cpu: 250m
+            cpu: 350m
             memory: 256Mi
           requests:
             cpu: 80m
@@ -1029,7 +1029,7 @@ spec:
         # resources, such as Minikube. If you do want to specify resources, uncomment the following
         # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
         limits:
-          cpu: 100m
+          cpu: 200m
           memory: 64Mi
         requests:
           cpu: 20m
