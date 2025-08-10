@@ -180,13 +180,13 @@ spec:
       # -- Specifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.
       controlledValues: RequestsAndLimits
       # -- Define the max allowed resources for the pod
-      maxAllowed: {}
-      # cpu: 100m
-      # memory: 128Mi
+      maxAllowed:
+        cpu: 10m
+        memory: 128Mi
       # -- Define the min allowed resources for the pod
-      minAllowed: {}
-      # cpu: 100m
-      # memory: 128Mi
+      minAllowed:
+        cpu: 2m
+        memory: 24Mi
 
       updatePolicy:
         # -- Specifies minimal number of replicas which need to be alive for VPA Updater to attempt pod eviction

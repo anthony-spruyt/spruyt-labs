@@ -17,6 +17,16 @@ spec:
         namespace: flux-system
   values:
     # #yaml-language-server: $schema=TODO
-    # Default values for kubelet-csr-approver: TODO
+    # Reloader documentation: https://github.com/stakater/Reloader/blob/master/deployments/kubernetes/chart/reloader/README.md
+    # Default values for reloader: https://github.com/stakater/Reloader/blob/master/deployments/kubernetes/chart/reloader/values.yaml
     nameOverride: *app
     fullnameOverride: *app
+    reloader:
+      deployment:
+        resources:
+          limits:
+            cpu: 5m
+            memory: 128Mi
+          requests:
+            cpu: 2m
+            memory: 32Mi

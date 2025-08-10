@@ -51,10 +51,11 @@ spec:
               capabilities: { drop: ["ALL"] }
             resources:
               requests:
-                cpu: 10m
-                memory: 300Mi
+                cpu: 40m
+                memory: 192Mi
               limits:
-                memory: 1000Mi
+                cpu: 1000m
+                memory: 1Gi
     service:
       technitium:
         controller: *name

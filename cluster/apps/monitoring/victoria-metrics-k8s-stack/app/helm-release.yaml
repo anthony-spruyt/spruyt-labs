@@ -549,7 +549,7 @@ spec:
             cpu: 20m
             memory: 64Mi
           requests:
-            cpu: 10m
+            cpu: 5m
             memory: 32Mi
 
     #    replicaCount: 1
@@ -733,7 +733,7 @@ spec:
             memory: 128Mi
           requests:
             cpu: 20m
-            memory: 64Mi
+            memory: 50Mi
 
     #    port: "8080"
     #    selectAllByDefault: true
@@ -836,11 +836,11 @@ spec:
         # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            cpu: 250m
-            memory: 512Mi
-          requests:
             cpu: 150m
             memory: 256Mi
+          requests:
+            cpu: 80m
+            memory: 128Mi
         env:
           - name: GOGC
             value: 100
@@ -950,8 +950,8 @@ spec:
           cpu: 200m
           memory: 1536Mi
         requests:
-          cpu: 40m
-          memory: 192Mi
+          cpu: 80m
+          memory: 256Mi
       # all values for grafana helm chart can be specified here
       sidecar:
         datasources:
@@ -1067,7 +1067,7 @@ spec:
         # resources, such as Minikube. If you do want to specify resources, uncomment the following
         # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
         limits:
-          cpu: 50m
+          cpu: 25m
           memory: 64Mi
         requests:
           cpu: 10m
