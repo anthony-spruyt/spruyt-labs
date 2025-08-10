@@ -76,7 +76,7 @@ instance:
                         cpu: 1000m
                       requests:
                         memory: 192Mi
-                        cpu: 10m
+                        cpu: 20m
         target:
           kind: Deployment
           name: kustomize-controller
