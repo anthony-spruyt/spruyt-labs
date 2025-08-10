@@ -29,10 +29,10 @@ spec:
       enabled: true # TODO: Disable when everything is setup and stable
       resources:
         limits:
-          cpu: 100m
-          memory: 512Mi
+          cpu: 200m
+          memory: 256Mi
         requests:
-          cpu: 3m
+          cpu: 5m
           memory: 8Mi
     monitoring:
       # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.

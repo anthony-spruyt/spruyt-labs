@@ -950,7 +950,7 @@ spec:
           cpu: 400m
           memory: 1536Mi
         requests:
-          cpu: 80m
+          cpu: 100m
           memory: 256Mi
       # all values for grafana helm chart can be specified here
       sidecar:
@@ -1029,11 +1029,11 @@ spec:
         # resources, such as Minikube. If you do want to specify resources, uncomment the following
         # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
         limits:
-          cpu: 200m
+          cpu: 250m
           memory: 64Mi
         requests:
-          cpu: 20m
-          memory: 32Mi
+          cpu: 25m
+          memory: 16Mi
       # all values for prometheus-node-exporter helm chart can be specified here
       #service:
       #  # Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
