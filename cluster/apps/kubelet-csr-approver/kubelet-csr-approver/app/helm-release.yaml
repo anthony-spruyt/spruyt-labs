@@ -23,3 +23,10 @@ spec:
     bypassDnsResolution: true
     providerIpPrefixes: ["${LAN_SUBNET}"]
     skipDenyStep: true
+    resources:
+      requests:
+        cpu: 5m
+        memory: 32Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi

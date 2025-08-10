@@ -52,11 +52,11 @@ instance:
                   - name: manager
                     resources:
                       limits:
-                        memory: 2Gi
+                        memory: 1Gi
                         cpu: 1000m
                       requests:
-                        memory: 128Mi
-                        cpu: 100m
+                        memory: 64Mi
+                        cpu: 20m
         target:
           kind: Deployment
           name: helm-controller
@@ -72,11 +72,11 @@ instance:
                   - name: manager
                     resources:
                       limits:
-                        memory: 2Gi
+                        memory: 1Gi
                         cpu: 1000m
                       requests:
-                        memory: 64Mi
-                        cpu: 25m
+                        memory: 192Mi
+                        cpu: 10m
         target:
           kind: Deployment
           name: kustomize-controller
@@ -92,11 +92,11 @@ instance:
                   - name: manager
                     resources:
                       limits:
-                        memory: 1Gi
-                        cpu: 1000m
+                        memory: 512Mi
+                        cpu: 100m
                       requests:
                         memory: 32Mi
-                        cpu: 10m
+                        cpu: 5m
         target:
           kind: Deployment
           name: notification-controller
@@ -112,11 +112,11 @@ instance:
                   - name: manager
                     resources:
                       limits:
-                        memory: 2Gi
+                        memory: 1Gi
                         cpu: 1000m
                       requests:
-                        memory: 64Mi
-                        cpu: 10m
+                        memory: 40Mi
+                        cpu: 5m
         target:
           kind: Deployment
           name: source-controller

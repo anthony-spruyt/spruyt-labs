@@ -39,10 +39,10 @@ spec:
     # -- [Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for the `external-dns` container.
     resources:
       limits:
-        cpu: 25m
+        cpu: 10m
         memory: 96Mi
       requests:
-        cpu: 10m
+        cpu: 5m
         memory: 32Mi
 
     provider:

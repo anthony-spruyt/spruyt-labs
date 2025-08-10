@@ -48,11 +48,11 @@ apiPriority: # @schema default: {"enabled":false,"level":"workload-high","extraS
 # -- Container resources requests and limits settings.
 resources: # @schema required: true
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 200m
+    memory: 256Mi
   requests: # @schema default: {"cpu":"100m","memory":"64Mi"}
-    cpu: 10m
-    memory: 128Mi
+    cpu: 5m
+    memory: 96Mi
 
 # -- Container liveness probe settings.
 livenessProbe: # @schema default: {"httpGet":{"path":"/healthz","port":8081},"initialDelaySeconds":15,"periodSeconds":20}

@@ -31,7 +31,7 @@ spec:
               # TODO:renovate
               tag: 1.9.4
             env:
-              IRQBALANCE_DEBUG: true
+              IRQBALANCE_DEBUG: false
             resources:
               requests:
                 cpu: 5m

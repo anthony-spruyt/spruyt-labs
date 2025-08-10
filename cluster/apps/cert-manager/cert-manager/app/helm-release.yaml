@@ -30,22 +30,22 @@ spec:
     # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
     resources:
       limits:
-        cpu: 10m
+        cpu: 20m
         memory: 128Mi
       requests:
         cpu: 10m
-        memory: 64Mi
+        memory: 32Mi
 
     replicaCount: 2
     webhook:
       # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
       resources:
         limits:
-          cpu: 10m
-          memory: 256Mi
+          cpu: 20m
+          memory: 192Mi
         requests:
           cpu: 10m
-          memory: 160Mi
+          memory: 96Mi
 
       replicaCount: 2
       podDisruptionBudget:
@@ -54,11 +54,11 @@ spec:
       # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
       resources:
         limits:
-          cpu: 10m
-          memory: 256Mi
+          cpu: 20m
+          memory: 192Mi
         requests:
           cpu: 10m
-          memory: 160Mi
+          memory: 64Mi
 
       replicaCount: 2
       podDisruptionBudget:
