@@ -947,10 +947,10 @@ spec:
       # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
       resources:
         limits:
-          cpu: 200m
+          cpu: 1000m
           memory: 1536Mi
         requests:
-          cpu: 80m
+          cpu: 200m
           memory: 256Mi
       # all values for grafana helm chart can be specified here
       sidecar:
