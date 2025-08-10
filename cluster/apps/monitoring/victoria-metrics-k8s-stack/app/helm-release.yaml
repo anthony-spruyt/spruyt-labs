@@ -298,9 +298,12 @@ spec:
         # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            memory: 512Gi
+            cpu: 250m
+            memory: 1536Mi
           requests:
-            memory: 256Mi
+            cpu: 150m
+            memory: 1024Mi
+
     #    port: "8428"
     #    # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
     #    retentionPeriod: "1"
@@ -531,15 +534,24 @@ spec:
     #      #    hosts:
     #      #      - vminsert.domain.com
 
-    #alertmanager:
-    #  # -- Create VMAlertmanager CR
-    #  enabled: true
-    #  # -- VMAlertmanager labels
-    #  labels: {}
-    #  # -- VMAlertmanager annotations
-    #  annotations: {}
-    #  # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
-    #  spec:
+    alertmanager:
+      # -- Create VMAlertmanager CR
+      enabled: true
+      # -- VMAlertmanager labels
+      #labels: {}
+      # -- VMAlertmanager annotations
+      #annotations: {}
+      # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
+      spec:
+        # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+        resources:
+          limits:
+            cpu: 20m
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+
     #    replicaCount: 1
     #    port: "9093"
     #    selectAllByDefault: true
@@ -703,18 +715,26 @@ spec:
     #    #    hosts:
     #    #      - alertmanager.domain.com
 
-    #vmalert:
-    #  # -- VMAlert annotations
-    #  annotations: {}
-    #  # -- VMAlert labels
-    #  labels: {}
-    #  # -- Create VMAlert CR
-    #  enabled: true
+    vmalert:
+      # -- VMAlert annotations
+      #  annotations: {}
+      #  # -- VMAlert labels
+      #  labels: {}
+      # -- Create VMAlert CR
+      enabled: true
+      # -- Controls whether VMAlert should use VMAgent or VMInsert as a target for remotewrite
+      #remoteWriteVMAgent: false
+      # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
+      spec:
+        # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+        resources:
+          limits:
+            cpu: 40m
+            memory: 128Mi
+          requests:
+            cpu: 20m
+            memory: 64Mi
 
-    #  # -- Controls whether VMAlert should use VMAgent or VMInsert as a target for remotewrite
-    #  remoteWriteVMAgent: false
-    #  # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
-    #  spec:
     #    port: "8080"
     #    selectAllByDefault: true
     #    evaluationInterval: 20s
@@ -813,17 +833,20 @@ spec:
       #  #- url: http://some-remote-write/api/v1/write
       # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
       spec:
+        # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            memory: 1Gi
+            cpu: 250m
+            memory: 512Mi
           requests:
-            cpu: 500m
-            memory: 500Mi
+            cpu: 150m
+            memory: 256Mi
         env:
           - name: GOGC
             value: 100
           - name: GOMAXPROCS
             value: 1
+
         #port: "8429"
         #selectAllByDefault: true
         #scrapeInterval: 20s
@@ -918,9 +941,17 @@ spec:
     #    #   url: https://{{ printf "%s-prometheus.svc" .Release.Name }}:9090
     #    #   version: 1
 
-    ## -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
+    # -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
     grafana:
       enabled: true
+      # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+      resources:
+        limits:
+          cpu: 200m
+          memory: 1536Mi
+        requests:
+          cpu: 40m
+          memory: 192Mi
       # all values for grafana helm chart can be specified here
       sidecar:
         datasources:
@@ -989,24 +1020,32 @@ spec:
     #      endpoints:
     #        - port: '{{ .Values.grafana.service.portName }}'
 
-    ## -- prometheus-node-exporter dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-node-exporter/values.yaml)
-    #prometheus-node-exporter:
-    #  enabled: true
-
-    #  # all values for prometheus-node-exporter helm chart can be specified here
-    #  service:
-    #    # Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
-    #    #
-    #    labels:
-    #      jobLabel: node-exporter
-    #  extraArgs:
-    #    - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
-    #    - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|erofs|sysfs|tracefs)$
-    #  # -- Node Exporter VM scrape config
+    # -- prometheus-node-exporter dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-node-exporter/values.yaml)
+    prometheus-node-exporter:
+      enabled: true
+      resources:
+        # We usually recommend not to specify default resources and to leave this as a conscious
+        # choice for the user. This also increases chances charts run on environments with little
+        # resources, such as Minikube. If you do want to specify resources, uncomment the following
+        # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+        limits:
+          cpu: 50m
+          memory: 64Mi
+        requests:
+          cpu: 20m
+          memory: 32Mi
+      # all values for prometheus-node-exporter helm chart can be specified here
+      #service:
+      #  # Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
+      #  labels:
+      #    jobLabel: node-exporter
+      #extraArgs:
+      #  - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+      #  - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|erofs|sysfs|tracefs)$
+      # -- Node Exporter VM scrape config
     #  vmScrape:
     #    # whether we should create a service scrape resource for node-exporter
     #    enabled: true
-
     #    # -- [Scrape configuration](https://docs.victoriametrics.com/operator/api#vmservicescrapespec) for Node Exporter
     #    spec:
     #      jobLabel: jobLabel
@@ -1019,9 +1058,20 @@ spec:
     #            - action: drop
     #              source_labels: [mountpoint]
     #              regex: "/var/lib/kubelet/pods.+"
-    ## -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
-    #kube-state-metrics:
-    #  enabled: true
+    # -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
+    kube-state-metrics:
+      enabled: true
+      resources:
+        # We usually recommend not to specify default resources and to leave this as a conscious
+        # choice for the user. This also increases chances charts run on environments with little
+        # resources, such as Minikube. If you do want to specify resources, uncomment the following
+        # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+        limits:
+          cpu: 50m
+          memory: 64Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
     #  # -- [Scrape configuration](https://docs.victoriametrics.com/operator/api#vmservicescrapespec) for Kube State Metrics
     #  vmScrape:
     #    enabled: true

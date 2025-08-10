@@ -194,15 +194,14 @@ spec:
     ## -- Operator lifecycle. See [this article](https://kubernetes.io/docs/tasks/configure-pod-container/attach-handler-lifecycle-event/) for details.
     #lifecycle: {}
 
-    ## -- Resource object
-    #resources:
-    #  {}
-    #  # limits:
-    #  #   cpu: 120m
-    #  #   memory: 320Mi
-    #  # requests:
-    #  #   cpu: 80m
-    #  #   memory: 120Mi
+    # -- Resource object
+    resources:
+      limits:
+        cpu: 25m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 64Mi
 
     ## -- Pod's node selector. Details are [here](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector)
     #nodeSelector: {}
