@@ -1,0 +1,24 @@
+---
+# #yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressrouteudp_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/udp/ingressrouteudp/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: ingress-route-minecraft-bedrock
+  namespace: minecraft
+  annotations:
+    #kubernetes.io/ingress.class: traefik
+    external-dns.alpha.kubernetes.io/hostname: minecraft.lan.${EXTERNAL_DOMAIN}
+    #external-dns.alpha.kubernetes.io/target: ${LB_IP_TRAEFIK}
+spec:
+  entryPoints:
+    - udp
+  routes:
+    - match: Host(`minecraft.lan.${EXTERNAL_DOMAIN}`)
+      kind: Rule
+      services:
+        - name: minecraft-bedrock-minecraft-bedrock
+          namespace: minecraft
+          port: 19132
+          # Here, nativeLB instructs to build the servers load balancer with the Kubernetes Service clusterIP only.
+          nativeLB: true
