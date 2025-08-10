@@ -54,7 +54,7 @@ spec:
       # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
       resources:
         limits:
-          cpu: 30m
+          cpu: 50m
           memory: 192Mi
         requests:
           cpu: 10m
