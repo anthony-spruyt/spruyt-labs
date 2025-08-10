@@ -1,6 +1,8 @@
 ---
 # Default helm values: https://github.com/itzg/minecraft-server-charts/blob/master/charts/minecraft-bedrock/values.yaml
 restoreMode: false
+podAnnotations:
+  reloader.stakater.com/auto: "true"
 image:
   repository: itzg/minecraft-bedrock-server
   tag: latest
