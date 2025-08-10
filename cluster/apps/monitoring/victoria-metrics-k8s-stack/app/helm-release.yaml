@@ -550,16 +550,16 @@ spec:
             cpu: 5m
             memory: 32Mi
 
-    #    replicaCount: 1
-    #    port: "9093"
-    #    selectAllByDefault: true
-    #    image:
-    #      tag: v0.28.1
-    #    externalURL: ""
-    #    routePrefix: /
+        #replicaCount: 1
+        #port: "9093"
+        #selectAllByDefault: true
+        #image:
+        #  tag: v0.28.1
+        #externalURL: ""
+        #routePrefix: /
 
-    #    # -- (string) If this one defined, it will be used for alertmanager configuration and config parameter will be ignored
-    #    configSecret: ""
+        # -- (string) If this one defined, it will be used for alertmanager configuration and config parameter will be ignored
+        configSecret: victoria-metrics-k8s-stack-secrets
     #  # --
     #  # @raw
     #  # enable storing .Values.alertmanager.config in VMAlertmanagerConfig instead of k8s Secret.
@@ -953,10 +953,6 @@ spec:
           enabled: true
           initDatasources: true
           label: grafana_datasource
-          resource: both
-        alerts:
-          enabled: true
-          label: grafana_alert
           resource: both
 
       # -- Create datasource configmap even if grafana deployment has been disabled
