@@ -27,6 +27,13 @@ spec:
     toolbox:
       # -- Enable Ceph debugging pod deployment. See [toolbox](https://github.com/rook/rook/blob/master/Documentation/Troubleshooting/ceph-toolbox.md)
       enabled: true # TODO: Disable when everything is setup and stable
+      resources:
+        limits:
+          cpu: 50m
+          memory: 512Mi
+        requests:
+          cpu: 3m
+          memory: 8Mi
     monitoring:
       # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.
       # Monitoring requires Prometheus to be pre-installed
@@ -91,3 +98,102 @@ spec:
         deviceFilter: ^nvme0n1$
         config:
           encryptedDevice: "false"
+      resources:
+        mgr:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 768Mi
+        mon:
+          limits:
+            memory: 2Gi
+          requests:
+            cpu: 60m
+            memory: 512Mi
+        osd:
+          limits:
+            memory: 4Gi
+          requests:
+            cpu: 150m
+            memory: 768Mi
+        prepareosd:
+          # limits: It is not recommended to set limits on the OSD prepare job
+          #         since it's a one-time burst for memory that must be allowed to
+          #         complete without an OOM kill.  Note however that if a k8s
+          #         limitRange guardrail is defined external to Rook, the lack of
+          #         a limit here may result in a sync failure, in which case a
+          #         limit should be added.  1200Mi may suffice for up to 15Ti
+          #         OSDs ; for larger devices 2Gi may be required.
+          #         cf. https://github.com/rook/rook/pull/11103
+          requests:
+            cpu: 500m
+            memory: 50Mi
+        mgr-sidecar:
+          limits:
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 40Mi
+        crashcollector:
+          limits:
+            memory: 60Mi
+          requests:
+            cpu: 10m
+            memory: 16Mi
+        logcollector:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        cleanup:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 100Mi
+        exporter:
+          limits:
+            memory: 128Mi
+          requests:
+            cpu: 25m
+            memory: 32Mi
+    # -- A list of CephFileSystem configurations to deploy
+    # @default -- See [below](#ceph-file-systems)
+    cephFileSystems:
+      - name: ceph-filesystem
+        # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Shared-Filesystem/ceph-filesystem-crd.md#filesystem-settings for available configuration
+        spec:
+          metadataServer:
+            resources:
+              limits:
+                memory: 4Gi
+              requests:
+                cpu: 35m
+                memory: 64Mi
+    # -- A list of CephObjectStore configurations to deploy
+    # @default -- See [below](#ceph-object-stores)
+    cephObjectStores:
+      - name: ceph-objectstore
+        # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Object-Storage/ceph-object-store-crd.md#object-store-settings for available configuration
+        spec:
+          gateway:
+            port: 80
+            resources:
+              limits:
+                memory: 2Gi
+              requests:
+                cpu: 20m
+                memory: 64Mi
+            # securePort: 443
+            # sslCertificateRef:
+            instances: 1
+            priorityClassName: system-cluster-critical
+            opsLogSidecar:
+              resources:
+                limits:
+                  memory: 100Mi
+                requests:
+                  cpu: 10m
+                  memory: 40Mi

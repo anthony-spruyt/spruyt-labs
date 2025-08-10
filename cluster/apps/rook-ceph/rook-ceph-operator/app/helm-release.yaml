@@ -28,8 +28,8 @@ spec:
       limits:
         memory: 512Mi
       requests:
-        cpu: 100m # Default was 200m
-        memory: 128Mi
+        cpu: 50m # Default was 200m
+        memory: 256Mi
     currentNamespaceOnly: true
     csi:
       # https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-read-affinity-for-rbd-and-cephfs-volumes
