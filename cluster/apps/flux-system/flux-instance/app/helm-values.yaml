@@ -53,9 +53,73 @@ instance:
                     resources:
                       limits:
                         memory: 2Gi
+                        cpu: 1000m
+                      requests:
+                        memory: 128Mi
+                        cpu: 100m
         target:
           kind: Deployment
-          name: (kustomize-controller|helm-controller|source-controller)
+          name: helm-controller
+      - patch: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: all
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: manager
+                    resources:
+                      limits:
+                        memory: 2Gi
+                        cpu: 1000m
+                      requests:
+                        memory: 64Mi
+                        cpu: 25m
+        target:
+          kind: Deployment
+          name: kustomize-controller
+      - patch: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: all
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: manager
+                    resources:
+                      limits:
+                        memory: 1Gi
+                        cpu: 1000m
+                      requests:
+                        memory: 32Mi
+                        cpu: 10m
+        target:
+          kind: Deployment
+          name: notification-controller
+      - patch: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: all
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: manager
+                    resources:
+                      limits:
+                        memory: 2Gi
+                        cpu: 1000m
+                      requests:
+                        memory: 64Mi
+                        cpu: 10m
+        target:
+          kind: Deployment
+          name: source-controller
       # Enable in-memory kustomize builds
       # Ref: https://fluxcd.io/flux/installation/configuration/vertical-scaling/#enable-in-memory-kustomize-builds
       - patch: |
