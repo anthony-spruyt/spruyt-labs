@@ -179,21 +179,9 @@ spec:
         # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Object-Storage/ceph-object-store-crd.md#object-store-settings for available configuration
         spec:
           gateway:
-            port: 80
             resources:
               limits:
                 memory: 2Gi
               requests:
                 cpu: 20m
                 memory: 64Mi
-            # securePort: 443
-            # sslCertificateRef:
-            instances: 1
-            priorityClassName: system-cluster-critical
-            opsLogSidecar:
-              resources:
-                limits:
-                  memory: 100Mi
-                requests:
-                  cpu: 10m
-                  memory: 40Mi
