@@ -7,6 +7,7 @@ References:
 - [https://github.com/mrwulf/home-cluster](https://github.com/mrwulf/home-cluster)
 - [https://github.com/timtorChen/homelab](https://github.com/timtorChen/homelab)
 - [https://github.com/d4rkfella/home-ops](https://github.com/d4rkfella/home-ops)
+- [https://github.com/xunholy/k8s-gitops](https://github.com/xunholy/k8s-gitops) for minecraft hosting on k8s
 
 ## Talos
 
