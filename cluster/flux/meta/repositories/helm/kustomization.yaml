@@ -5,6 +5,7 @@ resources:
   - ./cilium-charts.yaml
   - ./jetstack-charts.yaml
   - ./kubernetes-sigs-charts.yaml
+  - ./minecraft-server-charts.yaml
   - ./mojo2600-charts.yaml
   - ./postfinance-charts.yaml
   - ./spegel-charts.yaml

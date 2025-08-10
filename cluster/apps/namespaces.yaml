@@ -48,6 +48,11 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: minecraft
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: monitoring
 ---
 apiVersion: v1
