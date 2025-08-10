@@ -36,6 +36,15 @@ spec:
   # Documentation: https://github.com/kubernetes-sigs/external-dns/tree/master/charts/external-dns#values
   # Default values: https://github.com/kubernetes-sigs/external-dns/blob/master/charts/external-dns/values.yaml
   values:
+    # -- [Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for the `external-dns` container.
+    resources:
+      limits:
+        cpu: 25m
+        memory: 96Mi
+      requests:
+        cpu: 10m
+        memory: 32Mi
+
     provider:
       name: rfc2136
     extraArgs:
@@ -69,11 +78,5 @@ spec:
     txtOwnerId: k8s
     domainFilters:
       - "lan.${EXTERNAL_DOMAIN}"
-    resources:
-      requests:
-        memory: 100Mi
-        cpu: 25m
-      limits:
-        memory: 250Mi
     serviceMonitor:
       enabled: true
