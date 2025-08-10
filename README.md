@@ -63,7 +63,8 @@ Cert manager with local self signed certs and cloudflare + lets encrypt ACME for
 
 ## Victoria Metrics & Logs
 
-[text](https://docs.victoriametrics.com/)
+- [https://docs.victoriametrics.com/](https://docs.victoriametrics.com/)
+- [https://vector.dev/docs/](https://vector.dev/docs/)
 
 ## Helm Values
 
