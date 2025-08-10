@@ -1015,7 +1015,7 @@ spec:
           cpu: 500m
           memory: 64Mi
         requests:
-          cpu: 25m
+          cpu: 30m
           memory: 16Mi
       # all values for prometheus-node-exporter helm chart can be specified here
       #service:
