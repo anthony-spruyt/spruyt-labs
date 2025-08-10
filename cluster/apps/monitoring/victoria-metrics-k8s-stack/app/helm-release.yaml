@@ -298,7 +298,7 @@ spec:
         # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            cpu: 250m
+            cpu: 375m
             memory: 1536Mi
           requests:
             cpu: 150m
@@ -546,7 +546,7 @@ spec:
         # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            cpu: 20m
+            cpu: 25m
             memory: 64Mi
           requests:
             cpu: 5m
@@ -729,7 +729,7 @@ spec:
         # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            cpu: 40m
+            cpu: 60m
             memory: 128Mi
           requests:
             cpu: 20m
@@ -836,7 +836,7 @@ spec:
         # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
         resources:
           limits:
-            cpu: 150m
+            cpu: 250m
             memory: 256Mi
           requests:
             cpu: 80m
@@ -947,7 +947,7 @@ spec:
       # -- Resource object. Details are [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
       resources:
         limits:
-          cpu: 300m
+          cpu: 400m
           memory: 1536Mi
         requests:
           cpu: 80m
@@ -1029,7 +1029,7 @@ spec:
         # resources, such as Minikube. If you do want to specify resources, uncomment the following
         # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
         limits:
-          cpu: 50m
+          cpu: 100m
           memory: 64Mi
         requests:
           cpu: 20m
