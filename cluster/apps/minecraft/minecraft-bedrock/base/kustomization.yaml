@@ -5,6 +5,6 @@ kind: Kustomization
 resources:
   - ./helm-release.yaml
 configMapGenerator:
-  - name: minecraft-base-values
+  - name: minecraft-bedrock-base-values
     files:
       - values.yaml=./helm-values.yaml
