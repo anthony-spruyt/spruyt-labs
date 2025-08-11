@@ -297,11 +297,11 @@ spec:
       spec:
         resources:
           limits:
-            cpu: 475m
-            memory: 1536Mi
+            cpu: 1000m
+            memory: 2048Mi
           requests:
             cpu: 200m
-            memory: 1088Mi
+            memory: 1536Mi
 
     #    port: "8428"
     #    # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
