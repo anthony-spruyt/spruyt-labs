@@ -6,8 +6,6 @@ kind: PersistentVolumeClaim
 metadata:
   name: minecraft-bedrock
   namespace: minecraft
-  finalizers:
-    - kubernetes.io/pvc-protection
 spec:
   storageClassName: rbd-fast
   accessModes:
