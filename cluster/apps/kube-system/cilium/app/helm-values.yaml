@@ -4,7 +4,7 @@
 # Default values for cilium: https://raw.githubusercontent.com/giantswarm/cilium-app/main/helm/cilium/values.yaml
 policyEnforcementMode: "default"
 debug:
-  enabled: true
+  enabled: false
 rollOutCiliumPods: true
 localRedirectPolicy: true
 kubeProxyReplacement: true
