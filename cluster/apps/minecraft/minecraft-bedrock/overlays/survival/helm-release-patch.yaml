@@ -1,0 +1,17 @@
+---
+# Disable yaml server as this is a patch - yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minecraft-bedrock
+  annotations:
+    minecraft.bedrock.config/version: "1"
+spec:
+  releaseName: minecraft-bedrock-survival
+  valuesFrom:
+    - kind: ConfigMap
+      name: minecraft-bedrock-base-values
+      valuesKey: values.yaml
+    - kind: ConfigMap
+      name: minecraft-bedrock-survival-values
+      valuesKey: values.yaml

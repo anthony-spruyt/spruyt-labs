@@ -3,7 +3,8 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: &app minecraft-bedrock
+  name: minecraft-bedrock
+  namespace: minecraft
 spec:
   interval: 1h
   chart:
@@ -39,11 +40,4 @@ spec:
   driftDetection:
     mode: enabled
   maxHistory: 3
-  # #yaml-language-server: $schema=TODO
-  # Minecraft server documentation:
-  # Default values for minecraft server:
-  values:
-    fullnameOverride: *app
-  valuesFrom:
-    - kind: ConfigMap
-      name: minecraft-bedrock-values
+  values: {}

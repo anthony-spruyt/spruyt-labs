@@ -33,7 +33,7 @@ spec:
         cpu: 100m
         memory: 1Gi
       requests:
-        cpu: 8m
+        cpu: 30m
         memory: 300Mi
     ports:
       web:
