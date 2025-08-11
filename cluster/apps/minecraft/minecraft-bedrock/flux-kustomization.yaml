@@ -3,7 +3,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app minecraft-bedrock-survival
+  name: &app minecraft-bedrock-creative
   namespace: &fluxnamespace flux-system
 spec:
   targetNamespace: minecraft
@@ -13,7 +13,7 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster-storage
   interval: 1h
-  path: ./cluster/apps/minecraft/minecraft-bedrock/overlays/survival
+  path: ./cluster/apps/minecraft/minecraft-bedrock/overlays/creative
   prune: true
   sourceRef:
     kind: GitRepository
@@ -32,7 +32,7 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app minecraft-bedrock-creative
+  name: &app minecraft-bedrock-survival
   namespace: &fluxnamespace flux-system
 spec:
   targetNamespace: minecraft
@@ -41,8 +41,9 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: rook-ceph-cluster-storage
+    - name: minecraft-bedrock-creative
   interval: 1h
-  path: ./cluster/apps/minecraft/minecraft-bedrock/overlays/creative
+  path: ./cluster/apps/minecraft/minecraft-bedrock/overlays/survival
   prune: true
   sourceRef:
     kind: GitRepository

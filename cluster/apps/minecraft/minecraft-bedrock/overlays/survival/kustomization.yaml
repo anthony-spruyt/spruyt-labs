@@ -5,7 +5,6 @@ kind: Kustomization
 namespace: minecraft
 resources:
   - ./persistent-volume-claim.yaml
-  - ../../base
 configMapGenerator:
   - name: minecraft-bedrock-survival-values
     files:
