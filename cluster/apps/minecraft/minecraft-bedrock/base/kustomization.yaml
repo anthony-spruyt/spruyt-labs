@@ -8,3 +8,5 @@ configMapGenerator:
   - name: minecraft-bedrock-base-values
     files:
       - values.yaml=./helm-values.yaml
+generatorOptions:
+  disableNameSuffixHash: true
