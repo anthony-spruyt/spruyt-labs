@@ -5,7 +5,7 @@ kind: HelmRelease
 metadata:
   name: minecraft-bedrock
   annotations:
-    minecraft.bedrock.config/version: "1"
+    minecraft.bedrock.config/version: "2"
 spec:
   releaseName: minecraft-bedrock-survival
   valuesFrom:
