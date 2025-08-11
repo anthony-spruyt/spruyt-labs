@@ -5,14 +5,10 @@ kind: Kustomization
 namespace: minecraft
 resources:
   - ./persistent-volume-claim.yaml
+  - ./helm-release.yaml
 configMapGenerator:
   - name: minecraft-bedrock-survival-values
     files:
       - values.yaml=./helm-values.yaml
 generatorOptions:
   disableNameSuffixHash: true
-patches:
-  - target:
-      kind: HelmRelease
-      name: minecraft-bedrock
-    path: ./helm-release-patch.yaml

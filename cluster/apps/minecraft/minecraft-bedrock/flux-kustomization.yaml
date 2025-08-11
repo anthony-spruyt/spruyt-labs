@@ -41,7 +41,6 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: rook-ceph-cluster-storage
-    - name: minecraft-bedrock-creative
   interval: 1h
   path: ./cluster/apps/minecraft/minecraft-bedrock/overlays/survival
   prune: true

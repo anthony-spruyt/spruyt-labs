@@ -3,8 +3,10 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: minecraft-bedrock
+  name: minecraft-bedrock-survival
   namespace: minecraft
+  annotations:
+    minecraft.bedrock.config/version: "3"
 spec:
   interval: 1h
   chart:
@@ -40,4 +42,10 @@ spec:
   driftDetection:
     mode: enabled
   maxHistory: 3
-  values: {}
+  valuesFrom:
+    - kind: ConfigMap
+      name: minecraft-bedrock-base-values
+      valuesKey: values.yaml
+    - kind: ConfigMap
+      name: minecraft-bedrock-survival-values
+      valuesKey: values.yaml
