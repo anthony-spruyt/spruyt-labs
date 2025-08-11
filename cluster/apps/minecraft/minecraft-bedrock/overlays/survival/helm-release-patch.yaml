@@ -4,7 +4,6 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: minecraft-bedrock
-  namespace: minecraft
   annotations:
     minecraft.bedrock.config/version: "1"
 spec:
