@@ -140,12 +140,12 @@ spec:
             memory: 60Mi
           requests:
             cpu: 10m
-            memory: 16Mi
+            memory: 24Mi
         logcollector:
           limits:
             memory: 1Gi
           requests:
-            cpu: 100m
+            cpu: 200m
             memory: 100Mi
         cleanup:
           limits:

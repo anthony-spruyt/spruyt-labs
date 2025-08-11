@@ -26,9 +26,9 @@ spec:
       enabled: true
     resources:
       limits:
-        memory: 512Mi
+        memory: 1Gi
       requests:
-        cpu: 50m # Default was 200m
+        cpu: 250m
         memory: 256Mi
     currentNamespaceOnly: true
     csi:
