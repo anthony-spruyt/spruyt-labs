@@ -134,11 +134,11 @@ persistence:
   dataDir:
     # Set this to false if you don't care to persist state between restarts.
     enabled: true
-    Size: 10Gi
+    # Size: 10Gi
     # access modes used by the volume, RWO by default,
     # ensure your storage class supports other modes if chosen
-    accessModes:
-      - ReadWriteOnce
+    # accessModes:
+    #   - ReadWriteOnce
 podAnnotations:
   reloader.stakater.com/auto: "true"
 deploymentAnnotations: {}
