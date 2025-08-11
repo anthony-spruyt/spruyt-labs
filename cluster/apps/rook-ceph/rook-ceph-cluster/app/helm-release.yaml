@@ -101,10 +101,10 @@ spec:
       resources:
         mgr:
           limits:
-            memory: 1Gi
+            memory: 2Gi
           requests:
             cpu: 100m
-            memory: 768Mi
+            memory: 1Gi
         mon:
           limits:
             memory: 2Gi
@@ -116,7 +116,7 @@ spec:
             memory: 4Gi
           requests:
             cpu: 150m
-            memory: 768Mi
+            memory: 1Gi
         prepareosd:
           # limits: It is not recommended to set limits on the OSD prepare job
           #         since it's a one-time burst for memory that must be allowed to
