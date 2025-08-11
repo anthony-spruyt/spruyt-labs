@@ -144,7 +144,8 @@ podAnnotations:
   reloader.stakater.com/auto: "true"
 deploymentAnnotations: {}
 deploymentLables: {}
-serviceAnnotations: {}
+serviceAnnotations:
+  io.cilium/lb-ipam-ips: "${LB_IP_MINECRAFT}"
 serviceLables: {}
 minecraftServer:
   eula: "TRUE"
@@ -208,7 +209,7 @@ minecraftServer:
   # IPv4 UDP port of server. If using a nodePort, set serverPort and nodePort to the same value (e.g. 30000) so ping time displays.
   serverPort: 19132
   # type of kubernetes service to use
-  serviceType: ClusterIP
+  serviceType: LoadBalancer
   ## Set the port used if the serviceType is NodePort
   # nodePort:
   #loadBalancerIP:
