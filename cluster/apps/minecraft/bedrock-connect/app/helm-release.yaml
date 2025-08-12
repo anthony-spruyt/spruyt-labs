@@ -14,11 +14,11 @@ spec:
   values:
     fullnameOverride: *name
     controllers:
-      bedrockConnect:
+      bedrockconnect:
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
-          bedrockConnect:
+          bedrockconnect:
             image:
               # TODO:renovate
               repository: josiahsayers15/bedrockconnect
@@ -35,8 +35,8 @@ spec:
                 containerPort: 19132
                 protocol: UDP
     service:
-      bedrockConnect:
-        controller: bedrockConnect
+      bedrockconnect:
+        controller: bedrockconnect
         type: LoadBalancer
         externalTrafficPolicy: Local
         annotations:
