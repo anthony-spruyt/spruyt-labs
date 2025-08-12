@@ -18,7 +18,6 @@ spec:
     remediation:
       strategy: rollback
       retries: 10
-  # #yaml-language-server: $schema=TODO
   values:
     fullnameOverride: *name
     defaultPodOptions:

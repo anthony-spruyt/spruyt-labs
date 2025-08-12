@@ -67,6 +67,11 @@ Cert manager with local self signed certs and cloudflare + lets encrypt ACME for
 - [https://docs.victoriametrics.com/](https://docs.victoriametrics.com/)
 - [https://vector.dev/docs/](https://vector.dev/docs/)
 
+## Minecraft
+
+TODO: document
+bedrock connect, DNS interception and minecraft bedrock server
+
 ## Helm Values
 
 Use the following regular expression on GitHub to find YAML language server schemas: `/yaml-language-server:\s*[^\n]*appkeyword[^\n]*\.json/`

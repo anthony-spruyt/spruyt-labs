@@ -19,8 +19,6 @@ spec:
       strategy: rollback
       retries: 3
   values:
-    # #yaml-language-server: $schema=TODO
-    # Default values for irq-balance: TODO
     controllers:
       fstrim:
         type: daemonset

@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &name bedrock-connect
+  namespace: minecraft
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: bjw-s-labs-app-template
+    namespace: flux-system
+  values:
+    fullnameOverride: *name
+    controllers:
+      bedrockConnect:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          bedrockConnect:
+            image:
+              # TODO:renovate
+              repository: josiahsayers15/bedrockconnect
+              tag: 1.0.1
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            ports:
+              - name: bedrock-udp
+                containerPort: 19132
+                protocol: UDP
+    service:
+      bedrockConnect:
+        controller: bedrockConnect
+        type: LoadBalancer
+        externalTrafficPolicy: Local
+        annotations:
+          io.cilium/lb-ipam-ips: "${LB_IP_BEDROCK_CONNECT}"
+        ports:
+          bedrock-udp:
+            port: 19132
+            enabled: true
+            protocol: UDP
