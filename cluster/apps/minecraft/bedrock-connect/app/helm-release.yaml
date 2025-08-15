@@ -25,10 +25,10 @@ spec:
               tag: 1.0.1
             resources:
               requests:
-                cpu: 100m
+                cpu: 10m
                 memory: 128Mi
               limits:
-                cpu: 500m
+                cpu: 100m
                 memory: 512Mi
             ports:
               - name: bedrock-udp

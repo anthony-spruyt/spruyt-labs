@@ -13,7 +13,7 @@
     "LICENSE": true,
     "Taskfile.yml": true,
     ".kilocodeignore": true,
-    "talos/clusterconfig": true
+    "talos/clusterconfig": false
   },
   "search.exclude": {
     "**/*.secret.*": true,
