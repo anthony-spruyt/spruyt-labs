@@ -384,7 +384,7 @@ spec:
 
       resources:
         requests:
-          cpu: 20m
+          cpu: 30m
           memory: 32Mi
         limits:
           cpu: 100m
