@@ -38,7 +38,6 @@ spec:
       bedrockconnect:
         controller: bedrockconnect
         type: LoadBalancer
-        externalTrafficPolicy: Local
         annotations:
           io.cilium/lb-ipam-ips: "${LB_IP_BEDROCK_CONNECT}"
         ports:
