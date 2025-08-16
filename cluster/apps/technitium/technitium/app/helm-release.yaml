@@ -83,6 +83,10 @@ spec:
             enabled: true
             port: 443
             protocol: TCP
+        ipFamilyPolicy: PreferDualStack
+        ipFamilies:
+          - IPv6
+          - IPv4
     persistence:
       config:
         enabled: true
