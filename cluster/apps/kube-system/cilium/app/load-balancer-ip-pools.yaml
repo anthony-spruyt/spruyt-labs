@@ -10,4 +10,3 @@ spec:
   blocks:
     - cidr: "${NETWORK_LB_CIDR_IP4}"
     - cidr: "${NETWORK_LB_CIDR_IP6}"
-    - cidr: 2403:5812:7fff:74a::202/128
