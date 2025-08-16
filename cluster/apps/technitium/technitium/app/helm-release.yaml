@@ -87,7 +87,7 @@ spec:
         ipFamilies:
           - IPv6
           - IPv4
-        externalTrafficPolicy: Local
+        externalTrafficPolicy: Cluster
         externalIPs:
           - "${LB_IP4_TECHNITIUM}"
           - "${LB_IP6_TECHNITIUM}"
