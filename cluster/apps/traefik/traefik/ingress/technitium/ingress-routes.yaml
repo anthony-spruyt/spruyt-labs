@@ -15,7 +15,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: ClientIP("192.168.50.98") # Host(`dns.lan.${EXTERNAL_DOMAIN}`) #|| ClientIP("192.168.50.98") # Use this to bootstrap DNS during recovery
+    - match: Host(`dns.lan.${EXTERNAL_DOMAIN}`) #|| ClientIP("192.168.50.98") # Use this to bootstrap DNS during recovery
       kind: Rule
       middlewares:
         - name: compress
