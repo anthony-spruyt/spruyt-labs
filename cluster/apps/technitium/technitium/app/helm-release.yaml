@@ -87,7 +87,8 @@ spec:
         ipFamilies:
           - IPv6
           - IPv4
-        externalTrafficPolicy: Cluster
+        externalTrafficPolicy: Local
+        externalIPs: "${LB_IP4_TECHNITIUM},${LB_IP6_TECHNITIUM}"
     persistence:
       config:
         enabled: true
