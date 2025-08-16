@@ -87,6 +87,7 @@ spec:
         ipFamilies:
           - IPv6
           - IPv4
+        externalTrafficPolicy: Local
     persistence:
       config:
         enabled: true
