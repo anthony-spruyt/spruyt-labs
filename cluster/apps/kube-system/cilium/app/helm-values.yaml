@@ -40,7 +40,7 @@ enableIPv4Masquerade: true
 enableIPv6Masquerade: true
 loadBalancer:
   algorithm: "maglev"
-  mode: "dsr"
+  mode: snat # "dsr"
 routingMode: "native"
 ipam:
   mode: "kubernetes"
