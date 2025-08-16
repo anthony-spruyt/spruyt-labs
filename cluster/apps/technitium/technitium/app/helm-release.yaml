@@ -88,7 +88,9 @@ spec:
           - IPv6
           - IPv4
         externalTrafficPolicy: Local
-        externalIPs: "${LB_IP4_TECHNITIUM},${LB_IP6_TECHNITIUM}"
+        externalIPs:
+          - "${LB_IP4_TECHNITIUM}"
+          - "${LB_IP6_TECHNITIUM}"
     persistence:
       config:
         enabled: true
