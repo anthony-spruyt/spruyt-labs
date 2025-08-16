@@ -10,9 +10,9 @@ talosVersion: v1.10.6
 kubernetesVersion: v1.33.3
 
 clusterName: ${CLUSTER_NAME}
-endpoint: https://${LB_IP4_KUBEAPI}:6443
-#endpoint: https://${DOMAIN_NAME_KUBEAPI} # This is dependant on the DNS server so can be flakey if that is down rather use the load balancer service IP
-#endpoint: https://${C1_IP4}:6443 # Change back to this if doing a fresh bootsrap
+#endpoint: https://${LB_IP4_KUBEAPI}:6443
+#endpoint: https://${DOMAIN_NAME_KUBEAPI}
+endpoint: https://${KUBEAPI_VIP_IP}:6443
 domain: ${CLUSTER_DOMAIN}
 
 additionalApiServerCertSans:
@@ -20,6 +20,7 @@ additionalApiServerCertSans:
   - ${LB_IP4_KUBEAPI}
   - ${LB_IP6_KUBEAPI}
   - ${DOMAIN_NAME_KUBEAPI}
+  - ${KUBEAPI_VIP_IP}
 
 cniConfig:
   name: none
@@ -66,6 +67,7 @@ nodes:
       - 127.0.0.1
       - ${LB_IP4_KUBEAPI}
       - ${DOMAIN_NAME_KUBEAPI}
+      - ${KUBEAPI_VIP_IP}
     nodeLabels: &e2nodelabels
       node-role.kubernetes.io/control-plane: ""
       #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
