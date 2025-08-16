@@ -21,7 +21,12 @@ spec:
     providerRegex: |
       ${KUBELET_CSR_APPROVER_REGEX}
     bypassDnsResolution: true
-    providerIpPrefixes: ["${LAN_SUBNET}"]
+    providerIpPrefixes:
+      - "${LAN_SUBNET}"
+      - "${NATIVE_ROUTING_CIDR_IP6}"
+      - "${NETWORK_LB_CIDR_IP6}"
+      - "${CLUSTER_POD_NETS_IP6}"
+      - "${CLUSTER_SVC_NETS_IP6}"
     skipDenyStep: true
     resources:
       requests:
