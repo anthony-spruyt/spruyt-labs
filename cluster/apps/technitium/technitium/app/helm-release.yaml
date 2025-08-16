@@ -87,7 +87,7 @@ spec:
         ipFamilies:
           - IPv6
           - IPv4
-        externalTrafficPolicy: Local
+        externalTrafficPolicy: Cluster
     persistence:
       config:
         enabled: true
