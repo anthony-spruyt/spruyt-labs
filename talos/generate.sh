@@ -45,8 +45,8 @@ talosctl config remove ${CLUSTER_NAME} -y || true
 talosctl config merge clusterconfig/talosconfig
 talosctl config context ${CLUSTER_NAME}
 
-talosctl config endpoint ${C1_IP}
-talosctl config node ${C1_IP}
+talosctl config endpoint ${C1_IP4}
+talosctl config node ${C1_IP4}
 
 talosctl config remove dummy -y
 

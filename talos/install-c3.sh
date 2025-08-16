@@ -29,16 +29,16 @@ talosctl config context ${CLUSTER_NAME}
 
 talosctl apply-config \
   --insecure \
-  -e ${C1_IP} \
-  -n ${C3_IP} \
+  -e ${C1_IP4} \
+  -n ${C3_IP4} \
   --file clusterconfig/${CLUSTER_NAME}-${C3_HOST}.yaml
 
-wait_for_talos "${C3_IP}" 300
+wait_for_talos "${C3_IP4}" 300
 
 echo "⏳ Giving node time to fully start up before wiping secondary disks..."
 read -rp "Press any key to wipe secondary disks: " continuewipesanswer
 
-talosctl wipe disk nvme0n1 -n ${C3_IP} --drop-partition
+talosctl wipe disk nvme0n1 -n ${C3_IP4} --drop-partition
 
 echo "⏳ Giving node time to fully start up before approving certs..."
 read -rp "Press any key to approve certs: " continuecertc2sanswer

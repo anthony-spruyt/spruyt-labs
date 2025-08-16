@@ -55,8 +55,8 @@ wait_for_bootstrap() {
 # talosctl config merge clusterconfig/talosconfig
 # talosctl config context ${CLUSTER_NAME}
 #
-# talosctl config endpoint ${C1_IP}
-# talosctl config node ${C1_IP}
+# talosctl config endpoint ${C1_IP4}
+# talosctl config node ${C1_IP4}
 #
 # talosctl config remove dummy -y
 #
@@ -70,29 +70,29 @@ talosctl config context ${CLUSTER_NAME}
 
 talosctl apply-config \
   --insecure \
-  -e ${C1_IP} \
-  -n ${C1_IP} \
+  -e ${C1_IP4} \
+  -n ${C1_IP4} \
   --file clusterconfig/${CLUSTER_NAME}-${C1_HOST}.yaml
 
-wait_for_talos "${C1_IP}" 300
+wait_for_talos "${C1_IP4}" 300
 
 echo "⏳ Giving node time to fully start up before wiping secondary disks..."
 read -rp "Press any key to wipe secondary disks: " continuewipesanswer
 
-talosctl wipe disk nvme0n1 -n ${C1_IP} --drop-partition
+talosctl wipe disk nvme0n1 -n ${C1_IP4} --drop-partition
 
 echo "⏳ Giving control plane components time to fully start up before bootstrapping..."
 read -rp "Press any key to continue: " continuebootstrapanswer
 
 talosctl bootstrap \
-  -e ${C1_IP} \
-  -n ${C1_IP}
+  -e ${C1_IP4} \
+  -n ${C1_IP4}
 
-wait_for_bootstrap "${C1_IP}" 300
+wait_for_bootstrap "${C1_IP4}" 300
 
 talosctl kubeconfig \
-  -e ${C1_IP} \
-  -n ${C1_IP} \
+  -e ${C1_IP4} \
+  -n ${C1_IP4} \
   -f \
   -m
 

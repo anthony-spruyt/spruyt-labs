@@ -10,8 +10,9 @@ talosVersion: v1.10.6
 kubernetesVersion: v1.33.3
 
 clusterName: ${CLUSTER_NAME}
-endpoint: https://${DOMAIN_NAME_KUBEAPI}
-#endpoint: https://${C1_IP}:6443 # Change back to this if doing a fresh bootsrap
+endpoint: https://${LB_IP4_KUBEAPI}:6443
+#endpoint: https://${DOMAIN_NAME_KUBEAPI} # This is dependant on the DNS server so can be flakey if that is down rather use the load balancer service IP
+#endpoint: https://${C1_IP4}:6443 # Change back to this if doing a fresh bootsrap
 domain: ${CLUSTER_DOMAIN}
 
 additionalApiServerCertSans:
@@ -25,7 +26,7 @@ cniConfig:
 nodes:
   - hostname: ${C1_HOST}
     controlPlane: true
-    ipAddress: ${C1_IP}
+    ipAddress: ${C1_IP4}
     machineSpec: &e2machinespec
       mode: metal
       arch: amd64
@@ -41,9 +42,9 @@ nodes:
           ipv6: true
           ipv4: true
     certSANs: &additionalMachineCertSans
-      - ${C1_IP}
-      - ${C2_IP}
-      - ${C3_IP}
+      - ${C1_IP4}
+      - ${C2_IP4}
+      - ${C3_IP4}
       - 127.0.0.1
       - ${LB_IP4_KUBEAPI}
       - ${DOMAIN_NAME_KUBEAPI}
@@ -88,7 +89,7 @@ nodes:
                   - ${DOMAIN_NAME_KUBEAPI}
   - hostname: ${C2_HOST}
     controlPlane: true
-    ipAddress: ${C2_IP}
+    ipAddress: ${C2_IP4}
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
     networkInterfaces: *networkInterfaces
@@ -99,7 +100,7 @@ nodes:
     patches: *e2patches
   - hostname: ${C3_HOST}
     controlPlane: true
-    ipAddress: ${C3_IP}
+    ipAddress: ${C3_IP4}
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
     networkInterfaces: *networkInterfaces
@@ -110,7 +111,7 @@ nodes:
     patches: *e2patches
   - hostname: ${W1_HOST}
     controlPlane: false
-    ipAddress: ${W1_IP}
+    ipAddress: ${W1_IP4}
     machineSpec: &pi4machinespec
       mode: metal
       arch: arm64
@@ -122,7 +123,7 @@ nodes:
     nodeAnnotations: *nodeannotations
   - hostname: ${W2_HOST}
     controlPlane: false
-    ipAddress: ${W2_IP}
+    ipAddress: ${W2_IP4}
     machineSpec: *pi4machinespec
     installDisk: *pi4installdisk
     networkInterfaces: *networkInterfaces
