@@ -18,6 +18,7 @@ domain: ${CLUSTER_DOMAIN}
 additionalApiServerCertSans:
   - 127.0.0.1
   - ${LB_IP4_KUBEAPI}
+  - ${LB_IP6_KUBEAPI}
   - ${DOMAIN_NAME_KUBEAPI}
 
 cniConfig:
@@ -43,19 +44,19 @@ nodes:
       size: "<= 300GB"
       model: RTL9210B-CG
     networkInterfaces:
-      - interface: eth0
+      - interface: eno1
         dhcp: &dhcp false
         addresses:
           - "${C1_IP4}/24"
           - "${C1_IP6}/64"
         mtu: &mtu 9000
-        #routes: &routes
-        #  - network: "0.0.0.0/0"
-        #    gateway: "${GATEWAY_IP4}"
-        #    metric: 1024
-        #  - network: ::/0
-        #    gateway: "${GATEWAY_IP6}"
-        #    metric: 4096
+        routes: &routes
+          - network: "0.0.0.0/0"
+            gateway: "${GATEWAY_IP4}"
+            #metric: 1024
+          - network: ::/0
+            gateway: "${GATEWAY_IP6}"
+            #metric: 4096
         vip: &vip
           ip: "${KUBEAPI_VIP_IP}"
     certSANs: &additionalMachineCertSans
@@ -110,13 +111,13 @@ nodes:
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
     networkInterfaces:
-      - interface: eth0
+      - interface: eno1
         dhcp: *dhcp
         addresses:
           - "${C2_IP4}/24"
           - "${C2_IP6}/64"
         mtu: *mtu
-        #routes: *routes
+        routes: *routes
         vip: *vip
     certSANs: *additionalMachineCertSans
     nodeLabels: *e2nodelabels
@@ -129,13 +130,13 @@ nodes:
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
     networkInterfaces:
-      - interface: eth0
+      - interface: eno1
         dhcp: *dhcp
         addresses:
           - "${C3_IP4}/24"
           - "${C3_IP6}/64"
         mtu: *mtu
-        #routes: *routes
+        routes: *routes
         vip: *vip
     certSANs: *additionalMachineCertSans
     nodeLabels: *e2nodelabels
@@ -150,13 +151,13 @@ nodes:
       arch: arm64
     installDisk: &pi4installdisk /dev/sda
     networkInterfaces:
-      - interface: eth0
+      - interface: eno1
         dhcp: *dhcp
         addresses:
           - "${W1_IP4}/24"
           - "${W1_IP6}/64"
         mtu: *mtu
-        #routes: *routes
+        routes: *routes
     certSANs: *additionalMachineCertSans
     nodeLabels: &pi4nodelabels
       node-role.kubernetes.io/worker: ""
@@ -167,13 +168,13 @@ nodes:
     machineSpec: *pi4machinespec
     installDisk: *pi4installdisk
     networkInterfaces:
-      - interface: eth0
+      - interface: eno1
         dhcp: *dhcp
         addresses:
           - "${W2_IP4}/24"
           - "${W2_IP6}/64"
         mtu: *mtu
-        #routes: *routes
+        routes: *routes
     certSANs: *additionalMachineCertSans
     nodeLabels: *pi4nodelabels
     nodeAnnotations: *nodeannotations
