@@ -23,6 +23,8 @@ k8sServiceHost: localhost
 k8sServicePort: 7445
 bgpControlPlane:
   enabled: false # TODO: enable when / if supported by router
+l2announcements:
+  enabled: true
 cgroup:
   autoMount:
     enabled: false
