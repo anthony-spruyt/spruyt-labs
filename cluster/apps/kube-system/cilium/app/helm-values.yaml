@@ -34,6 +34,8 @@ bpf:
   masquerade: true
   preallocateMaps: true
   tproxy: true
+enableIPv4Masquerade: true
+enableIPv6Masquerade: true
 loadBalancer:
   algorithm: "maglev"
   mode: "dsr"

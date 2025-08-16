@@ -69,7 +69,7 @@ nodes:
       node-role.kubernetes.io/control-plane: ""
       #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
     nodeAnnotations: &nodeannotations
-      installerImage: "factory.talos.dev/metal-installer-secureboot/777390ee380b57c5589bda8c3c3673d6b1e3252add27737701d216fbd50a3774:v1.10.5"
+      installerImage: "factory.talos.dev/metal-installer-secureboot/777390ee380b57c5589bda8c3c3673d6b1e3252add27737701d216fbd50a3774:v1.10.6"
     schematic: &e2schematic
       customization:
         secureboot:
