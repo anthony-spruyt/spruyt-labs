@@ -23,6 +23,13 @@ additionalApiServerCertSans:
 cniConfig:
   name: none
 
+clusterSvcNets:
+  - ${CLUSTER_SVC_NETS_IP4}
+  - ${CLUSTER_SVC_NETS_IP6}
+clusterPodNets:
+  - ${CLUSTER_POD_NETS_IP4}
+  - ${CLUSTER_POD_NETS_IP6}
+
 nodes:
   - hostname: ${C1_HOST}
     controlPlane: true
@@ -35,12 +42,22 @@ nodes:
     installDiskSelector: &e2installdiskselector
       size: "<= 300GB"
       model: RTL9210B-CG
-    networkInterfaces: &networkInterfaces
+    networkInterfaces:
       - interface: eth0
-        dhcp: true
-        dhcpOptions:
-          ipv6: true
-          ipv4: true
+        dhcp: &dhcp false
+        addresses:
+          - "${C1_IP4}/24"
+          - "${C1_IP6}/64"
+        mtu: &mtu 9000
+        #routes: &routes
+        #  - network: "0.0.0.0/0"
+        #    gateway: "${GATEWAY_IP4}"
+        #    metric: 1024
+        #  - network: ::/0
+        #    gateway: "${GATEWAY_IP6}"
+        #    metric: 4096
+        vip: &vip
+          ip: "${KUBEAPI_VIP_IP}"
     certSANs: &additionalMachineCertSans
       - ${C1_IP4}
       - ${C2_IP4}
@@ -92,7 +109,15 @@ nodes:
     ipAddress: ${C2_IP4}
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
-    networkInterfaces: *networkInterfaces
+    networkInterfaces:
+      - interface: eth0
+        dhcp: *dhcp
+        addresses:
+          - "${C2_IP4}/24"
+          - "${C2_IP6}/64"
+        mtu: *mtu
+        #routes: *routes
+        vip: *vip
     certSANs: *additionalMachineCertSans
     nodeLabels: *e2nodelabels
     nodeAnnotations: *nodeannotations
@@ -103,7 +128,15 @@ nodes:
     ipAddress: ${C3_IP4}
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
-    networkInterfaces: *networkInterfaces
+    networkInterfaces:
+      - interface: eth0
+        dhcp: *dhcp
+        addresses:
+          - "${C3_IP4}/24"
+          - "${C3_IP6}/64"
+        mtu: *mtu
+        #routes: *routes
+        vip: *vip
     certSANs: *additionalMachineCertSans
     nodeLabels: *e2nodelabels
     nodeAnnotations: *nodeannotations
@@ -116,7 +149,14 @@ nodes:
       mode: metal
       arch: arm64
     installDisk: &pi4installdisk /dev/sda
-    networkInterfaces: *networkInterfaces
+    networkInterfaces:
+      - interface: eth0
+        dhcp: *dhcp
+        addresses:
+          - "${W1_IP4}/24"
+          - "${W1_IP6}/64"
+        mtu: *mtu
+        #routes: *routes
     certSANs: *additionalMachineCertSans
     nodeLabels: &pi4nodelabels
       node-role.kubernetes.io/worker: ""
@@ -126,7 +166,14 @@ nodes:
     ipAddress: ${W2_IP4}
     machineSpec: *pi4machinespec
     installDisk: *pi4installdisk
-    networkInterfaces: *networkInterfaces
+    networkInterfaces:
+      - interface: eth0
+        dhcp: *dhcp
+        addresses:
+          - "${W2_IP4}/24"
+          - "${W2_IP6}/64"
+        mtu: *mtu
+        #routes: *routes
     certSANs: *additionalMachineCertSans
     nodeLabels: *pi4nodelabels
     nodeAnnotations: *nodeannotations
@@ -163,7 +210,7 @@ patches:
       network:
         disableSearchDomain: true
         nameservers:
-          - ${GATEWAY_IP}
+          - ${GATEWAY_IP4}
           - 172.64.36.1
           - 172.64.36.2
 

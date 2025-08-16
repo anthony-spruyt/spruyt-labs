@@ -9,7 +9,15 @@ rollOutCiliumPods: true
 localRedirectPolicy: true
 kubeProxyReplacement: true
 kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
-ipv4NativeRoutingCIDR: "${NETWORK_K8S_CLUSTER_CIDR}"
+k8s:
+  requireIPv4PodCIDR: true
+  requireIPv6PodCIDR: true
+ipv4:
+  enabled: true
+ipv4NativeRoutingCIDR: "${NATIVE_ROUTING_CIDR_IP4}"
+ipv6:
+  enabled: true
+ipv6NativeRoutingCIDR: "${NATIVE_ROUTING_CIDR_IP6}"
 autoDirectNodeRoutes: true
 k8sServiceHost: localhost
 k8sServicePort: 7445
@@ -36,12 +44,15 @@ ipMasqAgent:
   enabled: true
   config:
     nonMasqueradeCIDRs:
-      - "10.96.0.0/12" # Service ClusterIP range
-      - "10.244.0.0/20" # PodCIDR (aggregated /20 IE 16 nodes)
-      - "${NETWORK_K8S_CLUSTER_CIDR}" # Native routing range
-      - "100.64.0.0/10" # Cilium overlay
-      - "${NETWORK_LB_CIDR_IP4}" # Cilium LB-IPAM pool IP4
-      - "${NETWORK_LB_CIDR_IP6}" # Cilium LB-IPAM pool IP6
+      - "${CLUSTER_SVC_NETS_IP4}" # Cluster services IP4
+      - "${CLUSTER_SVC_NETS_IP6}" # Cluster services IP6
+      - "${CLUSTER_POD_NETS_IP4}" # Cluster pods IP4
+      - "${CLUSTER_POD_NETS_IP6}" # Cluster pods IP6
+      - "${NETWORK_LB_CIDR_IP4}" # Cilium LB-IPAM IP4
+      - "${NETWORK_LB_CIDR_IP6}" # Cilium LB-IPAM IP6
+      - "${NATIVE_ROUTING_CIDR_IP4}" # Native routing IP4
+      - "${NATIVE_ROUTING_CIDR_IP6}" # Native routing IP6
+      #- "100.64.0.0/10" # Cilium overlay IP4
     masqLinkLocal: false # keep link-local (169.254.0.0/16) un-SNAT-ed
     masqLinkLocalIPv6: false # keep fe80::/10 un-SNAT-ed
 operator:
