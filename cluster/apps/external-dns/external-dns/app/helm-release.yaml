@@ -48,7 +48,7 @@ spec:
     provider:
       name: rfc2136
     extraArgs:
-      - --rfc2136-host=${LB_IP_TECHNITIUM}
+      - --rfc2136-host=${LB_IP4_TECHNITIUM}
       - --rfc2136-port=53
       - --rfc2136-zone=lan.${EXTERNAL_DOMAIN}
       - --rfc2136-tsig-secret-alg=hmac-sha256

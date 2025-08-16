@@ -16,7 +16,7 @@ domain: ${CLUSTER_DOMAIN}
 
 additionalApiServerCertSans:
   - 127.0.0.1
-  - ${LB_IP_KUBEAPI}
+  - ${LB_IP4_KUBEAPI}
   - ${DOMAIN_NAME_KUBEAPI}
 
 cniConfig:
@@ -42,7 +42,7 @@ nodes:
       - ${C2_IP}
       - ${C3_IP}
       - 127.0.0.1
-      - ${LB_IP_KUBEAPI}
+      - ${LB_IP4_KUBEAPI}
       - ${DOMAIN_NAME_KUBEAPI}
     nodeLabels: &e2nodelabels
       node-role.kubernetes.io/control-plane: ""
@@ -80,7 +80,7 @@ nodes:
             state: *e2encryption
           network:
             extraHostEntries:
-              - ip: ${LB_IP_KUBEAPI}
+              - ip: ${LB_IP4_KUBEAPI}
                 aliases:
                   - ${DOMAIN_NAME_KUBEAPI}
   - hostname: ${C2_HOST}
@@ -159,7 +159,7 @@ patches:
       network:
         disableSearchDomain: true
         nameservers:
-          - ${LB_IP_TECHNITIUM}
+          - ${LB_IP4_TECHNITIUM}
           - ${GATEWAY_IP}
           - 172.64.36.1
           - 172.64.36.2

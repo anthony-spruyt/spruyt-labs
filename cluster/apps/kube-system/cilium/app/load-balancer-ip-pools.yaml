@@ -8,4 +8,5 @@ metadata:
   namespace: kube-system
 spec:
   blocks:
-    - cidr: "${NETWORK_LB_RANGE}"
+    - cidr: "${NETWORK_LB_CIDR_IP4}"
+    - cidr: "${NETWORK_LB_CIDR_IP6}"

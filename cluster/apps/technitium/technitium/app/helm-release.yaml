@@ -65,7 +65,7 @@ spec:
         controller: *name
         type: LoadBalancer
         annotations:
-          io.cilium/lb-ipam-ips: "${LB_IP_TECHNITIUM}"
+          io.cilium/lb-ipam-ips: "${LB_IP4_TECHNITIUM},${LB_IP6_TECHNITIUM}"
         ports:
           dns-tcp:
             enabled: true

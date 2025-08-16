@@ -10,7 +10,7 @@ metadata:
     #kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: ceph.lan.${EXTERNAL_DOMAIN}
-    #external-dns.alpha.kubernetes.io/target: ${LB_IP_TRAEFIK}
+    #external-dns.alpha.kubernetes.io/target: ${LB_IP4_TRAEFIK}
 spec:
   entryPoints:
     - websecure
