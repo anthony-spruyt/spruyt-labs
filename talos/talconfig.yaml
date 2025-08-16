@@ -37,6 +37,9 @@ nodes:
     networkInterfaces: &networkInterfaces
       - interface: eth0
         dhcp: true
+        dhcpOptions:
+          ipv6: true
+          ipv4: true
     certSANs: &additionalMachineCertSans
       - ${C1_IP}
       - ${C2_IP}
@@ -159,14 +162,9 @@ patches:
       network:
         disableSearchDomain: true
         nameservers:
-          - ${LB_IP4_TECHNITIUM}
           - ${GATEWAY_IP}
           - 172.64.36.1
           - 172.64.36.2
-          - 1.1.1.1
-          - 1.0.0.1
-          - 8.8.8.8
-          - 8.8.4.4
 
 controlPlane:
   patches:
