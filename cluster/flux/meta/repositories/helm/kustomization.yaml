@@ -4,6 +4,7 @@ resources:
   - ./bjw-s-charts.yaml
   - ./cilium-charts.yaml
   - ./jetstack-charts.yaml
+  - ./kube-vip-charts.yaml
   - ./kubernetes-sigs-charts.yaml
   - ./minecraft-server-charts.yaml
   - ./mojo2600-charts.yaml
