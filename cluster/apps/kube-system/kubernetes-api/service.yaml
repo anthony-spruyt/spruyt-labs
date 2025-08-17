@@ -21,3 +21,7 @@ spec:
       port: 443
       protocol: TCP
       targetPort: 6443
+  ipFamilyPolicy: PreferDualStack
+  ipFamilies:
+    - IPv4
+    - IPv6
