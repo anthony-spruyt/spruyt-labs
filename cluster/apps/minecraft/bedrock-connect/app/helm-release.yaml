@@ -45,3 +45,7 @@ spec:
             port: 19132
             enabled: true
             protocol: UDP
+        ipFamilyPolicy: PreferDualStack
+        ipFamilies:
+          - IPv4
+          - IPv6

@@ -48,3 +48,7 @@ spec:
     service:
       annotations:
         io.cilium/lb-ipam-ips: "${LB_IP4_TRAEFIK},${LB_IP6_TRAEFIK}"
+      ipFamilyPolicy: PreferDualStack
+      ipFamilies:
+        - IPv4
+        - IPv6
