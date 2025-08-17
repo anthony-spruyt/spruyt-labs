@@ -48,11 +48,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: metallb
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: metallb-system
 ---
 apiVersion: v1
