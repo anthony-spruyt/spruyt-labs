@@ -39,7 +39,7 @@ spec:
         controller: bedrockconnect
         type: LoadBalancer
         annotations:
-          metallb.universe.tf/loadBalancerIPs: '["${LB_IP4_BEDROCK_CONNECT}"]'
+          metallb.universe.tf/loadBalancerIPs: "${LB_IP4_BEDROCK_CONNECT}"
         ports:
           bedrock-udp:
             port: 19132
