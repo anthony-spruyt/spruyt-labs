@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app metallb
+  namespace: metallb
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: *app
+      sourceRef:
+        kind: HelmRepository
+        name: metallb-charts
+        namespace: flux-system
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  values:
+    speaker:
+      # Run speaker in hostNetwork so it can respond to ARP/NDP on the host's interfaces
+      hostNetwork: true
