@@ -23,7 +23,7 @@ k8sServiceHost: localhost
 k8sServicePort: 7445
 bgpControlPlane:
   enabled: false # Router does not support BGP
-l2announcements: # Disable and use kube-vip
+l2announcements:
   enabled: false
 cgroup:
   autoMount:
