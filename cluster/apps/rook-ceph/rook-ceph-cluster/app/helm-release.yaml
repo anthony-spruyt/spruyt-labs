@@ -75,6 +75,9 @@ spec:
             enabled: true
           - name: prometheus
             enabled: true
+      csi:
+        readAffinity:
+          enabled: true
       dashboard:
         enabled: true
         # serve the dashboard under a subpath (useful when you are accessing the dashboard via a reverse proxy)
@@ -159,6 +162,8 @@ spec:
           requests:
             cpu: 25m
             memory: 32Mi
+    cephFileSystems: []
+    cephObjectStores: []
     # -- A list of CephFileSystem configurations to deploy
     # @default -- See [below](#ceph-file-systems)
     #cephFileSystems:

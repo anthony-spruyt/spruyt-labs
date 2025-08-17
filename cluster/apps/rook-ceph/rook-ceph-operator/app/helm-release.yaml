@@ -35,15 +35,26 @@ spec:
       # https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-read-affinity-for-rbd-and-cephfs-volumes
       readAffinity:
         enabled: true
-      #enableCephfsDriver: false
-      #enableCephfsSnapshotter: false
+      enableCephfsDriver: false
+      enableCephfsSnapshotter: false
       enableCSIEncryption: true
-      #enableVolumeGroupSnapshot: false
+      enableVolumeGroupSnapshot: false
       # -- Set CephFS Kernel mount options to use https://docs.ceph.com/en/latest/man/8/mount.ceph/#options.
       # Set to "ms_mode=secure" when connections.encrypted is enabled in CephCluster CR
       cephFSKernelMountOptions:
         - ms_mode=secure
       enableMetadata: true
+      csiRBDProvisionerResource:
+        - name: csi-provisioner
+          resource:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+        - name: csi-resizer
+          resource:
+            requests:
+              memory: 128Mi
+              cpu: 100m
       #pluginTolerations:
       #  - key: node-role.kubernetes.io/control-plane
       #    operator: Exists
