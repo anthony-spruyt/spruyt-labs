@@ -47,4 +47,5 @@ spec:
         allowCrossNamespace: false
     service:
       annotations:
-        metallb.universe.tf/loadBalancerIPs: "${LB_IP4_TRAEFIK}"
+        metallb.io/loadBalancerIPs: "${LB_IP4_TRAEFIK}"
+        metallb.io/address-pool: dual-stack-ip-pool
