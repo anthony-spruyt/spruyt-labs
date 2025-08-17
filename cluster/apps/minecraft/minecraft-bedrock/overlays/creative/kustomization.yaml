@@ -10,3 +10,7 @@ configMapGenerator:
   - name: minecraft-bedrock-creative-values
     files:
       - values.yaml=./helm-values.yaml
+generatorOptions:
+  disableNameSuffixHash: false
+  labels:
+    kustomize.toolkit.fluxcd.io/substitute: "minecraftBedrockCreativeValuesConfigMapName"

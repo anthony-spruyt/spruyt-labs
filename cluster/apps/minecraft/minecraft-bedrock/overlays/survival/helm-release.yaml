@@ -47,5 +47,5 @@ spec:
       name: minecraft-bedrock-base-values
       valuesKey: values.yaml
     - kind: ConfigMap
-      name: minecraft-bedrock-survival-values
+      name: $(minecraftBedrockSurvivalValuesConfigMapName)
       valuesKey: values.yaml

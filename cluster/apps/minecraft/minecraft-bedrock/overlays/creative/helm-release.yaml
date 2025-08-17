@@ -47,5 +47,5 @@ spec:
       name: minecraft-bedrock-base-values
       valuesKey: values.yaml
     - kind: ConfigMap
-      name: minecraft-bedrock-creative-values
+      name: $(minecraftBedrockCreativeValuesConfigMapName)
       valuesKey: values.yaml
