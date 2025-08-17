@@ -85,8 +85,8 @@ spec:
             protocol: TCP
         ipFamilyPolicy: PreferDualStack
         ipFamilies:
-          - IPv6
           - IPv4
+          - IPv6
     persistence:
       config:
         enabled: true
