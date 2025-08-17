@@ -18,7 +18,7 @@ resources:
   - ./rook-ceph
   # networking
   - ./cert-manager
-  - ./metallb
+  - ./metallb-system
   - ./traefik
   - ./technitium
   - ./external-dns

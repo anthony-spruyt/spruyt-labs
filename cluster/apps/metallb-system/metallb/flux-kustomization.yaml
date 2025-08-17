@@ -6,13 +6,13 @@ metadata:
   name: &app metallb
   namespace: &fluxnamespace flux-system
 spec:
-  targetNamespace: metallb
+  targetNamespace: metallb-system
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   interval: 1h
-  path: ./cluster/apps/metallb/metallb/app
-  prune: false
+  path: ./cluster/apps/metallb-system/metallb/app
+  prune: true
   retryInterval: 2m
   sourceRef:
     kind: GitRepository
