@@ -65,7 +65,6 @@ spec:
         type: LoadBalancer
         annotations:
           metallb.io/loadBalancerIPs: "${LB_IP4_TECHNITIUM},${LB_IP6_TECHNITIUM}"
-          metallb.io/address-pool: dual-stack-ip-pool
         ports:
           dns-tcp:
             enabled: true

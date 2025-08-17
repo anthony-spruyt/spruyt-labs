@@ -40,7 +40,6 @@ spec:
         type: LoadBalancer
         annotations:
           metallb.io/loadBalancerIPs: "${LB_IP4_BEDROCK_CONNECT}"
-          metallb.io/address-pool: dual-stack-ip-pool
         ports:
           bedrock-udp:
             port: 19132

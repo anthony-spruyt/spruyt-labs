@@ -6,7 +6,6 @@ metadata:
   namespace: kube-system
   annotations:
     metallb.io/loadBalancerIPs: "${LB_IP4_KUBEAPI}"
-    metallb.io/address-pool: dual-stack-ip-pool
 spec:
   externalTrafficPolicy: Local
   type: LoadBalancer

@@ -65,7 +65,6 @@ spec:
         #   - ReadWriteOnce
     serviceAnnotations:
       metallb.io/loadBalancerIPs: "${LB_IP4_MINECRAFT_BEDROCK_1}"
-      metallb.io/address-pool: dual-stack-ip-pool
     minecraftServer:
       eula: "TRUE"
       # One of: LATEST, SNAPSHOT, or a specific version (ie: "1.7.9").
@@ -129,6 +128,9 @@ spec:
       serverPort: 19132
       # type of kubernetes service to use
       serviceType: LoadBalancer
+      # Preserve client source IP/port for UDP (important for Bedrock/RakNet).
+      # MetalLB will announce the VIP only from nodes with endpoints when Local is used.
+      externalTrafficPolicy: Local
       ## Set the port used if the serviceType is NodePort
       # nodePort:
       # loadBalancerIP:
