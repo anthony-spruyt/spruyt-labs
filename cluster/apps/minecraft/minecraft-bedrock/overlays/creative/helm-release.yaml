@@ -6,7 +6,7 @@ metadata:
   name: minecraft-bedrock-creative
   namespace: minecraft
   annotations:
-    minecraft.bedrock.config/version: "3"
+    minecraft.bedrock.config/version: "5"
 spec:
   interval: 1h
   chart:
