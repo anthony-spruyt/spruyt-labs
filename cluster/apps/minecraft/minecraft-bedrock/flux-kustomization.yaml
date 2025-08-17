@@ -13,7 +13,7 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster-storage
   interval: 1h
-  path: ./cluster/apps/minecraft/minecraft-bedrock/overlays/creative
+  path: ./cluster/apps/minecraft/minecraft-bedrock/creative
   prune: true
   sourceRef:
     kind: GitRepository
@@ -27,8 +27,6 @@ spec:
         name: cluster-settings
       - kind: Secret
         name: cluster-secrets
-      - kind: ConfigMap
-        name: minecraft-bedrock-creative-values
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -44,7 +42,7 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster-storage
   interval: 1h
-  path: ./cluster/apps/minecraft/minecraft-bedrock/overlays/survival
+  path: ./cluster/apps/minecraft/minecraft-bedrock/survival
   prune: true
   sourceRef:
     kind: GitRepository
@@ -58,5 +56,3 @@ spec:
         name: cluster-settings
       - kind: Secret
         name: cluster-secrets
-      - kind: ConfigMap
-        name: minecraft-bedrock-survival-values
