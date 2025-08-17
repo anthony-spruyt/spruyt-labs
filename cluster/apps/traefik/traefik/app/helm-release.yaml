@@ -47,4 +47,4 @@ spec:
         allowCrossNamespace: false
     service:
       annotations:
-        metallb.universe.tf/loadBalancerIPs: '["${LB_IP4_TRAEFIK}"]'
+        metallb.universe.tf/loadBalancerIPs: "${LB_IP4_TRAEFIK}"
