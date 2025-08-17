@@ -38,7 +38,6 @@ spec:
         containers:
           technitium:
             image:
-              # TODO:renovate
               repository: technitium/dns-server
               tag: 13.6.0
             env:
