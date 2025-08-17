@@ -64,9 +64,7 @@ spec:
         controller: *name
         type: LoadBalancer
         annotations:
-          io.cilium/lb-ipam-ips: "${LB_IP4_TECHNITIUM}"
-          metallb.universe.tf/address-pool: "ipv6-pool"
-        loadBalancerIP: "${LB_IP6_TECHNITIUM}"
+          metallb.universe.tf/loadBalancerIPs: '["${LB_IP4_TECHNITIUM}", "${LB_IP6_TECHNITIUM}"]'
         ports:
           dns-tcp:
             enabled: true

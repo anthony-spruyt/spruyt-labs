@@ -64,7 +64,7 @@ spec:
         # accessModes:
         #   - ReadWriteOnce
     serviceAnnotations:
-      io.cilium/lb-ipam-ips: "${LB_IP4_MINECRAFT_BEDROCK_2}"
+      metallb.universe.tf/loadBalancerIPs: '["${LB_IP4_MINECRAFT_BEDROCK_2}"]'
     minecraftServer:
       eula: "TRUE"
       # One of: LATEST, SNAPSHOT, or a specific version (ie: "1.7.9").
