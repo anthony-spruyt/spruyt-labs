@@ -61,7 +61,7 @@ minecraftServer:
   # Cheat like commands can be used.
   cheats: true
   # Enable emit server telemetry.
-  emitServerTelemetry: true
+  emitServerTelemetry: false
   # Enable lan visibility.
   enableLanVisibility: true
   # IPv4 UDP port of server. If using a nodePort, set serverPort and nodePort to the same value (e.g. 30000) so ping time displays.
