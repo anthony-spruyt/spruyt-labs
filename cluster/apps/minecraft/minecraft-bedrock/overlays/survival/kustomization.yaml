@@ -10,5 +10,3 @@ configMapGenerator:
   - name: minecraft-bedrock-survival-values
     files:
       - values.yaml=./helm-values.yaml
-generatorOptions:
-  disableNameSuffixHash: true
