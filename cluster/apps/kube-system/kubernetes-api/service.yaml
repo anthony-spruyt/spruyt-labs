@@ -5,7 +5,7 @@ metadata:
   name: kubernetes-api
   namespace: kube-system
   annotations:
-    io.cilium/lb-ipam-ips: "${LB_IP4_KUBEAPI},${LB_IP6_KUBEAPI}"
+    io.cilium/lb-ipam-ips: "${LB_IP4_KUBEAPI}"
 spec:
   externalTrafficPolicy: Local
   type: LoadBalancer
@@ -21,7 +21,3 @@ spec:
       port: 443
       protocol: TCP
       targetPort: 6443
-  ipFamilyPolicy: PreferDualStack
-  ipFamilies:
-    - IPv4
-    - IPv6

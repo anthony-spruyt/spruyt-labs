@@ -4,7 +4,7 @@ persistence:
   dataDir:
     existingClaim: *app
 serviceAnnotations:
-  io.cilium/lb-ipam-ips: "${LB_IP4_MINECRAFT_BEDROCK_1},${LB_IP6_MINECRAFT_BEDROCK_1}"
+  io.cilium/lb-ipam-ips: "${LB_IP4_MINECRAFT_BEDROCK_1}"
 minecraftServer:
   eula: "TRUE"
   # One of: LATEST, SNAPSHOT, or a specific version (ie: "1.7.9").
