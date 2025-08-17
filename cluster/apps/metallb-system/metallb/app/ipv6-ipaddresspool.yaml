@@ -8,6 +8,7 @@ spec:
   addresses:
     - "${NETWORK_LB_CIDR_IP6}"
 ---
+# Documentation: https://metallb.io/configuration/_advanced_l2_configuration/index.html
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
 metadata:

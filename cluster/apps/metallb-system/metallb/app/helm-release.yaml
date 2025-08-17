@@ -10,6 +10,7 @@ spec:
   chart:
     spec:
       chart: *app
+      version: 0.15.2
       sourceRef:
         kind: HelmRepository
         name: metallb-charts
@@ -18,7 +19,14 @@ spec:
     crds: CreateReplace
   upgrade:
     crds: CreateReplace
+  # yaml-language-server: $schema=https://github.com/metallb/metallb/blob/main/charts/metallb/values.schema.json
+  # Documentation: https://metallb.io/configuration/
+  # Default values: https://github.com/metallb/metallb/blob/main/charts/metallb/values.yaml
   values:
+    crds:
+      enabled: true
+      validationFailurePolicy: Fail
     speaker:
       # Run speaker in hostNetwork so it can respond to ARP/NDP on the host's interfaces
-      hostNetwork: true
+      daemonset:
+        hostNetwork: true
