@@ -9,3 +9,6 @@ metadata:
 spec:
   blocks:
     - cidr: "${NETWORK_LB_CIDR_IP4_CILIUM}"
+  serviceSelector:
+    matchLabels:
+      lb-owner: cilium
