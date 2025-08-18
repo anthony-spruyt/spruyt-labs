@@ -64,7 +64,7 @@ spec:
         # accessModes:
         #   - ReadWriteOnce
     serviceAnnotations:
-      io.cilium/lb-ipam-ips: "${LB_IP_MINECRAFT_BEDROCK_2}"
+      metallb.io/loadBalancerIPs: "${LB_IP4_MINECRAFT_BEDROCK_2}"
     minecraftServer:
       eula: "TRUE"
       # One of: LATEST, SNAPSHOT, or a specific version (ie: "1.7.9").
@@ -132,7 +132,8 @@ spec:
       # nodePort:
       # loadBalancerIP:
       # loadBalancerSourceRanges: []
-      ## Set the externalTrafficPolicy in the Service to either Cluster or Local
+      # Preserve client source IP/port for UDP (important for Bedrock/RakNet).
+      # MetalLB will announce the VIP only from nodes with endpoints when Local is used.
       externalTrafficPolicy: Local
       ## Enable SSH for console access (eg. needed for backup containers like https://github.com/Kaiede/Bedrockifier)
       # Please note: if you use this together with serviceType LoadBalancer, make sure you have at least Kubernetes v1.26
