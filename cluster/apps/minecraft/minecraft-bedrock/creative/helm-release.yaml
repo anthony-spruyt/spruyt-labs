@@ -130,7 +130,7 @@ spec:
       serviceType: LoadBalancer
       ## Set the port used if the serviceType is NodePort
       # nodePort:
-      # loadBalancerIP:
+      loadBalancerIP: ${LB_IP4_MINECRAFT_BEDROCK_2}
       # loadBalancerSourceRanges: []
       # Preserve client source IP/port for UDP (important for Bedrock/RakNet).
       # MetalLB will announce the VIP only from nodes with endpoints when Local is used.
