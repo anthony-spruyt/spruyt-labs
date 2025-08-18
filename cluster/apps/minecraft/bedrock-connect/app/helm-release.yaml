@@ -48,3 +48,4 @@ spec:
             port: 19132
             enabled: true
             protocol: UDP
+        externalTrafficPolicy: Cluster
