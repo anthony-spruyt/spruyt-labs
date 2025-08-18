@@ -6,5 +6,5 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    - "${NETWORK_LB_CIDR_IP6}"
-    - "${NETWORK_LB_CIDR_IP4}"
+    - "${NETWORK_LB_CIDR_IP6_METALLB}"
+    - "${NETWORK_LB_CIDR_IP4_METALLB}"

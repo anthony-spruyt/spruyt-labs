@@ -52,8 +52,9 @@ ipMasqAgent:
       - "${CLUSTER_SVC_NETS_IP6}" # Cluster services IP6
       - "${CLUSTER_POD_NETS_IP4}" # Cluster pods IP4
       - "${CLUSTER_POD_NETS_IP6}" # Cluster pods IP6
-      - "${NETWORK_LB_CIDR_IP4}" # Cilium LB-IPAM IP4
-      - "${NETWORK_LB_CIDR_IP6}" # Cilium LB-IPAM IP6
+      - "${NETWORK_LB_CIDR_IP4_CILIUM}" # Cilium pool IP4
+      - "${NETWORK_LB_CIDR_IP4_METALLB}" # LB-Metallb pool IP4
+      - "${NETWORK_LB_CIDR_IP6}" # Metallb pool IP6
       - "${NATIVE_ROUTING_CIDR_IP4}" # Native routing IP4
       - "${NATIVE_ROUTING_CIDR_IP6}" # Native routing IP6
       #- "100.64.0.0/10" # Cilium overlay IP4
