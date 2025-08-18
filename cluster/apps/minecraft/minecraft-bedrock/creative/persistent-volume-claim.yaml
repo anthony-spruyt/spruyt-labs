@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: minecraft-bedrock-creative
+  name: minecraft-bedrock-creative-v1
   namespace: minecraft
   finalizers:
     - kubernetes.io/pvc-protection

@@ -55,7 +55,7 @@ spec:
       ##
       storageClass: "rbd-fast"
       dataDir:
-        existingClaim: *app
+        existingClaim: minecraft-bedrock-creative-v1
         # Set this to false if you don't care to persist state between restarts.
         enabled: true
         # Size: 10Gi
