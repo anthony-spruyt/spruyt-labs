@@ -12,4 +12,3 @@ spec:
   serviceSelector:
     matchLabels:
       lb-owner: cilium
-  disabled: true
