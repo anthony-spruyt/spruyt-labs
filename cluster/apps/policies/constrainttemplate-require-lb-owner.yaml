@@ -1,0 +1,34 @@
+---
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequirelbowner
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireLBOwner
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequirelbowner
+
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Service"
+          input.review.object.spec.type == "LoadBalancer"
+
+          not has_owner_annotation
+
+          msg := sprintf("LoadBalancer Service %v/%v must have Cilium or MetalLB ownership annotation",
+                  [input.review.object.metadata.namespace, input.review.object.metadata.name])
+        }
+
+        has_owner_annotation {
+          ann := input.review.object.metadata.annotations
+          ann["io.cilium/lb-ipam-ips"]
+        }
+
+        has_owner_annotation {
+          ann := input.review.object.metadata.annotations
+          ann["metallb.io/loadBalancerIPs"]
+        }
