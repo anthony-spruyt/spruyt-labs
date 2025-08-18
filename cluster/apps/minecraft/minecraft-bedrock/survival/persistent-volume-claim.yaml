@@ -10,6 +10,7 @@ metadata:
     - kubernetes.io/pvc-protection
 spec:
   storageClassName: rbd-fast
+  volumeName: pvc-6389d6af-8e6b-44b1-ab3f-95a9e5a2e36b
   accessModes:
     - ReadWriteOnce
   resources:
