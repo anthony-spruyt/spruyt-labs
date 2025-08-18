@@ -7,15 +7,13 @@ metadata:
   name: ingress-routes-lan-https
   namespace: whoami
   annotations:
-    #kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: whoami.lan.${EXTERNAL_DOMAIN}
-    #external-dns.alpha.kubernetes.io/target: ${LB_IP4_TRAEFIK}
 spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`whoami.lan.${EXTERNAL_DOMAIN}`) #&& PathPrefix(`/`)
+    - match: Host(`whoami.lan.${EXTERNAL_DOMAIN}`)
       kind: Rule
       middlewares:
         - name: compress

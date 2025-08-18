@@ -7,16 +7,14 @@ metadata:
   name: ingress-routes-lan
   namespace: kube-system
   annotations:
-    #kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: hubble.lan.${EXTERNAL_DOMAIN}
-    #external-dns.alpha.kubernetes.io/target: ${LB_IP4_TRAEFIK}
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`hubble.lan.${EXTERNAL_DOMAIN}`) #&& PathPrefix(`/`)
+      match: Host(`hubble.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: compress
       services:
@@ -35,9 +33,7 @@ metadata:
   name: ingress-route-kube-api
   namespace: kube-system
   annotations:
-    #kubernetes.io/ingress.class: traefik
     external-dns.alpha.kubernetes.io/hostname: api.lan.${EXTERNAL_DOMAIN}
-    #external-dns.alpha.kubernetes.io/target: ${LB_IP4_KUBEAPI}
 spec:
   entryPoints:
     - websecure

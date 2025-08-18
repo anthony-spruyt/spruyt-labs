@@ -10,7 +10,6 @@ talosVersion: v1.10.6
 kubernetesVersion: v1.33.4
 
 clusterName: ${CLUSTER_NAME}
-#endpoint: https://${LB_IP4_KUBEAPI}:6443
 #endpoint: https://${DOMAIN_NAME_KUBEAPI}
 #endpoint: https://${C1_IP4}:6443
 endpoint: https://${KUBEAPI_VIP_IP}:6443
@@ -18,10 +17,14 @@ domain: ${CLUSTER_DOMAIN}
 
 additionalApiServerCertSans:
   - 127.0.0.1
-  - ${LB_IP4_KUBEAPI}
-  - ${LB_IP6_KUBEAPI}
   - ${DOMAIN_NAME_KUBEAPI}
   - ${KUBEAPI_VIP_IP}
+  - ${C1_IP4}
+  - ${C2_IP4}
+  - ${C3_IP4}
+  - ${C1_IP6}
+  - ${C2_IP6}
+  - ${C3_IP6}
 
 cniConfig:
   name: none
@@ -62,13 +65,15 @@ nodes:
         vip: &vip
           ip: "${KUBEAPI_VIP_IP}"
     certSANs: &additionalMachineCertSans
+      - 127.0.0.1
+      - ${DOMAIN_NAME_KUBEAPI}
+      - ${KUBEAPI_VIP_IP}
       - ${C1_IP4}
       - ${C2_IP4}
       - ${C3_IP4}
-      - 127.0.0.1
-      - ${LB_IP4_KUBEAPI}
-      - ${DOMAIN_NAME_KUBEAPI}
-      - ${KUBEAPI_VIP_IP}
+      - ${C1_IP6}
+      - ${C2_IP6}
+      - ${C3_IP6}
     nodeLabels: &e2nodelabels
       node-role.kubernetes.io/control-plane: ""
       #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
@@ -105,7 +110,7 @@ nodes:
             state: *e2encryption
           network:
             extraHostEntries:
-              - ip: ${LB_IP4_KUBEAPI}
+              - ip: ${KUBEAPI_VIP_IP}
                 aliases:
                   - ${DOMAIN_NAME_KUBEAPI}
   - hostname: ${C2_HOST}

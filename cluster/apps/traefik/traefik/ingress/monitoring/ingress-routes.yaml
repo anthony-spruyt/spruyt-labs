@@ -7,16 +7,14 @@ metadata:
   name: ingress-routes-lan-grafana
   namespace: monitoring
   annotations:
-    #kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: grafana.lan.${EXTERNAL_DOMAIN}
-    #external-dns.alpha.kubernetes.io/target: ${LB_IP4_TRAEFIK}
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`grafana.lan.${EXTERNAL_DOMAIN}`) #&& PathPrefix(`/`)
+      match: Host(`grafana.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: compress
       services:
@@ -35,16 +33,14 @@ metadata:
   name: ingress-routes-lan-vmagent
   namespace: monitoring
   annotations:
-    #kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: vmagent.lan.${EXTERNAL_DOMAIN}
-    #external-dns.alpha.kubernetes.io/target: ${LB_IP4_TRAEFIK}
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`vmagent.lan.${EXTERNAL_DOMAIN}`) #&& PathPrefix(`/`)
+      match: Host(`vmagent.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: compress
       services:
