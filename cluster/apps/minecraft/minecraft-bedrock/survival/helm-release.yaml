@@ -6,7 +6,7 @@ metadata:
   name: &app minecraft-bedrock-survival
   namespace: minecraft
   annotations:
-    minecraft.bedrock.config/version: "11"
+    minecraft.bedrock.config/version: "12"
 spec:
   interval: 1h
   chart:
@@ -271,5 +271,5 @@ spec:
       reloader.stakater.com/auto: "true"
     deploymentAnnotations: {}
     deploymentLables: {}
-    #serviceLables:
-    #  lb-owner: cilium
+    serviceLables:
+      lb-owner: cilium
