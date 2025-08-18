@@ -6,7 +6,7 @@ metadata:
   name: &app minecraft-bedrock-survival
   namespace: minecraft
   annotations:
-    minecraft.bedrock.config/version: "9"
+    minecraft.bedrock.config/version: "10"
 spec:
   interval: 1h
   chart:
