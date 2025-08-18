@@ -5,6 +5,8 @@ kind: Kustomization
 resources:
   # namespaces
   - ./namespaces.yaml
+  # gatekeeper
+  - ./gatekeeper
   # fluxcd
   - ./flux-system
   # kube system
