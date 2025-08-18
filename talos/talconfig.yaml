@@ -12,6 +12,7 @@ kubernetesVersion: v1.33.3
 clusterName: ${CLUSTER_NAME}
 #endpoint: https://${LB_IP4_KUBEAPI}:6443
 #endpoint: https://${DOMAIN_NAME_KUBEAPI}
+#endpoint: https://${C1_IP4}:6443
 endpoint: https://${KUBEAPI_VIP_IP}:6443
 domain: ${CLUSTER_DOMAIN}
 

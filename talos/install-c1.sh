@@ -76,10 +76,10 @@ talosctl apply-config \
 
 wait_for_talos "${C1_IP4}" 300
 
-echo "⏳ Giving node time to fully start up before wiping secondary disks..."
-read -rp "Press any key to wipe secondary disks: " continuewipesanswer
+#echo "⏳ Giving node time to fully start up before wiping secondary disks..."
+#read -rp "Press any key to wipe secondary disks: " continuewipesanswer
 
-talosctl wipe disk nvme0n1 -n ${C1_IP4} --drop-partition
+#talosctl wipe disk nvme0n1 -n ${C1_IP4} --drop-partition
 
 echo "⏳ Giving control plane components time to fully start up before bootstrapping..."
 read -rp "Press any key to continue: " continuebootstrapanswer

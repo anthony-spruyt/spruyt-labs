@@ -35,10 +35,10 @@ talosctl apply-config \
 
 wait_for_talos "${C3_IP4}" 300
 
-echo "⏳ Giving node time to fully start up before wiping secondary disks..."
-read -rp "Press any key to wipe secondary disks: " continuewipesanswer
+#echo "⏳ Giving node time to fully start up before wiping secondary disks..."
+#read -rp "Press any key to wipe secondary disks: " continuewipesanswer
 
-talosctl wipe disk nvme0n1 -n ${C3_IP4} --drop-partition
+#talosctl wipe disk nvme0n1 -n ${C3_IP4} --drop-partition
 
 echo "⏳ Giving node time to fully start up before approving certs..."
 read -rp "Press any key to approve certs: " continuecertc2sanswer
