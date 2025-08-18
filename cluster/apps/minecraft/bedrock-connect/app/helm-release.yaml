@@ -39,7 +39,7 @@ spec:
         controller: bedrockconnect
         type: LoadBalancer
         annotations:
-          metallb.io/loadBalancerIPs: "${LB_IP4_BEDROCK_CONNECT}"
+          io.cilium/lb-ipam-ips: "${LB_IP4_BEDROCK_CONNECT}"
         ports:
           bedrock-udp:
             port: 19132
