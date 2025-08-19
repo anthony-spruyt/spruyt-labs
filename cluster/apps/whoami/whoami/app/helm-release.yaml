@@ -20,6 +20,7 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+  # Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
   values:
     controllers:
       main:

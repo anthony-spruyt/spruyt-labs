@@ -11,18 +11,19 @@ spec:
     kind: OCIRepository
     name: bjw-s-labs-app-template
     namespace: flux-system
+  # Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
   values:
     fullnameOverride: *name
     controllers:
-      bedrockconnect:
+      main:
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
-          bedrockconnect:
+          main:
             image:
               # TODO:renovate
-              repository: josiahsayers15/bedrockconnect
-              tag: 1.0.1
+              repository: nmbgeek/bedrockconnect
+              tag: 1.59
             resources:
               requests:
                 cpu: 30m
@@ -34,15 +35,14 @@ spec:
               - name: bedrock-udp
                 containerPort: 19132
                 protocol: UDP
+            #command: []
+            #args: []
     service:
       bedrockconnect:
-        controller: bedrockconnect
+        controller: main
         type: LoadBalancer
         annotations:
-          #io.cilium/lb-ipam-ips: "${LB_IP4_BEDROCK_CONNECT}"
           metallb.io/loadBalancerIPs: "${LB_IP4_BEDROCK_CONNECT}"
-        #labels:
-        #  lb-owner: cilium
         ports:
           bedrock-udp:
             port: 19132
