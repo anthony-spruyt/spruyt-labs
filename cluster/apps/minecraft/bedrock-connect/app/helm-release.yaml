@@ -5,8 +5,6 @@ kind: HelmRelease
 metadata:
   name: &app bedrock-connect
   namespace: minecraft
-  labels:
-    app.kubernetes.io/name: *app
 spec:
   interval: 1h
   chartRef:
