@@ -16,14 +16,14 @@ spec:
       name: *app
       namespace: *namespace
   path: ./cluster/apps/minecraft/bedrock-connect/app
-  prune: false
+  prune: true
   sourceRef:
     kind: GitRepository
     name: *fluxnamespace
   wait: false
   interval: 1h
   retryInterval: 1m
-  timeout: 5m
+  timeout: 1m
   postBuild:
     substituteFrom:
       - kind: ConfigMap
