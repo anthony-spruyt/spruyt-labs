@@ -14,10 +14,31 @@ spec:
   # Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
   values:
     fullnameOverride: *name
+    configMaps:
+      custom:
+        enabled: true
+        data:
+          custom_servers.json: |-
+            [
+              {
+                "name": "Spruyt fam survival",
+                "address": "mc1.lan.spruyt.xyz",
+                "port": 19132
+              },
+              {
+                "name": "Spruyt fam creative",
+                "address": "mc2.lan.spruyt.xyz",
+                "port": 19132
+              }
+            ]
     controllers:
       main:
         annotations:
           reloader.stakater.com/auto: "true"
+        extraVolumes:
+          - name: custom-servers
+            configMap:
+              name: bedrock-connect-custom
         containers:
           main:
             image:
@@ -35,6 +56,11 @@ spec:
               - name: bedrock-udp
                 containerPort: 19132
                 protocol: UDP
+            extraVolumeMounts:
+              - name: custom-servers
+                mountPath: /app/custom_servers.json
+                subPath: custom_servers.json
+                readOnly: true
             #command: []
             #args: []
     service:
