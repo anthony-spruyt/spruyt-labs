@@ -22,11 +22,13 @@ spec:
             [
               {
                 "name": "Spruyt fam survival",
+                "iconUrl": "https://i.imgur.com/nhumQVP.png",
                 "address": "mc1.lan.spruyt.xyz",
                 "port": 19132
               },
               {
                 "name": "Spruyt fam creative",
+                "iconUrl": "https://i.imgur.com/nhumQVP.png",
                 "address": "mc2.lan.spruyt.xyz",
                 "port": 19132
               }
