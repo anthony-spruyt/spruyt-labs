@@ -11,6 +11,7 @@ spec:
     kind: OCIRepository
     name: bjw-s-labs-app-template
     namespace: flux-system
+  # yaml-language-server: $schema=https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.schema.json
   # Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
   values:
     fullnameOverride: *app
@@ -31,14 +32,19 @@ spec:
                 "port": 19132
               }
             ]
+    extraVolumes:
+      - name: custom-servers
+        configMap:
+          name: bedrock-connect-custom
+    extraVolumeMounts:
+      - name: custom-servers
+        mountPath: /app/custom_servers.json
+        subPath: custom_servers.json
+        readOnly: true
     controllers:
       main:
         annotations:
           reloader.stakater.com/auto: "true"
-        extraVolumes:
-          - name: custom-servers
-            configMap:
-              name: bedrock-connect-custom
         containers:
           main:
             image:
@@ -56,13 +62,6 @@ spec:
               - name: bedrock-udp
                 containerPort: 19132
                 protocol: UDP
-            extraVolumeMounts:
-              - name: custom-servers
-                mountPath: /app/custom_servers.json
-                subPath: custom_servers.json
-                readOnly: true
-            #command: []
-            #args: []
     service:
       bedrockconnect:
         controller: main
