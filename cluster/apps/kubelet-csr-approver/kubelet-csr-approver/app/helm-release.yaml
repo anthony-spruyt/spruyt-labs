@@ -24,9 +24,8 @@ spec:
     providerIpPrefixes:
       - "${NATIVE_ROUTING_CIDR_IP4}"
       - "${NATIVE_ROUTING_CIDR_IP6}"
-      - "${NETWORK_LB_CIDR_IP4_CILIUM}"
-      - "${NETWORK_LB_CIDR_IP4_METALLB}"
-      - "${NETWORK_LB_CIDR_IP6_METALLB}"
+      - "${NETWORK_LB_CIDR_IP4}"
+      - "${NETWORK_LB_CIDR_IP6}"
       - "${CLUSTER_POD_NETS_IP4}"
       - "${CLUSTER_POD_NETS_IP6}"
       - "${CLUSTER_SVC_NETS_IP4}"

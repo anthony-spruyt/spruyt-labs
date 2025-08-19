@@ -7,18 +7,6 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    - "${NETWORK_LB_CIDR_IP6_METALLB}"
-    - "${NETWORK_LB_CIDR_IP4_METALLB}"
-    - "${NETWORK_LB_CIDR_IP4_CILIUM}"
+    - "${NETWORK_LB_CIDR_IP6}"
+    - "${NETWORK_LB_CIDR_IP4}"
   autoAssign: false
-#---
-# yaml-language-server: $schema=https://github.com/datreeio/CRDs-catalog/raw/main/metallb.io/ipaddresspool_v1beta1.json
-#apiVersion: metallb.io/v1beta1
-#kind: IPAddressPool
-#metadata:
-#  name: cilium-shadow-pool
-#  namespace: metallb-system
-#spec:
-#  addresses:
-#    - "${NETWORK_LB_CIDR_IP4_CILIUM}"
-#  autoAssign: false

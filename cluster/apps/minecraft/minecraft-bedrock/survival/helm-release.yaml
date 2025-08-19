@@ -66,7 +66,6 @@ spec:
         # accessModes:
         #   - ReadWriteOnce
     serviceAnnotations:
-      #io.cilium/lb-ipam-ips: "${LB_IP4_MINECRAFT_BEDROCK_1}"
       metallb.io/loadBalancerIPs: "${LB_IP4_MINECRAFT_BEDROCK_1}"
     minecraftServer:
       eula: "TRUE"
@@ -270,5 +269,4 @@ spec:
       reloader.stakater.com/auto: "true"
     deploymentAnnotations: {}
     deploymentLables: {}
-    #serviceLabels:
-    #  lb-owner: cilium
+    serviceLabels: {}
