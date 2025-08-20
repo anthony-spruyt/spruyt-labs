@@ -53,6 +53,9 @@ spec:
               - name: bedrock-udp
                 containerPort: 19132
                 protocol: UDP
+            env:
+              - name: JAVA_TOOL_OPTIONS
+                value: "-Djava.net.preferIPv4Stack=true"
     service:
       bedrockconnect:
         controller: main
