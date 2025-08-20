@@ -15,6 +15,32 @@ spec:
   # Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
   values:
     fullnameOverride: *app
+    controllers:
+      main:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          main:
+            image:
+              # TODO:renovate
+              #repository: nmbgeek/bedrockconnect
+              #tag: 1.59
+              repository: aspruyt/bedrockconnect
+              tag: java17
+            resources:
+              requests:
+                cpu: 30m
+                memory: 256Mi
+              limits:
+                cpu: 100m
+                memory: 512Mi
+            ports:
+              - name: bedrock-udp
+                containerPort: 19132
+                protocol: UDP
+            env:
+              - name: JAVA_TOOL_OPTIONS
+                value: "-Djava.net.preferIPv4Stack=true"
     configMaps:
       config:
         enabled: true
@@ -32,30 +58,6 @@ spec:
                 "port": 19132
               }
             ]
-    controllers:
-      main:
-        annotations:
-          reloader.stakater.com/auto: "true"
-        containers:
-          main:
-            image:
-              # TODO:renovate
-              repository: nmbgeek/bedrockconnect
-              tag: 1.59
-            resources:
-              requests:
-                cpu: 30m
-                memory: 256Mi
-              limits:
-                cpu: 100m
-                memory: 512Mi
-            ports:
-              - name: bedrock-udp
-                containerPort: 19132
-                protocol: UDP
-            env:
-              - name: JAVA_TOOL_OPTIONS
-                value: "-Djava.net.preferIPv4Stack=true"
     service:
       bedrockconnect:
         controller: main
