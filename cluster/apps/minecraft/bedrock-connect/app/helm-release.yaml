@@ -69,6 +69,7 @@ spec:
       config:
         enabled: true
         type: configMap
+        name: config
         advancedMounts:
           main:
             main:
