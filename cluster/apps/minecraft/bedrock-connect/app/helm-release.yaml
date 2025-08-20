@@ -16,7 +16,7 @@ spec:
   values:
     fullnameOverride: *app
     configMaps:
-      custom:
+      config:
         enabled: true
         data:
           custom_servers.json: |-
@@ -32,15 +32,6 @@ spec:
                 "port": 19132
               }
             ]
-    extraVolumes:
-      - name: custom-servers
-        configMap:
-          name: bedrock-connect-custom
-    extraVolumeMounts:
-      - name: custom-servers
-        mountPath: /app/custom_servers.json
-        subPath: custom_servers.json
-        readOnly: true
     controllers:
       main:
         annotations:
@@ -74,3 +65,13 @@ spec:
             enabled: true
             protocol: UDP
         externalTrafficPolicy: Cluster
+    persistence:
+      config:
+        enabled: true
+        type: configMap
+        advancedMounts:
+          main:
+            main:
+              - path: /app/custom_servers.json
+                readOnly: true
+                subPath: custom_servers.json
