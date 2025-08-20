@@ -69,7 +69,7 @@ spec:
       config:
         enabled: true
         type: configMap
-        name: config
+        name: bedrock-connect
         advancedMounts:
           main:
             main:
