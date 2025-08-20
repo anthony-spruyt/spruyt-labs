@@ -29,10 +29,10 @@ spec:
               tag: java17
             resources:
               requests:
-                cpu: 30m
+                cpu: 50m
                 memory: 256Mi
               limits:
-                cpu: 100m
+                cpu: 500m
                 memory: 512Mi
             ports:
               - name: bedrock-udp
