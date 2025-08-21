@@ -6,4 +6,4 @@ resources:
   - ./persistent-volume-claims.yaml
   - ./vaultwarden-backup-secrets.sops.yaml
   - ./vaultwarden-secrets.sops.yaml
-  #- ./helm-release.yaml
+  - ./helm-release.yaml
