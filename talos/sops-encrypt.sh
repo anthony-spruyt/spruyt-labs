@@ -12,3 +12,5 @@ sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/worksp
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/technitium/technitium/app/technitium-secrets.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/monitoring/victoria-logs-single/app/victoria-logs-single-secrets.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/monitoring/victoria-metrics-k8s-stack/app/victoria-metrics-k8s-stack-secrets.sops.yaml"
+sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/vaultwarden/vaultwarden/app/vaultwarden-secrets.sops.yaml"
+sops --config "/workspaces/spruyt-labs/.sops.yaml" --encrypt --in-place "/workspaces/spruyt-labs/cluster/apps/vaultwarden/vaultwarden/app/vaultwarden-backup-secrets.sops.yaml"

@@ -3,9 +3,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./kube-system
-  - ./monitoring
-  - ./rook-ceph
-  - ./technitium
-  - ./vaultwarden
-  - ./whoami
+  - ./persistent-volume-claims.yaml
+  - ./vaultwarden-backup-secrets.sops.yaml
+  - ./vaultwarden-secrets.sops.yaml
+  #- ./helm-release.yaml
