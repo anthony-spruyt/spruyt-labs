@@ -30,32 +30,6 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-grafana
-  namespace: monitoring
-  annotations:
-    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: grafana.${EXTERNAL_DOMAIN}
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`grafana.${EXTERNAL_DOMAIN}`)
-      middlewares:
-        - name: compress
-      services:
-        - name: victoria-metrics-k8s-stack-grafana
-          namespace: monitoring
-          passHostHeader: true
-          port: 80
-  tls:
-    secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
----
-# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
-# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
   name: ingress-routes-lan-vmagent
   namespace: monitoring
   annotations:
