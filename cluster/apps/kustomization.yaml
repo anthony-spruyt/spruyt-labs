@@ -27,6 +27,6 @@ resources:
   - ./monitoring
   # workloads
   - ./minecraft
-  # vaultwarden
+  - ./vaultwarden
   # mosquito
   # homeassistant addons
