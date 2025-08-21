@@ -62,10 +62,6 @@ wait_for_bootstrap() {
 #
 # talosctl config info
 
-#server: https://10.0.10.200:6443
-#server: https://192.168.50.99:6443
-#server: https://api.lan.spruyt.xyz
-
 talosctl config context ${CLUSTER_NAME}
 
 talosctl apply-config \
