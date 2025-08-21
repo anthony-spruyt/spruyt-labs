@@ -21,7 +21,7 @@ spec:
               tag: 1.34.3-alpine
             envFrom:
               - secretRef:
-                name: vaultwarden-secrets
+                  name: vaultwarden-secrets
             probes:
               liveness: &probes
                 enabled: true
@@ -50,7 +50,7 @@ spec:
               tag: 2.1.0
             envFrom:
               - secretRef:
-                name: vaultwarden-backup-secrets
+                  name: vaultwarden-backup-secrets
     service:
       vaultwarden:
         controller: main
