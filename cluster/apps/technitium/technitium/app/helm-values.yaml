@@ -106,6 +106,12 @@ service:
         enabled: true
         port: 443
         protocol: TCP
+      http:
+        port: 5380
+        protocol: HTTP
+      https:
+        port: 53443
+        protocol: HTTPS
     ipFamilyPolicy: PreferDualStack
     ipFamilies:
       - IPv6
@@ -119,7 +125,7 @@ persistence:
   tls:
     enabled: true
     type: secret
-    name: dns-secure
+    name: dns-internal-spruyt-xyz-tls
     globalMounts:
       - path: /certs
         readOnly: true

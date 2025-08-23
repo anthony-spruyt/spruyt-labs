@@ -184,7 +184,7 @@ persistence:
   tls:
     enabled: true
     type: secret
-    name: dns-secure
+    name: dns-internal-spruyt-xyz-tls
     globalMounts:
       - path: /certs
         readOnly: true

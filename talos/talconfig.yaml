@@ -1,9 +1,5 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
-# Example configs:
-# - https://github.com/budimanjojo/talhelper/blob/master/example/talconfig.yaml
-# - https://github.com/mrwulf/home-cluster/blob/main/talos/talconfig.yaml
-
 # renovate: depName=ghcr.io/siderolabs/installer datasource=docker
 talosVersion: v1.10.6
 # renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
@@ -223,6 +219,8 @@ patches:
       network:
         disableSearchDomain: true
         nameservers:
+          - ${LB_IP4_TECHNITIUM}
+          - ${LB_IP4_TECHNITIUM_SECONDARY}
           - 172.64.36.1
           - 172.64.36.2
 

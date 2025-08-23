@@ -3,17 +3,16 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "dns-secure-technitium"
+  name: "dns-internal-spruyt-xyz-tls-technitium"
   namespace: technitium
 spec:
-  secretName: "dns-secure"
+  secretName: "dns-internal-spruyt-xyz-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
-  commonName: "dns-secure.lan.${EXTERNAL_DOMAIN}"
+  commonName: "${EXTERNAL_DOMAIN}"
   dnsNames:
     - "dns.lan.${EXTERNAL_DOMAIN}"
-    - "dns-secure.lan.${EXTERNAL_DOMAIN}"
   keystores:
     pkcs12:
       create: true
