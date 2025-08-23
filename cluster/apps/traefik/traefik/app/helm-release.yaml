@@ -35,13 +35,13 @@ spec:
       requests:
         cpu: 30m
         memory: 300Mi
-    ports:
-      web:
-        redirections:
-          entryPoint:
-            to: websecure
-            scheme: https
-            permanent: true
+    #ports:
+    #  web:
+    #    redirections:
+    #      entryPoint:
+    #        to: websecure
+    #        scheme: https
+    #        permanent: true
     providers:
       kubernetesCRD:
         allowCrossNamespace: false
