@@ -12,6 +12,7 @@ spec:
     kind: ClusterIssuer
   commonName: "dns-secure.lan.${EXTERNAL_DOMAIN}"
   dnsNames:
+    - "dns.lan.${EXTERNAL_DOMAIN}"
     - "dns-secure.lan.${EXTERNAL_DOMAIN}"
   keystores:
     pkcs12:
