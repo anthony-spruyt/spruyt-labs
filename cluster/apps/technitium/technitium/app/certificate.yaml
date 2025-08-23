@@ -14,11 +14,6 @@ spec:
   dnsNames:
     - "dns.lan.${EXTERNAL_DOMAIN}"
     - "dns-secure.lan.${EXTERNAL_DOMAIN}"
-  ipAddresses:
-    - "192.168.50.33"
-    - "2403:5812:7fff:74a::202"
-    - "192.168.50.38"
-    - "2403:5812:7fff:74a::203"
   keystores:
     pkcs12:
       create: true
