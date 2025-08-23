@@ -54,6 +54,8 @@ spec:
     service:
       vaultwarden:
         controller: main
+        type: ClusterIP
+        externalTrafficPolicy: Local
         ports:
           http:
             port: *port
