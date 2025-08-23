@@ -16,7 +16,7 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   technitium-secondary:
-    replicas: 2
+    replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
@@ -167,6 +167,10 @@ service:
         enabled: true
         port: 443
         protocol: TCP
+      debug:
+        enabled: true
+        port: 5380
+        protocol: HTTP
     ipFamilyPolicy: PreferDualStack
     ipFamilies:
       - IPv6
