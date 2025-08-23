@@ -1,0 +1,185 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+fullnameOverride: &name technitium-secondary
+defaultPodOptions:
+  automountServiceAccountToken: false
+  enableServiceLinks: false
+  terminationGracePeriodSeconds: 20
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  technitium-secondary:
+    replicas: 2
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      labels:
+        role: dns-secondary
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - dns-primary
+              topologyKey: kubernetes.io/hostname
+    initContainers:
+      bootstrap-config:
+        image:
+          repository: dwdraju/alpine-curl-jq
+        command:
+          - sh
+          - -c
+          - |
+            echo "TODO"
+        env:
+          - name: API_BASE_URL
+            value: "http://localhost:5380"
+          - name: USER
+            value: "admin"
+          - name: PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: technitium-secrets
+                key: DNS_SERVER_ADMIN_PASSWORD
+          - name: CATALOG_ZONE
+            value: "catalog.zone"
+          - name: PRIMARY_IP4
+            value: "${LB_IP4_TECHNITIUM}"
+          - name: PRIMARY_IP6
+            value: "${LB_IP6_TECHNITIUM}"
+          - name: TSIG_KEY_NAME
+            valueFrom:
+              secretKeyRef:
+                name: technitium-secrets
+                key: TSIG_KEY
+          - name: TSIG_KEY
+            valueFrom:
+              secretKeyRef:
+                name: technitium-secrets
+                key: TSIG_SECRET
+    containers:
+      technitium:
+        image:
+          repository: technitium/dns-server
+          tag: 13.6.0
+        env:
+          - name: DNS_SERVER_DOMAIN
+            value: "${DNS_SERVER_DOMAIN}"
+          - name: DNS_SERVER_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: technitium-secrets
+                key: DNS_SERVER_ADMIN_PASSWORD
+        securityContext:
+          allowPrivilegeEscalation: false
+          #  Error! Read-only file system : '/tmp/'
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          requests:
+            cpu: 40m
+            memory: 192Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        probes:
+          liveness:
+            enabled: true
+            custom: false
+            spec:
+              tcpSocket:
+                port: 53
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              failureThreshold: 3
+          #readiness:
+          #  enabled: true
+          #  custom: true
+          #  spec:
+          #    exec:
+          #      command:
+          #        - sh
+          #        - -c
+          #        - |
+          #          set -e
+          #          MARKER="/tmp/initial-sync-complete"
+          #          ZONE_DIR="/etc/dns/zones"
+          #          PRIMARY="${DNS_SERVER_DOMAIN}"
+
+          #          # Require at least one transferred zone
+          #          [ -d "$ZONE_DIR" ] && [ "$(find "$ZONE_DIR" -type f | wc -l)" -gt 0 ]
+
+          #          # If already primed, we're done
+          #          [ -f "$MARKER" ] && exit 0
+
+          #          # Only before first Ready: try TCP/53 reachability if tools exist
+          #          if command -v nc >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
+          #            timeout 2 nc -z "${PRIMARY}" 53
+          #          fi
+
+          #          # Mark initial sync complete
+          #          : > "$MARKER"
+          #    initialDelaySeconds: 10
+          #    periodSeconds: 5
+          #    failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "sleep 5"]
+service:
+  technitium:
+    controller: *name
+    ports:
+      http:
+        port: 5380
+  dns:
+    controller: *name
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+    annotations:
+      metallb.io/loadBalancerIPs: "${LB_IP4_TECHNITIUM_SECONDARY},${LB_IP6_TECHNITIUM_SECONDARY}"
+    ports:
+      dns-tcp:
+        enabled: true
+        port: 53
+        protocol: TCP
+      dns-udp:
+        enabled: true
+        port: 53
+        protocol: UDP
+      dns-over-tls:
+        enabled: true
+        port: 853
+        protocol: TCP
+      dns-over-https:
+        enabled: true
+        port: 443
+        protocol: TCP
+    ipFamilyPolicy: PreferDualStack
+    ipFamilies:
+      - IPv6
+      - IPv4
+persistence:
+  config:
+    enabled: true
+    type: emptyDir
+    globalMounts:
+      - path: /etc/dns
+  tls:
+    enabled: true
+    type: secret
+    name: dns-secure
+    globalMounts:
+      - path: /certs
+        readOnly: true

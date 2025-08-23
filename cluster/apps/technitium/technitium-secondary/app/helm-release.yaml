@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: technitium
+  name: technitium-secondary
   namespace: technitium
 spec:
   interval: 1h
@@ -20,4 +20,4 @@ spec:
       retries: 10
   valuesFrom:
     - kind: ConfigMap
-      name: technitium-values
+      name: technitium-secondary-values

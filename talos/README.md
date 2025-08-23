@@ -51,4 +51,4 @@ To [upgrade](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/) Talos Li
 
 ## Resources
 
-- [Talos 1.10 Configuration Reference & Documentation](https://www.talos.dev/v1.10/reference/configuration/)
+- [Talos 1.10 Configuration Reference & Documentation](https://www.talos.dev/v1.10/reference/configuration/v1alpha1/config/)

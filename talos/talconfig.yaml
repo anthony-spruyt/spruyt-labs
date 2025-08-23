@@ -216,6 +216,10 @@ patches:
           imageGCHighThresholdPercent: 70
           maxParallelImagePulls: 10
           serializeImagePulls: false
+        nodeIP:
+          validSubnets:
+            - ${NATIVE_ROUTING_CIDR_IP4}
+            - ${NATIVE_ROUTING_CIDR_IP6}
       network:
         disableSearchDomain: true
         nameservers:

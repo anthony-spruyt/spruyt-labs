@@ -17,5 +17,5 @@ spec:
     pkcs12:
       create: true
       passwordSecretRef:
-        name: technitium-secrets
+        name: technitium-cert-secrets
         key: PFX_PASSWORD
