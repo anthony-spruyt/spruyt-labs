@@ -51,10 +51,7 @@ service:
     ports:
       http:
         port: *port
-      test1:
-        port: 7277
-      test2:
-        port: 8080
+        protocol: HTTP
 persistence:
   data:
     existingClaim: vaultwarden-data
