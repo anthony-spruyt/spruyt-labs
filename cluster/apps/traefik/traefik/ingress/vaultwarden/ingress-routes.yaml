@@ -4,7 +4,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-wan
+  name: ingress-routes-wan-vaultwarden
   namespace: vaultwarden
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
@@ -15,8 +15,8 @@ spec:
   routes:
     - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`)
       kind: Rule
-      middlewares:
-        - name: compress
+      #middlewares:
+      #  - name: compress
       services:
         - name: vaultwarden
           namespace: vaultwarden
