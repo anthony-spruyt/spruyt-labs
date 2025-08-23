@@ -51,7 +51,6 @@ service:
     ports:
       http:
         port: *port
-        protocol: HTTP
 persistence:
   data:
     existingClaim: vaultwarden-data
