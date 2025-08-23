@@ -10,7 +10,7 @@ spec:
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
-  commonName: "${EXTERNAL_DOMAIN}"
+  commonName: "dns.lan.${EXTERNAL_DOMAIN}"
   dnsNames:
     - "dns.lan.${EXTERNAL_DOMAIN}"
   keystores:
