@@ -3,30 +3,13 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "wildcard-${EXTERNAL_DOMAIN/./-}-tls-kube-system"
+  name: "hubble-internal-${EXTERNAL_DOMAIN/./-}-tls-kube-system"
   namespace: kube-system
 spec:
-  secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+  secretName: "hubble-internal-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
-  commonName: "${EXTERNAL_DOMAIN}"
+  commonName: "hubble.lan.${EXTERNAL_DOMAIN}"
   dnsNames:
-    - "${EXTERNAL_DOMAIN}"
-    - "*.${EXTERNAL_DOMAIN}"
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls-kube-system"
-  namespace: kube-system
-spec:
-  secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
-  issuerRef:
-    name: ${CLUSTER_ISSUER}
-    kind: ClusterIssuer
-  commonName: "${EXTERNAL_DOMAIN}"
-  dnsNames:
-    - "${EXTERNAL_DOMAIN}"
-    - "*.lan.${EXTERNAL_DOMAIN}"
+    - "hubble.lan.${EXTERNAL_DOMAIN}"
