@@ -15,8 +15,8 @@ spec:
   routes:
     - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`)
       kind: Rule
-      middlewares:
-        - name: compress
+      #middlewares:
+      #  - name: compress
       services:
         - name: vaultwarden
           namespace: vaultwarden
