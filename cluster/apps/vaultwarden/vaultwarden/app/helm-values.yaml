@@ -1,0 +1,64 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+defaultPodOptions:
+  annotations:
+    secret.reloader.stakater.com/reload: vaultwarden
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      main:
+        image:
+          repository: vaultwarden/server
+          tag: 1.34.3-alpine
+        envFrom:
+          - secretRef:
+              name: vaultwarden-secrets
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /alive
+                port: &port 80
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 1
+              failureThreshold: 3
+          readiness: *probes
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 2Gi
+      backups:
+        # Restore with:
+        #   gpg --decrypt backup.tar.xz.gpg > backup.tar.xz
+        #   tar -xJvf ./backup/data.tar.xz -C /data/
+        image:
+          repository: bruceforce/vaultwarden-backup
+          tag: 2.1.0
+        envFrom:
+          - secretRef:
+              name: vaultwarden-backup-secrets
+service:
+  vaultwarden:
+    controller: main
+    ports:
+      http:
+        port: *port
+persistence:
+  data:
+    existingClaim: vaultwarden-data
+    globalMounts:
+      - path: /data
+  backups:
+    existingClaim: vaultwarden-backups
+    globalMounts:
+      - path: /backups
+  tmp:
+    type: emptyDir
