@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/traefik/traefik-helm-chart/refs/heads/master/traefik/values.schema.json
+# Default values for traefik: https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml
+# -- [Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for `traefik` container.
+resources:
+  limits:
+    cpu: 100m
+    memory: 1Gi
+  requests:
+    cpu: 30m
+    memory: 300Mi
+#ports:
+#  web:
+#    redirections:
+#      entryPoint:
+#        to: websecure
+#        scheme: https
+#        permanent: true
+providers:
+  kubernetesCRD:
+    allowCrossNamespace: false
+service:
+  annotations:
+    metallb.io/loadBalancerIPs: "${LB_IP4_TRAEFIK}"
