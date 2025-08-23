@@ -69,7 +69,7 @@ spec:
             port: 19132
             enabled: true
             protocol: UDP
-        externalTrafficPolicy: Local
+        externalTrafficPolicy: Cluster
     persistence:
       config:
         enabled: true

@@ -142,7 +142,7 @@ service:
   dns:
     controller: *name
     type: LoadBalancer
-    externalTrafficPolicy: Local
+    externalTrafficPolicy: Cluster
     annotations:
       metallb.io/loadBalancerIPs: "${LB_IP4_TECHNITIUM_SECONDARY},${LB_IP6_TECHNITIUM_SECONDARY}"
     ports:
