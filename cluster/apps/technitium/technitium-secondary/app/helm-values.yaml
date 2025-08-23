@@ -36,6 +36,7 @@ controllers:
       bootstrap-config:
         image:
           repository: dwdraju/alpine-curl-jq
+          tag: latest
         command:
           - sh
           - -c
