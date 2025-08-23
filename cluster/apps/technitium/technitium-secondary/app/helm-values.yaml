@@ -75,7 +75,7 @@ controllers:
           tag: 13.6.0
         env:
           - name: DNS_SERVER_DOMAIN
-            value: "${DNS_SERVER_DOMAIN}"
+            value: "${DNS_SERVER_SECONDARY_DOMAIN}"
           - name: DNS_SERVER_ADMIN_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -139,11 +139,6 @@ controllers:
             exec:
               command: ["sh", "-c", "sleep 5"]
 service:
-  technitium:
-    controller: *name
-    ports:
-      http:
-        port: 5380
   dns:
     controller: *name
     type: LoadBalancer
@@ -167,10 +162,12 @@ service:
         enabled: true
         port: 443
         protocol: TCP
-      debug:
-        enabled: true
+      api-http:
         port: 5380
         protocol: HTTP
+      api-https:
+        port: 53443
+        protocol: HTTPS
     ipFamilyPolicy: PreferDualStack
     ipFamilies:
       - IPv6
@@ -184,7 +181,7 @@ persistence:
   tls:
     enabled: true
     type: secret
-    name: dns-internal-spruyt-xyz-tls
+    name: dns-secondary-internal-spruyt-xyz-tls
     globalMounts:
       - path: /certs
         readOnly: true

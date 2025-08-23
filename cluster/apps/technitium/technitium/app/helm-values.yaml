@@ -78,11 +78,6 @@ controllers:
             exec:
               command: ["sh", "-c", "sleep 5"]
 service:
-  technitium:
-    controller: *name
-    ports:
-      http:
-        port: 5380
   dns:
     controller: *name
     type: LoadBalancer
@@ -106,10 +101,10 @@ service:
         enabled: true
         port: 443
         protocol: TCP
-      http:
+      api-http:
         port: 5380
         protocol: HTTP
-      https:
+      api-https:
         port: 53443
         protocol: HTTPS
     ipFamilyPolicy: PreferDualStack

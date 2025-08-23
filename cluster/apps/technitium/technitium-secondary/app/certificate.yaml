@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "dns-secondary-internal-spruyt-xyz-tls-technitium"
+  namespace: technitium
+spec:
+  secretName: "dns-secondary-internal-spruyt-xyz-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  commonName: "dns-secondary.lan.${EXTERNAL_DOMAIN}"
+  dnsNames:
+    - "dns-secondary.lan.${EXTERNAL_DOMAIN}"
+  keystores:
+    pkcs12:
+      create: true
+      passwordSecretRef:
+        name: technitium-cert-secrets
+        key: PFX_PASSWORD
