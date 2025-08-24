@@ -39,7 +39,9 @@ spec:
       app.kubernetes.io/instance: vaultwarden
       app.kubernetes.io/name: vaultwarden
   egress:
-    - icmps:
+    - toEntities:
+        - cluster
+      icmps:
         - fields:
             - family: IPv4
               type: DestinationUnreachable
