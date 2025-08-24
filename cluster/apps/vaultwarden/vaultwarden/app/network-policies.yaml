@@ -39,15 +39,18 @@ spec:
       app.kubernetes.io/instance: vaultwarden
       app.kubernetes.io/name: vaultwarden
   egress:
-    - toEntities:
-        - cluster
-        - world
-      icmps:
+    - icmps:
         - fields:
             - family: IPv4
-              type: DestinationUnreachable
+              type: Echo
             - family: IPv4
               type: EchoRequest
+            - family: IPv4
+              type: EchoReply
+            - family: IPv6
+              type: EchoRequest
+            - family: IPv6
+              type: EchoReply
             - family: IPv6
               type: NeighborSolicitation
             - family: IPv6
