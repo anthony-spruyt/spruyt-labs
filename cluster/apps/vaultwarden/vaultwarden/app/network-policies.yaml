@@ -1,5 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -8,9 +9,9 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      controller: main
-      instance: vaultwarden
-      name: vaultwarden
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: vaultwarden
+      app.kubernetes.io/name: vaultwarden
   egress:
     # Allow DNS to kube-dns Service on UDP/TCP 53
     - toServices:
@@ -25,6 +26,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -33,9 +35,9 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      controller: main
-      instance: vaultwarden
-      name: vaultwarden
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: vaultwarden
+      app.kubernetes.io/name: vaultwarden
   egress:
     - icmps:
         - fields:
@@ -49,6 +51,7 @@ spec:
               type: NeighborAdvertisement
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -57,9 +60,9 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      controller: main
-      instance: vaultwarden
-      name: vaultwarden
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: vaultwarden
+      app.kubernetes.io/name: vaultwarden
   egress:
     - toEntities:
         - world
@@ -71,6 +74,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -79,9 +83,9 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      controller: main
-      instance: vaultwarden
-      name: vaultwarden
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: vaultwarden
+      app.kubernetes.io/name: vaultwarden
   egress:
     - toEntities:
         - world
@@ -94,6 +98,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -102,9 +107,9 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      controller: main
-      instance: vaultwarden
-      name: vaultwarden
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: vaultwarden
+      app.kubernetes.io/name: vaultwarden
   egress:
     - toEntities:
         - world
@@ -116,6 +121,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -124,9 +130,9 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      controller: main
-      instance: vaultwarden
-      name: vaultwarden
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: vaultwarden
+      app.kubernetes.io/name: vaultwarden
   egress:
     - toEntities:
         - world
@@ -138,6 +144,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -146,9 +153,9 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      controller: main
-      instance: vaultwarden
-      name: vaultwarden
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: vaultwarden
+      app.kubernetes.io/name: vaultwarden
   ingress:
     - fromEndpoints:
         - matchLabels:
