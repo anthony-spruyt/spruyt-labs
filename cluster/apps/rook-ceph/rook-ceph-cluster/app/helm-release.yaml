@@ -68,6 +68,7 @@ spec:
         annotations: {}
     cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-cluster-crd.html
       mgr:
+        mgr/crash/warn_recent_interval: "7200" # 2h
         modules:
           - name: pg_autoscaler
             enabled: true
