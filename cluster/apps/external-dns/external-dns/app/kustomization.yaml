@@ -5,3 +5,10 @@ kind: Kustomization
 resources:
   - ./external-dns-secrets.sops.yaml
   - ./helm-release.yaml
+configMapGenerator:
+  - name: external-dns-values
+    namespace: external-dns
+    files:
+      - values.yaml=./helm-values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
