@@ -1,0 +1,160 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-dns-egress
+  namespace: vaultwarden
+spec:
+  endpointSelector:
+    matchLabels:
+      controller: main
+      instance: vaultwarden
+      name: vaultwarden
+  egress:
+    # Allow DNS to kube-dns Service on UDP/TCP 53
+    - toServices:
+        - k8sService:
+            serviceName: kube-dns
+            namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-icmps-egress
+  namespace: vaultwarden
+spec:
+  endpointSelector:
+    matchLabels:
+      controller: main
+      instance: vaultwarden
+      name: vaultwarden
+  egress:
+    - icmps:
+        - fields:
+            - family: IPv4
+              type: DestinationUnreachable
+            - family: IPv4
+              type: EchoRequest
+            - family: IPv6
+              type: NeighborSolicitation
+            - family: IPv6
+              type: NeighborAdvertisement
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-brevo-smtp-egress
+  namespace: vaultwarden
+spec:
+  endpointSelector:
+    matchLabels:
+      controller: main
+      instance: vaultwarden
+      name: vaultwarden
+  egress:
+    - toEntities:
+        - world
+      toFQDNs:
+        - matchName: smtp-relay.brevo.com
+      toPorts:
+        - ports:
+            - port: "587"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-bitwarden-push-and-identity-egress
+  namespace: vaultwarden
+spec:
+  endpointSelector:
+    matchLabels:
+      controller: main
+      instance: vaultwarden
+      name: vaultwarden
+  egress:
+    - toEntities:
+        - world
+      toFQDNs:
+        - matchName: push.bitwarden.com
+        - matchName: identity.bitwarden.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-duo-egress
+  namespace: vaultwarden
+spec:
+  endpointSelector:
+    matchLabels:
+      controller: main
+      instance: vaultwarden
+      name: vaultwarden
+  egress:
+    - toEntities:
+        - world
+      toFQDNs:
+        - matchName: api-59c495e0.duosecurity.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-world-web-egress # favicons etc can disable this and block if risky
+  namespace: vaultwarden
+spec:
+  endpointSelector:
+    matchLabels:
+      controller: main
+      instance: vaultwarden
+      name: vaultwarden
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+  namespace: vaultwarden
+spec:
+  endpointSelector:
+    matchLabels:
+      controller: main
+      instance: vaultwarden
+      name: vaultwarden
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
