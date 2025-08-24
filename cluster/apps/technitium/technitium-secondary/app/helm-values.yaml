@@ -32,42 +32,42 @@ controllers:
                     values:
                       - dns-primary
               topologyKey: kubernetes.io/hostname
-    initContainers:
-      bootstrap-config:
-        image:
-          repository: dwdraju/alpine-curl-jq
-          tag: latest
-        command:
-          - sh
-          - -c
-          - |
-            echo "TODO"
-        env:
-          - name: API_BASE_URL
-            value: "http://localhost:5380"
-          - name: USER
-            value: "admin"
-          - name: PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: technitium-secrets
-                key: DNS_SERVER_ADMIN_PASSWORD
-          - name: CATALOG_ZONE
-            value: "catalog.zone"
-          - name: PRIMARY_IP4
-            value: "${LB_IP4_TECHNITIUM}"
-          - name: PRIMARY_IP6
-            value: "${LB_IP6_TECHNITIUM}"
-          - name: TSIG_KEY_NAME
-            valueFrom:
-              secretKeyRef:
-                name: technitium-secrets
-                key: TSIG_KEY
-          - name: TSIG_KEY
-            valueFrom:
-              secretKeyRef:
-                name: technitium-secrets
-                key: TSIG_SECRET
+    #initContainers:
+    #  bootstrap-config:
+    #    image:
+    #      repository: dwdraju/alpine-curl-jq
+    #      tag: latest
+    #    command:
+    #      - sh
+    #      - -c
+    #      - |
+    #        echo "TODO"
+    #    env:
+    #      - name: API_BASE_URL
+    #        value: "http://localhost:5380"
+    #      - name: USER
+    #        value: "admin"
+    #      - name: PASSWORD
+    #        valueFrom:
+    #          secretKeyRef:
+    #            name: technitium-secrets
+    #            key: DNS_SERVER_ADMIN_PASSWORD
+    #      - name: CATALOG_ZONE
+    #        value: "catalog.zone"
+    #      - name: PRIMARY_IP4
+    #        value: "${LB_IP4_TECHNITIUM}"
+    #      - name: PRIMARY_IP6
+    #        value: "${LB_IP6_TECHNITIUM}"
+    #      - name: TSIG_KEY_NAME
+    #        valueFrom:
+    #          secretKeyRef:
+    #            name: technitium-secrets
+    #            key: TSIG_KEY
+    #      - name: TSIG_KEY
+    #        valueFrom:
+    #          secretKeyRef:
+    #            name: technitium-secrets
+    #            key: TSIG_SECRET
     containers:
       technitium:
         image:
@@ -95,15 +95,16 @@ controllers:
             cpu: 1000m
             memory: 1Gi
         probes:
-          liveness:
+          readiness:
             enabled: true
             custom: false
             spec:
               tcpSocket:
                 port: 53
-              initialDelaySeconds: 15
-              periodSeconds: 10
+              periodSeconds: 5
               failureThreshold: 3
+          # TODO: make this stateless one day so it bootstraps from init container that configures it via the API
+          # WIP script is in FLUX24 local snippets
           #readiness:
           #  enabled: true
           #  custom: true
@@ -114,26 +115,18 @@ controllers:
           #        - -c
           #        - |
           #          set -e
-          #          MARKER="/tmp/initial-sync-complete"
-          #          ZONE_DIR="/etc/dns/zones"
-          #          PRIMARY="${DNS_SERVER_DOMAIN}"
-
-          #          # Require at least one transferred zone
-          #          [ -d "$ZONE_DIR" ] && [ "$(find "$ZONE_DIR" -type f | wc -l)" -gt 0 ]
-
-          #          # If already primed, we're done
-          #          [ -f "$MARKER" ] && exit 0
-
-          #          # Only before first Ready: try TCP/53 reachability if tools exist
-          #          if command -v nc >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
-          #            timeout 2 nc -z "${PRIMARY}" 53
-          #          fi
-
-          #          # Mark initial sync complete
-          #          : > "$MARKER"
           #    initialDelaySeconds: 10
           #    periodSeconds: 5
           #    failureThreshold: 3
+          liveness:
+            enabled: true
+            custom: false
+            spec:
+              tcpSocket:
+                port: 53
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              failureThreshold: 3
         lifecycle:
           preStop:
             exec:
@@ -175,7 +168,7 @@ service:
 persistence:
   config:
     enabled: true
-    type: emptyDir
+    existingClaim: technitium-secondary
     globalMounts:
       - path: /etc/dns
   tls:

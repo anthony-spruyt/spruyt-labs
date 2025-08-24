@@ -38,10 +38,13 @@ controllers:
           repository: technitium/dns-server
           tag: 13.6.0
         env:
-          DNS_SERVER_DOMAIN: "${DNS_SERVER_DOMAIN}"
-        envFrom:
-          - secretRef:
-              name: technitium-secrets
+          - name: DNS_SERVER_DOMAIN
+            value: "${DNS_SERVER_DOMAIN}"
+          - name: DNS_SERVER_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: technitium-secrets
+                key: DNS_SERVER_ADMIN_PASSWORD
         securityContext:
           allowPrivilegeEscalation: false
           #  Error! Read-only file system : '/tmp/'
