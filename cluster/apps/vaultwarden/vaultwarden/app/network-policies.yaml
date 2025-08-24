@@ -41,6 +41,7 @@ spec:
   egress:
     - toEntities:
         - cluster
+        - world
       icmps:
         - fields:
             - family: IPv4
