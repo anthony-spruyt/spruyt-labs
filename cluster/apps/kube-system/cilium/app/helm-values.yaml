@@ -55,7 +55,7 @@ ipMasqAgent:
       - "${NETWORK_LB_CIDR_IP4}" # LB pool IP4
       - "${NETWORK_LB_CIDR_IP6}" # LB pool IP6
       - "${NATIVE_ROUTING_CIDR_IP4}" # Native routing IP4
-      #- "${NATIVE_ROUTING_CIDR_IP6}" # Native routing IP6
+      - "${NATIVE_ROUTING_CIDR_IP6}" # Native routing IP6
       #- "100.64.0.0/10" # Cilium overlay IP4
     masqLinkLocal: false # keep link-local (169.254.0.0/16) un-SNAT-ed
     masqLinkLocalIPv6: false # keep fe80::/10 un-SNAT-ed
