@@ -16,7 +16,7 @@ spec:
         kind: HelmRepository
         name: jetstack-charts
         namespace: flux-system
-  # yaml-language-server: $schema=https://github.com/cert-manager/cert-manager/blob/master/deploy/charts/cert-manager/values.schema.json
+  # yaml-language-server: $schema=https://raw.githubusercontent.com/cert-manager/cert-manager/refs/heads/master/deploy/charts/cert-manager/values.schema.json
   # Default values: https://github.com/cert-manager/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml
   values:
     crds:

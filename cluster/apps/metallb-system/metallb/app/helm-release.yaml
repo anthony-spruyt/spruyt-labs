@@ -19,7 +19,7 @@ spec:
     crds: CreateReplace
   upgrade:
     crds: CreateReplace
-  # yaml-language-server: $schema=https://github.com/metallb/metallb/blob/main/charts/metallb/values.schema.json
+  # yaml-language-server: $schema=https://raw.githubusercontent.com/metallb/metallb/refs/heads/main/charts/metallb/values.schema.json
   # Documentation: https://metallb.io/configuration/
   # Default values: https://github.com/metallb/metallb/blob/main/charts/metallb/values.yaml
   values:

@@ -21,7 +21,7 @@ spec:
   uninstall:
     keepHistory: false
   # Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
-  # yaml-language-server: $schema=https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.schema.json
+  # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
   values:
     controllers:
       main:
