@@ -8,4 +8,5 @@ metadata:
 spec:
   addresses:
     - "${NETWORK_LB_CIDR_IP4}"
+    - "${NETWORK_LB_CIDR_IP6}"
   autoAssign: false

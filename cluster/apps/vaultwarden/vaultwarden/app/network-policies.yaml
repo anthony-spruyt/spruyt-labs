@@ -30,7 +30,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-icmps-egress
+  name: allow-icmps
   namespace: vaultwarden
 spec:
   endpointSelector:
@@ -41,10 +41,25 @@ spec:
   egress:
     - icmps:
         - fields:
-            - family: IPv6
-              type: NeighborSolicitation
-            - family: IPv6
-              type: NeighborAdvertisement
+            - family: IPv4
+              type: EchoRequest
+            - family: IPv4
+              type: EchoReply
+            - family: IPv4
+              type: DestinationUnreachable
+            - family: IPv4
+              type: TimeExceeded
+  ingress:
+    - icmps:
+        - fields:
+            - family: IPv4
+              type: EchoRequest
+            - family: IPv4
+              type: EchoReply
+            - family: IPv4
+              type: DestinationUnreachable
+            - family: IPv4
+              type: TimeExceeded
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Documentation: https://docs.cilium.io/en/latest/security/policy/index.html

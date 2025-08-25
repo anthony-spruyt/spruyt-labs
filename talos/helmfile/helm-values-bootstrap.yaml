@@ -15,7 +15,7 @@ cgroup:
 ipam:
   mode: "kubernetes"
 ipv6:
-  enabled: true
+  enabled: false
 operator:
   replicas: 1
   rollOutPods: false

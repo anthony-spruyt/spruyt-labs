@@ -56,8 +56,6 @@ controllers:
     #        value: "catalog.zone"
     #      - name: PRIMARY_IP4
     #        value: "${LB_IP4_TECHNITIUM}"
-    #      - name: PRIMARY_IP6
-    #        value: "${LB_IP6_TECHNITIUM}"
     #      - name: TSIG_KEY_NAME
     #        valueFrom:
     #          secretKeyRef:

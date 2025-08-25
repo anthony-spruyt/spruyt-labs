@@ -219,8 +219,8 @@ patches:
       network:
         disableSearchDomain: true
         nameservers:
-          - ${LB_IP4_TECHNITIUM}
-          - ${LB_IP4_TECHNITIUM_SECONDARY}
+          - ${GATEWAY_IP4}
+          - ${GATEWAY_IP6}
           - 172.64.36.1
           - 172.64.36.2
 
