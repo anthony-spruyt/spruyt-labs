@@ -32,17 +32,11 @@ controllers:
           repository: docker.io/cloudflare/cloudflared
           tag: 2025.8.1
         args:
-          - cloudflared
           - tunnel
-          - --no-autoupdate
-          - --loglevel
-          - debug
-          - --metrics
-          - 0.0.0.0:8080
           - run
         env:
-          #NO_AUTOUPDATE: "true"
-          #TUNNEL_METRICS: 0.0.0.0:8080
+          NO_AUTOUPDATE: "true"
+          TUNNEL_METRICS: 0.0.0.0:8080
           TUNNEL_ORIGIN_ENABLE_HTTP2: true
           TUNNEL_POST_QUANTUM: true
           TUNNEL_TRANSPORT_PROTOCOL: quic
