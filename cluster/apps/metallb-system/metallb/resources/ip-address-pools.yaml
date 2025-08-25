@@ -3,10 +3,9 @@
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
-  name: dual-stack-ip-pool
+  name: lb-ip-pool
   namespace: metallb-system
 spec:
   addresses:
-    - "${NETWORK_LB_CIDR_IP6}"
     - "${NETWORK_LB_CIDR_IP4}"
   autoAssign: false

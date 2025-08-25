@@ -86,7 +86,7 @@ service:
     type: LoadBalancer
     externalTrafficPolicy: Local
     annotations:
-      metallb.io/loadBalancerIPs: "${LB_IP4_TECHNITIUM},${LB_IP6_TECHNITIUM}"
+      metallb.io/loadBalancerIPs: "${LB_IP4_TECHNITIUM}"
     ports:
       dns-tcp:
         enabled: true
@@ -110,9 +110,8 @@ service:
       api-https:
         port: 53443
         protocol: HTTPS
-    ipFamilyPolicy: PreferDualStack
+    ipFamilyPolicy: SingleStack
     ipFamilies:
-      - IPv6
       - IPv4
 persistence:
   config:

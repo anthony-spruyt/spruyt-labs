@@ -7,4 +7,4 @@ metadata:
   namespace: metallb-system
 spec:
   ipAddressPools:
-    - dual-stack-ip-pool
+    - lb-ip-pool

@@ -16,7 +16,7 @@ ipv4:
   enabled: true
 ipv4NativeRoutingCIDR: "${NATIVE_ROUTING_CIDR_IP4}"
 ipv6:
-  enabled: true
+  enabled: false
 ipv6NativeRoutingCIDR: "${NATIVE_ROUTING_CIDR_IP6}"
 autoDirectNodeRoutes: true
 k8sServiceHost: localhost
