@@ -83,7 +83,7 @@ controllers:
 #          - hostname: "*.${EXTERNAL_DOMAIN}"
 #            service: *svc
 #          - service: http_status:404
-
+#
 #persistence:
 #  config:
 #    type: configMap
@@ -92,16 +92,16 @@ controllers:
 #      - path: /etc/cloudflared/config.yaml
 #        subPath: config.yaml
 #        readOnly: true
-#service:
-#  app:
-#    ports:
-#      http:
-#        port: *port
-#serviceMonitor:
-#  app:
-#    endpoints:
-#      - port: http
-#        scheme: http
-#        path: /metrics
-#        interval: 1m
-#        scrapeTimeout: 10s
+service:
+  app:
+    ports:
+      http:
+        port: *port
+serviceMonitor:
+  app:
+    endpoints:
+      - port: http
+        scheme: http
+        path: /metrics
+        interval: 1m
+        scrapeTimeout: 10s
