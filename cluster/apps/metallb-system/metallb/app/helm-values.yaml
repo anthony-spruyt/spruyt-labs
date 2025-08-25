@@ -5,31 +5,20 @@
 crds:
   enabled: true
   validationFailurePolicy: Fail
-
-# controller contains configuration specific to the MetalLB cluster
-# controller.
 controller:
   image:
     repository: quay.io/metallb/controller
   serviceAccount:
-    # Specifies whether a ServiceAccount should be created
     create: true
-
-# speaker contains configuration specific to the MetalLB speaker
-# daemonset.
 speaker:
   logLevel: info
   tolerateMaster: true
   image:
     repository: quay.io/metallb/speaker
   serviceAccount:
-    # Specifies whether a ServiceAccount should be created
     create: true
+  frr:
+    enabled: false
   # Run speaker in hostNetwork so it can respond to ARP/NDP on the host's interfaces
   daemonset:
     hostNetwork: true
-    containers:
-      speaker:
-        env:
-          - name: METALLB_SPEAKER_INTERFACE
-            value: eno1
