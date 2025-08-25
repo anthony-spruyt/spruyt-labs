@@ -84,7 +84,7 @@ service:
   dns:
     controller: *name
     type: LoadBalancer
-    externalTrafficPolicy: Cluster
+    externalTrafficPolicy: Local
     annotations:
       metallb.io/loadBalancerIPs: "${LB_IP4_TECHNITIUM},${LB_IP6_TECHNITIUM}"
     ports:
