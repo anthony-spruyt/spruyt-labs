@@ -14,3 +14,4 @@ sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/worksp
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/apps/monitoring/victoria-metrics-k8s-stack/app/victoria-metrics-k8s-stack-secrets.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/apps/vaultwarden/vaultwarden/app/vaultwarden-secrets.sops.yaml"
 sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/apps/vaultwarden/vaultwarden/app/vaultwarden-backup-secrets.sops.yaml"
+sops --config "/workspaces/spruyt-labs/.sops.yaml" --decrypt --in-place "/workspaces/spruyt-labs/cluster/apps/cloudflare-system/cloudflared/app/cloudflared-secrets.sops.yaml"

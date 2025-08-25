@@ -16,7 +16,7 @@ spec:
       name: *app
       namespace: *namespace
   path: ./cluster/apps/irq-balance/irq-balance/app
-  prune: false
+  prune: true
   sourceRef:
     kind: GitRepository
     name: *fluxnamespace

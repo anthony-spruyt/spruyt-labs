@@ -1,26 +1,24 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app technitium-secondary
-  namespace: &fluxnamespace flux-system
+  name: &app cloudflared
+  namespace: flux-system
 spec:
-  targetNamespace: technitium
+  targetNamespace: cloudflare-system
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  dependsOn:
-    - name: technitium
-  interval: 1h
-  path: ./cluster/apps/technitium/technitium-secondary/app
+  path: ./cluster/apps/cloudflare-system/cloudflared/app
   prune: true
   sourceRef:
     kind: GitRepository
-    name: *fluxnamespace
-    namespace: *fluxnamespace
+    name: flux-system
+    namespace: flux-system
+  interval: 1h
   timeout: 5m
-  wait: false
+  wait: true
   decryption:
     provider: sops
     secretRef:

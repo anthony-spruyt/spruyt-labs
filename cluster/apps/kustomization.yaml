@@ -22,6 +22,7 @@ resources:
   - ./traefik
   - ./technitium
   - ./external-dns
+  - ./cloudflare-system
   - ./whoami
   # observability
   - ./monitoring

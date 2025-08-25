@@ -1,0 +1,14 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: cloudflared
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: bjw-s-labs-app-template
+    namespace: flux-system
+  valuesFrom:
+    - kind: ConfigMap
+      name: cloudflared-values

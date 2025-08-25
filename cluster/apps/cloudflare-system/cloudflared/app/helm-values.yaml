@@ -1,0 +1,113 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+defaultPodOptions:
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: cloudflared
+controllers:
+  cloudflared:
+    replicas: 3
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+        sysctls:
+          # Allows ICMP traffic (ping, traceroute) to resources behind cloudflared.
+          - name: net.ipv4.ping_group_range
+            value: "65532 65532"
+    containers:
+      app:
+        image:
+          repository: docker.io/cloudflare/cloudflared
+          tag: 2025.8.1
+        args:
+          - cloudflared
+          - tunnel
+          - --no-autoupdate
+          - --loglevel
+          - debug
+          - --metrics
+          - 0.0.0.0:8080
+          - run
+        env:
+          #NO_AUTOUPDATE: "true"
+          #TUNNEL_METRICS: 0.0.0.0:8080
+          TUNNEL_ORIGIN_ENABLE_HTTP2: true
+          TUNNEL_POST_QUANTUM: true
+          TUNNEL_TRANSPORT_PROTOCOL: quic
+          TUNNEL_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: cloudflared-secrets
+                key: spruyt-labs-01-token
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /ready
+                port: &port 8080
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 1
+              failureThreshold: 3
+          readiness: *probes
+        resources:
+          requests:
+            cpu: 10m
+          limits:
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+#configMaps:
+#  config:
+#    enabled: true
+#    data:
+#      config.yaml: |-
+#        originRequest:
+#          http2Origin: true
+#          originServerName: "external.${EXTERNAL_DOMAIN}"
+#        ingress:
+#          - hostname: "${EXTERNAL_DOMAIN}"
+#            service: &svc https://traefik.traefik.svc.cluster.local:443
+#          - hostname: "*.${EXTERNAL_DOMAIN}"
+#            service: *svc
+#          - service: http_status:404
+
+#persistence:
+#  config:
+#    type: configMap
+#    name: cloudflared
+#    globalMounts:
+#      - path: /etc/cloudflared/config.yaml
+#        subPath: config.yaml
+#        readOnly: true
+#service:
+#  app:
+#    ports:
+#      http:
+#        port: *port
+#serviceMonitor:
+#  app:
+#    endpoints:
+#      - port: http
+#        scheme: http
+#        path: /metrics
+#        interval: 1m
+#        scrapeTimeout: 10s
