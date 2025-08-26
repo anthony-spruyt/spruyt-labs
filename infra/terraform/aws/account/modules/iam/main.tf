@@ -1,19 +1,6 @@
 ############################################################
 # TFC OIDC role with anchored S3 bucket & alias‑driven KMS scoping
 ############################################################
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.10"
-    }
-  }
-}
-
-locals {
-  # Anchored pattern so future Ceph buckets under this namespace are included
-  ceph_bucket_pattern = "arn:aws:s3:::spruyt-labs-${var.aws_account_id}-prod-ceph-*"
-}
 
 # Resolve KMS ARNs from aliases instead of hardcoding IDs
 # Update aliases to match those in your AWS KMS console
@@ -40,6 +27,8 @@ locals {
     data.aws_kms_key.ceph_main.arn,
     data.aws_kms_key.ceph_logs.arn
   ]
+  # Anchored pattern so future Ceph buckets under this namespace are included
+  ceph_bucket_pattern = "arn:aws:s3:::spruyt-labs-${var.aws_account_id}-prod-ceph-*"
 }
 
 # OIDC trust policy for Terraform Cloud
@@ -135,8 +124,4 @@ resource "aws_iam_role_policy" "tfc_oidc_inline" {
   name   = "tfc-oidc-inline"
   role   = aws_iam_role.tfc_oidc.id
   policy = data.aws_iam_policy_document.tfc_oidc_policy.json
-}
-
-output "tfc_oidc_role_arn" {
-  value = aws_iam_role.tfc_oidc.arn
 }
