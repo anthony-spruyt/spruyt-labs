@@ -7,11 +7,4 @@ terraform {
       version = "~> 6.10"
     }
   }
-
-  backend "remote" {
-    organization = "spruyt-labs"
-    workspaces {
-      name = "aws-ceph-objectstore"
-    }
-  }
 }

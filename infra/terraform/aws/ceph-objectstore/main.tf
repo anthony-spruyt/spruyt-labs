@@ -105,6 +105,12 @@ resource "aws_s3_bucket_notification" "this" {
   eventbridge = true
 }
 
+# Main bucket alias
+resource "aws_kms_alias" "this_alias" {
+  name          = "alias/${local.bucket_name}"
+  target_key_id = aws_kms_key.this.key_id
+}
+
 # ------------------------------
 # Logging Bucket
 # ------------------------------
@@ -195,4 +201,9 @@ resource "aws_s3_bucket_logging" "this" {
   bucket        = aws_s3_bucket.this.id
   target_bucket = aws_s3_bucket.log_bucket.id
   target_prefix = "logs/"
+}
+
+resource "aws_kms_alias" "log_bucket_alias" {
+  name          = "alias/${local.bucket_name}-logs"
+  target_key_id = aws_kms_key.log_bucket.key_id
 }
