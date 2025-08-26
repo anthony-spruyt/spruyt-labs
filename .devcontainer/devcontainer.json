@@ -14,7 +14,8 @@
     "ghcr.io/devcontainers-extra/features/pre-commit": {},
     "ghcr.io/devcontainers/features/github-cli": {},
     "ghcr.io/rio/features/kustomize": {},
-    "ghcr.io/audacioustux/devcontainers/cilium": {}
+    "ghcr.io/audacioustux/devcontainers/cilium": {},
+    "ghcr.io/devcontainers/features/terraform": {}
   },
   "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./talos/local-env-setup.sh\"",
   "customizations": {
