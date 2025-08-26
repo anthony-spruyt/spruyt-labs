@@ -17,6 +17,7 @@ jobs:
       matrix:
         module:
           - infra/terraform/aws/ceph-objectstore
+          - infra/terraform/aws/account
           #- infra/terraform/aws/velero-backups
           #- infra/terraform/aws/vpc-core
     steps:
