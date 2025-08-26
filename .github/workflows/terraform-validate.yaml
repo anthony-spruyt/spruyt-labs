@@ -2,8 +2,13 @@ name: Terraform Validate
 
 on:
   pull_request:
+    branches:
+      - main
     paths:
       - "infra/terraform/**"
+
+permissions:
+  contents: read
 
 jobs:
   validate:

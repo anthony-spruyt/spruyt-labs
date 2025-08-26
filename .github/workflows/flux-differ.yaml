@@ -3,8 +3,10 @@ name: Flux differ
 
 on:
   pull_request:
-    branches: ["*"]
-    paths: ["cluster/**.yaml"]
+    branches:
+      - main
+    paths:
+      - "cluster/**.yaml"
 
 permissions: read-all
 
