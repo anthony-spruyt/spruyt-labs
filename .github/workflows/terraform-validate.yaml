@@ -1,0 +1,41 @@
+name: Terraform Validate
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "infra/terraform/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module:
+          - infra/terraform/aws/ceph-objectstore
+          #- infra/terraform/aws/velero-backups
+          #- infra/terraform/aws/vpc-core
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.0
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: ${{ matrix.module }}
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+        working-directory: ${{ matrix.module }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ${{ matrix.module }}
