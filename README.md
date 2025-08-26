@@ -58,11 +58,11 @@ ceph crash archive-all
 To get the newly generated UI password after bootstrapping a new cluster run the following:
 `kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo`
 
-## Cloudflare
+## Cloudflared
 
 Cloudflare tunneling to avoid having to forward any ports.
 
-[https://github.com/adyanth/cloudflare-operator](https://github.com/adyanth/cloudflare-operator)
+[https://github.com/cloudflare/cloudflared](https://github.com/cloudflare/cloudflared)
 
 ## Cert Manager
 
