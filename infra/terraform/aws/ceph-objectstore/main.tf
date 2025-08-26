@@ -12,13 +12,16 @@ locals {
   }
 }
 
-# Core bucket
+# ------------------------------
+# Main Bucket
+# ------------------------------
 resource "aws_s3_bucket" "this" {
   bucket = local.bucket_name
   tags   = local.common_tags
+
+  # checkov:skip=CKV_AWS_144:Cross-region replication not required for home lab
 }
 
-# Enforce bucket owner for all objects (no ACLs)
 resource "aws_s3_bucket_ownership_controls" "this" {
   bucket = aws_s3_bucket.this.id
   rule {
@@ -26,7 +29,6 @@ resource "aws_s3_bucket_ownership_controls" "this" {
   }
 }
 
-# Block all public access, always
 resource "aws_s3_bucket_public_access_block" "this" {
   bucket                  = aws_s3_bucket.this.id
   block_public_acls       = true
@@ -35,17 +37,28 @@ resource "aws_s3_bucket_public_access_block" "this" {
   restrict_public_buckets = true
 }
 
-# Default server-side encryption (SSE-S3)
+resource "aws_s3_bucket_versioning" "this" {
+  bucket = aws_s3_bucket.this.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_kms_key" "this" {
+  description             = "KMS key for ${local.bucket_name}"
+  deletion_window_in_days = 10
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   bucket = aws_s3_bucket.this.id
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      kms_master_key_id = aws_kms_key.this.arn
+      sse_algorithm     = "aws:kms"
     }
   }
 }
 
-# Lifecycle: transition to STANDARD_IA after 30 days
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
@@ -61,9 +74,81 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       days          = 30
       storage_class = "STANDARD_IA"
     }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
 
   depends_on = [
     aws_s3_bucket_server_side_encryption_configuration.this
   ]
+}
+
+resource "aws_s3_bucket_notification" "this" {
+  bucket      = aws_s3_bucket.this.id
+  eventbridge = true
+}
+
+# ------------------------------
+# Logging Bucket
+# ------------------------------
+resource "aws_s3_bucket" "log_bucket" {
+  bucket = "${local.bucket_name}-logs"
+  tags   = local.common_tags
+}
+
+resource "aws_s3_bucket_ownership_controls" "log_bucket" {
+  bucket = aws_s3_bucket.log_bucket.id
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "log_bucket" {
+  bucket                  = aws_s3_bucket.log_bucket.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_kms_key" "log_bucket" {
+  description             = "KMS key for ${local.bucket_name}-logs"
+  deletion_window_in_days = 10
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "log_bucket" {
+  bucket = aws_s3_bucket.log_bucket.id
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.log_bucket.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "log_bucket" {
+  bucket = aws_s3_bucket.log_bucket.id
+
+  rule {
+    id     = "expire-logs-after-30d"
+    status = "Enabled"
+
+    filter { prefix = "" }
+
+    expiration {
+      days = 30
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
+resource "aws_s3_bucket_logging" "this" {
+  bucket        = aws_s3_bucket.this.id
+  target_bucket = aws_s3_bucket.log_bucket.id
+  target_prefix = "logs/"
 }

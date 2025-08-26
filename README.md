@@ -49,7 +49,7 @@ How to debug via rook-ceph-tools: `kubectl -n rook-ceph exec -it deploy/rook-cep
 
 How to archive health warnings:
 
-```
+```bash
 kubectl -n rook-ceph exec -it rook-ceph-<pod> -- bash
 ceph crash ls
 ceph crash archive-all
