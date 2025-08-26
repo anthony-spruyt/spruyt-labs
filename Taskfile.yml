@@ -10,3 +10,4 @@ includes:
   pre-commit: .taskfiles/pre-commit.yml
   sops: .taskfiles/sops.yml
   flux: .taskfiles/flux.yml
+  terraform: .taskfiles/terraform.yml

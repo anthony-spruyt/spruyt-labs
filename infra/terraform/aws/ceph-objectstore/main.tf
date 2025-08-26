@@ -111,11 +111,6 @@ resource "aws_kms_alias" "this_alias" {
   target_key_id = aws_kms_key.this.key_id
 }
 
-# Outputs for role workspace to consume
-output "main_kms_alias_name" {
-  value = aws_kms_alias.this_alias.name
-}
-
 # ------------------------------
 # Logging Bucket
 # ------------------------------
@@ -208,13 +203,7 @@ resource "aws_s3_bucket_logging" "this" {
   target_prefix = "logs/"
 }
 
-# Logs bucket alias
 resource "aws_kms_alias" "log_bucket_alias" {
   name          = "alias/${local.bucket_name}-logs"
   target_key_id = aws_kms_key.log_bucket.key_id
-}
-
-# Outputs for role workspace to consume
-output "logs_kms_alias_name" {
-  value = aws_kms_alias.log_bucket_alias.name
 }

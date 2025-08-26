@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  fmt: "{{ .ROOT_DIR }}/.taskfiles/terraform/scripts/fmt.sh"
+  init: "{{ .ROOT_DIR }}/.taskfiles/terraform/scripts/init.sh"
+  validate: "{{ .ROOT_DIR }}/.taskfiles/terraform/scripts/validate.sh"
+
+tasks:
+  fmt:
+    desc: Terraform format
+    cmds:
+      - bash {{ .fmt }}
+  init:
+    desc: Terraform format
+    cmds:
+      - bash {{ .init }}
+  validate:
+    desc: Terraform format
+    cmds:
+      - bash {{ .validate }}
