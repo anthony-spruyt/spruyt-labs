@@ -109,7 +109,7 @@ resource "aws_s3_bucket_notification" "this" {
 # Logging Bucket
 # ------------------------------
 resource "aws_s3_bucket" "log_bucket" {
-# checkov:skip=CKV_AWS_144:Cross-region replication not required for home lab
+  # checkov:skip=CKV_AWS_144:Cross-region replication not required for home lab
   bucket = "${local.bucket_name}-logs"
   tags   = local.common_tags
 }
