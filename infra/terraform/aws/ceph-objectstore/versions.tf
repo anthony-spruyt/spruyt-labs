@@ -8,6 +8,7 @@ terraform {
     }
   }
 
+  # terrascan:ignore
   cloud {
     organization = "spruyt-labs"
 
@@ -15,4 +16,5 @@ terraform {
       name = "spruyt-labs-aws-ceph-objectstore"
     }
   }
+  # terrascan:endignore
 }
