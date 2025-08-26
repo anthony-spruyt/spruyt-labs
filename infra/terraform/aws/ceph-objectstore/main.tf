@@ -15,11 +15,10 @@ locals {
 # ------------------------------
 # Main Bucket
 # ------------------------------
+# checkov:skip=CKV_AWS_144:Cross-region replication not required for home lab
 resource "aws_s3_bucket" "this" {
   bucket = local.bucket_name
   tags   = local.common_tags
-
-  # checkov:skip=CKV_AWS_144:Cross-region replication not required for home lab
 }
 
 resource "aws_s3_bucket_ownership_controls" "this" {
@@ -47,6 +46,22 @@ resource "aws_s3_bucket_versioning" "this" {
 resource "aws_kms_key" "this" {
   description             = "KMS key for ${local.bucket_name}"
   deletion_window_in_days = 10
+  enable_key_rotation     = true
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "key-default-1"
+    Statement = [
+      {
+        Sid       = "AllowRootAccountAccess"
+        Effect    = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action    = "kms:*"
+        Resource  = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
@@ -93,6 +108,7 @@ resource "aws_s3_bucket_notification" "this" {
 # ------------------------------
 # Logging Bucket
 # ------------------------------
+# checkov:skip=CKV_AWS_144:Cross-region replication not required for home lab
 resource "aws_s3_bucket" "log_bucket" {
   bucket = "${local.bucket_name}-logs"
   tags   = local.common_tags
@@ -113,9 +129,32 @@ resource "aws_s3_bucket_public_access_block" "log_bucket" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_versioning" "log_bucket" {
+  bucket = aws_s3_bucket.log_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_kms_key" "log_bucket" {
   description             = "KMS key for ${local.bucket_name}-logs"
   deletion_window_in_days = 10
+  enable_key_rotation     = true
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "key-default-1"
+    Statement = [
+      {
+        Sid       = "AllowRootAccountAccess"
+        Effect    = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action    = "kms:*"
+        Resource  = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "log_bucket" {
@@ -145,6 +184,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "log_bucket" {
       days_after_initiation = 7
     }
   }
+}
+
+resource "aws_s3_bucket_notification" "log_bucket" {
+  bucket      = aws_s3_bucket.log_bucket.id
+  eventbridge = true
 }
 
 resource "aws_s3_bucket_logging" "this" {
