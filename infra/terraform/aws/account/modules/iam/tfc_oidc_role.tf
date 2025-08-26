@@ -1,6 +1,14 @@
 ############################################################
 # TFC OIDC role with anchored S3 bucket & alias‑driven KMS scoping
 ############################################################
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
 
 locals {
   # Anchored pattern so future Ceph buckets under this namespace are included
