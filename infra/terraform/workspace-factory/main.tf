@@ -23,5 +23,5 @@ module "ceph-objectstore" {
   tfc_organization_name   = var.tfc_organization_name
   tfc_project_name        = var.tfc_project_name
   tfc_workspace_name      = var.ceph_objectstore_tfc_workspace_name
-  aws_iam_policy_document = data.aws_iam_policy_document.ceph_objectstore_aws_iam_policy
+  aws_iam_policy_document = data.aws_iam_policy_document.ceph_objectstore_aws_iam_policy.json
 }
