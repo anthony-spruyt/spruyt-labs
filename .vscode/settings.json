@@ -13,7 +13,9 @@
     "LICENSE": true,
     "Taskfile.yml": true,
     ".kilocodeignore": true,
-    "talos/clusterconfig": false
+    "talos/clusterconfig": false,
+    "**/.terraform": true,
+    "**/.terraform.lock.hcl": true
   },
   "search.exclude": {
     "**/*.secret.*": true,
@@ -26,5 +28,6 @@
   "editor.codeActions.triggerOnFocusChange": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "prettier.configPath": ".github/linters/.prettierrc.yaml",
-  "prettier.ignorePath": ".github/linters/.prettierignore"
+  "prettier.ignorePath": ".github/linters/.prettierignore",
+  "explorer.sortOrder": "type"
 }

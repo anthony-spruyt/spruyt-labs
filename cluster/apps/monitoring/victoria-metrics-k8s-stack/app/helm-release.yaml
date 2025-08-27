@@ -730,7 +730,7 @@ spec:
             cpu: 200m
             memory: 128Mi
           requests:
-            cpu: 20m
+            cpu: 30m
             memory: 80Mi
 
     #    port: "8080"
@@ -1016,7 +1016,7 @@ spec:
           cpu: 1000m
           memory: 64Mi
         requests:
-          cpu: 30m
+          cpu: 25m
           memory: 16Mi
       # all values for prometheus-node-exporter helm chart can be specified here
       #service:
