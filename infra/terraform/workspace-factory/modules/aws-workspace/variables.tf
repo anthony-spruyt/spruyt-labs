@@ -32,6 +32,6 @@ variable "aws_region" {
 }
 
 variable "aws_iam_policy_document" {
-  type        = any
+  type        = string
   description = "The AWS IAM policy to be created and attached to the workload identity role"
 }
