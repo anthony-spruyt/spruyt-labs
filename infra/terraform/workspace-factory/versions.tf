@@ -15,4 +15,11 @@ terraform {
       version = "~> 4.1"
     }
   }
+
+  backend "remote" {
+    organization = "spruyt-labs"
+    workspaces {
+      name = "workspace-factory"
+    }
+  }
 }
