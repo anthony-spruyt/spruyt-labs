@@ -13,6 +13,15 @@ spec:
   entryPoints:
     - websecure
   routes:
+    - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`) && PathPrefix(`/admin`)
+      kind: Rule
+      middlewares:
+        - name: lan-ip-whitelist
+      services:
+        - name: vaultwarden
+          namespace: vaultwarden
+          passHostHeader: true
+          port: 80
     - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`)
       kind: Rule
       #middlewares:
