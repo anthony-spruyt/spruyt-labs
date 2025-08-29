@@ -46,6 +46,8 @@ nodes:
       model: RTL9210B-CG
     networkInterfaces:
       - interface: eno1
+        ignore: true
+      - interface: enp1s0
         dhcp: &dhcp false
         addresses:
           - "${C1_IP4}/24"
@@ -54,10 +56,10 @@ nodes:
         routes: &routes
           - network: "0.0.0.0/0"
             gateway: "${GATEWAY_IP4}"
-            #metric: 1024
+            metric: 512
           - network: ::/0
             gateway: "${GATEWAY_IP6}"
-            #metric: 4096
+            metric: 512
         vip: &vip
           ip: "${KUBEAPI_VIP_IP}"
     certSANs: &additionalMachineCertSans
@@ -74,7 +76,7 @@ nodes:
       node-role.kubernetes.io/control-plane: ""
       #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
     nodeAnnotations: &nodeannotations
-      installerImage: "factory.talos.dev/metal-installer-secureboot/777390ee380b57c5589bda8c3c3673d6b1e3252add27737701d216fbd50a3774:v1.10.6"
+      installerImage: "factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7"
     schematic: &e2schematic
       customization:
         secureboot:
@@ -90,6 +92,9 @@ nodes:
     patches: &e2patches
       - |-
         machine:
+          sysctls:
+            net.ipv6.conf.enp1s0.autoconf: "0"
+            net.ipv6.conf.enp1s0.accept_ra: "0"
           install:
              wipe: true
           systemDiskEncryption:
@@ -97,9 +102,9 @@ nodes:
               provider: luks2
               keys:
                 - slot: 0
+                  nodeID: {}
+                - slot: 1
                   tpm: {}
-                #- slot: 1
-                #  nodeID: {}
               options:
                 - no_read_workqueue
                 - no_write_workqueue
@@ -134,6 +139,8 @@ nodes:
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
     networkInterfaces:
+      - interface: enp1s0
+        ignore: true
       - interface: eno1
         dhcp: *dhcp
         addresses:
@@ -166,6 +173,19 @@ nodes:
     nodeLabels: &pi4nodelabels
       node-role.kubernetes.io/worker: ""
     nodeAnnotations: *nodeannotations
+    patches: &rpipatches
+      - |-
+        machine:
+          sysctls:
+            net.ipv6.conf.en01.autoconf: "0"
+            net.ipv6.conf.eno1.accept_ra: "0"
+          install:
+             wipe: true
+          network:
+            extraHostEntries:
+              - ip: ${KUBEAPI_VIP_IP}
+                aliases:
+                  - ${DOMAIN_NAME_KUBEAPI}
   - hostname: ${W2_HOST}
     controlPlane: false
     ipAddress: ${W2_IP4}
@@ -182,6 +202,7 @@ nodes:
     certSANs: *additionalMachineCertSans
     nodeLabels: *pi4nodelabels
     nodeAnnotations: *nodeannotations
+    patches: *rpipatches
 
 patches:
   - |-
@@ -207,6 +228,11 @@ patches:
         extraArgs:
           rotate-server-certificates: true
           max-pods: 150
+          logging-format: json
+          #node-status-update-frequency: "10s"
+          #node-monitor-period: "5s"             # default 5s
+          #node-monitor-grace-period: "20s"      # default 40s
+          #pod-eviction-timeout: "30s"           # default 300s
         extraConfig:
           imageGCLowThresholdPercent: 60
           imageGCHighThresholdPercent: 70
@@ -223,6 +249,12 @@ patches:
           - ${GATEWAY_IP6}
           - 172.64.36.1
           - 172.64.36.2
+      #time:
+      #  servers:
+      #    - 0.au.pool.ntp.org
+      #    - 1.au.pool.ntp.org
+      #    - 2.au.pool.ntp.org
+      #    - 3.au.pool.ntp.org
 
 controlPlane:
   patches:

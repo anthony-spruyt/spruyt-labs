@@ -8,7 +8,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 
 talosctl upgrade \
   --nodes ${C1_IP4} \
-  --image factory.talos.dev/metal-installer-secureboot/777390ee380b57c5589bda8c3c3673d6b1e3252add27737701d216fbd50a3774:v1.10.6 \
+  --image factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7 \
   --preserve
 
 echo "⏳ Giving control plane time to upgrade before upgrading the next node..."
@@ -16,7 +16,7 @@ read -rp "Press any key to continue: " continueupgrade1answer
 
 talosctl upgrade \
   --nodes ${C2_IP4} \
-  --image factory.talos.dev/metal-installer-secureboot/777390ee380b57c5589bda8c3c3673d6b1e3252add27737701d216fbd50a3774:v1.10.6 \
+  --image factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7 \
   --preserve
 
 echo "⏳ Giving control plane time to upgrade before upgrading the next node..."
@@ -24,5 +24,5 @@ read -rp "Press any key to continue: " continueupgrade2answer
 
 talosctl upgrade \
   --nodes ${C3_IP4} \
-  --image factory.talos.dev/metal-installer-secureboot/777390ee380b57c5589bda8c3c3673d6b1e3252add27737701d216fbd50a3774:v1.10.6 \
+  --image factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7 \
   --preserve

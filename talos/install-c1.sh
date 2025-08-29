@@ -72,10 +72,10 @@ talosctl apply-config \
 
 wait_for_talos "${C1_IP4}" 300
 
-#echo "⏳ Giving node time to fully start up before wiping secondary disks..."
-#read -rp "Press any key to wipe secondary disks: " continuewipesanswer
+echo "⏳ Giving node time to fully start up before wiping secondary disks..."
+read -rp "Press any key to wipe secondary disks: " continuewipesanswer
 
-#talosctl wipe disk nvme0n1 -n ${C1_IP4} --drop-partition
+talosctl wipe disk nvme0n1 -n ${C1_IP4} --drop-partition
 
 echo "⏳ Giving control plane components time to fully start up before bootstrapping..."
 read -rp "Press any key to continue: " continuebootstrapanswer
@@ -117,7 +117,7 @@ cat /workspaces/spruyt-labs/secrets/age.key | kubectl create secret generic sops
 
 #read -rp "Press any key to gh auth: " continueghanswer
 
-gh auth token | helm registry login ghcr.io -u anthony-spruyt --password-stdin
+#gh auth token | helm registry login ghcr.io -u anthony-spruyt --password-stdin
 
 #read -rp "Press any key to add flux-gitops-key secret to cluster: " continuegitopsanswer
 
@@ -134,8 +134,8 @@ kubectl kustomize https://github.com/kubernetes-csi/external-snapshotter/client/
 echo "⏳ Installing cert-manager CRDs..."
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
 
-#read -rp "Press any key to install flux: " continuefluxanswer
-#
-#helmfile apply \
-#  --suppress-diff \
-#  -f helmfile/flux.yaml
+read -rp "Press any key to install flux: " continuefluxanswer
+
+helmfile apply \
+  --suppress-diff \
+  -f helmfile/flux.yaml
