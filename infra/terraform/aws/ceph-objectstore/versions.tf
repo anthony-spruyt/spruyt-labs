@@ -11,7 +11,7 @@ terraform {
   backend "remote" {
     organization = "spruyt-labs"
     workspaces {
-      name = "aws-ceph-objectstore"
+      name = "ceph-objectstore"
     }
   }
 }
