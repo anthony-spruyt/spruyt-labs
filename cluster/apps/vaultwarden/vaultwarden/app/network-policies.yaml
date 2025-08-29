@@ -75,12 +75,8 @@ spec:
       app.kubernetes.io/instance: vaultwarden
       app.kubernetes.io/name: vaultwarden
   egress:
-    - toEntities:
-        - world
-      toFQDNs:
+    - toFQDNs:
         - matchName: smtp-relay.brevo.com
-      toCIDR:
-        - 1.179.116.1/32
       toPorts:
         - ports:
             - port: "587"
@@ -100,9 +96,7 @@ spec:
       app.kubernetes.io/instance: vaultwarden
       app.kubernetes.io/name: vaultwarden
   egress:
-    - toEntities:
-        - world
-      toFQDNs:
+    - toFQDNs:
         - matchName: push.bitwarden.com
         - matchName: identity.bitwarden.com
       toPorts:
@@ -124,9 +118,7 @@ spec:
       app.kubernetes.io/instance: vaultwarden
       app.kubernetes.io/name: vaultwarden
   egress:
-    - toEntities:
-        - world
-      toFQDNs:
+    - toFQDNs:
         - matchName: api-59c495e0.duosecurity.com
       toPorts:
         - ports:
