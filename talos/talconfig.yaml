@@ -121,6 +121,8 @@ nodes:
     installDiskSelector: *e2installdiskselector
     networkInterfaces:
       - interface: eno1
+        ignore: true
+      - interface: enp3s0f3u3
         dhcp: *dhcp
         addresses:
           - "${C2_IP4}/24"
@@ -132,16 +134,40 @@ nodes:
     nodeLabels: *e2nodelabels
     nodeAnnotations: *nodeannotations
     schematic: *e2schematic
-    patches: *e2patches
+    patches:
+      - |-
+        machine:
+          sysctls:
+            net.ipv6.conf.enp3s0f3u3.autoconf: "0"
+            net.ipv6.conf.enp3s0f3u3.accept_ra: "0"
+          install:
+             wipe: true
+          systemDiskEncryption:
+            ephemeral:
+              provider: luks2
+              keys:
+                - slot: 0
+                  nodeID: {}
+                - slot: 1
+                  tpm: {}
+              options:
+                - no_read_workqueue
+                - no_write_workqueue
+            state:
+          network:
+            extraHostEntries:
+              - ip: ${KUBEAPI_VIP_IP}
+                aliases:
+                  - ${DOMAIN_NAME_KUBEAPI}
   - hostname: ${C3_HOST}
     controlPlane: true
     ipAddress: ${C3_IP4}
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
     networkInterfaces:
-      - interface: enp1s0
-        ignore: true
       - interface: eno1
+        ignore: true
+      - interface: enp1s0
         dhcp: *dhcp
         addresses:
           - "${C3_IP4}/24"

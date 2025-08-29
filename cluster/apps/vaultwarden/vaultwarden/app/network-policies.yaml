@@ -79,6 +79,8 @@ spec:
         - world
       toFQDNs:
         - matchName: smtp-relay.brevo.com
+      toCIDR:
+        - 1.179.116.1/32
       toPorts:
         - ports:
             - port: "587"
