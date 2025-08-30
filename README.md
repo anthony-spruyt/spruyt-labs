@@ -83,3 +83,12 @@ bedrock connect, DNS interception and minecraft bedrock server
 ## Helm Values
 
 Use the following regular expression on GitHub to find YAML language server schemas: `/yaml-language-server:\s*[^\n]*appkeyword[^\n]*\.json/`
+
+## Kilocode
+
+### MCP Servers
+
+#### Context7
+
+- [https://github.com/upstash/context7](https://github.com/upstash/context7)
+- [https://context7.com/dashboard](https://context7.com/dashboard)
