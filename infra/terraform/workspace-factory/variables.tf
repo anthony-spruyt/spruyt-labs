@@ -16,7 +16,12 @@ variable "tfc_project_name" {
 
 variable "ceph_objectstore_tfc_workspace_name" {
   type        = string
-  description = "The name of the workspace that you'd like to create and connect to AWS"
+  description = "The name of the ceph objectstore workspace to create and connect to AWS"
+}
+
+variable "velero_backup_tfc_workspace_name" {
+  type        = string
+  description = "The name of the Velero workspace to create and connect to AWS"
 }
 
 variable "aws_region" {
@@ -25,7 +30,7 @@ variable "aws_region" {
   description = "AWS region for resources"
 }
 
-variable "ceph_objectstore_aws_account_id" {
+variable "aws_account_id" {
   type        = string
   description = "The AWS account ID"
 }

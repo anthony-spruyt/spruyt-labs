@@ -1,6 +1,6 @@
 
 locals {
-  ceph_bucket_pattern = "arn:aws:s3:::spruyt-labs-${var.ceph_objectstore_aws_account_id}-prod-ceph-*"
+  ceph_bucket_pattern = "arn:aws:s3:::spruyt-labs-${var.aws_account_id}-prod-ceph-*"
 }
 
 data "aws_iam_policy_document" "ceph_objectstore_aws_iam_policy" {
