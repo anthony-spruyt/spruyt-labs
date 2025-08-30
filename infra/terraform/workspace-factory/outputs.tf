@@ -3,5 +3,5 @@
 #}
 #
 #output "velero_backup_tfc_role_arn" {
-#  value = module.velero-backup.tfc_role_arn
+#  value = module.velero_backup.tfc_role_arn
 #}

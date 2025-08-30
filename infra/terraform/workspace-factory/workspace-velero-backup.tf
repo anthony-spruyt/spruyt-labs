@@ -18,7 +18,7 @@ data "aws_iam_policy_document" "velero_backup_aws_iam_policy" {
   }
 }
 
-module "velero-backup" {
+module "velero_backup" {
   source                                  = "./modules/aws-workspace"
   aws_iam_policy_document                 = data.aws_iam_policy_document.velero_backup_aws_iam_policy.json
   aws_region                              = var.aws_region
