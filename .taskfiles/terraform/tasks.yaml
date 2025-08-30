@@ -8,6 +8,10 @@ vars:
   validate: "{{ .ROOT_DIR }}/.taskfiles/terraform/scripts/validate.sh"
 
 tasks:
+  login:
+    desc: Login to Terraform cloud
+    cmds:
+      - bash terraform login
   fmt:
     desc: Terraform format all workspaces and modules
     cmds:

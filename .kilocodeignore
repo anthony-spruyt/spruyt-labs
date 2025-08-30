@@ -1,3 +1,11 @@
 secrets
 talos/clusterconfig
 *.sops.*
+.devcontainer
+.taskfiles
+.vscode
+.gitattributes
+.gitleaksignore
+.pre-commit-config.yaml
+LICENSE
+Taskfile.yml

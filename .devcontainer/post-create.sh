@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-chmod u+x **/*.sh
+sudo chmod u+x **/*.sh
 
 curl -sSfL https://taskfile.dev/install.sh \
     | sudo sh -s -- -b /usr/local/bin
@@ -13,4 +13,3 @@ task dev-env:install-flux
 task dev-env:install-flux-capacitor
 task dev-env:install-age
 task pre-commit:init
-task terraform:init
