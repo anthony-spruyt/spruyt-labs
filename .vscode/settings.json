@@ -1,21 +1,21 @@
 {
   "files.exclude": {
     ".devcontainer": true,
-    ".github": true,
-    ".taskfiles": true,
-    "capacitor": true,
+    ".github": false,
+    ".taskfiles": false,
+    "capacitor": false,
     "secrets": false,
-    ".sops.yaml": true,
-    ".gitattributes": true,
-    ".gitleaksignore": true,
+    ".sops.yaml": false,
+    ".gitattributes": false,
+    ".gitleaksignore": false,
     ".gitignore": true,
-    ".pre-commit-config.yaml": true,
-    "LICENSE": true,
-    "Taskfile.yml": true,
-    ".kilocodeignore": true,
+    ".pre-commit-config.yaml": false,
+    "LICENSE": false,
+    "Taskfile.yml": false,
+    ".kilocodeignore": false,
     "talos/clusterconfig": false,
-    "**/.terraform": true,
-    "**/.terraform.lock.hcl": true
+    "**/.terraform": false,
+    "**/.terraform.lock.hcl": false
   },
   "search.exclude": {
     "**/*.secret.*": true,

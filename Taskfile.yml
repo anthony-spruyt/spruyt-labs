@@ -1,4 +1,5 @@
 ---
+# https://taskfile.dev
 version: "3"
 
 vars:
@@ -7,7 +8,8 @@ vars:
   CLUSTER_DIR: "{{.PROJECT_DIR}}/cluster"
 
 includes:
-  pre-commit: .taskfiles/pre-commit.yml
-  sops: .taskfiles/sops.yml
-  flux: .taskfiles/flux.yml
-  terraform: .taskfiles/terraform.yml
+  flux: .taskfiles/flux/tasks.yaml
+  kubectl: .taskfiles/kubectl/tasks.yaml
+  pre-commit: .taskfiles/pre-commit/tasks.yaml
+  sops: .taskfiles/sops/tasks.yaml
+  terraform: .taskfiles/terraform/tasks.yaml

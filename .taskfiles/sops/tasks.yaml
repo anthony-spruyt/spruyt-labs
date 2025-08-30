@@ -2,8 +2,9 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 vars:
-  decryptScript: "{{ .ROOT_DIR }}/talos/sops-decrypt.sh"
-  encryptScript: "{{ .ROOT_DIR }}/talos/sops-encrypt.sh"
+  initScript: "{{ .ROOT_DIR }}/.taskfiles/sops/scripts/sops-encrypt.sh"
+  decryptScript: "{{ .ROOT_DIR }}/.taskfiles/sops/scripts/sops-decrypt.sh"
+  encryptScript: "{{ .ROOT_DIR }}/.taskfiles/sops/scripts/sops-encrypt.sh"
 
 tasks:
   encrypt:

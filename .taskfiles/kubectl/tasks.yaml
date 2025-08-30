@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+vars:
+  deleteFailedPodsScript: "{{ .ROOT_DIR }}/.taskfiles/kubectl/scripts/delete-failed-pods.sh"
+
+tasks:
+  delete-failed-pods:
+    desc: Delete failed pods
+    cmds:
+      - bash {{ .deleteFailedPodsScript }}

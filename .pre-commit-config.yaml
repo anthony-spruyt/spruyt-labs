@@ -43,3 +43,10 @@ repos:
             --config=.github/linters/.prettierrc.yaml,
             --ignore-path=.github/linters/.prettierignore,
           ]
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.77.0
+    hooks:
+      - id: terraform_fmt
+        files: ^infra/terraform/
+      - id: terraform_tflint
+        files: ^infra/terraform/
