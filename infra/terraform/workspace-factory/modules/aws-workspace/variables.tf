@@ -66,3 +66,12 @@ variable "tfc_vcs_repo_ingress_submodules" {
   default     = false
   description = "Flag to enable support for VCS submodules in the repository"
 }
+variable "oidc_provider_arn" {
+  type        = string
+  description = "The ARN of the OIDC provider to use for federated identity"
+}
+
+variable "oidc_provider_client_id_list" {
+  type        = list(string)
+  description = "The client ID list for the OIDC provider"
+}

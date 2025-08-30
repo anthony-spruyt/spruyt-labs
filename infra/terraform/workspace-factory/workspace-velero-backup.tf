@@ -31,4 +31,6 @@ module "velero_backup" {
   tfc_working_directory                   = var.velero_backup_tfc_working_directory
   tfc_workspace_name                      = var.velero_backup_tfc_workspace_name
   tfc_vcs_repo_ingress_submodules         = var.tfc_vcs_repo_ingress_submodules
+  oidc_provider_arn                       = module.aws_oidc_provider.aws_oidc_provider_arn
+  oidc_provider_client_id_list            = module.aws_oidc_provider.aws_oidc_provider_client_id_list
 }

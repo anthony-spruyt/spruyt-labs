@@ -1,4 +1,3 @@
-
 locals {
   ceph_objectstore_bucket_pattern = "arn:aws:s3:::spruyt-labs-${var.aws_account_id}-prod-ceph-*"
 }
@@ -31,4 +30,6 @@ module "ceph_objectstore" {
   tfc_working_directory                   = var.ceph_objectstore_tfc_working_directory
   tfc_workspace_name                      = var.ceph_objectstore_tfc_workspace_name
   tfc_vcs_repo_ingress_submodules         = var.tfc_vcs_repo_ingress_submodules
+  oidc_provider_arn                       = module.aws_oidc_provider.aws_oidc_provider_arn
+  oidc_provider_client_id_list            = module.aws_oidc_provider.aws_oidc_provider_client_id_list
 }
