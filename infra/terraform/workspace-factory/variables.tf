@@ -74,18 +74,6 @@ variable "tfc_vcs_repo_ingress_submodules" {
   description = "Flag to enable support for VCS submodules in the repository for the workspace-factory workspace"
 }
 
-variable "tfc_vcs_repo_oauth_token_id" {
-  type        = string
-  default     = ""
-  description = "The optional OAuth token ID for VCS integration in the workspace-factory workspace"
-}
-
-variable "tfc_vcs_repo_tags_regex" {
-  type        = string
-  default     = ""
-  description = "The optional regex pattern to filter VCS tags for triggering runs in the workspace-factory workspace"
-}
-
 variable "workspace_factory_tfc_workspace_name" {
   type        = string
   description = "The name of the Terraform Cloud workspace for the workspace-factory module"

@@ -66,15 +66,3 @@ variable "tfc_vcs_repo_ingress_submodules" {
   default     = false
   description = "Flag to enable support for VCS submodules in the repository"
 }
-
-variable "tfc_vcs_repo_oauth_token_id" {
-  type        = string
-  default     = ""
-  description = "The optional OAuth token ID for VCS integration"
-}
-
-variable "tfc_vcs_repo_tags_regex" {
-  type        = string
-  default     = ""
-  description = "The optional regex pattern to filter VCS tags for triggering runs"
-}

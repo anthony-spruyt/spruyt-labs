@@ -31,6 +31,4 @@ module "velero-backup" {
   tfc_working_directory                   = var.velero_backup_tfc_working_directory
   tfc_workspace_name                      = var.velero_backup_tfc_workspace_name
   tfc_vcs_repo_ingress_submodules         = var.tfc_vcs_repo_ingress_submodules
-  tfc_vcs_repo_oauth_token_id             = var.tfc_vcs_repo_oauth_token_id
-  tfc_vcs_repo_tags_regex                 = var.tfc_vcs_repo_tags_regex
 }

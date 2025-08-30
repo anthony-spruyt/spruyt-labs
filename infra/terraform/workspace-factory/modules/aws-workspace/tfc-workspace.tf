@@ -16,8 +16,6 @@ resource "tfe_workspace" "my_workspace" {
     github_app_installation_id = var.tfc_vcs_repo_github_app_installation_id
     identifier                 = var.tfc_vcs_repo_identifier
     ingress_submodules         = var.tfc_vcs_repo_ingress_submodules
-    oauth_token_id             = var.tfc_vcs_repo_oauth_token_id
-    tags_regex                 = var.tfc_vcs_repo_tags_regex
   }
   force_delete = true
 }

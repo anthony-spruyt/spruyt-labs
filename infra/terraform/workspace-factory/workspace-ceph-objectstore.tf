@@ -31,6 +31,4 @@ module "ceph_objectstore" {
   tfc_working_directory                   = var.ceph_objectstore_tfc_working_directory
   tfc_workspace_name                      = var.ceph_objectstore_tfc_workspace_name
   tfc_vcs_repo_ingress_submodules         = var.tfc_vcs_repo_ingress_submodules
-  tfc_vcs_repo_oauth_token_id             = var.tfc_vcs_repo_oauth_token_id
-  tfc_vcs_repo_tags_regex                 = var.tfc_vcs_repo_tags_regex
 }
