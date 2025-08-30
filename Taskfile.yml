@@ -12,5 +12,6 @@ includes:
   flux: .taskfiles/flux/tasks.yaml
   kubectl: .taskfiles/kubectl/tasks.yaml
   pre-commit: .taskfiles/pre-commit/tasks.yaml
+  rook-ceph: .taskfiles/rook-ceph/tasks.yaml
   sops: .taskfiles/sops/tasks.yaml
   terraform: .taskfiles/terraform/tasks.yaml

@@ -9,13 +9,14 @@ vars:
 
 tasks:
   login:
-    desc: Login to Terraform cloud
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task terraform:login"'
     cmds:
-      - bash terraform login
+      - terraform login
   fmt:
     desc: Terraform format all workspaces and modules
     cmds:
-      - bash {{ .fmt }}
+      - terraform fmt -recursive
+    dir: /workspaces/spruyt-labs/infra/terraform
   init:
     desc: Initializes all workspaces and modules
     cmds:

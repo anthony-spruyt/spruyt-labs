@@ -1,0 +1,9 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+tasks:
+  tools:
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task rook-ceph:tools"'
+    cmds:
+      - kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- bash
