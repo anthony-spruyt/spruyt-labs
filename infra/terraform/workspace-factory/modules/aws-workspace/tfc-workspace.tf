@@ -5,9 +5,21 @@ data "tfe_project" "tfc_project" {
 }
 
 resource "tfe_workspace" "my_workspace" {
-  name         = var.tfc_workspace_name
-  organization = var.tfc_organization_name
-  project_id   = data.tfe_project.tfc_project.id
+  name              = var.tfc_workspace_name
+  organization      = var.tfc_organization_name
+  project_id        = data.tfe_project.tfc_project.id
+  working_directory = var.tfc_working_directory
+  trigger_patterns = [
+    var.tfc_trigger_pattern
+  ]
+  vcs_repo {
+    branch                     = var.tfc_vcs_repo_branch
+    github_app_installation_id = var.tfc_vcs_repo_github_app_installation_id
+    identifier                 = var.tfc_vcs_repo_identifier
+    ingress_submodules         = var.tfc_vcs_repo_ingress_submodules
+    oauth_token_id             = var.tfc_vcs_repo_oauth_token_id
+    tags_regex                 = var.tfc_vcs_repo_tags_regex
+  }
 }
 
 resource "tfe_variable" "enable_aws_provider_auth" {

@@ -10,3 +10,4 @@ tasks:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task flux:cap"'
     cmds:
       - bash {{ .startCapacitorScript }}
+    interactive: true

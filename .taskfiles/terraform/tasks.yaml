@@ -12,6 +12,7 @@ tasks:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task terraform:login"'
     cmds:
       - terraform login
+    interactive: true
   fmt:
     desc: Terraform format all workspaces and modules
     cmds:
