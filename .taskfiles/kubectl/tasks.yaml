@@ -6,6 +6,6 @@ vars:
 
 tasks:
   delete-failed-pods:
-    desc: Delete failed pods
+    desc: Deletes all failed pods from the cluster
     cmds:
       - bash {{ .deleteFailedPodsScript }}

@@ -1,14 +1,14 @@
 {
   "files.exclude": {
-    ".devcontainer": true,
+    ".devcontainer": false,
     ".github": false,
     ".taskfiles": false,
-    "capacitor": false,
+    ".capacitor": false,
     "secrets": false,
     ".sops.yaml": false,
     ".gitattributes": false,
     ".gitleaksignore": false,
-    ".gitignore": true,
+    ".gitignore": false,
     ".pre-commit-config.yaml": false,
     "LICENSE": false,
     "Taskfile.yml": false,

@@ -9,14 +9,14 @@ vars:
 
 tasks:
   fmt:
-    desc: Terraform format
+    desc: Terraform format all workspaces and modules
     cmds:
       - bash {{ .fmt }}
   init:
-    desc: Terraform format
+    desc: Initializes all workspaces and modules
     cmds:
       - bash {{ .init }}
   validate:
-    desc: Terraform format
+    desc: Validates all workspaces and modules
     cmds:
       - bash {{ .validate }}

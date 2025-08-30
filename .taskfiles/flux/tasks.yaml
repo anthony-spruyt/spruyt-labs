@@ -6,15 +6,7 @@ vars:
   startCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/flux/scripts/start-capacitor.sh"
 
 tasks:
-  install-capacitor:
-    desc: Install flux capacitor
+  cap:
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task flux:cap"'
     cmds:
-      - curl -L "https://github.com/gimlet-io/capacitor/releases/download/capacitor-next/next-$(uname)-$(uname -m)" -o {{ .ROOT_DIR }}/capacitor/next
-      - chmod +x {{ .ROOT_DIR }}/capacitor/next
-  # Rather run directly as even interactive doesnt work and you then cant
-  # stop / restart it without having to restart dev container.
-  # cap:
-  #   desc: Start flux capacitor
-  #   cmds:
-  #     - bash {{ .startCapacitorScript }}
-  #   interactive: true
+      - bash {{ .startCapacitorScript }}

@@ -26,4 +26,4 @@ image_list.txt
 bootstrap/
 cluster/core/kube-system/kubelet-csr-approver/charts/
 temp
-capacitor/next
+.capacitor

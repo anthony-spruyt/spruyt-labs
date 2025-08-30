@@ -8,6 +8,7 @@ vars:
   CLUSTER_DIR: "{{.PROJECT_DIR}}/cluster"
 
 includes:
+  dev-env: .taskfiles/dev-env/tasks.yaml
   flux: .taskfiles/flux/tasks.yaml
   kubectl: .taskfiles/kubectl/tasks.yaml
   pre-commit: .taskfiles/pre-commit/tasks.yaml

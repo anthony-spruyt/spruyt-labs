@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  installAgeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-age.sh"
+  installFluxCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux-capacitor.sh"
+  installFluxScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux.sh"
+  installHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm-plugins.sh"
+  installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
+  updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
+
+tasks:
+  install-age:
+    desc: Installs age and age-keygen
+    cmds:
+      - bash {{ .installAgeScript }}
+  install-flux-capacitor:
+    desc: Installs Flux Capacitor v2 local FluxCD GUI
+    cmds:
+      - bash {{ .installFluxCapacitorScript }}
+  install-flux:
+    desc: Installs the Flux CLI
+    cmds:
+      - bash {{ .installFluxScript }}
+  install-helm-plugins:
+    desc: Installs Helm schema gen and diff
+    cmds:
+      - bash {{ .installHelmPluginsScript }}
+  install-talhelper:
+    desc: Installs the Talhelper CLI
+    cmds:
+      - bash {{ .installTalhelperScript }}
+  update-helm-plugins:
+    desc: Updates Helm plugins
+    cmds:
+      - bash {{ .updateHelmPluginsScript }}
