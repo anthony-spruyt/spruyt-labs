@@ -14,10 +14,10 @@ k8s:
   requireIPv6PodCIDR: true
 ipv4:
   enabled: true
-ipv4NativeRoutingCIDR: "${NATIVE_ROUTING_CIDR_IP4}"
+ipv4NativeRoutingCIDR: "${CLUSTER_VLAN_CIDR_IP4}"
 ipv6:
   enabled: false
-ipv6NativeRoutingCIDR: "${NATIVE_ROUTING_CIDR_IP6}"
+ipv6NativeRoutingCIDR: "${CLUSTER_VLAN_CIDR_IP6}"
 autoDirectNodeRoutes: true
 k8sServiceHost: localhost
 k8sServicePort: 7445
@@ -54,8 +54,10 @@ ipMasqAgent:
       - "${CLUSTER_POD_NETS_IP6}" # Cluster pods IP6
       - "${NETWORK_LB_CIDR_IP4}" # LB pool IP4
       - "${NETWORK_LB_CIDR_IP6}" # LB pool IP6
-      - "${NATIVE_ROUTING_CIDR_IP4}" # Native routing IP4
-      - "${NATIVE_ROUTING_CIDR_IP6}" # Native routing IP6
+      - "${LAN_CIDR_IP4}" # Native routing IP4
+      - "${LAN_CIDR_IP6}" # Native routing IP6
+      - "${CLUSTER_VLAN_CIDR_IP4}" # Nodes routing IP4
+      - "${CLUSTER_VLAN_CIDR_IP6}" # Nodes routing IP6
       #- "100.64.0.0/10" # Cilium overlay IP4
     masqLinkLocal: false # keep link-local (169.254.0.0/16) un-SNAT-ed
     masqLinkLocalIPv6: false # keep fe80::/10 un-SNAT-ed

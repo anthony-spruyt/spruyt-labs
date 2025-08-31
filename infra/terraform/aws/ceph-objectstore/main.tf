@@ -7,7 +7,6 @@ locals {
   common_tags = {
     Project     = var.project
     Environment = var.environment
-    Owner       = "anthony"
     ManagedBy   = "terraform"
   }
 }
@@ -62,6 +61,7 @@ resource "aws_kms_key" "this" {
       }
     ]
   })
+  tags = local.common_tags
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
@@ -161,6 +161,7 @@ resource "aws_kms_key" "log_bucket" {
       }
     ]
   })
+  tags = local.common_tags
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "log_bucket" {

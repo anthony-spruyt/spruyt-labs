@@ -9,5 +9,5 @@ metadata:
 spec:
   ipWhiteList:
     sourceRange:
-      - ${NATIVE_ROUTING_CIDR_IP4}
-      - ${NATIVE_ROUTING_CIDR_IP6}
+      - ${LAN_CIDR_IP4}
+      - ${LAN_CIDR_IP6}
