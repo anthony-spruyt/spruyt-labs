@@ -27,7 +27,7 @@ This Terraform workspace provisions an S3 bucket and IAM user for Velero backups
 
    Or, for the standard Velero format, create a file `credentials-velero`:
 
-   ```
+   ```ini
    [default]
    aws_access_key_id = <access_key_id>
    aws_secret_access_key = <secret_access_key>
@@ -50,7 +50,7 @@ This Terraform workspace provisions an S3 bucket and IAM user for Velero backups
 ## Outputs
 
 - `velero_backup_bucket`: S3 bucket name
-- `velero_iam_user`: IAM user name
+- `velero_iam_user`: IAM username
 - `velero_iam_access_key_id`: Access key ID
 - `velero_iam_secret_access_key`: Secret access key (sensitive)
 
