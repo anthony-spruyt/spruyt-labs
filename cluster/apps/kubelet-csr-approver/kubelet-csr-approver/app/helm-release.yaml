@@ -22,8 +22,10 @@ spec:
       ${KUBELET_CSR_APPROVER_REGEX}
     bypassDnsResolution: true
     providerIpPrefixes:
-      - "${NATIVE_ROUTING_CIDR_IP4}"
-      - "${NATIVE_ROUTING_CIDR_IP6}"
+      - "${LAN_CIDR_IP4}"
+      - "${LAN_CIDR_IP6}"
+      - "${CLUSTER_VLAN_CIDR_IP4}"
+      - "${CLUSTER_VLAN_CIDR_IP6}"
       - "${NETWORK_LB_CIDR_IP4}"
       - "${NETWORK_LB_CIDR_IP6}"
       - "${CLUSTER_POD_NETS_IP4}"
