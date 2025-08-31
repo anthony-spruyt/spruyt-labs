@@ -17,22 +17,16 @@ additionalApiServerCertSans:
   - ${KUBEAPI_VIP_IP}
   - ${C1_IP4}
   - ${C1_IP4_VLAN_10}
-  - ${C1_IP4_VLAN_20}
   - ${C2_IP4}
   - ${C2_IP4_VLAN_10}
-  - ${C2_IP4_VLAN_20}
   - ${C3_IP4}
   - ${C3_IP4_VLAN_10}
-  - ${C3_IP4_VLAN_20}
   - ${C1_IP6}
   - ${C1_IP6_VLAN_10}
-  - ${C1_IP6_VLAN_20}
   - ${C2_IP6}
   - ${C2_IP6_VLAN_10}
-  - ${C2_IP6_VLAN_20}
   - ${C3_IP6}
   - ${C3_IP6_VLAN_10}
-  - ${C3_IP6_VLAN_20}
 
 cniConfig:
   name: none
@@ -80,11 +74,6 @@ nodes:
               - "${C1_IP4_VLAN_10}/24"
               - "${C1_IP6_VLAN_10}/64"
             mtu: *mtu
-          - vlanId: 20
-            addresses:
-              - "${C1_IP4_VLAN_20}/24"
-              - "${C1_IP6_VLAN_20}/64"
-            mtu: *mtu
 
     certSANs: &additionalMachineCertSans
       - 127.0.0.1
@@ -92,22 +81,16 @@ nodes:
       - ${KUBEAPI_VIP_IP}
       - ${C1_IP4}
       - ${C1_IP4_VLAN_10}
-      - ${C1_IP4_VLAN_20}
       - ${C2_IP4}
       - ${C2_IP4_VLAN_10}
-      - ${C2_IP4_VLAN_20}
       - ${C3_IP4}
       - ${C3_IP4_VLAN_10}
-      - ${C3_IP4_VLAN_20}
       - ${C1_IP6}
       - ${C1_IP6_VLAN_10}
-      - ${C1_IP6_VLAN_20}
       - ${C2_IP6}
       - ${C2_IP6_VLAN_10}
-      - ${C2_IP6_VLAN_20}
       - ${C3_IP6}
       - ${C3_IP6_VLAN_10}
-      - ${C3_IP6_VLAN_20}
     nodeLabels: &e2nodelabels
       node-role.kubernetes.io/control-plane: ""
       #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
@@ -172,11 +155,6 @@ nodes:
               - "${C2_IP4_VLAN_10}/24"
               - "${C2_IP6_VLAN_10}/64"
             mtu: *mtu
-          - vlanId: 20
-            addresses:
-              - "${C2_IP4_VLAN_20}/24"
-              - "${C2_IP6_VLAN_20}/64"
-            mtu: *mtu
     certSANs: *additionalMachineCertSans
     nodeLabels: *e2nodelabels
     nodeAnnotations: *nodeannotations
@@ -227,11 +205,6 @@ nodes:
             addresses:
               - "${C3_IP4_VLAN_10}/24"
               - "${C3_IP6_VLAN_10}/64"
-            mtu: *mtu
-          - vlanId: 20
-            addresses:
-              - "${C3_IP4_VLAN_20}/24"
-              - "${C3_IP6_VLAN_20}/64"
             mtu: *mtu
     certSANs: *additionalMachineCertSans
     nodeLabels: *e2nodelabels
