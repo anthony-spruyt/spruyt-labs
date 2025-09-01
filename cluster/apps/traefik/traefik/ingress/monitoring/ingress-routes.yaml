@@ -16,7 +16,7 @@ spec:
     - kind: Rule
       match: Host(`grafana.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
-        - name: lan-ip-whitelist
+        # - name: lan-ip-whitelist
         - name: compress
       services:
         - name: victoria-metrics-k8s-stack-grafana
@@ -43,7 +43,7 @@ spec:
     - kind: Rule
       match: Host(`vmagent.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
-        - name: lan-ip-whitelist
+        # - name: lan-ip-whitelist
         - name: compress
       services:
         - name: vmagent-victoria-metrics-k8s-stack

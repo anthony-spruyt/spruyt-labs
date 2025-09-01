@@ -16,7 +16,7 @@ spec:
     - kind: Rule
       match: Host(`ceph.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
-        - name: lan-ip-whitelist
+        # - name: lan-ip-whitelist
         - name: compress
       services:
         - name: rook-ceph-mgr-dashboard
