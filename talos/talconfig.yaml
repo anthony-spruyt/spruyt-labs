@@ -141,7 +141,7 @@ nodes:
     networkInterfaces:
       - interface: eno1
         ignore: true
-      - interface: enp3s0f3u3
+      - interface: enp1s0
         dhcp: *dhcp
         addresses:
           - "${C2_IP4}/24"
@@ -163,8 +163,8 @@ nodes:
       - |-
         machine:
           sysctls:
-            net.ipv6.conf.enp3s0f3u3.autoconf: "0"
-            net.ipv6.conf.enp3s0f3u3.accept_ra: "0"
+            net.ipv6.conf.enp1s0.autoconf: "0"
+            net.ipv6.conf.enp1s0.accept_ra: "0"
           install:
              wipe: true
           systemDiskEncryption:
