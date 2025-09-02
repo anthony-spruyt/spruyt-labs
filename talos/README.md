@@ -32,18 +32,18 @@ Here are the options for the initial boot of Talos Linux on a bare-metal machine
 
 #### SecureBoot ISO
 
-[https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.10.7/metal-amd64-secureboot.iso](https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.10.7/metal-amd64-secureboot.iso)
+[https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.11.0/metal-amd64-secureboot.iso](https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.11.0/metal-amd64-secureboot.iso)
 [(SecureBoot documentation)](https://www.talos.dev/v1.10/talos-guides/install/bare-metal-platforms/secureboot/)
 
 ### Initial Installation
 
 For the initial installation of Talos Linux (not applicable for disk image boot), add the following installer image to the machine configuration:
-`factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7`
+`factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.11.0`
 
 ### Upgrading Talos Linux
 
 To [upgrade](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/) Talos Linux on the machine, use the following image:
-`factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7`
+`factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.11.0`
 
 ### Gracefully Shutdown
 
@@ -182,7 +182,7 @@ talosctl logs -k
 
 #### SecureBoot UKI
 
-[https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.10.7/metal-amd64-secureboot-uki.efi](https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.10.7/metal-amd64-secureboot-uki.efi)
+[https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.11.0/metal-amd64-secureboot-uki.efi](https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.11.0/metal-amd64-secureboot-uki.efi)
 
 ## Resources
 
