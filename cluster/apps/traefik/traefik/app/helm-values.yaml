@@ -25,4 +25,5 @@ providers:
 service:
   annotations:
     metallb.io/loadBalancerIPs: "${LB_IP4_TRAEFIK}"
-  externalTrafficPolicy: Local
+  spec:
+    externalTrafficPolicy: Local
