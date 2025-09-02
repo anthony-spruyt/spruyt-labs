@@ -85,7 +85,10 @@ kubectl -n rook-ceph scale deployment rook-ceph-osd-1 --replicas=0
 kubectl -n rook-ceph scale deployment rook-ceph-osd-2 --replicas=0
 kubectl -n rook-ceph scale deployment rook-ceph-mgr-a --replicas=0
 kubectl -n rook-ceph scale deployment rook-ceph-mgr-b --replicas=0
+kubectl -n rook-ceph scale deployment rook-ceph-mgr-c --replicas=0
+kubectl -n rook-ceph scale deployment rook-ceph-mgr-d --replicas=0
 kubectl -n rook-ceph scale deployment rook-ceph-mon-a --replicas=0
+kubectl -n rook-ceph scale deployment rook-ceph-mon-b --replicas=0
 kubectl -n rook-ceph scale deployment rook-ceph-mon-c --replicas=0
 kubectl -n rook-ceph scale deployment rook-ceph-mon-d --replicas=0
 ```
@@ -112,10 +115,14 @@ Order matters—mons first:
 
 ```bash
 kubectl -n rook-ceph scale deployment rook-ceph-mon-a --replicas=1
+kubectl -n rook-ceph scale deployment rook-ceph-mon-b --replicas=1
 kubectl -n rook-ceph scale deployment rook-ceph-mon-c --replicas=1
 kubectl -n rook-ceph scale deployment rook-ceph-mon-d --replicas=1
+kubectl -n rook-ceph scale deployment rook-ceph-mon-e --replicas=1
 kubectl -n rook-ceph scale deployment rook-ceph-mgr-a --replicas=1
 kubectl -n rook-ceph scale deployment rook-ceph-mgr-b --replicas=1
+kubectl -n rook-ceph scale deployment rook-ceph-mgr-c --replicas=1
+kubectl -n rook-ceph scale deployment rook-ceph-mgr-d --replicas=1
 kubectl -n rook-ceph scale deployment rook-ceph-osd-0 --replicas=1
 kubectl -n rook-ceph scale deployment rook-ceph-osd-1 --replicas=1
 kubectl -n rook-ceph scale deployment rook-ceph-osd-2 --replicas=1
@@ -148,6 +155,28 @@ ceph osd unset norecover
 ##### Restart Apps
 
 Bring back Vaultwarden, Mosquitto, Chrony, etc.
+
+### Logs
+
+The logs of a talos node can be viewed by running the following against a node.
+
+#### Kernel
+
+```bash
+talosctl -n <NODE_IP> dmesg
+```
+
+#### Service
+
+```bash
+talosctl logs
+```
+
+#### Container
+
+```bash
+talosctl logs -k
+```
 
 ### Extra Assets
 
