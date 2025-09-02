@@ -16,7 +16,7 @@ spec:
     - match: Host(`whoami.lan.${EXTERNAL_DOMAIN}`)
       kind: Rule
       middlewares:
-        #- name: lan-ip-whitelist
+        - name: lan-ip-whitelist
         - name: compress
       services:
         - name: whoami

@@ -3,11 +3,19 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../base/lan-ip-whitelist.yaml
   - ../base/compress.yaml
+  - ../base/lan-ip-whitelist.yaml
+  - ../base/rate-limit.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
 patches:
+  - target:
+      kind: Middleware
+      name: compress
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: vaultwarden
   - target:
       kind: Middleware
       name: lan-ip-whitelist
@@ -17,7 +25,7 @@ patches:
         value: vaultwarden
   - target:
       kind: Middleware
-      name: compress
+      name: rate-limit
     patch: |
       - op: replace
         path: /metadata/namespace

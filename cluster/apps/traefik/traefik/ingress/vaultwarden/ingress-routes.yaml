@@ -24,8 +24,9 @@ spec:
           port: 80
     - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`)
       kind: Rule
-      #middlewares:
-      #  - name: compress
+      middlewares:
+        # - name: compress
+        - name: rate-limit
       services:
         - name: vaultwarden
           namespace: vaultwarden
