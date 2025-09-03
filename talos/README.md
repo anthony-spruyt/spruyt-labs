@@ -8,7 +8,7 @@ If secrets are regenerated then `cluster/apps/traefik/traefik/crds/talos-api-tls
 
 ## Talos Linux Image Factory
 
-[Talos Image Factory URL](https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=-lockdown+lockdown%3Dintegrity&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=true&target=metal&version=1.10.5)
+[Talos Image Factory URL](https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=-lockdown+lockdown%3Dintegrity&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=true&target=metal&version=1.10.7)
 
 Your image schematic ID is: `9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61`
 
@@ -32,18 +32,18 @@ Here are the options for the initial boot of Talos Linux on a bare-metal machine
 
 #### SecureBoot ISO
 
-[https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.11.0/metal-amd64-secureboot.iso](https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.11.0/metal-amd64-secureboot.iso)
+[https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.10.7/metal-amd64-secureboot.iso](https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.10.7/metal-amd64-secureboot.iso)
 [(SecureBoot documentation)](https://www.talos.dev/v1.10/talos-guides/install/bare-metal-platforms/secureboot/)
 
 ### Initial Installation
 
 For the initial installation of Talos Linux (not applicable for disk image boot), add the following installer image to the machine configuration:
-`factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.11.0`
+`factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7`
 
 ### Upgrading Talos Linux
 
 To [upgrade](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/) Talos Linux on the machine, use the following image:
-`factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.11.0`
+`factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7`
 
 ### Gracefully Shutdown
 
@@ -98,9 +98,9 @@ kubectl -n rook-ceph scale deployment rook-ceph-mon-d --replicas=0
 Use Talos API or CLI to shut down nodes cleanly:
 
 ```bash
-talosctl shutdown -n 192.168.50.84
-talosctl shutdown -n 192.168.50.92
-talosctl shutdown -n 192.168.50.99
+talosctl shutdown -n <node 3>
+talosctl shutdown -n <node 2>
+talosctl shutdown -n <node 1>
 ```
 
 #### Restart Sequence
@@ -182,7 +182,7 @@ talosctl logs -k
 
 #### SecureBoot UKI
 
-[https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.11.0/metal-amd64-secureboot-uki.efi](https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.11.0/metal-amd64-secureboot-uki.efi)
+[https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.10.7/metal-amd64-secureboot-uki.efi](https://factory.talos.dev/image/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61/v1.10.7/metal-amd64-secureboot-uki.efi)
 
 ## Resources
 

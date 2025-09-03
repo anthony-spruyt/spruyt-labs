@@ -1,19 +1,17 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
 # renovate: depName=ghcr.io/siderolabs/installer datasource=docker
-talosVersion: v1.11.0
+talosVersion: v1.10.7
 # renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
-kubernetesVersion: v1.34.0
+kubernetesVersion: v1.33.4
 
 clusterName: ${CLUSTER_NAME}
-#endpoint: https://${DOMAIN_NAME_KUBEAPI}
 #endpoint: https://${C1_IP4}:6443
 endpoint: https://${KUBEAPI_VIP_IP}:6443
 domain: ${CLUSTER_DOMAIN}
 
 additionalApiServerCertSans:
   - 127.0.0.1
-  - ${DOMAIN_NAME_KUBEAPI}
   - ${KUBEAPI_VIP_IP}
   - ${C1_IP4}
   - ${C1_IP4_VLAN_10}
@@ -50,6 +48,31 @@ nodes:
     installDiskSelector: &e2installdiskselector
       size: "<= 300GB"
       model: RTL9210B-CG
+    #volumes: &e2volumes
+    #  - name: STATE
+    #    encryption:
+    #      provider: luks2
+    #      keys:
+    #        - slot: 0
+    #          nodeID: {}
+    #        - slot: 1
+    #          tpm: {}
+    #      options:
+    #        - no_read_workqueue
+    #        - no_write_workqueue
+    #  - name: EPHEMERAL
+    #    encryption:
+    #      provider: luks2
+    #      keys:
+    #        - slot: 0
+    #          nodeID: {}
+    #          lockToState: true
+    #        - slot: 1
+    #          tpm: {}
+    #          lockToState: true
+    #      options:
+    #        - no_read_workqueue
+    #        - no_write_workqueue
     networkInterfaces:
       - interface: eno1
         ignore: true
@@ -74,10 +97,8 @@ nodes:
               - "${C1_IP4_VLAN_10}/24"
               - "${C1_IP6_VLAN_10}/64"
             mtu: *mtu
-
     certSANs: &additionalMachineCertSans
       - 127.0.0.1
-      - ${DOMAIN_NAME_KUBEAPI}
       - ${KUBEAPI_VIP_IP}
       - ${C1_IP4}
       - ${C1_IP4_VLAN_10}
@@ -95,7 +116,7 @@ nodes:
       node-role.kubernetes.io/control-plane: ""
       #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
     nodeAnnotations: &nodeannotations
-      installerImage: "factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.11.0"
+      installerImage: "factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7"
     schematic: &e2schematic
       customization:
         secureboot:
@@ -128,16 +149,12 @@ nodes:
                 - no_read_workqueue
                 - no_write_workqueue
             state: *e2encryption
-          network:
-            extraHostEntries:
-              - ip: ${KUBEAPI_VIP_IP}
-                aliases:
-                  - ${DOMAIN_NAME_KUBEAPI}
   - hostname: ${C2_HOST}
     controlPlane: true
     ipAddress: ${C2_IP4}
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
+    #volumes: *e2volumes
     networkInterfaces:
       - interface: eno1
         ignore: true
@@ -159,36 +176,13 @@ nodes:
     nodeLabels: *e2nodelabels
     nodeAnnotations: *nodeannotations
     schematic: *e2schematic
-    patches:
-      - |-
-        machine:
-          sysctls:
-            net.ipv6.conf.enp1s0.autoconf: "0"
-            net.ipv6.conf.enp1s0.accept_ra: "0"
-          install:
-             wipe: true
-          systemDiskEncryption:
-            ephemeral:
-              provider: luks2
-              keys:
-                - slot: 0
-                  nodeID: {}
-                - slot: 1
-                  tpm: {}
-              options:
-                - no_read_workqueue
-                - no_write_workqueue
-            state:
-          network:
-            extraHostEntries:
-              - ip: ${KUBEAPI_VIP_IP}
-                aliases:
-                  - ${DOMAIN_NAME_KUBEAPI}
+    patches: *e2patches
   - hostname: ${C3_HOST}
     controlPlane: true
     ipAddress: ${C3_IP4}
     machineSpec: *e2machinespec
     installDiskSelector: *e2installdiskselector
+    #volumes: *e2volumes
     networkInterfaces:
       - interface: eno1
         ignore: true
@@ -238,11 +232,6 @@ nodes:
             net.ipv6.conf.eno1.accept_ra: "0"
           install:
              wipe: true
-          network:
-            extraHostEntries:
-              - ip: ${KUBEAPI_VIP_IP}
-                aliases:
-                  - ${DOMAIN_NAME_KUBEAPI}
   - hostname: ${W2_HOST}
     controlPlane: false
     ipAddress: ${W2_IP4}
