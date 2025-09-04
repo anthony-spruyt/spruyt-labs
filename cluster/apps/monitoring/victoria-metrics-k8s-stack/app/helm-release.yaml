@@ -311,7 +311,7 @@ spec:
         storage:
           storageClassName: "rbd-fast-delete"
           accessModes:
-            - ReadWriteOnce
+            - ReadWriteOncePod
           resources:
             requests:
               storage: 30Gi
