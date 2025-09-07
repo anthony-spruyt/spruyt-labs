@@ -22,7 +22,6 @@ spec:
         containers:
           main:
             image:
-              # TODO:renovate
               #repository: nmbgeek/bedrockconnect
               #tag: 1.59
               repository: aspruyt/bedrockconnect

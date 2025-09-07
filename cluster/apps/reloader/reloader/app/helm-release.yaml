@@ -8,7 +8,6 @@ spec:
   interval: 1h
   chart:
     spec:
-      # TODO:renovate
       chart: reloader
       version: 2.1.5
       sourceRef:
