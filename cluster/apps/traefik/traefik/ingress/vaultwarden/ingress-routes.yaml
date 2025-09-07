@@ -16,8 +16,9 @@ spec:
     - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`) && PathPrefix(`/admin`)
       kind: Rule
       middlewares:
-        #- name: lan-ip-whitelist
+        - name: lan-ip-whitelist
         - name: rate-limit
+        - name: compress
       services:
         - name: vaultwarden
           namespace: vaultwarden
@@ -26,8 +27,8 @@ spec:
     - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`)
       kind: Rule
       middlewares:
-        # - name: compress
         - name: rate-limit
+        - name: compress
       services:
         - name: vaultwarden
           namespace: vaultwarden

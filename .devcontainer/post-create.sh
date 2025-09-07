@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-sudo chmod u+x **/*.sh
+sudo find . -type f -name '*.sh' -exec chmod u+x {} +
 
 curl -sSfL https://taskfile.dev/install.sh \
     | sudo sh -s -- -b /usr/local/bin

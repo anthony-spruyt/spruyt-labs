@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+source "/workspace/spruyt-labs/talos/config.sh"
 
 wait_for_talos() {
   local node_ip="$1"
@@ -47,45 +47,45 @@ wait_for_bootstrap() {
   return 0
 }
 
-talosctl config context ${CLUSTER_NAME}
+talosctl config context "${CLUSTER_NAME}"
 
 talosctl apply-config \
   --insecure \
-  -e ${C1_IP4} \
-  -n ${C1_IP4} \
-  --file clusterconfig/${CLUSTER_NAME}-${C1_HOST}.yaml
+  -e "${C1_IP4}" \
+  -n "${C1_IP4}" \
+  --file "clusterconfig/${CLUSTER_NAME}-${C1_HOST}.yaml"
 
 wait_for_talos "${C1_IP4}" 300
 
 echo "⏳ Giving node time to fully start up before wiping secondary disks..."
-read -rp "Press any key to wipe secondary disks: " continuewipesanswer
+read -rp "Press any key to wipe secondary disks: "
 
-talosctl wipe disk nvme0n1 -n ${C1_IP4} --drop-partition
+talosctl wipe disk nvme0n1 -n "${C1_IP4}" --drop-partition
 
 echo "⏳ Giving control plane components time to fully start up before bootstrapping..."
-read -rp "Press any key to continue: " continuebootstrapanswer
+read -rp "Press any key to continue: "
 
 talosctl bootstrap \
-  -e ${C1_IP4} \
-  -n ${C1_IP4}
+  -e "${C1_IP4}" \
+  -n "${C1_IP4}"
 
 wait_for_bootstrap "${C1_IP4}" 300
 
 talosctl kubeconfig \
-  -e ${C1_IP4} \
-  -n ${C1_IP4} \
+  -e "${C1_IP4}" \
+  -n "${C1_IP4}" \
   -f \
   -m
 
 echo "⏳ Giving control plane components time to fully bootstrap before installing cilium..."
-read -rp "Press any key to continue: " continueciliumanswer
+read -rp "Press any key to continue: "
 
 helmfile apply \
   --suppress-diff \
   -f helmfile/cilium.yaml
 
 echo "⏳ Giving cilium time to fully start up before approving certs..."
-read -rp "Press any key to approve certs: " continuecertc1sanswer
+read -rp "Press any key to approve certs: "
 
 kubectl get \
   csr \
@@ -94,24 +94,24 @@ kubectl get \
 kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply -f -
 
 #kubectl delete secret sops-age --namespace=flux-system
-cat /workspaces/spruyt-labs/secrets/age.key | kubectl create secret generic sops-age --namespace=flux-system --from-file=age.agekey=/dev/stdin
+cat "$SOPS_AGE_KEY_FILE" | kubectl create secret generic sops-age --namespace=flux-system --from-file=age.agekey=/dev/stdin
 
-#read -rp "Press any key to gh auth login: " continueghanswer
+#read -rp "Press any key to gh auth login: "
 
 #gh auth login
 
-#read -rp "Press any key to gh auth: " continueghanswer
+#read -rp "Press any key to gh auth: "
 
 #gh auth token | helm registry login ghcr.io -u anthony-spruyt --password-stdin
 
-#read -rp "Press any key to add flux-gitops-key secret to cluster: " continuegitopsanswer
+#read -rp "Press any key to add flux-gitops-key secret to cluster: "
 
-ssh-keyscan github.com > /workspaces/spruyt-labs/secrets/known_hosts
+ssh-keyscan github.com > /workspaces/spruyt-labs/.secrets/known_hosts
 
 kubectl create secret generic flux-gitops-key \
   --namespace=flux-system \
-  --from-file=identity=/workspaces/spruyt-labs/secrets/flux-gitops-key \
-  --from-file=known_hosts=/workspaces/spruyt-labs/secrets/known_hosts
+  --from-file=identity=/workspaces/spruyt-labs/.secrets/flux-gitops-key \
+  --from-file=known_hosts=/workspaces/spruyt-labs/.secrets/known_hosts
 
 # https://github.com/kubernetes-csi/external-snapshotter?tab=readme-ov-file#usage
 echo "⏳ Installing external-snapshotter CRDs..."
@@ -119,7 +119,7 @@ kubectl kustomize https://github.com/kubernetes-csi/external-snapshotter/client/
 echo "⏳ Installing cert-manager CRDs..."
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
 
-read -rp "Press any key to install flux: " continuefluxanswer
+read -rp "Press any key to install flux: "
 
 helmfile apply \
   --suppress-diff \

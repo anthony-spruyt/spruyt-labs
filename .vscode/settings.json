@@ -4,7 +4,7 @@
     ".github": false,
     ".taskfiles": false,
     ".capacitor": false,
-    "secrets": false,
+    ".secrets": false,
     ".sops.yaml": false,
     ".gitattributes": false,
     ".gitleaksignore": false,
@@ -20,7 +20,7 @@
   "search.exclude": {
     "**/*.secret.*": true,
     "**/temp/**": true,
-    "**/secrets/**": true
+    "**/.secrets/**": true
   },
   "files.autoSave": "afterDelay",
   "files.autoSaveWorkspaceFilesOnly": true,
@@ -29,5 +29,6 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "prettier.configPath": ".github/linters/.prettierrc.yaml",
   "prettier.ignorePath": ".github/linters/.prettierignore",
-  "explorer.sortOrder": "type"
+  "explorer.sortOrder": "type",
+  "editor.tabSize": 2
 }
