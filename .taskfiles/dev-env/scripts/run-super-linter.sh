@@ -17,7 +17,7 @@ sudo docker run \
   -e LINTER_RULES_PATH=".github/linters" \
   -e RUN_LOCAL="true" \
   -e SAVE_SUPER_LINTER_OUTPUT="true" \
-  -e SUPER_LINTER_OUTPUT_DIRECTORY_NAME=".super-linter-output" \
+  -e SUPER_LINTER_OUTPUT_DIRECTORY_NAME=".output" \
   -e USE_FIND_ALGORITHM="true" \
   -e VALIDATE_ALL_CODEBASE="true" \
   -e VALIDATE_BASH="true" \
