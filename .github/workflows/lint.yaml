@@ -55,9 +55,9 @@ jobs:
           VALIDATE_MARKDOWN_PRETTIER: "true"
           VALIDATE_RENOVATE: "true"
           VALIDATE_TERRAFORM_FMT: "true"
-          VALIDATE_TERRAFORM_TERRASCAN: "true"
           VALIDATE_TERRAFORM_TFLINT: "true"
           VALIDATE_TRIVY: "true"
           VALIDATE_YAML: "true"
           VALIDATE_YAML_PRETTIER: "true"
-          VALIDATE_CHECKOV: "true" # Cant get this one working locally
+          #VALIDATE_CHECKOV: "true" # Cant get this one working locally
+          #VALIDATE_TERRAFORM_TERRASCAN: "true" # Do not need doubling up

@@ -33,7 +33,6 @@ sudo docker run \
   -e VALIDATE_MARKDOWN_PRETTIER="true" \
   -e VALIDATE_RENOVATE="true" \
   -e VALIDATE_TERRAFORM_FMT="true" \
-  -e VALIDATE_TERRAFORM_TERRASCAN="true" \
   -e VALIDATE_TERRAFORM_TFLINT="true" \
   -e VALIDATE_TRIVY="true" \
   -e VALIDATE_YAML="true" \
@@ -42,4 +41,5 @@ sudo docker run \
   --rm \
   ghcr.io/super-linter/super-linter:slim-latest
 
-#  -e VALIDATE_CHECKOV="true" \ # Cant get this one working locally
+# -e VALIDATE_CHECKOV="true" \ # Cant get this one working locally
+# -e VALIDATE_TERRAFORM_TERRASCAN="true" \ # Do not need doubling up

@@ -11,3 +11,4 @@ scan:
     - vuln
     - misconfig
     - secret
+ignorefile: .github/linters/.trivyignore

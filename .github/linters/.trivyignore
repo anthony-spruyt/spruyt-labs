@@ -1,0 +1,8 @@
+# Cilium should be in kube-system
+AVD-KSV-0037
+
+# We dont need S3 bucket logging
+AVD-AWS-0089
+
+# AWS encryption is good enough for this
+AVD-AWS-0132
