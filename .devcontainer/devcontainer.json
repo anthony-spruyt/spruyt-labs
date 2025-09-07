@@ -1,6 +1,9 @@
 {
   "name": "Ubuntu",
   "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
   "features": {
     "ghcr.io/devcontainers-extra/features/sops": {},
     "ghcr.io/devcontainers-extra/features/talosctl": {
@@ -17,7 +20,8 @@
     "ghcr.io/devcontainers/features/github-cli": {},
     "ghcr.io/rio/features/kustomize": {},
     "ghcr.io/audacioustux/devcontainers/cilium": {},
-    "ghcr.io/devcontainers/features/terraform": {}
+    "ghcr.io/devcontainers/features/terraform": {},
+    "ghcr.io/devcontainers/features/docker-in-docker": {}
   },
   "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./.devcontainer/post-create.sh\"",
   "customizations": {
@@ -41,8 +45,8 @@
     }
   },
   "containerEnv": {
-    "SOPS_AGE_KEY_FILE": "/workspaces/spruyt-labs/secrets/age.key",
-    "KUBECONFIG": "/workspaces/spruyt-labs/secrets/kubeconfig",
-    "TALOSCONFIG": "/workspaces/spruyt-labs/secrets/talosconfig"
+    "SOPS_AGE_KEY_FILE": "/workspaces/spruyt-labs/.secrets/age.key",
+    "KUBECONFIG": "/workspaces/spruyt-labs/.secrets/kubeconfig",
+    "TALOSCONFIG": "/workspaces/spruyt-labs/.secrets/talosconfig"
   }
 }

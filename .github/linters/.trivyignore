@@ -1,0 +1,11 @@
+# Cilium should be in kube-system.
+AVD-KSV-0037
+
+# Dont need S3 bucket logging.
+AVD-AWS-0089
+
+# AWS encryption is good enough.
+AVD-AWS-0132
+
+# Terraform cloud workspaces do need unrestricted S3 IAM policies.
+AVD-AWS-0345

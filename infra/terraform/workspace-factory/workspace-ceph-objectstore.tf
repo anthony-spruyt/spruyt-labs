@@ -2,7 +2,7 @@ locals {
   ceph_objectstore_bucket_pattern = "arn:aws:s3:::spruyt-labs-${var.aws_account_id}-prod-ceph-*"
 }
 
-data "aws_iam_policy_document" "ceph_objectstore_aws_iam_policy" {
+data "aws_iam_policy_document" "ceph_objectstore_tfc_aws_iam_policy" {
   version = "2012-10-17"
   statement {
     sid    = "CephObjectStoreTerraformAccess"
@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "ceph_objectstore_aws_iam_policy" {
 
 module "ceph_objectstore" {
   source                                  = "./modules/aws-workspace"
-  aws_iam_policy_document                 = data.aws_iam_policy_document.ceph_objectstore_aws_iam_policy.json
+  aws_iam_policy_document                 = data.aws_iam_policy_document.ceph_objectstore_tfc_aws_iam_policy.json
   aws_region                              = var.aws_region
   tfc_trigger_pattern                     = var.ceph_objectstore_tfc_trigger_pattern
   tfc_vcs_repo_branch                     = var.tfc_vcs_repo_branch

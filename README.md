@@ -66,7 +66,7 @@ Cloudflare tunneling to avoid having to forward any ports.
 
 ## Cert Manager
 
-Cert manager with local self signed certs and cloudflare + lets encrypt ACME for mydomain.com and subdomains.
+Cert manager with local self signed certs and Cloudflare + lets encrypt ACME for mydomain.com and subdomains.
 
 [https://cert-manager.io/](https://cert-manager.io/)
 

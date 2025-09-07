@@ -1,21 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-AGE_KEY_PATH="/workspaces/spruyt-labs/secrets/age.key"
 SOPS_CONFIG="/workspaces/spruyt-labs/.sops.yaml"
 
-if [[ -f "$AGE_KEY_PATH" ]]; then
-  read -p "Age key already exists at $AGE_KEY_PATH. Overwrite? (y/N): " confirm
+if [[ -f "$SOPS_AGE_KEY_FILE" ]]; then
+  read -p "Age key already exists at $SOPS_AGE_KEY_FILE. Overwrite? (y/N): " confirm
   if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
     echo "Aborted: keeping existing age key."
     exit 0
   fi
   ./sops-decrypt.sh || true
-  rm -f "$AGE_KEY_PATH"
+  rm -f "$SOPS_AGE_KEY_FILE"
 fi
 
-age-keygen -o "$AGE_KEY_PATH" 2> /tmp/agekey.pub || { echo "age-keygen failed"; exit 1; }
-chmod 400 "$AGE_KEY_PATH"
+age-keygen -o "$SOPS_AGE_KEY_FILE" 2> /tmp/agekey.pub || { echo "age-keygen failed"; exit 1; }
+chmod 400 "$SOPS_AGE_KEY_FILE"
 
 AGE_PUBLIC_KEY=$(grep -i '^public key:' /tmp/agekey.pub | awk '{print $3}')
 rm -f /tmp/agekey.pub
@@ -31,6 +30,6 @@ else
   echo "⚠️  Could not find the public key in age-keygen output. .sops.yaml not updated."
 fi
 
-echo "✅ New Age key created at $AGE_KEY_PATH"
+echo "✅ New Age key created at $SOPS_AGE_KEY_FILE"
 
 ./sops-encrypt.sh || true

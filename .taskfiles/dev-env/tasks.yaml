@@ -9,6 +9,7 @@ vars:
   installHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm-plugins.sh"
   installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
   updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
+  runSuperLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-super-linter.sh"
 
 tasks:
   install-age:
@@ -35,3 +36,7 @@ tasks:
     desc: Updates Helm plugins
     cmds:
       - bash {{ .updateHelmPluginsScript }}
+  lint:
+    desc: Runs super-linter against the repo
+    cmds:
+      - bash {{ .runSuperLinterScript }}

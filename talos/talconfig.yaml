@@ -6,7 +6,6 @@ talosVersion: v1.10.7
 kubernetesVersion: v1.33.4
 
 clusterName: ${CLUSTER_NAME}
-#endpoint: https://${C1_IP4}:6443
 endpoint: https://${KUBEAPI_VIP_IP}:6443
 domain: ${CLUSTER_DOMAIN}
 
@@ -276,6 +275,8 @@ patches:
           max-pods: 150
           logging-format: json
           node-status-update-frequency: "5s"
+          #node-monitor-period: "5s"             # default 5s
+          #node-monitor-grace-period: "40s"      # default 40s
         extraConfig:
           imageGCLowThresholdPercent: 60
           imageGCHighThresholdPercent: 70

@@ -28,19 +28,13 @@
     "ghcr.io/fluxcd/notification-controller",
     "ghcr.io/fluxcd/source-controller",
   ],
-  flux: {
-    fileMatch: ["/cluster/.+\\.ya?ml$/"],
-  },
-  "helm-values": {
-    fileMatch: ["/cluster/.+\\.ya?ml$/"],
-  },
-  kubernetes: {
-    fileMatch: ["/cluster/.+\\.ya?ml$/"],
-  },
+  flux: { managerFilePatterns: ["//cluster/.+\\.ya?ml$//"] },
+  "helm-values": { managerFilePatterns: ["//cluster/.+\\.ya?ml$//"] },
+  kubernetes: { managerFilePatterns: ["//cluster/.+\\.ya?ml$//"] },
   customManagers: [
     {
       customType: "regex",
-      fileMatch: ["/cluster/.+\\.ya?ml$/"],
+      managerFilePatterns: ["//cluster/.+\\.ya?ml$//"],
       matchStrings: [
         "registryUrl=(?<registryUrl>.*?)\n *chart: (?<depName>.*?)\n *version: (?<currentValue>.*)\n",
       ],
