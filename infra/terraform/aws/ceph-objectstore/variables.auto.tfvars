@@ -1,2 +1,2 @@
-project     = "spruyt-labs"
-environment = "prod"
+# project     = "spruyt-labs"
+# environment = "prod"
