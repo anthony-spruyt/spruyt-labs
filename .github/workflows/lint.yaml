@@ -33,7 +33,7 @@ jobs:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
       - name: Run super linter
-        uses: github/super-linter/slim@v7
+        uses: github/super-linter/slim@latest
         env:
           DEFAULT_BRANCH: "origin/main"
           FILTER_REGEX_EXCLUDE: '.*sops.*|.*/mcp\.json$'
