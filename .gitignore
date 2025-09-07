@@ -27,3 +27,4 @@ bootstrap/
 cluster/core/kube-system/kubelet-csr-approver/charts/
 temp
 .capacitor
+.super-linter-output

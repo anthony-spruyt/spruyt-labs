@@ -4,10 +4,10 @@
     {
       customType: "regex",
       description: ["Process custom dependencies"],
-      fileMatch: [
-        "(^|/).taskfiles/.+\\.ya?ml$",
-        "(^|/)talos/.+\\.ya?ml$",
-        "(^|/)cluster/.+\\.ya?ml$",
+      managerFilePatterns: [
+        "//.taskfiles/.+\\.ya?ml$//",
+        "//talos/.+\\.ya?ml$//",
+        "//cluster/.+\\.ya?ml$//",
       ],
       matchStrings: [
         // # renovate: depName=kubernetes/kubernetes datasource=github-releases

@@ -16,6 +16,8 @@ sudo docker run \
   -e IGNORE_GITIGNORED_FILES="true" \
   -e LINTER_RULES_PATH=".github/linters" \
   -e RUN_LOCAL="true" \
+  -e SAVE_SUPER_LINTER_OUTPUT="true" \
+  -e SUPER_LINTER_OUTPUT_DIRECTORY_NAME=".super-linter-output" \
   -e USE_FIND_ALGORITHM="true" \
   -e VALIDATE_ALL_CODEBASE="true" \
   -e VALIDATE_BASH="true" \
@@ -40,4 +42,4 @@ sudo docker run \
   --rm \
   ghcr.io/super-linter/super-linter:slim-latest
 
-#  -e VALIDATE_CHECKOV="true" \
+#  -e VALIDATE_CHECKOV="true" \ # Cant get this one working locally
