@@ -4,11 +4,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.11"
+      version = "~> 6.12"
     }
   }
 
   backend "remote" {
+    hostname     = "app.terraform.io"
     organization = "spruyt-labs"
     workspaces {
       name = "velero-backup"

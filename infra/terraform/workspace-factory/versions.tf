@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.11"
+      version = "~> 6.12"
     }
     tfe = {
       source  = "hashicorp/tfe"
@@ -17,6 +17,7 @@ terraform {
   }
 
   backend "remote" {
+    hostname     = "app.terraform.io"
     organization = "spruyt-labs"
     workspaces {
       name = "workspace-factory"
