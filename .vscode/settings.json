@@ -1,8 +1,8 @@
 {
   "files.exclude": {
     ".devcontainer": false,
-    ".github": true,
-    ".taskfiles": true,
+    ".github": false,
+    ".taskfiles": false,
     ".secrets": false,
     ".sops.yaml": true,
     ".gitattributes": true,
@@ -11,7 +11,7 @@
     ".pre-commit-config.yaml": true,
     "LICENSE": true,
     "Taskfile.yml": true,
-    ".kilocode": true,
+    ".kilocode": false,
     ".kilocodeignore": true,
     "talos/clusterconfig": false,
     "**/.terraform": true,
