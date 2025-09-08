@@ -1,5 +1,5 @@
 resource "aws_iam_role" "tfc_role" {
-  name = "${var.tfc_workspace_name}-tfc-role"
+  name = "tfc-role-${var.tfc_workspace_name}"
 
   assume_role_policy = <<EOF
 {
@@ -26,7 +26,7 @@ EOF
 }
 
 resource "aws_iam_policy" "tfc_policy" {
-  name        = "${var.tfc_workspace_name}-tfc-policy"
+  name        = "tfc-policy-${var.tfc_workspace_name}"
   description = "TFC run policy"
   policy      = var.aws_iam_policy_document
 }

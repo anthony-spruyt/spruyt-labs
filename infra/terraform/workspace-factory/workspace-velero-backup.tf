@@ -1,18 +1,13 @@
-locals {
-  velero_backup_bucket_pattern = "arn:aws:s3:::spruyt-labs-${var.aws_account_id}-prod-velero-*"
-}
-
 data "aws_iam_policy_document" "velero_backup_tfc_aws_iam_policy" {
   version = "2012-10-17"
   statement {
     sid    = "VeleroBackupTerraformAccess"
     effect = "Allow"
     actions = [
-      "s3:*",
+      "*"
     ]
     resources = [
-      local.velero_backup_bucket_pattern,
-      "${local.velero_backup_bucket_pattern}/*"
+      "*"
     ]
   }
 }
