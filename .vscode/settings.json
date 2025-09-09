@@ -3,19 +3,19 @@
     ".devcontainer": false,
     ".github": false,
     ".taskfiles": false,
-    ".capacitor": false,
     ".secrets": false,
-    ".sops.yaml": false,
-    ".gitattributes": false,
-    ".gitleaksignore": false,
-    ".gitignore": false,
-    ".pre-commit-config.yaml": false,
-    "LICENSE": false,
-    "Taskfile.yml": false,
-    ".kilocodeignore": false,
+    ".sops.yaml": true,
+    ".gitattributes": true,
+    ".gitleaksignore": true,
+    ".gitignore": true,
+    ".pre-commit-config.yaml": true,
+    "LICENSE": true,
+    "Taskfile.yml": true,
+    ".kilocode": false,
+    ".kilocodeignore": true,
     "talos/clusterconfig": false,
-    "**/.terraform": false,
-    "**/.terraform.lock.hcl": false
+    "**/.terraform": true,
+    "**/.terraform.lock.hcl": true
   },
   "search.exclude": {
     "**/*.secret.*": true,
@@ -30,5 +30,8 @@
   "prettier.configPath": ".github/linters/.prettierrc.yaml",
   "prettier.ignorePath": ".github/linters/.prettierignore",
   "explorer.sortOrder": "type",
-  "editor.tabSize": 2
+  "editor.tabSize": 2,
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform"
+  }
 }

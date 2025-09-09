@@ -36,10 +36,10 @@ variable "aws_region" {
   description = "The AWS region in which to provision all resources"
 }
 
-variable "aws_account_id" {
-  type        = string
-  description = "The AWS account ID used for resource provisioning"
-}
+# variable "aws_account_id" {
+#   type        = string
+#   description = "The AWS account ID used for resource provisioning"
+# }
 
 variable "ceph_objectstore_tfc_trigger_pattern" {
   type        = string
@@ -81,6 +81,11 @@ variable "tfc_vcs_repo_ingress_submodules" {
   default     = false
   description = "Flag to enable support for VCS submodules in the repository for the workspace-factory workspace"
 }
+
+# variable "environment" {
+#   type        = string
+#   description = "Environment tag (configured in Terraform Cloud variable sets)"
+# }
 
 # variable "workspace_factory_tfc_workspace_name" {
 #   type        = string

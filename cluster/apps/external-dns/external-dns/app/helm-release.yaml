@@ -9,7 +9,6 @@ spec:
   interval: 1h
   chart:
     spec:
-      # TODO:renovate
       chart: *app
       version: 1.18.0
       sourceRef:

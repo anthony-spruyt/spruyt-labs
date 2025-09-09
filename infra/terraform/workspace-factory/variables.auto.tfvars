@@ -1,5 +1,6 @@
-aws_account_id                          = "470715245270"
-aws_region                              = "ap-southeast-4" # ap-southeast-2 = Sydney ; ap-southeast-4 = Melbourne
+# aws_account_id                          = "470715245270"
+aws_region = "ap-southeast-4" # ap-southeast-2 = Sydney ; ap-southeast-4 = Melbourne
+# environment                             = "prod"
 tfc_aws_audience                        = "aws.workload.identity"
 tfc_hostname                            = "app.terraform.io"
 tfc_organization_name                   = "spruyt-labs"

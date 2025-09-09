@@ -1,8 +1,13 @@
 {
   "name": "Ubuntu",
   "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "runArgs": ["--env-file", "${localEnv:HOME}/.secrets/.env"],
   "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind",
+    "source=${localEnv:HOME}/.secrets/.terraform.d,target=/home/vscode/.terraform.d,type=bind",
+    "source=${localEnv:HOME}/.secrets,target=/workspaces/spruyt-labs/.secrets,type=bind",
+    "source=${localEnv:HOME}/.kilocode,target=/workspaces/spruyt-labs/.kilocode,type=bind"
   ],
   "features": {
     "ghcr.io/devcontainers-extra/features/sops": {},
@@ -43,10 +48,5 @@
       "label": "Capacitor",
       "onAutoForward": "openBrowser"
     }
-  },
-  "containerEnv": {
-    "SOPS_AGE_KEY_FILE": "/workspaces/spruyt-labs/.secrets/age.key",
-    "KUBECONFIG": "/workspaces/spruyt-labs/.secrets/kubeconfig",
-    "TALOSCONFIG": "/workspaces/spruyt-labs/.secrets/talosconfig"
   }
 }
