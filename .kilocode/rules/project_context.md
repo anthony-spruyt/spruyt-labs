@@ -4,11 +4,11 @@ Spruyt-labs homelab workspace rules
 
 ## Guidelines
 
-- This is a talos linux kubernetes cluster home lab.
+- This is a Talos Linux kubernetes cluster home lab.
 - Talos does NOT support SSH.
 - This is a baremetal home lab. No local attaching or network logging.
 - Supporting cloud infra is managed by Terraform in the `infra` folder
 - Talos config is in the `talos` folder
-- This project is in a vscode dev container; as such you have a terminal available with preinstalled tools such as `kubectl`, `talosctl`, `talhelper`, `github-cli` IE `gh`, `terraform` and also task files via `task`
-- Github actions are in `.github`
+- This project is in a Visual Studio Code dev container; as such you have a terminal available with preinstalled tools such as `kubectl`, `talosctl`, `talhelper`, `github-cli` IE `gh`, `terraform` and also task files via `task`
+- GitHub Actions are in `.github`
 - Always consider what MCP servers are available and make sure to use them if they can enhance outcomes.
