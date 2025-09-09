@@ -12,6 +12,7 @@ metadata:
 spec:
   entryPoints:
     - websecure
+    - web
   routes:
     - match: Host(`unifi.${EXTERNAL_DOMAIN}`)
       kind: Rule
