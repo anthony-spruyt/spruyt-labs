@@ -3,6 +3,24 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
 controllers:
   unifi:
+    initContainers:
+      fix-perms:
+        image:
+          repository: busybox
+          tag: 1.37.0
+          pullPolicy: IfNotPresent
+        command:
+          - sh
+          - -c
+          - |
+            echo "Setting ownership on /unifi/data and /unifi/log..."
+            chown -R 999:999 /unifi/data /unifi/log
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
     annotations:
       reloader.stakater.com/auto: "true"
     containers:
@@ -27,10 +45,6 @@ controllers:
           - name: JVM_INIT_HEAP_SIZE
             value: 1024M
         securityContext:
-          runAsUser: 999
-          runAsGroup: 999
-          fsGroup: 999
-          fsGroupChangePolicy: "OnRootMismatch"
           allowPrivilegeEscalation: false
           capabilities:
             drop: ["ALL"]
