@@ -9,7 +9,7 @@ controllers:
       unifi:
         image:
           repository: jacobalberty/unifi
-          tag: v9.4.19
+          tag: v9.4.19@sha256:ef032346e2ebdcadaadeb27e38be55f97e6b5ed6cea333d5d82ae9b58ae4068b
           pullPolicy: IfNotPresent
         env:
           - name: TZ
