@@ -45,6 +45,8 @@ controllers:
           - name: JVM_INIT_HEAP_SIZE
             value: 1024M
         securityContext:
+          fsGroup: 999
+          fsGroupChangePolicy: "OnRootMismatch"
           allowPrivilegeEscalation: false
           capabilities:
             drop: ["ALL"]
