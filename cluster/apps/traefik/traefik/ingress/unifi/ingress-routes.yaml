@@ -23,6 +23,6 @@ spec:
         - name: unifi
           namespace: unifi
           passHostHeader: true
-          port: 8443
+          port: 8080
   tls:
     secretName: "unifi-${EXTERNAL_DOMAIN/./-}-tls"
