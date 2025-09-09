@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "unifi-${EXTERNAL_DOMAIN/./-}-tls-unifi"
+  namespace: unifi
+spec:
+  secretName: "unifi-${EXTERNAL_DOMAIN/./-}-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  commonName: "unifi.${EXTERNAL_DOMAIN}"
+  dnsNames:
+    - "unifi.${EXTERNAL_DOMAIN}"
