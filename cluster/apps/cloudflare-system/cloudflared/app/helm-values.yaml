@@ -31,6 +31,7 @@ controllers:
         image:
           repository: docker.io/cloudflare/cloudflared
           tag: 2025.8.1
+          pullPolicy: IfNotPresent
         args:
           - tunnel
           - run

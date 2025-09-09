@@ -31,6 +31,7 @@ spec:
             image:
               repository: docker.io/traefik/whoami
               tag: v1.11.0
+              pullPolicy: IfNotPresent
             resources:
               requests:
                 cpu: 1m

@@ -24,6 +24,7 @@ resources:
   - ./technitium
   - ./external-dns
   - ./cloudflare-system
+  - ./unifi
   - ./whoami
   # Observability
   - ./monitoring
@@ -43,3 +44,5 @@ resources:
   # Automation
   # - ./n8n
   # - ./node-red
+  # Disaster Recovery
+  # - ./velero

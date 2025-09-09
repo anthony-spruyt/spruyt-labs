@@ -29,6 +29,7 @@ spec:
             image:
               repository: ghcr.io/home-operations/irqbalance
               tag: 1.9.4
+              pullPolicy: IfNotPresent
             env:
               IRQBALANCE_DEBUG: false
             resources:

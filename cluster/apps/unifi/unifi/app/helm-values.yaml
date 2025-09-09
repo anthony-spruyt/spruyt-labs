@@ -1,0 +1,146 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+controllers:
+  unifi:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      unifi:
+        image:
+          repository: jacobalberty/unifi
+          tag: v9.4.19
+          pullPolicy: IfNotPresent
+        env:
+          - name: TZ
+            value: ${TIMEZONE}
+          - name: RUNAS_UID0
+            value: "false"
+          - name: BIND_PRIV
+            value: "false"
+          - name: UNIFI_UID
+            value: "999"
+          - name: UNIFI_GID
+            value: "999"
+          - name: UNIFI_STDOUT
+            value: "true"
+          - name: JVM_INIT_HEAP_SIZE
+            value: 1024M
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 1Gi
+          limits:
+            memory: 2Gi
+service:
+  unifi:
+    controller: unifi
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+    annotations:
+      metallb.io/loadBalancerIPs: "${LB_IP4_UNIFI}"
+    # https://help.ui.com/hc/en-us/articles/218506997-Required-Ports-Reference
+    ports:
+      # DNS lookups for Guest Portal redirection and updates (also required for Remote Management)
+      # DNS lookups for remote access, updates, and Guest Portal redirection (also required for UniFi Network)
+      dns-tcp:
+        enabled: false
+        port: 53
+        protocol: TCP
+      dns-udp:
+        enabled: false
+        port: 53
+        protocol: UDP
+      # STUN for device adoption and communication (also required for Remote Management)
+      # STUN for remote access (also required for UniFi Network)
+      stun:
+        enabled: true
+        port: 3478
+        protocol: UDP
+      # Device and application communication
+      controller:
+        enabled: true
+        port: 8080
+        protocol: TCP
+      # Application GUI/API (on UniFi Console)
+      app-console:
+        enabled: true
+        port: 8443
+        protocol: HTTPS
+      # Hotspot portal redirection (HTTP)
+      portal-http-redirect:
+        enabled: false
+        portRange:
+          start: 8880
+          end: 8882
+        protocol: HTTP
+      # Hotspot portal redirection (HTTPS)
+      portal-https-redirect:
+        enabled: false
+        port: 8843
+        protocol: HTTPS
+      # Secure Portal for Hotspot
+      portal-secure:
+        enabled: false
+        port: 8444
+        protocol: HTTPS
+      # UniFi mobile speed test
+      speedtest:
+        enabled: false
+        port: 6789
+        protocol: TCP
+      # Local database communication
+      local-db:
+        enabled: false
+        port: 27117
+        protocol: TCP
+      # Device discovery during adoption
+      discovery:
+        enabled: true
+        port: 10001
+        protocol: UDP
+      # L2 discovery ("Make application discoverable on L2 network")
+      l2-discovery:
+        enabled: false
+        port: 1900
+        protocol: UDP
+      # Remote syslog capture
+      syslog:
+        enabled: false
+        port: 5514
+        protocol: UDP
+      # SSH access (manual management, not used by default)
+      ssh-tcp:
+        enabled: false
+        port: 22
+        protocol: TCP
+      ssh-udp:
+        enabled: false
+        port: 22
+        protocol: UDP
+      # Application GUI/API access via web browser (also required for Remote Management)
+      # Remote Access service, application GUI/API access via web browser (also required for UniFi Network)
+      app-web:
+        enabled: false
+        port: 443
+        protocol: HTTPS
+      # Remote access support
+      remote-access:
+        enabled: false
+        port: 5349
+        protocol: TCP
+
+persistence:
+  data:
+    existingClaim: unifi-data
+    globalMounts:
+      - path: /unifi/data
+  log:
+    type: emptyDir
+    medium: Memory
+    globalMounts:
+      - path: /unifi/log

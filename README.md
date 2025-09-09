@@ -80,6 +80,10 @@ Cert manager with local self signed certs and Cloudflare + lets encrypt ACME for
 TODO: document
 bedrock connect, DNS interception and minecraft bedrock server
 
+## UniFi
+
+[https://github.com/jacobalberty/unifi-docker](https://github.com/jacobalberty/unifi-docker)
+
 ## Helm Values
 
 Use the following regular expression on GitHub to find YAML language server schemas: `/yaml-language-server:\s*[^\n]*appkeyword[^\n]*\.json/`
