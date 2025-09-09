@@ -7,7 +7,7 @@ metadata:
   name: lan-ip-whitelist
   namespace: placeholder
 spec:
-  ipWhiteList:
+  ipAllowList:
     sourceRange:
       - ${LAN_CIDR_IP4}
       - ${LAN_CIDR_IP6}
