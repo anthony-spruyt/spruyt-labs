@@ -44,3 +44,6 @@ domainFilters:
   - "lan.${EXTERNAL_DOMAIN}"
 serviceMonitor:
   enabled: true
+podAnnotations:
+  external-dns.external-dns.config/version: "3"
+  reloader.stakater.com/auto: "true"
