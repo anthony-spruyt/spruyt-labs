@@ -32,40 +32,6 @@ controllers:
                     values:
                       - dns-primary
               topologyKey: kubernetes.io/hostname
-    #initContainers:
-    #  bootstrap-config:
-    #    image:
-    #      repository: dwdraju/alpine-curl-jq
-    #      tag: latest
-    #    command:
-    #      - sh
-    #      - -c
-    #      - |
-    #        echo "TODO"
-    #    env:
-    #      - name: API_BASE_URL
-    #        value: "http://localhost:5380"
-    #      - name: USER
-    #        value: "admin"
-    #      - name: PASSWORD
-    #        valueFrom:
-    #          secretKeyRef:
-    #            name: technitium-secrets
-    #            key: DNS_SERVER_ADMIN_PASSWORD
-    #      - name: CATALOG_ZONE
-    #        value: "catalog.zone"
-    #      - name: PRIMARY_IP4
-    #        value: "${LB_IP4_TECHNITIUM}"
-    #      - name: TSIG_KEY_NAME
-    #        valueFrom:
-    #          secretKeyRef:
-    #            name: technitium-secrets
-    #            key: TSIG_KEY
-    #      - name: TSIG_KEY
-    #        valueFrom:
-    #          secretKeyRef:
-    #            name: technitium-secrets
-    #            key: TSIG_SECRET
     containers:
       technitium:
         image:
@@ -102,21 +68,6 @@ controllers:
                 port: 53
               periodSeconds: 5
               failureThreshold: 3
-          # TODO: make this stateless one day so it bootstraps from init container that configures it via the API
-          # WIP script is in FLUX24 local snippets
-          #readiness:
-          #  enabled: true
-          #  custom: true
-          #  spec:
-          #    exec:
-          #      command:
-          #        - sh
-          #        - -c
-          #        - |
-          #          set -e
-          #    initialDelaySeconds: 10
-          #    periodSeconds: 5
-          #    failureThreshold: 3
           liveness:
             enabled: true
             custom: false
@@ -137,6 +88,7 @@ service:
     externalTrafficPolicy: Local
     annotations:
       metallb.io/loadBalancerIPs: "${LB_IP4_TECHNITIUM_SECONDARY}"
+      metallb.io/loadBalancerIPsVersion: "3"
     ports:
       dns-tcp:
         enabled: true

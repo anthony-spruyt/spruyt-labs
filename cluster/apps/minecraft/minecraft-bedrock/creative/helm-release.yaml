@@ -5,8 +5,6 @@ kind: HelmRelease
 metadata:
   name: &app minecraft-bedrock-creative
   namespace: minecraft
-  annotations:
-    minecraft.bedrock.config/version: "15"
 spec:
   interval: 1h
   chart:
@@ -66,6 +64,7 @@ spec:
         #   - ReadWriteOnce
     serviceAnnotations:
       metallb.io/loadBalancerIPs: "${LB_IP4_MINECRAFT_BEDROCK_2}"
+      metallb.io/loadBalancerIPsVersion: "3"
     minecraftServer:
       eula: "TRUE"
       # One of: LATEST, SNAPSHOT, or a specific version (ie: "1.7.9").

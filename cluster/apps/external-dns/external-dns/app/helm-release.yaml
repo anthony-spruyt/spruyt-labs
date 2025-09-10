@@ -5,8 +5,6 @@ kind: HelmRelease
 metadata:
   name: &app external-dns
   namespace: external-dns
-  annotations:
-    external-dns.external-dns.config/version: "2"
 spec:
   interval: 1h
   chart:

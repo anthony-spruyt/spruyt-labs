@@ -88,6 +88,7 @@ service:
     externalTrafficPolicy: Local
     annotations:
       metallb.io/loadBalancerIPs: "${LB_IP4_TECHNITIUM}"
+      metallb.io/loadBalancerIPsVersion: "3"
     ports:
       dns-tcp:
         enabled: true
