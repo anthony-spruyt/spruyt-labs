@@ -5,6 +5,8 @@ kind: IPAddressPool
 metadata:
   name: lb-ip-pool
   namespace: metallb-system
+  annotations:
+    metallb-system.lb-ip-pool.config/version: "2"
 spec:
   addresses:
     - "${NETWORK_LB_CIDR_IP4}"

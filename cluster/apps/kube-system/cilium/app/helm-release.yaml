@@ -5,6 +5,8 @@ kind: HelmRelease
 metadata:
   name: cilium
   namespace: kube-system
+  annotations:
+    kube-system.cilium.config/version: "2"
 spec:
   interval: 1h
   chart:
