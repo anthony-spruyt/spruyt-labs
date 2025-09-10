@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-source "/workspace/spruyt-labs/talos/config.sh"
+source "/workspaces/spruyt-labs/talos/config.sh"
 
 # TODO: need to update script to show rook-ceph status as healthy before upgrading and needs to be waited for between each node upgrade
 # https://www.talos.dev/v1.10/kubernetes-guides/configuration/ceph-with-rook/#talos-linux-considerations

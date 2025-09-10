@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-source "/workspace/spruyt-labs/talos/config.sh"
+source "/workspaces/spruyt-labs/talos/config.sh"
 
 wait_for_talos() {
   local node_ip="$1"

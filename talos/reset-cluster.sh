@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -euo pipefail
 
-source "/workspace/spruyt-labs/talos/config.sh"
+source "/workspaces/spruyt-labs/talos/config.sh"
 
 #talosctl wipe disk nvme0n1 -n ${C1_IP4} --drop-partition
 #talosctl wipe disk nvme0n1 -n ${C2_IP4} --drop-partition
