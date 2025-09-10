@@ -7,6 +7,12 @@ controllers:
       reloader.stakater.com/auto: "true"
     containers:
       unifi:
+        securityContext:
+          runAsUser: 999
+          runAsGroup: 999
+          fsGroup: 999
+          # capabilities:
+          #   add: ["NET_BIND_SERVICE"]
         image:
           repository: jacobalberty/unifi
           tag: v9.4.19@sha256:ef032346e2ebdcadaadeb27e38be55f97e6b5ed6cea333d5d82ae9b58ae4068b
