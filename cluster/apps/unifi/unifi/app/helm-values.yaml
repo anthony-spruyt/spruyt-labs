@@ -21,14 +21,14 @@ controllers:
         env:
           - name: TZ
             value: ${TIMEZONE}
-          # - name: RUNAS_UID0
-          #   value: "false"
+          - name: RUNAS_UID0
+            value: "false"
           # - name: BIND_PRIV
           #   value: "false"
-          # - name: UNIFI_UID
-          #   value: "999"
-          # - name: UNIFI_GID
-          #   value: "999"
+          - name: UNIFI_UID
+            value: "999"
+          - name: UNIFI_GID
+            value: "999"
           - name: UNIFI_STDOUT
             value: "true"
           - name: JVM_INIT_HEAP_SIZE
