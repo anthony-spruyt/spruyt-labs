@@ -5,6 +5,8 @@ kind: HelmRelease
 metadata:
   name: technitium-secondary
   namespace: technitium
+  annotations:
+    technitium.technitium-secondary.config/version: "2"
 spec:
   interval: 1h
   chartRef:

@@ -5,6 +5,8 @@ kind: HelmRelease
 metadata:
   name: &app bedrock-connect
   namespace: minecraft
+  annotations:
+    minecraft.bedrock-connect.config/version: "2"
 spec:
   interval: 1h
   chartRef:

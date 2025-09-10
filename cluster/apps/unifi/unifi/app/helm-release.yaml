@@ -3,6 +3,8 @@ apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
 metadata:
   name: unifi
+  annotations:
+    unifi.unifi.config/version: "2"
 spec:
   interval: 1h
   chartRef:
