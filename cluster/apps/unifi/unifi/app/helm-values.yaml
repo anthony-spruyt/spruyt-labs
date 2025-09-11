@@ -9,7 +9,7 @@ controllers:
       unifi:
         image:
           repository: ghcr.io/lemker/uosserver
-          tag: 0.0.47
+          tag: 0.0.48
           pullPolicy: IfNotPresent
         env:
           - name: UOS_UUID
