@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-wan-unifi
+  namespace: unifi
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: unifi.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`unifi.${EXTERNAL_DOMAIN}`)
+      kind: Rule
+      middlewares:
+        - name: rate-limit
+        - name: compress
+      services:
+        - name: unifi
+          namespace: unifi
+          passHostHeader: true
+          port: 443
+  tls:
+    secretName: "unifi-${EXTERNAL_DOMAIN/./-}-tls"

@@ -1,0 +1,117 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-persistent
+  namespace: unifi
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: rbd-fast
+  resources:
+    requests:
+      storage: 8Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-var-log
+  namespace: unifi
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: rbd-fast
+  resources:
+    requests:
+      storage: 8Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-data
+  namespace: unifi
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: rbd-fast
+  resources:
+    requests:
+      storage: 8Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-srv
+  namespace: unifi
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: rbd-fast
+  resources:
+    requests:
+      storage: 8Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-var-lib-unifi
+  namespace: unifi
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: rbd-fast
+  resources:
+    requests:
+      storage: 8Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-var-lib-mongodb
+  namespace: unifi
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: rbd-fast
+  resources:
+    requests:
+      storage: 8Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-etc-rabbitmq-ssl
+  namespace: unifi
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: rbd-fast
+  resources:
+    requests:
+      storage: 8Gi
