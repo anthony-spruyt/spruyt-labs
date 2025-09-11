@@ -36,6 +36,7 @@ controllers:
               failureThreshold: 3
 configMaps:
   unifi-config:
+    forceRename: unifi-config
     data:
       UOS_SERVER_VERSION: "4.3.4"
       FIRMWARE_PLATFORM: "linux-x64"
