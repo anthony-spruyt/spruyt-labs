@@ -24,7 +24,7 @@ resources:
   - ./technitium
   - ./external-dns
   - ./cloudflare-system
-  - ./unifi
+  # - ./unifi
   - ./whoami
   # Observability
   - ./monitoring
