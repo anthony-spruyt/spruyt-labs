@@ -36,11 +36,6 @@ variable "aws_region" {
   description = "The AWS region in which to provision all resources"
 }
 
-# variable "aws_account_id" {
-#   type        = string
-#   description = "The AWS account ID used for resource provisioning"
-# }
-
 variable "ceph_objectstore_tfc_trigger_pattern" {
   type        = string
   description = "The regex pattern used to match VCS webhook triggers for the Ceph Objectstore workspace"
@@ -81,23 +76,3 @@ variable "tfc_vcs_repo_ingress_submodules" {
   default     = false
   description = "Flag to enable support for VCS submodules in the repository for the workspace-factory workspace"
 }
-
-# variable "environment" {
-#   type        = string
-#   description = "Environment tag (configured in Terraform Cloud variable sets)"
-# }
-
-# variable "workspace_factory_tfc_workspace_name" {
-#   type        = string
-#   description = "The name of the Terraform Cloud workspace for the workspace-factory module"
-# }
-#
-# variable "workspace_factory_tfc_working_directory" {
-#   type        = string
-#   description = "The working directory within the VCS repository for the workspace-factory Terraform Cloud workspace"
-# }
-#
-# variable "workspace_factory_tfc_trigger_pattern" {
-#   type        = string
-#   description = "The regex pattern used to match VCS webhook triggers for the workspace-factory workspace"
-# }

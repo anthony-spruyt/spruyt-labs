@@ -1,6 +1,4 @@
-# aws_account_id                          = "470715245270"
-aws_region = "ap-southeast-4" # ap-southeast-2 = Sydney ; ap-southeast-4 = Melbourne
-# environment                             = "prod"
+aws_region                              = "ap-southeast-4" # ap-southeast-2 = Sydney ; ap-southeast-4 = Melbourne
 tfc_aws_audience                        = "aws.workload.identity"
 tfc_hostname                            = "app.terraform.io"
 tfc_organization_name                   = "spruyt-labs"
@@ -14,6 +12,3 @@ ceph_objectstore_tfc_trigger_pattern    = "infra/terraform/aws/ceph-objectstore/
 velero_backup_tfc_workspace_name        = "velero-backup"
 velero_backup_tfc_working_directory     = "infra/terraform/aws/velero-backup"
 velero_backup_tfc_trigger_pattern       = "infra/terraform/aws/velero-backup/**"
-# workspace_factory_tfc_workspace_name    = "workspace-factory"
-# workspace_factory_tfc_working_directory = "/infra/terraform/workspace-factory"
-# workspace_factory_tfc_trigger_pattern   = "/infra/terraform/workspace-factory/**"
