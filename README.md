@@ -62,6 +62,14 @@ ceph crash archive-all
 To get the newly generated UI password after bootstrapping a new cluster run the following:
 `kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo`
 
+## Velero
+
+Backup and DR for Rook Ceph
+
+- [https://velero.io/](https://velero.io/)
+- [https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/README.md](https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/README.md)
+- [https://github.com/vmware-tanzu/velero-plugin-for-aws](https://github.com/vmware-tanzu/velero-plugin-for-aws)
+
 ## Cloudflared
 
 Cloudflare tunneling to avoid having to forward any ports.
