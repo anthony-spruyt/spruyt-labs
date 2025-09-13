@@ -6,6 +6,6 @@ resources:
   - ./kube-system
   - ./monitoring
   - ./rook-ceph
-  - ./unifi
+  # - ./unifi
   - ./vaultwarden
   - ./whoami
