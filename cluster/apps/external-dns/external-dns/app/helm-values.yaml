@@ -43,6 +43,7 @@ txtPrefix: external-dns-
 txtOwnerId: k8s
 domainFilters:
   - "lan.${EXTERNAL_DOMAIN}"
+  - "${EXTERNAL_DOMAIN}"
 serviceMonitor:
   enabled: true
 podAnnotations:
