@@ -35,7 +35,7 @@ metadata:
   name: daily-apps
   namespace: velero
 spec:
-  paused: true
+  paused: false
   schedule: "0 3 * * *" # 3:00 daily
   useOwnerReferencesInBackup: false
   template:
