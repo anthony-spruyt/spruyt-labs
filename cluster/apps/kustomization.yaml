@@ -45,4 +45,4 @@ resources:
   # - ./n8n
   # - ./node-red
   # Disaster Recovery
-  # - ./velero
+  - ./velero

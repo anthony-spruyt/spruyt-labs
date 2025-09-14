@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/velero.io/backupstoragelocation_v1.json
+# Velero Documentation: https://velero.io/docs/v1.17/api-types/backupstoragelocation/
+# AWS Plugin Documentation: https://github.com/vmware-tanzu/velero-plugin-for-aws/blob/main/backupstoragelocation.md
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: aws-primary
+  namespace: velero
+spec:
+  provider: velero.io/aws
+  objectStorage:
+    bucket: spruyt-labs-470715245270-prod-velero-backup
+    prefix: velero
+  credential:
+    name: velero-secret
+    key: cloud
+  config:
+    region: ap-southeast-4
+  accessMode: ReadWrite

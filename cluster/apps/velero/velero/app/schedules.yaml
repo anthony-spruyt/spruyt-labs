@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/velero.io/schedule_v1.json
+# Velero Documentation: https://velero.io/docs/v1.17/api-types/schedule/
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: weekly-cluster
+  namespace: velero
+spec:
+  paused: true
+  schedule: "0 4 * * 0" # At 04:00 on Sunday
+  useOwnerReferencesInBackup: false
+  template:
+    excludedNamespaces:
+      - velero
+    excludedResources:
+      - events
+      - events.events.k8s.io
+    snapshotVolumes: true
+    storageLocation: aws-primary
+    volumeSnapshotLocations:
+      - aws-primary
+    ttl: 720h0m0s # 30 days
+    defaultVolumesToFsBackup: false
+    metadata:
+      labels:
+        velero.io/backup-type: "full-cluster"
+        velero.io/schedule-name: "weekly-cluster"
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/velero.io/schedule_v1.json
+# Velero Documentation: https://velero.io/docs/v1.17/api-types/schedule/
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-apps
+  namespace: velero
+spec:
+  paused: true
+  schedule: "0 3 * * *" # 3:00 daily
+  useOwnerReferencesInBackup: false
+  template:
+    excludedNamespaces:
+      - velero
+    excludedResources:
+      - events
+      - events.events.k8s.io
+      - replicasets
+      - pods
+    snapshotVolumes: true
+    storageLocation: aws-primary
+    volumeSnapshotLocations:
+      - aws-primary
+    ttl: 168h0m0s # 7 days
+    defaultVolumesToFsBackup: false
+    metadata:
+      labels:
+        velero.io/backup-type: "applications"
+        velero.io/schedule-name: "daily-apps"

@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/velero.io/volumesnapshotlocation_v1.json
+# Velero Documentation: https://velero.io/docs/v1.17/api-types/volumesnapshotlocation/
+# AWS Plugin Documentation: https://github.com/vmware-tanzu/velero-plugin-for-aws/blob/main/volumesnapshotlocation.md
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: aws-primary
+  namespace: velero
+spec:
+  provider: velero.io/aws
+  credential:
+    name: velero-secret
+    key: cloud
+  config:
+    region: ap-southeast-4
