@@ -476,7 +476,7 @@ configuration:
   # How long to wait by default before backups can be garbage collected. Default: 72h
   # defaultBackupTTL:
   # Name of the default volume snapshot location.
-  defaultVolumeSnapshotLocations: aws-primary
+  defaultVolumeSnapshotLocations: csi:aws-primary
   # `velero server` default: empty
   # disableControllers:
   # `velero server` default: false
