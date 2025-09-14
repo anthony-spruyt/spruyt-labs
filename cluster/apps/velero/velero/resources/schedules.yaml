@@ -8,7 +8,8 @@ metadata:
   namespace: velero
 spec:
   paused: false
-  schedule: "0 4 * * 0" # At 04:00 on Sunday
+  schedule: "0 18 * * 6" # At 04:00 Sunday Melbourne (UTC+10)
+  skipImmediately: false
   useOwnerReferencesInBackup: false
   template:
     excludedNamespaces:
@@ -36,7 +37,8 @@ metadata:
   namespace: velero
 spec:
   paused: false
-  schedule: "0 3 * * *" # 3:00 daily
+  schedule: "0 17 * * *" # At 03:00 daily Melbourne (UTC+10)
+  skipImmediately: false
   useOwnerReferencesInBackup: false
   template:
     excludedNamespaces:
