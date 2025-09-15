@@ -21,7 +21,7 @@ spec:
       - pv
     storageLocation: aws-primary
     ttl: 336h0m0s # 14 days
-    snapshotVolumes: false
+    snapshotVolumes: true
     snapshotMoveData: true
     metadata:
       labels:
