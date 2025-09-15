@@ -10,6 +10,7 @@ vars:
   installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
   updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
   runSuperLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-super-linter.sh"
+  installVeleroScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-velero.sh"
 
 tasks:
   install-age:
@@ -40,3 +41,7 @@ tasks:
     desc: Runs super-linter against the repo
     cmds:
       - bash {{ .runSuperLinterScript }}
+  install-velero:
+    desc: Installs the Velero CLI
+    cmds:
+      - bash {{ .installVeleroScript }}

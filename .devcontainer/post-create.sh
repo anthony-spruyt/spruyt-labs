@@ -12,4 +12,5 @@ task dev-env:install-helm-plugins
 task dev-env:install-flux
 task dev-env:install-flux-capacitor
 task dev-env:install-age
+task dev-env:install-velero
 task pre-commit:init
