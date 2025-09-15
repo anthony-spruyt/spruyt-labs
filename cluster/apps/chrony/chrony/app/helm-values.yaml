@@ -26,12 +26,6 @@ controllers:
         ports:
           - containerPort: 123
             protocol: UDP
-        securityContext:
-          capabilities:
-            drop:
-              - ALL
-            add:
-              - CHOWN
         env:
           - name: "NTP_SERVERS"
             value: "time.cloudflare.com"
