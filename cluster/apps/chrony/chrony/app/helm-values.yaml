@@ -23,6 +23,7 @@ controllers:
           repository: dockurr/chrony
           tag: 4.8
           pullPolicy: IfNotPresent
+        restartPolicy: Always
         ports:
           - containerPort: 123
             protocol: UDP
