@@ -79,22 +79,22 @@ nodes:
         dhcp: &dhcp false
         addresses:
           - "${C1_IP4}/24"
-          - "${C1_IP6}/64"
+          # - "${C1_IP6}/64"
         mtu: &mtu 9000
         routes: &routes
           - network: "0.0.0.0/0"
             gateway: "${GATEWAY_IP4}"
             metric: 512
-          - network: ::/0
-            gateway: "${GATEWAY_IP6}"
-            metric: 512
+          # - network: ::/0
+          #   gateway: "${GATEWAY_IP6}"
+          #   metric: 512
         vip: &vip
           ip: "${KUBEAPI_VIP_IP}"
         vlans:
           - vlanId: 10
             addresses:
               - "${C1_IP4_VLAN_10}/24"
-              - "${C1_IP6_VLAN_10}/64"
+              # - "${C1_IP6_VLAN_10}/64"
             mtu: *mtu
     certSANs: &additionalMachineCertSans
       - 127.0.0.1
@@ -161,7 +161,7 @@ nodes:
         dhcp: *dhcp
         addresses:
           - "${C2_IP4}/24"
-          - "${C2_IP6}/64"
+          # - "${C2_IP6}/64"
         mtu: *mtu
         routes: *routes
         vip: *vip
@@ -169,7 +169,7 @@ nodes:
           - vlanId: 10
             addresses:
               - "${C2_IP4_VLAN_10}/24"
-              - "${C2_IP6_VLAN_10}/64"
+              # - "${C2_IP6_VLAN_10}/64"
             mtu: *mtu
     certSANs: *additionalMachineCertSans
     nodeLabels: *e2nodelabels
@@ -189,7 +189,7 @@ nodes:
         dhcp: *dhcp
         addresses:
           - "${C3_IP4}/24"
-          - "${C3_IP6}/64"
+          # - "${C3_IP6}/64"
         mtu: *mtu
         routes: *routes
         vip: *vip
@@ -197,7 +197,7 @@ nodes:
           - vlanId: 10
             addresses:
               - "${C3_IP4_VLAN_10}/24"
-              - "${C3_IP6_VLAN_10}/64"
+              # - "${C3_IP6_VLAN_10}/64"
             mtu: *mtu
     certSANs: *additionalMachineCertSans
     nodeLabels: *e2nodelabels
@@ -216,7 +216,7 @@ nodes:
         dhcp: *dhcp
         addresses:
           - "${W1_IP4}/24"
-          - "${W1_IP6}/64"
+          # - "${W1_IP6}/64"
         mtu: *mtu
         routes: *routes
     certSANs: *additionalMachineCertSans
@@ -241,7 +241,7 @@ nodes:
         dhcp: *dhcp
         addresses:
           - "${W2_IP4}/24"
-          - "${W2_IP6}/64"
+          # - "${W2_IP6}/64"
         mtu: *mtu
         routes: *routes
     certSANs: *additionalMachineCertSans
@@ -357,3 +357,9 @@ controlPlane:
             https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
           - # renovate: datasource=github-releases depName=prometheus-operator/prometheus-operator
             https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.84.0/stripped-down-crds.yaml
+          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotclasses.yaml
+          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotcontents.yaml
+          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshots.yaml
