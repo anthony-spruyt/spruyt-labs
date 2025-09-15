@@ -46,10 +46,12 @@ controllers:
                 command:
                   - sh
                   - -c
-                  - ntpdate -q 127.0.0.1 | grep offset
-              initialDelaySeconds: 10
-              periodSeconds: 30
-              failureThreshold: 3
+                  - |
+                    chronyc waitsync 15           \
+                    && exit 0 || exit 1
+              initialDelaySeconds: 5
+              periodSeconds: 15
+              failureThreshold: 2
           liveness:
             enabled: true
             custom: true
@@ -58,9 +60,13 @@ controllers:
                 command:
                   - sh
                   - -c
-                  - ntpdate -q 127.0.0.1 > /dev/null
-              initialDelaySeconds: 15
+                  - |
+                    chronyc sources -n           \
+                    | awk '$1 == "*" { exit 0 }  \
+                          END { exit 1 }'
+              initialDelaySeconds: 20
               periodSeconds: 60
+              timeoutSeconds: 5
               failureThreshold: 3
         resources:
           requests:
