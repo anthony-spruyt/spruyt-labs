@@ -264,7 +264,8 @@ spec:
     ##
     envFrom: []
     podAnnotations:
+      backup.velero.io/backup-volumes: datadir
+    deploymentAnnotations:
       reloader.stakater.com/auto: "true"
-    deploymentAnnotations: {}
     deploymentLables: {}
     serviceLabels: {}
