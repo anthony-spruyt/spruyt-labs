@@ -5,9 +5,9 @@ controllers:
   main:
     annotations:
       reloader.stakater.com/auto: "true"
-    pod:
-      annotations:
-        backup.velero.io/backup-volumes: data,backups
+    # pod:
+    #   annotations:
+    #     backup.velero.io/backup-volumes: data,backups
     containers:
       main:
         image:

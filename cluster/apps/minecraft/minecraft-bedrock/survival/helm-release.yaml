@@ -263,8 +263,8 @@ spec:
     ## ConfigMaps and Secrets
     ##
     envFrom: []
-    podAnnotations:
-      backup.velero.io/backup-volumes: datadir
+    # podAnnotations:
+    #   backup.velero.io/backup-volumes: datadir
     deploymentAnnotations:
       reloader.stakater.com/auto: "true"
     deploymentLables: {}

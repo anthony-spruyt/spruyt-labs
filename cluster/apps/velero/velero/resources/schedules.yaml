@@ -17,12 +17,12 @@ spec:
       - technitium
       - vaultwarden
     includedResources:
+      - pods
       - pvc
       - pv
     storageLocation: aws-primary
-    ttl: 336h0m0s # 14 days
-    snapshotVolumes: true
     snapshotMoveData: true
+    ttl: 336h0m0s # 14 days
     metadata:
       labels:
         velero.io/backup-type: "applications"
