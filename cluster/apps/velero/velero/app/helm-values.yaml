@@ -137,6 +137,12 @@ initContainers:
     volumeMounts:
       - mountPath: /target
         name: plugins
+  - name: velero-plugin-for-kopia
+    image: velero/velero-plugin-for-kopia:v0.5.0
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
 
 # SecurityContext to use for the Velero deployment. Optional.
 # Set fsGroup for `AWS IAM Roles for Service Accounts`
@@ -458,7 +464,7 @@ configuration:
   # comments below.
   # --------------------
   # `velero server` default: kopia
-  # uploaderType:
+  uploaderType: kopia
   # `velero server` default: 1m
   # backupSyncPeriod:
   # `velero server` default: 4h
@@ -504,7 +510,7 @@ configuration:
   # How long to wait on persistent volumes and namespaces to terminate during a restore before timing out. Default: 10m
   # terminatingResourceTimeout:
   # Bool flag to configure Velero server to move data by default for all snapshots supporting data movement. Default: false
-  # defaultSnapshotMoveData:
+  defaultSnapshotMoveData: true
   # Comma separated list of velero feature flags. default: empty
   features: EnableCSI
   # features:
@@ -653,78 +659,79 @@ backupsEnabled: false
 snapshotsEnabled: false
 
 # Whether to deploy the node-agent daemonset.
-# deployNodeAgent: false
+deployNodeAgent: true
 
-# nodeAgent:
-#   podVolumePath: /var/lib/kubelet/pods
-#   pluginVolumePath: /var/lib/kubelet/plugins
-#   # Pod priority class name to use for the node-agent daemonset. Optional.
-#   priorityClassName: ""
-#   # Pod runtime class name to use for the node-agent daemonset. Optional.
-#   runtimeClassName: ""
-#   # Resource requests/limits to specify for the node-agent daemonset deployment. Optional.
-#   # https://velero.io/docs/v1.6/customize-installation/#customize-resource-requests-and-limits
-#   resources:
-#     {}
-#     # requests:
-#     #   cpu: 500m
-#     #   memory: 512Mi
-#     # limits:
-#     #   cpu: 1000m
-#     #   memory: 1024Mi
-#   # Container resize policy for the node-agent daemonset.
-#   # See: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/
-#   resizePolicy:
-#     []
-#     # - resourceName: cpu
-#     #   restartPolicy: NotRequired
-#     # - resourceName: memory
-#     #   restartPolicy: RestartContainer
-#
-#   # Tolerations to use for the node-agent daemonset. Optional.
-#   tolerations: []
-#
-#   # Annotations to set for the node-agent daemonset. Optional.
-#   annotations: {}
-#
-#   # labels to set for the node-agent daemonset. Optional.
-#   labels: {}
-#
-#   # Additional pod labels for the node-agent daemonset. Optional
-#   # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-#   podLabels: {}
-#
-#   # will map /scratch to emptyDir. Set to false and specify your own volume
-#   # via extraVolumes and extraVolumeMounts that maps to /scratch
-#   # if you don't want to use emptyDir.
-#   useScratchEmptyDir: true
-#
-#   # Extra volumes for the node-agent daemonset. Optional.
-#   extraVolumes: []
-#
-#   # Extra volumeMounts for the node-agent daemonset. Optional.
-#   extraVolumeMounts: []
-#
-#   # Additional values to be used as environment variables for node-agent daemonset. Optional.
-#   extraEnvVars:
-#     []
-#     # Simple key/value
-#     # - name: SIMPLE_VAR
-#     #   value: "simple-value"
-#
-#     # FieldRef example
-#     # - name: MY_POD_LABEL
-#     #   valueFrom:
-#     #     fieldRef:
-#     #       fieldPath: metadata.labels['my_label']
-#
-#   # Additional command-line arguments that will be passed to the node-agent. Optional.
-#   # e.g.: extraArgs: ["--foo=bar"]
-#   extraArgs: []
-#
-#   # Configure the dnsPolicy of the node-agent daemonset
-#   # See: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
-#   dnsPolicy: ClusterFirst
+nodeAgent:
+  deploy: true
+  podVolumePath: /var/lib/kubelet/pods
+  pluginVolumePath: /var/lib/kubelet/plugins
+  #   # Pod priority class name to use for the node-agent daemonset. Optional.
+  #   priorityClassName: ""
+  #   # Pod runtime class name to use for the node-agent daemonset. Optional.
+  #   runtimeClassName: ""
+  #   # Resource requests/limits to specify for the node-agent daemonset deployment. Optional.
+  #   # https://velero.io/docs/v1.6/customize-installation/#customize-resource-requests-and-limits
+  #   resources:
+  #     {}
+  #     # requests:
+  #     #   cpu: 500m
+  #     #   memory: 512Mi
+  #     # limits:
+  #     #   cpu: 1000m
+  #     #   memory: 1024Mi
+  #   # Container resize policy for the node-agent daemonset.
+  #   # See: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/
+  #   resizePolicy:
+  #     []
+  #     # - resourceName: cpu
+  #     #   restartPolicy: NotRequired
+  #     # - resourceName: memory
+  #     #   restartPolicy: RestartContainer
+  #
+  #   # Tolerations to use for the node-agent daemonset. Optional.
+  #   tolerations: []
+  #
+  #   # Annotations to set for the node-agent daemonset. Optional.
+  #   annotations: {}
+  #
+  #   # labels to set for the node-agent daemonset. Optional.
+  #   labels: {}
+  #
+  #   # Additional pod labels for the node-agent daemonset. Optional
+  #   # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  #   podLabels: {}
+  #
+  #   # will map /scratch to emptyDir. Set to false and specify your own volume
+  #   # via extraVolumes and extraVolumeMounts that maps to /scratch
+  #   # if you don't want to use emptyDir.
+  #   useScratchEmptyDir: true
+  #
+  #   # Extra volumes for the node-agent daemonset. Optional.
+  #   extraVolumes: []
+  #
+  #   # Extra volumeMounts for the node-agent daemonset. Optional.
+  #   extraVolumeMounts: []
+  #
+  #   # Additional values to be used as environment variables for node-agent daemonset. Optional.
+  #   extraEnvVars:
+  #     []
+  #     # Simple key/value
+  #     # - name: SIMPLE_VAR
+  #     #   value: "simple-value"
+  #
+  #     # FieldRef example
+  #     # - name: MY_POD_LABEL
+  #     #   valueFrom:
+  #     #     fieldRef:
+  #     #       fieldPath: metadata.labels['my_label']
+  #
+  #   # Additional command-line arguments that will be passed to the node-agent. Optional.
+  #   # e.g.: extraArgs: ["--foo=bar"]
+  #   extraArgs: []
+  #
+  #   # Configure the dnsPolicy of the node-agent daemonset
+  #   # See: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
+  dnsPolicy: ClusterFirst
 #
 #   # Configure hostAliases for node-agent daemonset. Optional
 #   # For more information, check: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/
