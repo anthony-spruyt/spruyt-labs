@@ -14,7 +14,7 @@ resources:
   - ./spegel
   - ./kubelet-csr-approver
   - ./reloader
-  # - ./chrony
+  - ./chrony
   # Storage
   - ./rook-ceph
   # Networking

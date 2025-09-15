@@ -1,0 +1,87 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+fullnameOverride: &name chrony
+controllers:
+  chrony:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    type: deployment
+    replicas: 3
+    strategy: RollingUpdate
+    pod:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: *name
+    containers:
+      chrony:
+        image:
+          repository: dockurr/chrony
+          tag: 4.8
+          pullPolicy: IfNotPresent
+        ports:
+          - containerPort: 123
+            protocol: UDP
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        env:
+          - name: "NTP_SERVERS"
+            value: "time.cloudflare.com"
+          - name: "TZ"
+            value: ${TIMEZONE}
+          - name: "ENABLE_SYSCLK"
+            value: "false"
+          - name: ENABLE_NTS
+            value: "true"
+          - name: LOG_LEVEL
+            value: "1" #  0 (informational), 1 (warning), 2 (non-fatal error), and 3 (fatal error).
+        probes:
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - ntpdate -q 127.0.0.1 | grep offset
+              initialDelaySeconds: 10
+              periodSeconds: 30
+              failureThreshold: 3
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - ntpdate -q 127.0.0.1 > /dev/null
+              initialDelaySeconds: 15
+              periodSeconds: 60
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+service:
+  chrony:
+    controller: *name
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+    annotations:
+      metallb.io/loadBalancerIPs: "${LB_IP4_NTP}"
+    ports:
+      ntp:
+        port: 123
+        protocol: UDP

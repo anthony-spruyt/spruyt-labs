@@ -11,10 +11,10 @@ defaultPodOptions:
           app.kubernetes.io/name: cloudflared
 controllers:
   cloudflared:
-    replicas: 3
-    strategy: RollingUpdate
     annotations:
       reloader.stakater.com/auto: "true"
+    replicas: 3
+    strategy: RollingUpdate
     pod:
       securityContext:
         runAsNonRoot: true
