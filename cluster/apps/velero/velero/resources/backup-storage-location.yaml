@@ -11,7 +11,6 @@ spec:
   provider: velero.io/aws
   objectStorage:
     bucket: spruyt-labs-470715245270-prod-velero-backup
-    prefix: velero
   credential:
     name: velero-secret
     key: cloud
