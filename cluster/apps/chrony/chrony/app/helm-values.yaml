@@ -27,7 +27,6 @@ controllers:
           - containerPort: 123
             protocol: UDP
         securityContext:
-          allowPrivilegeEscalation: false
           capabilities:
             drop:
               - ALL
