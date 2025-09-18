@@ -79,7 +79,7 @@ spec:
       ## -- Image pull secrets
       #imagePullSecrets: []
       ## -- Replica count
-      replicaCount: 2
+      #replicaCount: 1
       ## -- Name of Priority Class
       #priorityClassName: ""
       ## -- Overrides the full name of server component
