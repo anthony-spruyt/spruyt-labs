@@ -79,7 +79,7 @@ spec:
       ## -- Image pull secrets
       #imagePullSecrets: []
       ## -- Replica count
-      #replicaCount: 1
+      replicaCount: 2
       ## -- Name of Priority Class
       #priorityClassName: ""
       ## -- Overrides the full name of server component
@@ -142,7 +142,13 @@ spec:
       #nodeSelector: {}
       #
       ## -- Pod topologySpreadConstraints
-      #topologySpreadConstraints: []
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: victoria-logs-single
       #
       ## -- Pod affinity
       #affinity: {}
