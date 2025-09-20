@@ -7,7 +7,7 @@ logs:
     level: INFO
 resources:
   limits:
-    cpu: 100m
+    cpu: 500m
     memory: 1Gi
   requests:
     cpu: 30m
