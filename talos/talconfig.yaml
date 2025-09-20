@@ -303,6 +303,13 @@ patches:
 
 controlPlane:
   patches:
+    # Tune etcd timings
+    - |-
+      cluster:
+        etcd:
+          extraArgs:
+            heartbeat-interval: "200"       # give heartbeats more headroom
+            election-timeout: "2000"
     # Expose metrics
     - |-
       cluster:
