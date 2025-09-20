@@ -10,6 +10,11 @@ spec:
     kind: OCIRepository
     name: victoria-metrics-k8s-stack-ocirepo
     namespace: flux-system
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+      strategy: rollback
   # #yaml-language-server: $schema=TODO
   # Victoria Metrics k8s Stack Reference -> https://docs.victoriametrics.com/helm/victoria-metrics-k8s-stack/#parameters
   # Default values for victoria-metrics-k8s-stack: https://github.com/VictoriaMetrics/helm-charts/blob/master/charts/victoria-metrics-k8s-stack/values.yaml
