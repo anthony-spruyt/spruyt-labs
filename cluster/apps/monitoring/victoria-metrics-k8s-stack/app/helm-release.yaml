@@ -1255,10 +1255,10 @@ spec:
       enabled: true
 
       ## -- If your etcd is not deployed as a pod, specify IPs it can be found on
-      #endpoints: []
-      ## - 10.141.4.22
-      ## - 10.141.4.23
-      ## - 10.141.4.24
+      endpoints:
+        - ${C1_IP4_VLAN_10}
+        - ${C2_IP4_VLAN_10}
+        - ${C3_IP4_VLAN_10}
 
       ## Etcd service. If using kubeEtcd.endpoints only the port and targetPort are used
       service:
@@ -1271,8 +1271,8 @@ spec:
             # -- ETCD service target port
             targetPort: 2381
         # -- ETCD service pods selector
-        selector:
-          component: kube-controller-manager # instead of using hardcoded IP endpoints,
+        # selector:
+        #   component: kube-controller-manager # instead of using hardcoded IP endpoints,
         # this is a trick borrowed from from https://github.com/siderolabs/talos/discussions/7214#discussioncomment-10255876
         # which only works if/because etcd is deployed on the same nodes where the rest
         # of the api server (notably kube-controller-manager) are deployed. Adjust if that's
@@ -1287,7 +1287,7 @@ spec:
           endpoints:
             - port: etcd-http
               scheme: http
-              path: metrics
+              path: /metrics
 
     # Component scraping kube scheduler
     kubeScheduler:
