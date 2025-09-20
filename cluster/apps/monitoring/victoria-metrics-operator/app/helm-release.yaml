@@ -197,7 +197,7 @@ spec:
     # -- Resource object
     resources:
       limits:
-        cpu: 25m
+        cpu: 100m
         memory: 128Mi
       requests:
         cpu: 10m
