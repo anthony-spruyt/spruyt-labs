@@ -1255,23 +1255,28 @@ spec:
       enabled: true
 
       ## -- If your etcd is not deployed as a pod, specify IPs it can be found on
-      endpoints:
-        - ${C1_IP4}
-        - ${C2_IP4}
-        - ${C3_IP4}
+      #endpoints: []
+      ## - 10.141.4.22
+      ## - 10.141.4.23
+      ## - 10.141.4.24
 
       ## Etcd service. If using kubeEtcd.endpoints only the port and targetPort are used
       service:
         # -- Enable service for ETCD metrics scraping
         enabled: true
-        name: etcd-metrics
-        # -- ETCD service port
-        port: 2381
-        # -- ETCD service target port
-        targetPort: 2381
+        ports:
+          etcd-http:
+            # -- ETCD service port
+            port: 2381
+            # -- ETCD service target port
+            targetPort: 2381
         # -- ETCD service pods selector
-        # selector:
-        #   component: etcd
+        selector:
+          component: kube-controller-manager # instead of using hardcoded IP endpoints,
+        # this is a trick borrowed from from https://github.com/siderolabs/talos/discussions/7214#discussioncomment-10255876
+        # which only works if/because etcd is deployed on the same nodes where the rest
+        # of the api server (notably kube-controller-manager) are deployed. Adjust if that's
+        # not how your cluster is set up.
 
       # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
       vmScrape:
@@ -1280,14 +1285,8 @@ spec:
           namespaceSelector:
             matchNames: [kube-system]
           endpoints:
-            - # bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-              # bearerTokenSecret:
-              #   key: ""
-              port: etcd-metrics
+            - port: etcd-http
               scheme: http
-              # tlsConfig:
-              #   caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-              #   insecureSkipVerify: true
 
     # Component scraping kube scheduler
     kubeScheduler:
