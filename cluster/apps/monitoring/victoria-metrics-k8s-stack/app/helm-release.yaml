@@ -1282,8 +1282,8 @@ spec:
             - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
-              port: http-metrics
-              scheme: https
+              port: 2381
+              scheme: http
               tlsConfig:
                 caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecureSkipVerify: true
