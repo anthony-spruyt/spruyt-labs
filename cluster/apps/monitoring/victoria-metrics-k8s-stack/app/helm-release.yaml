@@ -1152,7 +1152,7 @@ spec:
     # Component scraping the kube controller manager
     kubeControllerManager:
       # -- Enable kube controller manager metrics scraping
-      enabled: false
+      enabled: true
 
     #  # -- If your kube controller manager is not deployed as a pod, specify IPs it can be found on
     #  endpoints: []
@@ -1247,7 +1247,7 @@ spec:
     ## Component scraping etcd
     kubeEtcd:
       # -- Enabled KubeETCD metrics scraping
-      enabled: false
+      enabled: true
 
     #  # -- If your etcd is not deployed as a pod, specify IPs it can be found on
     #  endpoints: []
@@ -1285,7 +1285,7 @@ spec:
     # Component scraping kube scheduler
     kubeScheduler:
       # -- Enable KubeScheduler metrics scraping
-      enabled: false
+      enabled: true
 
     #  # -- If your kube scheduler is not deployed as a pod, specify IPs it can be found on
     #  endpoints: []
