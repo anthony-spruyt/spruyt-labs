@@ -1255,10 +1255,10 @@ spec:
       enabled: true
 
       ## -- If your etcd is not deployed as a pod, specify IPs it can be found on
-      #endpoints: []
-      ## - 10.141.4.22
-      ## - 10.141.4.23
-      ## - 10.141.4.24
+      endpoints:
+        - ${C1_IP4_VLAN_10}
+        - ${C2_IP4_VLAN_10}
+        - ${C3_IP4_VLAN_10}
 
       ## Etcd service. If using kubeEtcd.endpoints only the port and targetPort are used
       service:
@@ -1270,8 +1270,8 @@ spec:
         # -- ETCD service target port
         targetPort: 2381
         # -- ETCD service pods selector
-        selector:
-          component: etcd
+        # selector:
+        #   component: etcd
 
       # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
       vmScrape:
@@ -1280,14 +1280,14 @@ spec:
           namespaceSelector:
             matchNames: [kube-system]
           endpoints:
-            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - # bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
               port: etcd-metrics
               scheme: http
-              tlsConfig:
-                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecureSkipVerify: true
+              # tlsConfig:
+              #   caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              #   insecureSkipVerify: true
 
     # Component scraping kube scheduler
     kubeScheduler:

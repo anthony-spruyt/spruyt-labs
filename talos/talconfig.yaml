@@ -263,9 +263,15 @@ patches:
           resolveMemberNames: true
       files:
         # configure containerd for spegel
+        # expose metrics
+        # set log level to warn
         - content: |
             [plugins."io.containerd.cri.v1.images"]
               discard_unpacked_layers = false
+            [metrics]
+              address = "0.0.0.0:11234"
+            [debug]
+              level = "warn"
           path: /etc/cri/conf.d/20-customization.part
           permissions: 0o644
           op: create
@@ -275,8 +281,6 @@ patches:
           max-pods: 150
           logging-format: json
           node-status-update-frequency: "5s"
-          #node-monitor-period: "5s"             # default 5s
-          #node-monitor-grace-period: "40s"      # default 40s
         extraConfig:
           imageGCLowThresholdPercent: 60
           imageGCHighThresholdPercent: 70
@@ -299,6 +303,18 @@ patches:
 
 controlPlane:
   patches:
+    # Expose metrics
+    - |-
+      cluster:
+        etcd:
+          extraArgs:
+            listen-metrics-urls: http://0.0.0.0:2381
+        controllerManager:
+          extraArgs:
+            bind-address: 0.0.0.0
+        scheduler:
+          extraArgs:
+            bind-address: 0.0.0.0
     # Disable default API server admission plugins so that
     # it does not conflict with mutating admission policy.
     - |-

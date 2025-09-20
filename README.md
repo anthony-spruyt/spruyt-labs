@@ -17,6 +17,8 @@ OS of choice for Bossgame e2 controller planes and Raspberry Pi 4 workers
 
 [https://github.com/budimanjojo/talhelper](https://github.com/budimanjojo/talhelper)
 
+TODO: investigate [https://github.com/trueforge-org/truecharts/releases](https://github.com/trueforge-org/truecharts/releases)
+
 ## FluxCD
 
 gitops via FluxCD
@@ -108,3 +110,8 @@ Use the following regular expression on GitHub to find YAML language server sche
 
 - [https://github.com/upstash/context7](https://github.com/upstash/context7)
 - [https://context7.com/dashboard](https://context7.com/dashboard)
+
+## Debug containerd crashes
+
+- `talosctl -n {NODE_IP} logs containerd`
+- `talosctl -n {NODE_IP} logs cri`
