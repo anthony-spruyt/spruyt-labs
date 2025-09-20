@@ -1184,7 +1184,7 @@ spec:
             matchNames:
               - kube-system
           endpoints:
-            - # bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
               port: http-metrics
@@ -1279,7 +1279,7 @@ spec:
           namespaceSelector:
             matchNames: [kube-system]
           endpoints:
-            - # bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
               port: http-metrics
@@ -1318,7 +1318,7 @@ spec:
           namespaceSelector:
             matchNames: [kube-system]
           endpoints:
-            - # bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
               port: http-metrics
