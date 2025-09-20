@@ -1264,6 +1264,7 @@ spec:
       service:
         # -- Enable service for ETCD metrics scraping
         enabled: true
+        name: etcd-metrics
         # -- ETCD service port
         port: 2381
         # -- ETCD service target port
@@ -1282,7 +1283,7 @@ spec:
             - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
-              port: 2381
+              port: etcd-metrics
               scheme: http
               tlsConfig:
                 caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
