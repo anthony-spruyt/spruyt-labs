@@ -1184,15 +1184,11 @@ spec:
             matchNames:
               - kube-system
           endpoints:
-            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - # bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
               port: http-metrics
-              scheme: https
-              tlsConfig:
-                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                serverName: kubernetes
-                insecureSkipVerify: true
+              scheme: http
 
     ## Component scraping kubeDns. Use either this or coreDns
     #kubeDns:
@@ -1279,14 +1275,11 @@ spec:
           namespaceSelector:
             matchNames: [kube-system]
           endpoints:
-            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - # bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
               port: http-metrics
-              scheme: https
-              tlsConfig:
-                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecureSkipVerify: true
+              scheme: http
 
     # Component scraping kube scheduler
     kubeScheduler:
@@ -1318,14 +1311,11 @@ spec:
           namespaceSelector:
             matchNames: [kube-system]
           endpoints:
-            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - # bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
               # bearerTokenSecret:
               #   key: ""
               port: http-metrics
-              scheme: https
-              tlsConfig:
-                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecureSkipVerify: true
+              scheme: http
 
     ## Component scraping kube proxy
     #kubeProxy:
