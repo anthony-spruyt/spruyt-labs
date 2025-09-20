@@ -1287,6 +1287,7 @@ spec:
           endpoints:
             - port: etcd-http
               scheme: http
+              path: metrics
 
     # Component scraping kube scheduler
     kubeScheduler:
