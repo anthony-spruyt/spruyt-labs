@@ -1261,16 +1261,16 @@ spec:
       ## - 10.141.4.24
 
       ## Etcd service. If using kubeEtcd.endpoints only the port and targetPort are used
-      #service:
-      #  # -- Enable service for ETCD metrics scraping
-      #  enabled: true
-      #  # -- ETCD service port
-      #  port: 2379
-      #  # -- ETCD service target port
-      #  targetPort: 2379
-      #  # -- ETCD service pods selector
-      #  selector:
-      #    component: etcd
+      service:
+        # -- Enable service for ETCD metrics scraping
+        enabled: true
+        # -- ETCD service port
+        port: 2381
+        # -- ETCD service target port
+        targetPort: 2381
+        # -- ETCD service pods selector
+        selector:
+          component: etcd
 
       # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
       vmScrape:
