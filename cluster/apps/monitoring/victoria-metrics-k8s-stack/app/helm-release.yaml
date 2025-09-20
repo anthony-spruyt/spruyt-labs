@@ -1256,9 +1256,9 @@ spec:
 
       ## -- If your etcd is not deployed as a pod, specify IPs it can be found on
       endpoints:
-        - ${C1_IP4_VLAN_10}
-        - ${C2_IP4_VLAN_10}
-        - ${C3_IP4_VLAN_10}
+        - ${C1_IP4}
+        - ${C2_IP4}
+        - ${C3_IP4}
 
       ## Etcd service. If using kubeEtcd.endpoints only the port and targetPort are used
       service:
@@ -1287,7 +1287,7 @@ spec:
           endpoints:
             - port: etcd-http
               scheme: http
-              path: /metrics
+              path: metrics
 
     # Component scraping kube scheduler
     kubeScheduler:
