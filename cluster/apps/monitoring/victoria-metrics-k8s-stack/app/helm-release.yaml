@@ -1154,40 +1154,40 @@ spec:
       # -- Enable kube controller manager metrics scraping
       enabled: true
 
-    #  # -- If your kube controller manager is not deployed as a pod, specify IPs it can be found on
-    #  endpoints: []
-    #  # - 10.141.4.22
-    #  # - 10.141.4.23
-    #  # - 10.141.4.24
+      ## -- If your kube controller manager is not deployed as a pod, specify IPs it can be found on
+      #endpoints: []
+      ## - 10.141.4.22
+      ## - 10.141.4.23
+      ## - 10.141.4.24
+      ## If using kubeControllerManager.endpoints only the port and targetPort are used
+      #service:
+      #  # -- Create service for kube controller manager metrics scraping
+      #  enabled: true
+      #  # -- Kube controller manager service port
+      #  port: 10257
+      #  # -- Kube controller manager service target port
+      #  targetPort: 10257
+      #  # -- Kube controller manager service pod selector
+      #  selector:
+      #    component: kube-controller-manager
 
-    #  # If using kubeControllerManager.endpoints only the port and targetPort are used
-    #  service:
-    #    # -- Create service for kube controller manager metrics scraping
-    #    enabled: true
-    #    # -- Kube controller manager service port
-    #    port: 10257
-    #    # -- Kube controller manager service target port
-    #    targetPort: 10257
-    #    # -- Kube controller manager service pod selector
-    #    selector:
-    #      component: kube-controller-manager
-
-    #  # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
-    #  vmScrape:
-    #    spec:
-    #      jobLabel: jobLabel
-    #      namespaceSelector:
-    #        matchNames:
-    #          - kube-system
-    #      endpoints:
-    #        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-    #          # bearerTokenSecret:
-    #          #   key: ""
-    #          port: http-metrics
-    #          scheme: https
-    #          tlsConfig:
-    #            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    #            serverName: kubernetes
+      # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
+      vmScrape:
+        spec:
+          jobLabel: jobLabel
+          namespaceSelector:
+            matchNames:
+              - kube-system
+          endpoints:
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+              # bearerTokenSecret:
+              #   key: ""
+              port: http-metrics
+              scheme: https
+              tlsConfig:
+                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                serverName: kubernetes
+                insecureSkipVerify: true
 
     ## Component scraping kubeDns. Use either this or coreDns
     #kubeDns:
@@ -1249,76 +1249,78 @@ spec:
       # -- Enabled KubeETCD metrics scraping
       enabled: true
 
-    #  # -- If your etcd is not deployed as a pod, specify IPs it can be found on
-    #  endpoints: []
-    #  # - 10.141.4.22
-    #  # - 10.141.4.23
-    #  # - 10.141.4.24
+      ## -- If your etcd is not deployed as a pod, specify IPs it can be found on
+      #endpoints: []
+      ## - 10.141.4.22
+      ## - 10.141.4.23
+      ## - 10.141.4.24
 
-    #  # Etcd service. If using kubeEtcd.endpoints only the port and targetPort are used
-    #  service:
-    #    # -- Enable service for ETCD metrics scraping
-    #    enabled: true
-    #    # -- ETCD service port
-    #    port: 2379
-    #    # -- ETCD service target port
-    #    targetPort: 2379
-    #    # -- ETCD service pods selector
-    #    selector:
-    #      component: etcd
+      ## Etcd service. If using kubeEtcd.endpoints only the port and targetPort are used
+      #service:
+      #  # -- Enable service for ETCD metrics scraping
+      #  enabled: true
+      #  # -- ETCD service port
+      #  port: 2379
+      #  # -- ETCD service target port
+      #  targetPort: 2379
+      #  # -- ETCD service pods selector
+      #  selector:
+      #    component: etcd
 
-    #  # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
-    #  vmScrape:
-    #    spec:
-    #      jobLabel: jobLabel
-    #      namespaceSelector:
-    #        matchNames: [kube-system]
-    #      endpoints:
-    #        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-    #          # bearerTokenSecret:
-    #          #   key: ""
-    #          port: http-metrics
-    #          scheme: https
-    #          tlsConfig:
-    #            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
+      vmScrape:
+        spec:
+          jobLabel: jobLabel
+          namespaceSelector:
+            matchNames: [kube-system]
+          endpoints:
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+              # bearerTokenSecret:
+              #   key: ""
+              port: http-metrics
+              scheme: https
+              tlsConfig:
+                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecureSkipVerify: true
 
     # Component scraping kube scheduler
     kubeScheduler:
       # -- Enable KubeScheduler metrics scraping
       enabled: true
 
-    #  # -- If your kube scheduler is not deployed as a pod, specify IPs it can be found on
-    #  endpoints: []
-    #  # - 10.141.4.22
-    #  # - 10.141.4.23
-    #  # - 10.141.4.24
+      ## -- If your kube scheduler is not deployed as a pod, specify IPs it can be found on
+      #endpoints: []
+      ## - 10.141.4.22
+      ## - 10.141.4.23
+      ## - 10.141.4.24
 
-    #  # If using kubeScheduler.endpoints only the port and targetPort are used
-    #  service:
-    #    # -- Enable service for KubeScheduler metrics scrape
-    #    enabled: true
-    #    # -- KubeScheduler service port
-    #    port: 10259
-    #    # -- KubeScheduler service target port
-    #    targetPort: 10259
-    #    # -- KubeScheduler service pod selector
-    #    selector:
-    #      component: kube-scheduler
+      ## If using kubeScheduler.endpoints only the port and targetPort are used
+      #service:
+      #  # -- Enable service for KubeScheduler metrics scrape
+      #  enabled: true
+      #  # -- KubeScheduler service port
+      #  port: 10259
+      #  # -- KubeScheduler service target port
+      #  targetPort: 10259
+      #  # -- KubeScheduler service pod selector
+      #  selector:
+      #    component: kube-scheduler
 
-    #  # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
-    #  vmScrape:
-    #    spec:
-    #      jobLabel: jobLabel
-    #      namespaceSelector:
-    #        matchNames: [kube-system]
-    #      endpoints:
-    #        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-    #          # bearerTokenSecret:
-    #          #   key: ""
-    #          port: http-metrics
-    #          scheme: https
-    #          tlsConfig:
-    #            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
+      vmScrape:
+        spec:
+          jobLabel: jobLabel
+          namespaceSelector:
+            matchNames: [kube-system]
+          endpoints:
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+              # bearerTokenSecret:
+              #   key: ""
+              port: http-metrics
+              scheme: https
+              tlsConfig:
+                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecureSkipVerify: true
 
     ## Component scraping kube proxy
     #kubeProxy:
