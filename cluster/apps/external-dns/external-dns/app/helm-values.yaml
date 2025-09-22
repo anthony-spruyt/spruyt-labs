@@ -4,7 +4,7 @@
 # Default values: https://github.com/kubernetes-sigs/external-dns/blob/master/charts/external-dns/values.yaml
 resources:
   limits:
-    cpu: 100m
+    # cpu: 100m
     memory: 96Mi
   requests:
     cpu: 5m
