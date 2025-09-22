@@ -115,7 +115,7 @@ nodes:
       node-role.kubernetes.io/control-plane: ""
       #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
     nodeAnnotations: &nodeannotations
-      installerImage: "factory.talos.dev/metal-installer-secureboot/9aa2ecda3ee602d57be72bb3c9b43fc6bc37c7279ea5b36c4e84d91d55853d61:v1.10.7"
+      installerImage: "factory.talos.dev/metal-installer-secureboot/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb:v1.10.7"
     schematic: &e2schematic
       customization:
         secureboot:
@@ -123,6 +123,14 @@ nodes:
         extraKernelArgs:
           - -lockdown
           - lockdown=integrity
+          - amd_pstate=1
+          - nvme_core.multipath=1
+          - elevator=mq-deadline
+          - net.core.default_qdisc=fq
+          - tcp_congestion_control=bbr
+          - vm.vfs_cache_pressure=50
+          - quiet
+          - loglevel=3
         systemExtensions:
           officialExtensions:
             - siderolabs/amd-ucode
@@ -313,9 +321,6 @@ controlPlane:
     # Expose metrics
     - |-
       cluster:
-        etcd:
-          extraArgs:
-            listen-metrics-urls: http://0.0.0.0:2381
         controllerManager:
           extraArgs:
             bind-address: 0.0.0.0
