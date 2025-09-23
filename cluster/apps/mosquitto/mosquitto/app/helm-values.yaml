@@ -1,0 +1,112 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+controllers:
+  mosquitto:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      # annotations:
+      #   backup.velero.io/backup-volumes: cache
+      securityContext:
+        runAsUser: 2000
+        runAsGroup: 2000
+        runAsNonRoot: true
+        fsGroup: 2000
+    containers:
+      mosquitto:
+        image:
+          repository: public.ecr.aws/docker/library/eclipse-mosquitto
+          tag: 2.0.22-openssl
+          pullPolicy: IfNotPresent
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 10m
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+service:
+  mosquitto:
+    controller: mosquitto
+    type: LoadBalancer
+    annotations:
+      metallb.io/loadBalancerIPs: "${LB_IP4_MOSQUITTO}"
+    ports:
+      mqtt:
+        port: 1883
+        protocol: TCP
+      # mqtt-over-ws:
+      #   port: 1884
+      #   protocol: TCP
+      # mqtt-ssl:
+      #   port: 8883
+      #   protocol: TCP
+      # mqtt-over-ws-ssl:
+      #   port: 8884
+      #   protocol: TCP
+configMaps:
+  mosquitto-config:
+    data:
+      # https://mosquitto.org/man/mosquitto-conf-5.html
+      mosquitto.conf: |
+        # Configure persistence
+        persistence true
+        persistence_location /data
+        autosave_interval 60
+
+        # Configure logging
+        connection_messages false
+        log_dest stdout
+        log_dest stderr
+
+        # Configure listeners
+        per_listener_settings true
+
+        # mqtt
+        listener 1883
+        allow_anonymous true
+
+        # TODO mqtt-over-ws
+        # listener 1884
+
+        # TODO mqtt-ssl
+        # listener 8883
+        # allow_anonymous false
+        # require_certificate false
+        # cafile /mosquitto/certs/root.pem
+        # certfile /mosquitto/certs/server.pem
+        # keyfile /mosquitto/certs/server.key
+
+        # TODO mqtt-over-ws-ssl
+        # listener 8884
+persistence:
+  mosquitto-config:
+    type: configMap
+    identifier: mosquitto-config
+    advancedMounts:
+      mosquitto:
+        mosquitto:
+          - path: /mosquitto/config/mosquitto.conf
+            subPath: mosquitto.conf
+  mosquitto-data:
+    existingClaim: "mosquitto-data"
+    advancedMounts:
+      mosquitto:
+        mosquitto:
+          - path: /mosquitto/data
+  mosquitto-log:
+    type: emptyDir
+    advancedMounts:
+      mosquitto:
+        mosquitto:
+          - path: /mosquitto/log

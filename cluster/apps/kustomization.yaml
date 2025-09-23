@@ -34,7 +34,7 @@ resources:
   # - ./mariadb
   # - ./mssql
   # Message Brokers
-  # - ./mosquitto
+  - ./mosquitto
   # - ./rabbitmq
   # Games
   - ./minecraft

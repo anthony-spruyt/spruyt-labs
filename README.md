@@ -56,13 +56,19 @@ How to debug via rook-ceph-tools: `kubectl -n rook-ceph exec -it deploy/rook-cep
 How to archive health warnings:
 
 ```bash
-kubectl -n rook-ceph exec -it rook-ceph-<pod> -- bash
+kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- bash
 ceph crash ls
 ceph crash archive-all
 ```
 
 To get the newly generated UI password after bootstrapping a new cluster run the following:
 `kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo`
+
+### Dashboards
+
+TODO: need to add these via source control
+
+[https://grafana.com/grafana/dashboards/2842-ceph-cluster/](https://grafana.com/grafana/dashboards/2842-ceph-cluster/)
 
 ## Velero
 
