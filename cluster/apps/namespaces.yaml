@@ -65,6 +65,11 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: mosquitto
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: reloader
 ---
 apiVersion: v1
