@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "mosquitto-internal-spruyt-xyz-tls-mosquitto"
+  namespace: mosquitto
+spec:
+  secretName: "mosquitto-internal-spruyt-xyz-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  commonName: "mosquitto.lan.${EXTERNAL_DOMAIN}"
+  dnsNames:
+    - "mosquitto.lan.${EXTERNAL_DOMAIN}"

@@ -45,20 +45,25 @@ service:
       mqtt:
         port: 1883
         protocol: TCP
-      # mqtt-over-ws:
-      #   port: 1884
-      #   protocol: TCP
       mqtt-ssl:
         port: 8883
         protocol: TCP
-      # mqtt-over-ws-ssl:
-      #   port: 8884
-      #   protocol: TCP
 configMaps:
   mosquitto-config:
     data:
       # https://mosquitto.org/man/mosquitto-conf-5.html
       mosquitto.conf: |
+        # mqtt
+        listener 1883
+        allow_anonymous true
+
+        # mqtt-ssl
+        listener 8883
+        allow_anonymous true
+        require_certificate false
+        certfile /mosquitto/certs/tls.crt
+        keyfile /mosquitto/certs/tls.key
+
         # Configure persistence
         persistence true
         persistence_location /mosquitto/data/
@@ -71,24 +76,6 @@ configMaps:
 
         # Configure listeners
         per_listener_settings true
-
-        # mqtt
-        listener 1883
-        allow_anonymous true
-
-        # TODO mqtt-over-ws
-        # listener 1884
-
-        # TODO mqtt-ssl
-        # listener 8883
-        # allow_anonymous false
-        # require_certificate false
-        # cafile /mosquitto/certs/root.pem
-        # certfile /mosquitto/certs/server.pem
-        # keyfile /mosquitto/certs/server.key
-
-        # TODO mqtt-over-ws-ssl
-        # listener 8884
 persistence:
   mosquitto-config:
     type: configMap
@@ -110,3 +97,10 @@ persistence:
       mosquitto:
         mosquitto:
           - path: /mosquitto/log
+  mosquitto-certs:
+    type: secret
+    name: mosquitto-internal-spruyt-xyz-tls
+    advancedMounts:
+      mosquitto:
+        mosquitto:
+          - path: /mosquitto/certs
