@@ -961,6 +961,16 @@ spec:
           label: grafana_datasource
           resource: both
 
+      persistence:
+        enabled: true
+        type: pvc
+        size: 10Gi
+        storageClassName: rbd-fast
+        accessModes:
+          - ReadWriteOncePod
+        finalizers:
+          - kubernetes.io/pvc-protection
+
       # -- Create datasource configmap even if grafana deployment has been disabled
       #forceDeployDatasource: false
 
