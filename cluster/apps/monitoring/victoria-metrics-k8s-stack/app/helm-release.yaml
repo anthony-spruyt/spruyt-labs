@@ -306,7 +306,7 @@ spec:
             memory: 2048Mi
           requests:
             cpu: 200m
-            memory: 1536Mi
+            memory: 1664Mi
 
         #port: "8428"
         # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
@@ -949,10 +949,10 @@ spec:
       resources:
         limits:
           cpu: 1000m
-          memory: 1536Mi
+          memory: 2Gi
         requests:
           cpu: 100m
-          memory: 256Mi
+          memory: 1Gi
       # all values for grafana helm chart can be specified here
       sidecar:
         datasources:
@@ -1019,10 +1019,10 @@ spec:
       resources:
         limits:
           cpu: 1000m
-          memory: 64Mi
+          memory: 128Mi
         requests:
           cpu: 25m
-          memory: 16Mi
+          memory: 64Mi
       # all values for prometheus-node-exporter helm chart can be specified here
       #service:
       #  # Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
@@ -1060,7 +1060,7 @@ spec:
           memory: 256Mi
         requests:
           cpu: 10m
-          memory: 32Mi
+          memory: 96Mi
     #  # -- [Scrape configuration](https://docs.victoriametrics.com/operator/api#vmservicescrapespec) for Kube State Metrics
     #  vmScrape:
     #    enabled: true
