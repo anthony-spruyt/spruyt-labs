@@ -48,9 +48,9 @@ service:
       # mqtt-over-ws:
       #   port: 1884
       #   protocol: TCP
-      # mqtt-ssl:
-      #   port: 8883
-      #   protocol: TCP
+      mqtt-ssl:
+        port: 8883
+        protocol: TCP
       # mqtt-over-ws-ssl:
       #   port: 8884
       #   protocol: TCP
