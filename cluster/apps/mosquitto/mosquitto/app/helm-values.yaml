@@ -61,7 +61,7 @@ configMaps:
       mosquitto.conf: |
         # Configure persistence
         persistence true
-        persistence_location /data
+        persistence_location /mosquitto/data/
         autosave_interval 60
 
         # Configure logging
