@@ -110,8 +110,6 @@ persistence:
   mosquitto-credentials:
     type: secret
     name: mosquitto-secrets
-    items:
-      - key: credentials.txt
     advancedMounts:
       mosquitto:
         mosquitto:
