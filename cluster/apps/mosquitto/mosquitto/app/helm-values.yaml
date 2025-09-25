@@ -91,6 +91,10 @@ configMaps:
         certfile /mosquitto/certs/tls.crt
         keyfile /mosquitto/certs/tls.key
 persistence:
+  config:
+    type: emptyDir
+    globalMounts:
+      - path: /mosquitto/config
   mosquitto-config:
     type: configMap
     identifier: mosquitto-config
@@ -122,9 +126,7 @@ persistence:
   mosquitto-secrets:
     type: secret
     name: mosquitto-secrets
-    advancedMounts:
-      mosquitto:
-        mosquitto:
-          - path: /mosquitto/secrets/credentials.txt
-            subPath: credentials.txt
-            readOnly: true
+    globalMounts:
+      - path: /mosquitto/secrets/credentials.txt
+        subPath: credentials.txt
+        readOnly: true
