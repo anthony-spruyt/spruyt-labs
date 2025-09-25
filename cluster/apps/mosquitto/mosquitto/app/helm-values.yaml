@@ -87,6 +87,7 @@ persistence:
         mosquitto:
           - path: /mosquitto/config/mosquitto.conf
             subPath: mosquitto.conf
+            readOnly: true
   mosquitto-data:
     existingClaim: "mosquitto-data"
     advancedMounts:
@@ -109,8 +110,10 @@ persistence:
   mosquitto-credentials:
     type: secret
     name: mosquitto-secrets
+    defaultMode: 0700
     advancedMounts:
       mosquitto:
         mosquitto:
           - path: /mosquitto/config/credentials.txt
             subPath: credentials.txt
+            readOnly: true
