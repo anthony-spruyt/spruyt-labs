@@ -68,11 +68,13 @@ configMaps:
 
         # mqtt
         listener 1883
-        allow_anonymous true
+        allow_anonymous false
+        password_file /mosquitto/config/credentials.txt
 
         # mqtt-ssl
         listener 8883
-        allow_anonymous true
+        allow_anonymous false
+        password_file /mosquitto/config/credentials.txt
         require_certificate false
         certfile /mosquitto/certs/tls.crt
         keyfile /mosquitto/certs/tls.key
@@ -85,6 +87,7 @@ persistence:
         mosquitto:
           - path: /mosquitto/config/mosquitto.conf
             subPath: mosquitto.conf
+            readOnly: true
   mosquitto-data:
     existingClaim: "mosquitto-data"
     advancedMounts:
@@ -104,3 +107,14 @@ persistence:
       mosquitto:
         mosquitto:
           - path: /mosquitto/certs
+  mosquitto-credentials:
+    type: secret
+    name: mosquitto-secrets
+    items:
+      - key: credentials.txt
+    advancedMounts:
+      mosquitto:
+        mosquitto:
+          - path: /mosquitto/config/credentials.txt
+            subPath: credentials.txt
+            readOnly: true
