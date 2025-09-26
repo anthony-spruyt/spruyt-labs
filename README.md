@@ -64,6 +64,20 @@ ceph crash archive-all
 To get the newly generated UI password after bootstrapping a new cluster run the following:
 `kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo`
 
+How to free a persistent volume:
+
+```bash
+kubectl patch pv {PVC_NAME} --type=json \
+  -p='[{"op": "remove", "path": "/spec/claimRef"}]'
+```
+
+How to change the access mode of a persistent volume:
+
+```bash
+kubectl patch pv {PVC_NAME} --type=json \
+  -p='[{"op": "replace", "path": "/spec/accessModes", "value": ["ReadWriteOnce"]}]'
+```
+
 ### Dashboards
 
 TODO: need to add these via source control
