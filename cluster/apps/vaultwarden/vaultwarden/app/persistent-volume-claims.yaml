@@ -12,7 +12,7 @@ spec:
   storageClassName: rbd-fast
   volumeName: pvc-63c9a9a0-fe7d-43a0-9da5-fd6114163c8b
   accessModes:
-    - ReadWriteOncePod
+    - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
@@ -30,7 +30,7 @@ spec:
   storageClassName: rbd-fast
   volumeName: pvc-4444b3d9-2bfe-4dc1-a010-e614601d9332
   accessModes:
-    - ReadWriteOncePod
+    - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
