@@ -3,7 +3,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app external-dns
+  name: &app external-dns-technitium
   namespace: &fluxnamespace flux-system
 spec:
   targetNamespace: external-dns
@@ -13,7 +13,7 @@ spec:
   dependsOn:
     - name: technitium
   interval: 1h
-  path: ./cluster/apps/external-dns/external-dns/app
+  path: ./cluster/apps/external-dns/external-dns-technitium/app
   prune: true
   retryInterval: 2m
   sourceRef:
