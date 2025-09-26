@@ -100,6 +100,15 @@ Cert manager with local self signed certs and Cloudflare + lets encrypt ACME for
 TODO: document
 bedrock connect, DNS interception and minecraft bedrock server
 
+## Mosquitto
+
+Reference for adding new users: [https://mosquitto.org/documentation/authentication-methods/](https://mosquitto.org/documentation/authentication-methods/)
+
+## PostgreSQL
+
+Documentation: [https://cloudnative-pg.io/documentation/1.27/](https://cloudnative-pg.io/documentation/1.27/)
+Helm Charts: [https://github.com/cloudnative-pg/charts](https://github.com/cloudnative-pg/charts)
+
 ## UniFi
 
 [https://github.com/jacobalberty/unifi-docker](https://github.com/jacobalberty/unifi-docker)
@@ -121,3 +130,4 @@ Use the following regular expression on GitHub to find YAML language server sche
 
 - `talosctl -n {NODE_IP} logs containerd`
 - `talosctl -n {NODE_IP} logs cri`
+- `talosctl -n {NODE_IP} logs etcd`

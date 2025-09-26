@@ -316,8 +316,8 @@ controlPlane:
       cluster:
         etcd:
           extraArgs:
-            heartbeat-interval: "200"       # give heartbeats more headroom
-            election-timeout: "2000"
+            heartbeat-interval: "1000"       # give heartbeats more headroom, revert to defaults when no more USB talos disks
+            election-timeout: "2500"         # At least 2x the heartbeat interval, revert to defaults when no more USB talos disks
     # Expose metrics
     - |-
       cluster:
