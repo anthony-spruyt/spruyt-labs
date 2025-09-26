@@ -3,13 +3,13 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: &app external-dns-technitium
+  name: external-dns-technitium
   namespace: external-dns
 spec:
   interval: 1h
   chart:
     spec:
-      chart: *app
+      chart: external-dns
       version: 1.18.0
       sourceRef:
         kind: HelmRepository
