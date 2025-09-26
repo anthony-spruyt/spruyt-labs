@@ -178,7 +178,7 @@ spec:
         #
         #       # -- Array of access modes. Must match those of existing PV or dynamic provisioner. Details are [here](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
         accessModes:
-          - ReadWriteOncePod
+          - ReadWriteOnce
         #       # -- Persistent volume annotations
         #       annotations: {}
         #

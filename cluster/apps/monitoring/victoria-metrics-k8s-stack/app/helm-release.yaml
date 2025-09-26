@@ -316,7 +316,7 @@ spec:
         storage:
           storageClassName: "rbd-fast-delete"
           accessModes:
-            - ReadWriteOncePod
+            - ReadWriteOnce
           resources:
             requests:
               storage: 30Gi
@@ -967,7 +967,7 @@ spec:
         size: 10Gi
         storageClassName: rbd-fast
         accessModes:
-          - ReadWriteOncePod
+          - ReadWriteOnce
         finalizers:
           - kubernetes.io/pvc-protection
 
