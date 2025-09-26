@@ -2,14 +2,14 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 vars:
-  deleteFailedPodsScript: "{{ .ROOT_DIR }}/.taskfiles/kubectl/scripts/delete-failed-pods.sh"
+  deleteInactivePodsScript: "{{ .ROOT_DIR }}/.taskfiles/kubectl/scripts/delete-inactive-pods.sh"
   resetPvcAccessModeScript: "{{ .ROOT_DIR }}/.taskfiles/kubectl/scripts/reset-pvc-access-mode.sh"
 
 tasks:
-  delete-failed-pods:
+  delete-inactive-pods:
     desc: Deletes all failed pods from the cluster
     cmds:
-      - bash {{ .deleteFailedPodsScript }}
+      - bash {{ .deleteInactivePodsScript }}
   reset-pvc-access-mode:
     desc: Removes the claim reference from a persistent volumen and resets the access mode. Pass the persisten volume name as CLI argument.
     cmds:
