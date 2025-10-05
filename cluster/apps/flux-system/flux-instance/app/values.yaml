@@ -29,24 +29,26 @@ instance:
       # SOPS decryption
       - patch: |
           - op: add
-            path: /spec/decryption
+            path: /spec
             value:
-              provider: sops
-              secretRef:
-                name: sops-age
+              decryption:
+                provider: sops
+                secretRef:
+                  name: sops-age
         target:
           group: kustomize.toolkit.fluxcd.io
           kind: Kustomization
       # Post build substitutions
       - patch: |
           - op: add
-            path: /spec/postBuild
+            path: /spec
             value:
-              substituteFrom:
-                - kind: ConfigMap
-                  name: cluster-settings
-                - kind: Secret
-                  name: cluster-secrets
+              postBuild:
+                substituteFrom:
+                  - kind: ConfigMap
+                    name: cluster-settings
+                  - kind: Secret
+                    name: cluster-secrets
         target:
           group: kustomize.toolkit.fluxcd.io
           kind: Kustomization
