@@ -18,7 +18,7 @@ instance:
     multitenant: false
     tenantDefaultServiceAccount: "default"
   sync:
-    interval: 1m
+    interval: 1h
     kind: "GitRepository"
     url: "ssh://git@github.com/anthony-spruyt/spruyt-labs"
     ref: "refs/heads/main"
@@ -26,6 +26,18 @@ instance:
     pullSecret: "flux-gitops-key"
   kustomize:
     patches:
+      # # Source ref
+      # - patch: |
+      #     - op: add
+      #       path: /spec/sourceRef
+      #       value:
+      #         kind: GitRepository
+      #         name: flux-system
+      #         namespace: flux-system
+      #   target:
+      #     group: kustomize.toolkit.fluxcd.io
+      #     kind: Kustomization
+      # SOPS decryption
       - patch: |
           - op: add
             path: /spec/decryption
@@ -34,6 +46,20 @@ instance:
               secretRef:
                 name: sops-age
         target:
+          group: kustomize.toolkit.fluxcd.io
+          kind: Kustomization
+      # Post build substitutions
+      - patch: |
+          - op: add
+            path: /spec/postBuild
+            value:
+              substituteFrom:
+                - kind: ConfigMap
+                  name: cluster-settings
+                - kind: Secret
+                  name: cluster-secrets
+        target:
+          group: kustomize.toolkit.fluxcd.io
           kind: Kustomization
       # Increase the number of workers and limits
       # Ref: https://fluxcd.io/flux/installation/configuration/vertical-scaling/#increase-the-number-of-workers-and-limits
@@ -47,6 +73,67 @@ instance:
         target:
           kind: Deployment
           name: (kustomize-controller|helm-controller|source-controller)
+      # Enable in-memory kustomize builds
+      # Ref: https://fluxcd.io/flux/installation/configuration/vertical-scaling/#enable-in-memory-kustomize-builds
+      - patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --concurrent=20
+          - op: replace
+            path: /spec/template/spec/volumes/0
+            value:
+              name: temp
+              emptyDir:
+                medium: Memory
+        target:
+          kind: Deployment
+          name: kustomize-controller
+      # Enable Helm repositories caching
+      - patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --helm-cache-max-size=10
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --helm-cache-ttl=60m
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --helm-cache-purge-interval=5m
+        target:
+          kind: Deployment
+          name: source-controller
+      # Flux near OOM detection for Helm
+      # Ref: https://fluxcd.io/flux/installation/configuration/helm-oom-detection/
+      - patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --feature-gates=OOMWatch=true
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --oom-watch-memory-threshold=95
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --oom-watch-interval=500ms
+        target:
+          kind: Deployment
+          name: helm-controller
+      # Disable chart digest tracking
+      - patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --feature-gates=DisableChartDigestTracking=true
+        target:
+          kind: Deployment
+          name: helm-controller
+      # Controller-level SOPS decryption
+      - patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --sops-age-secret=sops-age
+        target:
+          kind: Deployment
+          name: kustomize-controller
+      # Adjust resources and limits
       - patch: |
           apiVersion: apps/v1
           kind: Deployment
@@ -127,33 +214,3 @@ instance:
         target:
           kind: Deployment
           name: source-controller
-      # Enable in-memory kustomize builds
-      # Ref: https://fluxcd.io/flux/installation/configuration/vertical-scaling/#enable-in-memory-kustomize-builds
-      - patch: |
-          - op: add
-            path: /spec/template/spec/containers/0/args/-
-            value: --concurrent=20
-          - op: replace
-            path: /spec/template/spec/volumes/0
-            value:
-              name: temp
-              emptyDir:
-                medium: Memory
-        target:
-          kind: Deployment
-          name: kustomize-controller
-      # Flux near OOM detection for Helm
-      # Ref: https://fluxcd.io/flux/installation/configuration/helm-oom-detection/
-      - patch: |
-          - op: add
-            path: /spec/template/spec/containers/0/args/-
-            value: --feature-gates=OOMWatch=true
-          - op: add
-            path: /spec/template/spec/containers/0/args/-
-            value: --oom-watch-memory-threshold=95
-          - op: add
-            path: /spec/template/spec/containers/0/args/-
-            value: --oom-watch-interval=500ms
-        target:
-          kind: Deployment
-          name: helm-controller
