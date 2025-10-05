@@ -4,7 +4,7 @@ releases:
   - name: flux-operator
     namespace: flux-system
     chart: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
-    version: 0.25.0
+    version: 0.30.0
     wait: true
     # Set this to true if your chart contains crds or install-crd hooks.
     disableValidation: true
@@ -13,7 +13,7 @@ releases:
   - name: flux-instance
     namespace: flux-system
     chart: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance
-    version: 0.25.0
+    version: 0.30.0
     needs: ["flux-system/flux-operator"]
     # Set this to true if your chart contains crds or install-crd hooks.
     disableValidation: true

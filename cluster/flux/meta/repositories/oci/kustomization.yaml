@@ -4,6 +4,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./bjw-s-labs-app-template.yaml
+  - ./flux-instance-ocirepo.yaml
+  - ./flux-operator-ocirepo.yaml
   - ./rook-ceph-cluster-ocirepo.yaml
   - ./rook-ceph-ocirepo.yaml
   - ./victoria-logs-single-ocirepo.yaml

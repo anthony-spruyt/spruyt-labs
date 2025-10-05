@@ -1,17 +1,24 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/controlplaneio-fluxcd/charts/main/charts/flux-instance/values.schema.json
 # Default values for flux-instance: https://github.com/controlplaneio-fluxcd/charts/blob/main/charts/flux-instance/values.yaml
-
 instance:
-  distribution:
-    # renovate: datasource=github-releases depName=controlplaneio-fluxcd/distribution
-    version: 2.6.4 # @schema required: true # was 2.x in defaults
-    registry: "ghcr.io/fluxcd" # This is the default but added to make lint errors go away as it is required and it doenst know this is an overlay
-  cluster:
+  # -- Distribution https://fluxcd.control-plane.io/operator/fluxinstance/#distribution-configuration
+  distribution: # @schema required: true
+    version: "2.x" # @schema required: true
+    registry: "ghcr.io/fluxcd" # @schema required: true
+    artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests:latest"
+    artifactPullSecret: ""
+    imagePullSecret: ""
+  # -- Cluster https://fluxcd.control-plane.io/operator/fluxinstance/#cluster-configuration
+  cluster: # @schema required: true
+    type: kubernetes # @schema enum:[kubernetes,openshift,aws,azure,gcp]
+    size: "" # @schema enum:['',small,medium,large]
     domain: "cluster.local"
-    networkPolicy: false # was true in defaults
+    networkPolicy: true
+    multitenant: false
+    tenantDefaultServiceAccount: "default"
   sync:
-    interval: 5m
+    interval: 1m
     kind: "GitRepository"
     url: "ssh://git@github.com/anthony-spruyt/spruyt-labs"
     ref: "refs/heads/main"

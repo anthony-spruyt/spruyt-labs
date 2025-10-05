@@ -8,41 +8,41 @@ resources:
   # Fluxcd
   - ./flux-system
   # Kube System
-  - ./kube-system
+  # - ./kube-system
   # System
-  - ./irq-balance
-  - ./spegel
-  - ./kubelet-csr-approver
-  - ./reloader
-  - ./chrony
+  # - ./irq-balance
+  # - ./spegel
+  # - ./kubelet-csr-approver
+  # - ./reloader
+  # - ./chrony
   # Storage
-  - ./rook-ceph
+  # - ./rook-ceph
   # Networking
-  - ./cert-manager
-  - ./metallb-system
-  - ./traefik
-  - ./technitium
-  - ./external-dns
-  - ./cloudflare-system
+  # - ./cert-manager
+  # - ./metallb-system
+  # - ./traefik
+  # - ./technitium
+  # - ./external-dns
+  # - ./cloudflare-system
   # - ./unifi
-  - ./whoami
+  # - ./whoami
   # Observability
-  - ./monitoring
+  # - ./monitoring
   # Databases
   # - ./postgress
   # - ./mysql
   # - ./mariadb
   # - ./mssql
   # Message Brokers
-  - ./mosquitto
+  # - ./mosquitto
   # - ./rabbitmq
   # Games
-  - ./minecraft
+  # - ./minecraft
   # Security & Identity
-  - ./vaultwarden
+  # - ./vaultwarden
   # - ./authentik
   # Automation
   # - ./n8n
   # - ./node-red
   # Disaster Recovery
-  - ./velero
+  # - ./velero
