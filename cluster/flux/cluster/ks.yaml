@@ -42,21 +42,37 @@ spec:
         name: cluster-settings
       - kind: Secret
         name: cluster-secrets
-  # patches:
-  #   - # Add Sops decryption to all Kustomizations
-  #     patch: |-
-  #       apiVersion: kustomize.toolkit.fluxcd.io/v1
-  #       kind: Kustomization
-  #       metadata:
-  #         name: not-used
-  #       spec:
-  #         decryption:
-  #           provider: sops
-  #           secretRef:
-  #             name: sops-age
-  #     target:
-  #       group: kustomize.toolkit.fluxcd.io
-  #       kind: Kustomization
+  patches:
+    # Add SOPS decryption to all Kustomizations
+    - patch: |-
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: not-used
+        spec:
+          decryption:
+            provider: sops
+            secretRef:
+              name: sops-age
+      target:
+        group: kustomize.toolkit.fluxcd.io
+        kind: Kustomization
+    # Add post build substitutions to all Kustomizations
+    - patch: |-
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: not-used
+        spec:
+          postBuild:
+            substituteFrom:
+              - kind: ConfigMap
+                name: cluster-settings
+              - kind: Secret
+                name: cluster-secrets
+      target:
+        group: kustomize.toolkit.fluxcd.io
+        kind: Kustomization
   #   - # Add HelmRelease defaults to all Kustomizations
   #     patch: |-
   #       apiVersion: kustomize.toolkit.fluxcd.io/v1

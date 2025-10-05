@@ -26,40 +26,25 @@ instance:
     pullSecret: "flux-gitops-key"
   kustomize:
     patches:
-      # SOPS decryption
+      # SOPS decryption for flux system kustomization
       - patch: |
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: not-used
-          spec:
-            template:
-              spec:
-                decryption:
-                  provider: sops
-                  secretRef:
-                    name: sops-age
+          - op: add
+            path: /spec/decryption
+            value:
+              provider: sops
+              secretRef:
+                name: sops-age
         target:
-          group: kustomize.toolkit.fluxcd.io
           kind: Kustomization
-      # Post build substitutions
+          name: flux-system
+      # Controller-level SOPS decryption
       - patch: |
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: not-used
-          spec:
-            template:
-              spec:
-                postBuild:
-                  substituteFrom:
-                    - kind: ConfigMap
-                      name: cluster-settings
-                    - kind: Secret
-                      name: cluster-secrets
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --sops-age-secret=sops-age
         target:
-          group: kustomize.toolkit.fluxcd.io
-          kind: Kustomization
+          kind: Deployment
+          name: kustomize-controller
       # Increase the number of workers and limits
       # Ref: https://fluxcd.io/flux/installation/configuration/vertical-scaling/#increase-the-number-of-workers-and-limits
       - patch: |
@@ -124,14 +109,6 @@ instance:
         target:
           kind: Deployment
           name: helm-controller
-      # Controller-level SOPS decryption
-      - patch: |
-          - op: add
-            path: /spec/template/spec/containers/0/args/-
-            value: --sops-age-secret=sops-age
-        target:
-          kind: Deployment
-          name: kustomize-controller
       # Adjust resources and limits
       - patch: |
           apiVersion: apps/v1
