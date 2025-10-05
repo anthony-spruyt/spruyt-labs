@@ -1,6 +1,7 @@
 ---
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
+
 vars:
   deleteInactivePodsScript: "{{ .ROOT_DIR }}/.taskfiles/kubectl/scripts/delete-inactive-pods.sh"
   resetPvcAccessModeScript: "{{ .ROOT_DIR }}/.taskfiles/kubectl/scripts/reset-pvc-access-mode.sh"

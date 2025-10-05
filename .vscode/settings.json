@@ -10,7 +10,7 @@
     ".gitignore": true,
     ".pre-commit-config.yaml": true,
     "LICENSE": true,
-    "Taskfile.yml": true,
+    "Taskfile.yml": false,
     ".kilocode": false,
     ".kilocodeignore": true,
     "talos/clusterconfig": false,

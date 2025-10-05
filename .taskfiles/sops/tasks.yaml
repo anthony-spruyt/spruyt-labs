@@ -1,6 +1,7 @@
 ---
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
+
 vars:
   initScript: "{{ .ROOT_DIR }}/.taskfiles/sops/scripts/sops-encrypt.sh"
   decryptScript: "{{ .ROOT_DIR }}/.taskfiles/sops/scripts/sops-decrypt.sh"

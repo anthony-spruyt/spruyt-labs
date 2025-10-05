@@ -11,7 +11,7 @@ kubeProxyReplacement: true
 kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
 k8s:
   requireIPv4PodCIDR: true
-  requireIPv6PodCIDR: true
+  requireIPv6PodCIDR: false
 ipv4:
   enabled: true
 ipv4NativeRoutingCIDR: "${CLUSTER_VLAN_CIDR_IP4}"

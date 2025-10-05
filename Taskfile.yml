@@ -14,4 +14,5 @@ includes:
   pre-commit: .taskfiles/pre-commit/tasks.yaml
   rook-ceph: .taskfiles/rook-ceph/tasks.yaml
   sops: .taskfiles/sops/tasks.yaml
+  talos: .taskfiles/talos/tasks.yaml
   terraform: .taskfiles/terraform/tasks.yaml

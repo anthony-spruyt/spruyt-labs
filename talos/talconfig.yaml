@@ -1,324 +1,396 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/v3.0.36/pkg/config/schemas/talconfig.json
+
 # renovate: depName=ghcr.io/siderolabs/installer datasource=docker
-talosVersion: v1.10.7
+talosVersion: v1.11.2
 # renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
 kubernetesVersion: v1.33.4
 
 clusterName: ${CLUSTER_NAME}
-endpoint: https://${KUBEAPI_VIP_IP}:6443
 domain: ${CLUSTER_DOMAIN}
-
-additionalApiServerCertSans:
-  - 127.0.0.1
-  - ${KUBEAPI_VIP_IP}
-  - ${C1_IP4}
-  - ${C1_IP4_VLAN_10}
-  - ${C2_IP4}
-  - ${C2_IP4_VLAN_10}
-  - ${C3_IP4}
-  - ${C3_IP4_VLAN_10}
-  - ${C1_IP6}
-  - ${C1_IP6_VLAN_10}
-  - ${C2_IP6}
-  - ${C2_IP6_VLAN_10}
-  - ${C3_IP6}
-  - ${C3_IP6_VLAN_10}
-
+endpoint: "https://${KUBEAPI_VIP}:6443"
+#endpoint: "https://${E2_3_IP4}:6443"
+allowSchedulingOnControlPlanes: false
 cniConfig:
-  name: none
-
-clusterSvcNets:
-  - ${CLUSTER_SVC_NETS_IP4}
-  - ${CLUSTER_SVC_NETS_IP6}
+  name: none # Cilium
 clusterPodNets:
-  - ${CLUSTER_POD_NETS_IP4}
-  - ${CLUSTER_POD_NETS_IP6}
+  - ${CLUSTER_POD_CIDR_IP4}
+clusterSvcNets:
+  - ${CLUSTER_SVC_CIDR_IP4}
+additionalApiServerCertSans:
+  - ${E2_1_IP4}
+  - ${E2_2_IP4}
+  - ${E2_3_IP4}
+  - ${MS_01_1_IP4}
+  - ${MS_01_2_IP4}
+  - ${MS_01_3_IP4}
+  - 127.0.0.1 # KubePrism
+additionalMachineCertSans:
+  - ${KUBEAPI_VIP}
+  - ${E2_1_IP4}
+  - ${E2_2_IP4}
+  - ${E2_3_IP4}
+  - ${MS_01_1_IP4}
+  - ${MS_01_2_IP4}
+  - ${MS_01_3_IP4}
+  - 127.0.0.1 # KubePrism
 
 nodes:
-  - hostname: ${C1_HOST}
+  - hostname: e2-1
     controlPlane: true
-    ipAddress: ${C1_IP4}
-    machineSpec: &e2machinespec
+    installDiskSelector:
+      serial: P300ADBB25032802523
+    ipAddress: ${E2_1_IP4}
+    machineSpec:
       mode: metal
       arch: amd64
       secureboot: true
       useUKI: true
-    installDiskSelector: &e2installdiskselector
-      size: "<= 300GB"
-      model: RTL9210B-CG
-    #volumes: &e2volumes
-    #  - name: STATE
-    #    encryption:
-    #      provider: luks2
-    #      keys:
-    #        - slot: 0
-    #          nodeID: {}
-    #        - slot: 1
-    #          tpm: {}
-    #      options:
-    #        - no_read_workqueue
-    #        - no_write_workqueue
-    #  - name: EPHEMERAL
-    #    encryption:
-    #      provider: luks2
-    #      keys:
-    #        - slot: 0
-    #          nodeID: {}
-    #          lockToState: true
-    #        - slot: 1
-    #          tpm: {}
-    #          lockToState: true
-    #      options:
-    #        - no_read_workqueue
-    #        - no_write_workqueue
     networkInterfaces:
       - interface: eno1
         ignore: true
       - interface: enp1s0
-        dhcp: &dhcp false
-        addresses:
-          - "${C1_IP4}/24"
-          # - "${C1_IP6}/64"
-        mtu: &mtu 9000
-        routes: &routes
-          - network: "0.0.0.0/0"
-            gateway: "${GATEWAY_IP4}"
-            metric: 512
-          # - network: ::/0
-          #   gateway: "${GATEWAY_IP6}"
-          #   metric: 512
-        vip: &vip
-          ip: "${KUBEAPI_VIP_IP}"
+        dhcp: false
+        mtu: 9000
         vlans:
-          - vlanId: 10
+          - vlanId: 20
             addresses:
-              - "${C1_IP4_VLAN_10}/24"
-              # - "${C1_IP6_VLAN_10}/64"
-            mtu: *mtu
-    certSANs: &additionalMachineCertSans
-      - 127.0.0.1
-      - ${KUBEAPI_VIP_IP}
-      - ${C1_IP4}
-      - ${C1_IP4_VLAN_10}
-      - ${C2_IP4}
-      - ${C2_IP4_VLAN_10}
-      - ${C3_IP4}
-      - ${C3_IP4_VLAN_10}
-      - ${C1_IP6}
-      - ${C1_IP6_VLAN_10}
-      - ${C2_IP6}
-      - ${C2_IP6_VLAN_10}
-      - ${C3_IP6}
-      - ${C3_IP6_VLAN_10}
-    nodeLabels: &e2nodelabels
-      node-role.kubernetes.io/control-plane: ""
-      #node.kubernetes.io/exclude-from-external-load-balancers: "" # only use this if not scheduling on control plane
-    nodeAnnotations: &nodeannotations
-      installerImage: "factory.talos.dev/metal-installer-secureboot/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb:v1.10.7"
-    schematic: &e2schematic
-      customization:
-        secureboot:
-          includeWellKnownCertificates: true
-        extraKernelArgs:
-          - -lockdown
-          - lockdown=integrity
-          - amd_pstate=1
-          - nvme_core.multipath=1
-          - elevator=mq-deadline
-          - net.core.default_qdisc=fq
-          - tcp_congestion_control=bbr
-          - vm.vfs_cache_pressure=50
-          - quiet
-          - loglevel=3
-        systemExtensions:
-          officialExtensions:
-            - siderolabs/amd-ucode
-            - siderolabs/iscsi-tools
-            - siderolabs/util-linux-tools
-    patches: &e2patches
+              - ${E2_1_IP4}/24
+            routes:
+              - network: 0.0.0.0/0
+                gateway: ${GATEWAY_IP4}
+                metric: 512
+            vip:
+              ip: ${KUBEAPI_VIP}
+    nodeAnnotations: &e2NodeAnnotations
+      installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
+    patches: &e2Patches
+      # Disable ipv6 auto config
+      # Disable ipv6 accept RAs
       - |-
         machine:
           sysctls:
             net.ipv6.conf.enp1s0.autoconf: "0"
             net.ipv6.conf.enp1s0.accept_ra: "0"
-          install:
-             wipe: true
-          systemDiskEncryption:
-            ephemeral: &e2encryption
-              provider: luks2
-              keys:
-                - slot: 0
-                  nodeID: {}
-                - slot: 1
-                  tpm: {}
-              options:
-                - no_read_workqueue
-                - no_write_workqueue
-            state: *e2encryption
-  - hostname: ${C2_HOST}
+      # Set all disks to `none` scheduler (optimal setting for Ceph and ZFS)
+      - |-
+        machine:
+          udev:
+            rules:
+              - SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"
+    schematic: &e2Schematic
+      customization:
+        secureboot:
+          includeWellKnownCertificates: true
+        extraKernelArgs:
+          - -lockdown # Secure boot lockdown needs updating
+          - lockdown=integrity # to integrity for Cilium
+          - quiet # Reduce noise
+          - loglevel=3 # Reduce noise
+          - amd_pstate=1 # Enable AMD CPU boost
+          # - talos.auditd.disabled=1 # Less security, faster computer
+          # - mitigations=off # Less security, faster computer
+          # - apparmor=0 # Less security, faster computer
+          # - security=none # Less security, faster computer
+          # - init_on_alloc=0 # Less security, faster computer
+          # - init_on_free=0 # Less security, faster computer
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/lldpd
+            - siderolabs/iscsi-tools
+            - siderolabs/util-linux-tools
+    volumes: &e2TpmEncryptedVolumes
+      - name: STATE
+        encryption:
+          provider: luks2
+          keys:
+            - slot: 0
+              nodeID: {}
+            - slot: 1
+              tpm: {}
+      - name: EPHEMERAL
+        encryption:
+          provider: luks2
+          keys:
+            - slot: 0
+              nodeID: {}
+              lockToState: true
+            - slot: 1
+              tpm: {}
+              lockToState: true
+  - hostname: e2-2
     controlPlane: true
-    ipAddress: ${C2_IP4}
-    machineSpec: *e2machinespec
-    installDiskSelector: *e2installdiskselector
-    #volumes: *e2volumes
-    networkInterfaces:
-      - interface: eno1
-        ignore: true
-      - interface: enp1s0
-        dhcp: *dhcp
-        addresses:
-          - "${C2_IP4}/24"
-          # - "${C2_IP6}/64"
-        mtu: *mtu
-        routes: *routes
-        vip: *vip
-        vlans:
-          - vlanId: 10
-            addresses:
-              - "${C2_IP4_VLAN_10}/24"
-              # - "${C2_IP6_VLAN_10}/64"
-            mtu: *mtu
-    certSANs: *additionalMachineCertSans
-    nodeLabels: *e2nodelabels
-    nodeAnnotations: *nodeannotations
-    schematic: *e2schematic
-    patches: *e2patches
-  - hostname: ${C3_HOST}
-    controlPlane: true
-    ipAddress: ${C3_IP4}
-    machineSpec: *e2machinespec
-    installDiskSelector: *e2installdiskselector
-    #volumes: *e2volumes
-    networkInterfaces:
-      - interface: eno1
-        ignore: true
-      - interface: enp1s0
-        dhcp: *dhcp
-        addresses:
-          - "${C3_IP4}/24"
-          # - "${C3_IP6}/64"
-        mtu: *mtu
-        routes: *routes
-        vip: *vip
-        vlans:
-          - vlanId: 10
-            addresses:
-              - "${C3_IP4_VLAN_10}/24"
-              # - "${C3_IP6_VLAN_10}/64"
-            mtu: *mtu
-    certSANs: *additionalMachineCertSans
-    nodeLabels: *e2nodelabels
-    nodeAnnotations: *nodeannotations
-    schematic: *e2schematic
-    patches: *e2patches
-  - hostname: ${W1_HOST}
-    controlPlane: false
-    ipAddress: ${W1_IP4}
-    machineSpec: &pi4machinespec
+    installDiskSelector:
+      serial: P300ADBB25032802429
+    ipAddress: ${E2_2_IP4}
+    machineSpec:
       mode: metal
-      arch: arm64
-    installDisk: &pi4installdisk /dev/sda
+      arch: amd64
+      secureboot: true
+      useUKI: true
     networkInterfaces:
       - interface: eno1
-        dhcp: *dhcp
-        addresses:
-          - "${W1_IP4}/24"
-          # - "${W1_IP6}/64"
-        mtu: *mtu
-        routes: *routes
-    certSANs: *additionalMachineCertSans
-    nodeLabels: &pi4nodelabels
-      node-role.kubernetes.io/worker: ""
-    nodeAnnotations: *nodeannotations
-    patches: &rpipatches
+        ignore: true
+      - interface: enp1s0
+        dhcp: false
+        mtu: 9000
+        vlans:
+          - vlanId: 20
+            addresses:
+              - ${E2_2_IP4}/24
+            routes:
+              - network: 0.0.0.0/0
+                gateway: ${GATEWAY_IP4}
+                metric: 512
+            vip:
+              ip: ${KUBEAPI_VIP}
+    nodeAnnotations: *e2NodeAnnotations
+    patches: *e2Patches
+    schematic: *e2Schematic
+    volumes: *e2TpmEncryptedVolumes
+  - hostname: e2-3
+    controlPlane: true
+    installDiskSelector:
+      serial: P300ADBB25032803816
+    ipAddress: ${E2_3_IP4}
+    machineSpec:
+      mode: metal
+      arch: amd64
+      secureboot: true
+      useUKI: true
+    networkInterfaces:
+      - interface: eno1
+        ignore: true
+      - interface: enp1s0
+        dhcp: false
+        mtu: 9000
+        vlans:
+          - vlanId: 20
+            addresses:
+              - ${E2_3_IP4}/24
+            routes:
+              - network: 0.0.0.0/0
+                gateway: ${GATEWAY_IP4}
+                metric: 512
+            vip:
+              ip: ${KUBEAPI_VIP}
+    nodeAnnotations: *e2NodeAnnotations
+    patches: *e2Patches
+    schematic: *e2Schematic
+    volumes: *e2TpmEncryptedVolumes
+  - hostname: ms-01-1
+    controlPlane: false
+    installDiskSelector:
+      serial: MQ11W14606696
+    ipAddress: ${MS_01_1_IP4}
+    machineSpec:
+      mode: metal
+      arch: amd64
+      secureboot: true
+      useUKI: true
+    networkInterfaces:
+      - interface: enp2s0f0np0
+        ignore: true
+      - interface: enp2s0f1np1
+        ignore: true
+      - interface: enp87s0
+        ignore: true
+      - interface: enp89s0
+        dhcp: false
+        mtu: 9000
+        vlans:
+          - vlanId: 20
+            addresses:
+              - ${MS_01_1_IP4}/24
+            routes:
+              - network: 0.0.0.0/0
+                gateway: ${GATEWAY_IP4}
+                metric: 512
+    nodeAnnotations: &ms01NodeAnnotations
+      installerImage: "factory.talos.dev/metal-installer-secureboot/358b87443e77784112467ac042afcf9f96ad38c0d2de23d157d836b1eb44a5e8:v1.11.2"
+    patches: &ms01Patches
+      # Enable Thunderbolt
+      # and net
+      - |-
+        machine:
+          kernel:
+            modules:
+              - name: nbd
+              - name: thunderbolt
+              - name: thunderbolt_net
+      # Disable ipv6 auto config and accept RAs
       - |-
         machine:
           sysctls:
-            net.ipv6.conf.en01.autoconf: "0"
-            net.ipv6.conf.eno1.accept_ra: "0"
-          install:
-             wipe: true
-  - hostname: ${W2_HOST}
+            net.ipv6.conf.enp2s0f0np0.autoconf: "0"
+            net.ipv6.conf.enp2s0f0np0.accept_ra: "0"
+            net.ipv6.conf.enp2s0f1np1.autoconf: "0"
+            net.ipv6.conf.enp2s0f1np1.accept_ra: "0"
+            net.ipv6.conf.enp87s0.autoconf: "0"
+            net.ipv6.conf.enp87s0.accept_ra: "0"
+            net.ipv6.conf.enp89s0.autoconf: "0"
+            net.ipv6.conf.enp89s0.accept_ra: "0"
+      # Optimize networking for 10Gb/s NICs
+      - |-
+        machine:
+          sysctls:
+            net.core.default_qdisc: fq                      # 10Gb/s
+            net.ipv4.tcp_congestion_control: bbr            # 10Gb/s
+            net.ipv4.tcp_fastopen: 3                        # TCP Fast Open
+            net.ipv4.tcp_mtu_probing: 1                     # Jumbo frames
+            net.ipv4.tcp_rmem: 4096 87380 33554432          # 10Gb/s
+            net.ipv4.tcp_window_scaling: 1                  # 10Gb/s
+            net.ipv4.tcp_wmem: 4096 65536 33554432          # 10Gb/s
+      # Enable Intel CPU boost
+      - |-
+        machine:
+          sysfs:
+            devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1 # Enable CPU boost
+      # Intel GPU passthrough
+      - |-
+        machine:
+          udev:
+            rules:
+              - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
+      # Auto authorize Thunderbolt devices
+      - |-
+        machine:
+          udev:
+            rules:
+              - ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
+      # Boost transmit queue length - high-throughput workloads
+      - |-
+        machine:
+          udev:
+            rules:
+              - SUBSYSTEM=="net", ACTION=="add", KERNEL=="tap*", ATTR{tx_queue_len}="10000"
+              - SUBSYSTEM=="net", ACTION=="add", KERNEL=="tun*", ATTR{tx_queue_len}="10000"
+      # Set all disks to `none` scheduler (optimal setting for Ceph and ZFS)
+      - |-
+        machine:
+          udev:
+            rules:
+              - SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"
+    schematic: &ms01Scehmatic
+      customization:
+        secureboot:
+          includeWellKnownCertificates: true
+        extraKernelArgs:
+          - -lockdown # Secure boot lockdown needs updating
+          - lockdown=integrity # to integrity for Cilium
+          - quiet # Reduce noise
+          - loglevel=3 # Reduce noise
+          - intel_iommu=on # PCI Passthrough
+          - iommu=pt # PCI Passthrough
+          # - talos.auditd.disabled=1 # Less security, faster computer
+          # - mitigations=off # Less security, faster computer
+          # - apparmor=0 # Less security, faster computer
+          # - security=none # Less security, faster computer
+          # - init_on_alloc=0 # Less security, faster computer
+          # - init_on_free=0 # Less security, faster computer
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/i915
+            - siderolabs/intel-ucode
+            - siderolabs/lldpd
+            - siderolabs/thunderbolt
+            - siderolabs/iscsi-tools
+            - siderolabs/util-linux-tools
+    volumes: &ms01TpmEncryptedVolumes
+      - name: STATE
+        encryption:
+          provider: "luks2"
+          keys:
+            - slot: 0
+              tpm: {}
+      - name: EPHEMERAL
+        encryption:
+          provider: "luks2"
+          keys:
+            - slot: 0
+              tpm: {}
+              lockToState: true
+  - hostname: "ms-01-2"
     controlPlane: false
-    ipAddress: ${W2_IP4}
-    machineSpec: *pi4machinespec
-    installDisk: *pi4installdisk
+    installDiskSelector:
+      serial: TBC
+    ipAddress: ${MS_01_2_IP4}
+    machineSpec:
+      mode: metal
+      arch: amd64
+      secureboot: true
+      useUKI: true
     networkInterfaces:
-      - interface: eno1
-        dhcp: *dhcp
-        addresses:
-          - "${W2_IP4}/24"
-          # - "${W2_IP6}/64"
-        mtu: *mtu
-        routes: *routes
-    certSANs: *additionalMachineCertSans
-    nodeLabels: *pi4nodelabels
-    nodeAnnotations: *nodeannotations
-    patches: *rpipatches
-
-patches:
-  - |-
-    machine:
-      features:
-        kubePrism:
-          enabled: true
-          port: 7445
-        hostDNS:
-          enabled: true
-          # Incompatible with Cilium bpf masquerade. https://github.com/siderolabs/talos/issues/8836
-          forwardKubeDNSToHost: false
-          resolveMemberNames: true
-      files:
-        # configure containerd for spegel
-        # expose metrics
-        # set log level to warn
-        - content: |
-            [plugins."io.containerd.cri.v1.images"]
-              discard_unpacked_layers = false
-            [metrics]
-              address = "0.0.0.0:11234"
-            [debug]
-              level = "warn"
-          path: /etc/cri/conf.d/20-customization.part
-          permissions: 0o644
-          op: create
-      kubelet:
-        extraArgs:
-          rotate-server-certificates: true
-          max-pods: 150
-          logging-format: json
-          node-status-update-frequency: "5s"
-        extraConfig:
-          imageGCLowThresholdPercent: 60
-          imageGCHighThresholdPercent: 70
-          maxParallelImagePulls: 10
-          serializeImagePulls: false
-        nodeIP:
-          validSubnets:
-            - ${CLUSTER_VLAN_CIDR_IP4}
-            - ${CLUSTER_VLAN_CIDR_IP6}
-      network:
-        disableSearchDomain: true
-        nameservers:
-          - ${LB_IP4_TECHNITIUM}
-          - ${LB_IP4_TECHNITIUM_SECONDARY}
-          - 172.64.36.1
-          - 172.64.36.2
-      time:
-        servers:
-          - time.cloudflare.com
+      - interface: enp2s0f0np0
+        ignore: true
+      - interface: enp2s0f1np1
+        ignore: true
+      - interface: enp87s0
+        ignore: true
+      - interface: enp89s0
+        dhcp: false
+        mtu: 9000
+        vlans:
+          - vlanId: 20
+            addresses:
+              - ${MS_01_2_IP4}/24
+            routes:
+              - network: 0.0.0.0/0
+                gateway: ${GATEWAY_IP4}
+                metric: 512
+    nodeAnnotations: *ms01NodeAnnotations
+    patches: *ms01Patches
+    schematic: *ms01Scehmatic
+    volumes: *ms01TpmEncryptedVolumes
+  - hostname: ms-01-3
+    controlPlane: false
+    installDiskSelector:
+      serial: TBC
+    ipAddress: ${MS_01_3_IP4}
+    machineSpec:
+      mode: metal
+      arch: amd64
+      secureboot: true
+      useUKI: true
+    networkInterfaces:
+      - interface: enp2s0f0np0
+        ignore: true
+      - interface: enp2s0f1np1
+        ignore: true
+      - interface: enp87s0
+        ignore: true
+      - interface: enp89s0
+        dhcp: false
+        mtu: 9000
+        vlans:
+          - vlanId: 20
+            addresses:
+              - ${MS_01_3_IP4}/24
+            routes:
+              - network: 0.0.0.0/0
+                gateway: ${GATEWAY_IP4}
+                metric: 512
+    nodeAnnotations: *ms01NodeAnnotations
+    patches: *ms01Patches
+    schematic: *ms01Scehmatic
+    volumes: *ms01TpmEncryptedVolumes
 
 controlPlane:
+  disableSearchDomain: &disableSearchDomain true
+  extensionServices: &extensionServices
+    - name: lldpd
+      configFiles:
+        - content: |
+            configure lldpd portidsubtype ifname
+            configure system description "Talos Node"
+          mountPath: /usr/local/etc/lldpd/lldpd.conf
+  nameservers: &nameservers
+    - ${GATEWAY_IP4}
+  nodeLabels:
+    node-role.kubernetes.io/control-plane: ""
   patches:
-    # Tune etcd timings
-    - |-
-      cluster:
-        etcd:
-          extraArgs:
-            heartbeat-interval: "1000"       # give heartbeats more headroom, revert to defaults when no more USB talos disks
-            election-timeout: "2500"         # At least 2x the heartbeat interval, revert to defaults when no more USB talos disks
-    # Expose metrics
+    # Expose control plane metrics
     - |-
       cluster:
         controllerManager:
@@ -333,36 +405,45 @@ controlPlane:
       - op: replace
         path: /cluster/apiServer/admissionControl
         value: []
-
     # Enable MutatingAdmissionPolicy feature‐gate
     - |-
       cluster:
         apiServer:
           extraArgs:
+            # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+            # enable-aggregator-routing: true
             runtime-config: admissionregistration.k8s.io/v1alpha1=true
             feature-gates: MutatingAdmissionPolicy=true
-
-    # Grant Kubernetes‐sidecar access to the Talos API for backups
-    - |-
-      machine:
-        features:
-          kubernetesTalosAPIAccess:
-            enabled: true
-            allowedRoles:
-              - os:etcd:backup
-            allowedKubernetesNamespaces:
-              - backups
-
-    # Core cluster settings & resource tweaks
+    # Set control plane resources
+    # - |-
+    #   cluster:
+    #     apiServer:
+    #       resources:
+    #         requests:
+    #           cpu: 400m
+    #           memory: 1.5G
+    #         limits:
+    #           memory: 4G
+    #     controllerManager:
+    #       resources:
+    #         requests:
+    #           cpu: 100m
+    #           memory: 100Mi
+    #         limits:
+    #           memory: 400Mi
+    #     scheduler:
+    #       resources:
+    #         requests:
+    #           cpu: 10m
+    #           memory: 100Mi
+    #         limits:
+    #           memory: 200Mi
+    # Configure etcd
     - |-
       cluster:
-        allowSchedulingOnControlPlanes: true
-        network:
-          cni:
-            name: none
-        proxy:
-          disabled: true
-
+        etcd:
+          extraArgs:
+            auto-compaction-retention: 4
     # Spegel scheduler: disable ImageLocality scoring
     - |
       cluster:
@@ -376,7 +457,6 @@ controlPlane:
                   score:
                     disabled:
                       - name: ImageLocality
-
     # Bootstrap manifests
     - |-
       cluster:
@@ -384,10 +464,85 @@ controlPlane:
           - # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
             https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
           - # renovate: datasource=github-releases depName=prometheus-operator/prometheus-operator
-            https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.84.0/stripped-down-crds.yaml
+            https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.85.0/stripped-down-crds.yaml
           - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
           - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
           - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
           - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotclasses.yaml
           - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotcontents.yaml
           - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshots.yaml
+
+worker:
+  disableSearchDomain: *disableSearchDomain
+  extensionServices: *extensionServices
+  nameservers: *nameservers
+
+patches:
+  # Enable KubePrism
+  - |-
+    machine:
+      features:
+        kubePrism:
+          enabled: true
+          port: 7445
+  # Configure host DNS for Cilium
+  - |-
+    machine:
+      features:
+        hostDNS:
+          enabled: true
+          # Incompatible with Cilium bpf masquerade. https://github.com/siderolabs/talos/issues/8836
+          forwardKubeDNSToHost: false
+          resolveMemberNames: true
+  # Disable KubeProxy in favor of Cilium
+  - |-
+    cluster:
+      proxy:
+        disabled: true
+  # Wipe disks on install
+  - |-
+    machine:
+      install:
+          wipe: true
+  # Configure containerd
+  - |-
+    machine:
+      files:
+        # dont discard unpacked layers for spegel
+        # expose containerd metrics
+        # set log level to warn
+        - op: create
+          path: /etc/cri/conf.d/20-customization.part
+          permissions: 0o644
+          content: |
+            [plugins."io.containerd.cri.v1.images"]
+              discard_unpacked_layers = false
+            [metrics]
+              address = "0.0.0.0:11234"
+            [debug]
+              level = "warn"
+  # Configure kubelet
+  - |-
+    machine:
+      kubelet:
+        extraArgs:
+          rotate-server-certificates: true
+          max-pods: 150
+          logging-format: json
+        extraConfig:
+          imageGCLowThresholdPercent: 60
+          imageGCHighThresholdPercent: 70
+          maxParallelImagePulls: 10
+          serializeImagePulls: false
+          shutdownGracePeriod: 60s
+          shutdownGracePeriodCriticalPods: 30s
+        nodeIP:
+          validSubnets:
+            - ${CLUSTER_NODE_CIDR_IP4}
+  # Set NTP server
+  - |-
+    machine:
+      time:
+        disabled: false
+        servers:
+          - time.cloudflare.com

@@ -114,8 +114,8 @@ kubectl create secret generic flux-gitops-key \
   --from-file=known_hosts=/workspaces/spruyt-labs/.secrets/known_hosts
 
 # https://github.com/kubernetes-csi/external-snapshotter?tab=readme-ov-file#usage
-echo "⏳ Installing external-snapshotter CRDs..."
-kubectl kustomize https://github.com/kubernetes-csi/external-snapshotter/client/config/crd | kubectl create -f -
+#echo "⏳ Installing external-snapshotter CRDs..."
+#kubectl kustomize https://github.com/kubernetes-csi/external-snapshotter/client/config/crd | kubectl create -f -
 echo "⏳ Installing cert-manager CRDs..."
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
 

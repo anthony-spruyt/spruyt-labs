@@ -46,9 +46,3 @@ read -rp "Press any key to approve certs: "
 kubectl get \
   csr \
   -o name | xargs kubectl certificate approve
-
-read -rp "Press any key to install flux: "
-
-helmfile apply \
-  --suppress-diff \
-  -f helmfile/flux.yaml

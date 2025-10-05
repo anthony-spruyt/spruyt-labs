@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  genConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/genconfig.sh"
+  applyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config.sh"
+
+tasks:
+  gen:
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task talos:genconfig"'
+    cmds:
+      - bash {{ .genConfigScript }}
+    interactive: true
+  apply:
+    desc: Apply Talos config to all nodes
+    cmds:
+      - bash {{ .applyConfigScript }}
