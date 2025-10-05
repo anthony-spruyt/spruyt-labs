@@ -5,7 +5,15 @@ controllers:
   main:
     annotations:
       reloader.stakater.com/auto: "true"
-    replicas: 1
+    pod:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: whoami
+    replicas: 6
     containers:
       main:
         image:
