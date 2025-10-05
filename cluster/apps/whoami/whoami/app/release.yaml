@@ -10,6 +10,6 @@ spec:
     kind: OCIRepository
     name: bjw-s-labs-app-template
     namespace: flux-system
-  values:
+  valuesFrom:
     - kind: ConfigMap
       name: whoami-values

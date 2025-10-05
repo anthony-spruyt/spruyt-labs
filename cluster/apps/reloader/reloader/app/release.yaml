@@ -14,6 +14,6 @@ spec:
         kind: HelmRepository
         name: stakater-charts
         namespace: flux-system
-  values:
+  valuesFrom:
     - kind: ConfigMap
       name: reloader-values
