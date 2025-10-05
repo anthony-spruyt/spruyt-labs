@@ -28,27 +28,35 @@ instance:
     patches:
       # SOPS decryption
       - patch: |
-          - op: add
-            path: /spec
-            value:
-              decryption:
-                provider: sops
-                secretRef:
-                  name: sops-age
+          apiVersion: kustomize.toolkit.fluxcd.io/v1
+          kind: Kustomization
+          metadata:
+            name: not-used
+          spec:
+            template:
+              spec:
+                decryption:
+                  provider: sops
+                  secretRef:
+                    name: sops-age
         target:
           group: kustomize.toolkit.fluxcd.io
           kind: Kustomization
       # Post build substitutions
       - patch: |
-          - op: add
-            path: /spec
-            value:
-              postBuild:
-                substituteFrom:
-                  - kind: ConfigMap
-                    name: cluster-settings
-                  - kind: Secret
-                    name: cluster-secrets
+          apiVersion: kustomize.toolkit.fluxcd.io/v1
+          kind: Kustomization
+          metadata:
+            name: not-used
+          spec:
+            template:
+              spec:
+                postBuild:
+                  substituteFrom:
+                    - kind: ConfigMap
+                      name: cluster-settings
+                    - kind: Secret
+                      name: cluster-secrets
         target:
           group: kustomize.toolkit.fluxcd.io
           kind: Kustomization
