@@ -1,0 +1,12 @@
+cluster:
+  extraManifests:
+    - # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
+      https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
+    - # renovate: datasource=github-releases depName=prometheus-operator/prometheus-operator
+      https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.85.0/stripped-down-crds.yaml
+    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotclasses.yaml
+    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotcontents.yaml
+    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshots.yaml

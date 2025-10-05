@@ -1,0 +1,5 @@
+# Disable default API server admission plugins so that
+# it does not conflict with mutating admission policy.
+- op: replace
+  path: /cluster/apiServer/admissionControl
+  value: []

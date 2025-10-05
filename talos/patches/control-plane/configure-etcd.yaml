@@ -1,0 +1,4 @@
+cluster:
+  etcd:
+    extraArgs:
+      auto-compaction-retention: 4

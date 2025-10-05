@@ -1,0 +1,15 @@
+machine:
+  files:
+    # dont discard unpacked layers for spegel
+    # expose containerd metrics
+    # set log level to warn
+    - op: create
+      path: /etc/cri/conf.d/20-customization.part
+      permissions: 0o644
+      content: |
+        [plugins."io.containerd.cri.v1.images"]
+          discard_unpacked_layers = false
+        [metrics]
+          address = "0.0.0.0:11234"
+        [debug]
+          level = "warn"

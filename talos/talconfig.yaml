@@ -4,7 +4,7 @@
 # renovate: depName=ghcr.io/siderolabs/installer datasource=docker
 talosVersion: v1.11.2
 # renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
-kubernetesVersion: v1.33.4
+kubernetesVersion: v1.33.4 # There is an issue with 1.34.1. The api server gets rejected by etcd.
 
 clusterName: ${CLUSTER_NAME}
 domain: ${CLUSTER_DOMAIN}
@@ -390,159 +390,26 @@ controlPlane:
   nodeLabels:
     node-role.kubernetes.io/control-plane: ""
   patches:
-    # Expose control plane metrics
-    - |-
-      cluster:
-        controllerManager:
-          extraArgs:
-            bind-address: 0.0.0.0
-        scheduler:
-          extraArgs:
-            bind-address: 0.0.0.0
-    # Disable default API server admission plugins so that
-    # it does not conflict with mutating admission policy.
-    - |-
-      - op: replace
-        path: /cluster/apiServer/admissionControl
-        value: []
-    # Enable MutatingAdmissionPolicy feature‐gate
-    - |-
-      cluster:
-        apiServer:
-          extraArgs:
-            # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
-            # enable-aggregator-routing: true
-            runtime-config: admissionregistration.k8s.io/v1alpha1=true
-            feature-gates: MutatingAdmissionPolicy=true
-    # Set control plane resources
-    # - |-
-    #   cluster:
-    #     apiServer:
-    #       resources:
-    #         requests:
-    #           cpu: 400m
-    #           memory: 1.5G
-    #         limits:
-    #           memory: 4G
-    #     controllerManager:
-    #       resources:
-    #         requests:
-    #           cpu: 100m
-    #           memory: 100Mi
-    #         limits:
-    #           memory: 400Mi
-    #     scheduler:
-    #       resources:
-    #         requests:
-    #           cpu: 10m
-    #           memory: 100Mi
-    #         limits:
-    #           memory: 200Mi
-    # Configure etcd
-    - |-
-      cluster:
-        etcd:
-          extraArgs:
-            auto-compaction-retention: 4
-    # Spegel scheduler: disable ImageLocality scoring
-    - |
-      cluster:
-        scheduler:
-          config:
-            apiVersion: kubescheduler.config.k8s.io/v1
-            kind: KubeSchedulerConfiguration
-            profiles:
-              - schedulerName: default-scheduler
-                plugins:
-                  score:
-                    disabled:
-                      - name: ImageLocality
-    # Bootstrap manifests
-    - |-
-      cluster:
-        extraManifests:
-          - # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
-            https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
-          - # renovate: datasource=github-releases depName=prometheus-operator/prometheus-operator
-            https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.85.0/stripped-down-crds.yaml
-          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
-          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
-          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
-          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotclasses.yaml
-          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotcontents.yaml
-          - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshots.yaml
+    - "@patches/control-plane/configure-etcd.yaml"
+    - "@patches/control-plane/configure-scheduler-for-spegel.yaml"
+    - "@patches/control-plane/disable-admissions-plugins.yaml"
+    - "@patches/control-plane/enable-mutating-admission-policy.yaml"
+    - "@patches/control-plane/expose-metrics.yaml"
+    - "@patches/control-plane/extra-manifests.yaml"
+    # - "@patches/control-plane/resources.yaml"
 
 worker:
   disableSearchDomain: *disableSearchDomain
   extensionServices: *extensionServices
   nameservers: *nameservers
+  nodeLabels:
+    node-role.kubernetes.io/worker: ""
 
 patches:
-  # Enable KubePrism
-  - |-
-    machine:
-      features:
-        kubePrism:
-          enabled: true
-          port: 7445
-  # Configure host DNS for Cilium
-  - |-
-    machine:
-      features:
-        hostDNS:
-          enabled: true
-          # Incompatible with Cilium bpf masquerade. https://github.com/siderolabs/talos/issues/8836
-          forwardKubeDNSToHost: false
-          resolveMemberNames: true
-  # Disable KubeProxy in favor of Cilium
-  - |-
-    cluster:
-      proxy:
-        disabled: true
-  # Wipe disks on install
-  - |-
-    machine:
-      install:
-          wipe: true
-  # Configure containerd
-  - |-
-    machine:
-      files:
-        # dont discard unpacked layers for spegel
-        # expose containerd metrics
-        # set log level to warn
-        - op: create
-          path: /etc/cri/conf.d/20-customization.part
-          permissions: 0o644
-          content: |
-            [plugins."io.containerd.cri.v1.images"]
-              discard_unpacked_layers = false
-            [metrics]
-              address = "0.0.0.0:11234"
-            [debug]
-              level = "warn"
-  # Configure kubelet
-  - |-
-    machine:
-      kubelet:
-        extraArgs:
-          rotate-server-certificates: true
-          max-pods: 150
-          logging-format: json
-        extraConfig:
-          imageGCLowThresholdPercent: 60
-          imageGCHighThresholdPercent: 70
-          maxParallelImagePulls: 10
-          serializeImagePulls: false
-          shutdownGracePeriod: 60s
-          shutdownGracePeriodCriticalPods: 30s
-        nodeIP:
-          validSubnets:
-            - ${CLUSTER_NODE_CIDR_IP4}
-  # Set NTP server
-  - |-
-    machine:
-      time:
-        disabled: false
-        servers:
-          - time.cloudflare.com
+  - "@patches/global/configure-containerd.yaml"
+  - "@patches/global/configure-kubelet.yaml"
+  - "@patches/global/configure-ntp.yaml"
+  - "@patches/global/disable-kube-proxy-for-cilium.yaml"
+  - "@patches/global/enable-kube-prism.yaml"
+  - "@patches/global/host-dns-for-cilium.yaml"
+  - "@patches/global/wipe-disks-on-install.yaml"

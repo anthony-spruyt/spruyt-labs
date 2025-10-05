@@ -1,0 +1,16 @@
+machine:
+  kubelet:
+    extraArgs:
+      rotate-server-certificates: true
+      max-pods: 150
+      logging-format: json
+    extraConfig:
+      imageGCLowThresholdPercent: 60
+      imageGCHighThresholdPercent: 70
+      maxParallelImagePulls: 10
+      serializeImagePulls: false
+      shutdownGracePeriod: 60s
+      shutdownGracePeriodCriticalPods: 30s
+    nodeIP:
+      validSubnets:
+        - ${CLUSTER_NODE_CIDR_IP4}
