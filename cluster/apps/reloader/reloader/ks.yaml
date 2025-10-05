@@ -13,9 +13,4 @@ spec:
   interval: 1h
   path: ./cluster/apps/reloader/reloader/app
   prune: true
-  sourceRef:
-    kind: GitRepository
-    name: *fluxnamespace
-    namespace: *fluxnamespace
   timeout: 5m
-  wait: false

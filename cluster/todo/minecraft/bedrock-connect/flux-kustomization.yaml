@@ -20,7 +20,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: *fluxnamespace
-  wait: false
   interval: 1h
   retryInterval: 1m
   timeout: 1m

@@ -20,7 +20,6 @@ spec:
     name: *fluxnamespace
     namespace: *fluxnamespace
   timeout: 5m
-  wait: false
   postBuild:
     substituteFrom:
       - kind: ConfigMap
@@ -49,7 +48,6 @@ spec:
     name: *fluxnamespace
     namespace: *fluxnamespace
   timeout: 5m
-  wait: false
   postBuild:
     substituteFrom:
       - kind: ConfigMap

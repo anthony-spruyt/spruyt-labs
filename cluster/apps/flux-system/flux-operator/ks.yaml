@@ -14,9 +14,5 @@ spec:
   path: ./cluster/apps/flux-system/flux-operator/app
   prune: true
   retryInterval: 2m
-  sourceRef:
-    kind: GitRepository
-    name: *fluxnamespace
-    namespace: *fluxnamespace
   timeout: 5m
   wait: true
