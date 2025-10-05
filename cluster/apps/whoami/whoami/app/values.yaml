@@ -13,7 +13,7 @@ controllers:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: whoami
-    replicas: 6
+    replicas: 1
     containers:
       main:
         image:
