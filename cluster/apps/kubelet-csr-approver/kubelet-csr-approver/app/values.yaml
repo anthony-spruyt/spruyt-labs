@@ -1,0 +1,16 @@
+# #yaml-language-server: $schema=TODO
+# Default values for kubelet-csr-approver: https://github.com/postfinance/kubelet-csr-approver/blob/main/charts/kubelet-csr-approver/values.yaml
+global:
+  clusterDomain: ${CLUSTER_DOMAIN}
+providerRegex: |
+  ${KUBELET_CSR_APPROVER_REGEX}
+bypassDnsResolution: true
+providerIpPrefixes:
+  - "${CLUSTER_NODE_CIDR_IP4}"
+skipDenyStep: true
+resources:
+  requests:
+    cpu: 5m
+    memory: 32Mi
+  limits:
+    memory: 64Mi
