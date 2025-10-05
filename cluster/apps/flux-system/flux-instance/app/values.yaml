@@ -26,17 +26,6 @@ instance:
     pullSecret: "flux-gitops-key"
   kustomize:
     patches:
-      # # Source ref
-      # - patch: |
-      #     - op: add
-      #       path: /spec/sourceRef
-      #       value:
-      #         kind: GitRepository
-      #         name: flux-system
-      #         namespace: flux-system
-      #   target:
-      #     group: kustomize.toolkit.fluxcd.io
-      #     kind: Kustomization
       # SOPS decryption
       - patch: |
           - op: add
