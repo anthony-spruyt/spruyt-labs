@@ -5,14 +5,44 @@ version: "3"
 vars:
   genConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/genconfig.sh"
   applyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config.sh"
+  c1ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-e2-1.sh"
+  c2ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-e2-2.sh"
+  c3ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-e2-3.sh"
+  w1ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-ms-01-1.sh"
+  w2ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-ms-01-2.sh"
+  w3ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-ms-01-3.sh"
 
 tasks:
   gen:
-    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task talos:genconfig"'
+    # desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task talos:genconfig"'
+    desc: Generate new Talos configuration files.
     cmds:
       - bash {{ .genConfigScript }}
-    interactive: true
   apply:
     desc: Apply Talos config to all nodes
     cmds:
       - bash {{ .applyConfigScript }}
+  apply-c1:
+    desc: Apply Talos config to control plane 1
+    cmds:
+      - bash {{ .c1ApplyConfigScript }}
+  apply-c2:
+    desc: Apply Talos config to control plane 2
+    cmds:
+      - bash {{ .c2ApplyConfigScript }}
+  apply-c3:
+    desc: Apply Talos config to control plane 3
+    cmds:
+      - bash {{ .c3ApplyConfigScript }}
+  apply-w1:
+    desc: Apply Talos config to worker 1
+    cmds:
+      - bash {{ .w1ApplyConfigScript }}
+  apply-w2:
+    desc: Apply Talos config to worker 2
+    cmds:
+      - bash {{ .w2ApplyConfigScript }}
+  apply-w3:
+    desc: Apply Talos config to worker 3
+    cmds:
+      - bash {{ .w3ApplyConfigScript }}

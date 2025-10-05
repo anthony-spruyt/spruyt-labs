@@ -3,11 +3,11 @@ set -euo pipefail
 
 source "/workspaces/spruyt-labs/.taskfiles/talos/scripts/config.sh"
 
-read -rp "Generate secrets? (y/n): " gensecretsanswer
-if [[ "$gensecretsanswer" =~ ^[Yy]$ ]]; then
-  talhelper gensecret > /workspaces/spruyt-labs/talos/talsecret.sops.yaml
-  sops --config "/workspaces/spruyt-labs/.sops.yaml" -e --in-place "/workspaces/spruyt-labs/talos/talsecret.sops.yaml"
-fi
+# read -rp "Generate secrets? (y/n): " gensecretsanswer
+# if [[ "$gensecretsanswer" =~ ^[Yy]$ ]]; then
+#   talhelper gensecret > /workspaces/spruyt-labs/talos/talsecret.sops.yaml
+#   sops --config "/workspaces/spruyt-labs/.sops.yaml" -e --in-place "/workspaces/spruyt-labs/talos/talsecret.sops.yaml"
+# fi
 
 talhelper validate talconfig /workspaces/spruyt-labs/talos/talconfig.yaml \
   -e /workspaces/spruyt-labs/talos/talenv.sops.yaml

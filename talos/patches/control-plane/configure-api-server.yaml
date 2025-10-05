@@ -1,0 +1,8 @@
+cluster:
+  apiServer:
+    extraArgs:
+      # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+      enable-aggregator-routing: true
+      # https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/
+      feature-gates: "MutatingAdmissionPolicy=true,WatchList=true,WatchListClient=true"
+      runtime-config: admissionregistration.k8s.io/v1beta1=true

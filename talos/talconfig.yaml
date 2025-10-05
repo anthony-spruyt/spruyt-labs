@@ -4,7 +4,7 @@
 # renovate: depName=ghcr.io/siderolabs/installer datasource=docker
 talosVersion: v1.11.2
 # renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
-kubernetesVersion: v1.33.4 # There is an issue with 1.34.1. The api server gets rejected by etcd.
+kubernetesVersion: v1.34.1
 
 clusterName: ${CLUSTER_NAME}
 domain: ${CLUSTER_DOMAIN}
@@ -393,7 +393,7 @@ controlPlane:
     - "@patches/control-plane/configure-etcd.yaml"
     - "@patches/control-plane/configure-scheduler-for-spegel.yaml"
     - "@patches/control-plane/disable-admissions-plugins.yaml"
-    - "@patches/control-plane/enable-mutating-admission-policy.yaml"
+    - "@patches/control-plane/configure-api-server.yaml"
     - "@patches/control-plane/expose-metrics.yaml"
     - "@patches/control-plane/extra-manifests.yaml"
     # - "@patches/control-plane/resources.yaml"

@@ -1,14 +1,18 @@
 machine:
   kubelet:
+    defaultRuntimeSeccompProfileEnabled: true
+    disableManifestsDirectory: true
+    # https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options
     extraArgs:
-      rotate-server-certificates: true
-      max-pods: 150
-      logging-format: json
+      logging-format: json # Deprecated, needs to be moved to config file IE --config string
+    # https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration
     extraConfig:
-      imageGCLowThresholdPercent: 60
       imageGCHighThresholdPercent: 70
+      imageGCLowThresholdPercent: 60
       maxParallelImagePulls: 10
+      maxPods: 150
       serializeImagePulls: false
+      serverTLSBootstrap: true
       shutdownGracePeriod: 60s
       shutdownGracePeriodCriticalPods: 30s
     nodeIP:
