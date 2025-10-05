@@ -9,7 +9,7 @@ resources:
   # System
   # - ./irq-balance
   # - ./spegel
-  # - ./kubelet-csr-approver
+  - ./kubelet-csr-approver
   - ./reloader
   # - ./chrony
   # Storage
