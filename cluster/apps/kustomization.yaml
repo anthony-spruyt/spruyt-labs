@@ -22,7 +22,7 @@ resources:
   # - ./external-dns
   # - ./cloudflare-system
   # - ./unifi
-  # - ./whoami
+  - ./whoami
   # Observability
   # - ./monitoring
   # Databases
