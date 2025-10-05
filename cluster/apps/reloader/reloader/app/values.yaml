@@ -1,0 +1,14 @@
+# #yaml-language-server: $schema=TODO
+# Reloader documentation: https://github.com/stakater/Reloader/blob/master/deployments/kubernetes/chart/reloader/README.md
+# Default values for reloader: https://github.com/stakater/Reloader/blob/master/deployments/kubernetes/chart/reloader/values.yaml
+nameOverride: reloader
+fullnameOverride: reloader
+reloader:
+  deployment:
+    resources:
+      limits:
+        cpu: 200m
+        memory: 128Mi
+      requests:
+        cpu: 5m
+        memory: 32Mi

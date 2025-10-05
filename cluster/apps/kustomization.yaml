@@ -10,7 +10,7 @@ resources:
   # - ./irq-balance
   # - ./spegel
   # - ./kubelet-csr-approver
-  # - ./reloader
+  - ./reloader
   # - ./chrony
   # Storage
   # - ./rook-ceph
