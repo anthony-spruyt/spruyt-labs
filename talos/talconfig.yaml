@@ -314,7 +314,7 @@ nodes:
   - hostname: "ms-01-2"
     controlPlane: false
     installDiskSelector:
-      serial: TBC
+      serial: MP46W15115349
     ipAddress: ${MS_01_2_IP4}
     machineSpec:
       mode: metal
@@ -346,7 +346,7 @@ nodes:
   - hostname: ms-01-3
     controlPlane: false
     installDiskSelector:
-      serial: TBC
+      serial: MQ19B55500378
     ipAddress: ${MS_01_3_IP4}
     machineSpec:
       mode: metal
@@ -402,8 +402,6 @@ worker:
   disableSearchDomain: *disableSearchDomain
   extensionServices: *extensionServices
   nameservers: *nameservers
-  nodeLabels:
-    node-role.kubernetes.io/worker: ""
 
 patches:
   - "@patches/global/configure-containerd.yaml"
