@@ -16,10 +16,6 @@ spec:
         kind: HelmRepository
         name: cilium-charts
         namespace: flux-system
-  install:
-    crds: CreateReplace
-  upgrade:
-    crds: CreateReplace
   valuesFrom:
     - kind: ConfigMap
       name: cilium-values
