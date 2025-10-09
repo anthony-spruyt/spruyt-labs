@@ -5,15 +5,14 @@ kind: Kustomization
 resources:
   - ./flux-system
   - ./kube-system
-  # System
-  # - ./irq-balance
-  # - ./spegel
   - ./kubelet-csr-approver
   - ./reloader
+  - ./observability
+  - ./whoami
+  # - ./irq-balance
+  # - ./spegel
   # - ./chrony
-  # Storage
   # - ./rook-ceph
-  # Networking
   # - ./cert-manager
   # - ./metallb-system
   # - ./traefik
@@ -21,9 +20,6 @@ resources:
   # - ./external-dns
   # - ./cloudflare-system
   # - ./unifi
-  - ./whoami
-  # Observability
-  # - ./monitoring
   # Databases
   # - ./postgress
   # - ./mysql
