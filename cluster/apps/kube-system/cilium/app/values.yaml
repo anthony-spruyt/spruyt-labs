@@ -10,6 +10,7 @@ localRedirectPolicies:
   # addressMatcherCIDRs: null # Limit the allowed addresses in Address Matcher rule of Local Redirect Policies to the given CIDRs. @schema@ type: [null, array] @schema@
 kubeProxyReplacement: true
 k8sServicePort: 7445 # kube prism
+k8sServiceHost: localhost
 kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256 # healthz server bind address for the kube-proxy replacement. To enable set the value to '0.0.0.0:10256' for all ipv4 addresses and this '[::]:10256' for all ipv6 addresses. By default it is disabled.
 k8s: # Configure Kubernetes specific configuration
   requireIPv4PodCIDR: true # requireIPv4PodCIDR enables waiting for Kubernetes to provide the PodCIDR range via the Kubernetes node resource
