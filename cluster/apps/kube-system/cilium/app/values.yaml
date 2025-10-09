@@ -2,8 +2,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/giantswarm/cilium-app/main/helm/cilium/values.schema.json
 # Cilium Helm Reference -> https://docs.cilium.io/en/stable/helm-reference/
 # Default values for cilium: https://raw.githubusercontent.com/giantswarm/cilium-app/main/helm/cilium/values.yaml
-# debug:
-#   enabled: false
+debug:
+  enabled: false
 rollOutCiliumPods: true # Roll out cilium agent pods automatically when configmap is updated.
 localRedirectPolicies:
   enabled: true # Enable local redirect policies.
