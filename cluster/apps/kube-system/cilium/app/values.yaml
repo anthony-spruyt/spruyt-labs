@@ -86,7 +86,7 @@ hubble:
   metrics:
     dashboards:
       enabled: true
-      namespace: monitoring
+      namespace: observability
     enabled:
       - dns:query;ignoreAAAA
       - drop
