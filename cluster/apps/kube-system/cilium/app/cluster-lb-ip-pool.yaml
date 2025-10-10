@@ -6,4 +6,5 @@ metadata:
   name: cluster-lb-ip-pool
 spec:
   blocks:
-    - cidr: "${CLUSTER_LB_CIDR_IP4}"
+    - start: "${CLUSTER_LB_CIDR_START_IP4}"
+    - stop: "${CLUSTER_LB_CIDR_STOP_IP4}"
