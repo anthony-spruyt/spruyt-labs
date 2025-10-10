@@ -4,14 +4,15 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: &app rook-ceph-cluster
-  namespace: &fluxnamespace flux-system
+  namespace: flux-system
 spec:
   targetNamespace: &namespace rook-ceph
+  path: ./cluster/apps/rook-ceph/rook-ceph-cluster/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: rook-ceph
+    - name: rook-ceph-operator
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
@@ -27,52 +28,25 @@ spec:
   #    failed: status.ceph.health == 'HEALTH_ERR'
   #    current: status.ceph.health in ['HEALTH_OK', 'HEALTH_WARN']
   interval: 1h
-  path: ./cluster/apps/rook-ceph/rook-ceph-cluster/app
   prune: true
   retryInterval: 2m
-  sourceRef:
-    kind: GitRepository
-    name: *fluxnamespace
-    namespace: *fluxnamespace
   timeout: 15m
   wait: true
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
-  postBuild:
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-      - kind: Secret
-        name: cluster-secrets
 ---
 # yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: &app rook-ceph-cluster-storage
-  namespace: &fluxnamespace flux-system
+  namespace: flux-system
 spec:
   targetNamespace: rook-ceph
+  path: ./cluster/apps/rook-ceph/rook-ceph-cluster/storage
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: rook-ceph-cluster
   interval: 1h
-  path: ./cluster/apps/rook-ceph/rook-ceph-cluster/storage
   prune: true
-  retryInterval: 2m
-  sourceRef:
-    kind: GitRepository
-    name: *fluxnamespace
-    namespace: *fluxnamespace
-  timeout: 15m
-  wait: true
-  postBuild:
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-      - kind: Secret
-        name: cluster-secrets
+  timeout: 5m

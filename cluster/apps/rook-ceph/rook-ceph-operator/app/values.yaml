@@ -1,0 +1,46 @@
+# #yaml-language-server: $schema=TODO
+# Rook Ceph Operator Helm Reference -> https://rook.io/docs/rook/v1.9/helm-operator.html#configuration
+# Default values for rook-ceph operator: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph/values.yaml
+crds:
+  enabled: true
+resources:
+  limits:
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+currentNamespaceOnly: true
+csi:
+  # https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-read-affinity-for-rbd-and-cephfs-volumes
+  readAffinity:
+    enabled: true
+  enableCephfsDriver: false
+  enableCephfsSnapshotter: false
+  enableCSIEncryption: true
+  enableVolumeGroupSnapshot: false
+  # -- Set CephFS Kernel mount options to use https://docs.ceph.com/en/latest/man/8/mount.ceph/#options.
+  # Set to "ms_mode=secure" when connections.encrypted is enabled in CephCluster CR
+  cephFSKernelMountOptions:
+    - ms_mode=secure
+  enableMetadata: true
+  csiRBDProvisionerResource:
+    - name: csi-provisioner
+      resource:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+    - name: csi-resizer
+      resource:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+  #pluginTolerations:
+  #  - key: node-role.kubernetes.io/control-plane
+  #    operator: Exists
+  #    effect: NoSchedule
+  enableLiveness: true
+enableDiscoveryDaemon: true
+monitoring:
+  # -- Enable monitoring. Requires Prometheus to be pre-installed.
+  # Enabling will also create RBAC rules to allow Operator to create ServiceMonitors
+  enabled: true

@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Apparently can also do this as a CRD -> https://github.com/timtorChen/homelab/blob/02178963e88dd102f1fe89ebb965bf2e6b4e36a9/kubernetes/rook-ceph/cluster/cephcluster.yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rook-ceph-cluster
+spec:
+  interval: 1h
+  timeout: 15m
+  chartRef:
+    kind: OCIRepository
+    name: rook-ceph-cluster-ocirepo
+    namespace: flux-system
+  valuesFrom:
+    - kind: ConfigMap
+      name: rook-ceph-cluster-values

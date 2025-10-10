@@ -12,10 +12,9 @@ resources:
   - ./cert-manager
   - ./traefik
   - ./spegel
+  - ./rook-ceph
   # - ./irq-balance
-  # - ./spegel
   # - ./chrony
-  # - ./rook-ceph
   # - ./metallb-system
   # - ./technitium
   # - ./external-dns

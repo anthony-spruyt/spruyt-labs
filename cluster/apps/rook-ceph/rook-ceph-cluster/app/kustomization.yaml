@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./config-maps.yaml
+  - ./storage-encryption-secret.sops.yaml
+  - ./release.yaml
+configMapGenerator:
+  - name: rook-ceph-cluster-values
+    namespace: rook-ceph
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
