@@ -10,12 +10,12 @@ resources:
   - ./observability
   - ./whoami
   - ./cert-manager
+  - ./traefik
   # - ./irq-balance
   # - ./spegel
   # - ./chrony
   # - ./rook-ceph
   # - ./metallb-system
-  # - ./traefik
   # - ./technitium
   # - ./external-dns
   # - ./cloudflare-system
