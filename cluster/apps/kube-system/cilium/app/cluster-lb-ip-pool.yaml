@@ -7,4 +7,4 @@ metadata:
 spec:
   blocks:
     - start: "${CLUSTER_LB_CIDR_START_IP4}"
-    - stop: "${CLUSTER_LB_CIDR_STOP_IP4}"
+      stop: "${CLUSTER_LB_CIDR_STOP_IP4}"
