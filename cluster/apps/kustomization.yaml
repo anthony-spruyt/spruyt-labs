@@ -11,6 +11,7 @@ resources:
   - ./whoami
   - ./cert-manager
   - ./traefik
+  - ./spegel
   # - ./irq-balance
   # - ./spegel
   # - ./chrony
