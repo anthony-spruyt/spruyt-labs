@@ -6,7 +6,7 @@ resources:
   - release.yaml
 configMapGenerator:
   - name: reloader-values
-    namespace: flux-system
+    namespace: reloader
     files:
       - values.yaml
 configurations:

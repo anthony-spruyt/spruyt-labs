@@ -9,11 +9,11 @@ resources:
   - ./reloader
   - ./observability
   - ./whoami
+  - ./cert-manager
   # - ./irq-balance
   # - ./spegel
   # - ./chrony
   # - ./rook-ceph
-  # - ./cert-manager
   # - ./metallb-system
   # - ./traefik
   # - ./technitium

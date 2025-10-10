@@ -7,10 +7,10 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: whoami
+  path: ./cluster/apps/whoami/whoami/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: ./cluster/apps/whoami/whoami/app
-  prune: true
   interval: 1h
+  prune: true
   timeout: 5m

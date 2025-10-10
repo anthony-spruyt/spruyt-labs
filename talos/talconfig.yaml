@@ -190,6 +190,10 @@ nodes:
       secureboot: true
       useUKI: true
     networkInterfaces:
+      - deviceSelector: { busPath: 0-1.0 } # Thunderbolt power side
+        ignore: true
+      - deviceSelector: { busPath: 1-1.0 } # Thunderbolt nic side
+        ignore: true
       - interface: enp2s0f0np0
         ignore: true
       - interface: enp2s0f1np1
@@ -311,7 +315,7 @@ nodes:
             - slot: 0
               tpm: {}
               lockToState: true
-  - hostname: "ms-01-2"
+  - hostname: ms-01-2
     controlPlane: false
     installDiskSelector:
       serial: MP46W15115349
@@ -322,6 +326,10 @@ nodes:
       secureboot: true
       useUKI: true
     networkInterfaces:
+      - deviceSelector: { busPath: 0-1.0 } # Thunderbolt power side
+        ignore: true
+      - deviceSelector: { busPath: 1-1.0 } # Thunderbolt nic side
+        ignore: true
       - interface: enp2s0f0np0
         ignore: true
       - interface: enp2s0f1np1
@@ -354,6 +362,10 @@ nodes:
       secureboot: true
       useUKI: true
     networkInterfaces:
+      - deviceSelector: { busPath: 0-1.0 } # Thunderbolt power side
+        ignore: true
+      - deviceSelector: { busPath: 1-1.0 } # Thunderbolt nic side
+        ignore: true
       - interface: enp2s0f0np0
         ignore: true
       - interface: enp2s0f1np1

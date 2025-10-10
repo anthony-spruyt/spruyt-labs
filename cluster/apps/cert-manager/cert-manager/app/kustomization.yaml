@@ -5,5 +5,12 @@ kind: Kustomization
 resources:
   - ./zerossl-eab-secret.sops.yaml
   - ./solver-secrets.sops.yaml
-  - ./helm-release.yaml
+  - ./release.yaml
   - ./cluster-issuers.yaml
+configMapGenerator:
+  - name: cert-manager-values
+    namespace: cert-manager
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

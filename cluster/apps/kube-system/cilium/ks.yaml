@@ -4,24 +4,14 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: &app cilium
-  namespace: &fluxnamespace flux-system
+  namespace: flux-system
 spec:
   targetNamespace: kube-system
+  path: ./cluster/apps/kube-system/cilium/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: ./cluster/apps/kube-system/cilium/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: *fluxnamespace
-    namespace: *fluxnamespace
   interval: 1h
+  prune: true
   timeout: 5m
   wait: true
-  postBuild:
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-      - kind: Secret
-        name: cluster-secrets

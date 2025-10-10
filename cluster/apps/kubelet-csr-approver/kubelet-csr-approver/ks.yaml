@@ -7,10 +7,10 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: kubelet-csr-approver
+  path: "./cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app"
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   interval: 1h
-  path: "./cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app"
   prune: true
   timeout: 5m

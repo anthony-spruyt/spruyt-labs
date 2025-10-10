@@ -6,7 +6,7 @@ resources:
   - ./release.yaml
 configMapGenerator:
   - name: kubelet-csr-approver-values
-    namespace: flux-system
+    namespace: kubelet-csr-approver
     files:
       - values.yaml
 configurations:

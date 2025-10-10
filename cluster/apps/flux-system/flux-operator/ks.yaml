@@ -7,12 +7,11 @@ metadata:
   namespace: &fluxnamespace flux-system
 spec:
   targetNamespace: *fluxnamespace
+  path: ./cluster/apps/flux-system/flux-operator/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   interval: 1h
-  path: ./cluster/apps/flux-system/flux-operator/app
   prune: true
-  retryInterval: 2m
   timeout: 5m
   wait: true

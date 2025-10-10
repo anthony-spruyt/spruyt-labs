@@ -7,7 +7,7 @@ resources:
   - ./service.yaml
 configMapGenerator:
   - name: whoami-values
-    namespace: flux-system
+    namespace: whoami
     files:
       - values.yaml
 configurations:

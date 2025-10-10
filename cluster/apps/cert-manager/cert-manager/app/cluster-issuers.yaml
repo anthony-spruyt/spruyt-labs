@@ -6,7 +6,7 @@ metadata:
   name: letsencrypt-staging
 spec:
   acme:
-    email: ${SECRET_ACME_EMAIL}
+    email: ${ACME_EMAIL}
     profile: tlsserver
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
@@ -28,7 +28,7 @@ metadata:
   name: letsencrypt-production
 spec:
   acme:
-    email: ${SECRET_ACME_EMAIL}
+    email: ${ACME_EMAIL}
     profile: tlsserver
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
@@ -51,7 +51,7 @@ metadata:
   name: zerossl-production
 spec:
   acme:
-    email: ${SECRET_ACME_EMAIL}
+    email: ${ACME_EMAIL}
     server: https://acme.zerossl.com/v2/DV90
     privateKeySecretRef:
       name: zerossl-production-account-private-key
