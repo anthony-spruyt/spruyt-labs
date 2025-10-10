@@ -24,4 +24,4 @@ spec:
           passHostHeader: true
           port: 80
   tls:
-    secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
+    secretName: "whoami-lan-${EXTERNAL_DOMAIN/./-}-tls"

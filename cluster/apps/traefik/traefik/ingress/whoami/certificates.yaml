@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "whoami-lan-${EXTERNAL_DOMAIN/./-}"
+  namespace: whoami
+spec:
+  secretName: "whoami-lan-${EXTERNAL_DOMAIN/./-}-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  commonName: "${EXTERNAL_DOMAIN}"
+  dnsNames:
+    - "whoami.lan.${EXTERNAL_DOMAIN}"
