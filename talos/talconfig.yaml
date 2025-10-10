@@ -389,6 +389,8 @@ controlPlane:
     - ${GATEWAY_IP4}
   nodeLabels:
     node-role.kubernetes.io/control-plane: ""
+    bgp: "65050"
+
   patches:
     - "@patches/control-plane/configure-etcd.yaml"
     - "@patches/control-plane/configure-scheduler-for-spegel.yaml"
@@ -402,6 +404,8 @@ worker:
   disableSearchDomain: *disableSearchDomain
   extensionServices: *extensionServices
   nameservers: *nameservers
+  nodeLabels:
+    bgp: "65050"
 
 patches:
   - "@patches/global/configure-containerd.yaml"

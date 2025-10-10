@@ -94,10 +94,10 @@ hubble:
 #   hostNamespaceOnly: true # Strangely not mentioned in the helm chart reference but it is in the json schema.
 wellKnownIdentities:
   enabled: true # Enable the use of well-known identities.
-# encryption:
-#   enabled: true # Enable transparent network encryption.
-#   nodeEncryption: true # Enable encryption for pure node to node traffic. This option is only effective when encryption.type is set to "wireguard".
-#   type: wireguard # Encryption method. Can be either ipsec or wireguard.
+encryption:
+  enabled: true # Enable transparent network encryption.
+  nodeEncryption: true # Enable encryption for pure node to node traffic. This option is only effective when encryption.type is set to "wireguard".
+  type: wireguard # Encryption method. Can be either ipsec or wireguard.
 securityContext:
   # -- Run the pod with elevated privileges
   privileged: false
