@@ -20,7 +20,7 @@ k8s: # Configure Kubernetes specific configuration
 # if Cilium is configured to use direct routing and the Kubernetes CIDR is included in the native routing CIDR, the user must configure the
 # routes to reach pods, either manually or by setting the auto-direct-node-routes flag.
 ipv4NativeRoutingCIDR: "${CLUSTER_NODE_CIDR_IP4}"
-autoDirectNodeRoutes: true # Enable installation of PodCIDR routes between worker nodes if worker nodes share a common L2 network segment.
+# autoDirectNodeRoutes: true # Enable installation of PodCIDR routes between worker nodes if worker nodes share a common L2 network segment.
 bgpControlPlane: # This feature set enables virtual BGP routers to be created via CiliumBGPPeeringPolicy CRDs.
   enabled: true # Enables the BGP control plane.
 gatewayAPI:
