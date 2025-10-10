@@ -5,9 +5,9 @@
 debug:
   enabled: false
 rollOutCiliumPods: true # Roll out cilium agent pods automatically when configmap is updated.
-localRedirectPolicies:
-  enabled: true # Enable local redirect policies.
-  # addressMatcherCIDRs: null # Limit the allowed addresses in Address Matcher rule of Local Redirect Policies to the given CIDRs. @schema@ type: [null, array] @schema@
+# localRedirectPolicies:
+#   enabled: true # Enable local redirect policies.
+#   addressMatcherCIDRs: null # Limit the allowed addresses in Address Matcher rule of Local Redirect Policies to the given CIDRs. @schema@ type: [null, array] @schema@
 kubeProxyReplacement: true
 k8sServicePort: 7445 # kube prism
 k8sServiceHost: localhost
@@ -20,7 +20,7 @@ k8s: # Configure Kubernetes specific configuration
 # if Cilium is configured to use direct routing and the Kubernetes CIDR is included in the native routing CIDR, the user must configure the
 # routes to reach pods, either manually or by setting the auto-direct-node-routes flag.
 ipv4NativeRoutingCIDR: "${CLUSTER_NODE_CIDR_IP4}"
-# autoDirectNodeRoutes: true # Enable installation of PodCIDR routes between worker nodes if worker nodes share a common L2 network segment.
+autoDirectNodeRoutes: true # Enable installation of PodCIDR routes between worker nodes if worker nodes share a common L2 network segment.
 bgpControlPlane: # This feature set enables virtual BGP routers to be created via CiliumBGPPeeringPolicy CRDs.
   enabled: true # Enables the BGP control plane.
 gatewayAPI:
@@ -56,15 +56,8 @@ bpfClockProbe: true # Enable BPF clock source probing for more efficient tick re
 routingMode: "native" # Enable native-routing mode or tunneling mode. Possible values: - "" - native - tunnel
 ipam:
   mode: "kubernetes" # Configure IP Address Management mode. ref: https://docs.cilium.io/en/stable/network/concepts/ipam/
-# ipMasqAgent: # Configure the eBPF-based ip-masq-agent
-#   enabled: true
-#   config:
-#     nonMasqueradeCIDRs:
-#       - "${CLUSTER_NODE_CIDR_IP4}" # Nodes routing IP4
-#       - "${CLUSTER_POD_CIDR_IP4}" # Cluster pods IP4
-#       - "${CLUSTER_SVC_CIDR_IP4}" # Cluster services IP4
-#     masqLinkLocal: false # keep link-local (169.254.0.0/16) un-SNAT-ed
-#     masqLinkLocalIPv6: false # keep fe80::/10 un-SNAT-ed
+ipMasqAgent: # Configure the eBPF-based ip-masq-agent
+  enabled: true
 operator:
   rollOutPods: true # Roll out cilium-operator pods automatically when configmap is updated.
 prometheus:
@@ -96,15 +89,15 @@ hubble:
       - port-distribution
       - icmp
       - http
-socketLB: # Configure socket LB
-  enabled: true # Enable socket LB
-  hostNamespaceOnly: true # Stragenly not mentioned in the helm chart reference but it is in the json schema.
+# socketLB: # Configure socket LB
+#   enabled: true # Enable socket LB
+#   hostNamespaceOnly: true # Strangely not mentioned in the helm chart reference but it is in the json schema.
 wellKnownIdentities:
   enabled: true # Enable the use of well-known identities.
-encryption:
-  enabled: true # Enable transparent network encryption.
-  nodeEncryption: true # Enable encryption for pure node to node traffic. This option is only effective when encryption.type is set to "wireguard".
-  type: wireguard # Encryption method. Can be either ipsec or wireguard.
+# encryption:
+#   enabled: true # Enable transparent network encryption.
+#   nodeEncryption: true # Enable encryption for pure node to node traffic. This option is only effective when encryption.type is set to "wireguard".
+#   type: wireguard # Encryption method. Can be either ipsec or wireguard.
 securityContext:
   # -- Run the pod with elevated privileges
   privileged: false
