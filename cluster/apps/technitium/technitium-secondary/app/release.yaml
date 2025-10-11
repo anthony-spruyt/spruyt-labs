@@ -11,13 +11,6 @@ spec:
     kind: OCIRepository
     name: bjw-s-labs-app-template
     namespace: flux-system
-  install:
-    remediation:
-      retries: 10
-  upgrade:
-    remediation:
-      strategy: rollback
-      retries: 10
   valuesFrom:
     - kind: ConfigMap
       name: technitium-secondary-values

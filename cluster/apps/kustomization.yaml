@@ -13,10 +13,10 @@ resources:
   - ./traefik
   - ./spegel
   - ./rook-ceph
+  - ./technitium
   # - ./irq-balance
   # - ./chrony
   # - ./metallb-system
-  # - ./technitium
   # - ./external-dns
   # - ./cloudflare-system
   # - ./unifi

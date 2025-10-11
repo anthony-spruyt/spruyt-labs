@@ -4,13 +4,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: technitium-secondary
+  name: technitium
   namespace: technitium
-  finalizers:
-    - kubernetes.io/pvc-protection
+  # finalizers:
+  #   - kubernetes.io/pvc-protection
 spec:
   storageClassName: rbd-fast
-  volumeName: pvc-27cb99f7-9ab1-4f3a-9d14-37f78b0c6f40
   accessModes:
     - ReadWriteOnce
   resources:
