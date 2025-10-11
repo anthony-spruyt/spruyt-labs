@@ -10,6 +10,5 @@ spec:
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
-  commonName: "${EXTERNAL_DOMAIN}"
   dnsNames:
     - "whoami.lan.${EXTERNAL_DOMAIN}"
