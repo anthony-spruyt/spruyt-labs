@@ -14,4 +14,3 @@ spec:
   interval: 1h
   prune: true
   timeout: 5m
-  wait: true
