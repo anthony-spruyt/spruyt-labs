@@ -15,18 +15,18 @@ patches:
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: monitoring
+        value: observability
   - target:
       kind: Middleware
       name: lan-ip-whitelist
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: monitoring
+        value: observability
   - target:
       kind: Middleware
       name: rate-limit
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: monitoring
+        value: observability

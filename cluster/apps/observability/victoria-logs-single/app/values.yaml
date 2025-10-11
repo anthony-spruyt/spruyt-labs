@@ -452,7 +452,7 @@ vector:
       vlogs:
         type: elasticsearch
         endpoints:
-          - "http://victoria-logs-single-server.monitoring.svc:9428/insert/elasticsearch/"
+          - "http://victoria-logs-single-server.observability.svc:9428/insert/elasticsearch/"
         inputs: [parser]
         mode: bulk
         api_version: v8
