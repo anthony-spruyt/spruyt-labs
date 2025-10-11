@@ -12,7 +12,6 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - "dns-secondary.lan.${EXTERNAL_DOMAIN}"
-    - "${TECHNITIUM_SECONDARY_IP4}"
   keystores:
     pkcs12:
       create: true
