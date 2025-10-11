@@ -18,7 +18,7 @@ resources:
   - ./cloudflare-system
   - ./vaultwarden
   - ./irq-balance
-  # - ./chrony
+  - ./chrony
   # - ./metallb-system
   # - ./unifi
   # Databases
