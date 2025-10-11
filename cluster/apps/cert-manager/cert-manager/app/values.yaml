@@ -12,7 +12,7 @@ dns01RecursiveNameserversOnly: true
 # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
 resources:
   limits:
-    cpu: 100m
+    cpu: 500m
     memory: 128Mi
   requests:
     cpu: 10m
@@ -23,7 +23,7 @@ webhook:
   # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
   resources:
     limits:
-      cpu: 100m
+      cpu: 500m
       memory: 192Mi
     requests:
       cpu: 10m
@@ -36,7 +36,7 @@ cainjector:
   # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
   resources:
     limits:
-      cpu: 100m
+      cpu: 500m
       memory: 192Mi
     requests:
       cpu: 10m

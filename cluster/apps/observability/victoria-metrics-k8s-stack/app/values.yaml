@@ -715,7 +715,7 @@ vmalert:
   spec:
     resources:
       limits:
-        cpu: 400m
+        cpu: 1000m
         memory: 128Mi
       requests:
         cpu: 30m
@@ -931,7 +931,7 @@ grafana:
   enabled: true
   resources:
     limits:
-      cpu: 2000m
+      cpu: 3000m
       memory: 2Gi
     requests:
       cpu: 100m
@@ -1043,7 +1043,7 @@ kube-state-metrics:
     # resources, such as Minikube. If you do want to specify resources, uncomment the following
     # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
     limits:
-      cpu: 100m
+      cpu: 500m
       memory: 256Mi
     requests:
       cpu: 10m
