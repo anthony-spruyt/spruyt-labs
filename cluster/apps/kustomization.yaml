@@ -15,10 +15,10 @@ resources:
   - ./rook-ceph
   - ./technitium
   - ./external-dns
+  - ./cloudflare-system
   # - ./irq-balance
   # - ./chrony
   # - ./metallb-system
-  # - ./cloudflare-system
   # - ./unifi
   # Databases
   # - ./postgress
