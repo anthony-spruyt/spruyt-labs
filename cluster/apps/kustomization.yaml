@@ -16,6 +16,7 @@ resources:
   - ./technitium
   - ./external-dns
   - ./cloudflare-system
+  - ./vaultwarden
   # - ./irq-balance
   # - ./chrony
   # - ./metallb-system
@@ -31,7 +32,6 @@ resources:
   # Games
   # - ./minecraft
   # Security & Identity
-  # - ./vaultwarden
   # - ./authentik
   # Automation
   # - ./n8n

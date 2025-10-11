@@ -7,7 +7,7 @@ controllers:
       reloader.stakater.com/auto: "true"
     # pod:
     #   annotations:
-    #     backup.velero.io/backup-volumes: data,backups
+    #     backup.velero.io/backup-volumes: data
     containers:
       main:
         image:
@@ -36,16 +36,6 @@ controllers:
             memory: 256Mi
           limits:
             memory: 2Gi
-      backups:
-        # Restore with:
-        #   gpg --decrypt backup.tar.xz.gpg > backup.tar.xz
-        #   tar -xJvf ./backup/data.tar.xz -C /data/
-        image:
-          repository: bruceforce/vaultwarden-backup
-          tag: 2.1.0
-        envFrom:
-          - secretRef:
-              name: vaultwarden-backup-secrets
 service:
   vaultwarden:
     controller: main
@@ -57,9 +47,5 @@ persistence:
     existingClaim: vaultwarden-data
     globalMounts:
       - path: /data
-  backups:
-    existingClaim: vaultwarden-backups
-    globalMounts:
-      - path: /backups
   tmp:
     type: emptyDir
