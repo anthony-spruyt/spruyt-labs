@@ -285,7 +285,7 @@ vmsingle:
   spec:
     resources:
       limits:
-        cpu: 2000m
+        cpu: 3000m
         memory: 2048Mi
       requests:
         cpu: 200m
@@ -931,7 +931,7 @@ grafana:
   enabled: true
   resources:
     limits:
-      cpu: 4000m
+      cpu: 3000m
       memory: 2Gi
     requests:
       cpu: 100m

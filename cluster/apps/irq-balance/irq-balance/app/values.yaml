@@ -1,0 +1,39 @@
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+controllers:
+  fstrim:
+    type: daemonset
+    containers:
+      app:
+        image:
+          repository: ghcr.io/home-operations/irqbalance
+          tag: 1.9.4
+          pullPolicy: IfNotPresent
+        env:
+          # See: https://gist.github.com/gavinmcfall/ea6cb1233d3a300e9f44caf65a32d519
+          IRQBALANCE_BANNED_CPULIST: 8-15 # 8-15 are E-cores
+          IRQBALANCE_DEBUG: false
+        resources:
+          requests:
+            cpu: 25m
+            memory: 128Mi
+          limits:
+            memory: 128Mi
+        securityContext:
+          privileged: true
+defaultPodOptions:
+  hostIPC: true
+  hostPID: true
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values: ["ms-01-1", "ms-01-2", "ms-01-3"]
+persistence:
+  run:
+    type: emptyDir
+    globalMounts:
+      - path: /run/irqbalance
