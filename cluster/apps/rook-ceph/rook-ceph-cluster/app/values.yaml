@@ -7,7 +7,7 @@ toolbox:
   enabled: true # TODO: Disable when everything is setup and stable
   resources:
     limits:
-      cpu: 200m
+      cpu: 1000m
       memory: 256Mi
     requests:
       cpu: 5m
