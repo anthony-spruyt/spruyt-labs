@@ -37,11 +37,11 @@ sources:
   - service
   - ingress
   - traefik-proxy
-  #- gateway-grpcroute
-  #- gateway-httproute
-  #- gateway-tlsroute
-  #- gateway-udproute
-  #- gateway-tcproute
+  - gateway-grpcroute
+  - gateway-httproute
+  - gateway-tlsroute
+  - gateway-udproute
+  - gateway-tcproute
 policy: sync
 txtPrefix: external-dns-
 txtOwnerId: k8s
@@ -50,7 +50,5 @@ domainFilters:
   - "${EXTERNAL_DOMAIN}"
 serviceMonitor:
   enabled: true
-podAnnotations:
-  external-dns.external-dns.config/version: "3"
 deploymentAnnotations:
   reloader.stakater.com/auto: "true"

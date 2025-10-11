@@ -12,6 +12,7 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - "dns.lan.${EXTERNAL_DOMAIN}"
+    - "${TECHNITIUM_IP4}"
   keystores:
     pkcs12:
       create: true

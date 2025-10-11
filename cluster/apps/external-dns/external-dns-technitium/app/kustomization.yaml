@@ -4,11 +4,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./external-dns-technitium-secrets.sops.yaml
-  - ./helm-release.yaml
+  - ./release.yaml
 configMapGenerator:
   - name: external-dns-technitium-values
     namespace: external-dns
     files:
-      - values.yaml=./helm-values.yaml
+      - values.yaml
 configurations:
   - ./kustomizeconfig.yaml
