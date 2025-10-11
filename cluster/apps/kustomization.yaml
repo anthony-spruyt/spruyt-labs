@@ -17,8 +17,8 @@ resources:
   - ./external-dns
   - ./cloudflare-system
   - ./vaultwarden
-  # - ./irq-balance
   # - ./chrony
+  # - ./irq-balance
   # - ./metallb-system
   # - ./unifi
   # Databases

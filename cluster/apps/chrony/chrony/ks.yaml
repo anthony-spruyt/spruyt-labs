@@ -4,27 +4,16 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: &app chrony
-  namespace: &fluxnamespace flux-system
+  namespace: flux-system
 spec:
   targetNamespace: chrony
+  path: ./cluster/apps/chrony/chrony/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: technitium
   interval: 1h
-  path: ./cluster/apps/chrony/chrony/app
   prune: true
-  retryInterval: 2m
-  sourceRef:
-    kind: GitRepository
-    name: *fluxnamespace
-    namespace: *fluxnamespace
-  timeout: 15m
+  timeout: 5m
   wait: true
-  postBuild:
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-      - kind: Secret
-        name: cluster-secrets
