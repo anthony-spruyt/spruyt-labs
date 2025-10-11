@@ -6,7 +6,7 @@ resources:
   - ./release.yaml
 configMapGenerator:
   - name: irqbalance-values
-    namespace: irqbalance
+    namespace: irq-balance
     files:
       - values.yaml
 configurations:
