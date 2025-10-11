@@ -14,10 +14,10 @@ resources:
   - ./spegel
   - ./rook-ceph
   - ./technitium
+  - ./external-dns
   # - ./irq-balance
   # - ./chrony
   # - ./metallb-system
-  # - ./external-dns
   # - ./cloudflare-system
   # - ./unifi
   # Databases
