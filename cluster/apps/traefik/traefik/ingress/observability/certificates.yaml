@@ -3,30 +3,26 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "wildcard-${EXTERNAL_DOMAIN/./-}-tls-monitoring"
-  namespace: monitoring
+  name: "grafana-lan-${EXTERNAL_DOMAIN/./-}"
+  namespace: observability
 spec:
-  secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+  secretName: "grafana-lan-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
-  commonName: "${EXTERNAL_DOMAIN}"
   dnsNames:
-    - "${EXTERNAL_DOMAIN}"
-    - "*.${EXTERNAL_DOMAIN}"
+    - "grafana.lan.${EXTERNAL_DOMAIN}"
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls-monitoring"
-  namespace: monitoring
+  name: "vmagent-lan-${EXTERNAL_DOMAIN/./-}"
+  namespace: observability
 spec:
-  secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
+  secretName: "vmagent-lan-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
-  commonName: "${EXTERNAL_DOMAIN}"
   dnsNames:
-    - "${EXTERNAL_DOMAIN}"
-    - "*.lan.${EXTERNAL_DOMAIN}"
+    - "vmagent.lan.${EXTERNAL_DOMAIN}"

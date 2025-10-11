@@ -4,8 +4,8 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-lan-grafana
-  namespace: monitoring
+  name: ingress-routes-lan-https-grafana
+  namespace: observability
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: grafana.lan.${EXTERNAL_DOMAIN}
@@ -20,19 +20,19 @@ spec:
         - name: compress
       services:
         - name: victoria-metrics-k8s-stack-grafana
-          namespace: monitoring
+          namespace: observability
           passHostHeader: true
           port: 80
   tls:
-    secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
+    secretName: "grafana-lan-${EXTERNAL_DOMAIN/./-}-tls"
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
 # Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-lan-vmagent
-  namespace: monitoring
+  name: ingress-routes-lan-https-vmagent
+  namespace: observability
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: vmagent.lan.${EXTERNAL_DOMAIN}
@@ -47,8 +47,8 @@ spec:
         - name: compress
       services:
         - name: vmagent-victoria-metrics-k8s-stack
-          namespace: monitoring
+          namespace: observability
           passHostHeader: true
           port: 8429
   tls:
-    secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
+    secretName: "vmagent-lan-${EXTERNAL_DOMAIN/./-}-tls"

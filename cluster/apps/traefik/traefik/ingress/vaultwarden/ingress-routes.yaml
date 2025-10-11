@@ -4,7 +4,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-wan-vaultwarden
+  name: ingress-routes-wan-https
   namespace: vaultwarden
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}

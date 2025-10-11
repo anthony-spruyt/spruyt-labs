@@ -4,7 +4,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-lan
+  name: ingress-routes-lan-https
   namespace: kube-system
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
@@ -24,4 +24,4 @@ spec:
           passHostHeader: true
           port: 80
   tls:
-    secretName: "hubble-internal-${EXTERNAL_DOMAIN/./-}-tls"
+    secretName: "hubble-lan-${EXTERNAL_DOMAIN/./-}-tls"

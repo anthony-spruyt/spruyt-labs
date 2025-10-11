@@ -3,30 +3,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "wildcard-${EXTERNAL_DOMAIN/./-}-tls-rook-ceph"
+  name: "ceph-lan-${EXTERNAL_DOMAIN/./-}"
   namespace: rook-ceph
 spec:
-  secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+  secretName: "ceph-lan-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
-  commonName: "${EXTERNAL_DOMAIN}"
   dnsNames:
-    - "${EXTERNAL_DOMAIN}"
-    - "*.${EXTERNAL_DOMAIN}"
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls-rook-ceph"
-  namespace: rook-ceph
-spec:
-  secretName: "wildcard-internal-${EXTERNAL_DOMAIN/./-}-tls"
-  issuerRef:
-    name: ${CLUSTER_ISSUER}
-    kind: ClusterIssuer
-  commonName: "${EXTERNAL_DOMAIN}"
-  dnsNames:
-    - "${EXTERNAL_DOMAIN}"
-    - "*.lan.${EXTERNAL_DOMAIN}"
+    - "ceph.lan.${EXTERNAL_DOMAIN}"

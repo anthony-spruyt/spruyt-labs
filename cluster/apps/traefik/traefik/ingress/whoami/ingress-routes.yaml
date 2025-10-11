@@ -13,8 +13,8 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`whoami.lan.${EXTERNAL_DOMAIN}`)
-      kind: Rule
+    - kind: Rule
+      match: Host(`whoami.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: lan-ip-whitelist
         - name: compress
