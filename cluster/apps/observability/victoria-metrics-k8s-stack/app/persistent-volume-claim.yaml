@@ -5,12 +5,11 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: grafana-data
-  namespace: monitoring
-  finalizers:
-    - kubernetes.io/pvc-protection
+  namespace: observability
+  # finalizers:
+  #   - kubernetes.io/pvc-protection
 spec:
   storageClassName: rbd-fast
-  volumeName: pvc-e9afceb5-51de-474b-aa9e-761aead07754
   accessModes:
     - ReadWriteOnce
   resources:

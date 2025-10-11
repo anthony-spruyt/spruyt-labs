@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-logs-single
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: victoria-logs-single-ocirepo
+    namespace: flux-system
+  valuesFrom:
+    - kind: ConfigMap
+      name: victoria-logs-single-values

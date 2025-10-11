@@ -5,4 +5,11 @@ kind: Kustomization
 resources:
   - ./persistent-volume-claim.yaml
   - ./victoria-metrics-k8s-stack-secrets.sops.yaml
-  - ./helm-release.yaml
+  - ./release.yaml
+configMapGenerator:
+  - name: victoria-metrics-k8s-stack-values
+    namespace: observability
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

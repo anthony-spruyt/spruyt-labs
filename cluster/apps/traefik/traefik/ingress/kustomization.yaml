@@ -7,5 +7,5 @@ resources:
   - ./rook-ceph
   - ./whoami
   - ./vaultwarden
-  # - ./observability
+  - ./observability
   # - ./unifi
