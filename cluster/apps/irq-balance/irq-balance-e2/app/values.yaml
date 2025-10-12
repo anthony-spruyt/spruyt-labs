@@ -30,6 +30,10 @@ defaultPodOptions:
               - key: kubernetes.io/hostname
                 operator: In
                 values: ["e2-1", "e2-2", "e2-3"]
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
 persistence:
   run:
     type: emptyDir
