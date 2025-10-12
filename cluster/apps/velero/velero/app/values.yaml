@@ -26,16 +26,16 @@
 
 # Details of the container image to use in the Velero deployment & daemonset (if
 # enabling node-agent). Required.
-image:
-  repository: velero/velero
-  tag: v1.16.2
-  # Digest value example: sha256:d238835e151cec91c6a811fe3a89a66d3231d9f64d09e5f3c49552672d271f38.
-  # If used, it will take precedence over the image.tag.
-  # digest:
-  pullPolicy: IfNotPresent
-  # One or more secrets to be used when pulling images
-  # imagePullSecrets: []
-  # - registrySecretName
+# image:
+#   repository: velero/velero
+#   tag: v1.16.2
+#   # Digest value example: sha256:d238835e151cec91c6a811fe3a89a66d3231d9f64d09e5f3c49552672d271f38.
+#   # If used, it will take precedence over the image.tag.
+#   # digest:
+#   pullPolicy: IfNotPresent
+#   # One or more secrets to be used when pulling images
+#   # imagePullSecrets: []
+#   # - registrySecretName
 
 # nameOverride: ""
 # fullnameOverride: ""
@@ -100,29 +100,29 @@ image:
 #   limits:
 #     cpu: 100m
 #     memory: 256Mi
-upgradeCRDsJob:
-  # Extra volumes for the Upgrade CRDs Job. Optional.
-  extraVolumes: []
-  # Extra volumeMounts for the Upgrade CRDs Job. Optional.
-  extraVolumeMounts: []
-  # Additional values to be used as environment variables. Optional.
-  extraEnvVars:
-    []
-    # Simple value
-    # - name: SIMPLE_VAR
-    #   value: "simple-value"
-
-    # FieldRef example
-    # - name: MY_POD_LABEL
-    #   valueFrom:
-    #     fieldRef:
-    #       fieldPath: metadata.labels['my_label']
-
-  # Configure if API credential for Service Account is automounted.
-  automountServiceAccountToken: true
-  # Configure the shell cmd in case you are using custom image
-  # shellCmd: /tmp/sh
-  # updateCmd: /velero install --crds-only --dry-run -o yaml | /tmp/kubectl apply -f -
+# upgradeCRDsJob:
+#   # Extra volumes for the Upgrade CRDs Job. Optional.
+#   extraVolumes: []
+#   # Extra volumeMounts for the Upgrade CRDs Job. Optional.
+#   extraVolumeMounts: []
+#   # Additional values to be used as environment variables. Optional.
+#   extraEnvVars:
+#     []
+#     # Simple value
+#     # - name: SIMPLE_VAR
+#     #   value: "simple-value"
+#
+#     # FieldRef example
+#     # - name: MY_POD_LABEL
+#     #   valueFrom:
+#     #     fieldRef:
+#     #       fieldPath: metadata.labels['my_label']
+#
+#   # Configure if API credential for Service Account is automounted.
+#   automountServiceAccountToken: true
+#   # Configure the shell cmd in case you are using custom image
+#   # shellCmd: /tmp/sh
+#   # updateCmd: /velero install --crds-only --dry-run -o yaml | /tmp/kubectl apply -f -
 
 # Configure the dnsPolicy of the Velero deployment
 # See: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
@@ -338,27 +338,27 @@ metrics:
     #   labels:
     #     severity: warning
 
-kubectl:
-  image:
-    repository: docker.io/bitnamilegacy/kubectl
-    # Digest value example: sha256:d238835e151cec91c6a811fe3a89a66d3231d9f64d09e5f3c49552672d271f38.
-    # If used, it will take precedence over the kubectl.image.tag.
-    # digest:
-    # kubectl image tag. If used, it will take precedence over the cluster Kubernetes version.
-    # tag: 1.16.15
-  # Container Level Security Context for the 'kubectl' container of the crd jobs. Optional.
-  # See: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  # containerSecurityContext: {}
-  # Resource requests/limits to specify for the upgrade/cleanup job. Optional
-  # resources: {}
-  # Annotations to set for the upgrade/cleanup job. Optional.
-  # annotations: {}
-  # Labels to set for the upgrade/cleanup job. Optional.
-  # labels: {}
-  # Extra volumes for the upgrade/cleanup job. Optional.
-  # extraVolumes: []
-  # Extra volumeMounts for the upgrade/cleanup job.. Optional.
-  # extraVolumeMounts: []
+# kubectl:
+#   image:
+#     repository: docker.io/bitnamilegacy/kubectl
+#     # Digest value example: sha256:d238835e151cec91c6a811fe3a89a66d3231d9f64d09e5f3c49552672d271f38.
+#     # If used, it will take precedence over the kubectl.image.tag.
+#     # digest:
+#     # kubectl image tag. If used, it will take precedence over the cluster Kubernetes version.
+#     # tag: 1.16.15
+#   # Container Level Security Context for the 'kubectl' container of the crd jobs. Optional.
+#   # See: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+#   # containerSecurityContext: {}
+#   # Resource requests/limits to specify for the upgrade/cleanup job. Optional
+#   # resources: {}
+#   # Annotations to set for the upgrade/cleanup job. Optional.
+#   # annotations: {}
+#   # Labels to set for the upgrade/cleanup job. Optional.
+#   # labels: {}
+#   # Extra volumes for the upgrade/cleanup job. Optional.
+#   # extraVolumes: []
+#   # Extra volumeMounts for the upgrade/cleanup job.. Optional.
+#   # extraVolumeMounts: []
 
 # This job upgrades the CRDs.
 # upgradeCRDs: true
