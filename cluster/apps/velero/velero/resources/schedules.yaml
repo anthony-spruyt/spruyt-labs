@@ -4,10 +4,10 @@
 apiVersion: velero.io/v1
 kind: Schedule
 metadata:
-  name: cluster-wide-backups
+  name: spruyt-labs-cluster-backup
   namespace: velero
 spec:
-  paused: true
+  paused: false
   schedule: "0 17 * * *" # At 03:00 daily Melbourne (UTC+10)
   skipImmediately: false
   useOwnerReferencesInBackup: true
@@ -17,5 +17,5 @@ spec:
     ttl: 336h0m0s # 14 days
     metadata:
       labels:
-        velero.io/backup-type: "Global"
-        velero.io/schedule-name: "cluster-wide-backups"
+        velero.io/backup-type: "cluster"
+        velero.io/schedule-name: "spruyt-labs-cluster-backup"
