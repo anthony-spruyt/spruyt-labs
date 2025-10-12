@@ -6,11 +6,11 @@ resources:
   - ./certificate.yaml
   - ./persistent-volume-claim.yaml
   - ./mosquitto-secrets.sops.yaml
-  - ./helm-release.yaml
+  - ./release.yaml
 configMapGenerator:
   - name: mosquitto-values
     namespace: mosquitto
     files:
-      - values.yaml=./helm-values.yaml
+      - values.yaml
 configurations:
   - ./kustomizeconfig.yaml

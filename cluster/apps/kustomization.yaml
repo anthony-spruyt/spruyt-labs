@@ -20,6 +20,7 @@ resources:
   - ./irq-balance
   - ./chrony
   - ./minecraft
+  - ./mosquitto
   # - ./metallb-system
   # - ./unifi
   # Databases
@@ -28,7 +29,6 @@ resources:
   # - ./mariadb
   # - ./mssql
   # Message Brokers
-  # - ./mosquitto
   # - ./rabbitmq
   # Games
   # Security & Identity
