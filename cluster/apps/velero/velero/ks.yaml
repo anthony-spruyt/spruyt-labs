@@ -14,7 +14,7 @@ spec:
   interval: 1h
   prune: true
   timeout: 5m
-  wait: true
+  # wait: true
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
