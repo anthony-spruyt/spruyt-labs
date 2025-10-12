@@ -13,11 +13,11 @@ initContainers:
 
 kubectl:
   image:
-    repository: docker.io/bitnami/kubectl
-    tag: latest
+    repository: registry.k8s.io/kubectl
+    tag: v1.34.1
 
 # This job upgrades the CRDs.
-upgradeCRDs: false
+# upgradeCRDs: false
 
 ##
 ## Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,
