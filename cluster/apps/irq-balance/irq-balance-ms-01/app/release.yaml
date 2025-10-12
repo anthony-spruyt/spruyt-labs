@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: irqbalance
+  name: irq-balance-ms-01
 spec:
   interval: 1h
   chartRef:
@@ -12,4 +12,4 @@ spec:
     namespace: flux-system
   valuesFrom:
     - kind: ConfigMap
-      name: irqbalance-values
+      name: irq-balance-ms-01-values

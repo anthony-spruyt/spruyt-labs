@@ -1,5 +1,6 @@
 cluster:
   etcd:
     extraArgs:
+      snapshot-count: 100000
       auto-compaction-mode: "periodic"
-      auto-compaction-retention: "24h"
+      auto-compaction-retention: "1h"

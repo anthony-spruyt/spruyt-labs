@@ -4,4 +4,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./namespace.yaml
-  - ./irq-balance/ks.yaml
+  - ./irq-balance-e2/ks.yaml
+  - ./irq-balance-ms-01/ks.yaml

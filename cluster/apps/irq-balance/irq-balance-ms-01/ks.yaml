@@ -3,11 +3,11 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app irqbalance
+  name: &app irq-balance-ms-01
   namespace: flux-system
 spec:
   targetNamespace: &namespace irq-balance
-  path: ./cluster/apps/irq-balance/irq-balance/app
+  path: ./cluster/apps/irq-balance/irq-balance-ms-01/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app

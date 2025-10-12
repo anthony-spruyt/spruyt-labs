@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
   - ./release.yaml
 configMapGenerator:
-  - name: irqbalance-values
+  - name: irq-balance-e2-values
     namespace: irq-balance
     files:
       - values.yaml
