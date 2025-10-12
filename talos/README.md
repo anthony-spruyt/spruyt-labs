@@ -8,29 +8,35 @@ Run the task `task talos:gen` and select yes when prompted to generate new secre
 
 ### E2 Control Plane Schematic
 
-[Talos Image Factory URL](https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=-lockdown+lockdown%3Dintegrity+quiet+loglevel%3D3+amd_pstate%3D1&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Flldpd&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=true&target=metal&version=1.11.2)
+[Talos Image Factory URL](https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=-lockdown+lockdown%3Dintegrity+quiet+loglevel%3D3+amd_pstate%3D1+pcie_aspm%3Doff+pci%3Dpcie_bus_perf+nvme_core.default_ps_maxlatency_us%3D0+iommu%3Dpt+idle%3Dnomwait+mitigations%3Doff+security%3Dnone+init_on_alloc%3D0+init_on_free%3D0+talos.auditd.disabled%3D1+apparmor%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Flldpd&extensions=siderolabs%2Fnvme-cli&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=true&target=metal&version=1.11.2)
 
-Your image schematic ID is: `a25c479f21f7bad71d7d7425b03fe60db9c83901bd68fe963ca16841e6f4fd16`
+Your image schematic ID is: `7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6`
 
 ```yaml
 customization:
   extraKernelArgs:
-    - -lockdown # Secure boot lockdown needs updating
-    - lockdown=integrity # to integrity for Cilium
-    - quiet # Reduce noise
-    - loglevel=3 # Reduce noise
-    - amd_pstate=1 # Enable AMD CPU boost
-    # - talos.auditd.disabled=1 # Less security, faster computer
-    # - mitigations=off # Less security, faster computer
-    # - apparmor=0 # Less security, faster computer
-    # - security=none # Less security, faster computer
-    # - init_on_alloc=0 # Less security, faster computer
-    # - init_on_free=0 # Less security, faster computer
+    - -lockdown
+    - lockdown=integrity
+    - quiet
+    - loglevel=3
+    - amd_pstate=1
+    - pcie_aspm=off
+    - pci=pcie_bus_perf
+    - nvme_core.default_ps_maxlatency_us=0
+    - iommu=pt
+    - idle=nomwait
+    - mitigations=off
+    - security=none
+    - init_on_alloc=0
+    - init_on_free=0
+    - talos.auditd.disabled=1
+    - apparmor=0
   systemExtensions:
     officialExtensions:
       - siderolabs/amd-ucode
-      - siderolabs/lldpd
       - siderolabs/iscsi-tools
+      - siderolabs/lldpd
+      - siderolabs/nvme-cli
       - siderolabs/util-linux-tools
 ```
 
@@ -38,48 +44,49 @@ customization:
 
 ##### SecureBoot ISO
 
-[https://factory.talos.dev/image/a25c479f21f7bad71d7d7425b03fe60db9c83901bd68fe963ca16841e6f4fd16/v1.11.2/metal-amd64-secureboot.iso](https://factory.talos.dev/image/a25c479f21f7bad71d7d7425b03fe60db9c83901bd68fe963ca16841e6f4fd16/v1.11.2/metal-amd64-secureboot.iso) [(SecureBoot documentation)](https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/)
+[https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.2/metal-amd64-secureboot.iso](https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.2/metal-amd64-secureboot.iso) [(SecureBoot documentation)](https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/)
 
 #### Initial Installation
 
 For the initial installation of Talos Linux (not applicable for disk image boot), add the following installer image to the machine configuration:
 
-> factory.talos.dev/metal-installer-secureboot/a25c479f21f7bad71d7d7425b03fe60db9c83901bd68fe963ca16841e6f4fd16:v1.11.2
+> factory.talos.dev/metal-installer-secureboot/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6:v1.11.2
 
 #### Upgrading Talos Linux
 
 To [upgrade](https://www.talos.dev/v1.11/talos-guides/upgrading-talos/) Talos Linux on the machine, use the following image:
 
-> factory.talos.dev/metal-installer-secureboot/a25c479f21f7bad71d7d7425b03fe60db9c83901bd68fe963ca16841e6f4fd16:v1.11.2
+> factory.talos.dev/metal-installer-secureboot/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6:v1.11.2
 
 ### MS-01 Worker Schematic
 
-[Talos Image Factory URL](https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=-lockdown+lockdown%3Dintegrity+quiet+loglevel%3D3+intel_iommu%3Don+iommu%3Dpt&cmdline-set=true&extensions=-&extensions=siderolabs%2Fi915&extensions=siderolabs%2Fintel-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Flldpd&extensions=siderolabs%2Fthunderbolt&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=true&target=metal&version=1.11.2)
+[Talos Image Factory URL](https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=-lockdown+lockdown%3Dintegrity+quiet+loglevel%3D3+intel_iommu%3Don+iommu%3Dpt+talos.auditd.disabled%3D1+mitigations%3Doff+net.ifnames%3D0+apparmor%3D0+security%3Dnone+init_on_alloc%3D0+init_on_free%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Fi915&extensions=siderolabs%2Fintel-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Flldpd&extensions=siderolabs%2Fthunderbolt&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=true&target=metal&version=1.11.2)
 
-Your image schematic ID is: `358b87443e77784112467ac042afcf9f96ad38c0d2de23d157d836b1eb44a5e8`
+Your image schematic ID is: `7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf`
 
 ```yaml
 customization:
   extraKernelArgs:
-    - -lockdown # Secure boot lockdown needs updating
-    - lockdown=integrity # to integrity for Cilium
-    - quiet # Reduce noise
-    - loglevel=3 # Reduce noise
-    - intel_iommu=on # PCI Passthrough
-    - iommu=pt # PCI Passthrough
-    # - talos.auditd.disabled=1 # Less security, faster computer
-    # - mitigations=off # Less security, faster computer
-    # - apparmor=0 # Less security, faster computer
-    # - security=none # Less security, faster computer
-    # - init_on_alloc=0 # Less security, faster computer
-    # - init_on_free=0 # Less security, faster computer
+    - -lockdown
+    - lockdown=integrity
+    - quiet
+    - loglevel=3
+    - intel_iommu=on
+    - iommu=pt
+    - talos.auditd.disabled=1
+    - mitigations=off
+    - net.ifnames=0
+    - apparmor=0
+    - security=none
+    - init_on_alloc=0
+    - init_on_free=0
   systemExtensions:
     officialExtensions:
       - siderolabs/i915
       - siderolabs/intel-ucode
+      - siderolabs/iscsi-tools
       - siderolabs/lldpd
       - siderolabs/thunderbolt
-      - siderolabs/iscsi-tools
       - siderolabs/util-linux-tools
 ```
 
@@ -87,19 +94,19 @@ customization:
 
 ##### SecureBoot ISO
 
-[https://factory.talos.dev/image/358b87443e77784112467ac042afcf9f96ad38c0d2de23d157d836b1eb44a5e8/v1.11.2/metal-amd64-secureboot.iso](https://factory.talos.dev/image/358b87443e77784112467ac042afcf9f96ad38c0d2de23d157d836b1eb44a5e8/v1.11.2/metal-amd64-secureboot.iso) [(SecureBoot documentation)](https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/)
+[https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.2/metal-amd64-secureboot.iso](https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.2/metal-amd64-secureboot.iso) [(SecureBoot documentation)](https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/)
 
 #### Initial Installation
 
 For the initial installation of Talos Linux (not applicable for disk image boot), add the following installer image to the machine configuration:
 
-> factory.talos.dev/metal-installer-secureboot/358b87443e77784112467ac042afcf9f96ad38c0d2de23d157d836b1eb44a5e8:v1.11.2
+> factory.talos.dev/metal-installer-secureboot/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf:v1.11.2
 
 #### Upgrading Talos Linux
 
 To [upgrade](https://www.talos.dev/v1.11/talos-guides/upgrading-talos/) Talos Linux on the machine, use the following image:
 
-> factory.talos.dev/metal-installer-secureboot/358b87443e77784112467ac042afcf9f96ad38c0d2de23d157d836b1eb44a5e8:v1.11.2
+> factory.talos.dev/metal-installer-secureboot/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf:v1.11.2
 
 ### Gracefully Shutdown
 

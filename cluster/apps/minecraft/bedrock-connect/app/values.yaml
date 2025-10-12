@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+fullnameOverride: bedrock-connect
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      main:
+        image:
+          #repository: nmbgeek/bedrockconnect
+          #tag: 1.59
+          repository: aspruyt/bedrockconnect
+          tag: java17
+          pullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+          - name: bedrock-udp
+            containerPort: 19132
+            protocol: UDP
+        env:
+          - name: JAVA_TOOL_OPTIONS
+            value: "-Djava.net.preferIPv4Stack=true"
+configMaps:
+  config:
+    enabled: true
+    data:
+      custom_servers.json: |-
+        [
+          {
+            "name": "Spruyt fam survival",
+            "address": "mc1.lan.spruyt.xyz",
+            "port": 19132
+          },
+          {
+            "name": "Spruyt fam creative",
+            "address": "mc2.lan.spruyt.xyz",
+            "port": 19132
+          }
+        ]
+service:
+  bedrockconnect:
+    controller: main
+    type: LoadBalancer
+    annotations:
+      lbipam.cilium.io/ips: "${BEDROCK_CONNECT_IP4}"
+    ports:
+      bedrock-udp:
+        port: 19132
+        enabled: true
+        protocol: UDP
+    externalTrafficPolicy: Cluster
+persistence:
+  config:
+    enabled: true
+    type: configMap
+    name: bedrock-connect
+    advancedMounts:
+      main:
+        main:
+          - path: /app/custom_servers.json
+            readOnly: true
+            subPath: custom_servers.json

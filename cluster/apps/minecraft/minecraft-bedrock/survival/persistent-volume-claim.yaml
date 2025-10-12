@@ -4,13 +4,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: minecraft-bedrock-creative-v1
+  name: minecraft-bedrock-survival-v1
   namespace: minecraft
-  finalizers:
-    - kubernetes.io/pvc-protection
+  # finalizers:
+  #   - kubernetes.io/pvc-protection
 spec:
   storageClassName: rbd-fast
-  volumeName: pvc-63bdfbea-0076-4dcd-85ee-618b82b82d0d
   accessModes:
     - ReadWriteOnce
   resources:

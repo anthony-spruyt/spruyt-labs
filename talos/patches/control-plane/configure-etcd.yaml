@@ -1,4 +1,5 @@
 cluster:
   etcd:
     extraArgs:
-      auto-compaction-retention: 4
+      auto-compaction-mode: "periodic"
+      auto-compaction-retention: "24h"

@@ -88,12 +88,17 @@ nodes:
           - quiet # Reduce noise
           - loglevel=3 # Reduce noise
           - amd_pstate=1 # Enable AMD CPU boost
-          # - talos.auditd.disabled=1 # Less security, faster computer
-          # - mitigations=off # Less security, faster computer
-          # - apparmor=0 # Less security, faster computer
-          # - security=none # Less security, faster computer
-          # - init_on_alloc=0 # Less security, faster computer
-          # - init_on_free=0 # Less security, faster computer
+          - pcie_aspm=off # Stop link ASPM transitions
+          - pci=pcie_bus_perf # Set device MPS to the largest allowable MPS based on its parent bus.
+          - nvme_core.default_ps_maxlatency_us=0 # Prevent entering low PS
+          - iommu=pt # PCI Passthrough
+          - idle=nomwait # Prevent deep CPU idle states
+          - mitigations=off # Less security, faster computer
+          - security=none # Less security, faster computer
+          - init_on_alloc=0 # Less security, faster computer
+          - init_on_free=0 # Less security, faster computer
+          - talos.auditd.disabled=1 # Less security, faster computer
+          - apparmor=0 # Less security, faster computer
         systemExtensions:
           officialExtensions:
             - siderolabs/amd-ucode
@@ -212,7 +217,7 @@ nodes:
                 gateway: ${GATEWAY_IP4}
                 metric: 512
     nodeAnnotations: &ms01NodeAnnotations
-      installerImage: "factory.talos.dev/metal-installer-secureboot/358b87443e77784112467ac042afcf9f96ad38c0d2de23d157d836b1eb44a5e8:v1.11.2"
+      installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
     patches: &ms01Patches
       # Enable Thunderbolt
       # and net
@@ -224,17 +229,17 @@ nodes:
               - name: thunderbolt
               - name: thunderbolt_net
       # Disable ipv6 auto config and accept RAs
-      - |-
-        machine:
-          sysctls:
-            net.ipv6.conf.enp2s0f0np0.autoconf: "0"
-            net.ipv6.conf.enp2s0f0np0.accept_ra: "0"
-            net.ipv6.conf.enp2s0f1np1.autoconf: "0"
-            net.ipv6.conf.enp2s0f1np1.accept_ra: "0"
-            net.ipv6.conf.enp87s0.autoconf: "0"
-            net.ipv6.conf.enp87s0.accept_ra: "0"
-            net.ipv6.conf.enp89s0.autoconf: "0"
-            net.ipv6.conf.enp89s0.accept_ra: "0"
+      # - |-
+      #   machine:
+      #     sysctls:
+      #       net.ipv6.conf.enp2s0f0np0.autoconf: "0"
+      #       net.ipv6.conf.enp2s0f0np0.accept_ra: "0"
+      #       net.ipv6.conf.enp2s0f1np1.autoconf: "0"
+      #       net.ipv6.conf.enp2s0f1np1.accept_ra: "0"
+      #       net.ipv6.conf.enp87s0.autoconf: "0"
+      #       net.ipv6.conf.enp87s0.accept_ra: "0"
+      #       net.ipv6.conf.enp89s0.autoconf: "0"
+      #       net.ipv6.conf.enp89s0.accept_ra: "0"
       # Optimize networking for 10Gb/s NICs
       - |-
         machine:
@@ -287,12 +292,13 @@ nodes:
           - loglevel=3 # Reduce noise
           - intel_iommu=on # PCI Passthrough
           - iommu=pt # PCI Passthrough
-          # - talos.auditd.disabled=1 # Less security, faster computer
-          # - mitigations=off # Less security, faster computer
-          # - apparmor=0 # Less security, faster computer
-          # - security=none # Less security, faster computer
-          # - init_on_alloc=0 # Less security, faster computer
-          # - init_on_free=0 # Less security, faster computer
+          - talos.auditd.disabled=1 # Less security, faster computer
+          - mitigations=off # Less security, faster computer - Thunderbolt ring https://gist.github.com/gavinmcfall/ea6cb1233d3a300e9f44caf65a32d519
+          - net.ifnames=0 # Thunderbolt ring https://gist.github.com/gavinmcfall/ea6cb1233d3a300e9f44caf65a32d519
+          - apparmor=0 # Less security, faster computer
+          - security=none # Less security, faster computer
+          - init_on_alloc=0 # Less security, faster computer
+          - init_on_free=0 # Less security, faster computer
         systemExtensions:
           officialExtensions:
             - siderolabs/i915

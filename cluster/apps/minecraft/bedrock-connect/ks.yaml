@@ -4,9 +4,10 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: &app bedrock-connect
-  namespace: &fluxnamespace flux-system
+  namespace: flux-system
 spec:
   targetNamespace: &namespace minecraft
+  path: ./cluster/apps/minecraft/bedrock-connect/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -15,17 +16,6 @@ spec:
       kind: HelmRelease
       name: *app
       namespace: *namespace
-  path: ./cluster/apps/minecraft/bedrock-connect/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: *fluxnamespace
   interval: 1h
-  retryInterval: 1m
+  prune: true
   timeout: 1m
-  postBuild:
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-      - kind: Secret
-        name: cluster-secrets

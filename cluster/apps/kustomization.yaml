@@ -19,6 +19,7 @@ resources:
   - ./vaultwarden
   - ./irq-balance
   - ./chrony
+  - ./minecraft
   # - ./metallb-system
   # - ./unifi
   # Databases
@@ -30,7 +31,6 @@ resources:
   # - ./mosquitto
   # - ./rabbitmq
   # Games
-  # - ./minecraft
   # Security & Identity
   # - ./authentik
   # Automation

@@ -5,4 +5,11 @@ kind: Kustomization
 namespace: minecraft
 resources:
   - ./persistent-volume-claim.yaml
-  - ./helm-release.yaml
+  - ./release.yaml
+configMapGenerator:
+  - name: minecraft-bedrock-survival-values
+    namespace: minecraft
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
