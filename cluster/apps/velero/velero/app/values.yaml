@@ -16,7 +16,7 @@ kubectl:
     repository: docker.io/bitnami/kubectl
 
 # This job upgrades the CRDs.
-# upgradeCRDs: false
+upgradeCRDs: false
 
 ##
 ## Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,
