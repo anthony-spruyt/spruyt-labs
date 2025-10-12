@@ -11,7 +11,7 @@ controllers:
           #repository: nmbgeek/bedrockconnect
           #tag: 1.59
           repository: aspruyt/bedrockconnect
-          tag: java17
+          tag: latest
           pullPolicy: IfNotPresent
         resources:
           requests:
