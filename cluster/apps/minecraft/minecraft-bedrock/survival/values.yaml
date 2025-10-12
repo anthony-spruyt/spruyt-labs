@@ -58,7 +58,7 @@ minecraftServer:
   # The "level-name" value is used as the world name and its folder name. The player may also copy their saved game folder here, and change the name to the same as that folder's to load it instead.
   levelName: world
   # Define this if you want a specific map generation seed.
-  # levelSeed:
+  levelSeed: 5688672905671473889
   # One of: creative, survival, adventure, spectator
   gameMode: survival
   # Permission level for new players joining for the first time (visitor, member, operator)

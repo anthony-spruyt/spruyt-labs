@@ -21,6 +21,7 @@ resources:
   - ./chrony
   - ./minecraft
   - ./mosquitto
+  - ./velero
   # - ./metallb-system
   # - ./unifi
   # Databases
@@ -37,4 +38,3 @@ resources:
   # - ./n8n
   # - ./node-red
   # Disaster Recovery
-  # - ./velero

@@ -4,27 +4,18 @@
 apiVersion: velero.io/v1
 kind: Schedule
 metadata:
-  name: pvc-backups
+  name: cluster-wide-backups
   namespace: velero
 spec:
-  paused: false
+  paused: true
   schedule: "0 17 * * *" # At 03:00 daily Melbourne (UTC+10)
   skipImmediately: false
   useOwnerReferencesInBackup: true
   template:
-    includedNamespaces:
-      - minecraft
-      - mosquitto
-      - technitium
-      - vaultwarden
-    includedResources:
-      - pods
-      - pvc
-      - pv
     storageLocation: aws-primary
     snapshotMoveData: true
     ttl: 336h0m0s # 14 days
     metadata:
       labels:
-        velero.io/backup-type: "applications"
-        velero.io/schedule-name: "daily-apps-ceph-block-state"
+        velero.io/backup-type: "Global"
+        velero.io/schedule-name: "cluster-wide-backups"
