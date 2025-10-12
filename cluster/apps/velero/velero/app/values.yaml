@@ -14,6 +14,7 @@ initContainers:
 kubectl:
   image:
     repository: docker.io/bitnami/kubectl
+    tag: latest
 
 # This job upgrades the CRDs.
 upgradeCRDs: false
