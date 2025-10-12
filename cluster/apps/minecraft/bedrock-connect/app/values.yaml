@@ -55,7 +55,7 @@ service:
         port: 19132
         enabled: true
         protocol: UDP
-    externalTrafficPolicy: Cluster
+    externalTrafficPolicy: Local
 persistence:
   config:
     enabled: true

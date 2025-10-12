@@ -90,7 +90,7 @@ minecraftServer:
   # loadBalancerIP:
   # loadBalancerSourceRanges: []
   ## Set the externalTrafficPolicy in the Service to either Cluster or Local
-  externalTrafficPolicy: Cluster
+  externalTrafficPolicy: Local
   ## Enable SSH for console access (eg. needed for backup containers like https://github.com/Kaiede/Bedrockifier)
   # Please note: if you use this together with serviceType LoadBalancer, make sure you have at least Kubernetes v1.26
   enableSSH: false
