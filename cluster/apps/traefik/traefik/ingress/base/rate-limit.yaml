@@ -8,8 +8,11 @@ metadata:
   namespace: placeholder
 spec:
   rateLimit:
-    average: 5
+    average: 50
     burst: 10
+    period: "1s"
     sourceCriterion:
       ipStrategy:
         depth: 1
+        excludedIPs:
+          - "${LAN_CIDR_IP4}"
