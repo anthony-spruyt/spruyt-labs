@@ -40,19 +40,19 @@ customization:
       - siderolabs/util-linux-tools
 ```
 
-#### First Boot
+#### E2 First Boot
 
-##### SecureBoot ISO
+##### E2 SecureBoot ISO
 
-[https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.2/metal-amd64-secureboot.iso](https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.2/metal-amd64-secureboot.iso) [(SecureBoot documentation)](https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/)
+[Download](https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.2/metal-amd64-secureboot.iso) [(SecureBoot documentation)](https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/)
 
-#### Initial Installation
+#### E2 Initial Installation
 
 For the initial installation of Talos Linux (not applicable for disk image boot), add the following installer image to the machine configuration:
 
 > factory.talos.dev/metal-installer-secureboot/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6:v1.11.2
 
-#### Upgrading Talos Linux
+#### E2 Upgrading Talos Linux
 
 To [upgrade](https://www.talos.dev/v1.11/talos-guides/upgrading-talos/) Talos Linux on the machine, use the following image:
 
@@ -90,19 +90,19 @@ customization:
       - siderolabs/util-linux-tools
 ```
 
-#### First Boot
+#### MS-01 First Boot
 
-##### SecureBoot ISO
+##### MS-01 SecureBoot ISO
 
-[https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.2/metal-amd64-secureboot.iso](https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.2/metal-amd64-secureboot.iso) [(SecureBoot documentation)](https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/)
+[Download](https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.2/metal-amd64-secureboot.iso) [(SecureBoot documentation)](https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/)
 
-#### Initial Installation
+#### MS-01 Initial Installation
 
 For the initial installation of Talos Linux (not applicable for disk image boot), add the following installer image to the machine configuration:
 
 > factory.talos.dev/metal-installer-secureboot/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf:v1.11.2
 
-#### Upgrading Talos Linux
+#### MS-01 Upgrading Talos Linux
 
 To [upgrade](https://www.talos.dev/v1.11/talos-guides/upgrading-talos/) Talos Linux on the machine, use the following image:
 

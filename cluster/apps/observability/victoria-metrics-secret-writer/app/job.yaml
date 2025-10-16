@@ -21,7 +21,8 @@ spec:
           operator: Exists
           effect: NoSchedule
       containers:
-        - image: docker.io/bitnami/kubectl:latest
+        - image: registry.k8s.io/kubectl:v1.34.1
+          repository:
           command: ["/bin/sh"]
           args:
             - "-c"
@@ -49,6 +50,13 @@ spec:
             seLinuxOptions: {}
             seccompProfile:
               type: RuntimeDefault
+          resources:
+            limits:
+              cpu: 100m
+              memory: 1Gi
+            requests:
+              cpu: 50m
+              memory: 128Mi
       volumes:
         - name: tmp
           emptyDir: {}

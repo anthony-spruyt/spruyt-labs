@@ -46,7 +46,7 @@ tasks:
     cmds:
       - bash {{ .installVeleroScript }}
   priv-pod:
-    desc: Run a privileged pod on a specified node
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on a specified node'
     cmd: |
       kubectl run privileged-{{.node}} -i --rm --image=null \
         --overrides="$(yq {{.ROOT_DIR}}/.taskfiles/dev-env/resources/privileged-pod.tmpl.yaml -o=json | envsubst)"
@@ -55,26 +55,26 @@ tasks:
     preconditions:
       - test -f {{.ROOT_DIR}}/.taskfiles/dev-env/resources/privileged-pod.tmpl.yaml
   priv-pod-e2-1:
-    desc: Run a privileged pod on e2-1
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on e2-1'
     cmd: |
       task dev-env:priv-pod node=e2-1
   priv-pod-e2-2:
-    desc: Run a privileged pod on e2-2
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on e2-2'
     cmd: |
       task dev-env:priv-pod node=e2-2
   priv-pod-e2-3:
-    desc: Run a privileged pod on e2-3
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on e2-3'
     cmd: |
       task dev-env:priv-pod node=e2-3
   priv-pod-ms-1:
-    desc: Run a privileged pod on ms-01-1
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on ms-01-1'
     cmd: |
       task dev-env:priv-pod node=ms-01-1
   priv-pod-ms-2:
-    desc: Run a privileged pod on ms-01-2
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on ms-01-2'
     cmd: |
       task dev-env:priv-pod node=ms-01-2
   priv-pod-ms-3:
-    desc: Run a privileged pod on ms-01-3
+    desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on ms-01-3'
     cmd: |
       task dev-env:priv-pod node=ms-01-3
