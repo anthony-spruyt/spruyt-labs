@@ -22,7 +22,6 @@ spec:
           effect: NoSchedule
       containers:
         - image: registry.k8s.io/kubectl:v1.34.1
-          repository:
           command: ["/bin/sh"]
           args:
             - "-c"
