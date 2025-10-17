@@ -9,7 +9,7 @@ rollOutCiliumPods: true # Roll out cilium agent pods automatically when configma
 #   enabled: true # Enable local redirect policies.
 #   addressMatcherCIDRs: null # Limit the allowed addresses in Address Matcher rule of Local Redirect Policies to the given CIDRs. @schema@ type: [null, array] @schema@
 kubeProxyReplacement: true
-k8sServicePort: 7445 # kube prism
+k8sServicePort: 6443 # 7445 -> kube prism if not using native routing mode but encapsulated
 k8sServiceHost: ${KUBEAPI_VIP}
 kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256 # healthz server bind address for the kube-proxy replacement. To enable set the value to '0.0.0.0:10256' for all ipv4 addresses and this '[::]:10256' for all ipv6 addresses. By default it is disabled.
 k8s: # Configure Kubernetes specific configuration
