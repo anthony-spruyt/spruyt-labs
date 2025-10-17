@@ -16,6 +16,7 @@ spec:
         kind: HelmRepository
         name: cilium-charts
         namespace: flux-system
+  timeout: 2m
   valuesFrom:
     - kind: ConfigMap
       name: cilium-values
