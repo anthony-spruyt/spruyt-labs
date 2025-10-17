@@ -43,9 +43,9 @@ cgroup: # Configure cgroup related configuration
 #   enabled: true # Enable bandwidth manager infrastructure (also prerequirement for BBR)
 #   bbr: true # Activate BBR TCP congestion control for Pods
 # enableIPv4BIGTCP: true # Enables IPv4 BIG TCP support which increases maximum IPv4 GSO/GRO limits for nodes and pods
-# bpf:
+bpf:
+  masquerade: true # Enable native IP masquerade support in eBPF
 #   datapathMode: netkit # Mode for Pod devices for the core datapath (veth, netkit, netkit-l2)
-#   masquerade: true # Enable native IP masquerade support in eBPF
 #   preallocateMaps: true # Enables pre-allocation of eBPF map values. This increases memory usage but can reduce latency.
 #   tproxy: true # Configure the eBPF-based TPROXY (beta) to reduce reliance on iptables rules for implementing Layer 7 policy.
 #   # Control to use a distributed per-CPU backend memory for the core BPF LRU maps which Cilium uses. This improves performance significantly,
