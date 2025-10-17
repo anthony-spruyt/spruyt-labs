@@ -53,11 +53,11 @@ bpf:
 #   distributedLRU:
 #     enabled: true # Enable distributed LRU backend memory. For compatibility with existing installations it is off by default.
 #   mapDynamicSizeRatio: 0.08 # Configure auto-sizing for all BPF maps based on available memory. ref: https://docs.cilium.io/en/stable/network/ebpf/maps/
+ipMasqAgent: # Configure the eBPF-based ip-masq-agent
+  enabled: true
 # bpfClockProbe: true # Enable BPF clock source probing for more efficient tick retrieval.
 ipam:
   mode: "kubernetes" # Configure IP Address Management mode. ref: https://docs.cilium.io/en/stable/network/concepts/ipam/
-# ipMasqAgent: # Configure the eBPF-based ip-masq-agent
-#   enabled: true
 operator:
   rollOutPods: true # Roll out cilium-operator pods automatically when configmap is updated.
 prometheus:
