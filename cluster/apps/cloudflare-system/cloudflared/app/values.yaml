@@ -33,9 +33,9 @@ controllers:
           pullPolicy: IfNotPresent
         args:
           - tunnel
-          - run
           - --edge-ip-version
           - "4"
+          - run
         env:
           NO_AUTOUPDATE: "true"
           TUNNEL_METRICS: 0.0.0.0:8080
