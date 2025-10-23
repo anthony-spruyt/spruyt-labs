@@ -22,10 +22,8 @@ resources:
   - ./minecraft
   - ./mosquitto
   - ./velero
-  # - ./metallb-system
-  # - ./unifi
+  - ./cnpg-system
   # Databases
-  # - ./postgress
   # - ./mysql
   # - ./mariadb
   # - ./mssql
@@ -37,4 +35,3 @@ resources:
   # Automation
   # - ./n8n
   # - ./node-red
-  # Disaster Recovery
