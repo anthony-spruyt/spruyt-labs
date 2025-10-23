@@ -3,17 +3,16 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app external-dns-technitium
+  name: &app cnpg-cluster
   namespace: flux-system
 spec:
-  targetNamespace: external-dns
-  path: ./cluster/apps/external-dns/external-dns-technitium/app
+  targetNamespace: cnpg-system
+  path: ./cluster/apps/cnpg-system/cnpg-cluster/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: technitium
+    - name: cnpg-operator
   interval: 1h
   prune: true
   timeout: 5m
-  wait: true

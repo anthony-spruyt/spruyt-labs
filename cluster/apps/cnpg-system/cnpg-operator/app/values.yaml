@@ -1,0 +1,6 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/cloudnative-pg/charts/refs/heads/main/charts/cloudnative-pg/values.schema.json
+# Documentation: https://github.com/cloudnative-pg/charts/blob/main/charts/cloudnative-pg/README.md
+# Default values: https://github.com/cloudnative-pg/charts/blob/main/charts/cloudnative-pg/values.yaml
+config:
+  clusterWide: false

@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/cloudnative-pg/charts/refs/heads/main/charts/cluster/values.schema.json
+# Documentation: https://github.com/cloudnative-pg/charts/blob/main/charts/cluster/README.md
+# Default values: https://github.com/cloudnative-pg/charts/blob/main/charts/cluster/values.yaml
+type: postgresql
+mode: standalone
+version:
+  postgresql: "18"
+cluster:
+  instances: 3
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: required # preferred
+  monitoring:
+    enabled: true
+    podMonitor:
+      enabled: true
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 8Gi
+  storage:
+    size: 50Gi
+    storageClass: rbd-fast
+poolers:
+  - name: rw
+    type: rw
+    instances: 1
+    monitoring:
+      enabled: true
+      podMonitor:
+        enabled: true
+        relabelings:
+          - targetLabel: type
+            replacement: rw
+  - name: ro
+    type: ro
+    instances: 1
+    monitoring:
+      enabled: true
+      podMonitor:
+        enabled: true
+        relabelings:
+          - targetLabel: type
+            replacement: ro
+backups:
+  enabled: false
+  # provider: s3
+  # s3:
+  #   region: "eu-west-1"
+  #   bucket: "db-backups"
+  #   path: "/v1"
+  #   accessKey: "AWS_S3_ACCESS_KEY"
+  #   secretKey: "AWS_S3_SECRET_KEY"
+  # scheduledBackups:
+  #   - name: daily-backup # Daily at midnight
+  #     schedule: "0 0 0 * * *" # Daily at midnight
+  #     backupOwnerReference: self
+  # retentionPolicy: "30d"

@@ -14,5 +14,5 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster-storage
   interval: 1h
-  prune: false
+  prune: true
   timeout: 5m

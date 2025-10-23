@@ -404,7 +404,8 @@ controlPlane:
             configure system description "Talos Node"
           mountPath: /usr/local/etc/lldpd/lldpd.conf
   nameservers: &nameservers
-    - ${GATEWAY_IP4}
+    - ${DNS_1}
+    - ${DNS_2}
   nodeLabels:
     node-role.kubernetes.io/control-plane: ""
     bgp: "65050"
