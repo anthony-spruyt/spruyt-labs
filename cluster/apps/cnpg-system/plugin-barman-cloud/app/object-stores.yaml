@@ -1,0 +1,50 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/barmancloud.cnpg.io/objectstore_v1.json
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: aws-postgres18
+spec:
+  retentionPolicy: 30d
+  configuration:
+    destinationPath: s3://spruyt-labs-470715245270-prod-cnpg-backup/postgres18
+    s3Credentials:
+      accessKeyId:
+        name: cnpg-secrets
+        key: AWS_ACCESS_KEY_ID
+      secretAccessKey:
+        name: cnpg-secrets
+        key: AWS_SECRET_ACCESS_KEY
+    data:
+      compression: bzip2
+    wal:
+      compression: bzip2
+      maxParallel: 8
+# ---
+# # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/barmancloud.cnpg.io/objectstore_v1.json
+# apiVersion: barmancloud.cnpg.io/v1
+# kind: ObjectStore
+# metadata:
+#   name: azure-postgres18
+# spec:
+#   retentionPolicy: 30d
+#   configuration:
+#     destinationPath: "<destination path here>"
+#     azureCredentials:
+#       connectionString:
+#         name: cnpg-secrets
+#         key: AZURE_CONNECTION_STRING
+#       storageAccount:
+#         name: cnpg-secrets
+#         key: AZURE_STORAGE_ACCOUNT
+#       storageKey:
+#         name: cnpg-secrets
+#         key: AZURE_STORAGE_KEY
+#       storageSasToken:
+#         name: cnpg-secrets
+#         key: AZURE_STORAGE_SAS_TOKEN
+#     data:
+#       compression: bzip2
+#     wal:
+#       compression: bzip2
+#       maxParallel: 8

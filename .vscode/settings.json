@@ -8,7 +8,7 @@
     ".gitattributes": true,
     ".gitleaksignore": true,
     ".gitignore": true,
-    ".pre-commit-config.yaml": true,
+    ".pre-commit-config.yaml": false,
     "LICENSE": true,
     "Taskfile.yml": false,
     ".kilocode": false,

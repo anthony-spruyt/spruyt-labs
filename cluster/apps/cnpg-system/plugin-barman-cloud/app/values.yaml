@@ -1,0 +1,5 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/cloudnative-pg/charts/refs/heads/main/charts/plugin-barman-cloud/values.schema.json
+# Documentation: https://github.com/cloudnative-pg/charts/blob/main/charts/plugin-barman-cloud/README.md
+# Default values: https://github.com/cloudnative-pg/charts/blob/main/charts/plugin-barman-cloud/values.yaml
+replicaCount: 1
