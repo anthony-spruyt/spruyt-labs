@@ -1,6 +1,6 @@
-# Cloud Native Postgresql Backup AWS S3 Terraform Workspace
+# Cloud Native PostgreSQL Backup AWS S3 Terraform Workspace
 
-This Terraform workspace provisions an S3 bucket and IAM user for Cloud Native Postgresql backups.
+This Terraform workspace provisions an S3 bucket and IAM user for Cloud Native PostgreSQL backups.
 
 ## Usage
 

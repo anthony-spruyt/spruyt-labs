@@ -79,15 +79,15 @@ variable "velero_backup_tfc_working_directory" {
 
 variable "cnpg_backup_tfc_workspace_name" {
   type        = string
-  description = "The name of the Terraform Cloud workspace for Cloud Native Postgresql backup to create and connect to AWS"
+  description = "The name of the Terraform Cloud workspace for Cloud Native PostgreSQL backup to create and connect to AWS"
 }
 
 variable "cnpg_backup_tfc_trigger_pattern" {
   type        = string
-  description = "The regex pattern used to match VCS webhook triggers for the Cloud Native Postgresql backup workspace"
+  description = "The regex pattern used to match VCS webhook triggers for the Cloud Native PostgreSQL backup workspace"
 }
 
 variable "cnpg_backup_tfc_working_directory" {
   type        = string
-  description = "The working directory within the VCS repository for the Cloud Native Postgresql backup Terraform Cloud workspace"
+  description = "The working directory within the VCS repository for the Cloud Native PostgreSQL backup Terraform Cloud workspace"
 }
