@@ -29,7 +29,7 @@ controllers:
       app:
         image:
           repository: docker.io/cloudflare/cloudflared
-          tag: 2025.8.1
+          tag: 2025.10.0
           pullPolicy: IfNotPresent
         args:
           - tunnel
