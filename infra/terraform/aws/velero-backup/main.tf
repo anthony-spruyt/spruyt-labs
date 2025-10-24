@@ -106,7 +106,3 @@ resource "aws_s3_bucket_public_access_block" "velero" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
-
-resource "aws_iam_access_key" "velero" {
-  user = aws_iam_user.velero.name
-}
