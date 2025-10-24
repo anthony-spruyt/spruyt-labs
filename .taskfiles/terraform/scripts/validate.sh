@@ -11,3 +11,5 @@ cd /workspaces/spruyt-labs/infra/terraform/aws/velero-backup
 terraform validate
 cd /workspaces/spruyt-labs/infra/terraform/aws/ceph-objectstore
 terraform validate
+cd /workspaces/spruyt-labs/infra/terraform/aws/cnpg-backup
+terraform validate

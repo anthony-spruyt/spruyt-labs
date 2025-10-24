@@ -12,3 +12,6 @@ ceph_objectstore_tfc_trigger_pattern    = "infra/terraform/aws/ceph-objectstore/
 velero_backup_tfc_workspace_name        = "velero-backup"
 velero_backup_tfc_working_directory     = "infra/terraform/aws/velero-backup"
 velero_backup_tfc_trigger_pattern       = "infra/terraform/aws/velero-backup/**"
+cnpg_backup_tfc_workspace_name          = "cnpg-backup"
+cnpg_backup_tfc_working_directory       = "infra/terraform/aws/cnpg-backup"
+cnpg_backup_tfc_trigger_pattern         = "infra/terraform/aws/cnpg-backup/**"
