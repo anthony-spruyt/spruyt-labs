@@ -1,8 +1,9 @@
-# patch-barman-plugin.yaml
+---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: cnpg-cluster
+  namespace: cnpg-system
 spec:
   plugins:
     - name: barman-cloud.cloudnative-pg.io
