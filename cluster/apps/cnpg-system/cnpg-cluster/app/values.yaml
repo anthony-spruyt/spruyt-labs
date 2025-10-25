@@ -37,6 +37,12 @@ poolers:
         relabelings:
           - targetLabel: type
             replacement: rw
+    template:
+      spec:
+        type: LoadBalancer
+        externalTrafficPolicy: Local
+        annotations:
+          lbipam.cilium.io/ips: "${PGCN_RW_IP4}"
   - name: ro
     type: ro
     instances: 1
@@ -47,5 +53,11 @@ poolers:
         relabelings:
           - targetLabel: type
             replacement: ro
+    template:
+      spec:
+        type: LoadBalancer
+        externalTrafficPolicy: Local
+        annotations:
+          lbipam.cilium.io/ips: "${PGCN_RO_IP4}"
 backups:
   enabled: false
