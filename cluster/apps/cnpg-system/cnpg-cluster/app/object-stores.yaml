@@ -5,7 +5,7 @@ kind: ObjectStore
 metadata:
   name: aws-postgres18
 spec:
-  retentionPolicy: 30d
+  retentionPolicy: 7d
   configuration:
     destinationPath: s3://spruyt-labs-470715245270-prod-cnpg-backup/postgres18
     s3Credentials:
@@ -27,7 +27,7 @@ spec:
 # metadata:
 #   name: azure-postgres18
 # spec:
-#   retentionPolicy: 30d
+#   retentionPolicy: 7d
 #   configuration:
 #     destinationPath: "<destination path here>"
 #     azureCredentials:
