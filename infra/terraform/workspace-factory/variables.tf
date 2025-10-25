@@ -47,62 +47,62 @@ variable "tfc_vcs_repo_ingress_submodules" {
   description = "Flag to enable support for VCS submodules in the repository for the workspace-factory workspace"
 }
 
-variable "ceph_objectstore_tfc_workspace_name" {
+variable "ceph_objectstore_aws_tfc_workspace_name" {
   type        = string
   description = "The name of the Terraform Cloud workspace for Ceph Objectstore to create and connect to AWS"
 }
 
-variable "ceph_objectstore_tfc_trigger_pattern" {
+variable "ceph_objectstore_aws_tfc_trigger_pattern" {
   type        = string
   description = "The regex pattern used to match VCS webhook triggers for the Ceph Objectstore workspace"
 }
 
-variable "ceph_objectstore_tfc_working_directory" {
+variable "ceph_objectstore_aws_tfc_working_directory" {
   type        = string
   description = "The working directory within the VCS repository for the Ceph Objectstore Terraform Cloud workspace"
 }
 
-variable "velero_backup_tfc_workspace_name" {
+variable "velero_backup_aws_tfc_workspace_name" {
   type        = string
   description = "The name of the Terraform Cloud workspace for Velero backup to create and connect to AWS"
 }
 
-variable "velero_backup_tfc_trigger_pattern" {
+variable "velero_backup_aws_tfc_trigger_pattern" {
   type        = string
   description = "The regex pattern used to match VCS webhook triggers for the Velero backup workspace"
 }
 
-variable "velero_backup_tfc_working_directory" {
+variable "velero_backup_aws_tfc_working_directory" {
   type        = string
   description = "The working directory within the VCS repository for the Velero backup Terraform Cloud workspace"
 }
 
-variable "cnpg_backup_tfc_workspace_name" {
+variable "cnpg_backup_aws_tfc_workspace_name" {
   type        = string
   description = "The name of the Terraform Cloud workspace for Cloud Native PostgreSQL backup to create and connect to AWS"
 }
 
-variable "cnpg_backup_tfc_trigger_pattern" {
+variable "cnpg_backup_aws_tfc_trigger_pattern" {
   type        = string
   description = "The regex pattern used to match VCS webhook triggers for the Cloud Native PostgreSQL backup workspace"
 }
 
-variable "cnpg_backup_tfc_working_directory" {
+variable "cnpg_backup_aws_tfc_working_directory" {
   type        = string
   description = "The working directory within the VCS repository for the Cloud Native PostgreSQL backup Terraform Cloud workspace"
 }
 
-variable "external_secrets_tfc_workspace_name" {
+variable "external_secrets_aws_tfc_workspace_name" {
   type        = string
   description = "The name of the Terraform Cloud workspace for External Secrets to create and connect to AWS"
 }
 
-variable "external_secrets_tfc_trigger_pattern" {
+variable "external_secrets_aws_tfc_trigger_pattern" {
   type        = string
   description = "The regex pattern used to match VCS webhook triggers for the External Secrets workspace"
 }
 
-variable "external_secrets_tfc_working_directory" {
+variable "external_secrets_aws_tfc_working_directory" {
   type        = string
   description = "The working directory within the VCS repository for the External Secrets Terraform Cloud workspace"
 }

@@ -13,5 +13,5 @@ cd /workspaces/spruyt-labs/infra/terraform/aws/ceph-objectstore
 terraform init -upgrade -reconfigure
 cd /workspaces/spruyt-labs/infra/terraform/aws/cnpg-backup
 terraform init -upgrade -reconfigure
-cd /workspaces/spruyt-labs/infra/terraform/aws/external-secrets-backup
+cd /workspaces/spruyt-labs/infra/terraform/aws/external-secrets
 terraform init -upgrade -reconfigure
