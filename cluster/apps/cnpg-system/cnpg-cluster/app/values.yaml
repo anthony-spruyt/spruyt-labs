@@ -26,44 +26,6 @@ cluster:
   storage:
     size: 50Gi
     storageClass: rbd-fast
-poolers:
-  - name: rw
-    type: rw
-    instances: 1
-    monitoring:
-      enabled: true
-      podMonitor:
-        enabled: true
-        relabelings:
-          - targetLabel: type
-            replacement: rw
-    template:
-      spec:
-        serviceTemplate:
-          metadata:
-            annotations:
-              lbipam.cilium.io/ips: "${PGCN_RW_IP4}"
-          spec:
-            type: LoadBalancer
-            externalTrafficPolicy: Local
-  - name: ro
-    type: ro
-    instances: 1
-    monitoring:
-      enabled: true
-      podMonitor:
-        enabled: true
-        relabelings:
-          - targetLabel: type
-            replacement: ro
-    template:
-      spec:
-        serviceTemplate:
-          metadata:
-            annotations:
-              lbipam.cilium.io/ips: "${PGCN_RO_IP4}"
-          spec:
-            type: LoadBalancer
-            externalTrafficPolicy: Local
+poolers: []
 backups:
   enabled: false
