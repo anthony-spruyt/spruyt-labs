@@ -39,10 +39,13 @@ poolers:
             replacement: rw
     template:
       spec:
-        type: LoadBalancer
-        externalTrafficPolicy: Local
-        annotations:
-          lbipam.cilium.io/ips: "${PGCN_RW_IP4}"
+        serviceTemplate:
+          metadata:
+            annotations:
+              lbipam.cilium.io/ips: "${PGCN_RW_IP4}"
+          spec:
+            type: LoadBalancer
+            externalTrafficPolicy: Local
   - name: ro
     type: ro
     instances: 1
@@ -55,9 +58,12 @@ poolers:
             replacement: ro
     template:
       spec:
-        type: LoadBalancer
-        externalTrafficPolicy: Local
-        annotations:
-          lbipam.cilium.io/ips: "${PGCN_RO_IP4}"
+        serviceTemplate:
+          metadata:
+            annotations:
+              lbipam.cilium.io/ips: "${PGCN_RO_IP4}"
+          spec:
+            type: LoadBalancer
+            externalTrafficPolicy: Local
 backups:
   enabled: false
