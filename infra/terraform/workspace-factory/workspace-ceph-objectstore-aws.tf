@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "ceph_objectstore_tfc_aws_iam_policy" {
   }
 }
 
-module "ceph_objectstore_aws" {
+module "ceph_objectstore" {
   source                                  = "./modules/aws-workspace"
   aws_iam_policy_document                 = data.aws_iam_policy_document.ceph_objectstore_tfc_aws_iam_policy.json
   aws_region                              = var.aws_region

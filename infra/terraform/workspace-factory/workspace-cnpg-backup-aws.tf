@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "cnpg_backup_tfc_aws_iam_policy" {
   }
 }
 
-module "cnpg_backup_aws" {
+module "cnpg_backup" {
   source                                  = "./modules/aws-workspace"
   aws_iam_policy_document                 = data.aws_iam_policy_document.cnpg_backup_tfc_aws_iam_policy.json
   aws_region                              = var.aws_region
