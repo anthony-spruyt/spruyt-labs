@@ -13,3 +13,5 @@ cd /workspaces/spruyt-labs/infra/terraform/aws/ceph-objectstore
 terraform validate
 cd /workspaces/spruyt-labs/infra/terraform/aws/cnpg-backup
 terraform validate
+cd /workspaces/spruyt-labs/infra/terraform/aws/external-secrets
+terraform validate

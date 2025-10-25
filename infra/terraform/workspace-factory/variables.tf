@@ -91,3 +91,18 @@ variable "cnpg_backup_tfc_working_directory" {
   type        = string
   description = "The working directory within the VCS repository for the Cloud Native PostgreSQL backup Terraform Cloud workspace"
 }
+
+variable "external_secrets_tfc_workspace_name" {
+  type        = string
+  description = "The name of the Terraform Cloud workspace for External Secrets to create and connect to AWS"
+}
+
+variable "external_secrets_tfc_trigger_pattern" {
+  type        = string
+  description = "The regex pattern used to match VCS webhook triggers for the External Secrets workspace"
+}
+
+variable "external_secrets_tfc_working_directory" {
+  type        = string
+  description = "The working directory within the VCS repository for the External Secrets Terraform Cloud workspace"
+}

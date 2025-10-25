@@ -6,6 +6,7 @@ resources:
   - ./flux-system
   - ./kube-system
   - ./kubelet-csr-approver
+  - ./external-secrets
   - ./reloader
   - ./observability
   - ./whoami

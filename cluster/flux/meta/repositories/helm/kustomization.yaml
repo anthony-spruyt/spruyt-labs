@@ -4,6 +4,7 @@ resources:
   - ./bjw-s-charts.yaml
   - ./cilium-charts.yaml
   - ./cloudnative-pg-charts.yaml
+  - ./external-secrets-charts.yaml
   - ./jetstack-charts.yaml
   - ./kubernetes-sigs-charts.yaml
   - ./metallb-charts.yaml
