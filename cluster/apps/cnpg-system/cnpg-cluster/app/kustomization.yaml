@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./object-stores.yaml
   - ./release.yaml
+  - ./scheduled-backup.yaml
 configMapGenerator:
   - name: cnpg-cluster-values
     namespace: cnpg-system

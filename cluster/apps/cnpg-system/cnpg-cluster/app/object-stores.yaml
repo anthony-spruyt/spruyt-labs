@@ -4,6 +4,7 @@ apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
   name: aws-postgres18
+  namespace: cnpg-system
 spec:
   retentionPolicy: 7d
   configuration:
