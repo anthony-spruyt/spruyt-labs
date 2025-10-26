@@ -2,9 +2,8 @@
 # #yaml-language-server: $schema=TODO
 # Documentation: https://github.com/8gears/n8n-helm-chart/blob/main/README.md
 # Default values: https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
-#Prod like set up with CloudNativePG and nginx-ingress
+# Configure n8n via env vars -> https://docs.n8n.io/hosting/configuration/environment-variables
 main:
-  # https://docs.n8n.io/hosting/configuration/environment-variables
   extraEnv:
     N8N_ENCRYPTION_KEY:
       valueFrom:
@@ -37,7 +36,7 @@ main:
         secretKeyRef:
           name: n8n-cnpg-cluster-app
           key: password
-    DB_POSTGRESDB_POOL_SIZEL: 10 # Look at n8n-cnpg-poolers.yaml if this gets larger
+    DB_POSTGRESDB_POOL_SIZEL: 10
     DB_POSTGRESDB_SSL_ENABLED: true
     DB_POSTGRESDB_SSL_CA_FILE: /home/ssl/certs/postgresql/ca.crt
   extraVolumeMounts:
