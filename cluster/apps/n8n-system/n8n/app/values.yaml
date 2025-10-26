@@ -1,0 +1,57 @@
+---
+# #yaml-language-server: $schema=TODO
+# Documentation: https://github.com/8gears/n8n-helm-chart/blob/main/README.md
+# Default values: https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
+# Configure n8n via env vars -> https://docs.n8n.io/hosting/configuration/environment-variables
+main:
+  config:
+    db:
+      type: postgresdb
+      postgresdb:
+        host: n8n-cnpg-cluster-rw
+  extraEnv:
+    DB_TYPE: postgresdb
+    DB_POSTGRESDB_DATABASE:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: dbname
+    DB_POSTGRESDB_HOST:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: host
+    DB_POSTGRESDB_PORT:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: port
+    DB_POSTGRESDB_USER:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: user
+    DB_POSTGRESDB_PASSWORD:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: password
+    DB_POSTGRESDB_POOL_SIZEL: "10"
+    DB_POSTGRESDB_SSL_ENABLED: "true"
+    DB_POSTGRESDB_SSL_CA_FILE: /home/ssl/certs/postgresql/ca.crt
+    N8N_ENCRYPTION_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: N8N_ENCRYPTION_KEY
+  extraVolumeMounts:
+    - name: db-ca-cert
+      mountPath: /home/ssl/certs/postgresql
+      readOnly: true
+  extraVolumes:
+    - name: db-ca-cert
+      secret:
+        secretName: n8n-cnpg-cluster-ca
+        items:
+          - key: ca.crt
+            path: ca.crt
