@@ -4,11 +4,6 @@
 # Default values: https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
 # Configure n8n via env vars -> https://docs.n8n.io/hosting/configuration/environment-variables
 main:
-  config:
-    db:
-      type: postgresdb
-      postgresdb:
-        host: n8n-cnpg-cluster-rw
   extraEnv:
     DB_TYPE: postgresdb
     DB_POSTGRESDB_DATABASE:
@@ -38,7 +33,7 @@ main:
           key: password
     DB_POSTGRESDB_POOL_SIZEL: "10"
     DB_POSTGRESDB_SSL_ENABLED: "true"
-    DB_POSTGRESDB_SSL_CA_FILE: /home/ssl/certs/postgresql/ca.crt
+    DB_POSTGRESDB_SSL_CA_FILE: "/home/ssl/certs/postgresql/ca.crt"
     N8N_ENCRYPTION_KEY:
       valueFrom:
         secretKeyRef:
@@ -46,7 +41,7 @@ main:
           key: N8N_ENCRYPTION_KEY
   extraVolumeMounts:
     - name: db-ca-cert
-      mountPath: /home/ssl/certs/postgresql
+      mountPath: "/home/ssl/certs/postgresql"
       readOnly: true
   extraVolumes:
     - name: db-ca-cert
@@ -55,3 +50,10 @@ main:
         items:
           - key: ca.crt
             path: ca.crt
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2048Mi
+    requests:
+      cpu: 100m
+      memory: 512Mi
