@@ -12,7 +12,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: cnpg-cluster
+    - name: cnpg-operator
     - name: rook-ceph-cluster-storage
   interval: 1h
   prune: true

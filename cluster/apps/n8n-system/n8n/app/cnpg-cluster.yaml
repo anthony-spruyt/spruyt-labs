@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: n8n-cluster
+  namespace: n8n-system
+spec:
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+  bootstrap:
+    initdb:
+      database: n8n
+      owner: n8n
+  enableSuperuserAccess: true
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18"
+  instances: 1
+  monitoring:
+    enablePodMonitor: true
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      enabled: true
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: aws-object-store
+  postgresql:
+    parameters:
+      shared_buffers: 256MB # 25% of the memory defined under requests memory
+  primaryUpdateMethod: switchover
+  primaryUpdateStrategy: unsupervised
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 100m
+      memory: 1Gi # shared_buffers under parameters should be 25% of the memory defined here
+  storage:
+    pvcTemplate:
+      dataSource:
+        kind: PersistentVolumeClaim
+        name: n8n

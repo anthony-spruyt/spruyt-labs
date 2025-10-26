@@ -8,26 +8,25 @@ main:
     db:
       type: postgresdb
       postgresdb:
-        host: cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local
+        host: db-rw
         user: n8n
         pool:
           size: 10
         ssl:
           enabled: true
           reject_Unauthorized: true
-          ca_file: "/home/ssl/certs/postgresql/ca.crt"
-  secret:
-    n8n:
-      encryption_key: "<your-secure-encryption-key>"
-
+          ca_file: /home/ssl/certs/postgresql/ca.crt
   extraEnv:
+    N8N_ENCRYPTION_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: N8N_ENCRYPTION_KEY
     DB_POSTGRESDB_PASSWORD:
       valueFrom:
         secretKeyRef:
           name: db-app
           key: password
-
-  # Mount the CNPG CA Cert into N8N container
   extraVolumeMounts:
     - name: db-ca-cert
       mountPath: /home/ssl/certs/postgresql
@@ -39,31 +38,26 @@ main:
         items:
           - key: ca.crt
             path: ca.crt
-
   resources:
     limits:
+      cpu: 2000m
       memory: 2048Mi
     requests:
+      cpu: 100m
       memory: 512Mi
-# cnpg DB cluster request
-# extraManifests:
-#   - apiVersion: postgresql.cnpg.io/v1
-#     kind: Cluster
-#     metadata:
-#       name: db
-#     spec:
-#       instances: 1
-#       bootstrap:
-#         initdb:
-#           database: n8n
-#           owner: n8n
-#       postgresql:
-#         parameters:
-#           shared_buffers: "64MB"
-#       resources:
-#         requests:
-#           memory: "512Mi"
-#         limits:
-#           memory: "512Mi"
-#       storage:
-#         size: 1Gi
+  extraManifests:
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: db
+        namespace: n8n-system
+      spec:
+        affinity:
+          enablePodAntiAffinity: true
+          podAntiAffinityType: required
+          topologyKey: kubernetes.io/hostname
+        instances: 1
+        bootstrap:
+          initdb:
+            database: n8n
+            owner: n8n
