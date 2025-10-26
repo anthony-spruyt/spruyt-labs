@@ -13,6 +13,7 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: cnpg-operator
+    - name: plugin-barman-cloud
     - name: rook-ceph-cluster-storage
   interval: 1h
   prune: true
