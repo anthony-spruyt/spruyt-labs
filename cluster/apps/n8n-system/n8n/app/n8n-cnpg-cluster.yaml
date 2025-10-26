@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: n8n-cluster
+  name: n8n-cnpg-cluster
   namespace: n8n-system
 spec:
   affinity:
@@ -39,6 +39,9 @@ spec:
       memory: 1Gi # shared_buffers under parameters should be 25% of the memory defined here
   storage:
     pvcTemplate:
-      dataSource:
-        kind: PersistentVolumeClaim
-        name: n8n
+      storageClassName: rbd-fast
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 3Gi

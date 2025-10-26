@@ -4,10 +4,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./n8n-secrets.sops.yaml
-  - ./persistent-volume-claim.yaml
-  - ./cnpg-cluster.yaml
-  # - ./cnpg-poolers.yaml
-  # - ./cnpg-scheduled-backup.yaml
+  # - ./n8n-cnpg-cluster.yaml
+  # - ./n8n-cnpg-poolers.yaml
+  # - ./n8n-cnpg-scheduled-backup.yaml
   # - ./release.yaml
 configMapGenerator:
   - name: n8n-values
