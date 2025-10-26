@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
   - ./n8n-secrets.sops.yaml
   - ./persistent-volume-claim.yaml
-  # - ./cnpg-cluster.yaml
+  - ./cnpg-cluster.yaml
   # - ./cnpg-poolers.yaml
   # - ./cnpg-scheduled-backup.yaml
   # - ./release.yaml
