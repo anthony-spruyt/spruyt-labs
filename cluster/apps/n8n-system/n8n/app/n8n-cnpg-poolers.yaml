@@ -1,0 +1,56 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/postgresql.cnpg.io/pooler_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: n8n-cnpg-cluster-pooler-rw
+  namespace: n8n-system
+spec:
+  cluster:
+    name: n8n-cnpg-cluster
+  instances: 1
+  monitoring:
+    enablePodMonitor: true
+    podMonitorRelabelings:
+      - action: replace
+        replacement: rw
+        targetLabel: type
+  pgbouncer:
+    paused: false
+    poolMode: session
+  type: rw
+  # serviceTemplate:
+  #   metadata:
+  #     annotations:
+  #       lbipam.cilium.io/ips: "${PGCN_RW_IP4}"
+  #   spec:
+  #     type: LoadBalancer
+  #     externalTrafficPolicy: Local
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/postgresql.cnpg.io/pooler_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: n8n-cnpg-cluster-pooler-ro
+  namespace: n8n-system
+spec:
+  cluster:
+    name: n8n-cnpg-cluster
+  instances: 1
+  monitoring:
+    enablePodMonitor: true
+    podMonitorRelabelings:
+      - action: replace
+        replacement: ro
+        targetLabel: type
+  pgbouncer:
+    paused: false
+    poolMode: session
+  type: ro
+  # serviceTemplate:
+  #   metadata:
+  #     annotations:
+  #       lbipam.cilium.io/ips: "${PGCN_RO_IP4}"
+  #   spec:
+  #     type: LoadBalancer
+  #     externalTrafficPolicy: Local

@@ -4,29 +4,42 @@
 # Default values: https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
 #Prod like set up with CloudNativePG and nginx-ingress
 main:
-  config:
-    db:
-      type: postgresdb
-      postgresdb:
-        host: db-rw
-        user: n8n
-        pool:
-          size: 10
-        ssl:
-          enabled: true
-          reject_Unauthorized: true
-          ca_file: /home/ssl/certs/postgresql/ca.crt
+  # https://docs.n8n.io/hosting/configuration/environment-variables
   extraEnv:
     N8N_ENCRYPTION_KEY:
       valueFrom:
         secretKeyRef:
           name: n8n-secrets
           key: N8N_ENCRYPTION_KEY
+    DB_TYPE: postgresdb
+    DB_POSTGRESDB_DATABASE:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: dbname
+    DB_POSTGRESDB_HOST:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: host
+    DB_POSTGRESDB_PORT:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: port
+    DB_POSTGRESDB_USER:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-cnpg-cluster-app
+          key: user
     DB_POSTGRESDB_PASSWORD:
       valueFrom:
         secretKeyRef:
-          name: db-app
+          name: n8n-cnpg-cluster-app
           key: password
+    DB_POSTGRESDB_POOL_SIZEL: 10 # Look at n8n-cnpg-poolers.yaml if this gets larger
+    DB_POSTGRESDB_SSL_ENABLED: true
+    DB_POSTGRESDB_SSL_CA_FILE: /home/ssl/certs/postgresql/ca.crt
   extraVolumeMounts:
     - name: db-ca-cert
       mountPath: /home/ssl/certs/postgresql
@@ -34,7 +47,7 @@ main:
   extraVolumes:
     - name: db-ca-cert
       secret:
-        secretName: db-ca
+        secretName: n8n-cnpg-cluster-ca
         items:
           - key: ca.crt
             path: ca.crt
@@ -45,19 +58,3 @@ main:
     requests:
       cpu: 100m
       memory: 512Mi
-  extraManifests:
-    - apiVersion: postgresql.cnpg.io/v1
-      kind: Cluster
-      metadata:
-        name: db
-        namespace: n8n-system
-      spec:
-        affinity:
-          enablePodAntiAffinity: true
-          podAntiAffinityType: required
-          topologyKey: kubernetes.io/hostname
-        instances: 1
-        bootstrap:
-          initdb:
-            database: n8n
-            owner: n8n

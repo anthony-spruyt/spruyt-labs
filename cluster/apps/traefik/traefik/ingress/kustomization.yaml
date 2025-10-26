@@ -8,4 +8,5 @@ resources:
   - ./whoami
   - ./vaultwarden
   - ./observability
+  - ./n8n
   # - ./unifi
