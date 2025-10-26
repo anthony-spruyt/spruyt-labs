@@ -25,3 +25,7 @@ providers:
 service:
   spec:
     externalTrafficPolicy: Local
+tlsStore:
+  default:
+    defaultCertificate:
+      secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
