@@ -3,12 +3,12 @@
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: aws-postgres18
+  name: aws-object-store
   namespace: cnpg-system
 spec:
   retentionPolicy: 7d
   configuration:
-    destinationPath: s3://spruyt-labs-470715245270-prod-cnpg-backup/postgres18
+    destinationPath: s3://spruyt-labs-470715245270-prod-cnpg-backup/object-store
     s3Credentials:
       accessKeyId:
         name: cnpg-secrets
@@ -26,7 +26,7 @@ spec:
 # apiVersion: barmancloud.cnpg.io/v1
 # kind: ObjectStore
 # metadata:
-#   name: azure-postgres18
+#   name: azure-object-store
 # spec:
 #   retentionPolicy: 7d
 #   configuration:

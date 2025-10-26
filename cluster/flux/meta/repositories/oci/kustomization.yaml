@@ -6,6 +6,7 @@ resources:
   - ./bjw-s-labs-app-template.yaml
   - ./flux-instance-ocirepo.yaml
   - ./flux-operator-ocirepo.yaml
+  - ./n8n-ocirepo.yaml
   - ./rook-ceph-cluster-ocirepo.yaml
   - ./rook-ceph-ocirepo.yaml
   - ./victoria-logs-single-ocirepo.yaml

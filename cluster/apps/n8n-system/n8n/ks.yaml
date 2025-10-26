@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app n8n
+  namespace: flux-system
+spec:
+  targetNamespace: n8n-system
+  path: ./cluster/apps/n8n-system/n8n/app
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: cnpg-cluster
+    - name: rook-ceph-cluster-storage
+  interval: 1h
+  prune: true
+  timeout: 5m

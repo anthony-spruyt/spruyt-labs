@@ -24,6 +24,7 @@ resources:
   - ./mosquitto
   - ./velero
   - ./cnpg-system
+  - ./n8n-system
   # Databases
   # - ./mysql
   # - ./mariadb
@@ -34,5 +35,4 @@ resources:
   # Security & Identity
   # - ./authentik
   # Automation
-  # - ./n8n
   # - ./node-red

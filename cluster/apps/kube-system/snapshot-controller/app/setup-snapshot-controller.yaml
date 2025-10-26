@@ -6,6 +6,7 @@
 # Vanilla Kubernetes, kube-system makes sense for the namespace.
 
 ---
+# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.14.0/deployment-apps-v1.json
 kind: Deployment
 apiVersion: apps/v1
 metadata:

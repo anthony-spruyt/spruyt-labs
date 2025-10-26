@@ -33,6 +33,7 @@ spec:
   dependsOn:
     - name: cnpg-cluster
     - name: plugin-barman-cloud
+    - name: external-secrets
   interval: 1h
   prune: true
   timeout: 5m
