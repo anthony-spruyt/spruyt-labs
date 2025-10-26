@@ -3,6 +3,6 @@
 # Documentation: https://github.com/cloudnative-pg/charts/blob/main/charts/cloudnative-pg/README.md
 # Default values: https://github.com/cloudnative-pg/charts/blob/main/charts/cloudnative-pg/values.yaml
 config:
-  clusterWide: false
+  clusterWide: true
 monitoring:
   podMonitorEnabled: true

@@ -11,7 +11,7 @@ kubectl patch cluster cnpg-cluster \
           "name": "barman-cloud.cloudnative-pg.io",
           "isWALArchiver": true,
           "parameters": {
-            "barmanObjectName": "aws-postgres18"
+            "barmanObjectName": "aws-object-store"
           }
         }
       ]
