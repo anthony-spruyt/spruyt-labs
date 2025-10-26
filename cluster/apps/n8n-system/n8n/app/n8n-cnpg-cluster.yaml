@@ -24,7 +24,7 @@ spec:
       enabled: true
       isWALArchiver: true
       parameters:
-        barmanObjectName: aws-object-store
+        barmanObjectName: n8n-cnpg-aws-object-store
   postgresql:
     parameters:
       shared_buffers: 256MB # 25% of the memory defined under requests memory
