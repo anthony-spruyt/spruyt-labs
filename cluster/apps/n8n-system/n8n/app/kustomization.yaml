@@ -7,7 +7,7 @@ resources:
   - ./n8n-cnpg-object-stores.yaml
   - ./n8n-cnpg-cluster.yaml
   # - ./n8n-cnpg-poolers.yaml
-  # - ./n8n-cnpg-scheduled-backup.yaml
+  - ./n8n-cnpg-scheduled-backups.yaml
   # - ./release.yaml
 configMapGenerator:
   - name: n8n-values
