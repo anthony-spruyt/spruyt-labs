@@ -36,8 +36,8 @@ main:
         secretKeyRef:
           name: n8n-cnpg-cluster-app
           key: password
-    DB_POSTGRESDB_POOL_SIZEL: 10
-    DB_POSTGRESDB_SSL_ENABLED: true
+    DB_POSTGRESDB_POOL_SIZEL: "10"
+    DB_POSTGRESDB_SSL_ENABLED: "true"
     DB_POSTGRESDB_SSL_CA_FILE: /home/ssl/certs/postgresql/ca.crt
   extraVolumeMounts:
     - name: db-ca-cert
