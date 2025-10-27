@@ -33,9 +33,9 @@ main:
           name: n8n-cnpg-cluster-app
           key: password
     DB_POSTGRESDB_POOL_SIZE:
-      value: 10
+      value: "10"
     DB_POSTGRESDB_SSL_ENABLED:
-      value: true
+      value: "true"
     DB_POSTGRESDB_SSL_CA_FILE:
       value: /home/ssl/certs/postgresql/ca.crt
     GENERIC_TIMEZONE:
@@ -50,9 +50,9 @@ main:
           name: n8n-secrets
           key: N8N_ENCRYPTION_KEY
     N8N_PORT:
-      value: 5678
+      value: "5678"
     N8N_PROXY_HOPS:
-      value: 1
+      value: "1"
     # Running n8n without task runners is deprecated.
     # Task runners will be turned on by default in a future version.
     # Please set `N8N_RUNNERS_ENABLED=true` to enable task runners now and avoid potential issues in the future.
@@ -72,6 +72,8 @@ main:
         items:
           - key: ca.crt
             path: ca.crt
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
   securityContext:
     capabilities:
       drop:
