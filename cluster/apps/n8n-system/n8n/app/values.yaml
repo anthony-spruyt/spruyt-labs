@@ -67,6 +67,8 @@ main:
     - name: db-ca-cert
       mountPath: /home/ssl/certs/postgresql
       readOnly: true
+    - name: n8n-cache
+      mountPath: /home/node/.cache
   extraVolumes:
     - name: db-ca-cert
       secret:
@@ -74,6 +76,8 @@ main:
         items:
           - key: ca.crt
             path: ca.crt
+    - name: n8n-cache
+      emptyDir: {}
   deploymentAnnotations:
     reloader.stakater.com/auto: "true"
   securityContext:
