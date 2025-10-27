@@ -72,8 +72,6 @@ main:
         items:
           - key: ca.crt
             path: ca.crt
-  deploymentAnnotations:
-    reloader.stakater.com/auto: "true"
   securityContext:
     capabilities:
       drop:
