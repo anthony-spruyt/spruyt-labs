@@ -40,6 +40,8 @@ main:
       value: /home/ssl/certs/postgresql/ca.crt
     GENERIC_TIMEZONE:
       value: ${TIMEZONE}
+    N8N_EDITOR_BASE_URL:
+      value: https://n8n.${EXTERNAL_DOMAIN}
     N8N_ENCRYPTION_KEY:
       valueFrom:
         secretKeyRef:
