@@ -3,12 +3,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "n8n-lan-${EXTERNAL_DOMAIN/./-}"
+  name: "n8n-${EXTERNAL_DOMAIN/./-}"
   namespace: n8n-system
 spec:
-  secretName: "n8n-lan-${EXTERNAL_DOMAIN/./-}-tls"
+  secretName: "n8n-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
   dnsNames:
-    - "n8n.lan.${EXTERNAL_DOMAIN}"
+    - "n8n.${EXTERNAL_DOMAIN}"

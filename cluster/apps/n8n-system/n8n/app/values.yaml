@@ -32,17 +32,23 @@ main:
         secretKeyRef:
           name: n8n-cnpg-cluster-app
           key: password
-    DB_POSTGRESDB_POOL_SIZEL:
-      value: "10"
+    DB_POSTGRESDB_POOL_SIZE:
+      value: 10
     DB_POSTGRESDB_SSL_ENABLED:
-      value: "true"
+      value: true
     DB_POSTGRESDB_SSL_CA_FILE:
       value: /home/ssl/certs/postgresql/ca.crt
+    GENERIC_TIMEZONE:
+      value: ${TIMEZONE}
     N8N_ENCRYPTION_KEY:
       valueFrom:
         secretKeyRef:
           name: n8n-secrets
           key: N8N_ENCRYPTION_KEY
+    N8N_PROXY_HOPS:
+      value: 1
+    WEBHOOK_URL:
+      value: https://n8n.${EXTERNAL_DOMAIN}
   extraVolumeMounts:
     - name: db-ca-cert
       mountPath: /home/ssl/certs/postgresql
@@ -54,10 +60,19 @@ main:
         items:
           - key: ca.crt
             path: ca.crt
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
   resources:
     limits:
       cpu: 2000m
       memory: 2048Mi
     requests:
       cpu: 100m
-      memory: 512Mi
+      memory: 256Mi

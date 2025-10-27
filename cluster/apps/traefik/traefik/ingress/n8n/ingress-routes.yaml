@@ -4,19 +4,19 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-lan-https
+  name: ingress-routes-wan-https
   namespace: n8n-system
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: n8n.lan.${EXTERNAL_DOMAIN}
+    external-dns.alpha.kubernetes.io/hostname: n8n.${EXTERNAL_DOMAIN}
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`n8n.lan.${EXTERNAL_DOMAIN}`)
+      match: Host(`n8n.${EXTERNAL_DOMAIN}`)
       middlewares:
-        - name: lan-ip-whitelist
+        - name: rate-limit
         - name: compress
       services:
         - name: n8n
@@ -24,4 +24,4 @@ spec:
           passHostHeader: true
           port: 80
   tls:
-    secretName: "n8n-lan-${EXTERNAL_DOMAIN/./-}-tls"
+    secretName: "n8n-${EXTERNAL_DOMAIN/./-}-tls"
