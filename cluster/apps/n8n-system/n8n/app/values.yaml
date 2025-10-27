@@ -41,7 +41,7 @@ main:
     GENERIC_TIMEZONE:
       value: ${TIMEZONE}
     N8N_BLOCK_ENV_ACCESS_IN_NODE:
-      value: true
+      value: "true"
     N8N_EDITOR_BASE_URL:
       value: https://n8n.${EXTERNAL_DOMAIN}
     N8N_ENCRYPTION_KEY:
