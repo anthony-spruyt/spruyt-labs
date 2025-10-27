@@ -17,7 +17,6 @@ spec:
       kind: Rule
       middlewares:
         - name: lan-ip-whitelist
-        - name: rate-limit
         - name: compress
       services:
         - name: vaultwarden
@@ -27,7 +26,6 @@ spec:
     - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`)
       kind: Rule
       middlewares:
-        - name: rate-limit
         - name: compress
       services:
         - name: vaultwarden

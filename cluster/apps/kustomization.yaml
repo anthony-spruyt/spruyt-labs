@@ -25,14 +25,11 @@ resources:
   - ./velero
   - ./cnpg-system
   - ./n8n-system
-  # Databases
+  # - ./snmp
+  # - ./smtp
   # - ./mysql
   # - ./mariadb
   # - ./mssql
-  # Message Brokers
   # - ./rabbitmq
-  # Games
-  # Security & Identity
   # - ./authentik
-  # Automation
   # - ./node-red
