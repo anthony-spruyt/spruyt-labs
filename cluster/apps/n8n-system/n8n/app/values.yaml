@@ -49,8 +49,8 @@ main:
         secretKeyRef:
           name: n8n-secrets
           key: N8N_ENCRYPTION_KEY
-    N8N_PORT:
-      value: "5678"
+    N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:
+      value: "true"
     N8N_PROXY_HOPS:
       value: "1"
     # Running n8n without task runners is deprecated.
