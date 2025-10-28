@@ -11,5 +11,5 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 1.0.15
+    tag: 1.0.16
   url: oci://8gears.container-registry.com/library/n8n
