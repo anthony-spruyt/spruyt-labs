@@ -5,6 +5,7 @@ resources:
   - ./cilium-charts.yaml
   - ./cloudnative-pg-charts.yaml
   - ./external-secrets-charts.yaml
+  - ./goauthentik-charts.yaml
   - ./jetstack-charts.yaml
   - ./kubernetes-sigs-charts.yaml
   - ./metallb-charts.yaml

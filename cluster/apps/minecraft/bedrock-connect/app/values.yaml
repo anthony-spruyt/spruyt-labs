@@ -8,8 +8,8 @@ controllers:
     containers:
       main:
         image:
-          #repository: nmbgeek/bedrockconnect
-          #tag: 1.59
+          # repository: nmbgeek/bedrockconnect
+          # tag: 1.60
           repository: aspruyt/bedrockconnect
           tag: latest
           pullPolicy: IfNotPresent

@@ -12,7 +12,7 @@
     "LICENSE": true,
     "Taskfile.yml": false,
     ".kilocode": false,
-    ".kilocodeignore": true,
+    ".kilocodeignore": false,
     "talos/clusterconfig": false,
     "**/.terraform": true,
     "**/.terraform.lock.hcl": false

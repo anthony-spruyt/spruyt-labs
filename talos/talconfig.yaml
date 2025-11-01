@@ -39,7 +39,8 @@ nodes:
   - hostname: e2-1
     controlPlane: true
     installDiskSelector:
-      serial: P300ADBB25032802523
+      serial: 50026B76874DDE95 # Kinston
+      # serial: P300ADBB25032802523 # Patriot
     ipAddress: ${E2_1_IP4}
     machineSpec:
       mode: metal
