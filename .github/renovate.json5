@@ -22,14 +22,12 @@
   commitBodyTable: true,
   rebaseWhen: "conflicted",
   enabledManagers: [
-    "custom",
-    "docker",
-    "flux",
-    "github-actions",
-    "helm",
+    "regex",
+    "dockerfile",
     "helm-values",
     "kubernetes",
-    "regex",
+    "flux",
+    "github-actions",
     "terraform",
   ],
   ignoreDeps: [

@@ -29,9 +29,6 @@
     "ghcr.io/devcontainers/features/docker-in-docker": {},
     "ghcr.io/devcontainers/features/node": {
       "version": "22"
-    },
-    "ghcr.io/devcontainers-extra/features/npm-packages": {
-      "packages": "renovate"
     }
   },
   "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./.devcontainer/post-create.sh\"",
