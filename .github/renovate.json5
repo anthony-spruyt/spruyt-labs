@@ -53,7 +53,7 @@
     },
     {
       matchDatasources: ["docker", "oci"],
-      pinDigests: true,
+      pinDigests: false,
     },
     {
       matchDatasources: ["docker", "oci"],
@@ -99,7 +99,7 @@
       matchManagers: ["regex"],
       matchPaths: [".taskfiles/**"],
       labels: ["renovate/taskfile"],
-      pinDigests: true,
+      pinDigests: false,
     },
     {
       matchManagers: ["regex"],
