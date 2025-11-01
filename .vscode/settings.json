@@ -15,7 +15,7 @@
     ".kilocodeignore": true,
     "talos/clusterconfig": false,
     "**/.terraform": true,
-    "**/.terraform.lock.hcl": true
+    "**/.terraform.lock.hcl": false
   },
   "search.exclude": {
     "**/*.secret.*": true,
