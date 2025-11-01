@@ -12,7 +12,7 @@ spec:
     spec:
       # renovate: datasource=github-releases depName=postfinance/kubelet-csr-approver
       chart: kubelet-csr-approver
-      version: 1.2.10
+      version: 1.2.11
       sourceRef:
         kind: HelmRepository
         name: postfinance-charts
