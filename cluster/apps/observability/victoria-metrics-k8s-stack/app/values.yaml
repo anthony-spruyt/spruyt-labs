@@ -827,11 +827,13 @@ vmagent:
         inlineUrlRelabelConfig:
           # Drop all NCT sensors
           - action: drop
+            sourceLabels:
               - __name__
               - chip
             regex: "^node_hwmon_temp_celsius;platform_nct.*"
           # Except temp2 and temp7
           - action: keep
+            sourceLabels:
               - __name__
               - chip
               - sensor
