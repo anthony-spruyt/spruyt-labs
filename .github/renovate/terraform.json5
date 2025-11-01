@@ -1,0 +1,33 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  description: [
+    "Terraform configuration for Renovate. Enables provider, module, and runtime updates across infra/terraform workspaces.",
+  ],
+  terraform: {
+    fileMatch: [
+      "(^|/)infra/terraform/.+\\.tf$",
+      "(^|/)infra/terraform/.+\\.tfvars(\\.json)?$",
+      "(^|/)infra/terraform/.terraform.lock.hcl$",
+    ],
+  },
+  packageRules: [
+    {
+      matchManagers: ["terraform"],
+      matchDatasources: ["terraform-provider"],
+      separateMinorPatch: true,
+      stabilityDays: 3,
+      labels: ["renovate/terraform", "dep/provider"],
+    },
+    {
+      matchManagers: ["terraform"],
+      matchDatasources: ["terraform-module"],
+      separateMinorPatch: true,
+      labels: ["renovate/terraform", "dep/module"],
+    },
+    {
+      matchManagers: ["terraform"],
+      matchDatasources: ["terraform-version"],
+      labels: ["renovate/terraform", "dep/runtime"],
+    },
+  ],
+}

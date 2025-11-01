@@ -1,0 +1,56 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  description: [
+    "Regex managers covering Talos manifests, Taskfiles, shell scripts, and miscellaneous YAML where Renovate needs explicit capture groups.",
+  ],
+  regexManagers: [
+    {
+      customType: "regex",
+      fileMatch: ["(^|/)talos/.+\\.ya?ml$"],
+      matchStrings: [
+        "# renovate: depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\s*\\n\\s*(?<prefix>.+?)(?<currentValue>(v|\\d)[^\\s/]+)",
+        "(?<prefix>talosVersion:\\s*)(?<currentValue>v?\\d+\\.\\d+\\.\\d+)",
+        "(?<prefix>kubernetesVersion:\\s*)(?<currentValue>v?\\d+\\.\\d+\\.\\d+)",
+      ],
+      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
+    },
+    {
+      customType: "regex",
+      fileMatch: ["(^|/)talos/helmfile/.+\\.ya?ml$"],
+      matchStrings: [
+        "(?<depName>oci://[^\\s:@]+)(?::|@)(?<currentValue>[^\\s\"']+)",
+        "(?<prefix>version:\\s*)(?<currentValue>[^\\s\"']+)",
+      ],
+      datasourceTemplate: "helm",
+    },
+    {
+      customType: "regex",
+      fileMatch: ["(^|/)cluster/flux/meta/repositories/oci/.+\\.ya?ml$"],
+      matchStrings: [
+        'url:\\s*(?<depName>oci://[^\\s]+)[^\\S\\n]*\\n(?:[\\s\\S]*?)?ref:\\s*\\n\\s*tag:\\s*"?(?<currentValue>[^"\\s]+)"?',
+      ],
+      datasourceTemplate: "helm",
+    },
+    {
+      customType: "regex",
+      fileMatch: ["(^|/)cluster/.+\\.ya?ml$"],
+      matchStrings: [
+        "registryUrl=(?<registryUrl>[^\\n]+)\\n\\s*chart:\\s*(?<depName>[^\\n]+)\\n\\s*version:\\s*(?<currentValue>[^\\n]+)",
+        "(?<prefix>artifact:\\s*)(?<depName>oci://[^:]+):(?<currentValue>[^\\s]+)",
+      ],
+      datasourceTemplate: "{{#if registryUrl}}helm{{else}}oci{{/if}}",
+    },
+    {
+      customType: "regex",
+      fileMatch: [
+        "(^|/)\\.taskfiles/.+\\.(ya?ml|tmpl\\.ya?ml)$",
+        "(^|/)\\.taskfiles/.+/scripts/.+\\.(sh|bash)$",
+      ],
+      matchStrings: [
+        "(?<prefix>image:\\s*)(?<depName>[^:\\s]+):(?<currentValue>[^\\s\"']+)",
+        "(?<depName>(?:ghcr|docker\\.io|quay\\.io|registry\\.k8s\\.io)[^:\\s]+):(?<currentValue>[^\\s\"']+)",
+      ],
+      datasourceTemplate: "docker",
+    },
+  ],
+}
