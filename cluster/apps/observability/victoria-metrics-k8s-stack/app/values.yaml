@@ -819,6 +819,19 @@ vmagent:
   #  #- url: http://some-remote-write/api/v1/write
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
   spec:
+    remoteWrite:
+      # Primary remote write endpoint for the vmsingle service (service DNS)
+      - url: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local:8428/api/v1/write
+        forceVMProto: true # Prefer VictoriaMetrics protocol for compatibility
+        sendTimeout: 5s # Cap per-request duration (CRD default is 1m)
+        inlineUrlRelabelConfig:
+          - action: drop
+            sourceLabels:
+              - __name__
+              - chip
+              - __value__
+            regex: '^node_hwmon_temp_celsius;nct6775.*;1[0-9]{2}(?:\.\d+)?$'
+            replacement: ""
     resources:
       limits:
         cpu: 1000m

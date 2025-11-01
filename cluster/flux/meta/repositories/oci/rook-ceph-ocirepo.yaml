@@ -11,5 +11,6 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
+    # https://rook.github.io/docs/rook/v1.18/Upgrade/rook-upgrade/#supported-versions
     tag: v1.17.8
   url: oci://ghcr.io/rook/rook-ceph
