@@ -941,6 +941,7 @@ vmagent:
 # -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
 grafana:
   enabled: true
+  deploymentStrategy: Recreate
   resources:
     limits:
       cpu: 3000m
