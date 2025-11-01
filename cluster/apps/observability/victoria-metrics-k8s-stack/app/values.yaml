@@ -825,13 +825,17 @@ vmagent:
         forceVMProto: true # Prefer VictoriaMetrics protocol for compatibility
         sendTimeout: 5s # Cap per-request duration (CRD default is 1m)
         inlineUrlRelabelConfig:
-          # Drop NCT6775 or NCT6798 ghost temps that are less than or equal to 0 and larger than 100 deg C
+          # Drop all NCT sensors
           - action: drop
-            sourceLabels:
               - __name__
               - chip
-              - __value__
-            regex: '^node_hwmon_temp_celsius;platform_nct(6775|6798).*;(?:1[0-9]{2}(?:\.\d+)?|0(?:\.0+)?|-\d+(?:\.\d+)?)$'
+            regex: "^node_hwmon_temp_celsius;platform_nct.*"
+          # Except temp2 and temp7
+          - action: keep
+              - __name__
+              - chip
+              - sensor
+            regex: "^node_hwmon_temp_celsius;platform_nct.*;(temp2|temp7)$"
     resources:
       limits:
         cpu: 1000m
