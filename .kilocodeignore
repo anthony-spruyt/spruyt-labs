@@ -1,7 +1,6 @@
 .secrets
 talos/clusterconfig
 *.sops.*
-.vscode
 .gitattributes
 .gitleaksignore
 LICENSE
