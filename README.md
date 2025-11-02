@@ -236,7 +236,6 @@ containerd` for regressions. Reapply prior configuration with
   certificate management.
 - [Rook Ceph](https://github.com/rook/rook) — Storage operator documentation and
   [encryption guidance](https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-rbd-and-cephfs-encryption-support).
-- [Metallb](https://metallb.io/) — Load balancer IP allocation.
 - [Velero](https://velero.io/) and the
   [AWS plugin](https://github.com/vmware-tanzu/velero-plugin-for-aws) —
   Backup and restore workflows.
@@ -250,8 +249,6 @@ containerd` for regressions. Reapply prior configuration with
   — MQTT user management.
 - [CloudNativePG documentation](https://cloudnative-pg.io/documentation/1.27/)
   — PostgreSQL operator tuning.
-- [UniFi Docker reference](https://github.com/jacobalberty/unifi-docker) —
-  Controller deployment specifics.
 
 ### Tooling and automation
 
