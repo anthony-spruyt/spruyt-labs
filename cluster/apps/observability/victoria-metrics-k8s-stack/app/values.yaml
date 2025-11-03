@@ -68,7 +68,7 @@ victoria-metrics-operator:
 #      enabled: true
 
 ## -- Create default rules for monitoring the cluster
-#defaultRules:
+defaultRules:
 #  # -- Labels, which are used for grouping results of the queries. Note that these labels are joined with `.Values.global.clusterLabel`
 #  additionalGroupByLabels: []
 #  create: true
@@ -819,18 +819,18 @@ vmagent:
   #  #- url: http://some-remote-write/api/v1/write
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
   spec:
-    remoteWrite:
-      # Primary remote write endpoint for the vmsingle service (service DNS)
-      - url: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local:8428/api/v1/write
-        forceVMProto: true # Prefer VictoriaMetrics protocol for compatibility
-        sendTimeout: 5s # Cap per-request duration (CRD default is 1m)
-        inlineUrlRelabelConfig:
-          # Drop all NCT sensors
-          - action: drop
-            sourceLabels:
-              - __name__
-              - chip
-            regex: "^node_hwmon_temp_celsius;platform_nct.*"
+    # remoteWrite:
+    #   # Primary remote write endpoint for the vmsingle service (service DNS)
+    #   - url: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local:8428/api/v1/write
+    #     forceVMProto: true # Prefer VictoriaMetrics protocol for compatibility
+    #     sendTimeout: 5s # Cap per-request duration (CRD default is 1m)
+    #     inlineUrlRelabelConfig:
+    #       # Drop all NCT sensors
+    #       - action: drop
+    #         sourceLabels:
+    #           - __name__
+    #           - chip
+    #         regex: "^node_hwmon_temp_celsius;platform_nct.*"
     resources:
       limits:
         cpu: 1000m
@@ -1029,10 +1029,10 @@ prometheus-node-exporter:
   #  # Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
   #  labels:
   #    jobLabel: node-exporter
-  #extraArgs:
+  extraArgs:
   #  - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
   #  - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|erofs|sysfs|tracefs)$
-  # -- Node Exporter VM scrape config
+# -- Node Exporter VM scrape config
 #  vmScrape:
 #    # whether we should create a service scrape resource for node-exporter
 #    enabled: true
