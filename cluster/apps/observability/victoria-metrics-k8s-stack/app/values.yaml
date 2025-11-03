@@ -68,7 +68,7 @@ victoria-metrics-operator:
 #      enabled: true
 
 ## -- Create default rules for monitoring the cluster
-defaultRules:
+# defaultRules:
 #  # -- Labels, which are used for grouping results of the queries. Note that these labels are joined with `.Values.global.clusterLabel`
 #  additionalGroupByLabels: []
 #  create: true
@@ -1024,15 +1024,15 @@ prometheus-node-exporter:
     requests:
       cpu: 25m
       memory: 64Mi
-  # all values for prometheus-node-exporter helm chart can be specified here
-  #service:
-  #  # Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
-  #  labels:
-  #    jobLabel: node-exporter
-  extraArgs:
-  #  - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
-  #  - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|erofs|sysfs|tracefs)$
-# -- Node Exporter VM scrape config
+#   # all values for prometheus-node-exporter helm chart can be specified here
+#   service:
+#     # Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
+#     labels:
+#       jobLabel: node-exporter
+#   extraArgs:
+#     - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+#     - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|erofs|sysfs|tracefs)$
+#  -- Node Exporter VM scrape config
 #  vmScrape:
 #    # whether we should create a service scrape resource for node-exporter
 #    enabled: true
