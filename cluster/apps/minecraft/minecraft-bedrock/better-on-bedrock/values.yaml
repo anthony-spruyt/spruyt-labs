@@ -154,9 +154,7 @@ shareProcessNamespace: false
 #       - name: nfs
 #         mountPath: /mnt/volume
 #         readOnly: true
-initContainers:
-  - name: better-on-bedrock
-    image:
+initContainers: []
 ## Enable an Specify container in sidecarContainers. To add a sidecar;
 sidecarContainers: ""
 # sidecarContainers: |
