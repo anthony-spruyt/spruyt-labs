@@ -56,7 +56,7 @@ minecraftServer:
   # Max view distance (in chunks). Default is 10
   viewDistance: 32
   # The "level-name" value is used as the world name and its folder name. The player may also copy their saved game folder here, and change the name to the same as that folder's to load it instead.
-  levelName: world
+  levelName: better-on-bedrock
   # Define this if you want a specific map generation seed.
   # levelSeed: 5688672905671473889
   # One of: creative, survival, adventure, spectator
@@ -68,7 +68,7 @@ minecraftServer:
   # One of: DEFAULT, FLAT, LEGACY
   levelType: DEFAULT
   # Force clients to use texture packs in the current world
-  texturepackRequired: false
+  texturepackRequired: true
   # This is the server name shown in the in-game server list.
   serverName: "Spruyt fam better on bedrock"
   # Check accounts against Minecraft account service.
@@ -205,7 +205,7 @@ extraDeploy: []
 # turn off the minecraft bedrock server and just run sleep in a loop, this way you can get to the server files to restore a server without the server already have loaded
 # them into memory or something
 # kubectl cp -n minecraft survival-server-minecraft-bedrock-b868f4464-nq22m:/data/worlds/. ./
-restoreMode: true
+restoreMode: false
 ## Additional minecraft container environment variables
 ## Values can be either variable values or `valueFrom` yaml
 ##
