@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: minecraft-bedrock-survival
+  name: minecraft-bedrock-better-on-bedrock
   namespace: minecraft
 spec:
   interval: 1h
@@ -17,4 +17,4 @@ spec:
         namespace: flux-system
   valuesFrom:
     - kind: ConfigMap
-      name: minecraft-bedrock-survival-values
+      name: minecraft-bedrock-better-on-bedrock-values

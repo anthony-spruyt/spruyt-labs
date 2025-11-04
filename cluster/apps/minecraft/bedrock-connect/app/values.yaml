@@ -42,6 +42,11 @@ configMaps:
             "name": "Spruyt fam creative",
             "address": "mc2.lan.spruyt.xyz",
             "port": 19132
+          },
+          {
+            "name": "Spruyt fam better on bedrock",
+            "address": "mc3.lan.spruyt.xyz",
+            "port": 19132
           }
         ]
 service:
