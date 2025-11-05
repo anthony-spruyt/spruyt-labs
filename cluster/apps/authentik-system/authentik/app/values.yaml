@@ -1,0 +1,4 @@
+---
+# #yaml-language-server: $schema=TODO
+# Documentation: https://github.com/goauthentik/helm/blob/authentik-2025.10.0/charts/authentik/README.md
+# Default values: https://github.com/goauthentik/helm/blob/authentik-2025.10.0/charts/authentik/values.yaml
