@@ -205,7 +205,7 @@ extraDeploy: []
 # turn off the minecraft bedrock server and just run sleep in a loop, this way you can get to the server files to restore a server without the server already have loaded
 # them into memory or something
 # kubectl cp -n minecraft survival-server-minecraft-bedrock-b868f4464-nq22m:/data/worlds/. ./
-restoreMode: false
+restoreMode: true
 ## Additional minecraft container environment variables
 ## Values can be either variable values or `valueFrom` yaml
 ##
