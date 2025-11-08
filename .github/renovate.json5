@@ -22,7 +22,7 @@
   commitBodyTable: true,
   rebaseWhen: "conflicted",
   enabledManagers: [
-    "regex",
+    "custom.regex",
     "dockerfile",
     "helm-values",
     "kubernetes",
@@ -88,7 +88,7 @@
     {
       matchManagers: ["github-actions"],
       labels: ["renovate/github-actions"],
-      stabilityDays: 2,
+      minimumReleaseAge: "2 days",
     },
     {
       matchManagers: ["terraform"],
@@ -96,16 +96,16 @@
       separateMinorPatch: true,
     },
     {
-      matchManagers: ["regex"],
-      matchPaths: [".taskfiles/**"],
+      matchManagers: ["custom.regex"],
+      matchFileNames: [".taskfiles/**"],
       labels: ["renovate/taskfile"],
       pinDigests: false,
     },
     {
-      matchManagers: ["regex"],
-      matchPaths: ["talos/**"],
+      matchManagers: ["custom.regex"],
+      matchFileNames: ["talos/**"],
       labels: ["renovate/talos"],
-      stabilityDays: 3,
+      minimumReleaseAge: "3 days",
     },
   ],
 }
