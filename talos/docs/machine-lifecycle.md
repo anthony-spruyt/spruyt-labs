@@ -25,8 +25,8 @@ flux get kustomizations -n flux-system
 ### Configuration Preparation
 
 1. Update [`talos/talconfig.yaml`](../talconfig.yaml) with new node metadata (hostname, IP, schematic reference, disk layout).
-2. Create or extend overlay snippets in `cluster/machines/*` (control-plane, workers, VMs) to declare node-specific patches.
-3. Regenerate rendered configs:
+1. Create or extend overlay snippets in `cluster/machines/*` (control-plane, workers, VMs) to declare node-specific patches.
+1. Regenerate rendered configs:
 
 ```bash
 talhelper genconfig
@@ -34,7 +34,7 @@ talhelper genconfig
 
 Outputs are written to `talos/clusterconfig/` (gitignored) for secure distribution.
 
-4. If secrets need rotation or first-time generation, run:
+1. If secrets need rotation or first-time generation, run:
 
 ```bash
 task talos:gen
@@ -43,20 +43,20 @@ task talos:gen
 ### Physical Hardware Provisioning
 
 1. Download the SecureBoot ISO matching the hardware class (see [Talos image schematics](#talos-image-schematics)).
-2. Boot from USB/PXE, select the encrypted target disk, and wait for the Talos API to advertise readiness:
+1. Boot from USB/PXE, select the encrypted target disk, and wait for the Talos API to advertise readiness:
 
 ```bash
 talosctl health --nodes <node-ip>
 ```
 
-3. Apply the rendered configuration:
+1. Apply the rendered configuration:
 
 ```bash
 talosctl apply-config --insecure --nodes <node-ip> \
    --file talos/clusterconfig/<hostname>.yaml
 ```
 
-4. For the first control-plane node, perform bootstrap:
+1. For the first control-plane node, perform bootstrap:
 
 ```bash
 talosctl bootstrap --nodes <control-plane-ip>
@@ -67,10 +67,10 @@ Record the etcd snapshot generated during the bootstrap sequence.
 ### Virtual Machine Provisioning
 
 1. Provision a UEFI VM with at least 2 vCPUs and attach the SecureBoot ISO.
-2. Place the VM NIC on the appropriate VLAN and assign the IP declared in `talconfig`.
-3. Inject the rendered `machineconfig` via virtual media or cloud-init userdata.
-4. Apply the configuration with `talosctl apply-config` once the Talos API is reachable.
-5. Verify kubelet registration:
+1. Place the VM NIC on the appropriate VLAN and assign the IP declared in `talconfig`.
+1. Inject the rendered `machineconfig` via virtual media or cloud-init userdata.
+1. Apply the configuration with `talosctl apply-config` once the Talos API is reachable.
+1. Verify kubelet registration:
 
 ```bash
 kubectl get nodes -o wide | grep <hostname>
@@ -83,28 +83,28 @@ Update the machine inventory sheet with hardware IDs, BMC credentials, and schem
 ## GitOps Update Flow
 
 1. Start a feature branch: `git checkout -b feat/talos-<change>`.
-2. Edit the relevant overlays and Talos patch snippets (`talos/patches/`).
-3. Render configs and review diffs without writing secrets:
+1. Edit the relevant overlays and Talos patch snippets (`talos/patches/`).
+1. Render configs and review diffs without writing secrets:
 
 ```bash
 talhelper genconfig --dry-run --diff
 ```
 
-4. Execute repository checks:
+1. Execute repository checks:
 
 ```bash
 task validate
 task dev-env:lint
 ```
 
-5. Commit changes referencing affected lifecycle phases (Plan, Apply, Validate) and open a PR.
-6. After merge, prompt reconciliation:
+1. Commit changes referencing affected lifecycle phases (Plan, Apply, Validate) and open a PR.
+1. After merge, prompt reconciliation:
 
 ```bash
 flux reconcile kustomization cluster-machines --with-source
 ```
 
-7. Confirm nodes consume the new configuration:
+1. Confirm nodes consume the new configuration:
 
 ```bash
 talosctl -n <node-ip> get machineconfig -o yaml
@@ -158,8 +158,8 @@ kubectl cordon <hostname>
 kubectl drain <hostname> --ignore-daemonsets --delete-emptydir-data
 ```
 
-2. Perform hardware service or firmware upgrades.
-3. Return the node to service:
+1. Perform hardware service or firmware upgrades.
+1. Return the node to service:
 
 ```bash
 kubectl uncordon <hostname>
@@ -167,21 +167,70 @@ kubectl uncordon <hostname>
 
 ### Talos OS Upgrades
 
-1. Review available factory images in [Talos image schematics](#talos-image-schematics).
-2. Execute the upgrade:
+1. **Select the correct installer image**
 
-```bash
-talosctl upgrade --nodes <node-ip> \
-   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
-```
+   - Navigate to `https://factory.talos.dev/installer/?options=secureboot:<true|false>`
+   - Choose the hardware schematic that matches your platform, then confirm the SecureBoot choice matches your nodes:
+     - SecureBoot-enabled nodes require the `secureboot:1` schematic.
+     - Traditional BIOS/UEFI nodes without SecureBoot must use the `secureboot:0` schematic.
+   - Copy the fully-qualified installer reference returned by Factory (e.g., `factory.talos.dev/installer/dad61fef6bbdd2ce03248abcdef0123456789abcd8ef0123456789abcdef0123`).
 
-3. Validate versions:
+1. **Run `talosctl upgrade`**
 
-```bash
-talosctl version -n <node-ip>
-```
+   - Always upgrade control plane nodes before workers. Allow each node to rejoin the cluster and reconcile Flux before moving to the next node class.
+   - Control plane example (`--endpoints` points at the virtual/control-plane endpoint; `--nodes` is the node being upgraded):
 
-4. Reapply machine configs if needed to eliminate drift.
+     ```sh
+     talosctl upgrade \
+       --nodes 10.10.0.11 \
+       --endpoints 10.10.0.10 \
+       --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
+     ```
+
+   - Worker example (use a control plane endpoint so the worker can coordinate with quorum during the upgrade):
+
+     ```sh
+     talosctl upgrade \
+       --nodes 10.10.0.21 \
+       --endpoints 10.10.0.10 \
+       --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
+     ```
+
+   - Repeat for each node, ensuring workers are upgraded after the control plane pool has converged.
+
+1. **Post-upgrade validation**
+
+   - Confirm Talos versions align:
+
+     ```sh
+     talosctl version --nodes <node-ip> --endpoints <control-plane-endpoint>
+     ```
+
+     Expect the node's Talos version to match the targeted release.
+
+   - Verify Kubernetes node health:
+
+     ```sh
+     kubectl get nodes
+     ```
+
+     All nodes should report `Ready` with the updated `VERSION`.
+
+   - Reconcile GitOps / Flux:
+
+     ```sh
+     flux get kustomizations
+     ```
+
+     Ensure every kustomization is `Ready` and reporting the new revision.
+
+   - Confirm etcd quorum (control plane only):
+
+     ```sh
+     talosctl -n <control-plane-node-ip> -e <control-plane-endpoint> etcd status
+     ```
+
+     Expect all members to be `healthy` with consistent terms/indices.
 
 ### Graceful Shutdown and Restart
 
@@ -199,7 +248,7 @@ ceph osd set nobackfill
 ceph osd set norecover
 ```
 
-2. Scale down the Rook operator and Ceph deployments.
+1. Scale down the Rook operator and Ceph deployments.
 
 ```bash
 kubectl -n rook-ceph scale deployment rook-ceph-operator --replicas=0
@@ -221,13 +270,13 @@ kubectl -n rook-ceph scale deployment rook-ceph-mon-c --replicas=0
 kubectl -n rook-ceph scale deployment rook-ceph-mon-d --replicas=0
 ```
 
-3. Shutdown Talos nodes in ascending order of criticality:
+1. Shutdown Talos nodes in ascending order of criticality:
 
 ```bash
 talosctl shutdown -n <node-ip>
 ```
 
-4. On restart, bring control-plane nodes back first, then reverse the Ceph scaling process, and finally clear Ceph flags.
+1. On restart, bring control-plane nodes back first, then reverse the Ceph scaling process, and finally clear Ceph flags.
 
 Order matters—mons first:
 
@@ -269,12 +318,12 @@ ceph osd unset norecover
    - Revert the offending Git commit and trigger Flux reconciliation.
    - Reapply the last-known-good config from `talos/clusterconfig/`.
 
-2. **Node Rebuild**
+1. **Node Rebuild**
 
    - Wipe disks with the Talos installer, re-run provisioning, and reapply machine configs.
    - Restore labels and taints to align with node pool expectations.
 
-3. **Control Plane Failure**
+1. **Control Plane Failure**
 
    - Restore etcd from the latest snapshot:
 
@@ -284,12 +333,12 @@ ceph osd unset norecover
 
    - Update VIP or DNS entries if API endpoints move.
 
-4. **Secrets Recovery**
+1. **Secrets Recovery**
 
    - Decrypt backups of `talos/talenv.sops.yaml` and `talos/talsecret.sops.yaml`.
    - Rotate Age identities if compromise is suspected; re-run `task talos:gen`.
 
-5. **Disaster Scenario**
+1. **Disaster Scenario**
    - Rebuild control-plane nodes first, followed by storage workers and application workers.
    - Validate storage reattachment and Flux reconciliation before handing workloads back to product teams.
 

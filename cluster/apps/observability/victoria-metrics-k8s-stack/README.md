@@ -19,7 +19,8 @@ kubectl delete vmrule {NAME} -n {NAMESPACE}
 Find the orphaned resources
 
 ```bash
-kubectl get vmservicescrapes,vmpodscrapes,vmnodescrapes,vmstaticscrapes,vmscrapeconfigs -A
+kubectl get vmservicescrapes,vmpodscrapes,vmnodescrapes, \
+  vmstaticscrapes,vmscrapeconfigs -A
 ```
 
 Delete the scrape targets, example type vmpodscrape

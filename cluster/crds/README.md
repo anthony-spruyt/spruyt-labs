@@ -43,7 +43,7 @@ workloads.
 - For Talos-managed CRDs, ensure access to `talosconfig` and Talhelper
   credentials.
 - Document intended CRD changes (group, versions, breaking semantics) in the
-  related workload README and reference this runbook in the pull request.
+  related workload readme and reference this runbook in the pull request.
 
 ### Procedure
 
@@ -148,7 +148,7 @@ spec:
 
 - `task dev-env:lint` – repository-wide linting prior to PR.
 - `kubeconform --summary` – schema validation of CRD directories.
-- GitHub Actions `lint.yaml` – markdown, YAML, JSON, and policy checks.
+- GitHub Actions `lint.yaml` – Markdown, YAML, JSON, and policy checks.
 - GitHub Actions `flux-differ.yaml` – ensures Flux diffs and reconciliation align
   with expectations.
 - `talosctl health` – validates Talos-applied CRDs do not impact control-plane
@@ -179,6 +179,6 @@ spec:
 - Flux task automation: [`Taskfile.yml`](../../Taskfile.yml)
 - Application runbook example: [`cluster/apps/README.md`](../apps/README.md)
 
-## Change Log
+## Changelog
 
 - _TBD — add entries in the format `yyyy-mm-dd · short summary · PR/commit reference`._

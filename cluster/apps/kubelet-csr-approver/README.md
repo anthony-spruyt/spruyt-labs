@@ -4,7 +4,7 @@
 
 The kubelet-csr-approver controller automates approval of node client
 certificates. It enforces policy checks before Talos-managed worker and
-control-plane nodes join the cluster. This README documents the GitOps layout,
+control-plane nodes join the cluster. This readme documents the GitOps layout,
 deployment workflow, and operations required to keep the automation healthy for
 the spruyt-labs environment.
 
@@ -238,15 +238,15 @@ Ready without manual intervention.
 
 ## References and Cross-links
 
-- Runbook standards: [Repository root README](../../README.md#runbook-standards)
+- Runbook standards: [Repository root readme](../../README.md#runbook-standards)
 - Flux control plane operations: [Flux GitOps Runbook](../flux/README.md)
-- CSR policy and security context: [Custom resources README](../crds/README.md)
-- Talos node bootstrap procedures: [Talos cluster README](../../talos/README.md)
+- CSR policy and security context: [Custom resources readme](../crds/README.md)
+- Talos node bootstrap procedures: [Talos cluster readme](../../talos/README.md)
 - Upstream kubelet-csr-approver documentation:
   <https://github.com/postfinance/kubelet-csr-approver>
 - Kubernetes certificate signing requests reference:
   <https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/>
 
-## Change Log
+## Changelog
 
 - TBD — record updates in the format `yyyy-mm-dd · short summary · PR/commit`.

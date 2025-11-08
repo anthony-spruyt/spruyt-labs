@@ -18,7 +18,7 @@ sudo docker run \
   -e RUN_LOCAL="true" \
   -e SAVE_SUPER_LINTER_OUTPUT="true" \
   -e SUPER_LINTER_OUTPUT_DIRECTORY_NAME=".output" \
-  -e USE_FIND_ALGORITHM="true" \
+  -e USE_FIND_ALGORITHM="false" \
   -e VALIDATE_ALL_CODEBASE="true" \
   -e VALIDATE_BASH="true" \
   -e VALIDATE_BASH_EXEC="true" \

@@ -60,7 +60,7 @@ state into the cluster.
    dependencies (`ks.yaml`, `release.yaml`, ConfigMaps, PVCs).
 2. Validate that chart repositories are defined in `cluster/flux/meta/repositories/`
    and add new repositories there when necessary.
-3. Document intended changes in the app-specific README (if present) and decide
+3. Document intended changes in the app-specific readme (if present) and decide
    whether additional runbooks or alerts are required.
 
 #### Authoring
@@ -68,7 +68,7 @@ state into the cluster.
 1. Start from a clean branch: `git checkout -b feat/<app>-<change>`.
 2. Edit manifests or introduce new overlays following the directory conventions.
 3. Validate manifest structure during authoring:
-   - `task pre-commit:run` for repository-wide linting (YAML, markdown,
+   - `task pre-commit:run` for repository-wide linting (YAML, Markdown,
      gitleaks, terraform as applicable).
    - `kubeconform --summary cluster/apps/<namespace>/<app>/app` to ensure
      Kubernetes schema compliance.
@@ -136,13 +136,13 @@ spec:
 - Inspect `flux get helmrelease <app> -n <namespace>` for reconciliation status,
   revisions, and last apply errors.
 - Execute application-specific smoke tests (HTTP checks, StatefulSet PVC
-  binding, service endpoints) documented in the app README.
+  binding, service endpoints) documented in the app readme.
 - Review `kubectl logs deployment/<app>` (or relevant controller) for regressions
   immediately after rollout.
 
 #### Rollback and Undeploy
 
-1. For configuration regressions, revert the offending commit (`git revert
+1. For configuration regressions, revert the offending commit (`Git revert
 <sha>`) and push the fix branch so Flux reapplies the prior desired state.
 2. For urgent rollbacks without code changes, suspend the HelmRelease with
    `flux suspend helmrelease <app> -n <namespace>` and resume after remediation.
@@ -154,7 +154,7 @@ spec:
 
 - Capture validation results in the PR description (commands run, outputs,
   screenshots as needed).
-- Update this README or the app-specific runbook with new validation probes
+- Update this readme or the app-specific runbook with new validation probes
   introduced during the change.
 - If validation deviates from the standard workflow, escalate via the path
   below.
@@ -181,7 +181,7 @@ during incident handling and contribute new patterns after resolution.
 | Tooling                                | Purpose                                                                                                           |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `task pre-commit:run`                  | Executes the local hook suite (yamllint, prettier, gitleaks, terraform fmt, SOPS checks).                         |
-| `task dev-env:lint`                    | Runs the full super-linter pipeline used in CI to verify markdown, YAML, JSON, Terraform, and security baselines. |
+| `task dev-env:lint`                    | Runs the full super-linter pipeline used in CI to verify Markdown, YAML, JSON, Terraform, and security baselines. |
 | `kubeconform --summary`                | Validates rendered Kubernetes manifests against upstream schemas.                                                 |
 | `helm template --debug` or `helm lint` | Ensures Helm charts render cleanly before Flux reconciliation.                                                    |
 | `flux diff ks` / `flux diff hr`        | Previews Flux changes prior to merge for safer reviews.                                                           |
@@ -197,7 +197,7 @@ during incident handling and contribute new patterns after resolution.
 | ------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Helm chart rendering errors during reconciliation | `flux logs --kind HelmRelease --name <app> -n <namespace>`, `helm template` locally | Correct values syntax, adjust chart versions, or align schema with upstream documentation.                            |
 | Schema mismatches (kubeconform errors, CRD drift) | `kubeconform --summary`, `kubectl describe crd <resource>`                          | Update CRDs under `resources/`, rerun kubeconform, and ensure Flux applies CRD updates before HelmRelease changes.    |
-| Flux reconciliation failures (`Ready=False`)      | `flux get kustomizations -n flux-system`, `flux events`                             | Resolve git authentication, SOPS decryption, or repository dependency issues, then trigger `flux reconcile`.          |
+| Flux reconciliation failures (`Ready=False`)      | `flux get kustomizations -n flux-system`, `flux events`                             | Resolve Git authentication, SOPS decryption, or repository dependency issues, then trigger `flux reconcile`.          |
 | Application unhealthy post-upgrade                | `kubectl get events -n <namespace>`, workload logs, service endpoints               | Revert the commit, suspend the HelmRelease, or rollback image tag/values. Validate dependent services before reapply. |
 | Secret or config drift                            | `kubectl get secret <name> -n <namespace> -o yaml`, `task sops:decrypt`             | Regenerate secrets, re-encrypt with SOPS, commit updates, and ensure external secret stores are refreshed.            |
 
@@ -212,7 +212,7 @@ during incident handling and contribute new patterns after resolution.
 - Example monitoring playbook:
   [`cluster/apps/observability/victoria-metrics-k8s-stack/README.md`](observability/victoria-metrics-k8s-stack/README.md)
 
-## Change Log
+## Changelog
 
 - _TBD — record future updates to this runbook here (yyyy-mm-dd · short summary ·
   link to PR)._

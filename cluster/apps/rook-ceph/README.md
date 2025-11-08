@@ -53,7 +53,7 @@ lifecycle management, incident response, and backup integration.
   `talosconfig` for node inspections.
 - Verify the workstation reaches the Kubernetes API, Talos control plane, and
   the Ceph dashboard ingress when exposed.
-- Confirm NVMe devices on target nodes meet the regex in
+- Confirm NVMe devices on target nodes meet the regular expression in
   [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml).
 - Ensure Velero schedules capture the `rook-ceph` namespace and required secrets.
 
@@ -407,7 +407,7 @@ events`, and the Flux commit SHA.
 - Rook documentation: <https://rook.io/docs/rook/latest/>
 - Ceph upstream operations guide: <https://docs.ceph.com/en/latest/>
 
-## Change Log
+## Changelog
 
 - _TBD — record future updates in the format `yyyy-mm-dd · short summary ·
 PR/commit reference`._

@@ -53,7 +53,7 @@ Platform engineering owns the Talos lifecycle. Operators provision
 control-plane and worker nodes, drive GitOps workflows for machine
 configuration, and coordinate maintenance or recovery actions. Comprehensive
 procedures are documented in
-[`docs/machine-lifecycle.md`](docs/machine-lifecycle.md); this README highlights
+[`docs/machine-lifecycle.md`](docs/machine-lifecycle.md); this readme highlights
 the key phases.
 
 ### Preconditions
@@ -150,25 +150,28 @@ Detailed provisioning guidance lives in
 
 #### Maintenance
 
-1. Cordon and drain workloads before disruptive work:
+- **SecureBoot schematic selection**
 
-   ```bash
-   kubectl cordon <host>
-   kubectl drain <host> --ignore-daemonsets --delete-emptydir-data
-   ```
+  - Browse `https://factory.talos.dev/installer/?options=secureboot:<true|false>` and choose the schematic matching the node's hardware profile.
+  - Confirm SecureBoot alignment (`secureboot:1` for SecureBoot-enabled nodes, `secureboot:0` otherwise). Copy the Factory installer image digest.
 
-2. Perform hardware service or Talos OS upgrades:
+- **Upgrade command template**
 
-   ```bash
-   talosctl upgrade --nodes <node-ip> \
-     --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
-   ```
+  ```sh
+  talosctl upgrade \
+    --nodes <node-ip> \
+    --endpoints <control-plane-endpoint> \
+    --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
+  ```
 
-3. Reapply configs or run `task talos:apply` to clear drift.
-4. Use the graceful shutdown cadence (Ceph flags, scaling operators, Talos
-   shutdown) described in
-   [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md#graceful-shutdown-and-restart).
-5. Return nodes to service with `kubectl uncordon <host>`.
+  - Upgrade control plane nodes first, one at a time.
+  - Proceed with workers after the control plane is stable.
+
+- **Verification checklist**
+  - `talosctl version --nodes <node-ip> --endpoints <control-plane-endpoint>`
+  - `kubectl get nodes` (expect all `Ready`, correct Talos/K8s versions)
+  - `flux get kustomizations` (ensure GitOps sync status is `Ready`)
+  - `talosctl ... etcd status` for control plane health confirmation
 
 #### Rollback and disaster recovery
 
@@ -344,6 +347,6 @@ Additional asset: SecureBoot UKI –
 - FluxCD documentation – <https://fluxcd.io/>
 - Ceph maintenance reference – <https://rook.io/docs/rook/latest/>
 
-## Change Log
+## Changelog
 
 - _TBD – record future updates as `yyyy-mm-dd · short summary · PR/commit`._

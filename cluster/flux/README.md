@@ -283,7 +283,7 @@ and automation issues.
    flux logs --kind ImageUpdateAutomation --name <name> -n <namespace>
    ```
 
-2. Ensure policies resolve tags (`flux get image policies -A`). Update semver
+2. Ensure policies resolve tags (`flux get image policies -A`). Update SemVer
    filters if no tags match.
 3. Validate commit permissions for automation bots and reconcile the Git
    source after adjustments.
@@ -297,7 +297,7 @@ and automation issues.
 - Secrets management workflows: [`.taskfiles/sops/tasks.yaml`](../../.taskfiles/sops/tasks.yaml)
 - Flux visualization task: [`.taskfiles/flux/tasks.yaml`](../../.taskfiles/flux/tasks.yaml)
 
-## Change Log
+## Changelog
 
 - _TBD — record future updates using the format_
   _`yyyy-mm-dd · short summary · PR/commit reference`._

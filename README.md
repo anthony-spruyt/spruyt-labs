@@ -54,7 +54,7 @@ Objectives:
 ## Operational Runbook
 
 The following runbook governs day-to-day cluster changes. Component-specific
-details must be added to the corresponding README listed in the README Index.
+details must be added to the corresponding readme listed in the readme Index.
 
 ### Cluster Change Workflow
 
@@ -69,19 +69,19 @@ details must be added to the corresponding README listed in the README Index.
    `task talos:gen` and apply to the appropriate node set via `task talos:apply`,
    `task talos:apply-c[1-3]`, or `task talos:apply-w[1-3]`.
 4. **Author workload changes** – Modify manifests under `cluster/`, updating or
-   creating component runbooks in the relevant README.
+   creating component runbooks in the relevant readme.
 5. **Document runbooks** – Capture Summary, Preconditions, Procedure,
-   Validation, Troubleshooting, and Escalation details in the component README
+   Validation, Troubleshooting, and Escalation details in the component readme
    during the same change.
 6. **Validate locally** – Run `task dev-env:lint` to execute the super-linter
-   suite and address markdown, YAML, and policy findings.
+   suite and address Markdown, YAML, and policy findings.
 7. **Commit and push** – Use feature branches, include runbook context in commit
    messages, and open a PR for review.
 8. **Flux reconciliation** – After merge, monitor reconciliation with
    `task flux:cap` (Flux Capacitor) or
    `flux reconcile kustomization <name> --with-source` to expedite rollout.
 9. **Post-change validation** – Confirm workloads and infrastructure via the
-   validation steps outlined below and update the Change Log when appropriate.
+   validation steps outlined below and update the changelog when appropriate.
 
 ### Day-0 and provisioning guidance
 
@@ -92,6 +92,8 @@ details must be added to the corresponding README listed in the README Index.
   before committing.
 - Maintain Rook Ceph dashboards via Grafana (dashboard `2842`) and commit any
   dashboard JSON once sourced.
+- Validate Talos installer selection via Factory (`factory.talos.dev/installer/...`), ensuring the SecureBoot schematic matches each node class before provisioning.
+- Capture the fully-qualified installer digest and document the control plane endpoint IPs used for Talos upgrades.
 
 ### Day-2 operations
 
@@ -102,7 +104,7 @@ details must be added to the corresponding README listed in the README Index.
 
 ## Runbook Standards
 
-Each component README must adopt the following structure to remain consistent
+Each component readme must adopt the following structure to remain consistent
 and actionable:
 
 1. **Summary** – One to two sentences describing the service and primary
@@ -160,6 +162,8 @@ containerd` for regressions. Reapply prior configuration with
   `task talos:apply-<node>` if issues appear.
 - Gather diagnostics via `talosctl -n <node> dmesg` and
   `talosctl -n <node> logs -k` for kernel or runtime problems.
+- Skipping SecureBoot validation: Always confirm the Factory installer link uses the correct `secureboot` schematic (`secureboot:1` vs `secureboot:0`) prior to upgrades.
+- Incomplete verification: After `talosctl upgrade`, run `talosctl version`, `kubectl get nodes`, `flux get kustomizations`, and check etcd health to catch drift early; see `talos/docs/machine-lifecycle.md` for the full checklist.
 
 ### Rook Ceph storage health
 
@@ -199,15 +203,15 @@ containerd` for regressions. Reapply prior configuration with
 ### Helm chart schema lookups
 
 - Locate YAML language server schemas for chart values by searching GitHub with
-  the regex `/yaml-language-server:\s*[^\n]*appkeyword[^\n]*\.json/`.
+  the regular expression `/yaml-language-server:\s*[^\n]*appkeyword[^\n]*\.json/`.
 
 ## References and Cross-links
 
-### README Index
+### Readme Index
 
 <!-- markdownlint-disable MD013 -->
 
-| Area                              | README                                                                                  |
+| Area                              | Readme                                                                                  |
 | --------------------------------- | --------------------------------------------------------------------------------------- |
 | Cluster applications              | [`cluster/apps/README.md`](cluster/apps/README.md)                                      |
 | Custom resources                  | [`cluster/crds/README.md`](cluster/crds/README.md)                                      |
@@ -269,6 +273,6 @@ outputs, and Talos log excerpts in any escalation. Coordinate secrets
 management or Talos image changes with the platform owner before modifying
 production nodes.
 
-## Change Log
+## Changelog
 
-TBD – record future README updates and significant procedural changes here.
+TBD – record future readme updates and significant procedural changes here.

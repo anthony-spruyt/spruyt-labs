@@ -178,7 +178,7 @@ tasks, and remediation when runs fail.
 2. Confirm generated workspaces inherit the correct VCS settings and variable
    sets before enabling automated runs.
 
-3. Document any temporary bootstrap scripts in this README and retire them once
+3. Document any temporary bootstrap scripts in this readme and retire them once
    they are automated.
 
 #### Phase 6 – Rollback and Remediation
@@ -316,7 +316,7 @@ remediation commands covering authentication, drift, and failed applies.
 
 <!-- markdownlint-enable MD013 -->
 
-## Change Log
+## Changelog
 
-- TBD — record future README updates in `yyyy-mm-dd · summary · PR/commit`
+- TBD — record future readme updates in `yyyy-mm-dd · summary · PR/commit`
   format.

@@ -487,6 +487,6 @@ a controlled fashion while maintaining schedule hygiene and credential integrity
   `flux get kustomizations -n flux-system` after restores or credential
   rotations.
 
-## Change Log
+## Changelog
 
 - _TBD – record updates using `yyyy-mm-dd · short summary · PR/commit reference`._
