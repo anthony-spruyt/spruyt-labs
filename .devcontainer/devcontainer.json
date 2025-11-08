@@ -12,7 +12,7 @@
   "features": {
     "ghcr.io/devcontainers-extra/features/sops": {},
     "ghcr.io/devcontainers-extra/features/talosctl": {
-      "version": "1.11.2"
+      "version": "1.11.5"
     },
     "ghcr.io/devcontainers-extra/features/helmfile": {},
     "ghcr.io/devcontainers/features/kubectl-helm-minikube": {
