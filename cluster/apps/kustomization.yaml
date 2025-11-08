@@ -25,7 +25,7 @@ resources:
   - ./velero
   - ./cnpg-system
   - ./n8n-system
-  - ./authentik-system
+  # - ./authentik-system
   # - ./snmp
   # - ./smtp
   # - ./mysql
