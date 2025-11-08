@@ -11,13 +11,14 @@ locals {
   }
 }
 
-resource "aws_ssm_parameter" "secret_a" {
-  name        = "/production/database/password/master"
-  description = "The parameter description"
-  type        = "SecureString"
-  value       = "dummy"
-  tags        = local.common_tags
-}
+# Use parameter store instead of secrets manager as it is MUCH cheaper
+# resource "aws_ssm_parameter" "secret_a" {
+#   name        = "/production/database/password/master"
+#   description = "The parameter description"
+#   type        = "SecureString"
+#   value       = "dummy"
+#   tags        = local.common_tags
+# }
 
 # resource "aws_secretsmanager_secret" "external_secrets" {
 #   name   = local.secret_name
