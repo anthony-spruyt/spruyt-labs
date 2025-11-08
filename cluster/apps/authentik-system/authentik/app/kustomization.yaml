@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./authentik-secrets.sops.yaml
+  - ./authentik-cnpg-object-stores.yaml
+  - ./authentik-cnpg-cluster.yaml
+  # Dont need pooling yet, if pooling is needed when load increase can look at enabling.
+  # - ./authentik-cnpg-poolers.yaml
+  - ./authentik-cnpg-scheduled-backups.yaml
+  - ./release.yaml
+configMapGenerator:
+  - name: authentik-values
+    namespace: authentik-system
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
