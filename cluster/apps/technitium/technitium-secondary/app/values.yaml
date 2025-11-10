@@ -38,7 +38,7 @@ controllers:
       technitium:
         image:
           repository: technitium/dns-server
-          tag: 13.6.0
+          tag: 14.0.1
           pullPolicy: IfNotPresent
         env:
           - name: DNS_SERVER_DOMAIN
