@@ -14,7 +14,7 @@ spec:
   template:
     storageLocation: aws-primary
     snapshotMoveData: true
-    ttl: 336h0m0s # 14 days
+    ttl: 600h0m0s # 25 days
     metadata:
       labels:
         velero.io/backup-type: "cluster"
