@@ -173,6 +173,38 @@ Detailed provisioning guidance lives in
   - `flux get kustomizations` (ensure GitOps sync status is `Ready`)
   - `talosctl ... etcd status` for control plane health confirmation
 
+##### Kubernetes control-plane upgrade
+
+> Reference: [Sidero Labs guide](https://docs.siderolabs.com/kubernetes-guides/advanced-guides/upgrading-kubernetes)
+
+1. Confirm cluster prerequisites: Flux controllers report `Ready`, recent etcd snapshots are archived, Talos nodes run a supported release, and the maintenance window is approved.
+2. Perform a dry run to surface API deprecations and preview the upgrade plan:
+
+   ```bash
+   talosctl --nodes {CP_IP} upgrade-k8s --to 1.34.2 --dry-run
+   ```
+
+   - Replace `{CP_IP}` with the control-plane node you are validating.
+   - Resolve warnings about deprecated resources or missing manifests before continuing.
+
+3. Execute the upgrade after the dry run succeeds:
+
+   ```bash
+   talosctl --nodes {CP_IP} upgrade-k8s --to 1.34.2
+   ```
+
+   - Talos orchestrates control-plane members sequentially and updates kube-proxy/kubelet while `--upgrade-kubelet` remains enabled (default).
+   - Include `--endpoint <control-plane-endpoint>` when invoking the command through the VIP, or disable kubelet upgrades per node with `--upgrade-kubelet=false`.
+
+4. Validate cluster state when the command finishes:
+
+   - `kubectl version --short`
+   - `kubectl get nodes`
+   - `talosctl health --nodes <node-ip>`
+   - `flux get kustomizations -n flux-system`
+
+5. Confirm worker nodes report the expected kubelet version (if upgraded) or schedule drains and restarts when kubelet updates were deferred. Archive the dry-run output and validation notes with the change record.
+
 #### Rollback and disaster recovery
 
 - Revert offending commits and force Flux reconciliation.

@@ -16,7 +16,7 @@
     },
     "ghcr.io/devcontainers-extra/features/helmfile": {},
     "ghcr.io/devcontainers/features/kubectl-helm-minikube": {
-      "version": "1.34.1"
+      "version": "1.34.2"
     },
     "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
       "yqVersion": "latest"
