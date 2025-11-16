@@ -3,7 +3,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: etcd-secret-writer
+  name: kube-secrets-writer
   namespace: observability
 spec:
   template:
@@ -25,17 +25,77 @@ spec:
           command: ["/bin/sh"]
           args:
             - "-c"
-            - >-
-              kubectl create secret generic etcd-secrets --save-config
-              --dry-run=client --from-file=/system/secrets/etcd/ca.crt
-              --from-file=/system/secrets/etcd/server.crt
-              --from-file=/system/secrets/etcd/server.key -o yaml | kubectl apply -f
-              -
+            - |
+              set -euo pipefail
+              umask 077
+              SECRET_NAMESPACE="${SECRET_NAMESPACE:-observability}"
+
+              sync_component() {
+                component="$1"
+                dir="$2"
+                secret="$3"
+                mappings="$4"
+
+                if [ ! -d "$dir" ]; then
+                  echo "Directory $dir missing for $component, skipping" >&2
+                  return
+                fi
+
+                args=""
+                missing=0
+
+                for entry in $mappings; do
+                  key=${entry%%:*}
+                  candidates=${entry#*:}
+                  found=0
+                  for candidate in $(echo "$candidates" | tr ',' ' '); do
+                    if [ -f "$dir/$candidate" ]; then
+                      args="$args --from-file=$key=$dir/$candidate"
+                      found=1
+                      break
+                    fi
+                  done
+                  if [ "$found" -eq 0 ]; then
+                    echo "Missing file(s) [$candidates] for $component key $key" >&2
+                    missing=$((missing + 1))
+                  fi
+                done
+
+                if [ "$missing" -gt 0 ]; then
+                  echo "Skipping $component due to missing required files" >&2
+                  return
+                fi
+
+                cmd="kubectl create secret generic \"$secret\" --namespace \"$SECRET_NAMESPACE\" --save-config --dry-run=client$args -o yaml"
+                echo "Syncing $component secrets from $dir into ${SECRET_NAMESPACE}/$secret" >&2
+                sh -c "$cmd | kubectl apply -n \"$SECRET_NAMESPACE\" -f -"
+              }
+
+              cat <<'EOF' | while IFS='|' read -r component dir secret mappings; do
+              etcd|/mnt/secrets/etcd|etcd-secrets|ca.crt:ca.crt server.crt:server.crt server.key:server.key
+              kube-scheduler|/mnt/secrets/kube-scheduler|kube-scheduler-secrets|ca.crt:ca.crt client.crt:client.crt client.key:client.key
+              kube-controller-manager|/mnt/secrets/kube-controller-manager|kube-controller-manager-secrets|ca.crt:ca.crt client.crt:client.crt client.key:client.key
+              kube-apiserver|/mnt/secrets/kube-apiserver|kube-apiserver-secrets|ca.crt:ca.crt client.crt:apiserver.crt,client.crt client.key:apiserver.key,client.key
+              EOF
+              do
+                [ -n "$component" ] || continue
+                sync_component "$component" "$dir" "$secret" "$mappings"
+              done
           imagePullPolicy: IfNotPresent
           name: kubectl
           volumeMounts:
-            - mountPath: /system/secrets/etcd
-              name: k8setcdcert
+            - mountPath: /mnt/secrets/etcd
+              name: etcd-secrets
+              readOnly: true
+            - mountPath: /mnt/secrets/kube-scheduler
+              name: kube-scheduler-secrets
+              readOnly: true
+            - mountPath: /mnt/secrets/kube-controller-manager
+              name: kube-controller-manager-secrets
+              readOnly: true
+            - mountPath: /mnt/secrets/kube-apiserver
+              name: kube-apiserver-secrets
+              readOnly: true
             - mountPath: /tmp
               name: tmp
           securityContext:
@@ -61,7 +121,20 @@ spec:
           emptyDir: {}
         - hostPath:
             path: /system/secrets/etcd
-          name: k8setcdcert
+            type: Directory
+          name: etcd-secrets
+        - hostPath:
+            path: /system/secrets/kubernetes/kube-scheduler
+            type: Directory
+          name: kube-scheduler-secrets
+        - hostPath:
+            path: /system/secrets/kubernetes/kube-controller-manager
+            type: Directory
+          name: kube-controller-manager-secrets
+        - hostPath:
+            path: /system/secrets/kubernetes/apiserver
+            type: Directory
+          name: kube-apiserver-secrets
       restartPolicy: Never
       serviceAccount: secrets-writer
       serviceAccountName: secrets-writer
