@@ -6,6 +6,7 @@ resources:
   - ./persistent-volume-claim.yaml
   - ./victoria-metrics-k8s-stack-secrets.sops.yaml
   - ./release.yaml
+  - ./rbac.yaml
 configMapGenerator:
   - name: victoria-metrics-k8s-stack-values
     namespace: observability
