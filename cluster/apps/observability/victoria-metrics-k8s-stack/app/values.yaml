@@ -120,7 +120,6 @@ kube-state-metrics:
       cpu: 10m
       memory: 96Mi
 
-## Component scraping etcd
 kubeEtcd:
   enabled: true
   service:
@@ -154,3 +153,25 @@ kubeEtcd:
             keySecret:
               name: etcd-secrets
               key: server.key
+
+kubeScheduler:
+  vmScrape:
+    spec:
+      endpoints:
+        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          port: http-metrics
+          scheme: http
+          tlsConfig:
+            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            insecureSkipVerify: true
+
+kubeControllerManager:
+  vmScrape:
+    spec:
+      endpoints:
+        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          port: http-metrics
+          scheme: http
+          tlsConfig:
+            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            insecureSkipVerify: true
