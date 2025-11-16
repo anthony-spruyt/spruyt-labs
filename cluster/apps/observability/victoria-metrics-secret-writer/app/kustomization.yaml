@@ -6,4 +6,4 @@ resources:
   - ./role.yaml
   - ./service-account.yaml
   - ./role-binding.yaml
-  - ./job.yaml
+  - ./etcd-secret-writer.yaml
