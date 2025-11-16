@@ -82,8 +82,8 @@ vmagent:
             regex: true
           - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
             action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: ${1}:${2}
+            regex: '([^:]+)(?::\d+)?;(\d+)'
+            replacement: '${1}:${2}'
             target_label: __address__
       - job_name: 'kubernetes-endpoints'
         scrape_interval: 30s
@@ -96,8 +96,8 @@ vmagent:
           - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
             action: replace
             target_label: __address__
-            regex: (.+)(?::\d+);(\d+)
-            replacement: $1:$2
+            regex: '(.+)(?::\d+);(\d+)'
+            replacement: '$1:$2'
 # -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
 grafana:
   enabled: true
