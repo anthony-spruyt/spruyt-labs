@@ -9,7 +9,7 @@ scan:
     - talos/clusterconfig
   skip-files:
     - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
-    - cluster/apps/observability/victoria-metrics-secret-writer/app/job.yaml
+    - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
     - cluster/apps/observability/victoria-metrics-secret-writer/app/role.yaml
   scanners:
     - vuln
