@@ -9,3 +9,5 @@ spec:
   ref:
     tag: "0.5.1"
   url: oci://ghcr.io/spegel-org/helm-charts/spegel
+  secretRef:
+    name: ghcr-docker-config
