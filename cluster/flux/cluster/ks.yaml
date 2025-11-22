@@ -26,7 +26,7 @@ spec:
         metadata:
           name: not-used
         spec:
-          interval: 1h
+          interval: 15m
           timeout: 3m
       target:
         group: source.toolkit.fluxcd.io
@@ -39,7 +39,7 @@ spec:
         metadata:
           name: not-used
         spec:
-          interval: 1h
+          interval: 15m
           timeout: 3m
           layerSelector:
             mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
