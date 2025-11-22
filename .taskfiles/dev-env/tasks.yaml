@@ -8,23 +8,24 @@ vars:
   installFluxScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux.sh"
   installHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm-plugins.sh"
   installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
-  updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
-  runSuperLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-super-linter.sh"
+  installTalosctlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talosctl.sh"
   installVeleroScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-velero.sh"
+  runSuperLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-super-linter.sh"
+  updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
 
 tasks:
   install-age:
     desc: Installs age and age-keygen
     cmds:
       - bash {{ .installAgeScript }}
-  install-flux-capacitor:
-    desc: Installs Flux Capacitor v2 local FluxCD GUI
-    cmds:
-      - bash {{ .installFluxCapacitorScript }}
   install-flux:
     desc: Installs the Flux CLI
     cmds:
       - bash {{ .installFluxScript }}
+  install-flux-capacitor:
+    desc: Installs Flux Capacitor v2 local FluxCD GUI
+    cmds:
+      - bash {{ .installFluxCapacitorScript }}
   install-helm-plugins:
     desc: Installs Helm schema gen and diff
     cmds:
@@ -33,18 +34,18 @@ tasks:
     desc: Installs the Talhelper CLI
     cmds:
       - bash {{ .installTalhelperScript }}
-  update-helm-plugins:
-    desc: Updates Helm plugins
+  install-talosctl:
+    desc: Installs talosctl
     cmds:
-      - bash {{ .updateHelmPluginsScript }}
-  lint:
-    desc: Runs super-linter against the repo
-    cmds:
-      - bash {{ .runSuperLinterScript }}
+      - bash {{ .installTalosctlScript }}
   install-velero:
     desc: Installs the Velero CLI
     cmds:
       - bash {{ .installVeleroScript }}
+  lint:
+    desc: Runs super-linter against the repo
+    cmds:
+      - bash {{ .runSuperLinterScript }}
   priv-pod:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on a specified node'
     cmd: |
@@ -78,3 +79,7 @@ tasks:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on ms-01-3'
     cmd: |
       task dev-env:priv-pod node=ms-01-3
+  update-helm-plugins:
+    desc: Updates Helm plugins
+    cmds:
+      - bash {{ .updateHelmPluginsScript }}

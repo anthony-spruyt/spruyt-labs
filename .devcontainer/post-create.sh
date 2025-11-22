@@ -7,6 +7,7 @@ curl -sSfL https://taskfile.dev/install.sh \
     | sudo sh -s -- -b /usr/local/bin
 
 echo "🔧 Running dev env setup tasks..."
+task dev-env:install-talosctl
 task dev-env:install-talhelper
 task dev-env:install-helm-plugins
 task dev-env:install-flux
