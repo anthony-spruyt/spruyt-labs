@@ -6,10 +6,6 @@ metadata:
   name: n8n-ocirepo
   namespace: flux-system
 spec:
-  interval: 24h
-  layerSelector:
-    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
-    operation: copy
   ref:
     tag: "1.1.0"
   url: oci://8gears.container-registry.com/library/n8n
