@@ -6,7 +6,6 @@ metadata:
   name: &app velero
   namespace: velero
 spec:
-  interval: 1h
   chart:
     spec:
       chart: *app

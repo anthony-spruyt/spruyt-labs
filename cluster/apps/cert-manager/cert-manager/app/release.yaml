@@ -6,7 +6,6 @@ metadata:
   name: cert-manager
   namespace: cert-manager
 spec:
-  interval: 1h
   chart:
     spec:
       chart: cert-manager

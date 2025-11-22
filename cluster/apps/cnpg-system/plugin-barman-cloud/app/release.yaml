@@ -6,7 +6,6 @@ metadata:
   name: plugin-barman-cloud
   namespace: cnpg-system
 spec:
-  interval: 1h
   chart:
     spec:
       chart: plugin-barman-cloud

@@ -6,7 +6,6 @@ metadata:
   name: cloudflared
   namespace: cloudflare-system
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: bjw-s-labs-app-template

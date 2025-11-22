@@ -7,7 +7,6 @@ metadata:
   annotations:
     kubelet-csr-approver.kubelet-csr-approver.config/version: "2"
 spec:
-  interval: 1h
   chart:
     spec:
       # renovate: datasource=github-releases depName=postfinance/kubelet-csr-approver

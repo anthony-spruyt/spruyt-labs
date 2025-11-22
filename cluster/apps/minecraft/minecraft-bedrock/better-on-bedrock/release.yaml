@@ -6,7 +6,6 @@ metadata:
   name: minecraft-bedrock-better-on-bedrock
   namespace: minecraft
 spec:
-  interval: 1h
   chart:
     spec:
       chart: minecraft-bedrock

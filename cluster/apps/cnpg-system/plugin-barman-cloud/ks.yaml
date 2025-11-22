@@ -14,6 +14,5 @@ spec:
   dependsOn:
     - name: cnpg-operator
     - name: cert-manager
-  interval: 1h
   prune: true
   timeout: 5m

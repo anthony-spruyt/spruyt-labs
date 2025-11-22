@@ -6,7 +6,6 @@ metadata:
   name: cnpg-operator
   namespace: cnpg-system
 spec:
-  interval: 1h
   chart:
     spec:
       chart: cloudnative-pg

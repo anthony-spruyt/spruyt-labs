@@ -16,6 +16,5 @@ spec:
       kind: HelmRelease
       name: *app
       namespace: *namespace
-  interval: 1h
   prune: true
   timeout: 1m

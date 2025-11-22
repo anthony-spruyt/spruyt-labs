@@ -5,7 +5,6 @@ kind: HelmRelease
 metadata:
   name: traefik
 spec:
-  interval: 1h
   chart:
     spec:
       # renovate: datasource=github-releases depName=traefik/traefik-helm-chart

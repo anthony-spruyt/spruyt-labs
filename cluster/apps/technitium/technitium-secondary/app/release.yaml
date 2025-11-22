@@ -6,7 +6,6 @@ metadata:
   name: technitium-secondary
   namespace: technitium
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: bjw-s-labs-app-template

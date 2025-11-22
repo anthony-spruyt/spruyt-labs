@@ -6,7 +6,6 @@ metadata:
   name: bedrock-connect
   namespace: minecraft
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: bjw-s-labs-app-template

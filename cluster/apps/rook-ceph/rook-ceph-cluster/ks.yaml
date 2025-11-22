@@ -27,7 +27,6 @@ spec:
   #    kind: CephCluster
   #    failed: status.ceph.health == 'HEALTH_ERR'
   #    current: status.ceph.health in ['HEALTH_OK', 'HEALTH_WARN']
-  interval: 1h
   prune: true
   retryInterval: 2m
   timeout: 15m
@@ -47,6 +46,5 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: rook-ceph-cluster
-  interval: 1h
   prune: true
   timeout: 5m

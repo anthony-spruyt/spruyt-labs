@@ -6,7 +6,6 @@ metadata:
   name: cilium
   namespace: kube-system
 spec:
-  interval: 1h
   chart:
     spec:
       # renovate: registryUrl=https://helm.cilium.io

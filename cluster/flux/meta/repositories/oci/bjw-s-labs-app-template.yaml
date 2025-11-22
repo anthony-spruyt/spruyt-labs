@@ -6,10 +6,6 @@ metadata:
   name: bjw-s-labs-app-template
   namespace: flux-system
 spec:
-  interval: 24h
-  layerSelector:
-    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
-    operation: copy
   ref:
     tag: "4.4.0"
   url: oci://ghcr.io/bjw-s-labs/helm/app-template

@@ -11,6 +11,5 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  interval: 1h
   prune: true
   timeout: 5m

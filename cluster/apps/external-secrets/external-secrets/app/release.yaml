@@ -5,7 +5,6 @@ kind: HelmRelease
 metadata:
   name: external-secrets
 spec:
-  interval: 1h
   chart:
     spec:
       chart: external-secrets

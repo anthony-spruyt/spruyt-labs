@@ -13,6 +13,5 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: rook-ceph-cluster-storage
-  interval: 1h
   prune: true
   timeout: 5m

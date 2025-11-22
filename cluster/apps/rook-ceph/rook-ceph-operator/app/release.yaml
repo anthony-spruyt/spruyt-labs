@@ -5,7 +5,6 @@ kind: HelmRelease
 metadata:
   name: rook-ceph-operator
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: rook-ceph-ocirepo

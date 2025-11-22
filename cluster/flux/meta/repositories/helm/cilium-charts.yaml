@@ -6,6 +6,4 @@ metadata:
   name: cilium-charts
   namespace: flux-system
 spec:
-  interval: 24h
-  timeout: 3m
   url: https://helm.cilium.io

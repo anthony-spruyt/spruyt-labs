@@ -6,6 +6,4 @@ metadata:
   name: vaultwarden-charts
   namespace: flux-system
 spec:
-  interval: 24h
-  timeout: 3m
   url: https://gissilabs.github.io/charts/

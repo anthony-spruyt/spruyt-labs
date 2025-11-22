@@ -6,10 +6,6 @@ metadata:
   name: rook-ceph-ocirepo
   namespace: flux-system
 spec:
-  interval: 24h
-  layerSelector:
-    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
-    operation: copy
   ref:
     # https://rook.github.io/docs/rook/v1.18/Upgrade/rook-upgrade/#supported-versions
     tag: v1.17.9

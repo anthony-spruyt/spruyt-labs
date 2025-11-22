@@ -6,7 +6,6 @@ metadata:
   name: external-dns-technitium
   namespace: external-dns
 spec:
-  interval: 1h
   chart:
     spec:
       chart: external-dns

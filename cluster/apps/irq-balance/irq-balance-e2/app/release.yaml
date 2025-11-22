@@ -5,7 +5,6 @@ kind: HelmRelease
 metadata:
   name: irq-balance-e2
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: bjw-s-labs-app-template
