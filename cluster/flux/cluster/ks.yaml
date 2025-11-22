@@ -19,54 +19,34 @@ spec:
     secretRef:
       name: sops-age
   patches:
-    - # Add defaults to all HelmRepository Kustomizations
-      patch: |-
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
+    # Add defaults to all HelmRepository Kustomizations
+    - patch: |-
+        apiVersion: source.toolkit.fluxcd.io/v1
+        kind: HelmRepository
         metadata:
           name: not-used
         spec:
-          patches:
-            - patch: |-
-                apiVersion: source.toolkit.fluxcd.io/v1
-                kind: HelmRepository
-                metadata:
-                  name: not-used
-                spec:
-                  interval: 1h
-                  timeout: 3m
-              target:
-                group: source.toolkit.fluxcd.io
-                kind: HelmRepository
+          interval: 1h
+          timeout: 3m
       target:
-        group: kustomize.toolkit.fluxcd.io
-        kind: Kustomization
+        group: source.toolkit.fluxcd.io
+        kind: HelmRepository
         labelSelector: helmrepositorydefaults.flux.home.arpa/disabled notin (true)
-    - # Add defaults to all OCIRepository Kustomizations
-      patch: |-
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
+    # Add defaults to all OCIRepository Kustomizations
+    - patch: |-
+        apiVersion: source.toolkit.fluxcd.io/v1
+        kind: OCIRepository
         metadata:
           name: not-used
         spec:
-          patches:
-            - patch: |-
-                apiVersion: source.toolkit.fluxcd.io/v1
-                kind: OCIRepository
-                metadata:
-                  name: not-used
-                spec:
-                  interval: 1h
-                  timeout: 3m
-                  layerSelector:
-                    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
-                    operation: copy
-              target:
-                group: source.toolkit.fluxcd.io
-                kind: OCIRepository
+          interval: 1h
+          timeout: 3m
+          layerSelector:
+            mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+            operation: copy
       target:
-        group: kustomize.toolkit.fluxcd.io
-        kind: Kustomization
+        group: source.toolkit.fluxcd.io
+        kind: OCIRepository
         labelSelector: ocirepositorydefaults.flux.home.arpa/disabled notin (true)
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
@@ -140,8 +120,8 @@ spec:
         group: kustomize.toolkit.fluxcd.io
         kind: Kustomization
         labelSelector: substitution.flux.home.arpa/disabled notin (true)
-    - # Add defaults to all HelmRelease Kustomizations
-      patch: |-
+    # Add defaults to all HelmRelease Kustomizations
+    - patch: |-
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         metadata:
