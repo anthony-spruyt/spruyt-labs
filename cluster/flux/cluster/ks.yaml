@@ -42,13 +42,14 @@ spec:
       - kind: Secret
         name: cluster-secrets
   patches:
-    # Add source ref to all Kustomizations
+    # Add defaults to all Kustomizations
     - patch: |-
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         metadata:
           name: not-used
         spec:
+          interval: 1h
           sourceRef:
             kind: GitRepository
             name: flux-system
@@ -56,6 +57,7 @@ spec:
       target:
         group: kustomize.toolkit.fluxcd.io
         kind: Kustomization
+        labelSelector: kustomizationdefaults.flux.home.arpa/disabled notin (true)
     # Add SOPS decryption to all Kustomizations
     - patch: |-
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -70,6 +72,7 @@ spec:
       target:
         group: kustomize.toolkit.fluxcd.io
         kind: Kustomization
+        labelSelector: sops.flux.home.arpa/disabled notin (true)
     # Add post build substitutions to all Kustomizations
     - patch: |-
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -87,7 +90,7 @@ spec:
         group: kustomize.toolkit.fluxcd.io
         kind: Kustomization
         labelSelector: substitution.flux.home.arpa/disabled notin (true)
-    - # Add HelmRelease defaults to all Kustomizations
+    - # Add defaults to all HelmRelease Kustomizations
       patch: |-
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
@@ -101,6 +104,7 @@ spec:
                 metadata:
                   name: not-used
                 spec:
+                  interval: 1h
                   install:
                     crds: CreateReplace
                     strategy:
@@ -123,3 +127,53 @@ spec:
       target:
         group: kustomize.toolkit.fluxcd.io
         kind: Kustomization
+        labelSelector: helmreleasedefaults.flux.home.arpa/disabled notin (true)
+    - # Add defaults to all HelmRepository Kustomizations
+      patch: |-
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: not-used
+        spec:
+          patches:
+            - patch: |-
+                apiVersion: source.toolkit.fluxcd.io/v1
+                kind: HelmRepository
+                metadata:
+                  name: not-used
+                spec:
+                  interval: 1h
+                  timeout: 3m
+              target:
+                group: source.toolkit.fluxcd.io
+                kind: HelmRepository
+      target:
+        group: kustomize.toolkit.fluxcd.io
+        kind: Kustomization
+        labelSelector: helmrepositorydefaults.flux.home.arpa/disabled notin (true)
+    - # Add defaults to all OCIRepository Kustomizations
+      patch: |-
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: not-used
+        spec:
+          patches:
+            - patch: |-
+                apiVersion: source.toolkit.fluxcd.io/v1
+                kind: OCIRepository
+                metadata:
+                  name: not-used
+                spec:
+                  interval: 1h
+                  timeout: 3m
+                  layerSelector:
+                    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+                    operation: copy
+              target:
+                group: source.toolkit.fluxcd.io
+                kind: OCIRepository
+      target:
+        group: kustomize.toolkit.fluxcd.io
+        kind: Kustomization
+        labelSelector: ocirepositorydefaults.flux.home.arpa/disabled notin (true)
