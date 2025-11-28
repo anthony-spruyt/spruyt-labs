@@ -24,6 +24,7 @@ resources:
   - ./mosquitto
   - ./velero
   - ./cnpg-system
+  - ./valkey-system
   - ./n8n-system
   # - ./authentik-system
   # - ./snmp

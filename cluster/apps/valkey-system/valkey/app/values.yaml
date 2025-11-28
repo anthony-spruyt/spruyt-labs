@@ -1,0 +1,12 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/valkey-io/valkey-helm/refs/heads/main/valkey/values.schema.json
+# Default values: https://github.com/valkey-io/valkey-helm/blob/main/valkey/values.yaml
+# Documentation: https://github.com/valkey-io/valkey-helm/blob/main/valkey/README.md
+auth:
+  enabled: true
+  usersExistingSecret: valkey-secrets
+  aclUsers:
+    n8n:
+      permission: "~* &* +@all" # https://valkey.io/topics/acl/
+metrics:
+  enabled: true
