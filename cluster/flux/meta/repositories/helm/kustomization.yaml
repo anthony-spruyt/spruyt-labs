@@ -14,5 +14,6 @@ resources:
   - ./postfinance-charts.yaml
   - ./stakater-charts.yaml
   - ./traefik-charts.yaml
+  - ./valkey-io-charts.yaml
   - ./vaultwarden-charts.yaml
   - ./vmware-tanzu-charts.yaml
