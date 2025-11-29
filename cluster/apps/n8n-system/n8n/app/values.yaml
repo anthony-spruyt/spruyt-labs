@@ -3,6 +3,11 @@
 # Documentation: https://github.com/8gears/n8n-helm-chart/blob/main/README.md
 # Default values: https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
 # Configure n8n via env vars -> https://docs.n8n.io/hosting/configuration/environment-variables
+image:
+  repository: n8nio/n8n
+  pullPolicy: IfNotPresent
+  # renovate: datasource=github-releases depName=n8n-io/n8n
+  tag: "1.121.3"
 main:
   config:
     queue:
