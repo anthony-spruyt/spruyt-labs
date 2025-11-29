@@ -9,7 +9,11 @@
         "(^|/)cluster/(?:[^/]+/)*[^/]+\\.ya?ml$",
       ],
       matchStrings: [
+        // Matches renovate comment annotations for version fields, optionally capturing chart names
+        // Handles complex multi-line patterns with optional chart declarations before version fields
         "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
+        // Matches renovate comment annotations for path-based version references
+        // Used for GitHub release assets or similar path-structured dependencies
         "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}[^\\n]*\\n(?:[^\\n]*\\n)?[^\\S\\n]*(?:-\\s*)?(?<prefix>[^\\n]*/)(?<currentValue>(?:v|\\d)[^/\\s\"']+)",
       ],
       depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if packageName}}{{{packageName}}}{{else}}{{#if chartName}}{{{chartName}}}{{/if}}{{/if}}{{/if}}",

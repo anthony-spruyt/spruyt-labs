@@ -129,6 +129,59 @@ Complete these verification steps before submitting changes to ensure cluster st
 - Launch privileged pods for node diagnostics with
   `task dev-env:priv-pod node=<node>`.
 
+### Renovate Dependency Management
+
+#### Summary
+
+Renovate automates dependency updates for Helm charts, Kubernetes manifests, Terraform configurations, and other components to keep the homelab infrastructure current and secure. Refer to [`.kilocode/rules/renovate.md`](.kilocode/rules/renovate.md) for detailed maintenance procedures.
+
+#### Preconditions
+
+- Renovate bot configured in GitHub repository settings with appropriate permissions.
+- Configuration files present in `.github/renovate/` directory (helm.json5, groups.json5, regex-managers.json5, customManagers.json5).
+- Repository structure matches configured file patterns for dependency detection.
+
+#### Procedure by lifecycle phase
+
+##### Configuration
+
+1. Maintain Helm registry configurations in `.github/renovate/helm.json5` for chart repositories.
+2. Update package groupings in `.github/renovate/groups.json5` to ensure related components (operators and CRDs, charts and images) update together.
+3. Configure regex managers in `.github/renovate/regex-managers.json5` for custom dependency formats.
+4. Adjust stability settings (stabilityDays) based on component criticality and update history.
+
+##### Maintenance
+
+1. Perform quarterly reviews of all Renovate configuration files to ensure they reflect current repository structure.
+2. Monitor update success rates and system stability after dependency deployments.
+3. Audit manager coverage to ensure all dependency types have appropriate configurations.
+4. Update registries when URLs change or new repositories are introduced.
+
+##### Updates
+
+1. Renovate automatically detects dependencies and creates pull requests for updates.
+2. Review PRs for compatibility, test changes in staging if available, and merge following cluster change workflow.
+3. Monitor post-update stability and rollback if necessary.
+
+#### Validation
+
+- Check Renovate dashboard or GitHub PRs for active dependency update proposals.
+- Verify updated dependency versions in manifests after merging PRs.
+- Run `task dev-env:lint` to ensure no linting issues introduced by updates.
+- Confirm cluster stability with `kubectl get nodes` and `flux get kustomizations -n flux-system`.
+
+#### Troubleshooting
+
+- **Failed updates**: Review PR comments for errors; adjust stabilityDays or groupings if updates are too frequent or unstable.
+- **Missing dependencies**: Audit manager configurations and file patterns; add new managers for undetected dependency types.
+- **Stability issues**: Roll back problematic updates by reverting commits or suspending HelmReleases; increase stabilityDays for critical components.
+- **Configuration errors**: Validate JSON5 syntax in configuration files; test with Renovate dry-run locally.
+
+#### Escalation
+
+- Contact platform operations for configuration issues, failed updates impacting production, or when automated updates require manual intervention.
+- Escalate to documentation governance for updates to the Renovate rule or configuration standards.
+
 ## Runbook Standards
 
 Each component readme must adopt the following structure to remain consistent
@@ -212,12 +265,13 @@ This consolidated matrix covers common failure modes across the cluster, applica
 
 #### Rules and Procedures
 
-| Document                       | Description                                                                                |
-| ------------------------------ | ------------------------------------------------------------------------------------------ |
-| Kubernetes workflow guidelines | [`.kilocode/rules/kubernetes.md`](.kilocode/rules/kubernetes.md)                           |
-| Project context and guidelines | [`.kilocode/rules/project_context.md`](.kilocode/rules/project_context.md)                 |
-| Shared procedures              | [`.kilocode/rules/shared-procedures.md`](.kilocode/rules/shared-procedures.md)             |
-| Context7 library usage         | [`.kilocode/rules/user_context7_libraries.md`](.kilocode/rules/user_context7_libraries.md) |
+| Document                         | Description                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------------------ |
+| Kubernetes workflow guidelines   | [`.kilocode/rules/kubernetes.md`](.kilocode/rules/kubernetes.md)                           |
+| Project context and guidelines   | [`.kilocode/rules/project_context.md`](.kilocode/rules/project_context.md)                 |
+| Shared procedures                | [`.kilocode/rules/shared-procedures.md`](.kilocode/rules/shared-procedures.md)             |
+| Context7 library usage           | [`.kilocode/rules/user_context7_libraries.md`](.kilocode/rules/user_context7_libraries.md) |
+| Renovate configuration standards | [`.kilocode/rules/renovate.md`](.kilocode/rules/renovate.md)                               |
 
 #### Templates
 

@@ -8,7 +8,11 @@
       customType: "regex",
       fileMatch: ["(^|/)talos/.+\\.ya?ml$"],
       matchStrings: [
+        // Matches renovate comment annotations for version fields in Talos YAML files
+        // Captures datasource, depName, packageName from comment, then version value
         "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<prefix>(?:talosVersion|kubernetesVersion|version):\\s*)(?<currentValue>[^\\s\"']+)",
+        // Matches renovate comment annotations for URL fields in Talos YAML files
+        // Used for HTTP/HTTPS URLs in list items with renovate comments
         "-\\s+#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<currentValue>https?://[^\\s\"']+)",
       ],
       depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{{packageName}}}{{/if}}",
@@ -19,6 +23,8 @@
       customType: "regex",
       fileMatch: ["(^|/)talos/helmfile/.+\\.ya?ml$"],
       matchStrings: [
+        // Matches Helm chart references in Talos helmfile YAML files
+        // Captures optional OCI prefix and chart path, then version
         "chart:\\s*(?<ociPrefix>oci://)?(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
       ],
       depNameTemplate: "{{{chartPath}}}",
@@ -29,6 +35,8 @@
       customType: "regex",
       fileMatch: ["(^|/)cluster/flux/meta/repositories/oci/.+\\.ya?ml$"],
       matchStrings: [
+        // Matches OCI repository URLs in Flux OCI repository definitions
+        // Captures the OCI path and tag version for dependency updates
         'url:\\s*oci://(?<depNamePath>[^\\s]+)[^\\S\\n]*\\n(?:[\\s\\S]*?)?ref:\\s*\\n[^\\S\\n]*tag:\\s*"?(?<currentValue>[^"\\s]+)"?',
       ],
       depNameTemplate: "{{{depNamePath}}}",
@@ -39,7 +47,11 @@
       customType: "regex",
       fileMatch: ["(^|/)cluster/.+\\.ya?ml$"],
       matchStrings: [
+        // Matches renovate comment annotations for any key-value pairs in cluster YAML files
+        // Captures datasource, depName, packageName from comment, then field and value
         "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<prefix>[\\w.-]+:\\s*)(?<currentValue>[^\\s\"']+)",
+        // Matches OCI artifact references in cluster YAML files
+        // Captures artifact prefix, OCI path, and version/tag
         '(?<artifactPrefix>artifact:\\s*"?)oci://(?<depNamePath>[^:"\\s]+)(?::|@)(?<currentValue>[^"\\s]+)"?',
       ],
       depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
@@ -53,7 +65,11 @@
         "(^|/)\\.taskfiles/.+/scripts/.+\\.(sh|bash)$",
       ],
       matchStrings: [
+        // Matches image references in Taskfile YAML templates and scripts
+        // Captures image name and tag for Docker container updates
         "(?<prefix>image:\\s*)(?<depName>[^:\\s]+):(?<currentValue>[^\\s\"']+)",
+        // Matches container registry image references in Taskfile scripts
+        // Supports ghcr, docker.io, quay.io, and registry.k8s.io registries
         "(?<depName>(?:ghcr|docker\\.io|quay\\.io|registry\\.k8s\\.io)[^:\\s]+):(?<currentValue>[^\\s\"']+)",
       ],
       depNameTemplate: "{{{depName}}}",

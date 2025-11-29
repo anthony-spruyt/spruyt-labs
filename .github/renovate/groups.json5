@@ -32,5 +32,39 @@
       separateMinorPatch: true,
       stabilityDays: 2,
     },
+    {
+      description: "Victoria Metrics components",
+      groupName: "Victoria Metrics",
+      matchPackagePatterns: [
+        "victoria-metrics",
+        "victoriametrics",
+        "ghcr.io/victoriametrics/helm-charts",
+      ],
+      matchDatasources: ["helm", "docker", "oci"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: true,
+    },
+    {
+      description: "External Secrets Operator",
+      groupName: "External Secrets",
+      matchPackagePatterns: ["external-secrets"],
+      matchDatasources: ["helm"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: true,
+    },
+    {
+      description: "CloudNativePG (CNPG) components",
+      groupName: "CloudNativePG",
+      matchPackagePatterns: ["cloudnative-pg", "cnpg"],
+      matchDatasources: ["helm", "docker"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: true,
+    },
   ],
 }
