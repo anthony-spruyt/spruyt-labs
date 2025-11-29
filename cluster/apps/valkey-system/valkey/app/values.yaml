@@ -5,8 +5,9 @@
 auth:
   enabled: true
   usersExistingSecret: valkey-secrets
+  # https://valkey.io/topics/acl/
   aclUsers:
     n8n:
-      permission: "~* &* +@all" # https://valkey.io/topics/acl/
+      permissions: "~* &* +@all"
 metrics:
   enabled: true
