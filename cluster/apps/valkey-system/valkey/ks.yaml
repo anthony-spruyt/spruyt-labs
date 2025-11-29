@@ -6,7 +6,7 @@ metadata:
   name: &app valkey
   namespace: flux-system
 spec:
-  targetNamespace: &namespace valkey-system
+  targetNamespace: valkey-system
   path: ./cluster/apps/valkey-system/valkey/app
   commonMetadata:
     labels:
