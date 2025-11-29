@@ -4,8 +4,7 @@
 
 This runbook documents how operators deploy, maintain, and recover the
 Rook-Ceph storage stack that lives under [`cluster/apps/rook-ceph`](.). It
-aligns with the repository-wide operational standards described in
-[`README.md`](../../README.md#runbook-standards) and centers on daily storage
+aligns with the repository-wide operational standards and centers on daily storage
 lifecycle management, incident response, and backup integration.
 
 ## Architecture Overview
@@ -41,7 +40,7 @@ lifecycle management, incident response, and backup integration.
 | [`cluster/apps/rook-ceph/rook-ceph-cluster/storage`](rook-ceph-cluster/storage)                 | Storage overlays defining pools, storage classes, and snapshot classes.                  |
 | [`cluster/apps/rook-ceph/rook-ceph-cluster/storage/block`](rook-ceph-cluster/storage/block)     | RBD block pools, `StorageClass`, and `VolumeSnapshotClass` definitions.                  |
 | [`cluster/apps/rook-ceph/rook-ceph-cluster/storage/object`](rook-ceph-cluster/storage/object)   | Object store and user manifests for Ceph RGW (enabled as required).                      |
-| [`.taskfiles/rook-ceph/tasks.yaml`](../../.taskfiles/rook-ceph/tasks.yaml)                      | Task runner target that opens an interactive shell in the toolbox deployment.            |
+| `.taskfiles/rook-ceph/tasks.yaml`                                                               | Task runner target that opens an interactive shell in the toolbox deployment.            |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -230,8 +229,7 @@ snapshots during incidents.
    kubectl get pvc -A | grep rook
    ```
 
-6. Coordinate Talos etcd recovery using
-   [`talos/docs/machine-lifecycle.md`](../../talos/docs/machine-lifecycle.md) if
+6. Coordinate Talos etcd recovery if
    the control plane was rebuilt.
 
 #### Phase 4 – Velero Backup Integration
@@ -251,8 +249,8 @@ snapshots during incidents.
    ```
 
 3. Ensure Ceph credentials and secrets reside in Velero snapshots for restores.
-4. Align retention and storage targets with the forthcoming Velero runbook:
-   [`cluster/apps/velero/README.md`](../velero/README.md) _(pending)_.
+4. Align retention and storage targets with the Velero runbook:
+   [`cluster/apps/velero/README.md`](../velero/README.md).
 
 ### Validation
 
@@ -392,22 +390,12 @@ events`, and the Flux commit SHA.
 
 ## References and Cross-links
 
-- Repository runbook standards:
-  [`README.md`](../../README.md#runbook-standards)
-- Application deployment overview:
-  [`cluster/apps/README.md`](../README.md)
-- Flux control plane operations:
-  [`cluster/flux/README.md`](../../flux/README.md)
-- Custom resource lifecycle guidance:
-  [`cluster/crds/README.md`](../../crds/README.md)
-- Talos machine lifecycle and etcd recovery:
-  [`talos/docs/machine-lifecycle.md`](../../talos/docs/machine-lifecycle.md)
-- Velero backup runbook (pending authoring):
-  [`cluster/apps/velero/README.md`](../velero/README.md) _(pending)_
+- Application deployment overview: [cluster/apps/README.md](/cluster/apps/README.md)
+- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](/cluster/apps/flux-system/flux-instance/README.md)
+- Custom resource lifecycle guidance: [cluster/crds/README.md](/cluster/apps/crds/README.md)
+- Velero backup runbook: [cluster/apps/velero/velero/README.md](/cluster/apps/velero/velero/README.md)
+- Runbook standards: [Repository root readme](/README.md#runbook-standards)
+- Rook-Ceph taskfile: [.taskfiles/rook-ceph/tasks.yaml](/.taskfiles/rook-ceph/tasks.yaml)
+- Talos machine lifecycle: [Talos docs machine-lifecycle.md](/cluster/talos/docs/machine-lifecycle.md)
 - Rook documentation: <https://rook.io/docs/rook/latest/>
 - Ceph upstream operations guide: <https://docs.ceph.com/en/latest/>
-
-## Changelog
-
-- _TBD — record future updates in the format `yyyy-mm-dd · short summary ·
-PR/commit reference`._

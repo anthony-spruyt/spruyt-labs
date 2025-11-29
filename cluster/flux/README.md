@@ -213,15 +213,15 @@ and automation issues.
 
 <!-- markdownlint-disable MD013 -->
 
-| Tooling                                                   | Purpose                                                                                                   |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `task dev-env:lint`                                       | Executes super-linter (markdownlint, yamllint, prettier, gitleaks) for repository parity prior to merges. |
-| `task pre-commit:run`                                     | Runs local hooks mirroring CI enforcement before pushing changes.                                         |
-| `flux diff ks <name> --path=./cluster/...`                | Previews reconciled changes for a given `Kustomization` to surface destructive diffs.                     |
-| `flux diff hr <release> --namespace <ns>`                 | Evaluates Helm release deltas before applying.                                                            |
-| GitHub Actions `lint.yaml` & `flux-differ.yaml`           | CI signal covering linting, schema validation, and Flux drift detection.                                  |
-| `flux reconcile kustomization cluster-meta --with-source` | Verifies meta layer integrity after repository updates.                                                   |
-| `kubectl get kustomizations,helmreleases -A`              | Manual spot-check of reconciliation status across namespaces.                                             |
+| Tooling                                                   | Purpose                                                                                                  |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `task dev-env:lint`                                       | Executes mega-linter (markdownlint, yamllint, prettier, gitleaks) for repository parity prior to merges. |
+| `task pre-commit:run`                                     | Runs local hooks mirroring CI enforcement before pushing changes.                                        |
+| `flux diff ks <name> --path=./cluster/...`                | Previews reconciled changes for a given `Kustomization` to surface destructive diffs.                    |
+| `flux diff hr <release> --namespace <ns>`                 | Evaluates Helm release deltas before applying.                                                           |
+| GitHub Actions `lint.yaml` & `flux-differ.yaml`           | CI signal covering linting, schema validation, and Flux drift detection.                                 |
+| `flux reconcile kustomization cluster-meta --with-source` | Verifies meta layer integrity after repository updates.                                                  |
+| `kubectl get kustomizations,helmreleases -A`              | Manual spot-check of reconciliation status across namespaces.                                            |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -296,8 +296,3 @@ and automation issues.
 - Talos bootstrap and control-plane recovery: [`talos/README.md`](../../talos/README.md)
 - Secrets management workflows: [`.taskfiles/sops/tasks.yaml`](../../.taskfiles/sops/tasks.yaml)
 - Flux visualization task: [`.taskfiles/flux/tasks.yaml`](../../.taskfiles/flux/tasks.yaml)
-
-## Changelog
-
-- _TBD — record future updates using the format_
-  _`yyyy-mm-dd · short summary · PR/commit reference`._

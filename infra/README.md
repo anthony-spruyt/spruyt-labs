@@ -240,7 +240,7 @@ remediation commands covering authentication, drift, and failed applies.
   pull requests.
 - `terraform validate` — confirms syntactic correctness within the active
   workspace.
-- GitHub Actions super-linter (`.github/workflows/lint.yaml`) runs
+- GitHub Actions mega-linter (`.github/workflows/lint.yaml`) runs
   `terraform fmt`, `terraform validate`, and `tflint` on pull requests.
 - Manual post-apply checks:
   - `aws s3api get-bucket-versioning --bucket <bucket>` to confirm versioning.
@@ -315,8 +315,3 @@ remediation commands covering authentication, drift, and failed applies.
   <https://github.com/terraform-linters/tflint>
 
 <!-- markdownlint-enable MD013 -->
-
-## Changelog
-
-- TBD — record future readme updates in `yyyy-mm-dd · summary · PR/commit`
-  format.

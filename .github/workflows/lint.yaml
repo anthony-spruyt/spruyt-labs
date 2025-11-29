@@ -1,5 +1,4 @@
 ---
-# https://github.com/marketplace/actions/super-linter
 name: Lint
 
 on: # yamllint disable-line rule:truthy
@@ -30,34 +29,9 @@ jobs:
       - name: Repo checkout
         uses: actions/checkout@v6
         with:
-          # Full git history is needed to get a proper list of changed files within `super-linter`
+          # Full git history is needed to get a proper list of changed files within `mega-linter`
           fetch-depth: 0
-      - name: Run super linter
-        uses: super-linter/super-linter@v8.2.1
+      - name: Run mega linter
+        uses: oxsecurity/mega-linter@v9
         env:
-          DEFAULT_BRANCH: "origin/main"
-          FILTER_REGEX_EXCLUDE: '.*sops.*|.*/mcp\.json$'
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          IGNORE_GITIGNORED_FILES: "true"
-          LINTER_RULES_PATH: ".github/linters"
-          VALIDATE_ALL_CODEBASE: "${{ env.VALIDATE_ALL_CODEBASE }}"
-          VALIDATE_BASH: "true"
-          VALIDATE_BASH_EXEC: "true"
-          VALIDATE_GITHUB_ACTIONS: "true"
-          VALIDATE_GITLEAKS: "true"
-          VALIDATE: "true"
-          VALIDATE_JSON: "true"
-          VALIDATE_JSON_PRETTIER: "true"
-          VALIDATE_JSONC: "true"
-          VALIDATE_JSONC_PRETTIER: "true"
-          VALIDATE_NATURAL_LANGUAGE: "true"
-          VALIDATE_MARKDOWN: "true"
-          VALIDATE_MARKDOWN_PRETTIER: "true"
-          VALIDATE_RENOVATE: "true"
-          VALIDATE_TERRAFORM_FMT: "true"
-          VALIDATE_TERRAFORM_TFLINT: "true"
-          VALIDATE_TRIVY: "true"
-          VALIDATE_YAML: "true"
-          VALIDATE_YAML_PRETTIER: "true"
-          #VALIDATE_CHECKOV: "true" # Cant get this one working locally
-          #VALIDATE_TERRAFORM_TERRASCAN: "true" # Do not need doubling up

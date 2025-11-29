@@ -201,14 +201,6 @@ Ready without manual intervention.
 - For Talos nodes failing to request certificates, consult
   `talosctl -n <node> logs kubelet` for client-side errors.
 
-### Escalation
-
-- Open a high-priority incident with the platform on-call if manual approvals are
-  required for more than one node rotation.
-- Coordinate with Talos owners before adjusting bootstrap tokens or machine
-  configurations.
-- Engage security reviewers when policy changes weaken CSR validation.
-
 ## Validation and Testing
 
 <!-- markdownlint-disable MD013 -->
@@ -223,30 +215,13 @@ Ready without manual intervention.
 
 <!-- markdownlint-enable MD013 -->
 
-## Troubleshooting Matrix
-
-<!-- markdownlint-disable MD013 -->
-
-| Symptom                           | Actions                                                                                                                                                                                                                                                                        |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CSRs stuck in `Pending`           | Check controller logs, validate RBAC with `kubectl auth can-i approve certificatesigningrequests.nodeclient --as system:serviceaccount:kubelet-csr-approver:kubelet-csr-approver`, and confirm Talos nodes advertise expected SANs. Approve manually only after investigation. |
-| Permission denied errors          | Ensure the service account retains `certificatesigningrequests/approve` verbs; reconcile the Flux Kustomization and reapply RBAC if drift is detected.                                                                                                                         |
-| Controller pod `CrashLoopBackOff` | Describe the pod, inspect logs, and verify ConfigMap-generated values for syntax issues; roll back to the prior release if misconfiguration is found.                                                                                                                          |
-| Nodes never join after approval   | Inspect `talosctl -n <node> logs kubelet`, confirm the CSR includes the `system:nodes` group, and ensure the issued certificate subject matches the node name.                                                                                                                 |
-
-<!-- markdownlint-enable MD013 -->
-
 ## References and Cross-links
 
-- Runbook standards: [Repository root readme](../../README.md#runbook-standards)
-- Flux control plane operations: [Flux GitOps Runbook](../flux/README.md)
-- CSR policy and security context: [Custom resources readme](../crds/README.md)
-- Talos node bootstrap procedures: [Talos cluster readme](../../talos/README.md)
+- Runbook standards: [Repository root readme](/README.md#runbook-standards)
+- Flux control plane operations: [cluster/flux/README.md](/cluster/flux/README.md)
+- CSR policy and security context: [cluster/crds/README.md](/cluster/apps/crds/README.md)
+- Talos node bootstrap procedures: [talos/README.md](/cluster/talos/README.md)
 - Upstream kubelet-csr-approver documentation:
   <https://github.com/postfinance/kubelet-csr-approver>
 - Kubernetes certificate signing requests reference:
   <https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/>
-
-## Changelog
-
-- TBD — record updates in the format `yyyy-mm-dd · short summary · PR/commit`.

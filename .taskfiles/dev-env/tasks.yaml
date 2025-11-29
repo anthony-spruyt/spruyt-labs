@@ -10,7 +10,7 @@ vars:
   installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
   installTalosctlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talosctl.sh"
   installVeleroScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-velero.sh"
-  runSuperLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-super-linter.sh"
+  runMegaLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-mega-linter.sh"
   updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
 
 tasks:
@@ -43,9 +43,9 @@ tasks:
     cmds:
       - bash {{ .installVeleroScript }}
   lint:
-    desc: Runs super-linter against the repo
+    desc: Runs mega-linter against the repo
     cmds:
-      - bash {{ .runSuperLinterScript }}
+      - bash {{ .runMegaLinterScript }}
   priv-pod:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on a specified node'
     cmd: |

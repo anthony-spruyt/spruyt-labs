@@ -178,7 +178,3 @@ spec:
   [`talos/patches/control-plane/extra-manifests.yaml`](../../talos/patches/control-plane/extra-manifests.yaml)
 - Flux task automation: [`Taskfile.yml`](../../Taskfile.yml)
 - Application runbook example: [`cluster/apps/README.md`](../apps/README.md)
-
-## Changelog
-
-- _TBD — add entries in the format `yyyy-mm-dd · short summary · PR/commit reference`._

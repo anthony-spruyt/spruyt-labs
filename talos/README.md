@@ -378,7 +378,3 @@ Additional asset: SecureBoot UKI –
 - Talhelper project – <https://github.com/budimanjojo/talhelper>
 - FluxCD documentation – <https://fluxcd.io/>
 - Ceph maintenance reference – <https://rook.io/docs/rook/latest/>
-
-## Changelog
-
-- _TBD – record future updates as `yyyy-mm-dd · short summary · PR/commit`._

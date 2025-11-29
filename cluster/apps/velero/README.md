@@ -7,7 +7,7 @@ Talos Kubernetes cluster. This runbook documents how operators provision the
 Velero control plane, integrate it with Rook-Ceph CSI snapshots, capture
 cluster-scoped resources, and execute restores ranging from single namespace
 recovery to full cluster rebuilds. All guidance aligns with the repository-wide
-runbook standards in [`README.md`](../../README.md#runbook-standards) and
+runbook standards and
 assumes GitOps reconciliation through Flux.
 
 ## Architecture Overview
@@ -39,7 +39,7 @@ assumes GitOps reconciliation through Flux.
 | [`cluster/apps/velero/velero/app/values.yaml`](velero/app/values.yaml)               | Helm chart values covering plugins, snapshot defaults, and secret wiring. |
 | [`cluster/apps/velero/velero/app/release.yaml`](velero/app/release.yaml)             | Flux `HelmRelease` definition pointing at the VMware Tanzu Velero chart.  |
 | [`cluster/apps/velero/velero/ks.yaml`](velero/ks.yaml)                               | Flux `Kustomization` that reconciles the HelmRelease into the cluster.    |
-| [`../../.taskfiles/dev-env/tasks.yaml`](../../.taskfiles/dev-env/tasks.yaml)         | Task runner entries for installing the Velero CLI and related tooling.    |
+| `../../.taskfiles/dev-env/tasks.yaml`                                                | Task runner entries for installing the Velero CLI and related tooling.    |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -242,16 +242,15 @@ a controlled fashion while maintaining schedule hygiene and credential integrity
      rbd snap ls <pool>/<image>
      ```
 
-   - Follow Talos etcd recovery guidance in
-     [`talos/docs/machine-lifecycle.md`](../../talos/docs/machine-lifecycle.md)
-     if control-plane nodes required replacement.
+- Follow Talos etcd recovery guidance
+  if control-plane nodes required replacement.
 
-   - Resume GitOps once validation succeeds:
+- Resume GitOps once validation succeeds:
 
-     ```bash
-     flux resume kustomization cluster-apps
-     flux reconcile kustomization cluster-apps --with-source
-     ```
+  ```bash
+  flux resume kustomization cluster-apps
+  flux reconcile kustomization cluster-apps --with-source
+  ```
 
 4. Archive restore logs for audit:
 
@@ -473,20 +472,13 @@ a controlled fashion while maintaining schedule hygiene and credential integrity
 
 ## References and Cross-links
 
-- Repository runbook standards:
-  [`README.md`](../../README.md#runbook-standards)
-- Rook-Ceph storage operations:
-  [`cluster/apps/rook-ceph/README.md`](../rook-ceph/README.md)
-- Flux GitOps control plane:
-  [`cluster/flux/README.md`](../../flux/README.md)
-- Talos machine lifecycle and etcd recovery:
-  [`talos/docs/machine-lifecycle.md`](../../talos/docs/machine-lifecycle.md)
+- Rook-Ceph storage operations: [cluster/apps/rook-ceph/rook-ceph-cluster/README.md](/cluster/apps/rook-ceph/rook-ceph-cluster/README.md)
+- Flux GitOps control plane: [cluster/flux/README.md](/cluster/flux/README.md)
+- Runbook standards: [Repository root readme](/README.md#runbook-standards)
+- Velero taskfile: [.taskfiles/dev-env/tasks.yaml](/.taskfiles/dev-env/tasks.yaml)
+- Talos machine lifecycle: [Talos docs machine-lifecycle.md](/cluster/talos/docs/machine-lifecycle.md)
 - Velero upstream documentation: <https://velero.io/docs/>
 - AWS plugin reference: <https://github.com/vmware-tanzu/velero-plugin-for-aws>
 - GitOps integration pattern: monitor Flux Kustomizations with
   `flux get kustomizations -n flux-system` after restores or credential
   rotations.
-
-## Changelog
-
-- _TBD – record updates using `yyyy-mm-dd · short summary · PR/commit reference`._

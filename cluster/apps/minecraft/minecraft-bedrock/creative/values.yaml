@@ -106,9 +106,6 @@ image:
   tag: latest
   pullPolicy: Always
   pullSecret: ""
-## Configure resource requests and limits
-## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-##
 resources:
   requests:
     memory: 1Gi

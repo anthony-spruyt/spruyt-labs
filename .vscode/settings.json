@@ -27,8 +27,8 @@
   "editor.formatOnSave": true,
   "editor.codeActions.triggerOnFocusChange": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "prettier.configPath": ".github/linters/.prettierrc.yaml",
-  "prettier.ignorePath": ".github/linters/.prettierignore",
+  "prettier.configPath": ".prettierrc.yaml",
+  "prettier.ignorePath": ".prettierignore",
   "explorer.sortOrder": "type",
   "editor.tabSize": 2,
   "[terraform]": {

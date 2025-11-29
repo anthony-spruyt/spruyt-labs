@@ -12,49 +12,26 @@ Spruyt-labs homelab workspace rules and operating context for contributors.
 
 ## Day-to-day guidelines
 
+- Always test changes with linting or validation after any task to confirm successful completion. Never assume success; verify explicitly before proceeding with any further actions.
 - Query the live cluster with `kubectl` or `talosctl` to validate assumptions before making changes.
 - Keep GitHub Actions definitions in `.github/` aligned with repository workflows.
-- Review [`kubernetes.md`](kubernetes.md:1) for kubectl verification steps before touching Kubernetes manifests.
+- Review [`kubernetes.md`](kubernetes.md) for kubectl verification steps before touching Kubernetes manifests.
 - Prefer automation (Flux, Terraform, Talos declarative configs) over manual intervention to avoid configuration drift.
+- **Always use Taskfile tasks first** for any development operations (e.g., `task dev-env:lint` for linting) instead of running underlying scripts directly. Only run scripts manually if the Taskfile task is unavailable or insufficient.
+- **Always test changes with linting or validation before committing** (e.g., `task dev-env:lint` for documentation and code checks).
 - Evaluate available MCP servers before resorting to ad-hoc web searches.
-
-## Terraform change workflow (quick checklist)
-
-1. `terraform fmt` and `terraform validate` within the `infra/` subdirectories you modify.
-2. Run `terraform plan`, capture the output, and annotate any expected changes or surprises.
-3. Request review with the plan output attached; ensure reviewers understand blast radius, dependencies, and roll-back strategy.
-4. After approval, `terraform apply` with the exact plan you reviewed. Document the apply run in change notes or tickets.
-5. Confirm state file synchronization (remote backend) and monitor downstream systems for drift.
-
-## Talos lifecycle operations (quick checklist)
-
-1. Use `talosctl health` and `talosctl logs -f kubelet` (as needed) to assess cluster health before upgrades or configuration changes.
-2. Diff intended vs. live Talos machine config with `talosctl config diff` before applying updates.
-3. Apply changes via `talosctl apply-config --insecure --nodes <target>` or Flux-managed Talos resources, avoiding partial application across control-plane nodes.
-4. Verify post-change status with `talosctl health` and Kubernetes node readiness. Capture follow-up actions or anomalies.
-5. Coordinate disruptive maintenance windows with platform owners listed in the escalation section.
-
-## MCP integration workflow
-
-- Primary MCP endpoint: see [`../mcp.json`](../mcp.json:1) for the `context7` server configuration.
-- Before issuing `resolve-library-id`, consult the pre-approved catalog in [`context7-libraries.json`](../context7-libraries.json:1).
-- When documentation is required, prefer MCP tools (`resolve-library-id`, `get-library-docs`) to ensure citations are consistent and cached.
-- Record the library ID, version (if provided), and relevant snippets in your change notes or pull request description.
-- If documentation is unavailable or outdated, escalate per the ownership guidance below before proceeding.
-
-## Escalation and ownership
-
-- **Cluster operations:** _Owner TBD_ — add contact (Slack channel, email, or on-call rotation). Dependency: platform team to provide canonical contact list.
-- **Documentation governance:** _Owner TBD_ — identify who approves rule updates and maintains MCP catalog entries.
-- **Terraform infrastructure:** _Owner TBD_ — specify responsible maintainer or triage channel.
-
-> Update the placeholders above once maintainers publish the official contact matrix. Until then, flag ownership gaps in pull requests.
+- **Automation Decisions**: Use Taskfile tasks for any multi-step or repetitive process; reserve manual commands for one-off verifications or when Taskfile equivalents are unavailable.
 
 ## Related documents
 
-- [`kubernetes.md`](kubernetes.md:1) — detailed kubectl workflow and command reference.
-- [`user_context7_libraries.md`](user_context7_libraries.md:1) — Context7 library usage policy.
+- [`kubernetes.md`](kubernetes.md) — detailed kubectl workflow and command reference.
+- [`shared-procedures.md`](shared-procedures.md) — common operational patterns and MCP workflows.
+- [`user_context7_libraries.md`](user_context7_libraries.md) — Context7 library usage policy.
 - `../context7-libraries.json` — catalog of approved Context7 libraries.
 - `../mcp.json` — MCP server definitions and tool allowances.
 
 Keep related guidance synchronized to avoid conflicting instructions across documents.
+
+## Changelog
+
+- 2025-11-29 · Added Automation Decisions bullet in Day-to-day guidelines section.

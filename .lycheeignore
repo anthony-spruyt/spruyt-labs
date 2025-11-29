@@ -1,0 +1,5 @@
+s3:*
+oci:*
+ssh:*
+https://n8n.*
+.*svc.*

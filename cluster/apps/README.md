@@ -109,7 +109,7 @@ spec:
 
 ##### Commit and Review Hygiene
 
-1. Run `task dev-env:lint` to exercise the super-linter pipeline before opening
+1. Run `task dev-env:lint` to exercise the mega-linter pipeline before opening
    a PR.
 2. Commit with meaningful context, including runbook updates when applicable.
 3. Open a pull request summarizing lifecycle phases touched (Plan, Apply,
@@ -162,44 +162,21 @@ spec:
 ### Troubleshooting
 
 Common failure modes and diagnostics are captured in the
-[Troubleshooting Playbooks](#troubleshooting-playbooks) section. Reference it
+[Troubleshooting](#troubleshooting) section. Reference it
 during incident handling and contribute new patterns after resolution.
-
-### Escalation
-
-- Notify the platform owner or on-call channel when a change impacts shared
-  infrastructure (ingress, storage, DNS).
-- Include links to PRs, Flux reconciliation logs, `kubectl` diagnostics, and
-  runbook sections when escalating.
-- Coordinate with secrets management owners before rotating credentials that
-  affect multiple namespaces.
 
 ## Validation and Testing
 
 <!-- markdownlint-disable MD013 -->
 
-| Tooling                                | Purpose                                                                                                           |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `task pre-commit:run`                  | Executes the local hook suite (yamllint, prettier, gitleaks, terraform fmt, SOPS checks).                         |
-| `task dev-env:lint`                    | Runs the full super-linter pipeline used in CI to verify Markdown, YAML, JSON, Terraform, and security baselines. |
-| `kubeconform --summary`                | Validates rendered Kubernetes manifests against upstream schemas.                                                 |
-| `helm template --debug` or `helm lint` | Ensures Helm charts render cleanly before Flux reconciliation.                                                    |
-| `flux diff ks` / `flux diff hr`        | Previews Flux changes prior to merge for safer reviews.                                                           |
-| Repository CI (`.github/workflows/*`)  | Confirms lint, formatting, and policy checks pass for app changes; monitor PR status checks for enforcement.      |
-
-<!-- markdownlint-enable MD013 -->
-
-## Troubleshooting Playbooks
-
-<!-- markdownlint-disable MD013 -->
-
-| Failure Mode                                      | Diagnostics                                                                         | Remediation                                                                                                           |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Helm chart rendering errors during reconciliation | `flux logs --kind HelmRelease --name <app> -n <namespace>`, `helm template` locally | Correct values syntax, adjust chart versions, or align schema with upstream documentation.                            |
-| Schema mismatches (kubeconform errors, CRD drift) | `kubeconform --summary`, `kubectl describe crd <resource>`                          | Update CRDs under `resources/`, rerun kubeconform, and ensure Flux applies CRD updates before HelmRelease changes.    |
-| Flux reconciliation failures (`Ready=False`)      | `flux get kustomizations -n flux-system`, `flux events`                             | Resolve Git authentication, SOPS decryption, or repository dependency issues, then trigger `flux reconcile`.          |
-| Application unhealthy post-upgrade                | `kubectl get events -n <namespace>`, workload logs, service endpoints               | Revert the commit, suspend the HelmRelease, or rollback image tag/values. Validate dependent services before reapply. |
-| Secret or config drift                            | `kubectl get secret <name> -n <namespace> -o yaml`, `task sops:decrypt`             | Regenerate secrets, re-encrypt with SOPS, commit updates, and ensure external secret stores are refreshed.            |
+| Tooling                                | Purpose                                                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `task pre-commit:run`                  | Executes the local hook suite (yamllint, prettier, gitleaks, terraform fmt, SOPS checks).                        |
+| `task dev-env:lint`                    | Runs the full mega-linter pipeline used in CI to verify Markdown, YAML, JSON, Terraform, and security baselines. |
+| `kubeconform --summary`                | Validates rendered Kubernetes manifests against upstream schemas.                                                |
+| `helm template --debug` or `helm lint` | Ensures Helm charts render cleanly before Flux reconciliation.                                                   |
+| `flux diff ks` / `flux diff hr`        | Previews Flux changes prior to merge for safer reviews.                                                          |
+| Repository CI (`.github/workflows/*`)  | Confirms lint, formatting, and policy checks pass for app changes; monitor PR status checks for enforcement.     |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -209,10 +186,76 @@ during incident handling and contribute new patterns after resolution.
 - Flux operations guide: [`cluster/flux/README.md`](../flux/README.md)
 - Task automation index: [`Taskfile.yml`](../../Taskfile.yml)
 - SOPS workflow tasks: [`.taskfiles/sops/tasks.yaml`](../../.taskfiles/sops/tasks.yaml)
-- Example monitoring playbook:
-  [`cluster/apps/observability/victoria-metrics-k8s-stack/README.md`](observability/victoria-metrics-k8s-stack/README.md)
+- Documentation standards: [`.kilocode/rules/documentation_standards.md`](../../.kilocode/rules/documentation_standards.md)
 
-## Changelog
+## Agent-Friendly Workflows
 
-- _TBD — record future updates to this runbook here (yyyy-mm-dd · short summary ·
-  link to PR)._
+This section provides decision trees and conditional logic for autonomous execution of app deployment processes, including health checks and failure recovery.
+
+### App Deployment Health Check Workflow
+
+```bash
+If kubectl get pods -A --no-headers | grep -E "(Pending|CrashLoopBackOff|Error)" > /dev/null
+Then:
+  For each unhealthy pod:
+    Run kubectl describe pod <pod-name> -n <namespace>
+    Expected output: Events indicate failure reason
+    If image pull error:
+      Run kubectl logs <pod-name> -n <namespace> --previous
+      Expected output: Image pull failure details
+      Recovery: Verify image registry access; update image tag if needed
+    Else if resource constraints:
+      Run kubectl get pod <pod-name> -n <namespace> -o yaml | grep -A 10 resources
+      Expected output: Resource limits/requests
+      Recovery: Adjust resource specifications in values.yaml
+    Else:
+      Run kubectl logs <pod-name> -n <namespace>
+      Expected output: Application error logs
+      Recovery: Check application configuration; rollback if misconfiguration
+  Else:
+    Proceed to Helm release status check
+Else:
+  Proceed to Helm release status check
+```
+
+### Helm Release Reconciliation Workflow
+
+```bash
+If flux get helmreleases -A --no-headers | grep -v "True" > /dev/null
+Then:
+  For each failing HelmRelease:
+    Run flux reconcile helmrelease <name> -n <namespace>
+    Expected output: Reconciliation completes successfully
+    If reconciliation fails:
+      Run flux logs --kind HelmRelease --name <name> -n <namespace>
+      Expected output: Error details (e.g., chart version mismatch, values invalid)
+      Recovery: Validate chart values with helm template; update release.yaml if needed
+    Else:
+      Run flux get helmrelease <name> -n <namespace>
+      Expected output: Status shows Ready=True
+  Else:
+    App deployment verified successfully
+Else:
+  App deployment verified successfully
+```
+
+### Failure Recovery Escalation Workflow
+
+```bash
+If post-deployment validation fails (e.g., service endpoints unreachable)
+Then:
+  Run kubectl get events -n <namespace> --sort-by=.lastTimestamp | tail -10
+  Expected output: Recent events related to deployment
+  If network policy blocking:
+    Run kubectl get networkpolicies -n <namespace>
+    Expected output: List of policies
+    Recovery: Review and adjust Cilium network policies
+  Else if persistent volume issues:
+    Run kubectl get pvc -n <namespace>
+    Expected output: PVC status
+    Recovery: Check storage class and Rook Ceph health
+  Else:
+    Escalate to component-specific troubleshooting per app README
+Else:
+  Deployment successful; monitor for regressions
+```

@@ -1,3 +1,4 @@
+---
 name: Terraform Validate
 
 on: # yamllint disable-line rule:truthy
