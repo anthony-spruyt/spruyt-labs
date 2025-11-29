@@ -4,7 +4,16 @@
 # Default values: https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
 # Configure n8n via env vars -> https://docs.n8n.io/hosting/configuration/environment-variables
 main:
-  extraEnv:
+  config:
+    queue:
+      health:
+        check:
+          active: true
+      bull:
+        redis:
+          host: valkey.valkey-system
+          port: 6379
+  extraEnv: &extraEnv
     DB_TYPE:
       value: postgresdb
     DB_POSTGRESDB_DATABASE:
@@ -65,10 +74,6 @@ main:
     # TODO: migrate to external task runner
     N8N_RUNNERS_MODE:
       value: "internal"
-    QUEUE_BULL_REDIS_HOST:
-      value: "valkey.valkey-system"
-    QUEUE_BULL_REDIS_PORT:
-      value: "6379"
     QUEUE_BULL_REDIS_USERNAME:
       valueFrom:
         secretKeyRef:
@@ -81,13 +86,13 @@ main:
           key: QUEUE_BULL_REDIS_PASSWORD
     WEBHOOK_URL:
       value: https://n8n.${EXTERNAL_DOMAIN}
-  extraVolumeMounts:
+  extraVolumeMounts: &extraVolumeMounts
     - name: db-ca-cert
       mountPath: /home/ssl/certs/postgresql
       readOnly: true
     - name: n8n-cache
       mountPath: /home/node/.cache
-  extraVolumes:
+  extraVolumes: &extraVolumes
     - name: db-ca-cert
       secret:
         secretName: n8n-cnpg-cluster-ca
@@ -96,7 +101,7 @@ main:
             path: ca.crt
     - name: n8n-cache
       emptyDir: {}
-  deploymentAnnotations:
+  deploymentAnnotations: &deploymentAnnotations
     reloader.stakater.com/auto: "true"
   securityContext:
     capabilities:
@@ -114,5 +119,13 @@ main:
       memory: 256Mi
 worker:
   enabled: true
+  extraEnv: *extraEnv
+  extraVolumeMounts: *extraVolumeMounts
+  extraVolumes: *extraVolumes
+  deploymentAnnotations: *deploymentAnnotations
 webhook:
   enabled: true
+  extraEnv: *extraEnv
+  extraVolumeMounts: *extraVolumeMounts
+  extraVolumes: *extraVolumes
+  deploymentAnnotations: *deploymentAnnotations
