@@ -8,6 +8,13 @@ auth:
   # https://valkey.io/topics/acl/
   aclUsers:
     n8n:
-      permissions: "~* &* +@all"
+      permissions: "~n8n:queue:bull:* &* +@all"
 metrics:
   enabled: true
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
