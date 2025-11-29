@@ -44,5 +44,6 @@
   "n8n": "/n8n-io/n8n",
   "n8n-docs": "/n8n-io/n8n-docs",
   "node-red": "/node-red/node-red",
-  "node-red-docs": "/node-red/node-red.github.io"
+  "node-red-docs": "/node-red/node-red.github.io",
+  "valkey": "/valkey-io/valkey-doc"
 }

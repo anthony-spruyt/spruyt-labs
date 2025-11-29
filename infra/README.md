@@ -4,7 +4,7 @@
 
 This document governs the Terraform-backed infrastructure that supports the
 spruyt-labs Talos cluster. It explains how directories under
-[`infra/`](infra) are organized, prescribes operator workflows for planning
+[infra/](.) are organized, prescribes operator workflows for planning
 and applying changes, captures validation expectations, and enumerates
 troubleshooting paths for Terraform Cloud backed deployments.
 
@@ -25,7 +25,7 @@ troubleshooting paths for Terraform Cloud backed deployments.
   workspace level variables.
 - [`terraform/aws/ceph-objectstore/`](terraform/aws/ceph-objectstore) —
   Provisions S3 object storage and IAM integration consumed by
-  [`cluster/apps/rook-ceph/`](cluster/apps/rook-ceph).
+  [`cluster/apps/rook-ceph/`](../cluster/apps/rook-ceph).
 - [`terraform/aws/cnpg-backup/`](terraform/aws/cnpg-backup) —
   Manages CloudNativePG backup storage. Additional usage notes live in
   [`terraform/aws/cnpg-backup/README.md`](terraform/aws/cnpg-backup/README.md).

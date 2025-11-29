@@ -17,7 +17,7 @@ This Terraform configuration bootstraps Terraform Cloud workspaces for AWS-based
 
 ## Configuration
 
-Update the variables file [variables.auto.tfvars](infra/terraform/workspace-factory/variables.auto.tfvars), for example:
+Update the variables file [variables.auto.tfvars](variables.auto.tfvars), for example:
 
 ```hcl
 aws_account_id                          = "<AWS account ID>"
@@ -67,7 +67,7 @@ Push any changes to the configured VCS branch (for example, `main`); Terraform C
 
 After runs complete, review the following outputs in the Terraform Cloud UI or via the Terraform CLI:
 
-- Other workspace-specific outputs in [outputs.tf](infra/terraform/workspace-factory/outputs.tf)
+- Other workspace-specific outputs in [outputs.tf](outputs.tf)
 
 ## Linting
 

@@ -30,6 +30,7 @@ Objectives:
   (cloudflared) for remote access.
 - **Storage** – Rook Ceph provides block, filesystem, and object storage with
   Velero handling backup and disaster recovery.
+- **Caching** – Valkey provides Redis-compatible in-memory data storage.
 - **Observability** – VictoriaMetrics pairs with Vector for log shipping.
   Dashboards will be committed once finalized.
 
