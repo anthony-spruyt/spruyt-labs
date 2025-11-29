@@ -38,6 +38,8 @@ main:
       value: "true"
     DB_POSTGRESDB_SSL_CA_FILE:
       value: /home/ssl/certs/postgresql/ca.crt
+    EXECUTIONS_MODE:
+      value: "queue"
     GENERIC_TIMEZONE:
       value: ${TIMEZONE}
     N8N_BLOCK_ENV_ACCESS_IN_NODE:
@@ -57,12 +59,26 @@ main:
       value: "5678"
     N8N_PROXY_HOPS:
       value: "1"
-    # Running n8n without task runners is deprecated.
-    # Task runners will be turned on by default in a future version.
-    # Please set `N8N_RUNNERS_ENABLED=true` to enable task runners now and avoid potential issues in the future.
-    # Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
     N8N_RUNNERS_ENABLED:
-      value: "false"
+      value: "true"
+    # Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
+    # TODO: migrate to external task runner
+    N8N_RUNNERS_MODE:
+      value: "internal"
+    QUEUE_BULL_REDIS_HOST:
+      value: "valkey.valkey-system"
+    QUEUE_BULL_REDIS_PORT:
+      value: "6379"
+    QUEUE_BULL_REDIS_USERNAME:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: QUEUE_BULL_REDIS_USERNAME
+    QUEUE_BULL_REDIS_PASSWORD:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: QUEUE_BULL_REDIS_PASSWORD
     WEBHOOK_URL:
       value: https://n8n.${EXTERNAL_DOMAIN}
   extraVolumeMounts:
@@ -96,3 +112,7 @@ main:
     requests:
       cpu: 100m
       memory: 256Mi
+worker:
+  enabled: true
+webhook:
+  enabled: true
