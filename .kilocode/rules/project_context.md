@@ -31,7 +31,3 @@ Spruyt-labs homelab workspace rules and operating context for contributors.
 - `../mcp.json` — MCP server definitions and tool allowances.
 
 Keep related guidance synchronized to avoid conflicting instructions across documents.
-
-## Changelog
-
-- 2025-11-29 · Added Automation Decisions bullet in Day-to-day guidelines section.

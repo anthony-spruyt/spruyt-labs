@@ -4,16 +4,16 @@
     "Centralized Flux, Kubernetes and Helm values manager configuration.",
   ],
   flux: {
-    fileMatch: ["(^|/)cluster/.+\\.ya?ml$"],
+    managerFilePatterns: ["(^|/)cluster/.+\\.ya?ml$"],
   },
   "helm-values": {
-    fileMatch: [
+    managerFilePatterns: [
       "(^|/)cluster/.+/(values(\\.\\w+)?|values\\.ya?ml)$",
       "(^|/)cluster/.+/(release|helmrelease)\\.ya?ml$",
       "(^|/)talos/helmfile/.+\\.ya?ml$",
     ],
   },
   kubernetes: {
-    fileMatch: ["(^|/)cluster/.+\\.ya?ml$", "(^|/)talos/.+\\.ya?ml$"],
+    managerFilePatterns: ["(^|/)cluster/.+\\.ya?ml$", "(^|/)talos/.+\\.ya?ml$"],
   },
 }

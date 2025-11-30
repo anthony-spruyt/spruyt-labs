@@ -95,7 +95,3 @@ flux diff hr <name> --namespace <namespace>
 
 - Ensure the relevant rule or runbook references the same library ID so future contributors reuse consistent sources.
 - If you discovered inaccuracies or stale references, open an issue or submit a follow-up change to update [`context7-libraries.json`](../context7-libraries.json) and the associated guidance.
-
-## Changelog
-
-- 2025-11-29 · Added Decision Trees for Tool Selection subsection under MCP Integration Workflow.

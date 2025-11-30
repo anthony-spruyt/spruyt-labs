@@ -27,6 +27,7 @@ controllers:
             value: "65532 65532"
     containers:
       app:
+        # renovate: datasource=docker depName=cloudflare/cloudflared
         image:
           repository: docker.io/cloudflare/cloudflared
           tag: 2025.11.1

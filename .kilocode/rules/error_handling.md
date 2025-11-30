@@ -46,7 +46,3 @@ Involve human operators when:
 - **Event inspection**: `kubectl get events -n <namespace> --sort-by=.metadata.creationTimestamp` for chronological event review
 - **Flux logs**: `kubectl logs -n flux-system deployment/flux-controller` for reconciliation details
 - **Helm debug**: `helm install --dry-run --debug <release> <chart> -n <namespace>` for validation without deployment
-
-## Changelog
-
-- 2025-11-29 · Created comprehensive error handling rule with symptom-based decision trees, escalation criteria, and recovery procedures.

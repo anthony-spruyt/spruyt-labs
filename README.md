@@ -110,7 +110,7 @@ Complete these verification steps before submitting changes to ensure cluster st
    `task flux:cap` (Flux Capacitor) or
    `flux reconcile kustomization <name> --with-source` to expedite rollout.
 9. **Post-change validation** – Confirm workloads and infrastructure via the
-   validation steps outlined below and update the changelog when appropriate.
+   validation steps outlined below.
 
 ### Day-0 and provisioning guidance
 

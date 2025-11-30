@@ -3,7 +3,7 @@
     {
       description: "Rook-Ceph image and chart",
       groupName: "Rook Ceph",
-      matchPackagePatterns: ["rook.ceph", "rook/rook"],
+      matchPackageNames: ["rook.ceph", "rook/rook"],
       matchDatasources: ["docker", "helm", "github-tags"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
@@ -13,7 +13,7 @@
     {
       description: "Traefik chart and CRD",
       groupName: "Traefik",
-      matchPackagePatterns: ["traefik", "traefik-crd-source"],
+      matchPackageNames: ["traefik", "traefik-crd-source"],
       matchDatasources: ["helm", "regex", "github-tags"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
@@ -30,12 +30,12 @@
       groupName: "cilium",
       additionalBranchPrefix: "",
       separateMinorPatch: true,
-      stabilityDays: 2,
+      minimumReleaseAge: "2 days",
     },
     {
       description: "Victoria Metrics components",
       groupName: "Victoria Metrics",
-      matchPackagePatterns: [
+      matchPackageNames: [
         "victoria-metrics",
         "victoriametrics",
         "ghcr.io/victoriametrics/helm-charts",
@@ -49,17 +49,73 @@
     {
       description: "External Secrets Operator",
       groupName: "External Secrets",
-      matchPackagePatterns: ["external-secrets"],
+      matchPackageNames: ["external-secrets"],
       matchDatasources: ["helm"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: true,
+      minimumReleaseAge: "7 days",
+    },
+    {
+      description: "CloudNativePG (CNPG) components",
+      groupName: "CloudNativePG",
+      matchPackageNames: ["cloudnative-pg", "cnpg"],
+      matchDatasources: ["helm", "docker"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },
       separateMinorPatch: true,
     },
     {
-      description: "CloudNativePG (CNPG) components",
-      groupName: "CloudNativePG",
-      matchPackagePatterns: ["cloudnative-pg", "cnpg"],
+      description: "Flux components",
+      groupName: "Flux",
+      matchPackageNames: ["fluxcd/*", "ghcr.io/fluxcd/*"],
+      matchDatasources: ["docker", "helm", "github-releases"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: true,
+      minimumReleaseAge: "7 days",
+    },
+    {
+      description: "Authentik stack",
+      groupName: "Authentik",
+      matchPackageNames: ["goauthentik/*", "ghcr.io/goauthentik/*"],
+      matchDatasources: ["docker", "helm"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: true,
+    },
+    {
+      description: "Cert-Manager components",
+      groupName: "Cert-Manager",
+      matchPackageNames: ["cert-manager", "jetstack/cert-manager"],
+      matchDatasources: ["helm", "docker"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: true,
+      minimumReleaseAge: "7 days",
+    },
+    {
+      description: "External-DNS components",
+      groupName: "External-DNS",
+      matchPackageNames: ["external-dns", "kubernetes-sigs/external-dns"],
+      matchDatasources: ["helm", "docker"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: true,
+    },
+    {
+      description: "Snapshot Controller components",
+      groupName: "Snapshot Controller",
+      matchPackageNames: [
+        "snapshot-controller",
+        "kubernetes-csi/external-snapshotter",
+      ],
       matchDatasources: ["helm", "docker"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",

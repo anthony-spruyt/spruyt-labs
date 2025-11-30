@@ -4,7 +4,7 @@
     "Terraform configuration for Renovate. Enables provider, module, and runtime updates across infra/terraform workspaces.",
   ],
   terraform: {
-    fileMatch: [
+    managerFilePatterns: [
       "(^|/)infra/terraform/.+\\.tf$",
       "(^|/)infra/terraform/.+\\.tfvars(\\.json)?$",
       "(^|/)infra/terraform/.terraform.lock.hcl$",
@@ -15,7 +15,7 @@
       matchManagers: ["terraform"],
       matchDatasources: ["terraform-provider"],
       separateMinorPatch: true,
-      stabilityDays: 3,
+      minimumReleaseAge: "3 days",
       labels: ["renovate/terraform", "dep/provider"],
     },
     {

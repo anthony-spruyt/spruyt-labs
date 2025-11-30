@@ -16,6 +16,7 @@ controllers:
     replicas: 1
     containers:
       whoami:
+        # renovate: datasource=docker depName=traefik/whoami
         image:
           repository: docker.io/traefik/whoami
           tag: v1.11.0

@@ -5,6 +5,7 @@ controllers:
     type: daemonset
     containers:
       app:
+        # renovate: datasource=docker depName=ghcr.io/home-operations/irqbalance
         image:
           repository: ghcr.io/home-operations/irqbalance
           tag: 1.9.4

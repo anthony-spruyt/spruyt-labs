@@ -7,6 +7,7 @@ controllers:
       reloader.stakater.com/auto: "true"
     initContainers:
       copy-secrets:
+        # renovate: datasource=docker depName=library/busybox
         image:
           repository: busybox
           tag: "1.37.0"
@@ -26,6 +27,7 @@ controllers:
         runAsNonRoot: true
         fsGroup: 1883
     containers:
+      # renovate: datasource=docker depName=public.ecr.aws/docker/library/eclipse-mosquitto
       mosquitto:
         image:
           repository: public.ecr.aws/docker/library/eclipse-mosquitto

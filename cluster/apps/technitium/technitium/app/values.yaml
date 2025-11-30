@@ -36,6 +36,7 @@ controllers:
               topologyKey: kubernetes.io/hostname
     containers:
       technitium:
+        # renovate: datasource=docker depName=technitium/dns-server
         image:
           repository: technitium/dns-server
           tag: 14.2.0

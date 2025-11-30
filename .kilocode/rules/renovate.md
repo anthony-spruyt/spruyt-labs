@@ -37,7 +37,7 @@ To add new package groupings in `.github/renovate/groups.json5`:
 3. Set separateMinorPatch: true for safety and granular update control
 4. Add stabilityDays if needed for critical infrastructure components
 5. Include appropriate commitMessageTopic for clear PR descriptions
-6. Test the grouping with a Renovate dry-run before committing
+6. Validate the configuration with renovate-config-validator before committing
 
 ### Monitoring Stability Settings
 
@@ -57,7 +57,7 @@ To add new package groupings in `.github/renovate/groups.json5`:
 
 ## Testing and Validation
 
-This section provides detailed instructions for testing Renovate configuration locally to ensure changes are valid and effective before committing. Refer to the [Renovate Dependency Management section in README.md](../README.md#renovate-dependency-management) for integration with repository workflow.
+This section provides detailed instructions for validating Renovate configuration locally to ensure changes are valid before committing. Since Renovate executes in GitHub Actions, local dry-run testing is optional but recommended for complex changes. Local validation primarily focuses on syntax and schema checking using `renovate-config-validator`. Always run `renovate-config-validator` before committing configuration changes. Refer to the [Renovate Dependency Management section in README.md](../README.md#renovate-dependency-management) for integration with repository workflow.
 
 ### Configuration Validation
 
@@ -84,6 +84,8 @@ This section provides detailed instructions for testing Renovate configuration l
    ```
 
 ### Dry-Run Tests
+
+Dry-run testing is primarily intended for GitHub Actions CI/CD pipelines to validate configuration changes before deployment. Local dry runs are optional and useful for complex configuration changes or troubleshooting, but not required for routine validation.
 
 1. **Local Dry Run**: Test Renovate configuration against the repository without creating PRs:
 
@@ -188,7 +190,3 @@ This section provides detailed instructions for testing Renovate configuration l
 ## Related Rules
 
 - [documentation_standards.md](documentation_standards.md) — for documenting Renovate configuration changes and update procedures
-
-## Changelog
-
-- 2025-11-29 · Initial creation of Renovate configuration standards rule.

@@ -58,8 +58,3 @@ Use approved Context7 libraries, cluster documentation, or vendor references to 
 
 - [error_handling.md](error_handling.md) — systematic troubleshooting frameworks
 - [shared-procedures.md](shared-procedures.md) — common operational patterns
-
-## Changelog
-
-- 2025-11-29 · Added Related Rules section for improved cross-referencing.
-- 2025-11-29 · Added Error Handling Workflows section with conditional workflows for common kubectl command failures.

@@ -66,7 +66,3 @@ Objectives:
 
 - [Root runbook standards](../../README.md#runbook-standards)
 - [Related documentation links]
-
-## Changelog
-
-- _TBD — record updates in the format `yyyy-mm-dd · short summary · PR/commit`._
