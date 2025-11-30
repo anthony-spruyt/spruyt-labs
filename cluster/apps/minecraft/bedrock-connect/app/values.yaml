@@ -7,7 +7,6 @@ controllers:
       reloader.stakater.com/auto: "true"
     containers:
       main:
-        # renovate: datasource=docker depName=aspruyt/bedrockconnect
         image:
           repository: aspruyt/bedrockconnect
           tag: "1.62"

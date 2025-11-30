@@ -10,7 +10,6 @@ controllers:
     #     backup.velero.io/backup-volumes: data
     containers:
       main:
-        # renovate: datasource=docker depName=vaultwarden/server
         image:
           repository: vaultwarden/server
           tag: 1.34.3-alpine

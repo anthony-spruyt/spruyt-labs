@@ -19,7 +19,6 @@ controllers:
               app.kubernetes.io/name: *name
     containers:
       chrony:
-        # renovate: datasource=docker depName=dockurr/chrony
         image:
           repository: dockurr/chrony
           tag: 4.8

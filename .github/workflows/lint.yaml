@@ -32,6 +32,6 @@ jobs:
           # Full git history is needed to get a proper list of changed files within `mega-linter`
           fetch-depth: 0
       - name: Run mega linter
-        uses: oxsecurity/mega-linter@v9
+        uses: oxsecurity/megalinter@v9
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

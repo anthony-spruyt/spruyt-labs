@@ -6,7 +6,6 @@
 image:
   repository: n8nio/n8n
   pullPolicy: IfNotPresent
-  # renovate: datasource=github-releases depName=n8n-io/n8n
   tag: "1.121.3"
 main:
   config:

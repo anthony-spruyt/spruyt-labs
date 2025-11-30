@@ -7,7 +7,6 @@ metadata:
 spec:
   chart:
     spec:
-      # renovate: datasource=github-releases depName=valkey-io/valkey-helm
       chart: valkey
       version: v0.8.1
       sourceRef:

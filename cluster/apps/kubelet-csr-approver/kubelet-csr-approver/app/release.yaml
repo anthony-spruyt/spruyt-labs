@@ -9,7 +9,6 @@ metadata:
 spec:
   chart:
     spec:
-      # renovate: datasource=github-releases depName=postfinance/kubelet-csr-approver
       chart: kubelet-csr-approver
       version: 1.2.12
       sourceRef:
