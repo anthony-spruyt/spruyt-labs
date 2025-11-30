@@ -17,6 +17,7 @@
     "github>anthony-spruyt/spruyt-labs//.github/renovate/regex-managers.json5",
   ],
   enabled: true,
+  ignorePaths: ["talos/helmfile"],
   dependencyDashboardTitle: "Renovate Dashboard",
   suppressNotifications: ["prIgnoreNotification"],
   commitBodyTable: true,
