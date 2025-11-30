@@ -9,6 +9,8 @@ auth:
   aclUsers:
     n8n:
       permissions: "~n8n:* &* +@all"
+    redisinsight:
+      permissions: "~* &* +@read"
 metrics:
   enabled: true
 resources:
