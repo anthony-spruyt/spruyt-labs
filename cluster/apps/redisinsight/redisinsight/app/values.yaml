@@ -37,7 +37,7 @@ controllers:
             memory: 512M
         securityContext:
           allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true # this is commented out in reference charts, likely to cause issues
+          # readOnlyRootFilesystem: true # SQLITE_CANTOPEN: unable to open database file
           capabilities:
             drop:
               - ALL

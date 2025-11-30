@@ -9,4 +9,5 @@ resources:
   - ./vaultwarden
   - ./observability
   - ./n8n
+  - ./redisinsight
   # - ./unifi

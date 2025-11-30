@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base/compress.yaml
+  - ../base/lan-ip-whitelist.yaml
+  - ../base/rate-limit.yaml
+  - ./certificates.yaml
+  - ./ingress-routes.yaml
+patches:
+  - target:
+      kind: Middleware
+      name: compress
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: redisinsight
+  - target:
+      kind: Middleware
+      name: lan-ip-whitelist
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: redisinsight
+  - target:
+      kind: Middleware
+      name: rate-limit
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: redisinsight
