@@ -2,7 +2,7 @@
 
 ## Purpose and Scope
 
-The n8n controller deploys the n8n workflow automation platform for creating and managing automated workflows. It includes PostgreSQL database storage via CloudNativePG, Redis queue for job processing, and supports webhooks and task runners. This readme documents the GitOps layout, deployment workflow, and operations required to keep the n8n platform healthy in the spruyt-labs environment.
+The n8n controller deploys the n8n workflow automation platform for creating and managing automated workflows. It includes PostgreSQL database storage via CloudNativePG, Valkey queue for job processing, and supports webhooks and task runners. This readme documents the GitOps layout, deployment workflow, and operations required to keep the n8n platform healthy in the spruyt-labs environment.
 
 Objectives:
 
@@ -161,7 +161,7 @@ Operate the n8n Helm release to provide a scalable workflow automation platform 
 ### Troubleshooting Guidance
 
 - If pods fail to start, check database connection and secret references in logs.
-- For workflow execution failures, inspect worker logs and Redis connectivity.
+- For workflow execution failures, inspect worker logs and Valkey connectivity.
 - When webhooks fail, verify ingress and TLS configuration.
 - If database issues occur, review CNPG cluster status and backup schedules.
 - For high resource usage, monitor workflow complexity and task runner configuration.

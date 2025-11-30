@@ -16,7 +16,7 @@ Objectives:
 
 | Path                                                        | Description                                                                |
 | ----------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/valkey-system/README.md`                      | This runbook and component overview.                                       |
+| `cluster/apps/valkey-system/valkey/README.md`               | This runbook and component overview.                                       |
 | `cluster/apps/valkey-system/kustomization.yaml`             | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
 | `cluster/apps/valkey-system/namespace.yaml`                 | Namespace definition for the valkey-system workload.                       |
 | `cluster/apps/valkey-system/valkey/ks.yaml`                 | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
