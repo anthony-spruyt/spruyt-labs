@@ -1,0 +1,62 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  description: [
+    "Shared Helm configuration for Renovate. Consolidates registry discovery for HTTP and OCI chart sources referenced throughout the cluster and Talos manifests.",
+  ],
+  helm: {
+    fileMatch: [
+      "(^|/)cluster/.+/(values|release)\\.ya?ml$",
+      "(^|/)talos/helmfile/.+\\.ya?ml$",
+    ],
+    registryUrls: [
+      // bjw-s common Helm charts library
+      "https://bjw-s-labs.github.io/helm-charts/",
+      // CloudNativePG (CNPG) PostgreSQL operator charts
+      "https://cloudnative-pg.github.io/charts",
+      // External Secrets Operator charts
+      "https://charts.external-secrets.io",
+      // Authentik identity provider charts
+      "https://charts.goauthentik.io",
+      // cert-manager and related Jetstack charts
+      "https://charts.jetstack.io/",
+      // GISSLab Helm charts
+      "https://gissilabs.github.io/charts/",
+      // Cilium CNI and networking charts
+      "https://helm.cilium.io",
+      // Traefik ingress controller charts
+      "https://helm.traefik.io/traefik",
+      // Minecraft server Helm charts
+      "https://itzg.github.io/minecraft-server-charts",
+      // External DNS controller charts
+      "https://kubernetes-sigs.github.io/external-dns",
+      // kubelet CSR approver charts
+      "https://postfinance.github.io/kubelet-csr-approver",
+      // Stakater common Helm charts
+      "https://stakater.github.io/stakater-charts",
+      // VMware Tanzu Helm charts
+      "https://vmware-tanzu.github.io/helm-charts",
+      // Valkey in-memory data structure store charts
+      "https://valkey.io/valkey-helm/",
+      // N8N workflow automation platform
+      "oci://8gears.container-registry.com/library/n8n",
+      // bjw-s app-template Helm chart
+      "oci://ghcr.io/bjw-s-labs/helm/app-template",
+      // Flux Instance controller chart
+      "oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance",
+      // Flux Operator chart
+      "oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator",
+      // Rook Ceph storage operator chart
+      "oci://ghcr.io/rook/rook-ceph",
+      // Rook Ceph cluster chart
+      "oci://ghcr.io/rook/rook-ceph-cluster",
+      // Spegel container registry mirror charts
+      "oci://ghcr.io/spegel-org/helm-charts",
+      // Victoria Metrics single-node logs chart
+      "oci://ghcr.io/victoriametrics/helm-charts/victoria-logs-single",
+      // Victoria Metrics Kubernetes monitoring stack chart
+      "oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack",
+      // Victoria Metrics operator chart
+      "oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-operator",
+    ],
+  },
+}

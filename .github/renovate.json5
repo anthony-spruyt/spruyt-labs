@@ -8,6 +8,13 @@
     ":semanticCommits",
     ":enablePreCommit",
     ":separatePatchReleases",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/disabledDatasources.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/customManagers.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/groups.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/kubernetes.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/helm.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/terraform.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/regex-managers.json5",
   ],
   enabled: true,
   dependencyDashboardTitle: "Renovate Dashboard",
@@ -23,166 +30,6 @@
     "github-actions",
     "terraform",
   ],
-  "helm-values": {
-    managerFilePatterns: [
-      "(^|/)cluster/.+/(values|release)\\.ya?ml$",
-      "(^|/)talos/helmfile/.+\\.ya?ml$",
-      "(^|/)cluster/.+/(values(\\.\\w+)?|values\\.ya?ml)$",
-      "(^|/)cluster/.+/(release|helmrelease)\\.ya?ml$",
-    ],
-    registryUrls: [
-      // bjw-s common Helm charts library
-      "https://bjw-s-labs.github.io/helm-charts/",
-      // CloudNativePG (CNPG) PostgreSQL operator charts
-      "https://cloudnative-pg.github.io/charts",
-      // External Secrets Operator charts
-      "https://charts.external-secrets.io",
-      // Authentik identity provider charts
-      "https://charts.goauthentik.io",
-      // cert-manager and related Jetstack charts
-      "https://charts.jetstack.io/",
-      // GISSLab Helm charts
-      "https://gissilabs.github.io/charts/",
-      // Cilium CNI and networking charts
-      "https://helm.cilium.io",
-      // Traefik ingress controller charts
-      "https://helm.traefik.io/traefik",
-      // Minecraft server Helm charts
-      "https://itzg.github.io/minecraft-server-charts",
-      // External DNS controller charts
-      "https://kubernetes-sigs.github.io/external-dns",
-      // kubelet CSR approver charts
-      "https://postfinance.github.io/kubelet-csr-approver",
-      // Stakater common Helm charts
-      "https://stakater.github.io/stakater-charts",
-      // VMware Tanzu Helm charts
-      "https://vmware-tanzu.github.io/helm-charts",
-      // Valkey in-memory data structure store charts
-      "https://valkey.io/valkey-helm/",
-      // N8N workflow automation platform
-      "oci://8gears.container-registry.com/library/n8n",
-      // bjw-s app-template Helm chart
-      "oci://ghcr.io/bjw-s-labs/helm/app-template",
-      // Flux Instance controller chart
-      "oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance",
-      // Flux Operator chart
-      "oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator",
-      // Rook Ceph storage operator chart
-      "oci://ghcr.io/rook/rook-ceph",
-      // Rook Ceph cluster chart
-      "oci://ghcr.io/rook/rook-ceph-cluster",
-      // Spegel container registry mirror charts
-      "oci://ghcr.io/spegel-org/helm-charts",
-      // Victoria Metrics single-node logs chart
-      "oci://ghcr.io/victoriametrics/helm-charts/victoria-logs-single",
-      // Victoria Metrics Kubernetes monitoring stack chart
-      "oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack",
-      // Victoria Metrics operator chart
-      "oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-operator",
-    ],
-  },
-  flux: {
-    managerFilePatterns: ["(^|/)cluster/.+\\.ya?ml$"],
-  },
-  kubernetes: {
-    managerFilePatterns: ["(^|/)cluster/.+\\.ya?ml$", "(^|/)talos/.+\\.ya?ml$"],
-  },
-  terraform: {
-    managerFilePatterns: [
-      "(^|/)infra/terraform/.+\\.tf$",
-      "(^|/)infra/terraform/.+\\.tfvars(\\.json)?$",
-      "(^|/)infra/terraform/.+\\.terraform.lock.hcl$",
-    ],
-  },
-  customManagers: [
-    {
-      customType: "regex",
-      description: ["Process renovate-annotated dependencies."],
-      managerFilePatterns: [
-        "(^|/)talos/(?:[^/]+/)*[^/]+\\.ya?ml$",
-        "(^|/)cluster/(?:[^/]+/)*[^/]+\\.ya?ml$",
-      ],
-      matchStrings: [
-        // Matches renovate comment annotations for version fields, optionally capturing chart names before version fields
-        // Handles complex multi-line patterns with optional chart declarations before version fields
-        "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
-        // Matches renovate comment annotations for path-based version references
-        // Used for GitHub release assets or similar path-structured dependencies
-        "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}[^\\n]*\\n(?:[^\\n]*\\n)?[^\\S\\n]*(?<prefix>[^\\n]*/)(?<currentValue>(?:v|\\d)[^/\\s\"']+)",
-      ],
-      packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if packageName}}{{{packageName}}}{{else}}{{#if chartName}}{{{chartName}}}{{/if}}{{/if}}{{/if}}",
-      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}{{#if chartName}}helm{{else}}github-releases{{/if}}{{/if}}",
-    },
-    {
-      customType: "regex",
-      managerFilePatterns: ["(^|/)talos/.+\\.ya?ml$"],
-      matchStrings: [
-        // Matches renovate comment annotations for version fields in Talos YAML files
-        // Captures datasource, depName, packageName from comment, then version value
-        "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<prefix>(?:talosVersion|kubernetesVersion|version):\\s*)(?<currentValue>[^\\s\"']+)",
-        // Matches renovate comment annotations for URL fields in Talos YAML files
-        // Used for HTTP/HTTPS URLs in list items with renovate comments
-        "-\\s+#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<currentValue>https?://[^\\s\"']+)",
-      ],
-      packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{{packageName}}}{{/if}}",
-      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
-    },
-    {
-      customType: "regex",
-      managerFilePatterns: ["(^|/)talos/helmfile/.+\\.ya?ml$"],
-      matchStrings: [
-        // Matches Helm chart references in Talos helmfile YAML files
-        // Captures optional OCI prefix and chart path, then version
-        "chart:\\s*(?<ociPrefix>oci://)?(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
-      ],
-      packageNameTemplate: "{{{chartPath}}}",
-      datasourceTemplate: "{{#if ociPrefix}}oci{{else}}helm{{/if}}",
-    },
-    {
-      customType: "regex",
-      managerFilePatterns: [
-        "(^|/)cluster/flux/meta/repositories/oci/.+\\.ya?ml$",
-      ],
-      matchStrings: [
-        // Matches OCI repository URLs in Flux OCI repository definitions
-        // Captures the OCI path and tag version for dependency updates
-        'url:\\s*oci://(?<depNamePath>[^\\s]+)[^\\S\\n]*\\n(?:[\\s\\S]*?)?ref:\\s*\\n[^\\S\\n]*tag:\\s*"?(?<currentValue>[^"\\s]+)"?',
-      ],
-      packageNameTemplate: "{{{depNamePath}}}",
-      datasourceTemplate: "oci",
-    },
-    {
-      customType: "regex",
-      managerFilePatterns: ["(^|/)cluster/.+\\.ya?ml$"],
-      matchStrings: [
-        // Matches renovate comment annotations for any key-value pairs in cluster YAML files
-        // Captures datasource, depName, packageName from comment, then field and value
-        "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<prefix>[\\w.-]+:\\s*)(?<currentValue>[^\\s\"']+)",
-        // Matches OCI artifact references in cluster YAML files
-        // Captures artifact prefix, OCI path, and version/tag
-        '(?<artifactPrefix>artifact:\\s*"?)oci://(?<depNamePath>[^:"\\s]+)(?::|@)(?<currentValue>[^"\\s]+)"?',
-      ],
-      packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
-      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}{{#if artifactPrefix}}oci{{else}}github-releases{{/if}}{{/if}}",
-    },
-    {
-      customType: "regex",
-      managerFilePatterns: [
-        "(^|/)\\.taskfiles/.+\\.(ya?ml|tmpl\\.ya?ml)$",
-        "(^|/)\\.taskfiles/.+/scripts/.+\\.(sh|bash)$",
-      ],
-      matchStrings: [
-        // Matches image references in Taskfile YAML templates and scripts
-        // Captures image name and tag for Docker container updates
-        "(?<prefix>image:\\s*)(?<depName>[^:\\s]+):(?<currentValue>[^\\s\"']+)",
-        // Matches container registry image references in Taskfile scripts
-        // Supports ghcr, docker.io, quay.io, and registry.k8s.io registries
-        "(?<depName>(?:ghcr|docker\\.io|quay\\.io|registry\\.k8s\\.io)[^:\\s]+):(?<currentValue>[^\\s\"']+)",
-      ],
-      packageNameTemplate: "{{{depName}}}",
-      datasourceTemplate: "docker",
-    },
-  ],
   ignoreDeps: [
     "ghcr.io/fluxcd/helm-controller",
     "ghcr.io/fluxcd/image-automation-controller",
@@ -192,12 +39,6 @@
     "ghcr.io/fluxcd/source-controller",
   ],
   packageRules: [
-    {
-      description: "Disable kubernetes-api",
-      matchManagers: ["kubernetes"],
-      matchDatasources: ["kubernetes-api"],
-      enabled: false,
-    },
     {
       matchDatasources: ["helm"],
       separateMinorPatch: true,
@@ -265,146 +106,6 @@
       matchFileNames: ["talos/**"],
       labels: ["renovate/talos"],
       minimumReleaseAge: "3 days",
-    },
-    {
-      description: "Rook-Ceph image and chart",
-      groupName: "Rook Ceph",
-      matchPackageNames: ["rook.ceph", "rook/rook"],
-      matchDatasources: ["docker", "helm", "github-tags"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-    },
-    {
-      description: "Traefik chart and CRD",
-      groupName: "Traefik",
-      matchPackageNames: ["traefik", "traefik-crd-source"],
-      matchDatasources: ["helm", "regex", "github-tags"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-    },
-    {
-      matchDatasources: ["helm", "docker"],
-      matchPackageNames: [
-        "quay.io/cilium/cilium",
-        "quay.io/cilium/operator-generic",
-        "cilium",
-      ],
-      groupName: "cilium",
-      additionalBranchPrefix: "",
-      separateMinorPatch: true,
-      minimumReleaseAge: "2 days",
-    },
-    {
-      description: "Victoria Metrics components",
-      groupName: "Victoria Metrics",
-      matchPackageNames: [
-        "victoria-metrics",
-        "victoriametrics",
-        "ghcr.io/victoriametrics/helm-charts",
-      ],
-      matchDatasources: ["helm", "docker", "oci"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-    },
-    {
-      description: "External Secrets Operator",
-      groupName: "External Secrets",
-      matchPackageNames: ["external-secrets"],
-      matchDatasources: ["helm"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-      minimumReleaseAge: "7 days",
-    },
-    {
-      description: "CloudNativePG (CNPG) components",
-      groupName: "CloudNativePG",
-      matchPackageNames: ["cloudnative-pg", "cnpg"],
-      matchDatasources: ["helm", "docker"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-    },
-    {
-      description: "Flux components",
-      groupName: "Flux",
-      matchPackageNames: ["fluxcd/*", "ghcr.io/fluxcd/*"],
-      matchDatasources: ["docker", "helm", "github-releases"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-      minimumReleaseAge: "7 days",
-    },
-    {
-      description: "Authentik stack",
-      groupName: "Authentik",
-      matchPackageNames: ["goauthentik/*", "ghcr.io/goauthentik/*"],
-      matchDatasources: ["docker", "helm"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-    },
-    {
-      description: "Cert-Manager components",
-      groupName: "Cert-Manager",
-      matchPackageNames: ["cert-manager", "jetstack/cert-manager"],
-      matchDatasources: ["helm", "docker"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-      minimumReleaseAge: "7 days",
-    },
-    {
-      description: "External-DNS components",
-      groupName: "External-DNS",
-      matchPackageNames: ["external-dns", "kubernetes-sigs/external-dns"],
-      matchDatasources: ["helm", "docker"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-    },
-    {
-      description: "Snapshot Controller components",
-      groupName: "Snapshot Controller",
-      matchPackageNames: [
-        "snapshot-controller",
-        "kubernetes-csi/external-snapshotter",
-      ],
-      matchDatasources: ["helm", "docker"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      separateMinorPatch: true,
-    },
-    {
-      matchManagers: ["terraform"],
-      matchDatasources: ["terraform-provider"],
-      separateMinorPatch: true,
-      minimumReleaseAge: "3 days",
-      labels: ["renovate/terraform", "dep/provider"],
-    },
-    {
-      matchManagers: ["terraform"],
-      matchDatasources: ["terraform-module"],
-      separateMinorPatch: true,
-      labels: ["renovate/terraform", "dep/module"],
-    },
-    {
-      matchManagers: ["terraform"],
-      matchDatasources: ["terraform-version"],
-      labels: ["renovate/terraform", "dep/runtime"],
     },
   ],
 }
