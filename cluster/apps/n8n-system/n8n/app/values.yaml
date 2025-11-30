@@ -55,6 +55,8 @@ main:
       value: "queue"
     GENERIC_TIMEZONE:
       value: ${TIMEZONE}
+    OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS:
+      value: "true"
     N8N_BLOCK_ENV_ACCESS_IN_NODE:
       value: "true"
     N8N_DIAGNOSTICS_ENABLED:
