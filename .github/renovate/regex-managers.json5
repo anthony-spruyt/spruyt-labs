@@ -22,8 +22,9 @@
         "chart:\\s*(?<ociPrefix>oci://)?(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
       ],
       depNameTemplate: "{{{chartPath}}}",
-      datasourceTemplate: "{{#if ociPrefix}}oci{{else}}helm{{/if}}",
+      datasourceTemplate: "{{#if ociPrefix}}docker{{else}}helm{{/if}}",
       packageNameTemplate: "{{{chartPath}}}",
+      registryUrlTemplate: "{{#if ociPrefix}}https://{{split chartPath '/' 0}}{{/if}}",
     },
     {
       customType: "regex",

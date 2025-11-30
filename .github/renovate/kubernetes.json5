@@ -10,7 +10,6 @@
     managerFilePatterns: [
       "/(^|/)cluster/.+/(values(\\.\\w+)?|values\\.ya?ml)$/",
       "/(^|/)cluster/.+/(release|helmrelease)\\.ya?ml$/",
-      "/(^|/)talos/helmfile/.+\\.ya?ml$/",
     ],
   },
   kubernetes: {
