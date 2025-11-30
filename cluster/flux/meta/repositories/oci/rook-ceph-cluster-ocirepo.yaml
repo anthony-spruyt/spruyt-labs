@@ -8,5 +8,5 @@ metadata:
 spec:
   ref:
     # https://rook.github.io/docs/rook/v1.18/Upgrade/rook-upgrade/#supported-versions
-    tag: v1.17.9
+    tag: v1.18.7
   url: oci://ghcr.io/rook/rook-ceph-cluster
