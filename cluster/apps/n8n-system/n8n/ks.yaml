@@ -15,6 +15,7 @@ spec:
     - name: cnpg-operator
     - name: plugin-barman-cloud
     - name: rook-ceph-cluster-storage
+    - name: valkey
   prune: true
   timeout: 5m
   wait: true
