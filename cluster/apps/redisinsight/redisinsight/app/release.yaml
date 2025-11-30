@@ -1,0 +1,13 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: redisinsight
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: bjw-s-labs-app-template
+    namespace: flux-system
+  valuesFrom:
+    - kind: ConfigMap
+      name: redisinsight-values

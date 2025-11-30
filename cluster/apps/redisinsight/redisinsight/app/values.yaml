@@ -1,0 +1,56 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+defaultPodOptions:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+controllers:
+  redisinsight:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    strategy: Recreate
+    serviceAccount:
+      identifier: redisinsight
+    containers:
+      app:
+        image:
+          repository: redis/redisinsight
+          tag: 2.70.1@sha256:b7aa18e73329ebb2e3d9e949b8d35193bf5415ef35c16fd9a50e6f832922b296
+        env:
+          - name: RI_FILES_LOGGER
+            value: "false"
+          - name: RI_STDOUT_LOGGER
+            value: "true"
+        resources:
+          requests:
+            cpu: 25m
+            memory: 256M
+          limits:
+            cpu: 100m
+            memory: 512M
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true # this is commented out in reference charts, likely to cause issues
+          capabilities:
+            drop:
+              - ALL
+serviceAccount:
+  redisinsight:
+    enabled: true
+service:
+  app:
+    # name should not be 'redisinsight'  since the service creates environment variables
+    # that conflicts with redisinsight application's environment variables:
+    # `REDISINSIGHT_HOST` and `REDISINSIGHT_PORT`
+    suffix: svc
+    controller: redisinsight
+    ports:
+      http:
+        port: 5540

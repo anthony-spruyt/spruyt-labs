@@ -52,6 +52,7 @@ This rule establishes standards for documentation quality, completeness, and mai
 
 ## Enforcement
 
+- **Mandatory Linting**: All documentation changes must be validated by running `task dev-env:lint` immediately after modifications and before any commits. Linting is mandatory for all documentation changes and failures will block pull request merges until corrected. Non-compliance will result in rejected commits and require immediate remediation.
 - Documentation changes must pass mega-linter checks
 - Pull requests modifying documentation require review for compliance with these standards
 - Missing or inadequate documentation blocks feature development until resolved

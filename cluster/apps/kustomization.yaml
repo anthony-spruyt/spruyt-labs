@@ -26,6 +26,7 @@ resources:
   - ./cnpg-system
   - ./valkey-system
   - ./n8n-system
+  - ./redisinsight
   # - ./authentik-system
   # - ./snmp
   # - ./smtp
