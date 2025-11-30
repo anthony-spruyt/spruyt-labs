@@ -19,12 +19,22 @@
       customType: "regex",
       managerFilePatterns: ["/(^|/)talos/helmfile/.+\\.ya?ml$/"],
       matchStrings: [
-        "chart:\\s*(?<ociPrefix>oci://)?(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
+        "chart:\\s*oci://(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
       ],
       depNameTemplate: "{{{chartPath}}}",
-      datasourceTemplate: "{{#if ociPrefix}}docker{{else}}helm{{/if}}",
+      datasourceTemplate: "docker",
       packageNameTemplate: "{{{chartPath}}}",
-      registryUrlTemplate: "{{#if ociPrefix}}https://{{split chartPath '/' 0}}{{/if}}",
+      registryUrlTemplate: "https://{{split chartPath '/' 0}}",
+    },
+    {
+      customType: "regex",
+      managerFilePatterns: ["/(^|/)talos/helmfile/.+\\.ya?ml$/"],
+      matchStrings: [
+        "chart:\\s*(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
+      ],
+      depNameTemplate: "{{{chartPath}}}",
+      datasourceTemplate: "helm",
+      packageNameTemplate: "{{{chartPath}}}",
     },
     {
       customType: "regex",
