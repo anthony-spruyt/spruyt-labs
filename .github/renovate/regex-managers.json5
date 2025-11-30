@@ -3,61 +3,63 @@
   description: [
     "Regex managers covering Talos manifests, Taskfiles, shell scripts, and miscellaneous YAML where Renovate needs explicit capture groups.",
   ],
-  regexManagers: [
+  customManagers: [
     {
       customType: "regex",
-      fileMatch: ["(^|/)talos/.+\\.ya?ml$"],
+      managerFilePatterns: ["/(^|/)talos/.+\\.ya?ml$/"],
       matchStrings: [
         "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<prefix>(?:talosVersion|kubernetesVersion|version):\\s*)(?<currentValue>[^\\s\"']+)",
         "-\\s+#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<currentValue>https?://[^\\s\"']+)",
       ],
       depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{{packageName}}}{{/if}}",
-      lookupNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{{packageName}}}{{/if}}",
+      packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{{packageName}}}{{/if}}",
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
     },
     {
       customType: "regex",
-      fileMatch: ["(^|/)talos/helmfile/.+\\.ya?ml$"],
+      managerFilePatterns: ["/(^|/)talos/helmfile/.+\\.ya?ml$/"],
       matchStrings: [
         "chart:\\s*(?<ociPrefix>oci://)?(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
       ],
       depNameTemplate: "{{{chartPath}}}",
       datasourceTemplate: "{{#if ociPrefix}}oci{{else}}helm{{/if}}",
-      lookupNameTemplate: "{{{chartPath}}}",
+      packageNameTemplate: "{{{chartPath}}}",
     },
     {
       customType: "regex",
-      fileMatch: ["(^|/)cluster/flux/meta/repositories/oci/.+\\.ya?ml$"],
+      managerFilePatterns: [
+        "/(^|/)cluster/flux/meta/repositories/oci/.+\\.ya?ml$/",
+      ],
       matchStrings: [
         'url:\\s*oci://(?<depNamePath>[^\\s]+)[^\\S\\n]*\\n(?:[\\s\\S]*?)?ref:\\s*\\n[^\\S\\n]*tag:\\s*"?(?<currentValue>[^"\\s]+)"?',
       ],
       depNameTemplate: "{{{depNamePath}}}",
       datasourceTemplate: "oci",
-      lookupNameTemplate: "{{{depNamePath}}}",
+      packageNameTemplate: "{{{depNamePath}}}",
     },
     {
       customType: "regex",
-      fileMatch: ["(^|/)cluster/.+\\.ya?ml$"],
+      managerFilePatterns: ["/(^|/)cluster/.+\\.ya?ml$/"],
       matchStrings: [
         "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<prefix>[\\w.-]+:\\s*)(?<currentValue>[^\\s\"']+)",
         '(?<artifactPrefix>artifact:\\s*"?)oci://(?<depNamePath>[^:"\\s]+)(?::|@)(?<currentValue>[^"\\s]+)"?',
       ],
       depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
-      lookupNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
+      packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}{{#if artifactPrefix}}oci{{else}}github-releases{{/if}}{{/if}}",
     },
     {
       customType: "regex",
-      fileMatch: [
-        "(^|/)\\.taskfiles/.+\\.(ya?ml|tmpl\\.ya?ml)$",
-        "(^|/)\\.taskfiles/.+/scripts/.+\\.(sh|bash)$",
+      managerFilePatterns: [
+        "/(^|/)\\.taskfiles/.+\\.(ya?ml|tmpl\\.ya?ml)$/",
+        "/(^|/)\\.taskfiles/.+/scripts/.+\\.(sh|bash)$/",
       ],
       matchStrings: [
         "(?<prefix>image:\\s*)(?<depName>[^:\\s]+):(?<currentValue>[^\\s\"']+)",
         "(?<depName>(?:ghcr|docker\\.io|quay\\.io|registry\\.k8s\\.io)[^:\\s]+):(?<currentValue>[^\\s\"']+)",
       ],
       depNameTemplate: "{{{depName}}}",
-      lookupNameTemplate: "{{{depName}}}",
+      packageNameTemplate: "{{{depName}}}",
       datasourceTemplate: "docker",
     },
   ],

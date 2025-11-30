@@ -3,10 +3,10 @@
   description: [
     "Shared Helm configuration for Renovate. Consolidates registry discovery for HTTP and OCI chart sources referenced throughout the cluster and Talos manifests.",
   ],
-  helm: {
-    fileMatch: [
-      "(^|/)cluster/.+/(values|release)\\.ya?ml$",
-      "(^|/)talos/helmfile/.+\\.ya?ml$",
+  "helm-values": {
+    managerFilePatterns: [
+      "/(^|/)cluster/.+/(values|release)\\.ya?ml$/",
+      "/(^|/)talos/helmfile/.+\\.ya?ml$/",
     ],
     registryUrls: [
       // bjw-s common Helm charts library

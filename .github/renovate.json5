@@ -29,14 +29,7 @@
     "flux",
     "github-actions",
     "terraform",
-  ],
-  ignoreDeps: [
-    "ghcr.io/fluxcd/helm-controller",
-    "ghcr.io/fluxcd/image-automation-controller",
-    "ghcr.io/fluxcd/image-reflector-controller",
-    "ghcr.io/fluxcd/kustomize-controller",
-    "ghcr.io/fluxcd/notification-controller",
-    "ghcr.io/fluxcd/source-controller",
+    "devcontainer",
   ],
   packageRules: [
     {

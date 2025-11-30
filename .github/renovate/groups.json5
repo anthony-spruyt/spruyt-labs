@@ -122,5 +122,32 @@
       },
       separateMinorPatch: true,
     },
+    {
+      description: "CI/CD Actions",
+      groupName: "CI/CD Actions",
+      matchManagers: ["github-actions"],
+      matchPackageNames: ["actions/*", "docker/*"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+    {
+      description: "BJW-S App Template",
+      groupName: "App Template",
+      matchPackageNames: ["ghcr.io/bjw-s-labs/helm/app-template"],
+      matchDatasources: ["helm"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+    {
+      description: "Kubernetes and Talos",
+      groupName: "Kubernetes/Talos",
+      matchPackageNames: ["kubernetes", "siderolabs/talos"],
+      matchDatasources: ["docker", "github-releases", "custom.regex"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
   ],
 }
