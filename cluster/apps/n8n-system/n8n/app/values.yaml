@@ -81,7 +81,7 @@ main:
     N8N_RUNNERS_MODE:
       value: "internal"
     QUEUE_BULL_PREFIX:
-      value: "n8n:queue:bull:"
+      value: "n8n:queue:bull"
     QUEUE_BULL_REDIS_USERNAME:
       valueFrom:
         secretKeyRef:

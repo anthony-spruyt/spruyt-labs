@@ -8,7 +8,7 @@ auth:
   # https://valkey.io/topics/acl/
   aclUsers:
     n8n:
-      permissions: "~n8n:queue:bull:* &* +@all"
+      permissions: "~n8n:* &* +@all"
 metrics:
   enabled: true
 resources:
