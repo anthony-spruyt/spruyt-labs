@@ -45,7 +45,7 @@
         'url:\\s*oci://(?<depNamePath>[^\\s]+)[^\\S\\n]*\\n(?:[\\s\\S]*?)?ref:\\s*\\n[^\\S\\n]*tag:\\s*"?(?<currentValue>[^"\\s]+)"?',
       ],
       depNameTemplate: "{{{depNamePath}}}",
-      datasourceTemplate: "oci",
+      datasourceTemplate: "docker",
       packageNameTemplate: "{{{depNamePath}}}",
     },
     {
@@ -57,7 +57,7 @@
       ],
       depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
       packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
-      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}{{#if artifactPrefix}}oci{{else}}github-releases{{/if}}{{/if}}",
+      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}{{#if artifactPrefix}}docker{{else}}github-releases{{/if}}{{/if}}",
     },
     {
       customType: "regex",

@@ -34,7 +34,7 @@
     },
     {
       matchDatasources: ["helm"],
-      matchPackageNames: ["cilium"],
+      matchPackageNames: ["cilium", "cilium/cilium"],
       registryUrls: ["https://helm.cilium.io"],
     },
     {
