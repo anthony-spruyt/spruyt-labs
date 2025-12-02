@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=TODO
+# Documentation: https://github.com/qdrant/qdrant-helm
+# Default values: https://github.com/qdrant/qdrant-helm/blob/main/charts/qdrant/values.yaml
+env:
+  - name: QDRANT__SERVICE__API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: qdrant-secret
+        key: QDRANT__SERVICE__API_KEY
+livenessProbe:
+  enabled: true
+readinessProbe:
+  enabled: true
+startupProbe:
+  enabled: true
+resources:
+  limits:
+    cpu: 100m
+    memory: 512Mi
+  requests:
+    cpu: 10m
+    memory: 128Mi
+persistence:
+  enabled: true
+  # If need to resize the PVC then reference below to do so because this is a stateful set and the fields will be immutable.
+  # https://github.com/qdrant/qdrant-helm/blob/main/charts/qdrant/README.md#updating-statefulsets
+  size: 10Gi
+  storageClassName: rbd-fast
+metrics:
+  serviceMonitor:
+    enabled: true

@@ -10,6 +10,7 @@ resources:
   - ./kubernetes-sigs-charts.yaml
   - ./minecraft-server-charts.yaml
   - ./postfinance-charts.yaml
+  - ./qdrant-charts.yaml
   - ./stakater-charts.yaml
   - ./traefik-charts.yaml
   - ./valkey-io-charts.yaml

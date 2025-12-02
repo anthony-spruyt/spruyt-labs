@@ -3,12 +3,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./kube-system
-  - ./rook-ceph
-  - ./whoami
-  - ./vaultwarden
-  - ./observability
-  - ./n8n
-  - ./redisinsight
-  - ./qdrant
-  # - ./unifi
+  - ./namespace.yaml
+  - ./qdrant/ks.yaml
