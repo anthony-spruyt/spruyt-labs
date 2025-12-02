@@ -29,4 +29,9 @@ persistence:
   storageClassName: rbd-fast
 metrics:
   serviceMonitor:
-    enabled: false
+    enabled: true
+    authorization:
+      type: Bearer
+      credentials:
+        name: qdrant-secrets
+        key: QDRANT__SERVICE__API_KEY
