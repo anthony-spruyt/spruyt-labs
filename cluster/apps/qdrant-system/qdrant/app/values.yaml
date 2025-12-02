@@ -6,7 +6,7 @@ env:
   - name: QDRANT__SERVICE__API_KEY
     valueFrom:
       secretKeyRef:
-        name: qdrant-secret
+        name: qdrant-secrets
         key: QDRANT__SERVICE__API_KEY
 livenessProbe:
   enabled: true
