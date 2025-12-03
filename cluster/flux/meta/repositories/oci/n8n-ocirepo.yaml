@@ -7,5 +7,5 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "2.0.0"
+    tag: "2.0.1"
   url: oci://8gears.container-registry.com/library/n8n
