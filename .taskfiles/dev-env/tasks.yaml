@@ -7,6 +7,7 @@ vars:
   installFluxCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux-capacitor.sh"
   installFluxScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux.sh"
   installHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm-plugins.sh"
+  installSafeChainScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-safe-chain.sh"
   installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
   installTalosctlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talosctl.sh"
   installVeleroScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-velero.sh"
@@ -30,6 +31,10 @@ tasks:
     desc: Installs Helm schema gen and diff
     cmds:
       - bash {{ .installHelmPluginsScript }}
+  install-safe-chain:
+    desc: Installs safe-chain
+    cmds:
+      - bash {{ .installSafeChainScript }}
   install-talhelper:
     desc: Installs the Talhelper CLI
     cmds:
