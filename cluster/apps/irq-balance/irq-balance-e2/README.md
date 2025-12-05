@@ -1,197 +1,271 @@
-# irq-balance-e2 Runbook
+# irq-balance-e2 - IRQ Balancing
 
-## Purpose and Scope
+## Overview
 
-The irq-balance-e2 deployment runs the irqbalance daemon on specific nodes (e2-1, e2-2, e2-3) to distribute hardware interrupts across CPU cores, optimizing system performance and reducing latency. This ensures efficient interrupt handling on designated cluster nodes.
-
-Objectives:
-
-- Describe the GitOps layout, deployment workflow, and operations required to keep the irqbalance daemon healthy on target nodes.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the repository runbook standards.
+IRQ Balance is a Linux daemon that distributes hardware interrupts across multiple CPUs to improve system performance. The e2 variant is specifically configured for the edge node in the spruyt-labs homelab infrastructure, ensuring optimal interrupt handling for network-intensive workloads.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                               | Description                                                                |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `cluster/apps/irq-balance/README.md`                               | This runbook and component overview.                                       |
-| `cluster/apps/irq-balance/kustomization.yaml`                      | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/irq-balance/namespace.yaml`                          | Namespace definition for the irq-balance workload.                         |
-| `cluster/apps/irq-balance/irq-balance-e2/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/irq-balance/irq-balance-e2/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/irq-balance/irq-balance-e2/app/release.yaml`         | Flux `HelmRelease` referencing the bjw-s-labs app-template chart.          |
-| `cluster/apps/irq-balance/irq-balance-e2/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/irq-balance/irq-balance-e2/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/flux/meta/repositories/bjw-s-labs-app-template.yaml`      | Helm repository definition pinning the upstream app-template source.       |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+irq-balance-e2/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage daemonsets on target nodes.
-- Ensure the workstation can reach the Kubernetes API and that the `irq-balance-e2` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Target nodes (e2-1, e2-2, e2-3) must be schedulable and have appropriate labels.
+- Kubernetes cluster with proper node access
+- Edge node (e2) with appropriate CPU configuration
+- Proper kernel support for IRQ balancing
+- Network connectivity for node management
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the irq-balance-e2 Helm release to run irqbalance daemons on designated nodes, ensuring interrupts are balanced across CPU cores for optimal performance.
+1. **IRQ balancing monitoring**:
 
-### Preconditions
+```bash
+# Check irq-balance service status
+kubectl get pods -n irq-balance
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when irqbalance updates could impact node performance.
-- Capture the current Helm release revision for rollback reference:
+# Verify IRQ balancing
+kubectl exec -n irq-balance <pod-name> -- systemctl status irqbalance
 
-  ```bash
-  kubectl -n irq-balance get helmrelease irq-balance-e2 -o yaml
-  ```
+# Check IRQ distribution
+kubectl exec -n irq-balance <pod-name> -- cat /proc/interrupts
+```
 
-### Procedure
+2. **Configuration management**:
 
-#### Phase 1 – Plan and Author Changes
+```bash
+# Check current configuration
+kubectl exec -n irq-balance <pod-name> -- cat /etc/default/irqbalance
 
-1. Update chart versions or values under `cluster/apps/irq-balance/irq-balance-e2/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+# Verify IRQ balance configuration
+kubectl exec -n irq-balance <pod-name> -- irqbalance --debug
+```
 
-   ```bash
-   flux diff hr irq-balance-e2 --namespace irq-balance
-   ```
+3. **Performance monitoring**:
 
-4. Commit changes with runbook updates and open a pull request.
+```bash
+# Check IRQ balancing status
+kubectl exec -n irq-balance <pod-name> -- systemctl status irqbalance
 
-#### Phase 2 – Reconcile with Flux
+# Monitor IRQ distribution
+kubectl exec -n irq-balance <pod-name> -- watch -n 1 cat /proc/interrupts
+```
 
-1. After merge, monitor the Flux Kustomization:
+### Decision Trees
 
-   ```bash
-   flux reconcile kustomization irq-balance-e2 --with-source
-   flux get kustomizations irq-balance-e2 -n flux-system
-   ```
+```yaml
+# irq-balance-e2 operational decision tree
+start: "irq_balance_health_check"
+nodes:
+  irq_balance_health_check:
+    question: "Is irq-balance-e2 healthy?"
+    command: "kubectl get pods -n irq-balance --no-headers | grep -v 'Running'"
+    validation: "wc -l | grep -q '^0$'"
+    yes: "investigate_issue"
+    no: "irq_balance_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n irq-balance"
+    log_command: "kubectl logs -n irq-balance <pod-name> --tail=50"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    diagnostic_commands:
+      - "kubectl get events -n irq-balance --sort-by=.metadata.creationTimestamp | tail -10"
+      - "kubectl top pods -n irq-balance"
+    options:
+      config_error: "Configuration issue"
+      dependency_failure: "Dependency problem"
+      resource_constraint: "Resource limitation"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    commands:
+      - "helm get values irq-balance-e2 -n irq-balance"
+      - "kubectl get cm -n irq-balance -o yaml"
+    next: "apply_fix"
+  dependency_failure:
+    action: "Check cross-service dependencies"
+    commands:
+      - "kubectl get nodes | grep e2"
+      - "kubectl get pods -n kube-system --selector=k8s-app=cilium"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits"
+    commands:
+      - "kubectl top nodes"
+      - "kubectl describe nodes | grep -A 10 'Capacity'"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    validation_commands:
+      - "kubectl apply -f <fixed-config>"
+      - "kubectl rollout restart deployment/<deployment> -n irq-balance"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n irq-balance --no-headers | grep 'Running'"
+    validation: "wc -l | grep -q '^[1-9]'"
+    yes: "irq_balance_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  irq_balance_healthy:
+    action: "irq-balance-e2 verified healthy"
+    next: "end"
+end: "end"
+```
 
-2. Confirm the Helm release upgrade succeeded:
+### Cross-Service Dependencies
 
-   ```bash
-   flux get helmrelease irq-balance-e2 -n irq-balance
-   ```
+```yaml
+# irq-balance-e2 cross-service dependencies
+service_dependencies:
+  irq-balance-e2:
+    depends_on:
+      - kube-system/cilium
+    depended_by:
+      - Network-intensive workloads
+      - High-performance applications
+      - Real-time systems
+    critical_path: true
+    health_check_command: "kubectl get pods -n irq-balance --no-headers | grep 'Running'"
+```
 
-#### Phase 3 – Monitor DaemonSet Health
+## Troubleshooting
 
-1. Watch daemonset pods on target nodes:
+### Common Issues
 
-   ```bash
-   kubectl get pods -n irq-balance -l app.kubernetes.io/name=irq-balance-e2
-   kubectl describe ds irq-balance-e2 -n irq-balance
-   ```
+1. **Node access problems**:
 
-2. Validate events emitted by the daemonset:
+   - **Symptom**: Pod unable to access edge node
+   - **Diagnosis**: Check node status and access permissions
+   - **Resolution**: Verify node labels and taints
 
-   ```bash
-   kubectl get events -n irq-balance --sort-by=.lastTimestamp
-   ```
+2. **IRQ balancing not working**:
 
-3. Ensure target nodes have the daemon running (`kubectl get nodes --show-labels`).
+   - **Symptom**: Uneven IRQ distribution
+   - **Diagnosis**: Check IRQ balance configuration and kernel support
+   - **Resolution**: Verify IRQ balance parameters and kernel modules
 
-#### Phase 4 – Manual Intervention for Failed Pods
+3. **Resource constraints**:
 
-1. Check pod logs for startup failures:
+   - **Symptom**: Pods in Pending state or frequent restarts
+   - **Diagnosis**: Check resource requests vs available cluster resources
+   - **Resolution**: Adjust resource limits or scale cluster
 
-   ```bash
-   kubectl logs -n irq-balance ds/irq-balance-e2
-   ```
+4. **Configuration errors**:
 
-2. Inspect node conditions if pods fail to schedule:
+   - **Symptom**: IRQ balance service not starting
+   - **Diagnosis**: Check configuration syntax and parameters
+   - **Resolution**: Verify values.yaml configuration
 
-   ```bash
-   kubectl describe node e2-1
-   ```
+## Maintenance
 
-3. Restart the daemonset if needed:
+### Updates
 
-   ```bash
-   kubectl rollout restart ds/irq-balance-e2 -n irq-balance
-   ```
+```bash
+# Update irq-balance-e2 using Flux
+flux reconcile kustomization irq-balance-e2 --with-source
+```
 
-#### Phase 5 – Rollback or Disable
+### Configuration Management
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+```bash
+# Update irq-balance-e2 configuration
+flux reconcile kustomization irq-balance-e2 --with-source
 
-   ```bash
-   flux suspend kustomization irq-balance-e2 -n flux-system
-   flux suspend helmrelease irq-balance-e2 -n irq-balance
-   ```
+# Verify configuration changes
+kubectl exec -n irq-balance <pod-name> -- cat /etc/default/irqbalance
+```
 
-3. Resume once remediation is complete:
+### MCP Integration
 
-   ```bash
-   flux resume kustomization irq-balance-e2 -n flux-system
-   flux resume helmrelease irq-balance-e2 -n irq-balance
-   ```
+- **Library ID**: `irq-balance-interrupt-management`
+- **Version**: `v1.9.0`
+- **Usage**: IRQ balancing and interrupt distribution
+- **Citation**: Use `resolve-library-id` for irq-balance configuration and API references
 
-4. Consider scaling the daemonset to zero as a last resort:
+## References
 
-   ```bash
-   kubectl -n irq-balance patch ds/irq-balance-e2 --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/nodeSelector", "value": {"nonexistent": "true"}}]'
-   ```
+- [IRQ Balance Documentation](https://github.com/irqbalance/irqbalance)
+- [Flux CD Documentation](https://fluxcd.io/flux/)
+- [Kubernetes Node Management](https://kubernetes.io/docs/concepts/architecture/nodes/)
 
-### Validation
+## Agent-Friendly Workflows
 
-- `kubectl get ds -n irq-balance` shows irq-balance-e2 with desired/ready pods matching target nodes.
-- `kubectl get pods -n irq-balance -l app.kubernetes.io/name=irq-balance-e2` reports all pods Running.
-- `flux get helmrelease irq-balance-e2 -n irq-balance` reports `Ready=True` with no pending upgrades.
-- Interrupt distribution can be verified with `irqbalance --debug` on nodes (requires privileged access).
+This section provides decision trees and conditional logic for autonomous execution of irq-balance-e2 tasks.
 
-### Troubleshooting Guidance
+### irq-balance-e2 Health Check Workflow
 
-- If pods fail to start, check privileged security context and host PID/IPC requirements:
+```yaml
+# irq-balance-e2 health check decision tree
+start: "check_irq_balance_pods"
+nodes:
+  check_irq_balance_pods:
+    question: "Are irq-balance pods running?"
+    command: "kubectl get pods -n irq-balance --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_irqbalance_service"
+    no: "restart_irq_balance_pods"
+  check_irqbalance_service:
+    question: "Is irqbalance service running?"
+    command: "kubectl exec -n irq-balance deployment/irq-balance-e2 -- systemctl is-active irqbalance | grep -c 'active'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "SERVICE_FAIL"}'' | grep -q ''OK'''
+    yes: "check_irq_distribution"
+    no: "start_irqbalance_service"
+  check_irq_distribution:
+    question: "Are IRQs being distributed?"
+    command: "kubectl exec -n irq-balance deployment/irq-balance-e2 -- cat /proc/interrupts | grep -c 'CPU[0-9]'"
+    validation: 'awk ''{if ($1 >= 2) print "OK"; else print "DISTRIBUTION_FAIL"}'' | grep -q ''OK'''
+    yes: "irq_balance_healthy"
+    no: "fix_irq_distribution"
+  restart_irq_balance_pods:
+    action: "Restart irq-balance pods"
+    next: "check_irq_balance_pods"
+  start_irqbalance_service:
+    action: "Start irqbalance service"
+    next: "check_irqbalance_service"
+  fix_irq_distribution:
+    action: "Check IRQ balancing configuration and kernel support"
+    next: "check_irq_distribution"
+  irq_balance_healthy:
+    action: "IRQ balancing for edge node e2 is healthy"
+    next: "end"
+end: "end"
+```
 
-  ```bash
-  kubectl auth can-i use securitycontext --as system:serviceaccount:irq-balance:irq-balance-e2
-  ```
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-- For scheduling failures, verify node selectors and tolerations match target nodes.
-- When the Helm release fails to deploy, check rendered manifests:
+### Before using Context7 tools
 
-  ```bash
-  flux diff hr irq-balance-e2 --namespace irq-balance
-  kubeconform -strict -summary ./cluster/apps/irq-balance/irq-balance-e2/app
-  ```
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for irq-balance-e2 documentation.
+- Confirm the catalog entry contains the documentation or API details needed for irq-balance-e2 operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
 
-- If pods crash, capture logs and describe the pod:
+### When the catalog covers irq-balance-e2 documentation needs
 
-  ```bash
-  kubectl -n irq-balance get pods
-  kubectl -n irq-balance describe pod <pod-name>
-  ```
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed irq-balance-e2 configuration changes.
 
-- For performance issues, monitor interrupt distribution with system tools on target nodes.
+### When irq-balance-e2 documentation is missing or outdated
 
-## Validation and Testing
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
 
-<!-- markdownlint-disable MD013 -->
+### Documenting Citations and MCP Usage
 
-| Step                                                         | Purpose                                                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                              | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                          | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr irq-balance-e2 --namespace irq-balance`        | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n irq-balance get events --sort-by=.lastTimestamp` | Confirms the daemonset emits scheduling events after rollout.                                    |
-| `kubectl get ds -n irq-balance`                              | Validates daemonset is running on target nodes.                                                  |
-
-<!-- markdownlint-enable MD013 -->
-
-## References and Cross-links
-
-- Runbook standards: [Repository root readme](/README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](/cluster/flux/README.md)
-- Helm repository management: [cluster/flux/meta/repositories/README.md](/cluster/flux/meta/repositories/README.md)
-- Upstream app-template documentation: <https://github.com/bjw-s-labs/helm-charts/tree/main/charts/library/common>
-- Upstream irqbalance documentation: <https://github.com/Irqbalance/irqbalance>
-- Home Operations irqbalance image: <https://github.com/home-operations/containers/tree/main/apps/irqbalance>
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in irq-balance-e2 change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting irq-balance-e2 documentation.

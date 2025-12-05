@@ -1,6 +1,6 @@
 # Custom Resource Definitions Runbook
 
-## Purpose and Scope
+## Overview
 
 This runbook covers authoring, validation, deployment, and rollback of custom
 resource definitions (CRDs) that support FluxCD-managed workloads in the
@@ -26,7 +26,7 @@ artifacts.
 
 <!-- markdownlint-enable MD013 -->
 
-## Operational Runbook
+## Operation
 
 ### Summary
 
@@ -170,7 +170,7 @@ spec:
 
 <!-- markdownlint-enable MD013 -->
 
-### References and Cross-links
+### References
 
 - Repository runbook standards: [`README.md`](../../README.md#runbook-standards)
 - Flux operations guide: [`cluster/flux/README.md`](../flux/README.md)

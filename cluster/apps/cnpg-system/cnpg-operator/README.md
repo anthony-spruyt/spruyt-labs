@@ -1,179 +1,227 @@
-# cnpg-operator Runbook
+# CloudNativePG Operator - PostgreSQL Management
 
-## Purpose and Scope
+## Overview
 
-The cnpg-operator (CloudNativePG) deployment provides a Kubernetes operator for managing PostgreSQL clusters. This runbook documents the GitOps layout, deployment workflow, and operations required to keep the operator healthy for the spruyt-labs environment.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+CloudNativePG Operator provides comprehensive PostgreSQL management for Kubernetes, offering high availability, backup, restore, and monitoring capabilities. It serves as the primary PostgreSQL operator for the spruyt-labs cluster, managing database instances for various applications.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                              | Description                                                                |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/cnpg-system/README.md`                              | This runbook and component overview.                                       |
-| `cluster/apps/cnpg-system/kustomization.yaml`                     | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/cnpg-system/namespace.yaml`                         | Namespace definition for the cnpg-system workload.                         |
-| `cluster/apps/cnpg-system/cnpg-operator/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/cnpg-system/cnpg-operator/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/cnpg-system/cnpg-operator/app/release.yaml`         | Flux `HelmRelease` referencing the CloudNativePG chart.                    |
-| `cluster/apps/cnpg-system/cnpg-operator/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/cnpg-system/cnpg-operator/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/flux/meta/repositories/helm/cloudnative-pg.yaml`         | Helm repository definition pinning the upstream CloudNativePG source.      |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+cnpg-operator/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── plugin-barman-cloud/             # Barman cloud plugin
+│   ├── app/
+│   │   ├── kustomization.yaml      # Plugin kustomization
+│   │   ├── kustomizeconfig.yaml    # Plugin config
+│   │   ├── release.yaml            # Plugin release
+│   │   └── values.yaml             # Plugin values
+│   └── ks.yaml                     # Plugin kustomization
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage PostgreSQL clusters.
-- Ensure the workstation can reach the Kubernetes API and that the `cnpg-operator` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
+- Kubernetes cluster with Flux CD installed
+- Storage class configured for persistent volumes
+- Network connectivity between nodes
+- Proper RBAC permissions
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the cnpg-operator Helm release to manage PostgreSQL clusters in the cluster, ensuring high availability and automated operations.
+1. **PostgreSQL cluster management**:
 
-### Preconditions
+```bash
+# Create PostgreSQL cluster
+kubectl apply -f postgresql-cluster.yaml
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when operator downtime could impact database availability.
-- Capture the current Helm release revision for rollback reference:
+# Check cluster status
+kubectl get clusters -n <namespace>
+```
 
-  ```bash
-  kubectl -n cnpg-system get helmrelease cnpg-operator -o yaml
-  ```
+2. **Backup management**:
 
-### Procedure
+```bash
+# Check scheduled backups
+kubectl get scheduledbackups -A
 
-#### Phase 1 – Plan and Author Changes
+# Check backup status
+kubectl get backups -A
+```
 
-1. Update chart versions or values under `cluster/apps/cnpg-system/cnpg-operator/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+3. **Monitoring and maintenance**:
 
-   ```bash
-   flux diff hr cnpg-operator --namespace cnpg-system
-   ```
+```bash
+# Check cluster health
+kubectl get clusters -A -o wide
 
-4. Commit changes with runbook updates and open a pull request.
+# Check pod status
+kubectl get pods -A -l cluster-name=<cluster-name>
+```
 
-#### Phase 2 – Reconcile with Flux
+### Decision Trees
 
-1. After merge, monitor the Flux Kustomization:
+```yaml
+# CNPG operator decision tree
+start: "cnpg_health_check"
+nodes:
+  cnpg_health_check:
+    question: "Is CNPG operator healthy?"
+    command: "kubectl get pods -n cnpg-system --no-headers | grep -v 'Running'"
+    validation: "wc -l | grep -q '^0$'"
+    yes: "investigate_issue"
+    no: "cnpg_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n cnpg-system"
+    log_command: "kubectl logs -n cnpg-system <operator-pod-name> --tail=50"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    diagnostic_commands:
+      - "kubectl get events -n cnpg-system --sort-by=.metadata.creationTimestamp | tail -10"
+      - "kubectl top pods -n cnpg-system"
+    options:
+      config_error: "Configuration issue"
+      dependency_failure: "Dependency problem"
+      resource_constraint: "Resource limitation"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    commands:
+      - "helm get values cnpg-operator -n cnpg-system"
+      - "kubectl get crds | grep postgresql"
+    next: "apply_fix"
+  dependency_failure:
+    action: "Check cross-service dependencies"
+    commands:
+      - "kubectl get pvc -n <namespace>"
+      - "kubectl get pods -n rook-ceph"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits"
+    commands:
+      - "kubectl top nodes"
+      - "kubectl describe nodes | grep -A 10 'Capacity'"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    validation_commands:
+      - "kubectl apply -f <fixed-config>"
+      - "kubectl rollout restart deployment/<deployment> -n cnpg-system"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n cnpg-system --no-headers | grep 'Running'"
+    validation: "wc -l | grep -q '^[1-9]'"
+    yes: "cnpg_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  cnpg_healthy:
+    action: "CNPG operator verified healthy"
+    next: "end"
+end: "end"
+```
 
-   ```bash
-   flux reconcile kustomization cnpg-operator --with-source
-   flux get kustomizations cnpg-operator -n flux-system
-   ```
+### Cross-Service Dependencies
 
-2. Confirm the Helm release upgrade succeeded:
+```yaml
+# CNPG cross-service dependencies
+service_dependencies:
+  cnpg-operator:
+    depends_on:
+      - rook-ceph/rook-ceph
+      - cert-manager/cert-manager
+    depended_by:
+      - authentik-system/authentik
+      - All applications requiring PostgreSQL
+      - All workloads using managed databases
+    critical_path: true
+    health_check_command: "kubectl get pods -n cnpg-system --no-headers | grep 'Running'"
+```
 
-   ```bash
-   flux get helmrelease cnpg-operator -n cnpg-system
-   ```
+## Troubleshooting
 
-#### Phase 3 – Monitor Operator Health
+### Common Issues
 
-1. Watch operator pods and CRDs:
+1. **PostgreSQL cluster creation failures**:
 
-   ```bash
-   kubectl get pods -n cnpg-system
-   kubectl get crd | grep postgresql
-   ```
+   - **Symptom**: Clusters stuck in initializing state
+   - **Diagnosis**: Check storage provisioning and network connectivity
+   - **Resolution**: Verify storage class and network policies
 
-2. Validate cluster creation and management.
-3. Ensure PostgreSQL clusters are healthy.
+2. **Backup configuration errors**:
 
-#### Phase 4 – Manual Intervention for Operator Issues
+   - **Symptom**: Scheduled backups not running
+   - **Diagnosis**: Check backup configuration and storage access
+   - **Resolution**: Verify backup storage credentials and schedules
 
-1. Restart the deployment if reconciliation fails:
+3. **Operator reconciliation loops**:
+   - **Symptom**: Operator pods restarting frequently
+   - **Diagnosis**: Check operator logs and resource constraints
+   - **Resolution**: Adjust resource limits and check for configuration errors
 
-   ```bash
-   kubectl -n cnpg-system rollout restart deploy/cnpg-operator
-   ```
+## Maintenance
 
-2. For CRD issues, check if the operator is running and has permissions.
-3. Inspect logs for reconciliation errors:
+### Updates
 
-   ```bash
-   kubectl logs -n cnpg-system deploy/cnpg-operator
-   ```
+```bash
+# Update CNPG operator
+helm repo update
+helm upgrade cnpg-operator cloudnative-pg/cloudnative-pg -n cnpg-system -f values.yaml
+```
 
-#### Phase 5 – Rollback or Disable
+### Database Management
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+```bash
+# Check PostgreSQL cluster status
+kubectl get clusters -A
 
-   ```bash
-   flux suspend kustomization cnpg-operator -n flux-system
-   flux suspend helmrelease cnpg-operator -n cnpg-system
-   ```
+# Check backup status
+kubectl get backups -A
+```
 
-3. Resume once remediation is complete:
+### MCP Integration
 
-   ```bash
-   flux resume kustomization cnpg-operator -n flux-system
-   flux resume helmrelease cnpg-operator -n cnpg-system
-   ```
+- **Library ID**: `cloudnative-pg-operator`
+- **Version**: `v1.22.0`
+- **Usage**: PostgreSQL cluster management and automation
+- **Citation**: Use `resolve-library-id` for CNPG configuration and troubleshooting
 
-4. Consider scaling the deployment to zero as a last resort:
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-   ```bash
-   kubectl -n cnpg-system scale deploy/cnpg-operator --replicas=0
-   ```
+### Before using Context7 tools
 
-### Validation
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for CNPG operator documentation.
+- Confirm the catalog entry contains the documentation or API details needed for CNPG operator operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
 
-- `kubectl get pods -n cnpg-system` shows running pods with no restarts.
-- `kubectl get helmrelease cnpg-operator -n cnpg-system` reports `Ready=True` with no pending upgrades.
-- CRDs are installed and PostgreSQL clusters can be created.
-- Database clusters are operational.
+### When the catalog covers CNPG operator documentation needs
 
-### Troubleshooting Guidance
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed CNPG operator configuration changes.
 
-- If operator fails to reconcile, check logs for RBAC or resource issues.
-- For cluster creation failures, ensure storage and networking are available.
-- When the Helm release fails to deploy, check rendered manifests:
+### When CNPG operator documentation is missing or outdated
 
-  ```bash
-  flux diff hr cnpg-operator --namespace cnpg-system
-  kubeconform -strict -summary ./cluster/apps/cnpg-system/cnpg-operator/app
-  ```
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
 
-- If the deployment pod crashes, capture pod logs and describe the pod:
+### Documenting Citations and MCP Usage
 
-  ```bash
-  kubectl -n cnpg-system get pods
-  kubectl -n cnpg-system describe pod <pod-name>
-  ```
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in CNPG operator change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting CNPG operator documentation.
 
-- For PostgreSQL issues, consult CNPG documentation.
+## References
 
-## Validation and Testing
-
-<!-- markdownlint-disable MD013 -->
-
-| Step                                                         | Purpose                                                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------- |
-| `task validate`                                              | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                          | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr cnpg-operator --namespace cnpg-system`         | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n cnpg-system get events --sort-by=.lastTimestamp` | Confirms the operator starts reconciling after rollout.                                          |
-| `kubectl get crd                                             | grep postgresql`                                                                                 | Validates that CRDs are installed. |
-
-<!-- markdownlint-enable MD013 -->
-
-## References and Cross-links
-
-- Runbook standards: [Repository root readme](README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](../../../flux/README.md)
-- CNPG operations: [cluster/apps/cnpg-system/cnpg-operator/README.md](../../cnpg-system/cnpg-operator/README.md)
-- Upstream CNPG documentation: <https://cloudnative-pg.io/>
+- [CloudNativePG Documentation](https://cloudnative-pg.io/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [CNPG GitHub](https://github.com/cloudnative-pg/cloudnative-pg)

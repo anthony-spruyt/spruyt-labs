@@ -2,6 +2,17 @@
 
 ## Purpose and Scope
 
+The Infrastructure Terraform Runbook provides comprehensive guidance for managing cloud infrastructure resources using Terraform and Terraform Cloud, ensuring reliable and automated provisioning of AWS services for the spruyt-labs homelab.
+
+Objectives:
+
+- Automate AWS infrastructure provisioning and management
+- Maintain infrastructure as code with version control and reviews
+- Ensure consistent and repeatable deployments across environments
+- Provide validation and troubleshooting procedures for infrastructure changes
+
+## Overview
+
 This document governs the Terraform-backed infrastructure that supports the
 spruyt-labs Talos cluster. It explains how directories under
 [infra/](.) are organized, prescribes operator workflows for planning
@@ -46,7 +57,7 @@ troubleshooting paths for Terraform Cloud backed deployments.
 Remote state for every workspace is stored in Terraform Cloud. Avoid local state
 files and rely on Terraform Cloud runs or authenticated CLI operations.
 
-## Operational Runbook
+## Operation
 
 ### Summary
 
@@ -297,12 +308,14 @@ remediation commands covering authentication, drift, and failed applies.
 - Remove orphaned assets manually (for example, S3 buckets blocking deletion)
   before re-running the apply.
 
-## References and Cross-links
+## References
 
 <!-- markdownlint-disable MD013 -->
 
 - Runbook standards overview:
-  [`README.md#runbook-standards`](../README.md#runbook-standards)
+  [`README.md`](../README.md#runbook-standards)
+- Infrastructure maintenance procedures:
+  [`MAINTENANCE.md`](MAINTENANCE.md)
 - Flux GitOps operations:
   [`cluster/flux/README.md`](../cluster/flux/README.md)
 - Talos platform guidance:

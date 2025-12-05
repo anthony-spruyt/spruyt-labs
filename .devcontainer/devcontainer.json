@@ -39,7 +39,8 @@
         "blueglassblock.better-json5",
         "esbenp.prettier-vscode",
         "kilocode.kilo-code",
-        "hashicorp.terraform"
+        "hashicorp.terraform",
+        "bierner.markdown-mermaid"
       ]
     }
   },

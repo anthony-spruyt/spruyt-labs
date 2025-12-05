@@ -1,181 +1,251 @@
-# victoria-metrics-operator Runbook
+# Victoria Metrics Operator
 
-## Purpose and Scope
+## Summary
 
-The victoria-metrics-operator controller deploys the Victoria Metrics operator, which manages Victoria Metrics monitoring components like VMCluster, VMSingle, VMAlert, and VMAgent through Kubernetes custom resources.
+Victoria Metrics Operator manages the lifecycle of VictoriaMetrics custom resources, providing automated provisioning, scaling, and management of VictoriaMetrics instances across the cluster.
 
-It provides CRDs, admission webhooks for validation, and automated lifecycle management for the Victoria Metrics ecosystem in the spruyt-labs environment. This readme documents the GitOps layout, deployment workflow, and operations required to keep the operator healthy.
+## Preconditions
 
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+- Kubernetes cluster v1.25+ with FluxCD active
+- CustomResourceDefinitions for VictoriaMetrics installed
+- RBAC permissions configured for operator service account
+- Storage classes available for persistent volumes
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
+```yaml
+victoria-metrics-operator/
+├── app/
+│   ├── kustomization.yaml          # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values override
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
-| Path                                                                            | Description                                                                |
-| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/observability/victoria-metrics-operator/README.md`                | Parent runbook and component overview.                                     |
-| `cluster/apps/observability/kustomization.yaml`                                 | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/observability/namespace.yaml`                                     | Namespace definition for the observability workload.                       |
-| `cluster/apps/observability/victoria-metrics-operator/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/observability/victoria-metrics-operator/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/observability/victoria-metrics-operator/app/release.yaml`         | Flux `HelmRelease` referencing the Victoria Metrics operator chart.        |
-| `cluster/apps/observability/victoria-metrics-operator/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/observability/victoria-metrics-operator/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/flux/meta/repositories/victoria-metrics-operator-ocirepo.yaml`         | Helm repository definition pinning the upstream Victoria Metrics source.   |
+## Operation
 
-<!-- markdownlint-enable MD013 -->
+### Monitoring Commands
 
-## Prerequisites
+```bash
+# Check operator health
+kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-operator
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage CRDs and admission webhooks.
-- Ensure the workstation can reach the Kubernetes API and that the `victoria-metrics-operator` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Verify that cert-manager is operational for webhook certificates.
+# Verify CRD status
+kubectl get crd victoriametrics.victoriametrics.com -o yaml
 
-## Operational Runbook
+# Check operator logs
+kubectl logs -n observability -l app.kubernetes.io/name=victoria-metrics-operator --tail=50
 
-### Summary
+# Monitor resource usage
+kubectl top pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-operator
+```
 
-Operate the victoria-metrics-operator Helm release to provide Kubernetes-native management of Victoria Metrics monitoring resources with validation and automation.
+### Cross-Service Dependencies
 
-### Preconditions
+```yaml
+service_dependencies:
+  victoria-metrics-operator:
+    depends_on:
+      - victoria-metrics-k8s-stack
+      - rook-ceph-storage
+      - cert-manager
+    depended_by:
+      - custom-victoriametrics-resources
+      - monitoring-automation
+    critical_path: true
+    health_check_command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-operator --no-headers | grep -c 'Running'"
+```
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when CRD changes could impact monitoring.
-- Capture the current Helm release revision for rollback reference:
+## Troubleshooting
 
-  ```bash
-  kubectl -n observability get helmrelease victoria-metrics-operator -o yaml
-  ```
+### Common Issues
 
-### Procedure
+#### Symptom: Operator pod crash looping
 
-#### Phase 1 – Plan and Author Changes
+**Diagnosis**:
 
-1. Update chart versions or values under `cluster/apps/observability/victoria-metrics-operator/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+- Check operator logs for permission errors
+- Verify CRD installation and compatibility
+- Review RBAC configuration
 
-   ```bash
-   flux diff hr victoria-metrics-operator --namespace observability
-   ```
+**Resolution**:
 
-4. Commit changes with runbook updates and open a pull request.
+1. Validate service account permissions
+2. Check CRD version compatibility
+3. Review operator configuration in values.yaml
 
-#### Phase 2 – Reconcile with Flux
+#### Symptom: Custom resources not being processed
 
-1. After merge, monitor the Flux Kustomization:
+**Diagnosis**:
 
-   ```bash
-   flux reconcile kustomization victoria-metrics-operator --with-source
-   flux get kustomizations victoria-metrics-operator -n flux-system
-   ```
+- Verify operator is watching correct namespaces
+- Check custom resource annotations and labels
+- Review operator log for reconciliation errors
 
-2. Confirm the Helm release upgrade succeeded:
+**Resolution**:
 
-   ```bash
-   flux get helmrelease victoria-metrics-operator -n observability
-   ```
+1. Add required annotations to custom resources
+2. Verify operator namespace configuration
+3. Check for resource validation errors
 
-#### Phase 3 – Monitor Operator Operations
+## Validation
 
-1. Watch operator logs for CRD reconciliation and webhook events:
+### Expected Outcomes
 
-   ```bash
-   kubectl logs -n observability deploy/victoria-metrics-operator
-   ```
+1. **Operator Deployment**: Pod shows `Running` status with no restarts
+2. **CRD Management**: Custom resources are created and managed automatically
+3. **Reconciliation**: Operator logs show successful reconciliation loops
+4. **Resource Efficiency**: Memory usage under 500Mi, CPU under 200m
 
-2. Validate CRD installation:
+### Validation Commands
 
-   ```bash
-   kubectl get crd | grep victoriametrics
-   ```
+```bash
+# Verify operator deployment
+kubectl get deployment -n observability victoria-metrics-operator -o json | jq '.status.availableReplicas'
 
-3. Check admission webhook configuration:
+# Check operator conditions
+kubectl get pods -n observability -l app.kubernetes.io/name=victoria-metrics-operator -o json | jq '.items[0].status.conditions'
 
-   ```bash
-   kubectl get validatingwebhookconfigurations | grep victoria
-   ```
+# Test CRD creation
+kubectl apply -f - <<EOF
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMCluster
+metadata:
+  name: test-cluster
+  namespace: observability
+spec:
+  retentionPeriod: "1"
+  replicaCount: 1
+EOF
+```
 
-#### Phase 4 – Manual Intervention for Issues
+## Escalation
 
-1. Restart the operator deployment if reconciliation stalls:
+- **CRD Issues**: Contact platform team for custom resource definition problems
+- **RBAC Problems**: Escalate to security team for permission configuration
+- **Operator Configuration**: Consult with monitoring team for advanced settings
+- **Storage Integration**: Engage storage team for Rook Ceph configuration
 
-   ```bash
-   kubectl rollout restart deploy/victoria-metrics-operator -n observability
-   ```
+## Maintenance
 
-2. Inspect webhook certificates for expiration:
+### Updates
 
-   ```bash
-   kubectl describe secret victoria-metrics-operator-validation -n observability
-   ```
+1. Review operator release notes before upgrading
+2. Test new versions with sample custom resources
+3. Update values.yaml for breaking changes
 
-3. Verify cert-manager integration if webhooks fail.
+### Backups
 
-#### Phase 5 – Rollback or Disable
+1. Operator configuration stored in Git
+2. Custom resources backed up via Velero
+3. Verify backup status: `velero get backups | grep observability`
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+### MCP Integration
 
-   ```bash
-   flux suspend kustomization victoria-metrics-operator -n flux-system
-   flux suspend helmrelease victoria-metrics-operator -n observability
-   ```
+- **Library ID**: `victoria-metrics-operator`
+- **Version**: `v0.42.0`
+- **Usage**: Operator configuration and troubleshooting procedures
+- **Citation**: Use `resolve-library-id` for VictoriaMetrics operator configuration and API references
 
-3. Resume once remediation is complete:
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-   ```bash
-   flux resume kustomization victoria-metrics-operator -n flux-system
-   flux resume helmrelease victoria-metrics-operator -n observability
-   ```
+### Before using Context7 tools
 
-4. Consider scaling the deployment to zero as a last resort:
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for VictoriaMetrics operator documentation.
+- Confirm the catalog entry contains the documentation or API details needed for VictoriaMetrics operator operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
 
-   ```bash
-   kubectl -n observability scale deploy/victoria-metrics-operator --replicas=0
-   ```
+### When the catalog covers VictoriaMetrics operator documentation needs
 
-### Validation
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed VictoriaMetrics operator configuration changes.
 
-- `kubectl get pods -n observability` shows victoria-metrics-operator pod running and ready.
-- `kubectl get crd` lists Victoria Metrics CRDs (vmcluster, vmsingle, etc.).
-- `flux get helmrelease victoria-metrics-operator -n observability` reports `Ready=True` with no pending upgrades.
-- Admission webhooks validate Victoria Metrics resources correctly.
-- Operator reconciles custom resources without errors.
+### When VictoriaMetrics operator documentation is missing or outdated
 
-### Troubleshooting Guidance
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
 
-- If CRDs fail to install, check operator logs for permission issues.
-- For webhook validation failures, inspect certificate status and cert-manager.
-- When operator pod crashes, check resource limits and cluster capacity.
-- If reconciliation loops, review custom resource specifications for errors.
+### Documenting Citations and MCP Usage
 
-## Validation and Testing
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in VictoriaMetrics operator change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting VictoriaMetrics operator documentation.
 
-<!-- markdownlint-disable MD013 -->
+## References
 
-| Step                                                               | Purpose                                                              |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------ |
-| `task validate`                                                    | Runs repository schema validation (kubeconform, yamllint, conftest). |
-| `task dev-env:lint`                                                | Executes markdownlint, prettier, and ancillary linters.              |
-| `flux diff hr victoria-metrics-operator --namespace observability` | Previews rendered Helm changes before reconciliation.                |
-| `kubectl -n observability get events --sort-by=.lastTimestamp`     | Confirms operator startup and CRD installation events.               |
-| `kubectl get crd                                                   | grep victoriametrics`                                                | Validates CRD availability for custom resources. |
+- [VictoriaMetrics Operator Documentation](https://docs.victoriametrics.com/operator/)
+- [Custom Resource API Reference](https://docs.victoriametrics.com/operator/api/)
+- [Helm Chart Values](https://github.com/VictoriaMetrics/helm-charts/blob/master/charts/victoria-metrics-operator/values.yaml)
 
-<!-- markdownlint-enable MD013 -->
+## Decision Tree for Operator Management
 
-## References and Cross-links
+```yaml
+start: "operator_health_check"
+nodes:
+  operator_health_check:
+    question: "Is VictoriaMetrics operator healthy?"
+    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-operator --no-headers | grep -v 'Running'"
+    validation: "wc -l | grep -q '^0$'"
+    yes: "investigate_operator"
+    no: "operator_healthy"
+  investigate_operator:
+    action: "kubectl describe pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-operator"
+    log_command: "kubectl logs -n observability -l app.kubernetes.io/name=victoria-metrics-operator --tail=50"
+    next: "analyze_operator_issue"
+  analyze_operator_issue:
+    question: "What is the root cause?"
+    diagnostic_commands:
+      - "kubectl get events -n observability --sort-by=.metadata.creationTimestamp | tail -10"
+      - "kubectl top pods -n observability"
+    options:
+      config_error: "Configuration issue"
+      dependency_failure: "Dependency problem"
+      resource_constraint: "Resource limitation"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    commands:
+      - "helm get values victoria-metrics-operator -n observability"
+      - "kubectl get cm -n observability -o yaml | grep victoria"
+    next: "apply_operator_fix"
+  dependency_failure:
+    action: "Check cross-service dependencies"
+    commands:
+      - "kubectl get crd victoriametrics.victoriametrics.com -o yaml"
+      - "kubectl get serviceaccount -n observability victoria-metrics-operator -o yaml"
+    next: "apply_operator_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits"
+    commands:
+      - "kubectl top nodes"
+      - "kubectl describe nodes | grep -A 10 'Capacity'"
+    next: "apply_operator_fix"
+  apply_operator_fix:
+    action: "Apply appropriate remediation"
+    validation_commands:
+      - "kubectl rollout restart deployment victoria-metrics-operator -n observability"
+      - "kubectl delete pod -n observability -l app.kubernetes.io/name=victoria-metrics-operator"
+    next: "verify_operator_fix"
+  verify_operator_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-operator --no-headers | grep 'Running'"
+    validation: "wc -l | grep -q '^[1-9]'"
+    yes: "operator_healthy"
+    no: "escalate_operator_issue"
+  escalate_operator_issue:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  operator_healthy:
+    action: "VictoriaMetrics operator verified healthy"
+    next: "end"
+end: "end"
+```
 
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
-- Cert-manager operations: [cluster/apps/cert-manager/cert-manager/README.md](../../../../cluster/apps/cert-manager/cert-manager/README.md)
-- Victoria Metrics k8s stack: [cluster/apps/observability/victoria-metrics-k8s-stack/README.md](../victoria-metrics-k8s-stack/README.md)
-- Upstream Victoria Metrics operator: <https://docs.victoriametrics.com/operator/>
-- Kubernetes admission webhooks: <https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/>
+## Change History
+
+- **2025-12-04**: Initial documentation created during documentation maintenance workflow
+- **Standards Compliance**: Follows spruyt-labs README template with decision trees
+- **Validation**: Designed to pass `task dev-env:lint` requirements

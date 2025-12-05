@@ -1,5 +1,7 @@
 # Terraform Workspace Factory
 
+## Overview
+
 This Terraform configuration bootstraps Terraform Cloud workspaces for AWS-based infrastructure using Workload Identity authentication.
 
 ## Prerequisites

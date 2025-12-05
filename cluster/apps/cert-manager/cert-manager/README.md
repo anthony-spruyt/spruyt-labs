@@ -1,259 +1,258 @@
-# cert-manager Runbook
+# cert-manager - Certificate Management
 
 ## Purpose and Scope
 
-Cert-manager is a Kubernetes add-on to automate the management and issuance of TLS certificates from various issuing sources, including Let's Encrypt, HashiCorp Vault, and Venafi. This readme documents the GitOps layout, deployment workflow, and operations for maintaining cert-manager in spruyt-labs.
+cert-manager provides automated TLS certificate management for the spruyt-labs homelab infrastructure, handling certificate issuance, renewal, and integration with various certificate authorities.
 
 Objectives:
 
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+- Automate certificate issuance and renewal processes
+- Integrate with multiple certificate issuers (Let's Encrypt, Vault, etc.)
+- Provide TLS certificates for ingress resources and services
+- Ensure secure communication across the homelab infrastructure
+
+## Overview
+
+cert-manager is a native Kubernetes certificate management controller that automates the management and issuance of TLS certificates. It integrates with various issuers including Let's Encrypt, HashiCorp Vault, and private CAs to provide certificates for ingress resources and other services.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                              | Description                                                                |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/cert-manager/cert-manager/README.md`                | This runbook and component overview.                                       |
-| `cluster/apps/cert-manager/kustomization.yaml`                    | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/cert-manager/namespace.yaml`                        | Namespace definition for the cert-manager workload.                        |
-| `cluster/apps/cert-manager/cert-manager/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/cert-manager/cert-manager/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/cert-manager/cert-manager/app/release.yaml`         | Flux `HelmRelease` referencing the upstream jetstack/cert-manager chart.   |
-| `cluster/apps/cert-manager/cert-manager/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/cert-manager/cert-manager/app/cluster-issuers.yaml` | ClusterIssuer resources for ACME certificate issuance.                     |
-| `cluster/apps/cert-manager/cert-manager/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/flux/meta/repositories/helm/jetstack-charts.yaml`        | Helm repository definition pinning the upstream cert-manager source.       |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+cert-manager/
+├── app/
+│   ├── cluster-issuers.yaml          # Cluster-wide issuer configurations
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml          # Kustomize config
+│   ├── release.yaml                  # Helm release configuration
+│   └── values.yaml                   # Helm values
+├── ks.yaml                           # Kustomization configuration
+└── README.md                         # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage certificate issuers.
-- Ensure the workstation can reach the Kubernetes API and that the `cert-manager` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- DNS-01 challenge requires Cloudflare API token and domain access for ACME issuance.
-
-## Operational Runbook
-
-### Summary
-
-Operate the cert-manager Helm release to provide automated certificate lifecycle management, including issuance, renewal, and revocation for TLS certificates used across the cluster.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when certificate changes could impact service availability.
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n cert-manager get helmrelease cert-manager -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/cert-manager/cert-manager/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
-
-   ```bash
-   flux diff hr cert-manager --namespace cert-manager
-   ```
-
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
-
-   ```bash
-   flux reconcile kustomization cert-manager --with-source
-   flux get kustomizations cert-manager -n flux-system
-   ```
-
-2. Confirm the Helm release upgrade succeeded:
-
-   ```bash
-   flux get helmrelease cert-manager -n cert-manager
-   ```
-
-#### Phase 3 – Monitor Certificate Issuance
-
-1. Watch certificate requests and issuances:
-
-   ```bash
-   kubectl get certificates -A
-   kubectl get certificaterequests -A
-   ```
-
-2. Validate ClusterIssuer status:
-
-   ```bash
-   kubectl get clusterissuers
-   kubectl describe clusterissuer letsencrypt-production
-   ```
-
-3. Ensure certificates are renewed before expiration.
-
-#### Phase 4 – Manual Intervention for Failed Issuances
-
-1. Check certificate request status for errors:
-
-   ```bash
-   kubectl describe certificaterequest <name>
-   ```
-
-2. Verify DNS propagation for DNS-01 challenges.
-3. Inspect cert-manager logs for ACME errors:
-
-   ```bash
-   kubectl logs -n cert-manager deployment/cert-manager
-   ```
-
-4. For stuck requests, delete and recreate the Certificate resource.
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization cert-manager -n flux-system
-   flux suspend helmrelease cert-manager -n cert-manager
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization cert-manager -n flux-system
-   flux resume helmrelease cert-manager -n cert-manager
-   ```
-
-4. Scale deployments to zero as a last resort:
-
-   ```bash
-   kubectl -n cert-manager scale deploy/cert-manager --replicas=0
-   kubectl -n cert-manager scale deploy/cert-manager-cainjector --replicas=0
-   kubectl -n cert-manager scale deploy/cert-manager-webhook --replicas=0
-   ```
+- Kubernetes cluster with Flux CD installed
+- Ingress controller configured
+- DNS records properly configured for domains
+- Cluster issuer credentials available
 
 ### Validation
 
-- `kubectl get certificates -A` shows certificates in Ready state with valid expiration dates.
-- `kubectl get clusterissuers` reports all issuers as Ready.
-- `flux get helmrelease cert-manager -n cert-manager` reports `Ready=True` with no pending upgrades.
-- Certificate secrets are present and contain valid TLS data.
+```bash
+# Validate cert-manager installation
+kubectl get pods -n cert-manager
 
-### Troubleshooting Guidance
+# Check cluster issuers
+kubectl get clusterissuers
 
-- If certificates fail to issue, check DNS resolution and Cloudflare API access.
-- For webhook errors, ensure CRDs are installed and webhook is reachable.
-- When the Helm release fails to deploy, check rendered manifests:
+# Validate certificate status
+kubectl get certificates -A
+```
 
-  ```bash
-  flux diff hr cert-manager --namespace cert-manager
-  kubeconform -strict -summary ./cluster/apps/cert-manager/cert-manager/app
-  ```
+## Operation
 
-- If pods crash, inspect logs and resource limits.
+### Procedures
 
-## Validation and Testing
+1. **Certificate issuance**:
 
-<!-- markdownlint-disable MD013 -->
+   - Create Certificate resources in appropriate namespaces using Flux
+   - Verify automatic issuance and renewal through Flux reconciliation
 
-| Step                                                 | Purpose                                                                                          |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                      | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                  | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr cert-manager --namespace cert-manager` | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl get certificates -A`                        | Validates certificate issuance and renewal.                                                      |
-| `kubectl get clusterissuers`                         | Ensures issuers are operational.                                                                 |
+2. **Issuer management**:
 
-<!-- markdownlint-enable MD013 -->
+   ```bash
+   # Check issuer status using Flux
+   flux get kustomizations -n cert-manager
 
-## References and Cross-links
+   # Describe issuer for details
+   kubectl describe clusterissuer <issuer-name>
+   ```
 
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
-- Certificate management: [cluster/apps/README.md](../../README.md)
-- Upstream cert-manager documentation: <https://cert-manager.io/docs/>
-- Jetstack cert-manager Helm chart: <https://github.com/cert-manager/cert-manager/tree/master/deploy/charts/cert-manager>
-- ACME protocol: <https://tools.ietf.org/html/rfc8555>
+3. **Certificate renewal monitoring**:
+
+   ```bash
+   # Check certificate expiration
+   kubectl get certificates -A -o wide
+
+   # Check certificate events
+   kubectl get events -A | grep certificate
+   ```
+
+### Decision Trees
+
+```yaml
+# cert-manager operational decision tree
+start: "cert_manager_health_check"
+nodes:
+  cert_manager_health_check:
+    question: "Is cert-manager healthy?"
+    command: "kubectl get pods -n cert-manager --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "cert_manager_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n cert-manager | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      issuer_config_error: "Issuer configuration problem"
+      dns_challenge_failure: "DNS challenge failure"
+      rate_limit_hit: "Let's Encrypt rate limit"
+      network_issue: "Network connectivity"
+  issuer_config_error:
+    action: "Check cluster issuer configuration: kubectl get clusterissuers -o yaml"
+    next: "apply_fix"
+  dns_challenge_failure:
+    action: "Verify DNS records and challenge configuration"
+    next: "apply_fix"
+  rate_limit_hit:
+    action: "Check Let's Encrypt rate limits and wait"
+    next: "apply_fix"
+  network_issue:
+    action: "Investigate network connectivity to issuer endpoints"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation using Flux reconciliation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n cert-manager --no-headers | grep 'Running'"
+    yes: "cert_manager_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  cert_manager_healthy:
+    action: "cert-manager verified healthy"
+    next: "end"
+end: "end"
+```
+
+### Cross-Service Dependencies
+
+```yaml
+# cert-manager cross-service dependencies
+service_dependencies:
+  cert-manager:
+    depends_on:
+      - traefik/traefik
+      - external-dns/external-dns-technitium
+    depended_by:
+      - authentik-system/authentik
+      - traefik/traefik
+      - All services requiring TLS certificates
+    critical_path: true
+    health_check_command: "kubectl get pods -n cert-manager --no-headers | grep 'Running'"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Certificate issuance failures**:
+
+   - **Symptom**: Certificates stuck in "Pending" state
+   - **Diagnosis**: Check issuer status and challenge resolution
+   - **Resolution**: Verify DNS records and issuer configuration, then use `flux reconcile kustomization cert-manager --with-source`
+
+2. **DNS challenge timeouts**:
+
+   - **Symptom**: Certificate issuance times out
+   - **Diagnosis**: Check DNS propagation and challenge configuration
+   - **Resolution**: Verify DNS records and challenge solver configuration, then use `flux reconcile kustomization cert-manager --with-source`
+
+3. **Rate limit errors**:
+   - **Symptom**: Let's Encrypt rate limit errors
+   - **Diagnosis**: Check certificate request frequency
+   - **Resolution**: Reduce request frequency or use staging environment, then use `flux reconcile kustomization cert-manager --with-source`
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update cert-manager using Flux
+flux reconcile kustomization cert-manager --with-source
+```
+
+### Issuer Management
+
+```bash
+# Add new cluster issuer using Flux
+flux reconcile kustomization cert-manager --with-source
+
+# Update existing issuer using Flux
+flux reconcile kustomization cert-manager --with-source
+```
+
+### Backups
+
+```bash
+# Backup cert-manager configuration
+kubectl get clusterissuers -o yaml > cert-manager-clusterissuers-backup.yaml
+kubectl get certificates -A -o yaml > cert-manager-certificates-backup.yaml
+
+# Restore from backup
+kubectl apply -f cert-manager-clusterissuers-backup.yaml
+kubectl apply -f cert-manager-certificates-backup.yaml
+```
+
+### MCP Integration
+
+- **Library ID**: `cert-manager`
+- **Version**: `v1.13.3`
+- **Usage**: TLS certificate automation and management
+- **Citation**: Use `resolve-library-id` for cert-manager API and configuration references
+
+## References
+
+- [cert-manager Documentation](https://cert-manager.io/docs/)
+- [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
+- [Flux CD Documentation](https://fluxcd.io/flux/)
 
 ## Agent-Friendly Workflows
 
-This section provides decision trees and conditional logic for autonomous execution of cert-manager tasks, including certificate issuance checks and recovery from failures.
+This section provides decision trees and conditional logic for autonomous execution of cert-manager tasks.
 
-### Certificate Issuance Status Workflow
-
-```bash
-If kubectl get certificates -A --no-headers | grep -v "True" > /dev/null
-Then:
-  For each failing certificate:
-    Run kubectl describe certificate <name> -n <namespace>
-    Expected output: Certificate status and events
-    If status shows "False":
-      Run kubectl get certificaterequests -n <namespace> | grep <certificate-name>
-      Expected output: Associated CertificateRequest
-      If CertificateRequest exists:
-        Run kubectl describe certificaterequest <request-name> -n <namespace>
-        Expected output: Request status and failure reason
-        Recovery: Check DNS propagation; verify issuer credentials
-      Else:
-        Run kubectl logs -n cert-manager deployment/cert-manager
-        Expected output: Controller logs for issuance errors
-        Recovery: Ensure ClusterIssuer is properly configured
-  Else:
-    Proceed to issuer health check
-Else:
-  Proceed to issuer health check
-```
-
-### ClusterIssuer Health Workflow
+### Certificate Health Check Workflow
 
 ```bash
-If kubectl get clusterissuers --no-headers | grep -v "True" > /dev/null
+If kubectl get certificates -A --no-headers | grep -v 'True' > /dev/null
 Then:
-  For each failing issuer:
-    Run kubectl describe clusterissuer <name>
-    Expected output: Issuer status and conditions
-    If ACME issuer failing:
-      Run kubectl logs -n cert-manager deployment/cert-manager | grep <issuer-name>
-      Expected output: ACME challenge errors
-      Recovery: Verify DNS-01 challenge configuration; check Cloudflare API access
-    Else if CA issuer failing:
-      Run kubectl get secret <ca-secret> -n cert-manager
-      Expected output: CA certificate present
-      Recovery: Ensure CA certificate is valid and accessible
+  Run kubectl describe certificate <cert-name> -n <namespace>
+  Expected output: Certificate details and status
+  If status shows 'False':
+    Run flux reconcile kustomization cert-manager --with-source
+    Expected output: Reconciliation completed
+    Recovery: Certificate re-issued
   Else:
-    Certificates verified successfully
+    Proceed to next check
 Else:
-  Certificates verified successfully
+  Proceed to next check
 ```
 
-### Certificate Renewal Failure Recovery Workflow
+## Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-```bash
-If kubectl get certificates -A -o jsonpath='{.items[?(@.status.renewalTime<"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'")].metadata.name}' | grep . > /dev/null
-Then:
-  For each certificate nearing expiration:
-    Run kubectl get certificate <name> -n <namespace> -o yaml | grep renewalTime
-    Expected output: Renewal time before current time
-    If renewal failed:
-      Run kubectl delete certificaterequest <request-name> -n <namespace>
-      Expected output: Request deleted
-      Recovery: Wait for automatic re-issuance; check issuer rate limits
-    Else:
-      Run kubectl annotate certificate <name> -n <namespace> cert-manager.io/issue-temporary-certificate=true
-      Expected output: Annotation added
-      Recovery: Forces immediate renewal attempt
-  Else:
-    Certificate lifecycle healthy
-Else:
-  Certificate lifecycle healthy
-```
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for cert-manager documentation.
+- Confirm the catalog entry contains the documentation or API details needed for cert-manager operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers cert-manager documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed cert-manager configuration changes.
+
+### When cert-manager documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in cert-manager change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting cert-manager documentation.

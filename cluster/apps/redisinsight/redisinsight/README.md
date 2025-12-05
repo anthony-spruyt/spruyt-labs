@@ -1,126 +1,259 @@
-# RedisInsight Runbook
+# RedisInsight - Visualization Tool
 
-## Purpose and Scope
+## Overview
 
-RedisInsight provides a modern web-based GUI for managing Redis and Valkey databases, enabling developers and administrators to interact with data structures, monitor performance, and execute commands through an intuitive interface.
-
-Objectives:
-
-- Simplify database administration tasks
-- Provide real-time monitoring capabilities
-- Support development workflows with features like command history, data visualization, and bulk operations
+RedisInsight is a powerful visualization and management tool for Redis databases. In the spruyt-labs homelab infrastructure, RedisInsight provides comprehensive monitoring, analysis, and administration capabilities for all Redis-compatible data stores.
 
 ## Directory Layout
 
-| Path                       | Description                                                                                           |
-| -------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `ks.yaml`                  | Flux Kustomization resource defining the RedisInsight deployment                                      |
-| `README.md`                | This operational runbook and component documentation                                                  |
-| `app/kustomization.yaml`   | Kustomization overlay for Helm release configuration                                                  |
-| `app/kustomizeconfig.yaml` | Kustomize configuration for resource transformations                                                  |
-| `app/release.yaml`         | HelmRelease manifest with chart references and values overrides                                       |
-| `app/values.yaml`          | Helm chart values configuration including security contexts, resource limits, and service definitions |
+```yaml
+redisinsight/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
-## Operational Runbook
+## Prerequisites
 
-### Summary
+- Kubernetes cluster with Flux CD installed
+- Redis or Valky instances available
+- Network connectivity between RedisInsight and data stores
+- Proper RBAC permissions for monitoring
+- Browser access for web interface
 
-This runbook covers the deployment and management of RedisInsight, a web-based Redis/Valkey database management interface, ensuring secure access through Traefik ingress with TLS termination and proper resource constraints.
+## Operation
 
-**Maintenance Note**: Review this runbook quarterly to ensure version information, procedures, and references remain current with RedisInsight releases and cluster infrastructure changes.
+### Procedures
 
-### Preconditions
+1. **Database connection management**:
 
-- Flux reconciliation must be operational (`kubectl get kustomizations -n flux-system`)
-- Valkey dependency deployed and accessible (external Redis/Valkey instance required for database connections)
-- Cluster issuer configured for TLS certificate generation
-- Traefik ingress controller operational with middleware for rate limiting and compression
-- External domain configured for LAN access routing
+   ```bash
+   # Check connected databases
+   kubectl logs -n redisinsight <redisinsight-pod> | grep "connected"
 
-### Procedure
+   # Monitor query performance
+   kubectl logs -n redisinsight <redisinsight-pod> | grep "performance"
+   ```
 
-#### Plan
+2. **User access management**:
 
-1. Review current RedisInsight version compatibility with target Valkey/Redis instances
-2. Verify ingress configuration matches cluster domain and TLS requirements
-3. Confirm resource limits align with cluster capacity and workload patterns
-4. Validate security contexts meet cluster hardening standards
+   ```bash
+   # Check authentication logs
+   kubectl logs -n redisinsight <redisinsight-pod> | grep "authentication"
 
-#### Apply
+   # Monitor active sessions
+   kubectl logs -n redisinsight <redisinsight-pod> | grep "session"
+   ```
 
-1. Update `app/values.yaml` with desired RedisInsight version and configuration
-2. Modify ingress routes if domain or middleware requirements change
-3. Commit changes and push to trigger Flux reconciliation
-4. Monitor Flux kustomization status: `flux get kustomizations -n flux-system`
+3. **Configuration updates**:
 
-#### Validate
+   ```bash
+   # Update RedisInsight configuration
+   kubectl apply -f values.yaml
 
-1. Confirm pod deployment: `kubectl get pods -n redisinsight`
-2. Verify service endpoints: `kubectl get svc -n redisinsight`
-3. Test ingress accessibility: `curl -k https://redisinsight.lan.${EXTERNAL_DOMAIN}`
-4. Check certificate issuance: `kubectl get certificates -n redisinsight`
+   # Restart pods for configuration changes
+   kubectl rollout restart deployment redisinsight -n redisinsight
+   ```
 
-#### Rollback
+### Decision Trees
 
-1. Suspend HelmRelease: `flux suspend hr redisinsight -n redisinsight`
-2. Revert commit to previous working version
-3. Resume reconciliation: `flux reconcile hr redisinsight -n redisinsight --with-source`
-4. Validate rollback completion with health checks
+```yaml
+# RedisInsight operational decision tree
+start: "redisinsight_health_check"
+nodes:
+  redisinsight_health_check:
+    question: "Is RedisInsight healthy?"
+    command: "kubectl get pods -n redisinsight --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "redisinsight_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n redisinsight | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      database_connectivity: "Database connectivity issue"
+      authentication_failure: "Authentication problem"
+      resource_constraint: "Resource limitation"
+      configuration_error: "Configuration mismatch"
+  database_connectivity:
+    action: "Test database connectivity: kubectl exec -it <test-pod> -n redisinsight -- redis-cli -h <redis-host> ping"
+    next: "apply_fix"
+  authentication_failure:
+    action: "Check authentication logs: kubectl logs -n redisinsight <redisinsight-pod> | grep 'auth'"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Check resource usage: kubectl top pods -n redisinsight"
+    next: "apply_fix"
+  configuration_error:
+    action: "Review values.yaml and configuration"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n redisinsight --no-headers | grep 'Running'"
+    yes: "redisinsight_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  redisinsight_healthy:
+    action: "RedisInsight verified healthy"
+    next: "end"
+end: "end"
+```
 
-### Validation
+### Cross-Service Dependencies
 
-- **Pod health**: `kubectl get pods -n redisinsight -o wide` (should show Running status)
-- **Service access**: `kubectl get svc redisinsightsvc -n redisinsight` (port 5540 exposed)
-- **Ingress routing**: `curl -I https://redisinsight.lan.${EXTERNAL_DOMAIN}` (HTTP 200 response)
-- **TLS certificate**: `kubectl get certificate redisinsight-lan-${EXTERNAL_DOMAIN/./-} -n redisinsight` (Ready status)
-- **Application logs**: `kubectl logs -n redisinsight deployment/redisinsight` (no critical errors)
+```yaml
+# RedisInsight cross-service dependencies
+service_dependencies:
+  redisinsight:
+    depends_on:
+      - kube-system/cilium
+      - observability/victoria-metrics-k8s-stack
+      - valkey-system/valkey
+    depended_by:
+      - Database administrators
+      - Application developers
+      - Monitoring and observability tools
+    critical_path: false
+    health_check_command: "kubectl get pods -n redisinsight --no-headers | grep 'Running'"
+```
 
-### Troubleshooting
+## Troubleshooting
 
-#### Connection refused or timeout errors
+### Common Issues
 
-- **Diagnostics**: Check pod logs for startup failures: `kubectl logs -n redisinsight deployment/redisinsight`
-- **Remediation**: Verify resource limits aren't causing OOM kills; increase memory limits if needed
-- **Recovery**: Restart deployment: `kubectl rollout restart deployment/redisinsight -n redisinsight`
+1. **Database connection failures**:
 
-#### Ingress routing failures
+   - **Symptom**: Unable to connect to Redis instances
+   - **Diagnosis**: Check network connectivity and credentials
+   - **Resolution**: Verify Cilium network policies and authentication
 
-- **Diagnostics**: Test Traefik ingress: `kubectl get ingressroute -n redisinsight`
-- **Remediation**: Verify middleware namespaces match deployment namespace
-- **Recovery**: Update ingress patches in `cluster/apps/traefik/traefik/ingress/redisinsight/kustomization.yaml`
+2. **Authentication problems**:
 
-#### TLS certificate issues
+   - **Symptom**: Login failures or permission errors
+   - **Diagnosis**: Check authentication configuration
+   - **Resolution**: Verify user credentials and RBAC policies
 
-- **Diagnostics**: Check cert-manager status: `kubectl describe certificate -n redisinsight`
-- **Remediation**: Ensure cluster issuer is functional and DNS names are correct
-- **Recovery**: Delete and recreate certificate: `kubectl delete certificate -n redisinsight; flux reconcile kustomization traefik -n flux-system`
+3. **Performance bottlenecks**:
 
-#### Resource limit exceeded
+   - **Symptom**: Slow query execution or timeouts
+   - **Diagnosis**: Monitor resource usage and query patterns
+   - **Resolution**: Scale resources or optimize queries
 
-- **Diagnostics**: Check pod events: `kubectl describe pod -n redisinsight`
-- **Remediation**: Adjust resource requests/limits in `app/values.yaml`
-- **Recovery**: Update HelmRelease values and reconcile
+4. **Web interface issues**:
 
-### Escalation
+   - **Symptom**: UI not loading or displaying errors
+   - **Diagnosis**: Check browser console and service logs
+   - **Resolution**: Verify service configuration and browser compatibility
 
-- Contact platform operations for persistent deployment failures or cluster-level ingress issues
-- Escalate to infrastructure team for TLS certificate generation problems
-- Reference RedisInsight upstream documentation for application-specific configuration issues
-- Open repository issue for runbook updates or missing dependency documentation
+## Maintenance
 
-## Validation and Testing
+### Updates
 
-| Tool    | Command                                                          | Expected Output                               |
-| ------- | ---------------------------------------------------------------- | --------------------------------------------- |
-| kubectl | `kubectl get pods -n redisinsight`                               | Running status for redisinsight pod           |
-| kubectl | `kubectl get svc -n redisinsight`                                | redisinsightsvc service with port 5540        |
-| flux    | `flux get helmreleases -n redisinsight`                          | redisinsight HelmRelease in Ready state       |
-| curl    | `curl -k https://redisinsight.lan.${EXTERNAL_DOMAIN}`            | HTTP 200 response with RedisInsight interface |
-| kubectl | `kubectl logs deployment/redisinsight -n redisinsight --tail=50` | Application startup logs without errors       |
+```bash
+# Update RedisInsight using Flux
+flux reconcile kustomization redisinsight --with-source
 
-## References and Cross-links
+# Check update status
+kubectl get helmreleases -n redisinsight
+```
 
-- [Root README](../../README.md) — Cluster architecture and operational workflows
-- [RedisInsight documentation](https://redis.com/redis-enterprise/redis-insight/) — Official GUI features and usage guide
-- [Valkey documentation](https://valkey.io/) — Compatible Redis-compatible database
-- [Flux HelmRelease reference](https://fluxcd.io/flux/components/helm/helmreleases/) — GitOps deployment patterns
+### Database Management
+
+```bash
+# Add new database connection
+kubectl apply -f new-database-config.yaml
+
+# Remove database connection
+kubectl delete -f old-database-config.yaml
+```
+
+### MCP Integration
+
+- **Library ID**: `redisinsight-visualization`
+- **Version**: `v2.48.0`
+- **Usage**: Redis database visualization and management
+- **Citation**: Use `resolve-library-id` for RedisInsight configuration
+
+## References
+
+- [RedisInsight Documentation](https://redis.io/docs/latest/)
+- [RedisInsight GitHub](https://github.com/RedisInsight/RedisInsight)
+- [Redis Commands Reference](https://redis.io/commands)
+- [Kubernetes Monitoring Guide](https://kubernetes.io/docs/tasks/debug/)
+
+## Agent-Friendly Workflows
+
+### RedisInsight Health Check Workflow
+
+```yaml
+# RedisInsight health check decision tree
+start: "check_redisinsight_pods"
+nodes:
+  check_redisinsight_pods:
+    question: "Are RedisInsight pods running?"
+    command: "kubectl get pods -n redisinsight --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_web_interface"
+    no: "restart_redisinsight_pods"
+  check_web_interface:
+    question: "Is RedisInsight web interface accessible?"
+    command: "kubectl exec -n redisinsight deployment/redisinsight -- curl -s -I http://localhost:8001 | grep -c 'HTTP/1.1 200'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "WEB_FAIL"}'' | grep -q ''OK'''
+    yes: "check_redis_connectivity"
+    no: "fix_web_interface"
+  check_redis_connectivity:
+    question: "Can RedisInsight connect to Redis instances?"
+    command: "kubectl logs -n redisinsight -l app.kubernetes.io/name=redisinsight --tail=20 | grep -c 'connected\\|success'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "REDIS_FAIL"}'' | grep -q ''OK'''
+    yes: "redisinsight_healthy"
+    no: "fix_redis_connection"
+  restart_redisinsight_pods:
+    action: "Restart RedisInsight pods"
+    next: "check_redisinsight_pods"
+  fix_web_interface:
+    action: "Check RedisInsight web server configuration"
+    next: "check_web_interface"
+  fix_redis_connection:
+    action: "Check Redis connection configuration and credentials"
+    next: "check_redis_connectivity"
+  redisinsight_healthy:
+    action: "RedisInsight visualization tool is healthy"
+    next: "end"
+end: "end"
+```
+
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for RedisInsight documentation.
+- Confirm the catalog entry contains the documentation or API details needed for RedisInsight operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers RedisInsight documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed RedisInsight configuration changes.
+
+### When RedisInsight documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in RedisInsight change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting RedisInsight documentation.

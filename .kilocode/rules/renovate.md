@@ -55,7 +55,161 @@ To add new package groupings in `.github/renovate/groups.json5`:
 - Test manager configurations with Renovate dry-runs to verify dependency detection
 - Update customManagers.json5 when new annotation patterns are introduced
 
-## Testing and Validation
+## Procedures
+
+### Updating Helm Registries
+
+1. **Identify Need**: Determine if new registry is required based on new charts or registry changes
+2. **Locate Configuration**: Open `.github/renovate/helm.json5`
+3. **Add Registry**: Add new registry entry with name and registryUrls
+4. **Validate**: Run renovate-config-validator to check syntax
+5. **Commit**: Submit changes with descriptive commit message
+
+### Adding Package Groupings
+
+1. **Identify Packages**: Find related packages requiring coordinated updates
+2. **Edit Groups File**: Modify `.github/renovate/groups.json5`
+3. **Define Group**: Add group object with required properties
+4. **Set Stability**: Configure stabilityDays for critical components
+5. **Validate Configuration**: Use renovate-config-validator
+6. **Test Grouping**: Run dry-run to verify package matching
+7. **Document**: Update PR description with grouping rationale
+
+### Monitoring and Adjusting Stability
+
+1. **Review Updates**: Check recent Renovate PRs for success/failure rates
+2. **Assess Stability**: Monitor cluster health after updates
+3. **Adjust Settings**: Modify stabilityDays in group configurations
+4. **Document Changes**: Record stability decisions in commit messages
+5. **Schedule Reviews**: Plan quarterly configuration audits
+
+## Practical Configuration Examples
+
+This section provides concrete examples of Renovate configurations commonly used in the spruyt-labs repository.
+
+### Helm Registry Configuration Example
+
+```json5
+// .github/renovate/helm.json5
+{
+  helm: {
+    registryUrls: [
+      "https://charts.bitnami.com/bitnami",
+      "https://grafana.github.io/helm-charts",
+      "https://prometheus-community.github.io/helm-charts",
+      "https://kubernetes.github.io/ingress-nginx",
+      "https://cert-manager.io/",
+      "https://fluxcd-community.github.io/helm-charts",
+      "https://rook.github.io/rook/",
+      "https://victoriametrics.github.io/helm-charts/",
+      "https://cloudnative-pg.github.io/charts",
+      "https://external-secrets.io",
+    ],
+  },
+}
+```
+
+### Package Grouping Examples
+
+```json5
+// .github/renovate/groups.json5
+{
+  groups: {
+    cilium: {
+      description: "Group Cilium operator and CRDs together",
+      matchPackagePatterns: ["^cilium"],
+      matchDatasources: ["helm"],
+      separateMinorPatch: true,
+      stabilityDays: 7,
+      commitMessageTopic: "cilium",
+    },
+    "cert-manager": {
+      description: "Group cert-manager components",
+      matchPackagePatterns: ["^cert-manager"],
+      matchDatasources: ["helm"],
+      separateMinorPatch: true,
+      stabilityDays: 3,
+      commitMessageTopic: "cert-manager",
+    },
+    "victoria-metrics": {
+      description: "Group VictoriaMetrics observability stack",
+      matchPackagePatterns: ["^victoria"],
+      matchDatasources: ["helm"],
+      separateMinorPatch: true,
+      stabilityDays: 5,
+      commitMessageTopic: "victoria-metrics",
+    },
+  },
+}
+```
+
+### Custom Regex Managers for Non-Standard Dependencies
+
+```json5
+// .github/renovate/regex-managers.json5
+{
+  regexManagers: [
+    {
+      description: "Update Talos image versions in schematics",
+      fileMatch: ["talos/.*\\.yaml$"],
+      matchStrings: [
+        '# renovate: datasource=docker depName=(?<depName>.*?)\\s+version: "(?<currentValue>.*?)"',
+      ],
+      datasourceTemplate: "docker",
+    },
+    {
+      description: "Update Kubernetes API versions in CRDs",
+      fileMatch: ["cluster/crds/.*\\.yaml$"],
+      matchStrings: ["apiVersion: (?<depName>.*?)/(?<currentValue>.*)"],
+      datasourceTemplate: "kubernetes-api",
+    },
+    {
+      description: "Update Go module versions in Dockerfiles",
+      fileMatch: ["Dockerfile.*"],
+      matchStrings: ["FROM golang:(?<currentValue>.*?) AS"],
+      datasourceTemplate: "docker",
+      depNameTemplate: "golang",
+    },
+    {
+      description: "Update Flux OCI repository tags",
+      fileMatch: ["cluster/flux/.*\\.yaml$"],
+      matchStrings: [
+        "tag: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)",
+      ],
+    },
+  ],
+}
+```
+
+### Custom Managers for Annotation-Based Updates
+
+```json5
+// .github/renovate/customManagers.json5
+{
+  customManagers: [
+    {
+      description: "Update Helm chart versions with custom annotations",
+      customType: "helm",
+      fileMatch: ["cluster/apps/.*\\.yaml$"],
+      datasourceTemplate: "helm",
+      depNameTemplate: "{{ .chart.name }}",
+      currentValueTemplate: "{{ .chart.version }}",
+      extractVersionTemplate: "^v?(?<version>.*)$",
+    },
+    {
+      description: "Update Docker image tags in Kubernetes manifests",
+      customType: "docker",
+      fileMatch: ["cluster/apps/.*\\.yaml$"],
+      datasourceTemplate: "docker",
+      depNameTemplate: "{{ .image.repository }}",
+      currentValueTemplate: "{{ .image.tag }}",
+      extractVersionTemplate: "^(?<version>.*)$",
+    },
+  ],
+}
+```
+
+## Validation
 
 This section provides detailed instructions for validating Renovate configuration locally to ensure changes are valid before committing. Since Renovate executes in GitHub Actions, local dry-run testing is optional but recommended for complex changes. Local validation primarily focuses on syntax and schema checking using `renovate-config-validator`. Always run `renovate-config-validator` before committing configuration changes. Refer to the [Renovate Dependency Management section in README.md](../README.md#renovate-dependency-management) for integration with repository workflow.
 
@@ -147,6 +301,7 @@ Dry-run testing is primarily intended for GitHub Actions CI/CD pipelines to vali
    - Check for missing commas, quotes, or brackets
    - Use an online JSON5 validator for complex configurations
    - Compare with working examples in the Renovate documentation
+   - Validate JSON5 syntax: `renovate-config-validator .github/renovate/*.json5`
 
 2. **Missing Dependencies**: If expected dependencies are not detected:
 
@@ -167,17 +322,96 @@ Dry-run testing is primarily intended for GitHub Actions CI/CD pipelines to vali
    - Check for authentication requirements in private registries
    - Test registry connectivity: `helm repo add test <url> && helm repo update`
 
-5. **Dry-Run Failures**: If dry-run exits with errors:
+5. **Failed Updates in Production**: If Renovate PRs cause cluster issues:
 
-   - Increase log level: `--log-level debug` for more details
-   - Check for network connectivity issues
-   - Verify Git repository access and credentials
-   - Ensure all required environment variables are set
+   - Review PR description for stability days and testing recommendations
+   - Check cluster health: `kubectl get nodes` and `flux get kustomizations -A`
+   - Roll back by reverting the merge commit
+   - Adjust stabilityDays in group configurations for problematic components
+   - Document the issue in the PR for future reference
 
-6. **Performance Issues**: If dry-run takes too long:
-   - Limit scope with `--include-paths` for specific directories
-   - Use `--dry-run` with `--print-config` to debug configuration loading
-   - Check for overly broad fileMatch patterns causing excessive file scanning
+6. **Custom Regex Manager Issues**: If regex patterns don't match:
+
+   - Test regex patterns with online regex testers
+   - Use `grep -r "<pattern>" .` to verify file content matches
+   - Check capture groups (?<depName>, ?<currentValue>) are correctly named
+   - Validate datasourceTemplate matches the dependency type
+   - Example debug: `grep -r "datasource=docker" cluster/ | head -5`
+
+7. **Authentication Problems**: If Renovate can't access private registries:
+
+   - Ensure GitHub secrets are configured for private registries
+   - Check hostRules in renovate.json for authentication
+   - Verify token permissions for repository access
+   - Test authentication manually with curl or helm commands
+
+8. **Version Pinning Issues**: If versions aren't updating as expected:
+
+   - Check for version constraints in package files
+   - Verify stabilityDays hasn't blocked recent updates
+   - Review ignoreDeps or packageRules that might exclude updates
+   - Use Renovate dashboard to see why updates are blocked
+
+## Machine-Readable Elements
+
+### Renovate Configuration Decision Tree
+
+```yaml
+# Decision tree for when to update Renovate configuration
+start: "change_needed"
+nodes:
+  change_needed:
+    question: "What type of Renovate configuration change is needed?"
+    options:
+      add_registry: "Add new Helm registry"
+      add_grouping: "Add package grouping"
+      update_stability: "Adjust stability settings"
+      add_manager: "Add new manager configuration"
+      quarterly_review: "Quarterly configuration review"
+  add_registry:
+    action: "Check if registry not in helm.json5, add registryUrls, validate syntax"
+    next: "validate_change"
+  add_grouping:
+    action: "Identify related packages, define group in groups.json5, set stabilityDays"
+    next: "validate_change"
+  update_stability:
+    action: "Review update success rates, adjust stabilityDays based on criticality"
+    next: "validate_change"
+  add_manager:
+    action: "Audit for new file types, add regex managers or update fileMatch patterns"
+    next: "validate_change"
+  quarterly_review:
+    action: "Review all config files, update registries, audit groupings, check manager coverage"
+    next: "validate_change"
+  validate_change:
+    action: "Run renovate-config-validator, test with dry-run if possible"
+    next: "change_valid"
+  change_valid:
+    question: "Configuration valid?"
+    yes: "commit_change"
+    no: "fix_issues"
+  fix_issues:
+    action: "Correct syntax errors or configuration issues"
+    next: "validate_change"
+  commit_change:
+    action: "Commit with descriptive message documenting the change rationale"
+    next: "end"
+end: "end"
+```
+
+### Command Templates
+
+```yaml
+# Template for Renovate configuration commands
+renovate_commands:
+  validate_config: "renovate-config-validator .github/renovate/*.json5"
+
+# Template for configuration audit
+audit_commands:
+  find_new_files: "find cluster/ -name '*.yaml' | grep -E '(chart|values|config)' | head -10"
+  check_registries: "grep -r 'registryUrls' .github/renovate/helm.json5"
+  list_groups: "grep -A 5 'groupName' .github/renovate/groups.json5"
+```
 
 ## Enforcement
 

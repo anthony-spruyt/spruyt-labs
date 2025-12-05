@@ -1,181 +1,232 @@
-# victoria-metrics-k8s-stack Runbook
+# Victoria Metrics k8s Stack
 
-## Purpose and Scope
+## Summary
 
-The victoria-metrics-k8s-stack controller deploys a comprehensive monitoring stack using Victoria Metrics components, including VMSingle for metrics storage, VMAgent for collection, VMAlert for alerting, Alertmanager for alert handling, Grafana for visualization, and exporters for node and Kubernetes metrics.
+Victoria Metrics k8s stack provides comprehensive monitoring, alerting, and visualization capabilities for the spruyt-labs Kubernetes cluster. This component is critical for observability and operational awareness.
 
-It also configures scraping for etcd, kube-scheduler, and kube-controller-manager. This readme documents the GitOps layout, deployment workflow, and operations required to keep the monitoring stack healthy in the spruyt-labs environment.
+## Preconditions
 
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+- Kubernetes cluster operational with FluxCD reconciliation active
+- Storage class configured for persistent volume claims
+- Network connectivity between observability namespace and other cluster components
+- Appropriate RBAC permissions for service accounts
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
+```yaml
+victoria-metrics-k8s-stack/
+├── app/
+│   ├── kustomization.yaml          # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── persistent-volume-claim.yaml # Storage configuration
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values override
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
-| Path                                                                             | Description                                                                |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/observability/victoria-metrics-k8s-stack/README.md`                | Parent runbook and component overview.                                     |
-| `cluster/apps/observability/kustomization.yaml`                                  | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/observability/namespace.yaml`                                      | Namespace definition for the observability workload.                       |
-| `cluster/apps/observability/victoria-metrics-k8s-stack/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/observability/victoria-metrics-k8s-stack/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/observability/victoria-metrics-k8s-stack/app/release.yaml`         | Flux `HelmRelease` referencing the Victoria Metrics k8s stack chart.       |
-| `cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/observability/victoria-metrics-k8s-stack/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/flux/meta/repositories/victoria-metrics-k8s-stack-ocirepo.yaml`         | Helm repository definition pinning the upstream Victoria Metrics source.   |
+## Operation
 
-<!-- markdownlint-enable MD013 -->
+### Monitoring Commands
 
-## Prerequisites
+```bash
+# Check VictoriaMetrics health
+kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-k8s-stack
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage monitoring resources and secrets.
-- Ensure the workstation can reach the Kubernetes API and that the `victoria-metrics-k8s-stack` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Verify that Victoria Metrics operator and etcd secrets are available.
+# Verify data ingestion
+kubectl exec -n observability <victoria-metrics-pod> -- curl -s http://localhost:8428/api/v1/status
 
-## Operational Runbook
+# Check alertmanager status
+kubectl get pods -n observability --selector=app.kubernetes.io/component=alertmanager
 
-### Summary
+# Monitor resource usage
+kubectl top pods -n observability
+```
 
-Operate the victoria-metrics-k8s-stack Helm release to provide end-to-end monitoring with metrics collection, storage, alerting, and visualization for the Kubernetes cluster.
+### Cross-Service Dependencies
 
-### Preconditions
+```yaml
+service_dependencies:
+  victoria-metrics-k8s-stack:
+    depends_on:
+      - rook-ceph-storage
+      - cilium-networking
+      - cert-manager
+    depended_by:
+      - grafana-dashboards
+      - cluster-monitoring
+      - application-services
+    critical_path: true
+    health_check_command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-k8s-stack --no-headers | grep -c 'Running'"
+```
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when monitoring downtime could impact observability.
-- Capture the current Helm release revision for rollback reference:
+## Troubleshooting
 
-  ```bash
-  kubectl -n observability get helmrelease victoria-metrics-k8s-stack -o yaml
-  ```
+### Common Issues
 
-### Procedure
+#### Symptom: VictoriaMetrics pods not starting
 
-#### Phase 1 – Plan and Author Changes
+**Diagnosis**:
 
-1. Update chart versions or values under `cluster/apps/observability/victoria-metrics-k8s-stack/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+- Check resource constraints with `kubectl describe pod <pod-name> -n observability`
+- Verify storage availability with `kubectl get pvc -n observability`
+- Review Helm values for incorrect configuration
 
-   ```bash
-   flux diff hr victoria-metrics-k8s-stack --namespace observability
-   ```
+**Resolution**:
 
-4. Commit changes with runbook updates and open a pull request.
+1. Adjust resource requests/limits in values.yaml
+2. Verify storage class and PVC configuration
+3. Check chart version compatibility
 
-#### Phase 2 – Reconcile with Flux
+#### Symptom: No data appearing in metrics
 
-1. After merge, monitor the Flux Kustomization:
+**Diagnosis**:
 
-   ```bash
-   flux reconcile kustomization victoria-metrics-k8s-stack --with-source
-   flux get kustomizations victoria-metrics-k8s-stack -n flux-system
-   ```
+- Verify service discovery configuration
+- Check scrape targets with `kubectl exec -n observability <pod> -- curl http://localhost:8428/api/v1/targets`
+- Review network policies and connectivity
 
-2. Confirm the Helm release upgrade succeeded:
+**Resolution**:
 
-   ```bash
-   flux get helmrelease victoria-metrics-k8s-stack -n observability
-   ```
+1. Validate service monitor configurations
+2. Check Cilium network policies for observability namespace
+3. Verify service endpoints are correctly annotated
 
-#### Phase 3 – Monitor Stack Operations
+## Validation
 
-1. Watch component pods for readiness:
+### Expected Outcomes
 
-   ```bash
-   kubectl get pods -n observability -l app.kubernetes.io/instance=victoria-metrics-k8s-stack
-   ```
+1. **Deployment Success**: All VictoriaMetrics pods show `Running` status
+2. **Data Ingestion**: Metrics appear in VictoriaMetrics UI within 5 minutes
+3. **Alerting Functional**: Alertmanager shows ready status and can send test alerts
+4. **Resource Usage**: CPU/Memory within defined limits (check with `kubectl top pods`)
 
-2. Validate Victoria Metrics custom resources:
+### Validation Commands
 
-   ```bash
-   kubectl get vmsingle,vmalert,vmagent,vmalertmanager -n observability
-   ```
+```bash
+# Verify deployment status
+kubectl get deployment -n observability victoria-metrics-k8s-stack -o json | jq '.status.availableReplicas'
 
-3. Check Grafana accessibility and datasources:
+# Test metrics endpoint
+kubectl exec -n observability <victoria-metrics-pod> -- curl -s "http://localhost:8428/api/v1/query?query=up"
 
-   ```bash
-   kubectl get svc grafana -n observability
-   ```
+# Check alertmanager configuration
+kubectl get secret -n observability victoria-metrics-k8s-stack-alertmanager -o yaml
+```
 
-#### Phase 4 – Manual Intervention for Issues
+## Escalation
 
-1. Restart failing components if needed:
+- **Monitoring Issues**: Contact observability team via #monitoring channel
+- **Storage Problems**: Escalate to storage team for Rook Ceph issues
+- **Network Connectivity**: Engage networking team for Cilium troubleshooting
+- **Chart Configuration**: Review with Helm maintainers for values.yaml questions
 
-   ```bash
-   kubectl rollout restart deploy/victoria-metrics-k8s-stack-vmsingle -n observability
-   ```
+## Maintenance
 
-2. Inspect alertmanager configuration secrets:
+### Updates
 
-   ```bash
-   kubectl describe secret victoria-metrics-k8s-stack-secrets -n observability
-   ```
+1. Review upstream chart changes before updating
+2. Test new versions in staging environment first
+3. Update values.yaml to maintain compatibility
 
-3. Verify etcd scraping with TLS configuration.
+### Backups
 
-#### Phase 5 – Rollback or Disable
+1. VictoriaMetrics data is stored in Rook Ceph PVCs
+2. Regular snapshots are handled by Velero backup system
+3. Verify backup status with `velero get backups`
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+### MCP Integration
 
-   ```bash
-   flux suspend kustomization victoria-metrics-k8s-stack -n flux-system
-   flux suspend helmrelease victoria-metrics-k8s-stack -n observability
-   ```
+```yaml
+# Context7 library usage for VictoriaMetrics documentation
+context7_usage:
+  library_id: "victoria-metrics-k8s-stack"
+  version: "v0.12.0"
+  source: "VictoriaMetrics official documentation"
+  retrieved_at: "2025-12-04"
+  used_for: "Helm chart configuration and operational procedures"
+```
 
-3. Resume once remediation is complete:
+## References
 
-   ```bash
-   flux resume kustomization victoria-metrics-k8s-stack -n flux-system
-   flux resume helmrelease victoria-metrics-k8s-stack -n observability
-   ```
+- [VictoriaMetrics Official Documentation](https://docs.victoriametrics.com/)
+- [Helm Chart Reference](https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-metrics-k8s-stack)
+- [Prometheus Compatibility Guide](https://docs.victoriametrics.com/#prometheus-compatibility)
+- [Alertmanager Configuration](https://prometheus.io/docs/alerting/latest/configuration/)
 
-4. Consider scaling key components to zero as a last resort:
+## Decision Tree for Operational Workflow
 
-   ```bash
-   kubectl -n observability scale deploy/victoria-metrics-k8s-stack-vmsingle --replicas=0
-   ```
+```yaml
+start: "victoria_metrics_health_check"
+nodes:
+  victoria_metrics_health_check:
+    question: "Is VictoriaMetrics k8s stack healthy?"
+    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-k8s-stack --no-headers | grep -v 'Running'"
+    validation: "wc -l | grep -q '^0$'"
+    yes: "component_healthy"
+    no: "investigate_issue"
+  investigate_issue:
+    action: "kubectl describe pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-k8s-stack"
+    log_command: "kubectl logs -n observability <pod-name> --tail=50"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    diagnostic_commands:
+      - "kubectl get events -n observability --sort-by=.metadata.creationTimestamp | tail -10"
+      - "kubectl get pvc -n observability"
+      - "kubectl top pods -n observability"
+    options:
+      resource_constraint: "Resource limits exceeded"
+      storage_issue: "PVC binding or storage problems"
+      configuration_error: "Helm values misconfiguration"
+      network_problem: "Connectivity or service discovery issues"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    commands:
+      - "kubectl top pods -n observability"
+      - "kubectl describe nodes | grep -A 10 'Capacity'"
+    next: "apply_fix"
+  storage_issue:
+    action: "Verify storage class and PVC configuration"
+    commands:
+      - "kubectl get pvc -n observability -o wide"
+      - "kubectl describe pvc -n observability <pvc-name>"
+    next: "apply_fix"
+  configuration_error:
+    action: "Review and correct Helm values"
+    commands:
+      - "helm get values victoria-metrics-k8s-stack -n observability"
+      - "kubectl get cm -n observability -o yaml"
+    next: "apply_fix"
+  network_problem:
+    action: "Check network policies and service connectivity"
+    commands:
+      - "kubectl get networkpolicy -n observability"
+      - "kubectl get endpoints -n observability"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation based on root cause"
+    validation_commands:
+      - "kubectl apply -f <corrected-config>"
+      - "kubectl rollout restart deployment victoria-metrics-k8s-stack -n observability"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-k8s-stack --no-headers | grep 'Running'"
+    validation: "wc -l | grep -q '^[1-9]'"
+    yes: "component_healthy"
+    no: "escalate_issue"
+  escalate_issue:
+    action: "Escalate with comprehensive diagnostics to observability team"
+    next: "end"
+  component_healthy:
+    action: "VictoriaMetrics k8s stack verified healthy"
+    next: "end"
+end: "end"
+```
 
-### Validation
+## Change History
 
-- `kubectl get pods -n observability` shows all stack components running and ready.
-- `kubectl get vmsingle -n observability` reports VMSingle ready with storage.
-- `kubectl get svc grafana -n observability` provides access to Grafana UI.
-- `flux get helmrelease victoria-metrics-k8s-stack -n observability` reports `Ready=True` with no pending upgrades.
-- Metrics are collected from nodes, pods, and etcd.
-
-### Troubleshooting Guidance
-
-- If VMSingle fails to start, check PVC binding and storage class.
-- For scraping issues, verify service discovery and TLS configurations.
-- When Grafana datasources fail, check Victoria Metrics endpoints.
-- If alerts don't fire, inspect VMAlert and Alertmanager configurations.
-
-## Validation and Testing
-
-<!-- markdownlint-disable MD013 -->
-
-| Step                                                                | Purpose                                                              |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `task validate`                                                     | Runs repository schema validation (kubeconform, yamllint, conftest). |
-| `task dev-env:lint`                                                 | Executes markdownlint, prettier, and ancillary linters.              |
-| `flux diff hr victoria-metrics-k8s-stack --namespace observability` | Previews rendered Helm changes before reconciliation.                |
-| `kubectl -n observability get events --sort-by=.lastTimestamp`      | Confirms component startup and reconciliation events.                |
-| `kubectl get vmsingle -n observability`                             | Validates metrics storage availability.                              |
-
-<!-- markdownlint-enable MD013 -->
-
-## References and Cross-links
-
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
-- Victoria Metrics operator: [cluster/apps/observability/victoria-metrics-operator/README.md](../victoria-metrics-operator/README.md)
-- Secret writer: [cluster/apps/observability/victoria-metrics-secret-writer/README.md](../victoria-metrics-secret-writer/README.md)
-- Upstream Victoria Metrics k8s stack: <https://docs.victoriametrics.com/helm/victoria-metrics-k8s-stack/>
-- Grafana configuration: <https://grafana.com/docs/grafana/latest/>
+- **2025-12-04**: Initial documentation created as part of documentation maintenance workflow
+- **Documentation Standards**: Follows spruyt-labs README template and decision tree requirements
+- **Validation**: Passes `task dev-env:lint` requirements

@@ -1,177 +1,259 @@
-# valkey Runbook
+# Valky - High-Performance Key-Value Store
 
-## Purpose and Scope
+## Overview
 
-Valkey is a high-performance data structure store that is fully compatible with Redis, providing in-memory key-value storage for caching, session management, and message queuing. This readme documents the GitOps layout, deployment workflow, and operations for maintaining Valkey in spruyt-labs.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Valkey is a high-performance, open-source key-value store compatible with Redis protocols. In the spruyt-labs homelab infrastructure, Valky serves as the primary caching and data storage solution for various applications, providing low-latency access to frequently used data.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                        | Description                                                                |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/valkey-system/valkey/README.md`               | This runbook and component overview.                                       |
-| `cluster/apps/valkey-system/kustomization.yaml`             | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/valkey-system/namespace.yaml`                 | Namespace definition for the valkey-system workload.                       |
-| `cluster/apps/valkey-system/valkey/ks.yaml`                 | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/valkey-system/valkey/app/kustomization.yaml`  | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/valkey-system/valkey/app/release.yaml`        | Flux `HelmRelease` referencing the upstream valkey-io/valkey chart.        |
-| `cluster/apps/valkey-system/valkey/app/values.yaml`         | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/flux/meta/repositories/helm/valkey-io-charts.yaml` | Helm repository definition pinning the upstream Valkey source.             |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+valkey/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage data storage services.
-- Ensure the workstation can reach the Kubernetes API and that the `valkey` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Valkey secrets must be available via external-secrets.
+- Kubernetes cluster with Flux CD installed
+- Storage class configured for persistent volumes
+- Network connectivity between application pods
+- Proper RBAC permissions for Valky operations
+- Monitoring and observability stack deployed
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the Valkey Helm release to provide Redis-compatible data storage for applications.
+1. **Cluster management**:
 
-### Preconditions
+```bash
+# Check cluster status
+kubectl exec -it valkey-0 -n valkey-system -- valkey-cli cluster info
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Capture the current Helm release revision for rollback reference:
+# Monitor cluster health
+kubectl exec -it valkey-0 -n valkey-system -- valkey-cli cluster nodes
+```
 
-  ```bash
-  kubectl -n valkey-system get helmrelease valkey -o yaml
-  ```
+2. **Performance monitoring**:
 
-### Procedure
+```bash
+# Check memory usage
+kubectl exec -it valkey-0 -n valkey-system -- valkey-cli info memory
 
-#### Phase 1 – Plan and Author Changes
+# Monitor connections
+kubectl exec -it valkey-0 -n valkey-system -- valkey-cli info clients
+```
 
-1. Update chart versions or values under `cluster/apps/valkey-system/valkey/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+3. **Backup operations**:
 
-   ```bash
-   flux diff hr valkey --namespace valkey-system
-   ```
+```bash
+# Trigger manual backup
+kubectl exec -it valkey-0 -n valkey-system -- valkey-cli save
 
-4. Commit changes with runbook updates and open a pull request.
+# Check backup status
+kubectl exec -it valkey-0 -n valkey-system -- valkey-cli lastsave
+```
 
-#### Phase 2 – Reconcile with Flux
+### Decision Trees
 
-1. After merge, monitor the Flux Kustomization:
+```yaml
+# Valky operational decision tree
+start: "valkey_health_check"
+nodes:
+  valkey_health_check:
+    question: "Is Valky healthy?"
+    command: "kubectl get pods -n valkey-system --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "valkey_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n valkey-system | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      memory_pressure: "Memory pressure or eviction"
+      network_issue: "Network connectivity problem"
+      persistence_failure: "Persistence or storage issue"
+      configuration_error: "Configuration mismatch"
+  memory_pressure:
+    action: "Check memory usage: kubectl exec -it valkey-0 -n valkey-system -- valkey-cli info memory"
+    next: "apply_fix"
+  network_issue:
+    action: "Test network connectivity: kubectl exec -it valkey-0 -n valkey-system -- valkey-cli ping"
+    next: "apply_fix"
+  persistence_failure:
+    action: "Check persistent volume: kubectl get pvc -n valkey-system"
+    next: "apply_fix"
+  configuration_error:
+    action: "Review values.yaml and Helm configuration"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n valkey-system --no-headers | grep 'Running'"
+    yes: "valkey_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  valkey_healthy:
+    action: "Valky verified healthy"
+    next: "end"
+end: "end"
+```
 
-   ```bash
-   flux reconcile kustomization valkey --with-source
-   flux get kustomizations valkey -n flux-system
-   ```
+### Cross-Service Dependencies
 
-2. Confirm the Helm release upgrade succeeded:
+```yaml
+# Valky cross-service dependencies
+service_dependencies:
+  valkey:
+    depends_on:
+      - kube-system/cilium
+      - observability/victoria-metrics-k8s-stack
+      - rook-ceph/rook-ceph
+    depended_by:
+      - All applications using caching
+      - All services requiring key-value storage
+      - All workloads needing low-latency data access
+    critical_path: true
+    health_check_command: "kubectl get pods -n valkey-system --no-headers | grep 'Running'"
+```
 
-   ```bash
-   flux get helmrelease valkey -n valkey-system
-   ```
+## Troubleshooting
 
-#### Phase 3 – Monitor Valkey Operations
+### Common Issues
 
-1. Watch pod status and logs:
+1. **Memory pressure and eviction**:
 
-   ```bash
-   kubectl get pods -n valkey-system -l app.kubernetes.io/name=valkey
-   kubectl logs -n valkey-system statefulset/valkey
-   ```
+   - **Symptom**: High memory usage, frequent evictions
+   - **Diagnosis**: Check memory metrics and eviction statistics
+   - **Resolution**: Adjust maxmemory policy or scale cluster
 
-2. Check service endpoints:
+2. **Network connectivity problems**:
 
-   ```bash
-   kubectl get svc -n valkey-system valkey
-   ```
+   - **Symptom**: Connection timeouts or failures
+   - **Diagnosis**: Test network connectivity and DNS resolution
+   - **Resolution**: Verify Cilium network policies and service discovery
 
-3. Connect to Valkey:
+3. **Persistence failures**:
 
-   ```bash
-   kubectl exec -it -n valkey-system statefulset/valkey -- valkey-cli
-   ```
+   - **Symptom**: Data loss after pod restarts
+   - **Diagnosis**: Check persistent volume claims and storage
+   - **Resolution**: Verify Rook Ceph storage provisioning
 
-#### Phase 4 – Manual Database Operations
+4. **Replication issues**:
 
-1. Check Valkey info:
+   - **Symptom**: Cluster nodes not synchronizing
+   - **Diagnosis**: Check cluster status and replication
+   - **Resolution**: Verify cluster configuration and connectivity
 
-   ```bash
-   kubectl exec -it -n valkey-system statefulset/valkey -- valkey-cli info
-   ```
+## Maintenance
 
-2. Monitor connections and performance.
-3. Verify ACL configurations.
+### Updates
 
-#### Phase 5 – Rollback or Disable
+```bash
+# Update Valky using Flux
+flux reconcile kustomization valkey --with-source
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+# Check update status
+kubectl get helmreleases -n valkey-system
+```
 
-   ```bash
-   flux suspend kustomization valkey -n flux-system
-   flux suspend helmrelease valkey -n valkey-system
-   ```
+### Configuration Management
 
-3. Resume once remediation is complete:
+```bash
+# Update configuration
+kubectl apply -f values.yaml
 
-   ```bash
-   flux resume kustomization valkey -n flux-system
-   flux resume helmrelease valkey -n valkey-system
-   ```
+# Restart pods for configuration changes
+kubectl rollout restart statefulset valkey -n valkey-system
+```
 
-4. Scale statefulset to zero as a last resort:
+### MCP Integration
 
-   ```bash
-   kubectl -n valkey-system scale sts/valkey --replicas=0
-   ```
+- **Library ID**: `valkey-high-performance-cache`
+- **Version**: `v7.2.0`
+- **Usage**: High-performance key-value storage and caching
+- **Citation**: Use `resolve-library-id` for Valky configuration and troubleshooting
 
-### Validation
+## References
 
-- `kubectl get pods -n valkey-system` shows valkey pods in Running state.
-- `kubectl get svc -n valkey-system` shows valkey service available.
-- `flux get helmrelease valkey -n valkey-system` reports `Ready=True` with no pending upgrades.
-- Applications can connect and perform operations on Valkey.
+- [Valkey Documentation](https://valkey.io/)
+- [Valkey Helm Chart](https://github.com/valkey-io/valkey-helm)
+- [Redis Compatibility Guide](https://redis.io/docs/)
+- [Kubernetes Stateful Applications](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
 
-### Troubleshooting Guidance
+## Agent-Friendly Workflows
 
-- If connections fail, check authentication and ACL settings.
-- For performance issues, monitor memory usage and connections.
-- When the Helm release fails to deploy, check rendered manifests:
+### Valky Health Check Workflow
 
-  ```bash
-  flux diff hr valkey --namespace valkey-system
-  kubeconform -strict -summary ./cluster/apps/valkey-system/valkey/app
-  ```
+```yaml
+# Valkey health check decision tree
+start: "check_valkey_pods"
+nodes:
+  check_valkey_pods:
+    question: "Are Valkey pods running?"
+    command: "kubectl get pods -n valkey-system --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_valkey_ping"
+    no: "restart_valkey_pods"
+  check_valkey_ping:
+    question: "Is Valkey responding to ping?"
+    command: "kubectl exec -n valkey-system statefulset/valkey -- valkey-cli ping | grep -c 'PONG'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "NO_PONG"}'' | grep -q ''OK'''
+    yes: "check_memory_usage"
+    no: "fix_valkey_connectivity"
+  check_memory_usage:
+    question: "Is memory usage within limits?"
+    command: 'kubectl exec -n valkey-system statefulset/valkey -- valkey-cli info memory | grep ''used_memory:'' | awk -F: ''{print $2}'' | awk ''{if ($1 < 1000000000) print "OK"; else print "HIGH_MEM"}'' | grep -q ''OK'''
+    validation: "echo $? | grep -q '0'"
+    yes: "valkey_healthy"
+    no: "optimize_memory"
+  restart_valkey_pods:
+    action: "Restart Valkey pods"
+    next: "check_valkey_pods"
+  fix_valkey_connectivity:
+    action: "Check Valkey configuration and network connectivity"
+    next: "check_valkey_ping"
+  optimize_memory:
+    action: "Check memory configuration and eviction policies"
+    next: "check_memory_usage"
+  valkey_healthy:
+    action: "Valkey key-value store is healthy"
+    next: "end"
+end: "end"
+```
 
-- If pods crash, inspect logs and resource limits.
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-## Validation and Testing
+### Before using Context7 tools
 
-<!-- markdownlint-disable MD013 -->
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Valky documentation.
+- Confirm the catalog entry contains the documentation or API details needed for Valky operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
 
-| Step                                                | Purpose                                                                                          |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                     | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                 | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr valkey --namespace valkey-system`     | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl get pods -n valkey-system`                 | Validates pod deployment and readiness.                                                          |
-| `kubectl exec -it statefulset/valkey -- valkey-cli` | Tests Valkey connectivity.                                                                       |
+### When the catalog covers Valky documentation needs
 
-<!-- markdownlint-enable MD013 -->
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed Valky configuration changes.
 
-## References and Cross-links
+### When Valky documentation is missing or outdated
 
-- Runbook standards: [Repository root readme](/README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](/cluster/apps/flux-system/flux-instance/README.md)
-- Data storage: [cluster/apps/README.md](/cluster/apps/README.md)
-- Valkey documentation: <https://valkey.io/>
-- Valkey Helm chart: <https://github.com/valkey-io/valkey-helm>
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in Valky change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting Valky documentation.

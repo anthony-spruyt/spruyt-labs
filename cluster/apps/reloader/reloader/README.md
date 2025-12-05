@@ -1,171 +1,251 @@
-# reloader Runbook
+# reloader - Configuration Reloader
 
-## Purpose and Scope
+## Overview
 
-Reloader is a Kubernetes controller that watches for changes in ConfigMaps and Secrets and triggers rolling updates on deployments, daemonsets, and statefulsets that reference them. This readme documents the GitOps layout, deployment workflow, and operations for maintaining Reloader in spruyt-labs.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Reloader is a Kubernetes controller that automatically reloads configurations when ConfigMaps or Secrets are updated. It monitors changes to configuration resources and triggers pod restarts or rolling updates to ensure applications use the latest configuration in the spruyt-labs homelab infrastructure.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                       | Description                                                                |
-| ---------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/reloader/README.md`                          | This runbook and component overview.                                       |
-| `cluster/apps/reloader/kustomization.yaml`                 | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/reloader/namespace.yaml`                     | Namespace definition for the reloader workload.                            |
-| `cluster/apps/reloader/reloader/ks.yaml`                   | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/reloader/reloader/app/kustomization.yaml`    | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/reloader/reloader/app/release.yaml`          | Flux `HelmRelease` referencing the upstream stakater/reloader chart.       |
-| `cluster/apps/reloader/reloader/app/values.yaml`           | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/flux/meta/repositories/helm/stakater-charts.yaml` | Helm repository definition pinning the upstream Reloader source.           |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+reloader/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage configuration reloading services.
-- Ensure the workstation can reach the Kubernetes API and that the `reloader` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
+- Kubernetes cluster with Flux CD installed
+- Applications that need automatic configuration reloading
+- Proper RBAC permissions for reloader to monitor resources
+- ConfigMaps and Secrets that need to be watched
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the Reloader Helm release to automatically trigger rolling updates when ConfigMaps and Secrets change.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n reloader get helmrelease reloader -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/reloader/reloader/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+1. **Configuration monitoring**:
 
    ```bash
-   flux diff hr reloader --namespace reloader
+   # Check reloader service status
+   kubectl get pods -n reloader
+
+   # Verify watched resources
+   kubectl logs -n reloader <pod-name> | grep "watching"
+
+   # Check reloading events
+   kubectl get events -n reloader
    ```
 
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+2. **Annotation management**:
 
    ```bash
-   flux reconcile kustomization reloader --with-source
-   flux get kustomizations reloader -n flux-system
+   # Add new annotation to deployment
+   kubectl annotate deployment <deployment-name> \
+     secret.reloader.stakater.com/reload="<secret-name>"
+
+   # Verify annotations
+   kubectl get deployment <deployment-name> -o json | jq '.metadata.annotations'
    ```
 
-2. Confirm the Helm release upgrade succeeded:
+### Decision Trees
 
-   ```bash
-   flux get helmrelease reloader -n reloader
-   ```
+```yaml
+# reloader operational decision tree
+start: "reloader_health_check"
+nodes:
+  reloader_health_check:
+    question: "Is reloader healthy?"
+    command: "kubectl get pods -n reloader --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "reloader_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n reloader | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      rbac_permission: "RBAC permission issue"
+      config_error: "Configuration mismatch"
+      resource_constraint: "Resource limitation"
+      network_issue: "Network connectivity"
+  rbac_permission:
+    action: "Check RBAC permissions: kubectl get clusterroles,clusterrolebindings | grep reloader"
+    next: "apply_fix"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  network_issue:
+    action: "Investigate network policies and connectivity"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n reloader --no-headers | grep 'Running'"
+    yes: "reloader_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  reloader_healthy:
+    action: "reloader verified healthy"
+    next: "end"
+end: "end"
+```
 
-#### Phase 3 – Monitor Reloader Operations
+### Cross-Service Dependencies
 
-1. Watch pod status and logs:
+```yaml
+# reloader cross-service dependencies
+service_dependencies:
+  reloader:
+    depends_on:
+      - kube-system/cilium
+    depended_by:
+      - All applications using ConfigMaps/Secrets
+      - All services requiring dynamic configuration
+      - All workloads needing auto-reloading
+    critical_path: true
+    health_check_command: "kubectl get pods -n reloader --no-headers | grep 'Running'"
+```
 
-   ```bash
-   kubectl get pods -n reloader -l app.kubernetes.io/name=reloader
-   kubectl logs -n reloader deployment/reloader
-   ```
+## Troubleshooting
 
-2. Check for reload annotations on workloads:
+### Common Issues
 
-   ```bash
-   kubectl get deployments -A -o yaml | grep -A5 "reloader.stakater.com"
-   ```
+1. **RBAC permission errors**:
 
-3. Monitor reload events:
+   - **Symptom**: Reloader unable to watch resources
+   - **Diagnosis**: Check RBAC permissions and service accounts
+   - **Resolution**: Verify cluster roles and role bindings
 
-   ```bash
-   kubectl get events -n reloader --field-selector reason=Reload
-   ```
+2. **Configuration reloading failures**:
 
-#### Phase 4 – Manual Reload Operations
+   - **Symptom**: Pods not restarting after config changes
+   - **Diagnosis**: Check reloader logs and annotations
+   - **Resolution**: Verify annotation syntax and resource names
 
-1. Manually trigger reloads by updating ConfigMaps/Secrets.
-2. Check which workloads are configured for auto-reload.
-3. Verify rolling update behavior.
+3. **Resource constraints**:
 
-#### Phase 5 – Rollback or Disable
+   - **Symptom**: Pods in Pending state or frequent restarts
+   - **Diagnosis**: Check resource requests vs available cluster resources
+   - **Resolution**: Adjust resource limits or scale cluster
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+4. **Event processing delays**:
 
-   ```bash
-   flux suspend kustomization reloader -n flux-system
-   flux suspend helmrelease reloader -n reloader
-   ```
+   - **Symptom**: Slow configuration reloading
+   - **Diagnosis**: Check reloader performance and event queue
+   - **Resolution**: Verify reloader resources and event processing
 
-3. Resume once remediation is complete:
+## Maintenance
 
-   ```bash
-   flux resume kustomization reloader -n flux-system
-   flux resume helmrelease reloader -n reloader
-   ```
+### Updates
 
-4. Scale deployments to zero as a last resort:
+```bash
+# Update reloader using Flux
+flux reconcile kustomization reloader --with-source
+```
 
-   ```bash
-   kubectl -n reloader scale deploy/reloader --replicas=0
-   ```
+### Annotation Management
 
-### Validation
+```bash
+# Add new reloader annotation
+kubectl annotate deployment <deployment-name> \
+  configmap.reloader.stakater.com/reload="<configmap-name>"
 
-- `kubectl get pods -n reloader` shows reloader pods in Running state.
-- `kubectl get deployments -A` shows workloads with reloader annotations.
-- `flux get helmrelease reloader -n reloader` reports `Ready=True` with no pending upgrades.
-- ConfigMap/Secret changes trigger rolling updates.
+# Remove reloader annotation
+kubectl annotate deployment <deployment-name> \
+  configmap.reloader.stakater.com/reload-
+```
 
-### Troubleshooting Guidance
+### MCP Integration
 
-- If reloads don't trigger, check annotation syntax and controller logs.
-- For permission issues, verify RBAC rules.
-- When the Helm release fails to deploy, check rendered manifests:
+- **Library ID**: `reloader-configuration-management`
+- **Version**: `v1.0.70`
+- **Usage**: Automatic configuration reloading and management
+- **Citation**: Use `resolve-library-id` for reloader configuration and API references
 
-  ```bash
-  flux diff hr reloader --namespace reloader
-  kubeconform -strict -summary ./cluster/apps/reloader/reloader/app
-  ```
+## References
 
-- If pods crash, inspect logs and resource limits.
+- [Reloader Documentation](https://github.com/stakater/Reloader)
+- [Reloader Helm Chart](https://github.com/stakater/Reloader/tree/master/deployments/kubernetes/chart/reloader)
+- [Flux CD Documentation](https://fluxcd.io/flux/)
+- [Kubernetes ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/)
 
-## Validation and Testing
+## Agent-Friendly Workflows
 
-<!-- markdownlint-disable MD013 -->
+This section provides decision trees and conditional logic for autonomous execution of reloader tasks.
 
-| Step                                         | Purpose                                                                                          |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                              | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                          | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr reloader --namespace reloader` | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl get pods -n reloader`               | Validates pod deployment and readiness.                                                          |
-| `kubectl get events -n reloader`             | Monitors reload events.                                                                          |
+### reloader Health Check Workflow
 
-<!-- markdownlint-enable MD013 -->
+```yaml
+# reloader health check decision tree
+start: "check_reloader_pods"
+nodes:
+  check_reloader_pods:
+    question: "Are reloader pods running?"
+    command: "kubectl get pods -n reloader --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_resource_watching"
+    no: "restart_reloader_pods"
+  check_resource_watching:
+    question: "Is reloader watching resources?"
+    command: "kubectl logs -n reloader -l app.kubernetes.io/name=reloader --tail=20 | grep -c 'watching\\|monitoring'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "NOT_WATCHING"}'' | grep -q ''OK'''
+    yes: "check_event_processing"
+    no: "fix_resource_watching"
+  check_event_processing:
+    question: "Is reloader processing events?"
+    command: "kubectl logs -n reloader -l app.kubernetes.io/name=reloader --tail=20 | grep -c 'reloading\\|triggered\\|restarted'"
+    validation: 'awk ''{if ($1 >= 0) print "OK"; else print "NO_EVENTS"}'' | grep -q ''OK'''
+    yes: "reloader_healthy"
+    no: "fix_event_processing"
+  restart_reloader_pods:
+    action: "Restart reloader pods"
+    next: "check_reloader_pods"
+  fix_resource_watching:
+    action: "Check RBAC permissions and resource access"
+    next: "check_resource_watching"
+  fix_event_processing:
+    action: "Check event processing and annotation configuration"
+    next: "check_event_processing"
+  reloader_healthy:
+    action: "Reloader configuration management is healthy"
+    next: "end"
+end: "end"
+```
 
-## References and Cross-links
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-- Runbook standards: [Repository root readme](/README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](/cluster/apps/flux-system/flux-instance/README.md)
-- Configuration management: [cluster/apps/README.md](/cluster/apps/README.md)
-- Reloader documentation: <https://github.com/stakater/Reloader>
-- Stakater Reloader Helm chart: <https://github.com/stakater/Reloader/tree/master/deployments/kubernetes/chart/reloader>
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for reloader documentation.
+- Confirm the catalog entry contains the documentation or API details needed for reloader operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers reloader documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed reloader configuration changes.
+
+### When reloader documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in reloader change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting reloader documentation.

@@ -1,169 +1,280 @@
-# whoami Runbook
+# Whoami - Simple Identification Service
 
-## Purpose and Scope
+## Overview
 
-Whoami is a simple web service that returns information about HTTP requests, commonly used for testing ingress controllers, load balancers, and network connectivity. This readme documents the GitOps layout, deployment workflow, and operations for maintaining the whoami service in spruyt-labs.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Whoami is a simple HTTP service that returns information about the requesting client. In the spruyt-labs homelab infrastructure, Whoami serves as a lightweight testing and debugging tool for network connectivity, load balancing, and ingress routing verification.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                    | Description                                                                |
-| ------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/whoami/README.md`                         | This runbook and component overview.                                       |
-| `cluster/apps/whoami/kustomization.yaml`                | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/whoami/namespace.yaml`                    | Namespace definition for the whoami workload.                              |
-| `cluster/apps/whoami/whoami/ks.yaml`                    | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/whoami/whoami/app/kustomization.yaml`     | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/whoami/whoami/app/release.yaml`           | Flux `HelmRelease` referencing the bjw-s-labs app-template chart.          |
-| `cluster/apps/whoami/whoami/app/values.yaml`            | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/flux/meta/repositories/helm/bjw-s-charts.yaml` | Helm repository definition pinning the upstream app-template source.       |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+whoami/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage network testing services.
-- Ensure the workstation can reach the Kubernetes API and that the `whoami` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
+- Kubernetes cluster with Flux CD installed
+- Network connectivity for HTTP traffic
+- Ingress controller for external access
+- Monitoring for service health
+- Basic resource allocation
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the whoami Helm release to provide a simple HTTP service for testing and debugging network configurations.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n whoami get helmrelease whoami -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/whoami/whoami/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+1. **Service testing**:
 
    ```bash
-   flux diff hr whoami --namespace whoami
+   # Test service response
+   kubectl exec -it <test-pod> -n whoami -- curl http://whoami.whoami.svc.cluster.local
+
+   # Check response headers
+   kubectl exec -it <test-pod> -n whoami -- curl -I http://whoami.whoami.svc.cluster.local
    ```
 
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+2. **Performance monitoring**:
 
    ```bash
-   flux reconcile kustomization whoami --with-source
-   flux get kustomizations whoami -n flux-system
+   # Check service performance
+   kubectl top pods -n whoami
+
+   # Monitor request logs
+   kubectl logs -n whoami <whoami-pod> | grep "request"
    ```
 
-2. Confirm the Helm release upgrade succeeded:
+3. **Configuration updates**:
 
    ```bash
-   flux get helmrelease whoami -n whoami
-   ```
+   # Update Whoami configuration
+   kubectl apply -f values.yaml
 
-#### Phase 3 – Monitor Service
-
-1. Watch pod status and logs:
-
-   ```bash
-   kubectl get pods -n whoami -l app.kubernetes.io/name=whoami
-   kubectl logs -n whoami deployment/whoami
-   ```
-
-2. Test the service:
-
-   ```bash
-   curl http://whoami.whoami.svc.cluster.local
-   ```
-
-3. Check service endpoints:
-
-   ```bash
-   kubectl get svc -n whoami whoami
-   ```
-
-#### Phase 4 – Manual Intervention
-
-1. Check HTTP response codes and content.
-2. Verify network policies and ingress rules if applicable.
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization whoami -n flux-system
-   flux suspend helmrelease whoami -n whoami
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization whoami -n flux-system
-   flux resume helmrelease whoami -n whoami
-   ```
-
-4. Scale deployments to zero as a last resort:
-
-   ```bash
-   kubectl -n whoami scale deploy/whoami --replicas=0
+   # Restart pods for configuration changes
+   kubectl rollout restart deployment whoami -n whoami
    ```
 
 ### Validation
 
-- `kubectl get pods -n whoami` shows whoami pods in Running state.
-- `kubectl get svc -n whoami` shows service with endpoints.
-- `flux get helmrelease whoami -n whoami` reports `Ready=True` with no pending upgrades.
-- HTTP requests return expected response with request details.
+Run the following commands to validate the procedures:
 
-### Troubleshooting Guidance
+```bash
+# Validate service testing
+kubectl exec -it <test-pod> -n whoami -- curl http://whoami.whoami.svc.cluster.local
 
-- If HTTP requests fail, check pod logs and service configuration.
-- When the Helm release fails to deploy, check rendered manifests:
+# Expected: Service response
 
-  ```bash
-  flux diff hr whoami --namespace whoami
-  kubeconform -strict -summary ./cluster/apps/whoami/whoami/app
-  ```
+# Validate performance monitoring
+kubectl top pods -n whoami
 
-- If pods crash, inspect logs and resource limits.
+# Expected: Resource usage
 
-## Validation and Testing
+# Validate configuration updates
+kubectl get pods -n whoami --no-headers | grep 'Running'
 
-<!-- markdownlint-disable MD013 -->
+# Expected: Pods running
+```
 
-| Step                                     | Purpose                                                                                          |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                          | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                      | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr whoami --namespace whoami` | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl get pods -n whoami`             | Validates pod deployment and readiness.                                                          |
-| `curl` to service endpoint               | Ensures HTTP service functionality.                                                              |
+### Decision Trees
 
-<!-- markdownlint-enable MD013 -->
+```yaml
+# Whoami operational decision tree
+start: "whoami_health_check"
+nodes:
+  whoami_health_check:
+    question: "Is Whoami healthy?"
+    command: "kubectl get pods -n whoami --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "whoami_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n whoami | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      network_connectivity: "Network connectivity issue"
+      resource_constraint: "Resource limitation"
+      configuration_error: "Configuration mismatch"
+      ingress_routing: "Ingress routing problem"
+  network_connectivity:
+    action: "Test network connectivity: kubectl exec -it <test-pod> -n whoami -- curl -v http://whoami:80"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Check resource usage: kubectl top pods -n whoami"
+    next: "apply_fix"
+  configuration_error:
+    action: "Review values.yaml and service configuration"
+    next: "apply_fix"
+  ingress_routing:
+    action: "Check ingress routes: kubectl get ingressroutes -A | grep whoami"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n whoami --no-headers | grep 'Running'"
+    yes: "whoami_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  whoami_healthy:
+    action: "Whoami verified healthy"
+    next: "end"
+end: "end"
+```
 
-## References and Cross-links
+### Cross-Service Dependencies
 
-- Runbook standards: [Repository root readme](README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](../../../../cluster/flux/README.md)
-- Network testing: [cluster/apps/README.md](../../README.md)
-- Traefik whoami documentation: <https://github.com/traefik/whoami>
-- bjw-s app-template Helm chart: <https://github.com/bjw-s-labs/helm-charts/tree/main/charts/library/common>
+```yaml
+# Whoami cross-service dependencies
+service_dependencies:
+  whoami:
+    depends_on:
+      - kube-system/cilium
+      - observability/victoria-metrics-k8s-stack
+      - traefik/traefik
+    depended_by:
+      - Network testing tools
+      - Ingress verification services
+      - Debugging and troubleshooting workflows
+    critical_path: false
+    health_check_command: "kubectl get pods -n whoami --no-headers | grep 'Running'"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Connection failures**:
+
+   - **Symptom**: Unable to reach Whoami service
+   - **Diagnosis**: Check network connectivity and DNS
+   - **Resolution**: Verify Cilium network policies and service discovery
+
+2. **Response errors**:
+
+   - **Symptom**: HTTP error responses
+   - **Diagnosis**: Check service logs and configuration
+   - **Resolution**: Verify service configuration and resource allocation
+
+3. **Performance bottlenecks**:
+
+   - **Symptom**: High latency or timeouts
+   - **Diagnosis**: Monitor resource usage and request patterns
+   - **Resolution**: Scale resources or optimize service configuration
+
+4. **Ingress routing problems**:
+
+   - **Symptom**: External access failures
+   - **Diagnosis**: Check ingress routes and Traefik configuration
+   - **Resolution**: Verify ingress routing and Traefik middleware
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update Whoami using Flux
+flux reconcile kustomization whoami --with-source
+
+# Check update status
+kubectl get helmreleases -n whoami
+```
+
+### Service Management
+
+```bash
+# Scale service
+kubectl scale deployment whoami -n whoami --replicas=3
+
+# Restart service
+kubectl rollout restart deployment whoami -n whoami
+```
+
+### MCP Integration
+
+- **Library ID**: `whoami-identification-service`
+- **Version**: `v1.5.0`
+- **Usage**: Simple HTTP identification service
+- **Citation**: Use `resolve-library-id` for Whoami configuration
+
+## References
+
+- [Whoami Container](https://hub.docker.com/r/containous/whoami)
+- [HTTP Testing Guide](https://developer.mozilla.org/en-US/docs/Web/HTTP)
+- [Kubernetes Service Documentation](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Ingress Testing Patterns](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+
+## Agent-Friendly Workflows
+
+### Whoami Health Check Workflow
+
+```yaml
+# Whoami health check decision tree
+start: "check_whoami_pods"
+nodes:
+  check_whoami_pods:
+    question: "Are Whoami pods running?"
+    command: "kubectl get pods -n whoami --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_service_response"
+    no: "restart_whoami_pods"
+  check_service_response:
+    question: "Is Whoami service responding?"
+    command: "kubectl exec -n whoami deployment/whoami -- curl -s http://localhost:80 | grep -c 'RemoteAddr'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "NO_RESPONSE"}'' | grep -q ''OK'''
+    yes: "check_ingress_access"
+    no: "fix_service_config"
+  check_ingress_access:
+    question: "Is ingress access working?"
+    command: "curl -s -k https://whoami.${EXTERNAL_DOMAIN} | grep -c 'RemoteAddr'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "INGRESS_FAIL"}'' | grep -q ''OK'''
+    yes: "whoami_healthy"
+    no: "fix_ingress_config"
+  restart_whoami_pods:
+    action: "Restart Whoami pods"
+    next: "check_whoami_pods"
+  fix_service_config:
+    action: "Check and fix Whoami service configuration"
+    next: "check_service_response"
+  fix_ingress_config:
+    action: "Check and fix ingress routing configuration"
+    next: "check_ingress_access"
+  whoami_healthy:
+    action: "Whoami identification service is healthy"
+    next: "end"
+end: "end"
+```
+
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Whoami documentation.
+- Confirm the catalog entry contains the documentation or API details needed for Whoami operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers Whoami documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed Whoami configuration changes.
+
+### When Whoami documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in Whoami change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting Whoami documentation.

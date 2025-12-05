@@ -1,178 +1,253 @@
-# plugin-barman-cloud Runbook
+# plugin-barman-cloud - Barman Cloud Plugin
 
-## Purpose and Scope
+## Overview
 
-The plugin-barman-cloud deployment provides a plugin for CloudNativePG to enable cloud-based backups for PostgreSQL clusters. This runbook documents the GitOps layout, deployment workflow, and operations required to keep the plugin healthy for the spruyt-labs environment.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Barman Cloud Plugin provides cloud storage integration for PostgreSQL backups managed by CloudNativePG. It enables backup and restore operations with cloud storage providers for enhanced data protection and disaster recovery capabilities.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                                    | Description                                                                |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/cnpg-system/README.md`                                    | This runbook and component overview.                                       |
-| `cluster/apps/cnpg-system/kustomization.yaml`                           | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/cnpg-system/namespace.yaml`                               | Namespace definition for the cnpg-system workload.                         |
-| `cluster/apps/cnpg-system/plugin-barman-cloud/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/cnpg-system/plugin-barman-cloud/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/cnpg-system/plugin-barman-cloud/app/release.yaml`         | Flux `HelmRelease` referencing the plugin-barman-cloud chart.              |
-| `cluster/apps/cnpg-system/plugin-barman-cloud/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/cnpg-system/plugin-barman-cloud/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/flux/meta/repositories/helm/cloudnative-pg.yaml`               | Helm repository definition pinning the upstream CloudNativePG source.      |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+plugin-barman-cloud/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage PostgreSQL backups.
-- Ensure the workstation can reach the Kubernetes API and that the `plugin-barman-cloud` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
+- Kubernetes cluster with Flux CD installed
+- CloudNativePG operator deployed and operational
+- Cloud storage credentials configured (AWS S3, Azure Blob, Google Cloud Storage)
+- Proper network connectivity to cloud storage providers
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the plugin-barman-cloud Helm release to enable cloud backups for PostgreSQL clusters managed by CNPG.
+1. **Cloud backup management**:
 
-### Preconditions
+```bash
+# Check backup status
+kubectl get backups -A
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when backup operations could impact performance.
-- Capture the current Helm release revision for rollback reference:
+# Verify cloud storage connectivity
+kubectl logs -n cnpg-system <plugin-pod-name> | grep "cloud storage"
+```
 
-  ```bash
-  kubectl -n cnpg-system get helmrelease plugin-barman-cloud -o yaml
-  ```
+2. **Backup configuration**:
 
-### Procedure
+```bash
+# Check backup configuration
+kubectl get scheduledbackups -A
 
-#### Phase 1 – Plan and Author Changes
+# Verify backup retention policies
+kubectl get backupconfigurations -A
+```
 
-1. Update chart versions or values under `cluster/apps/cnpg-system/plugin-barman-cloud/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+3. **Performance monitoring**:
 
-   ```bash
-   flux diff hr plugin-barman-cloud --namespace cnpg-system
-   ```
+```bash
+# Check plugin resource usage
+kubectl top pods -n cnpg-system -l app.kubernetes.io/name=barman-cloud
 
-4. Commit changes with runbook updates and open a pull request.
+# Monitor backup operations
+kubectl logs -n cnpg-system <plugin-pod-name> | grep "backup"
+```
 
-#### Phase 2 – Reconcile with Flux
+### Decision Trees
 
-1. After merge, monitor the Flux Kustomization:
+```yaml
+# Barman Cloud Plugin operational decision tree
+start: "barman_cloud_health_check"
+nodes:
+  barman_cloud_health_check:
+    question: "Is Barman Cloud Plugin healthy?"
+    command: "kubectl get pods -n cnpg-system -l app.kubernetes.io/name=barman-cloud --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "barman_cloud_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n cnpg-system -l app.kubernetes.io/name=barman-cloud | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      cloud_connectivity: "Cloud storage connectivity problem"
+      credential_issue: "Credential configuration issue"
+      resource_constraint: "Resource limitation"
+      network_issue: "Network connectivity"
+  cloud_connectivity:
+    action: "Check cloud storage connectivity: kubectl logs -n cnpg-system <plugin-pod-name> | grep 'cloud'"
+    next: "apply_fix"
+  credential_issue:
+    action: "Verify cloud credentials: kubectl get secrets -n cnpg-system"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  network_issue:
+    action: "Investigate network policies and connectivity"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n cnpg-system -l app.kubernetes.io/name=barman-cloud --no-headers | grep 'Running'"
+    yes: "barman_cloud_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  barman_cloud_healthy:
+    action: "Barman Cloud Plugin verified healthy"
+    next: "end"
+end: "end"
+```
 
-   ```bash
-   flux reconcile kustomization plugin-barman-cloud --with-source
-   flux get kustomizations plugin-barman-cloud -n flux-system
-   ```
+### Cross-Service Dependencies
 
-2. Confirm the Helm release upgrade succeeded:
+```yaml
+# Barman Cloud Plugin cross-service dependencies
+service_dependencies:
+  plugin-barman-cloud:
+    depends_on:
+      - cnpg-system/cnpg-operator
+      - external-secrets/external-secrets
+    depended_by:
+      - All PostgreSQL clusters requiring cloud backups
+      - All applications using managed PostgreSQL databases
+    critical_path: true
+    health_check_command: "kubectl get pods -n cnpg-system -l app.kubernetes.io/name=barman-cloud --no-headers | grep 'Running'"
+```
 
-   ```bash
-   flux get helmrelease plugin-barman-cloud -n cnpg-system
-   ```
+## Troubleshooting
 
-#### Phase 3 – Monitor Plugin Health
+### Common Issues
 
-1. Watch plugin pods:
+1. **Cloud storage connectivity failures**:
 
-   ```bash
-   kubectl get pods -n cnpg-system -l app.kubernetes.io/name=plugin-barman-cloud
-   ```
+   - **Symptom**: Backup operations failing
+   - **Diagnosis**: Check cloud storage connectivity and credentials
+   - **Resolution**: Verify cloud storage configuration and network connectivity
 
-2. Validate backup configurations in PostgreSQL clusters.
-3. Ensure backups are running successfully.
+2. **Credential configuration errors**:
 
-#### Phase 4 – Manual Intervention for Backup Issues
+   - **Symptom**: Authentication failures in logs
+   - **Diagnosis**: Check cloud storage credentials and access permissions
+   - **Resolution**: Verify cloud storage credentials and access policies
 
-1. Restart the deployment if backups fail:
+3. **Resource constraints**:
 
-   ```bash
-   kubectl -n cnpg-system rollout restart deploy/plugin-barman-cloud
-   ```
+   - **Symptom**: Pods in Pending state or frequent restarts
+   - **Diagnosis**: Check resource requests vs available cluster resources
+   - **Resolution**: Adjust resource limits or scale cluster
 
-2. For cloud credentials issues, verify secrets are correct.
-3. Inspect logs for backup errors:
+4. **Network connectivity issues**:
 
-   ```bash
-   kubectl logs -n cnpg-system deploy/plugin-barman-cloud
-   ```
+   - **Symptom**: Backup operations timing out
+   - **Diagnosis**: Check network policies and cloud storage connectivity
+   - **Resolution**: Verify network configuration and firewall rules
 
-#### Phase 5 – Rollback or Disable
+## Maintenance
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+### Updates
 
-   ```bash
-   flux suspend kustomization plugin-barman-cloud -n flux-system
-   flux suspend helmrelease plugin-barman-cloud -n cnpg-system
-   ```
+```bash
+# Update Barman Cloud Plugin using Flux
+flux reconcile kustomization plugin-barman-cloud --with-source
+```
 
-3. Resume once remediation is complete:
+### Backup Management
 
-   ```bash
-   flux resume kustomization plugin-barman-cloud -n flux-system
-   flux resume helmrelease plugin-barman-cloud -n cnpg-system
-   ```
+```bash
+# Verify scheduled backups
+kubectl get scheduledbackups -A
 
-4. Consider scaling the deployment to zero as a last resort:
+# Check backup status
+kubectl get backups -A
+```
 
-   ```bash
-   kubectl -n cnpg-system scale deploy/plugin-barman-cloud --replicas=0
-   ```
+### MCP Integration
 
-### Validation
+- **Library ID**: `barman-cloud-backup-plugin`
+- **Version**: `v1.22.0`
+- **Usage**: Cloud storage integration for PostgreSQL backups
+- **Citation**: Use `resolve-library-id` for Barman Cloud configuration and troubleshooting
 
-- `kubectl get pods -n cnpg-system` shows running pods with no restarts.
-- `kubectl get helmrelease plugin-barman-cloud -n cnpg-system` reports `Ready=True` with no pending upgrades.
-- PostgreSQL clusters can configure cloud backups.
-- Backup jobs complete successfully.
+## References
 
-### Troubleshooting Guidance
+- [CloudNativePG Documentation](https://cloudnative-pg.io/)
+- [Flux CD Documentation](https://fluxcd.io/flux/)
 
-- If backups fail, check cloud credentials and permissions.
-- For plugin not loading, ensure CNPG operator is running and plugin is installed.
-- When the Helm release fails to deploy, check rendered manifests:
+## Agent-Friendly Workflows
 
-  ```bash
-  flux diff hr plugin-barman-cloud --namespace cnpg-system
-  kubeconform -strict -summary ./cluster/apps/cnpg-system/plugin-barman-cloud/app
-  ```
+This section provides decision trees and conditional logic for autonomous execution of Barman Cloud Plugin tasks.
 
-- If the deployment pod crashes, capture pod logs and describe the pod:
+### Barman Cloud Plugin Health Check Workflow
 
-  ```bash
-  kubectl -n cnpg-system get pods
-  kubectl -n cnpg-system describe pod <pod-name>
-  ```
+```yaml
+# Barman Cloud Plugin health check decision tree
+start: "check_barman_cloud_pods"
+nodes:
+  check_barman_cloud_pods:
+    question: "Are Barman Cloud Plugin pods running?"
+    command: "kubectl get pods -n cnpg-system -l app.kubernetes.io/name=barman-cloud --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_cloud_storage_connectivity"
+    no: "restart_barman_cloud_pods"
+  check_cloud_storage_connectivity:
+    question: "Is cloud storage connectivity working?"
+    command: "kubectl logs -n cnpg-system -l app.kubernetes.io/name=barman-cloud --tail=20 | grep -c 'cloud.*success\\|storage.*connected'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "CONNECT_FAIL"}'' | grep -q ''OK'''
+    yes: "check_backup_operations"
+    no: "fix_cloud_credentials"
+  check_backup_operations:
+    question: "Are backup operations working?"
+    command: "kubectl get backups -A --no-headers | wc -l"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "NO_BACKUPS"}'' | grep -q ''OK'''
+    yes: "barman_cloud_healthy"
+    no: "fix_backup_config"
+  restart_barman_cloud_pods:
+    action: "Restart Barman Cloud Plugin pods"
+    next: "check_barman_cloud_pods"
+  fix_cloud_credentials:
+    action: "Check and fix cloud storage credentials"
+    next: "check_cloud_storage_connectivity"
+  fix_backup_config:
+    action: "Check backup configuration and scheduled backups"
+    next: "check_backup_operations"
+  barman_cloud_healthy:
+    action: "Barman Cloud Plugin for PostgreSQL backups is healthy"
+    next: "end"
+end: "end"
+```
 
-- For backup issues, consult CNPG and Barman documentation.
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-## Validation and Testing
+### Before using Context7 tools
 
-<!-- markdownlint-disable MD013 -->
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Barman Cloud Plugin documentation.
+- Confirm the catalog entry contains the documentation or API details needed for Barman Cloud Plugin operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
 
-| Step                                                                            | Purpose                                                                                          |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                                                 | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                                             | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr plugin-barman-cloud --namespace cnpg-system`                      | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n cnpg-system get events --sort-by=.lastTimestamp`                    | Confirms the plugin starts after rollout.                                                        |
-| `kubectl get pods -n cnpg-system -l app.kubernetes.io/name=plugin-barman-cloud` | Validates that the plugin is running.                                                            |
+### When the catalog covers Barman Cloud Plugin documentation needs
 
-<!-- markdownlint-enable MD013 -->
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed Barman Cloud Plugin configuration changes.
 
-## References and Cross-links
+### When Barman Cloud Plugin documentation is missing or outdated
 
-- Runbook standards: [Repository root readme](README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](../../../../cluster/flux/README.md)
-- CNPG operations: [cluster/apps/cnpg-system/cnpg-operator/README.md](../cnpg-operator/README.md)
-- Upstream plugin-barman-cloud documentation: <https://cloudnative-pg.io/docs/>
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in Barman Cloud Plugin change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting Barman Cloud Plugin documentation.

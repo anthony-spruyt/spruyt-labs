@@ -1,188 +1,259 @@
-# mosquitto Runbook
+# mosquitto - MQTT Broker
 
-## Purpose and Scope
+## Overview
 
-The mosquitto controller deploys an Eclipse Mosquitto MQTT broker for IoT and messaging applications in the spruyt-labs environment. It provides secure MQTT (port 1883) and MQTT-SSL (port 8883) endpoints with password-based authentication, TLS encryption, and persistent message storage. This readme documents the GitOps layout, deployment workflow, and operations required to keep the MQTT broker healthy.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Mosquitto is an open-source MQTT broker that implements the MQTT protocol for lightweight messaging in IoT (Internet of Things) applications. It provides a publish-subscribe messaging pattern for device communication in the spruyt-labs homelab infrastructure.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                                | Description                                                                |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/mosquitto/README.md`                                  | Parent runbook and component overview.                                     |
-| `cluster/apps/mosquitto/kustomization.yaml`                         | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/mosquitto/namespace.yaml`                             | Namespace definition for the mosquitto workload.                           |
-| `cluster/apps/mosquitto/mosquitto/ks.yaml`                          | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/mosquitto/mosquitto/app/kustomization.yaml`           | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/mosquitto/mosquitto/app/release.yaml`                 | Flux `HelmRelease` referencing the bjw-s app-template chart.               |
-| `cluster/apps/mosquitto/mosquitto/app/values.yaml`                  | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/mosquitto/mosquitto/app/kustomizeconfig.yaml`         | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/apps/mosquitto/mosquitto/app/certificate.yaml`             | Certificate manifest for TLS.                                              |
-| `cluster/apps/mosquitto/mosquitto/app/persistent-volume-claim.yaml` | PVC for persistent data storage.                                           |
-| `cluster/flux/meta/repositories/bjw-s-labs-app-template.yaml`       | Helm repository definition pinning the upstream bjw-s app-template source. |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+mosquitto/
+├── app/
+│   ├── certificate.yaml                # TLS certificate configuration
+│   ├── kustomization.yaml              # Kustomize configuration
+│   ├── kustomizeconfig.yaml            # Kustomize config
+│   ├── persistent-volume-claim.yaml     # Persistent volume claims
+│   ├── release.yaml                    # Helm release configuration
+│   └── values.yaml                     # Helm values
+├── ks.yaml                             # Kustomization configuration
+└── README.md                           # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage MQTT broker configurations.
-- Ensure the workstation can reach the Kubernetes API and that the `mosquitto` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Verify that required secrets (mosquitto-secrets, TLS certificates) exist in the cluster.
+- Kubernetes cluster with Flux CD installed
+- Storage class configured for persistent volumes
+- Ingress controller configured for MQTT protocol
+- TLS certificates available for secure MQTT connections
+- Rook Ceph storage provisioned (dependency)
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the mosquitto Helm release to provide reliable MQTT messaging services with authentication, encryption, and persistence for IoT applications.
+1. **MQTT broker management**:
 
-### Preconditions
+   - Access mosquitto admin interface (if configured)
+   - Monitor MQTT connections and topics
+   - Manage authentication and authorization
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when broker downtime could impact connected clients.
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n mosquitto get helmrelease mosquitto -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/mosquitto/mosquitto/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+2. **Persistent volume monitoring**:
 
    ```bash
-   flux diff hr mosquitto --namespace mosquitto
-   ```
-
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
-
-   ```bash
-   flux reconcile kustomization mosquitto --with-source
-   flux get kustomizations mosquitto -n flux-system
-   ```
-
-2. Confirm the Helm release upgrade succeeded:
-
-   ```bash
-   flux get helmrelease mosquitto -n mosquitto
-   ```
-
-#### Phase 3 – Monitor Broker Operations
-
-1. Watch pod logs for connection and authentication events:
-
-   ```bash
-   kubectl logs -n mosquitto deploy/mosquitto -f
-   ```
-
-2. Validate service endpoints and connectivity:
-
-   ```bash
-   kubectl get svc -n mosquitto
-   ```
-
-3. Check persistent volume claims for data retention:
-
-   ```bash
+   # Check persistent volume claims
    kubectl get pvc -n mosquitto
+
+   # Verify volume binding
+   kubectl get pv | grep mosquitto
    ```
 
-#### Phase 4 – Manual Intervention for Issues
-
-1. Restart pods if authentication or connection issues occur:
+3. **Certificate renewal monitoring**:
 
    ```bash
-   kubectl rollout restart deploy/mosquitto -n mosquitto
+   # Check certificate expiration
+   kubectl get certificates -n mosquitto -o wide
+
+   # Check certificate events
+   kubectl get events -n mosquitto | grep certificate
    ```
 
-2. Inspect secrets and certificates for expiration or misconfiguration:
+### Decision Trees
 
-   ```bash
-   kubectl describe secret mosquitto-secrets -n mosquitto
-   kubectl describe certificate mosquitto-lan-<domain>-tls -n mosquitto
-   ```
+```yaml
+# mosquitto operational decision tree
+start: "mosquitto_health_check"
+nodes:
+  mosquitto_health_check:
+    question: "Is mosquitto healthy?"
+    command: "kubectl get pods -n mosquitto --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "mosquitto_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n mosquitto | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      storage_issue: "Persistent volume problem"
+      config_error: "Configuration mismatch"
+      resource_constraint: "Resource limitation"
+      network_issue: "Network connectivity"
+      tls_issue: "TLS certificate problem"
+  storage_issue:
+    action: "Check PVC and PV: kubectl get pvc -n mosquitto"
+    next: "apply_fix"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  network_issue:
+    action: "Investigate network policies and connectivity"
+    next: "apply_fix"
+  tls_issue:
+    action: "Check certificate status: kubectl get certificates -n mosquitto"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n mosquitto --no-headers | grep 'Running'"
+    yes: "mosquitto_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  mosquitto_healthy:
+    action: "mosquitto verified healthy"
+    next: "end"
+end: "end"
+```
 
-3. For client connection failures, verify password file and TLS setup in logs.
+### Cross-Service Dependencies
 
-#### Phase 5 – Rollback or Disable
+```yaml
+# mosquitto cross-service dependencies
+service_dependencies:
+  mosquitto:
+    depends_on:
+      - rook-ceph/rook-ceph-cluster
+      - traefik/traefik
+      - cert-manager/cert-manager
+    depended_by:
+      - IoT devices and applications
+      - Home automation systems
+    critical_path: true
+    health_check_command: "kubectl get pods -n mosquitto --no-headers | grep 'Running'"
+```
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+## Troubleshooting
 
-   ```bash
-   flux suspend kustomization mosquitto -n flux-system
-   flux suspend helmrelease mosquitto -n mosquitto
-   ```
+### Common Issues
 
-3. Resume once remediation is complete:
+1. **Persistent volume binding failures**:
 
-   ```bash
-   flux resume kustomization mosquitto -n flux-system
-   flux resume helmrelease mosquitto -n mosquitto
-   ```
+   - **Symptom**: Pods stuck in Pending state
+   - **Diagnosis**: Check PVC status and storage class availability
+   - **Resolution**: Verify Rook Ceph storage provisioning and PVC configuration
 
-4. Consider scaling the deployment to zero as a last resort:
+2. **TLS certificate issues**:
 
-   ```bash
-   kubectl -n mosquitto scale deploy/mosquitto --replicas=0
-   ```
+   - **Symptom**: MQTT connection failures
+   - **Diagnosis**: Check cert-manager certificate status and TLS configuration
+   - **Resolution**: Verify certificate DNS names and issuer configuration
 
-### Validation
+3. **Resource constraints**:
 
-- `kubectl get pods -n mosquitto` shows mosquitto pod running and ready.
-- `kubectl get svc -n mosquitto` reports LoadBalancer service with assigned IP.
-- `kubectl get pvc -n mosquitto` shows mosquitto-data PVC bound.
-- `flux get helmrelease mosquitto -n mosquitto` reports `Ready=True` with no pending upgrades.
-- MQTT clients can connect using credentials from mosquitto-secrets.
+   - **Symptom**: Pods in Pending state or frequent restarts
+   - **Diagnosis**: Check resource requests vs available cluster resources
+   - **Resolution**: Adjust resource limits or scale cluster
 
-### Troubleshooting Guidance
+4. **Network connectivity issues**:
 
-- If pods fail to start, check init container logs for secret copying issues:
+   - **Symptom**: MQTT clients unable to connect
+   - **Diagnosis**: Check network policies and ingress configuration
+   - **Resolution**: Verify network connectivity and firewall rules
 
-  ```bash
-  kubectl logs -n mosquitto deploy/mosquitto -c copy-secrets
-  ```
+## Maintenance
 
-- For authentication failures, verify the password file format and client credentials.
-- When TLS connections fail, inspect certificate validity and listener configuration.
-- If persistence is lost, check PVC binding and rook-ceph cluster health.
-- For high resource usage, review connection limits and message retention settings.
+### Updates
 
-## Validation and Testing
+```bash
+# Update mosquitto using Flux
+flux reconcile kustomization mosquitto --with-source
+```
 
-<!-- markdownlint-disable MD013 -->
+### Backups
 
-| Step                                                       | Purpose                                                              |
-| ---------------------------------------------------------- | -------------------------------------------------------------------- |
-| `task validate`                                            | Runs repository schema validation (kubeconform, yamllint, conftest). |
-| `task dev-env:lint`                                        | Executes markdownlint, prettier, and ancillary linters.              |
-| `flux diff hr mosquitto --namespace mosquitto`             | Previews rendered Helm changes before reconciliation.                |
-| `kubectl -n mosquitto get events --sort-by=.lastTimestamp` | Confirms broker startup events and connection logs.                  |
-| `kubectl get nodes`                                        | Validates cluster readiness for LoadBalancer services.               |
+```bash
+# Verify persistent volume backups
+kubectl get pvc -n mosquitto
 
-<!-- markdownlint-enable MD013 -->
+# Check backup status if using Velero
+kubectl get backups -n mosquitto
+```
 
-## References and Cross-links
+### MCP Integration
 
-- Runbook standards: [Repository root readme](README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
-- Rook Ceph storage operations: [cluster/apps/rook-ceph/rook-ceph-cluster/README.md](../../../../cluster/apps/rook-ceph/rook-ceph-cluster/README.md)
-- Certificate management: [cluster/apps/cert-manager/cert-manager/README.md](../../../../cluster/apps/cert-manager/cert-manager/README.md)
-- Upstream Eclipse Mosquitto documentation: <https://mosquitto.org/>
-- bjw-s app-template chart: <https://github.com/bjw-s-labs/helm-charts/tree/main/charts/library/common>
+- **Library ID**: `mosquitto-mqtt-broker`
+- **Version**: `2.0.18`
+- **Usage**: MQTT messaging and IoT device communication
+- **Citation**: Use `resolve-library-id` for mosquitto configuration and API references
+
+## References
+
+- [Mosquitto Documentation](https://mosquitto.org/documentation/)
+- [MQTT Protocol Specification](http://mqtt.org/)
+- [Flux CD Documentation](https://fluxcd.io/flux/)
+- [Rook Ceph Documentation](https://rook.io/docs/rook/latest/)
+
+## Agent-Friendly Workflows
+
+This section provides decision trees and conditional logic for autonomous execution of mosquitto tasks.
+
+### mosquitto Health Check Workflow
+
+```yaml
+# mosquitto health check decision tree
+start: "check_mosquitto_pods"
+nodes:
+  check_mosquitto_pods:
+    question: "Are mosquitto pods running?"
+    command: "kubectl get pods -n mosquitto --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_mqtt_port"
+    no: "restart_mosquitto_pods"
+  check_mqtt_port:
+    question: "Is MQTT port listening?"
+    command: "kubectl exec -n mosquitto deployment/mosquitto -- netstat -tln | grep -c ':1883\\|:8883'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "PORT_FAIL"}'' | grep -q ''OK'''
+    yes: "check_mqtt_connectivity"
+    no: "fix_mqtt_config"
+  check_mqtt_connectivity:
+    question: "Can MQTT clients connect?"
+    command: "kubectl logs -n mosquitto -l app.kubernetes.io/name=mosquitto --tail=20 | grep -c 'New client connected\\|Client.*connected'"
+    validation: 'awk ''{if ($1 >= 0) print "OK"; else print "CONNECT_FAIL"}'' | grep -q ''OK'''
+    yes: "mosquitto_healthy"
+    no: "fix_client_connectivity"
+  restart_mosquitto_pods:
+    action: "Restart mosquitto pods"
+    next: "check_mosquitto_pods"
+  fix_mqtt_config:
+    action: "Check mosquitto configuration and port settings"
+    next: "check_mqtt_port"
+  fix_client_connectivity:
+    action: "Check network policies and client authentication"
+    next: "check_mqtt_connectivity"
+  mosquitto_healthy:
+    action: "Mosquitto MQTT broker is healthy"
+    next: "end"
+end: "end"
+```
+
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for mosquitto documentation.
+- Confirm the catalog entry contains the documentation or API details needed for mosquitto operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers mosquitto documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed mosquitto configuration changes.
+
+### When mosquitto documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in mosquitto change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting mosquitto documentation.

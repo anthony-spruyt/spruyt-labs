@@ -1,196 +1,200 @@
-# kubelet-csr-approver Runbook
+# Kubelet CSR Approver - Certificate Signing Request Management
 
-## Purpose and Scope
+## Overview
 
-The kubelet-csr-approver controller automates approval of node client certificates. It enforces policy checks before Talos-managed worker and control-plane nodes join the cluster. This readme documents the GitOps layout, deployment workflow, and operations required to keep the automation healthy for the spruyt-labs environment.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Kubelet CSR Approver automates the approval of Kubernetes Certificate Signing Requests (CSRs) for kubelet serving certificates. It provides automated certificate rotation and management for kubelet nodes, ensuring secure and up-to-date TLS certificates for node communication.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                                              | Description                                                                  |
-| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `cluster/kubelet-csr-approver/README.md`                                          | Parent runbook and component overview.                                       |
-| `cluster/apps/kubelet-csr-approver/kustomization.yaml`                            | Top-level Kustomize entry that namespaces resources and delegates to Flux.   |
-| `cluster/apps/kubelet-csr-approver/namespace.yaml`                                | Namespace definition for the controller workload.                            |
-| `cluster/apps/kubelet-csr-approver/kubelet-csr-approver/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.      |
-| `cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.            |
-| `cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app/release.yaml`         | Flux `HelmRelease` referencing the PostFinance chart.                        |
-| `cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                         |
-| `cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.              |
-| `cluster/flux/meta/repositories/postfinance-charts.yaml`                          | Helm repository definition pinning the upstream kubelet-csr-approver source. |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+kubelet-csr-approver/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to approve CSRs.
-- Ensure the workstation can reach the Kubernetes API and that the `kubelet-csr-approver` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
+- Kubernetes cluster with Flux CD installed
+- Proper RBAC permissions for CSR approval
+- Certificate authority configured
+- Node connectivity established
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the kubelet-csr-approver Helm release so kubelet client certificate signing requests are automatically validated and approved, keeping Talos nodes Ready without manual intervention.
+1. **CSR monitoring**:
 
-### Preconditions
+```bash
+# Check pending CSRs
+kubectl get csr
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when approving or denying CSRs could impact node availability.
-- Capture the current Helm release revision for rollback reference:
+# Approve CSR manually
+kubectl certificate approve <csr-name>
+```
 
-  ```bash
-  kubectl -n kubelet-csr-approver get helmrelease kubelet-csr-approver -o yaml
-  ```
+2. **Certificate rotation monitoring**:
 
-### Procedure
+```bash
+# Check certificate expiration
+kubectl get certificates -A -o wide
 
-#### Phase 1 – Plan and Author Changes
+# Check node certificate status
+kubectl get nodes -o json | jq '.items[].status.conditions[] | select(.type=="Ready")'
+```
 
-1. Update chart versions or values under `cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
-
-   ```bash
-   flux diff hr kubelet-csr-approver --namespace kubelet-csr-approver
-   ```
-
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+3. **CSR approver management**:
 
    ```bash
-   flux reconcile kustomization kubelet-csr-approver --with-source
-   flux get kustomizations kubelet-csr-approver -n flux-system
-   ```
-
-2. Confirm the Helm release upgrade succeeded:
-
-   ```bash
-   flux get helmrelease kubelet-csr-approver -n kubelet-csr-approver
-   ```
-
-#### Phase 3 – Monitor CSR Approvals
-
-1. Watch incoming CSRs while nodes bootstrap:
-
-   ```bash
-   kubectl get csr
-   kubectl describe csr <name>
-   ```
-
-2. Validate events emitted by the controller:
-
-   ```bash
-   kubectl get events -n kubelet-csr-approver --sort-by=.lastTimestamp
-   ```
-
-3. Ensure newly joined nodes reach Ready state (`kubectl get nodes`, `talosctl health`).
-
-#### Phase 4 – Manual Intervention for Stuck CSRs
-
-1. Approve urgent CSRs manually if automation is degraded:
-
-   ```bash
-   kubectl certificate approve <csr-name>
-   ```
-
-2. For security-sensitive cases, deny the CSR and investigate node identity:
-
-   ```bash
-   kubectl certificate deny <csr-name>
-   ```
-
-3. Inspect controller logs for policy failures or RBAC errors:
-
-   ```bash
+   # Check approver logs
    kubectl logs -n kubelet-csr-approver deploy/kubelet-csr-approver
-   ```
 
-4. Rotate Talos bootstrap tokens if repeated unknown CSRs appear.
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization kubelet-csr-approver -n flux-system
-   flux suspend helmrelease kubelet-csr-approver -n kubelet-csr-approver
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization kubelet-csr-approver -n flux-system
-   flux resume helmrelease kubelet-csr-approver -n kubelet-csr-approver
-   ```
-
-4. Consider scaling the deployment to zero as a last resort:
-
-   ```bash
-   kubectl -n kubelet-csr-approver scale deploy/kubelet-csr-approver --replicas=0
+   # Check approver events
+   kubectl get events -n kubelet-csr-approver
    ```
 
 ### Validation
 
-- `kubectl get csr` shows new requests transitioning to `Approved,Issued` within seconds of submission.
-- `kubectl get nodes` reports joining nodes as `Ready` with current CSR issuance timestamps.
-- `flux get helmrelease kubelet-csr-approver -n kubelet-csr-approver` reports `Ready=True` with no pending upgrades.
-- Audit logs confirm the controller approved CSRs instead of manual administrators.
+Run the following commands to validate the procedures:
 
-### Troubleshooting Guidance
+```bash
+# Validate CSR monitoring
+kubectl get csr
 
-- If CSRs remain pending, inspect controller logs for policy violations and verify RBAC:
+# Expected: CSRs listed with status
 
-  ```bash
-  kubectl auth can-i approve certificatesigningrequests.nodeclient --as system:serviceaccount:kubelet-csr-approver:kubelet-csr-approver
-  ```
+# Validate certificate rotation monitoring
+kubectl get certificates -A -o wide
 
-- For repeated denials, ensure Talos node configurations present expected SANs and group memberships.
-- When the Helm release fails to deploy, check rendered manifests:
+# Expected: Certificates listed with expiration dates
 
-  ```bash
-  flux diff hr kubelet-csr-approver --namespace kubelet-csr-approver
-  kubeconform -strict -summary ./cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app
-  ```
+# Validate CSR approver management
+kubectl logs -n kubelet-csr-approver deploy/kubelet-csr-approver
 
-- If the deployment pod crashes, capture pod logs and describe the pod:
+# Expected: Logs showing approval activity
+```
 
-  ```bash
-  kubectl -n kubelet-csr-approver get pods
-  kubectl -n kubelet-csr-approver describe pod <pod-name>
-  ```
+### Decision Trees
 
-- For Talos nodes failing to request certificates, consult `talosctl -n <node> logs kubelet` for client-side errors.
+```yaml
+# Kubelet CSR approver decision tree
+start: "csr_approver_health_check"
+nodes:
+  csr_approver_health_check:
+    question: "Is CSR approver healthy?"
+    command: "kubectl get pods -n kubelet-csr-approver --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "csr_approver_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n kubelet-csr-approver | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      rbac_permission: "RBAC permission problem"
+      certificate_authority: "Certificate authority issue"
+      node_connectivity: "Node connectivity problem"
+      resource_constraint: "Resource limitation"
+  rbac_permission:
+    action: "Check RBAC configuration: kubectl get clusterroles | grep csr"
+    next: "apply_fix"
+  certificate_authority:
+    action: "Verify certificate authority configuration"
+    next: "apply_fix"
+  node_connectivity:
+    action: "Investigate node-to-api-server connectivity"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n kubelet-csr-approver --no-headers | grep 'Running'"
+    yes: "csr_approver_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  csr_approver_healthy:
+    action: "CSR approver verified healthy"
+    next: "end"
+end: "end"
+```
 
-## Validation and Testing
+### Cross-Service Dependencies
 
-<!-- markdownlint-disable MD013 -->
+```yaml
+# Kubelet CSR approver cross-service dependencies
+service_dependencies:
+  kubelet-csr-approver:
+    depends_on:
+      - cert-manager/cert-manager
+    depended_by:
+      - All Kubernetes nodes
+      - All workloads requiring node certificates
+      - All components using kubelet TLS
+    critical_path: true
+    health_check_command: "kubectl get pods -n kubelet-csr-approver --no-headers | grep 'Running'"
+```
 
-| Step                                                                  | Purpose                                                                                          |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                                       | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                                   | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr kubelet-csr-approver --namespace kubelet-csr-approver`  | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n kubelet-csr-approver get events --sort-by=.lastTimestamp` | Confirms the controller emits approval events after rollout.                                     |
-| `kubectl get nodes`                                                   | Validates that approved CSRs translate into Ready nodes.                                         |
+## Troubleshooting
 
-<!-- markdownlint-enable MD013 -->
+### Common Issues
 
-## References and Cross-links
+1. **CSR approval failures**:
 
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
-- Upstream kubelet-csr-approver documentation: <https://github.com/postfinance/kubelet-csr-approver>
-- Kubernetes certificate signing requests reference: <https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/>
+   - **Symptom**: CSRs stuck in Pending state
+   - **Diagnosis**: Check RBAC permissions and approver logs
+   - **Resolution**: Verify RBAC roles and approver configuration
+
+2. **Certificate authority connectivity issues**:
+
+   - **Symptom**: Certificate signing failures
+   - **Diagnosis**: Check CA connectivity and configuration
+   - **Resolution**: Verify certificate authority endpoints and credentials
+
+3. **Node certificate rotation problems**:
+   - **Symptom**: Node communication failures
+   - **Diagnosis**: Check node certificate validity and rotation
+   - **Resolution**: Verify certificate rotation process and node connectivity
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update kubelet CSR approver
+helm repo update
+helm upgrade kubelet-csr-approver kubelet-csr-approver/kubelet-csr-approver -n kubelet-csr-approver -f values.yaml
+```
+
+### CSR Management
+
+```bash
+# Check pending CSRs
+kubectl get csr
+
+# Approve pending CSRs
+kubectl certificate approve <csr-name>
+```
+
+### MCP Integration
+
+- **Library ID**: `kubelet-csr-approver`
+- **Version**: `v1.2.0`
+- **Usage**: Automated kubelet certificate signing request approval
+- **Citation**: Use `resolve-library-id` for CSR approver configuration and troubleshooting
+
+## References
+
+- [Kubernetes CSR Documentation](https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/)
+- [Kubelet CSR Approver GitHub](https://github.com/postfinance/kubelet-csr-approver)
+- [Kubernetes Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)

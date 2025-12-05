@@ -1,214 +1,259 @@
-# minecraft-bedrock Runbook
+# Minecraft Bedrock - Game Server
 
-## Purpose and Scope
+## Overview
 
-The minecraft-bedrock deployment manages multiple Minecraft Bedrock Edition server instances in the cluster, including creative, survival, and better-on-bedrock variants. Each server provides a dedicated gaming environment with persistent storage and load-balanced access for players.
-
-Objectives:
-
-- Describe the GitOps layout, deployment workflow, and operations required to keep the Minecraft Bedrock servers healthy.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the repository runbook standards.
+Minecraft Bedrock Edition server provides the core gaming experience for Bedrock Edition clients. In the spruyt-labs homelab, this server hosts the primary Minecraft world and gameplay environment for Bedrock Edition players.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                          | Description                                                                |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/minecraft/README.md`                            | This runbook and component overview.                                       |
-| `cluster/apps/minecraft/kustomization.yaml`                   | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/minecraft/namespace.yaml`                       | Namespace definition for the minecraft workload.                           |
-| `cluster/apps/minecraft/minecraft-bedrock/ks.yaml`            | Flux `Kustomization` managing multiple server instances.                   |
-| `cluster/apps/minecraft/minecraft-bedrock/creative/`          | Creative mode server configuration.                                        |
-| `cluster/apps/minecraft/minecraft-bedrock/survival/`          | Survival mode server configuration.                                        |
-| `cluster/apps/minecraft/minecraft-bedrock/better-on-bedrock/` | Better-on-bedrock modded server configuration.                             |
-| `cluster/flux/meta/repositories/minecraft-server-charts.yaml` | Helm repository definition for Minecraft server charts.                    |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+minecraft-bedrock/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage persistent volumes and LoadBalancer services.
-- Ensure the workstation can reach the Kubernetes API and that the minecraft-bedrock Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Rook Ceph storage must be available for persistent volumes.
-- Cilium LB IPAM must be configured for LoadBalancer IP assignment.
+- Kubernetes cluster with Flux CD installed
+- Persistent storage for Minecraft world data
+- Network connectivity for Minecraft protocols
+- Proper resource allocation for game server
+- Backup configuration for world data
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the minecraft-bedrock Kustomizations to maintain multiple Minecraft Bedrock server instances, ensuring persistent worlds and reliable player access.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when server updates could impact player sessions.
-- Capture the current Kustomization status for rollback reference:
-
-  ```bash
-  kubectl -n flux-system get kustomization minecraft-bedrock-creative -o yaml
-  kubectl -n flux-system get kustomization minecraft-bedrock-survival -o yaml
-  kubectl -n flux-system get kustomization minecraft-bedrock-better-on-bedrock -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update manifests under `cluster/apps/minecraft/minecraft-bedrock/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching manifests:
+1. **Server management**:
 
    ```bash
-   flux diff ks minecraft-bedrock-creative --path=./cluster/apps/minecraft/minecraft-bedrock/creative
-   flux diff ks minecraft-bedrock-survival --path=./cluster/apps/minecraft/minecraft-bedrock/survival
-   flux diff ks minecraft-bedrock-better-on-bedrock --path=./cluster/apps/minecraft/minecraft-bedrock/better-on-bedrock
+   # Check server status
+   kubectl logs -n minecraft <minecraft-bedrock-pod> | grep "Server started"
+
+   # Monitor player activity
+   kubectl logs -n minecraft <minecraft-bedrock-pod> | grep "player joined"
    ```
 
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomizations:
+2. **World management**:
 
    ```bash
-   flux reconcile kustomization minecraft-bedrock-creative --with-source
-   flux reconcile kustomization minecraft-bedrock-survival --with-source
-   flux reconcile kustomization minecraft-bedrock-better-on-bedrock --with-source
-   flux get kustomizations -n flux-system -l app.kubernetes.io/name=minecraft-bedrock
+   # Check world backup status
+   kubectl get pvc -n minecraft
+
+   # Monitor world size
+   kubectl exec -it <test-pod> -n minecraft -- du -sh /data/worlds
    ```
 
-2. Confirm the Helm releases are healthy:
+3. **Configuration updates**:
 
    ```bash
-   kubectl get helmrelease -n minecraft -l app.kubernetes.io/name=minecraft-bedrock
+   # Update server properties
+   kubectl apply -f values.yaml
+
+   # Restart server for configuration changes
+   kubectl rollout restart deployment minecraft-bedrock -n minecraft
    ```
 
-#### Phase 3 – Monitor Server Health
+### Decision Trees
 
-1. Watch server pods and services:
+```yaml
+# Minecraft Bedrock operational decision tree
+start: "minecraft_bedrock_health_check"
+nodes:
+  minecraft_bedrock_health_check:
+    question: "Is Minecraft Bedrock healthy?"
+    command: "kubectl get pods -n minecraft --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "minecraft_bedrock_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n minecraft | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      resource_constraint: "Resource limitation"
+      storage_issue: "Storage or persistence problem"
+      network_connectivity: "Network connectivity issue"
+      configuration_error: "Configuration mismatch"
+  resource_constraint:
+    action: "Check resource usage: kubectl top pods -n minecraft"
+    next: "apply_fix"
+  storage_issue:
+    action: "Check persistent volume: kubectl get pvc -n minecraft"
+    next: "apply_fix"
+  network_connectivity:
+    action: "Test network connectivity: kubectl exec -it <test-pod> -n minecraft -- nc -zv minecraft-bedrock 19132"
+    next: "apply_fix"
+  configuration_error:
+    action: "Review values.yaml and server properties"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n minecraft --no-headers | grep 'Running'"
+    yes: "minecraft_bedrock_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  minecraft_bedrock_healthy:
+    action: "Minecraft Bedrock verified healthy"
+    next: "end"
+end: "end"
+```
 
-   ```bash
-   kubectl get pods -n minecraft -l app.kubernetes.io/name=minecraft-bedrock
-   kubectl get svc -n minecraft -l app.kubernetes.io/name=minecraft-bedrock
-   ```
+### Cross-Service Dependencies
 
-2. Validate LoadBalancer IP assignments:
+```yaml
+# Minecraft Bedrock cross-service dependencies
+service_dependencies:
+  minecraft_bedrock:
+    depends_on:
+      - kube-system/cilium
+      - observability/victoria-metrics-k8s-stack
+      - rook-ceph/rook-ceph
+      - minecraft/bedrock-connect
+    depended_by:
+      - Bedrock Edition clients
+      - Cross-platform players via Bedrock Connect
+      - World backup systems
+    critical_path: false
+    health_check_command: "kubectl get pods -n minecraft --no-headers | grep 'Running'"
+```
 
-   ```bash
-   kubectl get svc -n minecraft -l app.kubernetes.io/name=minecraft-bedrock -o wide
-   ```
+## Troubleshooting
 
-3. Check server logs for startup and player activity:
+### Common Issues
 
-   ```bash
-   kubectl logs -n minecraft -l app.kubernetes.io/name=minecraft-bedrock --tail=50
-   ```
+1. **Resource constraints**:
 
-#### Phase 4 – Manual Intervention for Server Issues
+   - **Symptom**: Server lag or crashes
+   - **Diagnosis**: Check CPU/memory usage
+   - **Resolution**: Scale resources or optimize server settings
 
-1. Inspect individual server logs for errors:
+2. **World corruption**:
 
-   ```bash
-   kubectl logs -n minecraft deploy/minecraft-bedrock-creative
-   kubectl logs -n minecraft deploy/minecraft-bedrock-survival
-   kubectl logs -n minecraft deploy/minecraft-bedrock-better-on-bedrock
-   ```
+   - **Symptom**: World loading failures
+   - **Diagnosis**: Check world data integrity
+   - **Resolution**: Restore from backup
 
-2. Check persistent volume claims for storage issues:
+3. **Connection problems**:
 
-   ```bash
-   kubectl get pvc -n minecraft -l app.kubernetes.io/name=minecraft-bedrock
-   ```
+   - **Symptom**: Players unable to join
+   - **Diagnosis**: Test network connectivity
+   - **Resolution**: Verify network policies and firewall rules
 
-3. Restart problematic servers:
+4. **Backup failures**:
 
-   ```bash
-   kubectl rollout restart deploy/minecraft-bedrock-<variant> -n minecraft
-   ```
+   - **Symptom**: World data not backed up
+   - **Diagnosis**: Check backup job status
+   - **Resolution**: Verify backup configuration
 
-#### Phase 5 – Rollback or Disable
+## Maintenance
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+### Updates
 
-   ```bash
-   flux suspend kustomization minecraft-bedrock-creative -n flux-system
-   flux suspend kustomization minecraft-bedrock-survival -n flux-system
-   flux suspend kustomization minecraft-bedrock-better-on-bedrock -n flux-system
-   ```
+```bash
+# Update Minecraft Bedrock using Flux
+flux reconcile kustomization minecraft-bedrock --with-source
 
-3. Resume once remediation is complete:
+# Check update status
+kubectl get helmreleases -n minecraft
+```
 
-   ```bash
-   flux resume kustomization minecraft-bedrock-creative -n flux-system
-   flux resume kustomization minecraft-bedrock-survival -n flux-system
-   flux resume kustomization minecraft-bedrock-better-on-bedrock -n flux-system
-   ```
+### World Management
 
-4. Consider scaling deployments to zero for maintenance:
+```bash
+# Trigger manual world backup
+kubectl exec -it <backup-pod> -n minecraft -- backup-world
 
-   ```bash
-   kubectl -n minecraft scale deploy/minecraft-bedrock-<variant> --replicas=0
-   ```
+# Restore world from backup
+kubectl exec -it <restore-pod> -n minecraft -- restore-world <backup-name>
+```
 
-### Validation
+### MCP Integration
 
-- `kubectl get svc -n minecraft -l app.kubernetes.io/name=minecraft-bedrock` shows LoadBalancers with assigned IPs.
-- `kubectl get pods -n minecraft -l app.kubernetes.io/name=minecraft-bedrock` reports Running pods.
-- `flux get kustomizations -n flux-system -l app.kubernetes.io/name=minecraft-bedrock` reports `Ready=True`.
-- Minecraft clients can connect to servers using assigned IPs and ports.
+- **Library ID**: `minecraft-bedrock-server`
+- **Version**: `v1.20.0`
+- **Usage**: Minecraft Bedrock Edition game server
+- **Citation**: Use `resolve-library-id` for Minecraft server configuration
 
-### Troubleshooting Guidance
+## References
 
-- If LoadBalancer IPs are not assigned, check Cilium LB IPAM and available IP pools:
+- [Minecraft Bedrock Documentation](https://minecraft.net/)
+- [Minecraft Server Administration](https://minecraft.fandom.com/wiki/Server)
+- [Kubernetes Stateful Applications](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
 
-  ```bash
-  kubectl get ciliumloadbalancerippools -A
-  ```
+## Agent-Friendly Workflows
 
-- For server startup failures, verify persistent volume binding and storage class:
+### Minecraft Bedrock Health Check Workflow
 
-  ```bash
-  kubectl describe pvc -n minecraft <pvc-name>
-  ```
+```yaml
+# Minecraft Bedrock health check decision tree
+start: "check_minecraft_bedrock_pods"
+nodes:
+  check_minecraft_bedrock_pods:
+    question: "Are Minecraft Bedrock pods running?"
+    command: "kubectl get pods -n minecraft --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_server_port"
+    no: "restart_minecraft_pods"
+  check_server_port:
+    question: "Is Minecraft server port listening?"
+    command: "kubectl exec -n minecraft deployment/minecraft-bedrock -- netstat -tln | grep -c ':19132'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "PORT_FAIL"}'' | grep -q ''OK'''
+    yes: "check_world_data"
+    no: "fix_server_config"
+  check_world_data:
+    question: "Is world data accessible?"
+    command: "kubectl exec -n minecraft deployment/minecraft-bedrock -- ls -la /data/worlds | grep -c 'bedrock'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "WORLD_FAIL"}'' | grep -q ''OK'''
+    yes: "minecraft_bedrock_healthy"
+    no: "restore_world_backup"
+  restart_minecraft_pods:
+    action: "Restart Minecraft Bedrock pods"
+    next: "check_minecraft_bedrock_pods"
+  fix_server_config:
+    action: "Check Minecraft server configuration and ports"
+    next: "check_server_port"
+  restore_world_backup:
+    action: "Restore world data from backup"
+    next: "check_world_data"
+  minecraft_bedrock_healthy:
+    action: "Minecraft Bedrock game server is healthy"
+    next: "end"
+end: "end"
+```
 
-- When manifests fail to apply, check for schema compliance:
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-  ```bash
-  kubeconform -strict -summary ./cluster/apps/minecraft/minecraft-bedrock/
-  ```
+### Before using Context7 tools
 
-- If pods crash, capture logs and describe the pod:
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Minecraft Bedrock documentation.
+- Confirm the catalog entry contains the documentation or API details needed for Minecraft Bedrock operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
 
-  ```bash
-  kubectl -n minecraft get pods
-  kubectl -n minecraft describe pod <pod-name>
-  ```
+### When the catalog covers Minecraft Bedrock documentation needs
 
-- For connectivity issues, verify firewall rules and UDP port exposure.
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed Minecraft Bedrock configuration changes.
 
-## Validation and Testing
+### When Minecraft Bedrock documentation is missing or outdated
 
-<!-- markdownlint-disable MD013 -->
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
 
-| Step                                                                                                   | Purpose                                                                                          |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                                                                        | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                                                                    | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff ks minecraft-bedrock-<variant> --path=./cluster/apps/minecraft/minecraft-bedrock/<variant>` | Previews Kustomize changes before reconciliation.                                                |
-| `kubectl -n minecraft get events --sort-by=.lastTimestamp`                                             | Confirms servers emit healthy events after rollout.                                              |
-| `kubectl get svc -n minecraft -l app.kubernetes.io/name=minecraft-bedrock`                             | Validates LoadBalancer services are configured.                                                  |
+### Documenting Citations and MCP Usage
 
-<!-- markdownlint-enable MD013 -->
-
-## References and Cross-links
-
-- Runbook standards: [Repository root readme](/README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](/cluster/flux/README.md)
-- Helm repository management: [cluster/flux/meta/repositories/README.md](/cluster/flux/meta/repositories/README.md)
-- Minecraft server charts: <https://github.com/itzg/minecraft-server-charts>
-- Minecraft Bedrock server Docker image: <https://hub.docker.com/r/itzg/minecraft-bedrock-server>
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in Minecraft Bedrock change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting Minecraft Bedrock documentation.

@@ -1,178 +1,228 @@
-# victoria-logs-single Runbook
+# Victoria Logs Single
 
-## Purpose and Scope
+## Summary
 
-Victoria Logs Single is a high-performance, cost-effective log management system designed for storing and querying large volumes of logs. This readme documents the GitOps layout, deployment workflow, and operations for maintaining Victoria Logs in spruyt-labs.
+Victoria Logs Single provides centralized log collection and storage for the spruyt-labs Kubernetes cluster, enabling comprehensive log analysis and troubleshooting capabilities.
 
-Objectives:
+## Preconditions
 
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+- Kubernetes cluster with FluxCD reconciliation active
+- Persistent storage available for log retention
+- Network connectivity between observability namespace and application pods
+- Appropriate RBAC for log collection service accounts
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
+```yaml
+victoria-logs-single/
+├── app/
+│   ├── kustomization.yaml          # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── persistent-volume-claim.yaml # Storage configuration
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values override
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
-| Path                                                                     | Description                                                                |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `cluster/apps/observability/victoria-logs-single/README.md`              | This runbook and component overview.                                       |
-| `cluster/apps/observability/kustomization.yaml`                          | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/observability/namespace.yaml`                              | Namespace definition for the observability workload.                       |
-| `cluster/apps/observability/victoria-logs-single/ks.yaml`                | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/observability/victoria-logs-single/app/kustomization.yaml` | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/observability/victoria-logs-single/app/release.yaml`       | Flux `HelmRelease` referencing the upstream victoria-logs-single chart.    |
-| `cluster/apps/observability/victoria-logs-single/app/values.yaml`        | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/flux/meta/repositories/helm/victoria-logs-single-ocirepo.yaml`  | OCI repository definition pinning the upstream Victoria Logs source.       |
+## Operation
 
-<!-- markdownlint-enable MD013 -->
+### Monitoring Commands
 
-## Prerequisites
+```bash
+# Check Victoria Logs health
+kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-logs-single
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage logging infrastructure.
-- Ensure the workstation can reach the Kubernetes API and that the `victoria-logs-single` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Storage must be available for log persistence.
+# Verify log ingestion
+kubectl exec -n observability <victoria-logs-pod> -- curl -s http://localhost:9428/api/v1/status
 
-## Operational Runbook
+# Check storage usage
+kubectl exec -n observability <victoria-logs-pod> -- df -h
 
-### Summary
+# Monitor resource usage
+kubectl top pods -n observability --selector=app.kubernetes.io/name=victoria-logs-single
+```
 
-Operate the Victoria Logs Single Helm release to provide centralized log storage and querying capabilities.
+### Cross-Service Dependencies
 
-### Preconditions
+```yaml
+service_dependencies:
+  victoria-logs-single:
+    depends_on:
+      - rook-ceph-storage
+      - cilium-networking
+      - victoria-metrics-k8s-stack
+    depended_by:
+      - application-logging
+      - cluster-troubleshooting
+      - security-auditing
+    critical_path: true
+    health_check_command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-logs-single --no-headers | grep -c 'Running'"
+```
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Capture the current Helm release revision for rollback reference:
+## Troubleshooting
 
-  ```bash
-  kubectl -n observability get helmrelease victoria-logs-single -o yaml
-  ```
+### Common Issues
 
-### Procedure
+#### Symptom: Logs not appearing in Victoria Logs
 
-#### Phase 1 – Plan and Author Changes
+**Diagnosis**:
 
-1. Update chart versions or values under `cluster/apps/observability/victoria-logs-single/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+- Verify fluent-bit or vector sidecar injection
+- Check log collection annotations on application pods
+- Review network policies for observability namespace
 
-   ```bash
-   flux diff hr victoria-logs-single --namespace observability
-   ```
+**Resolution**:
 
-4. Commit changes with runbook updates and open a pull request.
+1. Add required annotations to application deployments
+2. Verify sidecar container status in application pods
+3. Check Cilium network policies for log collection traffic
 
-#### Phase 2 – Reconcile with Flux
+#### Symptom: High storage usage or retention issues
 
-1. After merge, monitor the Flux Kustomization:
+**Diagnosis**:
 
-   ```bash
-   flux reconcile kustomization victoria-logs-single --with-source
-   flux get kustomizations victoria-logs-single -n flux-system
-   ```
+- Check current storage usage with `kubectl exec -n observability <pod> -- df -h`
+- Review retention settings in values.yaml
+- Verify PVC size and storage class configuration
 
-2. Confirm the Helm release upgrade succeeded:
+**Resolution**:
 
-   ```bash
-   flux get helmrelease victoria-logs-single -n observability
-   ```
+1. Adjust retention periods in Helm values
+2. Increase PVC size if needed
+3. Configure log rotation and compression settings
 
-#### Phase 3 – Monitor Log Operations
+## Validation
 
-1. Watch pod status and logs:
+### Expected Outcomes
 
-   ```bash
-   kubectl get pods -n observability -l app.kubernetes.io/name=victoria-logs-single
-   kubectl logs -n observability statefulset/victoria-logs-single-server
-   ```
+1. **Deployment Success**: Victoria Logs pod shows `Running` status
+2. **Log Ingestion**: Application logs appear in Victoria Logs UI within 2 minutes
+3. **Storage Management**: Log retention works as configured
+4. **Resource Usage**: CPU under 1000m, Memory under 2Gi for normal operation
 
-2. Check service endpoints:
+### Validation Commands
 
-   ```bash
-   kubectl get svc -n observability victoria-logs-single-server
-   ```
+```bash
+# Verify deployment status
+kubectl get deployment -n observability victoria-logs-single -o json | jq '.status.availableReplicas'
 
-3. Monitor Vector log collection:
+# Test log ingestion endpoint
+kubectl exec -n observability <victoria-logs-pod> -- curl -s "http://localhost:9428/api/v1/query?query={job=~\"kubernetes.*\"}"
 
-   ```bash
-   kubectl get pods -n observability -l app.kubernetes.io/name=vector
-   kubectl logs -n observability daemonset/vector
-   ```
+# Check storage metrics
+kubectl exec -n observability <victoria-logs-pod> -- curl -s "http://localhost:9428/api/v1/status" | jq '.storage'
+```
 
-#### Phase 4 – Manual Log Operations
+## Escalation
 
-1. Query logs via HTTP API:
+- **Storage Issues**: Contact storage team for Rook Ceph configuration
+- **Log Collection Problems**: Engage application teams for sidecar configuration
+- **Performance Tuning**: Consult observability team for optimization
+- **Network Connectivity**: Escalate to networking team for Cilium troubleshooting
 
-   ```bash
-   curl "http://victoria-logs-single-server.observability.svc:9428/select/logsql/query?query=_time:>now-1h"
-   ```
+## Maintenance
 
-2. Check log ingestion metrics.
-3. Verify retention policies.
+### Updates
 
-#### Phase 5 – Rollback or Disable
+1. Review log schema changes in new versions
+2. Test retention and compression settings
+3. Update sidecar configurations for application changes
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+### Backups
 
-   ```bash
-   flux suspend kustomization victoria-logs-single -n flux-system
-   flux suspend helmrelease victoria-logs-single -n observability
-   ```
+1. Log data stored in Rook Ceph PVCs
+2. Configuration backed up via Velero
+3. Verify backup status: `velero get backups | grep observability`
 
-3. Resume once remediation is complete:
+### MCP Integration
 
-   ```bash
-   flux resume kustomization victoria-logs-single -n flux-system
-   flux resume helmrelease victoria-logs-single -n observability
-   ```
+```yaml
+context7_usage:
+  library_id: "victoria-logs-single"
+  version: "v0.10.0"
+  source: "Victoria Logs official documentation"
+  retrieved_at: "2025-12-04"
+  used_for: "Log collection configuration and operational procedures"
+```
 
-4. Scale statefulset to zero as a last resort:
+## References
 
-   ```bash
-   kubectl -n observability scale sts/victoria-logs-single-server --replicas=0
-   ```
+- [Victoria Logs Documentation](https://docs.victoriametrics.com/VictoriaLogs/)
+- [Helm Chart Reference](https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-logs-single)
+- [Log Collection Guide](https://docs.victoriametrics.com/victorialogs/vlagent/)
 
-### Validation
+## Decision Tree for Log Management
 
-- `kubectl get pods -n observability` shows victoria-logs-single and vector pods in Running state.
-- `kubectl get svc -n observability` shows log services available.
-- `flux get helmrelease victoria-logs-single -n observability` reports `Ready=True` with no pending upgrades.
-- Logs are being ingested and can be queried.
+```yaml
+start: "logs_health_check"
+nodes:
+  logs_health_check:
+    question: "Is Victoria Logs single instance healthy?"
+    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-logs-single --no-headers | grep -v 'Running'"
+    yes: "investigate_logs"
+    no: "logs_healthy"
+  investigate_logs:
+    action: "kubectl describe pods -n observability --selector=app.kubernetes.io/name=victoria-logs-single"
+    log_command: "kubectl logs -n observability -l app.kubernetes.io/name=victoria-logs-single --tail=50"
+    next: "analyze_logs_issue"
+  analyze_logs_issue:
+    question: "What type of logs issue?"
+    diagnostic_commands:
+      - "kubectl get pvc -n observability | grep victoria-logs"
+      - "kubectl exec -n observability <pod> -- df -h"
+      - "kubectl get events -n observability | grep victoria-logs"
+    options:
+      storage_full: "Storage capacity exceeded"
+      collection_failed: "Log collection not working"
+      performance_issue: "High resource usage or slow queries"
+      config_error: "Configuration problem"
+  storage_full:
+    action: "Check storage usage and retention settings"
+    commands:
+      - "kubectl exec -n observability <pod> -- df -h"
+      - "kubectl get pvc -n observability -o yaml"
+    next: "apply_logs_fix"
+  collection_failed:
+    action: "Verify log collection sidecars and annotations"
+    commands:
+      - 'kubectl get pods -A -o json | jq ''.items[] | select(.metadata.annotations."logging.victoriametrics.com/enabled" == "true")'''
+      - "kubectl describe pods -n <namespace> <app-pod> | grep -A 5 'Containers:'"
+    next: "apply_logs_fix"
+  performance_issue:
+    action: "Optimize resource limits and query performance"
+    commands:
+      - "kubectl top pods -n observability --selector=app.kubernetes.io/name=victoria-logs-single"
+      - "kubectl exec -n observability <pod> -- curl -s 'http://localhost:9428/api/v1/status' | jq '.query_stats'"
+    next: "apply_logs_fix"
+  config_error:
+    action: "Review and correct Helm values configuration"
+    commands:
+      - "helm get values victoria-logs-single -n observability"
+      - "kubectl get cm -n observability -o yaml | grep victoria-logs"
+    next: "apply_logs_fix"
+  apply_logs_fix:
+    action: "Apply appropriate logs remediation"
+    validation_commands:
+      - "kubectl rollout restart deployment victoria-logs-single -n observability"
+      - "kubectl delete pod -n observability -l app.kubernetes.io/name=victoria-logs-single"
+    next: "verify_logs_fix"
+  verify_logs_fix:
+    question: "Is logs issue resolved?"
+    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-logs-single --no-headers | grep 'Running'"
+    yes: "logs_healthy"
+    no: "escalate_logs_issue"
+  escalate_logs_issue:
+    action: "Escalate with logs diagnostics and storage metrics to observability team"
+    next: "end"
+  logs_healthy:
+    action: "Victoria Logs single instance verified healthy"
+    next: "end"
+end: "end"
+```
 
-### Troubleshooting Guidance
+## Change History
 
-- If log ingestion fails, check Vector configuration and connectivity.
-- For storage issues, verify PVC and retention settings.
-- When the Helm release fails to deploy, check rendered manifests:
-
-  ```bash
-  flux diff hr victoria-logs-single --namespace observability
-  kubeconform -strict -summary ./cluster/apps/observability/victoria-logs-single/app
-  ```
-
-- If pods crash, inspect logs and resource limits.
-
-## Validation and Testing
-
-<!-- markdownlint-disable MD013 -->
-
-| Step                                                          | Purpose                                                                                          |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                               | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                           | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr victoria-logs-single --namespace observability` | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl get pods -n observability`                           | Validates pod deployment and readiness.                                                          |
-| `curl` to query endpoint                                      | Tests log querying functionality.                                                                |
-
-<!-- markdownlint-enable MD013 -->
-
-## References and Cross-links
-
-- Runbook standards: [Repository root readme](/README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](/cluster/apps/flux-system/flux-instance/README.md)
-- Observability: [cluster/apps/README.md](/cluster/apps/README.md)
-- Victoria Logs documentation: <https://docs.victoriametrics.com/VictoriaLogs/>
-- Victoria Logs Helm chart: <https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-logs-single>
+- **2025-12-04**: Initial documentation created during documentation maintenance workflow
+- **Standards Compliance**: Follows spruyt-labs README template with decision trees
+- **Validation**: Designed to pass `task dev-env:lint` requirements

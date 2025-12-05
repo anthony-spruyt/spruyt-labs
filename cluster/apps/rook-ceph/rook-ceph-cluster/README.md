@@ -1,6 +1,6 @@
 # rook-ceph-cluster Runbook
 
-## Purpose and Scope
+## Overview
 
 Rook Ceph Cluster deploys and manages a Ceph storage cluster using Rook, providing distributed block storage, shared filesystem storage, and object storage for Kubernetes workloads. This readme documents the GitOps layout, deployment workflow, and operations for maintaining the Ceph cluster in spruyt-labs.
 
@@ -36,7 +36,7 @@ Objectives:
 - Ensure the workstation can reach the Kubernetes API and that the `rook-ceph-cluster` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
 - Storage devices must be available and properly configured for Ceph OSDs.
 
-## Operational Runbook
+## Operation
 
 ### Summary
 
@@ -181,10 +181,10 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 
 <!-- markdownlint-enable MD013 -->
 
-## References and Cross-links
+## References
 
-- Runbook standards: [Repository root readme](/README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](/cluster/apps/flux-system/flux-instance/README.md)
+- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
+- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
 - Storage operations: [cluster/apps/README.md](/cluster/apps/README.md)
 - Rook Ceph documentation: <https://rook.io/docs/rook/latest/>
 - Rook Ceph cluster Helm chart: <https://github.com/rook/rook/tree/master/deploy/charts/rook-ceph-cluster>

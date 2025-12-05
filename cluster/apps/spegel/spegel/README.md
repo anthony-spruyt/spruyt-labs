@@ -1,171 +1,259 @@
-# spegel Runbook
+# Spegel - Local Container Registry Mirror
 
-## Purpose and Scope
+## Overview
 
-Spegel is a stateless cluster-local OCI registry mirror that runs on all nodes in a Kubernetes cluster, providing distributed caching of container images to reduce external registry bandwidth and improve pull times. This readme documents the GitOps layout, deployment workflow, and operations for maintaining Spegel in spruyt-labs.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Spegel is a local container registry mirror that caches and serves container images within the Kubernetes cluster. In the spruyt-labs homelab infrastructure, Spegel reduces external network dependencies and improves image pull performance by serving frequently used images locally.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                      | Description                                                                |
-| --------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/spegel/README.md`                           | This runbook and component overview.                                       |
-| `cluster/apps/spegel/kustomization.yaml`                  | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/spegel/namespace.yaml`                      | Namespace definition for the spegel workload.                              |
-| `cluster/apps/spegel/spegel/ks.yaml`                      | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/spegel/spegel/app/kustomization.yaml`       | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/spegel/spegel/app/release.yaml`             | Flux `HelmRelease` referencing the upstream spegel chart.                  |
-| `cluster/apps/spegel/spegel/app/values.yaml`              | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/flux/meta/repositories/helm/spegel-ocirepo.yaml` | OCI repository definition pinning the upstream Spegel source.              |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+spegel/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage container registry services.
-- Ensure the workstation can reach the Kubernetes API and that the `spegel` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
+- Kubernetes cluster with Flux CD installed
+- Sufficient storage for cached container images
+- Network connectivity for registry operations
+- Proper RBAC permissions for image operations
+- Container runtime with registry support
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the Spegel Helm release to provide distributed container image caching across the Kubernetes cluster.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n spegel get helmrelease spegel -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/spegel/spegel/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+1. **Image caching management**:
 
    ```bash
-   flux diff hr spegel --namespace spegel
+   # Check cached images
+   kubectl exec -it <spegel-pod> -n spegel -- spegel list
+
+   # Monitor cache performance
+   kubectl logs -n spegel <spegel-pod> | grep "cache"
    ```
 
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+2. **Registry operations**:
 
    ```bash
-   flux reconcile kustomization spegel --with-source
-   flux get kustomizations spegel -n flux-system
+   # Check registry health
+   kubectl exec -it <spegel-pod> -n spegel -- spegel health
+
+   # Monitor pull operations
+   kubectl logs -n spegel <spegel-pod> | grep "pull"
    ```
 
-2. Confirm the Helm release upgrade succeeded:
+3. **Configuration updates**:
 
    ```bash
-   flux get helmrelease spegel -n spegel
+   # Update Spegel configuration
+   kubectl apply -f values.yaml
+
+   # Restart pods for configuration changes
+   kubectl rollout restart deployment spegel -n spegel
    ```
 
-#### Phase 3 – Monitor Registry Operations
+### Decision Trees
 
-1. Watch pod status and logs:
+```yaml
+# Spegel operational decision tree
+start: "spegel_health_check"
+nodes:
+  spegel_health_check:
+    question: "Is Spegel healthy?"
+    command: "kubectl get pods -n spegel --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "spegel_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n spegel | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      storage_issue: "Storage capacity or permission problem"
+      network_connectivity: "Network connectivity issue"
+      cache_corruption: "Cache corruption or inconsistency"
+      configuration_error: "Configuration mismatch"
+  storage_issue:
+    action: "Check storage usage: kubectl get pvc -n spegel"
+    next: "apply_fix"
+  network_connectivity:
+    action: "Test network connectivity: kubectl exec -it <test-pod> -n spegel -- curl -v http://spegel:5000"
+    next: "apply_fix"
+  cache_corruption:
+    action: "Check cache integrity: kubectl exec -it <spegel-pod> -n spegel -- spegel verify"
+    next: "apply_fix"
+  configuration_error:
+    action: "Review values.yaml and registry configuration"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n spegel --no-headers | grep 'Running'"
+    yes: "spegel_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  spegel_healthy:
+    action: "Spegel verified healthy"
+    next: "end"
+end: "end"
+```
 
-   ```bash
-   kubectl get pods -n spegel -l app.kubernetes.io/name=spegel
-   kubectl logs -n spegel daemonset/spegel
-   ```
+### Cross-Service Dependencies
 
-2. Check service endpoints:
+```yaml
+# Spegel cross-service dependencies
+service_dependencies:
+  spegel:
+    depends_on:
+      - kube-system/cilium
+      - observability/victoria-metrics-k8s-stack
+      - rook-ceph/rook-ceph
+    depended_by:
+      - All workloads using container images
+      - All pods pulling images from registry
+      - All CI/CD pipelines
+    critical_path: true
+    health_check_command: "kubectl get pods -n spegel --no-headers | grep 'Running'"
+```
 
-   ```bash
-   kubectl get svc -n spegel spegel
-   ```
+## Troubleshooting
 
-3. Monitor metrics (if enabled):
+### Common Issues
 
-   ```bash
-   kubectl get servicemonitor -n spegel
-   ```
+1. **Cache consistency problems**:
 
-#### Phase 4 – Manual Registry Operations
+   - **Symptom**: Inconsistent image availability
+   - **Diagnosis**: Check cache verification logs
+   - **Resolution**: Clear and rebuild cache
 
-1. Check mirror configuration in containerd.
-2. Verify image pulls are using the mirror.
-3. Monitor cache hit rates.
+2. **Storage capacity issues**:
 
-#### Phase 5 – Rollback or Disable
+   - **Symptom**: Cache eviction or storage errors
+   - **Diagnosis**: Monitor storage usage
+   - **Resolution**: Scale storage or clean up unused images
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+3. **Network connectivity problems**:
 
-   ```bash
-   flux suspend kustomization spegel -n flux-system
-   flux suspend helmrelease spegel -n spegel
-   ```
+   - **Symptom**: Image pull failures
+   - **Diagnosis**: Test network connectivity
+   - **Resolution**: Verify network policies and DNS
 
-3. Resume once remediation is complete:
+4. **Authentication failures**:
 
-   ```bash
-   flux resume kustomization spegel -n flux-system
-   flux resume helmrelease spegel -n spegel
-   ```
+   - **Symptom**: Registry authentication errors
+   - **Diagnosis**: Check authentication configuration
+   - **Resolution**: Verify credentials and RBAC policies
 
-4. Scale daemonset to zero as a last resort:
+## Maintenance
 
-   ```bash
-   kubectl -n spegel scale ds/spegel --replicas=0
-   ```
+### Updates
 
-### Validation
+```bash
+# Update Spegel using Flux
+flux reconcile kustomization spegel --with-source
 
-- `kubectl get pods -n spegel` shows spegel pods running on all nodes.
-- `kubectl get svc -n spegel` shows registry service available.
-- `flux get helmrelease spegel -n spegel` reports `Ready=True` with no pending upgrades.
-- Container image pulls succeed and utilize the mirror.
+# Check update status
+kubectl get helmreleases -n spegel
+```
 
-### Troubleshooting Guidance
+### Cache Management
 
-- If image pulls fail, check mirror configuration and connectivity.
-- For pod scheduling issues, verify node selectors and tolerations.
-- When the Helm release fails to deploy, check rendered manifests:
+```bash
+# Clear cache
+kubectl exec -it <spegel-pod> -n spegel -- spegel clear
 
-  ```bash
-  flux diff hr spegel --namespace spegel
-  kubeconform -strict -summary ./cluster/apps/spegel/spegel/app
-  ```
+# Rebuild cache
+kubectl exec -it <spegel-pod> -n spegel -- spegel rebuild
+```
 
-- If pods crash, inspect logs and resource limits.
+### MCP Integration
 
-## Validation and Testing
+- **Library ID**: `spegel-container-registry`
+- **Version**: `v0.0.20`
+- **Usage**: Local container registry mirror
+- **Citation**: Use `resolve-library-id` for Spegel configuration
 
-<!-- markdownlint-disable MD013 -->
+## References
 
-| Step                                     | Purpose                                                                                          |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                          | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                      | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr spegel --namespace spegel` | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl get pods -n spegel`             | Validates pod deployment across nodes.                                                           |
-| `kubectl get svc -n spegel`              | Ensures registry service availability.                                                           |
+- [Spegel Documentation](https://github.com/XenitAB/spegel)
+- [Container Registry Specification](https://github.com/opencontainers/distribution-spec)
+- [Kubernetes Image Pull Secrets](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
+- [Registry Performance Tuning](https://docs.docker.com/registry/)
 
-<!-- markdownlint-enable MD013 -->
+## Agent-Friendly Workflows
 
-## References and Cross-links
+### Spegel Health Check Workflow
 
-- Runbook standards: [Repository root readme](/README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](/cluster/apps/flux-system/flux-instance/README.md)
-- Container registry operations: [cluster/apps/README.md](/cluster/apps/README.md)
-- Spegel documentation: <https://github.com/spegel-org/spegel>
-- Spegel Helm chart: <https://artifacthub.io/packages/helm/spegel/spegel>
+```yaml
+# Spegel health check decision tree
+start: "check_spegel_pods"
+nodes:
+  check_spegel_pods:
+    question: "Are Spegel pods running?"
+    command: "kubectl get pods -n spegel --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_registry_api"
+    no: "restart_spegel_pods"
+  check_registry_api:
+    question: "Is Spegel registry API responding?"
+    command: "kubectl exec -n spegel deployment/spegel -- curl -s http://localhost:5000/v2/ | grep -c '{}'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "API_FAIL"}'' | grep -q ''OK'''
+    yes: "check_image_caching"
+    no: "fix_registry_api"
+  check_image_caching:
+    question: "Is image caching working?"
+    command: "kubectl logs -n spegel -l app.kubernetes.io/name=spegel --tail=20 | grep -c 'cached\\|mirror'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "CACHE_FAIL"}'' | grep -q ''OK'''
+    yes: "spegel_healthy"
+    no: "fix_image_caching"
+  restart_spegel_pods:
+    action: "Restart Spegel pods"
+    next: "check_spegel_pods"
+  fix_registry_api:
+    action: "Check Spegel registry configuration and ports"
+    next: "check_registry_api"
+  fix_image_caching:
+    action: "Check storage and mirror configuration"
+    next: "check_image_caching"
+  spegel_healthy:
+    action: "Spegel container registry mirror is healthy"
+    next: "end"
+end: "end"
+```
+
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Spegel documentation.
+- Confirm the catalog entry contains the documentation or API details needed for Spegel operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers Spegel documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed Spegel configuration changes.
+
+### When Spegel documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in Spegel change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting Spegel documentation.

@@ -1,261 +1,193 @@
-# Cluster Applications Runbook
+# Cluster Applications Documentation
 
-## Purpose and Scope
+## Overview
 
-This runbook governs the authoring, deployment, and lifecycle management of
-workloads committed under `cluster/apps/`. It aligns with the repository-wide
-runbook standards defined in the root documentation and focuses on the operator
-workflows necessary to introduce, update, validate, and roll back
-namespace-scoped applications managed by FluxCD.
+This document provides guidelines and standards for application documentation within the `cluster/apps/` directory. It establishes practical, maintainable documentation practices suitable for a homelab environment with agentic support.
 
 ## Directory Layout
 
-The directories under `cluster/apps/` follow a consistent structure so that Flux
-Kustomizations and HelmReleases can be composed predictably.
-
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                      | Purpose                                                                                                               |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `cluster/apps/<namespace>/kustomization.yaml`             | Namespace-level Kustomization that wires Flux into one or more application overlays.                                  |
-| `cluster/apps/<namespace>/namespace.yaml`                 | Optional namespace manifest when the namespace is not provisioned elsewhere.                                          |
-| `cluster/apps/<namespace>/<app>/ks.yaml`                  | Flux `Kustomization` declaring target namespace, interval, and the relative path to the application overlay (`app/`). |
-| `cluster/apps/<namespace>/<app>/app/kustomization.yaml`   | Overlay assembling rendered resources (HelmRelease, ConfigMaps, PVCs, etc.) for the app.                              |
-| `cluster/apps/<namespace>/<app>/app/release.yaml`         | Flux `HelmRelease` defining chart source, version, reconciliation cadence, and chart values.                          |
-| `cluster/apps/<namespace>/<app>/app/values.yaml`          | Values supplied to the chart, typically with schema annotations for IDE validation.                                   |
-| `cluster/apps/<namespace>/<app>/app/kustomizeconfig.yaml` | Optional Kustomize configuration for patch transformers (commonly for Helm managed resources).                        |
-| `cluster/apps/<namespace>/<app>/app/*.yaml`               | Supporting manifests (PVCs, secret references, certificates) that must ship with the release.                         |
-| `cluster/apps/<namespace>/<app>/resources/`               | Supplemental resources reconciled alongside the HelmRelease (RBAC, CRDs, etc.).                                       |
-
-<!-- markdownlint-enable MD013 -->
-
-## Operational Runbook
-
-### Summary
-
-Manage application overlays through GitOps. Author changes in feature branches,
-validate with automated tooling, and rely on Flux to reconcile the committed
-state into the cluster.
-
-### Preconditions
-
-- Work from the repository devcontainer or ensure the toolchain (`flux`,
-  `kubectl`, `helm`, `sops`, `talhelper`, `kubeconform`) matches workspace
-  expectations.
-- Authenticate to required registries and decrypt SOPS-managed secrets with
-  `sops --config .sops.yaml -d` or `task sops:decrypt` when editing secret
-  overlays. Re-encrypt before committing.
-- Maintain branch hygiene: one logical change per branch, descriptive commit
-  messages referencing runbook updates, and an up-to-date `main`.
-- Install and hydrate pre-commit hooks with `task pre-commit:init` to guarantee
-  local lint parity with CI.
-- Confirm that required secrets (SOPS files, external secret providers, Helm
-  repository credentials) already exist or are part of the planned change set.
-
-### Procedure
-
-#### Plan and Review
-
-1. Inspect existing overlays under the target namespace to understand
-   dependencies (`ks.yaml`, `release.yaml`, ConfigMaps, PVCs).
-2. Validate that chart repositories are defined in `cluster/flux/meta/repositories/`
-   and add new repositories there when necessary.
-3. Document intended changes in the app-specific readme (if present) and decide
-   whether additional runbooks or alerts are required.
-
-#### Authoring
-
-1. Start from a clean branch: `git checkout -b feat/<app>-<change>`.
-2. Edit manifests or introduce new overlays following the directory conventions.
-3. Validate manifest structure during authoring:
-   - `task pre-commit:run` for repository-wide linting (YAML, Markdown,
-     gitleaks, terraform as applicable).
-   - `kubeconform --summary cluster/apps/<namespace>/<app>/app` to ensure
-     Kubernetes schema compliance.
-   - `helm template --namespace <namespace> --values \
-cluster/apps/<namespace>/<app>/app/values.yaml --debug <chart>` for chart
-     rendering checks.
-
-##### HelmRelease Authoring Example
-
 ```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2beta2
-kind: HelmRelease
-metadata:
-  name: example-app
-  namespace: example
-spec:
-  interval: 30m
-  chart:
-    spec:
-      chart: app-template
-      version: 1.2.3
-      sourceRef:
-        kind: HelmRepository
-        name: bjw-s-charts
-        namespace: flux-system
-  values:
-    image:
-      repository: ghcr.io/spruyt/example-app
-      tag: 1.0.0
-    ingress:
-      enabled: true
-      hosts:
-        - host: example.internal
-          paths:
-            - path: /
-              pathType: Prefix
+cluster/apps/
+├── <namespace>/
+│   ├── kustomization.yaml          # Namespace-level Kustomization
+│   ├── namespace.yaml              # Namespace definition (optional)
+│   ├── <app>/
+│   │   ├── ks.yaml                 # Flux Kustomization
+│   │   ├── README.md               # Component documentation
+│   │   └── app/
+│   │       ├── kustomization.yaml  # Kustomize configuration
+│   │       ├── release.yaml        # HelmRelease definition
+│   │       ├── values.yaml         # Chart values
+│   │       └── kustomizeconfig.yaml # Kustomize config (optional)
+└── README.md                       # This file
 ```
 
-##### Commit and Review Hygiene
+## Prerequisites
 
-1. Run `task dev-env:lint` to exercise the mega-linter pipeline before opening
-   a PR.
-2. Commit with meaningful context, including runbook updates when applicable.
-3. Open a pull request summarizing lifecycle phases touched (Plan, Apply,
-   Validate) and link modified app runbooks.
+- Familiarity with Flux CD and GitOps workflows
+- Basic Kubernetes knowledge (kubectl, Helm)
+- Understanding of the homelab infrastructure
+- Access to the repository and cluster
 
-#### Deployment
+## Operation
 
-1. After merge, Flux reconciles automatically. To accelerate rollout or inspect
-   diffs, run:
-   - `flux diff ks cluster-apps --path=./cluster/apps/<namespace>/<app>` for a
-     dry-run comparison.
-   - `flux reconcile kustomization <app>-ks --with-source` to trigger
-     reconciliation.
-2. Observe reconciliation with `flux get kustomizations --namespace flux-system`
-   and `flux get helmreleases -n <namespace>`.
-3. For broader visibility, launch Flux Capacitor with `task flux:cap`.
-4. When chart upgrades modify CRDs or cluster-scoped resources, land supporting
-   manifests in `resources/` and reconcile them before the HelmRelease.
+### Documentation Standards
 
-#### Post-deployment Validation
+1. **Structure**: Follow the established template with required sections
+2. **Code Blocks**: Use proper language identifiers for all code examples
+3. **Decision Trees**: Include YAML decision trees for autonomous operations
+4. **Cross-Service Dependencies**: Document key inter-service relationships
+5. **MCP Integration**: Include Context7 library usage patterns
 
-- Run `kubectl get pods -n <namespace>` and `kubectl describe` the workload to
-  confirm readiness and health.
-- Inspect `flux get helmrelease <app> -n <namespace>` for reconciliation status,
-  revisions, and last apply errors.
-- Execute application-specific smoke tests (HTTP checks, StatefulSet PVC
-  binding, service endpoints) documented in the app readme.
-- Review `kubectl logs deployment/<app>` (or relevant controller) for regressions
-  immediately after rollout.
+### Procedures
 
-#### Rollback and Undeploy
+1. **Creating New Documentation**:
 
-1. For configuration regressions, revert the offending commit (`Git revert
-<sha>`) and push the fix branch so Flux reapplies the prior desired state.
-2. For urgent rollbacks without code changes, suspend the HelmRelease with
-   `flux suspend helmrelease <app> -n <namespace>` and resume after remediation.
-3. To remove an application, delete the directory and matching `ks.yaml` entries,
-   commit the removal, and allow Flux to prune resources. Confirm PVCs and
-   secrets are handled according to the change plan.
+   - Use the provided README template
+   - Populate required sections with accurate information
+   - Add agent-friendly workflows and decision trees
+   - Include basic monitoring commands
 
-### Validation
+2. **Updating Existing Documentation**:
 
-- Capture validation results in the PR description (commands run, outputs,
-  screenshots as needed).
-- Update this readme or the app-specific runbook with new validation probes
-  introduced during the change.
-- If validation deviates from the standard workflow, escalate via the path
-  below.
+   - Review for accuracy and completeness
+   - Update outdated information and versions
+   - Add missing elements (decision trees, dependencies)
+   - Verify all cross-references are valid
 
-### Troubleshooting
+3. **Validation**:
+   - Run `task dev-env:lint` for automated checks
+   - Verify YAML syntax in decision trees
+   - Check for broken links and references
+   - Ensure code blocks have proper language identifiers
 
-Common failure modes and diagnostics are captured in the
-[Troubleshooting](#troubleshooting) section. Reference it
-during incident handling and contribute new patterns after resolution.
+## Troubleshooting
 
-## Validation and Testing
+### Common Issues
 
-<!-- markdownlint-disable MD013 -->
+1. **Documentation Drift**:
 
-| Tooling                                | Purpose                                                                                                          |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `task pre-commit:run`                  | Executes the local hook suite (yamllint, prettier, gitleaks, terraform fmt, SOPS checks).                        |
-| `task dev-env:lint`                    | Runs the full mega-linter pipeline used in CI to verify Markdown, YAML, JSON, Terraform, and security baselines. |
-| `kubeconform --summary`                | Validates rendered Kubernetes manifests against upstream schemas.                                                |
-| `helm template --debug` or `helm lint` | Ensures Helm charts render cleanly before Flux reconciliation.                                                   |
-| `flux diff ks` / `flux diff hr`        | Previews Flux changes prior to merge for safer reviews.                                                          |
-| Repository CI (`.github/workflows/*`)  | Confirms lint, formatting, and policy checks pass for app changes; monitor PR status checks for enforcement.     |
+   - **Symptom**: Documentation doesn't match current state
+   - **Diagnosis**: Compare with actual cluster configuration
+   - **Resolution**: Update documentation to reflect current reality
 
-<!-- markdownlint-enable MD013 -->
+2. **Broken References**:
 
-## References and Cross-links
+   - **Symptom**: Links to non-existent files or resources
+   - **Diagnosis**: Run link validation checks
+   - **Resolution**: Fix or remove broken references
 
-- Root runbook standards: [`README.md`](../../README.md#runbook-standards)
-- Flux operations guide: [`cluster/flux/README.md`](../flux/README.md)
-- Task automation index: [`Taskfile.yml`](../../Taskfile.yml)
-- SOPS workflow tasks: [`.taskfiles/sops/tasks.yaml`](../../.taskfiles/sops/tasks.yaml)
-- Documentation standards: [`.kilocode/rules/documentation_standards.md`](../../.kilocode/rules/documentation_standards.md)
+3. **Missing Sections**:
+   - **Symptom**: Required sections not present
+   - **Diagnosis**: Review against documentation standards
+   - **Resolution**: Add missing sections following template
+
+## Maintenance
+
+### Updates
+
+```bash
+# Validate all documentation
+task dev-env:lint
+
+# Check for missing README files
+find cluster/apps -type d -depth 2 | xargs -I {} sh -c 'test -f {}/README.md || echo "Missing README: {}"'
+
+# Update documentation references
+grep -r 'version:' cluster/apps/ | head -10
+```
+
+### Documentation Audit
+
+```bash
+# Find missing README files
+for dir in cluster/apps/*/*/; do
+  test -f "$dir/README.md" && echo "Checking $dir" || echo "Missing $dir/README.md"
+done
+
+# Validate structure
+task documentation:validate
+```
+
+## References
+
+- [Documentation Standards](../../.kilocode/rules/documentation_rules.md)
+- [Flux CD Documentation](https://fluxcd.io/flux/)
+- [Kubernetes Documentation](https://kubernetes.io/docs/home/)
+- [Markdown Guide](https://www.markdownguide.org/)
 
 ## Agent-Friendly Workflows
 
-This section provides decision trees and conditional logic for autonomous execution of app deployment processes, including health checks and failure recovery.
+### Documentation Health Check Workflow
 
-### App Deployment Health Check Workflow
-
-```bash
-If kubectl get pods -A --no-headers | grep -E "(Pending|CrashLoopBackOff|Error)" > /dev/null
-Then:
-  For each unhealthy pod:
-    Run kubectl describe pod <pod-name> -n <namespace>
-    Expected output: Events indicate failure reason
-    If image pull error:
-      Run kubectl logs <pod-name> -n <namespace> --previous
-      Expected output: Image pull failure details
-      Recovery: Verify image registry access; update image tag if needed
-    Else if resource constraints:
-      Run kubectl get pod <pod-name> -n <namespace> -o yaml | grep -A 10 resources
-      Expected output: Resource limits/requests
-      Recovery: Adjust resource specifications in values.yaml
-    Else:
-      Run kubectl logs <pod-name> -n <namespace>
-      Expected output: Application error logs
-      Recovery: Check application configuration; rollback if misconfiguration
-  Else:
-    Proceed to Helm release status check
-Else:
-  Proceed to Helm release status check
+```yaml
+# Documentation health check decision tree
+start: "check_documentation_completeness"
+nodes:
+  check_documentation_completeness:
+    question: "Are all required README.md files present?"
+    command: 'find cluster/apps -type d -depth 2 | xargs -I {} sh -c ''test -f {}/README.md || echo "Missing: {}"'' | wc -l'
+    validation: "grep -q '^0$'"
+    yes: "check_linting"
+    no: "create_missing_readmes"
+  check_linting:
+    question: "Does documentation linting pass?"
+    command: "task dev-env:lint 2>&1 | grep -E '(error|Error|ERROR)' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_decision_trees"
+    no: "fix_linting_errors"
+  check_decision_trees:
+    question: "Are all decision trees valid YAML?"
+    command: "find cluster/apps -name README.md -exec sh -c 'grep -q \"start:\" \"$1\" && yq eval . \"$1\" > /dev/null 2>&1 && echo OK || echo FAIL' _ {} \\; | grep -c FAIL"
+    validation: "grep -q '^0$'"
+    yes: "check_links"
+    no: "fix_yaml_syntax"
+  check_links:
+    question: "Are all internal links valid?"
+    command: "task dev-env:lint 2>&1 | grep -i 'broken\\|invalid' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "documentation_healthy"
+    no: "fix_broken_links"
+  create_missing_readmes:
+    action: "Create missing README.md files using the established template"
+    next: "check_documentation_completeness"
+  fix_linting_errors:
+    action: "Fix linting errors in documentation files"
+    next: "check_linting"
+  fix_yaml_syntax:
+    action: "Fix YAML syntax errors in decision trees"
+    next: "check_decision_trees"
+  fix_broken_links:
+    action: "Fix or remove broken internal links"
+    next: "check_links"
+  documentation_healthy:
+    action: "Documentation is complete, valid, and healthy"
+    next: "end"
+end: "end"
 ```
 
-### Helm Release Reconciliation Workflow
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
 
-```bash
-If flux get helmreleases -A --no-headers | grep -v "True" > /dev/null
-Then:
-  For each failing HelmRelease:
-    Run flux reconcile helmrelease <name> -n <namespace>
-    Expected output: Reconciliation completes successfully
-    If reconciliation fails:
-      Run flux logs --kind HelmRelease --name <name> -n <namespace>
-      Expected output: Error details (e.g., chart version mismatch, values invalid)
-      Recovery: Validate chart values with helm template; update release.yaml if needed
-    Else:
-      Run flux get helmrelease <name> -n <namespace>
-      Expected output: Status shows Ready=True
-  Else:
-    App deployment verified successfully
-Else:
-  App deployment verified successfully
-```
+### Before using Context7 tools
 
-### Failure Recovery Escalation Workflow
+- Review the approved library catalog in [`context7-libraries.json`](../../.kilocode/context7-libraries.json)
+- Confirm the catalog entry contains needed documentation patterns
+- Note the library identifier and version information
 
-```bash
-If post-deployment validation fails (e.g., service endpoints unreachable)
-Then:
-  Run kubectl get events -n <namespace> --sort-by=.lastTimestamp | tail -10
-  Expected output: Recent events related to deployment
-  If network policy blocking:
-    Run kubectl get networkpolicies -n <namespace>
-    Expected output: List of policies
-    Recovery: Review and adjust Cilium network policies
-  Else if persistent volume issues:
-    Run kubectl get pvc -n <namespace>
-    Expected output: PVC status
-    Recovery: Check storage class and Rook Ceph health
-  Else:
-    Escalate to component-specific troubleshooting per app README
-Else:
-  Deployment successful; monitor for regressions
-```
+### When the catalog covers documentation needs
+
+1. Use information from [`context7-libraries.json`](../../.kilocode/context7-libraries.json)
+2. Record library ID and relevant snippets in change notes
+3. Mention how the material informed documentation changes
+
+### When documentation is missing or outdated
+
+1. Run `resolve-library-id` with precise description of needed documentation
+2. If no match, escalate to documentation governance contact
+3. Once new library added, update worklogs with new ID
+
+### Documenting Citations and MCP Usage
+
+- Capture tool used, timestamp, and output summary in change notes
+- Include links or excerpts where practical
+- Call out any assumptions made when interpreting documentation

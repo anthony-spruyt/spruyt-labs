@@ -1,6 +1,6 @@
 # Flux GitOps Runbook
 
-## Purpose and Scope
+## Overview
 
 This runbook governs the FluxCD control plane housed under `cluster/flux/`.
 It defines how platform operators bootstrap Flux onto a Talos-backed cluster,
@@ -26,7 +26,7 @@ complements the workload-focused procedures in `cluster/apps/`.
 
 <!-- markdownlint-enable MD013 -->
 
-## Operational Runbook
+## Operation
 
 ### Summary
 
@@ -288,7 +288,7 @@ and automation issues.
 3. Validate commit permissions for automation bots and reconcile the Git
    source after adjustments.
 
-## References and Cross-links
+## References
 
 - Runbook standards overview: [`README.md`](../../README.md#runbook-standards)
 - Application deployment guide: [`cluster/apps/README.md`](../apps/README.md)

@@ -1,179 +1,200 @@
-# flux-instance Runbook
+# Flux Instance - GitOps Continuous Delivery
 
-## Purpose and Scope
+## Overview
 
-The flux-instance deployment provides the Flux GitOps operator instance for managing the cluster's continuous deployment. This runbook documents the GitOps layout, deployment workflow, and operations required to keep the Flux instance healthy for the spruyt-labs environment.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Flux is a GitOps continuous delivery solution that automates the deployment and management of Kubernetes resources. It provides declarative infrastructure management by synchronizing the cluster state with the Git repository, enabling continuous delivery and drift detection.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                              | Description                                                                |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/flux-system/flux-instance/README.md`                | This runbook and component overview.                                       |
-| `cluster/apps/flux-system/kustomization.yaml`                     | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/flux-system/namespace.yaml`                         | Namespace definition for the flux-system workload.                         |
-| `cluster/apps/flux-system/flux-instance/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/flux-system/flux-instance/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/flux-system/flux-instance/app/release.yaml`         | Flux `HelmRelease` referencing the flux-instance chart.                    |
-| `cluster/apps/flux-system/flux-instance/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/flux-system/flux-instance/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/flux/meta/repositories/helm/controlplaneio-fluxcd.yaml`  | Helm repository definition pinning the upstream flux-instance source.      |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+flux-instance/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage Flux instances.
-- Ensure the workstation can reach the Kubernetes API and that the `flux-instance` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
+- Kubernetes cluster with proper RBAC configured
+- Git repository accessible from cluster
+- SSH keys or credentials for Git access
+- Proper network connectivity to Git repository
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the flux-instance Helm release to manage the Flux GitOps controllers and reconciliation.
+1. **Git repository management**:
 
-### Preconditions
+```bash
+# Check source status
+flux get sources -A
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when GitOps changes could impact deployments.
-- Capture the current Helm release revision for rollback reference:
+# Reconcile source
+flux reconcile source git <name>
+```
 
-  ```bash
-  kubectl -n flux-system get helmrelease flux-instance -o yaml
-  ```
+2. **Kustomization monitoring**:
 
-### Procedure
+```bash
+# Check kustomization status
+flux get kustomizations -A
 
-#### Phase 1 – Plan and Author Changes
+# Reconcile kustomization
+flux reconcile kustomization <name> --with-source
+```
 
-1. Update chart versions or values under `cluster/apps/flux-system/flux-instance/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
-
-   ```bash
-   flux diff hr flux-instance --namespace flux-system
-   ```
-
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+3. **Drift detection**:
 
    ```bash
-   flux reconcile kustomization flux-instance --with-source
-   flux get kustomizations flux-instance -n flux-system
-   ```
+   # Check for drift
+   flux get status --watch
 
-2. Confirm the Helm release upgrade succeeded:
-
-   ```bash
-   flux get helmrelease flux-instance -n flux-system
-   ```
-
-#### Phase 3 – Monitor Flux Controllers
-
-1. Watch Flux pods and CRDs:
-
-   ```bash
-   kubectl get pods -n flux-system
-   kubectl get crd | grep flux
-   ```
-
-2. Validate GitRepository and Kustomization reconciliation.
-3. Ensure deployments are updated.
-
-#### Phase 4 – Manual Intervention for Reconciliation Issues
-
-1. Restart the deployment if reconciliation fails:
-
-   ```bash
-   kubectl -n flux-system rollout restart deploy/flux-instance
-   ```
-
-2. For Git access issues, verify secrets are correct.
-3. Inspect logs for reconciliation errors:
-
-   ```bash
-   kubectl logs -n flux-system deploy/flux-instance
-   ```
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization flux-instance -n flux-system
-   flux suspend helmrelease flux-instance -n flux-system
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization flux-instance -n flux-system
-   flux resume helmrelease flux-instance -n flux-system
-   ```
-
-4. Consider scaling the deployment to zero as a last resort:
-
-   ```bash
-   kubectl -n flux-system scale deploy/flux-instance --replicas=0
+   # Force reconciliation
+   flux reconcile --all
    ```
 
 ### Validation
 
-- `kubectl get pods -n flux-system` shows running pods with no restarts.
-- `kubectl get helmrelease flux-instance -n flux-system` reports `Ready=True` with no pending upgrades.
-- CRDs are installed and GitOps reconciliation works.
-- Applications are deployed via Flux.
+Run the following commands to validate the procedures:
 
-### Troubleshooting Guidance
+```bash
+# Validate Git repository management
+flux get sources -A
 
-- If reconciliation fails, check Git access and repository status.
-- For CRD issues, ensure the operator is running and has permissions.
-- When the Helm release fails to deploy, check rendered manifests:
+# Expected: Sources listed with ready status
 
-  ```bash
-  flux diff hr flux-instance --namespace flux-system
-  kubeconform -strict -summary ./cluster/apps/flux-system/flux-instance/app
-  ```
+# Validate kustomization monitoring
+flux get kustomizations -A
 
-- If the deployment pod crashes, capture pod logs and describe the pod:
+# Expected: Kustomizations listed with ready status
 
-  ```bash
-  kubectl -n flux-system get pods
-  kubectl -n flux-system describe pod <pod-name>
-  ```
+# Validate drift detection
+flux get status --watch
 
-- For Flux issues, consult Flux documentation.
+# Expected: No drift detected or reconciliation in progress
+```
 
-## Validation and Testing
+### Decision Trees
 
-<!-- markdownlint-disable MD013 -->
+```yaml
+# Flux operational decision tree
+start: "flux_health_check"
+nodes:
+  flux_health_check:
+    question: "Is Flux healthy?"
+    command: "kubectl get pods -n flux-system --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "flux_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n flux-system | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      git_connectivity: "Git repository connectivity problem"
+      kustomization_error: "Kustomization configuration error"
+      permission_issue: "RBAC or Git permission problem"
+      resource_constraint: "Resource limitation"
+  git_connectivity:
+    action: "Check Git repository access: flux get sources -A"
+    next: "apply_fix"
+  kustomization_error:
+    action: "Review kustomization configuration: flux get kustomizations -A -o yaml"
+    next: "apply_fix"
+  permission_issue:
+    action: "Verify RBAC and Git credentials"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n flux-system --no-headers | grep 'Running'"
+    yes: "flux_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  flux_healthy:
+    action: "Flux verified healthy"
+    next: "end"
+end: "end"
+```
 
-| Step                                                         | Purpose                                                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------- |
-| `task validate`                                              | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                          | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr flux-instance --namespace flux-system`         | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n flux-system get events --sort-by=.lastTimestamp` | Confirms the operator starts reconciling after rollout.                                          |
-| `kubectl get crd                                             | grep flux`                                                                                       | Validates that CRDs are installed. |
+### Cross-Service Dependencies
 
-<!-- markdownlint-enable MD013 -->
+```yaml
+# Flux cross-service dependencies
+service_dependencies:
+  flux-instance:
+    depends_on:
+      - cert-manager/cert-manager
+    depended_by:
+      - All workloads deployed via GitOps
+      - All infrastructure components
+      - All applications managed by Flux
+    critical_path: true
+    health_check_command: "kubectl get pods -n flux-system --no-headers | grep 'Running'"
+```
 
-## References and Cross-links
+## Troubleshooting
 
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-operator/README.md](../flux-operator/README.md)
-- Certificate management: [cluster/apps/README.md](../../README.md)
-- Upstream flux-instance documentation: <https://fluxcd.control-plane.io/operator/>
+### Common Issues
+
+1. **Git repository connectivity failures**:
+
+   - **Symptom**: Sources not synchronizing
+   - **Diagnosis**: Check Git repository access and credentials
+   - **Resolution**: Verify SSH keys and repository URLs
+
+2. **Kustomization reconciliation errors**:
+
+   - **Symptom**: Kustomizations stuck in progress
+   - **Diagnosis**: Check kustomization configuration and resource validity
+   - **Resolution**: Verify YAML syntax and resource definitions
+
+3. **RBAC permission errors**:
+   - **Symptom**: Access denied errors in logs
+   - **Diagnosis**: Check RBAC permissions and service accounts
+   - **Resolution**: Verify cluster roles and role bindings
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update Flux Helm chart
+helm repo update
+helm upgrade flux fluxcd/flux -n flux-system -f values.yaml
+```
+
+### GitOps Management
+
+```bash
+# Force full reconciliation
+flux reconcile --all
+
+# Check Flux version
+flux version
+```
+
+### MCP Integration
+
+- **Library ID**: `fluxcd`
+- **Version**: `v2.1.2`
+- **Usage**: GitOps continuous delivery and reconciliation
+- **Citation**: Use `resolve-library-id` for Flux configuration and troubleshooting
+
+## References
+
+- [Flux Documentation](https://fluxcd.io/flux/)
+- [Flux GitOps Toolkit](https://fluxcd.io/flux/guides/)
+- [Flux Helm Chart](https://github.com/fluxcd/flux2)

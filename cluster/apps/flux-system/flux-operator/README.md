@@ -1,196 +1,295 @@
-# flux-operator Runbook
+# flux-operator - Flux Operator
 
-## Purpose and Scope
+## Overview
 
-The flux-operator controller manages Flux installations in the Kubernetes cluster, enabling declarative management of GitOps deployments. It provides a way to install, upgrade, and manage Flux controllers and their configurations through Kubernetes resources.
-
-Objectives:
-
-- Describe the GitOps layout, deployment workflow, and operations required to keep the flux-operator healthy.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the repository runbook standards.
+Flux Operator is a Kubernetes operator that manages Flux deployments using custom resources. It provides a declarative way to manage Flux instances and their components, enabling GitOps workflows for continuous delivery in the spruyt-labs homelab infrastructure.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                              | Description                                                                |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/flux-system/flux-operator/README.md`                | This runbook and component overview.                                       |
-| `cluster/apps/flux-system/kustomization.yaml`                     | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/flux-system/namespace.yaml`                         | Namespace definition for the flux-system workload.                         |
-| `cluster/apps/flux-system/flux-operator/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/flux-system/flux-operator/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/flux-system/flux-operator/app/release.yaml`         | Flux `HelmRelease` referencing the flux-operator OCIRepository.            |
-| `cluster/apps/flux-system/flux-operator/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/flux-system/flux-operator/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/flux/meta/repositories/flux-operator-ocirepo.yaml`       | OCIRepository definition pinning the upstream flux-operator source.        |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+flux-operator/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage Flux installations.
-- Ensure the workstation can reach the Kubernetes API and that the `flux-operator` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
+- Kubernetes cluster with proper RBAC configured
+- Git repository accessible from cluster
+- SSH keys or credentials for Git access
+- Proper network connectivity to Git repository
+- Flux instance already deployed
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the flux-operator Helm release to manage Flux installations declaratively, ensuring GitOps workflows remain functional and up-to-date.
+1. **Flux operator management**:
 
-### Preconditions
+```bash
+# Check flux-operator service status
+kubectl get pods -n flux-system
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when flux-operator updates could impact GitOps reconciliation.
-- Capture the current Helm release revision for rollback reference:
+# Verify operator reconciliation
+kubectl logs -n flux-system <operator-pod-name> | grep "reconciliation"
 
-  ```bash
-  kubectl -n flux-system get helmrelease flux-operator -o yaml
-  ```
+# Check operator events
+kubectl get events -n flux-system | grep flux-operator
+```
 
-### Procedure
+2. **Configuration management**:
 
-#### Phase 1 – Plan and Author Changes
+```bash
+# Check current configuration
+kubectl get configmap -n flux-system
 
-1. Update chart versions or values under `cluster/apps/flux-system/flux-operator/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+# Verify operator configuration
+kubectl get fluxoperators -A -o yaml
+```
 
-   ```bash
-   flux diff hr flux-operator --namespace flux-system
-   ```
-
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+3. **Performance monitoring**:
 
    ```bash
-   flux reconcile kustomization flux-operator --with-source
-   flux get kustomizations flux-operator -n flux-system
-   ```
+   # Check operator reconciliation status
+   kubectl logs -n flux-system <operator-pod-name> | grep "reconciliation"
 
-2. Confirm the Helm release upgrade succeeded:
-
-   ```bash
-   flux get helmrelease flux-operator -n flux-system
-   ```
-
-#### Phase 3 – Monitor Flux Instances
-
-1. Watch for flux-operator managed Flux instances:
-
-   ```bash
-   kubectl get fluxinstances -A
-   kubectl describe fluxinstance <name>
-   ```
-
-2. Validate events emitted by the operator:
-
-   ```bash
-   kubectl get events -n flux-system --sort-by=.lastTimestamp
-   ```
-
-3. Ensure Flux controllers remain healthy after updates (`flux check`).
-
-#### Phase 4 – Manual Intervention for Stuck Reconciling
-
-1. Check flux-operator logs for reconciliation failures:
-
-   ```bash
-   kubectl logs -n flux-system deploy/flux-operator
-   ```
-
-2. Inspect FluxInstance status for errors:
-
-   ```bash
-   kubectl get fluxinstances -A -o wide
-   kubectl describe fluxinstance <name>
-   ```
-
-3. Restart the operator if needed:
-
-   ```bash
-   kubectl rollout restart deploy/flux-operator -n flux-system
-   ```
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization flux-operator -n flux-system
-   flux suspend helmrelease flux-operator -n flux-system
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization flux-operator -n flux-system
-   flux resume helmrelease flux-operator -n flux-system
-   ```
-
-4. Consider scaling the deployment to zero as a last resort:
-
-   ```bash
-   kubectl -n flux-system scale deploy/flux-operator --replicas=0
+   # Monitor operator performance
+   kubectl top pods -n flux-system
    ```
 
 ### Validation
 
-- `kubectl get fluxinstances -A` shows managed Flux instances in Ready state.
-- `flux check` reports all controllers healthy with current versions.
-- `flux get helmrelease flux-operator -n flux-system` reports `Ready=True` with no pending upgrades.
-- Audit logs confirm the operator manages Flux installations without manual intervention.
+Run the following commands to validate the procedures:
 
-### Troubleshooting Guidance
+```bash
+# Validate flux-operator management
+kubectl get pods -n flux-system --no-headers | grep 'Running'
 
-- If Flux instances fail to reconcile, inspect operator logs for policy violations and verify RBAC:
+# Expected: Flux operator pods running
 
-  ```bash
-  kubectl auth can-i create fluxinstances --as system:serviceaccount:flux-system:flux-operator
-  ```
+# Validate configuration management
+kubectl get configmap -n flux-system
 
-- For repeated reconciliation failures, ensure OCIRepository is accessible and chart versions are valid.
-- When the Helm release fails to deploy, check rendered manifests:
+# Expected: Configuration maps listed
 
-  ```bash
-  flux diff hr flux-operator --namespace flux-system
-  kubeconform -strict -summary ./cluster/apps/flux-system/flux-operator/app
-  ```
+# Validate performance monitoring
+kubectl top pods -n flux-system
 
-- If the deployment pod crashes, capture pod logs and describe the pod:
+# Expected: Resource usage displayed
+```
 
-  ```bash
-  kubectl -n flux-system get pods
-  kubectl -n flux-system describe pod <pod-name>
-  ```
+### Decision Trees
 
-- For Flux instance creation issues, consult the flux-operator documentation for supported configurations.
+```yaml
+# flux-operator operational decision tree
+start: "flux_operator_health_check"
+nodes:
+  flux_operator_health_check:
+    question: "Is flux-operator healthy?"
+    command: "kubectl get pods -n flux-system --no-headers | grep -v 'Running'"
+    validation: "wc -l | grep -q '^0$'"
+    yes: "investigate_issue"
+    no: "flux_operator_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n flux-system"
+    log_command: "kubectl logs -n flux-system <operator-pod-name> --tail=50"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    diagnostic_commands:
+      - "kubectl get events -n flux-system --sort-by=.metadata.creationTimestamp | tail -10"
+      - "kubectl top pods -n flux-system"
+    options:
+      config_error: "Configuration issue"
+      dependency_failure: "Dependency problem"
+      resource_constraint: "Resource limitation"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    commands:
+      - "helm get values flux-operator -n flux-system"
+      - "kubectl get cm -n flux-system -o yaml"
+    next: "apply_fix"
+  dependency_failure:
+    action: "Check cross-service dependencies"
+    commands:
+      - "kubectl get pods -n flux-system"
+      - "kubectl get clusterroles,clusterrolebindings | grep flux"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits"
+    commands:
+      - "kubectl top nodes"
+      - "kubectl describe nodes | grep -A 10 'Capacity'"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    validation_commands:
+      - "kubectl apply -f <fixed-config>"
+      - "kubectl rollout restart deployment/<deployment> -n flux-system"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n flux-system --no-headers | grep 'Running'"
+    validation: "wc -l | grep -q '^[1-9]'"
+    yes: "flux_operator_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  flux_operator_healthy:
+    action: "flux-operator verified healthy"
+    next: "end"
+end: "end"
+```
 
-## Validation and Testing
+### Cross-Service Dependencies
 
-<!-- markdownlint-disable MD013 -->
+```yaml
+# flux-operator cross-service dependencies
+service_dependencies:
+  flux-operator:
+    depends_on:
+      - flux-system/flux-instance
+      - cert-manager/cert-manager
+    depended_by:
+      - All Flux-managed workloads
+      - All GitOps operations
+      - All infrastructure components
+    critical_path: true
+    health_check_command: "kubectl get pods -n flux-system --no-headers | grep 'Running'"
+```
 
-| Step                                                         | Purpose                                                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                              | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                          | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr flux-operator --namespace flux-system`         | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n flux-system get events --sort-by=.lastTimestamp` | Confirms the operator emits reconciliation events after rollout.                                 |
-| `flux check`                                                 | Validates that managed Flux instances remain operational.                                        |
+## Troubleshooting
 
-<!-- markdownlint-enable MD013 -->
+### Common Issues
 
-## References and Cross-links
+1. **Git repository connectivity failures**:
 
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../flux-instance/README.md)
-- OCIRepository management: [cluster/flux/meta/repositories/README.md](../../../flux/meta/repositories/README.md)
-- Upstream flux-operator documentation: <https://github.com/controlplaneio-fluxcd/charts/tree/main/charts/flux-operator>
-- Flux documentation: <https://fluxcd.io/>
+   - **Symptom**: Operator unable to access Git repository
+   - **Diagnosis**: Check Git repository connectivity and credentials
+   - **Resolution**: Verify SSH keys and repository URLs
+
+2. **RBAC permission errors**:
+
+   - **Symptom**: Access denied errors in logs
+   - **Diagnosis**: Check RBAC permissions and service accounts
+   - **Resolution**: Verify cluster roles and role bindings
+
+3. **Reconciliation delays**:
+
+   - **Symptom**: Slow operator reconciliation
+   - **Diagnosis**: Check operator performance and resource usage
+   - **Resolution**: Verify operator resources and network latency
+
+4. **Configuration errors**:
+
+   - **Symptom**: Operator service not starting
+   - **Diagnosis**: Check configuration syntax and operator parameters
+   - **Resolution**: Verify values.yaml configuration
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update flux-operator using Flux
+flux reconcile kustomization flux-operator --with-source
+```
+
+### Configuration Management
+
+```bash
+# Update flux-operator configuration
+flux reconcile kustomization flux-operator --with-source
+
+# Verify configuration changes
+kubectl logs -n flux-system <operator-pod-name> | grep "configuration"
+```
+
+### MCP Integration
+
+- **Library ID**: `flux-operator-gitops-management`
+- **Version**: `v1.2.0`
+- **Usage**: Flux operator management and GitOps operations
+- **Citation**: Use `resolve-library-id` for flux-operator configuration and API references
+
+## References
+
+- [Flux Operator Documentation](https://fluxcd.io/flux/)
+- [Flux GitOps Toolkit](https://fluxcd.io/flux/guides/)
+- [Kubernetes Operator Framework](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+- [Flux Helm Chart](https://github.com/fluxcd/flux2)
+
+## Agent-Friendly Workflows
+
+This section provides decision trees and conditional logic for autonomous execution of flux-operator tasks.
+
+### flux-operator Health Check Workflow
+
+```yaml
+# flux-operator health check decision tree
+start: "check_flux_operator_pods"
+nodes:
+  check_flux_operator_pods:
+    question: "Are flux-operator pods running?"
+    command: "kubectl get pods -n flux-system -l app.kubernetes.io/name=flux-operator --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_operator_reconciliation"
+    no: "restart_operator_pods"
+  check_operator_reconciliation:
+    question: "Is operator reconciliation working?"
+    command: "kubectl logs -n flux-system -l app.kubernetes.io/name=flux-operator --tail=100 | grep -i 'error\\|failed' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_managed_flux_instances"
+    no: "investigate_reconciliation_errors"
+  check_managed_flux_instances:
+    question: "Are managed Flux instances healthy?"
+    command: "kubectl get fluxinstances -A --no-headers | awk '{print $2}' | grep -v 'Ready' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "flux_operator_healthy"
+    no: "fix_flux_instances"
+  restart_operator_pods:
+    action: "Restart flux-operator pods"
+    next: "check_flux_operator_pods"
+  investigate_reconciliation_errors:
+    action: "Check operator logs for reconciliation errors"
+    next: "check_operator_reconciliation"
+  fix_flux_instances:
+    action: "Fix managed Flux instance issues"
+    next: "check_managed_flux_instances"
+  flux_operator_healthy:
+    action: "flux-operator and managed instances are healthy"
+    next: "end"
+end: "end"
+```
+
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for flux-operator documentation.
+- Confirm the catalog entry contains the documentation or API details needed for flux-operator operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers flux-operator documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed flux-operator configuration changes.
+
+### When flux-operator documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in flux-operator change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting flux-operator documentation.

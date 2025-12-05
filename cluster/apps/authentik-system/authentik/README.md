@@ -1,278 +1,209 @@
-# authentik Runbook
+# authentik - Identity Provider
 
-## Purpose and Scope
+## Overview
 
-Authentik is an open-source IAM solution providing authentication, authorization, and user management with SSO, MFA, and policy-based access control. This readme documents the GitOps layout, deployment workflow, and operations for maintaining authentik in spruyt-labs.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+authentik is an open-source Identity Provider that unifies identity management across applications and services. It provides authentication, authorization, and user management capabilities for the spruyt-labs homelab infrastructure.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                                                | Description                                                                        |
-| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `cluster/apps/authentik-system/README.md`                                           | This runbook and component overview.                                               |
-| `cluster/apps/authentik-system/kustomization.yaml`                                  | Top-level Kustomize entry that namespaces resources and delegates to Flux.         |
-| `cluster/apps/authentik-system/namespace.yaml`                                      | Namespace definition for the authentik-system workload.                            |
-| `cluster/apps/authentik-system/authentik/ks.yaml`                                   | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.            |
-| `cluster/apps/authentik-system/authentik/app/kustomization.yaml`                    | Overlay combining the HelmRelease, CNPG resources, and generated values ConfigMap. |
-| `cluster/apps/authentik-system/authentik/app/release.yaml`                          | Flux `HelmRelease` referencing the upstream goauthentik chart.                     |
-| `cluster/apps/authentik-system/authentik/app/values.yaml`                           | Rendered values supplied to the chart via ConfigMap.                               |
-| `cluster/apps/authentik-system/authentik/app/authentik-cnpg-cluster.yaml`           | CNPG PostgreSQL cluster configuration for authentik database.                      |
-| `cluster/apps/authentik-system/authentik/app/authentik-cnpg-object-stores.yaml`     | Barman cloud object store configuration for backups.                               |
-| `cluster/apps/authentik-system/authentik/app/authentik-cnpg-poolers.yaml`           | CNPG pooler configuration (commented out, for future scaling).                     |
-| `cluster/apps/authentik-system/authentik/app/authentik-cnpg-scheduled-backups.yaml` | Scheduled backup configuration for PostgreSQL cluster.                             |
-| `cluster/apps/authentik-system/authentik/app/persistent-volume-claim.yaml`          | PVC for authentik application storage.                                             |
-| `cluster/apps/authentik-system/authentik/app/kustomizeconfig.yaml`                  | Remaps ConfigMap keys to Helm values for deterministic patches.                    |
-| `cluster/apps/authentik-system/authentik/app/authentik-secrets.sops.yaml`           | Encrypted secrets for authentik and backup credentials.                            |
-| `cluster/flux/meta/repositories/helm/goauthentik-charts.yaml`                       | Helm repository definition pinning the upstream authentik source.                  |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+authentik/
+├── app/
+│   ├── authentik-cnpg-cluster.yaml      # PostgreSQL cluster configuration
+│   ├── authentik-cnpg-object-stores.yaml # Object storage configuration
+│   ├── authentik-cnpg-poolers.yaml      # Connection poolers
+│   ├── authentik-cnpg-scheduled-backups.yaml # Backup configuration
+│   ├── kustomization.yaml               # Kustomize configuration
+│   ├── kustomizeconfig.yaml             # Kustomize config
+│   ├── persistent-volume-claim.yaml      # Persistent volume claims
+│   ├── release.yaml                      # Helm release configuration
+│   └── values.yaml                       # Helm values
+├── ks.yaml                               # Kustomization configuration
+└── README.md                             # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage authentik configurations.
-- Ensure the workstation can reach the Kubernetes API and that the `authentik` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Verify dependencies are healthy: CNPG operator, barman-cloud plugin, and rook-ceph storage.
+- Kubernetes cluster with Flux CD installed
+- PostgreSQL operator (CNPG) deployed
+- Storage class configured for persistent volumes
+- Ingress controller configured
+- TLS certificates available
 
-## Operational Runbook
+### Prerequisites Validation
 
-### Summary
+```bash
+# Check authentik pods are running
+kubectl get pods -n authentik-system
 
-Operate the authentik Helm release alongside a CNPG-managed PostgreSQL cluster to provide centralized identity and access management services, including user authentication, authorization policies, and integrations with external providers.
+# Verify service is available
+kubectl get svc -n authentik-system
 
-### Preconditions
+# Check ingress route
+kubectl get ingressroute -n authentik-system
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when authentik downtime could impact user access.
-- Capture the current Helm release revision for rollback reference:
+# Verify TLS certificate
+kubectl get certificates -n authentik-system
+```
 
-  ```bash
-  kubectl -n authentik-system get helmrelease authentik -o yaml
-  ```
+## Operation
 
-### Procedure
+### Procedures
 
-#### Phase 1 – Plan and Author Changes
+1. **User management**:
 
-1. Update chart versions or values under `cluster/apps/authentik-system/authentik/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+   - Access authentik admin interface at `https://authentik.${EXTERNAL_DOMAIN}`
+   - Create users, groups, and applications
 
-   ```bash
-   flux diff hr authentik --namespace authentik-system
-   ```
+2. **Backup verification**:
 
-4. Commit changes with runbook updates and open a pull request.
+```bash
+kubectl get scheduledbackups -n authentik-system
+```
 
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
-
-   ```bash
-   flux reconcile kustomization authentik --with-source
-   flux get kustomizations authentik -n flux-system
-   ```
-
-2. Confirm the Helm release upgrade succeeded:
+3. **Connection pooler monitoring**:
 
    ```bash
-   flux get helmrelease authentik -n authentik-system
-   ```
-
-#### Phase 3 – Monitor Deployment and Database
-
-1. Watch authentik and PostgreSQL pods during rollout:
-
-   ```bash
-   kubectl get pods -n authentik-system
-   kubectl get clusters.postgresql.cnpg.io -n authentik-system
-   ```
-
-2. Validate events emitted by the deployments:
-
-   ```bash
-   kubectl get events -n authentik-system --sort-by=.lastTimestamp
-   ```
-
-3. Ensure authentik web UI is accessible and database connections are established.
-
-#### Phase 4 – Manual Intervention for Issues
-
-1. Restart pods if authentication fails:
-
-   ```bash
-   kubectl rollout restart deployment/authentik -n authentik-system
-   ```
-
-2. Check database connectivity and logs:
-
-   ```bash
-   kubectl logs -n authentik-system deployment/authentik
-   kubectl logs -n authentik-system cluster/authentik-cnpg-cluster-1
-   ```
-
-3. For backup issues, inspect scheduled backup status:
-
-   ```bash
-   kubectl get scheduledbackups.postgresql.cnpg.io -n authentik-system
-   ```
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization authentik -n flux-system
-   flux suspend helmrelease authentik -n authentik-system
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization authentik -n flux-system
-   flux resume helmrelease authentik -n authentik-system
-   ```
-
-4. Scale authentik deployment to zero as a last resort:
-
-   ```bash
-   kubectl -n authentik-system scale deploy/authentik --replicas=0
+   kubectl get poolers -n authentik-system
    ```
 
 ### Validation
 
-- `kubectl get pods -n authentik-system` shows authentik and PostgreSQL pods in Running state.
-- `kubectl get clusters.postgresql.cnpg.io -n authentik-system` reports the CNPG cluster as Ready.
-- `flux get helmrelease authentik -n authentik-system` reports `Ready=True` with no pending upgrades.
-- Authentik web UI is accessible and users can authenticate successfully.
-- Scheduled backups complete without errors (`kubectl get backups.postgresql.cnpg.io -n authentik-system`).
-
-### Troubleshooting Guidance
-
-- If pods fail to start, inspect logs for configuration or secret issues:
-
-  ```bash
-  kubectl -n authentik-system describe pod <pod-name>
-  kubectl -n authentik-system logs <pod-name>
-  ```
-
-- For database connection errors, verify CNPG cluster status and secrets:
-
-  ```bash
-  kubectl get secrets -n authentik-system
-  kubectl describe cluster authentik-cnpg-cluster -n authentik-system
-  ```
-
-- When the Helm release fails to deploy, check rendered manifests:
-
-  ```bash
-  flux diff hr authentik --namespace authentik-system
-  kubeconform -strict -summary ./cluster/apps/authentik-system/authentik/app
-  ```
-
-- If backups fail, check object store credentials and S3 access:
-
-  ```bash
-  kubectl logs -n authentik-system job/<backup-job-name>
-  ```
-
-- For authentication issues, consult authentik logs and configuration.
-
-## Validation and Testing
-
-<!-- markdownlint-disable MD013 -->
-
-| Step                                                              | Purpose                                                                                          |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                                   | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                               | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr authentik --namespace authentik-system`             | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n authentik-system get events --sort-by=.lastTimestamp` | Confirms deployments emit healthy events after rollout.                                          |
-| `kubectl get pods -n authentik-system`                            | Validates authentik and database pods are running.                                               |
-| `kubectl get clusters.postgresql.cnpg.io -n authentik-system`     | Ensures CNPG cluster is operational.                                                             |
-
-<!-- markdownlint-enable MD013 -->
-
-## References and Cross-links
-
-- Runbook standards: [Repository root readme](README.md#runbook-standards)
-- Flux control plane operations: [../../../flux/README.md](../../../flux/README.md)
-- CNPG operations: [../../cnpg-system/cnpg-operator/README.md](../../cnpg-system/cnpg-operator/README.md)
-- External secrets management: [../../external-secrets/external-secrets/README.md](../../external-secrets/external-secrets/README.md)
-- Rook Ceph storage: [../../rook-ceph/rook-ceph-operator/README.md](../../rook-ceph/rook-ceph-operator/README.md)
-- Upstream authentik documentation: <https://docs.goauthentik.io/>
-- Authentik Helm chart: <https://github.com/goauthentik/helm>
-- CNPG documentation: <https://cloudnative-pg.io/docs/>
-
-## Agent-Friendly Workflows
-
-This section provides decision trees and conditional logic for autonomous execution of Authentik deployment tasks, focusing on Helm release status, database connectivity, and authentication validation.
-
-### Authentik Deployment Status Workflow
+Run the following commands to validate the procedures:
 
 ```bash
-If flux get helmrelease authentik -n authentik-system --no-headers | grep -v "True" > /dev/null
-Then:
-  Run flux reconcile helmrelease authentik -n authentik-system
-  Expected output: Reconciliation completes without errors
-  If reconciliation fails:
-    Run kubectl logs -n authentik-system deployment/authentik --previous
-    Expected output: Error logs indicating failure reason
-    Recovery: Check values.yaml for configuration issues; verify secrets decryption
-  Else:
-    Run flux get helmrelease authentik -n authentik-system
-    Expected output: Status shows Ready=True
-    Proceed to database health check
-Else:
-  Proceed to database health check
+# Validate user management
+kubectl get pods -n authentik-system --no-headers | grep 'Running'
+
+# Expected: Authentik pods running
+
+# Validate backup verification
+kubectl get scheduledbackups -n authentik-system
+
+# Expected: Scheduled backups listed
+
+# Validate connection pooler monitoring
+kubectl get poolers -n authentik-system
+
+# Expected: Connection poolers listed
 ```
 
-### Database Connectivity Workflow
+### Decision Trees
+
+```yaml
+# authentik operational decision tree
+start: "authentik_health_check"
+nodes:
+  authentik_health_check:
+    question: "Is authentik healthy?"
+    command: "kubectl get pods -n authentik-system --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "authentik_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n authentik-system | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      database_issue: "PostgreSQL connection problem"
+      config_error: "Configuration mismatch"
+      resource_constraint: "Resource limitation"
+      network_issue: "Network connectivity"
+  database_issue:
+    action: "Check CNPG cluster: kubectl get clusters -n authentik-system"
+    next: "apply_fix"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  network_issue:
+    action: "Investigate network policies and connectivity"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n authentik-system --no-headers | grep 'Running'"
+    yes: "authentik_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  authentik_healthy:
+    action: "authentik verified healthy"
+    next: "end"
+end: "end"
+```
+
+### Cross-Service Dependencies
+
+```yaml
+# authentik cross-service dependencies
+service_dependencies:
+  authentik:
+    depends_on:
+      - cnpg-system/cnpg-operator
+      - traefik/traefik
+      - cert-manager/cert-manager
+    depended_by:
+      - Various applications requiring authentication
+    critical_path: true
+    health_check_command: "kubectl get pods -n authentik-system --no-headers | grep 'Running'"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database connection failures**:
+
+   - **Symptom**: Pods stuck in CrashLoopBackOff
+   - **Diagnosis**: Check CNPG cluster health and connection details
+   - **Resolution**: Verify PostgreSQL credentials and network connectivity
+
+2. **TLS certificate issues**:
+
+   - **Symptom**: Ingress route shows certificate errors
+   - **Diagnosis**: Check cert-manager certificate status
+   - **Resolution**: Verify certificate DNS names and issuer configuration
+
+3. **Resource constraints**:
+   - **Symptom**: Pods in Pending state
+   - **Diagnosis**: Check resource requests vs available cluster resources
+   - **Resolution**: Adjust resource limits or scale cluster
+
+## Maintenance
+
+### Updates
 
 ```bash
-If kubectl get clusters.postgresql.cnpg.io authentik-cnpg-cluster -n authentik-system --no-headers | grep -v "Ready" > /dev/null
-Then:
-  Run kubectl describe cluster authentik-cnpg-cluster -n authentik-system
-  Expected output: Cluster status and events
-  If cluster not ready:
-    Run kubectl logs -n authentik-system cluster/authentik-cnpg-cluster-1
-    Expected output: PostgreSQL startup logs
-    Recovery: Check PVC status with kubectl get pvc -n authentik-system; verify CNPG operator health
-  Else:
-    Run kubectl exec -n authentik-system cluster/authentik-cnpg-cluster-1 -- psql -U authentik -d authentik -c "SELECT 1"
-    Expected output: Query succeeds
-    Proceed to authentication validation
-Else:
-  Proceed to authentication validation
+# Update authentik Helm chart
+helm repo update
+helm upgrade authentik authentik/authentik -n authentik-system -f values.yaml
 ```
 
-### Authentication Validation Workflow
+### Backups
 
 ```bash
-If kubectl get pods -n authentik-system -l app.kubernetes.io/name=authentik --no-headers | grep -v "Running" > /dev/null
-Then:
-  Run kubectl describe pod -n authentik-system -l app.kubernetes.io/name=authentik
-  Expected output: Pod events and status
-  If pod not running:
-    Run kubectl logs -n authentik-system deployment/authentik
-    Expected output: Application logs
-    Recovery: Verify database connection string; check for migration errors
-  Else:
-    Run curl -k https://authentik.internal/-/health/ready/
-    Expected output: HTTP 200 OK
-    If health check fails:
-      Run kubectl logs -n authentik-system deployment/authentik | grep ERROR
-      Expected output: Specific error messages
-      Recovery: Restart deployment with kubectl rollout restart deployment/authentik -n authentik-system
-Else:
-  Authentik deployment verified successfully
+# Verify scheduled backups
+kubectl get scheduledbackups -n authentik-system
+
+# Check backup status
+kubectl get backups -n authentik-system
 ```
+
+### MCP Integration
+
+- **Library ID**: `authentik`
+- **Version**: `2024.10.3`
+- **Usage**: Authentication and authorization management
+- **Citation**: Use `resolve-library-id` for authentik documentation and API references
+
+## References
+
+- [authentik Documentation](https://goauthentik.io/docs/)
+- [CNPG Operator Documentation](https://cloudnative-pg.io/)
+- [Flux CD Documentation](https://fluxcd.io/flux/)

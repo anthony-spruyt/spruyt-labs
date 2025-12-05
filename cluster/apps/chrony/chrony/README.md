@@ -1,214 +1,280 @@
-# chrony Runbook
+# chrony - NTP Time Synchronization
 
-## Purpose and Scope
+## Overview
 
-The chrony controller provides Network Time Protocol (NTP) time synchronization services for the spruyt-labs cluster.
-
-It deploys a highly available NTP server using the dockurr/chrony image, configured to synchronize with upstream NTP servers (time.cloudflare.com) and serve NTP requests to cluster nodes and workloads via a LoadBalancer service.
-
-This ensures accurate timekeeping across the cluster, which is critical for logging, security, and distributed system operations.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Chrony is a versatile implementation of the Network Time Protocol (NTP) that provides precise time synchronization for the Kubernetes cluster. It ensures all nodes maintain accurate time, which is critical for distributed systems, logging, authentication, and other time-sensitive operations in the spruyt-labs homelab infrastructure.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                              | Description                                                                    |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `cluster/apps/chrony/chrony/README.md`                            | This runbook and component overview.                                           |
-| `cluster/apps/chrony/kustomization.yaml`                          | Top-level Kustomize entry that namespaces resources and delegates to Flux.     |
-| `cluster/apps/chrony/namespace.yaml`                              | Namespace definition for the chrony workload.                                  |
-| `cluster/apps/chrony/chrony/ks.yaml`                              | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.        |
-| `cluster/apps/chrony/chrony/app/kustomization.yaml`               | Overlay combining the HelmRelease and generated values ConfigMap.              |
-| `cluster/apps/chrony/chrony/app/release.yaml`                     | Flux `HelmRelease` referencing the bjw-s-labs app-template chart.              |
-| `cluster/apps/chrony/chrony/app/values.yaml`                      | Rendered values supplied to the chart via ConfigMap.                           |
-| `cluster/apps/chrony/chrony/app/kustomizeconfig.yaml`             | Remaps ConfigMap keys to Helm values for deterministic patches.                |
-| `cluster/flux/meta/repositories/oci/bjw-s-labs-app-template.yaml` | OCI repository definition pinning the upstream bjw-s-labs app-template source. |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+chrony/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage cluster time synchronization.
-- Ensure the workstation can reach the Kubernetes API and that the `chrony` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Confirm that the NTP LoadBalancer IP (`${NTP_IP4}`) is available and configured in the cluster networking.
+- Kubernetes cluster with Flux CD installed
+- Proper network connectivity for NTP servers
+- Appropriate firewall rules allowing NTP traffic (UDP port 123)
+- Cluster nodes with proper time synchronization requirements
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the chrony Helm release to provide reliable NTP services, ensuring cluster nodes and workloads maintain accurate time synchronization. The deployment uses 3 replicas for high availability and serves NTP on UDP port 123 via a LoadBalancer service.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when time synchronization disruptions could impact cluster operations.
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n chrony get helmrelease chrony -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/chrony/chrony/app/` as required (e.g., NTP servers, replicas, resource limits).
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+1. **Time synchronization monitoring**:
 
    ```bash
-   flux diff hr chrony --namespace chrony
+   # Check chrony service status
+   kubectl get pods -n chrony
+
+   # Verify time synchronization
+   kubectl exec -n chrony <pod-name> -- chronyc tracking
+
+   # Check time sources
+   kubectl exec -n chrony <pod-name> -- chronyc sources
    ```
 
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+2. **Configuration management**:
 
    ```bash
-   flux reconcile kustomization chrony --with-source
-   flux get kustomizations chrony -n flux-system
+   # Check current configuration
+   kubectl exec -n chrony <pod-name> -- cat /etc/chrony/chrony.conf
+
+   # Verify NTP server connectivity
+   kubectl exec -n chrony <pod-name> -- chronyc ntpdata
    ```
 
-2. Confirm the Helm release upgrade succeeded:
+3. **Performance monitoring**:
 
    ```bash
-   flux get helmrelease chrony -n chrony
-   ```
+   # Check time offset and synchronization status
+   kubectl exec -n chrony <pod-name> -- chronyc tracking
 
-#### Phase 3 – Monitor Time Synchronization
-
-1. Verify NTP service availability:
-
-   ```bash
-   kubectl -n chrony get svc chrony
-   ntpq -p ${NTP_IP4}
-   ```
-
-2. Check chrony synchronization status on pods:
-
-   ```bash
-   kubectl -n chrony exec -it deploy/chrony -- chronyc tracking
-   kubectl -n chrony exec -it deploy/chrony -- chronyc sources
-   ```
-
-3. Ensure pods are ready and probes are passing (`kubectl get pods -n chrony`).
-
-#### Phase 4 – Manual Intervention for Time Sync Issues
-
-1. If synchronization fails, inspect chrony logs for errors:
-
-   ```bash
-   kubectl -n chrony logs deploy/chrony
-   ```
-
-2. Manually adjust NTP servers or configuration if upstream sources are unreachable.
-3. Restart pods if needed:
-
-   ```bash
-   kubectl -n chrony rollout restart deploy/chrony
-   ```
-
-4. For persistent issues, verify network connectivity to upstream NTP servers from pod context.
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization chrony -n flux-system
-   flux suspend helmrelease chrony -n chrony
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization chrony -n flux-system
-   flux resume helmrelease chrony -n chrony
-   ```
-
-4. Scale the deployment to zero as a last resort during maintenance:
-
-   ```bash
-   kubectl -n chrony scale deploy/chrony --replicas=0
+   # Monitor time sources
+   kubectl exec -n chrony <pod-name> -- chronyc sources -v
    ```
 
 ### Validation
 
-- `chronyc tracking` shows synchronized status with low offset and jitter.
-- `ntpq -p ${NTP_IP4}` displays reachable peers with '\*' indicating the selected source.
-- `kubectl get pods -n chrony` reports all pods as Ready with passing readiness probes.
-- `flux get helmrelease chrony -n chrony` reports `Ready=True` with no pending upgrades.
-- Cluster nodes and workloads exhibit consistent timestamps in logs and events.
+Run the following commands to validate the procedures:
 
-### Troubleshooting Guidance
+```bash
+# Validate time synchronization monitoring
+kubectl get pods -n chrony --no-headers | grep 'Running'
 
-- If NTP queries fail, verify the LoadBalancer IP is correctly assigned and reachable:
+# Expected: At least one pod in Running state
 
-  ```bash
-  kubectl -n chrony describe svc chrony
-  ping ${NTP_IP4}
-  ```
+# Validate configuration management
+kubectl exec -n chrony <pod-name> -- chronyc tracking
 
-- For synchronization issues, check upstream server reachability:
+# Expected: Time synchronization status displayed
 
-  ```bash
-  kubectl -n chrony exec -it deploy/chrony -- ping time.cloudflare.com
-  ```
+# Validate performance monitoring
+kubectl exec -n chrony <pod-name> -- chronyc sources
 
-- If readiness probes fail, inspect chrony configuration and logs:
+# Expected: NTP sources listed with status
+```
 
-  ```bash
-  kubectl -n chrony exec -it deploy/chrony -- chronyc waitsync 15
-  kubectl -n chrony logs deploy/chrony --previous
-  ```
+### Decision Trees
 
-- When the Helm release fails to deploy, check rendered manifests:
+```yaml
+# chrony operational decision tree
+start: "chrony_health_check"
+nodes:
+  chrony_health_check:
+    question: "Is chrony healthy?"
+    command: "kubectl get pods -n chrony --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "chrony_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n chrony | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      ntp_connectivity: "NTP server connectivity problem"
+      config_error: "Configuration mismatch"
+      resource_constraint: "Resource limitation"
+      network_issue: "Network connectivity"
+  ntp_connectivity:
+    action: "Check NTP server connectivity: kubectl exec -n chrony <pod-name> -- chronyc ntpdata"
+    next: "apply_fix"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  network_issue:
+    action: "Investigate network policies and connectivity"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n chrony --no-headers | grep 'Running'"
+    yes: "chrony_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  chrony_healthy:
+    action: "chrony verified healthy"
+    next: "end"
+end: "end"
+```
 
-  ```bash
-  flux diff hr chrony --namespace chrony
-  kubeconform -strict -summary ./cluster/apps/chrony/chrony/app
-  ```
+### Cross-Service Dependencies
 
-- If pods crash or fail to start, capture pod details:
+```yaml
+# chrony cross-service dependencies
+service_dependencies:
+  chrony:
+    depends_on:
+      - kube-system/cilium
+    depended_by:
+      - All cluster nodes requiring time synchronization
+      - All time-sensitive applications
+      - Authentication systems
+      - Logging and monitoring systems
+    critical_path: true
+    health_check_command: "kubectl get pods -n chrony --no-headers | grep 'Running'"
+```
 
-  ```bash
-  kubectl -n chrony get pods
-  kubectl -n chrony describe pod <pod-name>
-  ```
+## Troubleshooting
 
-- For cluster-wide time drift, ensure nodes are configured to use the chrony service as NTP source.
+### Common Issues
 
-## Validation and Testing
+1. **NTP server connectivity failures**:
 
-<!-- markdownlint-disable MD013 -->
+   - **Symptom**: Time synchronization not working
+   - **Diagnosis**: Check NTP server connectivity and firewall rules
+   - **Resolution**: Verify NTP server addresses and network connectivity
 
-| Step                                                           | Purpose                                                                                          |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                                | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                            | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr chrony --namespace chrony`                       | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n chrony exec -it deploy/chrony -- chronyc tracking` | Confirms chrony synchronization status post-rollout.                                             |
-| `ntpq -p ${NTP_IP4}`                                           | Validates NTP service availability and peer synchronization.                                     |
+2. **Time drift issues**:
 
-<!-- markdownlint-enable MD013 -->
+   - **Symptom**: Significant time offset from NTP servers
+   - **Diagnosis**: Check chrony tracking and sources
+   - **Resolution**: Verify NTP server configuration and network latency
 
-## References and Cross-links
+3. **Resource constraints**:
 
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](../../../../cluster/flux/README.md)
-- OCI repository management: [cluster/flux/meta/repositories/oci/README.md](../../../../cluster/flux/meta/repositories/oci/README.md)
-- Cluster networking and LoadBalancer IPs: [cluster/apps/README.md](../../README.md)
-- Upstream chrony documentation: <https://chrony-project.org/>
-- Upstream dockurr/chrony image: <https://hub.docker.com/r/dockurr/chrony>
-- NTP protocol reference: <https://datatracker.ietf.org/doc/html/rfc5905>
+   - **Symptom**: Pods in Pending state or frequent restarts
+   - **Diagnosis**: Check resource requests vs available cluster resources
+   - **Resolution**: Adjust resource limits or scale cluster
+
+4. **Configuration errors**:
+
+   - **Symptom**: Chrony service not starting
+   - **Diagnosis**: Check configuration syntax and NTP server addresses
+   - **Resolution**: Verify values.yaml configuration
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update chrony using Flux
+flux reconcile kustomization chrony --with-source
+```
+
+### Configuration Management
+
+```bash
+# Update chrony configuration
+flux reconcile kustomization chrony --with-source
+
+# Verify configuration changes
+kubectl exec -n chrony <pod-name> -- cat /etc/chrony/chrony.conf
+```
+
+### MCP Integration
+
+- **Library ID**: `chrony-ntp-time-synchronization`
+- **Version**: `v4.2`
+- **Usage**: NTP time synchronization and management
+- **Citation**: Use `resolve-library-id` for chrony configuration and API references
+
+## References
+
+- [Chrony Documentation](https://chrony.tuxfamily.org/)
+- [NTP Protocol Specification](https://tools.ietf.org/html/rfc5905)
+- [Flux CD Documentation](https://fluxcd.io/flux/)
+- [Kubernetes Time Synchronization](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/)
+
+## Agent-Friendly Workflows
+
+This section provides decision trees and conditional logic for autonomous execution of chrony tasks.
+
+### chrony Health Check Workflow
+
+```yaml
+# chrony health check decision tree
+start: "check_chrony_pods"
+nodes:
+  check_chrony_pods:
+    question: "Are chrony pods running?"
+    command: "kubectl get pods -n chrony --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_time_synchronization"
+    no: "restart_chrony_pods"
+  check_time_synchronization:
+    question: "Is time synchronization working?"
+    command: 'kubectl exec -n chrony deployment/chrony -- chronyc tracking | grep ''System time'' | awk ''{print $4}'' | sed ''s/s//'' | awk ''{if ($1 < 0.1 && $1 > -0.1) print "OK"; else print "DRIFT"}'' | grep -c ''OK'''
+    validation: "grep -q '^1$'"
+    yes: "check_ntp_sources"
+    no: "fix_time_drift"
+  check_ntp_sources:
+    question: "Are NTP sources reachable?"
+    command: "kubectl exec -n chrony deployment/chrony -- chronyc sources | grep -c '^*'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "NO_SOURCES"}'' | grep -q ''OK'''
+    yes: "chrony_healthy"
+    no: "fix_ntp_sources"
+  restart_chrony_pods:
+    action: "Restart chrony pods"
+    next: "check_chrony_pods"
+  fix_time_drift:
+    action: "Check and fix time synchronization issues"
+    next: "check_time_synchronization"
+  fix_ntp_sources:
+    action: "Configure NTP sources and check connectivity"
+    next: "check_ntp_sources"
+  chrony_healthy:
+    action: "chrony time synchronization is healthy"
+    next: "end"
+end: "end"
+```
+
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for chrony documentation.
+- Confirm the catalog entry contains the documentation or API details needed for chrony operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers chrony documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed chrony configuration changes.
+
+### When chrony documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in chrony change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting chrony documentation.

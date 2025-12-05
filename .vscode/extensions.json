@@ -1,8 +1,13 @@
 {
   "recommendations": [
     "task.vscode-task",
+    "tim-koehler.helm-intellisense",
+    "redhat.vscode-yaml",
+    "mhutchie.git-graph",
     "blueglassblock.better-json5",
     "esbenp.prettier-vscode",
-    "kilocode.kilo-code"
+    "kilocode.kilo-code",
+    "hashicorp.terraform",
+    "bierner.markdown-mermaid"
   ]
 }

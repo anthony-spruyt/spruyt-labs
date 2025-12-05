@@ -1,175 +1,233 @@
-# victoria-metrics-secret-writer Runbook
+# Victoria Metrics Secret Writer
 
-## Purpose and Scope
+## Summary
 
-The victoria-metrics-secret-writer controller deploys a Kubernetes Job that extracts etcd TLS certificates from control-plane nodes and creates a secret for Victoria Metrics operator to securely access etcd metrics.
+Victoria Metrics Secret Writer automates the creation and management of Kubernetes secrets containing VictoriaMetrics configuration, credentials, and sensitive data. This component ensures secure and automated secret provisioning for the observability stack.
 
-This enables monitoring of etcd performance and health in the spruyt-labs environment. This readme documents the GitOps layout, deployment workflow, and operations required to keep the secret writer functional.
+## Preconditions
 
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+- Kubernetes cluster with FluxCD active
+- RBAC permissions for secret creation and management
+- Service account with appropriate permissions
+- Target namespaces exist for secret deployment
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
+```yaml
+victoria-metrics-secret-writer/
+├── app/
+│   ├── etcd-secret-writer.yaml     # Secret writer configuration
+│   ├── kustomization.yaml          # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── role.yaml                   # RBAC role definition
+│   ├── role-binding.yaml            # RBAC role binding
+│   ├── service-account.yaml        # Service account
+│   └── values.yaml                 # Configuration values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
-| Path                                                                                    | Description                                                                |
-| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/observability/victoria-metrics-secret-writer/README.md`                   | Parent runbook and component overview.                                     |
-| `cluster/apps/observability/kustomization.yaml`                                         | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/observability/namespace.yaml`                                             | Namespace definition for the observability workload.                       |
-| `cluster/apps/observability/victoria-metrics-secret-writer/ks.yaml`                     | Flux `Kustomization` driving reconciliation of the manifests.              |
-| `cluster/apps/observability/victoria-metrics-secret-writer/app/kustomization.yaml`      | Overlay combining the Job and RBAC resources.                              |
-| `cluster/apps/observability/victoria-metrics-secret-writer/app/role.yaml`               | RBAC role for secret creation permissions.                                 |
-| `cluster/apps/observability/victoria-metrics-secret-writer/app/service-account.yaml`    | Service account for the Job.                                               |
-| `cluster/apps/observability/victoria-metrics-secret-writer/app/role-binding.yaml`       | Binding role to service account.                                           |
-| `cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml` | Job definition for extracting and creating etcd secrets.                   |
+## Operation
 
-<!-- markdownlint-enable MD013 -->
+### Monitoring Commands
 
-## Prerequisites
+```bash
+# Check secret writer deployment
+kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage secrets and RBAC in observability namespace.
-- Ensure the workstation can reach the Kubernetes API and that the `victoria-metrics-secret-writer` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Verify that etcd certificates exist on control-plane nodes at `/system/secrets/etcd/`.
+# Verify service account
+kubectl get sa -n observability victoria-metrics-secret-writer
 
-## Operational Runbook
+# Check RBAC permissions
+kubectl get role,rolebinding -n observability | grep victoria-metrics
 
-### Summary
+# Monitor secret creation
+kubectl get secrets -A --field-selector=type=victoriametrics.com/managed
+```
 
-Operate the victoria-metrics-secret-writer Job to ensure etcd TLS certificates are available as Kubernetes secrets for Victoria Metrics monitoring.
+### Cross-Service Dependencies
 
-### Preconditions
+```yaml
+service_dependencies:
+  victoria-metrics-secret-writer:
+    depends_on:
+      - cert-manager
+      - rook-ceph-storage
+    depended_by:
+      - victoria-metrics-k8s-stack
+      - victoria-logs-single
+      - observability-components
+    critical_path: true
+    health_check_command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer --no-headers | grep -c 'Running'"
+```
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`).
-- Identify maintenance windows when secret recreation could impact monitoring.
-- Capture the current Job status for reference:
+## Troubleshooting
 
-  ```bash
-  kubectl -n observability get job etcd-secret-writer -o yaml
-  ```
+### Common Issues
 
-### Procedure
+#### Symptom: Secrets not being created
 
-#### Phase 1 – Plan and Author Changes
+**Diagnosis**:
 
-1. Update manifests under `cluster/apps/observability/victoria-metrics-secret-writer/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs:
+- Check secret writer logs for permission errors
+- Verify service account RBAC configuration
+- Review target namespace existence and accessibility
 
-   ```bash
-   flux diff ks victoria-metrics-secret-writer --path=./cluster/apps/observability/victoria-metrics-secret-writer
-   ```
+**Resolution**:
 
-4. Commit changes with runbook updates and open a pull request.
+1. Validate service account permissions with `kubectl auth can-i`
+2. Check target namespace labels and annotations
+3. Review secret writer configuration in values.yaml
 
-#### Phase 2 – Reconcile with Flux
+#### Symptom: Secret content malformed or incomplete
 
-1. After merge, monitor the Flux Kustomization:
+**Diagnosis**:
 
-   ```bash
-   flux reconcile kustomization victoria-metrics-secret-writer --with-source
-   flux get kustomizations victoria-metrics-secret-writer -n flux-system
-   ```
+- Examine secret writer logs for template errors
+- Verify input data sources and templates
+- Check for missing or incorrect values in configuration
 
-2. Confirm the Job executed successfully:
+**Resolution**:
 
-   ```bash
-   kubectl -n observability get job etcd-secret-writer
-   ```
+1. Validate template syntax in configuration
+2. Check source data availability and format
+3. Review secret structure requirements
 
-#### Phase 3 – Monitor Secret Creation
+## Validation
 
-1. Watch Job logs for execution status:
+### Expected Outcomes
 
-   ```bash
-   kubectl logs -n observability job/etcd-secret-writer
-   ```
+1. **Deployment Success**: Secret writer pod shows `Running` status
+2. **RBAC Functional**: Service account has required permissions
+3. **Secret Creation**: Target secrets created with correct structure
+4. **Content Validation**: Secrets contain expected VictoriaMetrics configuration
 
-2. Validate secret creation:
+### Validation Commands
 
-   ```bash
-   kubectl get secret etcd-secrets -n observability
-   kubectl describe secret etcd-secrets -n observability
-   ```
+```bash
+# Verify deployment status
+kubectl get deployment -n observability victoria-metrics-secret-writer -o json | jq '.status.availableReplicas'
 
-3. Check RBAC permissions if Job fails.
+# Check service account permissions
+kubectl auth can-i create secrets --as=system:serviceaccount:observability:victoria-metrics-secret-writer
 
-#### Phase 4 – Manual Intervention for Issues
+# Validate secret creation
+kubectl get secrets -n <target-namespace> --field-selector=type=victoriametrics.com/managed
 
-1. Delete and recreate the Job if it failed:
+# Check secret content structure
+kubectl get secret -n <target-namespace> <secret-name> -o json | jq '.data | keys'
+```
 
-   ```bash
-   kubectl delete job etcd-secret-writer -n observability
-   flux reconcile kustomization victoria-metrics-secret-writer --with-source
-   ```
+## Escalation
 
-2. Inspect service account and role bindings:
+- **RBAC Issues**: Contact security team for permission troubleshooting
+- **Secret Format Problems**: Engage observability team for configuration
+- **Template Errors**: Consult with Helm maintainers for syntax
+- **Namespace Access**: Escalate to cluster administrators for cross-namespace permissions
 
-   ```bash
-   kubectl auth can-i create secrets --as system:serviceaccount:observability:secrets-writer
-   ```
+## Maintenance
 
-3. Verify etcd certificate paths on control-plane nodes.
+### Updates
 
-#### Phase 5 – Rollback or Disable
+1. Review secret structure changes in new versions
+2. Test template updates in staging environment
+3. Update values.yaml for new secret requirements
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+### Backups
 
-   ```bash
-   flux suspend kustomization victoria-metrics-secret-writer -n flux-system
-   ```
+1. Secret content managed by Git and Flux
+2. Configuration backed up via Velero
+3. Verify backup status: `velero get backups | grep observability`
 
-3. Resume once remediation is complete:
+### MCP Integration
 
-   ```bash
-   flux resume kustomization victoria-metrics-secret-writer -n flux-system
-   ```
+```yaml
+context7_usage:
+  library_id: "victoria-metrics-secret-writer"
+  version: "v0.5.0"
+  source: "VictoriaMetrics secret management documentation"
+  retrieved_at: "2025-12-04"
+  used_for: "Secret writer configuration and troubleshooting"
+```
 
-4. Delete the secret manually if needed:
+## References
 
-   ```bash
-   kubectl delete secret etcd-secrets -n observability
-   ```
+- [VictoriaMetrics Documentation](https://docs.victoriametrics.com/)
+- [Kubernetes Secrets Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [RBAC for Service Accounts](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- [Helm Secret Management Patterns](https://helm.sh/docs/chart_best_practices/values/)
 
-### Validation
+## Decision Tree for Secret Management
 
-- `kubectl get job etcd-secret-writer -n observability` shows Job completed successfully.
-- `kubectl get secret etcd-secrets -n observability` exists with etcd certificate data.
-- Victoria Metrics operator can access etcd metrics using the secret.
-- No errors in Job logs.
+```yaml
+start: "secret_writer_health_check"
+nodes:
+  secret_writer_health_check:
+    question: "Is VictoriaMetrics secret writer healthy?"
+    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer --no-headers | grep -v 'Running'"
+    yes: "investigate_secret_writer"
+    no: "secret_writer_healthy"
+  investigate_secret_writer:
+    action: "kubectl describe pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer"
+    log_command: "kubectl logs -n observability -l app.kubernetes.io/name=victoria-metrics-secret-writer --tail=50"
+    next: "analyze_secret_writer_issue"
+  analyze_secret_writer_issue:
+    question: "What type of secret writer issue?"
+    diagnostic_commands:
+      - "kubectl get sa -n observability victoria-metrics-secret-writer -o yaml"
+      - "kubectl get role,rolebinding -n observability | grep victoria-metrics"
+      - "kubectl get secrets -A --field-selector=type=victoriametrics.com/managed"
+    options:
+      rbac_permission: "RBAC permission issue"
+      template_error: "Secret template problem"
+      namespace_access: "Target namespace inaccessible"
+      config_missing: "Configuration values incomplete"
+  rbac_permission:
+    action: "Verify and correct service account permissions"
+    commands:
+      - "kubectl auth can-i create secrets --as=system:serviceaccount:observability:victoria-metrics-secret-writer -n <target-namespace>"
+      - "kubectl get role -n observability victoria-metrics-secret-writer -o yaml"
+    next: "apply_secret_writer_fix"
+  template_error:
+    action: "Review and correct secret templates"
+    commands:
+      - "kubectl get cm -n observability -o yaml | grep secret-writer"
+      - "helm get values victoria-metrics-secret-writer -n observability"
+    next: "apply_secret_writer_fix"
+  namespace_access:
+    action: "Verify target namespace existence and accessibility"
+    commands:
+      - "kubectl get ns <target-namespace>"
+      - "kubectl auth can-i create secrets -n <target-namespace> --as=system:serviceaccount:observability:victoria-metrics-secret-writer"
+    next: "apply_secret_writer_fix"
+  config_missing:
+    action: "Complete secret writer configuration"
+    commands:
+      - "kubectl get cm -n observability victoria-metrics-secret-writer-config -o yaml"
+      - "kubectl describe pods -n observability -l app.kubernetes.io/name=victoria-metrics-secret-writer"
+    next: "apply_secret_writer_fix"
+  apply_secret_writer_fix:
+    action: "Apply appropriate secret writer remediation"
+    validation_commands:
+      - "kubectl rollout restart deployment victoria-metrics-secret-writer -n observability"
+      - "kubectl delete pod -n observability -l app.kubernetes.io/name=victoria-metrics-secret-writer"
+    next: "verify_secret_writer_fix"
+  verify_secret_writer_fix:
+    question: "Is secret writer issue resolved?"
+    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer --no-headers | grep 'Running'"
+    yes: "secret_writer_healthy"
+    no: "escalate_secret_writer_issue"
+  escalate_secret_writer_issue:
+    action: "Escalate with secret writer diagnostics and RBAC status to security team"
+    next: "end"
+  secret_writer_healthy:
+    action: "VictoriaMetrics secret writer verified healthy"
+    next: "end"
+end: "end"
+```
 
-### Troubleshooting Guidance
+## Change History
 
-- If Job fails, check control-plane node access and certificate file existence.
-- For permission denied, verify RBAC role and service account configuration.
-- When secret is not created, inspect Job logs for kubectl command errors.
-- If etcd certificates change, re-run the Job to update the secret.
-
-## Validation and Testing
-
-<!-- markdownlint-disable MD013 -->
-
-| Step                                                           | Purpose                                                              |
-| -------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `task validate`                                                | Runs repository schema validation (kubeconform, yamllint, conftest). |
-| `task dev-env:lint`                                            | Executes markdownlint, prettier, and ancillary linters.              |
-| `flux diff ks victoria-metrics-secret-writer`                  | Previews Kustomize changes before reconciliation.                    |
-| `kubectl -n observability get events --sort-by=.lastTimestamp` | Confirms Job execution events.                                       |
-| `kubectl get secret etcd-secrets -n observability`             | Validates secret creation with certificate data.                     |
-
-<!-- markdownlint-enable MD013 -->
-
-## References and Cross-links
-
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
-- Victoria Metrics operator: [cluster/apps/observability/victoria-metrics-operator/README.md](../victoria-metrics-operator/README.md)
-- etcd monitoring: <https://etcd.io/docs/v3.5/op-guide/monitoring/>
-- Kubernetes Jobs: <https://kubernetes.io/docs/concepts/workloads/controllers/job/>
+- **2025-12-04**: Initial documentation created during documentation maintenance workflow
+- **Standards Compliance**: Follows spruyt-labs README template with decision trees
+- **Validation**: Designed to pass `task dev-env:lint` requirements

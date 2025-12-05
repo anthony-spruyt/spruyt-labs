@@ -1,170 +1,258 @@
-# vaultwarden Runbook
+# vaultwarden - Password Manager
 
-## Purpose and Scope
+## Overview
 
-Vaultwarden is a Bitwarden-compatible server written in Rust, providing secure password management and credential storage for individuals and teams. This readme documents the GitOps layout, deployment workflow, and operations for maintaining Vaultwarden in spruyt-labs.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Vaultwarden is an unofficial Bitwarden-compatible server implementation that provides secure password management for the spruyt-labs homelab infrastructure. It offers a self-hosted solution for storing and managing sensitive credentials with end-to-end encryption.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                                     | Description                                                                |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `cluster/apps/vaultwarden/README.md`                                     | This runbook and component overview.                                       |
-| `cluster/apps/vaultwarden/kustomization.yaml`                            | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/vaultwarden/namespace.yaml`                                | Namespace definition for the vaultwarden workload.                         |
-| `cluster/apps/vaultwarden/vaultwarden/ks.yaml`                           | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/vaultwarden/vaultwarden/app/kustomization.yaml`            | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/vaultwarden/vaultwarden/app/release.yaml`                  | Flux `HelmRelease` referencing the bjw-s-labs app-template chart.          |
-| `cluster/apps/vaultwarden/vaultwarden/app/values.yaml`                   | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/vaultwarden/vaultwarden/app/network-policies.yaml`         | Network policies for secure communication.                                 |
-| `cluster/apps/vaultwarden/vaultwarden/app/persistent-volume-claims.yaml` | PVC for data persistence.                                                  |
-| `cluster/flux/meta/repositories/helm/bjw-s-charts.yaml`                  | Helm repository definition pinning the upstream app-template source.       |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+vaultwarden/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage password management services.
-- Ensure the workstation can reach the Kubernetes API and that the `vaultwarden` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Vaultwarden secrets must be available via external-secrets.
+- Kubernetes cluster with Flux CD installed
+- Persistent storage configured for data persistence
+- TLS certificates available for secure connections
+- SMTP server configured for email notifications
+- Rook Ceph storage provisioned (dependency)
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the Vaultwarden Helm release to provide secure password management and credential storage.
+1. **Password manager management**:
 
-### Preconditions
+   - Access vaultwarden web interface
+   - Monitor user authentication and data storage
+   - Manage backup and restore procedures
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n vaultwarden get helmrelease vaultwarden -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/vaultwarden/vaultwarden/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+2. **Persistent volume monitoring**:
 
    ```bash
-   flux diff hr vaultwarden --namespace vaultwarden
+   # Check persistent volume claims
+   kubectl get pvc -n vaultwarden
+
+   # Verify volume binding
+   kubectl get pv | grep vaultwarden
    ```
 
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+3. **Certificate renewal monitoring**:
 
    ```bash
-   flux reconcile kustomization vaultwarden --with-source
-   flux get kustomizations vaultwarden -n flux-system
+   # Check certificate expiration
+   kubectl get certificates -n vaultwarden -o wide
+
+   # Check certificate events
+   kubectl get events -n vaultwarden | grep certificate
    ```
 
-2. Confirm the Helm release upgrade succeeded:
+### Decision Trees
 
-   ```bash
-   flux get helmrelease vaultwarden -n vaultwarden
-   ```
+```yaml
+# vaultwarden operational decision tree
+start: "vaultwarden_health_check"
+nodes:
+  vaultwarden_health_check:
+    question: "Is vaultwarden healthy?"
+    command: "kubectl get pods -n vaultwarden --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "vaultwarden_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n vaultwarden | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      storage_issue: "Persistent volume problem"
+      config_error: "Configuration mismatch"
+      resource_constraint: "Resource limitation"
+      network_issue: "Network connectivity"
+      tls_issue: "TLS certificate problem"
+  storage_issue:
+    action: "Check PVC and PV: kubectl get pvc -n vaultwarden"
+    next: "apply_fix"
+  config_error:
+    action: "Review values.yaml and Helm configuration"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  network_issue:
+    action: "Investigate network policies and connectivity"
+    next: "apply_fix"
+  tls_issue:
+    action: "Check certificate status: kubectl get certificates -n vaultwarden"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n vaultwarden --no-headers | grep 'Running'"
+    yes: "vaultwarden_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  vaultwarden_healthy:
+    action: "vaultwarden verified healthy"
+    next: "end"
+end: "end"
+```
 
-#### Phase 3 – Monitor Vaultwarden Operations
+### Cross-Service Dependencies
 
-1. Watch pod status and logs:
+```yaml
+# vaultwarden cross-service dependencies
+service_dependencies:
+  vaultwarden:
+    depends_on:
+      - rook-ceph/rook-ceph-cluster
+      - traefik/traefik
+      - cert-manager/cert-manager
+    depended_by:
+      - Users requiring password management
+      - Authentication systems
+      - Security workflows
+    critical_path: true
+    health_check_command: "kubectl get pods -n vaultwarden --no-headers | grep 'Running'"
+```
 
-   ```bash
-   kubectl get pods -n vaultwarden -l app.kubernetes.io/name=vaultwarden
-   kubectl logs -n vaultwarden deployment/vaultwarden
-   ```
+## Troubleshooting
 
-2. Check service endpoints:
+### Common Issues
 
-   ```bash
-   kubectl get svc -n vaultwarden vaultwarden
-   ```
+1. **Persistent volume binding failures**:
 
-3. Access admin interface (if enabled).
+   - **Symptom**: Pods stuck in Pending state
+   - **Diagnosis**: Check PVC status and storage class availability
+   - **Resolution**: Verify Rook Ceph storage provisioning and PVC configuration
 
-#### Phase 4 – Manual Password Operations
+2. **TLS certificate issues**:
 
-1. Check database integrity.
-2. Monitor user registrations and logins.
-3. Verify backup procedures for encrypted data.
+   - **Symptom**: Web interface connection failures
+   - **Diagnosis**: Check cert-manager certificate status and TLS configuration
+   - **Resolution**: Verify certificate DNS names and issuer configuration
 
-#### Phase 5 – Rollback or Disable
+3. **Resource constraints**:
 
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+   - **Symptom**: Pods in Pending state or frequent restarts
+   - **Diagnosis**: Check resource requests vs available cluster resources
+   - **Resolution**: Adjust resource limits or scale cluster
 
-   ```bash
-   flux suspend kustomization vaultwarden -n flux-system
-   flux suspend helmrelease vaultwarden -n vaultwarden
-   ```
+4. **Network connectivity issues**:
 
-3. Resume once remediation is complete:
+   - **Symptom**: Web interface inaccessible
+   - **Diagnosis**: Check network policies and ingress configuration
+   - **Resolution**: Verify network connectivity and firewall rules
 
-   ```bash
-   flux resume kustomization vaultwarden -n flux-system
-   flux resume helmrelease vaultwarden -n vaultwarden
-   ```
+## Maintenance
 
-4. Scale deployments to zero as a last resort:
+### Updates
 
-   ```bash
-   kubectl -n vaultwarden scale deploy/vaultwarden --replicas=0
-   ```
+```bash
+# Update vaultwarden using Flux
+flux reconcile kustomization vaultwarden --with-source
+```
 
-### Validation
+### Backups
 
-- `kubectl get pods -n vaultwarden` shows vaultwarden pods in Running state.
-- `kubectl get svc -n vaultwarden` shows vaultwarden service available.
-- `flux get helmrelease vaultwarden -n vaultwarden` reports `Ready=True` with no pending upgrades.
-- Users can access the web interface and manage passwords.
+```bash
+# Verify persistent volume backups
+kubectl get pvc -n vaultwarden
 
-### Troubleshooting Guidance
+# Check backup status if using Velero
+kubectl get backups -n vaultwarden
+```
 
-- If login fails, check admin token and user configurations.
-- For database issues, verify PVC and data persistence.
-- When the Helm release fails to deploy, check rendered manifests:
+### MCP Integration
 
-  ```bash
-  flux diff hr vaultwarden --namespace vaultwarden
-  kubeconform -strict -summary ./cluster/apps/vaultwarden/vaultwarden/app
-  ```
+- **Library ID**: `vaultwarden-password-management`
+- **Version**: `v1.29.0`
+- **Usage**: Secure password storage and management
+- **Citation**: Use `resolve-library-id` for vaultwarden configuration and API references
 
-- If pods crash, inspect logs and resource limits.
+## References
 
-## Validation and Testing
+- [Vaultwarden Documentation](https://github.com/dani-garcia/vaultwarden)
+- [Bitwarden API Documentation](https://bitwarden.com/help/api/)
+- [Flux CD Documentation](https://fluxcd.io/flux/)
+- [Rook Ceph Documentation](https://rook.io/docs/rook/latest/)
 
-<!-- markdownlint-disable MD013 -->
+## Agent-Friendly Workflows
 
-| Step                                                          | Purpose                                                                                          |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                               | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                           | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr vaultwarden --namespace vaultwarden`            | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl get pods -n vaultwarden`                             | Validates pod deployment and readiness.                                                          |
-| `curl http://vaultwarden.vaultwarden.svc.cluster.local/alive` | Tests service health.                                                                            |
+This section provides decision trees and conditional logic for autonomous execution of vaultwarden tasks.
 
-<!-- markdownlint-enable MD013 -->
+### vaultwarden Health Check Workflow
 
-## References and Cross-links
+```yaml
+# vaultwarden health check decision tree
+start: "check_vaultwarden_pods"
+nodes:
+  check_vaultwarden_pods:
+    question: "Are vaultwarden pods running?"
+    command: "kubectl get pods -n vaultwarden --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_web_interface"
+    no: "restart_vaultwarden_pods"
+  check_web_interface:
+    question: "Is vaultwarden web interface accessible?"
+    command: "kubectl exec -n vaultwarden deployment/vaultwarden -- curl -s -I http://localhost:80 | grep -c 'HTTP/1.1 200'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "WEB_FAIL"}'' | grep -q ''OK'''
+    yes: "check_database"
+    no: "fix_web_interface"
+  check_database:
+    question: "Is database connectivity working?"
+    command: "kubectl logs -n vaultwarden -l app.kubernetes.io/name=vaultwarden --tail=20 | grep -c 'Database.*migrated\\|Starting.*migrations'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "DB_FAIL"}'' | grep -q ''OK'''
+    yes: "vaultwarden_healthy"
+    no: "fix_database_connection"
+  restart_vaultwarden_pods:
+    action: "Restart vaultwarden pods"
+    next: "check_vaultwarden_pods"
+  fix_web_interface:
+    action: "Check vaultwarden web server configuration"
+    next: "check_web_interface"
+  fix_database_connection:
+    action: "Check database configuration and connectivity"
+    next: "check_database"
+  vaultwarden_healthy:
+    action: "Vaultwarden password manager is healthy"
+    next: "end"
+end: "end"
+```
 
-- Runbook standards: [Repository root readme](/README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](/cluster/apps/flux-system/flux-instance/README.md)
-- Security services: [cluster/apps/README.md](/cluster/apps/README.md)
-- Vaultwarden documentation: <https://github.com/dani-garcia/vaultwarden>
-- bjw-s app-template Helm chart: <https://github.com/bjw-s-labs/helm-charts/tree/main/charts/library/common>
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for vaultwarden documentation.
+- Confirm the catalog entry contains the documentation or API details needed for vaultwarden operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers vaultwarden documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed vaultwarden configuration changes.
+
+### When vaultwarden documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in vaultwarden change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting vaultwarden documentation.

@@ -1,208 +1,270 @@
-# cilium Runbook
+# Cilium - Networking and Security
 
 ## Purpose and Scope
 
-The cilium deployment provides the Container Network Interface (CNI) and network policy engine for the Kubernetes cluster. It includes advanced networking features such as BGP control plane for routing, Hubble for observability, Gateway API support, and kube-proxy replacement for improved performance and security.
+Cilium provides advanced networking, security, and observability for the spruyt-labs Kubernetes cluster using eBPF technology, serving as the primary CNI and network security solution.
 
 Objectives:
 
-- Describe the GitOps layout, deployment workflow, and operations required to keep the Cilium CNI healthy.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the repository runbook standards.
+- Provide high-performance CNI networking for Kubernetes workloads
+- Implement network policies for microsegmentation and security
+- Enable BGP routing for integration with external networks
+- Provide load balancing capabilities for services
+- Offer deep observability and monitoring of network traffic
+
+## Overview
+
+Cilium provides networking, security, and observability for Kubernetes using eBPF technology. It serves as the CNI (Container Network Interface) for the spruyt-labs cluster, providing network connectivity, load balancing, network policies, and security features.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                          | Description                                                                |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/kube-system/README.md`                          | This runbook and component overview.                                       |
-| `cluster/apps/kube-system/kustomization.yaml`                 | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/kube-system/cilium/ks.yaml`                     | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/kube-system/cilium/app/kustomization.yaml`      | Overlay combining the HelmRelease, ConfigMap, and BGP resources.           |
-| `cluster/apps/kube-system/cilium/app/release.yaml`            | Flux `HelmRelease` referencing the Cilium Helm chart.                      |
-| `cluster/apps/kube-system/cilium/app/values.yaml`             | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/kube-system/cilium/app/kustomizeconfig.yaml`    | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/apps/kube-system/cilium/app/bgp-cluster.yaml`        | BGP cluster configuration for routing announcements.                       |
-| `cluster/apps/kube-system/cilium/app/bgp-peer.yaml`           | BGP peer definitions for external routers.                                 |
-| `cluster/apps/kube-system/cilium/app/bgp-advertisements.yaml` | BGP advertisement policies for service and pod CIDRs.                      |
-| `cluster/apps/kube-system/cilium/app/cluster-lb-ip-pool.yaml` | LoadBalancer IP pool configuration.                                        |
-| `cluster/flux/meta/repositories/cilium-charts.yaml`           | Helm repository definition pinning the upstream Cilium source.             |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+cilium/
+├── app/
+│   ├── bgp-advertisements.yaml      # BGP route advertisements
+│   ├── bgp-cluster.yaml            # BGP cluster configuration
+│   ├── bgp-peer.yaml               # BGP peer configuration
+│   ├── cluster-lb-ip-pool.yaml     # Load balancer IP pool
+│   ├── kustomization.yaml          # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage CNI and network policies.
-- Ensure the workstation can reach the Kubernetes API and that the `cilium` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- BGP peers and routing infrastructure must be configured for BGP features.
-
-## Operational Runbook
-
-### Summary
-
-Operate the cilium Helm release to maintain cluster networking, including CNI functionality, network policies, BGP routing, and observability through Hubble.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when CNI updates could impact pod networking.
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n kube-system get helmrelease cilium -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/kube-system/cilium/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
-
-   ```bash
-   flux diff hr cilium --namespace kube-system
-   ```
-
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
-
-   ```bash
-   flux reconcile kustomization cilium --with-source
-   flux get kustomizations cilium -n flux-system
-   ```
-
-2. Confirm the Helm release upgrade succeeded:
-
-   ```bash
-   flux get helmrelease cilium -n kube-system
-   ```
-
-#### Phase 3 – Monitor CNI Health
-
-1. Watch Cilium pods and status:
-
-   ```bash
-   kubectl get pods -n kube-system -l k8s-app=cilium
-   cilium status
-   ```
-
-2. Validate BGP peering and routing:
-
-   ```bash
-   cilium bgp peers
-   cilium bgp routes
-   ```
-
-3. Check Hubble connectivity:
-
-   ```bash
-   hubble status
-   ```
-
-#### Phase 4 – Manual Intervention for Network Issues
-
-1. Inspect Cilium logs for connectivity problems:
-
-   ```bash
-   kubectl logs -n kube-system ds/cilium
-   ```
-
-2. Check node network policies and endpoints:
-
-   ```bash
-   cilium endpoint list
-   cilium policy get
-   ```
-
-3. Restart Cilium daemonset if needed:
-
-   ```bash
-   kubectl rollout restart ds/cilium -n kube-system
-   ```
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization cilium -n flux-system
-   flux suspend helmrelease cilium -n kube-system
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization cilium -n flux-system
-   flux resume helmrelease cilium -n kube-system
-   ```
-
-4. Consider draining nodes for major CNI changes as a last resort.
+- Kubernetes cluster with Flux CD installed
+- BGP-capable network infrastructure
+- IPv4/IPv6 connectivity configured
+- Node networking properly configured
 
 ### Validation
 
-- `cilium status` reports all nodes ready and connected.
-- `kubectl get nodes` shows all nodes Ready with network connectivity.
-- `flux get helmrelease cilium -n kube-system` reports `Ready=True` with no pending upgrades.
-- BGP peers show established state and routes are advertised correctly.
+```bash
+# Validate Cilium installation
+kubectl get pods -n kube-system -l k8s-app=cilium
 
-### Troubleshooting Guidance
+# Check Cilium status
+cilium status
 
-- If pods cannot communicate, check Cilium network policies and endpoint status:
+# Validate network connectivity
+kubectl get nodes -o wide
+```
 
-  ```bash
-  cilium endpoint list
-  cilium policy get
-  ```
+## Operation
 
-- For BGP issues, verify peer configurations and routing tables:
+### Procedures
 
-  ```bash
-  cilium bgp peers
-  ip route show
-  ```
+1. **Network policy management**:
 
-- When the Helm release fails to deploy, check rendered manifests:
+```bash
+# Apply network policy
+kubectl apply -f network-policy.yaml
 
-  ```bash
-  flux diff hr cilium --namespace kube-system
-  kubeconform -strict -summary ./cluster/apps/kube-system/cilium/app
-  ```
+# Check network policies
+kubectl get networkpolicies -A
+```
 
-- If Cilium pods crash, capture logs and describe the pod:
+2. **BGP monitoring**:
 
-  ```bash
-  kubectl -n kube-system get pods
-  kubectl -n kube-system describe pod <pod-name>
-  ```
+```bash
+# Check BGP peer status
+kubectl get bgppeers -n kube-system -o wide
 
-- For Hubble issues, consult Hubble documentation and check relay/UI pods.
+# Check BGP advertisements
+kubectl get bgpadvertisements -n kube-system
+```
 
-## Validation and Testing
+3. **Load balancer management**:
 
-<!-- markdownlint-disable MD013 -->
+```bash
+# Check load balancer services
+kubectl get svc -A --field-selector spec.type=LoadBalancer
 
-| Step                                          | Purpose                                                                                          |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                               | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                           | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr cilium --namespace kube-system` | Previews rendered Helm changes before reconciliation.                                            |
-| `cilium status`                               | Validates CNI health and node connectivity.                                                      |
-| `kubectl get nodes`                           | Confirms all nodes are network-ready.                                                            |
+# Check load balancer IP allocation
+kubectl get ciliumloadbalancerippools -n kube-system
+```
 
-<!-- markdownlint-enable MD013 -->
+### Decision Trees
 
-## References and Cross-links
+```yaml
+# Cilium operational decision tree
+start: "cilium_health_check"
+nodes:
+  cilium_health_check:
+    question: "Is Cilium healthy?"
+    command: "kubectl get pods -n kube-system -l k8s-app=cilium --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "cilium_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n kube-system -l k8s-app=cilium | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      bgp_config_error: "BGP configuration problem"
+      network_policy_conflict: "Network policy conflict"
+      eBPF_loading_failure: "eBPF module loading failure"
+      node_connectivity: "Node connectivity issue"
+  bgp_config_error:
+    action: "Check BGP configuration: kubectl get bgppeers -n kube-system -o yaml"
+    next: "apply_fix"
+  network_policy_conflict:
+    action: "Review network policies: kubectl get networkpolicies -A -o yaml"
+    next: "apply_fix"
+  eBPF_loading_failure:
+    action: "Check eBPF compatibility and node status"
+    next: "apply_fix"
+  node_connectivity:
+    action: "Investigate node-to-node connectivity and MTU settings"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n kube-system -l k8s-app=cilium --no-headers | grep 'Running'"
+    yes: "cilium_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  cilium_healthy:
+    action: "Cilium verified healthy"
+    next: "end"
+end: "end"
+```
 
-- Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
-- Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
-- Upstream Cilium documentation: <https://docs.cilium.io/>
-- BGP control plane documentation: <https://docs.cilium.io/en/stable/network/bgp/>
-- Hubble documentation: <https://docs.cilium.io/en/stable/observability/hubble/>
+### Cross-Service Dependencies
+
+```yaml
+# Cilium cross-service dependencies
+service_dependencies:
+  cilium:
+    depends_on:
+      - kube-system/core-dns
+      - traefik/traefik
+    depended_by:
+      - All workloads requiring network connectivity
+      - All services requiring load balancing
+      - All applications using network policies
+    critical_path: true
+    health_check_command: "kubectl get pods -n kube-system -l k8s-app=cilium --no-headers | grep 'Running'"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **BGP session failures**:
+
+   - **Symptom**: BGP peers not establishing sessions
+   - **Diagnosis**: Check BGP configuration and peer reachability
+   - **Resolution**: Verify BGP peer IP addresses and AS numbers
+
+2. **Network policy enforcement issues**:
+
+   - **Symptom**: Unexpected network connectivity
+   - **Diagnosis**: Review network policy rules and labels
+   - **Resolution**: Verify policy selectors and rule definitions
+
+3. **eBPF loading failures**:
+   - **Symptom**: Cilium pods failing to start
+   - **Diagnosis**: Check kernel compatibility and eBPF support
+   - **Resolution**: Verify node kernel version and eBPF requirements
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update Cilium Helm chart
+helm repo update
+helm upgrade cilium cilium/cilium -n kube-system -f values.yaml
+```
+
+### BGP Management
+
+```bash
+# Update BGP configuration
+kubectl apply -f updated-bgp-config.yaml
+
+# Check BGP route advertisements
+kubectl get bgpadvertisements -n kube-system -o wide
+```
+
+### Backups
+
+```bash
+# Backup Cilium configuration
+kubectl get bgppeers -n kube-system -o yaml > cilium-bgp-peers-backup.yaml
+kubectl get bgpadvertisements -n kube-system -o yaml > cilium-bgp-ads-backup.yaml
+kubectl get ciliumnetworkpolicies -A -o yaml > cilium-network-policies-backup.yaml
+
+# Restore from backup
+kubectl apply -f cilium-bgp-peers-backup.yaml
+kubectl apply -f cilium-bgp-ads-backup.yaml
+kubectl apply -f cilium-network-policies-backup.yaml
+```
+
+### MCP Integration
+
+- **Library ID**: `cilium`
+- **Version**: `v1.15.5`
+- **Usage**: Kubernetes networking, security, and observability
+- **Citation**: Use `resolve-library-id` for Cilium configuration and troubleshooting
+
+## References
+
+- [Cilium Documentation](https://docs.cilium.io/)
+- [eBPF Documentation](https://ebpf.io/)
+- [BGP Configuration Guide](https://docs.cilium.io/en/stable/network/bgp/)
+
+## Agent-Friendly Workflows
+
+This section provides decision trees and conditional logic for autonomous execution of Cilium tasks.
+
+### Network Health Check Workflow
+
+```bash
+If kubectl get pods -n kube-system -l k8s-app=cilium --no-headers | grep -v 'Running' > /dev/null
+Then:
+  Run kubectl describe pods -n kube-system -l k8s-app=cilium
+  Expected output: Pod details and events
+  If events show connectivity issues:
+    Run kubectl get ciliumnetworkpolicies -A
+    Expected output: Network policy list
+    Recovery: Review and adjust network policies
+  Else:
+    Proceed to next check
+Else:
+  Proceed to next check
+```
+
+## Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Cilium documentation.
+- Confirm the catalog entry contains the documentation or API details needed for Cilium operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers Cilium documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed Cilium configuration changes.
+
+### When Cilium documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in Cilium change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting Cilium documentation.

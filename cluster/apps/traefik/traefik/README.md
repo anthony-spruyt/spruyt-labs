@@ -1,213 +1,283 @@
-# traefik Runbook
+# Traefik - Ingress Controller
 
-## Purpose and Scope
+## Overview
 
-The traefik deployment provides the Traefik ingress controller for the Kubernetes cluster, handling HTTP/HTTPS routing, load balancing, and SSL termination. It integrates with Kubernetes CRDs for dynamic configuration and supports Gateway API for advanced routing features.
-
-Objectives:
-
-- Describe the GitOps layout, deployment workflow, and operations required to keep the Traefik ingress controller healthy.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the repository runbook standards.
+Traefik is a modern HTTP reverse proxy and load balancer that serves as the ingress controller for the spruyt-labs Kubernetes cluster. It provides routing, load balancing, TLS termination, and observability for all incoming traffic to the cluster.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                  | Description                                                                        |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `cluster/apps/traefik/README.md`                      | This runbook and component overview.                                               |
-| `cluster/apps/traefik/kustomization.yaml`             | Top-level Kustomize entry that namespaces resources and delegates to Flux.         |
-| `cluster/apps/traefik/namespace.yaml`                 | Namespace definition for the traefik workload.                                     |
-| `cluster/apps/traefik/traefik/ks.yaml`                | Flux `Kustomization` driving reconciliation of the HelmRelease and ingress routes. |
-| `cluster/apps/traefik/traefik/app/kustomization.yaml` | Overlay combining the HelmRelease and generated values ConfigMap.                  |
-| `cluster/apps/traefik/traefik/app/release.yaml`       | Flux `HelmRelease` referencing the Traefik Helm chart.                             |
-| `cluster/apps/traefik/traefik/app/values.yaml`        | Rendered values supplied to the chart via ConfigMap.                               |
-| `cluster/apps/traefik/traefik/ingress/`               | Ingress route configurations for various services.                                 |
-| `cluster/flux/meta/repositories/traefik-charts.yaml`  | Helm repository definition pinning the upstream Traefik source.                    |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+traefik/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ingress/                        # Ingress route configurations
+│   ├── kustomization.yaml          # Ingress kustomization
+│   └── <workload>/                # Per-workload ingress routes
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage ingress resources and certificates.
-- Ensure the workstation can reach the Kubernetes API and that the `traefik` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Wildcard TLS certificate must be available for SSL termination.
+- Kubernetes cluster with Flux CD installed
+- cert-manager deployed for TLS certificate management
+- DNS properly configured for domains
+- Load balancer IP addresses available
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the traefik Helm release to maintain ingress routing and load balancing, ensuring secure and efficient traffic handling for cluster services.
+1. **Ingress route management**:
 
-### Preconditions
+```bash
+# Add new ingress route
+kubectl apply -f ingress/<workload>/ingress-route.yaml
 
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when ingress updates could impact service availability.
-- Capture the current Helm release revision for rollback reference:
+# Check ingress route status
+kubectl get ingressroutes -A -o wide
+```
 
-  ```bash
-  kubectl -n traefik get helmrelease traefik -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/traefik/traefik/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+2. **TLS certificate monitoring**:
 
    ```bash
-   flux diff hr traefik --namespace traefik
-   ```
-
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomizations:
-
-   ```bash
-   flux reconcile kustomization traefik --with-source
-   flux reconcile kustomization traefik-ingress --with-source
-   flux get kustomizations -n flux-system -l app.kubernetes.io/name=traefik
-   ```
-
-2. Confirm the Helm release upgrade succeeded:
-
-   ```bash
-   flux get helmrelease traefik -n traefik
-   ```
-
-#### Phase 3 – Monitor Ingress Health
-
-1. Watch Traefik pods and services:
-
-   ```bash
-   kubectl get pods -n traefik -l app.kubernetes.io/name=traefik
-   kubectl get svc -n traefik
-   ```
-
-2. Validate ingress routes and certificates:
-
-   ```bash
-   kubectl get ingress -A
-   kubectl get ingressroute -A
+   # Check certificate status
    kubectl get certificates -A
+
+   # Check certificate events
+   kubectl get events -A | grep certificate
    ```
 
-3. Check Traefik dashboard and metrics:
+3. **Traefik dashboard access**:
 
-   ```bash
-   kubectl port-forward -n traefik svc/traefik 8080:80
-   # Access dashboard at http://localhost:8080/dashboard/
-   ```
+```bash
+# Access Traefik dashboard
+kubectl port-forward svc/traefik -n traefik 9000:9000
 
-#### Phase 4 – Manual Intervention for Routing Issues
-
-1. Inspect Traefik logs for routing errors:
-
-   ```bash
-   kubectl logs -n traefik deploy/traefik
-   ```
-
-2. Check ingress resource status and events:
-
-   ```bash
-   kubectl describe ingressroute <name>
-   kubectl get events -n traefik --sort-by=.lastTimestamp
-   ```
-
-3. Restart Traefik deployment if needed:
-
-   ```bash
-   kubectl rollout restart deploy/traefik -n traefik
-   ```
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization traefik -n flux-system
-   flux suspend kustomization traefik-ingress -n flux-system
-   flux suspend helmrelease traefik -n traefik
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization traefik -n flux-system
-   flux resume kustomization traefik-ingress -n flux-system
-   flux resume helmrelease traefik -n traefik
-   ```
-
-4. Consider scaling the deployment to zero as a last resort:
-
-   ```bash
-   kubectl -n traefik scale deploy/traefik --replicas=0
-   ```
+# Check Traefik metrics
+kubectl port-forward svc/traefik -n traefik 8082:8082
+```
 
 ### Validation
 
-- `kubectl get svc -n traefik` shows traefik service with external IP.
-- `kubectl get pods -n traefik -l app.kubernetes.io/name=traefik` reports Running pods.
-- `flux get helmrelease traefik -n traefik` reports `Ready=True` with no pending upgrades.
-- HTTPS endpoints are accessible and certificates are valid.
+Run the following commands to validate the procedures:
 
-### Troubleshooting Guidance
+```bash
+# Validate ingress route management
+kubectl get ingressroutes -A -o wide
 
-- If ingress routes are not working, check Traefik configuration and CRD support:
+# Expected: Ingress routes listed with status
 
-  ```bash
-  kubectl get ingressroute -A -o yaml
-  ```
+# Validate TLS certificate monitoring
+kubectl get certificates -A
 
-- For SSL issues, verify certificate secrets and TLS store configuration:
+# Expected: Certificates listed
 
-  ```bash
-  kubectl get secret -n traefik wildcard-${EXTERNAL_DOMAIN/./-}-tls
-  ```
+# Validate Traefik dashboard access
+kubectl port-forward svc/traefik -n traefik 9000:9000
 
-- When the Helm release fails to deploy, check rendered manifests:
+# Expected: Port forward successful
+```
 
-  ```bash
-  flux diff hr traefik --namespace traefik
-  kubeconform -strict -summary ./cluster/apps/traefik/traefik/app
-  ```
+### Decision Trees
 
-- If pods crash, capture logs and describe the pod:
+```yaml
+# Traefik operational decision tree
+start: "traefik_health_check"
+nodes:
+  traefik_health_check:
+    question: "Is Traefik healthy?"
+    command: "kubectl get pods -n traefik --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "traefik_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n traefik | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      ingress_route_misconfig: "Ingress route misconfiguration"
+      tls_cert_issue: "TLS certificate problem"
+      load_balancer_failure: "Load balancer connectivity issue"
+      resource_constraint: "Resource limitation"
+  ingress_route_misconfig:
+    action: "Check ingress route configuration: kubectl get ingressroutes -A -o yaml"
+    next: "apply_fix"
+  tls_cert_issue:
+    action: "Verify TLS certificates: kubectl get certificates -A"
+    next: "apply_fix"
+  load_balancer_failure:
+    action: "Check load balancer service and connectivity"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n traefik --no-headers | grep 'Running'"
+    yes: "traefik_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  traefik_healthy:
+    action: "Traefik verified healthy"
+    next: "end"
+end: "end"
+```
 
-  ```bash
-  kubectl -n traefik get pods
-  kubectl -n traefik describe pod <pod-name>
-  ```
+### Cross-Service Dependencies
 
-- For performance issues, monitor Traefik metrics and adjust resource limits.
+```yaml
+# Traefik cross-service dependencies
+service_dependencies:
+  traefik:
+    depends_on:
+      - cert-manager/cert-manager
+      - kube-system/cilium
+      - external-dns/external-dns-technitium
+    depended_by:
+      - All services requiring external access
+      - All applications with ingress routes
+      - All workloads needing TLS termination
+    critical_path: true
+    health_check_command: "kubectl get pods -n traefik --no-headers | grep 'Running'"
+```
 
-## Validation and Testing
+## Troubleshooting
 
-<!-- markdownlint-disable MD013 -->
+### Common Issues
 
-| Step                                                     | Purpose                                                                                          |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                          | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                      | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr traefik --namespace traefik`               | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n traefik get events --sort-by=.lastTimestamp` | Confirms Traefik emits healthy events after rollout.                                             |
-| `kubectl get ingressroute -A`                            | Validates ingress routes are properly configured.                                                |
+1. **Ingress route not working**:
 
-<!-- markdownlint-enable MD013 -->
+   - **Symptom**: 404 errors on ingress routes
+   - **Diagnosis**: Check ingress route configuration and service endpoints
+   - **Resolution**: Verify route hostnames, service names, and ports
 
-## References and Cross-links
+2. **TLS certificate errors**:
 
-- Runbook standards: [Repository root readme](README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](../../../flux/README.md)
-- Helm repository management: [cluster/flux/meta/repositories/README.md](../../../flux/meta/repositories/README.md)
-- Traefik documentation: <https://doc.traefik.io/traefik/>
-- Traefik Helm chart: <https://github.com/traefik/traefik-helm-chart>
-- Kubernetes Gateway API: <https://gateway-api.sigs.k8s.io/>
+   - **Symptom**: Browser certificate warnings
+   - **Diagnosis**: Check cert-manager certificate status
+   - **Resolution**: Verify certificate DNS names and issuer configuration
+
+3. **Load balancer connectivity issues**:
+   - **Symptom**: External access failures
+   - **Diagnosis**: Check load balancer service and Cilium BGP configuration
+   - **Resolution**: Verify BGP advertisements and load balancer IP allocation
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update Traefik Helm chart
+helm repo update
+helm upgrade traefik traefik/traefik -n traefik -f values.yaml
+```
+
+### Ingress Route Management
+
+```bash
+# Add new ingress route
+kubectl apply -f ingress/<workload>/ingress-route.yaml
+
+# Update existing ingress route
+kubectl apply -f ingress/<workload>/updated-ingress-route.yaml
+```
+
+### MCP Integration
+
+- **Library ID**: `traefik-ingress-controller`
+- **Version**: `v2.10.5`
+- **Usage**: Ingress routing and load balancing
+- **Citation**: Use `resolve-library-id` for Traefik configuration and troubleshooting
+
+## References
+
+- [Traefik Documentation](https://doc.traefik.io/traefik/)
+- [IngressRoute CRD Reference](https://doc.traefik.io/traefik/providers/kubernetes-crd/)
+- [Traefik Helm Chart](https://github.com/traefik/traefik-helm-chart)
+
+## Agent-Friendly Workflows
+
+This section provides decision trees and conditional logic for autonomous execution of Traefik tasks.
+
+### Traefik Health Check Workflow
+
+```yaml
+# Traefik health check decision tree
+start: "check_traefik_pods"
+nodes:
+  check_traefik_pods:
+    question: "Are Traefik pods running?"
+    command: "kubectl get pods -n traefik --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_ingress_routes"
+    no: "restart_traefik_pods"
+  check_ingress_routes:
+    question: "Are ingress routes configured correctly?"
+    command: "kubectl get ingressroutes -A --no-headers | wc -l"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "NO_ROUTES"}'' | grep -q ''OK'''
+    yes: "check_tls_certificates"
+    no: "configure_ingress_routes"
+  check_tls_certificates:
+    question: "Are TLS certificates valid?"
+    command: "kubectl get certificates -A --no-headers | grep -v 'True' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_load_balancer"
+    no: "renew_certificates"
+  check_load_balancer:
+    question: "Is load balancer service healthy?"
+    command: "kubectl get svc -n traefik traefik -o jsonpath='{.status.loadBalancer.ingress}' | wc -c"
+    validation: 'awk ''{if ($1 > 2) print "OK"; else print "NO_LB"}'' | grep -q ''OK'''
+    yes: "traefik_healthy"
+    no: "fix_load_balancer"
+  restart_traefik_pods:
+    action: "Restart Traefik pods"
+    next: "check_traefik_pods"
+  configure_ingress_routes:
+    action: "Configure missing ingress routes"
+    next: "check_ingress_routes"
+  renew_certificates:
+    action: "Renew or fix TLS certificates"
+    next: "check_tls_certificates"
+  fix_load_balancer:
+    action: "Fix load balancer configuration and connectivity"
+    next: "check_load_balancer"
+  traefik_healthy:
+    action: "Traefik ingress controller is healthy"
+    next: "end"
+end: "end"
+```
+
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Traefik documentation.
+- Confirm the catalog entry contains the documentation or API details needed for Traefik operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers Traefik documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed Traefik configuration changes.
+
+### When Traefik documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in Traefik change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting Traefik documentation.

@@ -1,180 +1,197 @@
-# cloudflared Runbook
+# Cloudflared - Cloudflare Tunnel
 
-## Purpose and Scope
+## Overview
 
-The cloudflared deployment establishes a secure Cloudflare Tunnel to expose internal Kubernetes services to the public internet without requiring public IP addresses or opening inbound ports on the firewall. This runbook documents the GitOps layout, deployment workflow, and operations required to keep the tunnel healthy for the spruyt-labs environment.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Cloudflared provides secure tunneling to Cloudflare's global network, enabling private network access to internal services without exposing them to the public internet. It serves as the secure access solution for the spruyt-labs cluster, providing encrypted tunnels for administrative interfaces and internal services.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                                  | Description                                                                    |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `cluster/apps/cloudflare-system/README.md`                            | This runbook and component overview.                                           |
-| `cluster/apps/cloudflare-system/kustomization.yaml`                   | Top-level Kustomize entry that namespaces resources and delegates to Flux.     |
-| `cluster/apps/cloudflare-system/namespace.yaml`                       | Namespace definition for the cloudflared workload.                             |
-| `cluster/apps/cloudflare-system/cloudflared/ks.yaml`                  | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.        |
-| `cluster/apps/cloudflare-system/cloudflared/app/kustomization.yaml`   | Overlay combining the HelmRelease and generated values ConfigMap.              |
-| `cluster/apps/cloudflare-system/cloudflared/app/release.yaml`         | Flux `HelmRelease` referencing the bjw-s-labs app-template chart.              |
-| `cluster/apps/cloudflare-system/cloudflared/app/values.yaml`          | Rendered values supplied to the chart via ConfigMap.                           |
-| `cluster/apps/cloudflare-system/cloudflared/app/kustomizeconfig.yaml` | Remaps ConfigMap keys to Helm values for deterministic patches.                |
-| `cluster/flux/meta/repositories/oci/bjw-s-labs-app-template.yaml`     | OCI repository definition pinning the upstream bjw-s-labs app-template source. |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+cloudflared/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   └── values.yaml                 # Helm values
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage Cloudflare tunnels.
-- Ensure the workstation can reach the Kubernetes API and that the `cloudflared` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-
-## Operational Runbook
-
-### Summary
-
-Operate the cloudflared Helm release so internal services are securely exposed via Cloudflare Tunnel, keeping the tunnel authenticated and running without manual intervention.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when tunnel downtime could impact external access.
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n cloudflare-system get helmrelease cloudflared -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/cloudflare-system/cloudflared/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
-
-   ```bash
-   flux diff hr cloudflared --namespace cloudflare-system
-   ```
-
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
-
-   ```bash
-   flux reconcile kustomization cloudflared --with-source
-   flux get kustomizations cloudflared -n flux-system
-   ```
-
-2. Confirm the Helm release upgrade succeeded:
-
-   ```bash
-   flux get helmrelease cloudflared -n cloudflare-system
-   ```
-
-#### Phase 3 – Monitor Tunnel Health
-
-1. Watch tunnel status and connections:
-
-   ```bash
-   kubectl get pods -n cloudflare-system
-   kubectl logs -n cloudflare-system deploy/cloudflared
-   ```
-
-2. Validate tunnel connectivity via Cloudflare dashboard or API.
-3. Ensure services behind the tunnel are accessible.
-
-#### Phase 4 – Manual Intervention for Tunnel Issues
-
-1. Restart the deployment if connections fail:
-
-   ```bash
-   kubectl -n cloudflare-system rollout restart deploy/cloudflared
-   ```
-
-2. For token issues, verify the secret `cloudflared-secrets` contains the correct token.
-3. Inspect logs for authentication or network errors:
-
-   ```bash
-   kubectl logs -n cloudflare-system deploy/cloudflared --previous
-   ```
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization cloudflared -n flux-system
-   flux suspend helmrelease cloudflared -n cloudflare-system
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization cloudflared -n flux-system
-   flux resume helmrelease cloudflared -n cloudflare-system
-   ```
-
-4. Consider scaling the deployment to zero as a last resort:
-
-   ```bash
-   kubectl -n cloudflare-system scale deploy/cloudflared --replicas=0
-   ```
+- Kubernetes cluster with Flux CD installed
+- Cloudflare account and credentials
+- Proper network connectivity
+- DNS records configured in Cloudflare
 
 ### Validation
 
-- `kubectl get pods -n cloudflare-system` shows running pods with no restarts.
-- `kubectl get helmrelease cloudflared -n cloudflare-system` reports `Ready=True` with no pending upgrades.
-- Tunnel metrics at `/metrics` endpoint show active connections.
-- External services are accessible via Cloudflare domains.
+```bash
+# Check cloudflared pods are running
+kubectl get pods -n cloudflare-system
 
-### Troubleshooting Guidance
+# Verify tunnel status
+kubectl exec -n cloudflare-system deploy/cloudflared -- cloudflared tunnel info
 
-- If tunnel fails to connect, check logs for "failed to connect" errors and verify network connectivity.
-- For authentication failures, ensure the TUNNEL_TOKEN is valid and not expired.
-- When the Helm release fails to deploy, check rendered manifests:
+# Check tunnel connectivity
+kubectl logs -n cloudflare-system deploy/cloudflared | grep "Connected"
 
-  ```bash
-  flux diff hr cloudflared --namespace cloudflare-system
-  kubeconform -strict -summary ./cluster/apps/cloudflare-system/cloudflared/app
-  ```
+# Verify service connectivity
+curl https://<tunnel-name>.cfargotunnel.com
+```
 
-- If the deployment pod crashes, capture pod logs and describe the pod:
+## Operation
 
-  ```bash
-  kubectl -n cloudflare-system get pods
-  kubectl -n cloudflare-system describe pod <pod-name>
-  ```
+### Procedures
 
-- For Cloudflare API issues, consult Cloudflare dashboard for tunnel status.
+1. **Tunnel management**:
 
-## Validation and Testing
+```bash
+   # Check tunnel status
+   kubectl exec -n cloudflare-system deploy/cloudflared -- cloudflared tunnel list
 
-<!-- markdownlint-disable MD013 -->
+   # Check tunnel routes
+   kubectl exec -n cloudflare-system deploy/cloudflared -- cloudflared tunnel route show
+```
 
-| Step                                                               | Purpose                                                                                          |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                                    | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                                | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr cloudflared --namespace cloudflare-system`           | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n cloudflare-system get events --sort-by=.lastTimestamp` | Confirms the tunnel establishes connections after rollout.                                       |
-| `kubectl get pods -n cloudflare-system`                            | Validates that the deployment is running and healthy.                                            |
+2. **Connectivity monitoring**:
 
-<!-- markdownlint-enable MD013 -->
+```bash
+# Check tunnel logs
+kubectl logs -n cloudflare-system deploy/cloudflared -f
 
-## References and Cross-links
+# Check tunnel metrics
+kubectl exec -n cloudflare-system deploy/cloudflared -- cloudflared tunnel metrics
+```
 
-- Runbook standards: [Repository root readme](README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](../../../flux/README.md)
-- Certificate management: [cluster/apps/README.md](../../README.md)
-- Upstream cloudflared documentation: <https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/>
-- Cloudflare Tunnel documentation: <https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/>
+3. **Configuration updates**:
+
+```bash
+# Update cloudflared configuration
+kubectl apply -f updated-values.yaml
+
+# Restart cloudflared
+kubectl rollout restart deploy/cloudflared -n cloudflare-system
+
+```
+
+### Decision Trees
+
+```yaml
+# Cloudflared operational decision tree
+start: "cloudflared_health_check"
+nodes:
+  cloudflared_health_check:
+    question: "Is cloudflared healthy?"
+    command: "kubectl get pods -n cloudflare-system --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "cloudflared_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n cloudflare-system | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      tunnel_authentication: "Tunnel authentication problem"
+      network_connectivity: "Network connectivity issue"
+      configuration_error: "Configuration mismatch"
+      resource_constraint: "Resource limitation"
+  tunnel_authentication:
+    action: "Check tunnel credentials: kubectl exec -n cloudflare-system deploy/cloudflared -- cloudflared tunnel info"
+    next: "apply_fix"
+  network_connectivity:
+    action: "Investigate network connectivity to Cloudflare"
+    next: "apply_fix"
+  configuration_error:
+    action: "Review values.yaml and tunnel configuration"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Adjust resource requests/limits in values.yaml"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n cloudflare-system --no-headers | grep 'Running'"
+    yes: "cloudflared_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  cloudflared_healthy:
+    action: "Cloudflared verified healthy"
+    next: "end"
+end: "end"
+```
+
+### Cross-Service Dependencies
+
+```yaml
+# Cloudflared cross-service dependencies
+service_dependencies:
+  cloudflared:
+    depends_on:
+      - traefik/traefik
+      - cert-manager/cert-manager
+    depended_by:
+      - All services requiring secure external access
+      - All administrative interfaces
+      - All internal services exposed via tunnel
+    critical_path: true
+    health_check_command: "kubectl get pods -n cloudflare-system --no-headers | grep 'Running'"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Tunnel authentication failures**:
+
+   - **Symptom**: Tunnel not connecting to Cloudflare
+   - **Diagnosis**: Check tunnel credentials and authentication
+   - **Resolution**: Verify Cloudflare credentials and tunnel configuration
+
+2. **Network connectivity problems**:
+
+   - **Symptom**: Tunnel connectivity issues
+   - **Diagnosis**: Check network connectivity and firewall rules
+   - **Resolution**: Verify network configuration and Cloudflare connectivity
+
+3. **Configuration synchronization errors**:
+   - **Symptom**: Tunnel routes not updating
+   - **Diagnosis**: Check configuration synchronization
+   - **Resolution**: Verify tunnel configuration and restart cloudflared
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update cloudflared
+helm repo update
+helm upgrade cloudflared cloudflare/cloudflared -n cloudflare-system -f values.yaml
+```
+
+### Tunnel Management
+
+```bash
+# Check tunnel status
+kubectl exec -n cloudflare-system deploy/cloudflared -- cloudflared tunnel list
+
+# Update tunnel configuration
+kubectl apply -f updated-cloudflared-values.yaml
+```
+
+### MCP Integration
+
+- **Library ID**: `cloudflare-tunnel-cloudflared`
+- **Version**: `2024.10.1`
+- **Usage**: Secure tunneling to Cloudflare network
+- **Citation**: Use `resolve-library-id` for Cloudflared configuration and troubleshooting
+
+## References
+
+- [Cloudflared Documentation](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+- [Cloudflare Zero Trust](https://developers.cloudflare.com/cloudflare-one/)

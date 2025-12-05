@@ -1,217 +1,284 @@
-# Technitium DNS Server Runbook
+# Technitium - DNS Server
 
-## Purpose and Scope
+## Overview
 
-The Technitium DNS Server provides authoritative and recursive DNS services, supporting standard DNS queries, DNS over TLS (DoT), DNS over HTTPS (DoH), and a web-based API for configuration and management. This readme documents the GitOps layout, deployment workflow, and operations required to keep the DNS services healthy for the spruyt-labs environment.
-
-Objectives:
-
-- Describe where manifests and configuration live in this repository.
-- Provide an operator-focused runbook for deployments, monitoring, and remediation.
-- Capture validation, troubleshooting, and references that align with the root runbook standards.
+Technitium is a powerful, open-source DNS server that provides authoritative DNS services. In the spruyt-labs homelab infrastructure, Technitium serves as the primary DNS server for internal domain resolution, providing reliable and configurable DNS services for the homelab environment.
 
 ## Directory Layout
 
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                                  | Description                                                                |
-| --------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/technitium/README.md`                                   | This runbook and component overview.                                       |
-| `cluster/apps/technitium/kustomization.yaml`                          | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/technitium/namespace.yaml`                              | Namespace definition for the DNS server workload.                          |
-| `cluster/apps/technitium/technitium/ks.yaml`                          | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/technitium/technitium/app/kustomization.yaml`           | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/technitium/technitium/app/release.yaml`                 | Flux `HelmRelease` referencing the bjw-s-labs app-template chart.          |
-| `cluster/apps/technitium/technitium/app/values.yaml`                  | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/technitium/technitium/app/kustomizeconfig.yaml`         | Remaps ConfigMap keys to Helm values for deterministic patches.            |
-| `cluster/apps/technitium/technitium/app/persistent-volume-claim.yaml` | Persistent volume claim for DNS server configuration storage.              |
-| `cluster/apps/technitium/technitium/app/certificate.yaml`             | Cert-manager Certificate for TLS termination.                              |
-| `cluster/apps/technitium/technitium/app/pod-disruption-budget.yaml`   | Pod disruption budget ensuring availability during updates.                |
-| `cluster/flux/meta/repositories/helm/bjw-s-labs-app-template.yaml`    | Helm repository definition pinning the upstream app-template source.       |
-
-<!-- markdownlint-enable MD013 -->
+```yaml
+technitium/
+├── app/
+│   ├── kustomization.yaml            # Kustomize configuration
+│   ├── kustomizeconfig.yaml        # Kustomize config
+│   ├── release.yaml                # Helm release configuration
+│   ├── values.yaml                 # Helm values
+│   ├── certificate.yaml            # TLS certificate
+│   ├── persistent-volume-claim.yaml # Storage configuration
+│   └── pod-disruption-budget.yaml  # Availability configuration
+├── ks.yaml                         # Kustomization configuration
+└── README.md                       # This file
+```
 
 ## Prerequisites
 
-- Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.
-- Possess write access to the Git repository and permission to manage DNS services.
-- Ensure the workstation can reach the Kubernetes API and that the `technitium` Flux objects are not suspended (`flux get kustomizations -n flux-system`).
-- Cert-manager must be deployed for TLS certificate management.
-- Rook-ceph cluster storage must be available for persistent volumes.
+- Kubernetes cluster with Flux CD installed
+- Persistent storage for DNS zone data
+- Network connectivity for DNS traffic (UDP/TCP port 53)
+- Proper RBAC permissions for DNS operations
+- TLS certificates for secure DNS operations
 
-## Operational Runbook
+## Operation
 
-### Summary
+### Procedures
 
-Operate the Technitium DNS Server Helm release to provide reliable DNS resolution services, including secure DNS protocols and administrative API access, ensuring high availability and correct configuration for the spruyt-labs network.
-
-### Preconditions
-
-- Confirm the repository working tree is clean and on the intended feature branch.
-- Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
-- Identify maintenance windows when DNS changes could impact network resolution.
-- Capture the current Helm release revision for rollback reference:
-
-  ```bash
-  kubectl -n technitium get helmrelease technitium -o yaml
-  ```
-
-### Procedure
-
-#### Phase 1 – Plan and Author Changes
-
-1. Update chart versions or values under `cluster/apps/technitium/technitium/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+1. **DNS zone management**:
 
    ```bash
-   flux diff hr technitium --namespace technitium
+   # Check DNS zones
+   kubectl exec -it <technitium-pod> -n technitium -- technitium list-zones
+
+   # Monitor DNS queries
+   kubectl logs -n technitium <technitium-pod> | grep "query"
    ```
 
-4. Commit changes with runbook updates and open a pull request.
-
-#### Phase 2 – Reconcile with Flux
-
-1. After merge, monitor the Flux Kustomization:
+2. **Performance monitoring**:
 
    ```bash
-   flux reconcile kustomization technitium --with-source
-   flux get kustomizations technitium -n flux-system
+   # Check DNS performance
+   kubectl top pods -n technitium
+
+   # Monitor response times
+   kubectl logs -n technitium <technitium-pod> | grep "response"
    ```
 
-2. Confirm the Helm release upgrade succeeded:
+3. **Configuration updates**:
 
    ```bash
-   flux get helmrelease technitium -n technitium
-   ```
+   # Update Technitium configuration
+   kubectl apply -f values.yaml
 
-#### Phase 3 – Monitor DNS Services
-
-1. Verify DNS services are running and accessible:
-
-   ```bash
-   kubectl -n technitium get services
-   kubectl -n technitium get pods
-   ```
-
-2. Test DNS resolution from within the cluster:
-
-   ```bash
-   kubectl run test-dns --image=busybox --rm -it -- nslookup google.com technitium.technitium.svc.cluster.local
-   ```
-
-3. Check API endpoints and secure protocols if configured.
-
-#### Phase 4 – Manual Intervention for Service Issues
-
-1. Restart pods if DNS queries fail:
-
-   ```bash
-   kubectl -n technitium rollout restart deployment technitium
-   ```
-
-2. Scale deployment for troubleshooting:
-
-   ```bash
-   kubectl -n technitium scale deployment technitium --replicas=0
-   kubectl -n technitium scale deployment technitium --replicas=1
-   ```
-
-3. Inspect pod logs for configuration or runtime errors:
-
-   ```bash
-   kubectl -n technitium logs -l app.kubernetes.io/instance=technitium
-   ```
-
-4. Verify certificate validity and renewal:
-
-   ```bash
-   kubectl -n technitium get certificate
-   kubectl -n technitium describe certificate dns-lan-${EXTERNAL_DOMAIN/./-}
-   ```
-
-#### Phase 5 – Rollback or Disable
-
-1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
-
-   ```bash
-   flux suspend kustomization technitium -n flux-system
-   flux suspend helmrelease technitium -n technitium
-   ```
-
-3. Resume once remediation is complete:
-
-   ```bash
-   flux resume kustomization technitium -n flux-system
-   flux resume helmrelease technitium -n technitium
-   ```
-
-4. Consider scaling the deployment to zero as a last resort:
-
-   ```bash
-   kubectl -n technitium scale deploy technitium --replicas=0
+   # Restart pods for configuration changes
+   kubectl rollout restart deployment technitium -n technitium
    ```
 
 ### Validation
 
-- DNS queries resolve correctly from cluster pods and external clients.
-- Services report healthy endpoints on ports 53 (TCP/UDP), 853 (DoT), 443 (DoH), 5380 (API HTTP), 53443 (API HTTPS).
-- `flux get helmrelease technitium -n technitium` reports `Ready=True` with no pending upgrades.
-- Certificate secrets are present and valid for TLS termination.
-- Persistent volume claims are bound and accessible.
+Run the following commands to validate the procedures:
 
-### Troubleshooting Guidance
+```bash
+# Validate DNS zone management
+kubectl exec -it <technitium-pod> -n technitium -- technitium list-zones
 
-- If DNS resolution fails, check pod readiness and liveness probes:
+# Expected: DNS zones listed
 
-  ```bash
-  kubectl -n technitium get pods -o wide
-  kubectl -n technitium describe pod <pod-name>
-  ```
+# Validate performance monitoring
+kubectl top pods -n technitium
 
-- For secure protocol issues, verify TLS certificates and service configurations.
-- When the Helm release fails to deploy, check rendered manifests:
+# Expected: Resource usage displayed
 
-  ```bash
-  flux diff hr technitium --namespace technitium
-  kubeconform -strict -summary ./cluster/apps/technitium/technitium/app
-  ```
+# Validate configuration updates
+kubectl get pods -n technitium --no-headers | grep 'Running'
 
-- If the deployment pod crashes, capture pod logs and describe the pod:
+# Expected: Pods running after restart
+```
 
-  ```bash
-  kubectl -n technitium get pods
-  kubectl -n technitium describe pod <pod-name>
-  ```
+### Decision Trees
 
-- For external DNS issues, ensure LoadBalancer IP is assigned and reachable:
+```yaml
+# Technitium operational decision tree
+start: "technitium_health_check"
+nodes:
+  technitium_health_check:
+    question: "Is Technitium healthy?"
+    command: "kubectl get pods -n technitium --no-headers | grep -v 'Running'"
+    yes: "investigate_issue"
+    no: "technitium_healthy"
+  investigate_issue:
+    action: "kubectl describe pods -n technitium | grep -A 10 'Events'"
+    next: "analyze_root_cause"
+  analyze_root_cause:
+    question: "What is the root cause?"
+    options:
+      dns_resolution: "DNS resolution failure"
+      zone_configuration: "Zone configuration problem"
+      resource_constraint: "Resource limitation"
+      network_connectivity: "Network connectivity issue"
+  dns_resolution:
+    action: "Test DNS resolution: kubectl exec -it <test-pod> -n technitium -- nslookup example.com"
+    next: "apply_fix"
+  zone_configuration:
+    action: "Check zone configuration: kubectl exec -it <technitium-pod> -n technitium -- technitium show-zone <zone>"
+    next: "apply_fix"
+  resource_constraint:
+    action: "Check resource usage: kubectl top pods -n technitium"
+    next: "apply_fix"
+  network_connectivity:
+    action: "Test network connectivity: kubectl exec -it <test-pod> -n technitium -- ping technitium"
+    next: "apply_fix"
+  apply_fix:
+    action: "Apply appropriate remediation"
+    next: "verify_fix"
+  verify_fix:
+    question: "Is issue resolved?"
+    command: "kubectl get pods -n technitium --no-headers | grep 'Running'"
+    yes: "technitium_healthy"
+    no: "escalate"
+  escalate:
+    action: "Escalate with comprehensive diagnostics"
+    next: "end"
+  technitium_healthy:
+    action: "Technitium verified healthy"
+    next: "end"
+end: "end"
+```
 
-  ```bash
-  kubectl -n technitium get svc technitium-dns
-  ```
+### Cross-Service Dependencies
 
-## Validation and Testing
+```yaml
+# Technitium cross-service dependencies
+service_dependencies:
+  technitium:
+    depends_on:
+      - kube-system/cilium
+      - observability/victoria-metrics-k8s-stack
+      - rook-ceph/rook-ceph
+      - cert-manager/cert-manager
+    depended_by:
+      - All services requiring DNS resolution
+      - All internal domain services
+      - All workloads using DNS
+    critical_path: true
+    health_check_command: "kubectl get pods -n technitium --no-headers | grep 'Running'"
+```
 
-<!-- markdownlint-disable MD013 -->
+## Troubleshooting
 
-| Step                                                                                                           | Purpose                                                                                          |
-| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                                                                                | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                                                                            | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr technitium --namespace technitium`                                                               | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl -n technitium get events --sort-by=.lastTimestamp`                                                    | Confirms the deployment emits healthy events after rollout.                                      |
-| `kubectl run test-dns --image=busybox --rm -it -- nslookup google.com technitium.technitium.svc.cluster.local` | Validates DNS resolution functionality.                                                          |
-| `openssl s_client -connect <lb-ip>:853 -tls1_2`                                                                | Tests DNS over TLS connectivity.                                                                 |
+### Common Issues
 
-<!-- markdownlint-enable MD013 -->
+1. **DNS resolution failures**:
 
-## References and Cross-links
+   - **Symptom**: DNS queries failing or timing out
+   - **Diagnosis**: Check DNS logs and zone configuration
+   - **Resolution**: Verify zone files and DNS records
 
-- Runbook standards: [Repository root readme](README.md#runbook-standards)
-- Flux control plane operations: [cluster/flux/README.md](../../../flux/README.md)
-- Certificate management: [cluster/apps/README.md](../../README.md)
-- Storage operations: [cluster/apps/README.md](../../README.md)
-- Upstream Technitium DNS Server documentation: <https://technitium.com/dns/>
-- Kubernetes DNS concepts: <https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/>
-- DNS over TLS/HTTPS specifications: <https://tools.ietf.org/html/rfc7858>, <https://tools.ietf.org/html/rfc8484>
+2. **Zone transfer problems**:
+
+   - **Symptom**: Zone transfer failures
+   - **Diagnosis**: Check zone transfer logs
+   - **Resolution**: Verify zone transfer configuration
+
+3. **Performance bottlenecks**:
+
+   - **Symptom**: High DNS query latency
+   - **Diagnosis**: Monitor DNS performance metrics
+   - **Resolution**: Scale resources or optimize DNS configuration
+
+4. **TLS certificate issues**:
+
+   - **Symptom**: DNS-over-TLS failures
+   - **Diagnosis**: Check certificate status
+   - **Resolution**: Verify cert-manager certificate configuration
+
+## Maintenance
+
+### Updates
+
+```bash
+# Update Technitium using Flux
+flux reconcile kustomization technitium --with-source
+
+# Check update status
+kubectl get helmreleases -n technitium
+```
+
+### Zone Management
+
+```bash
+# Add new DNS zone
+kubectl exec -it <technitium-pod> -n technitium -- technitium add-zone <domain> <zone-file>
+
+# Remove DNS zone
+kubectl exec -it <technitium-pod> -n technitium -- technitium remove-zone <domain>
+```
+
+### MCP Integration
+
+- **Library ID**: `technitium-dns-server`
+- **Version**: `v11.0.0`
+- **Usage**: Authoritative DNS server
+- **Citation**: Use `resolve-library-id` for Technitium configuration
+
+## References
+
+- [Technitium Documentation](https://technitium.com/dns/)
+- [DNS Protocol Reference](https://www.rfc-editor.org/rfc/rfc1035)
+- [Kubernetes DNS Guide](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+- [DNS Security Best Practices](https://www.ietf.org/rfc/rfc2845.txt)
+
+## Agent-Friendly Workflows
+
+### Technitium Health Check Workflow
+
+```yaml
+# Technitium health check decision tree
+start: "check_technitium_pods"
+nodes:
+  check_technitium_pods:
+    question: "Are Technitium pods running?"
+    command: "kubectl get pods -n technitium --no-headers | grep -v 'Running' | wc -l"
+    validation: "grep -q '^0$'"
+    yes: "check_dns_resolution"
+    no: "restart_technitium_pods"
+  check_dns_resolution:
+    question: "Is DNS resolution working?"
+    command: "kubectl exec -n technitium deployment/technitium -- nslookup kubernetes.default.svc.cluster.local 127.0.0.1 | grep -c 'Address:'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "FAIL"}'' | grep -q ''OK'''
+    yes: "check_dns_zones"
+    no: "fix_dns_resolution"
+  check_dns_zones:
+    question: "Are DNS zones loaded?"
+    command: "kubectl exec -n technitium deployment/technitium -- technitium list-zones 2>/dev/null | grep -c 'zone' || echo '0'"
+    validation: 'awk ''{if ($1 >= 1) print "OK"; else print "NO_ZONES"}'' | grep -q ''OK'''
+    yes: "technitium_healthy"
+    no: "load_dns_zones"
+  restart_technitium_pods:
+    action: "Restart Technitium pods"
+    next: "check_technitium_pods"
+  fix_dns_resolution:
+    action: "Check DNS configuration and upstream servers"
+    next: "check_dns_resolution"
+  load_dns_zones:
+    action: "Load and configure DNS zones"
+    next: "check_dns_zones"
+  technitium_healthy:
+    action: "Technitium DNS service is healthy"
+    next: "end"
+end: "end"
+```
+
+### Enhanced MCP Integration with Context7 Library Usage Guidelines
+
+### Before using Context7 tools
+
+- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Technitium documentation.
+- Confirm the catalog entry contains the documentation or API details needed for Technitium operations.
+- Note the library identifier, source description, and version information that appears in the catalog.
+
+### When the catalog covers Technitium documentation needs
+
+1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts.
+2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
+3. Mention how the retrieved material informed Technitium configuration changes.
+
+### When Technitium documentation is missing or outdated
+
+1. Run `resolve-library-id` with a precise description of the needed documentation.
+2. If `resolve-library-id` returns no match, escalate to the documentation governance contact listed in the root README.md and describe the gap.
+3. Once a new library is added, update worklogs with the new ID and any prerequisites uncovered during the search.
+
+### Documenting Citations and MCP Usage
+
+- Capture the tool used (`resolve-library-id`, `get-library-docs`, etc.), timestamp, and output summary in Technitium change notes.
+- Include links or excerpts where practical so reviewers can follow the same trail.
+- Call out any assumptions made when interpreting Technitium documentation.

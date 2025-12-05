@@ -63,9 +63,30 @@ Complete these verification steps before submitting changes to ensure cluster st
 
 #### Kubernetes Manifest Changes
 
-- [ ] Confirm that the target resource type exists by running `kubectl api-resources` and recording the group/version you will touch.
-- [ ] Review every field you intend to modify with `kubectl explain <resource_type>[.<field_path>]`, expanding child fields with `--recursive` when necessary.
-- [ ] Retrieve and archive the current manifest with `kubectl get <resource_type> <resource_name> -n <namespace> -o yaml`, highlighting controller-managed sections you must not overwrite.
+- [ ] Confirm that the target resource type exists by running
+
+```bash
+kubectl api-resources
+```
+
+and recording the group/version you will touch.
+
+- [ ] Review every field you intend to modify with
+
+```bash
+kubectl explain <resource_type>[.<field_path>] --recursive
+```
+
+when necessary.
+
+- [ ] Retrieve and archive the current manifest with
+
+```bash
+kubectl get <resource_type> <resource_name> -n <namespace> -o yaml
+```
+
+highlighting controller-managed sections you must not overwrite.
+
 - [ ] Validate Helm chart defaults or CRD documentation through approved Context7 libraries or trusted upstream references, citing the material in your change notes.
 - [ ] Capture assumptions, dependencies, and upstream version requirements so reviewers can confirm that automation and Talos state will reconcile cleanly.
 
@@ -84,6 +105,60 @@ Complete these verification steps before submitting changes to ensure cluster st
 3. Apply changes via `talosctl apply-config --insecure --nodes <target>` or Flux-managed Talos resources, avoiding partial application across control-plane nodes.
 4. Verify post-change status with `talosctl health` and Kubernetes node readiness. Capture follow-up actions or anomalies.
 5. Coordinate disruptive maintenance windows with platform owners listed in the escalation section.
+
+### Development Environment Setup
+
+#### Devcontainer Configuration
+
+The repository includes a comprehensive devcontainer configuration (`.devcontainer/`) that provides a consistent development environment with all required tools pre-installed.
+
+**Features included:**
+
+- Ubuntu base image with essential development tools
+- Docker-in-Docker support for local testing
+- Kubernetes tools: kubectl, helm, kustomize
+- Infrastructure tools: Terraform, Ansible
+- GitOps tools: Flux CLI, Talos CLI, Talhelper
+- CI/CD tools: Renovate CLI, pre-commit hooks
+- Language support: Node.js, Python, Go
+- VS Code extensions for Kubernetes, YAML, Terraform development
+
+**Setup procedure:**
+
+1. Open the repository in VS Code
+2. When prompted, click "Reopen in Container" or use Command Palette: "Dev Containers: Reopen in Container"
+3. Wait for the post-create script to complete (installs additional tools)
+4. Verify installation with `task --list` to see available tasks
+
+**Local testing capabilities:**
+
+- Run `task dev-env:lint` for comprehensive code quality checks
+- Use `task terraform:validate` for infrastructure validation
+- Execute `task talos:gen` for configuration generation testing
+- Access Flux Capacitor at `http://localhost:3333` for GitOps visualization
+
+#### Taskfile Automation
+
+The repository uses Task (a Make alternative) for workflow automation. Key development tasks:
+
+**Environment setup:**
+
+- `task dev-env:install-age` - Install Age encryption tool
+- `task dev-env:install-flux` - Install Flux CLI
+- `task dev-env:install-talosctl` - Install Talos CLI
+- `task dev-env:install-talhelper` - Install Talhelper for config generation
+
+**Validation and testing:**
+
+- `task dev-env:lint` - Run mega-linter suite (markdownlint, yamllint, etc.)
+- `task terraform:fmt` - Format Terraform files
+- `task terraform:validate` - Validate Terraform configurations
+
+**Local development workflow:**
+
+- `task talos:gen` - Generate Talos machine configurations
+- `task flux:cap` - Launch Flux Capacitor for reconciliation monitoring
+- `task sops:decrypt` - Decrypt secrets for local development
 
 ### Cluster Change Workflow
 
@@ -112,15 +187,267 @@ Complete these verification steps before submitting changes to ensure cluster st
 9. **Post-change validation** – Confirm workloads and infrastructure via the
    validation steps outlined below.
 
-### Day-0 and provisioning guidance
+### Cluster Bootstrap and Initial Deployment
 
-- For initial installs or Talos upgrades, reference the schematics and installer
-  images documented in [`talos/README.md`](talos/README.md). SecureBoot ISO
-  links are maintained there.
-- Rotate secrets with `task talos:gen` and verify encrypted assets with SOPS
-  before committing.
-- Validate Talos installer selection via Factory (`factory.talos.dev/installer/...`), ensuring the SecureBoot schematic matches each node class before provisioning.
-- Capture the fully-qualified installer digest and document the control plane endpoint IPs used for Talos upgrades.
+This section provides comprehensive guidance for initial cluster deployment, including hardware requirements, network setup, and step-by-step provisioning procedures.
+
+#### Hardware Requirements
+
+##### Control Plane Nodes (Bossgame E2)
+
+- **CPU**: AMD Ryzen 7 5700G or equivalent (8 cores/16 threads minimum)
+- **Memory**: 32GB DDR4-3200 minimum, 64GB recommended
+- **Storage**: 500GB NVMe SSD for OS, additional SSDs for Ceph OSDs
+- **Network**: 2x 2.5GbE ports (Intel I225-V) for redundancy and performance
+- **Firmware**: Latest BIOS with SecureBoot enabled
+- **Power**: Redundant power supplies recommended
+
+##### Worker Nodes (Minisforum MS-01)
+
+- **CPU**: Intel Core i5-12450H or equivalent (8 cores/12 threads minimum)
+- **Memory**: 32GB DDR4-3200 minimum, 64GB recommended
+- **Storage**: 500GB NVMe SSD for OS, additional SSDs/HDDs for Ceph OSDs
+- **Network**: 2.5GbE port (Intel I225-V) with USB Ethernet adapter for redundancy
+- **Firmware**: Latest BIOS with SecureBoot enabled
+- **Power**: Efficient power supply with UPS backup recommended
+
+##### Network Infrastructure
+
+- **Router/Firewall**: pfSense/OPNsense capable of BGP and VLANs
+- **Switch**: Managed switch supporting 802.1Q VLANs and LACP
+- **VLANs**: Separate VLANs for management (10.10.0.0/24), storage (10.10.10.0/24), and services (10.10.20.0/24)
+- **DHCP**: DHCP server for PXE boot and IP assignment
+- **DNS**: Internal DNS server for cluster domain resolution
+
+#### Network Setup
+
+1. **Configure VLANs**:
+
+   ```bash
+   # Management VLAN (10.10.0.0/24)
+   # Storage VLAN (10.10.10.0/24)
+   # Services VLAN (10.10.20.0/24)
+   ```
+
+2. **Set up DHCP reservations** for cluster nodes:
+
+   - Control plane: 10.10.0.11, 10.10.0.12, 10.10.0.13
+   - Workers: 10.10.0.21, 10.10.0.22, 10.10.0.23
+
+3. **Configure BGP** on router for Cilium integration:
+
+   - AS number: 64512 (private)
+   - Neighbor: Cluster VIP (10.10.0.10)
+   - Advertise service subnets
+
+4. **DNS configuration**:
+   - Internal domain: spruyt-labs.lan
+   - External domain: spruyt-labs.com
+   - Wildcard records for ingress
+
+#### Bootstrap Procedure
+
+##### Phase 1: Repository and Tooling Setup
+
+1. **Clone repository** and enter devcontainer:
+
+   ```bash
+   git clone https://github.com/your-org/spruyt-labs.git
+   cd spruyt-labs
+   # Open in VS Code with devcontainer
+   ```
+
+2. **Install required tooling**:
+
+   ```bash
+   task dev-env:install-age
+   task dev-env:install-flux
+   task dev-env:install-talos
+   ```
+
+3. **Decrypt secrets** (requires Age identity):
+   ```bash
+   # Ensure AGE_IDENTITY environment variable is set
+   task sops:decrypt
+   ```
+
+##### Phase 2: Infrastructure Preparation
+
+1. **Bootstrap Terraform Cloud workspaces**:
+
+   ```bash
+   cd infra/terraform/workspace-factory
+   terraform init
+   terraform plan -out plan.tfplan
+   terraform apply plan.tfplan
+   ```
+
+2. **Configure Terraform variable sets** in Terraform Cloud for each workspace
+
+3. **Provision AWS infrastructure** (if using cloud backups):
+   ```bash
+   cd infra/terraform/aws/velero-backup
+   terraform init
+   terraform plan -out plan.tfplan
+   terraform apply plan.tfplan
+   ```
+
+##### Phase 3: Talos Configuration Generation
+
+1. **Update talconfig.yaml** with node specifications:
+
+   ```yaml
+   clusterName: spruyt-labs
+   endpoint: https://10.10.0.10:6443
+   nodes:
+     - hostname: bossgame-e2-01
+       ipAddress: 10.10.0.11
+       controlPlane: true
+       schematic: 7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6
+   ```
+
+2. **Generate Talos secrets**:
+
+   ```bash
+   task talos:gen
+   ```
+
+3. **Generate machine configurations**:
+   ```bash
+   talhelper genconfig
+   ```
+
+##### Phase 4: Node Provisioning
+
+1. **Download Talos installer ISOs**:
+
+   - Control plane: [SecureBoot ISO](https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.5/metal-amd64-secureboot.iso)
+   - Worker: [SecureBoot ISO](https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.5/metal-amd64-secureboot.iso)
+
+2. **Boot first control plane node** with Talos ISO
+
+3. **Apply configuration**:
+
+   ```bash
+   talosctl apply-config --insecure --nodes 10.10.0.11 \
+     --file talos/clusterconfig/bossgame-e2-01.yaml
+   ```
+
+4. **Bootstrap Kubernetes**:
+
+   ```bash
+   talosctl bootstrap --nodes 10.10.0.11
+   ```
+
+5. **Verify cluster**:
+
+   ```bash
+   talosctl health --nodes 10.10.0.11
+   kubectl get nodes
+   ```
+
+6. **Repeat for remaining nodes** (control plane first, then workers)
+
+##### Phase 5: Flux Bootstrap
+
+1. **Install Flux CLI** and bootstrap:
+
+   ```bash
+   flux bootstrap github \
+     --owner=your-org \
+     --repository=spruyt-labs \
+     --branch=main \
+     --path=cluster/flux \
+     --personal
+   ```
+
+2. **Monitor bootstrap**:
+
+   ```bash
+   flux get kustomizations -n flux-system
+   ```
+
+3. **Verify cluster components**:
+   ```bash
+   kubectl get pods -A
+   ```
+
+##### Phase 6: Post-Bootstrap Configuration
+
+1. **Configure external DNS** for ingress domains
+
+2. **Set up certificate management** with cert-manager
+
+3. **Deploy monitoring stack** (VictoriaMetrics, Vector, Grafana)
+
+4. **Configure backup solutions** (Velero, CNPG backups)
+
+5. **Test cluster functionality**:
+   - Deploy test application
+   - Verify ingress and TLS
+   - Test storage provisioning
+   - Validate monitoring and alerting
+
+#### Validation Checklist
+
+- [ ] All nodes report Ready status
+- [ ] Flux kustomizations are reconciled
+- [ ] Core services (Cilium, cert-manager, external-dns) are running
+- [ ] Ingress controller accessible
+- [ ] Storage classes available
+- [ ] Monitoring dashboards accessible
+- [ ] Backup jobs scheduled
+
+#### Bootstrap Decision Tree
+
+```yaml
+start: "bootstrap_start"
+nodes:
+  bootstrap_start:
+    question: "Ready to bootstrap cluster?"
+    yes: "check_prerequisites"
+    no: "gather_requirements"
+  gather_requirements:
+    action: "Review hardware requirements and network setup"
+    next: "bootstrap_start"
+  check_prerequisites:
+    question: "Prerequisites met (hardware, network, tooling)?"
+    yes: "infrastructure_setup"
+    no: "resolve_prerequisites"
+  resolve_prerequisites:
+    action: "Install missing tools or configure infrastructure"
+    next: "check_prerequisites"
+  infrastructure_setup:
+    action: "Bootstrap Terraform workspaces and AWS resources"
+    next: "talos_config"
+  talos_config:
+    action: "Generate Talos secrets and machine configs"
+    next: "node_provisioning"
+  node_provisioning:
+    question: "All nodes provisioned and healthy?"
+    yes: "flux_bootstrap"
+    no: "troubleshoot_nodes"
+  troubleshoot_nodes:
+    action: "Check Talos logs and network connectivity"
+    next: "node_provisioning"
+  flux_bootstrap:
+    action: "Install Flux and monitor reconciliation"
+    next: "post_bootstrap"
+  post_bootstrap:
+    action: "Configure DNS, certificates, and monitoring"
+    next: "validation_complete"
+  validation_complete:
+    question: "All validation checks pass?"
+    yes: "bootstrap_success"
+    no: "fix_issues"
+  fix_issues:
+    action: "Resolve validation failures"
+    next: "validation_complete"
+  bootstrap_success:
+    action: "Cluster bootstrap completed successfully"
+    next: "end"
+end: "end"
+```
 
 ### Day-2 operations
 
@@ -201,6 +528,152 @@ and actionable:
 6. **Escalation** – Next contacts, tooling escalations, or external references
    for unresolved incidents.
 
+## Cluster Monitoring and Alerting
+
+### Monitoring Stack Overview
+
+The spruyt-labs cluster uses VictoriaMetrics as the primary monitoring and alerting platform, providing comprehensive observability for infrastructure and applications.
+
+**Components:**
+
+- **VictoriaMetrics k8s-stack**: Metrics collection, storage, and alerting (Prometheus-compatible)
+- **VictoriaMetrics Operator**: Manages VictoriaMetrics resources and configurations
+- **Victoria Logs Single**: Centralized log aggregation and analysis
+- **VictoriaMetrics Secret Writer**: Automated secret management for monitoring components
+- **Grafana**: Visualization and dashboarding for metrics and logs
+
+### Basic Monitoring Commands
+
+**Cluster health:**
+
+```bash
+# Check overall cluster status
+kubectl get nodes
+kubectl get pods -A --no-headers | grep -v Running
+
+# Monitor resource usage
+kubectl top nodes
+kubectl top pods -A
+```
+
+**Flux reconciliation:**
+
+```bash
+# Check Flux kustomization status
+flux get kustomizations -A
+
+# Monitor specific kustomization
+flux get kustomizations -n flux-system
+```
+
+**VictoriaMetrics health:**
+
+```bash
+# Check VictoriaMetrics pods
+kubectl get pods -n observability -l app.kubernetes.io/name=victoria-metrics-k8s-stack
+
+# Verify metrics ingestion
+kubectl exec -n observability <victoria-metrics-pod> -- curl -s http://localhost:8428/api/v1/query?query=up
+```
+
+### Alerting Configuration
+
+**Alertmanager setup:**
+
+```bash
+# Check alertmanager configuration
+kubectl get secret -n observability victoria-metrics-k8s-stack-alertmanager -o yaml
+
+# View active alerts
+kubectl exec -n observability <alertmanager-pod> -- curl -s http://localhost:9093/api/v2/alerts
+```
+
+**Common alert scenarios:**
+
+- Node resource exhaustion (CPU > 90%, Memory > 90%)
+- Pod crashes or restarts
+- Storage capacity warnings (> 80% usage)
+- Network connectivity issues
+- Certificate expiration warnings
+
+### Troubleshooting Monitoring Issues
+
+**Metrics not appearing:**
+
+```bash
+# Check VictoriaMetrics targets
+kubectl exec -n observability <victoria-metrics-pod> -- curl -s http://localhost:8428/api/v1/targets | jq '.data.activeTargets[] | select(.health != "up")'
+
+# Verify service discovery
+kubectl get servicemonitors -A
+kubectl get podmonitors -A
+```
+
+**Logs not aggregating:**
+
+```bash
+# Check Victoria Logs ingestion
+kubectl exec -n observability <victoria-logs-pod> -- curl -s http://localhost:9428/api/v1/status
+
+# Verify log shipping configuration
+kubectl get pods -A -o json | jq '.items[] | select(.spec.containers[].env[]?.name == "VICTORIA_LOGS_URL")'
+```
+
+**Alertmanager not sending alerts:**
+
+```bash
+# Check alertmanager logs
+kubectl logs -n observability -l app.kubernetes.io/name=victoria-metrics-k8s-stack-alertmanager
+
+# Verify alert routing
+kubectl get configmaps -n observability -l app.kubernetes.io/name=victoria-metrics-k8s-stack-alertmanager
+```
+
+### Performance Monitoring
+
+**Resource monitoring:**
+
+```bash
+# Monitor cluster resource usage
+kubectl top nodes --sort-by=cpu
+kubectl top pods -A --sort-by=memory
+
+# Check storage usage
+kubectl get pvc -A
+kubectl exec -n rook-ceph <rook-tools-pod> -- ceph df
+```
+
+**Application performance:**
+
+```bash
+# Monitor application response times
+kubectl exec -n observability <victoria-metrics-pod> -- curl -s "http://localhost:8428/api/v1/query?query=histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+
+# Check error rates
+kubectl exec -n observability <victoria-metrics-pod> -- curl -s "http://localhost:8428/api/v1/query?query=rate(http_requests_total{status=~\"5..\"}[5m])"
+```
+
+### Grafana Access
+
+**Access Grafana:**
+
+```bash
+# Get Grafana URL
+kubectl get ingress -n observability -l app.kubernetes.io/name=grafana
+
+# Default credentials (change in production)
+username: admin
+password: prom-operator
+```
+
+**Useful dashboards:**
+
+- Kubernetes cluster monitoring
+- Node resource usage
+- Pod performance metrics
+- Application-specific dashboards
+- Flux reconciliation status
+
 ## Validation and Testing
 
 - `task dev-env:lint` – Runs mega-linter (markdownlint, textlint, prettier)
@@ -248,12 +721,12 @@ This consolidated matrix covers common failure modes across the cluster, applica
 
 #### Operational Runbooks
 
-| Component/Service    | Readme                                                                                       |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| Cluster applications | [`cluster/apps/README.md`](cluster/apps/README.md)                                           |
-| CSR automation       | [`cluster/apps/kubelet-csr-approver/README.md`](cluster/apps/kubelet-csr-approver/README.md) |
-| Custom resources     | [`cluster/crds/README.md`](cluster/crds/README.md)                                           |
-| Flux bootstrap       | [`cluster/flux/README.md`](cluster/flux/README.md)                                           |
+| Component/Service    | Readme                                                                                                                                 |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Cluster applications | [`cluster/apps/README.md`](cluster/apps/README.md)                                                                                     |
+| CSR automation       | [`cluster/apps/kubelet-csr-approver/kubelet-csr-approver/README.md`](cluster/apps/kubelet-csr-approver/kubelet-csr-approver/README.md) |
+| Custom resources     | [`cluster/crds/README.md`](cluster/crds/README.md)                                                                                     |
+| Flux bootstrap       | [`cluster/flux/README.md`](cluster/flux/README.md)                                                                                     |
 
 #### Infrastructure and Lifecycle
 
@@ -265,19 +738,19 @@ This consolidated matrix covers common failure modes across the cluster, applica
 
 #### Rules and Procedures
 
-| Document                         | Description                                                                                |
-| -------------------------------- | ------------------------------------------------------------------------------------------ |
-| Kubernetes workflow guidelines   | [`.kilocode/rules/kubernetes.md`](.kilocode/rules/kubernetes.md)                           |
-| Project context and guidelines   | [`.kilocode/rules/project_context.md`](.kilocode/rules/project_context.md)                 |
-| Shared procedures                | [`.kilocode/rules/shared-procedures.md`](.kilocode/rules/shared-procedures.md)             |
-| Context7 library usage           | [`.kilocode/rules/user_context7_libraries.md`](.kilocode/rules/user_context7_libraries.md) |
-| Renovate configuration standards | [`.kilocode/rules/renovate.md`](.kilocode/rules/renovate.md)                               |
+| Document                         | Description                                                      |
+| -------------------------------- | ---------------------------------------------------------------- |
+| Kubernetes workflow guidelines   | [`.kilocode/rules/core_rules.md`](.kilocode/rules/core_rules.md) |
+| Project context and guidelines   | [`.kilocode/rules/core_rules.md`](.kilocode/rules/core_rules.md) |
+| Shared procedures                | [`.kilocode/rules/procedures.md`](.kilocode/rules/procedures.md) |
+| Context7 library usage           | [`.kilocode/rules/procedures.md`](.kilocode/rules/procedures.md) |
+| Renovate configuration standards | [`.kilocode/rules/renovate.md`](.kilocode/rules/renovate.md)     |
 
 #### Templates
 
-| Template        | Purpose                                                          |
-| --------------- | ---------------------------------------------------------------- |
-| README template | [`.kilocode/templates/README.md`](.kilocode/templates/README.md) |
+| Template        | Purpose                                                                            |
+| --------------- | ---------------------------------------------------------------------------------- |
+| README template | [`.kilocode/templates/readme_template.md`](.kilocode/templates/readme_template.md) |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -307,6 +780,7 @@ This consolidated matrix covers common failure modes across the cluster, applica
   lifecycle.
 - [VictoriaMetrics](https://docs.victoriametrics.com/) and
   [Vector](https://vector.dev/docs/) — Observability stack.
+- [VictoriaMetrics Operator](https://docs.victoriametrics.com/operator/) — Kubernetes operator documentation.
 - [Mosquitto authentication methods](https://mosquitto.org/documentation/authentication-methods/)
   — MQTT user management.
 - [CloudNativePG documentation](https://cloudnative-pg.io/documentation/1.27/)
@@ -367,7 +841,7 @@ Else:
 ### Flux Reconciliation Monitoring Workflow
 
 ```bash
-If flux get kustomizations -n flux-system --no-headers | grep -v "True" > /dev/null
+If flux get kustomizations -n flux-system | grep -v "True" > /dev/null
 Then:
   For each failing kustomization:
     Run flux reconcile kustomization <name> --with-source

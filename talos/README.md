@@ -1,6 +1,6 @@
 # Talos Subsystem
 
-## Purpose and Scope
+## Overview
 
 The Talos subsystem codifies the lifecycle of spruyt-labs Kubernetes machines,
 from configuration generation with Talhelper through provisioning, maintenance,
@@ -45,7 +45,7 @@ live in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md).
   flux get kustomizations -n flux-system
   ```
 
-## Operational Runbook
+## Operation
 
 ### Summary
 
@@ -53,7 +53,8 @@ Platform engineering owns the Talos lifecycle. Operators provision
 control-plane and worker nodes, drive GitOps workflows for machine
 configuration, and coordinate maintenance or recovery actions. Comprehensive
 procedures are documented in
-[`docs/machine-lifecycle.md`](docs/machine-lifecycle.md); this readme highlights
+[`docs/machine-lifecycle.md`](docs/machine-lifecycle.md) and
+[`MAINTENANCE.md`](MAINTENANCE.md); this readme highlights
 the key phases.
 
 ### Preconditions
@@ -364,7 +365,7 @@ customization:
 Additional asset: SecureBoot UKI –
 <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.11.5/metal-amd64-secureboot-uki.efi>
 
-## References and Cross-links
+## References
 
 - Repository runbook standards –
   [`README.md`](../README.md#runbook-standards)
