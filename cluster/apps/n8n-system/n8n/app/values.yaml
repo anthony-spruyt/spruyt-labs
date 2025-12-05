@@ -82,6 +82,8 @@ main:
     # TODO: migrate to external task runner
     N8N_RUNNERS_MODE:
       value: "internal"
+    N8N_SKIP_AUTH_ON_OAUTH_CALLBACK:
+      value: "false"
     QUEUE_BULL_PREFIX:
       value: "n8n:queue:bull"
     QUEUE_BULL_REDIS_USERNAME:
