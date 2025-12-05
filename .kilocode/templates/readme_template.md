@@ -1,13 +1,5 @@
 # [Component Name] - [Brief Description]
 
-## Purpose and Scope
-
-[One to two sentences describing the service and primary objective of the runbook.]
-
-Objectives:
-
-- [List key objectives]
-
 ## Overview
 
 [Provide a brief description of the component, its purpose, and its role in the spruyt-labs homelab infrastructure.]
