@@ -25,12 +25,13 @@ spec:
   path: ./cluster/apps/traefik/traefik/ingress
   dependsOn:
     - name: traefik
+    - name: foundryvtt
     - name: n8n
-    - name: victoria-metrics-operator
     - name: qdrant
     - name: redisinsight
     - name: rook-ceph-operator
     - name: vaultwarden
+    - name: victoria-metrics-operator
     - name: whoami
   prune: true
   timeout: 3m
