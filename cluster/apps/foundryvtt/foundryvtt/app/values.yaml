@@ -10,6 +10,34 @@ controllers:
     type: deployment
     serviceAccount:
       identifier: foundryvtt
+    initContainers:
+      fixPermissions:
+        image:
+          repository: busybox
+          tag: "1.37.0"
+          pullPolicy: IfNotPresent
+        command:
+          - chown
+          - -R
+          - 1000:1000
+          - /data
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - CHOWN
+          runAsUser: 0
+          runAsGroup: 0
+          runAsNonRoot: false
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 10m
+            memory: 16Mi
     containers:
       app:
         image:
