@@ -21,6 +21,6 @@ spec:
         - name: foundryvtt
           namespace: foundryvtt
           passHostHeader: true
-          port: 3000
+          port: 30000
   tls:
     secretName: "foundryvtt-${EXTERNAL_DOMAIN/./-}-tls"

@@ -75,7 +75,7 @@ controllers:
             type: RuntimeDefault
         ports:
           - name: http
-            containerPort: 3000
+            containerPort: 30000
             protocol: TCP
         probes:
           liveness:
