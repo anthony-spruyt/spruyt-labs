@@ -17,10 +17,16 @@ controllers:
           tag: "1.37.0"
           pullPolicy: IfNotPresent
         command:
-          - chown
-          - -R
-          - 1000:1000
-          - /data
+          - sh
+          - -c
+          - |
+            # Change ownership of data directory, skipping lost+found
+            # lost+found is a system directory that cannot be modified
+            find /data -mindepth 1 -maxdepth 1 ! -name 'lost+found' -exec chown -R 1000:1000 {} \; || true
+            # Try to change lost+found ownership, but don't fail if it fails
+            if [ -d /data/lost+found ]; then
+              chown 1000:1000 /data/lost+found 2>/dev/null || true
+            fi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
