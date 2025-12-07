@@ -13,4 +13,4 @@ spec:
       app.kubernetes.io/name: *app
   prune: true
   timeout: 5m
-  wait: true
+  wait: false
