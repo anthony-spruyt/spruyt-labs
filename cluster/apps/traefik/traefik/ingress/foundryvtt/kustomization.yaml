@@ -15,18 +15,18 @@ patches:
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: unifi
+        value: foundryvtt
   - target:
       kind: Middleware
       name: lan-ip-whitelist
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: unifi
+        value: foundryvtt
   - target:
       kind: Middleware
       name: rate-limit
     patch: |
       - op: replace
         path: /metadata/namespace
-        value: unifi
+        value: foundryvtt

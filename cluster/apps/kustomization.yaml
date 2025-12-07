@@ -28,6 +28,7 @@ resources:
   - ./qdrant-system
   - ./n8n-system
   - ./redisinsight
+  - ./foundryvtt
   # - ./authentik-system
   # - ./snmp
   # - ./smtp

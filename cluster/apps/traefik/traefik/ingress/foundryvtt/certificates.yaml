@@ -3,12 +3,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "unifi-${EXTERNAL_DOMAIN/./-}"
-  namespace: unifi
+  name: "foundryvtt-${EXTERNAL_DOMAIN/./-}"
+  namespace: foundryvtt
 spec:
-  secretName: "unifi-${EXTERNAL_DOMAIN/./-}-tls"
+  secretName: "foundryvtt-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
   dnsNames:
-    - "unifi.${EXTERNAL_DOMAIN}"
+    - "foundry.${EXTERNAL_DOMAIN}"

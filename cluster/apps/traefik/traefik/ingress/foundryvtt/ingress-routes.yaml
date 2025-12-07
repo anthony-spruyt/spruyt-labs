@@ -5,23 +5,22 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingress-routes-wan-https
-  namespace: unifi
+  namespace: foundryvtt
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: unifi.${EXTERNAL_DOMAIN}
+    external-dns.alpha.kubernetes.io/hostname: foundry.${EXTERNAL_DOMAIN}
 spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`unifi.${EXTERNAL_DOMAIN}`)
-      kind: Rule
+    - kind: Rule
+      match: Host(`foundry.${EXTERNAL_DOMAIN}`)
       middlewares:
-        - name: rate-limit
         - name: compress
       services:
-        - name: unifi
-          namespace: unifi
+        - name: foundryvtt
+          namespace: foundryvtt
           passHostHeader: true
-          port: 443
+          port: 3000
   tls:
-    secretName: "unifi-${EXTERNAL_DOMAIN/./-}-tls"
+    secretName: "foundryvtt-${EXTERNAL_DOMAIN/./-}-tls"

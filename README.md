@@ -19,9 +19,8 @@ Objectives:
 
 ## Architecture Overview
 
-- **Operating system** – Talos Linux 1.11 on Bossgame E2 control planes and
-  Minisforum MS-01 workers. Talos image schematics and lifecycle procedures live
-  in [`talos/README.md`](talos/README.md).
+- **Operating system** – Talos Linux 1.11 on control plane and worker nodes.
+  Talos image schematics and lifecycle procedures live in [`talos/README.md`](talos/README.md).
 - **GitOps control plane** – FluxCD manages reconciliation for all Kubernetes
   resources defined under `cluster/`.
 - **Networking** – Cilium supplies CNI, network policy, and BGP integrations for
@@ -195,19 +194,19 @@ This section provides comprehensive guidance for initial cluster deployment, inc
 
 ##### Control Plane Nodes (Bossgame E2)
 
-- **CPU**: AMD Ryzen 7 5700G or equivalent (8 cores/16 threads minimum)
-- **Memory**: 32GB DDR4-3200 minimum, 64GB recommended
-- **Storage**: 500GB NVMe SSD for OS, additional SSDs for Ceph OSDs
-- **Network**: 2x 2.5GbE ports (Intel I225-V) for redundancy and performance
+- **CPU**: 4+ cores/8+ threads minimum (Intel Core i5/AMD Ryzen 5 or equivalent)
+- **Memory**: 16GB DDR4 minimum, 32GB recommended
+- **Storage**: 256GB NVMe SSD minimum for OS, additional storage for Ceph OSDs
+- **Network**: 1GbE minimum, 2.5GbE preferred
 - **Firmware**: Latest BIOS with SecureBoot enabled
-- **Power**: Redundant power supplies recommended
+- **Power**: Reliable power supply with UPS backup recommended
 
 ##### Worker Nodes (Minisforum MS-01)
 
-- **CPU**: Intel Core i5-12450H or equivalent (8 cores/12 threads minimum)
-- **Memory**: 32GB DDR4-3200 minimum, 64GB recommended
-- **Storage**: 500GB NVMe SSD for OS, additional SSDs/HDDs for Ceph OSDs
-- **Network**: 2.5GbE port (Intel I225-V) with USB Ethernet adapter for redundancy
+- **CPU**: 4+ cores/8+ threads minimum (Intel Core i3/i5 or AMD Ryzen 3/5 equivalent)
+- **Memory**: 16GB DDR4 minimum, 32GB recommended for workloads
+- **Storage**: 256GB NVMe SSD minimum for OS, additional storage for applications
+- **Network**: 1GbE minimum, 2.5GbE preferred
 - **Firmware**: Latest BIOS with SecureBoot enabled
 - **Power**: Efficient power supply with UPS backup recommended
 

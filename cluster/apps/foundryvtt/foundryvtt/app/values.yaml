@@ -1,0 +1,86 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+controllers:
+  foundryvtt:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    strategy: Recreate
+    replicas: 1
+    type: deployment
+    serviceAccount:
+      identifier: foundryvtt
+    containers:
+      app:
+        image:
+          repository: foundryvtt/foundryvtt
+          tag: "13.351.0"
+          pullPolicy: IfNotPresent
+        envFrom:
+          - secretRef:
+              name: foundryvtt-secrets
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        ports:
+          - name: http
+            containerPort: 3000
+            protocol: TCP
+        probes:
+          liveness:
+            enabled: true
+            custom: false
+            spec:
+              initialDelaySeconds: 600
+              failureThreshold: 40
+              periodSeconds: 30
+              timeoutSeconds: 20
+              httpGet:
+                path: /
+                port: http
+          readiness:
+            enabled: true
+            custom: false
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 20
+              httpGet:
+                path: /
+                port: http
+
+persistence:
+  foundryvtt-data:
+    existingClaim: "foundryvtt-data"
+    advancedMounts:
+      foundryvtt:
+        app:
+          - path: /data
+
+serviceAccount:
+  foundryvtt:
+    enabled: true
+service:
+  app:
+    suffix: svc
+    controller: foundryvtt
+    ports:
+      http:
+        port: 30000
