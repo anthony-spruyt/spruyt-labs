@@ -65,22 +65,21 @@ controllers:
               httpGet:
                 path: /
                 port: http
-
 persistence:
-  foundryvtt-data:
+  data:
     existingClaim: "foundryvtt-data"
     advancedMounts:
       foundryvtt:
         app:
           - path: /data
-
 serviceAccount:
   foundryvtt:
     enabled: true
 service:
-  app:
-    suffix: svc
+  foundryvtt:
     controller: foundryvtt
+    type: ClusterIP
     ports:
       http:
         port: 30000
+        protocol: HTTP
