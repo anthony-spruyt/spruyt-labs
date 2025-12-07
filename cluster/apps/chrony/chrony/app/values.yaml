@@ -37,36 +37,36 @@ controllers:
             value: "true"
           - name: LOG_LEVEL
             value: "1" #  0 (informational), 1 (warning), 2 (non-fatal error), and 3 (fatal error).
-        # probes:
-        #   readiness:
-        #     enabled: true
-        #     custom: true
-        #     spec:
-        #       exec:
-        #         command:
-        #           - sh
-        #           - -c
-        #           - |
-        #             chronyc waitsync 15           \
-        #             && exit 0 || exit 1
-        #       initialDelaySeconds: 5
-        #       periodSeconds: 15
-        #       failureThreshold: 2
-        #   liveness:
-        #     enabled: true
-        #     custom: true
-        #     spec:
-        #       exec:
-        #         command:
-        #           - sh
-        #           - -c
-        #           - |
-        #             chronyc waitsync 15           \
-        #             && exit 0 || exit 1
-        #       initialDelaySeconds: 20
-        #       periodSeconds: 60
-        #       timeoutSeconds: 5
-        #       failureThreshold: 3
+        probes:
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - |
+                    chronyc waitsync 15           \
+                    && exit 0 || exit 1
+              initialDelaySeconds: 5
+              periodSeconds: 15
+              failureThreshold: 2
+          # liveness:
+          #   enabled: true
+          #   custom: true
+          #   spec:
+          #     exec:
+          #       command:
+          #         - sh
+          #         - -c
+          #         - |
+          #           chronyc waitsync 15           \
+          #           && exit 0 || exit 1
+          #     initialDelaySeconds: 20
+          #     periodSeconds: 60
+          #     timeoutSeconds: 5
+          #     failureThreshold: 3
         resources:
           requests:
             cpu: 10m

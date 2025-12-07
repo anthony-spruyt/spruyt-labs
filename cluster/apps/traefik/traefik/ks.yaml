@@ -25,7 +25,6 @@ spec:
   path: ./cluster/apps/traefik/traefik/ingress
   dependsOn:
     - name: traefik
-    - name: foundryvtt
     - name: n8n
     - name: victoria-metrics-operator
     - name: qdrant
