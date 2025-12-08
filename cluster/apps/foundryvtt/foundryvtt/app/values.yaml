@@ -50,16 +50,18 @@ controllers:
           repository: felddy/foundryvtt
           tag: "13.351.0"
           pullPolicy: IfNotPresent
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144 --optimize-for-size --gc-interval=100"
         envFrom:
           - secretRef:
               name: foundryvtt-secrets
         resources:
           requests:
             cpu: 500m
-            memory: 512Mi
+            memory: 4Gi
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 2000m
+            memory: 8Gi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
@@ -82,10 +84,10 @@ controllers:
             enabled: true
             custom: false
             spec:
-              initialDelaySeconds: 600
-              failureThreshold: 40
+              initialDelaySeconds: 120
+              failureThreshold: 3
               periodSeconds: 30
-              timeoutSeconds: 20
+              timeoutSeconds: 10
               httpGet:
                 path: /
                 port: http
@@ -94,8 +96,9 @@ controllers:
             custom: false
             spec:
               initialDelaySeconds: 30
-              periodSeconds: 30
-              timeoutSeconds: 20
+              periodSeconds: 15
+              timeoutSeconds: 5
+              failureThreshold: 3
               httpGet:
                 path: /
                 port: http
