@@ -805,13 +805,13 @@ check_dependencies() {
 
 ### Before using Context7 tools for Rook-Ceph tasks
 
-- Review the approved library catalog in [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) to identify existing entries for Rook-Ceph documentation (e.g., "rook/rook-ceph", "rook/rook-ceph-cluster").
+- Review the approved library catalog in [`context7-libraries.json`](/.kilocode/context7-libraries.json) to identify existing entries for Rook-Ceph documentation (e.g., "rook/rook-ceph", "rook/rook-ceph-cluster").
 - Confirm the catalog entry contains the documentation or API details needed for Rook-Ceph operations.
 - Note the library identifier, source description, and any version information that appears in the catalog.
 
 ### When the catalog covers Rook-Ceph documentation needs
 
-1. Use the information from [`context7-libraries.json`](../../../../.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts on Rook-Ceph CRDs, Helm chart values, or troubleshooting guides.
+1. Use the information from [`context7-libraries.json`](/.kilocode/context7-libraries.json) directly or issue `get-library-docs` for deeper excerpts on Rook-Ceph CRDs, Helm chart values, or troubleshooting guides.
 2. Record the library ID, version (if provided), and relevant snippets in change notes or pull request descriptions.
 3. Mention how the retrieved material informed Rook-Ceph configuration changes (e.g., OSD configuration, storage pool setup, upgrade procedures).
 

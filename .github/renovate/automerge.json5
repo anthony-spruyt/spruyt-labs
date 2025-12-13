@@ -1,6 +1,6 @@
 {
   packageRules: [
-    {
+    /*{
       matchUpdateTypes: ["patch", "digest", "pin"],
       matchFileNames: ["^cluster/apps/.*"],
       automerge: true,
@@ -17,6 +17,12 @@
       matchUpdateTypes: ["minor"],
       automerge: true,
       platformAutomerge: true,
+    },*/
+    {
+      matchPackageNames: ["aspruyt/bedrockconnect"],
+      automerge: true,
+      platformAutomerge: true,
+      stabilityDays: 0,
     },
   ],
 }

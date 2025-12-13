@@ -15,7 +15,7 @@
     "github>anthony-spruyt/spruyt-labs//.github/renovate/helm.json5",
     "github>anthony-spruyt/spruyt-labs//.github/renovate/terraform.json5",
     "github>anthony-spruyt/spruyt-labs//.github/renovate/regex-managers.json5",
-    //"github>anthony-spruyt/spruyt-labs//.github/renovate/automerge.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/automerge.json5",
   ],
   enabled: true,
   ignorePaths: ["talos/helmfile"],

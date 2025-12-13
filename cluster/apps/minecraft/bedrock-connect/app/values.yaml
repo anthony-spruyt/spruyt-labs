@@ -9,7 +9,7 @@ controllers:
       main:
         image:
           repository: aspruyt/bedrockconnect
-          tag: "1.63"
+          tag: "1.63-jre25"
           pullPolicy: IfNotPresent
         resources:
           requests:
