@@ -7,4 +7,4 @@ resources:
   - ./role.yaml
   - ./service-account.yaml
   - ./role-binding.yaml
-  - ./restart-cron-job.yaml
+  - ./minecraft-bedrock-restart.yaml

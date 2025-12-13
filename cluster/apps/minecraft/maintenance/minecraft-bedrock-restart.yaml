@@ -10,6 +10,10 @@ spec:
     spec:
       template:
         spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
           serviceAccountName: minecraft-maintenance
           containers:
             - name: restart-creative
@@ -35,8 +39,8 @@ spec:
                     - ALL
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
-                runAsUser: 1001
-                runAsGroup: 1001
+                runAsUser: 10001
+                runAsGroup: 10001
                 seccompProfile:
                   type: RuntimeDefault
             - name: restart-survival
@@ -62,35 +66,8 @@ spec:
                     - ALL
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
-                runAsUser: 1001
-                runAsGroup: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-            - name: restart-better-on-bedrock
-              image: bitnami/kubectl:latest
-              command:
-                - kubectl
-                - rollout
-                - restart
-                - deployment/minecraft-bedrock-better-on-bedrock
-                - -n
-                - minecraft
-              resources:
-                requests:
-                  cpu: 10m
-                  memory: 32Mi
-                limits:
-                  cpu: 50m
-                  memory: 64Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                readOnlyRootFilesystem: true
-                runAsNonRoot: true
-                runAsUser: 1001
-                runAsGroup: 1001
+                runAsUser: 10001
+                runAsGroup: 10001
                 seccompProfile:
                   type: RuntimeDefault
           restartPolicy: OnFailure
