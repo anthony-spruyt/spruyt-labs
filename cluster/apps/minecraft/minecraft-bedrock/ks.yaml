@@ -49,3 +49,22 @@ spec:
     - name: rook-ceph-cluster-storage
   prune: true
   timeout: 5m
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: minecraft-bedrock-maintenance
+  namespace: flux-system
+spec:
+  targetNamespace: minecraft
+  path: ./cluster/apps/minecraft/maintenance
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: minecraft-bedrock-maintenance
+  dependsOn:
+    - name: minecraft-bedrock-creative
+    - name: minecraft-bedrock-survival
+    - name: minecraft-bedrock-better-on-bedrock
+  prune: true
+  timeout: 5m
