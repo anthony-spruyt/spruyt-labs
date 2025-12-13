@@ -4,7 +4,7 @@ This directory contains OCIRepository definitions for Helm charts hosted in OCI 
 
 ## Contents
 
-- `bjw-s-labs-app-template.yaml` - App template chart from bjw-s labs
+- `app-template.yaml` - App template chart from bjw-s labs
 - `flux-instance-ocirepo.yaml` - Flux instance operator chart
 - `flux-operator-ocirepo.yaml` - Flux operator chart
 - `n8n-ocirepo.yaml` - N8N workflow automation chart

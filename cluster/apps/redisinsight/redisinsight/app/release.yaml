@@ -6,7 +6,7 @@ metadata:
 spec:
   chartRef:
     kind: OCIRepository
-    name: bjw-s-labs-app-template
+    name: app-template
     namespace: flux-system
   valuesFrom:
     - kind: ConfigMap
