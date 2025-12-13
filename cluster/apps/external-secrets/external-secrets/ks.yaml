@@ -14,7 +14,7 @@ spec:
   prune: true
   timeout: 5m
 # ---
-# # Disabled as it is too big a security hole, rather go namespace scoped but more maintenace / setup
+# # Disabled as it is too big a security hole, rather go namespace scoped but more maintenance / setup
 # # to lock it down IE least privilege principle.
 # # yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 # apiVersion: kustomize.toolkit.fluxcd.io/v1
