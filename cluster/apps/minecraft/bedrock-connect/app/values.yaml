@@ -8,8 +8,8 @@ controllers:
     containers:
       main:
         image:
-          repository: aspruyt/bedrockconnect
-          tag: "1.63-jre25"
+          repository: pugmatt/bedrock-connect
+          tag: "1.63"
           pullPolicy: IfNotPresent
         resources:
           requests:
@@ -47,6 +47,8 @@ configMaps:
             "port": 19132
           }
         ]
+      config.yml: |-
+        custom_servers: /docker/brc/custom_servers.json
 service:
   bedrockconnect:
     controller: main
@@ -67,6 +69,9 @@ persistence:
     advancedMounts:
       main:
         main:
-          - path: /app/custom_servers.json
+          - path: /docker/brc/custom_servers.json
             readOnly: true
             subPath: custom_servers.json
+          - path: /docker/brc/config.yml
+            readOnly: true
+            subPath: config.yml

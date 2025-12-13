@@ -19,7 +19,7 @@
       platformAutomerge: true,
     },*/
     {
-      matchPackageNames: ["aspruyt/bedrockconnect"],
+      matchPackageNames: ["pugmatt/bedrock-connect"],
       automerge: true,
       platformAutomerge: true,
       stabilityDays: 0,
