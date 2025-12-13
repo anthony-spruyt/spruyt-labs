@@ -14,7 +14,7 @@ vars:
 
 tasks:
   gen:
-    # desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task talos:genconfig"'
+    # desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task talos:gen"'
     desc: Generate new Talos configuration files.
     cmds:
       - bash {{ .genConfigScript }}

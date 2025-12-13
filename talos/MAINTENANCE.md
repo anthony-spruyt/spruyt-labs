@@ -185,13 +185,13 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
 1. **Dry Run**:
 
    ```bash
-   talosctl upgrade-k8s --to <version> --dry-run
+   talosctl upgrade-k8s -n {NODE_IP} --to <version> --dry-run
    ```
 
 2. **Execute Upgrade**:
 
    ```bash
-   talosctl upgrade-k8s --to <version>
+   talosctl upgrade-k8s -n {NODE_IP} --to <version>
    ```
 
 3. **Monitor Progress**:
