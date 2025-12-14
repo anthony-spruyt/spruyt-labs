@@ -22,7 +22,7 @@ spec:
                 - kubectl
                 - rollout
                 - restart
-                - deployment/minecraft-bedrock-creative
+                - deployment/minecraft-bedrock-creative-minecraft-bedrock
                 - -n
                 - minecraft
               resources:
@@ -49,7 +49,7 @@ spec:
                 - kubectl
                 - rollout
                 - restart
-                - deployment/minecraft-bedrock-survival
+                - deployment/minecraft-bedrock-survival-minecraft-bedrock
                 - -n
                 - minecraft
               resources:
