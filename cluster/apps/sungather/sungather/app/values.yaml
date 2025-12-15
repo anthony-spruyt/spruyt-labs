@@ -21,11 +21,6 @@ controllers:
           repository: bohdans/sungather
           tag: v@sha256:58304729d98e221be01f4fcd796f1200793fe958577b3b838893732034fd9169
           pullPolicy: IfNotPresent
-        probes:
-          liveness:
-            enabled: true
-          readiness:
-            enabled: true
         resources:
           requests:
             cpu: 10m
