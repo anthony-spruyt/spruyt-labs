@@ -29,6 +29,7 @@ resources:
   - ./n8n-system
   - ./redisinsight
   - ./foundryvtt
+  - ./sungather
   # - ./authentik-system
   # - ./snmp
   # - ./smtp
