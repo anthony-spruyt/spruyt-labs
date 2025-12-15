@@ -23,10 +23,10 @@ controllers:
           pullPolicy: IfNotPresent
         resources:
           requests:
-            cpu: 10m
-            memory: 64M
+            cpu: 100m
+            memory: 512M
           limits:
-            cpu: 25m
+            cpu: 250m
             memory: 512M
         securityContext:
           allowPrivilegeEscalation: false
