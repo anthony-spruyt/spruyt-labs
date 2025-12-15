@@ -46,7 +46,7 @@ persistence:
       - path: /config
   sungather-config:
     type: secret
-    identifier: sungather-secrets
+    name: sungather-secrets
     advancedMounts:
       sungather:
         app:
