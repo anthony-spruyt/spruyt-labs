@@ -1,0 +1,55 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+defaultPodOptions:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  sungather:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: bohdans/sungather
+          tag: v@sha256:58304729d98e221be01f4fcd796f1200793fe958577b3b838893732034fd9169
+          pullPolicy: IfNotPresent
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64M
+          limits:
+            cpu: 25m
+            memory: 512M
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+persistence:
+  config:
+    type: emptyDir
+    globalMounts:
+      - path: /config
+  sungather-config:
+    type: secret
+    identifier: sungather-secrets
+    advancedMounts:
+      sungather:
+        app:
+          - path: /config/config.yaml
+            subPath: config.yaml
+            readOnly: true
