@@ -7,6 +7,8 @@ auth:
   usersExistingSecret: valkey-secrets
   # https://valkey.io/topics/acl/
   aclUsers:
+    default:
+      permissions: "~* &* -@all"
     n8n:
       permissions: "~n8n:* &* +@all"
     redisinsight:
