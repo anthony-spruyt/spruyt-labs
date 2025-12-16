@@ -54,7 +54,7 @@ tasks:
   priv-pod:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on a specified node'
     cmd: |
-      kubectl run privileged-{{.node}} -i --rm --image=null \
+      kubectl run privileged-{{.node}} -i --rm -n dev-debug --image=null \
         --overrides="$(yq {{.ROOT_DIR}}/.taskfiles/dev-env/resources/privileged-pod.tmpl.yaml -o=json | envsubst)"
     env:
       node: "{{.node}}"

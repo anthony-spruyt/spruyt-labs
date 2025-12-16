@@ -30,6 +30,7 @@ resources:
   - ./redisinsight
   - ./foundryvtt
   - ./sungather
+  - ./dev-debug
   # - ./authentik-system
   # - ./snmp
   # - ./smtp
