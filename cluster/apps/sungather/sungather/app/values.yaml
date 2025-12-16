@@ -12,10 +12,7 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   sungather:
-    pod:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
-    replicas: 0
+    replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"
     strategy: Recreate
@@ -58,3 +55,9 @@ persistence:
           - path: /config/config.yaml
             subPath: config.yaml
             readOnly: true
+service:
+  app:
+    controller: sungather
+    ports:
+      http:
+        port: 8099
