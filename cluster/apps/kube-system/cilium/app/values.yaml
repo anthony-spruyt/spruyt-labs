@@ -19,21 +19,28 @@ k8s: # Configure Kubernetes specific configuration
 # CIDR implies that Cilium can depend on the underlying networking stack to route packets to their destination. To offer a concrete example,
 # if Cilium is configured to use direct routing and the Kubernetes CIDR is included in the native routing CIDR, the user must configure the
 # routes to reach pods, either manually or by setting the auto-direct-node-routes flag.
-# routingMode: "native" # Enable native-routing mode or tunneling mode. Possible values: - "" - native - tunnel
-# autoDirectNodeRoutes: true # Enable installation of PodCIDR routes between worker nodes if worker nodes share a common L2 network segment.
-# ipv4NativeRoutingCIDR: "${CLUSTER_NODE_CIDR_IP4}"
-# bpf:
-#   masquerade: true # Enable native IP masquerade support in eBPF
-#   datapathMode: netkit # Mode for Pod devices for the core datapath (veth, netkit, netkit-l2)
-#   preallocateMaps: true # Enables pre-allocation of eBPF map values. This increases memory usage but can reduce latency.
-#   tproxy: true # Configure the eBPF-based TPROXY (beta) to reduce reliance on iptables rules for implementing Layer 7 policy.
-#   # Control to use a distributed per-CPU backend memory for the core BPF LRU maps which Cilium uses. This improves performance significantly,
-#   # but it is also recommended to increase BPF map sizing along with that.
-#   distributedLRU:
-#     enabled: true # Enable distributed LRU backend memory. For compatibility with existing installations it is off by default.
-#   mapDynamicSizeRatio: 0.08 # Configure auto-sizing for all BPF maps based on available memory. ref: https://docs.cilium.io/en/stable/network/ebpf/maps/
-# ipMasqAgent: # Configure the eBPF-based ip-masq-agent
-#   enabled: true
+routingMode: native # Enable native-routing mode or tunneling mode. Possible values: - "" - native - tunnel
+autoDirectNodeRoutes: true # Enable installation of PodCIDR routes between worker nodes if worker nodes share a common L2 network segment.
+ipv4NativeRoutingCIDR: "${CLUSTER_NODE_CIDR_IP4}" # Maintain native routing CIDR for direct routing
+bpf:
+  masquerade: true # Enable native IP masquerade support in eBPF for native routing
+  # datapathMode: netkit # Mode for Pod devices for the core datapath (veth, netkit, netkit-l2)
+  # preallocateMaps: true # Enables pre-allocation of eBPF map values. This increases memory usage but can reduce latency.
+  # tproxy: true # Configure the eBPF-based TPROXY (beta) to reduce reliance on iptables rules for implementing Layer 7 policy.
+  # # Control to use a distributed per-CPU backend memory for the core BPF LRU maps which Cilium uses. This improves performance significantly,
+  # # but it is also recommended to increase BPF map sizing along with that.
+  # distributedLRU:
+  #   enabled: true # Enable distributed LRU backend memory. For compatibility with existing installations it is off by default.
+  # mapDynamicSizeRatio: 0.08 # Configure auto-sizing for all BPF maps based on available memory. ref: https://docs.cilium.io/en/stable/network/ebpf/maps/
+enableIPv4Masquerade: true
+ipMasqAgent: # Configure the eBPF-based ip-masq-agent
+  enabled: true # Enable IP masquerading agent for external connectivity
+  # config:
+  #   nonMasqueradeCIDRs:
+  #     - ${CLUSTER_SVC_CIDR_IP4}
+  #     - ${CLUSTER_POD_CIDR_IP4}
+  #   masqLinkLocal: false
+  #   masqLinkLocalIPv6: false
 bgpControlPlane: # This feature set enables virtual BGP routers to be created via CiliumBGPPeeringPolicy CRDs.
   enabled: true # Enables the BGP control plane.
 gatewayAPI:
@@ -57,7 +64,7 @@ cgroup: # Configure cgroup related configuration
 # enableIPv4BIGTCP: true # Enables IPv4 BIG TCP support which increases maximum IPv4 GSO/GRO limits for nodes and pods
 # bpfClockProbe: true # Enable BPF clock source probing for more efficient tick retrieval.
 ipam:
-  mode: "kubernetes" # Configure IP Address Management mode. ref: https://docs.cilium.io/en/stable/network/concepts/ipam/
+  mode: kubernetes # Configure IP Address Management mode. ref: https://docs.cilium.io/en/stable/network/concepts/ipam/
 operator:
   rollOutPods: true # Roll out cilium-operator pods automatically when configmap is updated.
 prometheus:
