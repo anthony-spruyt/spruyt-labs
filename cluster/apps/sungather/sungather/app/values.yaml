@@ -12,6 +12,9 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   sungather:
+    pod:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
     replicas: 0
     annotations:
       reloader.stakater.com/auto: "true"
