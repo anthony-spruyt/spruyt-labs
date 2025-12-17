@@ -12,7 +12,7 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   sungather:
-    replicas: 0
+    replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"
     strategy: Recreate
