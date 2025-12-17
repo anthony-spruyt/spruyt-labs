@@ -75,7 +75,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "velero" {
     id     = "expire-old-versions"
     status = "Enabled"
 
-
     filter {}
 
     noncurrent_version_expiration {
