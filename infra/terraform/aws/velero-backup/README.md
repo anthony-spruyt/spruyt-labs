@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Terraform workspace provisions an S3 bucket and IAM user for Velero backups.
+This Terraform workspace provisions S3 buckets and IAM resources for Velero backups with cross-region replication for enhanced disaster recovery. It creates a primary bucket in the specified region and a replica bucket in a secondary region, with automatic replication of backup data to DEEP_ARCHIVE storage for cost-effective long-term retention.
 
 ## Usage
 
