@@ -5,22 +5,23 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingress-routes-lan-https
-  namespace: qdrant-system
+  namespace: flux-system
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: qdrant.lan.${EXTERNAL_DOMAIN}
+    external-dns.alpha.kubernetes.io/hostname: flux.lan.${EXTERNAL_DOMAIN}
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`qdrant.lan.${EXTERNAL_DOMAIN}`)
+      match: Host(`flux.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
+        - name: lan-ip-whitelist
         - name: compress
       services:
-        - name: qdrant
-          namespace: qdrant-system
+        - name: flux-operator
+          namespace: flux-system
           passHostHeader: true
-          port: 6333
+          port: 9080
   tls:
-    secretName: "qdrant-lan-${EXTERNAL_DOMAIN/./-}-tls"
+    secretName: "flux-lan-${EXTERNAL_DOMAIN/./-}-tls"
