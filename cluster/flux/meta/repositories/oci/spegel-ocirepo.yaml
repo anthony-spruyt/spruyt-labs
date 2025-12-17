@@ -7,7 +7,7 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "0.5.1"
+    tag: "0.6.0"
   url: oci://ghcr.io/spegel-org/helm-charts/spegel
   secretRef:
     name: ghcr-docker-config
