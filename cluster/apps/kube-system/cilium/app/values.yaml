@@ -35,12 +35,13 @@ bpf:
 enableIPv4Masquerade: true
 ipMasqAgent: # Configure the eBPF-based ip-masq-agent
   enabled: true # Enable IP masquerading agent for external connectivity
-  # config:
-  #   nonMasqueradeCIDRs:
-  #     - ${CLUSTER_SVC_CIDR_IP4}
-  #     - ${CLUSTER_POD_CIDR_IP4}
-  #   masqLinkLocal: false
-  #   masqLinkLocalIPv6: false
+  config:
+    nonMasqueradeCIDRs:
+      - ${CLUSTER_SVC_CIDR_IP4}
+      - ${CLUSTER_POD_CIDR_IP4}
+      - ${CLUSTER_NODE_CIDR_IP4}
+    # masqLinkLocal: false
+    # masqLinkLocalIPv6: false
 bgpControlPlane: # This feature set enables virtual BGP routers to be created via CiliumBGPPeeringPolicy CRDs.
   enabled: true # Enables the BGP control plane.
 gatewayAPI:
