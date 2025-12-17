@@ -88,7 +88,6 @@ resource "aws_s3_bucket_replication_configuration" "velero" {
 
   role   = aws_iam_role.replication.arn
   bucket = aws_s3_bucket.velero.id
-  region = var.aws_replica_region
 
   rule {
     id       = "velero-backup-replication"
