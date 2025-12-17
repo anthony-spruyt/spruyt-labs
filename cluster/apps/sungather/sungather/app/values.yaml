@@ -24,13 +24,13 @@ controllers:
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
-        resources:
-          requests:
-            cpu: 20m
-            memory: 32M
-          limits:
-            cpu: 500m
-            memory: 64M
+        # resources:
+        #   requests:
+        #     cpu: 20m
+        #     memory: 32M
+        #   limits:
+        #     cpu: 500m
+        #     memory: 64M
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
