@@ -13,6 +13,5 @@ spec:
     # exclude all
     /*
     # include files
-    !/deploy/controller/crds.yaml
     !/deploy/controller/rbac.yaml
     !/deploy/controller/setup-controller.yaml
