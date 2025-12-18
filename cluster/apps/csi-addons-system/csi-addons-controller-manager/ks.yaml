@@ -5,6 +5,10 @@ kind: Kustomization
 metadata:
   name: &app csi-addons-controller-manager
   namespace: flux-system
+  labels:
+    kustomizationdefaults.flux.home.arpa/disabled: "true"
+    sops.flux.home.arpa/disabled: "true"
+    substitution.flux.home.arpa/disabled: "true"
 spec:
   path: ./deploy/controller
   commonMetadata:
