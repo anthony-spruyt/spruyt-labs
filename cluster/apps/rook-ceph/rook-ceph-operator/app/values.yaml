@@ -34,6 +34,8 @@ csi:
         requests:
           memory: 128Mi
           cpu: 100m
+  csiAddons:
+    enabled: true
   #pluginTolerations:
   #  - key: node-role.kubernetes.io/control-plane
   #    operator: Exists
