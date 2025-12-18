@@ -48,19 +48,6 @@ spec:
         group: source.toolkit.fluxcd.io
         kind: OCIRepository
         labelSelector: ocirepositorydefaults.flux.home.arpa/disabled notin (true)
-    # Add defaults to all GitRepository Kustomizations
-    - patch: |-
-        apiVersion: source.toolkit.fluxcd.io/v1
-        kind: GitRepository
-        metadata:
-          name: not-used
-        spec:
-          interval: 15m
-          timeout: 3m
-      target:
-        group: source.toolkit.fluxcd.io
-        kind: GitRepository
-        labelSelector: gitrepositorydefaults.flux.home.arpa/disabled notin (true)
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1

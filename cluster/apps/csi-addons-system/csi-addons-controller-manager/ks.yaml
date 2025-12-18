@@ -5,19 +5,11 @@ kind: Kustomization
 metadata:
   name: &app csi-addons-controller-manager
   namespace: flux-system
-  labels:
-    kustomizationdefaults.flux.home.arpa/disabled: "true"
-    sops.flux.home.arpa/disabled: "true"
-    substitution.flux.home.arpa/disabled: "true"
 spec:
-  path: ./deploy/controller
+  path: ./cluster/apps/csi-addons-system/csi-addons-controller-manager/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  interval: 1h
-  sourceRef:
-    kind: GitRepository
-    name: kubernetes-csi-addons
   prune: true
   timeout: 5m
   wait: false
