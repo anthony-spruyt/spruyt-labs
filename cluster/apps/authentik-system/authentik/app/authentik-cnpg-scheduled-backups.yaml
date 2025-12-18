@@ -8,7 +8,7 @@ metadata:
 spec:
   immediate: true
   suspend: false
-  schedule: "0 16 * * *" # At 02:00 daily Melbourne (UTC+10)
+  schedule: "0 15 * * *" # At 01:00 daily Melbourne (UTC+10)
   cluster:
     name: authentik-cnpg-cluster
   method: plugin

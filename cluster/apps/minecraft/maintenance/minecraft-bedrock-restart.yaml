@@ -5,7 +5,7 @@ metadata:
   name: minecraft-bedrock-restart
   namespace: minecraft
 spec:
-  schedule: "0 14 * * *" # 14:00 UTC = 1AM AEDT (UTC+11)
+  schedule: "0 14 * * *" # At 00:00 daily Melbourne (UTC+10)
   jobTemplate:
     spec:
       template:
