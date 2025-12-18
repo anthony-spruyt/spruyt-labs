@@ -200,16 +200,23 @@ kubectl get <resource> -n <namespace>
 task dev-env:lint
 ```
 
-2. **Test Functionality**: Verify changes work as expected
-3. **Check Cluster State**:
+2. **Format and Validate Terraform** (if Terraform changes made):
+
+```bash
+task terraform:fmt
+task terraform:validate
+```
+
+3. **Test Functionality**: Verify changes work as expected
+4. **Check Cluster State**:
 
 ```bash
 kubectl get nodes
 talosctl get members
 ```
 
-4. **Review Automation**: Ensure Flux reconciliation continues properly
-5. **Monitor Post-Change**: Check resource status and events
+5. **Review Automation**: Ensure Flux reconciliation continues properly
+6. **Monitor Post-Change**: Check resource status and events
 
 ### Expected Outcomes
 
@@ -361,6 +368,7 @@ core_commands:
 ## Enforcement
 
 - **Mandatory Linting**: All changes must pass `task dev-env:lint` before commit
+- **Terraform Standards**: Format and validate all Terraform changes using `task terraform:fmt` and `task terraform:validate`
 - **Python Prohibition**: Code review must reject any Python scripts
 - **Documentation Requirements**: All components must have README.md files
 - **Validation Requirements**: All decision trees must pass YAML syntax validation

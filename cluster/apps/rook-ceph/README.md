@@ -215,6 +215,20 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    ceph pg stat
    ```
 
+6. **Block image maintenance** – Flatten cloned RBD images to remove dependency on parent snapshots during maintenance:
+
+   ```bash
+   # List children of a snapshot to see what needs flattening
+   rbd list <pool>/<image>@<snapshot>
+
+   # Flatten an image to make it independent
+   rbd flatten <pool>/<image>
+
+   # After flattening, you can remove the parent snapshot if no longer needed
+   rbd snap unprotect <pool>/<image>@<snapshot>
+   rbd snap rm <pool>/<image>@<snapshot>
+   ```
+
 #### Phase 5 – Disaster Recovery and Restore Path
 
 1. Assess overall impact:

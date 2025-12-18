@@ -2,7 +2,8 @@ data "aws_caller_identity" "current" {}
 
 locals {
   # Format: {project}-{accountid}-{environment}-cnpg-backup
-  bucket_name = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-cnpg-backup")
+  bucket_name         = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-cnpg-backup")
+  replica_bucket_name = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-cnpg-backup-replica")
 
   common_tags = {
     Project     = var.project
@@ -17,8 +18,26 @@ resource "aws_s3_bucket" "cnpg" {
   tags          = local.common_tags
 }
 
+resource "aws_s3_bucket" "cnpg_replica" {
+  bucket        = local.replica_bucket_name
+  region        = var.aws_replica_region
+  force_destroy = false
+  tags          = local.common_tags
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "cnpg" {
   bucket = aws_s3_bucket.cnpg.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "cnpg_replica" {
+  bucket = aws_s3_bucket.cnpg_replica.id
+  region = var.aws_replica_region
 
   rule {
     apply_server_side_encryption_by_default {
@@ -40,6 +59,15 @@ resource "aws_s3_bucket_versioning" "cnpg" {
   }
 }
 
+resource "aws_s3_bucket_versioning" "cnpg_replica" {
+  bucket = aws_s3_bucket.cnpg_replica.id
+  region = var.aws_replica_region
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_s3_bucket_lifecycle_configuration" "cnpg" {
   bucket = aws_s3_bucket.cnpg.id
 
@@ -50,7 +78,25 @@ resource "aws_s3_bucket_lifecycle_configuration" "cnpg" {
     filter {}
 
     noncurrent_version_expiration {
-      noncurrent_days = 30
+      noncurrent_days = var.expiration
+    }
+  }
+}
+
+resource "aws_s3_bucket_replication_configuration" "cnpg" {
+  depends_on = [aws_s3_bucket_versioning.cnpg_replica]
+
+  role   = aws_iam_role.replication.arn
+  bucket = aws_s3_bucket.cnpg.id
+
+  rule {
+    id       = "cnpg-backup-replication"
+    status   = "Enabled"
+    priority = 1
+
+    destination {
+      bucket        = aws_s3_bucket.cnpg_replica.arn
+      storage_class = "DEEP_ARCHIVE"
     }
   }
 }
@@ -99,8 +145,85 @@ resource "aws_iam_user_policy_attachment" "cnpg" {
   policy_arn = aws_iam_policy.cnpg.arn
 }
 
+# IAM role for S3 replication
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "replication" {
+  name               = "cnpg-backup-replication-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  tags               = local.common_tags
+}
+
+data "aws_iam_policy_document" "replication" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket",
+    ]
+
+    resources = [aws_s3_bucket.cnpg.arn]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:GetObjectVersionForReplication",
+      "s3:GetObjectVersionAcl",
+      "s3:GetObjectVersionTagging",
+    ]
+
+    resources = ["${aws_s3_bucket.cnpg.arn}/*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:ReplicateObject",
+      "s3:ReplicateDelete",
+      "s3:ReplicateTags",
+    ]
+
+    resources = ["${aws_s3_bucket.cnpg_replica.arn}/*"]
+  }
+}
+
+resource "aws_iam_policy" "replication" {
+  name   = "cnpg-backup-replication"
+  policy = data.aws_iam_policy_document.replication.json
+  tags   = local.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "replication" {
+  role       = aws_iam_role.replication.name
+  policy_arn = aws_iam_policy.replication.arn
+}
+
 resource "aws_s3_bucket_public_access_block" "cnpg" {
   bucket                  = aws_s3_bucket.cnpg.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "cnpg_replica" {
+  bucket                  = aws_s3_bucket.cnpg_replica.id
+  region                  = var.aws_replica_region
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
