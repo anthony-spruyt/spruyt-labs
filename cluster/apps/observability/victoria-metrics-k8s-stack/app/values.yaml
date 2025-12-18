@@ -116,6 +116,8 @@ grafana:
       initDatasources: true
       label: grafana_datasource
       resource: both
+    dashboards:
+      enabled: true
   persistence:
     enabled: true
     existingClaim: grafana-data
