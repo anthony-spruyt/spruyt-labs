@@ -21,6 +21,8 @@ parameters:
   csi.storage.k8s.io/fstype: ext4
 reclaimPolicy: Retain
 allowVolumeExpansion: true
+mountOptions:
+  - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
 ## StorageClass rbd-fast-delete
@@ -44,6 +46,8 @@ parameters:
   csi.storage.k8s.io/fstype: ext4
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+mountOptions:
+  - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
 ## StorageClass rbd-fast-ec
@@ -68,6 +72,8 @@ parameters:
   csi.storage.k8s.io/fstype: ext4
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+mountOptions:
+  - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
 ## StorageClass rbd-fast
@@ -93,6 +99,8 @@ parameters:
   encryptionKMSID: "user-secret-metadata"
 reclaimPolicy: Retain
 allowVolumeExpansion: true
+mountOptions:
+  - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
 ## StorageClass rbd-fast-delete
@@ -118,6 +126,8 @@ parameters:
   encryptionKMSID: "user-secret-metadata"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+mountOptions:
+  - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
 ## StorageClass rbd-fast-ec
@@ -144,3 +154,5 @@ parameters:
   encryptionKMSID: "user-secret-metadata"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+mountOptions:
+  - discard
