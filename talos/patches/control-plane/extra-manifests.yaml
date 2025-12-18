@@ -8,4 +8,3 @@ cluster:
     - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotclasses.yaml
     - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotcontents.yaml
     - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshots.yaml
-    - https://raw.githubusercontent.com/csi-addons/kubernetes-csi-addons/v0.13.0/deploy/controller/crds.yaml

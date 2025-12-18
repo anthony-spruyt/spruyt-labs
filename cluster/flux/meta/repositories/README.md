@@ -4,6 +4,7 @@ This directory contains repository definitions for Helm charts and OCI images us
 
 ## Directory Structure
 
+- `git/` - Git repository definitions
 - `helm/` - Traditional Helm repository definitions
 - `oci/` - OCI repository definitions for container registry-hosted charts
 

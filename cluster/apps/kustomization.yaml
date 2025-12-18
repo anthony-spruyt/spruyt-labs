@@ -13,6 +13,7 @@ resources:
   - ./cert-manager
   - ./traefik
   - ./spegel
+  - ./csi-addons-system
   - ./rook-ceph
   - ./technitium
   - ./external-dns
