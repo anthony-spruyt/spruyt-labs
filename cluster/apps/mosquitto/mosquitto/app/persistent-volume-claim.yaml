@@ -6,8 +6,10 @@ kind: PersistentVolumeClaim
 metadata:
   name: mosquitto-data
   namespace: mosquitto
-  finalizers:
-    - kubernetes.io/pvc-protection
+  # finalizers:
+  #   - kubernetes.io/pvc-protection
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
 spec:
   storageClassName: rbd-fast
   accessModes:
