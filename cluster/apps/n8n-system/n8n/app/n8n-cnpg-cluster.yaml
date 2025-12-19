@@ -28,12 +28,12 @@ spec:
   instances: 1
   monitoring:
     enablePodMonitor: true
-  plugins:
-    - name: barman-cloud.cloudnative-pg.io
-      enabled: true
-      isWALArchiver: true
-      parameters:
-        barmanObjectName: n8n-cnpg-aws-object-store
+  # plugins:
+  #   - name: barman-cloud.cloudnative-pg.io
+  #     enabled: true
+  #     isWALArchiver: true
+  #     parameters:
+  #       barmanObjectName: n8n-cnpg-aws-object-store
   postgresql:
     parameters:
       shared_buffers: 256MB # 25% of the memory defined under requests memory
