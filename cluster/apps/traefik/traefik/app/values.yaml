@@ -6,12 +6,12 @@ logs:
     format: json
     level: INFO
 resources:
-  limits:
-    cpu: 2000m
-    memory: 1Gi
   requests:
     cpu: 30m
     memory: 300Mi
+  limits:
+    cpu: 2000m
+    memory: 1Gi
 ports:
   web:
     redirections:
