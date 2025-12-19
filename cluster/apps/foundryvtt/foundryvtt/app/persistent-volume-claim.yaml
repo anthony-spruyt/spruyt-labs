@@ -18,17 +18,6 @@ spec:
     requests:
       storage: 10Gi
 ---
-# Step 1: Create a VolumeSnapshot from source PVC
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshot
-metadata:
-  name: foundryvtt-data-migration-snapshot
-  namespace: foundryvtt
-spec:
-  volumeSnapshotClassName: rook-ceph-rbd
-  source:
-    persistentVolumeClaimName: foundryvtt-data
----
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
 # Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
 apiVersion: v1
@@ -47,7 +36,3 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  dataSource:
-    name: foundryvtt-data-migration-snapshot
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io

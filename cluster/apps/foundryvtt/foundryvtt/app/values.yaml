@@ -6,7 +6,7 @@ controllers:
     annotations:
       reloader.stakater.com/auto: "true"
     strategy: Recreate
-    replicas: 0
+    replicas: 1
     type: deployment
     serviceAccount:
       identifier: foundryvtt
@@ -137,7 +137,7 @@ controllers:
                 port: http
 persistence:
   data:
-    existingClaim: "foundryvtt-data"
+    existingClaim: "foundryvtt-data-v2"
     globalMounts:
       - path: /data
 serviceAccount:
