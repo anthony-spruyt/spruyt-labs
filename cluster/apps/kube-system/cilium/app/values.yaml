@@ -82,6 +82,8 @@ hubble:
       enabled: true
       serviceMonitor:
         enabled: true
+    service:
+      targetPort: 9965
   ui:
     enabled: true
     rollOutPods: true
@@ -98,6 +100,7 @@ hubble:
       - icmp
       - http
     enableOpenMetrics: true
+    port: 9966
 socketLB: # Configure socket LB
   enabled: true # Enable socket LB
   hostNamespaceOnly: true # Strangely not mentioned in the helm chart reference but it is in the json schema.
