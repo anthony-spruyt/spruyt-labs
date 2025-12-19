@@ -55,3 +55,6 @@ spec:
         kind: PersistentVolumeClaim
         name: n8n-cnpg-cluster
         apiGroup: ""
+    size: 3Gi
+    storageClass: rbd-fast-delete
+    resizeInUseVolumes: true
