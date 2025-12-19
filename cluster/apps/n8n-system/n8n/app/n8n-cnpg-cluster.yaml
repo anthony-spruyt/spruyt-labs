@@ -51,10 +51,6 @@ spec:
       memory: 1Gi # shared_buffers under parameters should be 25% of the memory defined here
   storage:
     pvcTemplate:
-      volumeName: pvc-5703550f-348e-40e4-8d09-9c472d6b2304
-      storageClassName: rbd-fast
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 3Gi
+      dataSource:
+        kind: PersistentVolumeClaim
+        name: n8n-cnpg-cluster

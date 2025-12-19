@@ -17,7 +17,3 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  dataSource:
-    name: migration-snapshot
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
