@@ -11,9 +11,18 @@ spec:
     podAntiAffinityType: required
     topologyKey: kubernetes.io/hostname
   bootstrap:
-    initdb:
-      database: n8n
-      owner: n8n
+    # initdb:
+    #   database: n8n
+    #   owner: n8n
+    recovery:
+      source: origin
+  externalClusters:
+    - name: origin
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: n8n-cnpg-aws-object-store
+          serverName: n8n-cnpg-cluster
   enableSuperuserAccess: true
   imageName: "ghcr.io/cloudnative-pg/postgresql:18"
   instances: 1
