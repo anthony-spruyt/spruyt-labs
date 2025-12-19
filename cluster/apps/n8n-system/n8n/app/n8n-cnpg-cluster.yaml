@@ -18,7 +18,7 @@ spec:
       source: origin
       recoveryTarget:
         # Time base target for the recovery
-        targetTime: "2025-12-19 06:00:00.00000+11"
+        targetTime: "2025-12-14 06:00:00.00000+11"
   externalClusters:
     - name: origin
       plugin:
