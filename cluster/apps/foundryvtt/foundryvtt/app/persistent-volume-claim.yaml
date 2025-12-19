@@ -28,26 +28,26 @@ spec:
   volumeSnapshotClassName: rook-ceph-rbd
   source:
     persistentVolumeClaimName: foundryvtt-data
-# ---
-# # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
-# # Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   name: foundryvtt-data-v2
-#   namespace: foundryvtt
-#   # finalizers:
-#   #   - kubernetes.io/pvc-protection
-#   annotations:
-#     reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
-# spec:
-#   storageClassName: rbd-fast
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 10Gi
-#   dataSource:
-#     name: foundryvtt-data-migration-snapshot
-#     kind: VolumeSnapshot
-#     apiGroup: snapshot.storage.k8s.io
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: foundryvtt-data-v2
+  namespace: foundryvtt
+  # finalizers:
+  #   - kubernetes.io/pvc-protection
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
+spec:
+  storageClassName: rbd-fast
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  dataSource:
+    name: foundryvtt-data-migration-snapshot
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
