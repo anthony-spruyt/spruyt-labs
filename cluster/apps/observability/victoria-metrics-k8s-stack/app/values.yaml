@@ -68,6 +68,7 @@ vmagent:
         value: 100
       - name: GOMAXPROCS
         value: 1
+    serviceScrapeSelector: {}
     extraArgs:
       promscrape.streamParse: "true"
       promscrape.dropOriginalLabels: "false"
