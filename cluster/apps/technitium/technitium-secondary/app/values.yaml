@@ -16,7 +16,7 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   technitium-secondary:
-    replicas: 0
+    replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
@@ -119,7 +119,7 @@ service:
 persistence:
   config:
     enabled: true
-    existingClaim: technitium-secondary
+    existingClaim: technitium-secondary-v2
     globalMounts:
       - path: /etc/dns
   tls:
