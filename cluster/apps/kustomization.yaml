@@ -27,7 +27,7 @@ resources:
   - ./cnpg-system
   - ./valkey-system
   - ./qdrant-system
-  - ./n8n-system
+  # - ./n8n-system
   - ./redisinsight
   - ./foundryvtt
   - ./sungather
