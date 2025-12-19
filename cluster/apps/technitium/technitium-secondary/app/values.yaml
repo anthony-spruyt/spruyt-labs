@@ -16,7 +16,7 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   technitium-secondary:
-    replicas: 1
+    replicas: 0
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
