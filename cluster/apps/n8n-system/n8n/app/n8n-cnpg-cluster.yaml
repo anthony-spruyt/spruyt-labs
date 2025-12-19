@@ -39,7 +39,7 @@ spec:
       memory: 1Gi # shared_buffers under parameters should be 25% of the memory defined here
   storage:
     pvcTemplate:
-      storageClassName: rbd-fast
+      storageClassName: rbd-fast-delete
       accessModes:
         - ReadWriteOnce
       resources:
