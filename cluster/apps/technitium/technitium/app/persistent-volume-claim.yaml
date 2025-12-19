@@ -36,3 +36,7 @@ spec:
   resources:
     requests:
       storage: 4Gi
+  dataSource:
+    name: technitium-migration-snapshot
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
