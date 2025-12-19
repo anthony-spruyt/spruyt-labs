@@ -3,7 +3,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
 controllers:
   mosquitto:
-    replicas: 0
+    replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"
     initContainers:
@@ -105,7 +105,7 @@ persistence:
             subPath: mosquitto.conf
             readOnly: true
   mosquitto-data:
-    existingClaim: "mosquitto-data"
+    existingClaim: mosquitto-data-v2
     advancedMounts:
       mosquitto:
         mosquitto:
