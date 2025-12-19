@@ -16,3 +16,6 @@ spec:
       - kube-system
   endpoints:
     - port: 9966
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s

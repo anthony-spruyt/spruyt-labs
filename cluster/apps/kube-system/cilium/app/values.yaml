@@ -97,6 +97,7 @@ hubble:
       - port-distribution
       - icmp
       - http
+    enableOpenMetrics: true
 socketLB: # Configure socket LB
   enabled: true # Enable socket LB
   hostNamespaceOnly: true # Strangely not mentioned in the helm chart reference but it is in the json schema.
