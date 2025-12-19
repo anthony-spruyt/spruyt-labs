@@ -54,3 +54,4 @@ spec:
       dataSource:
         kind: PersistentVolumeClaim
         name: n8n-cnpg-cluster
+        apiGroup: ""
