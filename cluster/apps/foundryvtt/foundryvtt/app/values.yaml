@@ -6,7 +6,7 @@ controllers:
     annotations:
       reloader.stakater.com/auto: "true"
     strategy: Recreate
-    replicas: 1
+    replicas: 0
     type: deployment
     serviceAccount:
       identifier: foundryvtt
