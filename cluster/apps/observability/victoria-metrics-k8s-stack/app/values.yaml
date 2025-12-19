@@ -68,6 +68,9 @@ vmagent:
         value: 100
       - name: GOMAXPROCS
         value: 1
+    serviceScrapeSelector:
+      matchLabels:
+        app.kubernetes.io/instance: victoria-metrics-k8s-stack
     extraArgs:
       promscrape.streamParse: "true"
       promscrape.dropOriginalLabels: "false"
