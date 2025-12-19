@@ -15,38 +15,4 @@ spec:
     matchNames:
       - kube-system
   endpoints:
-    - port: metrics
----
-apiVersion: operator.victoriametrics.com/v1beta1
-kind: VMServiceScrape
-metadata:
-  name: rook-ceph-exporter
-  namespace: observability
-  labels:
-    app.kubernetes.io/instance: victoria-metrics-k8s-stack
-spec:
-  selector:
-    matchLabels:
-      app: rook-ceph-exporter
-  namespaceSelector:
-    matchNames:
-      - rook-ceph
-  endpoints:
-    - port: ceph-exporter-http-metrics
----
-apiVersion: operator.victoriametrics.com/v1beta1
-kind: VMServiceScrape
-metadata:
-  name: rook-ceph-mgr
-  namespace: observability
-  labels:
-    app.kubernetes.io/instance: victoria-metrics-k8s-stack
-spec:
-  selector:
-    matchLabels:
-      app: rook-ceph-mgr
-  namespaceSelector:
-    matchNames:
-      - rook-ceph
-  endpoints:
-    - port: http-metrics
+    - port: 9966
