@@ -72,6 +72,7 @@ vmagent:
       promscrape.streamParse: "true"
       promscrape.dropOriginalLabels: "false"
       promscrape.disableCompression: "true"
+      promscrape.maxScrapeSize: "256MB"
     # inlineScrapeConfig: |
     #   - job_name: 'kubernetes-pods'
     #     kubernetes_sd_configs:

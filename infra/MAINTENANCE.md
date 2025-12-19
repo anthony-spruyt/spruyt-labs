@@ -308,5 +308,5 @@ end: "end"
 - [Terraform CLI Documentation](https://developer.hashicorp.com/terraform/cli)
 - [Terraform Cloud Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 - [Velero Documentation](https://velero.io/docs/)
-- [CloudNativePG Backup](https://cloudnative-pg.io/documentation/1.27/backup/)
+- [CloudNativePG Backup](https://cloudnative-pg.io/docs/1.28/backup)
 - [AWS S3 Documentation](https://docs.aws.amazon.com/s3/)

@@ -292,7 +292,6 @@ and automation issues.
 
 - Runbook standards overview: [`README.md`](../../README.md#runbook-standards)
 - Application deployment guide: [`cluster/apps/README.md`](../apps/README.md)
-- Custom resource lifecycle guidance: [`cluster/crds/README.md`](../crds/README.md)
 - Talos bootstrap and control-plane recovery: [`talos/README.md`](../../talos/README.md)
 - Secrets management workflows: [`.taskfiles/sops/tasks.yaml`](../../.taskfiles/sops/tasks.yaml)
 - Flux visualization task: [`.taskfiles/flux/tasks.yaml`](../../.taskfiles/flux/tasks.yaml)

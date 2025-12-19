@@ -721,10 +721,9 @@ This consolidated matrix covers common failure modes across the cluster, applica
 #### Operational Runbooks
 
 | Component/Service    | Readme                                                                                                                                 |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | Cluster applications | [`cluster/apps/README.md`](cluster/apps/README.md)                                                                                     |
-| CSR automation       | [`cluster/apps/kubelet-csr-approver/kubelet-csr-approver/README.md`](cluster/apps/kubelet-csr-approver/kubelet-csr-approver/README.md) |
-| Custom resources     | [`cluster/crds/README.md`](cluster/crds/README.md)                                                                                     |
+| CSR automation       | [`cluster/apps/kubelet-csr-approver/kubelet-csr-approver/README.md`](cluster/apps/kubelet-csr-approver/kubelet-csr-approver/README.md) |     |
 | Flux bootstrap       | [`cluster/flux/README.md`](cluster/flux/README.md)                                                                                     |
 
 #### Infrastructure and Lifecycle
@@ -782,7 +781,7 @@ This consolidated matrix covers common failure modes across the cluster, applica
 - [VictoriaMetrics Operator](https://docs.victoriametrics.com/operator/) — Kubernetes operator documentation.
 - [Mosquitto authentication methods](https://mosquitto.org/documentation/authentication-methods/)
   — MQTT user management.
-- [CloudNativePG documentation](https://cloudnative-pg.io/documentation/1.27/)
+- [CloudNativePG documentation](https://cloudnative-pg.io/docs/)
   — PostgreSQL operator tuning.
 - [Valkey](https://valkey.io/) — In-memory data structure store.
 

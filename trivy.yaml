@@ -8,7 +8,9 @@ scan:
     - .secrets
     - talos/clusterconfig
   skip-files:
+    - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/csi-addons-config.yaml
     - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/rbac.yaml
+    - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
     - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
     - cluster/apps/minecraft/maintenance/minecraft-bedrock-restart.yaml
     - cluster/apps/minecraft/maintenance/role.yaml
