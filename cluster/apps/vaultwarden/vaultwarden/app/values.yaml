@@ -44,7 +44,7 @@ service:
         port: *port
 persistence:
   data:
-    existingClaim: vaultwarden-data
+    existingClaim: vaultwarden-data-v2
     globalMounts:
       - path: /data
   tmp:
