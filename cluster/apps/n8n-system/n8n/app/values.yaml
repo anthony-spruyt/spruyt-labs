@@ -72,6 +72,11 @@ main:
       value: "true"
     N8N_GIT_NODE_DISABLE_BARE_REPOS:
       value: "true"
+    N8N_LICENSE_ACTIVATION_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: N8N_LICENSE_ACTIVATION_KEY
     N8N_PORT:
       value: "5678"
     N8N_PROXY_HOPS:
