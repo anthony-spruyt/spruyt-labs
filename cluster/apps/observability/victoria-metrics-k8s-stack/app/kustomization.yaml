@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./persistent-volume-claim.yaml
   - ./victoria-metrics-k8s-stack-secrets.sops.yaml
+  - ./hubble-vm-service-scrape.yaml
   - ./release.yaml
 configMapGenerator:
   - name: victoria-metrics-k8s-stack-values

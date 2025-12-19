@@ -1,0 +1,14 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: hubble-relay
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      k8s-app: hubble-relay
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  endpoints:
+    - port: metrics
