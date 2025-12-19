@@ -16,6 +16,9 @@ spec:
     #   owner: n8n
     recovery:
       source: origin
+      recoveryTarget:
+        # Time base target for the recovery
+        targetTime: "2025-12-19 06:00:00.00000+11"
   externalClusters:
     - name: origin
       plugin:
@@ -28,12 +31,12 @@ spec:
   instances: 1
   monitoring:
     enablePodMonitor: true
-  plugins:
-    - name: barman-cloud.cloudnative-pg.io
-      enabled: true
-      isWALArchiver: true
-      parameters:
-        barmanObjectName: n8n-cnpg-aws-object-store
+  # plugins:
+  #   - name: barman-cloud.cloudnative-pg.io
+  #     enabled: true
+  #     isWALArchiver: true
+  #     parameters:
+  #       barmanObjectName: n8n-cnpg-aws-object-store
   postgresql:
     parameters:
       shared_buffers: 256MB # 25% of the memory defined under requests memory
