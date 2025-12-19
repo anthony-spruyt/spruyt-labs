@@ -2,7 +2,9 @@
 
 ## Overview
 
-CSI Addons Controller Manager provides extended Container Storage Interface (CSI) capabilities for the spruyt-labs homelab infrastructure, enabling advanced storage operations beyond the standard CSI specification. It is a Kubernetes controller that extends CSI drivers with additional capabilities not covered by the core CSI specification, providing APIs and controllers for operations like reclaiming unused space on storage volumes, managing network fences for storage isolation, and handling encryption key lifecycle management.
+CSI Addons Controller Manager provides extended Container Storage Interface (CSI) capabilities for the spruyt-labs homelab infrastructure, enabling advanced storage operations beyond the standard CSI specification.
+It is a Kubernetes controller that extends CSI drivers with additional capabilities not covered by the core CSI specification.
+It provides APIs and controllers for operations like reclaiming unused space on storage volumes, managing network fences for storage isolation, and handling encryption key lifecycle management.
 
 Objectives:
 
