@@ -26,7 +26,7 @@ persistence:
   # If need to resize the PVC then reference below to do so because this is a stateful set and the fields will be immutable.
   # https://github.com/qdrant/qdrant-helm/blob/main/charts/qdrant/README.md#updating-statefulsets
   size: 10Gi
-  storageClassName: rbd-fast
+  storageClassName: rbd-fast-delete
 metrics:
   serviceMonitor:
     enabled: true
