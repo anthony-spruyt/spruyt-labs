@@ -17,3 +17,22 @@ spec:
   resources:
     requests:
       storage: 4Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.33.3/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: technitium-secondary-v2
+  namespace: technitium
+  # finalizers:
+  #   - kubernetes.io/pvc-protection
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
+spec:
+  storageClassName: rbd-fast-delete
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
