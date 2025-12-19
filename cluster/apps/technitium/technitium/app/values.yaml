@@ -119,7 +119,7 @@ service:
 persistence:
   config:
     enabled: true
-    existingClaim: technitium
+    existingClaim: technitium-v2
     globalMounts:
       - path: /etc/dns
   tls:
