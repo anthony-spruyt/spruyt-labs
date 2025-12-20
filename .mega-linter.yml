@@ -1,39 +1,18 @@
 ENABLE_LINTERS:
   - ACTION_ACTIONLINT
   - BASH_SHELLCHECK
-  - JSON_NPM_PACKAGE_JSON_LINT
   - MARKDOWN_MARKDOWNLINT
-  # - MARKDOWN_MARKDOWN_TABLE_FORMATTER
   - REPOSITORY_GITLEAKS
   - REPOSITORY_SECRETLINT
   - REPOSITORY_TRIVY
   - SPELL_LYCHEE
   - TERRAFORM_TFLINT
-  # - TERRAFORM_TERRAFORM_FMT
-  # - YAML_PRETTIER
   - YAML_YAMLLINT
 FILTER_REGEX_EXCLUDE: '.*sops.*|.*/mcp\.json$'
 EXCLUDED_DIRECTORIES:
-  - /temp/lint/.git
-  - /temp/lint/talos
-  - /temp/lint/.kilocode
-  - /temp/lint/clusterconfig
-  - /temp/lint/legacy
-  - /temp/lint/.taskfiles/talos/scripts
   - .git
   - talos
   - .kilocode
-  - clusterconfig
-  - legacy
-  - .taskfiles/talos/scripts
-ADDITIONAL_EXCLUDED_DIRECTORIES:
-  - temp/lint/.git
-  - temp/lint/talos
-  - temp/lint/clusterconfig
-  - temp/lint/legacy
-  - temp/lint/.taskfiles/talos/scripts
-  - .git
-  - talos
   - clusterconfig
   - legacy
   - .taskfiles/talos/scripts

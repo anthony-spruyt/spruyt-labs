@@ -3,6 +3,9 @@ set -euo pipefail
 
 # Runs mega-linter against the current dev container workspace files,
 # excluding pipeline-only environment variables.
+#
+# NOTE: The -v mount path must match the HOST filesystem (WSL), not the devcontainer.
+# Update /home/aspruyt if your WSL username differs.
 
 sudo rm -rf /workspaces/spruyt-labs/.output
 mkdir /workspaces/spruyt-labs/.output
@@ -16,7 +19,6 @@ sudo docker run \
   -e UPDATED_SOURCES_REPORTER="true" \
   -e REPORT_OUTPUT_FOLDER="/tmp/lint/.output" \
   -v "/home/aspruyt/spruyt-labs:/tmp/lint" \
-  -v "/home/aspruyt/.kilocode:/tmp/lint/.kilocode" \
   --rm \
   oxsecurity/megalinter:v9
 
