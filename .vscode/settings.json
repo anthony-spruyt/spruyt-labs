@@ -3,7 +3,6 @@
     ".devcontainer": false,
     ".github": false,
     ".taskfiles": false,
-    ".secrets": false,
     ".sops.yaml": false,
     ".gitattributes": false,
     ".gitleaksignore": false,
@@ -19,8 +18,7 @@
   },
   "search.exclude": {
     "**/*.secret.*": true,
-    "**/temp/**": true,
-    "**/.secrets/**": true
+    "**/temp/**": true
   },
   "files.autoSave": "afterDelay",
   "files.autoSaveWorkspaceFilesOnly": true,

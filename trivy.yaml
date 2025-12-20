@@ -5,7 +5,6 @@ exit-code: 1
 exit-on-eol: 2
 scan:
   skip-dirs:
-    - .secrets
     - talos/clusterconfig
   skip-files:
     - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/csi-addons-config.yaml

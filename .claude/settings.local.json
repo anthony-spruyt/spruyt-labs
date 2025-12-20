@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(task dev-env:lint:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(while read dir)",
+      "Bash(do [ ! -f \"$dir/README.md\" ])",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(for dir in /workspaces/spruyt-labs/cluster/apps/*/*)",
+      "Bash(do [ -d \"$dir\" ])",
+      "Bash([ ! -f \"$dir/README.md\" ])",
+      "Bash(find:*)"
+    ]
+  }
+}

@@ -1,5 +1,4 @@
 .output
-.secrets
 talos/clusterconfig
 *.sops.*
 .gitattributes
