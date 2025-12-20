@@ -57,7 +57,7 @@
         "target": {
           "limit": 100,
           "matchAny": false,
-          "tags": [],
+          "tags": ["etcd-mixin"],
           "type": "dashboard"
         },
         "type": "dashboard"
@@ -3672,7 +3672,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "etcd",
+  "title": "etcd - detailed",
   "uid": "PMozG5zIz",
   "version": 11,
   "weekStart": "",
