@@ -1,5 +1,11 @@
+# Object storage and internal protocols
 s3:*
 oci:*
 ssh:*
+
+# Internal services
 https://n8n.*
 .*svc.*
+
+# Private repo (lychee can't authenticate)
+https://github.com/anthony-spruyt/spruyt-labs/*
