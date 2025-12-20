@@ -7,8 +7,8 @@
       platformAutomerge: true,
     },
     {
-      description: "Automerge GitHub Actions minor updates",
-      matchManagers: ["github-actions"],
+      description: "Automerge GitHub Actions and pre-commit minor updates",
+      matchManagers: ["github-actions", "pre-commit"],
       matchUpdateTypes: ["minor"],
       automerge: true,
       platformAutomerge: true,
