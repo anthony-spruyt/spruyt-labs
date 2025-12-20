@@ -13,7 +13,9 @@
     "ghcr.io/devcontainers-extra/features/sops": {},
     "ghcr.io/devcontainers-extra/features/helmfile": {},
     "ghcr.io/devcontainers/features/kubectl-helm-minikube": {
-      "version": "1.34.2"
+      "version": "v1.34.3",
+      "helm": "v4.0.4",
+      "minikube": "none"
     },
     "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
       "yqVersion": "latest"
@@ -26,7 +28,8 @@
     "ghcr.io/devcontainers/features/docker-in-docker": {},
     "ghcr.io/devcontainers-extra/features/renovate-cli": {},
     "ghcr.io/devcontainers/features/node": {},
-    "ghcr.io/devcontainers/features/python": {}
+    "ghcr.io/devcontainers/features/python": {},
+    "ghcr.io/devcontainers-extra/features/claude-code": {}
   },
   "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./.devcontainer/post-create.sh\"",
   "customizations": {
@@ -40,7 +43,8 @@
         "esbenp.prettier-vscode",
         "kilocode.kilo-code",
         "hashicorp.terraform",
-        "bierner.markdown-mermaid"
+        "bierner.markdown-mermaid",
+        "anthropic.claude-code"
       ]
     }
   },

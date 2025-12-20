@@ -8,6 +8,7 @@
     "esbenp.prettier-vscode",
     "kilocode.kilo-code",
     "hashicorp.terraform",
-    "bierner.markdown-mermaid"
+    "bierner.markdown-mermaid",
+    "anthropic.claude-code"
   ]
 }
