@@ -119,12 +119,41 @@ grafana:
       resource: both
     dashboards:
       enabled: true
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: "grafana-dashboards"
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/grafana-dashboards
+  dashboards:
+    grafana-dashboards:
+      ceph-cluster:
+        gnetId: 2842
+        revision: 18
+        datasource:
+          - name: DS_PROMETHEUS
+            value: VictoriaMetrics
+      etcd:
+        gnetId: 22236
+        revision: 1
+        datasource:
+          - name: DS_PROMETHEUS
+            value: VictoriaMetrics
   persistence:
-    enabled: true
-    existingClaim: grafana-data
+    enabled: false
   plugins:
     - victoriametrics-metrics-datasource
     - victoriametrics-logs-datasource
+  admin:
+    existingSecret: grafana-secrets
+    userKey: admin-user
+    passwordKey: admin-password
 
 # -- prometheus-node-exporter dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-node-exporter/values.yaml)
 prometheus-node-exporter:

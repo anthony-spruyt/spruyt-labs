@@ -199,34 +199,6 @@ This section provides comprehensive guidance for initial cluster deployment, inc
 | Storage   | 256GB NVMe + Ceph OSDs      | 256GB NVMe      |
 | Network   | 1GbE min, 2.5GbE preferred  | 1GbE min        |
 
-**Network Infrastructure**: Router with BGP/VLANs, managed switch, separate VLANs for management (10.10.0.0/24), storage (10.10.10.0/24), services (10.10.20.0/24).
-
-#### Network Setup
-
-1. **Configure VLANs**:
-
-   ```bash
-   # Management VLAN (10.10.0.0/24)
-   # Storage VLAN (10.10.10.0/24)
-   # Services VLAN (10.10.20.0/24)
-   ```
-
-2. **Set up DHCP reservations** for cluster nodes:
-
-   - Control plane: 10.10.0.11, 10.10.0.12, 10.10.0.13
-   - Workers: 10.10.0.21, 10.10.0.22, 10.10.0.23
-
-3. **Configure BGP** on router for Cilium integration:
-
-   - AS number: 64512 (private)
-   - Neighbor: Cluster VIP (10.10.0.10)
-   - Advertise service subnets
-
-4. **DNS configuration**:
-   - Internal domain: spruyt-labs.lan
-   - External domain: spruyt-labs.com
-   - Wildcard records for ingress
-
 #### Bootstrap Procedure
 
 ##### Phase 1: Repository and Tooling Setup
@@ -280,12 +252,12 @@ This section provides comprehensive guidance for initial cluster deployment, inc
 
    ```yaml
    clusterName: spruyt-labs
-   endpoint: https://10.10.0.10:6443
+   endpoint: https://<KUBEAPI_VIP>:6443
    nodes:
-     - hostname: bossgame-e2-01
-       ipAddress: 10.10.0.11
+     - hostname: <node-hostname>
+       ipAddress: <node-ip>
        controlPlane: true
-       schematic: 7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6
+       schematic: <schematic-id>
    ```
 
 2. **Generate Talos secrets**:
@@ -311,20 +283,20 @@ This section provides comprehensive guidance for initial cluster deployment, inc
 3. **Apply configuration**:
 
    ```bash
-   talosctl apply-config --insecure --nodes 10.10.0.11 \
-     --file talos/clusterconfig/bossgame-e2-01.yaml
+   talosctl apply-config --insecure --nodes <node-ip> \
+     --file talos/clusterconfig/<node-hostname>.yaml
    ```
 
 4. **Bootstrap Kubernetes**:
 
    ```bash
-   talosctl bootstrap --nodes 10.10.0.11
+   talosctl bootstrap --nodes <first-control-plane-ip>
    ```
 
 5. **Verify cluster**:
 
    ```bash
-   talosctl health --nodes 10.10.0.11
+   talosctl health --nodes <control-plane-ip>
    kubectl get nodes
    ```
 
