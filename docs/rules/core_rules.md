@@ -76,6 +76,10 @@ helm rollback <release> <revision> -n <ns>
 2. Use `task` commands
 3. Validate with `task dev-env:lint`
 4. Commit and let Flux reconcile
+5. **Verify deployment** - Always confirm changes are healthy before continuing:
+   - `flux get kustomizations -A` - Check reconciliation status
+   - `kubectl get pods -n <ns>` - Verify pods are running
+   - Check logs if issues: `kubectl logs -n <ns> -l app.kubernetes.io/name=<app>`
 
 ## Related
 
