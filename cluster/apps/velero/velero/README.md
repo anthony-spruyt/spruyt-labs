@@ -12,19 +12,6 @@ Velero provides comprehensive backup and disaster recovery capabilities for the 
 - Storage classes configured for volume snapshots
 - Cluster-wide RBAC permissions for Velero operations
 
-## Directory Layout
-
-```yaml
-velero/
-├── app/
-│   ├── kustomization.yaml          # Kustomize configuration
-│   ├── kustomizeconfig.yaml        # Kustomize config
-│   ├── release.yaml                # Helm release configuration
-│   └── values.yaml                 # Helm values override
-├── ks.yaml                         # Kustomization configuration
-└── README.md                       # This file
-```
-
 ## Operation
 
 ### Monitoring Commands
@@ -47,24 +34,6 @@ kubectl get restores -n velero
 
 # Monitor resource usage
 kubectl top pods -n velero
-```
-
-### Cross-Service Dependencies
-
-```yaml
-service_dependencies:
-  velero:
-    depends_on:
-      - rook-ceph-storage
-      - aws-credentials
-      - cert-manager
-      - cilium-networking
-    depended_by:
-      - disaster-recovery
-      - cluster-migration
-      - data-protection
-    critical_path: true
-    health_check_command: "kubectl get pods -n velero --selector=app.kubernetes.io/name=velero --no-headers | grep -c 'Running'"
 ```
 
 ## Troubleshooting
@@ -173,17 +142,6 @@ kubectl get schedules -n velero
 2. Backup metadata preserved in S3
 3. Verify backup system health: `velero get backup locations`
 
-### MCP Integration
-
-```yaml
-context7_usage:
-  library_id: "velero-kubernetes-backup"
-  version: "v1.12.0"
-  source: "Velero official documentation"
-  retrieved_at: "2025-12-04"
-  used_for: "Backup system configuration and disaster recovery procedures"
-```
-
 ## References
 
 - [Velero Official Documentation](https://velero.io/)
@@ -192,118 +150,6 @@ context7_usage:
 - [Backup Troubleshooting](https://velero.io/docs/main/troubleshooting/)
 - [Helm Chart Reference](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero)
 
-## Decision Tree for Backup Management
-
-```yaml
-start: "velero_health_check"
-nodes:
-  velero_health_check:
-    question: "Is Velero backup system healthy?"
-    command: "kubectl get pods -n velero --selector=app.kubernetes.io/name=velero --no-headers | grep -v 'Running'"
-    yes: "investigate_velero"
-    no: "velero_healthy"
-  investigate_velero:
-    action: "kubectl describe pods -n velero --selector=app.kubernetes.io/name=velero"
-    log_command: "kubectl logs -n velero -l app.kubernetes.io/name=velero --tail=50"
-    next: "analyze_velero_issue"
-  analyze_velero_issue:
-    question: "What type of Velero issue?"
-    diagnostic_commands:
-      - "kubectl get backupstoragelocations -n velero"
-      - "velero get backup-locations"
-      - "kubectl get events -n velero | grep velero"
-      - "velero backup get"
-    options:
-      aws_permission: "AWS S3 permission problem"
-      backup_failure: "Backup creation or completion issue"
-      restore_problem: "Restore operation failure"
-      resource_constraint: "Velero pod resource limits"
-  aws_permission:
-    action: "Verify AWS credentials and IAM permissions"
-    commands:
-      - "kubectl get secret -n velero cloud-credentials -o yaml"
-      - "velero backup-location get"
-    next: "apply_velero_fix"
-  backup_failure:
-    action: "Investigate backup creation problems"
-    commands:
-      - "velero backup logs <failed-backup>"
-      - "kubectl get backup -n velero <failed-backup> -o yaml"
-    next: "apply_velero_fix"
-  restore_problem:
-    action: "Troubleshoot restore operations"
-    commands:
-      - "velero restore logs <failed-restore>"
-      - "velero restore describe <failed-restore>"
-    next: "apply_velero_fix"
-  resource_constraint:
-    action: "Adjust Velero resource requests/limits"
-    commands:
-      - "kubectl top pods -n velero --selector=app.kubernetes.io/name=velero"
-      - "kubectl describe nodes | grep -A 5 'Allocatable'"
-    next: "apply_velero_fix"
-  apply_velero_fix:
-    action: "Apply appropriate Velero remediation"
-    validation_commands:
-      - "kubectl rollout restart deployment velero -n velero"
-      - "velero install --upgrade"
-    next: "verify_velero_fix"
-  verify_velero_fix:
-    question: "Is Velero issue resolved?"
-    command: "kubectl get pods -n velero --selector=app.kubernetes.io/name=velero --no-headers | grep 'Running'"
-    yes: "velero_healthy"
-    no: "escalate_velero_issue"
-  escalate_velero_issue:
-    action: "Escalate with Velero diagnostics and AWS credentials to cloud team"
-    next: "end"
-  velero_healthy:
-    action: "Velero backup system verified healthy"
-    next: "end"
-end: "end"
-```
-
-## Disaster Recovery Procedures
-
-### Cluster Recovery Workflow
-
-```yaml
-disaster_recovery:
-  steps:
-    - name: "Assess damage and determine recovery scope"
-      commands:
-        - "velero get backups --sort-by=metadata.creationTimestamp"
-        - "kubectl get nodes"
-      validation: "Identify most recent viable backup"
-
-    - name: "Prepare recovery environment"
-      commands:
-        - "kubectl create namespace velero --dry-run=client -o yaml | kubectl apply -f -"
-        - "velero install --provider aws --plugins velero/velero-plugin-for-aws:v1.0.0 --bucket <bucket> --secret-file ./credentials-velero"
-      validation: "Velero deployed and backup locations accessible"
-
-    - name: "Execute recovery operation"
-      commands:
-        - "velero restore create --from-backup <backup-name>"
-        - "velero restore logs <restore-name> --follow"
-      validation: "Restore operation completes successfully"
-
-    - name: "Verify recovered resources"
-      commands:
-        - "kubectl get all -A"
-        - "kubectl get pvc -A"
-        - "velero restore describe <restore-name>"
-      validation: "All critical resources restored and functional"
-
-    - name: "Post-recovery validation"
-      commands:
-        - "kubectl get pods -A --no-headers | grep -v 'Running'"
-        - "velero get restores"
-      validation: "Cluster returns to operational state"
-```
-
 ## Change History
 
 - **2025-12-04**: Initial documentation created during documentation maintenance workflow
-- **Standards Compliance**: Follows spruyt-labs README template with decision trees
-- **Validation**: Designed to pass `task dev-env:lint` requirements
-- **Critical Component**: Essential for cluster disaster recovery capabilities

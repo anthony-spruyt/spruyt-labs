@@ -4,19 +4,6 @@
 
 Kubelet CSR Approver automates the approval of Kubernetes Certificate Signing Requests (CSRs) for kubelet serving certificates. It provides automated certificate rotation and management for kubelet nodes, ensuring secure and up-to-date TLS certificates for node communication.
 
-## Directory Layout
-
-```yaml
-kubelet-csr-approver/
-├── app/
-│   ├── kustomization.yaml            # Kustomize configuration
-│   ├── kustomizeconfig.yaml        # Kustomize config
-│   ├── release.yaml                # Helm release configuration
-│   └── values.yaml                 # Helm values
-├── ks.yaml                         # Kustomization configuration
-└── README.md                       # This file
-```
-
 ## Prerequisites
 
 - Kubernetes cluster with Flux CD installed
@@ -79,72 +66,6 @@ kubectl logs -n kubelet-csr-approver deploy/kubelet-csr-approver
 # Expected: Logs showing approval activity
 ```
 
-### Decision Trees
-
-```yaml
-# Kubelet CSR approver decision tree
-start: "csr_approver_health_check"
-nodes:
-  csr_approver_health_check:
-    question: "Is CSR approver healthy?"
-    command: "kubectl get pods -n kubelet-csr-approver --no-headers | grep -v 'Running'"
-    yes: "investigate_issue"
-    no: "csr_approver_healthy"
-  investigate_issue:
-    action: "kubectl describe pods -n kubelet-csr-approver | grep -A 10 'Events'"
-    next: "analyze_root_cause"
-  analyze_root_cause:
-    question: "What is the root cause?"
-    options:
-      rbac_permission: "RBAC permission problem"
-      certificate_authority: "Certificate authority issue"
-      node_connectivity: "Node connectivity problem"
-      resource_constraint: "Resource limitation"
-  rbac_permission:
-    action: "Check RBAC configuration: kubectl get clusterroles | grep csr"
-    next: "apply_fix"
-  certificate_authority:
-    action: "Verify certificate authority configuration"
-    next: "apply_fix"
-  node_connectivity:
-    action: "Investigate node-to-api-server connectivity"
-    next: "apply_fix"
-  resource_constraint:
-    action: "Adjust resource requests/limits in values.yaml"
-    next: "apply_fix"
-  apply_fix:
-    action: "Apply appropriate remediation"
-    next: "verify_fix"
-  verify_fix:
-    question: "Is issue resolved?"
-    command: "kubectl get pods -n kubelet-csr-approver --no-headers | grep 'Running'"
-    yes: "csr_approver_healthy"
-    no: "escalate"
-  escalate:
-    action: "Escalate with comprehensive diagnostics"
-    next: "end"
-  csr_approver_healthy:
-    action: "CSR approver verified healthy"
-    next: "end"
-end: "end"
-```
-
-### Cross-Service Dependencies
-
-```yaml
-# Kubelet CSR approver cross-service dependencies
-service_dependencies:
-  kubelet-csr-approver:
-    depends_on:
-      - cert-manager/cert-manager
-    depended_by:
-      - All Kubernetes nodes
-      - All workloads requiring node certificates
-      - All components using kubelet TLS
-    critical_path: true
-    health_check_command: "kubectl get pods -n kubelet-csr-approver --no-headers | grep 'Running'"
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -185,13 +106,6 @@ kubectl get csr
 # Approve pending CSRs
 kubectl certificate approve <csr-name>
 ```
-
-### MCP Integration
-
-- **Library ID**: `kubelet-csr-approver`
-- **Version**: `v1.2.0`
-- **Usage**: Automated kubelet certificate signing request approval
-- **Citation**: Use `resolve-library-id` for CSR approver configuration and troubleshooting
 
 ## References
 

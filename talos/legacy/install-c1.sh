@@ -106,12 +106,12 @@ cat "$SOPS_AGE_KEY_FILE" | kubectl create secret generic sops-age --namespace=fl
 
 #read -rp "Press any key to add flux-gitops-key secret to cluster: "
 
-ssh-keyscan github.com > /workspaces/spruyt-labs/.secrets/known_hosts
+ssh-keyscan github.com > /home/vscode/.secrets/known_hosts
 
 kubectl create secret generic flux-gitops-key \
   --namespace=flux-system \
-  --from-file=identity=/workspaces/spruyt-labs/.secrets/flux-gitops-key \
-  --from-file=known_hosts=/workspaces/spruyt-labs/.secrets/known_hosts
+  --from-file=identity=/home/vscode/.secrets/flux-gitops-key \
+  --from-file=known_hosts=/home/vscode/.secrets/known_hosts
 
 # https://github.com/kubernetes-csi/external-snapshotter?tab=readme-ov-file#usage
 #echo "⏳ Installing external-snapshotter CRDs..."

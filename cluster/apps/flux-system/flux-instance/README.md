@@ -4,19 +4,6 @@
 
 Flux is a GitOps continuous delivery solution that automates the deployment and management of Kubernetes resources. It provides declarative infrastructure management by synchronizing the cluster state with the Git repository, enabling continuous delivery and drift detection.
 
-## Directory Layout
-
-```yaml
-flux-instance/
-├── app/
-│   ├── kustomization.yaml            # Kustomize configuration
-│   ├── kustomizeconfig.yaml        # Kustomize config
-│   ├── release.yaml                # Helm release configuration
-│   └── values.yaml                 # Helm values
-├── ks.yaml                         # Kustomization configuration
-└── README.md                       # This file
-```
-
 ## Prerequisites
 
 - Kubernetes cluster with proper RBAC configured
@@ -79,72 +66,6 @@ flux get status --watch
 # Expected: No drift detected or reconciliation in progress
 ```
 
-### Decision Trees
-
-```yaml
-# Flux operational decision tree
-start: "flux_health_check"
-nodes:
-  flux_health_check:
-    question: "Is Flux healthy?"
-    command: "kubectl get pods -n flux-system --no-headers | grep -v 'Running'"
-    yes: "investigate_issue"
-    no: "flux_healthy"
-  investigate_issue:
-    action: "kubectl describe pods -n flux-system | grep -A 10 'Events'"
-    next: "analyze_root_cause"
-  analyze_root_cause:
-    question: "What is the root cause?"
-    options:
-      git_connectivity: "Git repository connectivity problem"
-      kustomization_error: "Kustomization configuration error"
-      permission_issue: "RBAC or Git permission problem"
-      resource_constraint: "Resource limitation"
-  git_connectivity:
-    action: "Check Git repository access: flux get sources -A"
-    next: "apply_fix"
-  kustomization_error:
-    action: "Review kustomization configuration: flux get kustomizations -A -o yaml"
-    next: "apply_fix"
-  permission_issue:
-    action: "Verify RBAC and Git credentials"
-    next: "apply_fix"
-  resource_constraint:
-    action: "Adjust resource requests/limits in values.yaml"
-    next: "apply_fix"
-  apply_fix:
-    action: "Apply appropriate remediation"
-    next: "verify_fix"
-  verify_fix:
-    question: "Is issue resolved?"
-    command: "kubectl get pods -n flux-system --no-headers | grep 'Running'"
-    yes: "flux_healthy"
-    no: "escalate"
-  escalate:
-    action: "Escalate with comprehensive diagnostics"
-    next: "end"
-  flux_healthy:
-    action: "Flux verified healthy"
-    next: "end"
-end: "end"
-```
-
-### Cross-Service Dependencies
-
-```yaml
-# Flux cross-service dependencies
-service_dependencies:
-  flux-instance:
-    depends_on:
-      - cert-manager/cert-manager
-    depended_by:
-      - All workloads deployed via GitOps
-      - All infrastructure components
-      - All applications managed by Flux
-    critical_path: true
-    health_check_command: "kubectl get pods -n flux-system --no-headers | grep 'Running'"
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -185,13 +106,6 @@ flux reconcile --all
 # Check Flux version
 flux version
 ```
-
-### MCP Integration
-
-- **Library ID**: `fluxcd`
-- **Version**: `v2.1.2`
-- **Usage**: GitOps continuous delivery and reconciliation
-- **Citation**: Use `resolve-library-id` for Flux configuration and troubleshooting
 
 ## References
 

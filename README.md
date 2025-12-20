@@ -192,31 +192,14 @@ This section provides comprehensive guidance for initial cluster deployment, inc
 
 #### Hardware Requirements
 
-##### Control Plane Nodes (Bossgame E2)
+| Component | Control Plane (Bossgame E2) | Workers (MS-01) |
+| --------- | --------------------------- | --------------- |
+| CPU       | 4+ cores, 8+ threads        | 4+ cores        |
+| Memory    | 16GB min, 32GB recommended  | 16GB min        |
+| Storage   | 256GB NVMe + Ceph OSDs      | 256GB NVMe      |
+| Network   | 1GbE min, 2.5GbE preferred  | 1GbE min        |
 
-- **CPU**: 4+ cores/8+ threads minimum (Intel Core i5/AMD Ryzen 5 or equivalent)
-- **Memory**: 16GB DDR4 minimum, 32GB recommended
-- **Storage**: 256GB NVMe SSD minimum for OS, additional storage for Ceph OSDs
-- **Network**: 1GbE minimum, 2.5GbE preferred
-- **Firmware**: Latest BIOS with SecureBoot enabled
-- **Power**: Reliable power supply with UPS backup recommended
-
-##### Worker Nodes (Minisforum MS-01)
-
-- **CPU**: 4+ cores/8+ threads minimum (Intel Core i3/i5 or AMD Ryzen 3/5 equivalent)
-- **Memory**: 16GB DDR4 minimum, 32GB recommended for workloads
-- **Storage**: 256GB NVMe SSD minimum for OS, additional storage for applications
-- **Network**: 1GbE minimum, 2.5GbE preferred
-- **Firmware**: Latest BIOS with SecureBoot enabled
-- **Power**: Efficient power supply with UPS backup recommended
-
-##### Network Infrastructure
-
-- **Router/Firewall**: pfSense/OPNsense capable of BGP and VLANs
-- **Switch**: Managed switch supporting 802.1Q VLANs and LACP
-- **VLANs**: Separate VLANs for management (10.10.0.0/24), storage (10.10.10.0/24), and services (10.10.20.0/24)
-- **DHCP**: DHCP server for PXE boot and IP assignment
-- **DNS**: Internal DNS server for cluster domain resolution
+**Network Infrastructure**: Router with BGP/VLANs, managed switch, separate VLANs for management (10.10.0.0/24), storage (10.10.10.0/24), services (10.10.20.0/24).
 
 #### Network Setup
 
@@ -397,57 +380,6 @@ This section provides comprehensive guidance for initial cluster deployment, inc
 - [ ] Monitoring dashboards accessible
 - [ ] Backup jobs scheduled
 
-#### Bootstrap Decision Tree
-
-```yaml
-start: "bootstrap_start"
-nodes:
-  bootstrap_start:
-    question: "Ready to bootstrap cluster?"
-    yes: "check_prerequisites"
-    no: "gather_requirements"
-  gather_requirements:
-    action: "Review hardware requirements and network setup"
-    next: "bootstrap_start"
-  check_prerequisites:
-    question: "Prerequisites met (hardware, network, tooling)?"
-    yes: "infrastructure_setup"
-    no: "resolve_prerequisites"
-  resolve_prerequisites:
-    action: "Install missing tools or configure infrastructure"
-    next: "check_prerequisites"
-  infrastructure_setup:
-    action: "Bootstrap Terraform workspaces and AWS resources"
-    next: "talos_config"
-  talos_config:
-    action: "Generate Talos secrets and machine configs"
-    next: "node_provisioning"
-  node_provisioning:
-    question: "All nodes provisioned and healthy?"
-    yes: "flux_bootstrap"
-    no: "troubleshoot_nodes"
-  troubleshoot_nodes:
-    action: "Check Talos logs and network connectivity"
-    next: "node_provisioning"
-  flux_bootstrap:
-    action: "Install Flux and monitor reconciliation"
-    next: "post_bootstrap"
-  post_bootstrap:
-    action: "Configure DNS, certificates, and monitoring"
-    next: "validation_complete"
-  validation_complete:
-    question: "All validation checks pass?"
-    yes: "bootstrap_success"
-    no: "fix_issues"
-  fix_issues:
-    action: "Resolve validation failures"
-    next: "validation_complete"
-  bootstrap_success:
-    action: "Cluster bootstrap completed successfully"
-    next: "end"
-end: "end"
-```
-
 ### Day-2 operations
 
 - Scale Talos workloads safely using the graceful shutdown pattern in
@@ -575,103 +507,18 @@ kubectl get pods -n observability -l app.kubernetes.io/name=victoria-metrics-k8s
 kubectl exec -n observability <victoria-metrics-pod> -- curl -s http://localhost:8428/api/v1/query?query=up
 ```
 
-### Alerting Configuration
+### Troubleshooting Monitoring
 
-**Alertmanager setup:**
-
-```bash
-# Check alertmanager configuration
-kubectl get secret -n observability victoria-metrics-k8s-stack-alertmanager -o yaml
-
-# View active alerts
-kubectl exec -n observability <alertmanager-pod> -- curl -s http://localhost:9093/api/v2/alerts
-```
-
-**Common alert scenarios:**
-
-- Node resource exhaustion (CPU > 90%, Memory > 90%)
-- Pod crashes or restarts
-- Storage capacity warnings (> 80% usage)
-- Network connectivity issues
-- Certificate expiration warnings
-
-### Troubleshooting Monitoring Issues
-
-**Metrics not appearing:**
-
-```bash
-# Check VictoriaMetrics targets
-kubectl exec -n observability <victoria-metrics-pod> -- curl -s http://localhost:8428/api/v1/targets | jq '.data.activeTargets[] | select(.health != "up")'
-
-# Verify service discovery
-kubectl get servicemonitors -A
-kubectl get podmonitors -A
-```
-
-**Logs not aggregating:**
-
-```bash
-# Check Victoria Logs ingestion
-kubectl exec -n observability <victoria-logs-pod> -- curl -s http://localhost:9428/api/v1/status
-
-# Verify log shipping configuration
-kubectl get pods -A -o json | jq '.items[] | select(.spec.containers[].env[]?.name == "VICTORIA_LOGS_URL")'
-```
-
-**Alertmanager not sending alerts:**
-
-```bash
-# Check alertmanager logs
-kubectl logs -n observability -l app.kubernetes.io/name=victoria-metrics-k8s-stack-alertmanager
-
-# Verify alert routing
-kubectl get configmaps -n observability -l app.kubernetes.io/name=victoria-metrics-k8s-stack-alertmanager
-```
-
-### Performance Monitoring
-
-**Resource monitoring:**
-
-```bash
-# Monitor cluster resource usage
-kubectl top nodes --sort-by=cpu
-kubectl top pods -A --sort-by=memory
-
-# Check storage usage
-kubectl get pvc -A
-kubectl exec -n rook-ceph <rook-tools-pod> -- ceph df
-```
-
-**Application performance:**
-
-```bash
-# Monitor application response times
-kubectl exec -n observability <victoria-metrics-pod> -- curl -s "http://localhost:8428/api/v1/query?query=histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
-
-# Check error rates
-kubectl exec -n observability <victoria-metrics-pod> -- curl -s "http://localhost:8428/api/v1/query?query=rate(http_requests_total{status=~\"5..\"}[5m])"
-```
+| Issue                | Diagnostic Commands                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------- |
+| Metrics missing      | `kubectl get servicemonitors -A`, check VictoriaMetrics targets                                    |
+| Logs not aggregating | `kubectl exec -n observability <victoria-logs-pod> -- curl -s http://localhost:9428/api/v1/status` |
+| Alerts not firing    | `kubectl logs -n observability -l app.kubernetes.io/name=victoria-metrics-k8s-stack-alertmanager`  |
+| Storage issues       | `kubectl get pvc -A`, `kubectl exec -n rook-ceph <rook-tools-pod> -- ceph df`                      |
 
 ### Grafana Access
 
-**Access Grafana:**
-
-```bash
-# Get Grafana URL
-kubectl get ingress -n observability -l app.kubernetes.io/name=grafana
-
-# Default credentials (change in production)
-username: admin
-password: prom-operator
-```
-
-**Useful dashboards:**
-
-- Kubernetes cluster monitoring
-- Node resource usage
-- Pod performance metrics
-- Application-specific dashboards
-- Flux reconciliation status
+Access via ingress: `kubectl get ingress -n observability -l app.kubernetes.io/name=grafana`
 
 ## Validation and Testing
 
@@ -815,62 +662,19 @@ This consolidated matrix covers common failure modes across the cluster, applica
 
 Operational questions and incidents should be tracked via repository issues or the internal on-call channel. Include runbook references, recent Flux reconcile outputs, and Talos log excerpts in any escalation. Update the placeholders above once maintainers publish the official contact matrix. Until then, flag ownership gaps in pull requests.
 
-## Agent-Friendly Workflows
-
-This section provides decision trees and conditional logic for autonomous execution of cluster management tasks, including deployment verification and troubleshooting escalation.
-
-### Cluster Health Verification Workflow
+## Quick Verification Commands
 
 ```bash
-If kubectl get nodes --no-headers | grep -v Ready > /dev/null
-Then:
-  Run talosctl health
-  Expected output: All nodes report healthy
-  If health check fails:
-    Run talosctl logs -f kubelet
-    Expected output: No critical errors in logs
-    Recovery: Reapply Talos configuration with task talos:apply
-  Else:
-    Proceed to Flux reconciliation check
-Else:
-  Proceed to Flux reconciliation check
-```
+# Cluster health
+kubectl get nodes
+talosctl health
 
-### Flux Reconciliation Monitoring Workflow
+# Flux status
+flux get kustomizations -n flux-system
 
-```bash
-If flux get kustomizations -n flux-system | grep -v "True" > /dev/null
-Then:
-  For each failing kustomization:
-    Run flux reconcile kustomization <name> --with-source
-    Expected output: Reconciliation completes without errors
-    If reconciliation fails:
-      Run flux logs --kind Kustomization --name <name> -n flux-system
-      Expected output: Identify root cause (e.g., Git auth, SOPS decryption)
-      Recovery: Resolve dependencies and rerun reconcile; escalate if persistent
-  Else:
-    Proceed to application health checks
-Else:
-  Proceed to application health checks
-```
+# Unhealthy pods
+kubectl get pods -A --no-headers | grep -v Running
 
-### Troubleshooting Escalation Workflow
-
-```bash
-If application health checks fail (kubectl get pods -A --no-headers | grep -v Running > /dev/null)
-Then:
-  Run kubectl get events -A --sort-by=.lastTimestamp | tail -20
-  Expected output: Recent events indicate issue type
-  If events show resource constraints:
-    Run kubectl describe pod <pod-name> -n <namespace>
-    Expected output: Resource limits exceeded
-    Recovery: Adjust resource requests/limits in manifests
-  Else if events show image pull failures:
-    Run kubectl describe pod <pod-name> -n <namespace>
-    Expected output: Image pull error details
-    Recovery: Verify image registry access and credentials
-  Else:
-    Escalate to platform operations with logs and events
-Else:
-  Cluster deployment verified successfully
+# Recent events
+kubectl get events -A --sort-by=.lastTimestamp | tail -20
 ```

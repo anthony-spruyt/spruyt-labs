@@ -8,16 +8,6 @@ It provides a robust platform for game masters and players to collaborate in imm
 
 This deployment runs Foundry VTT in a Kubernetes cluster using Flux for GitOps management.
 
-## Directory Layout
-
-- `app/`: Application deployment configuration
-  - `kustomization.yaml`: Kustomize configuration for the app resources
-  - `kustomizeconfig.yaml`: Kustomize configuration settings
-  - `persistent-volume-claim.yaml`: Persistent volume claim for Foundry data storage (10Gi on rbd-fast)
-  - `release.yaml`: Flux HelmRelease for deploying the Foundry VTT Helm chart
-  - `values.yaml`: Helm values configuration for Foundry VTT deployment
-- `ks.yaml`: Flux Kustomization that manages the deployment of this component
-
 ## Prerequisites
 
 - **Namespace**: `foundryvtt` (created via `namespace.yaml`)
@@ -57,82 +47,6 @@ For external access, create ingress routes in `cluster/apps/traefik/traefik/ingr
 
 For LAN access, use `foundryvtt.lan.${EXTERNAL_DOMAIN}`.
 
-### Decision Trees
-
-```yaml
-# Foundry VTT deployment and monitoring decision tree
-start: "check_deployment_status"
-nodes:
-  check_deployment_status:
-    question: "Is Foundry VTT deployed and healthy?"
-    command: "kubectl get pods -n foundryvtt --no-headers | grep -c 'Running'"
-    validation: "grep -q '^1$'"
-    yes: "monitor_performance"
-    no: "investigate_deployment"
-  investigate_deployment:
-    action: "Check Flux kustomization and pod status"
-    commands:
-      - "flux get kustomizations foundryvtt -n flux-system"
-      - "kubectl describe pods -n foundryvtt"
-      - "kubectl logs -n foundryvtt --tail=50"
-    next: "check_root_cause"
-  check_root_cause:
-    question: "What is the deployment issue?"
-    options:
-      flux_error: "Flux reconciliation failed"
-      pod_error: "Pod startup failure"
-      storage_error: "Storage/PVC issue"
-      config_error: "Configuration error"
-  flux_error:
-    action: "Reconcile Flux kustomization and check source"
-    commands:
-      - "flux reconcile kustomization foundryvtt -n flux-system --with-source"
-      - "flux get sources -A | grep foundryvtt"
-    next: "verify_deployment"
-  pod_error:
-    action: "Check pod events and logs for startup issues"
-    commands:
-      - "kubectl get events -n foundryvtt --sort-by=.metadata.creationTimestamp | tail -10"
-      - "kubectl logs foundryvtt-0 -n foundryvtt --previous"
-    next: "verify_deployment"
-  storage_error:
-    action: "Verify PVC status and storage class"
-    commands:
-      - "kubectl get pvc -n foundryvtt"
-      - "kubectl describe pvc foundryvtt-data -n foundryvtt"
-    next: "verify_deployment"
-  config_error:
-    action: "Validate Helm values and secrets"
-    commands:
-      - "kubectl get secret foundryvtt-secrets -n foundryvtt"
-      - "helm get values foundryvtt -n foundryvtt"
-    next: "verify_deployment"
-  verify_deployment:
-    question: "Is deployment issue resolved?"
-    command: "kubectl get pods -n foundryvtt --no-headers | grep 'Running'"
-    yes: "monitor_performance"
-    no: "escalate"
-  monitor_performance:
-    action: "Monitor resource usage and application health"
-    commands:
-      - "kubectl top pods -n foundryvtt"
-      - "curl -k https://foundryvtt.lan.${EXTERNAL_DOMAIN}/"
-    next: "performance_healthy"
-  performance_healthy:
-    question: "Is performance within acceptable limits?"
-    command: 'kubectl top pods -n foundryvtt --no-headers | awk ''{print $3}'' | sed ''s/%//'' | awk ''{if ($1 > 80) print "high"; else print "ok"}'''
-    validation: "grep -q 'ok'"
-    yes: "end"
-    no: "optimize_resources"
-  optimize_resources:
-    action: "Adjust resource limits in values.yaml"
-    next: "end"
-  escalate:
-    action: "Escalate to human operator with comprehensive diagnostics"
-    next: "end"
-end: "end"
-```
-
 ### Monitoring Commands
 
 ```bash
@@ -154,34 +68,6 @@ kubectl get certificates -n foundryvtt
 # Check Flux reconciliation
 flux get kustomizations foundryvtt -n flux-system
 ```
-
-### Cross-Service Dependencies
-
-Foundry VTT has the following cross-service dependencies:
-
-- **Flux**: Critical dependency for automated deployment and reconciliation
-
-  - Health check: `flux get kustomizations foundryvtt -n flux-system`
-  - Impact: Deployment failures if Flux is unavailable
-
-- **cert-manager**: Required for TLS certificate management
-
-  - Health check: `kubectl get certificates -n foundryvtt`
-  - Impact: HTTPS access unavailable if certificates fail
-
-- **external-dns**: Manages DNS records for external access
-
-  - Health check: `kubectl get ingressroute foundryvtt -n foundryvtt -o yaml | grep external-dns`
-  - Impact: External DNS resolution fails
-
-- **Traefik**: Provides ingress routing and load balancing
-
-  - Health check: `kubectl get ingressroute -n foundryvtt`
-  - Impact: No external access to Foundry VTT
-
-- **Ceph Storage**: Provides persistent storage via rbd-fast storage class
-  - Health check: `kubectl get pvc foundryvtt-data -n foundryvtt`
-  - Impact: Data loss or startup failures if storage unavailable
 
 ## Troubleshooting
 

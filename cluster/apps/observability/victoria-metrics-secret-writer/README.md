@@ -11,22 +11,6 @@ Victoria Metrics Secret Writer automates the creation and management of Kubernet
 - Service account with appropriate permissions
 - Target namespaces exist for secret deployment
 
-## Directory Layout
-
-```yaml
-victoria-metrics-secret-writer/
-├── app/
-│   ├── etcd-secret-writer.yaml     # Secret writer configuration
-│   ├── kustomization.yaml          # Kustomize configuration
-│   ├── kustomizeconfig.yaml        # Kustomize config
-│   ├── role.yaml                   # RBAC role definition
-│   ├── role-binding.yaml            # RBAC role binding
-│   ├── service-account.yaml        # Service account
-│   └── values.yaml                 # Configuration values
-├── ks.yaml                         # Kustomization configuration
-└── README.md                       # This file
-```
-
 ## Operation
 
 ### Monitoring Commands
@@ -43,22 +27,6 @@ kubectl get role,rolebinding -n observability | grep victoria-metrics
 
 # Monitor secret creation
 kubectl get secrets -A --field-selector=type=victoriametrics.com/managed
-```
-
-### Cross-Service Dependencies
-
-```yaml
-service_dependencies:
-  victoria-metrics-secret-writer:
-    depends_on:
-      - cert-manager
-      - rook-ceph-storage
-    depended_by:
-      - victoria-metrics-k8s-stack
-      - victoria-logs-single
-      - observability-components
-    critical_path: true
-    health_check_command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer --no-headers | grep -c 'Running'"
 ```
 
 ## Troubleshooting
@@ -139,17 +107,6 @@ kubectl get secret -n <target-namespace> <secret-name> -o json | jq '.data | key
 2. Configuration backed up via Velero
 3. Verify backup status: `velero get backups | grep observability`
 
-### MCP Integration
-
-```yaml
-context7_usage:
-  library_id: "victoria-metrics-secret-writer"
-  version: "v0.5.0"
-  source: "VictoriaMetrics secret management documentation"
-  retrieved_at: "2025-12-04"
-  used_for: "Secret writer configuration and troubleshooting"
-```
-
 ## References
 
 - [VictoriaMetrics Documentation](https://docs.victoriametrics.com/)
@@ -157,77 +114,6 @@ context7_usage:
 - [RBAC for Service Accounts](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
 - [Helm Secret Management Patterns](https://helm.sh/docs/chart_best_practices/values/)
 
-## Decision Tree for Secret Management
-
-```yaml
-start: "secret_writer_health_check"
-nodes:
-  secret_writer_health_check:
-    question: "Is VictoriaMetrics secret writer healthy?"
-    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer --no-headers | grep -v 'Running'"
-    yes: "investigate_secret_writer"
-    no: "secret_writer_healthy"
-  investigate_secret_writer:
-    action: "kubectl describe pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer"
-    log_command: "kubectl logs -n observability -l app.kubernetes.io/name=victoria-metrics-secret-writer --tail=50"
-    next: "analyze_secret_writer_issue"
-  analyze_secret_writer_issue:
-    question: "What type of secret writer issue?"
-    diagnostic_commands:
-      - "kubectl get sa -n observability victoria-metrics-secret-writer -o yaml"
-      - "kubectl get role,rolebinding -n observability | grep victoria-metrics"
-      - "kubectl get secrets -A --field-selector=type=victoriametrics.com/managed"
-    options:
-      rbac_permission: "RBAC permission issue"
-      template_error: "Secret template problem"
-      namespace_access: "Target namespace inaccessible"
-      config_missing: "Configuration values incomplete"
-  rbac_permission:
-    action: "Verify and correct service account permissions"
-    commands:
-      - "kubectl auth can-i create secrets --as=system:serviceaccount:observability:victoria-metrics-secret-writer -n <target-namespace>"
-      - "kubectl get role -n observability victoria-metrics-secret-writer -o yaml"
-    next: "apply_secret_writer_fix"
-  template_error:
-    action: "Review and correct secret templates"
-    commands:
-      - "kubectl get cm -n observability -o yaml | grep secret-writer"
-      - "helm get values victoria-metrics-secret-writer -n observability"
-    next: "apply_secret_writer_fix"
-  namespace_access:
-    action: "Verify target namespace existence and accessibility"
-    commands:
-      - "kubectl get ns <target-namespace>"
-      - "kubectl auth can-i create secrets -n <target-namespace> --as=system:serviceaccount:observability:victoria-metrics-secret-writer"
-    next: "apply_secret_writer_fix"
-  config_missing:
-    action: "Complete secret writer configuration"
-    commands:
-      - "kubectl get cm -n observability victoria-metrics-secret-writer-config -o yaml"
-      - "kubectl describe pods -n observability -l app.kubernetes.io/name=victoria-metrics-secret-writer"
-    next: "apply_secret_writer_fix"
-  apply_secret_writer_fix:
-    action: "Apply appropriate secret writer remediation"
-    validation_commands:
-      - "kubectl rollout restart deployment victoria-metrics-secret-writer -n observability"
-      - "kubectl delete pod -n observability -l app.kubernetes.io/name=victoria-metrics-secret-writer"
-    next: "verify_secret_writer_fix"
-  verify_secret_writer_fix:
-    question: "Is secret writer issue resolved?"
-    command: "kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer --no-headers | grep 'Running'"
-    yes: "secret_writer_healthy"
-    no: "escalate_secret_writer_issue"
-  escalate_secret_writer_issue:
-    action: "Escalate with secret writer diagnostics and RBAC status to security team"
-    next: "end"
-  secret_writer_healthy:
-    action: "VictoriaMetrics secret writer verified healthy"
-    next: "end"
-end: "end"
-```
-
 ## Change History
 
 - **2025-12-04**: Initial documentation created during documentation maintenance workflow
-- **Standards Compliance**: Follows spruyt-labs README template with decision trees
-- **Validation**: Designed to pass `task dev-env:lint` requirements

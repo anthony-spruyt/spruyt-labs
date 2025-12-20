@@ -42,11 +42,6 @@ This Terraform workspace provisions AWS IAM resources for the External Secrets O
 - Verify access keys: `aws iam list-access-keys --user-name external-secrets`
 - Monitor CloudTrail: `aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=external-secrets`
 
-### Cross-Service Dependencies
-
-- **Depends on**: AWS account with IAM permissions
-- **Depended by**: External Secrets Operator (`cluster/apps/external-secrets/`), Kubernetes secrets management
-
 ## Troubleshooting
 
 ### IAM User Creation Fails

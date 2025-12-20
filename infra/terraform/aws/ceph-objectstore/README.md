@@ -42,11 +42,6 @@ This Terraform workspace provisions AWS S3 object storage resources and IAM inte
 - Verify encryption: `aws s3api get-bucket-encryption --bucket <bucket-name>`
 - Monitor lifecycle: `aws s3api get-bucket-lifecycle-configuration --bucket <bucket-name>`
 
-### Cross-Service Dependencies
-
-- **Depends on**: AWS account with appropriate permissions
-- **Depended by**: Rook Ceph cluster (`cluster/apps/rook-ceph/`), Ceph Rados Gateway
-
 ## Troubleshooting
 
 ### Bucket Creation Fails

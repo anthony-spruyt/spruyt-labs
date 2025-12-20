@@ -10,25 +10,6 @@ Objectives:
 - Provide an operator-focused runbook for deployments, monitoring, and remediation.
 - Capture validation, troubleshooting, and references that align with the root runbook standards.
 
-## Directory Layout
-
-<!-- markdownlint-disable MD013 -->
-
-| Path                                                                 | Description                                                                |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `cluster/apps/rook-ceph/rook-ceph-cluster/README.md`                 | This runbook and component overview.                                       |
-| `cluster/apps/rook-ceph/kustomization.yaml`                          | Top-level Kustomize entry that namespaces resources and delegates to Flux. |
-| `cluster/apps/rook-ceph/namespace.yaml`                              | Namespace definition for the rook-ceph workload.                           |
-| `cluster/apps/rook-ceph/rook-ceph-cluster/ks.yaml`                   | Flux `Kustomization` driving reconciliation of the HelmRelease overlay.    |
-| `cluster/apps/rook-ceph/rook-ceph-cluster/app/kustomization.yaml`    | Overlay combining the HelmRelease and generated values ConfigMap.          |
-| `cluster/apps/rook-ceph/rook-ceph-cluster/app/release.yaml`          | Flux `HelmRelease` referencing the upstream rook-ceph-cluster chart.       |
-| `cluster/apps/rook-ceph/rook-ceph-cluster/app/values.yaml`           | Rendered values supplied to the chart via ConfigMap.                       |
-| `cluster/apps/rook-ceph/rook-ceph-cluster/app/config-maps.yaml`      | Additional ConfigMaps for cluster configuration.                           |
-| `cluster/apps/rook-ceph/rook-ceph-cluster/storage/`                  | Storage class and PVC configurations.                                      |
-| `cluster/flux/meta/repositories/helm/rook-ceph-cluster-ocirepo.yaml` | OCI repository definition pinning the upstream Rook Ceph cluster source.   |
-
-<!-- markdownlint-enable MD013 -->
-
 ## Prerequisites
 
 - Execute from the repository devcontainer or install `kubectl`, `flux`, `task`, and `age` locally with access to the Age key for secrets decryption.

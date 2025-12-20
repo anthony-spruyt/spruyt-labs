@@ -47,11 +47,6 @@ module "oidc_provider" {
 - Verify OIDC provider creation: `aws iam get-open-id-connect-provider --open-id-connect-provider-arn <arn>`
 - Check Terraform Cloud integration: Review workspace settings in Terraform Cloud UI
 
-### Cross-Service Dependencies
-
-- **Depends on**: Terraform Cloud organization configuration
-- **Depended by**: AWS IAM roles that use workload identity, Terraform Cloud workspaces
-
 ## Troubleshooting
 
 ### OIDC Provider Creation Fails

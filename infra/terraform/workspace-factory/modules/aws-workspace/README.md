@@ -74,11 +74,6 @@ module "workspace" {
 - Verify IAM role: `aws iam get-role --role-name tfc-role-<workspace-name>`
 - Monitor runs: Check Terraform Cloud UI or use TFC API
 
-### Cross-Service Dependencies
-
-- **Depends on**: aws-oidc-provider module, Terraform Cloud organization, GitHub repository
-- **Depended by**: Terraform Cloud workspaces that use this IAM role for AWS access
-
 ## Troubleshooting
 
 ### Workspace Creation Fails

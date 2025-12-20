@@ -1,5 +1,4 @@
 .output
-.prompts
 .secrets
 talos/clusterconfig
 *.sops.*
