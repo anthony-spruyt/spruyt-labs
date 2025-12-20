@@ -5,6 +5,10 @@ apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
   name: rook-ceph-rbd
+  labels:
+    velero.io/csi-volumesnapshot-class: "true"
+  annotations:
+    velero.io/csi-volumesnapshot-class-data-mover-storage-class: rbd-fast-delete
 driver: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
