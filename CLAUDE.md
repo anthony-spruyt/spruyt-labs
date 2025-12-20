@@ -20,6 +20,7 @@ The devcontainer includes these pre-installed tools for cluster operations:
 - **talosctl** - Talos Linux node management
 - **velero** - Backup and restore CLI
 - **cilium** - CNI CLI for network debugging
+- **hubble** - Cilium network observability CLI
 - **sops** - Secret encryption/decryption
 - **kustomize** - Kubernetes manifest customization
 - **terraform** - Infrastructure as code
@@ -41,3 +42,8 @@ kubectl rollout restart deploy/<name> -n <ns>  # Restart deployment
 - **Architecture**: [README.md#architecture](README.md#architecture)
 - **Troubleshooting**: [README.md#troubleshooting-matrix](README.md#troubleshooting-matrix)
 - **App layout**: `cluster/apps/<namespace>/<app>/`
+
+## Git Conventions
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) for all commits and PRs:
+`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`

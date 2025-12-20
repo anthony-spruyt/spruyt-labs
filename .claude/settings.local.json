@@ -27,7 +27,8 @@
       "Bash(talosctl get:*)",
       "Bash(openssl rand:*)",
       "Bash(kubectl api-resources:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(task dev-env:hubble-drops)"
     ]
   }
 }

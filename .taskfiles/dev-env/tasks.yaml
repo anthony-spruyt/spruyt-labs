@@ -10,6 +10,8 @@ vars:
   installSafeChainScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-safe-chain.sh"
   installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
   installTalosctlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talosctl.sh"
+  hubbleDropsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/hubble-drops.sh"
+  installHubbleScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-hubble.sh"
   installVeleroScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-velero.sh"
   runMegaLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-mega-linter.sh"
   updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
@@ -31,6 +33,14 @@ tasks:
     desc: Installs Helm schema gen and diff
     cmds:
       - bash {{ .installHelmPluginsScript }}
+  install-hubble:
+    desc: Installs the Hubble CLI for Cilium network observability
+    cmds:
+      - bash {{ .installHubbleScript }}
+  hubble-drops:
+    desc: Shows recent dropped network traffic (blocked by network policies)
+    cmds:
+      - bash {{ .hubbleDropsScript }}
   install-safe-chain:
     desc: Installs safe-chain
     cmds:
