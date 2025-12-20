@@ -28,7 +28,8 @@
       "Bash(openssl rand:*)",
       "Bash(kubectl api-resources:*)",
       "Bash(git status:*)",
-      "Bash(task dev-env:hubble-drops)"
+      "Bash(task dev-env:hubble-drops)",
+      "Bash(gh issue view:*)"
     ]
   }
 }
