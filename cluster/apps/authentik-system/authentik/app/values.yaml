@@ -1,4 +1,107 @@
 ---
-# #yaml-language-server: $schema=TODO
+# yaml-language-server: $schema=TODO
 # Documentation: https://github.com/goauthentik/helm/blob/authentik-2025.10.0/charts/authentik/README.md
 # Default values: https://github.com/goauthentik/helm/blob/authentik-2025.10.0/charts/authentik/values.yaml
+global:
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
+  env:
+    # Database connection - uses CNPG auto-generated secret
+    - name: AUTHENTIK_POSTGRESQL__HOST
+      valueFrom:
+        secretKeyRef:
+          name: authentik-cnpg-cluster-app
+          key: host
+    - name: AUTHENTIK_POSTGRESQL__PORT
+      valueFrom:
+        secretKeyRef:
+          name: authentik-cnpg-cluster-app
+          key: port
+    - name: AUTHENTIK_POSTGRESQL__NAME
+      valueFrom:
+        secretKeyRef:
+          name: authentik-cnpg-cluster-app
+          key: dbname
+    - name: AUTHENTIK_POSTGRESQL__USER
+      valueFrom:
+        secretKeyRef:
+          name: authentik-cnpg-cluster-app
+          key: user
+    - name: AUTHENTIK_POSTGRESQL__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: authentik-cnpg-cluster-app
+          key: password
+    # Redis connection - uses Valkey
+    - name: AUTHENTIK_REDIS__HOST
+      value: valkey.valkey-system
+    - name: AUTHENTIK_REDIS__PORT
+      value: "6379"
+    - name: AUTHENTIK_REDIS__DB
+      value: "0"
+    - name: AUTHENTIK_REDIS__USERNAME
+      value: authentik
+    - name: AUTHENTIK_REDIS__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: AUTHENTIK_REDIS_PASSWORD
+    # Secret key for session signing
+    - name: AUTHENTIK_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: AUTHENTIK_SECRET_KEY
+  envFrom: []
+  volumeMounts:
+    - name: db-ca-cert
+      mountPath: /certs/postgresql
+      readOnly: true
+  volumes:
+    - name: db-ca-cert
+      secret:
+        secretName: authentik-cnpg-cluster-ca
+        items:
+          - key: ca.crt
+            path: ca.crt
+
+authentik:
+  log_level: info
+  error_reporting:
+    enabled: false
+
+# Disable bundled PostgreSQL - using external CNPG
+postgresql:
+  enabled: false
+
+# Disable bundled Redis - using external Valkey
+redis:
+  enabled: false
+
+server:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+worker:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true

@@ -25,6 +25,7 @@ spec:
   path: ./cluster/apps/traefik/traefik/ingress
   dependsOn:
     - name: traefik
+    - name: authentik
     - name: foundryvtt
     - name: n8n
     - name: qdrant

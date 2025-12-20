@@ -32,12 +32,11 @@ resources:
   - ./foundryvtt
   - ./sungather
   - ./dev-debug
-  # - ./authentik-system
+  - ./authentik-system
   # - ./snmp
   # - ./smtp
   # - ./mysql
   # - ./mariadb
   # - ./mssql
   # - ./rabbitmq
-  # - ./authentik
   # - ./node-red

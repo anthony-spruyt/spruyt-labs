@@ -13,6 +13,8 @@ auth:
       permissions: "~n8n:* &* +@all"
     redisinsight:
       permissions: "~* &* +@read"
+    authentik:
+      permissions: "~authentik:* &* +@all"
 metrics:
   enabled: true
 resources:
