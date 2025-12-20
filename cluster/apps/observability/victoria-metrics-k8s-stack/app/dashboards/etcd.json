@@ -57,7 +57,7 @@
         "target": {
           "limit": 100,
           "matchAny": false,
-          "tags": ["etcd-mixin"],
+          "tags": [],
           "type": "dashboard"
         },
         "type": "dashboard"
@@ -3651,7 +3651,7 @@
   ],
   "refresh": "",
   "schemaVersion": 40,
-  "tags": [],
+  "tags": ["etcd-mixin"],
   "templating": {
     "list": [
       {

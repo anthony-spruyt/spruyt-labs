@@ -14,7 +14,11 @@
       "Bash(do [ -d \"$dir\" ])",
       "Bash([ ! -f \"$dir/README.md\" ])",
       "Bash(find:*)",
-      "WebFetch(domain:docs.victoriametrics.com)"
+      "WebFetch(domain:docs.victoriametrics.com)",
+      "Bash(kubectl rollout:*)",
+      "Bash(kubectl rollout status:*)",
+      "Bash(kubectl logs:*)",
+      "Bash(kubectl get:*)"
     ]
   }
 }
