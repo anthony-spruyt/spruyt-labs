@@ -17,7 +17,6 @@ spec:
       match: Host(`authentik.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: compress
-        - name: rate-limit
       services:
         - name: authentik-server
           namespace: authentik-system
