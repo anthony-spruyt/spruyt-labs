@@ -18,7 +18,11 @@
       "Bash(kubectl rollout:*)",
       "Bash(kubectl rollout status:*)",
       "Bash(kubectl logs:*)",
-      "Bash(kubectl get:*)"
+      "Bash(kubectl get:*)",
+      "Bash(velero schedule get:*)",
+      "Bash(velero get:*)",
+      "Bash(velero backup describe:*)",
+      "Bash(kubectl describe:*)"
     ]
   }
 }
