@@ -33,6 +33,34 @@ Objectives:
 - **Observability** – VictoriaMetrics pairs with Vector for log shipping.
   Dashboards are maintained in Grafana for monitoring cluster health.
 
+## Security Posture
+
+### Pod Security Standards
+
+The cluster enforces **baseline** Pod Security Standards by default (Kubernetes 1.34).
+
+- Namespaces without explicit labels → baseline enforcement
+- Infrastructure namespaces (rook-ceph, observability, velero, etc.) → privileged
+  (explicitly labeled)
+
+### Secrets Management
+
+- All application secrets encrypted with **SOPS/Age**
+- No hardcoded credentials in manifests
+- External Secrets Operator available for future AWS Secrets Manager integration
+
+### Network Policies
+
+- Cilium CNI provides network policy enforcement
+- Critical apps have CiliumNetworkPolicy restricting ingress/egress
+- Default: allow-all (explicit policies required per app)
+
+### External Access
+
+- Public services via **Cloudflare Tunnel** (no direct ingress)
+- Internal services protected by **LAN IP whitelist** middleware
+- TLS certificates via cert-manager with ZeroSSL/Let's Encrypt
+
 ## Directory Layout
 
 <!-- markdownlint-disable MD013 -->
