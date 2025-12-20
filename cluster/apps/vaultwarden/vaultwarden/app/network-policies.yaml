@@ -5,7 +5,6 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: allow-kube-dns-egress
-  namespace: vaultwarden
 spec:
   endpointSelector:
     matchLabels:
@@ -31,7 +30,6 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: allow-icmps
-  namespace: vaultwarden
 spec:
   endpointSelector:
     matchLabels:
@@ -67,7 +65,6 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: allow-world-smtp-egress
-  namespace: vaultwarden
 spec:
   endpointSelector:
     matchLabels:
@@ -88,7 +85,6 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: allow-world-web-egress # favicons etc can disable this and block if risky
-  namespace: vaultwarden
 spec:
   endpointSelector:
     matchLabels:
@@ -111,7 +107,6 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: allow-traefik-ingress
-  namespace: vaultwarden
 spec:
   endpointSelector:
     matchLabels:
