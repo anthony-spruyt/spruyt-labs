@@ -22,7 +22,10 @@
       "Bash(velero schedule get:*)",
       "Bash(velero get:*)",
       "Bash(velero backup describe:*)",
-      "Bash(kubectl describe:*)"
+      "Bash(kubectl describe:*)",
+      "Bash(velero backup get:*)",
+      "Bash(talosctl get:*)",
+      "Bash(openssl rand:*)"
     ]
   }
 }
