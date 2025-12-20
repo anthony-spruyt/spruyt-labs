@@ -10,6 +10,8 @@ resources:
   # - ./n8n-cnpg-poolers.yaml
   - ./n8n-cnpg-scheduled-backups.yaml
   - ./release.yaml
+  # Enable policy later
+  # - ./network-policies.yaml
 configMapGenerator:
   - name: n8n-values
     namespace: n8n-system

@@ -5,6 +5,8 @@ kind: Kustomization
 resources:
   - ./valkey-secrets.sops.yaml
   - ./release.yaml
+  # Enable policy later
+  # - ./network-policies.yaml
 configMapGenerator:
   - name: valkey-values
     namespace: valkey-system

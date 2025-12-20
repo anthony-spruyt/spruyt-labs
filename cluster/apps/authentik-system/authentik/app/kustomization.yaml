@@ -10,6 +10,8 @@ resources:
   # - ./authentik-cnpg-poolers.yaml
   - ./authentik-cnpg-scheduled-backups.yaml
   - ./release.yaml
+  # Enable policy later
+  # - ./network-policies.yaml
 configMapGenerator:
   - name: authentik-values
     namespace: authentik-system

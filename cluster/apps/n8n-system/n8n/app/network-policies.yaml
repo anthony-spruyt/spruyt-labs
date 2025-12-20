@@ -1,0 +1,130 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow DNS egress to kube-dns
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-dns-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  egress:
+    - toServices:
+        - k8sService:
+            serviceName: kube-dns
+            namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Traefik
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to CNPG PostgreSQL
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cnpg-postgres-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-system
+            k8s:cnpg.io/cluster: n8n-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Valkey (Redis)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-valkey-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: valkey-system
+            k8s:app.kubernetes.io/name: valkey
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Qdrant
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-qdrant-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: qdrant-system
+            k8s:app.kubernetes.io/name: qdrant
+      toPorts:
+        - ports:
+            - port: "6333"
+              protocol: TCP
+            - port: "6334"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow HTTP/HTTPS egress for webhooks and external APIs
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-world-web-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
