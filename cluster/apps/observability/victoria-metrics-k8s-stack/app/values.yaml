@@ -104,6 +104,8 @@ grafana:
   enabled: true
   deploymentStrategy:
     type: Recreate
+  podAnnotations:
+    reloader.stakater.com/auto: "true"
   resources:
     limits:
       cpu: 3000m

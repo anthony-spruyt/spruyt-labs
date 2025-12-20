@@ -53,6 +53,8 @@
 server:
   # -- Enable deployment of server component. Deployed as StatefulSet
   #enabled: true
+  podAnnotations:
+    reloader.stakater.com/auto: "true"
   #image:
   #  # -- Image registry
   #  registry: ""

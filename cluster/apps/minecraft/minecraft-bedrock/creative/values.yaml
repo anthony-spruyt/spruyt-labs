@@ -11,9 +11,9 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  storageClass: "rbd-fast"
+  storageClass: "rbd-fast-delete"
   dataDir:
-    existingClaim: minecraft-bedrock-creative-v1
+    existingClaim: minecraft-bedrock-creative
     # Set this to false if you don't care to persist state between restarts.
     enabled: true
     # Size: 10Gi
