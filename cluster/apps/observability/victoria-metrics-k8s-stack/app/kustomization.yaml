@@ -12,5 +12,19 @@ configMapGenerator:
     namespace: observability
     files:
       - values.yaml
+  - name: grafana-dashboard-ceph-cluster
+    namespace: observability
+    files:
+      - dashboards/ceph-cluster.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-etcd
+    namespace: observability
+    files:
+      - dashboards/etcd.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml

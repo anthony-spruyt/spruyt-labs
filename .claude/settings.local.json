@@ -13,7 +13,8 @@
       "Bash(for dir in /workspaces/spruyt-labs/cluster/apps/*/*)",
       "Bash(do [ -d \"$dir\" ])",
       "Bash([ ! -f \"$dir/README.md\" ])",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch(domain:docs.victoriametrics.com)"
     ]
   }
 }
