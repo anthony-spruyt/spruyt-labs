@@ -25,10 +25,11 @@
   enabledManagers: [
     "custom.regex",
     "dockerfile",
-    "helm-values",
-    "kubernetes",
     "flux",
     "github-actions",
+    "helm-values",
+    "kubernetes",
+    "pre-commit",
     "terraform",
     "devcontainer",
   ],

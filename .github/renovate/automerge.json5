@@ -1,18 +1,13 @@
 {
   packageRules: [
-    /*{
+    {
+      description: "Automerge patch updates",
       matchUpdateTypes: ["patch", "digest", "pin"],
-      matchFileNames: ["^cluster/apps/.*"],
       automerge: true,
       platformAutomerge: true,
     },
     {
-      matchPackageNames: ["fluxcd/*", "ghcr.io/fluxcd/*"],
-      matchUpdateTypes: ["minor"],
-      automerge: true,
-      platformAutomerge: true,
-    },*/
-    {
+      description: "Automerge GitHub Actions minor updates",
       matchManagers: ["github-actions"],
       matchUpdateTypes: ["minor"],
       automerge: true,

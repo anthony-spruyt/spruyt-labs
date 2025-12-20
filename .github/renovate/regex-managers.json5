@@ -1,14 +1,14 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   description: [
-    "Regex managers covering Talos manifests, Taskfiles, shell scripts, and miscellaneous YAML where Renovate needs explicit capture groups.",
+    "Regex managers for specialized patterns not covered by customManagers.json5",
   ],
   customManagers: [
     {
       customType: "regex",
+      description: "URL-based versions in Talos manifests",
       managerFilePatterns: ["/(^|/)talos/.+\\.ya?ml$/"],
       matchStrings: [
-        "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<prefix>(?:talosVersion|kubernetesVersion|version):\\s*)(?<currentValue>[^\\s\"']+)",
         "-\\s+#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<currentValue>https?://[^\\s\"']+)",
       ],
       depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{{packageName}}}{{/if}}",
@@ -17,6 +17,7 @@
     },
     {
       customType: "regex",
+      description: "OCI Helm charts in Talos helmfile",
       managerFilePatterns: ["/(^|/)talos/helmfile/.+\\.ya?ml$/"],
       matchStrings: [
         "chart:\\s*oci://(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
@@ -28,6 +29,7 @@
     },
     {
       customType: "regex",
+      description: "Non-OCI Helm charts in Talos helmfile",
       managerFilePatterns: ["/(^|/)talos/helmfile/.+\\.ya?ml$/"],
       matchStrings: [
         "chart:\\s*(?<chartPath>[\\w./-]+)\\s*\\n[^\\S\\n]*version:\\s*(?<currentValue>[^\\s\"']+)",
@@ -38,6 +40,7 @@
     },
     {
       customType: "regex",
+      description: "Flux OCI repository refs",
       managerFilePatterns: [
         "/(^|/)cluster/flux/meta/repositories/oci/.+\\.ya?ml$/",
       ],
@@ -50,17 +53,18 @@
     },
     {
       customType: "regex",
+      description: "OCI artifact references in cluster manifests",
       managerFilePatterns: ["/(^|/)cluster/.+\\.ya?ml$/"],
       matchStrings: [
-        "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<prefix>[\\w.-]+:\\s*)(?<currentValue>[^\\s\"']+)",
         '(?<artifactPrefix>artifact:\\s*"?)oci://(?<depNamePath>[^:"\\s]+)(?::|@)(?<currentValue>[^"\\s]+)"?',
       ],
-      depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
-      packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if depNamePath}}{{{depNamePath}}}{{else}}{{{packageName}}}{{/if}}{{/if}}",
-      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}{{#if artifactPrefix}}docker{{else}}github-releases{{/if}}{{/if}}",
+      depNameTemplate: "{{{depNamePath}}}",
+      packageNameTemplate: "{{{depNamePath}}}",
+      datasourceTemplate: "docker",
     },
     {
       customType: "regex",
+      description: "Container images in Taskfiles and scripts",
       managerFilePatterns: [
         "/(^|/)\\.taskfiles/.+\\.(ya?ml|tmpl\\.ya?ml)$/",
         "/(^|/)\\.taskfiles/.+/scripts/.+\\.(sh|bash)$/",

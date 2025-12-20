@@ -396,24 +396,24 @@ Renovate automates dependency updates for Helm charts, Kubernetes manifests, Ter
 #### Preconditions
 
 - Renovate bot configured in GitHub repository settings with appropriate permissions.
-- Configuration files present in `.github/renovate/` directory (helm.json5, groups.json5, regex-managers.json5, customManagers.json5).
+- Configuration files present in `.github/renovate/` directory (groups.json5, regex-managers.json5, customManagers.json5).
 - Repository structure matches configured file patterns for dependency detection.
 
 #### Procedure by lifecycle phase
 
 ##### Configuration
 
-1. Maintain Helm registry configurations in `.github/renovate/helm.json5` for chart repositories.
-2. Update package groupings in `.github/renovate/groups.json5` to ensure related components (operators and CRDs, charts and images) update together.
-3. Configure regex managers in `.github/renovate/regex-managers.json5` for custom dependency formats.
-4. Adjust stability settings (stabilityDays) based on component criticality and update history.
+1. Update package groupings in `.github/renovate/groups.json5` to ensure related components (operators and CRDs, charts and images) update together.
+2. Configure regex managers in `.github/renovate/regex-managers.json5` for custom dependency formats.
+3. Adjust stability settings (stabilityDays) based on component criticality and update history.
+
+Note: Helm registry URLs are auto-detected by Renovate's Flux manager from `HelmRepository` resources.
 
 ##### Maintenance
 
 1. Perform quarterly reviews of all Renovate configuration files to ensure they reflect current repository structure.
 2. Monitor update success rates and system stability after dependency deployments.
 3. Audit manager coverage to ensure all dependency types have appropriate configurations.
-4. Update registries when URLs change or new repositories are introduced.
 
 ##### Updates
 
