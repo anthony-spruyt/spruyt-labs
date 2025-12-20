@@ -11,7 +11,6 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: snapshot-controller
-  namespace: kube-system
 spec:
   replicas: 2
   selector:

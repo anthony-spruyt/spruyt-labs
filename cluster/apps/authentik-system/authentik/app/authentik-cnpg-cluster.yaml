@@ -4,7 +4,6 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: authentik-cnpg-cluster
-  namespace: authentik-system
 spec:
   affinity:
     enablePodAntiAffinity: true

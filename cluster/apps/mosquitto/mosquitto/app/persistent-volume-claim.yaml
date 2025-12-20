@@ -5,7 +5,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mosquitto-data-v2
-  namespace: mosquitto
   # finalizers:
   #   - kubernetes.io/pvc-protection
   annotations:

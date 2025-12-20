@@ -4,7 +4,6 @@ apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
   name: n8n-cnpg-aws-object-store
-  namespace: n8n-system
 spec:
   retentionPolicy: 7d
   configuration:

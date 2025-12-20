@@ -4,7 +4,6 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "mosquitto-lan-${EXTERNAL_DOMAIN/./-}"
-  namespace: mosquitto
 spec:
   secretName: "mosquitto-lan-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:

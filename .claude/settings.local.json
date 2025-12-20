@@ -26,7 +26,8 @@
       "Bash(velero backup get:*)",
       "Bash(talosctl get:*)",
       "Bash(openssl rand:*)",
-      "Bash(kubectl api-resources:*)"
+      "Bash(kubectl api-resources:*)",
+      "Bash(git status:*)"
     ]
   }
 }

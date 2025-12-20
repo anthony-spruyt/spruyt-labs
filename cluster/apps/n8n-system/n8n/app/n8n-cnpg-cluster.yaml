@@ -4,7 +4,6 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: n8n-cnpg-cluster
-  namespace: n8n-system
 spec:
   affinity:
     enablePodAntiAffinity: true

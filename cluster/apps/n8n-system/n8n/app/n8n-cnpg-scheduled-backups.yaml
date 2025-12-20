@@ -4,7 +4,6 @@ apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
   name: n8n-cnpg-daily-scheduled-backup
-  namespace: n8n-system
 spec:
   immediate: true
   suspend: false

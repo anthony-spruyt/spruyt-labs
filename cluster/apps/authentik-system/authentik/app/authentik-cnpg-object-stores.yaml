@@ -4,7 +4,6 @@ apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
   name: authentik-cnpg-aws-object-store
-  namespace: authentik-system
 spec:
   retentionPolicy: 7d
   configuration:

@@ -3,7 +3,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rook-ceph-csi-kms-config
-  namespace: rook-ceph
 data:
   config.json: |-
     {
@@ -17,7 +16,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rook-config-override
-  namespace: rook-ceph
 data:
   # dev_enable_discard & bdev_async_discard_threads: Enables discard/TRIM operations on storage devices to mark free blocks.
   # In a home lab, this is essential for SSDs as it helps manage wear leveling and improves long-term performance.

@@ -4,7 +4,6 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Pooler
 metadata:
   name: authentik-cnpg-cluster-pooler-rw
-  namespace: authentik-system
 spec:
   cluster:
     name: authentik-cnpg-cluster
@@ -32,7 +31,6 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Pooler
 metadata:
   name: authentik-cnpg-cluster-pooler-ro
-  namespace: authentik-system
 spec:
   cluster:
     name: authentik-cnpg-cluster

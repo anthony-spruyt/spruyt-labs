@@ -4,7 +4,6 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "wildcard-${EXTERNAL_DOMAIN/./-}"
-  namespace: traefik
 spec:
   secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
