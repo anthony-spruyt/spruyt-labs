@@ -12,10 +12,22 @@ Core operational standards and constraints for the homelab. For full documentati
 
 ## Constraints
 
-1. **No Python scripts** - Strictly prohibited
-2. **Automation first** - Use Flux, Terraform, Talos declarative configs
-3. **Validation required** - Run `task dev-env:lint` before commits
-4. **Use Taskfile** - Prefer `task` commands over raw CLI
+1. **No Python scripts** - Use bash/Taskfile only
+2. **No SOPS decryption** - Never decrypt secrets via CLI
+3. **Automation first** - Use Flux, Terraform, Talos declarative configs
+4. **Validation required** - Run `task dev-env:lint` before commits
+5. **Use Taskfile** - Prefer `task` commands over raw CLI
+
+## Git Conventions
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) for all commits and PRs:
+
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `chore:` - Maintenance tasks
+- `docs:` - Documentation changes
+- `refactor:` - Code restructuring
+- `test:` - Test additions/changes
 
 ## Quick Reference
 
@@ -69,4 +81,4 @@ helm rollback <release> <revision> -n <ns>
 
 - [README.md](../../README.md) - Full documentation
 - [procedures.md](procedures.md) - Detailed procedures
-- [documentation_rules.md](documentation_rules.md) - Doc standards
+- [documentation.md](documentation.md) - Doc standards

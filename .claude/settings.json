@@ -1,7 +1,6 @@
 {
   "permissions": {
     "deny": [
-      "Read(./.output/**)",
       "Read(./talos/clusterconfig/**)",
       "Read(./**/*.sops.*)",
       "Read(./.gitattributes)",

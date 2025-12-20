@@ -57,4 +57,4 @@ renovate-config-validator .github/renovate/*.json5
 
 ## Related
 
-- [README.md - Renovate section](../README.md#renovate-dependency-management)
+- [Maintenance - Renovate section](../maintenance.md#renovate-dependency-management)

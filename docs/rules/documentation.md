@@ -50,7 +50,7 @@ kubectl get pods -n default
 ## Maintenance
 
 1. **Review after changes**: Update docs when repository changes affect accuracy
-2. **Use template**: Start new docs from `.kilocode/templates/readme_template.md`
+2. **Use template**: Start new docs from `docs/templates/readme_template.md`
 3. **Validate before commit**: Run `task dev-env:lint`
 
 ## Validation

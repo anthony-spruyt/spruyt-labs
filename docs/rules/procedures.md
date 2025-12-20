@@ -89,7 +89,7 @@ kubectl get secrets -A | grep tls    # TLS secrets
 
 ## MCP/Context7 Integration
 
-Configuration is in `.kilocode/mcp.json`. The approved library catalog is in `.kilocode/context7-libraries.json`.
+Configuration is in `.kilocode/mcp.json`. The approved library catalog is in `.kilocode/context7-libraries.json` (MCP config remains in .kilocode/ for KiloCode compatibility).
 
 ### Usage
 
@@ -124,4 +124,4 @@ use_mcp_tool server_name=context7 tool_name=get-library-docs arguments={"library
 ## Related
 
 - [core_rules.md](core_rules.md) - Operational constraints
-- [documentation_rules.md](documentation_rules.md) - Documentation standards
+- [documentation.md](documentation.md) - Documentation standards

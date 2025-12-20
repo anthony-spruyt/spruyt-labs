@@ -106,7 +106,7 @@ task documentation:validate
 
 ## References
 
-- [Documentation Standards](../../.kilocode/rules/documentation_rules.md)
+- [Documentation Standards](../../docs/rules/documentation.md)
 - [Flux CD Documentation](https://fluxcd.io/flux/)
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
 - [Markdown Guide](https://www.markdownguide.org/)
