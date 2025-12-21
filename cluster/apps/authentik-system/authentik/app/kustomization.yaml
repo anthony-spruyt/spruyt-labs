@@ -4,6 +4,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./authentik-secrets.sops.yaml
+  - ./authentik-blueprints.sops.yaml
   - ./authentik-cnpg-object-stores.yaml
   - ./authentik-cnpg-cluster.yaml
   # Dont need pooling yet, if pooling is needed when load increase can look at enabling.

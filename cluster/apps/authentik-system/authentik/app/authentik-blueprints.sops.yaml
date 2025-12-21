@@ -1,0 +1,24 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: authentik-blueprints
+    namespace: authentik-system
+type: Opaque
+stringData:
+    grafana-sso.yaml: ENC[AES256_GCM,data:HF+VMo5ZTVJcDQXZL2Vy+iDYjZx4ApOpMl4S+YoDihnVXd7ry30mwJ9IlQwQQwuqaF6hYX7D7RUUBue43ovOM+ztoVegHfA77QrqRpx4yXeG6LEmq3dgra218jKPoyQlTzmFFEqeQzR4QfIwGrGmfHpCWw3ewSKh2xMoZFb0/9aJWXkkRmyPm/wTsYLS9jssuJIdK4m7uiImBhDI9zl91VIa/ybSU2GRuKAN7Dq2f9Di17DF1IQ3bzsZgcEJXO1EN5ayadDXDro42vkvEWlwtahcOenXEmKKDeQMZ79hvfoIpDvvk9qyIrBqdx0Lhc1u3X3Tllo/gDkBZbCugnT2UZGPfjsz+bDnMFumTj6aPXEmTlpfhIaSAEaZh1cFlK55q3bPb/VeWB4L1s5hcN2EldYvq5ctQztcQmIQlZk3J//ZTgVomX74xmLxEwe574o5NUGKK/CmN26Jx6eYGTwU6JnHzLQO4SD992U7oQ+AFlmBAvlyX919pjcQBBf7U2aJQTUvncmYd+8Tc69ahCO1fWrV6r7DgHj2a93EzONtJNZprosYpSJl0IdQPt7xGQ8nJrYZ7+UzUuDboka+hugnJwwhHXRRIlRXo4cilbqyaqq1kJeZwjbk58ppWcWDSFJjzHfL4uxa+oG6cBBJePngZVp7gAMiyxg32e1QMZ5aZKpyDHiwmLQRBgLfiv4GUtts9XATuxxmvhta+EEYRzEzLYIbeUH2Z0vpQfS3jHtoMkSa6dFYVZfkCnmIzZiVZsXprFLI9rQLGUJtoqdy/qyYb0z3gJ77ais4SZwW2x8sXT7THlde/c/nFutcMlfT7wl7Ub42BkD8W5UbayCion2o0hhOz30stqMB7WEyEl8zeWtNaiew8n7M3ZhdMKaVRdOSdmFyQOnuA7Ze96GiAxuYAC+U2HceOaUNanNidZFGYzPF1DB46vxSyYBQ3Qm72c0fssRHsW2HGMQOxoS6uM3qGgc9mQ7wzlLWu7TY62f2d2L8WgrKsvhOHATzcNRVC0485/27/E7IinieSKTQQmJpyK7ikxNv4mMd1JfH/zSY116h69uyRdtOt0IRiXLQmSoQO/SLsPRH/YO1mnb3aOiIY1JqeZsrz+oDWsIAtoqGaqCv4WHpF8Tk1hYv5PdiQsMs3updjuVp5+8ypIwNBUq/xtDzFxsFf97JIrnQXjMZtVCE70sIGSJJB9aaVrgwGt8shEHZLH3Lh/KJL7PB4czXG9pfL15j3kTjddYWBEGkuTZzPOPJRLC4zJWyTn4yjgZ5NXsd9HJ1nJEQjLyeJ0RjjtH9hdaThqZ59G+XqnEKgTLK3TE0R9WFXmhlJVwzb1gXEMaJSvK6SJw+GWapJ88kTk/LNfg1cVBGx2EnhEfq+kYffyJvjznOC0Sgg1ZVi1Fx4rpjtZs42z3ZLtgu1vnOYKqWBvNtINAWgUXRyD+UqOUyBD4RsZLEoVFf81mEUagtwBKoETPWOs6QJ0xkHWNt3DVDWfghAXDY1ZpH9l0UopnehvBTB9T6jppDMNgg09u6Vsk1MHO0i94AkOKkLirUG+jrWAzA5jWmk44GTw/Moy8r5YU3AuAaLQjfkXRDrDzJ1ke9yXgaVDeUY36Qjc0qEPHDaf6PQeLobgitKrkfXf6eCngvfmRu9w2yjONjWq66e1n7VYR49gaB+z+1nDuHt37kbkjtoMGvG6402ZPXQv9m4GFV6ZdFGz8SpXXM6nuPGe5QE1HT4oQt79YPZOo1Av9kRCb29pmto1Asar3A11OBf1HJ1fuqLKV7HCp3+z+WaDxuVVIrujxV3iHNBSdJaCapEp+PEHvTPdQjKHZ4C7nkq56gv0YyzHe68d+TEtDCcKRJF6CliA==,iv:oH0WI2Ft4dW0cp7S/mlJrejp06fqNPcQAO0HiV7uCE0=,tag:LulDQXHeQ/J6hITOUzK6kg==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB1VkUwemtSaHlIWDVJUGN2
+            Nys4OURZalBFa00xVWxueEsrem9lNjBsa3dvCm1oOUtteUZPWHhlNVRKbGZRbmpZ
+            QThUa2tId0VjOU9IYWx5dVRKR1piSlUKLS0tIG9KTnBSbHMzRnRPbXFwZXVBSThN
+            REVMbUg4OW96bFhIVktSOVlCcHpOZXcKxGu9Ub2TBj+FcRq8x1ajOGQ3yAtHpAB9
+            JJb2D+5z4TsrsKZhllWueZ1WMw0bkI8ey0an478kCPZOhI8R64lfBQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-12-21T03:08:58Z"
+    mac: ENC[AES256_GCM,data:opyLKaM3OzL8UT8jG19dvWbQifRIwVkBg4tbn83PpAe1dzlICoKJOvx9v4joWnWTHVjVk4VimX3YyBJqoMq9gOdNO/4ZiTFTgGpS0uPaqCt+o7XHn6TvK7o5Sxer4rCuCWJzmPKUGK5pcaePhMf3nssit0pSRRtoMlQI2Tz52ak=,iv:5DW0gLWsn84HP2pucehZgCiwE8nk49ju4NzoQub/0wc=,tag:RVBhzu3JVylppE1yIPMkgw==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.11.0

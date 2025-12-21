@@ -57,6 +57,9 @@ global:
     - name: db-ca-cert
       mountPath: /certs/postgresql
       readOnly: true
+    - name: blueprints-custom
+      mountPath: /blueprints/custom
+      readOnly: true
   volumes:
     - name: db-ca-cert
       secret:
@@ -64,6 +67,9 @@ global:
         items:
           - key: ca.crt
             path: ca.crt
+    - name: blueprints-custom
+      secret:
+        secretName: authentik-blueprints
 
 authentik:
   log_level: info
