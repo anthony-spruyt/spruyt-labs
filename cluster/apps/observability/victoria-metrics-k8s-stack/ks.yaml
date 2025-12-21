@@ -13,7 +13,7 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: victoria-metrics-operator
-    - name: external-secrets-resources
+    - name: external-secrets
     - name: authentik
   prune: true
   timeout: 5m

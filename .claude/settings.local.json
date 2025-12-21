@@ -44,7 +44,10 @@
       "Bash(git -C /workspaces/spruyt-labs diff)",
       "Bash(xargs ls:*)",
       "Bash(jq:*)",
-      "Bash(kubectl auth can-i:*)"
+      "Bash(kubectl auth can-i:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ]
   }
 }
