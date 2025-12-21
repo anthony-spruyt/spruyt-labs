@@ -42,7 +42,8 @@
       "Bash(ls -la:*)",
       "Bash(kubectl exec:*)",
       "Bash(git -C /workspaces/spruyt-labs diff)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(jq:*)"
     ]
   }
 }
