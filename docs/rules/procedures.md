@@ -87,23 +87,13 @@ kubectl get certificates -A          # All certs
 kubectl get secrets -A | grep tls    # TLS secrets
 ```
 
-## MCP/Context7 Integration
+## Context7 Documentation
 
-Configuration is in `.kilocode/mcp.json`. The approved library catalog is in `.kilocode/context7-libraries.json` (MCP config remains in .kilocode/ for KiloCode compatibility).
+Library catalog: `docs/context7-libraries.json`
 
-### Usage
-
-1. Check catalog first: `grep -i '<topic>' .kilocode/context7-libraries.json`
-2. Use `resolve-library-id` if topic not in catalog
-3. Use `get-library-docs` to retrieve documentation
-4. Record library ID and version in change notes
-
-### Example
-
-```bash
-use_mcp_tool server_name=context7 tool_name=resolve-library-id arguments={"description": "Kubernetes Ingress API"}
-use_mcp_tool server_name=context7 tool_name=get-library-docs arguments={"library_id": "kubernetes", "version": "v1.28"}
-```
+- **Auto-trigger**: Fetch docs for catalog libraries when encountering unfamiliar APIs
+- **New libraries**: Ask before resolving libraries not in the catalog
+- **Versioning**: Use versions matching deployed software when available
 
 ## Validation
 

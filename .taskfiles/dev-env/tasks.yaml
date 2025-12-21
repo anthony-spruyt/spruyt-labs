@@ -3,20 +3,24 @@
 version: "3"
 
 vars:
+  hubbleDropsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/hubble-drops.sh"
   installAgeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-age.sh"
   installFluxCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux-capacitor.sh"
   installFluxScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux.sh"
   installHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm-plugins.sh"
+  installHubbleScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-hubble.sh"
   installSafeChainScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-safe-chain.sh"
   installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
   installTalosctlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talosctl.sh"
-  hubbleDropsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/hubble-drops.sh"
-  installHubbleScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-hubble.sh"
   installVeleroScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-velero.sh"
   runMegaLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-mega-linter.sh"
   updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
 
 tasks:
+  hubble-drops:
+    desc: Shows recent dropped network traffic (blocked by network policies)
+    cmds:
+      - bash {{ .hubbleDropsScript }}
   install-age:
     desc: Installs age and age-keygen
     cmds:
@@ -37,10 +41,6 @@ tasks:
     desc: Installs the Hubble CLI for Cilium network observability
     cmds:
       - bash {{ .installHubbleScript }}
-  hubble-drops:
-    desc: Shows recent dropped network traffic (blocked by network policies)
-    cmds:
-      - bash {{ .hubbleDropsScript }}
   install-safe-chain:
     desc: Installs safe-chain
     cmds:
