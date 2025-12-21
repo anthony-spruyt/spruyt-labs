@@ -64,6 +64,12 @@ global:
         secretKeyRef:
           name: authentik-grafana-oauth
           key: GRAFANA_OAUTH_CLIENT_SECRET
+    # OAuth rotation service account token (used via !Env tag in blueprint)
+    - name: OAUTH_ROTATION_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: OAUTH_ROTATION_API_TOKEN
   envFrom: []
   volumeMounts:
     - name: db-ca-cert
@@ -85,6 +91,8 @@ global:
         items:
           - key: grafana-sso.yaml
             path: grafana-sso.yaml
+          - key: oauth-rotation-service-account.yaml
+            path: oauth-rotation-service-account.yaml
 
 authentik:
   log_level: info

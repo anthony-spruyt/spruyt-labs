@@ -48,7 +48,8 @@
       "Bash(git -C /workspaces/spruyt-labs add -A)",
       "Bash(flux get:*)",
       "Bash(flux reconcile:*)",
-      "Bash(kubectl version:*)"
+      "Bash(kubectl version:*)",
+      "Bash(kubectl wait:*)"
     ]
   }
 }

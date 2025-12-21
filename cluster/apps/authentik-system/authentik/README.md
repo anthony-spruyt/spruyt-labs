@@ -310,8 +310,24 @@ Automated weekly rotation of OAuth credentials via CronJob. Credentials are upda
 
 #### Rotation Prerequisites
 
-- `AUTHENTIK_API_TOKEN` in `authentik-secrets.sops.yaml` (service account with admin permissions)
+- `OAUTH_ROTATION_API_TOKEN` in `authentik-secrets.sops.yaml`
+- OAuth Rotation Service Account blueprint applied (creates limited-permission service account)
 - ExternalSecret configured in consumer namespace (Step 4 above)
+
+#### Service Account Blueprint
+
+The rotation CronJob uses a dedicated service account with minimal permissions, defined in `app/blueprints/oauth-rotation-service-account.yaml`:
+
+- **Role**: `OAuth Rotation` - permissions for `view_oauth2provider` and `change_oauth2provider` only
+- **Group**: `OAuth Rotation Service Accounts`
+- **User**: `oauth-rotation-service` (service account type)
+- **Token**: `oauth-rotation-token` - API token set via `OAUTH_ROTATION_API_TOKEN` env var
+
+Generate the token value and add to `authentik-secrets.sops.yaml`:
+
+```bash
+openssl rand -hex 32  # OAUTH_ROTATION_API_TOKEN
+```
 
 #### Adding a New App to Rotation
 
@@ -393,15 +409,16 @@ kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
 
 ## File Reference
 
-| Component         | Location                                 |
-| ----------------- | ---------------------------------------- |
-| Blueprint         | `app/blueprints/<app>-sso.yaml`          |
-| OAuth Secret      | `app/authentik-<app>-oauth.sops.yaml`    |
-| Core Secrets      | `app/authentik-secrets.sops.yaml`        |
-| Helm values       | `app/values.yaml`                        |
-| OAuth Reader RBAC | `app/<app>-oauth-rbac.yaml`              |
-| Rotation CronJob  | `app/oauth-secret-rotation/cronjob.yaml` |
-| Rotation RBAC     | `app/oauth-secret-rotation/role.yaml`    |
+| Component                | Location                                             |
+| ------------------------ | ---------------------------------------------------- |
+| Blueprint                | `app/blueprints/<app>-sso.yaml`                      |
+| OAuth Secret             | `app/authentik-<app>-oauth.sops.yaml`                |
+| Core Secrets             | `app/authentik-secrets.sops.yaml`                    |
+| Helm values              | `app/values.yaml`                                    |
+| OAuth Reader RBAC        | `app/<app>-oauth-rbac.yaml`                          |
+| Rotation Service Account | `app/blueprints/oauth-rotation-service-account.yaml` |
+| Rotation CronJob         | `app/oauth-secret-rotation/cronjob.yaml`             |
+| Rotation RBAC            | `app/oauth-secret-rotation/role.yaml`                |
 
 **Grafana Example Files:**
 

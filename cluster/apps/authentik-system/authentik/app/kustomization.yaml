@@ -26,5 +26,6 @@ configMapGenerator:
       disableNameSuffixHash: true
     files:
       - blueprints/grafana-sso.yaml
+      - blueprints/oauth-rotation-service-account.yaml
 configurations:
   - ./kustomizeconfig.yaml

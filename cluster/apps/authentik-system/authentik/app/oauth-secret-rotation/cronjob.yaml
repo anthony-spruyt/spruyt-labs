@@ -76,7 +76,7 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: authentik-secrets
-                      key: AUTHENTIK_API_TOKEN
+                      key: OAUTH_ROTATION_API_TOKEN
               resources:
                 requests:
                   cpu: 10m
