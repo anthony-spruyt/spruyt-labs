@@ -2,117 +2,54 @@
 
 ## Overview
 
-authentik is an open-source Identity Provider that unifies identity management across applications and services. It provides authentication, authorization, and user management capabilities for the spruyt-labs homelab infrastructure.
+Open-source Identity Provider for SSO authentication across the cluster.
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD installed
-- PostgreSQL operator (CNPG) deployed
-- Storage class configured for persistent volumes
-- Ingress controller configured
-- TLS certificates available
-
-### Prerequisites Validation
-
-```bash
-# Check authentik pods are running
-kubectl get pods -n authentik-system
-
-# Verify service is available
-kubectl get svc -n authentik-system
-
-# Check ingress route
-kubectl get ingressroute -n authentik-system
-
-# Verify TLS certificate
-kubectl get certificates -n authentik-system
-```
+- CNPG operator (PostgreSQL)
+- Valkey (Redis-compatible)
+- cert-manager for TLS
 
 ## Operation
 
-### Procedures
-
-1. **User management**:
-
-   - Access authentik admin interface at `https://auth.${EXTERNAL_DOMAIN}`
-   - Create users, groups, and applications
-
-2. **Backup verification**:
+### Key Commands
 
 ```bash
-kubectl get scheduledbackups -n authentik-system
+# Check status
+kubectl get pods -n authentik-system
+flux get helmrelease -n flux-system authentik
+
+# View logs
+kubectl logs -n authentik-system -l app.kubernetes.io/name=authentik
 ```
 
-3. **Connection pooler monitoring**:
+### Adding SSO Integration (Blueprints)
 
-   ```bash
-   kubectl get poolers -n authentik-system
-   ```
+1. Create blueprint in `app/blueprints/<app>.yaml` (use schema in file)
+2. Add credentials to `app/authentik-secrets.sops.yaml`
+3. Add file to `app/kustomization.yaml` configMapGenerator
+4. Add env vars to `app/values.yaml`
 
-### Validation
+Required OAuth2Provider fields (2025.10+): `authorization_flow`, `invalidation_flow`
 
-Run the following commands to validate the procedures:
+### Debugging Blueprint Errors
 
 ```bash
-# Validate user management
-kubectl get pods -n authentik-system --no-headers | grep 'Running'
-
-# Expected: Authentik pods running
-
-# Validate backup verification
-kubectl get scheduledbackups -n authentik-system
-
-# Expected: Scheduled backups listed
-
-# Validate connection pooler monitoring
-kubectl get poolers -n authentik-system
-
-# Expected: Connection poolers listed
+kubectl exec -n authentik-system deploy/authentik-server -- ak shell -c "
+from authentik.blueprints.v1.importer import Importer
+from authentik.blueprints.models import BlueprintInstance
+bp = BlueprintInstance.objects.filter(name='Name').first()
+print(Importer.from_string(bp.retrieve(), bp.context).apply())
+"
 ```
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **Database connection failures**:
-
-   - **Symptom**: Pods stuck in CrashLoopBackOff
-   - **Diagnosis**: Check CNPG cluster health and connection details
-   - **Resolution**: Verify PostgreSQL credentials and network connectivity
-
-2. **TLS certificate issues**:
-
-   - **Symptom**: Ingress route shows certificate errors
-   - **Diagnosis**: Check cert-manager certificate status
-   - **Resolution**: Verify certificate DNS names and issuer configuration
-
-3. **Resource constraints**:
-   - **Symptom**: Pods in Pending state
-   - **Diagnosis**: Check resource requests vs available cluster resources
-   - **Resolution**: Adjust resource limits or scale cluster
-
-## Maintenance
-
-### Updates
-
-```bash
-# Update authentik Helm chart
-helm repo update
-helm upgrade authentik authentik/authentik -n authentik-system -f values.yaml
-```
-
-### Backups
-
-```bash
-# Verify scheduled backups
-kubectl get scheduledbackups -n authentik-system
-
-# Check backup status
-kubectl get backups -n authentik-system
-```
+1. **Blueprint shows error but no logs** - Errors stored in DB, use debug command above
+2. **Database connection failures** - Check CNPG cluster health
+3. **Pods CrashLoopBackOff** - Check secrets and Redis connectivity
 
 ## References
 
 - [authentik Documentation](https://goauthentik.io/docs/)
-- [CNPG Operator Documentation](https://cloudnative-pg.io/)
-- [Flux CD Documentation](https://fluxcd.io/flux/)
+- [Blueprint Schema](https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json)
