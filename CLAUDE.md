@@ -2,18 +2,38 @@
 
 Talos Linux homelab GitOps repository.
 
-## Rules
+## Constraints
 
-See [docs/rules/core_rules.md](docs/rules/core_rules.md) for constraints, conventions, and workflow.
+1. **No Python scripts** - Use bash/Taskfile only
+2. **No SOPS decryption** - Never decrypt secrets via CLI
+3. **Automation first** - Use Flux, Terraform, Talos declarative configs
+4. **Validation required** - Run `task dev-env:lint` before commits
+5. **Use Taskfile** - Prefer `task` commands over raw CLI
+
+## Git Conventions
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` New features
+- `fix:` Bug fixes
+- `chore:` Maintenance
+- `docs:` Documentation
+- `refactor:` Code restructuring
+
+## Environment
+
+- **Platform**: Talos Linux Kubernetes on bare metal
+- **Access**: No SSH - use `talosctl`, Flux, or Kubernetes APIs
+- **Config**: Talos in `talos/`, cloud in `infra/terraform/`
 
 ## Documentation
 
-- **Architecture**: [README.md](README.md)
-- **Rules**: [docs/rules/](docs/rules/)
-- **Runbooks**: [docs/](docs/) (bootstrap, maintenance, DR)
+- [README.md](README.md) - Architecture, troubleshooting matrix
+- [docs/rules/procedures.md](docs/rules/procedures.md) - Ingress, certificates, detailed procedures
+- [docs/](docs/) - Runbooks (bootstrap, maintenance, DR)
 
 ## Context7
 
-- **Catalog**: [docs/context7-libraries.json](docs/context7-libraries.json) - pre-approved library IDs
-- **Behavior**: Auto-fetch for catalog libraries; ask before resolving new ones
-- **Versioning**: Match cluster versions when available
+- Auto-fetch docs for common tools (Flux, Kubernetes, Helm, Cilium, Traefik, Rook, etc.)
+- Ask before resolving unfamiliar/niche libraries
+- Match cluster versions when available

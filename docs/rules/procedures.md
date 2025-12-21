@@ -89,10 +89,8 @@ kubectl get secrets -A | grep tls    # TLS secrets
 
 ## Context7 Documentation
 
-Library catalog: `docs/context7-libraries.json`
-
-- **Auto-trigger**: Fetch docs for catalog libraries when encountering unfamiliar APIs
-- **New libraries**: Ask before resolving libraries not in the catalog
+- **Auto-trigger**: Fetch docs for common tools when encountering unfamiliar APIs
+- **New libraries**: Ask before resolving unfamiliar/niche libraries
 - **Versioning**: Use versions matching deployed software when available
 
 ## Validation
