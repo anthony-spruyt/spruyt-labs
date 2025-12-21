@@ -87,7 +87,9 @@ entries:
       meta_launch_url: https://<app>.lan.spruyt.xyz
 ```
 
-#### Step 2: Add Credentials
+#### Step 2: Create Dedicated OAuth Secret
+
+Create a separate SOPS-encrypted secret for least-privilege cross-namespace access.
 
 Generate credentials:
 
@@ -96,11 +98,23 @@ openssl rand -hex 32  # client_id
 openssl rand -hex 32  # client_secret
 ```
 
-Add to `app/authentik-secrets.sops.yaml`:
+Create `app/authentik-<app>-oauth.sops.yaml`:
 
 ```yaml
-<APP>_OAUTH_CLIENT_ID: <generated>
-<APP>_OAUTH_CLIENT_SECRET: <generated>
+apiVersion: v1
+kind: Secret
+metadata:
+  name: authentik-<app>-oauth
+  namespace: authentik-system
+stringData:
+  <APP>_OAUTH_CLIENT_ID: <generated>
+  <APP>_OAUTH_CLIENT_SECRET: <generated>
+```
+
+Add to `app/kustomization.yaml` resources:
+
+```yaml
+- ./authentik-<app>-oauth.sops.yaml
 ```
 
 #### Step 3: Mount in Authentik
@@ -111,12 +125,12 @@ Add to `app/values.yaml` under `global.env`:
 - name: <APP>_OAUTH_CLIENT_ID
   valueFrom:
     secretKeyRef:
-      name: authentik-secrets
+      name: authentik-<app>-oauth
       key: <APP>_OAUTH_CLIENT_ID
 - name: <APP>_OAUTH_CLIENT_SECRET
   valueFrom:
     secretKeyRef:
-      name: authentik-secrets
+      name: authentik-<app>-oauth
       key: <APP>_OAUTH_CLIENT_SECRET
 ```
 
@@ -143,7 +157,7 @@ metadata:
 apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
-  name: authentik-secrets
+  name: <app>-oauth-store
   namespace: <consumer-namespace>
 spec:
   provider:
@@ -172,26 +186,54 @@ spec:
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
-    name: authentik-secrets
+    name: <app>-oauth-store
   target:
     name: <app>-oauth-credentials
     creationPolicy: Owner
   data:
     - secretKey: <APP>_OAUTH_CLIENT_ID
       remoteRef:
-        key: authentik-secrets
+        key: authentik-<app>-oauth
         property: <APP>_OAUTH_CLIENT_ID
     - secretKey: <APP>_OAUTH_CLIENT_SECRET
       remoteRef:
-        key: authentik-secrets
+        key: authentik-<app>-oauth
         property: <APP>_OAUTH_CLIENT_SECRET
 ```
 
-**RBAC (in authentik-system)** - add to `app/external-secrets-rbac.yaml`:
+**RBAC (in authentik-system)** - create `app/<app>-oauth-rbac.yaml`:
 
 ```yaml
-# Add resourceNames entry for the new secret keys
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: <app>-oauth-reader
+  namespace: authentik-system
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["authentik-<app>-oauth"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["selfsubjectrulesreviews"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: <app>-oauth-reader
+  namespace: authentik-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: <app>-oauth-reader
+subjects:
+  - kind: ServiceAccount
+    name: authentik-secret-reader
+    namespace: <consumer-namespace>
 ```
+
+This ensures each app can only read its own OAuth credentials.
 
 #### Step 5: Configure Application
 
@@ -257,7 +299,7 @@ Automated weekly rotation of OAuth credentials via CronJob. Credentials are upda
 
 1. CronJob generates new client_id/client_secret
 2. Updates Authentik OAuth2 provider via REST API
-3. Patches `authentik-secrets` in authentik-system
+3. Patches the app's dedicated OAuth secret (e.g., `authentik-grafana-oauth`)
 4. Forces ExternalSecret sync in consumer namespace
 
 #### Rotation Prerequisites
@@ -288,7 +330,7 @@ curl -sf -X PATCH \
   -d "{\"client_id\": \"${NEW_CLIENT_ID}\", \"client_secret\": \"${NEW_CLIENT_SECRET}\"}" \
   "${AUTHENTIK_URL}/api/v3/providers/oauth2/${PROVIDER_ID}/"
 
-kubectl patch secret authentik-secrets -n authentik-system --type='json' -p="[
+kubectl patch secret authentik-<app>-oauth -n authentik-system --type='json' -p="[
   {\"op\": \"replace\", \"path\": \"/data/<APP>_OAUTH_CLIENT_ID\", \"value\": \"$(echo -n $NEW_CLIENT_ID | base64 -w0)\"},
   {\"op\": \"replace\", \"path\": \"/data/<APP>_OAUTH_CLIENT_SECRET\", \"value\": \"$(echo -n $NEW_CLIENT_SECRET | base64 -w0)\"}
 ]"
@@ -345,20 +387,23 @@ kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
 
 ## File Reference
 
-| Component        | Location                                 |
-| ---------------- | ---------------------------------------- |
-| Blueprint        | `app/blueprints/<app>-sso.yaml`          |
-| Secrets (SOPS)   | `app/authentik-secrets.sops.yaml`        |
-| Helm values      | `app/values.yaml`                        |
-| Rotation CronJob | `app/oauth-secret-rotation/cronjob.yaml` |
-| Rotation RBAC    | `app/oauth-secret-rotation/role.yaml`    |
-| External RBAC    | `app/external-secrets-rbac.yaml`         |
+| Component         | Location                                 |
+| ----------------- | ---------------------------------------- |
+| Blueprint         | `app/blueprints/<app>-sso.yaml`          |
+| OAuth Secret      | `app/authentik-<app>-oauth.sops.yaml`    |
+| Core Secrets      | `app/authentik-secrets.sops.yaml`        |
+| Helm values       | `app/values.yaml`                        |
+| OAuth Reader RBAC | `app/<app>-oauth-rbac.yaml`              |
+| Rotation CronJob  | `app/oauth-secret-rotation/cronjob.yaml` |
+| Rotation RBAC     | `app/oauth-secret-rotation/role.yaml`    |
 
 **Grafana Example Files:**
 
 | Component      | Location                                                            |
 | -------------- | ------------------------------------------------------------------- |
 | Blueprint      | `app/blueprints/grafana-sso.yaml`                                   |
+| OAuth Secret   | `app/authentik-grafana-oauth.sops.yaml`                             |
+| Reader RBAC    | `app/external-secrets-rbac.yaml`                                    |
 | SecretStore    | `victoria-metrics-k8s-stack/app/authentik-secret-store.yaml`        |
 | ExternalSecret | `victoria-metrics-k8s-stack/app/grafana-oauth-external-secret.yaml` |
 | Rotation RBAC  | `victoria-metrics-k8s-stack/app/oauth-rotation-rbac.yaml`           |

@@ -59,8 +59,8 @@ spec:
 
                   echo "Authentik provider updated successfully"
 
-                  echo "Patching authentik-secrets for Grafana sync..."
-                  kubectl patch secret authentik-secrets -n authentik-system --type='json' -p="[
+                  echo "Patching authentik-grafana-oauth secret..."
+                  kubectl patch secret authentik-grafana-oauth -n authentik-system --type='json' -p="[
                     {\"op\": \"replace\", \"path\": \"/data/GRAFANA_OAUTH_CLIENT_ID\", \"value\": \"$$(echo -n $$NEW_CLIENT_ID | base64 -w0)\"},
                     {\"op\": \"replace\", \"path\": \"/data/GRAFANA_OAUTH_CLIENT_SECRET\", \"value\": \"$$(echo -n $$NEW_CLIENT_SECRET | base64 -w0)\"}
                   ]"

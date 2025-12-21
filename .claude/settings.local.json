@@ -45,7 +45,6 @@
       "Bash(jq:*)",
       "Bash(kubectl auth can-i:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)",
       "Bash(git -C /workspaces/spruyt-labs add -A)",
       "Bash(flux get:*)",
       "Bash(flux reconcile:*)",

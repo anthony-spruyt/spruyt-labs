@@ -53,15 +53,16 @@ global:
           name: authentik-secrets
           key: AUTHENTIK_SECRET_KEY
     # OAuth credentials for blueprints (used via !Env tag)
+    # Stored in separate secret for least-privilege cross-namespace access
     - name: GRAFANA_OAUTH_CLIENT_ID
       valueFrom:
         secretKeyRef:
-          name: authentik-secrets
+          name: authentik-grafana-oauth
           key: GRAFANA_OAUTH_CLIENT_ID
     - name: GRAFANA_OAUTH_CLIENT_SECRET
       valueFrom:
         secretKeyRef:
-          name: authentik-secrets
+          name: authentik-grafana-oauth
           key: GRAFANA_OAUTH_CLIENT_SECRET
   envFrom: []
   volumeMounts:
