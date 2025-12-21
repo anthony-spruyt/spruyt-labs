@@ -49,7 +49,9 @@
       "Bash(flux get:*)",
       "Bash(flux reconcile:*)",
       "Bash(kubectl version:*)",
-      "Bash(kubectl wait:*)"
+      "Bash(kubectl wait:*)",
+      "Bash(git -C /workspaces/spruyt-labs status:*)",
+      "Bash(git -C /workspaces/spruyt-labs diff:*)"
     ]
   }
 }

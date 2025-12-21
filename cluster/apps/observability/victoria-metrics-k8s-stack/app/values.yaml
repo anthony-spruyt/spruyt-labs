@@ -130,6 +130,7 @@ grafana:
     existingSecret: grafana-secrets
     userKey: admin-user
     passwordKey: admin-password
+  # https://github.com/grafana/grafana/blob/main/conf/defaults.ini
   grafana.ini:
     server:
       root_url: https://grafana.lan.${EXTERNAL_DOMAIN}
