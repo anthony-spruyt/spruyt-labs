@@ -38,10 +38,11 @@
       "Bash(git -C /workspaces/spruyt-labs status)",
       "WebFetch(domain:docs.goauthentik.io)",
       "Bash(git -C /workspaces/spruyt-labs log*)",
-      "Bash(xargs kubectl describe*)",
-      "Bash(ls -la*)",
+      "Bash(xargs kubectl describe:*)",
+      "Bash(ls -la:*)",
       "Bash(kubectl exec:*)",
-      "Bash(git -C /workspaces/spruyt-labs diff)"
+      "Bash(git -C /workspaces/spruyt-labs diff)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./authentik-secrets.sops.yaml
   - ./authentik-cnpg-object-stores.yaml
+  - ./external-secrets-rbac.yaml
   - ./authentik-cnpg-cluster.yaml
   # Dont need pooling yet, if pooling is needed when load increase can look at enabling.
   # - ./authentik-cnpg-poolers.yaml

@@ -12,3 +12,6 @@ AVD-AWS-0345
 
 # Attach policy directly to user, policies are user specific
 AVD-AWS-0143
+
+# ESO needs read access to sync secrets cross-namespace (least-privilege via resourceNames)
+AVD-KSV-0113
