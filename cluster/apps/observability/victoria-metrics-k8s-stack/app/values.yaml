@@ -142,9 +142,9 @@ grafana:
       client_id: $__file{/etc/secrets/auth_generic_oauth/client_id}
       client_secret: $__file{/etc/secrets/auth_generic_oauth/client_secret}
       scopes: openid profile email groups
-      auth_url: https://auth.${EXTERNAL_DOMAIN}/application/o/grafana/authorize/
-      token_url: http://authentik-server.authentik-system/application/o/grafana/token/
-      api_url: http://authentik-server.authentik-system/application/o/grafana/userinfo/
+      auth_url: https://auth.${EXTERNAL_DOMAIN}/application/o/authorize/
+      token_url: http://authentik-server.authentik-system/application/o/token/
+      api_url: http://authentik-server.authentik-system/application/o/userinfo/
       login_attribute_path: preferred_username
       groups_attribute_path: groups
       name_attribute_path: name

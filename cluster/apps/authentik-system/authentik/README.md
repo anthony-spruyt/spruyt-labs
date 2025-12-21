@@ -32,11 +32,13 @@ kubectl logs -n authentik-system -l app.kubernetes.io/name=authentik
 
 Required OAuth2Provider fields (2025.10+): `authorization_flow`, `invalidation_flow`
 
-**Important**: For server-to-server calls (token exchange, userinfo), use internal service URL:
+**Important**: OIDC endpoints do NOT include the application slug:
 
-- `auth_url` - External (browser redirect): `https://auth.example.com/...`
+- `auth_url` - External: `https://auth.example.com/application/o/authorize/`
 - `token_url` - Internal: `http://authentik-server.authentik-system/application/o/token/`
 - `api_url` - Internal: `http://authentik-server.authentik-system/application/o/userinfo/`
+
+Use internal K8s service URLs for token/userinfo (server-to-server calls).
 
 ### Debugging Blueprint Errors
 
