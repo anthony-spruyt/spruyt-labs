@@ -13,6 +13,30 @@ CloudNativePG Operator provides comprehensive PostgreSQL management for Kubernet
 
 ## Operation
 
+### kubectl cnpg Plugin
+
+Install the CNPG kubectl plugin for enhanced cluster management:
+
+```bash
+task dev-env:install-cnpg
+```
+
+Common operations:
+
+```bash
+# Check cluster status (detailed view)
+kubectl cnpg status <cluster-name> -n <namespace>
+
+# Restart cluster (preferred over pod deletion for secret rotation, config changes)
+kubectl cnpg restart <cluster-name> -n <namespace>
+
+# Trigger manual backup
+kubectl cnpg backup <cluster-name> -n <namespace>
+
+# Reload configuration without restart
+kubectl cnpg reload <cluster-name> -n <namespace>
+```
+
 ### Procedures
 
 1. **PostgreSQL cluster management**:

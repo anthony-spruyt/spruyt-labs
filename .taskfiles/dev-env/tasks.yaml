@@ -5,6 +5,7 @@ version: "3"
 vars:
   hubbleDropsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/hubble-drops.sh"
   installAgeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-age.sh"
+  installCnpgScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-cnpg.sh"
   installFluxCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux-capacitor.sh"
   installFluxScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux.sh"
   installHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm-plugins.sh"
@@ -25,6 +26,10 @@ tasks:
     desc: Installs age and age-keygen
     cmds:
       - bash {{ .installAgeScript }}
+  install-cnpg:
+    desc: Installs the CNPG kubectl plugin for CloudNativePG
+    cmds:
+      - bash {{ .installCnpgScript }}
   install-flux:
     desc: Installs the Flux CLI
     cmds:

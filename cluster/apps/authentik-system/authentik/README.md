@@ -23,6 +23,12 @@ flux get helmrelease -n flux-system authentik
 kubectl logs -n authentik-system -l app.kubernetes.io/name=authentik
 ```
 
+### CNPG Database Operations
+
+See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage.
+
+Cluster name: `authentik-cnpg-cluster`
+
 ### Adding SSO Integration (Blueprints)
 
 #### Step 1: Create Blueprint

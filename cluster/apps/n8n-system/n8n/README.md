@@ -23,7 +23,7 @@ n8n is a workflow automation tool that connects various applications and service
    - Create and manage workflows
    - Monitor workflow execution
 
-2. **Database monitoring**:
+2. **Database operations** - See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `n8n-cnpg-cluster`
 
    ```bash
    # Check connection pooler status
