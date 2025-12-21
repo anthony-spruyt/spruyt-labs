@@ -13,5 +13,13 @@
       automerge: true,
       platformAutomerge: true,
     },
+    {
+      description: "Automerge Terraform provider minor updates",
+      matchManagers: ["terraform"],
+      matchDatasources: ["terraform-provider"],
+      matchUpdateTypes: ["minor"],
+      automerge: true,
+      platformAutomerge: true,
+    },
   ],
 }
