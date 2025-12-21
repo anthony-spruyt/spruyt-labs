@@ -25,20 +25,43 @@ kubectl logs -n authentik-system -l app.kubernetes.io/name=authentik
 
 ### Adding SSO Integration (Blueprints)
 
-1. Create blueprint in `app/blueprints/<app>.yaml` (use schema in file)
-2. Add credentials to `app/authentik-secrets.sops.yaml`
+1. Create blueprint in `app/blueprints/<app>.yaml`
+2. Add credentials to `app/authentik-secrets.sops.yaml` (for `!Env` tags)
 3. Add file to `app/kustomization.yaml` configMapGenerator
-4. Add env vars to `app/values.yaml`
+4. Add env vars to `app/values.yaml` referencing the secrets
 
-Required OAuth2Provider fields (2025.10+): `authorization_flow`, `invalidation_flow`
+Required OAuth2Provider attrs:
 
-**Important**: OIDC endpoints do NOT include the application slug:
+- `authorization_flow`, `invalidation_flow` - Required flows
+- `client_type: confidential` - For server-side apps
+- `redirect_uris` - List with `url` and `matching_mode: strict`
+- `property_mappings` - Required for userinfo to return claims:
+
+```yaml
+property_mappings:
+  - !Find [
+      authentik_core.propertymapping,
+      [name, "authentik default OAuth Mapping: OpenID 'openid'"],
+    ]
+  - !Find [
+      authentik_core.propertymapping,
+      [name, "authentik default OAuth Mapping: OpenID 'profile'"],
+    ]
+  - !Find [
+      authentik_core.propertymapping,
+      [name, "authentik default OAuth Mapping: OpenID 'email'"],
+    ]
+```
+
+**OIDC Endpoints** (no app slug in path):
 
 - `auth_url` - External: `https://auth.example.com/application/o/authorize/`
 - `token_url` - Internal: `http://authentik-server.authentik-system/application/o/token/`
 - `api_url` - Internal: `http://authentik-server.authentik-system/application/o/userinfo/`
 
 Use internal K8s service URLs for token/userinfo (server-to-server calls).
+
+**Blueprint file format**: `# yamllint disable-file` must be on line 1.
 
 ### Debugging Blueprint Errors
 

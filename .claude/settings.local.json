@@ -40,7 +40,8 @@
       "Bash(git -C /workspaces/spruyt-labs log*)",
       "Bash(xargs kubectl describe*)",
       "Bash(ls -la*)",
-      "Bash(kubectl exec:*)"
+      "Bash(kubectl exec:*)",
+      "Bash(git -C /workspaces/spruyt-labs diff)"
     ]
   }
 }
