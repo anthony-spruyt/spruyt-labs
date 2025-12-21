@@ -25,12 +25,187 @@ kubectl logs -n authentik-system -l app.kubernetes.io/name=authentik
 
 ### Adding SSO Integration (Blueprints)
 
-1. Create blueprint in `app/blueprints/<app>.yaml`
-2. Add credentials to `app/authentik-secrets.sops.yaml` (for `!Env` tags)
-3. Add file to `app/kustomization.yaml` configMapGenerator
-4. Add env vars to `app/values.yaml` referencing the secrets
+#### Step 1: Create Blueprint
 
-Required OAuth2Provider attrs:
+Create `app/blueprints/<app>-sso.yaml`:
+
+```yaml
+# yamllint disable-file
+version: 1
+metadata:
+  name: <App> SSO
+entries:
+  - id: <app>_admins_group
+    model: authentik_core.group
+    identifiers:
+      name: <App> Admins
+    attrs:
+      name: <App> Admins
+
+  - id: <app>_provider
+    model: authentik_providers_oauth2.oauth2provider
+    identifiers:
+      name: <App>
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      client_type: confidential
+      redirect_uris:
+        - url: https://<app>.lan.spruyt.xyz/oauth/callback
+          matching_mode: strict
+      client_id: !Env <APP>_OAUTH_CLIENT_ID
+      client_secret: !Env <APP>_OAUTH_CLIENT_SECRET
+      property_mappings:
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'openid'"],
+          ]
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'profile'"],
+          ]
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'email'"],
+          ]
+
+  - id: <app>_application
+    model: authentik_core.application
+    identifiers:
+      slug: <app>
+    attrs:
+      name: <App>
+      provider: !KeyOf <app>_provider
+      meta_launch_url: https://<app>.lan.spruyt.xyz
+```
+
+#### Step 2: Add Credentials
+
+Generate credentials:
+
+```bash
+openssl rand -hex 32  # client_id
+openssl rand -hex 32  # client_secret
+```
+
+Add to `app/authentik-secrets.sops.yaml`:
+
+```yaml
+<APP>_OAUTH_CLIENT_ID: <generated>
+<APP>_OAUTH_CLIENT_SECRET: <generated>
+```
+
+#### Step 3: Mount in Authentik
+
+Add to `app/values.yaml` under `global.env`:
+
+```yaml
+- name: <APP>_OAUTH_CLIENT_ID
+  valueFrom:
+    secretKeyRef:
+      name: authentik-secrets
+      key: <APP>_OAUTH_CLIENT_ID
+- name: <APP>_OAUTH_CLIENT_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: authentik-secrets
+      key: <APP>_OAUTH_CLIENT_SECRET
+```
+
+Add to `app/kustomization.yaml` configMapGenerator:
+
+```yaml
+- key: <app>-sso.yaml
+  path: <app>-sso.yaml
+```
+
+#### Step 4: Cross-Namespace Secret Sync (if app is in different namespace)
+
+Create in the consumer app's directory:
+
+**ServiceAccount + SecretStore:**
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: authentik-secret-reader
+  namespace: <consumer-namespace>
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: authentik-secrets
+  namespace: <consumer-namespace>
+spec:
+  provider:
+    kubernetes:
+      remoteNamespace: authentik-system
+      server:
+        url: "https://kubernetes.default.svc"
+        caProvider:
+          type: ConfigMap
+          name: kube-root-ca.crt
+          key: ca.crt
+      auth:
+        serviceAccount:
+          name: authentik-secret-reader
+```
+
+**ExternalSecret:**
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: <app>-oauth-credentials
+  namespace: <consumer-namespace>
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: authentik-secrets
+  target:
+    name: <app>-oauth-credentials
+    creationPolicy: Owner
+  data:
+    - secretKey: <APP>_OAUTH_CLIENT_ID
+      remoteRef:
+        key: authentik-secrets
+        property: <APP>_OAUTH_CLIENT_ID
+    - secretKey: <APP>_OAUTH_CLIENT_SECRET
+      remoteRef:
+        key: authentik-secrets
+        property: <APP>_OAUTH_CLIENT_SECRET
+```
+
+**RBAC (in authentik-system)** - add to `app/external-secrets-rbac.yaml`:
+
+```yaml
+# Add resourceNames entry for the new secret keys
+```
+
+#### Step 5: Configure Application
+
+Use internal K8s URLs for server-to-server calls:
+
+```yaml
+auth_url: https://auth.spruyt.xyz/application/o/authorize/ # External (browser)
+token_url: http://authentik-server.authentik-system/application/o/token/ # Internal
+api_url: http://authentik-server.authentik-system/application/o/userinfo/ # Internal
+```
+
+Mount credentials via `envFromSecrets` or similar mechanism.
+
+#### OAuth2Provider Required Attrs
 
 - `authorization_flow`, `invalidation_flow` - Required flows
 - `client_type: confidential` - For server-side apps
@@ -73,6 +248,120 @@ bp = BlueprintInstance.objects.filter(name='Name').first()
 print(Importer.from_string(bp.retrieve(), bp.context).apply())
 "
 ```
+
+### OAuth Credential Rotation
+
+Automated weekly rotation of OAuth credentials via CronJob. Credentials are updated in both Authentik (via API) and Kubernetes secrets.
+
+#### How It Works
+
+1. CronJob generates new client_id/client_secret
+2. Updates Authentik OAuth2 provider via REST API
+3. Patches `authentik-secrets` in authentik-system
+4. Forces ExternalSecret sync in consumer namespace
+
+#### Rotation Prerequisites
+
+- `AUTHENTIK_API_TOKEN` in `authentik-secrets.sops.yaml` (service account with admin permissions)
+- ExternalSecret configured in consumer namespace (Step 4 above)
+
+#### Adding a New App to Rotation
+
+1. **Update CronJob script** (`app/oauth-secret-rotation/cronjob.yaml`):
+
+Add a section for the new app after the existing rotation logic:
+
+```bash
+# Rotate <App> credentials
+PROVIDER_NAME="<App>"
+NEW_CLIENT_ID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+NEW_CLIENT_SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+
+PROVIDER_RESPONSE=$(curl -sf \
+  -H "Authorization: Bearer ${AUTHENTIK_API_TOKEN}" \
+  "${AUTHENTIK_URL}/api/v3/providers/oauth2/?name=${PROVIDER_NAME}")
+PROVIDER_ID=$(echo "${PROVIDER_RESPONSE}" | grep -o '"pk":[0-9]*' | head -1 | cut -d: -f2)
+
+curl -sf -X PATCH \
+  -H "Authorization: Bearer ${AUTHENTIK_API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "{\"client_id\": \"${NEW_CLIENT_ID}\", \"client_secret\": \"${NEW_CLIENT_SECRET}\"}" \
+  "${AUTHENTIK_URL}/api/v3/providers/oauth2/${PROVIDER_ID}/"
+
+kubectl patch secret authentik-secrets -n authentik-system --type='json' -p="[
+  {\"op\": \"replace\", \"path\": \"/data/<APP>_OAUTH_CLIENT_ID\", \"value\": \"$(echo -n $NEW_CLIENT_ID | base64 -w0)\"},
+  {\"op\": \"replace\", \"path\": \"/data/<APP>_OAUTH_CLIENT_SECRET\", \"value\": \"$(echo -n $NEW_CLIENT_SECRET | base64 -w0)\"}
+]"
+
+kubectl patch externalsecret <app>-oauth-credentials -n <consumer-namespace> \
+  --type='merge' -p="{\"metadata\":{\"annotations\":{\"force-sync\":\"$(date +%s)\"}}}"
+```
+
+2. **Add RBAC for ExternalSecret patching** (in consumer app directory):
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: oauth-secret-rotation
+  namespace: <consumer-namespace>
+rules:
+  - apiGroups: ["external-secrets.io"]
+    resources: ["externalsecrets"]
+    resourceNames: ["<app>-oauth-credentials"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: oauth-secret-rotation
+  namespace: <consumer-namespace>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: oauth-secret-rotation
+subjects:
+  - kind: ServiceAccount
+    name: oauth-secret-rotation
+    namespace: authentik-system
+```
+
+3. **Update CronJob Role** (`app/oauth-secret-rotation/role.yaml`):
+
+Ensure secret keys are listed in resourceNames for patching.
+
+#### Testing Rotation
+
+```bash
+# Trigger manual rotation
+kubectl create job --from=cronjob/oauth-secret-rotation oauth-test -n authentik-system
+
+# Watch job progress
+kubectl logs -n authentik-system -l job-name=oauth-test -f
+
+# Verify ExternalSecret synced
+kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
+```
+
+## File Reference
+
+| Component        | Location                                 |
+| ---------------- | ---------------------------------------- |
+| Blueprint        | `app/blueprints/<app>-sso.yaml`          |
+| Secrets (SOPS)   | `app/authentik-secrets.sops.yaml`        |
+| Helm values      | `app/values.yaml`                        |
+| Rotation CronJob | `app/oauth-secret-rotation/cronjob.yaml` |
+| Rotation RBAC    | `app/oauth-secret-rotation/role.yaml`    |
+| External RBAC    | `app/external-secrets-rbac.yaml`         |
+
+**Grafana Example Files:**
+
+| Component      | Location                                                            |
+| -------------- | ------------------------------------------------------------------- |
+| Blueprint      | `app/blueprints/grafana-sso.yaml`                                   |
+| SecretStore    | `victoria-metrics-k8s-stack/app/authentik-secret-store.yaml`        |
+| ExternalSecret | `victoria-metrics-k8s-stack/app/grafana-oauth-external-secret.yaml` |
+| Rotation RBAC  | `victoria-metrics-k8s-stack/app/oauth-rotation-rbac.yaml`           |
 
 ## Troubleshooting
 
