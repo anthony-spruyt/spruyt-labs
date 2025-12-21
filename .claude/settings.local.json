@@ -47,8 +47,7 @@
       "Bash(kubectl auth can-i:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git -C /workspaces/spruyt-labs add -A)",
-      "Bash(git -C /workspaces/spruyt-labs commit -m \"$\\(cat <<''EOF''\nchore: change rotation schedule to Monday 1am Melbourne\n\nRuns 15:00 UTC Sunday = 01:00 Monday AEST \\(UTC+10\\).\nDuring daylight saving \\(AEDT\\) it will be 02:00 Monday.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git -C /workspaces/spruyt-labs add -A)"
     ]
   }
 }
