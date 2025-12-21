@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+# yamllint disable-file
+---
+version: 1
+metadata:
+  name: Grafana SSO
+entries:
+  - id: grafana_admins_group
+    model: authentik_core.group
+    identifiers:
+      name: Grafana Admins
+    attrs:
+      name: Grafana Admins
+  - id: grafana_editors_group
+    model: authentik_core.group
+    identifiers:
+      name: Grafana Editors
+    attrs:
+      name: Grafana Editors
+  - id: grafana_provider
+    model: authentik_providers_oauth2.oauth2provider
+    identifiers:
+      name: Grafana
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      client_type: confidential
+      redirect_uris:
+        - url: https://grafana.lan.spruyt.xyz/login/generic_oauth
+          matching_mode: strict
+      client_id: !Env GRAFANA_OAUTH_CLIENT_ID
+      client_secret: !Env GRAFANA_OAUTH_CLIENT_SECRET
+  - id: grafana_application
+    model: authentik_core.application
+    identifiers:
+      slug: grafana
+    attrs:
+      name: Grafana
+      provider: !KeyOf grafana_provider
+      meta_launch_url: https://grafana.lan.spruyt.xyz

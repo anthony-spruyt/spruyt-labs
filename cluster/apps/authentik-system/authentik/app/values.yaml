@@ -52,6 +52,17 @@ global:
         secretKeyRef:
           name: authentik-secrets
           key: AUTHENTIK_SECRET_KEY
+    # OAuth credentials for blueprints (used via !Env tag)
+    - name: GRAFANA_OAUTH_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: GRAFANA_OAUTH_CLIENT_ID
+    - name: GRAFANA_OAUTH_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: GRAFANA_OAUTH_CLIENT_SECRET
   envFrom: []
   volumeMounts:
     - name: db-ca-cert
@@ -68,8 +79,11 @@ global:
           - key: ca.crt
             path: ca.crt
     - name: blueprints-custom
-      secret:
-        secretName: authentik-blueprints
+      configMap:
+        name: authentik-blueprints
+        items:
+          - key: blueprints/grafana-sso.yaml
+            path: grafana-sso.yaml
 
 authentik:
   log_level: info
