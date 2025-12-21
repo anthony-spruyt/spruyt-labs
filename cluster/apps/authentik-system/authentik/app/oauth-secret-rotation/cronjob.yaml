@@ -6,7 +6,7 @@ metadata:
   name: oauth-secret-rotation
   namespace: authentik-system
 spec:
-  schedule: "0 3 * * 0" # Weekly Sunday 3AM UTC
+  schedule: "0 15 * * 0" # Weekly Monday 1am Melbourne (AEST/UTC+10)
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
