@@ -11,6 +11,7 @@ resources:
   # - ./authentik-cnpg-poolers.yaml
   - ./authentik-cnpg-scheduled-backups.yaml
   - ./release.yaml
+  - ./oauth-secret-rotation
   # Enable policy later
   # - ./network-policies.yaml
 configMapGenerator:

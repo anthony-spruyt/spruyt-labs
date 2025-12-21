@@ -7,8 +7,20 @@ Talos Linux homelab GitOps repository.
 1. **No Python scripts** - Use bash/Taskfile only
 2. **No SOPS decryption** - Never decrypt secrets via CLI
 3. **Automation first** - Use Flux, Terraform, Talos declarative configs
-4. **Validation required** - Run `task dev-env:lint` before commits
-5. **Use Taskfile** - Prefer `task` commands over raw CLI
+4. **Use Taskfile** - Prefer `task` commands over raw CLI
+5. **No manual cluster changes** - Never use kubectl to modify cluster state directly (annotations, patches, etc). Use Flux reconciliation or rollout restarts only.
+
+## Commit Workflow (MANDATORY)
+
+**ALWAYS follow this sequence before every commit:**
+
+```bash
+task dev-env:lint   # Step 1: Run linter FIRST
+git add -A          # Step 2: Stage changes
+git commit -m "..." # Step 3: Commit
+```
+
+Do NOT skip the lint step. Pre-commit hooks are a backup, not a replacement.
 
 ## Git Conventions
 

@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.34.3-standalone-strict/cronjob-batch-v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: oauth-secret-rotation
+  namespace: authentik-system
+spec:
+  schedule: "0 3 * * 0" # Weekly Sunday 3AM UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+          serviceAccountName: oauth-secret-rotation
+          containers:
+            - name: rotate-secrets
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "Generating new OAuth credentials..."
+                  NEW_CLIENT_ID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+                  NEW_CLIENT_SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+
+                  echo "Patching authentik-secrets..."
+                  kubectl patch secret authentik-secrets -n authentik-system --type='json' -p="[
+                    {\"op\": \"replace\", \"path\": \"/data/GRAFANA_OAUTH_CLIENT_ID\", \"value\": \"$(echo -n $NEW_CLIENT_ID | base64 -w0)\"},
+                    {\"op\": \"replace\", \"path\": \"/data/GRAFANA_OAUTH_CLIENT_SECRET\", \"value\": \"$(echo -n $NEW_CLIENT_SECRET | base64 -w0)\"}
+                  ]"
+
+                  echo "Restarting Authentik server..."
+                  kubectl rollout restart deployment/authentik-server -n authentik-system
+
+                  echo "Restarting Authentik worker..."
+                  kubectl rollout restart deployment/authentik-worker -n authentik-system
+
+                  echo "Waiting for Authentik server rollout..."
+                  kubectl rollout status deployment/authentik-server -n authentik-system --timeout=300s
+
+                  echo "Forcing ExternalSecret sync..."
+                  kubectl patch externalsecret grafana-oauth-credentials -n observability \
+                    --type='json' \
+                    -p="[{\"op\": \"add\", \"path\": \"/metadata/annotations/force-sync\", \"value\": \"$(date +%s)\"}]"
+
+                  echo "OAuth secret rotation completed successfully!"
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 10001
+                runAsGroup: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+          restartPolicy: OnFailure

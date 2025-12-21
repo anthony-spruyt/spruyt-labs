@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.34.3-standalone-strict/role-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: oauth-secret-rotation
+  namespace: authentik-system
+rules:
+  # Permission to patch the authentik-secrets secret
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["authentik-secrets"]
+    verbs: ["get", "patch"]
+  # Permission to restart Authentik deployments
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["authentik-server", "authentik-worker"]
+    verbs: ["get", "patch"]

@@ -15,3 +15,10 @@ AVD-AWS-0143
 
 # ESO needs read access to sync secrets cross-namespace (least-privilege via resourceNames)
 AVD-KSV-0113
+
+# OAuth rotation job needs patch access to deployments for rollout restart (scoped to specific resourceNames)
+AVD-KSV-0048
+
+# CronJobs use bitnami/kubectl:latest - acceptable for maintenance jobs
+AVD-KSV-0013
+AVD-KSV-0125
