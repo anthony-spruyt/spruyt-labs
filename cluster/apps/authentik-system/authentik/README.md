@@ -34,7 +34,7 @@ kubectl get certificates -n authentik-system
 
 1. **User management**:
 
-   - Access authentik admin interface at `https://authentik.${EXTERNAL_DOMAIN}`
+   - Access authentik admin interface at `https://auth.${EXTERNAL_DOMAIN}`
    - Create users, groups, and applications
 
 2. **Backup verification**:

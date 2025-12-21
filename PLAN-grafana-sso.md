@@ -8,7 +8,7 @@ Configure Grafana to authenticate via Authentik OIDC, enabling single sign-on.
 
 ### 1. Create OAuth2 Provider in Authentik UI
 
-In Authentik Admin (`https://authentik.spruyt.xyz/if/admin/`):
+In Authentik Admin (`https://auth.spruyt.xyz/if/admin/`):
 
 1. **Applications** → **Providers** → **Create**
 
@@ -78,7 +78,7 @@ grafana:
     server:
       root_url: https://grafana.lan.${EXTERNAL_DOMAIN}
     auth:
-      signout_redirect_url: https://authentik.${EXTERNAL_DOMAIN}/application/o/grafana/end-session/
+      signout_redirect_url: https://auth.${EXTERNAL_DOMAIN}/application/o/grafana/end-session/
       oauth_auto_login: false # Set true after testing works
     auth.generic_oauth:
       name: Authentik
@@ -86,9 +86,9 @@ grafana:
       client_id: $__file{/etc/secrets/auth_generic_oauth/client_id}
       client_secret: $__file{/etc/secrets/auth_generic_oauth/client_secret}
       scopes: openid profile email
-      auth_url: https://authentik.${EXTERNAL_DOMAIN}/application/o/authorize/
-      token_url: https://authentik.${EXTERNAL_DOMAIN}/application/o/token/
-      api_url: https://authentik.${EXTERNAL_DOMAIN}/application/o/userinfo/
+      auth_url: https://auth.${EXTERNAL_DOMAIN}/application/o/authorize/
+      token_url: https://auth.${EXTERNAL_DOMAIN}/application/o/token/
+      api_url: https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/
       role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
       allow_assign_grafana_admin: true
 

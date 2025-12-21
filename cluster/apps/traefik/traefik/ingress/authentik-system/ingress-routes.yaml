@@ -8,13 +8,13 @@ metadata:
   namespace: authentik-system
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: authentik.${EXTERNAL_DOMAIN}
+    external-dns.alpha.kubernetes.io/hostname: auth.${EXTERNAL_DOMAIN}
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`authentik.${EXTERNAL_DOMAIN}`)
+      match: Host(`auth.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: compress
       services:
@@ -23,4 +23,4 @@ spec:
           passHostHeader: true
           port: 80
   tls:
-    secretName: "authentik-${EXTERNAL_DOMAIN/./-}-tls"
+    secretName: "auth-${EXTERNAL_DOMAIN/./-}-tls"

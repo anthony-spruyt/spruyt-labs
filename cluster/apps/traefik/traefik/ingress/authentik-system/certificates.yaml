@@ -3,12 +3,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "authentik-${EXTERNAL_DOMAIN/./-}"
+  name: "auth-${EXTERNAL_DOMAIN/./-}"
   namespace: authentik-system
 spec:
-  secretName: "authentik-${EXTERNAL_DOMAIN/./-}-tls"
+  secretName: "auth-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
   dnsNames:
-    - "authentik.${EXTERNAL_DOMAIN}"
+    - "auth.${EXTERNAL_DOMAIN}"
