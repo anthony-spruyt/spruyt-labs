@@ -5,3 +5,5 @@ kind: Kustomization
 resources:
   - ./cluster-rbac.yaml
   - ./cluster-secret-store.yaml
+  - ./validation-secret.sops.yaml
+  - ./validation-rbac.yaml
