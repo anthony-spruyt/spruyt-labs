@@ -82,7 +82,7 @@ global:
       configMap:
         name: authentik-blueprints
         items:
-          - key: blueprints/grafana-sso.yaml
+          - key: grafana-sso.yaml
             path: grafana-sso.yaml
 
 authentik:
