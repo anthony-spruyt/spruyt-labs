@@ -13,6 +13,18 @@ spec:
   entryPoints:
     - websecure
   routes:
+    # Admin interface - LAN only
+    - kind: Rule
+      match: Host(`auth.${EXTERNAL_DOMAIN}`) && PathPrefix(`/if/admin`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: compress
+      services:
+        - name: authentik-server
+          namespace: authentik-system
+          passHostHeader: true
+          port: 80
+    # Everything else - public (SSO flows, login UI)
     - kind: Rule
       match: Host(`auth.${EXTERNAL_DOMAIN}`)
       middlewares:
