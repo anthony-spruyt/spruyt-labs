@@ -107,6 +107,19 @@ server:
     limits:
       cpu: 2000m
       memory: 2Gi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  containerSecurityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
   metrics:
     enabled: true
     serviceMonitor:
@@ -121,6 +134,19 @@ worker:
     limits:
       cpu: 1000m
       memory: 1Gi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  containerSecurityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
   metrics:
     enabled: true
     serviceMonitor:
