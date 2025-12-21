@@ -31,7 +31,6 @@
       "Bash(task dev-env:hubble-drops)",
       "Bash(gh issue view:*)",
       "Bash(gh issue list:*)",
-      "Bash(flux get kustomizations:*)",
       "mcp__plugin_context7_context7__get-library-docs",
       "WebFetch(domain:goauthentik.io)",
       "mcp__plugin_context7_context7__resolve-library-id",
@@ -47,7 +46,10 @@
       "Bash(kubectl auth can-i:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git -C /workspaces/spruyt-labs add -A)"
+      "Bash(git -C /workspaces/spruyt-labs add -A)",
+      "Bash(flux get:*)",
+      "Bash(flux reconcile:*)",
+      "Bash(kubectl version:*)"
     ]
   }
 }
