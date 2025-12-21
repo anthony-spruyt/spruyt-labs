@@ -33,42 +33,42 @@ spec:
                   PROVIDER_NAME="Grafana"
 
                   echo "Generating new OAuth credentials..."
-                  NEW_CLIENT_ID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-                  NEW_CLIENT_SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+                  NEW_CLIENT_ID=$$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+                  NEW_CLIENT_SECRET=$$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
 
-                  echo "Finding Authentik OAuth2 provider ID for ${PROVIDER_NAME}..."
-                  PROVIDER_RESPONSE=$(curl -sf \
-                    -H "Authorization: Bearer ${AUTHENTIK_API_TOKEN}" \
+                  echo "Finding Authentik OAuth2 provider ID for $${PROVIDER_NAME}..."
+                  PROVIDER_RESPONSE=$$(curl -sf \
+                    -H "Authorization: Bearer $${AUTHENTIK_API_TOKEN}" \
                     -H "Content-Type: application/json" \
-                    "${AUTHENTIK_URL}/api/v3/providers/oauth2/?name=${PROVIDER_NAME}")
+                    "$${AUTHENTIK_URL}/api/v3/providers/oauth2/?name=$${PROVIDER_NAME}")
 
-                  PROVIDER_ID=$(echo "${PROVIDER_RESPONSE}" | grep -o '"pk":[0-9]*' | head -1 | cut -d: -f2)
+                  PROVIDER_ID=$$(echo "$${PROVIDER_RESPONSE}" | grep -o '"pk":[0-9]*' | head -1 | cut -d: -f2)
 
-                  if [ -z "${PROVIDER_ID}" ]; then
-                    echo "ERROR: Could not find OAuth2 provider with name '${PROVIDER_NAME}'"
+                  if [ -z "$${PROVIDER_ID}" ]; then
+                    echo "ERROR: Could not find OAuth2 provider with name '$${PROVIDER_NAME}'"
                     exit 1
                   fi
-                  echo "Found provider ID: ${PROVIDER_ID}"
+                  echo "Found provider ID: $${PROVIDER_ID}"
 
                   echo "Updating Authentik OAuth2 provider credentials..."
                   curl -sf -X PATCH \
-                    -H "Authorization: Bearer ${AUTHENTIK_API_TOKEN}" \
+                    -H "Authorization: Bearer $${AUTHENTIK_API_TOKEN}" \
                     -H "Content-Type: application/json" \
-                    -d "{\"client_id\": \"${NEW_CLIENT_ID}\", \"client_secret\": \"${NEW_CLIENT_SECRET}\"}" \
-                    "${AUTHENTIK_URL}/api/v3/providers/oauth2/${PROVIDER_ID}/" > /dev/null
+                    -d "{\"client_id\": \"$${NEW_CLIENT_ID}\", \"client_secret\": \"$${NEW_CLIENT_SECRET}\"}" \
+                    "$${AUTHENTIK_URL}/api/v3/providers/oauth2/$${PROVIDER_ID}/" > /dev/null
 
                   echo "Authentik provider updated successfully"
 
                   echo "Patching authentik-secrets for Grafana sync..."
                   kubectl patch secret authentik-secrets -n authentik-system --type='json' -p="[
-                    {\"op\": \"replace\", \"path\": \"/data/GRAFANA_OAUTH_CLIENT_ID\", \"value\": \"$(echo -n $NEW_CLIENT_ID | base64 -w0)\"},
-                    {\"op\": \"replace\", \"path\": \"/data/GRAFANA_OAUTH_CLIENT_SECRET\", \"value\": \"$(echo -n $NEW_CLIENT_SECRET | base64 -w0)\"}
+                    {\"op\": \"replace\", \"path\": \"/data/GRAFANA_OAUTH_CLIENT_ID\", \"value\": \"$$(echo -n $$NEW_CLIENT_ID | base64 -w0)\"},
+                    {\"op\": \"replace\", \"path\": \"/data/GRAFANA_OAUTH_CLIENT_SECRET\", \"value\": \"$$(echo -n $$NEW_CLIENT_SECRET | base64 -w0)\"}
                   ]"
 
                   echo "Forcing ExternalSecret sync..."
                   kubectl patch externalsecret grafana-oauth-credentials -n observability \
                     --type='merge' \
-                    -p="{\"metadata\":{\"annotations\":{\"force-sync\":\"$(date +%s)\"}}}"
+                    -p="{\"metadata\":{\"annotations\":{\"force-sync\":\"$$(date +%s)\"}}}"
 
                   echo "OAuth secret rotation completed successfully!"
               env:
