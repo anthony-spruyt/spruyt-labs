@@ -11,8 +11,8 @@ rules:
     resources: ["secrets"]
     resourceNames: ["authentik-secrets"]
     verbs: ["get", "patch"]
-  # Permission to restart Authentik deployments
+  # Permission to restart Authentik deployments and wait for rollout
   - apiGroups: ["apps"]
     resources: ["deployments"]
     resourceNames: ["authentik-server", "authentik-worker"]
-    verbs: ["get", "patch"]
+    verbs: ["get", "list", "watch", "patch"]
