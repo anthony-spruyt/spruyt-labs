@@ -51,7 +51,8 @@
       "Bash(kubectl version:*)",
       "Bash(kubectl wait:*)",
       "Bash(git -C /workspaces/spruyt-labs status:*)",
-      "Bash(git -C /workspaces/spruyt-labs diff:*)"
+      "Bash(git -C /workspaces/spruyt-labs diff:*)",
+      "Bash(task --list:*)"
     ]
   }
 }
