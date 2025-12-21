@@ -39,7 +39,8 @@
       "WebFetch(domain:docs.goauthentik.io)",
       "Bash(git -C /workspaces/spruyt-labs log*)",
       "Bash(xargs kubectl describe*)",
-      "Bash(ls -la*)"
+      "Bash(ls -la*)",
+      "Bash(kubectl exec:*)"
     ]
   }
 }
