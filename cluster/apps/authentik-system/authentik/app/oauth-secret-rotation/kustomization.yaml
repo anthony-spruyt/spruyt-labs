@@ -6,5 +6,4 @@ resources:
   - ./service-account.yaml
   - ./role.yaml
   - ./role-binding.yaml
-  - ./observability-role.yaml
   - ./cronjob.yaml

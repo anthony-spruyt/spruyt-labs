@@ -6,6 +6,7 @@ resources:
   - ./grafana-secrets.sops.yaml
   - ./authentik-secret-store.yaml
   - ./grafana-oauth-external-secret.yaml
+  - ./oauth-rotation-rbac.yaml
   - ./victoria-metrics-k8s-stack-secrets.sops.yaml
   - ./vm-service-scrapes.yaml
   - ./release.yaml
