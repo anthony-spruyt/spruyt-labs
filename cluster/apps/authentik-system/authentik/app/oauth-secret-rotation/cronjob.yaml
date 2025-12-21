@@ -48,8 +48,8 @@ spec:
 
                   echo "Forcing ExternalSecret sync..."
                   kubectl patch externalsecret grafana-oauth-credentials -n observability \
-                    --type='json' \
-                    -p="[{\"op\": \"add\", \"path\": \"/metadata/annotations/force-sync\", \"value\": \"$(date +%s)\"}]"
+                    --type='merge' \
+                    -p="{\"metadata\":{\"annotations\":{\"force-sync\":\"$(date +%s)\"}}}"
 
                   echo "OAuth secret rotation completed successfully!"
               resources:
