@@ -21,7 +21,7 @@ spec:
           serviceAccountName: oauth-secret-rotation
           containers:
             - name: rotate-secrets
-              image: alpine/k8s:1.34.3
+              image: alpine/k8s:1.35.0
               command:
                 - /bin/sh
                 - -c
