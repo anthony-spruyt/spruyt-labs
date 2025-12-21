@@ -43,7 +43,8 @@
       "Bash(kubectl exec:*)",
       "Bash(git -C /workspaces/spruyt-labs diff)",
       "Bash(xargs ls:*)",
-      "Bash(jq:*)"
+      "Bash(jq:*)",
+      "Bash(kubectl auth can-i:*)"
     ]
   }
 }
