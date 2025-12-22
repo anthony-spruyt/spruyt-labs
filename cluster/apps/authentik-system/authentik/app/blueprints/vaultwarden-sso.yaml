@@ -65,3 +65,14 @@ entries:
       name: Vaultwarden
       provider: !KeyOf vaultwarden_provider
       meta_launch_url: https://vaultwarden.${EXTERNAL_DOMAIN}
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf vaultwarden_application
+      order: 0
+    attrs:
+      group: !KeyOf vaultwarden_users_group
+      negate: false
+      enabled: true
+      timeout: 30

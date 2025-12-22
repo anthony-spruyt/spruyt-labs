@@ -91,6 +91,17 @@ entries:
       name: <App>
       provider: !KeyOf <app>_provider
       meta_launch_url: https://<app>.lan.spruyt.xyz
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf <app>_application
+      order: 0
+    attrs:
+      group: !KeyOf <app>_admins_group
+      negate: false
+      enabled: true
+      timeout: 30
 ```
 
 #### Step 2: Create Dedicated OAuth Secret
@@ -564,6 +575,18 @@ entries:
       name: <App>
       provider: !KeyOf <app>_provider
       meta_launch_url: https://<app>.${EXTERNAL_DOMAIN}
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf <app>_application
+      order: 0
+    attrs:
+      group: !KeyOf <app>_users_group
+      negate: false
+      enabled: true
+      timeout: 30
+
   # Standalone outpost deployed to app namespace
   - id: <app>_outpost
     model: authentik_outposts.outpost
@@ -741,6 +764,17 @@ entries:
       name: <App>
       provider: !KeyOf <app>_provider
       meta_launch_url: https://<app>.lan.${EXTERNAL_DOMAIN}
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf <app>_application
+      order: 0
+    attrs:
+      group: !KeyOf <app>_users_group
+      negate: false
+      enabled: true
+      timeout: 30
 ```
 
 #### SAML Provider Key Attributes
@@ -818,6 +852,60 @@ For applications with CLI-based SAML setup (like Ceph Dashboard), automation via
 | HTTPS Header MW    | `traefik/ingress/base/https-proto-header.yaml`  |
 | Ingress Routes     | `traefik/ingress/rook-ceph/ingress-routes.yaml` |
 
+## Group-Based Access Control
+
+All SSO blueprints include `authentik_policies.policybinding` to restrict application access to group members only. Without this binding, any authenticated Authentik user can access the application.
+
+### Policy Binding Pattern
+
+```yaml
+# Policy binding to restrict access to group members only
+- model: authentik_policies.policybinding
+  identifiers:
+    target: !KeyOf <app>_application
+    order: 0
+  attrs:
+    group: !KeyOf <app>_users_group
+    negate: false
+    enabled: true
+    timeout: 30
+```
+
+### Group Hierarchy
+
+Parent/child group relationships allow role-based access with inheritance:
+
+- Users in **child groups** automatically have access to applications bound to the **parent group**
+- Use for apps with multiple roles (e.g., Grafana with Admin/Editor roles)
+
+**Grafana Example:**
+
+```yaml
+# Parent group - all Grafana users
+- id: grafana_users_group
+  model: authentik_core.group
+  identifiers:
+    name: Grafana Users
+
+# Child groups inherit parent access
+- id: grafana_admins_group
+  model: authentik_core.group
+  attrs:
+    parent: !KeyOf grafana_users_group
+
+- id: grafana_editors_group
+  model: authentik_core.group
+  attrs:
+    parent: !KeyOf grafana_users_group
+
+# Policy binds to parent - all users in parent OR children can access
+- model: authentik_policies.policybinding
+  attrs:
+    group: !KeyOf grafana_users_group
+```
+
+Users in `Grafana Admins` or `Grafana Editors` can access the application. Grafana then maps these groups to internal roles via the `groups` scope.
+
 ## Troubleshooting
 
 1. **Blueprint shows error but no logs** - Errors stored in DB, use debug command above
@@ -825,6 +913,7 @@ For applications with CLI-based SAML setup (like Ceph Dashboard), automation via
 3. **Pods CrashLoopBackOff** - Check secrets and Redis connectivity
 4. **SAML schema validation error** - Check `audience` matches SP entity ID exactly, ensure `property_mappings` are included
 5. **SAML HTTP vs HTTPS mismatch** - Add `https-proto-header` middleware to Traefik ingress
+6. **User can access app without being in group** - Missing `policybinding` in blueprint; add policy binding to application
 
 ## References
 

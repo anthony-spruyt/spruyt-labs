@@ -5,18 +5,30 @@ version: 1
 metadata:
   name: Grafana SSO
 entries:
+  # Parent group for all Grafana users - used for application access control
+  - id: grafana_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Grafana Users
+    attrs:
+      name: Grafana Users
+
+  # Role-based child groups - Grafana maps these to internal roles
   - id: grafana_admins_group
     model: authentik_core.group
     identifiers:
       name: Grafana Admins
     attrs:
       name: Grafana Admins
+      parent: !KeyOf grafana_users_group
+
   - id: grafana_editors_group
     model: authentik_core.group
     identifiers:
       name: Grafana Editors
     attrs:
       name: Grafana Editors
+      parent: !KeyOf grafana_users_group
   - id: grafana_provider
     model: authentik_providers_oauth2.oauth2provider
     identifiers:
@@ -59,3 +71,15 @@ entries:
       name: Grafana
       provider: !KeyOf grafana_provider
       meta_launch_url: https://grafana.lan.${EXTERNAL_DOMAIN}
+
+  # Policy binding to restrict access to group members only
+  # Users must be in Grafana Users (or child groups Admins/Editors)
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf grafana_application
+      order: 0
+    attrs:
+      group: !KeyOf grafana_users_group
+      negate: false
+      enabled: true
+      timeout: 30
