@@ -8,8 +8,10 @@ metadata:
   namespace: placeholder
 spec:
   forwardAuth:
-    # Uses embedded outpost via authentik-server service (port 80 -> targetPort 9000)
-    address: http://authentik-server.authentik-system:80/outpost.goauthentik.io/auth/traefik
+    # Uses standalone outpost deployed to local namespace by Authentik
+    # Service name format: ak-outpost-<outpost-name-slug>
+    # Outpost name "N8N Outpost" -> service "ak-outpost-n8n-outpost"
+    address: http://ak-outpost-n8n-outpost:9000/outpost.goauthentik.io/auth/traefik
     trustForwardHeader: true
     authResponseHeaders:
       - X-authentik-username

@@ -36,12 +36,21 @@ entries:
       name: N8N
       provider: !KeyOf n8n_provider
       meta_launch_url: https://n8n.${EXTERNAL_DOMAIN}
-  - id: embedded_outpost_config
+  # Standalone outpost deployed to n8n-system namespace
+  # Requires RBAC: Role/RoleBinding in n8n-system granting authentik SA permissions
+  - id: n8n_outpost
     model: authentik_outposts.outpost
     identifiers:
-      name: authentik Embedded Outpost
+      name: N8N Outpost
     attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
       config:
         authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: n8n-system
       providers:
         - !KeyOf n8n_provider

@@ -22,7 +22,6 @@ ports:
 providers:
   kubernetesCRD:
     allowCrossNamespace: false
-    allowExternalNameServices: true
 service:
   spec:
     externalTrafficPolicy: Local
