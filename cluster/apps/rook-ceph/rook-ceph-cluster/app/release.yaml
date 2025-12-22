@@ -30,6 +30,12 @@ spec:
                     image: quay.io/ceph/ceph:v19
                     restartPolicy: Always
                     command: ["/bin/bash", "-c"]
+                    env:
+                      - name: SAML_ADMIN_EMAIL
+                        valueFrom:
+                          secretKeyRef:
+                            name: cluster-secrets
+                            key: MY_AUTHENTIK_USER_EMAIL
                     args:
                       - |
                         echo "Waiting for ceph config files..."
@@ -37,6 +43,16 @@ spec:
                         echo "Waiting for Ceph cluster health..."
                         until ceph health 2>/dev/null | grep -qE "HEALTH_OK|HEALTH_WARN"; do sleep 10; done
                         echo "Ceph cluster is healthy"
+
+                        # Create SAML admin user if not exists (Ceph Dashboard requires pre-created users)
+                        if ! ceph dashboard ac-user-show "${SAML_ADMIN_EMAIL}" 2>/dev/null; then
+                          echo "Creating SAML admin user: ${SAML_ADMIN_EMAIL}"
+                          echo '""' | ceph dashboard ac-user-create "${SAML_ADMIN_EMAIL}" -i - administrator
+                          echo "SAML admin user created"
+                        else
+                          echo "SAML admin user already exists"
+                        fi
+
                         if ceph dashboard sso status 2>/dev/null | grep -q "SAML2 is enabled"; then
                           echo "SAML SSO already configured"
                         else
