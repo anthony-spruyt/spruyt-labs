@@ -107,6 +107,8 @@ global:
             path: oauth-rotation-service-account.yaml
           - key: n8n-sso.yaml
             path: n8n-sso.yaml
+          - key: ceph-dashboard-sso.yaml
+            path: ceph-dashboard-sso.yaml
 
 authentik:
   log_level: info
