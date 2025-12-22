@@ -72,7 +72,12 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
       encryption:
         enabled: true
       requireMsgr2: true
-      provider: host
+    provider: host
+    # Thunderbolt ring network for OSD replication traffic (26 Gbps per link)
+    # Uses link-local addresses on point-to-point Thunderbolt connections between MS-01 workers
+    addressRanges:
+      cluster:
+        - "169.254.255.0/24"
   crashCollector:
     daysToRetain: 30
   storage:

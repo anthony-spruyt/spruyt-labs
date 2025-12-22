@@ -196,10 +196,6 @@ nodes:
       secureboot: true
       useUKI: true
     networkInterfaces:
-      - deviceSelector: { busPath: 0-1.0 } # Thunderbolt power side
-        ignore: true
-      - deviceSelector: { busPath: 1-1.0 } # Thunderbolt nic side
-        ignore: true
       - interface: enp2s0f0np0
         ignore: true
       - interface: enp2s0f1np1
@@ -217,6 +213,22 @@ nodes:
               - network: 0.0.0.0/0
                 gateway: ${GATEWAY_IP4}
                 metric: 512
+      # Thunderbolt ring network for Ceph cluster traffic
+      # Using link-local /32 addresses - no gateway for point-to-point
+      - interface: thunderbolt0
+        addresses:
+          - 169.254.255.101/32
+        mtu: 65520
+        routes:
+          - network: 169.254.255.102/32 # ms-01-2 direct peer
+            metric: 2048
+      - interface: thunderbolt1
+        addresses:
+          - 169.254.255.101/32
+        mtu: 65520
+        routes:
+          - network: 169.254.255.103/32 # ms-01-3 direct peer
+            metric: 2048
     nodeAnnotations: &ms01NodeAnnotations
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
     patches: &ms01Patches
@@ -333,10 +345,6 @@ nodes:
       secureboot: true
       useUKI: true
     networkInterfaces:
-      - deviceSelector: { busPath: 0-1.0 } # Thunderbolt power side
-        ignore: true
-      - deviceSelector: { busPath: 1-1.0 } # Thunderbolt nic side
-        ignore: true
       - interface: enp2s0f0np0
         ignore: true
       - interface: enp2s0f1np1
@@ -354,6 +362,22 @@ nodes:
               - network: 0.0.0.0/0
                 gateway: ${GATEWAY_IP4}
                 metric: 512
+      # Thunderbolt ring network for Ceph cluster traffic
+      # Using link-local /32 addresses - no gateway for point-to-point
+      - interface: thunderbolt0
+        addresses:
+          - 169.254.255.102/32
+        mtu: 65520
+        routes:
+          - network: 169.254.255.101/32 # ms-01-1 direct peer
+            metric: 2048
+      - interface: thunderbolt1
+        addresses:
+          - 169.254.255.102/32
+        mtu: 65520
+        routes:
+          - network: 169.254.255.103/32 # ms-01-3 direct peer
+            metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
     patches: *ms01Patches
     schematic: *ms01Scehmatic
@@ -369,10 +393,6 @@ nodes:
       secureboot: true
       useUKI: true
     networkInterfaces:
-      - deviceSelector: { busPath: 0-1.0 } # Thunderbolt power side
-        ignore: true
-      - deviceSelector: { busPath: 1-1.0 } # Thunderbolt nic side
-        ignore: true
       - interface: enp2s0f0np0
         ignore: true
       - interface: enp2s0f1np1
@@ -390,6 +410,22 @@ nodes:
               - network: 0.0.0.0/0
                 gateway: ${GATEWAY_IP4}
                 metric: 512
+      # Thunderbolt ring network for Ceph cluster traffic
+      # Using link-local /32 addresses - no gateway for point-to-point
+      - interface: thunderbolt0
+        addresses:
+          - 169.254.255.103/32
+        mtu: 65520
+        routes:
+          - network: 169.254.255.101/32 # ms-01-1 direct peer
+            metric: 2048
+      - interface: thunderbolt1
+        addresses:
+          - 169.254.255.103/32
+        mtu: 65520
+        routes:
+          - network: 169.254.255.102/32 # ms-01-2 direct peer
+            metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
     patches: *ms01Patches
     schematic: *ms01Scehmatic
