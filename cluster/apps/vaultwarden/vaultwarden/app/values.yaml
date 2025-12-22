@@ -13,7 +13,7 @@ controllers:
         image:
           repository: vaultwarden/server
           tag: testing-alpine
-          pullPolicy: IfNotPresent
+          pullPolicy: Always
         envFrom:
           - secretRef:
               name: vaultwarden-secrets
