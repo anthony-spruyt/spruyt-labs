@@ -452,21 +452,60 @@ kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
 
 ### Adding SSO via Proxy Provider (Forward-Auth)
 
-For applications that don't support OAuth2 natively (e.g., N8N Community Edition), use Authentik's Proxy Provider with Traefik forward-auth.
+For applications that don't support OAuth2 natively (e.g., N8N Community Edition), use Authentik's Proxy Provider with Traefik forward-auth and standalone outposts.
 
 #### Architecture
 
 ```text
-User -> Traefik -> forwardAuth middleware -> Authentik (embedded outpost)
+User -> Traefik -> forwardAuth middleware -> Standalone Outpost (same namespace)
                                                   |
                                                   v (authenticated)
-                   Traefik <- headers injected <- Authentik
+                   Traefik <- headers injected <- Outpost
                       |
                       v
                    Application (reads X-authentik-email header)
 ```
 
-#### Step 1: Create Proxy Provider Blueprint
+#### Step 1: Create RBAC for Outpost Deployment
+
+Authentik needs permissions to deploy outposts to the target namespace. Create `<app>/app/authentik-outpost-rbac.yaml`:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: authentik-outpost-deployer
+  namespace: <app-namespace>
+rules:
+  - apiGroups: [""]
+    resources: [secrets, services, configmaps]
+    verbs: [get, create, delete, list, patch]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, create, delete, list, patch]
+  - apiGroups: [traefik.io]
+    resources: [middlewares]
+    verbs: [get, create, delete, list, patch]
+  - apiGroups: [monitoring.coreos.com]
+    resources: [servicemonitors]
+    verbs: [get, create, delete, list, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: authentik-outpost-deployer
+  namespace: <app-namespace>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: authentik-outpost-deployer
+subjects:
+  - kind: ServiceAccount
+    name: authentik
+    namespace: authentik-system
+```
+
+#### Step 2: Create Proxy Provider Blueprint with Standalone Outpost
 
 Create `app/blueprints/<app>-sso.yaml`:
 
@@ -507,30 +546,42 @@ entries:
       name: <App>
       provider: !KeyOf <app>_provider
       meta_launch_url: https://<app>.${EXTERNAL_DOMAIN}
-  - id: embedded_outpost_config
+  # Standalone outpost deployed to app namespace
+  - id: <app>_outpost
     model: authentik_outposts.outpost
     identifiers:
-      name: authentik Embedded Outpost
+      name: <App> Outpost
     attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: <app-namespace>
       providers:
         - !KeyOf <app>_provider
 ```
 
 **Note:** No OAuth secrets needed - proxy providers use session-based auth.
 
-#### Step 2: Create Traefik ForwardAuth Middleware
+#### Step 3: Create Traefik ForwardAuth Middleware
 
-Create reusable middleware in `traefik/ingress/base/authentik-forward-auth.yaml`:
+Create middleware in `traefik/ingress/<app-namespace>/` kustomization. The base template is in `traefik/ingress/base/authentik-forward-auth.yaml`:
 
 ```yaml
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: authentik-forward-auth
-  namespace: placeholder
+  namespace: <app-namespace>
 spec:
   forwardAuth:
-    address: http://authentik-server.authentik-system:9000/outpost.goauthentik.io/auth/traefik
+    # FQDN required - Traefik resolves from its own namespace context
+    # Service name format: ak-outpost-<outpost-name-slug>
+    address: http://ak-outpost-<app>-outpost.<app-namespace>.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
     trustForwardHeader: true
     authResponseHeaders:
       - X-authentik-username
@@ -540,7 +591,9 @@ spec:
       - X-authentik-uid
 ```
 
-#### Step 3: Update Application Ingress
+**Outpost service naming:** Authentik creates services named `ak-outpost-<slug>` where slug is the lowercase, hyphenated outpost name. Example: "N8N Outpost" → `ak-outpost-n8n-outpost`.
+
+#### Step 4: Update Application Ingress
 
 Add outpost route and middleware to application's IngressRoute:
 
@@ -551,8 +604,8 @@ spec:
     - kind: Rule
       match: Host(`<app>.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
       services:
-        - name: authentik-server
-          namespace: authentik-system
+        - name: ak-outpost-<app>-outpost
+          passHostHeader: true
           port: 9000
     # Main route with forward-auth
     - kind: Rule
@@ -564,7 +617,18 @@ spec:
           port: 80
 ```
 
-#### Step 4: Configure Application
+#### Step 5: Add Flux Dependency
+
+The app's Kustomization must depend on authentik to ensure RBAC exists before outpost deployment:
+
+```yaml
+# In <app>/ks.yaml
+spec:
+  dependsOn:
+    - name: authentik
+```
+
+#### Step 6: Configure Application
 
 The application receives trusted headers from Authentik:
 
@@ -580,6 +644,7 @@ Configure the application to trust and use these headers for authentication.
 | Component       | Location                                           |
 | --------------- | -------------------------------------------------- |
 | Blueprint       | `app/blueprints/n8n-sso.yaml`                      |
+| Outpost RBAC    | `n8n/app/authentik-outpost-rbac.yaml`              |
 | ForwardAuth     | `traefik/ingress/base/authentik-forward-auth.yaml` |
 | Ingress Routes  | `traefik/ingress/n8n-system/ingress-routes.yaml`   |
 | Hooks ConfigMap | `n8n/app/hooks-configmap.yaml`                     |
