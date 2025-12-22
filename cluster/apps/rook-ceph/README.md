@@ -418,3 +418,78 @@ Refer to the dedicated [Troubleshooting](#troubleshooting) section after perform
    ```bash
    flux reconcile kustomization rook-ceph-operator --with-source
    ```
+
+## Object Storage (RGW)
+
+Ceph Object Storage provides S3-compatible object storage via the RADOS Gateway (RGW). Two object stores are deployed:
+
+<!-- markdownlint-disable MD013 -->
+
+| Store     | Type                | Port | Use Case                                    |
+| --------- | ------------------- | ---- | ------------------------------------------- |
+| `fast`    | 3-way replicated    | 8080 | High-durability workloads, default          |
+| `fast-ec` | Erasure-coded (2+1) | 8081 | Capacity-efficient storage (~1.5x overhead) |
+
+<!-- markdownlint-enable MD013 -->
+
+### Storage Classes
+
+Four StorageClasses enable declarative bucket provisioning via `ObjectBucketClaim`:
+
+| StorageClass            | Store   | Reclaim Policy |
+| ----------------------- | ------- | -------------- |
+| `ceph-bucket`           | fast    | Retain         |
+| `ceph-bucket-delete`    | fast    | Delete         |
+| `ceph-bucket-ec`        | fast-ec | Retain         |
+| `ceph-bucket-ec-delete` | fast-ec | Delete         |
+
+### Internal Users
+
+Rook automatically creates internal users for RGW management:
+
+- **`dashboard-admin`** – Created per-realm for Ceph Dashboard integration with RGW
+- **`rgw-admin-ops-user`** – Created on-demand when ObjectBucketClaim or CephBucketNotification resources are deployed
+
+### Validation Commands
+
+```bash
+# Check object stores are healthy
+kubectl get cephobjectstore -n rook-ceph
+
+# Check RGW pods (should see 4 pods: 2 per store)
+kubectl get pods -n rook-ceph -l app=rook-ceph-rgw
+
+# Check StorageClasses exist
+kubectl get storageclass | grep ceph-bucket
+
+# List RGW users in a realm
+kubectl exec -n rook-ceph deploy/rook-ceph-tools -- radosgw-admin user list --rgw-realm=fast
+
+# Check RGW pools
+kubectl exec -n rook-ceph deploy/rook-ceph-tools -- ceph osd pool ls | grep rgw
+```
+
+### Creating Buckets with ObjectBucketClaim
+
+```yaml
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: my-bucket
+  namespace: my-app
+spec:
+  storageClassName: ceph-bucket
+  generateBucketName: my-bucket
+```
+
+This creates:
+
+- An S3 bucket in the `fast` object store
+- A ConfigMap `my-bucket` with bucket info (BUCKET_NAME, BUCKET_HOST, BUCKET_PORT)
+- A Secret `my-bucket` with credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+
+### Configuration Notes
+
+- **`preservePoolsOnDelete: false`** – Pools are deleted when CephObjectStore is removed. GitOps provides protection; manual deletion requires explicit pool removal.
+- **Dashboard integration** – SSO config and zone system_key setup handled by init container in toolbox deployment (see `release.yaml` postRenderers).
+- **Default realm** – `fast` is set as the global default realm/zonegroup/zone for dashboard display.
