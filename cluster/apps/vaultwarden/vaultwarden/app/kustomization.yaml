@@ -5,6 +5,9 @@ kind: Kustomization
 resources:
   - ./persistent-volume-claims.yaml
   - ./vaultwarden-secrets.sops.yaml
+  - ./authentik-secret-store.yaml
+  - ./vaultwarden-oauth-external-secret.yaml
+  - ./oauth-rotation-rbac.yaml
   - ./release.yaml
   - ./network-policies.yaml
 configMapGenerator:

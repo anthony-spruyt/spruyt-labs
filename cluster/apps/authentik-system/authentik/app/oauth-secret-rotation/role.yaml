@@ -6,13 +6,8 @@ metadata:
   name: oauth-secret-rotation
   namespace: authentik-system
 rules:
-  # Permission to patch the Grafana OAuth secret
+  # Permission to patch the OAuth secrets
   - apiGroups: [""]
     resources: ["secrets"]
-    resourceNames: ["authentik-grafana-oauth"]
+    resourceNames: ["authentik-grafana-oauth", "authentik-vaultwarden-oauth"]
     verbs: ["get", "patch"]
-  # Permission to restart Authentik deployments and wait for rollout
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    resourceNames: ["authentik-server", "authentik-worker"]
-    verbs: ["get", "list", "watch", "patch"]

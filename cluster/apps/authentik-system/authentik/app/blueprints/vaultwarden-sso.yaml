@@ -3,24 +3,18 @@
 ---
 version: 1
 metadata:
-  name: Grafana SSO
+  name: Vaultwarden SSO
 entries:
-  - id: grafana_admins_group
+  - id: vaultwarden_users_group
     model: authentik_core.group
     identifiers:
-      name: Grafana Admins
+      name: Vaultwarden Users
     attrs:
-      name: Grafana Admins
-  - id: grafana_editors_group
-    model: authentik_core.group
-    identifiers:
-      name: Grafana Editors
-    attrs:
-      name: Grafana Editors
-  - id: grafana_provider
+      name: Vaultwarden Users
+  - id: vaultwarden_provider
     model: authentik_providers_oauth2.oauth2provider
     identifiers:
-      name: Grafana
+      name: Vaultwarden
     attrs:
       authorization_flow:
         !Find [
@@ -34,10 +28,12 @@ entries:
         ]
       client_type: confidential
       redirect_uris:
-        - url: https://grafana.lan.${EXTERNAL_DOMAIN}/login/generic_oauth
+        - url: https://vaultwarden.${EXTERNAL_DOMAIN}/identity/connect/oidc-signin
           matching_mode: strict
-      client_id: !Env GRAFANA_OAUTH_CLIENT_ID
-      client_secret: !Env GRAFANA_OAUTH_CLIENT_SECRET
+      client_id: !Env VAULTWARDEN_OAUTH_CLIENT_ID
+      client_secret: !Env VAULTWARDEN_OAUTH_CLIENT_SECRET
+      # CRITICAL: Must be >5 min - Bitwarden clients detect 5min expiry
+      access_token_validity: minutes=10
       property_mappings:
         - !Find [
             authentik_core.propertymapping,
@@ -51,11 +47,15 @@ entries:
             authentik_core.propertymapping,
             [name, "authentik default OAuth Mapping: OpenID 'email'"],
           ]
-  - id: grafana_application
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'offline_access'"],
+          ]
+  - id: vaultwarden_application
     model: authentik_core.application
     identifiers:
-      slug: grafana
+      slug: vaultwarden
     attrs:
-      name: Grafana
-      provider: !KeyOf grafana_provider
-      meta_launch_url: https://grafana.lan.${EXTERNAL_DOMAIN}
+      name: Vaultwarden
+      provider: !KeyOf vaultwarden_provider
+      meta_launch_url: https://vaultwarden.${EXTERNAL_DOMAIN}

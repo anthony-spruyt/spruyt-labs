@@ -1,0 +1,26 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: authentik-vaultwarden-oauth
+    namespace: authentik-system
+    annotations:
+        kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+stringData:
+    VAULTWARDEN_OAUTH_CLIENT_ID: ENC[AES256_GCM,data:c3MvHEnfASdMbWC9a9ZhXgVOBLghO/l2POrM/RpGZ/g=,iv:0FUZOq6Q5zyGKKQQMJp2NDp0qQMvRcJY3Xnot/BO4Ak=,tag:nxLUNaSmfn/HGooyV/7Iog==,type:str]
+    VAULTWARDEN_OAUTH_CLIENT_SECRET: ENC[AES256_GCM,data:m1u9PkJewZR//aEn6oauxdpflWEUjUNlsqHLAyy0m7dTkO0XpW1vH2GJU4PgRtEufU7y0XD9eMXeQhGw35pYPQ==,iv:y4w7yaLu+Oqa0usyfczmUAvBevzKwhQV+s51pEtMQTc=,tag:NXCO+y4hwsQNW1U1uLaHLA==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBGYkkwVmdWT0F2R3l5YytH
+            ajNMNXJhSXV1OVVSV0JMTy9CWWc0Y1gzRFFBCm90Q2lMWkxBcXJXbkthb2l1eUtK
+            YVJTY1JjTzZjVXB3MkRZdHJhNUZvNjQKLS0tIE5CaUIyOVhYeTlneldEOVFJb0VE
+            K2NxRTg4bm8zWndnVVVEZFZpQzNxZmcK4HegeMkTumqmrHQ35NF6+zsLmtD8LK6P
+            5IuWCwt4bXYrUtJGGyg/qbOkuVkTQhRfmQ7ULt2oz9xTQknOUpr3Zg==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-12-22T06:17:04Z"
+    mac: ENC[AES256_GCM,data:53yMJdy0uxuB722jKaEtY/73P8FGG8teqP382+7F7N/p4NaSsgY0UzkWGdou2Mq89ZRC8MITgLiv0xD2L5vg5wy1VgXYMP8jDMkkNfaxZFqyc+S6iVPr/ZJo5o5L2oI8mcoKDJdlaVbMW6GSF1SAOdtmOV/6+BGtQUsFGzyP5Ck=,iv:ssMuIXZe8lfnhM0yRZXO93wyvNJzoRXEPypsFUd1/IM=,tag:eipZk67X7TFrEwTplUNuvg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.11.0

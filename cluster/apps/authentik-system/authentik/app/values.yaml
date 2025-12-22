@@ -64,6 +64,16 @@ global:
         secretKeyRef:
           name: authentik-grafana-oauth
           key: GRAFANA_OAUTH_CLIENT_SECRET
+    - name: VAULTWARDEN_OAUTH_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: authentik-vaultwarden-oauth
+          key: VAULTWARDEN_OAUTH_CLIENT_ID
+    - name: VAULTWARDEN_OAUTH_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: authentik-vaultwarden-oauth
+          key: VAULTWARDEN_OAUTH_CLIENT_SECRET
     # OAuth rotation service account token (used via !Env tag in blueprint)
     - name: OAUTH_ROTATION_API_TOKEN
       valueFrom:
@@ -91,6 +101,8 @@ global:
         items:
           - key: grafana-sso.yaml
             path: grafana-sso.yaml
+          - key: vaultwarden-sso.yaml
+            path: vaultwarden-sso.yaml
           - key: oauth-rotation-service-account.yaml
             path: oauth-rotation-service-account.yaml
 

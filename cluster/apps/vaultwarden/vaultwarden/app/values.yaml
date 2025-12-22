@@ -17,6 +17,8 @@ controllers:
         envFrom:
           - secretRef:
               name: vaultwarden-secrets
+          - secretRef:
+              name: vaultwarden-oauth-credentials
         probes:
           liveness: &probes
             enabled: true
