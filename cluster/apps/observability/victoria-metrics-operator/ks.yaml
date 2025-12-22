@@ -11,9 +11,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  dependsOn:
-    - name: rook-ceph-cluster-storage
-    # - name: victoria-metrics-secret-writer
+  # dependsOn:
+  #   - name: victoria-metrics-secret-writer
   prune: true
   timeout: 5m
   wait: true

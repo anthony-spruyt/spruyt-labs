@@ -32,7 +32,6 @@ spec:
                     command: ["/bin/bash", "-c"]
                     args:
                       - |
-                        set -e
                         echo "Waiting for ceph config files..."
                         until [ -f /etc/ceph/ceph.conf ] && [ -f /etc/ceph/keyring ]; do sleep 5; done
                         echo "Waiting for Ceph cluster health..."
@@ -41,7 +40,12 @@ spec:
                         if ceph dashboard sso status 2>/dev/null | grep -q "SAML2 is enabled"; then
                           echo "SAML SSO already configured"
                         else
-                          echo "Configuring SAML SSO..."
+                          echo "Waiting for Authentik SAML metadata endpoint..."
+                          until curl -sf https://auth.spruyt.cloud/application/saml/ceph-dashboard/metadata/ >/dev/null 2>&1; do
+                            echo "Authentik not ready yet, retrying in 30s..."
+                            sleep 30
+                          done
+                          echo "Authentik is ready. Configuring SAML SSO..."
                           ceph dashboard sso setup saml2 \
                             "https://ceph.lan.spruyt.cloud" \
                             "https://auth.spruyt.cloud/application/saml/ceph-dashboard/metadata/" \
