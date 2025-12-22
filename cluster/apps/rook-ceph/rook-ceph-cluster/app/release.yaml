@@ -43,6 +43,39 @@ spec:
                         until ceph health 2>/dev/null | grep -qE "HEALTH_OK|HEALTH_WARN"; do sleep 10; done
                         echo "Ceph cluster is healthy"
 
+                        # Clean up orphaned 'default' zone/zonegroup if it exists
+                        # These are leftover from Ceph initialization and have no RGW endpoints,
+                        # causing red icons in the dashboard topology viewer
+                        if radosgw-admin zonegroup get --rgw-zonegroup=default 2>/dev/null | grep -q '"endpoints": \[\]'; then
+                          echo "Removing orphaned 'default' zone and zonegroup..."
+                          radosgw-admin zone delete --rgw-zone=default 2>/dev/null || true
+                          radosgw-admin zonegroup delete --rgw-zonegroup=default 2>/dev/null || true
+                          radosgw-admin period update --commit 2>/dev/null || true
+                          echo "Orphaned default zone/zonegroup removed"
+                        fi
+
+                        # Configure zone system_key for dashboard topology viewer
+                        # The dashboard checks zone.system_key.access_key to show zone status.
+                        # Without this, it shows "Access/Secret keys not found" red icons.
+                        # We use the existing dashboard-admin credentials from each realm.
+                        for realm in fast fast-ec; do
+                          if radosgw-admin zone get --rgw-realm=$realm --rgw-zone=$realm 2>/dev/null | grep -q '"access_key": ""'; then
+                            echo "Configuring system_key for zone: $realm"
+                            # Extract dashboard-admin credentials from user info (keys only, written to temp file)
+                            radosgw-admin user info --uid=dashboard-admin --rgw-realm=$realm 2>/dev/null | \
+                              grep -oP '"access_key": "\K[^"]+' | head -1 > /tmp/ak_$realm
+                            radosgw-admin user info --uid=dashboard-admin --rgw-realm=$realm 2>/dev/null | \
+                              grep -oP '"secret_key": "\K[^"]+' | head -1 > /tmp/sk_$realm
+                            if [ -s /tmp/ak_$realm ] && [ -s /tmp/sk_$realm ]; then
+                              radosgw-admin zone modify --rgw-realm=$realm --rgw-zonegroup=$realm --rgw-zone=$realm \
+                                --access-key="$(cat /tmp/ak_$realm)" --secret="$(cat /tmp/sk_$realm)" 2>/dev/null
+                              radosgw-admin period update --commit --rgw-realm=$realm 2>/dev/null || true
+                              echo "Zone $realm system_key configured"
+                            fi
+                            rm -f /tmp/ak_$realm /tmp/sk_$realm
+                          fi
+                        done
+
                         # Create SAML admin user if not exists (Ceph Dashboard requires pre-created users)
                         # Uses --force-password to bypass password strength validation
                         # Password read from mounted secret file to avoid logging

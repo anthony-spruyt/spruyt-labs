@@ -39,12 +39,13 @@
       "WebFetch(domain:docs.ceph.com)",
       "WebFetch(domain:docs.goauthentik.io)",
       "WebFetch(domain:docs.n8n.io)",
-      "WebFetch(domain:fluxcd.io)",
-      "WebFetch(domain:integrations.goauthentik.io)",
-      "WebFetch(domain:rook.io)",
       "WebFetch(domain:docs.siderolabs.com)",
       "WebFetch(domain:docs.victoriametrics.com)",
-      "WebFetch(domain:goauthentik.io)"
+      "WebFetch(domain:fluxcd.io)",
+      "WebFetch(domain:integrations.goauthentik.io)",
+      "WebFetch(domain:goauthentik.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:rook.io)"
     ]
   }
 }
