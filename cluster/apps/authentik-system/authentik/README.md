@@ -446,6 +446,7 @@ kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
 
 - Requires `testing-alpine` image tag (SSO not in stable releases yet)
 - `access_token_validity: minutes=10` required (Bitwarden clients detect 5min expiry)
+- `signing_key` required - must use RS256 (HS256 incompatible with Vaultwarden)
 - Include `offline_access` scope for refresh tokens
 - Callback URL: `https://vaultwarden.${EXTERNAL_DOMAIN}/identity/connect/oidc-signin`
 
