@@ -14,13 +14,13 @@ spec:
     - websecure
   routes:
     # Authentik outpost path - required for SSO auth flow redirects
+    # Uses ExternalName service to avoid cross-namespace reference limitation
     - kind: Rule
       match: Host(`n8n.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
       services:
-        - name: authentik-server
-          namespace: authentik-system
+        - name: authentik-outpost
           passHostHeader: true
-          port: 9000
+          port: 80
     # Main N8N route with SSO forward-auth
     - kind: Rule
       match: Host(`n8n.${EXTERNAL_DOMAIN}`)

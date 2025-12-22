@@ -7,6 +7,7 @@ resources:
   - ../base/compress.yaml
   - ../base/lan-ip-whitelist.yaml
   - ../base/rate-limit.yaml
+  - ./authentik-outpost-service.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
 patches:

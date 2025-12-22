@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.34.3-standalone-strict/service-v1.json
+# ExternalName service to enable cross-namespace reference to Authentik embedded outpost
+# Required because Traefik CRD doesn't allow cross-namespace service references by default
+# Port 9000 is specified in IngressRoute; ExternalName just provides DNS alias
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentik-outpost
+  namespace: n8n-system
+spec:
+  type: ExternalName
+  externalName: authentik-server.authentik-system.svc.cluster.local

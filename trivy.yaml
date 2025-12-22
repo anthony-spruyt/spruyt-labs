@@ -17,6 +17,8 @@ scan:
     - cluster/apps/observability/victoria-metrics-secret-writer/app/role.yaml
     # hooks.js contains code that reads email headers - false positive for sensitive data
     - cluster/apps/n8n-system/n8n/app/hooks-configmap.yaml
+    # ExternalName service for internal cross-namespace DNS resolution (not external access)
+    - cluster/apps/traefik/traefik/ingress/n8n-system/authentik-outpost-service.yaml
   scanners:
     - vuln
     - misconfig
