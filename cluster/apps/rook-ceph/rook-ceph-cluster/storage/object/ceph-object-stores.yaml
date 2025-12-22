@@ -52,7 +52,7 @@ spec:
       codingChunks: 1
   preservePoolsOnDelete: true
   gateway:
-    port: 8080
+    port: 8081
     instances: 2
     resources:
       requests:
