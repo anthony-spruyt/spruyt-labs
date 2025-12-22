@@ -10,17 +10,17 @@ Talos Linux homelab GitOps repository.
 4. **Use Taskfile** - Prefer `task` commands over raw CLI
 5. **No manual cluster changes** - Never use kubectl to modify cluster state directly (annotations, patches, etc). Use Flux reconciliation or rollout restarts only.
 
-## Commit Workflow (MANDATORY)
+## Commit Workflow
 
-**ALWAYS follow this sequence before every commit:**
+**Run linter before commit for non-trivial changes:**
 
 ```bash
-task dev-env:lint   # Step 1: Run linter FIRST
+task dev-env:lint   # Step 1: Run linter (skip for trivial changes)
 git add -A          # Step 2: Stage changes
 git commit -m "..." # Step 3: Commit
 ```
 
-Do NOT skip the lint step. Pre-commit hooks are a backup, not a replacement.
+Skip linting for trivial changes (typos, single-line fixes, SOPS-only changes). Pre-commit hooks will catch issues regardless.
 
 ## Git Conventions
 
