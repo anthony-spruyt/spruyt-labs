@@ -19,7 +19,7 @@ spec:
     replicated:
       size: 3
       requireSafeReplicaSize: true
-  preservePoolsOnDelete: true
+  preservePoolsOnDelete: false
   gateway:
     port: 8080
     instances: 2
@@ -50,7 +50,7 @@ spec:
     erasureCoded:
       dataChunks: 2
       codingChunks: 1
-  preservePoolsOnDelete: true
+  preservePoolsOnDelete: false
   gateway:
     port: 8081
     instances: 2
