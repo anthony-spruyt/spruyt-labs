@@ -193,8 +193,17 @@ kubectl uncordon <hostname>
      talosctl upgrade \
        --nodes 10.10.0.21 \
        --endpoints 10.10.0.10 \
+       --preserve \
        --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
      ```
+
+   - **CRITICAL: Wait for Ceph HEALTH_OK between each worker upgrade:**
+
+     ```sh
+     kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
+     ```
+
+     Only proceed to the next worker when Ceph reports `HEALTH_OK`. This prevents data unavailability during rolling upgrades.
 
    - Repeat for each node, ensuring workers are upgraded after the control plane pool has converged.
 
@@ -417,14 +426,14 @@ ceph osd unset norecover
 
 | Hardware Class            | Schematic ID                                                       | SecureBoot ISO                                                                                                                                  | Upgrade Image                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Bossgame E2 control plane | `7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6` | [Download](https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.5/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6:v1.11.5` |
-| MS-01 worker              | `7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf` | [Download](https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.5/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf:v1.11.5` |
+| Bossgame E2 control plane | `7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6` | [Download](https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.6/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6:v1.11.6` |
+| MS-01 worker              | `7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf` | [Download](https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.6/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf:v1.11.6` |
 
 Reference the Talos SecureBoot documentation for ISO usage: <https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/>
 
 Additional assets:
 
-- SecureBoot UKI: <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.11.5/metal-amd64-secureboot-uki.efi>
+- SecureBoot UKI: <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.11.6/metal-amd64-secureboot-uki.efi>
 
 ## Secrets and Credentials
 

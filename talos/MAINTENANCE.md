@@ -150,13 +150,17 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    kubectl get nodes
    ```
 
-5. **Upgrade Workers**:
+5. **Upgrade Workers** (one at a time, wait for Ceph `HEALTH_OK` between each):
 
    ```bash
    talosctl upgrade \
      --nodes <worker-node-ip> \
      --endpoints <cluster-endpoint> \
+     --preserve \
      --image <factory-image-url>
+
+   # Wait for Ceph before next worker
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
 6. **Post-Upgrade Validation**:
