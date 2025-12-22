@@ -29,54 +29,28 @@ spec:
                   - name: sso-config
                     image: quay.io/ceph/ceph:v19
                     restartPolicy: Always
-                    command:
-                      - /bin/bash
-                      - -c
+                    command: ["/bin/bash", "-c"]
+                    args:
                       - |
                         set -e
-
-                        # Setup ceph config
-                        KEYRING_FILE="/etc/ceph/keyring"
-                        cat <<EOF > /etc/ceph/ceph.conf
-                        [global]
-                        mon_host = $(cat /etc/rook/mon-endpoints | sed 's/[a-z0-9_-]\+=//g')
-
-                        [client.admin]
-                        keyring = ${KEYRING_FILE}
-                        EOF
-
-                        cat <<EOF > ${KEYRING_FILE}
-                        [client.admin]
-                        key = $(cat /var/lib/rook-ceph-mon/secret.keyring)
-                        EOF
-
-                        # Wait for ceph cluster to be healthy
-                        echo "Waiting for Ceph cluster..."
-                        until ceph health 2>/dev/null | grep -q "HEALTH_OK\|HEALTH_WARN"; do
-                          sleep 10
-                        done
+                        echo "Waiting for ceph config files..."
+                        until [ -f /etc/ceph/ceph.conf ] && [ -f /etc/ceph/keyring ]; do sleep 5; done
+                        echo "Waiting for Ceph cluster health..."
+                        until ceph health 2>/dev/null | grep -qE "HEALTH_OK|HEALTH_WARN"; do sleep 10; done
                         echo "Ceph cluster is healthy"
-
-                        # Configure SAML SSO if not already configured
-                        SSO_STATUS=$(ceph dashboard sso status 2>/dev/null || echo "disabled")
-
-                        if echo "$SSO_STATUS" | grep -q "SAML2 is enabled"; then
+                        if ceph dashboard sso status 2>/dev/null | grep -q "SAML2 is enabled"; then
                           echo "SAML SSO already configured"
                         else
                           echo "Configuring SAML SSO..."
                           ceph dashboard sso setup saml2 \
-                            "https://ceph.lan.${EXTERNAL_DOMAIN}" \
-                            "https://auth.${EXTERNAL_DOMAIN}/application/saml/ceph-dashboard/metadata/" \
+                            "https://ceph.lan.spruyt.cloud" \
+                            "https://auth.spruyt.cloud/application/saml/ceph-dashboard/metadata/" \
                             "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-
                           ceph dashboard sso enable saml2
                           echo "SAML SSO configured successfully"
                         fi
-
                         ceph dashboard sso status
-
-                        # Sleep forever as sidecar
-                        echo "Configuration complete. Running as sidecar..."
+                        echo "Configuration complete. Sleeping..."
                         sleep infinity
                     resources:
                       limits:
