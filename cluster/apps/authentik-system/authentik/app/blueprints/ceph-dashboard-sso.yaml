@@ -40,6 +40,19 @@ entries:
         ]
       sign_assertion: true
       sign_response: true
+      property_mappings:
+        - !Find [
+            authentik_providers_saml.samlpropertymapping,
+            [name, "authentik default SAML Mapping: Email"],
+          ]
+        - !Find [
+            authentik_providers_saml.samlpropertymapping,
+            [name, "authentik default SAML Mapping: Name"],
+          ]
+        - !Find [
+            authentik_providers_saml.samlpropertymapping,
+            [name, "authentik default SAML Mapping: Username"],
+          ]
 
   # Application
   - id: ceph_dashboard_application
