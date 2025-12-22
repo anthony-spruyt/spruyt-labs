@@ -4,7 +4,8 @@
 # Default values for rook-ceph-cluster: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph-cluster/values.yaml
 toolbox:
   # -- Enable Ceph debugging pod deployment. See [toolbox](https://github.com/rook/rook/blob/master/Documentation/Troubleshooting/ceph-toolbox.md)
-  enabled: true # TODO: Disable when everything is setup and stable
+  # IMPORTANT: Must stay enabled - SSO config sidecar is patched onto this deployment via postRenderers in release.yaml
+  enabled: true
   resources:
     limits:
       cpu: 1000m

@@ -36,8 +36,11 @@
       "Bash(velero backup get:*)",
       "Bash(velero get:*)",
       "Bash(velero schedule get:*)",
+      "WebFetch(domain:docs.ceph.com)",
       "WebFetch(domain:docs.goauthentik.io)",
       "WebFetch(domain:docs.n8n.io)",
+      "WebFetch(domain:fluxcd.io)",
+      "WebFetch(domain:rook.io)",
       "WebFetch(domain:docs.siderolabs.com)",
       "WebFetch(domain:docs.victoriametrics.com)",
       "WebFetch(domain:goauthentik.io)"

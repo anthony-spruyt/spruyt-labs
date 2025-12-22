@@ -13,6 +13,10 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: rook-ceph-operator
+    # Note: No authentik dependency here to avoid circular dependency
+    # (authentik → rook-ceph-cluster-storage → rook-ceph-cluster)
+    # The SSO sidecar on toolbox handles this gracefully - it waits for
+    # cluster health and is idempotent (skips if SSO already configured)
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease

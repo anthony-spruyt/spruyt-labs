@@ -14,3 +14,82 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: rook-ceph-cluster-values
+  # Patch toolbox deployment to add SSO config sidecar
+  # Note: Flux postRenderers require inline patches, external files not supported
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: rook-ceph-tools
+            patch: |
+              - op: add
+                path: /spec/template/spec/initContainers
+                value:
+                  - name: sso-config
+                    image: quay.io/ceph/ceph:v19
+                    restartPolicy: Always
+                    command:
+                      - /bin/bash
+                      - -c
+                      - |
+                        set -e
+
+                        # Setup ceph config
+                        KEYRING_FILE="/etc/ceph/keyring"
+                        cat <<EOF > /etc/ceph/ceph.conf
+                        [global]
+                        mon_host = $(cat /etc/rook/mon-endpoints | sed 's/[a-z0-9_-]\+=//g')
+
+                        [client.admin]
+                        keyring = ${KEYRING_FILE}
+                        EOF
+
+                        cat <<EOF > ${KEYRING_FILE}
+                        [client.admin]
+                        key = $(cat /var/lib/rook-ceph-mon/secret.keyring)
+                        EOF
+
+                        # Wait for ceph cluster to be healthy
+                        echo "Waiting for Ceph cluster..."
+                        until ceph health 2>/dev/null | grep -q "HEALTH_OK\|HEALTH_WARN"; do
+                          sleep 10
+                        done
+                        echo "Ceph cluster is healthy"
+
+                        # Configure SAML SSO if not already configured
+                        SSO_STATUS=$(ceph dashboard sso status 2>/dev/null || echo "disabled")
+
+                        if echo "$SSO_STATUS" | grep -q "SAML2 is enabled"; then
+                          echo "SAML SSO already configured"
+                        else
+                          echo "Configuring SAML SSO..."
+                          ceph dashboard sso setup saml2 \
+                            "https://ceph.lan.${EXTERNAL_DOMAIN}" \
+                            "https://auth.${EXTERNAL_DOMAIN}/application/saml/ceph-dashboard/metadata/" \
+                            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+
+                          ceph dashboard sso enable saml2
+                          echo "SAML SSO configured successfully"
+                        fi
+
+                        ceph dashboard sso status
+
+                        # Sleep forever as sidecar
+                        echo "Configuration complete. Running as sidecar..."
+                        sleep infinity
+                    resources:
+                      limits:
+                        cpu: 100m
+                        memory: 128Mi
+                      requests:
+                        cpu: 10m
+                        memory: 32Mi
+                    volumeMounts:
+                      - name: mon-endpoint-volume
+                        mountPath: /etc/rook
+                      - name: ceph-admin-secret
+                        mountPath: /var/lib/rook-ceph-mon
+                        readOnly: true
+                      - name: ceph-config
+                        mountPath: /etc/ceph

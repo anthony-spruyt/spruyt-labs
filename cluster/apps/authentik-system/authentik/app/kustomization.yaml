@@ -31,5 +31,6 @@ configMapGenerator:
       - blueprints/vaultwarden-sso.yaml
       - blueprints/oauth-rotation-service-account.yaml
       - blueprints/n8n-sso.yaml
+      - blueprints/ceph-dashboard-sso.yaml
 configurations:
   - ./kustomizeconfig.yaml

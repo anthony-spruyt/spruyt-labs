@@ -1,0 +1,52 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Ceph Dashboard SSO
+entries:
+  # Group for Ceph Dashboard access
+  - id: ceph_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Ceph Dashboard Users
+    attrs:
+      name: Ceph Dashboard Users
+
+  # SAML Provider
+  - id: ceph_dashboard_provider
+    model: authentik_providers_saml.samlprovider
+    identifiers:
+      name: Ceph Dashboard
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      acs_url: https://ceph.lan.${EXTERNAL_DOMAIN}/auth/saml2
+      issuer: https://auth.${EXTERNAL_DOMAIN}
+      audience: https://ceph.lan.${EXTERNAL_DOMAIN}
+      sp_binding: post
+      signing_kp:
+        !Find [
+          authentik_crypto.certificatekeypair,
+          [name, "authentik Self-signed Certificate"],
+        ]
+      sign_assertion: true
+      sign_response: true
+
+  # Application
+  - id: ceph_dashboard_application
+    model: authentik_core.application
+    identifiers:
+      slug: ceph-dashboard
+    attrs:
+      name: Ceph Dashboard
+      provider: !KeyOf ceph_dashboard_provider
+      meta_launch_url: https://ceph.lan.${EXTERNAL_DOMAIN}
