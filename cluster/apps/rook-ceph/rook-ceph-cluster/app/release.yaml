@@ -32,10 +32,7 @@ spec:
                     command: ["/bin/bash", "-c"]
                     env:
                       - name: SAML_ADMIN_EMAIL
-                        valueFrom:
-                          secretKeyRef:
-                            name: cluster-secrets
-                            key: MY_AUTHENTIK_USER_EMAIL
+                        value: "${MY_AUTHENTIK_USER_EMAIL}"
                     args:
                       - |
                         echo "Waiting for ceph config files..."
