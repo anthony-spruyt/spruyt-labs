@@ -5,4 +5,4 @@ kind: Kustomization
 resources:
   - ./block
   #- ./filesystem
-  # - ./object  # STEP 1: Comment out, push, wait for deletion, then go to STEP 2
+  - ./object
