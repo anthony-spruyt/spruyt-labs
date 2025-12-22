@@ -15,6 +15,28 @@ machine:
       serverTLSBootstrap: true
       shutdownGracePeriod: 60s
       shutdownGracePeriodCriticalPods: 30s
+      # Container log rotation
+      containerLogMaxSize: "50Mi"
+      containerLogMaxFiles: 3
+      # Soft eviction thresholds (warning with grace period)
+      evictionSoft:
+        memory.available: "500Mi"
+        nodefs.available: "15%"
+        imagefs.available: "20%"
+      evictionSoftGracePeriod:
+        memory.available: "2m"
+        nodefs.available: "5m"
+        imagefs.available: "5m"
+      # Hard eviction thresholds
+      evictionHard:
+        memory.available: "200Mi"
+        nodefs.available: "10%"
+        imagefs.available: "15%"
+      # Minimum reclaim amounts when evicting
+      evictionMinimumReclaim:
+        memory.available: "100Mi"
+        nodefs.available: "1Gi"
+        imagefs.available: "2Gi"
     nodeIP:
       validSubnets:
         - ${CLUSTER_NODE_CIDR_IP4}
