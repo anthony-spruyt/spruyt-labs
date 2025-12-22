@@ -2,6 +2,10 @@
 # Victoria Metrics k8s Stack Reference -> https://docs.victoriametrics.com/helm/victoria-metrics-k8s-stack/#parameters
 # Default values for victoria-metrics-k8s-stack: https://github.com/VictoriaMetrics/helm-charts/blob/master/charts/victoria-metrics-k8s-stack/values.yaml
 
+external:
+  grafana:
+    host: https://grafana.lan.${EXTERNAL_DOMAIN}
+
 victoria-metrics-operator:
   enabled: false
 

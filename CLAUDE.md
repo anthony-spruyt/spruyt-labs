@@ -70,6 +70,12 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - [docs/rules/procedures.md](docs/rules/procedures.md) - Ingress, certificates, detailed procedures
 - [docs/](docs/) - Runbooks (bootstrap, maintenance, DR)
 
+**After completing a task, review and update documentation:**
+
+- Check if changes affect documented procedures or architecture
+- Update relevant docs to reflect new patterns or configurations
+- Keep this file (CLAUDE.md) in sync with actual practices
+
 ## Context7
 
 - **ALWAYS use Context7 BEFORE web search** for library/tool documentation
