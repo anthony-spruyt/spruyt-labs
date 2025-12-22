@@ -27,7 +27,7 @@ spec:
                 path: /spec/template/spec/initContainers
                 value:
                   - name: sso-config
-                    image: quay.io/ceph/ceph:v19
+                    image: quay.io/ceph/ceph:v20
                     restartPolicy: Always
                     command:
                       - /bin/bash
