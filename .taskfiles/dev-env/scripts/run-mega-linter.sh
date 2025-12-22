@@ -23,8 +23,11 @@ sudo docker run \
   oxsecurity/megalinter:v9
 
 # Copy fixed changes back to workspace root
+# Use sudo because megalinter runs as root and creates root-owned files
 if compgen -G "/workspaces/spruyt-labs/.output/updated_sources/*" > /dev/null; then
-    cp -r --preserve=all /workspaces/spruyt-labs/.output/updated_sources/* /workspaces/spruyt-labs/
+    sudo cp -r /workspaces/spruyt-labs/.output/updated_sources/* /workspaces/spruyt-labs/
+    # Fix ownership so git can work with the files
+    sudo chown -R "$(id -u):$(id -g)" /workspaces/spruyt-labs/
 fi
 
 exit 0
