@@ -140,12 +140,30 @@ Add to `app/values.yaml` under `global.env`:
       key: <APP>_OAUTH_CLIENT_SECRET
 ```
 
-Add to `app/kustomization.yaml` configMapGenerator:
+**IMPORTANT:** Update BOTH files to mount the blueprint:
+
+1. Add to `app/kustomization.yaml` configMapGenerator files list:
 
 ```yaml
-- key: <app>-sso.yaml
-  path: <app>-sso.yaml
+configMapGenerator:
+  - name: authentik-blueprints
+    files:
+      - blueprints/<app>-sso.yaml # Add here
 ```
+
+2. Add to `app/values.yaml` volume mount items list:
+
+```yaml
+volumes:
+  - name: blueprints-custom
+    configMap:
+      name: authentik-blueprints
+      items:
+        - key: <app>-sso.yaml # Add here
+          path: <app>-sso.yaml
+```
+
+Missing either step will cause the blueprint to not be discovered by Authentik.
 
 #### Step 4: Cross-Namespace Secret Sync (if app is in different namespace)
 
