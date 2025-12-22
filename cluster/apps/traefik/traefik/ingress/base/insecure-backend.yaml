@@ -1,0 +1,12 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/serverstransport_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/routing/services/#serverstransport
+# Purpose: Allow Traefik to connect to backends with self-signed certificates
+# Use case: Services with SSL enabled but using self-signed certs (e.g., Ceph Dashboard)
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: insecure-backend
+  namespace: placeholder
+spec:
+  insecureSkipVerify: true

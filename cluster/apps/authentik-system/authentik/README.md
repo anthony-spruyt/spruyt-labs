@@ -667,11 +667,164 @@ Configure the application to trust and use these headers for authentication.
 | Ingress Routes  | `traefik/ingress/n8n-system/ingress-routes.yaml`   |
 | Hooks ConfigMap | `n8n/app/hooks-configmap.yaml`                     |
 
+### Adding SSO via SAML Provider
+
+For applications with native SAML2 support (e.g., Ceph Dashboard), use Authentik's SAML Provider.
+
+#### SAML Architecture
+
+```text
+User -> Traefik (TLS) -> Application -> SAML redirect -> Authentik
+                                      <- SAML assertion <-
+```
+
+#### Step 1: Create SAML Provider Blueprint
+
+Create `app/blueprints/<app>-sso.yaml`:
+
+```yaml
+# yamllint disable-file
+version: 1
+metadata:
+  name: <App> SSO
+entries:
+  - id: <app>_users_group
+    model: authentik_core.group
+    identifiers:
+      name: <App> Users
+    attrs:
+      name: <App> Users
+  - id: <app>_provider
+    model: authentik_providers_saml.samlprovider
+    identifiers:
+      name: <App>
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      acs_url: https://<app>.lan.${EXTERNAL_DOMAIN}/auth/saml2
+      issuer: https://auth.${EXTERNAL_DOMAIN}
+      audience: https://<app>.lan.${EXTERNAL_DOMAIN}/auth/saml2/metadata
+      sp_binding: post
+      signing_kp:
+        !Find [
+          authentik_crypto.certificatekeypair,
+          [name, "authentik Self-signed Certificate"],
+        ]
+      sign_assertion: true
+      sign_response: true
+      property_mappings:
+        - !Find [
+            authentik_providers_saml.samlpropertymapping,
+            [name, "authentik default SAML Mapping: Email"],
+          ]
+        - !Find [
+            authentik_providers_saml.samlpropertymapping,
+            [name, "authentik default SAML Mapping: Name"],
+          ]
+        - !Find [
+            authentik_providers_saml.samlpropertymapping,
+            [name, "authentik default SAML Mapping: Username"],
+          ]
+  - id: <app>_application
+    model: authentik_core.application
+    identifiers:
+      slug: <app>
+    attrs:
+      name: <App>
+      provider: !KeyOf <app>_provider
+      meta_launch_url: https://<app>.lan.${EXTERNAL_DOMAIN}
+```
+
+#### SAML Provider Key Attributes
+
+| Attribute           | Description                                                       |
+| ------------------- | ----------------------------------------------------------------- |
+| `acs_url`           | Assertion Consumer Service URL (where SAML response is POSTed)    |
+| `issuer`            | Authentik's entity ID (your auth domain)                          |
+| `audience`          | Must match SP entity ID exactly (often the metadata URL)          |
+| `sp_binding`        | `post` for HTTP-POST binding                                      |
+| `signing_kp`        | Key pair for signing assertions (use self-signed cert)            |
+| `property_mappings` | **Required** - Email, Name, Username mappings for SAML assertions |
+
+#### Step 2: Configure Traefik for HTTPS Protocol Headers
+
+When the application is behind TLS termination (Traefik terminates HTTPS), the backend sees HTTP traffic. SAML libraries (like python-saml) validate that the SAML response destination matches the request protocol.
+
+**Add the `https-proto-header` middleware** to set `X-Forwarded-Proto: https`:
+
+```yaml
+# In traefik/ingress/<app-namespace>/kustomization.yaml
+resources:
+  - ../base/https-proto-header.yaml # Add this
+
+patches:
+  - target:
+      kind: Middleware
+      name: https-proto-header
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: <app-namespace>
+```
+
+```yaml
+# In ingress-routes.yaml
+middlewares:
+  - name: https-proto-header # Add before other middlewares
+  - name: lan-ip-whitelist
+  - name: compress
+```
+
+**Without this middleware**, SAML login fails with:
+
+```text
+"The response was received at http://... instead of https://..."
+```
+
+#### Step 3: Configure Application SAML
+
+Configure the application to use Authentik's SAML metadata endpoint:
+
+```text
+Metadata URL: https://auth.${EXTERNAL_DOMAIN}/application/saml/<app-slug>/metadata/
+```
+
+For applications with CLI-based SAML setup (like Ceph Dashboard), automation via sidecar is recommended. See `rook-ceph/rook-ceph-cluster/app/release.yaml` for an example using Flux postRenderers.
+
+#### SAML vs OAuth2 vs Proxy Provider
+
+| Aspect          | OAuth2 Provider      | Proxy Provider          | SAML Provider          |
+| --------------- | -------------------- | ----------------------- | ---------------------- |
+| App support     | Native OAuth2/OIDC   | Any (header-based)      | Native SAML2           |
+| Secrets needed  | Yes (client creds)   | No                      | No                     |
+| Outpost needed  | No                   | Yes (standalone)        | No                     |
+| Ingress changes | None                 | Forward-auth middleware | X-Forwarded-Proto only |
+| Common apps     | Grafana, Vaultwarden | N8N, apps without SSO   | Ceph Dashboard         |
+
+**Ceph Dashboard Example Files:**
+
+| Component          | Location                                        |
+| ------------------ | ----------------------------------------------- |
+| Blueprint          | `app/blueprints/ceph-dashboard-sso.yaml`        |
+| SSO Config Sidecar | `rook-ceph/rook-ceph-cluster/app/release.yaml`  |
+| HTTPS Header MW    | `traefik/ingress/base/https-proto-header.yaml`  |
+| Ingress Routes     | `traefik/ingress/rook-ceph/ingress-routes.yaml` |
+
 ## Troubleshooting
 
 1. **Blueprint shows error but no logs** - Errors stored in DB, use debug command above
 2. **Database connection failures** - Check CNPG cluster health
 3. **Pods CrashLoopBackOff** - Check secrets and Redis connectivity
+4. **SAML schema validation error** - Check `audience` matches SP entity ID exactly, ensure `property_mappings` are included
+5. **SAML HTTP vs HTTPS mismatch** - Add `https-proto-header` middleware to Traefik ingress
 
 ## References
 

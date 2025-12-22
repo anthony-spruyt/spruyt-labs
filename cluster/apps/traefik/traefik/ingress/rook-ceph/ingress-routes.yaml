@@ -24,5 +24,8 @@ spec:
           namespace: rook-ceph
           passHostHeader: true
           port: 8443
+          # HTTPS backend required for SAML SSO - python-saml validates request protocol
+          scheme: https
+          serversTransport: insecure-backend
   tls:
     secretName: "ceph-lan-${EXTERNAL_DOMAIN/./-}-tls"

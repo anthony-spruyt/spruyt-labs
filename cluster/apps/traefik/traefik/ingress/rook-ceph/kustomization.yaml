@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ../base/compress.yaml
   - ../base/https-proto-header.yaml
+  - ../base/insecure-backend.yaml
   - ../base/lan-ip-whitelist.yaml
   - ../base/rate-limit.yaml
   - ./certificates.yaml
@@ -34,6 +35,13 @@ patches:
   - target:
       kind: Middleware
       name: rate-limit
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: rook-ceph
+  - target:
+      kind: ServersTransport
+      name: insecure-backend
     patch: |
       - op: replace
         path: /metadata/namespace

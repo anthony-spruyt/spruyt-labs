@@ -67,7 +67,8 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
     port: 8443
     # Serve the dashboard using SSL (if using ingress to expose the dashboard and `ssl: true` you need to set
     # the corresponding "backend protocol" annotation(s) for your ingress controller of choice)
-    ssl: false
+    # NOTE: SSL must be enabled for SAML SSO to work correctly - python-saml validates the request protocol
+    ssl: true
   network:
     connections:
       encryption:
