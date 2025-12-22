@@ -31,7 +31,7 @@ entries:
         ]
       acs_url: https://ceph.lan.${EXTERNAL_DOMAIN}/auth/saml2
       issuer: https://auth.${EXTERNAL_DOMAIN}
-      audience: https://ceph.lan.${EXTERNAL_DOMAIN}
+      audience: https://ceph.lan.${EXTERNAL_DOMAIN}/auth/saml2/metadata
       sp_binding: post
       signing_kp:
         !Find [
