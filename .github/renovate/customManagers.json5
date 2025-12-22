@@ -19,21 +19,13 @@
         "(^|/)cluster/(?:[^/]+/)*[^/]+\\.ya?ml$",
       ],
       matchStrings: [
-        // depName before datasource: # renovate: depName=X datasource=Y
-        "#\\s*renovate:\\s+depName=(?<depName>\\S+)\\s+datasource=(?<datasource>\\S+)\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
-        // datasource before depName: # renovate: datasource=Y depName=X
-        "#\\s*renovate:\\s+datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
-        // packageName before datasource
-        "#\\s*renovate:\\s+packageName=(?<packageName>\\S+)\\s+datasource=(?<datasource>\\S+)\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
-        // datasource before packageName
-        "#\\s*renovate:\\s+datasource=(?<datasource>\\S+)\\s+packageName=(?<packageName>\\S+)\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
-        // URL path versions (unchanged)
-        "#\\s*renovate:\\s+depName=(?<depName>\\S+)\\s+datasource=(?<datasource>\\S+)[^\\n]*\\n(?:[^\\n]*\\n)?[^\\S\\n]*(?:-\\s*)?(?<prefix>[^\\n]*/)(?<currentValue>(?:v|\\d)[^/\\s\"']+)",
-        "#\\s*renovate:\\s+datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)[^\\n]*\\n(?:[^\\n]*\\n)?[^\\S\\n]*(?:-\\s*)?(?<prefix>[^\\n]*/)(?<currentValue>(?:v|\\d)[^/\\s\"']+)",
+        // Version field: # renovate: depName=X datasource=Y \n key: v1.2.3
+        // The ".+ " matches "talosVersion:" then space before version
+        "depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\n.+ (?<currentValue>(v|\\d)\\S+)",
+        // URL path: # renovate: depName=X datasource=Y \n .../v1.2.3/...
+        "depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\n.+/(?<currentValue>(v|\\d)[^/]+)",
       ],
-      depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if packageName}}{{{packageName}}}{{else}}{{#if chartName}}{{{chartName}}}{{/if}}{{/if}}{{/if}}",
-      packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if packageName}}{{{packageName}}}{{else}}{{#if chartName}}{{{chartName}}}{{/if}}{{/if}}{{/if}}",
-      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}{{#if chartName}}helm{{else}}github-releases{{/if}}{{/if}}",
+      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
     },
   ],
 }

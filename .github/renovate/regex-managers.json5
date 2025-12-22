@@ -9,10 +9,11 @@
       description: "URL-based versions in Talos manifests",
       managerFilePatterns: ["/(^|/)talos/.+\\.ya?ml$/"],
       matchStrings: [
-        "-\\s+#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n[^\\S\\n]*(?<currentValue>https?://[^\\s\"']+)",
+        // Pattern: - # renovate: depName=X datasource=Y \n https://...
+        "-\\s+#\\s*renovate:\\s+depName=(?<depName>\\S+)\\s+datasource=(?<datasource>\\S+)\\s*\\n[^\\S\\n]*(?<currentValue>https?://[^\\s\"']+)",
       ],
-      depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{{packageName}}}{{/if}}",
-      packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{{packageName}}}{{/if}}",
+      depNameTemplate: "{{{depName}}}",
+      packageNameTemplate: "{{{depName}}}",
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
     },
     {
