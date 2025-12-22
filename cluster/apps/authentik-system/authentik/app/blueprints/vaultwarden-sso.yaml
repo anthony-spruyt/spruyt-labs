@@ -34,6 +34,12 @@ entries:
       client_secret: !Env VAULTWARDEN_OAUTH_CLIENT_SECRET
       # CRITICAL: Must be >5 min - Bitwarden clients detect 5min expiry
       access_token_validity: minutes=10
+      # RS256 signing required for Vaultwarden (HS256 incompatible)
+      signing_key:
+        !Find [
+          authentik_crypto.certificatekeypair,
+          [name, "authentik Self-signed Certificate"],
+        ]
       property_mappings:
         - !Find [
             authentik_core.propertymapping,
