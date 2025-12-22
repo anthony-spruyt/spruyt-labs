@@ -30,5 +30,6 @@ configMapGenerator:
       - blueprints/grafana-sso.yaml
       - blueprints/vaultwarden-sso.yaml
       - blueprints/oauth-rotation-service-account.yaml
+      - blueprints/n8n-sso.yaml
 configurations:
   - ./kustomizeconfig.yaml

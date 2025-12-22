@@ -10,6 +10,7 @@ resources:
   # - ./n8n-cnpg-poolers.yaml
   - ./n8n-cnpg-scheduled-backups.yaml
   - ./release.yaml
+  - ./hooks-configmap.yaml
   # Enable policy later
   # - ./network-policies.yaml
 configMapGenerator:

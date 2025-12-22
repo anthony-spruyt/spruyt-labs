@@ -15,6 +15,8 @@ scan:
     - cluster/apps/minecraft/maintenance/role.yaml
     - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
     - cluster/apps/observability/victoria-metrics-secret-writer/app/role.yaml
+    # hooks.js contains code that reads email headers - false positive for sensitive data
+    - cluster/apps/n8n-system/n8n/app/hooks-configmap.yaml
   scanners:
     - vuln
     - misconfig

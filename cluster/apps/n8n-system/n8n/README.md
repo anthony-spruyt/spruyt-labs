@@ -92,6 +92,56 @@ kubectl top pods -n n8n-system
    - **Diagnosis**: Check network policies and egress connectivity
    - **Resolution**: Verify network configuration and firewall rules
 
+## SSO Authentication
+
+N8N Community Edition doesn't support OAuth2 natively. SSO is implemented via Authentik's Proxy Provider with forward-auth and external hooks.
+
+### How It Works
+
+1. User navigates to `https://n8n.${EXTERNAL_DOMAIN}`
+2. Traefik's forwardAuth middleware calls Authentik's embedded outpost
+3. Authentik authenticates user and injects `X-authentik-email` header
+4. N8N's external hooks (`hooks.js`) read the header and issue a session cookie
+5. User is logged in with their pre-provisioned N8N account
+
+### User Provisioning
+
+**Users must be pre-provisioned in N8N before SSO login works.** The hooks script looks up users by email - if not found, returns 401.
+
+To add a user:
+
+1. Log in to N8N as admin
+2. Go to Settings > Users
+3. Invite user with their Authentik email address
+
+### MFA Considerations
+
+If a user has MFA enabled in N8N, it should be disabled for SSO users since authentication is handled by Authentik:
+
+```bash
+kubectl exec -n n8n-system deploy/n8n -- n8n mfa:disable --email=user@example.com
+```
+
+MFA at the Authentik level is recommended instead for SSO users.
+
+### Webhook Bypass
+
+Webhooks are excluded from SSO authentication to allow external integrations:
+
+- `/webhook/*` - Production webhooks
+- `/webhook-test/*` - Test webhooks
+- `/healthz` - Health checks
+
+### Configuration Files
+
+| Component       | Location                      |
+| --------------- | ----------------------------- |
+| Hooks ConfigMap | `app/hooks-configmap.yaml`    |
+| Values (env)    | `app/values.yaml`             |
+| Ingress Routes  | `traefik/ingress/n8n-system/` |
+
+See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via-proxy-provider-forward-auth) for the complete SSO integration pattern.
+
 ## Maintenance
 
 ### Updates

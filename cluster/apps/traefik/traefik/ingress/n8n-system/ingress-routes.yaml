@@ -13,9 +13,19 @@ spec:
   entryPoints:
     - websecure
   routes:
+    # Authentik outpost path - required for SSO auth flow redirects
+    - kind: Rule
+      match: Host(`n8n.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      services:
+        - name: authentik-server
+          namespace: authentik-system
+          passHostHeader: true
+          port: 9000
+    # Main N8N route with SSO forward-auth
     - kind: Rule
       match: Host(`n8n.${EXTERNAL_DOMAIN}`)
       middlewares:
+        - name: authentik-forward-auth
         - name: compress
       services:
         - name: n8n

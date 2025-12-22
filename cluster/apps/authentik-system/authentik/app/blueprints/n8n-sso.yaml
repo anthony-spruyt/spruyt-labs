@@ -1,0 +1,45 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: N8N SSO
+entries:
+  - id: n8n_users_group
+    model: authentik_core.group
+    identifiers:
+      name: N8N Users
+    attrs:
+      name: N8N Users
+  - id: n8n_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: N8N
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://n8n.${EXTERNAL_DOMAIN}
+  - id: n8n_application
+    model: authentik_core.application
+    identifiers:
+      slug: n8n
+    attrs:
+      name: N8N
+      provider: !KeyOf n8n_provider
+      meta_launch_url: https://n8n.${EXTERNAL_DOMAIN}
+  - id: embedded_outpost_config
+    model: authentik_outposts.outpost
+    identifiers:
+      name: authentik Embedded Outpost
+    attrs:
+      providers:
+        - !KeyOf n8n_provider

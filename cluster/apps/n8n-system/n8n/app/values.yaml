@@ -89,6 +89,12 @@ main:
       value: "internal"
     N8N_SKIP_AUTH_ON_OAUTH_CALLBACK:
       value: "false"
+    EXTERNAL_HOOK_FILES:
+      value: "/home/node/.n8n/hooks.js"
+    # N8N_FORWARD_AUTH_HEADER is CUSTOM - read by hooks.js to identify the trusted header
+    # containing user email from Authentik forward-auth. Must match Traefik authResponseHeaders.
+    N8N_FORWARD_AUTH_HEADER:
+      value: "x-authentik-email"
     QUEUE_BULL_PREFIX:
       value: "n8n:queue:bull"
     QUEUE_BULL_REDIS_USERNAME:
@@ -109,6 +115,10 @@ main:
       readOnly: true
     - name: n8n-cache
       mountPath: /home/node/.cache
+    - name: n8n-hooks
+      mountPath: /home/node/.n8n/hooks.js
+      subPath: hooks.js
+      readOnly: true
   extraVolumes: &extraVolumes
     - name: db-ca-cert
       secret:
@@ -118,6 +128,9 @@ main:
             path: ca.crt
     - name: n8n-cache
       emptyDir: {}
+    - name: n8n-hooks
+      configMap:
+        name: n8n-hooks
   deploymentAnnotations: &deploymentAnnotations
     reloader.stakater.com/auto: "true"
   securityContext:

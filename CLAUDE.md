@@ -50,3 +50,13 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - Auto-fetch docs for common tools (Flux, Kubernetes, Helm, Cilium, Traefik, Rook, etc.)
 - Ask before resolving unfamiliar/niche libraries
 - Match cluster versions when available
+
+## Research Priority
+
+When researching or troubleshooting, use tools in this order:
+
+1. **Context7** - For library/tool documentation
+2. **Codebase search** (Grep, Glob, Read) - For existing patterns and implementations
+3. **gh CLI** - For GitHub issues, PRs, and discussions
+4. **WebFetch** - For specific URLs (docs, READMEs)
+5. **WebSearch** - Last resort when other tools don't have the answer

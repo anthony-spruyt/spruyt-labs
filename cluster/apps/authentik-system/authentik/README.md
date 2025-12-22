@@ -450,6 +450,140 @@ kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
 - Include `offline_access` scope for refresh tokens
 - Callback URL: `https://vaultwarden.${EXTERNAL_DOMAIN}/identity/connect/oidc-signin`
 
+### Adding SSO via Proxy Provider (Forward-Auth)
+
+For applications that don't support OAuth2 natively (e.g., N8N Community Edition), use Authentik's Proxy Provider with Traefik forward-auth.
+
+#### Architecture
+
+```text
+User -> Traefik -> forwardAuth middleware -> Authentik (embedded outpost)
+                                                  |
+                                                  v (authenticated)
+                   Traefik <- headers injected <- Authentik
+                      |
+                      v
+                   Application (reads X-authentik-email header)
+```
+
+#### Step 1: Create Proxy Provider Blueprint
+
+Create `app/blueprints/<app>-sso.yaml`:
+
+```yaml
+# yamllint disable-file
+version: 1
+metadata:
+  name: <App> SSO
+entries:
+  - id: <app>_users_group
+    model: authentik_core.group
+    identifiers:
+      name: <App> Users
+    attrs:
+      name: <App> Users
+  - id: <app>_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: <App>
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://<app>.${EXTERNAL_DOMAIN}
+  - id: <app>_application
+    model: authentik_core.application
+    identifiers:
+      slug: <app>
+    attrs:
+      name: <App>
+      provider: !KeyOf <app>_provider
+      meta_launch_url: https://<app>.${EXTERNAL_DOMAIN}
+  - id: embedded_outpost_config
+    model: authentik_outposts.outpost
+    identifiers:
+      name: authentik Embedded Outpost
+    attrs:
+      providers:
+        - !KeyOf <app>_provider
+```
+
+**Note:** No OAuth secrets needed - proxy providers use session-based auth.
+
+#### Step 2: Create Traefik ForwardAuth Middleware
+
+Create reusable middleware in `traefik/ingress/base/authentik-forward-auth.yaml`:
+
+```yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authentik-forward-auth
+  namespace: placeholder
+spec:
+  forwardAuth:
+    address: http://authentik-server.authentik-system:9000/outpost.goauthentik.io/auth/traefik
+    trustForwardHeader: true
+    authResponseHeaders:
+      - X-authentik-username
+      - X-authentik-groups
+      - X-authentik-email
+      - X-authentik-name
+      - X-authentik-uid
+```
+
+#### Step 3: Update Application Ingress
+
+Add outpost route and middleware to application's IngressRoute:
+
+```yaml
+spec:
+  routes:
+    # Authentik outpost path - required for SSO auth flow
+    - kind: Rule
+      match: Host(`<app>.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      services:
+        - name: authentik-server
+          namespace: authentik-system
+          port: 9000
+    # Main route with forward-auth
+    - kind: Rule
+      match: Host(`<app>.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: authentik-forward-auth
+      services:
+        - name: <app>
+          port: 80
+```
+
+#### Step 4: Configure Application
+
+The application receives trusted headers from Authentik:
+
+- `X-authentik-email` - User's email address
+- `X-authentik-username` - Username
+- `X-authentik-name` - Display name
+- `X-authentik-groups` - Group memberships
+
+Configure the application to trust and use these headers for authentication.
+
+**N8N Example Files:**
+
+| Component       | Location                                           |
+| --------------- | -------------------------------------------------- |
+| Blueprint       | `app/blueprints/n8n-sso.yaml`                      |
+| ForwardAuth     | `traefik/ingress/base/authentik-forward-auth.yaml` |
+| Ingress Routes  | `traefik/ingress/n8n-system/ingress-routes.yaml`   |
+| Hooks ConfigMap | `n8n/app/hooks-configmap.yaml`                     |
+
 ## Troubleshooting
 
 1. **Blueprint shows error but no logs** - Errors stored in DB, use debug command above

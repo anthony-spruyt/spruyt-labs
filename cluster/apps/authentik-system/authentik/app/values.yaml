@@ -105,6 +105,8 @@ global:
             path: vaultwarden-sso.yaml
           - key: oauth-rotation-service-account.yaml
             path: oauth-rotation-service-account.yaml
+          - key: n8n-sso.yaml
+            path: n8n-sso.yaml
 
 authentik:
   log_level: info
