@@ -15,8 +15,8 @@
       customType: "regex",
       description: ["Process renovate-annotated dependencies."],
       managerFilePatterns: [
-        "(^|/)talos/(?:[^/]+/)*[^/]+\\.ya?ml$",
-        "(^|/)cluster/(?:[^/]+/)*[^/]+\\.ya?ml$",
+        "/(^|/)talos/(?:[^/]+/)*[^/]+\\.ya?ml$/",
+        "/(^|/)cluster/(?:[^/]+/)*[^/]+\\.ya?ml$/",
       ],
       matchStrings: [
         // Version field: # renovate: depName=X datasource=Y \n key: v1.2.3
