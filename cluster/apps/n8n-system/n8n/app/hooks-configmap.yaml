@@ -27,12 +27,20 @@ data:
               strict: false,
               end: false
             }, async (req, res, next) => {
-              // Intercept logout and redirect to Authentik sign_out endpoint
-              // This ensures both N8N and Authentik sessions are invalidated
-              if (req.url === '/signout' || req.url.startsWith('/signout?')) {
+              // Intercept REST logout and clear cookie + redirect to Authentik sign_out
+              // N8N frontend calls POST /rest/logout, then navigates to /signout
+              if (req.method === 'POST' && req.url === '/rest/logout') {
                 // Clear N8N session cookie
                 res.clearCookie('n8n-auth');
-                // Redirect to Authentik proxy provider sign_out endpoint
+                // Return success with redirect hint - N8N will clear its state
+                // Then forward-auth kicks in on next request
+                return next();
+              }
+
+              // Intercept /signout page load (after REST logout or direct navigation)
+              // Redirect to Authentik to invalidate SSO session
+              if (req.url === '/signout' || req.url.startsWith('/signout?')) {
+                res.clearCookie('n8n-auth');
                 res.redirect('/outpost.goauthentik.io/sign_out');
                 return;
               }
