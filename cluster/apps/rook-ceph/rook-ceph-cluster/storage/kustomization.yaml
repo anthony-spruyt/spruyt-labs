@@ -5,4 +5,4 @@ kind: Kustomization
 resources:
   - ./block
   #- ./filesystem
-  #- ./object
+  - ./object

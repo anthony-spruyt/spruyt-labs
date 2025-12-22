@@ -1,5 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/ceph.rook.io/cephobjectstoreuser_v1.json
+## Admin user for fast object store
 apiVersion: ceph.rook.io/v1
 kind: CephObjectStoreUser
 metadata:
@@ -13,21 +14,15 @@ spec:
     bucket: "*"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/ceph.rook.io/cephobjectstoreuser_v1.json
+## Admin user for fast-ec object store
 apiVersion: ceph.rook.io/v1
 kind: CephObjectStoreUser
 metadata:
-  name: loki
+  name: admin-ec
   namespace: rook-ceph
 spec:
-  store: fast
-  displayName: loki
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/ceph.rook.io/cephobjectstoreuser_v1.json
-apiVersion: ceph.rook.io/v1
-kind: CephObjectStoreUser
-metadata:
-  name: mimir
-  namespace: rook-ceph
-spec:
-  store: fast
-  displayName: mimir
+  store: fast-ec
+  displayName: admin-ec
+  capabilities:
+    user: "*"
+    bucket: "*"

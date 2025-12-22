@@ -1,0 +1,62 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/ceph.rook.io/cephobjectstore_v1.json
+## CephObjectStore fast (3-way replicated)
+apiVersion: ceph.rook.io/v1
+kind: CephObjectStore
+metadata:
+  namespace: rook-ceph
+  name: fast
+spec:
+  metadataPool:
+    failureDomain: host
+    deviceClass: nvme
+    replicated:
+      size: 3
+      requireSafeReplicaSize: true
+  dataPool:
+    failureDomain: host
+    deviceClass: nvme
+    replicated:
+      size: 3
+      requireSafeReplicaSize: true
+  preservePoolsOnDelete: true
+  gateway:
+    port: 8080
+    instances: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/ceph.rook.io/cephobjectstore_v1.json
+## CephObjectStore fast-ec (erasure-coded for capacity efficiency)
+apiVersion: ceph.rook.io/v1
+kind: CephObjectStore
+metadata:
+  namespace: rook-ceph
+  name: fast-ec
+spec:
+  metadataPool:
+    failureDomain: host
+    deviceClass: nvme
+    replicated:
+      size: 3
+      requireSafeReplicaSize: true
+  dataPool:
+    failureDomain: host
+    deviceClass: nvme
+    erasureCoded:
+      dataChunks: 2
+      codingChunks: 1
+  preservePoolsOnDelete: true
+  gateway:
+    port: 8080
+    instances: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi

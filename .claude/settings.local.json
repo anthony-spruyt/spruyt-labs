@@ -40,6 +40,7 @@
       "WebFetch(domain:docs.goauthentik.io)",
       "WebFetch(domain:docs.n8n.io)",
       "WebFetch(domain:fluxcd.io)",
+      "WebFetch(domain:integrations.goauthentik.io)",
       "WebFetch(domain:rook.io)",
       "WebFetch(domain:docs.siderolabs.com)",
       "WebFetch(domain:docs.victoriametrics.com)",

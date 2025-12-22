@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+## StorageClass for OBC provisioning (replicated, retain)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ceph-bucket
+provisioner: rook-ceph.ceph.rook.io/bucket
+reclaimPolicy: Retain
+parameters:
+  objectStoreName: fast
+  objectStoreNamespace: rook-ceph
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+## StorageClass for OBC provisioning (replicated, delete)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ceph-bucket-delete
+provisioner: rook-ceph.ceph.rook.io/bucket
+reclaimPolicy: Delete
+parameters:
+  objectStoreName: fast
+  objectStoreNamespace: rook-ceph
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+## StorageClass for OBC provisioning (erasure-coded, retain)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ceph-bucket-ec
+provisioner: rook-ceph.ceph.rook.io/bucket
+reclaimPolicy: Retain
+parameters:
+  objectStoreName: fast-ec
+  objectStoreNamespace: rook-ceph
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+## StorageClass for OBC provisioning (erasure-coded, delete)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ceph-bucket-ec-delete
+provisioner: rook-ceph.ceph.rook.io/bucket
+reclaimPolicy: Delete
+parameters:
+  objectStoreName: fast-ec
+  objectStoreNamespace: rook-ceph
