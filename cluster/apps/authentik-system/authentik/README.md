@@ -431,6 +431,24 @@ kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
 | ExternalSecret | `victoria-metrics-k8s-stack/app/grafana-oauth-external-secret.yaml` |
 | Rotation RBAC  | `victoria-metrics-k8s-stack/app/oauth-rotation-rbac.yaml`           |
 
+**Vaultwarden Example Files:**
+
+| Component      | Location                                                             |
+| -------------- | -------------------------------------------------------------------- |
+| Blueprint      | `app/blueprints/vaultwarden-sso.yaml`                                |
+| OAuth Secret   | `app/authentik-vaultwarden-oauth.sops.yaml`                          |
+| Reader RBAC    | `app/external-secrets-rbac.yaml`                                     |
+| SecretStore    | `vaultwarden/vaultwarden/app/authentik-secret-store.yaml`            |
+| ExternalSecret | `vaultwarden/vaultwarden/app/vaultwarden-oauth-external-secret.yaml` |
+| Rotation RBAC  | `vaultwarden/vaultwarden/app/oauth-rotation-rbac.yaml`               |
+
+**Vaultwarden-specific notes:**
+
+- Requires `testing-alpine` image tag (SSO not in stable releases yet)
+- `access_token_validity: minutes=10` required (Bitwarden clients detect 5min expiry)
+- Include `offline_access` scope for refresh tokens
+- Callback URL: `https://vaultwarden.${EXTERNAL_DOMAIN}/identity/connect/oidc-signin`
+
 ## Troubleshooting
 
 1. **Blueprint shows error but no logs** - Errors stored in DB, use debug command above

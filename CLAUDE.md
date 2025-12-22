@@ -46,6 +46,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ## Context7
 
+- **ALWAYS use Context7 BEFORE web search** for library/tool documentation
 - Auto-fetch docs for common tools (Flux, Kubernetes, Helm, Cilium, Traefik, Rook, etc.)
 - Ask before resolving unfamiliar/niche libraries
 - Match cluster versions when available
