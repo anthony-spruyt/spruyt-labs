@@ -72,18 +72,6 @@ spec:
                           echo "SAML SSO configured successfully"
                         fi
                         ceph dashboard sso status
-
-                        # Configure RGW dashboard integration (uses primary 'fast' object store)
-                        if [ -f /var/run/secrets/rgw/AccessKey ] && [ -f /var/run/secrets/rgw/SecretKey ]; then
-                          echo "Configuring RGW dashboard integration..."
-                          ceph dashboard set-rgw-api-access-key -i /var/run/secrets/rgw/AccessKey
-                          ceph dashboard set-rgw-api-secret-key -i /var/run/secrets/rgw/SecretKey
-                          ceph dashboard set-rgw-api-ssl-verify false
-                          echo "RGW dashboard integration configured"
-                        else
-                          echo "RGW credentials not available yet, skipping dashboard integration"
-                        fi
-
                         echo "Configuration complete. Sleeping..."
                         sleep infinity
                     resources:
@@ -104,19 +92,9 @@ spec:
                       - name: dashboard-password
                         mountPath: /var/run/secrets/dashboard
                         readOnly: true
-                      - name: rgw-admin-secret
-                        mountPath: /var/run/secrets/rgw
-                        readOnly: true
               - op: add
                 path: /spec/template/spec/volumes/-
                 value:
                   name: dashboard-password
                   secret:
                     secretName: rook-ceph-dashboard-password
-              - op: add
-                path: /spec/template/spec/volumes/-
-                value:
-                  name: rgw-admin-secret
-                  secret:
-                    secretName: rook-ceph-object-user-fast-admin
-                    optional: true

@@ -1,28 +1,16 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/ceph.rook.io/cephobjectstoreuser_v1.json
-## Admin user for fast object store
-apiVersion: ceph.rook.io/v1
-kind: CephObjectStoreUser
-metadata:
-  name: admin
-  namespace: rook-ceph
-spec:
-  store: fast
-  displayName: admin
-  capabilities:
-    user: "*"
-    bucket: "*"
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/ceph.rook.io/cephobjectstoreuser_v1.json
-## Admin user for fast-ec object store
-apiVersion: ceph.rook.io/v1
-kind: CephObjectStoreUser
-metadata:
-  name: admin-ec
-  namespace: rook-ceph
-spec:
-  store: fast-ec
-  displayName: admin-ec
-  capabilities:
-    user: "*"
-    bucket: "*"
+# Example CephObjectStoreUser - uncomment and modify when needed
+# Rook auto-creates 'dashboard-admin' and 'rgw-admin-ops-user' for internal use
+#
+# apiVersion: ceph.rook.io/v1
+# kind: CephObjectStoreUser
+# metadata:
+#   name: my-app
+#   namespace: rook-ceph
+# spec:
+#   store: fast
+#   displayName: my-app
+#   capabilities:
+#     user: "*"
+#     bucket: "*"
