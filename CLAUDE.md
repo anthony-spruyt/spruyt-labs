@@ -9,6 +9,7 @@ Talos Linux homelab GitOps repository.
 3. **Automation first** - Use Flux, Terraform, Talos declarative configs
 4. **Use Taskfile** - Prefer `task` commands over raw CLI
 5. **No manual cluster changes** - Never use kubectl to modify cluster state directly (annotations, patches, etc). Use Flux reconciliation or rollout restarts only.
+6. **No git push** - User will push manually (SSH with passkey requires interactive authentication)
 
 ## Commit Workflow
 

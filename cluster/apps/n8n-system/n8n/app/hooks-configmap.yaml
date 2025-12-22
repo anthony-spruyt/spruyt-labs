@@ -27,6 +27,16 @@ data:
               strict: false,
               end: false
             }, async (req, res, next) => {
+              // Intercept logout and redirect to Authentik sign_out endpoint
+              // This ensures both N8N and Authentik sessions are invalidated
+              if (req.url === '/signout' || req.url.startsWith('/signout?')) {
+                // Clear N8N session cookie
+                res.clearCookie('n8n-auth');
+                // Redirect to Authentik proxy provider sign_out endpoint
+                res.redirect('/outpost.goauthentik.io/sign_out');
+                return;
+              }
+
               // Skip auth for webhooks and assets
               if (ignoreAuthRegexp.test(req.url)) return next();
 
