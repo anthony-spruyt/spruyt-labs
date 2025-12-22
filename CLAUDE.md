@@ -12,6 +12,16 @@ Talos Linux homelab GitOps repository.
 6. **No git push** - User will push manually (SSH with passkey requires interactive authentication)
 7. **No git amend** - Never use `git commit --amend`. Always create new commits.
 8. **No hardcoded domains** - Never hardcode the public domain. Always use `${EXTERNAL_DOMAIN}` variable for Flux substitution.
+9. **No reading live secrets** - Never use `kubectl get secret -o yaml/jsonpath` to read secret values from the cluster.
+
+## Secret Security
+
+When working with secrets in scripts or containers:
+
+- **Never echo secrets** - Don't use `echo "$SECRET" | command`. Secrets may appear in logs or process lists.
+- **Use file-based secrets** - Mount secrets as files and read with `-i /path/to/secret` or `cat /path/to/secret`.
+- **Use secretKeyRef sparingly** - Environment variables from secretKeyRef are visible in pod specs. Prefer volume mounts for sensitive data used in scripts.
+- **Never log secret values** - Avoid commands that might output secrets to stdout/stderr.
 
 ## Commit Workflow
 

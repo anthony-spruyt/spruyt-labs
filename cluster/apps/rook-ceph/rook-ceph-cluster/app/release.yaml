@@ -42,14 +42,17 @@ spec:
                         echo "Ceph cluster is healthy"
 
                         # Create SAML admin user if not exists (Ceph Dashboard requires pre-created users)
+                        # Uses --force-password to bypass password strength validation
+                        # Password read from mounted secret file to avoid logging
                         if ! ceph dashboard ac-user-show "${SAML_ADMIN_EMAIL}" 2>/dev/null; then
                           echo "Creating SAML admin user: ${SAML_ADMIN_EMAIL}"
-                          echo '""' | ceph dashboard ac-user-create "${SAML_ADMIN_EMAIL}" -i - administrator
+                          ceph dashboard ac-user-create "${SAML_ADMIN_EMAIL}" --force-password -i /var/run/secrets/dashboard/password administrator
                           echo "SAML admin user created"
                         else
                           echo "SAML admin user already exists"
                         fi
 
+                        # Configure SAML SSO if not already enabled
                         if ceph dashboard sso status 2>/dev/null | grep -q "SAML2 is enabled"; then
                           echo "SAML SSO already configured"
                         else
@@ -84,3 +87,12 @@ spec:
                         readOnly: true
                       - name: ceph-config
                         mountPath: /etc/ceph
+                      - name: dashboard-password
+                        mountPath: /var/run/secrets/dashboard
+                        readOnly: true
+              - op: add
+                path: /spec/template/spec/volumes/-
+                value:
+                  name: dashboard-password
+                  secret:
+                    secretName: rook-ceph-dashboard-password
