@@ -41,14 +41,14 @@ spec:
                           echo "SAML SSO already configured"
                         else
                           echo "Waiting for Authentik SAML metadata endpoint..."
-                          until curl -sf https://auth.spruyt.cloud/application/saml/ceph-dashboard/metadata/ >/dev/null 2>&1; do
+                          until curl -sf https://auth.${EXTERNAL_DOMAIN}/application/saml/ceph-dashboard/metadata/ >/dev/null 2>&1; do
                             echo "Authentik not ready yet, retrying in 30s..."
                             sleep 30
                           done
                           echo "Authentik is ready. Configuring SAML SSO..."
                           ceph dashboard sso setup saml2 \
-                            "https://ceph.lan.spruyt.cloud" \
-                            "https://auth.spruyt.cloud/application/saml/ceph-dashboard/metadata/" \
+                            "https://ceph.lan.${EXTERNAL_DOMAIN}" \
+                            "https://auth.${EXTERNAL_DOMAIN}/application/saml/ceph-dashboard/metadata/" \
                             "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
                           ceph dashboard sso enable saml2
                           echo "SAML SSO configured successfully"
