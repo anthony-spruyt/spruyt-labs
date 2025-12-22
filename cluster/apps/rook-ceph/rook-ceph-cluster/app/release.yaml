@@ -53,12 +53,14 @@ spec:
                           echo "Orphaned default zone/zonegroup removed"
                         fi
 
-                        # Set 'fast' zonegroup as the default if no default is set
-                        # This ensures proper default after removing the orphaned 'default' zonegroup
-                        if radosgw-admin zonegroup list 2>/dev/null | grep -q '"default_info": ""'; then
-                          echo "Setting 'fast' as the default zonegroup..."
-                          radosgw-admin zonegroup modify --rgw-zonegroup=fast --default 2>/dev/null || true
-                          echo "'fast' is now the default zonegroup"
+                        # Set 'fast' realm and zonegroup as the global default
+                        # This ensures 'fast' shows as default in the dashboard after removing orphaned 'default'
+                        if radosgw-admin realm list 2>/dev/null | grep -q '"default_info": ""'; then
+                          echo "Setting 'fast' as the default realm and zonegroup..."
+                          radosgw-admin realm default --rgw-realm=fast 2>/dev/null || true
+                          radosgw-admin zonegroup default --rgw-realm=fast --rgw-zonegroup=fast 2>/dev/null || true
+                          radosgw-admin zone default --rgw-realm=fast --rgw-zonegroup=fast --rgw-zone=fast 2>/dev/null || true
+                          echo "'fast' is now the global default"
                         fi
 
                         # Configure zone system_key for dashboard topology viewer
