@@ -41,5 +41,7 @@ entries:
     identifiers:
       name: authentik Embedded Outpost
     attrs:
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
       providers:
         - !KeyOf n8n_provider
