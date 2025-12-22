@@ -9,8 +9,17 @@
         "(^|/)cluster/(?:[^/]+/)*[^/]+\\.ya?ml$",
       ],
       matchStrings: [
-        "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
-        "#\\s*renovate:(?:\\s+(?:datasource=(?<datasource>\\S+)|depName=(?<depName>\\S+)|packageName=(?<packageName>\\S+))){1,}[^\\n]*\\n(?:[^\\n]*\\n)?[^\\S\\n]*(?:-\\s*)?(?<prefix>[^\\n]*/)(?<currentValue>(?:v|\\d)[^/\\s\"']+)",
+        // depName before datasource: # renovate: depName=X datasource=Y
+        "#\\s*renovate:\\s+depName=(?<depName>\\S+)\\s+datasource=(?<datasource>\\S+)\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
+        // datasource before depName: # renovate: datasource=Y depName=X
+        "#\\s*renovate:\\s+datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
+        // packageName before datasource
+        "#\\s*renovate:\\s+packageName=(?<packageName>\\S+)\\s+datasource=(?<datasource>\\S+)\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
+        // datasource before packageName
+        "#\\s*renovate:\\s+datasource=(?<datasource>\\S+)\\s+packageName=(?<packageName>\\S+)\\s*\\n(?:[^\\n]*chart:\\s*(?<chartName>[^\\s\"']+)[^\\n]*\\n|[^\\n]*\\n){0,3}?[^\\S\\n]*(?<prefix>(?:version|talosVersion|kubernetesVersion):\\s*)(?<currentValue>[^\\s\"']+)",
+        // URL path versions (unchanged)
+        "#\\s*renovate:\\s+depName=(?<depName>\\S+)\\s+datasource=(?<datasource>\\S+)[^\\n]*\\n(?:[^\\n]*\\n)?[^\\S\\n]*(?:-\\s*)?(?<prefix>[^\\n]*/)(?<currentValue>(?:v|\\d)[^/\\s\"']+)",
+        "#\\s*renovate:\\s+datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)[^\\n]*\\n(?:[^\\n]*\\n)?[^\\S\\n]*(?:-\\s*)?(?<prefix>[^\\n]*/)(?<currentValue>(?:v|\\d)[^/\\s\"']+)",
       ],
       depNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if packageName}}{{{packageName}}}{{else}}{{#if chartName}}{{{chartName}}}{{/if}}{{/if}}{{/if}}",
       packageNameTemplate: "{{#if depName}}{{{depName}}}{{else}}{{#if packageName}}{{{packageName}}}{{else}}{{#if chartName}}{{{chartName}}}{{/if}}{{/if}}{{/if}}",
