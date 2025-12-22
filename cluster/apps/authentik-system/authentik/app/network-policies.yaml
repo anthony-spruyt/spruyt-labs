@@ -205,11 +205,9 @@ spec:
       app.kubernetes.io/instance: authentik
       app.kubernetes.io/name: authentik
   egress:
-    - toServices:
-        - k8sService:
-            serviceName: kubernetes
-            namespace: default
+    - toEntities:
+        - kube-apiserver
       toPorts:
         - ports:
-            - port: "443"
+            - port: "6443"
               protocol: TCP
