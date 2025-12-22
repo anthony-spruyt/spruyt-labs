@@ -39,7 +39,6 @@
       "Bash(git -C /workspaces/spruyt-labs log:*)",
       "Bash(xargs kubectl describe:*)",
       "Bash(ls -la:*)",
-      "Bash(kubectl exec:*)",
       "Bash(git -C /workspaces/spruyt-labs diff)",
       "Bash(xargs ls:*)",
       "Bash(jq:*)",
@@ -52,7 +51,9 @@
       "Bash(kubectl wait:*)",
       "Bash(git -C /workspaces/spruyt-labs status:*)",
       "Bash(git -C /workspaces/spruyt-labs diff:*)",
-      "Bash(task --list:*)"
+      "Bash(task --list:*)",
+      "Bash(xxd:*)",
+      "Bash(gh pr list:*)"
     ]
   }
 }
