@@ -50,8 +50,15 @@ spec:
                           echo "Removing orphaned 'default' zone and zonegroup..."
                           radosgw-admin zone delete --rgw-zone=default 2>/dev/null || true
                           radosgw-admin zonegroup delete --rgw-zonegroup=default 2>/dev/null || true
-                          radosgw-admin period update --commit 2>/dev/null || true
                           echo "Orphaned default zone/zonegroup removed"
+                        fi
+
+                        # Set 'fast' zonegroup as the default if no default is set
+                        # This ensures proper default after removing the orphaned 'default' zonegroup
+                        if radosgw-admin zonegroup list 2>/dev/null | grep -q '"default_info": ""'; then
+                          echo "Setting 'fast' as the default zonegroup..."
+                          radosgw-admin zonegroup modify --rgw-zonegroup=fast --default 2>/dev/null || true
+                          echo "'fast' is now the default zonegroup"
                         fi
 
                         # Configure zone system_key for dashboard topology viewer

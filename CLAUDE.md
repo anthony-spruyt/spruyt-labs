@@ -25,6 +25,17 @@ Talos Linux homelab GitOps repository.
 - **Use secretKeyRef sparingly** - Environment variables from secretKeyRef are visible in pod specs. Prefer volume mounts for sensitive data used in scripts.
 - **Check existence, not values** - To verify credentials exist, check if secrets/users exist without outputting their values. Use commands that return counts, booleans, or names only.
 
+## Testing & Validation
+
+**ALWAYS validate changes after implementation:**
+
+- **Never leave changes untested** - After making changes, validate they work by running appropriate commands
+- **Trigger pod restarts when needed** - Use `kubectl delete pod` or `kubectl rollout restart` to apply config changes
+- **Check logs for errors** - Verify init containers and pods start successfully
+- **Validate end state** - Confirm the intended behavior is working (e.g., check dashboard, verify resources exist)
+- **When planning, include validation steps** - Every plan should specify how changes will be tested
+- **Write automated tests when possible** - For scripts or complex logic, add test cases or validation checks
+
 ## Commit Workflow
 
 **Run linter before commit for non-trivial changes:**
