@@ -58,8 +58,10 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 
 When researching or troubleshooting, use tools in this order:
 
-1. **Context7** - For library/tool documentation
+1. **Context7** - For library/tool documentation and API references
 2. **Codebase search** (Grep, Glob, Read) - For existing patterns and implementations
-3. **gh CLI** - For GitHub issues, PRs, and discussions
+3. **gh CLI** - For GitHub issues, PRs, discussions, and error messages (use `gh search issues`, `gh issue view`)
 4. **WebFetch** - For specific URLs (docs, READMEs)
 5. **WebSearch** - Last resort when other tools don't have the answer
+
+For error messages, search the upstream repo's issues first: `gh search issues "<error message>" --repo <org>/<repo>`
