@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/middleware_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/middlewares/overview/
+# Purpose: Sets X-Forwarded-Proto header to https for backend services behind TLS termination
+# Use case: SAML/SSO integrations where backend needs to know the external protocol
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: https-proto-header
+  namespace: placeholder
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
