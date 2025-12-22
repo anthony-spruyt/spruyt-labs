@@ -10,6 +10,7 @@ Talos Linux homelab GitOps repository.
 4. **Use Taskfile** - Prefer `task` commands over raw CLI
 5. **No manual cluster changes** - Never use kubectl to modify cluster state directly (annotations, patches, etc). Use Flux reconciliation or rollout restarts only.
 6. **No git push** - User will push manually (SSH with passkey requires interactive authentication)
+7. **No git amend** - Never use `git commit --amend`. Always create new commits.
 
 ## Commit Workflow
 
