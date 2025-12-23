@@ -1423,8 +1423,9 @@
     "list": [
       {
         "current": {
-          "text": "default",
-          "value": "default"
+          "selected": true,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
         },
         "hide": 0,
         "label": "Data Source",
