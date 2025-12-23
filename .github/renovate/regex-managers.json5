@@ -9,8 +9,13 @@
       description: "Headlamp plugins from ArtifactHub",
       managerFilePatterns: ["/(^|/)cluster/apps/headlamp-system/.+\\.ya?ml$/"],
       matchStrings: [
-        // Match: # renovate: depName=headlamp-plugins/headlamp_flux\n        version: 0.5.0
-        "#\\s*renovate:\\s*depName=(?<depName>[^\\s]+)\\n[^\\n]*version:\\s*(?<currentValue>[^\\s]+)",
+        // Match annotation followed by version within next few lines
+        // Example:
+        //   # renovate: depName=headlamp-plugins/headlamp_flux
+        //   - name: headlamp_flux
+        //     source: https://...
+        //     version: 0.5.0
+        "#\\s*renovate:\\s*depName=(?<depName>[^\\s]+)[\\s\\S]*?version:\\s*(?<currentValue>\\d[^\\s]*)",
       ],
       datasourceTemplate: "custom.artifacthub-headlamp",
     },
