@@ -493,3 +493,69 @@ This creates:
 - **`preservePoolsOnDelete: false`** – Pools are deleted when CephObjectStore is removed. GitOps provides protection; manual deletion requires explicit pool removal.
 - **Dashboard integration** – SSO config and zone system_key setup handled by init container in toolbox deployment (see `release.yaml` postRenderers).
 - **Default realm** – `fast` is set as the global default realm/zonegroup/zone for dashboard display.
+
+## Grafana Dashboard Integration
+
+The Ceph Dashboard embeds Grafana panels for metrics visualization. This requires specific configuration in both Grafana and Ceph.
+
+### Requirements
+
+1. **Dashboard1 datasource** – The Ceph Dashboard hardcodes `var-datasource=Dashboard1` in iframe URLs. A Grafana datasource named exactly "Dashboard1" must exist pointing to Prometheus/VictoriaMetrics.
+
+2. **Official ceph-mixin dashboards** – The Ceph Dashboard expects dashboards with specific UIDs from the [ceph-mixin](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out):
+
+   | Dashboard                  | UID                 | Used By                 |
+   | -------------------------- | ------------------- | ----------------------- |
+   | ceph-cluster.json          | `ceph-cluster`      | Cluster overview        |
+   | hosts-overview.json        | `-uVQuofik`         | Hosts list              |
+   | osds-overview.json         | `lo02I1Aiz`         | OSD list                |
+   | pool-overview.json         | `41FrpeUiz`         | Pool overview           |
+   | pool-detail.json           | `jE2s4dzik`         | Pool details            |
+   | osd-device-details.json    | `CrAHE0iZz`         | OSD device details      |
+   | rbd-overview.json          | `t2bQAeXGz`         | RBD overview            |
+   | rbd-details.json           | `YhCYGcuZz`         | RBD details             |
+   | radosgw-overview.json      | `WAkugZpiz`         | RGW overall performance |
+   | radosgw-sync-overview.json | `rgw-sync-overview` | RGW sync performance    |
+   | radosgw-detail.json        | `x5ARzZtmk`         | RGW instance details    |
+   | cephfsdashboard.json       | `MUsmxkziz`         | CephFS overview         |
+
+3. **Grafana embedding** – Enable iframe embedding in Grafana config:
+
+   ```yaml
+   grafana.ini:
+     security:
+       allow_embedding: true
+       cookie_samesite: disabled
+   ```
+
+### Configuration (Done via Init Container)
+
+The toolbox deployment includes an init container that configures monitoring endpoints:
+
+```bash
+ceph dashboard set-alertmanager-api-host 'http://vmalertmanager-victoria-metrics-k8s-stack.observability.svc.cluster.local:9093'
+ceph dashboard set-grafana-api-url 'http://victoria-metrics-k8s-stack-grafana.observability.svc.cluster.local:80'
+ceph dashboard set-grafana-frontend-api-url 'https://grafana.lan.${EXTERNAL_DOMAIN}'
+ceph dashboard set-grafana-api-ssl-verify false
+ceph dashboard set-alertmanager-api-ssl-verify false
+```
+
+The `prometheusEndpoint` is configured via the CephCluster CRD in `values.yaml`:
+
+```yaml
+cephClusterSpec:
+  dashboard:
+    prometheusEndpoint: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local:8428
+    prometheusEndpointSSLVerify: false
+```
+
+### Dashboard Locations
+
+- **Custom dashboards** – `cluster/apps/observability/victoria-metrics-k8s-stack/app/dashboards/`
+- **Dashboard ConfigMaps** – `cluster/apps/observability/victoria-metrics-k8s-stack/app/kustomization.yaml`
+- **Dashboard1 datasource** – `cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml` under `defaultDatasources.extra`
+
+### References
+
+- [Ceph Dashboard Grafana integration source](https://github.com/ceph/ceph/blob/main/src/pybind/mgr/dashboard/frontend/src/app/shared/components/grafana/grafana.component.ts)
+- [Ceph mixin dashboards](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out)

@@ -87,5 +87,26 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-rgw-sync
+    namespace: observability
+    files:
+      - dashboards/ceph-official-radosgw-sync-overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-rgw-detail
+    namespace: observability
+    files:
+      - dashboards/ceph-official-radosgw-detail.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-cephfs
+    namespace: observability
+    files:
+      - dashboards/ceph-official-cephfs.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml
