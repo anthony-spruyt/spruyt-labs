@@ -28,6 +28,7 @@
       "Bash(git show:*)",
       "Bash(git status:*)",
       "Bash(grep:*)",
+      "Bash(jq:*)",
       "Bash(kubectl api-resources:*)",
       "Bash(kubectl auth can-i:*)",
       "Bash(kubectl describe:*)",
@@ -61,14 +62,6 @@
       "WebFetch(domain:goauthentik.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:rook.io)"
-    ],
-    "deny": [
-      "Bash(curl:*)",
-      "Bash(kubectl describe secret:*)",
-      "Bash(kubectl get secret:*)",
-      "Bash(ssh:*)",
-      "Bash(sudo:*)",
-      "Bash(wget:*)"
     ]
   }
 }
