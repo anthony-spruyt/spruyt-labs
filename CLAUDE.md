@@ -1,105 +1,93 @@
 # CLAUDE.md
 
-Talos Linux homelab GitOps repository.
+Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosctl`, Flux, or Kubernetes APIs.
 
-## Constraints
+## Hard Rules
 
-1. **No Python scripts** - Use bash/Taskfile only
-2. **No SOPS decryption** - Never decrypt secrets via CLI
-3. **Automation first** - Use Flux, Terraform, Talos declarative configs
-4. **Use Taskfile** - Prefer `task` commands over raw CLI
-5. **No manual cluster changes** - Never use kubectl to modify cluster state directly (annotations, patches, etc). Use Flux reconciliation or rollout restarts only.
-6. **No git push** - User will push manually (SSH with passkey requires interactive authentication)
-7. **No git amend** - Never use `git commit --amend`. Always create new commits.
-8. **No hardcoded domains** - Never hardcode the public domain. Always use `${EXTERNAL_DOMAIN}` variable for Flux substitution.
-9. **No reading live secrets** - Never use `kubectl get secret -o yaml/jsonpath` to read secret values from the cluster.
+1. **No secrets output** - Never run commands that display credentials
+2. **Declarative only** - No manual kubectl patches; use Flux, Terraform, Talos configs
+3. **No git push** - User pushes manually (SSH passkey requires interactive auth)
+4. **No git amend** - Always new commits
+5. **No SOPS decrypt** - Never decrypt secrets via CLI
+6. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
+7. **No reading live secrets** - Never `kubectl get secret -o yaml/jsonpath`
+8. **Taskfile first** - Prefer `task` commands over raw CLI
 
-## Secret Security
+## Secrets
 
-**CRITICAL - NEVER OUTPUT SECRETS:**
+- Never output credentials (access keys, passwords, tokens)
+- Never `echo "$SECRET" | command` - secrets may appear in logs
+- Never log secret values to stdout/stderr
+- Check existence, not values: count users, verify resources exist
+- Mount secrets as files, not env vars when possible
 
-- **Never run commands that output credentials** - Commands like `ceph dashboard get-rgw-api-access-key`, `radosgw-admin user info`, or any command that returns access keys, secret keys, passwords, or tokens are FORBIDDEN.
-- **Never echo secrets** - Don't use `echo "$SECRET" | command`. Secrets may appear in logs or process lists.
-- **Never log secret values** - Avoid commands that might output secrets to stdout/stderr.
-- **Use file-based secrets** - Mount secrets as files and read with `-i /path/to/secret` or `cat /path/to/secret`.
-- **Use secretKeyRef sparingly** - Environment variables from secretKeyRef are visible in pod specs. Prefer volume mounts for sensitive data used in scripts.
-- **Check existence, not values** - To verify credentials exist, check if secrets/users exist without outputting their values. Use commands that return counts, booleans, or names only.
+## Workflow
 
-## Testing & Validation
-
-**ALWAYS validate changes after implementation:**
-
-- **Never leave changes untested** - After making changes, validate they work by running appropriate commands
-- **Trigger pod restarts when needed** - Use `kubectl delete pod` or `kubectl rollout restart` to apply config changes
-- **Check logs for errors** - Verify init containers and pods start successfully
-- **Validate end state** - Confirm the intended behavior is working (e.g., check dashboard, verify resources exist)
-- **When planning, include validation steps** - Every plan should specify how changes will be tested
-- **Write automated tests when possible** - For scripts or complex logic, add test cases or validation checks
-
-## Commit Workflow
-
-**Run linter before commit for non-trivial changes:**
+**Before commit (non-trivial changes):**
 
 ```bash
-task dev-env:lint   # Step 1: Run linter (skip for trivial changes)
-git add -A          # Step 2: Stage changes
-git commit -m "..." # Step 3: Commit
+task dev-env:lint && git add -A && git commit -m "type(scope): message"
 ```
 
-Skip linting for trivial changes (typos, single-line fixes, SOPS-only changes). Pre-commit hooks will catch issues regardless.
+Skip linting for trivial changes (typos, single-line fixes, SOPS-only). Pre-commit hooks catch issues.
 
-## Git Conventions
+**Validation:** Always test changes - check logs, `kubectl rollout restart`, verify end state. Plans should include validation steps.
 
-Use [Conventional Commits](https://www.conventionalcommits.org/):
+**Conventional commits:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
 
-- `feat:` New features
-- `fix:` Bug fixes
-- `chore:` Maintenance
-- `docs:` Documentation
-- `refactor:` Code restructuring
+**After push:** Flux webhooks auto-reconcile - no manual `flux reconcile` needed.
 
-## Environment
+## Codebase Map
 
-- **Platform**: Talos Linux Kubernetes on bare metal
-- **Access**: No SSH - use `talosctl`, Flux, or Kubernetes APIs
-- **Config**: Talos in `talos/`, cloud in `infra/terraform/`
+| Path                       | Purpose                      |
+| -------------------------- | ---------------------------- |
+| `cluster/apps/<ns>/<app>/` | Application deployments      |
+| `cluster/flux/meta/`       | Flux config, cluster secrets |
+| `talos/`                   | Talos machine configs        |
+| `infra/terraform/`         | Cloud infrastructure         |
+| `.taskfiles/`              | Automation scripts           |
+| `docs/`                    | Runbooks                     |
 
-## Documentation
+## Patterns
 
-- [README.md](README.md) - Architecture, troubleshooting matrix
-- [docs/rules/procedures.md](docs/rules/procedures.md) - Ingress, certificates, detailed procedures
-- [docs/](docs/) - Runbooks (bootstrap, maintenance, DR)
+**App structure:**
 
-**After completing a task, review and update documentation:**
+```
+cluster/apps/<namespace>/<app>/
+├── app/
+│   ├── kustomization.yaml
+│   ├── release.yaml        # HelmRelease
+│   ├── values.yaml         # Helm values
+│   └── *-secrets.sops.yaml # Encrypted secrets
+```
 
-- Check if changes affect documented procedures or architecture
-- Update relevant docs to reflect new patterns or configurations
-- Keep this file (CLAUDE.md) in sync with actual practices
+**Variable substitution:** `${EXTERNAL_DOMAIN}`, `${CLUSTER_ISSUER}`, `${TIMEZONE}`
 
-## Context7
-
-- **ALWAYS use Context7 BEFORE web search** for library/tool documentation
-- Auto-fetch docs for common tools (Flux, Kubernetes, Helm, Cilium, Traefik, Rook, etc.)
-- Ask before resolving unfamiliar/niche libraries
-- Match cluster versions when available
+**SOPS naming:** `<name>-secrets.sops.yaml` or `<name>.sops.yaml`
 
 ## Research Priority
 
-When researching or troubleshooting, use tools in this order:
+1. **Context7** - Library/tool docs (always first)
+   - Auto-fetch for: Flux, Kubernetes, Helm, Cilium, Traefik, Rook, Talos, etc.
+   - Ask before resolving unfamiliar/niche libraries
+   - Match cluster versions when available
+2. **Codebase** - Grep, Glob, Read for existing patterns
+3. **GitHub** - Use `gh` CLI or raw GitHub search for issues/PRs/code
+   ```bash
+   gh search issues "<error>" --repo <org>/<repo>
+   gh issue view <number> --repo <org>/<repo>
+   gh pr view <number> --repo <org>/<repo>
+   gh search code "<pattern>" --repo <org>/<repo>
+   ```
+   For raw file content, use WebFetch with `https://raw.githubusercontent.com/...`
+   For error messages, search upstream repo's issues first.
+4. **WebFetch** - Official docs URLs only
+5. **WebSearch** - Last resort
 
-1. **Context7** - For library/tool documentation and API references
-2. **Codebase search** (Grep, Glob, Read) - For existing patterns and implementations
-3. **gh CLI** - For GitHub issues, PRs, discussions, code, and error messages (use `gh search issues`, `gh search code`, `gh issue view`)
-4. **WebFetch** - For specific URLs (official docs, READMEs) - NOT for GitHub content
-5. **WebSearch** - Last resort when other tools don't have the answer
+## Documentation
 
-**GitHub Research Rules:**
+- [README.md](README.md) - Architecture overview
+- [docs/rules/procedures.md](docs/rules/procedures.md) - Ingress, certificates
+- [docs/](docs/) - Bootstrap, maintenance, DR runbooks
 
-- **NEVER use WebSearch or WebFetch for GitHub** - Always use `gh` CLI for GitHub issues, PRs, code, and discussions
-- Use `gh search issues "<query>" --repo <org>/<repo>` for issues
-- Use `gh search code "<query>" --repo <org>/<repo>` for code
-- Use `gh issue view <number> --repo <org>/<repo>` for issue details
-- Use `gh pr view <number> --repo <org>/<repo>` for PR details
-- For raw file content, use WebFetch with `https://raw.githubusercontent.com/...`
-
-For error messages, search the upstream repo's issues first: `gh search issues "<error message>" --repo <org>/<repo>`
+After completing tasks, review and update relevant docs for accuracy.
