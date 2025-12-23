@@ -3,15 +3,15 @@
   description: ["Custom datasources for non-standard package sources"],
   customDatasources: {
     // ArtifactHub Headlamp plugins datasource
-    // Usage: datasource=custom.artifacthub-headlamp depName=<repo>/<plugin>
-    // Example: depName=headlamp-plugins/headlamp_flux
+    // API path: /api/v1/packages/headlamp/<repo>/<plugin>
+    // depName format: <repo>/<plugin> (e.g., headlamp-plugins/headlamp_flux)
     "artifacthub-headlamp": {
       defaultRegistryUrlTemplate: "https://artifacthub.io/api/v1/packages/headlamp/{{packageName}}",
       format: "json",
       // Transform ArtifactHub response to Renovate format
       // ArtifactHub returns: { "available_versions": [{ "version": "0.5.0", ... }] }
       transformTemplates: [
-        '{ "releases": available_versions.{ "version": version } }',
+        '{ "releases": $map(available_versions, function($v) { { "version": $v.version } }) }',
       ],
     },
   },

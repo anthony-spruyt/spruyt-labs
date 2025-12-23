@@ -250,7 +250,10 @@ spec:
 ## Documentation
 
 - [README.md](README.md) - Architecture overview
+- [docs/rules/core_rules.md](docs/rules/core_rules.md) - Core operational standards
+- [docs/rules/documentation.md](docs/rules/documentation.md) - Documentation standards
 - [docs/rules/procedures.md](docs/rules/procedures.md) - Ingress, certificates
+- [docs/rules/renovate.md](docs/rules/renovate.md) - Renovate config, testing, troubleshooting
 - [docs/](docs/) - Bootstrap, maintenance, DR runbooks
 
 After completing tasks, review and update relevant docs for accuracy.

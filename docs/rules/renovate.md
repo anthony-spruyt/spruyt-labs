@@ -39,21 +39,35 @@ Edit `.github/renovate/groups.json5` to group related packages:
 - **Stability**: Adjust `minimumReleaseAge` for critical components (Cilium, cert-manager)
 - **Coverage**: Add regex managers for custom dependency formats
 
-## Validation
+## Testing Config Changes
+
+### Before Committing
 
 ```bash
-# Validate configuration syntax
-renovate-config-validator .github/renovate/*.json5
+# Validate all renovate configs
+renovate-config-validator --strict .github/renovate.json5
+
+# Validate specific config files
+renovate-config-validator --strict .github/renovate/customDatasources.json5
 ```
+
+### After Pushing
+
+1. Trigger a manual Renovate run via the Dependency Dashboard issue
+2. Check the [Mend Renovate logs](https://developer.mend.io/github/anthony-spruyt/spruyt-labs) for errors
+3. Verify expected PRs are created or dependencies are detected
 
 ## Troubleshooting
 
-| Issue                       | Solution                                        |
-| --------------------------- | ----------------------------------------------- |
-| Dependencies not detected   | Check fileMatch patterns cover the file paths   |
-| Grouping not working        | Verify matchPackagePatterns regex syntax        |
-| Updates blocked             | Check minimumReleaseAge or Dependency Dashboard |
-| Cluster issues after update | Revert merge commit, increase minimumReleaseAge |
+| Issue                          | Solution                                         |
+| ------------------------------ | ------------------------------------------------ |
+| Dependencies not detected      | Check fileMatch patterns cover the file paths    |
+| Grouping not working           | Verify matchPackagePatterns regex syntax         |
+| Updates blocked                | Check minimumReleaseAge or Dependency Dashboard  |
+| Cluster issues after update    | Revert merge commit, increase minimumReleaseAge  |
+| `Failed to look up custom.*`   | Check transform template or URL issues           |
+| `Response has failed validation` | JSONata output format wrong                    |
+| `Expected array, received object` | Use `$map()` for array outputs in transforms |
 
 ## Related
 
