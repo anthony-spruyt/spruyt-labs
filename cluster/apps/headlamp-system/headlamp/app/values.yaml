@@ -7,10 +7,10 @@ deploymentAnnotations:
 
 config:
   watchPlugins: true
-  # Skip OIDC TLS verify - workaround for chart bug where empty CA cert triggers error
+  # Provide system CA bundle to fix empty CA cert bug in chart
   # See: https://github.com/kubernetes-sigs/headlamp/issues/3884
   extraArgs:
-    - "-oidc-skip-tls-verify"
+    - "-oidc-ca-file=/etc/ssl/certs/ca-certificates.crt"
   oidc:
     secret:
       create: false
