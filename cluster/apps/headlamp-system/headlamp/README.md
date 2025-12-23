@@ -87,18 +87,24 @@ Common errors:
 
 ## OIDC Configuration
 
-Uses Authentik blueprint for SSO. The chart's native `externalSecret` feature syncs credentials from `authentik-system` namespace.
+Uses Authentik blueprint for SSO. The chart's `externalSecret` feature requires ALL OIDC config in the secret (not just credentials). The ExternalSecret uses a template to combine synced secrets with static OIDC config.
 
 ### ExternalSecret Flow
 
 ```text
-authentik-system/authentik-headlamp-oauth (SOPS secret)
+authentik-system/authentik-headlamp-oauth (SOPS: clientID, clientSecret)
     |
     v (RBAC: headlamp-oauth-reader)
-headlamp-system/headlamp-oauth-credentials (synced secret)
+headlamp-system/headlamp-oauth-credentials (ExternalSecret template)
+    |
+    +-- OIDC_CLIENT_ID: synced from authentik
+    +-- OIDC_CLIENT_SECRET: synced from authentik
+    +-- OIDC_ISSUER_URL: static in template
+    +-- OIDC_SCOPES: static in template
+    +-- OIDC_CALLBACK_URL: static in template
     |
     v (chart externalSecret feature)
-Headlamp pods (OIDC env vars)
+Headlamp pods (envFrom secretRef)
 ```
 
 ### Required Authentik Configuration

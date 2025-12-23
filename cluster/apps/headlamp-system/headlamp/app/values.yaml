@@ -10,12 +10,11 @@ config:
   oidc:
     secret:
       create: false
+    # Chart's externalSecret feature requires ALL OIDC config in the secret
+    # See headlamp-oauth-external-secret.yaml for full config
     externalSecret:
       enabled: true
       name: headlamp-oauth-credentials
-    issuerURL: https://auth.${EXTERNAL_DOMAIN}/application/o/headlamp/
-    scopes: openid profile email
-    callbackURL: https://headlamp.lan.${EXTERNAL_DOMAIN}/oidc/callback
 
 pluginsManager:
   enabled: true
