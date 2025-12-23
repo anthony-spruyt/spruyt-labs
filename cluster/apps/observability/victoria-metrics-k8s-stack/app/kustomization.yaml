@@ -15,10 +15,47 @@ configMapGenerator:
     namespace: observability
     files:
       - values.yaml
+  # Custom Ceph dashboard (kept for custom metrics/layout)
   - name: grafana-dashboard-ceph-cluster
     namespace: observability
     files:
       - dashboards/ceph-cluster.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  # Official Ceph dashboards (required for Ceph Dashboard embedding)
+  - name: grafana-dashboard-ceph-official-cluster
+    namespace: observability
+    files:
+      - dashboards/ceph-official-ceph-cluster.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-hosts
+    namespace: observability
+    files:
+      - dashboards/ceph-official-hosts-overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-osds
+    namespace: observability
+    files:
+      - dashboards/ceph-official-osds-overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-pools
+    namespace: observability
+    files:
+      - dashboards/ceph-official-pool-overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-rgw
+    namespace: observability
+    files:
+      - dashboards/ceph-official-radosgw-overview.json
     options:
       labels:
         grafana_dashboard: "1"
