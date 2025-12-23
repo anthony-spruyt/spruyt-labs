@@ -730,7 +730,13 @@
         "hide": 0,
         "label": "Data Source",
         "name": "datasource",
-        "options": [],
+        "options": [
+          {
+            "selected": true,
+            "text": "VictoriaMetrics",
+            "value": "P4169E866C3094E38"
+          }
+        ],
         "query": "prometheus",
         "refresh": 1,
         "regex": "",
