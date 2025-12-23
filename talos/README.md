@@ -182,7 +182,7 @@ Detailed provisioning guidance lives in
 2. Perform a dry run to surface API deprecations and preview the upgrade plan:
 
    ```bash
-   talosctl --nodes {CP_IP} upgrade-k8s --to v1.34.3 --dry-run
+   talosctl --nodes {CP_IP} upgrade-k8s --to v1.35.0 --dry-run
    ```
 
    - Replace `{CP_IP}` with the control-plane node you are validating.
@@ -191,7 +191,7 @@ Detailed provisioning guidance lives in
 3. Execute the upgrade after the dry run succeeds:
 
    ```bash
-   talosctl --nodes {CP_IP} upgrade-k8s --to v1.34.3
+   talosctl --nodes {CP_IP} upgrade-k8s --to v1.35.0
    ```
 
    - Talos orchestrates control-plane members sequentially and updates kube-proxy/kubelet while `--upgrade-kubelet` remains enabled (default).
@@ -298,9 +298,9 @@ Rotate secrets with `task talos:gen` if drift stems from credential mismatch.
 
 | Hardware class            | Schematic ID                                                       | SecureBoot ISO                                                                                                                                  | Upgrade image                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Bossgame E2 control plane | `7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6` | [Download](https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.6/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6:v1.11.6` |
+| Bossgame E2 control plane | `6a1b85c0a7566fea42c760572df8d1145aee288738dc503525ea350813823fdc` | [Download](https://factory.talos.dev/image/6a1b85c0a7566fea42c760572df8d1145aee288738dc503525ea350813823fdc/v1.12.0/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/6a1b85c0a7566fea42c760572df8d1145aee288738dc503525ea350813823fdc:v1.12.0` |
 
-Your image schematic ID is: `7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6`
+Your image schematic ID is: `6a1b85c0a7566fea42c760572df8d1145aee288738dc503525ea350813823fdc`
 
 ```yaml
 customization:
@@ -330,9 +330,9 @@ customization:
       - siderolabs/util-linux-tools
 ```
 
-| MS-01 worker | `7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf` | [Download](https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.6/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf:v1.11.6` |
+| MS-01 worker | `c234f5c7b2306fcc8fd58219d0e14ca4b6044f01de464924c5eefbd1f5bdb2dd` | [Download](https://factory.talos.dev/image/c234f5c7b2306fcc8fd58219d0e14ca4b6044f01de464924c5eefbd1f5bdb2dd/v1.12.0/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/c234f5c7b2306fcc8fd58219d0e14ca4b6044f01de464924c5eefbd1f5bdb2dd:v1.12.0` |
 
-Your image schematic ID is: `7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf`
+Your image schematic ID is: `c234f5c7b2306fcc8fd58219d0e14ca4b6044f01de464924c5eefbd1f5bdb2dd`
 
 ```yaml
 customization:
@@ -363,7 +363,7 @@ customization:
 <!-- markdownlint-enable MD013 -->
 
 Additional asset: SecureBoot UKI –
-<https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.11.6/metal-amd64-secureboot-uki.efi>
+<https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.12.0/metal-amd64-secureboot-uki.efi>
 
 ## References
 

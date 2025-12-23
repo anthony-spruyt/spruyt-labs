@@ -426,14 +426,14 @@ ceph osd unset norecover
 
 | Hardware Class            | Schematic ID                                                       | SecureBoot ISO                                                                                                                                  | Upgrade Image                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Bossgame E2 control plane | `7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6` | [Download](https://factory.talos.dev/image/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6/v1.11.6/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/7545fb734ed1aedc102a971aa833ae3927c260bd6cc70744469001bee8f8e1b6:v1.11.6` |
-| MS-01 worker              | `7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf` | [Download](https://factory.talos.dev/image/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf/v1.11.6/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/7d51373a99be01395b499f21e0cdf3d27cca57c3feab356c20efe96a2df341bf:v1.11.6` |
+| Bossgame E2 control plane | `6a1b85c0a7566fea42c760572df8d1145aee288738dc503525ea350813823fdc` | [Download](https://factory.talos.dev/image/6a1b85c0a7566fea42c760572df8d1145aee288738dc503525ea350813823fdc/v1.12.0/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/6a1b85c0a7566fea42c760572df8d1145aee288738dc503525ea350813823fdc:v1.12.0` |
+| MS-01 worker              | `c234f5c7b2306fcc8fd58219d0e14ca4b6044f01de464924c5eefbd1f5bdb2dd` | [Download](https://factory.talos.dev/image/c234f5c7b2306fcc8fd58219d0e14ca4b6044f01de464924c5eefbd1f5bdb2dd/v1.12.0/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/c234f5c7b2306fcc8fd58219d0e14ca4b6044f01de464924c5eefbd1f5bdb2dd:v1.12.0` |
 
-Reference the Talos SecureBoot documentation for ISO usage: <https://www.talos.dev/v1.11/talos-guides/install/bare-metal-platforms/secureboot/>
+Reference the Talos SecureBoot documentation for ISO usage: <https://www.talos.dev/v1.12/talos-guides/install/bare-metal-platforms/secureboot/>
 
 Additional assets:
 
-- SecureBoot UKI: <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.11.6/metal-amd64-secureboot-uki.efi>
+- SecureBoot UKI: <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.12.0/metal-amd64-secureboot-uki.efi>
 
 ## Secrets and Credentials
 

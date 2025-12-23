@@ -284,6 +284,6 @@ talosctl etcd snapshot <snapshot-path>
 
 ## References
 
-- [Talos Upgrade Guide](https://www.talos.dev/v1.11/talos-guides/upgrading-talos/)
+- [Talos Upgrade Guide](https://www.talos.dev/v1.12/talos-guides/upgrading-talos/)
 - [Kubernetes Upgrade Guide](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
 - [Ceph Maintenance](https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/)

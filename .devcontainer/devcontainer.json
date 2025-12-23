@@ -14,7 +14,7 @@
     "ghcr.io/devcontainers-extra/features/sops": {},
     "ghcr.io/devcontainers-extra/features/helmfile": {},
     "ghcr.io/devcontainers/features/kubectl-helm-minikube": {
-      "version": "v1.34.3",
+      "version": "v1.35.0",
       "helm": "v4.0.4",
       "minikube": "none"
     },
