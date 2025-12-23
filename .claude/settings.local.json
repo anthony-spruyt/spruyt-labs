@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "deny": ["Bash(kubectl get secret:*)", "Bash(kubectl describe secret:*)"],
+    "deny": ["Bash(curl:*)", "Bash(ssh:*)", "Bash(sudo:*)", "Bash(wget:*)"],
     "allow": [
       "mcp__plugin_context7_context7__get-library-docs",
       "mcp__plugin_context7_context7__resolve-library-id",
@@ -27,8 +27,6 @@
       "Bash(grep:*)",
       "Bash(kubectl api-resources:*)",
       "Bash(kubectl auth can-i:*)",
-      "Bash(kubectl describe:*)",
-      "Bash(kubectl get:*)",
       "Bash(kubectl logs:*)",
       "Bash(kubectl rollout:*)",
       "Bash(kubectl version:*)",
