@@ -16,3 +16,4 @@ includes:
   sops: .taskfiles/sops/tasks.yaml
   talos: .taskfiles/talos/tasks.yaml
   terraform: .taskfiles/terraform/tasks.yaml
+  test: .taskfiles/test/tasks.yaml

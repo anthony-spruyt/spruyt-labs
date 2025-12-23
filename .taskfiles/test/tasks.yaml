@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  testDiscordAlertScript: "{{ .ROOT_DIR }}/.taskfiles/test/scripts/test-discord-alert.sh"
+
+tasks:
+  discord-alert:
+    desc: Tests Discord alerting by creating a crashlooping pod (triggers KubePodCrashLooping after 15min)
+    cmds:
+      - bash {{ .testDiscordAlertScript }}
+
+  discord-alert-cleanup:
+    desc: Cleans up all alert-test pods
+    cmds:
+      - |
+        for pod in $(kubectl get pods --no-headers -o custom-columns=":metadata.name" 2>/dev/null | grep "^alert-test-" || true); do
+          echo "Deleting pod: $pod"
+          kubectl delete pod "$pod" --ignore-not-found=true
+        done
+        echo "Cleanup complete"
