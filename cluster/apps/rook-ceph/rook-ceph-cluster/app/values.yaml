@@ -69,6 +69,9 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
     # the corresponding "backend protocol" annotation(s) for your ingress controller of choice)
     # NOTE: SSL must be enabled for SAML SSO to work correctly - python-saml validates the request protocol
     ssl: true
+    # Prometheus endpoint for dashboard metrics (VictoriaMetrics is Prometheus-compatible)
+    prometheusEndpoint: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local:8428
+    prometheusEndpointSSLVerify: false
   network:
     connections:
       encryption:

@@ -16,6 +16,7 @@
       "Bash(git -C /workspaces/spruyt-labs add -A)",
       "Bash(git -C /workspaces/spruyt-labs diff:*)",
       "Bash(git -C /workspaces/spruyt-labs log:*)",
+      "Bash(git -C /workspaces/spruyt-labs show:*)",
       "Bash(git -C /workspaces/spruyt-labs status:*)",
       "Bash(git status:*)",
       "Bash(kubectl api-resources:*)",

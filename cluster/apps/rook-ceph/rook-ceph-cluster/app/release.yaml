@@ -114,6 +114,19 @@ spec:
                           echo "SAML SSO configured successfully"
                         fi
                         ceph dashboard sso status
+
+                        # Configure Grafana and Alertmanager endpoints for dashboard integration
+                        # Note: Prometheus is configured via CephCluster CRD (prometheusEndpoint)
+                        # Grafana/Alertmanager must be set via CLI as they're not supported in the CRD
+                        echo "Configuring Grafana and Alertmanager endpoints..."
+                        ceph dashboard set-alertmanager-api-host 'http://vmalertmanager-victoria-metrics-k8s-stack.observability.svc.cluster.local:9093'
+                        ceph dashboard set-grafana-api-url 'http://victoria-metrics-k8s-stack-grafana.observability.svc.cluster.local:80'
+                        ceph dashboard set-grafana-frontend-api-url 'https://grafana.lan.${EXTERNAL_DOMAIN}'
+                        # Disable SSL verification for internal cluster services (HTTP)
+                        ceph dashboard set-grafana-api-ssl-verify false
+                        ceph dashboard set-alertmanager-api-ssl-verify false
+                        echo "Grafana and Alertmanager endpoints configured"
+
                         echo "Configuration complete. Sleeping..."
                         sleep infinity
                     resources:
