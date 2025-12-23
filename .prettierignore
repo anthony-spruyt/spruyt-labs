@@ -1,2 +1,3 @@
 *.sops.*
 mcp.json
+*.md

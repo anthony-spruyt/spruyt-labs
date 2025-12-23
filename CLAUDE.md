@@ -73,7 +73,7 @@ kubectl exec <pod> -- <verify-command>
 
 **App structure:**
 
-```
+```text
 cluster/apps/<namespace>/<app>/
 ├── app/
 │   ├── kustomization.yaml
