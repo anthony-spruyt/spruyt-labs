@@ -138,6 +138,10 @@ grafana:
   grafana.ini:
     server:
       root_url: https://grafana.lan.${EXTERNAL_DOMAIN}
+    security:
+      # Allow Grafana to be embedded in iframes (required for Ceph Dashboard integration)
+      allow_embedding: true
+      cookie_samesite: disabled
     auth:
       signout_redirect_url: https://auth.${EXTERNAL_DOMAIN}/application/o/grafana/end-session/
       disable_login_form: true
