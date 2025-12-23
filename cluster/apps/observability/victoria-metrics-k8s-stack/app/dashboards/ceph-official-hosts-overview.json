@@ -698,11 +698,7 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": true,
-          "text": "VictoriaMetrics",
-          "value": "VictoriaMetrics"
-        },
+        "current": {},
         "hide": 0,
         "label": "Data Source",
         "name": "datasource",
