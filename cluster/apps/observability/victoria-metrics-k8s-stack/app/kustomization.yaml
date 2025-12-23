@@ -59,5 +59,26 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-rbd-overview
+    namespace: observability
+    files:
+      - dashboards/ceph-official-rbd-overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-rbd-details
+    namespace: observability
+    files:
+      - dashboards/ceph-official-rbd-details.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-pool-detail
+    namespace: observability
+    files:
+      - dashboards/ceph-official-pool-detail.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml
