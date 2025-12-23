@@ -2,6 +2,64 @@
 
 Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosctl`, Flux, or Kubernetes APIs.
 
+## Research Priority (ALWAYS FOLLOW THIS ORDER)
+
+> **NEVER skip steps. NEVER use WebSearch before exhausting other options.**
+
+| Step | Tool         | Use For                | Example                                            |
+| ---- | ------------ | ---------------------- | -------------------------------------------------- |
+| 1    | **Context7** | Library/tool docs      | `resolve-library-id` → `get-library-docs`          |
+| 2    | **GitHub**   | Issues, PRs, code      | `gh search issues "error" --repo org/repo`         |
+| 3    | **Codebase** | Existing patterns      | Grep, Glob, Read                                   |
+| 4    | **WebFetch** | Official docs URLs     | raw.githubusercontent.com, allowed docs.\* domains |
+| 5    | **WebSearch**| LAST RESORT ONLY       | Only after steps 1-4 fail                          |
+
+### Research Decision Flow
+
+1. **Library/tool question?** → Context7 first (`resolve-library-id`)
+   - Found → `get-library-docs`
+   - Not found → proceed to step 2
+2. **Has GitHub repo?** → `gh` CLI
+   - `gh search issues "topic" --repo org/repo`
+   - `gh issue list --repo org/repo --search "topic"`
+   - For raw files: WebFetch `raw.githubusercontent.com/...`
+3. **Official docs URL known?** → WebFetch (allowed domains only)
+4. **All above failed?** → WebSearch (state why others failed first)
+
+### Context7 Auto-Fetch Criteria
+
+Auto-fetch (no need to ask):
+
+- Core infrastructure: Flux, Kubernetes, Helm, Cilium, Traefik, Rook, Talos
+- Deployed in cluster: check `cluster/apps/` for what's installed
+- Common DevOps tools: Terraform, Ansible, cert-manager, external-dns
+
+Ask before resolving:
+
+- Niche/unfamiliar libraries
+- Ambiguous names (multiple projects with same name)
+- Tools not in above categories
+
+### When Context7 Doesn't Have the Library
+
+1. Check GitHub → `gh issue list --repo org/repo --search "topic"`
+2. Fetch README → WebFetch `raw.githubusercontent.com/.../README.md`
+3. Only then → WebSearch, explaining: "Context7 and GitHub don't have X, using web search"
+
+### Wrong vs Correct Research Pattern
+
+```text
+# BAD: Jumping to WebSearch
+User: "Does Technitium support SSO?"
+Wrong: WebSearch("Technitium SSO")  ← NEVER do this first
+
+# CORRECT:
+1. Context7: resolve-library-id("Technitium")  ← Not found
+2. GitHub: gh issue list --repo TechnitiumSoftware/DnsServer --search "SSO"
+3. WebFetch: raw.githubusercontent.com/.../README.md
+4. WebSearch: Only if all above fail
+```
+
 ## Hard Rules
 
 1. **No secrets output** - Never run commands that display credentials
@@ -13,13 +71,50 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 7. **No reading live secrets** - Never `kubectl get secret -o yaml/jsonpath`
 8. **Taskfile first** - Prefer `task` commands over raw CLI
 
-## Secrets
+## Secrets (NEVER EXPOSE)
 
-- Never output credentials (access keys, passwords, tokens)
-- Never `echo "$SECRET" | command` - secrets may appear in logs
-- Never log secret values to stdout/stderr
-- Check existence, not values: count users, verify resources exist
-- Mount secrets as files, not env vars when possible
+> **If in doubt, DON'T. Ask user before any command that might expose secrets.**
+
+### Forbidden Actions
+
+| Action                                      | Why Dangerous                        |
+| ------------------------------------------- | ------------------------------------ |
+| `kubectl get secret -o yaml`                | Outputs base64-encoded secrets       |
+| `kubectl get secret -o jsonpath='{.data}'`  | Same as above                        |
+| `sops -d <file>`                            | Decrypts to stdout                   |
+| `echo "$SECRET" \| command`                 | Secrets appear in process list/logs  |
+| Reading `*.sops.yaml` files                 | Blocked in settings, don't try       |
+| Reading `talos/clusterconfig/*`             | Contains machine secrets             |
+
+### Safe Alternatives
+
+| Instead of...                    | Do this...                                         |
+| -------------------------------- | -------------------------------------------------- |
+| Reading secret values            | Check existence: `kubectl get secret <name>`       |
+| Counting secret keys             | `kubectl get secret <name> -o json \| jq '.data \| keys'` |
+| Verifying secret has data        | `kubectl get secret <name> -o json \| jq '.data \| length'` |
+| Checking if user exists          | Count entries, don't list names                    |
+| Debugging auth issues            | Check pod logs, not secret contents                |
+
+### SOPS File Handling
+
+- **Never decrypt** SOPS files via CLI
+- **Edit pattern**: Use `sops <file>` (opens encrypted editor) - user does this manually
+- **View structure**: Read encrypted file to see key names (values are encrypted)
+- **Create new**: User creates manually, Claude provides template with placeholders
+
+### Wrong vs Correct Secret Pattern
+
+```text
+# BAD: Exposing secret values
+kubectl get secret postgres-creds -o yaml        ← NEVER
+kubectl get secret postgres-creds -o jsonpath='{.data.password}' | base64 -d  ← NEVER
+
+# CORRECT: Check existence without values
+kubectl get secret postgres-creds                ← OK (just shows name/type/age)
+kubectl get secret postgres-creds -o json | jq '.data | keys'  ← OK (shows key names only)
+kubectl get secret postgres-creds -o json | jq '.data | length'  ← OK (count of keys)
+```
 
 ## Workflow
 
@@ -91,25 +186,6 @@ cluster/apps/<namespace>/<app>/
 - Use Context7 or WebFetch with raw.githubusercontent.com to find correct key paths
 - Never assume key names
 - Verify the chart version matches when checking upstream docs
-
-## Research Priority
-
-1. **Context7** - Library/tool docs (always first)
-   - Auto-fetch for: Flux, Kubernetes, Helm, Cilium, Traefik, Rook, Talos, etc.
-   - Ask before resolving unfamiliar/niche libraries
-   - Match cluster versions when available
-2. **Codebase** - Grep, Glob, Read for existing patterns
-3. **GitHub** - Use `gh` CLI or raw GitHub search for issues/PRs/code
-   ```bash
-   gh search issues "<error>" --repo <org>/<repo>
-   gh issue view <number> --repo <org>/<repo>
-   gh pr view <number> --repo <org>/<repo>
-   gh search code "<pattern>" --repo <org>/<repo>
-   ```
-   For raw file content, use WebFetch with `https://raw.githubusercontent.com/...`
-   For error messages, search upstream repo's issues first.
-4. **WebFetch** - Official docs URLs only
-5. **WebSearch** - Last resort
 
 ## Documentation
 
