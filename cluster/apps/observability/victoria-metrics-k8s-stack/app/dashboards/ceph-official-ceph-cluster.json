@@ -1293,22 +1293,12 @@
         "hide": 0,
         "label": null,
         "name": "datasource",
-        "options": [
-          {
-            "selected": true,
-            "text": "VictoriaMetrics",
-            "value": "P4169E866C3094E38"
-          }
-        ],
+        "options": [],
         "query": "prometheus",
         "refresh": 1,
         "regex": "",
         "type": "datasource",
-        "current": {
-          "selected": true,
-          "text": "VictoriaMetrics",
-          "value": "P4169E866C3094E38"
-        }
+        "current": {}
       },
       {
         "datasource": {

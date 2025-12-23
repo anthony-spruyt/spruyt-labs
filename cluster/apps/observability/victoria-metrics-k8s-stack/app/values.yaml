@@ -127,6 +127,15 @@ grafana:
       enabled: true
   persistence:
     enabled: false
+  # Additional datasources for Ceph Dashboard compatibility
+  # The Ceph Dashboard hardcodes var-datasource=Dashboard1 in iframe URLs
+  # See: https://github.com/ceph/ceph/blob/main/src/pybind/mgr/dashboard/frontend/src/app/shared/components/grafana/grafana.component.ts
+  additionalDataSources:
+    - name: Dashboard1
+      type: prometheus
+      url: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local.:8428
+      access: proxy
+      isDefault: false
   plugins:
     - victoriametrics-metrics-datasource
     - victoriametrics-logs-datasource
