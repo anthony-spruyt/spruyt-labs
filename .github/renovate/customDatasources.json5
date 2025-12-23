@@ -11,7 +11,7 @@
       // Transform ArtifactHub response to Renovate format
       // ArtifactHub returns: { "available_versions": [{ "version": "0.5.0", ... }] }
       transformTemplates: [
-        '{ "releases": $map(available_versions, function($v) { { "version": $v.version } }) }',
+        '{ "releases": [$map(available_versions, function($v) { { "version": $v.version } })] }',
       ],
     },
   },
