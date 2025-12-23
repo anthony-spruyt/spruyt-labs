@@ -2,7 +2,7 @@
 
 ## Overview
 
-CNCF/kubernetes-sigs Kubernetes dashboard with plugins for GitOps and certificate visualization. Provides in-cluster UI for viewing Flux Kustomizations, HelmReleases, Sources, and cert-manager resources.
+CNCF/kubernetes-sigs Kubernetes dashboard with plugins for GitOps, certificate, and metrics visualization. Provides in-cluster UI for viewing Flux resources, cert-manager certificates, and pod/workload metrics.
 
 ## Prerequisites
 
@@ -63,10 +63,13 @@ pluginsManager:
 
 ### Available Plugins
 
-| Plugin       | ArtifactHub URL                                                                    | Description            |
-| ------------ | ---------------------------------------------------------------------------------- | ---------------------- |
-| Flux         | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux`          | GitOps visualization   |
-| cert-manager | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager`  | Certificate management |
+| Plugin     | ArtifactHub URL                                                                           | Description            |
+| ---------- | ----------------------------------------------------------------------------------------- | ---------------------- |
+| Flux       | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux`                 | GitOps visualization   |
+| cert-manager | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager`       | Certificate management |
+| Prometheus | `https://artifacthub.io/packages/headlamp/headlamp-plugins/prometheus_headlamp_plugin`   | Metrics visualization  |
+
+**Note**: The Prometheus plugin works with VictoriaMetrics (Prometheus-compatible). It adds CPU/memory charts to pod and workload detail views.
 
 ### Plugin Installation Troubleshooting
 
