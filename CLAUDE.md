@@ -62,14 +62,15 @@ Wrong: WebSearch("Technitium SSO")  ← NEVER do this first
 
 ## Hard Rules
 
-1. **No secrets output** - Never run commands that display credentials
-2. **Declarative only** - No manual kubectl patches; use Flux, Terraform, Talos configs
-3. **No git push** - User pushes manually (SSH passkey requires interactive auth)
-4. **No git amend** - Always new commits
-5. **No SOPS decrypt** - Never decrypt secrets via CLI
-6. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
-7. **No reading live secrets** - Never `kubectl get secret -o yaml/jsonpath`
-8. **Taskfile first** - Prefer `task` commands over raw CLI
+1. **No secrets output** - Never run commands that display credentials or env var values
+2. **No env var values** - Never `echo $VAR`, `printenv`, or `env | grep` - list keys only
+3. **Declarative only** - No manual kubectl patches; use Flux, Terraform, Talos configs
+4. **No git push** - User pushes manually (SSH passkey requires interactive auth)
+5. **No git amend** - Always new commits
+6. **No SOPS decrypt** - Never decrypt secrets via CLI
+7. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
+8. **No reading live secrets** - Never `kubectl get secret -o yaml/jsonpath`
+9. **Taskfile first** - Prefer `task` commands over raw CLI
 
 ## Secrets (NEVER EXPOSE)
 
@@ -83,8 +84,29 @@ Wrong: WebSearch("Technitium SSO")  ← NEVER do this first
 | `kubectl get secret -o jsonpath='{.data}'`  | Same as above                        |
 | `sops -d <file>`                            | Decrypts to stdout                   |
 | `echo "$SECRET" \| command`                 | Secrets appear in process list/logs  |
+| `echo "$VAR"` or `printenv VAR`             | May expose secret env vars           |
+| `env \| grep` or `printenv`                 | Lists all env vars including secrets |
 | Reading `*.sops.yaml` files                 | Blocked in settings, don't try       |
 | Reading `talos/clusterconfig/*`             | Contains machine secrets             |
+
+### Environment Variables
+
+**NEVER display environment variable values.** Always check keys first, then decide:
+
+1. **List keys only**: `env | cut -d= -f1` or `printenv | cut -d= -f1`
+2. **Check if key exists**: `test -n "${VAR+x}" && echo "VAR is set"`
+3. **If key looks sensitive** (contains PASSWORD, SECRET, TOKEN, KEY, CREDENTIAL, API, AUTH): **DO NOT echo or display its value**
+
+```text
+# BAD: Displaying env var values
+echo "$AUTHENTIK_SECRET_KEY"           ← NEVER
+printenv POSTGRES_PASSWORD             ← NEVER
+env | grep PASSWORD                    ← NEVER (shows values)
+
+# CORRECT: Check existence without values
+env | cut -d= -f1 | grep -i password   ← OK (keys only)
+test -n "${DB_PASSWORD+x}" && echo "DB_PASSWORD is set"  ← OK
+```
 
 ### Safe Alternatives
 

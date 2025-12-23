@@ -484,6 +484,25 @@ kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
 - Include `offline_access` scope for refresh tokens
 - Callback URL: `https://vaultwarden.${EXTERNAL_DOMAIN}/identity/connect/oidc-signin`
 
+**Headlamp Example Files:**
+
+| Component      | Location                                                  |
+| -------------- | --------------------------------------------------------- |
+| Blueprint      | `app/blueprints/headlamp-sso.yaml`                        |
+| OAuth Secret   | `app/authentik-headlamp-oauth.sops.yaml`                  |
+| Reader RBAC    | `app/headlamp-oauth-rbac.yaml`                            |
+| SecretStore    | `headlamp/app/authentik-secret-store.yaml`                |
+| ExternalSecret | `headlamp/app/headlamp-oauth-external-secret.yaml`        |
+| Rotation RBAC  | `headlamp/app/oauth-rotation-rbac.yaml`                   |
+| User RBAC      | `headlamp/app/user-rbac.yaml`                             |
+
+**Headlamp-specific notes:**
+
+- Requires RS256 signing (HS256 incompatible with Headlamp)
+- Uses kube-apiserver OIDC for user impersonation - see `talos/patches/control-plane/configure-api-server.yaml`
+- Only `client_secret` rotates - `client_id` must be stable (referenced in kube-apiserver config)
+- Requires custom email mapping for `email_verified: true` (see below)
+
 ### Adding SSO via Proxy Provider (Forward-Auth)
 
 For applications that don't support OAuth2 natively (e.g., N8N Community Edition), use Authentik's Proxy Provider with Traefik forward-auth and standalone outposts.
@@ -910,6 +929,52 @@ Parent/child group relationships allow role-based access with inheritance:
 ```
 
 Users in `Grafana Admins` or `Grafana Editors` can access the application. Grafana then maps these groups to internal roles via the `groups` scope.
+
+## Custom Scope Mappings
+
+### email_verified Claim
+
+**Problem**: Some OIDC consumers (notably Kubernetes API server) reject tokens with `email_verified: false`. Authentik v2025.10+ returns `email_verified: false` by default and has **no native email verification system**.
+
+**Solution**: Create a custom scope mapping that overrides the default email mapping:
+
+```yaml
+- id: <app>_email_mapping
+  model: authentik_providers_oauth2.scopemapping
+  identifiers:
+    name: "<App> OAuth Mapping: email verified"
+  attrs:
+    scope_name: email
+    description: "Email claim with email_verified always true"
+    expression: |
+      return {
+          "email": request.user.email,
+          "email_verified": True,
+      }
+```
+
+Then reference it in the provider's `property_mappings` using `!KeyOf` instead of the default email mapping:
+
+```yaml
+property_mappings:
+  - !Find [
+      authentik_core.propertymapping,
+      [name, "authentik default OAuth Mapping: OpenID 'openid'"],
+    ]
+  - !Find [
+      authentik_core.propertymapping,
+      [name, "authentik default OAuth Mapping: OpenID 'profile'"],
+    ]
+  # Use custom email mapping instead of default
+  - !KeyOf <app>_email_mapping
+```
+
+**Security note**: This is safe when:
+1. Users must be in an application-specific group (via `policybinding`)
+2. Authentik has no built-in email verification - the claim is purely informational
+3. Environment is a trusted homelab
+
+**Applications requiring this**: Headlamp (kube-apiserver OIDC rejects `email_verified: false`)
 
 ## Troubleshooting
 

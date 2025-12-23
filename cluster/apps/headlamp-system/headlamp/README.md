@@ -2,7 +2,7 @@
 
 ## Overview
 
-CNCF/kubernetes-sigs Kubernetes dashboard with Flux plugin for GitOps visualization. Provides in-cluster UI for viewing Flux Kustomizations, HelmReleases, and Sources.
+CNCF/kubernetes-sigs Kubernetes dashboard with plugins for GitOps and certificate visualization. Provides in-cluster UI for viewing Flux Kustomizations, HelmReleases, Sources, and cert-manager resources.
 
 ## Prerequisites
 
@@ -63,11 +63,10 @@ pluginsManager:
 
 ### Available Plugins
 
-| Plugin                | ArtifactHub URL                                                             | Description             |
-| --------------------- | --------------------------------------------------------------------------- | ----------------------- |
-| Flux                  | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux`   | GitOps visualization    |
-| cert-manager (future) | `https://artifacthub.io/packages/headlamp/headlamp-plugins/<plugin-name>`   | Certificate management  |
-| Prometheus (future)   | `https://artifacthub.io/packages/headlamp/headlamp-plugins/<plugin-name>`   | Metrics visualization   |
+| Plugin       | ArtifactHub URL                                                                    | Description            |
+| ------------ | ---------------------------------------------------------------------------------- | ---------------------- |
+| Flux         | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux`          | GitOps visualization   |
+| cert-manager | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager`  | Certificate management |
 
 ### Plugin Installation Troubleshooting
 
@@ -104,6 +103,32 @@ oidc-groups-claim: "groups"
 ```
 
 **Important**: The `oidc-client-id` must match the Authentik provider's client_id and remain stable (not rotated).
+
+### email_verified Claim Requirement
+
+**Problem**: Kubernetes API server rejects OIDC tokens with `email_verified: false`. Authentik v2025.10+ returns `email_verified: false` by default and has **no native email verification system**.
+
+**Solution**: The Headlamp SSO blueprint includes a custom scope mapping that returns `email_verified: true`:
+
+```yaml
+# In authentik-system/authentik/app/blueprints/headlamp-sso.yaml
+- id: headlamp_email_mapping
+  model: authentik_providers_oauth2.scopemapping
+  identifiers:
+    name: "Headlamp OAuth Mapping: email verified"
+  attrs:
+    scope_name: email
+    expression: |
+      return {
+          "email": request.user.email,
+          "email_verified": True,
+      }
+```
+
+This is safe because:
+1. Users must be in the "Headlamp Users" group to access the application
+2. Authentik has no built-in email verification - the claim is purely informational
+3. This is a homelab with trusted users
 
 ### User RBAC
 
@@ -177,11 +202,12 @@ The rotation job:
 
    Check plugin container logs. Plugin name must be lowercase alphanumeric (no `@` org prefix), source must be ArtifactHub URL.
 
-2. **OIDC login fails**
+2. **OIDC login fails / redirect loop**
 
    - Verify ExternalSecret is synced: `kubectl get es -n headlamp-system`
    - Check Authentik blueprint applied: look for "Headlamp SSO" in Authentik admin
    - Verify certificate is ready: `kubectl get cert -n headlamp-system`
+   - Check kube-apiserver logs for `email_verified` errors - if present, ensure custom email mapping is in blueprint
 
 3. **Kubeconfig errors in logs**
 
