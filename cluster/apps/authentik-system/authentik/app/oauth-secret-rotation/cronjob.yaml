@@ -31,18 +31,17 @@ spec:
                   # Configuration
                   AUTHENTIK_URL="http://authentik-server.authentik-system"
 
+                  # Rotate client_secret only (client_id stays stable)
                   rotate_oauth() {
                     PROVIDER_NAME="$$1"
                     SECRET_NAME="$$2"
-                    ID_KEY="$$3"
-                    SECRET_KEY="$$4"
-                    EXTERNAL_SECRET_NAME="$$5"
-                    EXTERNAL_SECRET_NAMESPACE="$$6"
+                    SECRET_KEY="$$3"
+                    EXTERNAL_SECRET_NAME="$$4"
+                    EXTERNAL_SECRET_NAMESPACE="$$5"
 
-                    echo "=== Rotating OAuth for $${PROVIDER_NAME} ==="
+                    echo "=== Rotating OAuth client_secret for $${PROVIDER_NAME} ==="
 
-                    echo "Generating new OAuth credentials..."
-                    NEW_CLIENT_ID=$$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+                    echo "Generating new client_secret..."
                     NEW_CLIENT_SECRET=$$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
 
                     echo "Finding Authentik OAuth2 provider ID for $${PROVIDER_NAME}..."
@@ -59,18 +58,17 @@ spec:
                     fi
                     echo "Found provider ID: $${PROVIDER_ID}"
 
-                    echo "Updating Authentik OAuth2 provider credentials..."
+                    echo "Updating Authentik OAuth2 provider client_secret..."
                     curl -sf -X PATCH \
                       -H "Authorization: Bearer $${AUTHENTIK_API_TOKEN}" \
                       -H "Content-Type: application/json" \
-                      -d "{\"client_id\": \"$${NEW_CLIENT_ID}\", \"client_secret\": \"$${NEW_CLIENT_SECRET}\"}" \
+                      -d "{\"client_secret\": \"$${NEW_CLIENT_SECRET}\"}" \
                       "$${AUTHENTIK_URL}/api/v3/providers/oauth2/$${PROVIDER_ID}/" > /dev/null
 
                     echo "Authentik provider updated successfully"
 
                     echo "Patching $${SECRET_NAME} secret..."
                     kubectl patch secret "$${SECRET_NAME}" -n authentik-system --type='json' -p="[
-                      {\"op\": \"replace\", \"path\": \"/data/$${ID_KEY}\", \"value\": \"$$(echo -n $$NEW_CLIENT_ID | base64 -w0)\"},
                       {\"op\": \"replace\", \"path\": \"/data/$${SECRET_KEY}\", \"value\": \"$$(echo -n $$NEW_CLIENT_SECRET | base64 -w0)\"}
                     ]"
 
@@ -83,13 +81,13 @@ spec:
                   }
 
                   # Rotate Grafana OAuth
-                  rotate_oauth "Grafana" "authentik-grafana-oauth" "GRAFANA_OAUTH_CLIENT_ID" "GRAFANA_OAUTH_CLIENT_SECRET" "grafana-oauth-credentials" "observability"
+                  rotate_oauth "Grafana" "authentik-grafana-oauth" "GRAFANA_OAUTH_CLIENT_SECRET" "grafana-oauth-credentials" "observability"
 
                   # Rotate Vaultwarden OAuth
-                  rotate_oauth "Vaultwarden" "authentik-vaultwarden-oauth" "VAULTWARDEN_OAUTH_CLIENT_ID" "VAULTWARDEN_OAUTH_CLIENT_SECRET" "vaultwarden-oauth-credentials" "vaultwarden"
+                  rotate_oauth "Vaultwarden" "authentik-vaultwarden-oauth" "VAULTWARDEN_OAUTH_CLIENT_SECRET" "vaultwarden-oauth-credentials" "vaultwarden"
 
                   # Rotate Headlamp OAuth
-                  rotate_oauth "Headlamp" "authentik-headlamp-oauth" "HEADLAMP_OIDC_CLIENT_ID" "HEADLAMP_OIDC_CLIENT_SECRET" "headlamp-oauth-credentials" "headlamp-system"
+                  rotate_oauth "Headlamp" "authentik-headlamp-oauth" "HEADLAMP_OIDC_CLIENT_SECRET" "headlamp-oauth-credentials" "headlamp-system"
 
                   echo "All OAuth secret rotations completed successfully!"
               env:

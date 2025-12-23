@@ -354,11 +354,11 @@ else:
 
 ### OAuth Credential Rotation
 
-Automated weekly rotation of OAuth credentials via CronJob. Credentials are updated in both Authentik (via API) and Kubernetes secrets.
+Automated weekly rotation of OAuth `client_secret` via CronJob. Only the secret is rotated - `client_id` remains stable (required for integrations like kube-apiserver OIDC).
 
 #### How It Works
 
-1. CronJob generates new client_id/client_secret
+1. CronJob generates new client_secret
 2. Updates Authentik OAuth2 provider via REST API
 3. Patches the app's dedicated OAuth secret (e.g., `authentik-grafana-oauth`)
 4. Forces ExternalSecret sync in consumer namespace
@@ -388,32 +388,11 @@ openssl rand -hex 32  # OAUTH_ROTATION_API_TOKEN
 
 1. **Update CronJob script** (`app/oauth-secret-rotation/cronjob.yaml`):
 
-Add a section for the new app after the existing rotation logic:
+Add a call to the `rotate_oauth` function (includes ExternalSecret sync):
 
 ```bash
-# Rotate <App> credentials
-PROVIDER_NAME="<App>"
-NEW_CLIENT_ID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-NEW_CLIENT_SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
-
-PROVIDER_RESPONSE=$(curl -sf \
-  -H "Authorization: Bearer ${AUTHENTIK_API_TOKEN}" \
-  "${AUTHENTIK_URL}/api/v3/providers/oauth2/?name=${PROVIDER_NAME}")
-PROVIDER_ID=$(echo "${PROVIDER_RESPONSE}" | grep -o '"pk":[0-9]*' | head -1 | cut -d: -f2)
-
-curl -sf -X PATCH \
-  -H "Authorization: Bearer ${AUTHENTIK_API_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d "{\"client_id\": \"${NEW_CLIENT_ID}\", \"client_secret\": \"${NEW_CLIENT_SECRET}\"}" \
-  "${AUTHENTIK_URL}/api/v3/providers/oauth2/${PROVIDER_ID}/"
-
-kubectl patch secret authentik-<app>-oauth -n authentik-system --type='json' -p="[
-  {\"op\": \"replace\", \"path\": \"/data/<APP>_OAUTH_CLIENT_ID\", \"value\": \"$(echo -n $NEW_CLIENT_ID | base64 -w0)\"},
-  {\"op\": \"replace\", \"path\": \"/data/<APP>_OAUTH_CLIENT_SECRET\", \"value\": \"$(echo -n $NEW_CLIENT_SECRET | base64 -w0)\"}
-]"
-
-kubectl patch externalsecret <app>-oauth-credentials -n <consumer-namespace> \
-  --type='merge' -p="{\"metadata\":{\"annotations\":{\"force-sync\":\"$(date +%s)\"}}}"
+# Rotate <App> credentials (client_secret only)
+rotate_oauth "<App>" "authentik-<app>-oauth" "<APP>_OAUTH_CLIENT_SECRET" "<app>-oauth-credentials" "<app-namespace>"
 ```
 
 2. **Add RBAC for ExternalSecret patching** (in consumer app directory):

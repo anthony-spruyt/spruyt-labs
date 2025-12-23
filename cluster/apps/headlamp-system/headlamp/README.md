@@ -87,7 +87,27 @@ Common errors:
 
 ## OIDC Configuration
 
-Uses Authentik blueprint for SSO. The chart's `externalSecret` feature requires ALL OIDC config in the secret (not just credentials). The ExternalSecret uses a template to combine synced secrets with static OIDC config.
+Headlamp uses OIDC for two purposes:
+
+1. **UI Authentication**: Users authenticate via Authentik to access Headlamp
+2. **Kubernetes API Impersonation**: The OIDC token is used to authenticate as the user against the Kubernetes API
+
+### Kubernetes API Server OIDC
+
+The kube-apiserver must be configured with OIDC to validate tokens from Authentik. This is set in `talos/patches/control-plane/configure-api-server.yaml`:
+
+```yaml
+oidc-issuer-url: "https://auth.${EXTERNAL_DOMAIN}/application/o/headlamp/"
+oidc-client-id: "<client-id-from-authentik>"
+oidc-username-claim: "email"
+oidc-groups-claim: "groups"
+```
+
+**Important**: The `oidc-client-id` must match the Authentik provider's client_id and remain stable (not rotated).
+
+### User RBAC
+
+OIDC-authenticated users need Kubernetes RBAC permissions. The user is identified by their email (from the `oidc-username-claim`). See `app/user-rbac.yaml` for the ClusterRoleBinding.
 
 ### ExternalSecret Flow
 
@@ -107,16 +127,18 @@ headlamp-system/headlamp-oauth-credentials (ExternalSecret template)
 Headlamp pods (envFrom secretRef)
 ```
 
-### Required Authentik Configuration
+### Required Configuration
 
 1. **Blueprint**: `authentik-system/authentik/app/blueprints/headlamp-sso.yaml`
 2. **OAuth Secret**: `authentik-system/authentik/app/authentik-headlamp-oauth.sops.yaml`
 3. **Env Vars**: HEADLAMP_OIDC_* in authentik values.yaml
 4. **Volume Mount**: headlamp-sso.yaml in authentik blueprints volume
+5. **API Server OIDC**: `talos/patches/control-plane/configure-api-server.yaml`
+6. **User RBAC**: `app/user-rbac.yaml`
 
 ## OAuth Credential Rotation
 
-Headlamp is integrated with the Authentik OAuth rotation CronJob. Credentials rotate weekly.
+Headlamp is integrated with the Authentik OAuth rotation CronJob. Only `client_secret` rotates weekly - `client_id` remains stable (required for kube-apiserver OIDC config).
 
 ### Rotation Components
 
@@ -128,22 +150,24 @@ Headlamp is integrated with the Authentik OAuth rotation CronJob. Credentials ro
 
 The rotation job:
 
-1. Generates new client_id/client_secret
+1. Generates new client_secret (client_id unchanged)
 2. Updates Authentik OAuth2 provider via API
 3. Patches `authentik-headlamp-oauth` secret
 4. Forces ExternalSecret sync in headlamp-system
 
 ## File Reference
 
-| Component              | Location                                  |
-| ---------------------- | ----------------------------------------- |
-| HelmRelease            | `app/release.yaml`                        |
-| Helm values            | `app/values.yaml`                         |
-| SecretStore            | `app/authentik-secret-store.yaml`         |
-| ExternalSecret         | `app/headlamp-oauth-external-secret.yaml` |
-| Rotation RBAC          | `app/oauth-rotation-rbac.yaml`            |
-| ConfigMap transformer  | `app/kustomizeconfig.yaml`                |
-| Ingress                | `traefik/traefik/ingress/headlamp-system` |
+| Component              | Location                                           |
+| ---------------------- | -------------------------------------------------- |
+| HelmRelease            | `app/release.yaml`                                 |
+| Helm values            | `app/values.yaml`                                  |
+| SecretStore            | `app/authentik-secret-store.yaml`                  |
+| ExternalSecret         | `app/headlamp-oauth-external-secret.yaml`          |
+| Rotation RBAC          | `app/oauth-rotation-rbac.yaml`                     |
+| User RBAC              | `app/user-rbac.yaml`                               |
+| ConfigMap transformer  | `app/kustomizeconfig.yaml`                         |
+| Ingress                | `traefik/traefik/ingress/headlamp-system`          |
+| API Server OIDC        | `talos/patches/control-plane/configure-api-server.yaml` |
 
 ## Troubleshooting
 

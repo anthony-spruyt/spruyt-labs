@@ -20,6 +20,8 @@ scan:
     # Authentik outpost deployer RBAC - required permissions from official helm chart
     # https://github.com/goauthentik/helm/blob/main/charts/authentik-remote-cluster/templates/role.yaml
     - cluster/apps/n8n-system/n8n/app/authentik-outpost-rbac.yaml
+    # Headlamp OIDC user binding - intentional cluster-admin for single-user homelab
+    - cluster/apps/headlamp-system/headlamp/app/user-rbac.yaml
   scanners:
     - vuln
     - misconfig

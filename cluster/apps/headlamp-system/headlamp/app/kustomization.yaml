@@ -6,6 +6,7 @@ resources:
   - ./authentik-secret-store.yaml
   - ./headlamp-oauth-external-secret.yaml
   - ./oauth-rotation-rbac.yaml
+  - ./user-rbac.yaml
   - ./release.yaml
 configMapGenerator:
   - name: headlamp-values

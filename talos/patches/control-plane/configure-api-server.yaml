@@ -6,3 +6,9 @@ cluster:
       # https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/
       feature-gates: "MutatingAdmissionPolicy=true,WatchList=true,WatchListClient=true"
       runtime-config: admissionregistration.k8s.io/v1beta1=true
+      # OIDC authentication via Authentik for Headlamp user impersonation
+      # https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens
+      oidc-issuer-url: "https://auth.${EXTERNAL_DOMAIN}/application/o/headlamp/"
+      oidc-client-id: "${HEADLAMP_OIDC_CLIENT_ID}"
+      oidc-username-claim: "email"
+      oidc-groups-claim: "groups"

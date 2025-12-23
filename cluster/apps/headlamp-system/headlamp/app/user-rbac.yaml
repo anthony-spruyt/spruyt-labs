@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.34.3-standalone-strict/clusterrolebinding-rbac-v1.json
+# ClusterRoleBinding for OIDC-authenticated users via Headlamp
+# The user is identified by their email from the OIDC token (oidc-username-claim: email)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-oidc-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  # User identified by email from Authentik OIDC token
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: ${MY_AUTHENTIK_USER_EMAIL}
