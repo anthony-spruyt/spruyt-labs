@@ -449,6 +449,7 @@ controlPlane:
 
   patches:
     - "@patches/control-plane/configure-etcd.yaml"
+    - "@patches/control-plane/configure-pod-gc.yaml"
     - "@patches/control-plane/configure-scheduler-for-spegel.yaml"
     - "@patches/control-plane/disable-admissions-plugins.yaml"
     - "@patches/control-plane/configure-api-server.yaml"
