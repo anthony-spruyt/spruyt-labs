@@ -43,6 +43,7 @@
       "Bash(ls:*)",
       "Bash(npx prettier:*)",
       "Bash(python3:*)",
+      "Bash(renovate-config-validator:*)",
       "Bash(talosctl get:*)",
       "Bash(talosctl health:*)",
       "Bash(talosctl version:*)",

@@ -14,6 +14,7 @@
     "github>anthony-spruyt/spruyt-labs//.github/renovate/kubernetes.json5",
     "github>anthony-spruyt/spruyt-labs//.github/renovate/terraform.json5",
     "github>anthony-spruyt/spruyt-labs//.github/renovate/regex-managers.json5",
+    "github>anthony-spruyt/spruyt-labs//.github/renovate/customDatasources.json5",
     "github>anthony-spruyt/spruyt-labs//.github/renovate/automerge.json5",
   ],
   enabled: true,

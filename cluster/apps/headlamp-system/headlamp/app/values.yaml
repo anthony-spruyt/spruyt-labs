@@ -26,18 +26,17 @@ pluginsManager:
   enabled: true
   configContent: |
     plugins:
+      # renovate: depName=headlamp-plugins/headlamp_flux
       - name: headlamp_flux
         source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux
         version: 0.5.0
+      # renovate: depName=headlamp-plugins/headlamp_cert-manager
       - name: headlamp_cert-manager
         source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager
         version: 0.1.0
-      - name: prometheus_headlamp_plugin
-        source: https://artifacthub.io/packages/headlamp/headlamp-plugins/prometheus_headlamp_plugin
-        version: 0.0.3
     installOptions:
       parallel: true
-      maxConcurrent: 3
+      maxConcurrent: 2
 
 resources:
   requests:
