@@ -326,6 +326,32 @@ print(Importer.from_string(bp.retrieve(), bp.context).apply())
 "
 ```
 
+### Force Blueprint Reload
+
+To list all blueprints and their status:
+
+```bash
+kubectl exec -n authentik-system deploy/authentik-server -- ak shell -c "
+from authentik.blueprints.models import BlueprintInstance
+[print(f'{b.pk} - {b.name} - {b.status}') for b in BlueprintInstance.objects.all()]
+"
+```
+
+To force re-apply a specific blueprint by name:
+
+```bash
+kubectl exec -n authentik-system deploy/authentik-server -- ak shell -c "
+from authentik.blueprints.models import BlueprintInstance
+from authentik.blueprints.v1.importer import Importer
+bp = BlueprintInstance.objects.filter(name='Headlamp SSO').first()
+if bp:
+    importer = Importer.from_string(bp.retrieve(), bp.context)
+    print(importer.apply())
+else:
+    print('Blueprint not found')
+"
+```
+
 ### OAuth Credential Rotation
 
 Automated weekly rotation of OAuth credentials via CronJob. Credentials are updated in both Authentik (via API) and Kubernetes secrets.

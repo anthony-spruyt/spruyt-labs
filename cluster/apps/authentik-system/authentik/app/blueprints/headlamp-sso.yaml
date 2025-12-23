@@ -30,7 +30,7 @@ entries:
         ]
       client_type: confidential
       redirect_uris:
-        - url: https://headlamp.lan.${EXTERNAL_DOMAIN}/oidc/callback
+        - url: https://headlamp.lan.${EXTERNAL_DOMAIN}/oidc-callback
           matching_mode: strict
       client_id: !Env HEADLAMP_OIDC_CLIENT_ID
       client_secret: !Env HEADLAMP_OIDC_CLIENT_SECRET

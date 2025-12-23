@@ -169,4 +169,4 @@ The rotation job:
 - [Helm Chart](https://github.com/kubernetes-sigs/headlamp/tree/main/charts/headlamp)
 - [Default Values](https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml)
 - [Flux Plugin](https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux)
-- [Authentik SSO Integration](../authentik-system/authentik/README.md)
+- [Authentik SSO Integration](../../authentik-system/authentik/README.md)
