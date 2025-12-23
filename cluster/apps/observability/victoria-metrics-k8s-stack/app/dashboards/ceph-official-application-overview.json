@@ -37,7 +37,7 @@
       },
       "id": 11,
       "panels": [],
-      "title": "Application ($$${application:csv})",
+      "title": "Application ($${application:csv})",
       "type": "row"
     },
     {
@@ -175,7 +175,7 @@
           "refId": "B"
         }
       ],
-      "title": "IOPS ($$${application:csv} - $pool)",
+      "title": "IOPS ($${application:csv} - $pool)",
       "type": "stat"
     },
     {
@@ -357,7 +357,7 @@
           "refId": "B"
         }
       ],
-      "title": "Throughput ($$${application:csv} - $pool)",
+      "title": "Throughput ($${application:csv} - $pool)",
       "type": "stat"
     },
     {
