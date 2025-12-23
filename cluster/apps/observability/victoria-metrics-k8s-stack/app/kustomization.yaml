@@ -80,5 +80,12 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-osd-device-details
+    namespace: observability
+    files:
+      - dashboards/ceph-official-osd-device-details.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml
