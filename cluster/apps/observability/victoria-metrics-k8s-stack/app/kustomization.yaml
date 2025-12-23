@@ -108,5 +108,68 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-host-details
+    namespace: observability
+    files:
+      - dashboards/ceph-official-host-details.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-application
+    namespace: observability
+    files:
+      - dashboards/ceph-official-application-overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-cluster-advanced
+    namespace: observability
+    files:
+      - dashboards/ceph-official-cluster-advanced.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-multi-cluster
+    namespace: observability
+    files:
+      - dashboards/ceph-official-multi-cluster-overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-nvmeof
+    namespace: observability
+    files:
+      - dashboards/ceph-official-nvmeof.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-nvmeof-perf
+    namespace: observability
+    files:
+      - dashboards/ceph-official-nvmeof-performance.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-node-exporter
+    namespace: observability
+    files:
+      - dashboards/ceph-official-node-exporter.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-rgw-s3
+    namespace: observability
+    files:
+      - dashboards/ceph-official-rgw-s3-analytics.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+  - name: grafana-dashboard-ceph-official-smb
+    namespace: observability
+    files:
+      - dashboards/ceph-official-smb-overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml
