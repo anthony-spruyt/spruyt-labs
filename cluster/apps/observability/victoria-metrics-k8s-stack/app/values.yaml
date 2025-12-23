@@ -16,6 +16,8 @@ defaultDatasources:
       url: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local.:8428
       access: proxy
       isDefault: false
+      jsonData:
+        manageAlerts: false
 
 victoria-metrics-operator:
   enabled: false
