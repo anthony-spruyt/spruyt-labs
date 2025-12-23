@@ -22,8 +22,7 @@ monitoring:
   # -- Whether to create the Prometheus rules for Ceph alerts
   createPrometheusRules: true
   # -- Edit Prometheus rules for Ceph alerts
-  prometheusRuleOverrides:
-    {}
+  prometheusRuleOverrides: {}
     # CephHealthWarning:
     #   disabled: true
     # NVMeoFHighWriteLatency:

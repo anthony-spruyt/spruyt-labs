@@ -1,13 +1,5 @@
 {
   "permissions": {
-    "deny": [
-      "Bash(curl:*)",
-      "Bash(kubectl describe secret:*)",
-      "Bash(kubectl get secret:*)",
-      "Bash(ssh:*)",
-      "Bash(sudo:*)",
-      "Bash(wget:*)"
-    ],
     "allow": [
       "mcp__plugin_context7_context7__get-library-docs",
       "mcp__plugin_context7_context7__resolve-library-id",
@@ -41,6 +33,7 @@
       "Bash(kubectl version:*)",
       "Bash(kubectl wait:*)",
       "Bash(ls:*)",
+      "Bash(npx prettier:*)",
       "Bash(python3:*)",
       "Bash(talosctl get:*)",
       "Bash(talosctl health:*)",
@@ -64,6 +57,14 @@
       "WebFetch(domain:goauthentik.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:rook.io)"
+    ],
+    "deny": [
+      "Bash(curl:*)",
+      "Bash(kubectl describe secret:*)",
+      "Bash(kubectl get secret:*)",
+      "Bash(ssh:*)",
+      "Bash(sudo:*)",
+      "Bash(wget:*)"
     ]
   }
 }
