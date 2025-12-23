@@ -1051,7 +1051,7 @@
     },
     {
       "columns": [],
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {

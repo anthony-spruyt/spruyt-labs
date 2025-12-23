@@ -58,7 +58,7 @@
     },
     {
       "colors": null,
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -104,7 +104,7 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_put_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -119,7 +119,7 @@
     },
     {
       "colors": null,
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -165,7 +165,7 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum\n(ceph_rgw_op_get_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -180,7 +180,7 @@
     },
     {
       "colors": null,
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -226,7 +226,7 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_put_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -241,7 +241,7 @@
     },
     {
       "colors": null,
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -287,7 +287,7 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum\n((sum by(instance_id)(ceph_rgw_op_put_obj_bytes) > 0) / (sum by(instance_id)(ceph_rgw_op_put_obj_ops) > 0) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -301,7 +301,7 @@
       "type": "stat"
     },
     {
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -335,7 +335,7 @@
       },
       "targets": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_list_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -345,7 +345,7 @@
           "refId": "A"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_list_buckets_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -354,7 +354,7 @@
           "refId": "B"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_put_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -364,7 +364,7 @@
           "refId": "C"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_per_bucket_get_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -374,7 +374,7 @@
           "refId": "D"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_del_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -384,7 +384,7 @@
           "refId": "E"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_del_bucket_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -394,7 +394,7 @@
           "refId": "F"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_copy_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -407,7 +407,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -455,7 +455,7 @@
       },
       "targets": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_put_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -465,7 +465,7 @@
           "refId": "A"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_per_bucket_get_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -475,7 +475,7 @@
           "refId": "B"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_del_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -485,7 +485,7 @@
           "refId": "C"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_copy_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -498,7 +498,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -546,7 +546,7 @@
       },
       "targets": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_list_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -556,7 +556,7 @@
           "refId": "A"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_list_buckets_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -565,7 +565,7 @@
           "refId": "B"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_put_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -575,7 +575,7 @@
           "refId": "C"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_get_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -585,7 +585,7 @@
           "refId": "D"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_del_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -595,7 +595,7 @@
           "refId": "E"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_del_bucket_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "instant": true,
@@ -605,7 +605,7 @@
           "refId": "F"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "expr": "sum(ceph_rgw_op_copy_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
           "format": "time_series",
           "intervalFactor": 1,
@@ -619,7 +619,7 @@
     },
     {
       "columns": [],
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -686,7 +686,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_put_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -702,7 +702,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_get_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -718,7 +718,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_del_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -734,7 +734,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_copy_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -863,7 +863,7 @@
     },
     {
       "columns": [],
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -930,7 +930,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_bucket_list_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -946,7 +946,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_bucket_put_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -962,7 +962,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_bucket_get_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -978,7 +978,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_bucket_del_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -994,7 +994,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_bucket_copy_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1135,7 +1135,7 @@
     },
     {
       "columns": [],
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1202,7 +1202,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_put_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1218,7 +1218,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_get_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1234,7 +1234,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_del_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1250,7 +1250,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_copy_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1381,7 +1381,7 @@
     },
     {
       "columns": [],
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1448,7 +1448,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_list_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1464,7 +1464,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_put_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1480,7 +1480,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_get_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1496,7 +1496,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_del_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1512,7 +1512,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "exemplar": false,
           "expr": "ceph_rgw_op_per_user_copy_obj_lat_sum *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", }",
@@ -1663,7 +1663,7 @@
       "id": 14,
       "panels": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1715,7 +1715,7 @@
           },
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "topk(5, \n    sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_put_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })\n)",
               "format": "time_series",
               "instant": true,
@@ -1729,7 +1729,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1781,7 +1781,7 @@
           },
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "topk(5, \n    sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_get_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })\n)",
               "format": "time_series",
               "instant": true,
@@ -1795,7 +1795,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1828,7 +1828,7 @@
           },
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "topk(5,\n    sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_put_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })\n)",
               "format": "time_series",
               "instant": true,
@@ -1842,7 +1842,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1875,7 +1875,7 @@
           },
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "topk(5,\n    sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_get_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })\n)",
               "format": "time_series",
               "instant": true,
@@ -1889,7 +1889,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1982,7 +1982,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_put_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -1997,7 +1997,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -2090,7 +2090,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_get_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -2105,7 +2105,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -2198,7 +2198,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_copy_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -2213,7 +2213,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -2306,7 +2306,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_del_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -2321,7 +2321,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -2414,7 +2414,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_get_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -2429,7 +2429,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -2522,7 +2522,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_put_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -2537,7 +2537,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -2630,7 +2630,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_list_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -2645,7 +2645,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -2738,7 +2738,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_del_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -2753,7 +2753,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -2846,7 +2846,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (bucket, ceph_daemon) ((ceph_rgw_op_per_bucket_copy_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -2862,7 +2862,7 @@
         },
         {
           "columns": [],
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "fieldConfig": {
             "defaults": {
               "custom": {
@@ -2928,7 +2928,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_put_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -2944,7 +2944,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_get_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -2960,7 +2960,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_del_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -2976,7 +2976,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_copy_obj_bytes *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -2992,7 +2992,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (bucket, ceph_daemon) (ceph_rgw_op_per_bucket_list_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -3152,7 +3152,7 @@
       "id": 29,
       "panels": [
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3204,7 +3204,7 @@
           },
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "topk(5, \n    sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_put_obj_ops ) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })\n)\n",
               "format": "time_series",
               "instant": true,
@@ -3218,7 +3218,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3270,7 +3270,7 @@
           },
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "topk(5, \n    sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_get_obj_ops ) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })\n)\n",
               "format": "time_series",
               "instant": true,
@@ -3284,7 +3284,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3317,7 +3317,7 @@
           },
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "topk(5, \n    sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_put_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })\n)",
               "format": "time_series",
               "instant": true,
@@ -3331,7 +3331,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3364,7 +3364,7 @@
           },
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "topk(5, \n    sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_get_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })\n)",
               "format": "time_series",
               "instant": true,
@@ -3378,7 +3378,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3471,7 +3471,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_put_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -3486,7 +3486,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3579,7 +3579,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_get_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -3594,7 +3594,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3687,7 +3687,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_del_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -3702,7 +3702,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3795,7 +3795,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_copy_obj_bytes) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -3810,7 +3810,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3903,7 +3903,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_get_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -3918,7 +3918,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -4011,7 +4011,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_put_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -4026,7 +4026,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -4119,7 +4119,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_list_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -4134,7 +4134,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -4227,7 +4227,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_del_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -4242,7 +4242,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -4335,7 +4335,7 @@
           "seriesOverrides": [],
           "targets": [
             {
-              "datasource": "${datasource}",
+              "datasource": "$datasource",
               "expr": "sum by (user, ceph_daemon) ((ceph_rgw_op_per_user_copy_obj_ops) *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
               "format": "time_series",
               "instant": false,
@@ -4351,7 +4351,7 @@
         },
         {
           "columns": [],
-          "datasource": "${datasource}",
+          "datasource": "$datasource",
           "fieldConfig": {
             "defaults": {
               "custom": {
@@ -4417,7 +4417,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (user, ceph_daemon) (ceph_rgw_op_per_user_put_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -4433,7 +4433,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (user, ceph_daemon) (ceph_rgw_op_per_user_get_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -4449,7 +4449,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (user, ceph_daemon) (ceph_rgw_op_per_user_del_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -4465,7 +4465,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (user, ceph_daemon) (ceph_rgw_op_per_user_copy_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",
@@ -4481,7 +4481,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$datasource"
               },
               "exemplar": false,
               "expr": "sum by (user, ceph_daemon) (ceph_rgw_op_per_user_list_obj_ops *\n    on (instance_id) group_left (ceph_daemon) ceph_rgw_metadata{ceph_daemon=~\"$rgw_servers\", cluster=~\"$cluster\", })",

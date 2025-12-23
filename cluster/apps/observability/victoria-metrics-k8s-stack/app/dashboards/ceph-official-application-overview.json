@@ -37,13 +37,13 @@
       },
       "id": 11,
       "panels": [],
-      "title": "Application ($${application:csv})",
+      "title": "Application ($$${application:csv})",
       "type": "row"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -91,7 +91,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum(ceph_osd_stat_bytes{cluster=~\"$cluster\"})",
@@ -106,7 +106,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -154,7 +154,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum(rate(ceph_pool_wr{cluster=~\"$cluster\",}[$__rate_interval]) *\n  on(pool_id) group_left(instance,name) ceph_pool_metadata{cluster=~\"$cluster\",name=~\"$pool\"})",
@@ -165,7 +165,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum(rate(ceph_pool_rd{cluster=~\"$cluster\",}[$__rate_interval]) *\n  on(pool_id) group_left(instance,name) ceph_pool_metadata{cluster=~\"$cluster\",name=~\"$pool\"})",
@@ -175,7 +175,7 @@
           "refId": "B"
         }
       ],
-      "title": "IOPS ($${application:csv} - $pool)",
+      "title": "IOPS ($$${application:csv} - $pool)",
       "type": "stat"
     },
     {
@@ -215,7 +215,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -270,7 +270,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -288,7 +288,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -336,7 +336,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum(rate(ceph_pool_wr_bytes{cluster=~\"$cluster\",}[$__rate_interval]) *\n  on(pool_id) group_left(instance,name) ceph_pool_metadata{cluster=~\"$cluster\", application=~\"$application\", name=~\"$pool\"})",
@@ -347,7 +347,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum(rate(ceph_pool_rd_bytes{cluster=~\"$cluster\",}[$__rate_interval]) *\n  on(pool_id) group_left(name) ceph_pool_metadata{cluster=~\"$cluster\",application=~\"$application\", name=~\"$pool\"})",
@@ -357,13 +357,13 @@
           "refId": "B"
         }
       ],
-      "title": "Throughput ($${application:csv} - $pool)",
+      "title": "Throughput ($$${application:csv} - $pool)",
       "type": "stat"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -574,7 +574,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "(ceph_pool_quota_bytes{cluster=~\"$cluster\",}*\n  on(pool_id) group_left(instance, name) ceph_pool_metadata{cluster=~\"$cluster\",application=~\"$application\", name=~\"$pool\"}\n   - \n   (ceph_pool_stored{cluster=~\"$cluster\",}  *\n  on(pool_id) group_left(instance, name) ceph_pool_metadata{cluster=~\"$cluster\",application=~\"$application\", name=~\"$pool\"})) > 0 \n  or\n  \n(ceph_pool_max_avail{cluster=~\"$cluster\",} *\n  on(pool_id) group_left(instance, name) ceph_pool_metadata{cluster=~\"$cluster\",application=~\"$application\", name=~\"$pool\"})",
@@ -587,7 +587,7 @@
         },
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "(ceph_pool_stored{cluster=~\"$cluster\",} *on(pool_id) group_left(instance, name) ceph_pool_metadata{cluster=~\"$cluster\",name=~\"$pool\"})\n  /\n  (((ceph_pool_quota_bytes{cluster=~\"$cluster\"} > 0) *\n  on(pool_id) group_left(instance, name) ceph_pool_metadata{cluster=~\"$cluster\", name=~\"$pool\", application=~\"$application\"}) or \n((ceph_pool_max_avail{cluster=~\"$cluster\"} \n+\nceph_pool_stored{cluster=~\"$cluster\", }) *\n  on(pool_id) group_left(instance, name) ceph_pool_metadata{cluster=~\"$cluster\",name=~\"$pool\", application=~\"$application\"}))",
@@ -600,7 +600,7 @@
         },
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "rate(ceph_pool_rd{cluster=~\"$cluster\", }[$__rate_interval]) *\n  on(pool_id) group_left(name) ceph_pool_metadata{cluster=~\"$cluster\", application=~\"$application\", name=~\"$pool\"}\n  + rate(ceph_pool_wr{cluster=~\"$cluster\", }[$__rate_interval]) *\n  on(pool_id) group_left(name) ceph_pool_metadata{cluster=~\"$cluster\", application=~\"$application\", name=~\"$pool\"}\n",
@@ -613,7 +613,7 @@
         },
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "rate(ceph_pool_rd_bytes{cluster=~\"$cluster\", }[$__rate_interval]) *\n  on(pool_id) group_left(name) ceph_pool_metadata{cluster=~\"$cluster\", application=~\"$application\", name=~\"$pool\"} +\n  rate(ceph_pool_wr_bytes{cluster=~\"$cluster\", }[$__rate_interval]) *\n  on(pool_id) group_left(name) ceph_pool_metadata{cluster=~\"$cluster\", application=~\"$application\", name=~\"$pool\"}\n",
@@ -626,7 +626,7 @@
         },
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "ceph_pool_metadata{cluster=~\"$cluster\", application=~\"$application\", name=~\"$pool\"}",
@@ -639,7 +639,7 @@
         },
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "ceph_pool_stored{cluster=~\"$cluster\", } * on(pool_id) group_left ceph_pool_metadata{cluster=~\"$cluster\", application=~\"$application\", name=~\"$pool\"}",
@@ -653,7 +653,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -668,7 +668,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -755,7 +755,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -836,7 +836,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "ceph_pool_stored{cluster=~\"$cluster\",} *\n  on(pool_id) group_left(instance, name) ceph_pool_metadata{cluster=~\"$cluster\",name=~\"$pool\"}",
@@ -851,7 +851,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -935,7 +935,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "rate(ceph_pool_wr{cluster=~\"$cluster\",}[$__rate_interval]) *\n  on(pool_id) group_left(instance,name) ceph_pool_metadata{cluster=~\"$cluster\",name=~\"$pool\"}",
@@ -946,7 +946,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "rate(ceph_pool_rd{cluster=~\"$cluster\",}[$__rate_interval]) *\n  on(pool_id) group_left(instance,name) ceph_pool_metadata{cluster=~\"$cluster\",name=~\"$pool\"}",
@@ -962,7 +962,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1046,7 +1046,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "rate(ceph_pool_wr_bytes{cluster=~\"$cluster\",}[$__rate_interval]) *\n  on(pool_id) group_left(instance,name) ceph_pool_metadata{cluster=~\"$cluster\", name=~\"$pool\"}",
@@ -1057,7 +1057,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "rate(ceph_pool_rd_bytes{cluster=~\"$cluster\",}[$__rate_interval]) *\n  on(pool_id) group_left(instance,name) ceph_pool_metadata{cluster=~\"$cluster\", name=~\"$pool\"}",
@@ -1073,7 +1073,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1157,7 +1157,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "ceph_pool_objects{cluster=~\"$cluster\",} *\n  on(pool_id) group_left(instance,name) ceph_pool_metadata{cluster=~\"$cluster\", name=~\"$pool\"}\n",
@@ -1189,7 +1189,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$datasource"
         },
         "definition": "label_values(ceph_health_status, cluster)",
         "includeAll": false,
@@ -1211,7 +1211,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$datasource"
         },
         "definition": "label_values(ceph_pool_metadata{cluster=\"$cluster\"},application)",
         "includeAll": true,
@@ -1235,7 +1235,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$datasource"
         },
         "definition": "label_values(ceph_pool_metadata{application=~\"$application\", cluster=\"$cluster\"},name)",
         "includeAll": true,

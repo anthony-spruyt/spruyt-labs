@@ -1049,7 +1049,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "Shows the highest average CPU on a gateway within the gateway group",
       "fieldConfig": {
         "defaults": {
@@ -1057,7 +1057,7 @@
             "mode": "thresholds"
           },
           "decimals": 2,
-          "displayName": "${__field.instance}",
+          "displayName": "$${__field.instance}",
           "mappings": [],
           "max": 100,
           "min": 0,
@@ -1457,14 +1457,14 @@
       "type": "table"
     },
     {
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "Show the subsystems by the count of namespaces they present to the client",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "continuous-blues"
           },
-          "displayName": "${__field.nqn}",
+          "displayName": "$${__field.nqn}",
           "mappings": [],
           "min": 0,
           "thresholds": {
@@ -1490,7 +1490,7 @@
                 "value": [
                   {
                     "title": "",
-                    "url": "d/feeuv1dno43r4deed/ceph-nvme-of-gateways-performance?var-subsystem=${__data.fields.nqn}"
+                    "url": "d/feeuv1dno43r4deed/ceph-nvme-of-gateways-performance?var-subsystem=$${__data.fields.nqn}"
                   }
                 ]
               }
@@ -1538,14 +1538,14 @@
       "type": "bargauge"
     },
     {
-      "datasource": "${datasource}",
+      "datasource": "$datasource",
       "description": "Show the subsystems by the count of namespaces they present to the client",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "continuous-purples"
           },
-          "displayName": "${__field.nqn}",
+          "displayName": "$${__field.nqn}",
           "mappings": [],
           "min": 0,
           "noValue": "0",
@@ -1570,7 +1570,7 @@
                 "value": [
                   {
                     "title": "",
-                    "url": "d/feeuv1dno43r4deed/ceph-nvme-of-gateways-performance?var-subsystem=${__data.fields.nqn}"
+                    "url": "d/feeuv1dno43r4deed/ceph-nvme-of-gateways-performance?var-subsystem=$${__data.fields.nqn}"
                   }
                 ]
               }

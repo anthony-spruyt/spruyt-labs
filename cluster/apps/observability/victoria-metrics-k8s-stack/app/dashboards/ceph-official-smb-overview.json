@@ -27,7 +27,7 @@
   "panels": [
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "SMB metrics daemon health.",
       "fieldConfig": {
@@ -91,7 +91,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "expr": "sum(smb_metrics_status{instance=~\"$hostname\"})  by (instance)",
           "format": "time_series",
@@ -107,7 +107,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "Number of nodes per cluster/s",
       "fieldConfig": {
@@ -157,7 +157,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum(count by (netbiosname) (smb_sessions_total * on (instance) group_left (netbiosname) smb_metrics_status{netbiosname=~\"$SMBcluster\"}))",
@@ -174,7 +174,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "Number of users currently logged in Cluster/s",
       "fieldConfig": {
@@ -224,7 +224,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -242,7 +242,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "Number of remote machines using a share in cluster/s",
       "fieldConfig": {
@@ -292,7 +292,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -310,7 +310,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "Number of currently active SMB user per cluster/s",
       "fieldConfig": {
@@ -360,7 +360,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -378,7 +378,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "Current total ingress throughput, bytes going in per second",
       "fieldConfig": {
@@ -428,7 +428,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -446,7 +446,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "Current total request time for the sum of all runing operations",
       "fieldConfig": {
@@ -496,7 +496,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -514,7 +514,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "Current total egress throughput, bytes going out per second",
       "fieldConfig": {
@@ -564,7 +564,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -582,7 +582,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "Current total number of operations per second",
       "fieldConfig": {
@@ -632,7 +632,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -650,7 +650,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -728,7 +728,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum by (operation) (rate(smb_smb2_request_inbytes{instance=~\"$hostname\", share=~\"$share\", client=~\"$client\"}[$__rate_interval]))",
@@ -741,7 +741,7 @@
         },
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum by (operation) (rate(smb_smb2_request_outbytes{instance=~\"$hostname\", share=~\"$share\", client=~\"$client\"}[$__rate_interval]))",
@@ -759,7 +759,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -837,7 +837,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum by (operation) (rate(smb_smb2_request_total{instance=~\"$hostname\", share=~\"$share\", client=~\"$client\"}[$__rate_interval]))",
@@ -854,7 +854,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "$datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -932,7 +932,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum by (operation) (rate(smb_smb2_request_duration_microseconds_sum{instance=~\"$hostname\", share=~\"$share\", client=~\"$client\"}[$__rate_interval]))",

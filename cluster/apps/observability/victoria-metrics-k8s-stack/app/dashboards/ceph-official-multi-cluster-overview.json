@@ -281,7 +281,7 @@
                 "value": [
                   {
                     "title": "",
-                    "url": "/d/edtb0oxdq/ceph-cluster?var-cluster=$${__data.fields.Cluster}&$${DS_PROMETHEUS:queryparam}"
+                    "url": "/d/edtb0oxdq/ceph-cluster?var-cluster=$$${__data.fields.Cluster}&$$${DS_PROMETHEUS:queryparam}"
                   }
                 ]
               }
@@ -1156,7 +1156,7 @@
             "uid": "$datasource"
           },
           "exemplar": false,
-          "expr": "predict_linear(avg(increase(ceph_cluster_total_used_bytes{cluster=~\"${Cluster}\"}[1d]))[7d:1h],120)",
+          "expr": "predict_linear(avg(increase(ceph_cluster_total_used_bytes{cluster=~\"$${Cluster}\"}[1d]))[7d:1h],120)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
