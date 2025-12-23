@@ -86,6 +86,12 @@ cluster/apps/<namespace>/<app>/
 
 **SOPS naming:** `<name>-secrets.sops.yaml` or `<name>.sops.yaml`
 
+**Helm values:** Before modifying Helm values, ALWAYS check upstream/source values.yaml first:
+
+- Use Context7 or WebFetch with raw.githubusercontent.com to find correct key paths
+- Never assume key names
+- Verify the chart version matches when checking upstream docs
+
 ## Research Priority
 
 1. **Context7** - Library/tool docs (always first)
