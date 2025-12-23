@@ -12,3 +12,5 @@ configMapGenerator:
     namespace: headlamp-system
     files:
       - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
