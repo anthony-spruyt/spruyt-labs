@@ -17,6 +17,7 @@ spec:
       match: Host(`headlamp.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: lan-ip-whitelist
+        - name: https-proto-header
         - name: compress
       services:
         - name: headlamp
