@@ -7,6 +7,10 @@ deploymentAnnotations:
 
 config:
   watchPlugins: true
+  # Skip OIDC TLS verify - workaround for chart bug where empty CA cert triggers error
+  # See: https://github.com/kubernetes-sigs/headlamp/issues/3884
+  extraArgs:
+    - "-oidc-skip-tls-verify"
   oidc:
     secret:
       create: false
@@ -15,6 +19,8 @@ config:
     externalSecret:
       enabled: true
       name: headlamp-oauth-credentials
+    # Required to trigger chart to add -oidc-callback-url arg
+    callbackURL: "https://headlamp.lan.${EXTERNAL_DOMAIN}/oidc-callback"
 
 pluginsManager:
   enabled: true
