@@ -31,11 +31,32 @@ task dev-env:lint && git add -A && git commit -m "type(scope): message"
 
 Skip linting for trivial changes (typos, single-line fixes, SOPS-only). Pre-commit hooks catch issues.
 
-**Validation:** Always test changes - check logs, `kubectl rollout restart`, verify end state. Plans should include validation steps.
-
 **Conventional commits:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
 
 **After push:** Flux webhooks auto-reconcile - no manual `flux reconcile` needed.
+
+## Validation (MANDATORY)
+
+**After EVERY change that affects cluster state, you MUST validate:**
+
+1. **Wait for reconciliation** - Check pod/deployment status after Flux syncs
+2. **Verify the change worked** - Run kubectl commands to confirm expected state
+3. **Check logs for errors** - Look at relevant pod logs for issues
+4. **Report results to user** - Don't just say "done", show proof it worked
+
+**Validation examples:**
+
+```bash
+# After HelmRelease change
+kubectl get hr -n <namespace> <release>
+kubectl get pod -n <namespace> -l app=<app>
+kubectl logs -n <namespace> -l app=<app> --tail=20
+
+# After config change
+kubectl exec <pod> -- <verify-command>
+```
+
+**Never skip validation.** If user says "pushed", immediately check reconciliation status and verify the change took effect. Plans must include specific validation steps.
 
 ## Codebase Map
 
