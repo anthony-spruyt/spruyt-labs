@@ -90,6 +90,37 @@ global:
         secretKeyRef:
           name: authentik-secrets
           key: OAUTH_ROTATION_API_TOKEN
+    # SMTP configuration for email verification
+    - name: AUTHENTIK_EMAIL__HOST
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: SMTP_HOST
+    - name: AUTHENTIK_EMAIL__PORT
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: SMTP_PORT
+    - name: AUTHENTIK_EMAIL__USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: SMTP_USERNAME
+    - name: AUTHENTIK_EMAIL__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: SMTP_PASSWORD
+    - name: AUTHENTIK_EMAIL__USE_TLS
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: SMTP_USE_TLS
+    - name: AUTHENTIK_EMAIL__FROM
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: SMTP_FROM
   envFrom: []
   volumeMounts:
     - name: db-ca-cert
