@@ -87,6 +87,36 @@ kubectl get certificates -A          # All certs
 kubectl get secrets -A | grep tls    # TLS secrets
 ```
 
+## HelmRelease with ConfigMapGenerator
+
+When using `configMapGenerator` to generate values ConfigMaps for HelmReleases, Kustomize adds a hash suffix to the ConfigMap name. To ensure the HelmRelease references the correct suffixed name, add a `kustomizeconfig.yaml`:
+
+1. Create `kustomizeconfig.yaml`:
+
+```yaml
+---
+nameReference:
+  - kind: ConfigMap
+    version: v1
+    fieldSpecs:
+      - path: spec/valuesFrom/name
+        kind: HelmRelease
+```
+
+2. Reference it in `kustomization.yaml`:
+
+```yaml
+configMapGenerator:
+  - name: <app>-values
+    namespace: <namespace>
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
+```
+
+This transforms `valuesFrom.name: <app>-values` to `valuesFrom.name: <app>-values-<hash>` automatically.
+
 ## Context7 Documentation
 
 - **Auto-trigger**: Fetch docs for common tools when encountering unfamiliar APIs
