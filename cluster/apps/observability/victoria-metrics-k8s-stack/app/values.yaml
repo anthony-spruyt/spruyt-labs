@@ -67,6 +67,9 @@ vmalert:
       requests:
         cpu: 30m
         memory: 80Mi
+    # Override external.url for alert source links (chart defaults to dummy URL when using Traefik IngressRoutes)
+    extraArgs:
+      external.url: https://grafana.lan.${EXTERNAL_DOMAIN}
 
 vmagent:
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
