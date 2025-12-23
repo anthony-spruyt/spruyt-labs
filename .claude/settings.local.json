@@ -15,6 +15,7 @@
       "Bash(gh issue view:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
+      "Bash(gh release list:*)",
       "Bash(gh search:*)",
       "Bash(git add:*)",
       "Bash(git -C /workspaces/spruyt-labs add -A)",
