@@ -12,11 +12,10 @@ Core operational standards and constraints for the homelab. For full documentati
 
 ## Constraints
 
-1. **No Python scripts** - Use bash/Taskfile only
-2. **No SOPS decryption** - Never decrypt secrets via CLI
-3. **Automation first** - Use Flux, Terraform, Talos declarative configs
-4. **Validation required** - Run `task dev-env:lint` before commits
-5. **Use Taskfile** - Prefer `task` commands over raw CLI
+1. **No SOPS decryption** - Never decrypt secrets via CLI
+2. **Automation first** - Use Flux, Terraform, Talos declarative configs
+3. **Validation required** - Run `task dev-env:lint` before commits
+4. **Use Taskfile** - Prefer `task` commands over raw CLI
 
 ## Git Conventions
 

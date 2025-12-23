@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./authentik-secret-store.yaml
+  - ./headlamp-oauth-external-secret.yaml
+  - ./oauth-rotation-rbac.yaml
+  - ./release.yaml
+configMapGenerator:
+  - name: headlamp-values
+    namespace: headlamp-system
+    files:
+      - values.yaml

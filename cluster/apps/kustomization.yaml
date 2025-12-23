@@ -33,6 +33,7 @@ resources:
   - ./sungather
   - ./dev-debug
   - ./authentik-system
+  - ./headlamp-system
   # - ./snmp
   # - ./smtp
   # - ./mysql

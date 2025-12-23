@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/headlamp/main/charts/headlamp/values.schema.json
+# Headlamp Helm Chart Reference -> https://headlamp.dev/docs/latest/installation/in-cluster/
+# Default values for headlamp: https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml
+deploymentAnnotations:
+  reloader.stakater.com/auto: "true"
+
+config:
+  watchPlugins: true
+  oidc:
+    secret:
+      create: false
+    externalSecret:
+      enabled: true
+      name: headlamp-oauth-credentials
+    issuerURL: https://auth.${EXTERNAL_DOMAIN}/application/o/headlamp/
+    scopes: openid profile email
+    callbackURL: https://headlamp.lan.${EXTERNAL_DOMAIN}/oidc/callback
+
+pluginsManager:
+  enabled: true
+  configContent: |
+    plugins:
+      - name: "@headlamp-k8s/flux"
+        source: https://www.npmjs.com/package/@headlamp-k8s/flux
+        version: 0.5.0
+    installOptions:
+      parallel: true
+      maxConcurrent: 2
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

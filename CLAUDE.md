@@ -169,12 +169,50 @@ kubectl exec <pod> -- <verify-command>
 **App structure:**
 
 ```text
-cluster/apps/<namespace>/<app>/
-├── app/
-│   ├── kustomization.yaml
-│   ├── release.yaml        # HelmRelease
-│   ├── values.yaml         # Helm values
-│   └── *-secrets.sops.yaml # Encrypted secrets
+cluster/apps/<namespace>/
+├── namespace.yaml          # Namespace with PSA labels
+├── kustomization.yaml      # References namespace + app ks.yaml files
+├── <app>/                  # Single app
+│   ├── ks.yaml
+│   ├── app/
+│   │   ├── kustomization.yaml
+│   │   ├── release.yaml        # HelmRelease
+│   │   ├── values.yaml         # Helm values
+│   │   └── *-secrets.sops.yaml # Encrypted secrets
+│   └── <optional>/         # Optional dependent resources (e.g., ingress/)
+├── <app1>/                 # Multiple apps (e.g., operator + instance)
+│   ├── ks.yaml
+│   └── app/
+└── <app2>/
+    ├── ks.yaml
+    └── app/
+```
+
+**Multiple Kustomizations for dependent resources:**
+
+When an app has optional resources that depend on it (e.g., ingress routes), add multiple
+Kustomizations in the same `ks.yaml`:
+
+```yaml
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app myapp
+spec:
+  path: ./cluster/apps/<namespace>/<app>/app
+  ...
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: myapp-ingress
+spec:
+  path: ./cluster/apps/<namespace>/<app>/ingress
+  dependsOn:
+    - name: myapp
+    - name: other-dependency
+  ...
 ```
 
 **Variable substitution:** `${EXTERNAL_DOMAIN}`, `${CLUSTER_ISSUER}`, `${TIMEZONE}`

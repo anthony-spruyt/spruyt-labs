@@ -9,5 +9,10 @@ rules:
   # Permission to patch the OAuth secrets
   - apiGroups: [""]
     resources: ["secrets"]
-    resourceNames: ["authentik-grafana-oauth", "authentik-vaultwarden-oauth"]
+    resourceNames:
+      [
+        "authentik-grafana-oauth",
+        "authentik-vaultwarden-oauth",
+        "authentik-headlamp-oauth",
+      ]
     verbs: ["get", "patch"]

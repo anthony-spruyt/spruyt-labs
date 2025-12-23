@@ -3,12 +3,16 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: vaultwarden
+  name: headlamp
 spec:
-  chartRef:
-    kind: OCIRepository
-    name: app-template
-    namespace: flux-system
+  chart:
+    spec:
+      chart: headlamp
+      version: 0.39.0
+      sourceRef:
+        kind: HelmRepository
+        name: headlamp-charts
+        namespace: flux-system
   valuesFrom:
     - kind: ConfigMap
-      name: vaultwarden-values
+      name: headlamp-values

@@ -1,0 +1,27 @@
+# yamllint disable
+# Headlamp OAuth credentials - isolated for least-privilege cross-namespace access
+apiVersion: v1
+kind: Secret
+metadata:
+    name: authentik-headlamp-oauth
+    namespace: authentik-system
+    annotations:
+        kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+stringData:
+    HEADLAMP_OIDC_CLIENT_ID: ENC[AES256_GCM,data:cAR1heflND0tunYVtkko/GlOy/Y44EdV3KbLGmMek6M=,iv:F4lX/xy82jYP5LMxJQc4yLF/EMngPr2qUwAXaiMqMZ4=,tag:kufmtt/k74g0vb9W/lTlgw==,type:str]
+    HEADLAMP_OIDC_CLIENT_SECRET: ENC[AES256_GCM,data:LC7AC1zWhjJfflbZk5p9MHlFXz0v6zSXpRl/Wq7/XwudkHFNCDMzsJzKmriuOJkSg1uj12IpRHPrfft7L8x2Qg==,iv:oqvsNBe+s/x9jYYv88loASDOsuHuzSXw5fEz08YpuQM=,tag:2pu/jrbjkgX4zJOXkr8e7g==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAwYkZOQkJmbUtvalJJejR5
+            TzlKQ3VBelREcHBqZ1JmcG4xbzZuWnNTRVdvCmgzVG1XZEdIWm5mNXJJdG9VS0dZ
+            c1JRMWRLeUtDSU1KY0pSWEhqQUZxUzgKLS0tIDllMDBlYmtzWTNHNG9Wd2ZYejhZ
+            TkFEejI4Yy9NUmwxaEo2cHRnNFBIM1EKncJ3nfmdzJZ4keMxo11Kwhu/R9atkxdl
+            xbM3OQ1cyQmzhIa3jGzFODutmvL0ivn96qpn4KuIYnRN/fEvsiM/uQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-12-23T08:00:29Z"
+    mac: ENC[AES256_GCM,data:ECeq77EOKhRgmjOiKzrijrqwNBZn5EwSTU2m4bNn45D9xlRLjYbKK3dfMGCTSGJ5LBRSU7i4HfrtydHxFIcmrcH2f0yuPwrvvY5vABijpYNODj9rBeb8M/Ottxl1YGDX+HxTk9/EPP/qLY6+8FhTV+A2NlZue4oFPTO3zPPo0y4=,iv:yiWxqOi1zlNvSoq9JKiIcoh6rNDk3JhAiJNnY7MVW+A=,tag:nP3aQndGoHXpyzF5jllMzw==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.11.0

@@ -74,6 +74,16 @@ global:
         secretKeyRef:
           name: authentik-vaultwarden-oauth
           key: VAULTWARDEN_OAUTH_CLIENT_SECRET
+    - name: HEADLAMP_OIDC_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: authentik-headlamp-oauth
+          key: HEADLAMP_OIDC_CLIENT_ID
+    - name: HEADLAMP_OIDC_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: authentik-headlamp-oauth
+          key: HEADLAMP_OIDC_CLIENT_SECRET
     # OAuth rotation service account token (used via !Env tag in blueprint)
     - name: OAUTH_ROTATION_API_TOKEN
       valueFrom:
@@ -109,6 +119,8 @@ global:
             path: n8n-sso.yaml
           - key: ceph-dashboard-sso.yaml
             path: ceph-dashboard-sso.yaml
+          - key: headlamp-sso.yaml
+            path: headlamp-sso.yaml
 
 authentik:
   log_level: info
