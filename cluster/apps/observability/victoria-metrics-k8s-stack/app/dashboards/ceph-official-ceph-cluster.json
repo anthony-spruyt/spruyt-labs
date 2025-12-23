@@ -1298,7 +1298,11 @@
         "refresh": 1,
         "regex": "",
         "type": "datasource",
-        "current": {}
+        "current": {
+          "selected": true,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        }
       },
       {
         "datasource": {
