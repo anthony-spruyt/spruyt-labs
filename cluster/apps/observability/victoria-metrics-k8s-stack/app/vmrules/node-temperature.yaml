@@ -33,3 +33,20 @@ spec:
             max by (instance) (
               node_hwmon_temp_celsius{chip=~"nvme_.*"}
             )
+
+        # CPU thermal headroom (percentage of critical temp used)
+        # 100% = at critical temp, 0% = at 0°C
+        - record: node:cpu_temperature_percent:max
+          expr: |
+            100 * max by (instance) (
+              node_hwmon_temp_celsius{chip=~"platform_coretemp_.*|pci0000:00_0000:00:18_3"}
+              / on(instance, chip, sensor) node_hwmon_temp_crit_celsius{chip=~"platform_coretemp_.*|pci0000:00_0000:00:18_3"}
+            )
+
+        # NVMe thermal headroom (percentage of critical temp used)
+        - record: node:nvme_temperature_percent:max
+          expr: |
+            100 * max by (instance) (
+              node_hwmon_temp_celsius{chip=~"nvme_.*"}
+              / on(instance, chip, sensor) node_hwmon_temp_crit_celsius{chip=~"nvme_.*"}
+            )

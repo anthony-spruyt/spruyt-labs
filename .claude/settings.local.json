@@ -24,7 +24,6 @@
       "Bash(git log:*)",
       "Bash(git show:*)",
       "Bash(git status:*)",
-      "Bash(git commit:*)",
       "Bash(git branch:*)",
       "Bash(git checkout:*)",
       "Bash(git switch:*)",

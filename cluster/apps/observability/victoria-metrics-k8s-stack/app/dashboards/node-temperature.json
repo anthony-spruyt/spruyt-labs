@@ -71,7 +71,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 12,
+        "w": 6,
         "x": 0,
         "y": 1
       },
@@ -97,12 +97,82 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node:cpu_temperature_celsius:max",
+          "expr": "node:cpu_temperature_celsius:max{instance=~\"$node\"}",
           "legendFormat": "{{ instance }}",
           "refId": "A"
         }
       ],
       "title": "CPU Temperature (Max)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "node:cpu_temperature_percent:max{instance=~\"$node\"}",
+          "legendFormat": "{{ instance }}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU % of Critical",
       "type": "stat"
     },
     {
@@ -141,8 +211,78 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 12,
+        "w": 6,
         "x": 12,
+        "y": 1
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "node:nvme_temperature_celsius:max{instance=~\"$node\"}",
+          "legendFormat": "{{ instance }}",
+          "refId": "A"
+        }
+      ],
+      "title": "NVMe Temperature (Max)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
         "y": 1
       },
       "id": 3,
@@ -167,12 +307,12 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node:nvme_temperature_celsius:max",
+          "expr": "node:nvme_temperature_percent:max{instance=~\"$node\"}",
           "legendFormat": "{{ instance }}",
           "refId": "A"
         }
       ],
-      "title": "NVMe Temperature (Max)",
+      "title": "NVMe % of Critical",
       "type": "stat"
     },
     {
@@ -280,7 +420,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node_hwmon_temp_celsius{chip=~\"platform_coretemp_.*|pci0000:00_0000:00:18_3\"}",
+          "expr": "node_hwmon_temp_celsius{instance=~\"$node\", chip=~\"platform_coretemp_.*|pci0000:00_0000:00:18_3\"}",
           "legendFormat": "{{ instance }} - {{ chip }} {{ sensor }}",
           "refId": "A"
         }
@@ -393,7 +533,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node_hwmon_temp_celsius{chip=~\"nvme_.*\"}",
+          "expr": "node_hwmon_temp_celsius{instance=~\"$node\", chip=~\"nvme_.*\"}",
           "legendFormat": "{{ instance }} - {{ chip }} {{ sensor }}",
           "refId": "A"
         }
@@ -531,7 +671,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node_hwmon_temp_celsius{chip=\"platform_nct6775_2592\", sensor=~\"temp2|temp7\"}",
+          "expr": "node_hwmon_temp_celsius{instance=~\"$node\", chip=\"platform_nct6775_2592\", sensor=~\"temp2|temp7\"}",
           "legendFormat": "{{ instance }} - {{ sensor }}",
           "refId": "A"
         }
@@ -562,6 +702,33 @@
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(node_hwmon_temp_celsius, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Node",
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": {
+          "query": "label_values(node_hwmon_temp_celsius, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
       }
     ]
   },

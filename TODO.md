@@ -1,7 +1,5 @@
 # Project TODOs
 
-- sort out the ms-01 noisy nonsense temp sensors. Some are 100+ deg and false, there are lots of reports online about it
-
 - Vaultwarden admin credentials uplift. Check pod logs.
 
 - Improve workload healthchecks and probes
