@@ -1,6 +1,17 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/heads/main/charts/velero/values.schema.json
 
+priorityClassName: high-priority
+
+# Tier 2 - generous limits (based on P99: 20m CPU, 180Mi memory)
+resources:
+  requests:
+    cpu: 25m
+    memory: 216Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
 # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
 # If the value is a string then it is evaluated as a template.
 initContainers:
@@ -56,3 +67,13 @@ snapshotsEnabled: false
 
 # Whether to deploy the node-agent daemonset.
 deployNodeAgent: true
+nodeAgent:
+  priorityClassName: high-priority
+  # Tier 2 - generous limits (based on P99: 12m CPU, 100Mi memory)
+  resources:
+    requests:
+      cpu: 15m
+      memory: 120Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi

@@ -186,8 +186,8 @@ extraVolumes: []
 # that are not already set by the chart.
 #
 # The value of the field will be interpretted as a template.
-extraPodSpec: {}
-#   priorityClassName: 'my-priority-class'
+extraPodSpec:
+  priorityClassName: low-priority
 ## Array of extra objects to deploy with the release
 ##
 # extraDeploy:

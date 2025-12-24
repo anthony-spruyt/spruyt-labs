@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/deploy/charts/external-secrets/values.schema.json
 # Documentation: https://external-secrets.io
 # Default values: https://github.com/external-secrets/external-secrets/blob/main/deploy/charts/external-secrets/values.yaml
+priorityClassName: critical-infrastructure
 # Critical infrastructure - no CPU limit (CPU is compressible)
 resources:
   limits:

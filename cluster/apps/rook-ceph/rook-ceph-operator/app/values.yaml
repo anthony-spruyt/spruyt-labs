@@ -1,6 +1,7 @@
 # #yaml-language-server: $schema=TODO
 # Rook Ceph Operator Helm Reference -> https://rook.io/docs/rook/v1.9/helm-operator.html#configuration
 # Default values for rook-ceph operator: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph/values.yaml
+priorityClassName: critical-infrastructure
 crds:
   enabled: true
 # Critical infrastructure - no CPU limit (already correct)

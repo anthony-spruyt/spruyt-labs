@@ -1,6 +1,7 @@
 # #yaml-language-server: $schema=TODO
 # Reloader documentation: https://github.com/stakater/Reloader/blob/master/deployments/kubernetes/chart/reloader/README.md
 # Default values for reloader: https://github.com/stakater/Reloader/blob/master/deployments/kubernetes/chart/reloader/values.yaml
+priorityClassName: high-priority
 nameOverride: reloader
 fullnameOverride: reloader
 reloader:

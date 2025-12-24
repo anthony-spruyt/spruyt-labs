@@ -1,7 +1,7 @@
 # #yaml-language-server: $schema=TODO
 # Default values for spegel: https://github.com/spegel-org/spegel/blob/main/charts/spegel/values.yaml
 # Values documentation: https://artifacthub.io/packages/helm/spegel/spegel
-
+priorityClassName: high-priority
 resources:
   requests:
     memory: 128Mi

@@ -5,6 +5,7 @@ kind: Cluster
 metadata:
   name: authentik-cnpg-cluster
 spec:
+  priorityClassName: high-priority
   affinity:
     enablePodAntiAffinity: true
     podAntiAffinityType: required

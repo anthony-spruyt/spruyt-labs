@@ -32,6 +32,7 @@ vmsingle:
   enabled: true
   # -- Full spec for VMSingle CRD. Allowed values describe [here](https://docs.victoriametrics.com/operator/api#vmsinglespec)
   spec:
+    priorityClassName: high-priority
     resources:
       limits:
         cpu: 3000m
@@ -54,6 +55,7 @@ alertmanager:
   enabled: true
   # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
   spec:
+    priorityClassName: high-priority
     resources:
       limits:
         cpu: 500m
@@ -68,6 +70,7 @@ vmalert:
   enabled: true
   # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
   spec:
+    priorityClassName: high-priority
     resources:
       limits:
         cpu: 1000m
@@ -82,6 +85,7 @@ vmalert:
 vmagent:
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
   spec:
+    priorityClassName: high-priority
     # Increased requests based on P99: 173m CPU, 162Mi memory
     resources:
       limits:
@@ -129,6 +133,7 @@ vmagent:
 # -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
 grafana:
   enabled: true
+  priorityClassName: high-priority
   deploymentStrategy:
     type: Recreate
   podAnnotations:

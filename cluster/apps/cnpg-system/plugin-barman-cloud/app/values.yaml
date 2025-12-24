@@ -2,4 +2,13 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/cloudnative-pg/charts/refs/heads/main/charts/plugin-barman-cloud/values.schema.json
 # Documentation: https://github.com/cloudnative-pg/charts/blob/main/charts/plugin-barman-cloud/README.md
 # Default values: https://github.com/cloudnative-pg/charts/blob/main/charts/plugin-barman-cloud/values.yaml
+priorityClassName: critical-infrastructure
 replicaCount: 1
+# Tier 1 - critical infrastructure (no CPU limit)
+# Based on P99: 5m CPU, 65Mi memory
+resources:
+  requests:
+    cpu: 7m
+    memory: 78Mi
+  limits:
+    memory: 128Mi

@@ -42,6 +42,10 @@ monitoring:
     # -- Annotations applied to PrometheusRule
     annotations: {}
 cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-cluster-crd.html
+  priorityClassNames:
+    mon: critical-infrastructure
+    osd: critical-infrastructure
+    mgr: critical-infrastructure
   mgr:
     config:
       mgr/crash/warn_recent_interval: "7200" # 2h

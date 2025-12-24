@@ -3,6 +3,7 @@
 # Documentation: https://github.com/goauthentik/helm/blob/main/charts/authentik/README.md
 # Default values: https://github.com/goauthentik/helm/blob/main/charts/authentik/values.yaml
 global:
+  priorityClassName: high-priority
   deploymentAnnotations:
     reloader.stakater.com/auto: "true"
   env:
