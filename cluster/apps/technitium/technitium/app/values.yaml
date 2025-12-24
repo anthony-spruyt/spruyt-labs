@@ -61,6 +61,7 @@ controllers:
             memory: 384Mi
           limits:
             memory: 1Gi
+        # Probes: TCP socket on DNS port 53 for health checking
         probes:
           readiness:
             enabled: true

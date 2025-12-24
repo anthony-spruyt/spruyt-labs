@@ -47,6 +47,7 @@ controllers:
               secretKeyRef:
                 name: cloudflared-secrets
                 key: spruyt-labs-01-token
+        # Probes: HTTP /ready on metrics port for tunnel health
         probes:
           liveness: &probes
             enabled: true

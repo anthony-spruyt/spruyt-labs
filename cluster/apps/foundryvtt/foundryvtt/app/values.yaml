@@ -113,6 +113,7 @@ controllers:
           - name: http
             containerPort: 30000
             protocol: TCP
+        # Probes: HTTP / with long startup delay (120s) for slow initialization
         probes:
           liveness:
             enabled: true

@@ -37,6 +37,9 @@ controllers:
             value: "true"
           - name: LOG_LEVEL
             value: "1" #  0 (informational), 1 (warning), 2 (non-fatal error), and 3 (fatal error).
+        # Probes: Readiness only - liveness intentionally disabled
+        # chrony can temporarily lose NTP sync during network issues but shouldn't restart
+        # (restarts would cause time discontinuities)
         probes:
           readiness:
             enabled: true
@@ -52,7 +55,7 @@ controllers:
               initialDelaySeconds: 5
               periodSeconds: 15
               failureThreshold: 2
-          # liveness:
+          # liveness: intentionally disabled - see comment above
           #   enabled: true
           #   custom: true
           #   spec:
