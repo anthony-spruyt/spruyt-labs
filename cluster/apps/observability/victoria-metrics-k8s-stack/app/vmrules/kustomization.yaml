@@ -6,3 +6,4 @@ resources:
   - ./talos-node-filesystem.yaml
   - ./talos-ceph-node-diskspace.yaml
   - ./node-temperature.yaml
+  - ./node-thermal-throttling.yaml

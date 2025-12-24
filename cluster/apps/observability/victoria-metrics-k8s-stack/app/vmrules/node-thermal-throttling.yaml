@@ -1,0 +1,79 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+# Thermal throttling alerts for CPU overheating
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: node-thermal-throttling
+  namespace: observability
+spec:
+  groups:
+    # ==========================================================================
+    # CONFIGURABLE THRESHOLDS
+    # Adjust these values to tune alert sensitivity. Change once, applies everywhere.
+    # ==========================================================================
+    - name: node-thermal-throttle-thresholds
+      interval: 1m
+      rules:
+        # Temperature thresholds (percentage of critical temp)
+        - record: node:thermal_throttle:threshold_warning_percent
+          expr: vector(85)
+
+        - record: node:thermal_throttle:threshold_critical_percent
+          expr: vector(95)
+
+        # Throttle event rate threshold (events per second)
+        # Set to 0 to alert on any throttling
+        - record: node:thermal_throttle:threshold_rate_events_per_sec
+          expr: vector(0)
+
+    # ==========================================================================
+    # ALERTS
+    # ==========================================================================
+    - name: node-thermal-throttle-alerts
+      rules:
+        # Intel nodes only - alerts on actual thermal throttle events
+        # AMD CPUs don't expose this counter via Linux kernel
+        - alert: NodeCPUThermalThrottling
+          expr: |
+            rate(node_cpu_package_throttles_total[5m])
+              > on() group_left() node:thermal_throttle:threshold_rate_events_per_sec
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "CPU thermal throttling detected on {{ $labels.instance }}"
+            description: >-
+              Node {{ $labels.instance }} is experiencing thermal throttling
+              at {{ printf "%.2f" $value }} events/sec. This indicates the CPU
+              is overheating and reducing performance to prevent damage.
+
+        # All nodes - early warning based on temperature percentage
+        - alert: NodeCPUTemperatureHigh
+          expr: |
+            node:cpu_temperature_percent:max
+              > on() group_left() node:thermal_throttle:threshold_warning_percent
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU temperature on {{ $labels.instance }}"
+            description: >-
+              CPU temperature on {{ $labels.instance }} is at
+              {{ printf "%.1f" $value }}% of critical threshold.
+              Consider improving cooling or reducing workload.
+
+        # All nodes - critical alert when very close to thermal shutdown
+        - alert: NodeCPUTemperatureCritical
+          expr: |
+            node:cpu_temperature_percent:max
+              > on() group_left() node:thermal_throttle:threshold_critical_percent
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Critical CPU temperature on {{ $labels.instance }}"
+            description: >-
+              CPU temperature on {{ $labels.instance }} is at
+              {{ printf "%.1f" $value }}% of critical threshold.
+              Thermal shutdown may be imminent. Immediate action required.
