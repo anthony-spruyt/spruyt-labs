@@ -1,0 +1,58 @@
+---
+# #yaml-language-server: $schema=TODO
+# Documentation: https://github.com/kyverno/kyverno/blob/main/charts/kyverno/README.md
+# Default values: https://github.com/kyverno/kyverno/blob/main/charts/kyverno/values.yaml
+
+# Tier 1 - critical infrastructure (no CPU limit)
+
+# Admission controller configuration
+admissionController:
+  priorityClassName: critical-infrastructure
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 384Mi
+  serviceMonitor:
+    enabled: true
+
+# Background controller configuration
+backgroundController:
+  priorityClassName: critical-infrastructure
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  serviceMonitor:
+    enabled: true
+
+# Cleanup controller configuration
+cleanupController:
+  priorityClassName: critical-infrastructure
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+  serviceMonitor:
+    enabled: true
+
+# Reports controller configuration
+reportsController:
+  priorityClassName: critical-infrastructure
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  serviceMonitor:
+    enabled: true

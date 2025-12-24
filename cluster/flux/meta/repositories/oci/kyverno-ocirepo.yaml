@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/ocirepository_v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: kyverno-ocirepo
+  namespace: flux-system
+spec:
+  ref:
+    tag: "3.6.1"
+  url: oci://ghcr.io/kyverno/charts/kyverno
+  secretRef:
+    name: ghcr-docker-config

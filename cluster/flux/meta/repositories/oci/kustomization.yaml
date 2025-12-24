@@ -14,3 +14,4 @@ resources:
   - ./victoria-logs-single-ocirepo.yaml
   - ./victoria-metrics-k8s-stack-ocirepo.yaml
   - ./victoria-metrics-operator-ocirepo.yaml
+  - ./kyverno-ocirepo.yaml

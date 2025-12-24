@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-limitrange
+  annotations:
+    policies.kyverno.io/title: Add Default LimitRange
+    policies.kyverno.io/category: Resource Management
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Namespace, LimitRange
+    policies.kyverno.io/description: >-
+      Automatically generates a LimitRange in every namespace to provide
+      default resource requests for containers that don't specify them.
+      This ensures all pods have at least Burstable QoS class.
+spec:
+  generateExisting: true
+  rules:
+    - name: generate-limitrange
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+      exclude:
+        any:
+          - resources:
+              names:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - kyverno
+                - flux-system
+      generate:
+        apiVersion: v1
+        kind: LimitRange
+        name: default-limits
+        namespace: "{{request.object.metadata.name}}"
+        synchronize: true
+        data:
+          spec:
+            limits:
+              - type: Container
+                default:
+                  memory: 256Mi
+                defaultRequest:
+                  cpu: 10m
+                  memory: 64Mi

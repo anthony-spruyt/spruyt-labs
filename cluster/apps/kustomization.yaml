@@ -34,6 +34,7 @@ resources:
   - ./dev-debug
   - ./authentik-system
   - ./headlamp-system
+  - ./kyverno
   # - ./snmp
   # - ./smtp
   # - ./mysql
