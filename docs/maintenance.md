@@ -232,6 +232,19 @@ kubectl get pods -A | grep -i pending
 kubectl get events -A --field-selector reason=OOMKilled --sort-by='.lastTimestamp' | tail -10
 ```
 
+### Step 5: Update This Documentation
+
+After completing the review, update this procedure if any issues were found:
+
+- **Container mappings**: Add any new containers to the table in Step 2 if they weren't listed
+- **Tier definitions**: Update tier lists if apps were added/removed or reclassified
+- **Decision matrix**: Refine thresholds or actions if the current guidance proved incorrect
+- **Query improvements**: Update queries if they needed modification to work correctly
+- **Missing steps**: Add any steps that were needed but not documented
+
+Commit documentation updates separately from resource changes with message:
+`docs(maintenance): update resource review procedure`
+
 ## Related
 
 - [docs/disaster-recovery.md](disaster-recovery.md) - DR procedures
