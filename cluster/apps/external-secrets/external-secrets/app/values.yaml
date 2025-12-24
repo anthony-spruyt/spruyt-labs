@@ -1,26 +1,24 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/deploy/charts/external-secrets/values.schema.json
 # Documentation: https://external-secrets.io
 # Default values: https://github.com/external-secrets/external-secrets/blob/main/deploy/charts/external-secrets/values.yaml
-# resources:
-#   limits:
-#     cpu: 500m
-#     memory: 128Mi
-#   requests:
-#     cpu: 5m
-#     memory: 40Mi
-# webhook:
-#   resources:
-#     limits:
-#       cpu: 500m
-#       memory: 128Mi
-#     requests:
-#       cpu: 5m
-#       memory: 32Mi
-# certController:
-#   resources:
-#     limits:
-#       cpu: 500m
-#       memory: 128Mi
-#     requests:
-#       cpu: 5m
-#       memory: 64Mi
+# Critical infrastructure - no CPU limit (CPU is compressible)
+resources:
+  limits:
+    memory: 192Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+webhook:
+  resources:
+    limits:
+      memory: 192Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+certController:
+  resources:
+    limits:
+      memory: 192Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi

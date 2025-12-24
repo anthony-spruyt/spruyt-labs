@@ -28,13 +28,14 @@ controllers:
             value: "false"
           - name: RI_STDOUT_LOGGER
             value: "true"
+        # Non-critical - limits at 5x requests (was 88-92% throttled)
         resources:
           requests:
-            cpu: 25m
-            memory: 256M
+            cpu: 50m
+            memory: 256Mi
           limits:
-            cpu: 100m
-            memory: 512M
+            cpu: 250m
+            memory: 512Mi
         securityContext:
           allowPrivilegeEscalation: false
           # readOnlyRootFilesystem: true # SQLITE_CANTOPEN: unable to open database file

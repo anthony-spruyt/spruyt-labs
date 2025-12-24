@@ -18,13 +18,14 @@ crds:
     # -- Enables CRD upgrade job
     enabled: true
 
+# Critical infrastructure - no CPU limit (CPU is compressible)
+# Increased memory based on P99: 120Mi
 resources:
   limits:
-    cpu: 500m
-    memory: 128Mi
+    memory: 256Mi
   requests:
     cpu: 10m
-    memory: 64Mi
+    memory: 128Mi
 
 # -- Configures resource validation
 admissionWebhooks:

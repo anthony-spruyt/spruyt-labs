@@ -60,9 +60,11 @@ controllers:
               timeoutSeconds: 1
               failureThreshold: 3
           readiness: *probes
+        # Already no CPU limit - add memory request
         resources:
           requests:
             cpu: 10m
+            memory: 64Mi
           limits:
             memory: 128Mi
         securityContext:

@@ -82,13 +82,14 @@ vmalert:
 vmagent:
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
   spec:
+    # Increased requests based on P99: 173m CPU, 162Mi memory
     resources:
       limits:
         cpu: 1000m
         memory: 256Mi
       requests:
-        cpu: 80m
-        memory: 128Mi
+        cpu: 100m
+        memory: 192Mi
     env:
       - name: GOGC
         value: 100

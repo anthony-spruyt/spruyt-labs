@@ -2,13 +2,13 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/controlplaneio-fluxcd/charts/main/charts/flux-operator/values.schema.json
 # Default values for flux-operator: https://github.com/controlplaneio-fluxcd/charts/blob/main/charts/flux-operator/values.yaml
 # -- Container resources requests and limits settings.
+# Critical infrastructure - no CPU limit (CPU is compressible)
 resources: # @schema required: true
   limits:
-    cpu: 2000m
     memory: 1Gi
   requests: # @schema default: {"cpu":"100m","memory":"64Mi"}
-    cpu: 100m
-    memory: 64Mi
+    cpu: 50m
+    memory: 128Mi
 
 # -- Container security context settings.
 # The default is compliant with the pod security restricted profile.

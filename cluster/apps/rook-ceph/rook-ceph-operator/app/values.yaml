@@ -3,12 +3,14 @@
 # Default values for rook-ceph operator: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph/values.yaml
 crds:
   enabled: true
+# Critical infrastructure - no CPU limit (already correct)
+# Increased requests to better reflect P99 usage spikes during reconciliation
 resources:
   limits:
     memory: 1Gi
   requests:
-    cpu: 250m
-    memory: 256Mi
+    cpu: 500m
+    memory: 512Mi
 currentNamespaceOnly: true
 csi:
   # https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-read-affinity-for-rbd-and-cephfs-volumes

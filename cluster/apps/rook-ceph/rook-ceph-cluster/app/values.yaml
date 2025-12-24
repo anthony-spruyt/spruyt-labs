@@ -6,13 +6,13 @@ toolbox:
   # -- Enable Ceph debugging pod deployment. See [toolbox](https://github.com/rook/rook/blob/master/Documentation/Troubleshooting/ceph-toolbox.md)
   # IMPORTANT: Must stay enabled - SSO config sidecar is patched onto this deployment via postRenderers in release.yaml
   enabled: true
+  # Critical infrastructure - no CPU limit (CPU is compressible)
   resources:
     limits:
-      cpu: 1000m
       memory: 256Mi
     requests:
-      cpu: 5m
-      memory: 8Mi
+      cpu: 25m
+      memory: 64Mi
 monitoring:
   # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.
   # Monitoring requires Prometheus to be pre-installed

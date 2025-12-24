@@ -68,6 +68,21 @@ ipam:
   mode: kubernetes # Configure IP Address Management mode. ref: https://docs.cilium.io/en/stable/network/concepts/ipam/
 operator:
   rollOutPods: true # Roll out cilium-operator pods automatically when configmap is updated.
+  # Critical networking infrastructure - no CPU limit (CPU is compressible)
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+# Critical networking infrastructure - no CPU limit (CPU is compressible)
+# Agent resources based on P99 usage: 245m CPU, 519Mi memory
+resources:
+  limits:
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
 prometheus:
   enabled: true
   serviceMonitor:

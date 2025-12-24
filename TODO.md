@@ -1,14 +1,10 @@
 # Project TODOs
 
-- ~~alerts when CPU is throttled due to heat~~ (done - node-thermal-throttling.yaml)
-
 - Vaultwarden admin credentials uplift. Check pod logs.
 
 - Improve workload healthchecks and probes
 
 - Workload quality of service and priority
-
-- check CPU throttled namespaces / workloads
 
 - how can we generate and host our own private yaml schemas
 

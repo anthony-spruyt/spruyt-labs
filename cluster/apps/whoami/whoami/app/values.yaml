@@ -20,13 +20,14 @@ controllers:
           repository: docker.io/traefik/whoami
           tag: v1.11.0
           pullPolicy: IfNotPresent
+        # Non-critical - limits at 5x requests (was 25-80% throttled)
         resources:
           requests:
-            cpu: 1m
-            memory: 16Mi
-          limits:
             cpu: 5m
             memory: 32Mi
+          limits:
+            cpu: 25m
+            memory: 64Mi
 service:
   whoami:
     controller: whoami

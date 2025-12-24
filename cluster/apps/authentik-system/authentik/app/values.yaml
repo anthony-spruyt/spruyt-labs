@@ -168,12 +168,12 @@ redis:
 
 server:
   replicas: 1
+  # Critical infrastructure - no CPU limit (CPU is compressible)
   resources:
     requests:
-      cpu: 100m
-      memory: 512Mi
+      cpu: 150m
+      memory: 768Mi
     limits:
-      cpu: 2000m
       memory: 2Gi
   securityContext:
     runAsNonRoot: true
@@ -195,12 +195,12 @@ server:
 
 worker:
   replicas: 1
+  # Critical infrastructure - no CPU limit (CPU is compressible)
   resources:
     requests:
-      cpu: 50m
-      memory: 256Mi
+      cpu: 100m
+      memory: 512Mi
     limits:
-      cpu: 1000m
       memory: 1Gi
   securityContext:
     runAsNonRoot: true

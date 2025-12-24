@@ -54,12 +54,12 @@ controllers:
           readOnlyRootFilesystem: false
           capabilities:
             drop: ["ALL"]
+        # Critical DNS infrastructure - no CPU limit (CPU is compressible)
         resources:
           requests:
-            cpu: 30m
-            memory: 256Mi
+            cpu: 50m
+            memory: 384Mi
           limits:
-            cpu: 1000m
             memory: 1Gi
         probes:
           readiness:

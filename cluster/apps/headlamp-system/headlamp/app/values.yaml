@@ -38,10 +38,11 @@ pluginsManager:
       parallel: true
       maxConcurrent: 2
 
+# Non-critical - limits at 5x requests
 resources:
   requests:
     cpu: 50m
-    memory: 128Mi
+    memory: 192Mi
   limits:
-    cpu: 500m
-    memory: 256Mi
+    cpu: 250m
+    memory: 384Mi

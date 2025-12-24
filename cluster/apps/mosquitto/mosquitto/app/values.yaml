@@ -35,11 +35,13 @@ controllers:
             enabled: true
           readiness:
             enabled: true
+        # Already no CPU limit - add memory request
         resources:
           limits:
             memory: 256Mi
           requests:
             cpu: 10m
+            memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

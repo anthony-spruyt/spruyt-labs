@@ -140,13 +140,14 @@ main:
     readOnlyRootFilesystem: true
     runAsNonRoot: true
     runAsUser: 1000
+  # Increased memory request based on P99: 369Mi
   resources:
     limits:
       cpu: 2000m
       memory: 2048Mi
     requests:
       cpu: 100m
-      memory: 256Mi
+      memory: 512Mi
 worker:
   enabled: true
   extraEnv: *extraEnv

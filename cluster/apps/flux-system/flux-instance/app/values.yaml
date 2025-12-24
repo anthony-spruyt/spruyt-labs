@@ -110,6 +110,8 @@ instance:
           kind: Deployment
           name: helm-controller
       # Adjust resources and limits
+      # Critical infrastructure - no CPU limits (CPU is compressible)
+      # Requests: P99 usage + 20% buffer
       - patch: |
           apiVersion: apps/v1
           kind: Deployment
@@ -123,10 +125,9 @@ instance:
                     resources:
                       limits:
                         memory: 1Gi
-                        cpu: 2000m
                       requests:
-                        memory: 64Mi
-                        cpu: 20m
+                        memory: 128Mi
+                        cpu: 50m
         target:
           kind: Deployment
           name: helm-controller
@@ -143,10 +144,9 @@ instance:
                     resources:
                       limits:
                         memory: 1Gi
-                        cpu: 2000m
                       requests:
-                        memory: 192Mi
-                        cpu: 20m
+                        memory: 256Mi
+                        cpu: 50m
         target:
           kind: Deployment
           name: kustomize-controller
@@ -163,10 +163,9 @@ instance:
                     resources:
                       limits:
                         memory: 512Mi
-                        cpu: 200m
                       requests:
-                        memory: 32Mi
-                        cpu: 5m
+                        memory: 64Mi
+                        cpu: 25m
         target:
           kind: Deployment
           name: notification-controller
@@ -183,10 +182,9 @@ instance:
                     resources:
                       limits:
                         memory: 1Gi
-                        cpu: 2000m
                       requests:
-                        memory: 40Mi
-                        cpu: 5m
+                        memory: 64Mi
+                        cpu: 25m
         target:
           kind: Deployment
           name: source-controller

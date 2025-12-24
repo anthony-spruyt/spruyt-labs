@@ -129,13 +129,13 @@ spec:
 
                         echo "Configuration complete. Sleeping..."
                         sleep infinity
+                    # Critical infrastructure - no CPU limit (was 94-97% throttled)
                     resources:
                       limits:
-                        cpu: 100m
-                        memory: 128Mi
+                        memory: 256Mi
                       requests:
-                        cpu: 10m
-                        memory: 32Mi
+                        cpu: 50m
+                        memory: 64Mi
                     volumeMounts:
                       - name: mon-endpoint-volume
                         mountPath: /etc/rook

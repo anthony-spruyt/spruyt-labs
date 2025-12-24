@@ -88,13 +88,14 @@ controllers:
         envFrom:
           - secretRef:
               name: foundryvtt-secrets
+        # Gaming workload - reduce over-provisioned memory based on P99: 405Mi
         resources:
           requests:
-            cpu: 500m
-            memory: 4Gi
+            cpu: 250m
+            memory: 1Gi
           limits:
             cpu: 2000m
-            memory: 8Gi
+            memory: 4Gi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
