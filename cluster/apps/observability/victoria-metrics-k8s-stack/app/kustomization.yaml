@@ -9,6 +9,7 @@ resources:
   - ./oauth-rotation-rbac.yaml
   - ./victoria-metrics-k8s-stack-secrets.sops.yaml
   - ./vm-service-scrapes.yaml
+  - ./vmrules
   - ./release.yaml
 configMapGenerator:
   - name: victoria-metrics-k8s-stack-values

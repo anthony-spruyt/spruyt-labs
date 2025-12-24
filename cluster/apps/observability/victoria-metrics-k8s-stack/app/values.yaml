@@ -19,6 +19,12 @@ defaultDatasources:
       jsonData:
         manageAlerts: false
 
+# Disable default NodeFilesystemSpaceFillingUp alerts - replaced with Talos-safe version in vmrules/
+defaultRules:
+  rules:
+    NodeFilesystemSpaceFillingUp:
+      create: false
+
 victoria-metrics-operator:
   enabled: false
 
@@ -196,7 +202,7 @@ prometheus-node-exporter:
   extraArgs:
     - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+|run/containerd/.+)($|/)
     - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|erofs|sysfs|tracefs|tmpfs|rootfs)$
-  # VMServiceScrape configuration to drop pod label (prevents stale series on pod restart)
+  # VMServiceScrape configuration for Talos-specific filtering
   vmScrape:
     enabled: true
     spec:
@@ -207,9 +213,6 @@ prometheus-node-exporter:
             - action: drop
               source_labels: [mountpoint]
               regex: "/var/lib/kubelet/pods.+"
-            # Drop pod label to prevent stale series causing false predict_linear alerts
-            - action: labeldrop
-              regex: pod
 
 # -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
 kube-state-metrics:

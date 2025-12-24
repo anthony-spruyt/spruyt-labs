@@ -1,0 +1,68 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/operator.victoriametrics.com/vmrule_v1beta1.json
+# Talos-safe version of NodeFilesystemSpaceFillingUp alerts
+# Adds deriv() guard to filter out false positives from Talos node restarts
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: talos-node-filesystem-alerts
+  namespace: observability
+spec:
+  groups:
+    - name: talos-node-exporter
+      rules:
+        # Warning: 24 hours prediction - only fire if disk is actually filling (deriv < 0)
+        - alert: NodeFilesystemSpaceFillingUp
+          expr: |
+            (
+              (
+                (node_filesystem_avail_bytes{job="node-exporter",fstype!="",mountpoint!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!="",mountpoint!=""}) * 100 < 15
+              )
+              and
+              (
+                predict_linear(node_filesystem_avail_bytes{job="node-exporter",fstype!="",mountpoint!=""}[6h], 86400) < 0
+              )
+              and
+              (
+                deriv(node_filesystem_avail_bytes{job="node-exporter",fstype!="",mountpoint!=""}[6h]) < 0
+              )
+              and
+              (
+                node_filesystem_readonly{job="node-exporter",fstype!="",mountpoint!=""} == 0
+              )
+            )
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Filesystem is predicted to run out of space within the next 24 hours."
+            description: 'Filesystem on {{ $labels.device }}, mounted on {{ $labels.mountpoint }}, at {{ $labels.instance }} has only {{ printf "%.2f" $value }}% available space left and is filling up.'
+            runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodefilesystemspacefillingup
+
+        # Critical: 4 hours prediction - only fire if disk is actually filling (deriv < 0)
+        - alert: NodeFilesystemSpaceFillingUp
+          expr: |
+            (
+              (
+                (node_filesystem_avail_bytes{job="node-exporter",fstype!="",mountpoint!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!="",mountpoint!=""}) * 100 < 10
+              )
+              and
+              (
+                predict_linear(node_filesystem_avail_bytes{job="node-exporter",fstype!="",mountpoint!=""}[6h], 14400) < 0
+              )
+              and
+              (
+                deriv(node_filesystem_avail_bytes{job="node-exporter",fstype!="",mountpoint!=""}[6h]) < 0
+              )
+              and
+              (
+                node_filesystem_readonly{job="node-exporter",fstype!="",mountpoint!=""} == 0
+              )
+            )
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "Filesystem is predicted to run out of space within the next 4 hours."
+            description: 'Filesystem on {{ $labels.device }}, mounted on {{ $labels.mountpoint }}, at {{ $labels.instance }} has only {{ printf "%.2f" $value }}% available space left and is filling up fast.'
+            runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodefilesystemspacefillingup
