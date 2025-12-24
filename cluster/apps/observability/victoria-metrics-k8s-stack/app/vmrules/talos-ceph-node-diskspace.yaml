@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/operator.victoriametrics.com/vmrule_v1beta1.json
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
 # Talos-safe version of CephNodeDiskspaceWarning alert
 # Adds deriv() guard to filter out false positives from Talos node restarts
 apiVersion: operator.victoriametrics.com/v1beta1
