@@ -27,6 +27,20 @@ controllers:
             memory: 32Mi
           limits:
             memory: 64Mi
+        # Probes: HTTP on whoami health endpoint
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 80
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 1
+              failureThreshold: 3
+          readiness: *probes
 service:
   whoami:
     controller: whoami
