@@ -97,8 +97,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node:cpu_temperature_celsius:max{instance=~\"$node\"}",
-          "legendFormat": "{{ instance }}",
+          "expr": "max(node:cpu_temperature_celsius:max{instance=~\"$node\"})",
+          "legendFormat": "Max CPU",
           "refId": "A"
         }
       ],
@@ -167,8 +167,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node:cpu_temperature_percent:max{instance=~\"$node\"}",
-          "legendFormat": "{{ instance }}",
+          "expr": "max(node:cpu_temperature_percent:max{instance=~\"$node\"})",
+          "legendFormat": "Max CPU %",
           "refId": "A"
         }
       ],
@@ -237,8 +237,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node:nvme_temperature_celsius:max{instance=~\"$node\"}",
-          "legendFormat": "{{ instance }}",
+          "expr": "max(node:nvme_temperature_celsius:max{instance=~\"$node\"})",
+          "legendFormat": "Max NVMe",
           "refId": "A"
         }
       ],
@@ -307,8 +307,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "node:nvme_temperature_percent:max{instance=~\"$node\"}",
-          "legendFormat": "{{ instance }}",
+          "expr": "max(node:nvme_temperature_percent:max{instance=~\"$node\"})",
+          "legendFormat": "Max NVMe %",
           "refId": "A"
         }
       ],
