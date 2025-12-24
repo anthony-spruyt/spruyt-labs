@@ -36,11 +36,21 @@ spec:
 
         # CPU thermal headroom (percentage of critical temp used)
         # 100% = at critical temp, 0% = at 0°C
+        # Intel coretemp: uses actual critical temp from sensor
+        # AMD k10temp: uses 95°C fallback (Tctl max, no crit metric exposed)
         - record: node:cpu_temperature_percent:max
           expr: |
-            100 * max by (instance) (
-              node_hwmon_temp_celsius{chip=~"platform_coretemp_.*|pci0000:00_0000:00:18_3"}
-              / on(instance, chip, sensor) node_hwmon_temp_crit_celsius{chip=~"platform_coretemp_.*|pci0000:00_0000:00:18_3"}
+            (
+              100 * max by (instance) (
+                node_hwmon_temp_celsius{chip=~"platform_coretemp_.*"}
+                / on(instance, chip, sensor) node_hwmon_temp_crit_celsius{chip=~"platform_coretemp_.*"}
+              )
+            )
+            or
+            (
+              100 * max by (instance) (
+                node_hwmon_temp_celsius{chip="pci0000:00_0000:00:18_3"}
+              ) / 95
             )
 
         # NVMe thermal headroom (percentage of critical temp used)
