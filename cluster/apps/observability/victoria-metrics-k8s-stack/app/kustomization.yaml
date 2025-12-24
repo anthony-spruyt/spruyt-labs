@@ -151,13 +151,15 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
-  - name: grafana-dashboard-ceph-official-node-exporter
-    namespace: observability
-    files:
-      - dashboards/ceph-official-node-exporter.json
-    options:
-      labels:
-        grafana_dashboard: "1"
+  # NOTE: ceph-official-node-exporter.json excluded - uses same UID (rYdddlPWk) as
+  # VM stack's node-exporter-full dashboard. Ceph Dashboard iframes work with VM version.
+  # - name: grafana-dashboard-ceph-official-node-exporter
+  #   namespace: observability
+  #   files:
+  #     - dashboards/ceph-official-node-exporter.json
+  #   options:
+  #     labels:
+  #       grafana_dashboard: "1"
   - name: grafana-dashboard-ceph-official-rgw-s3
     namespace: observability
     files:
