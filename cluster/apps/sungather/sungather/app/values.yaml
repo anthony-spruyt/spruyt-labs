@@ -10,6 +10,8 @@ defaultPodOptions:
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
+# Probes: Deferred - app currently disabled (replicas: 0)
+# TODO: Add HTTP probes on port 8099 when re-enabling
 controllers:
   sungather:
     replicas: 0
