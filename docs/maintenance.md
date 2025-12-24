@@ -144,24 +144,27 @@ Review and optimize Kubernetes resource requests and limits for all workloads. F
 1. **Query current throttling status (24h)**:
 
    ```bash
-   kubectl run -it --rm vmquery-throttle --image=curlimages/curl --restart=Never -- \
-     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query?query=topk(30,sum%20by%20(namespace,pod,container)(rate(container_cpu_cfs_throttled_periods_total[24h]))%20/%20sum%20by%20(namespace,pod,container)(rate(container_cpu_cfs_periods_total[24h]))*100)' | \
-     jq -r '.data.result[] | "\(.metric.namespace)/\(.metric.pod)/\(.metric.container): \(.value[1] | tonumber * 100 | round / 100)%"' | sort -t: -k2 -rn
+   kubectl -n dev-debug run vmquery-throttle --image=curlimages/curl --restart=Never --rm -i -- \
+     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
+     --data-urlencode 'query=topk(30,sum by (namespace,pod,container)(rate(container_cpu_cfs_throttled_periods_total[24h])) / sum by (namespace,pod,container)(rate(container_cpu_cfs_periods_total[24h]))*100)' | \
+     jq -r '.data.result[] | select(.metric.container) | "\(.metric.namespace)/\(.metric.pod)/\(.metric.container): \(.value[1] | tonumber | floor)%"' | sort -t: -k2 -rn
    ```
 
 2. **Query P99 CPU usage (7d)**:
 
    ```bash
-   kubectl run -it --rm vmquery-cpu --image=curlimages/curl --restart=Never -- \
-     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query?query=quantile_over_time(0.99,sum%20by%20(namespace,container)(rate(container_cpu_usage_seconds_total[5m]))[7d])*1000' | \
+   kubectl -n dev-debug run vmquery-cpu --image=curlimages/curl --restart=Never --rm -i -- \
+     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
+     --data-urlencode 'query=quantile_over_time(0.99,sum by (namespace,container)(rate(container_cpu_usage_seconds_total[5m]))[7d])*1000' | \
      jq -r '.data.result[] | "\(.metric.namespace)/\(.metric.container): \(.value[1] | tonumber | floor)m p99"' | sort -t: -k2 -rn | head -50
    ```
 
 3. **Query P99 memory usage (7d)**:
 
    ```bash
-   kubectl run -it --rm vmquery-mem --image=curlimages/curl --restart=Never -- \
-     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query?query=max(quantile_over_time(0.99,container_memory_working_set_bytes[7d]))by(namespace,container)/1024/1024' | \
+   kubectl -n dev-debug run vmquery-mem --image=curlimages/curl --restart=Never --rm -i -- \
+     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
+     --data-urlencode 'query=max(quantile_over_time(0.99,container_memory_working_set_bytes[7d]))by(namespace,container)/1024/1024' | \
      jq -r '.data.result[] | "\(.metric.namespace)/\(.metric.container): \(.value[1] | tonumber | floor)Mi p99"' | sort -t: -k2 -rn | head -50
    ```
 

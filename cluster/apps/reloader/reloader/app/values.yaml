@@ -5,10 +5,10 @@ nameOverride: reloader
 fullnameOverride: reloader
 reloader:
   deployment:
-    # Non-critical - limits at 5x requests
+    # Bursty workload - needs higher limit for occasional spikes
     resources:
       limits:
-        cpu: 50m
+        cpu: 200m
         memory: 192Mi
       requests:
         cpu: 10m
