@@ -6,6 +6,7 @@ vars:
   hubbleDropsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/hubble-drops.sh"
   installAgeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-age.sh"
   installCiliumScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-cilium.sh"
+  installClaudeCodeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-claude-code.sh"
   installCnpgScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-cnpg.sh"
   installFluxCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux-capacitor.sh"
   installFluxScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux.sh"
@@ -35,6 +36,10 @@ tasks:
     desc: Installs the Cilium CLI
     cmds:
       - bash {{ .installCiliumScript }}
+  install-claude-code:
+    desc: Installs the Claude Code CLI
+    cmds:
+      - bash {{ .installClaudeCodeScript }}
   install-cnpg:
     desc: Installs the CNPG kubectl plugin for CloudNativePG
     cmds:
