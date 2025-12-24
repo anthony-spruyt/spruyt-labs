@@ -14,6 +14,33 @@ When adding new Helm charts:
 2. Reference it in your `HelmRelease` via `sourceRef`
 3. Renovate auto-resolves the registry URL
 
+## Annotating Shell Scripts
+
+For install scripts in `.taskfiles/`, use Renovate annotations to auto-update pinned versions:
+
+```bash
+#!/bin/bash
+# renovate: depName=kubernetes/kubernetes datasource=github-releases
+VERSION="v1.35.0"
+
+# Use $VERSION in download URLs...
+```
+
+**Format:** Comment with `depName=<owner/repo>` and `datasource=<type>`, followed by `VERSION="<version>"` on the next line.
+
+**Common datasources:**
+
+- `github-releases` - GitHub release tags (most tools)
+- `docker` - Container image tags
+
+**Examples:**
+
+| Tool    | depName               | datasource      |
+| ------- | --------------------- | --------------- |
+| kubectl | kubernetes/kubernetes | github-releases |
+| helm    | helm/helm             | github-releases |
+| velero  | vmware-tanzu/velero   | github-releases |
+
 ## Adding Package Groupings
 
 Edit `.github/renovate/groups.json5` to group related packages:

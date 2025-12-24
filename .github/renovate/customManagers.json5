@@ -39,5 +39,17 @@
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
     },
+    {
+      customType: "regex",
+      description: [
+        "Process renovate-annotated dependencies in taskfile scripts.",
+      ],
+      managerFilePatterns: ["/(^|/)\\.taskfiles/(?:[^/]+/)*[^/]+\\.sh$/"],
+      matchStrings: [
+        // # renovate: depName=X datasource=Y \n VERSION="v1.2.3"
+        'depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\nVERSION="(?<currentValue>v[^"]+)"',
+      ],
+      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
+    },
   ],
 }

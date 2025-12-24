@@ -5,11 +5,16 @@ version: "3"
 vars:
   hubbleDropsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/hubble-drops.sh"
   installAgeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-age.sh"
+  installCiliumScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-cilium.sh"
   installCnpgScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-cnpg.sh"
   installFluxCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux-capacitor.sh"
   installFluxScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux.sh"
+  installHelmfileScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helmfile.sh"
   installHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm-plugins.sh"
+  installHelmScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm.sh"
   installHubbleScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-hubble.sh"
+  installKubectlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-kubectl.sh"
+  installKustomizeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-kustomize.sh"
   installSafeChainScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-safe-chain.sh"
   installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
   installTalosctlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talosctl.sh"
@@ -26,6 +31,10 @@ tasks:
     desc: Installs age and age-keygen
     cmds:
       - bash {{ .installAgeScript }}
+  install-cilium:
+    desc: Installs the Cilium CLI
+    cmds:
+      - bash {{ .installCiliumScript }}
   install-cnpg:
     desc: Installs the CNPG kubectl plugin for CloudNativePG
     cmds:
@@ -38,6 +47,14 @@ tasks:
     desc: Installs Flux Capacitor v2 local FluxCD GUI
     cmds:
       - bash {{ .installFluxCapacitorScript }}
+  install-helm:
+    desc: Installs Helm
+    cmds:
+      - bash {{ .installHelmScript }}
+  install-helmfile:
+    desc: Installs Helmfile
+    cmds:
+      - bash {{ .installHelmfileScript }}
   install-helm-plugins:
     desc: Installs Helm schema gen and diff
     cmds:
@@ -46,6 +63,14 @@ tasks:
     desc: Installs the Hubble CLI for Cilium network observability
     cmds:
       - bash {{ .installHubbleScript }}
+  install-kubectl:
+    desc: Installs kubectl
+    cmds:
+      - bash {{ .installKubectlScript }}
+  install-kustomize:
+    desc: Installs kustomize
+    cmds:
+      - bash {{ .installKustomizeScript }}
   install-safe-chain:
     desc: Installs safe-chain
     cmds:

@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-# Define architecture
+# renovate: depName=cilium/hubble datasource=github-releases
+VERSION="v1.18.3"
+
 ARCH=$(uname -m)
 case "$ARCH" in
   x86_64) ARCH="amd64" ;;
@@ -9,23 +11,20 @@ case "$ARCH" in
   *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-# Fetch latest Hubble release tag from GitHub
-LATEST_TAG=$(curl -s https://api.github.com/repos/cilium/hubble/releases/latest | grep '"tag_name":' | cut -d '"' -f4)
+# Remove existing to ensure version update
+if [[ -f /usr/local/bin/hubble ]]; then
+  sudo rm -f /usr/local/bin/hubble
+fi
 
-# Construct download URL
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
 TARBALL="hubble-linux-${ARCH}.tar.gz"
-URL="https://github.com/cilium/hubble/releases/download/${LATEST_TAG}/${TARBALL}"
-
-# Download and extract
-curl -L --fail --remote-name-all "$URL" "${URL}.sha256sum"
-sha256sum --check "${TARBALL}.sha256sum"
-tar -xzf "$TARBALL"
-
-# Move binary to /usr/local/bin
-sudo mv hubble /usr/local/bin/hubble
+curl -Lo "$TMPDIR/$TARBALL" "https://github.com/cilium/hubble/releases/download/${VERSION}/${TARBALL}"
+curl -Lo "$TMPDIR/${TARBALL}.sha256sum" "https://github.com/cilium/hubble/releases/download/${VERSION}/${TARBALL}.sha256sum"
+(cd "$TMPDIR" && sha256sum --check "${TARBALL}.sha256sum")
+tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
+sudo mv "$TMPDIR/hubble" /usr/local/bin/hubble
 sudo chmod +x /usr/local/bin/hubble
 
-# Clean up
-rm -rf "$TARBALL" "${TARBALL}.sha256sum"
-
-echo "✅ Hubble CLI ${LATEST_TAG} installed successfully."
+echo "✅ Hubble CLI ${VERSION} installed successfully."

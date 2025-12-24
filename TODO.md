@@ -12,4 +12,4 @@
 
 - check CPU throttled namespaces / workloads
 
-- install kubectl and helm rather via task
+- optimize claude settings

@@ -8,14 +8,19 @@ curl -sSfL https://taskfile.dev/install.sh \
 
 echo "🔧 Running dev env setup tasks..."
 
+task dev-env:install-kubectl
+task dev-env:install-kustomize
+task dev-env:install-helm
+task dev-env:install-helmfile
+task dev-env:install-helm-plugins
+task dev-env:install-cilium
+task dev-env:install-hubble
 task dev-env:install-safe-chain
 task dev-env:install-talosctl
 task dev-env:install-talhelper
-task dev-env:install-helm-plugins
 task dev-env:install-flux
 task dev-env:install-flux-capacitor
 task dev-env:install-age
 task dev-env:install-velero
-task dev-env:install-hubble
 task dev-env:install-cnpg
 task pre-commit:init
