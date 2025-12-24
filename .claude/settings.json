@@ -8,9 +8,6 @@
       "Read(./LICENSE)"
     ]
   },
-  "enabledPlugins": {
-    "context7@claude-plugins-official": true
-  },
   "hooks": {
     "PostToolUse": [
       {
@@ -23,5 +20,10 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "github@claude-plugins-official": true
   }
 }

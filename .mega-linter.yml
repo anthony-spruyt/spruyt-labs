@@ -12,7 +12,6 @@ FILTER_REGEX_EXCLUDE: '.*sops.*|.*/mcp\.json$'
 EXCLUDED_DIRECTORIES:
   - .git
   - talos
-  - .kilocode
   - clusterconfig
   - legacy
   - .taskfiles/talos/scripts

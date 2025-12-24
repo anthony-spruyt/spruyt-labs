@@ -10,8 +10,6 @@
     ".pre-commit-config.yaml": false,
     "LICENSE": false,
     "Taskfile.yml": false,
-    ".kilocode": false,
-    ".kilocodeignore": false,
     "talos/clusterconfig": false,
     "**/.terraform": false,
     "**/.terraform.lock.hcl": false

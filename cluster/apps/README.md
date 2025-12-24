@@ -41,7 +41,6 @@ cluster/apps/
 
 1. **Creating New Documentation**:
 
-   - Use the template from `.kilocode/templates/readme_template.md`
    - Populate required sections with accurate information
    - Include key monitoring and troubleshooting commands
 
