@@ -5,10 +5,9 @@ nameOverride: reloader
 fullnameOverride: reloader
 reloader:
   deployment:
-    # Bursty workload - needs higher limit for occasional spikes
+    # Tier 1 critical infrastructure - no CPU limit (impacts all workloads)
     resources:
       limits:
-        cpu: 200m
         memory: 192Mi
       requests:
         cpu: 10m

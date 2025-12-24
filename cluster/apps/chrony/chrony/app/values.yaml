@@ -67,12 +67,12 @@ controllers:
           #     periodSeconds: 60
           #     timeoutSeconds: 5
           #     failureThreshold: 3
+        # Tier 1 critical infrastructure - no CPU limit (time sync is essential)
         resources:
           requests:
             cpu: 10m
             memory: 10Mi
           limits:
-            cpu: 500m
             memory: 64Mi
 service:
   chrony:

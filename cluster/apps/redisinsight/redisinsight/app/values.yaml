@@ -28,13 +28,12 @@ controllers:
             value: "false"
           - name: RI_STDOUT_LOGGER
             value: "true"
-        # Non-critical - limits at 5x requests (was 88-92% throttled)
+        # Tier 3 - no CPU limit (was 88-92% throttled), P99 <1m so reduce requests
         resources:
           requests:
-            cpu: 50m
+            cpu: 10m
             memory: 256Mi
           limits:
-            cpu: 250m
             memory: 512Mi
         securityContext:
           allowPrivilegeEscalation: false

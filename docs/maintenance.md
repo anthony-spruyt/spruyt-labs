@@ -139,71 +139,98 @@ Run this prompt with Claude Code every quarter to review and optimize resource a
 
 ---
 
-Review and optimize Kubernetes resource requests and limits for all workloads. Follow this procedure:
+Review and optimize Kubernetes resource requests and limits for all workloads.
 
-1. **Query current throttling status (24h)**:
+---
 
-   ```bash
-   kubectl -n dev-debug run vmquery-throttle --image=curlimages/curl --restart=Never --rm -i -- \
-     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
-     --data-urlencode 'query=topk(30,sum by (namespace,pod,container)(rate(container_cpu_cfs_throttled_periods_total[24h])) / sum by (namespace,pod,container)(rate(container_cpu_cfs_periods_total[24h]))*100)' | \
-     jq -r '.data.result[] | select(.metric.container) | "\(.metric.namespace)/\(.metric.pod)/\(.metric.container): \(.value[1] | tonumber | floor)%"' | sort -t: -k2 -rn
-   ```
+### Step 1: Run Metrics Queries
 
-2. **Query P99 CPU usage (7d)**:
+First, clean up any leftover query pods:
 
-   ```bash
-   kubectl -n dev-debug run vmquery-cpu --image=curlimages/curl --restart=Never --rm -i -- \
-     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
-     --data-urlencode 'query=quantile_over_time(0.99,sum by (namespace,container)(rate(container_cpu_usage_seconds_total[5m]))[7d])*1000' | \
-     jq -r '.data.result[] | "\(.metric.namespace)/\(.metric.container): \(.value[1] | tonumber | floor)m p99"' | sort -t: -k2 -rn | head -50
-   ```
+```bash
+kubectl -n dev-debug delete pod -l app.kubernetes.io/purpose=metrics-query --ignore-not-found 2>/dev/null || true
+```
 
-3. **Query P99 memory usage (7d)**:
+Run all three queries using `--command` flag for reliability (run in parallel):
 
-   ```bash
-   kubectl -n dev-debug run vmquery-mem --image=curlimages/curl --restart=Never --rm -i -- \
-     curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
-     --data-urlencode 'query=max(quantile_over_time(0.99,container_memory_working_set_bytes[7d]))by(namespace,container)/1024/1024' | \
-     jq -r '.data.result[] | "\(.metric.namespace)/\(.metric.container): \(.value[1] | tonumber | floor)Mi p99"' | sort -t: -k2 -rn | head -50
-   ```
+**Throttling (24h)**:
 
-4. **Discover ALL workloads with resource configurations**:
+```bash
+kubectl -n dev-debug run vmquery-throttle --labels=app.kubernetes.io/purpose=metrics-query \
+  --image=curlimages/curl --restart=Never --rm -i --command -- \
+  curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
+  --data-urlencode 'query=topk(30,sum by (namespace,pod,container)(rate(container_cpu_cfs_throttled_periods_total[24h])) / sum by (namespace,pod,container)(rate(container_cpu_cfs_periods_total[24h]))*100)'
+```
 
-   ```bash
-   # Find all values.yaml files that define resources
-   find cluster/apps -name "values.yaml" -exec grep -l "resources:" {} \; | sort
+**P99 CPU (7d)**:
 
-   # Find all HelmRelease files (may have postRenderer patches with resources)
-   find cluster/apps -name "release.yaml" -exec grep -l "resources:" {} \; | sort
+```bash
+kubectl -n dev-debug run vmquery-cpu --labels=app.kubernetes.io/purpose=metrics-query \
+  --image=curlimages/curl --restart=Never --rm -i --command -- \
+  curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
+  --data-urlencode 'query=quantile_over_time(0.99,sum by (namespace,container)(rate(container_cpu_usage_seconds_total[5m]))[7d])*1000'
+```
 
-   # List all running pods to cross-reference with metrics
-   kubectl get pods -A --no-headers | awk '{print $1"/"$2}' | sort
-   ```
+**P99 Memory (7d)**:
 
-   **Important**: Read EVERY values.yaml file found above to review current resource settings. Do not skip any workloads. Compare each workload's current settings against the P99 metrics from steps 2-3.
+```bash
+kubectl -n dev-debug run vmquery-mem --labels=app.kubernetes.io/purpose=metrics-query \
+  --image=curlimages/curl --restart=Never --rm -i --command -- \
+  curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' \
+  --data-urlencode 'query=max(quantile_over_time(0.99,container_memory_working_set_bytes[7d]))by(namespace,container)/1024/1024'
+```
 
-5. **Apply these sizing rules**:
-   - **Requests**: P99 usage + 20% buffer
-   - **CPU Limits**:
-     - Critical infra (Flux, Authentik, Rook-Ceph, Traefik): Remove CPU limits entirely
-     - Non-critical: 3-5x requests
-   - **Memory Limits**: 1.5-2x requests (memory causes OOMKill, be generous)
+Parse JSON results locally - filter to containers with throttle >5% and create a comparison table.
 
-6. **Workload criticality tiers**:
-   - **Tier 1 (no CPU limit)**: Flux controllers, Authentik, CNPG, Rook-Ceph, Traefik, Cilium
-   - **Tier 2 (generous limits)**: VictoriaMetrics, N8N, Vaultwarden, Velero
-   - **Tier 3 (normal limits)**: Headlamp, RedisInsight, Whoami, Chrony
+### Step 2: Map Containers to Config Files
 
-7. **Update values.yaml files** for any workloads where:
-   - Throttle % > 5% (needs limit increase or removal)
-   - Requests < 80% of P99 usage (under-provisioned)
-   - Requests > 200% of P99 usage (over-provisioned, wasting scheduler capacity)
+For each throttled container, locate its resource config:
 
-8. **Validate changes** after push:
-   - Wait 30 minutes for metrics to stabilize
-   - Re-run throttle query to confirm < 5% throttling
-   - Check no pods are pending due to insufficient resources
+```bash
+find cluster/apps -name "values.yaml" -exec grep -l "resources:" {} \; | sort
+find cluster/apps -name "release.yaml" -exec grep -l "resources:" {} \; | sort
+```
+
+Common container-to-file mappings:
+
+| Container        | Config File                                                   |
+| ---------------- | ------------------------------------------------------------- |
+| sso-config       | cluster/apps/rook-ceph/rook-ceph-cluster/app/release.yaml     |
+| reloader         | cluster/apps/reloader/reloader/app/values.yaml                |
+| redisinsight/app | cluster/apps/redisinsight/redisinsight/app/values.yaml        |
+| whoami           | cluster/apps/whoami/whoami/app/values.yaml                    |
+| chrony           | cluster/apps/chrony/chrony/app/values.yaml                    |
+| headlamp         | cluster/apps/headlamp-system/headlamp/app/values.yaml         |
+| _most others_    | cluster/apps/\<namespace\>/\<app\>/app/values.yaml            |
+
+### Step 3: Decision Matrix
+
+| Condition                      | Action                                         |
+| ------------------------------ | ---------------------------------------------- |
+| Throttle >5% AND Tier 1        | Remove CPU limit                               |
+| Throttle >5% AND Tier 2/3      | Increase limit to 10x requests OR remove       |
+| P99 CPU > requests             | Increase requests to P99 + 20%                 |
+| P99 CPU < 50% of requests      | Reduce requests (but min 5m)                   |
+| Throttle >50% with no limit    | Increase requests (bursty workload)            |
+
+**Tier Definitions**:
+
+- **Tier 1 (no CPU limit)**: flux-\*, authentik-\*, cnpg-\*, rook-ceph-\*, traefik, cilium-\*, reloader, chrony, external-dns, cert-manager
+- **Tier 2 (generous limits 5-10x)**: victoria-metrics-\*, n8n-\*, vaultwarden, velero, technitium
+- **Tier 3 (normal limits 3-5x)**: headlamp, redisinsight, whoami, minecraft, foundryvtt
+
+### Step 4: Validate After Push
+
+Wait 30 minutes for metrics to stabilize, then:
+
+```bash
+# Re-run throttle query - all containers should be <5%
+# Check no pods pending
+kubectl get pods -A | grep -i pending
+
+# Check recent OOMKills
+kubectl get events -A --field-selector reason=OOMKilled --sort-by='.lastTimestamp' | tail -10
+```
 
 ## Related
 

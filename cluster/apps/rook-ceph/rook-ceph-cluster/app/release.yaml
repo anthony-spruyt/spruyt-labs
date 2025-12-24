@@ -129,12 +129,12 @@ spec:
 
                         echo "Configuration complete. Sleeping..."
                         sleep infinity
-                    # Critical infrastructure - no CPU limit (was 94-97% throttled)
+                    # Critical infrastructure - no CPU limit, high requests for bursty startup
                     resources:
                       limits:
                         memory: 256Mi
                       requests:
-                        cpu: 50m
+                        cpu: 100m
                         memory: 64Mi
                     volumeMounts:
                       - name: mon-endpoint-volume
