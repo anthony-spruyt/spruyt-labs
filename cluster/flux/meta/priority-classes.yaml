@@ -1,0 +1,45 @@
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: critical-infrastructure
+value: 1000000
+globalDefault: false
+preemptionPolicy: PreemptLowerPriority
+description: "Critical infrastructure - network, ingress, secrets, storage operators"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 100000
+globalDefault: false
+preemptionPolicy: PreemptLowerPriority
+description: "High priority - observability, auth, cluster utilities"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: standard
+value: 10000
+globalDefault: true
+preemptionPolicy: PreemptLowerPriority
+description: "Standard priority - default for all workloads"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: low-priority
+value: 1000
+globalDefault: false
+preemptionPolicy: PreemptLowerPriority
+description: "Low priority - gaming, non-critical workloads"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: best-effort
+value: 100
+globalDefault: false
+preemptionPolicy: Never
+description: "Best effort - preemptible workloads, batch jobs"
