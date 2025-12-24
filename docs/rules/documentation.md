@@ -45,12 +45,12 @@ kubectl get pods -n default
 3. **Dependencies**: Must list actual dependencies from ks.yaml dependsOn
 4. **GitOps-first**: Procedures should prefer editing manifests and reconciling over manual kubectl apply
 
-> **Note**: Directory layouts are not required in individual READMEs. The standard structure is documented in `cluster/apps/README.md`.
+> **Note**: Directory layouts are not required in individual READMEs. The standard structure is documented in [cluster/apps/README.md](../../cluster/apps/README.md).
 
 ## Maintenance
 
 1. **Review after changes**: Update docs when repository changes affect accuracy
-2. **Use template**: Start new docs from `docs/templates/readme_template.md`
+2. **Use template**: Start new docs from [readme_template.md](../templates/readme_template.md)
 3. **Validate before commit**: Run `task dev-env:lint`
 
 ## Validation
