@@ -25,6 +25,28 @@ controllers:
         env:
           - name: JAVA_TOOL_OPTIONS
             value: "-Djava.net.preferIPv4Stack=true"
+        # Probes: Exec-based Java process check (UDP-only service, no HTTP/TCP endpoints)
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command: ["pgrep", "-f", "java"]
+              initialDelaySeconds: 60
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command: ["pgrep", "-f", "java"]
+              initialDelaySeconds: 30
+              periodSeconds: 15
+              timeoutSeconds: 5
+              failureThreshold: 3
 configMaps:
   config:
     enabled: true
