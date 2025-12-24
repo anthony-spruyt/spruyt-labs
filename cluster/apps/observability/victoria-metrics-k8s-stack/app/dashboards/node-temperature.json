@@ -459,6 +459,15 @@
           "expr": "max by (instance, chip) (node_hwmon_temp_crit_celsius{instance=~\"$node\", chip=~\"platform_coretemp_.*\"})",
           "legendFormat": "{{ instance }} - {{ chip }} (critical)",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (instance, chip) (node_hwmon_temp_celsius{instance=~\"$node\", chip=\"pci0000:00_0000:00:18_3\"}) * 0 + 95",
+          "legendFormat": "{{ instance }} - {{ chip }} (critical)",
+          "refId": "C"
         }
       ],
       "title": "CPU Core Temperatures",
