@@ -22,13 +22,10 @@ monitoring:
   # -- Whether to create the Prometheus rules for Ceph alerts
   createPrometheusRules: true
   # -- Edit Prometheus rules for Ceph alerts
-  prometheusRuleOverrides: {}
-    # CephHealthWarning:
-    #   disabled: true
-    # NVMeoFHighWriteLatency:
-    #   for: 3m
-    #   labels:
-    #     severity: critical
+  # Disable CephNodeDiskspaceWarning - replaced with Talos-safe version in observability vmrules/
+  prometheusRuleOverrides:
+    CephNodeDiskspaceWarning:
+      disabled: true
   # -- The namespace in which to create the prometheus rules, if different from the rook cluster namespace.
   # If you have multiple rook-ceph clusters in the same k8s cluster, choose the same namespace (ideally, namespace with prometheus
   # deployed) to set rulesNamespaceOverride for all the clusters. Otherwise, you will get duplicate alerts with multiple alert definitions.
