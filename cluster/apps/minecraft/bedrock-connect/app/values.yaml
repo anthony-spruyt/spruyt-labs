@@ -25,28 +25,14 @@ controllers:
         env:
           - name: JAVA_TOOL_OPTIONS
             value: "-Djava.net.preferIPv4Stack=true"
-        # Probes: Exec-based Java process check (UDP-only service, no HTTP/TCP endpoints)
+        # Probes: Disabled - minimal container image has no shell/pgrep utilities
+        # UDP-only service (Minecraft Bedrock protocol) with no HTTP/TCP endpoints
+        # Kubernetes will still restart pod on process crash
         probes:
           liveness:
-            enabled: true
-            custom: true
-            spec:
-              exec:
-                command: ["pgrep", "-f", "java"]
-              initialDelaySeconds: 60
-              periodSeconds: 30
-              timeoutSeconds: 5
-              failureThreshold: 3
+            enabled: false
           readiness:
-            enabled: true
-            custom: true
-            spec:
-              exec:
-                command: ["pgrep", "-f", "java"]
-              initialDelaySeconds: 30
-              periodSeconds: 15
-              timeoutSeconds: 5
-              failureThreshold: 3
+            enabled: false
 configMaps:
   config:
     enabled: true
