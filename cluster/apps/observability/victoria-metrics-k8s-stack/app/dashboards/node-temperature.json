@@ -505,7 +505,34 @@
           },
           "unit": "celsius"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*\\(critical\\)$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [10, 10],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -536,6 +563,15 @@
           "expr": "max by (instance, chip, sensor) (node_hwmon_temp_celsius{instance=~\"$node\", chip=~\"nvme_.*\"})",
           "legendFormat": "{{ instance }} - {{ chip }} {{ sensor }}",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (instance, chip) (node_hwmon_temp_crit_celsius{instance=~\"$node\", chip=~\"nvme_.*\"})",
+          "legendFormat": "{{ instance }} - {{ chip }} (critical)",
+          "refId": "B"
         }
       ],
       "title": "NVMe Temperatures",
