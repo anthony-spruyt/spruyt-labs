@@ -78,13 +78,13 @@ operator:
       cpu: 50m
       memory: 128Mi
 # Critical networking infrastructure - no CPU limit (CPU is compressible)
-# Agent resources based on P99 usage: 245m CPU, 519Mi memory
+# Agent resources based on P99 usage: 1051m CPU, 520Mi memory
 resources:
   limits:
     memory: 1Gi
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 1250m
+    memory: 512Mi
 prometheus:
   enabled: true
   serviceMonitor:

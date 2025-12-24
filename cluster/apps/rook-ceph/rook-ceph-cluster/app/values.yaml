@@ -92,25 +92,26 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
     devicePathFilter: /dev/disk/by-id/nvme-(KINGSTON_OM3PGP41024P-A0_50026B72836A9B64|KINGSTON_OM3PGP41024P-A0_50026B72836A034E|KINGSTON_OM3PGP41024P-A0_50026B72836A9C9E)
     config:
       encryptedDevice: "true"
+  # Resource requests based on P99 metrics (7d): MGR=169m/737Mi, MON=188m/534Mi, OSD=483m/1078Mi
   resources:
     mgr:
       limits:
         memory: 2Gi
       requests:
-        cpu: 100m
+        cpu: 200m
         memory: 1Gi
     mon:
       limits:
         memory: 2Gi
       requests:
-        cpu: 60m
-        memory: 512Mi
+        cpu: 225m
+        memory: 640Mi
     osd:
       limits:
         memory: 4Gi
       requests:
-        cpu: 150m
-        memory: 1Gi
+        cpu: 600m
+        memory: 1280Mi
     prepareosd:
       # limits: It is not recommended to set limits on the OSD prepare job
       #         since it's a one-time burst for memory that must be allowed to
