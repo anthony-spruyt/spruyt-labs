@@ -14,7 +14,6 @@ metadata:
       default resource requests for containers that don't specify them.
       This ensures all pods have at least Burstable QoS class.
 spec:
-  generateExisting: true
   rules:
     - name: generate-limitrange
       match:
@@ -26,17 +25,41 @@ spec:
         any:
           - resources:
               names:
+                # Kubernetes system namespaces
                 - kube-system
                 - kube-public
                 - kube-node-lease
-                - kyverno
+                # GitOps and policy
                 - flux-system
+                - kyverno
+                # Core infrastructure
+                - cert-manager
+                - cilium-secrets
+                - cloudflare-system
+                - external-dns
+                - external-secrets
+                - kubelet-csr-approver
+                - reloader
+                - spegel
+                - traefik
+                - velero
+                # Storage
+                - csi-addons-system
+                - rook-ceph
+                # Database operators
+                - cnpg-system
+                # Observability
+                - observability
+                # System utilities
+                - chrony
+                - irq-balance
       generate:
         apiVersion: v1
         kind: LimitRange
         name: default-limits
         namespace: "{{request.object.metadata.name}}"
         synchronize: true
+        generateExisting: true
         data:
           spec:
             limits:

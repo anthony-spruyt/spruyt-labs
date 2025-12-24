@@ -109,6 +109,9 @@ resources:
   requests:
     memory: 1Gi
     cpu: 500m
+  limits:
+    cpu: 2000m
+    memory: 4Gi
 # If true the workload is defined as a StatefulSet instead of a Deployment.
 # Make sure to also update the strategyType!
 # All configuration options for the Deployment (e.g. annotations) are used for the StatefulSet.
