@@ -138,6 +138,8 @@ securityContext:
   allowPrivilegeEscalation: false
 # Most of these map to environment variables. See Minecraft for details:
 # https://hub.docker.com/r/itzg/minecraft-server/
+# Probes: Chart uses mc-monitor exec probe (purpose-built Bedrock health checker)
+# Only overriding initialDelaySeconds, chart provides complete probe config
 livenessProbe:
   initialDelaySeconds: 30
 readinessProbe:
