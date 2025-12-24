@@ -193,15 +193,20 @@ find cluster/apps -name "release.yaml" -exec grep -l "resources:" {} \; | sort
 
 Common container-to-file mappings:
 
-| Container        | Config File                                                   |
-| ---------------- | ------------------------------------------------------------- |
-| sso-config       | cluster/apps/rook-ceph/rook-ceph-cluster/app/release.yaml     |
-| reloader         | cluster/apps/reloader/reloader/app/values.yaml                |
-| redisinsight/app | cluster/apps/redisinsight/redisinsight/app/values.yaml        |
-| whoami           | cluster/apps/whoami/whoami/app/values.yaml                    |
-| chrony           | cluster/apps/chrony/chrony/app/values.yaml                    |
-| headlamp         | cluster/apps/headlamp-system/headlamp/app/values.yaml         |
-| _most others_    | cluster/apps/\<namespace\>/\<app\>/app/values.yaml            |
+| Container              | Config File                                                        |
+| ---------------------- | ------------------------------------------------------------------ |
+| sso-config             | cluster/apps/rook-ceph/rook-ceph-cluster/app/release.yaml          |
+| reloader               | cluster/apps/reloader/reloader/app/values.yaml                     |
+| redisinsight/app       | cluster/apps/redisinsight/redisinsight/app/values.yaml             |
+| whoami                 | cluster/apps/whoami/whoami/app/values.yaml                         |
+| chrony                 | cluster/apps/chrony/chrony/app/values.yaml                         |
+| headlamp               | cluster/apps/headlamp-system/headlamp/app/values.yaml              |
+| technitium             | cluster/apps/technitium/technitium/app/values.yaml                 |
+| technitium (secondary) | cluster/apps/technitium/technitium-secondary/app/values.yaml       |
+| cilium-agent           | cluster/apps/kube-system/cilium/app/values.yaml                    |
+| mon/mgr/osd            | cluster/apps/rook-ceph/rook-ceph-cluster/app/values.yaml           |
+| registry (spegel)      | cluster/apps/spegel/spegel/app/values.yaml                         |
+| _most others_          | cluster/apps/\<namespace\>/\<app\>/app/values.yaml                 |
 
 ### Step 3: Decision Matrix
 
@@ -215,8 +220,8 @@ Common container-to-file mappings:
 
 **Tier Definitions**:
 
-- **Tier 1 (no CPU limit)**: flux-\*, authentik-\*, cnpg-\*, rook-ceph-\*, traefik, cilium-\*, reloader, chrony, external-dns, cert-manager
-- **Tier 2 (generous limits 5-10x)**: victoria-metrics-\*, n8n-\*, vaultwarden, velero, technitium
+- **Tier 1 (no CPU limit)**: flux-\*, authentik-\*, cnpg-\*, rook-ceph-\*, traefik, cilium-\*, reloader, chrony, external-dns, cert-manager, technitium-\*, spegel, kyverno
+- **Tier 2 (generous limits 5-10x)**: victoria-metrics-\*, n8n-\*, vaultwarden, velero
 - **Tier 3 (normal limits 3-5x)**: headlamp, redisinsight, whoami, minecraft, foundryvtt
 
 ### Step 4: Validate After Push
