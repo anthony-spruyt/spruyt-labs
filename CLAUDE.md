@@ -89,6 +89,36 @@ Wrong: WebSearch("Technitium SSO")  ← NEVER do this first
 | Reading `*.sops.yaml` files                 | Blocked in settings, don't try       |
 | Reading `talos/clusterconfig/*`             | Contains machine secrets             |
 
+> **CRITICAL - kubectl secret access:**
+> The allow list permits `kubectl:*` for operational flexibility, but you MUST NEVER:
+>
+> **kubectl get secret output formats:**
+>
+> - `kubectl get secret <name> -o yaml` ← NEVER
+> - `kubectl get secret <name> -o json` ← NEVER
+> - `kubectl get secret <name> -o jsonpath='{.data}'` ← NEVER
+> - `kubectl get secret <name> --output=<any>` ← NEVER
+>
+> **kubectl exec reading secrets:**
+>
+> - `kubectl exec <pod> -- cat /var/run/secrets/*` ← NEVER
+> - `kubectl exec <pod> -- cat /etc/secrets/*` ← NEVER
+> - `kubectl exec <pod> -- cat *secret*` ← NEVER
+> - `kubectl exec <pod> -- cat *token*` ← NEVER
+> - `kubectl exec <pod> -- cat *password*` ← NEVER
+> - `kubectl exec <pod> -- cat *credential*` ← NEVER
+> - `kubectl exec <pod> -- cat *key*` ← NEVER (private keys)
+> - `kubectl exec <pod> -- cat *.pem` ← NEVER
+> - `kubectl exec <pod> -- env` ← NEVER (may show secret env vars)
+> - `kubectl exec <pod> -- printenv` ← NEVER
+>
+> **Safe alternatives:**
+>
+> - `kubectl get secret <name>` (shows metadata only)
+> - `kubectl get secret <name> -o json | jq '.data | keys'` (key names only)
+> - `kubectl exec <pod> -- ls /path` (list files, don't read)
+> - `kubectl exec <pod> -- env | cut -d= -f1` (env var names only)
+
 ### Environment Variables
 
 **NEVER display environment variable values.** Always check keys first, then decide:
@@ -137,6 +167,21 @@ kubectl get secret postgres-creds                ← OK (just shows name/type/ag
 kubectl get secret postgres-creds -o json | jq '.data | keys'  ← OK (shows key names only)
 kubectl get secret postgres-creds -o json | jq '.data | length'  ← OK (count of keys)
 ```
+
+## CLI Tool Preferences
+
+Use Claude's native tools instead of shell commands when possible:
+
+| Task           | Preferred            | Avoid                 |
+| -------------- | -------------------- | --------------------- |
+| Read files     | `Read` tool          | `cat`, `head`, `tail` |
+| Search content | `Grep` tool          | `grep`, `rg`          |
+| Find files     | `Glob` tool          | `find`, `ls -R`       |
+| Edit files     | `Edit` tool          | `sed -i`, `awk -i`    |
+| List env keys  | `env \| cut -d= -f1` | `env`, `printenv`     |
+
+**Note:** `echo` and `cat` are not in the allow list to prevent accidental
+`echo $SECRET` or `cat /path/to/secret`. Use the Read tool for file contents.
 
 ## Workflow
 
