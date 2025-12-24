@@ -174,5 +174,13 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  # Node temperature monitoring dashboard
+  - name: grafana-dashboard-node-temperature
+    namespace: observability
+    files:
+      - dashboards/node-temperature.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml
