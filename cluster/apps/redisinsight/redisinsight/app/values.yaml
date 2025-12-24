@@ -41,6 +41,20 @@ controllers:
           capabilities:
             drop:
               - ALL
+        # Probes: HTTP on RedisInsight API
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /api/health
+                port: 5540
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+          readiness: *probes
 serviceAccount:
   redisinsight:
     enabled: true
