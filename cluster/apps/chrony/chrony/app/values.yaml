@@ -8,7 +8,7 @@ controllers:
       reloader.stakater.com/auto: "true"
     type: deployment
     replicas: 3
-    strategy: RollingUpdate
+    strategy: Recreate
     pod:
       topologySpreadConstraints:
         - maxSkew: 1
