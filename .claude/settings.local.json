@@ -50,6 +50,7 @@
       "Bash(jq:*)",
       "Bash(yq:*)",
       "Bash(sleep:*)",
+      "Bash(kill:*)",
 
       "Bash(wc:*)",
       "Bash(sort:*)",

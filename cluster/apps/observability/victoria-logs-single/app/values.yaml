@@ -379,12 +379,13 @@ vector:
   # -- Enable deployment of vector
   enabled: true
 
+  # P99 168m - increase request to match (+20% headroom)
   resources:
     requests:
-      cpu: 100m
+      cpu: 200m
       memory: 128Mi
     limits:
-      cpu: 400m
+      cpu: 500m
       memory: 256Mi
 
   #role: Agent
