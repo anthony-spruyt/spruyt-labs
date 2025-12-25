@@ -19,12 +19,12 @@ crds:
     enabled: true
 
 # Critical infrastructure - no CPU limit (CPU is compressible)
-# Increased memory based on P99: 120Mi
+# P99 16m - increase request to match
 resources:
   limits:
     memory: 256Mi
   requests:
-    cpu: 10m
+    cpu: 20m
     memory: 128Mi
 
 # -- Configures resource validation

@@ -62,10 +62,10 @@ controllers:
               timeoutSeconds: 1
               failureThreshold: 3
           readiness: *probes
-        # Already no CPU limit - add memory request
+        # P99 14m per pod (42m/3 replicas) - no CPU limit
         resources:
           requests:
-            cpu: 10m
+            cpu: 15m
             memory: 64Mi
           limits:
             memory: 128Mi

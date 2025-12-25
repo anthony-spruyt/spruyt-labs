@@ -31,6 +31,7 @@ victoria-metrics-operator:
 vmsingle:
   enabled: true
   # -- Full spec for VMSingle CRD. Allowed values describe [here](https://docs.victoriametrics.com/operator/api#vmsinglespec)
+  # P99 359m - increase request to match (+25% headroom)
   spec:
     priorityClassName: high-priority
     resources:
@@ -38,7 +39,7 @@ vmsingle:
         cpu: 3000m
         memory: 2048Mi
       requests:
-        cpu: 200m
+        cpu: 450m
         memory: 1664Mi
     # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
     retentionPeriod: 7d
@@ -69,6 +70,7 @@ alertmanager:
 vmalert:
   enabled: true
   # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
+  # P99 45m - increase request to match
   spec:
     priorityClassName: high-priority
     resources:
@@ -76,7 +78,7 @@ vmalert:
         cpu: 1000m
         memory: 128Mi
       requests:
-        cpu: 30m
+        cpu: 55m
         memory: 80Mi
     # Override external.url for alert source links (chart defaults to dummy URL when using Traefik IngressRoutes)
     extraArgs:
@@ -226,6 +228,7 @@ prometheus-node-exporter:
               regex: node_hwmon_temp_celsius;platform_nct6775_2592;temp(1|3|4|5|6|8|9|10|11|12)
 
 # -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
+# P99 16m - increase request to match
 kube-state-metrics:
   enabled: true
   resources:
@@ -233,7 +236,7 @@ kube-state-metrics:
       cpu: 1000m
       memory: 256Mi
     requests:
-      cpu: 10m
+      cpu: 20m
       memory: 96Mi
 
 kubeEtcd:

@@ -14,12 +14,13 @@ readinessProbe:
   enabled: true
 startupProbe:
   enabled: true
+# P99 16m - increase request to match
 resources:
   limits:
     cpu: 1000m
     memory: 1Gi
   requests:
-    cpu: 10m
+    cpu: 20m
     memory: 128Mi
 persistence:
   enabled: true
