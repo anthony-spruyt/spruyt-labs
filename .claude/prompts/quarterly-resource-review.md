@@ -16,14 +16,17 @@ kubectl -n dev-debug delete pod -l app.kubernetes.io/purpose=metrics-query --ign
 
 ### Step 1a: Get Authoritative Container List
 
-Get a complete list of all containers running in the cluster (excludes system namespaces):
+Get a complete list of all containers running in the cluster (excludes Talos/Kubernetes-managed pods):
 
 ```bash
-kubectl get pods -A -o go-template='{{range .items}}{{$ns := .metadata.namespace}}{{range .spec.containers}}{{$ns}}{{"\t"}}{{.name}}{{"\n"}}{{end}}{{end}}' | grep -vE "^(kube-system|flux-system)" | sort -u > /tmp/cluster-containers.txt && wc -l /tmp/cluster-containers.txt
-# Expected: ~70-90 unique namespace+container combinations
+kubectl get pods -A -o go-template='{{range .items}}{{$ns := .metadata.namespace}}{{$pod := .metadata.name}}{{range .spec.containers}}{{$ns}}{{"\t"}}{{$pod}}{{"\t"}}{{.name}}{{"\n"}}{{end}}{{end}}' | grep -vE "^kube-system\s+(coredns|kube-apiserver|kube-controller-manager|kube-scheduler|kube-proxy)" | sort -u > /tmp/cluster-containers.txt && wc -l /tmp/cluster-containers.txt
+# Expected: ~80-100 unique namespace+pod+container combinations
 ```
 
 This provides the baseline to verify metrics queries return data for ALL workloads.
+
+**Included**: All GitOps-managed apps including cilium, snapshot-controller (kube-system), flux-operator, flux-instance (flux-system).
+**Excluded**: Only Talos-managed pods (coredns, kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy).
 
 **Note**: The Container Count metrics query will show more containers than this inventory because it includes historical data from old replicasets and deleted pods. The important check is that every container in the live inventory appears in the metrics.
 
@@ -127,6 +130,9 @@ Use namespace from container name to locate config. Common patterns:
 | technitium             | cluster/apps/technitium/technitium/app/values.yaml                 |
 | technitium (secondary) | cluster/apps/technitium/technitium-secondary/app/values.yaml       |
 | cilium-agent           | cluster/apps/kube-system/cilium/app/values.yaml                    |
+| snapshot-controller    | cluster/apps/kube-system/snapshot-controller/app/values.yaml       |
+| flux-operator          | cluster/apps/flux-system/flux-operator/app/values.yaml             |
+| flux-instance          | cluster/apps/flux-system/flux-instance/app/values.yaml             |
 | mon/mgr/osd            | cluster/apps/rook-ceph/rook-ceph-cluster/app/values.yaml           |
 | registry (spegel)      | cluster/apps/spegel/spegel/app/values.yaml                         |
 | CNPg databases         | cluster/apps/\<namespace\>/\<app\>/app/\*-cnpg-cluster.yaml        |

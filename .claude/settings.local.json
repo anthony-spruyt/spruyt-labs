@@ -102,6 +102,8 @@
       "Bash(pre-commit:*)",
       "Bash(renovate-config-validator:*)",
 
+      "Bash(mkdir:*)",
+
       "WebFetch(domain:docs.ceph.com)",
       "WebFetch(domain:docs.goauthentik.io)",
       "WebFetch(domain:docs.n8n.io)",
