@@ -7,7 +7,6 @@ resources:
   - ./certificate.yaml
   - ./persistent-volume-claim.yaml
   - ./release.yaml
-  - ./pod-disruption-budget.yaml
 configMapGenerator:
   - name: technitium-values
     namespace: technitium
