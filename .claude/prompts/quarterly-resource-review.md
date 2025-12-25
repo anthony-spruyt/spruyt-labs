@@ -18,6 +18,8 @@ kubectl -n dev-debug delete pod -l app.kubernetes.io/purpose=metrics-query --ign
 
 Get a complete list of all containers running in the cluster (excludes Talos/Kubernetes-managed pods):
 
+> **Note**: Copy commands exactly as written. The go-template uses `{{"\t"}}` and `{{"\n"}}` (single backslash) for tab/newline. Double-escaping (`{{"\\t"}}`) will break the output.
+
 ```bash
 kubectl get pods -A -o go-template='{{range .items}}{{$ns := .metadata.namespace}}{{$pod := .metadata.name}}{{range .spec.containers}}{{$ns}}{{"\t"}}{{$pod}}{{"\t"}}{{.name}}{{"\n"}}{{end}}{{end}}' | grep -vE "^kube-system\s+(coredns|kube-apiserver|kube-controller-manager|kube-scheduler|kube-proxy)" | sort -u > /tmp/cluster-containers.txt && wc -l /tmp/cluster-containers.txt
 # Expected: ~150-250 containers (varies with replica counts and maintenance jobs)
