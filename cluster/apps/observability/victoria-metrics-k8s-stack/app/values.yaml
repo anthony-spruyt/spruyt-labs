@@ -168,6 +168,8 @@ grafana:
   grafana.ini:
     server:
       root_url: https://grafana.lan.${EXTERNAL_DOMAIN}
+    date_formats:
+      default_timezone: ${TIMEZONE}
     security:
       # Allow Grafana to be embedded in iframes (required for Ceph Dashboard integration)
       allow_embedding: true
