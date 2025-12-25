@@ -22,7 +22,7 @@ deschedulerPolicy:
             nodeFit: true
         - name: RemoveDuplicates
           args:
-            evictableNamespaces:
+            namespaces:
               exclude:
                 # K8s system
                 - kube-system
@@ -38,7 +38,7 @@ deschedulerPolicy:
           args:
             constraints:
               - DoNotSchedule
-            evictableNamespaces:
+            namespaces:
               exclude:
                 - kube-system
                 - kube-public
@@ -49,7 +49,7 @@ deschedulerPolicy:
         - name: RemoveFailedPods
           args:
             minPodLifetimeSeconds: 3600
-            evictableNamespaces:
+            namespaces:
               exclude:
                 - kube-system
                 - kube-public
@@ -61,7 +61,7 @@ deschedulerPolicy:
           args:
             podRestartThreshold: 10
             includingInitContainers: true
-            evictableNamespaces:
+            namespaces:
               exclude:
                 - kube-system
                 - kube-public
