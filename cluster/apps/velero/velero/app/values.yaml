@@ -3,13 +3,13 @@
 
 priorityClassName: high-priority
 
-# Tier 2 - generous limits (based on P99: 20m CPU, 180Mi memory)
+# High-priority - no CPU limit (CPU is compressible)
+# Requests based on P99: 20m CPU, 180Mi memory
 resources:
   requests:
     cpu: 25m
     memory: 216Mi
   limits:
-    cpu: 500m
     memory: 512Mi
 
 # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
@@ -69,11 +69,11 @@ snapshotsEnabled: false
 deployNodeAgent: true
 nodeAgent:
   priorityClassName: high-priority
-  # Tier 2 - generous limits (based on P99: 12m CPU, 100Mi memory)
+  # High-priority - no CPU limit (CPU is compressible)
+  # Requests based on P99: 12m CPU, 100Mi memory
   resources:
     requests:
       cpu: 15m
       memory: 120Mi
     limits:
-      cpu: 250m
       memory: 256Mi
