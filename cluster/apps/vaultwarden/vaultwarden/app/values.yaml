@@ -37,11 +37,13 @@ controllers:
               timeoutSeconds: 1
               failureThreshold: 3
           readiness: *probes
+        # standard priority - generous CPU limit (5x requests)
         resources:
           requests:
             cpu: 100m
             memory: 256Mi
           limits:
+            cpu: 500m
             memory: 2Gi
 service:
   vaultwarden:

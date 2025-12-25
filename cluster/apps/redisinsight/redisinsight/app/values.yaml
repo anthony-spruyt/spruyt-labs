@@ -28,7 +28,7 @@ controllers:
             value: "false"
           - name: RI_STDOUT_LOGGER
             value: "true"
-        # Tier 3 - no CPU limit (was 88-92% throttled), P99 <1m so reduce requests
+        # low-priority - no CPU limit (was 88-92% throttled due to bursty startup)
         resources:
           requests:
             cpu: 10m

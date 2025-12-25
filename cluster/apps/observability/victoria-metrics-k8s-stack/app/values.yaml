@@ -86,13 +86,13 @@ vmagent:
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
   spec:
     priorityClassName: high-priority
-    # Increased requests based on P99: 173m CPU, 162Mi memory
+    # P99 139m - request set to P99+20%
     resources:
       limits:
         cpu: 1000m
         memory: 256Mi
       requests:
-        cpu: 100m
+        cpu: 170m
         memory: 192Mi
     env:
       - name: GOGC

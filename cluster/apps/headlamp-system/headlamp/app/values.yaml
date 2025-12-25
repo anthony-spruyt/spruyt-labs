@@ -38,10 +38,10 @@ pluginsManager:
       parallel: true
       maxConcurrent: 2
 
-# Tier 3 - increased limit to 10x (was 5x, throttling at 7.7%)
+# low-priority - P99 79m, limit 5x requests
 resources:
   requests:
-    cpu: 50m
+    cpu: 95m
     memory: 192Mi
   limits:
     cpu: 500m

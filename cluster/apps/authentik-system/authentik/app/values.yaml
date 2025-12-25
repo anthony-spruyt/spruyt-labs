@@ -169,10 +169,10 @@ redis:
 
 server:
   replicas: 1
-  # Critical infrastructure - no CPU limit (CPU is compressible)
+  # high-priority - no CPU limit; P99 310m, request set to P99+20%
   resources:
     requests:
-      cpu: 150m
+      cpu: 375m
       memory: 768Mi
     limits:
       memory: 2Gi
@@ -196,10 +196,10 @@ server:
 
 worker:
   replicas: 1
-  # Critical infrastructure - no CPU limit (CPU is compressible)
+  # high-priority - no CPU limit; P99 220m, request set to P99+20%
   resources:
     requests:
-      cpu: 100m
+      cpu: 265m
       memory: 512Mi
     limits:
       memory: 1Gi
