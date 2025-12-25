@@ -153,6 +153,20 @@ Use namespace from container name to locate config. Common patterns:
 | Missing from 7d query                        | Use 24h query data for new workloads          |
 | Container count mismatch                     | Investigate missing workloads in Step 1a      |
 
+### CNPg Database Resource Changes
+
+CNPg performs controlled switchovers when resource specs change, which can take several minutes per instance. To speed up the process:
+
+```bash
+# Scale down to 0 instances before pushing resource changes
+kubectl patch cluster -n <namespace> <cluster-name> --type merge -p '{"spec":{"instances":0}}'
+
+# After pushing, scale back up
+kubectl patch cluster -n <namespace> <cluster-name> --type merge -p '{"spec":{"instances":1}}'
+```
+
+This avoids the switchover process and the instance starts fresh with new resources.
+
 ---
 
 ## Reference: Resource Tiers
