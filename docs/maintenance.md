@@ -145,9 +145,15 @@ Review and optimize Kubernetes resource requests and limits for all workloads.
 
 ### Step 1: Build Workload Inventory and Run Metrics Queries
 
+First, clean up any leftover query pods from previous runs:
+
+```bash
+kubectl -n dev-debug delete pod -l app.kubernetes.io/purpose=metrics-query --ignore-not-found 2>/dev/null || true
+```
+
 #### Step 1a: Get Authoritative Container List
 
-First, get a complete list of all containers running in the cluster (excludes system namespaces):
+Get a complete list of all containers running in the cluster (excludes system namespaces):
 
 ```bash
 kubectl get pods -A -o go-template='{{range .items}}{{$ns := .metadata.namespace}}{{range .spec.containers}}{{$ns}}{{"\t"}}{{.name}}{{"\n"}}{{end}}{{end}}' | grep -vE "^(kube-system|flux-system)" | sort -u > /tmp/cluster-containers.txt && wc -l /tmp/cluster-containers.txt
@@ -160,13 +166,7 @@ This provides the baseline to verify metrics queries return data for ALL workloa
 
 #### Step 1b: Run Metrics Queries
 
-Clean up any leftover query pods:
-
-```bash
-kubectl -n dev-debug delete pod -l app.kubernetes.io/purpose=metrics-query --ignore-not-found 2>/dev/null || true
-```
-
-Run all queries using `--command` flag for reliability (run in parallel):
+Run all queries using `--command` flag for reliability:
 
 **Throttling (24h)** - All containers, no limit:
 
@@ -269,26 +269,59 @@ Use namespace from container name to locate config. Common patterns:
 
 ### Step 3: Decision Matrix
 
-| Condition                       | Action                                         |
-| ------------------------------- | ---------------------------------------------- |
-| Throttle >5% AND Tier 1         | Remove CPU limit                               |
-| Throttle >5% AND Tier 2/3       | Increase limit to 10x requests OR remove       |
-| P99 CPU > requests              | Increase requests to P99 + 20%                 |
-| P99 CPU < 30% of requests       | Reduce requests (but min 5m)                   |
-| Throttle >50% with no limit     | Increase requests (bursty workload)            |
-| No explicit resources defined   | Add resources based on P99 metrics from query  |
-| Missing from 7d query           | Use 24h query data for new workloads           |
-| Container count mismatch        | Investigate missing workloads in Step 1a       |
+| Condition                                    | Action                                        |
+| -------------------------------------------- | --------------------------------------------- |
+| Throttle >5% AND critical/high-priority      | Remove CPU limit (should already have none)   |
+| Throttle >5% AND standard/low/best-effort    | Increase limit to 10x requests OR remove      |
+| P99 CPU > requests                           | Increase requests to P99 + 20%                |
+| P99 CPU < 30% of requests                    | Reduce requests (but min 5m)                  |
+| Throttle >50% with no limit                  | Increase requests (bursty workload)           |
+| No explicit resources defined                | Add resources based on P99 metrics            |
+| Missing from 7d query                        | Use 24h query data for new workloads          |
+| Container count mismatch                     | Investigate missing workloads in Step 1a      |
 
-**Tier Definitions**:
+**Resource Tiers** (aligned with priority classes in `cluster/flux/meta/priority-classes.yaml`):
 
-- **Tier 1 (no CPU limit)**: flux-\*, authentik-\*, cnpg-\*, rook-ceph-\*, traefik, cilium-\*, reloader, chrony, external-dns, cert-manager, technitium-\*, spegel, kyverno
-- **Tier 2 (generous limits 5-10x)**: victoria-metrics-\*, n8n-\*, vaultwarden, velero
-- **Tier 3 (normal limits 3-5x)**: headlamp, redisinsight, whoami, minecraft, foundryvtt
+| Priority Class          | CPU Limit Policy         | Rationale                                    |
+| ----------------------- | ------------------------ | -------------------------------------------- |
+| critical-infrastructure | No CPU limit             | Must never be throttled - cluster fails      |
+| high-priority           | No CPU limit             | Essential user-facing services               |
+| standard                | Generous (5-10x request) | Balance performance & cluster protection     |
+| low-priority            | Normal (3-5x request)    | Can tolerate some throttling                 |
+| best-effort             | Strict (2-3x request)    | Preemptible, batch workloads                 |
 
-### Step 4: Validate After Push
+**Classification Guidelines** (for new workloads or reclassification):
 
-Wait 30 minutes for metrics to stabilize, then:
+| Priority Class          | Criteria                                              | Examples                                                                                           |
+| ----------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| critical-infrastructure | Cluster won't function without it; CNI, DNS, storage  | cilium, traefik, rook-ceph-\*, cnpg-\*, flux-\*, cert-manager, external-dns, technitium-\*, spegel |
+| high-priority           | User-facing auth, monitoring, cluster utilities       | authentik-\*, victoria-metrics-\*, grafana, reloader, chrono, valkey, kyverno                      |
+| standard                | Business applications with availability expectations  | vaultwarden, n8n-\*, velero, qdrant                                                                |
+| low-priority            | Internal tools, gaming, hobby projects                | headlamp, redisinsight, whoami, minecraft-\*, foundryvtt                                           |
+| best-effort             | Batch jobs, cron tasks, one-off workloads             | backup jobs, maintenance tasks                                                                     |
+
+**Reclassification Triggers:**
+
+- Workload causes cluster instability when throttled → promote to higher tier
+- Low P99 but high burst causing throttling → consider removing limit or promoting
+- New dependency identified (app X depends on app Y) → Y should be >= X's tier
+
+### Step 4: Update This Documentation
+
+Before pushing, update this procedure if any issues were found:
+
+- **Container mappings**: Add any new containers to the table in Step 2 if they weren't listed
+- **Tier definitions**: Update tier lists if apps were added/removed or reclassified
+- **Decision matrix**: Refine thresholds or actions if the current guidance proved incorrect
+- **Query improvements**: Update queries if they needed modification to work correctly
+- **Missing steps**: Add any steps that were needed but not documented
+
+Commit documentation updates separately from resource changes with message:
+`docs(maintenance): update resource review procedure`
+
+### Step 5: Validate After Push
+
+After pushing all commits, wait 30 minutes for metrics to stabilize, then:
 
 ```bash
 # Re-run throttle query - all containers should be <5%
@@ -299,18 +332,11 @@ kubectl get pods -A | grep -i pending
 kubectl get events -A --field-selector reason=OOMKilled --sort-by='.lastTimestamp' | tail -10
 ```
 
-### Step 5: Update This Documentation
+Clean up query pods after validation:
 
-After completing the review, update this procedure if any issues were found:
-
-- **Container mappings**: Add any new containers to the table in Step 2 if they weren't listed
-- **Tier definitions**: Update tier lists if apps were added/removed or reclassified
-- **Decision matrix**: Refine thresholds or actions if the current guidance proved incorrect
-- **Query improvements**: Update queries if they needed modification to work correctly
-- **Missing steps**: Add any steps that were needed but not documented
-
-Commit documentation updates separately from resource changes with message:
-`docs(maintenance): update resource review procedure`
+```bash
+kubectl -n dev-debug delete pod -l app.kubernetes.io/purpose=metrics-query --ignore-not-found 2>/dev/null || true
+```
 
 ## Related
 
