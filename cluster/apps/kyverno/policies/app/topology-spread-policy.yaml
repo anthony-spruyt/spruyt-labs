@@ -1,0 +1,93 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-topology-spread
+  annotations:
+    policies.kyverno.io/title: Add Default Topology Spread Constraints
+    policies.kyverno.io/category: Scheduling
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Deployment, StatefulSet
+    policies.kyverno.io/description: >-
+      Automatically injects topology spread constraints on Deployments and
+      StatefulSets that don't already have them. Uses soft constraints
+      (ScheduleAnyway) with maxSkew: 3 to encourage balanced pod distribution
+      across nodes without blocking scheduling.
+spec:
+  background: false
+  rules:
+    - name: add-topology-spread-to-deployments
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              operations:
+                - CREATE
+                - UPDATE
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                # Kubernetes system namespaces
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                # GitOps and policy (don't mutate controllers)
+                - flux-system
+                - kyverno
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.spec.topologySpreadConstraints || `[]` | length(@) }}"
+            operator: Equals
+            value: 0
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                topologySpreadConstraints:
+                  - maxSkew: 3
+                    topologyKey: kubernetes.io/hostname
+                    whenUnsatisfiable: ScheduleAnyway
+                    labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: '{{ request.object.spec.template.metadata.labels."app.kubernetes.io/name" || request.object.metadata.name }}'
+    - name: add-topology-spread-to-statefulsets
+      match:
+        any:
+          - resources:
+              kinds:
+                - StatefulSet
+              operations:
+                - CREATE
+                - UPDATE
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                # Kubernetes system namespaces
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                # GitOps and policy (don't mutate controllers)
+                - flux-system
+                - kyverno
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.spec.topologySpreadConstraints || `[]` | length(@) }}"
+            operator: Equals
+            value: 0
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                topologySpreadConstraints:
+                  - maxSkew: 3
+                    topologyKey: kubernetes.io/hostname
+                    whenUnsatisfiable: ScheduleAnyway
+                    labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: '{{ request.object.spec.template.metadata.labels."app.kubernetes.io/name" || request.object.metadata.name }}'

@@ -3,12 +3,13 @@ kind: Kustomization
 resources:
   - ./bjw-s-charts.yaml
   - ./cilium-charts.yaml
+  - ./descheduler-charts.yaml
+  - ./external-dns-charts.yaml
   - ./cloudnative-pg-charts.yaml
   - ./external-secrets-charts.yaml
   - ./goauthentik-charts.yaml
   - ./headlamp-charts.yaml
   - ./jetstack-charts.yaml
-  - ./kubernetes-sigs-charts.yaml
   - ./minecraft-server-charts.yaml
   - ./postfinance-charts.yaml
   - ./qdrant-charts.yaml

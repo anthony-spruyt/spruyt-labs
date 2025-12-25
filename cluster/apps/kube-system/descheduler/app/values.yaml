@@ -1,0 +1,80 @@
+---
+kind: CronJob
+schedule: "0 */2 * * *"
+timeZone: ${TIMEZONE}
+
+priorityClassName: high-priority
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+deschedulerPolicy:
+  profiles:
+    - name: default
+      pluginConfig:
+        - name: DefaultEvictor
+          args:
+            evictLocalStoragePods: false
+            evictSystemCriticalPods: false
+            evictFailedBarePods: true
+            nodeFit: true
+        - name: RemoveDuplicates
+          args:
+            evictableNamespaces:
+              exclude:
+                # K8s system
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                # GitOps controller
+                - flux-system
+                # Storage (OSD eviction could cause data issues)
+                - rook-ceph
+                # Ingress tunnel (1 per node, eviction causes connectivity loss)
+                - cloudflare-system
+        - name: RemovePodsViolatingTopologySpreadConstraint
+          args:
+            constraints:
+              - DoNotSchedule
+            evictableNamespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
+        - name: RemoveFailedPods
+          args:
+            minPodLifetimeSeconds: 3600
+            evictableNamespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
+        - name: RemovePodsHavingTooManyRestarts
+          args:
+            podRestartThreshold: 10
+            includingInitContainers: true
+            evictableNamespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
+      plugins:
+        balance:
+          enabled:
+            - RemoveDuplicates
+            - RemovePodsViolatingTopologySpreadConstraint
+        deschedule:
+          enabled:
+            - RemoveFailedPods
+            - RemovePodsHavingTooManyRestarts

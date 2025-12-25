@@ -3,16 +3,16 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: external-dns-technitium
+  name: &app descheduler
 spec:
   chart:
     spec:
-      chart: external-dns
-      version: 1.19.0
+      chart: *app
+      version: 0.34.0
       sourceRef:
         kind: HelmRepository
-        name: external-dns-charts
+        name: descheduler-charts
         namespace: flux-system
   valuesFrom:
     - kind: ConfigMap
-      name: external-dns-technitium-values
+      name: descheduler-values

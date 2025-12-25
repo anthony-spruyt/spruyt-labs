@@ -3,7 +3,7 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
-  name: kubernetes-sigs-charts
+  name: descheduler-charts
   namespace: flux-system
 spec:
-  url: https://kubernetes-sigs.github.io/external-dns
+  url: https://kubernetes-sigs.github.io/descheduler
