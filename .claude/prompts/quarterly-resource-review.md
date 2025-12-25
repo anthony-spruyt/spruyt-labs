@@ -20,7 +20,7 @@ Get a complete list of all containers running in the cluster (excludes Talos/Kub
 
 ```bash
 kubectl get pods -A -o go-template='{{range .items}}{{$ns := .metadata.namespace}}{{$pod := .metadata.name}}{{range .spec.containers}}{{$ns}}{{"\t"}}{{$pod}}{{"\t"}}{{.name}}{{"\n"}}{{end}}{{end}}' | grep -vE "^kube-system\s+(coredns|kube-apiserver|kube-controller-manager|kube-scheduler|kube-proxy)" | sort -u > /tmp/cluster-containers.txt && wc -l /tmp/cluster-containers.txt
-# Expected: ~80-100 unique namespace+pod+container combinations
+# Expected: ~150-250 containers (varies with replica counts and maintenance jobs)
 ```
 
 This provides the baseline to verify metrics queries return data for ALL workloads.
