@@ -136,7 +136,7 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
       requests:
         cpu: 10m
         memory: 24Mi
-    # P99 1m per container - reduce over-provisioned CPU
+    # P99 1m per container
     logcollector:
       limits:
         memory: 1Gi
