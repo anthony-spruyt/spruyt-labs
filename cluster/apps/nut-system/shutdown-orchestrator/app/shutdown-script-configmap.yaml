@@ -1,0 +1,172 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shutdown-script
+  namespace: nut-system
+data:
+  shutdown.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    # Configuration
+    NUT_SERVER="${NUT_SERVER:-nut-server-nut.nut-system.svc.cluster.local}"
+    NUT_PORT="${NUT_PORT:-3493}"
+    UPS_NAME="${UPS_NAME:-cp1500}"
+    SHUTDOWN_DELAY="${SHUTDOWN_DELAY:-30}"  # seconds after detecting power loss
+    POLL_INTERVAL="${POLL_INTERVAL:-5}"     # seconds between UPS checks
+    DRY_RUN="${DRY_RUN:-false}"             # set to "true" to test without executing
+
+    log() {
+      echo "[$(date -Iseconds)] $1"
+    }
+
+    # Execute command or log if dry-run
+    run() {
+      if [[ "$DRY_RUN" == "true" ]]; then
+        log "[DRY-RUN] Would execute: $*"
+        return 0
+      fi
+      "$@"
+    }
+
+    get_ups_status() {
+      upsc "${UPS_NAME}@${NUT_SERVER}:${NUT_PORT}" ups.status 2>/dev/null || echo "UNKNOWN"
+    }
+
+    hibernate_cnpg_clusters() {
+      log "Hibernating CNPG clusters..."
+
+      # Get all CNPG clusters across namespaces and hibernate them
+      # This uses the official CNPG hibernation annotation which:
+      # - Gracefully shuts down primary first, then replicas
+      # - Preserves PVCs for rehydration after power is restored
+      for cluster in $(kubectl get clusters.postgresql.cnpg.io -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\n"}{end}' 2>/dev/null); do
+        ns="${cluster%%/*}"
+        name="${cluster##*/}"
+        log "  Hibernating $ns/$name"
+        run kubectl annotate clusters.postgresql.cnpg.io "$name" -n "$ns" cnpg.io/hibernation=on --overwrite || true
+      done
+
+      log "CNPG clusters hibernated"
+    }
+
+    set_ceph_flags() {
+      log "Setting Ceph OSD flags..."
+
+      # Use deploy/ to exec directly without finding pod name
+      if ! kubectl -n rook-ceph get deploy rook-ceph-tools &>/dev/null; then
+        log "WARNING: rook-ceph-tools deployment not found, skipping Ceph flags"
+        return
+      fi
+
+      run kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd set noout || true
+      run kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd set nodown || true
+      run kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd set norebalance || true
+      run kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd set nobackfill || true
+      run kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd set norecover || true
+
+      log "Ceph flags set"
+    }
+
+    scale_ceph_down() {
+      log "Scaling down Ceph components..."
+
+      # Operator first to prevent reconciliation
+      run kubectl -n rook-ceph scale deployment rook-ceph-operator --replicas=0 || true
+      sleep 2
+
+      # OSDs
+      for osd in $(kubectl -n rook-ceph get deployment -l app=rook-ceph-osd -o name 2>/dev/null); do
+        run kubectl -n rook-ceph scale "$osd" --replicas=0 || true
+      done
+
+      # Managers
+      for mgr in $(kubectl -n rook-ceph get deployment -l app=rook-ceph-mgr -o name 2>/dev/null); do
+        run kubectl -n rook-ceph scale "$mgr" --replicas=0 || true
+      done
+
+      # Monitors (last)
+      for mon in $(kubectl -n rook-ceph get deployment -l app=rook-ceph-mon -o name 2>/dev/null); do
+        run kubectl -n rook-ceph scale "$mon" --replicas=0 || true
+      done
+
+      log "Ceph components scaled down"
+    }
+
+    shutdown_nodes() {
+      log "Initiating Talos node shutdown..."
+
+      # Get worker nodes first, then control plane
+      WORKERS="${MS_01_1_IP4} ${MS_01_2_IP4} ${MS_01_3_IP4}"
+      CONTROL_PLANE="${E2_1_IP4} ${E2_2_IP4} ${E2_3_IP4}"
+
+      # Workers first
+      for node in $WORKERS; do
+        log "  Shutting down worker: $node"
+        run talosctl shutdown -n "$node" --wait=false || true
+      done
+
+      sleep 5
+
+      # Control plane
+      for node in $CONTROL_PLANE; do
+        log "  Shutting down control plane: $node"
+        run talosctl shutdown -n "$node" --wait=false || true
+      done
+
+      log "Node shutdown commands sent"
+    }
+
+    graceful_shutdown() {
+      log "=== INITIATING GRACEFUL CLUSTER SHUTDOWN ==="
+      log "Power has been out for ${SHUTDOWN_DELAY}s - beginning emergency shutdown"
+
+      hibernate_cnpg_clusters
+      set_ceph_flags
+      scale_ceph_down
+      shutdown_nodes
+
+      log "=== SHUTDOWN SEQUENCE COMPLETE ==="
+      log "All shutdown commands sent. Waiting for node shutdown..."
+
+      # Wait indefinitely - prevents restart loop and keeps logs visible
+      sleep infinity
+    }
+
+    # Main loop
+    log "Shutdown orchestrator started"
+    log "Monitoring UPS: ${UPS_NAME}@${NUT_SERVER}:${NUT_PORT}"
+    log "Shutdown delay: ${SHUTDOWN_DELAY}s"
+    [[ "$DRY_RUN" == "true" ]] && log "*** DRY-RUN MODE ENABLED - no destructive actions will be taken ***"
+
+    on_battery_since=0
+
+    while true; do
+      status=$(get_ups_status)
+
+      if [[ "$status" == *"OB"* ]]; then
+        # On Battery
+        if [[ $on_battery_since -eq 0 ]]; then
+          on_battery_since=$(date +%s)
+          log "POWER LOSS DETECTED - Starting ${SHUTDOWN_DELAY}s countdown"
+        fi
+
+        elapsed=$(($(date +%s) - on_battery_since))
+        remaining=$((SHUTDOWN_DELAY - elapsed))
+
+        if [[ $elapsed -ge $SHUTDOWN_DELAY ]]; then
+          graceful_shutdown
+          # graceful_shutdown doesn't return
+        else
+          log "On battery for ${elapsed}s (${remaining}s until shutdown)"
+        fi
+      else
+        if [[ $on_battery_since -ne 0 ]]; then
+          log "Power restored after $(($(date +%s) - on_battery_since))s - cancelling shutdown"
+          on_battery_since=0
+        fi
+      fi
+
+      sleep "$POLL_INTERVAL"
+    done

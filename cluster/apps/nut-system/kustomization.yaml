@@ -3,8 +3,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./talos-node-filesystem.yaml
-  - ./talos-ceph-node-diskspace.yaml
-  - ./node-temperature.yaml
-  - ./node-thermal-throttling.yaml
-  - ./nut-ups.yaml
+  - ./namespace.yaml
+  - ./nut-server/ks.yaml
+  # TODO: Enable after nut-server is validated
+  # - ./shutdown-orchestrator/ks.yaml

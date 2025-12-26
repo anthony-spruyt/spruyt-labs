@@ -231,6 +231,8 @@ nodes:
             metric: 2048
     nodeAnnotations: &ms01NodeAnnotations
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
+    nodeLabels:
+      ups.spruyt-labs.io/connected: "true"
     patches: &ms01Patches
       # Enable Thunderbolt
       # and net
@@ -294,6 +296,14 @@ nodes:
           udev:
             rules:
               - SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"
+      # USB UPS (CyberPower CP1500) access for NUT server
+      - |-
+        machine:
+          udev:
+            rules:
+              - SUBSYSTEM=="usb", ATTR{idVendor}=="0764", MODE="0666"
+              - KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0666"
+              - KERNEL=="hiddev*", SUBSYSTEM=="usbmisc", MODE="0666"
     schematic: &ms01Scehmatic
       customization:
         secureboot:

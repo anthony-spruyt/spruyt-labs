@@ -1,0 +1,105 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: recovery-script
+  namespace: nut-system
+data:
+  recovery.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    log() {
+      echo "[$(date -Iseconds)] $1"
+    }
+
+    unset_ceph_flags() {
+      log "Unsetting Ceph OSD flags..."
+
+      # Use deploy/ to exec directly without finding pod name
+      if ! kubectl -n rook-ceph get deploy rook-ceph-tools &>/dev/null; then
+        log "WARNING: rook-ceph-tools deployment not found"
+        log "  Run manually once available:"
+        log "    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout"
+        log "    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset nodown"
+        log "    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset norebalance"
+        log "    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset nobackfill"
+        log "    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset norecover"
+        return 0  # Continue with recovery even if Ceph tools unavailable
+      fi
+
+      kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout || true
+      kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset nodown || true
+      kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset norebalance || true
+      kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset nobackfill || true
+      kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset norecover || true
+
+      log "Ceph flags unset"
+
+      # Show current Ceph status
+      log "Current Ceph status:"
+      kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status || true
+    }
+
+    wake_cnpg_clusters() {
+      log "Waking CNPG clusters from hibernation..."
+
+      # Find all hibernated clusters and wake them
+      hibernated=0
+      for cluster in $(kubectl get clusters.postgresql.cnpg.io -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}/{.metadata.annotations.cnpg\.io/hibernation}{"\n"}{end}' 2>/dev/null); do
+        ns="${cluster%%/*}"
+        rest="${cluster#*/}"
+        name="${rest%%/*}"
+        status="${rest##*/}"
+
+        if [[ "$status" == "on" ]]; then
+          log "  Waking $ns/$name"
+          kubectl annotate clusters.postgresql.cnpg.io "$name" -n "$ns" cnpg.io/hibernation- || true
+          hibernated=$((hibernated + 1))
+        fi
+      done
+
+      if [[ $hibernated -eq 0 ]]; then
+        log "No hibernated CNPG clusters found"
+      else
+        log "Woke $hibernated CNPG cluster(s)"
+      fi
+    }
+
+    verify_cluster_health() {
+      log "Verifying cluster health..."
+
+      log "Checking node status:"
+      kubectl get nodes -o wide
+
+      log ""
+      log "Checking CNPG cluster status:"
+      kubectl get clusters.postgresql.cnpg.io -A
+
+      log ""
+      log "Checking Ceph cluster status:"
+      kubectl -n rook-ceph get cephcluster
+
+      log ""
+      log "Checking critical pods:"
+      kubectl get pods -A -l app.kubernetes.io/name=rook-ceph-operator
+      kubectl get pods -A -l app=rook-ceph-osd
+      kubectl get pods -A -l app=rook-ceph-mon
+    }
+
+    # Main
+    log "=== CLUSTER RECOVERY AFTER POWER OUTAGE ==="
+    log ""
+
+    unset_ceph_flags
+    log ""
+
+    wake_cnpg_clusters
+    log ""
+
+    verify_cluster_health
+    log ""
+
+    log "=== RECOVERY COMPLETE ==="
+    log "Review the output above to ensure all services are healthy."
+    log "If any issues persist, check pod logs and Ceph status."

@@ -1,0 +1,62 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+# Alert rules for Network UPS Tools monitoring
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: nut-ups-alerts
+  namespace: observability
+spec:
+  groups:
+    - name: nut-ups
+      interval: 15s
+      rules:
+        # UPS is running on battery power
+        - alert: UPSOnBattery
+          expr: network_ups_tools_ups_status{flag="OB"} == 1
+          for: 0s
+          labels:
+            severity: critical
+          annotations:
+            summary: "UPS is on battery power"
+            description: "The UPS {{ $labels.ups }} is running on battery. Graceful shutdown will begin in 30 seconds if power is not restored."
+
+        # UPS battery is low
+        - alert: UPSBatteryLow
+          expr: network_ups_tools_battery_charge < 30
+          for: 0s
+          labels:
+            severity: critical
+          annotations:
+            summary: "UPS battery is low"
+            description: 'The UPS {{ $labels.ups }} battery is at {{ $value | printf "%.0f" }}%'
+
+        # UPS battery is getting low (warning)
+        - alert: UPSBatteryWarning
+          expr: network_ups_tools_battery_charge < 50 and network_ups_tools_battery_charge >= 30
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "UPS battery below 50%"
+            description: 'The UPS {{ $labels.ups }} battery is at {{ $value | printf "%.0f" }}%'
+
+        # UPS exporter is offline
+        - alert: UPSExporterOffline
+          expr: up{job=~".*nut.*"} == 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "NUT exporter is offline"
+            description: "Cannot reach NUT exporter - UPS monitoring is unavailable"
+
+        # UPS load is high
+        - alert: UPSHighLoad
+          expr: network_ups_tools_ups_load > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "UPS load is high"
+            description: 'The UPS {{ $labels.ups }} load is at {{ $value | printf "%.0f" }}%'

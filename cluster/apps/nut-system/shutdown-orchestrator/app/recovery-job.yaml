@@ -1,0 +1,48 @@
+---
+# Manual recovery job - apply after power restoration
+# Usage: kubectl apply -f recovery-job.yaml
+#        kubectl logs -n nut-system job/power-recovery -f
+#        kubectl delete job -n nut-system power-recovery
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: power-recovery
+  namespace: nut-system
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      serviceAccountName: shutdown-orchestrator
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: recovery
+          image: bitnami/kubectl:latest
+          command: ["/scripts/recovery.sh"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - name: scripts
+          configMap:
+            name: recovery-script
+            defaultMode: 0755
