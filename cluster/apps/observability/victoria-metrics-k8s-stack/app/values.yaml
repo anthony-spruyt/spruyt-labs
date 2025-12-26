@@ -31,7 +31,7 @@ victoria-metrics-operator:
 vmsingle:
   enabled: true
   # -- Full spec for VMSingle CRD. Allowed values describe [here](https://docs.victoriametrics.com/operator/api#vmsinglespec)
-  # High-priority - no CPU limit (CPU is compressible)
+  # High-priority: CPU limit 5x request per workload-classification.md
   # Requests based on P99: 774m (+20% headroom)
   spec:
     priorityClassName: high-priority
@@ -49,6 +49,7 @@ vmsingle:
               topologyKey: kubernetes.io/hostname
     resources:
       limits:
+        cpu: 4650m
         memory: 2048Mi
       requests:
         cpu: 930m
@@ -99,7 +100,7 @@ vmalert:
 
 vmagent:
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
-  # High-priority - no CPU limit (CPU is compressible)
+  # High-priority: CPU limit 5x request per workload-classification.md
   # Requests based on P99: 373m (+20% headroom)
   # Memory increased to 512Mi - OOMKilled at 256Mi during service discovery
   spec:
@@ -117,6 +118,7 @@ vmagent:
               topologyKey: kubernetes.io/hostname
     resources:
       limits:
+        cpu: 2250m
         memory: 512Mi
       requests:
         cpu: 450m
@@ -176,9 +178,10 @@ grafana:
                   operator: In
                   values: [vmsingle, vmagent]
             topologyKey: kubernetes.io/hostname
-  # High-priority - no CPU limit (CPU is compressible)
+  # High-priority: CPU limit 5x request per workload-classification.md
   resources:
     limits:
+      cpu: 500m
       memory: 2Gi
     requests:
       cpu: 100m

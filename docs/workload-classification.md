@@ -16,6 +16,22 @@ Defined in `cluster/flux/meta/priority-classes.yaml`:
 | `low-priority` | 1,000 | Yes | Internal tools, gaming, hobby projects |
 | `best-effort` | 100 | Never | Batch jobs, preemptible workloads |
 
+## CPU Limit Policy
+
+CPU limits protect hardware from thermal throttling caused by unbounded workloads. Policy varies by tier:
+
+| Priority Class | CPU Limit | Rationale |
+|----------------|-----------|-----------|
+| `critical-infrastructure` | None | Must never be throttled - cluster fails |
+| `high-priority` | 5x request | High burst headroom for essential services |
+| `standard` | 3x request | Moderate burst capacity |
+| `low-priority` | 2x request | Limited burst, can tolerate throttling |
+| `best-effort` | 1x (limit = request) | No burst, preemptible workloads |
+
+**Background**: Unbounded CPU workloads can cause physical thermal throttling on nodes, which affects ALL pods on that node - including critical infrastructure. Generous limits (3-5x requests) allow burst capacity while preventing runaway CPU consumption.
+
+**Exceptions**: Critical infrastructure (CNI, storage operators, DNS) must remain unbounded because throttling them causes cluster-wide failures. These workloads are expected to self-regulate.
+
 ## Classification Criteria
 
 ### critical-infrastructure

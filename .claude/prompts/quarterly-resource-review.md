@@ -150,8 +150,9 @@ Use namespace from container name to locate config. Common patterns:
 
 | Condition                                    | Action                                        |
 | -------------------------------------------- | --------------------------------------------- |
-| Throttle >5% AND critical/high-priority      | Remove CPU limit (should already have none)   |
-| Throttle >5% AND standard/low/best-effort    | Increase limit to 10x requests OR remove      |
+| Throttle >5% AND critical-infrastructure     | Remove CPU limit (should already have none)   |
+| Throttle >5% AND high-priority               | Increase limit (target 3-5x request)          |
+| Throttle >5% AND standard/low/best-effort    | Increase limit per tier policy                |
 | P99 CPU > requests                           | Increase requests to P99 + 20%                |
 | P99 CPU < 30% of requests                    | **FLAG ONLY** - report to user, do not action |
 | Throttle >50% with no limit                  | Increase requests (bursty workload)           |
@@ -196,10 +197,10 @@ Aligned with priority classes in `cluster/flux/meta/priority-classes.yaml`.
 | Priority Class          | CPU Limit Policy         | Rationale                                    |
 | ----------------------- | ------------------------ | -------------------------------------------- |
 | critical-infrastructure | No CPU limit             | Must never be throttled - cluster fails      |
-| high-priority           | No CPU limit             | Essential user-facing services               |
-| standard                | Generous (5-10x request) | Balance performance & cluster protection     |
-| low-priority            | Normal (3-5x request)    | Can tolerate some throttling                 |
-| best-effort             | Strict (2-3x request)    | Preemptible, batch workloads                 |
+| high-priority           | 5x request               | High burst headroom for essential services   |
+| standard                | 3x request               | Moderate burst capacity                      |
+| low-priority            | 2x request               | Limited burst, can tolerate throttling       |
+| best-effort             | 1x (limit = request)     | No burst, preemptible workloads              |
 
 ### Classification Guidelines
 
