@@ -60,7 +60,7 @@ entries:
     identifiers:
       slug: ceph-dashboard
     attrs:
-      name: Ceph Dashboard
+      name: Ceph
       provider: !KeyOf ceph_dashboard_provider
       meta_launch_url: https://ceph.lan.${EXTERNAL_DOMAIN}
       icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/ceph.png
