@@ -4,6 +4,8 @@ Review and optimize Kubernetes resource requests and limits for all workloads.
 
 Run this prompt every quarter to ensure resource allocation matches actual usage.
 
+**Important:** This prompt automatically adjusts under-provisioned resources but only **flags** over-provisioned ones. Over-provisioning changes require explicit user approval.
+
 ---
 
 ## Step 1: Build Workload Inventory and Run Metrics Queries
@@ -80,7 +82,9 @@ Parse JSON results locally and create a comparison table:
 
 1. **Verify completeness**: Container count from query should match Step 1a inventory
 2. **Filter throttled**: Containers with throttle >5%
-3. **Flag over-provisioned**: Containers with usage/request ratio <0.3
+3. **Flag over-provisioned (REPORT ONLY)**: Containers with usage/request ratio <0.3
+   - **DO NOT** reduce resources automatically
+   - Present findings to user and wait for explicit approval before any changes
 4. **Check for missing workloads**: Compare 7d vs 24h results - use 24h data for new workloads
 
 ---
@@ -149,11 +153,23 @@ Use namespace from container name to locate config. Common patterns:
 | Throttle >5% AND critical/high-priority      | Remove CPU limit (should already have none)   |
 | Throttle >5% AND standard/low/best-effort    | Increase limit to 10x requests OR remove      |
 | P99 CPU > requests                           | Increase requests to P99 + 20%                |
-| P99 CPU < 30% of requests                    | Reduce requests (but min 5m)                  |
+| P99 CPU < 30% of requests                    | **FLAG ONLY** - report to user, do not action |
 | Throttle >50% with no limit                  | Increase requests (bursty workload)           |
 | No explicit resources defined                | Add resources based on P99 metrics            |
 | Missing from 7d query                        | Use 24h query data for new workloads          |
 | Container count mismatch                     | Investigate missing workloads in Step 1a      |
+
+### Over-Provisioning Changes (User Confirmation Required)
+
+Over-provisioned workloads (usage/request ratio <0.3) are **flagged but NOT actioned automatically**.
+
+**Workflow:**
+
+1. Present flagged over-provisioned workloads to user with metrics
+2. Wait for explicit user confirmation for each workload
+3. Only reduce resources when user explicitly approves
+
+**Rationale:** Over-provisioning is often intentional for burst capacity, future growth, or stability. Reducing resources without review can cause unexpected issues.
 
 ### CNPg Database Resource Changes
 
