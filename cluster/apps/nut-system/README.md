@@ -9,10 +9,12 @@ Network UPS Tools (NUT) integration for UPS monitoring with automated graceful c
 
 ## Components
 
-| Component             | Purpose                                    | Namespace  |
-|-----------------------|--------------------------------------------|------------|
-| nut-server            | USB driver + upsd daemon + metrics exporter | nut-system |
-| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown   | nut-system |
+| Component             | Purpose                                    | Namespace  | Status   |
+|-----------------------|--------------------------------------------|------------|----------|
+| nut-server            | USB driver + upsd daemon + metrics exporter | nut-system | Active   |
+| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown   | nut-system | Disabled |
+
+> **Note**: The shutdown-orchestrator is disabled pending validation. Enable by uncommenting in [kustomization.yaml](kustomization.yaml).
 
 ## Prerequisites
 
@@ -175,8 +177,8 @@ kubectl annotate cluster <name> -n <namespace> cnpg.io/hibernation-
 ### Validation Commands
 
 ```bash
-# Verify NUT exporter metrics
-curl -s "http://vmsingle.observability.svc:8428/api/v1/query?query=network_ups_tools_battery_charge"
+# Verify NUT exporter metrics (scraped via /ups_metrics?ups=cp1500)
+curl -s 'http://vmsingle.observability.svc:8428/api/v1/query?query=network_ups_tools_battery_charge{ups="cp1500"}'
 
 # Verify RBAC
 kubectl auth can-i create pods/exec -n rook-ceph --as=system:serviceaccount:nut-system:shutdown-orchestrator
