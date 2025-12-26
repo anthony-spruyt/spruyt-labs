@@ -23,9 +23,9 @@ spec:
           expr: vector(95)
 
         # Throttle event rate threshold (events per second)
-        # Set to 0 to alert on any throttling
+        # 0.1 = ~6 events/min, filters brief spikes while catching real issues
         - record: node:thermal_throttle:threshold_rate_events_per_sec
-          expr: vector(0)
+          expr: vector(0.1)
 
     # ==========================================================================
     # ALERTS
