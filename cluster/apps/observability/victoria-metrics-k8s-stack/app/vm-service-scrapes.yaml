@@ -33,6 +33,11 @@ spec:
       - nut-system
   endpoints:
     - port: metrics
-      path: /metrics
+      path: /ups_metrics
+      params:
+        ups: [cp1500]
       interval: 15s
       scrapeTimeout: 10s
+      relabelConfigs:
+        - sourceLabels: [__param_ups]
+          targetLabel: ups
