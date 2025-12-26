@@ -115,7 +115,8 @@
       "WebFetch(domain:goauthentik.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:rook.io)",
-      "WebFetch(domain:talos.dev)"
+      "WebFetch(domain:talos.dev)",
+      "WebFetch(domain:www.talos.dev)"
     ]
   }
 }
