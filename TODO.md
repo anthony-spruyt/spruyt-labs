@@ -1,11 +1,42 @@
 # Project TODOs
 
-- how can we generate and host our own private yaml schemas
+## Infrastructure
 
-- if I have a helm release stuck because of a buggy deploy and a fix is pending but not being reconciled because it is still timing out, how can we force it to immediately fail and rollback or stop so the fix that was pending is applied.
+### NUT / UPS Shutdown
+- [ ] Enable shutdown-orchestrator (uncomment in `cluster/apps/nut-system/kustomization.yaml`)
+- [ ] Test dry-run mode with brief power disconnect (<30s)
+- [ ] Validate full shutdown sequence in dry-run (>30s disconnect)
+- [ ] Switch to live mode (`DRY_RUN=false`) after validation
+- [ ] Test recovery job after simulated outage
 
-- why is sungather working if run as addon in home assistant but not in the cluster - this needs to be during the day because the inverter is only on when sun powers it
+### Thermal / Hardware
+- [ ] Investigate ms-01-2 thermal throttling (2025-12-26 22:35 AEDT, load avg 2.3)
+  - CPU: Intel i5-12600H (4 P-cores hyperthreaded + 8 E-cores)
+  - Throttle counts since boot:
+    - P-core 4 (CPUs 2-3): 576 throttles ← worst
+    - P-core 12 (CPUs 6-7): 216 throttles
+    - P-core 0 (CPUs 0-1): 9 throttles
+    - P-core 8, all E-cores: 0 throttles
+  - Only specific P-cores throttling - possible uneven cooling or thermal paste
+  - **Root cause**: rook-ceph-operator peaked at 2458m during throttle window
+    - vmsingle: 1107m, authentik-cnpg: 1022m, vmagent: 541m
+    - Likely Ceph rebalance/OSD operation triggered the spike
+  - Unbounded CPU workloads that can burst:
+    - vmsingle (930m req, no limit)
+    - vmagent (450m req, no limit)
+    - cilium (1250m req, no limit)
+  - Consider: CPU limits on observability stack, or spread Ceph operator
 
-- why does the technitium PVC keep growing so much
+## Applications
 
-- ms-01-2 is still throttling sometimes, reached 2.3 last night
+### Technitium
+- [ ] Investigate PVC growth - why does it keep growing?
+
+## Knowledge Base / Research
+
+### Helm Stuck Releases
+- [ ] Document how to force-fail a stuck HelmRelease to apply pending fix
+  - Workaround: `helm rollback <release> -n <ns> 0` + delete/recreate Kustomization
+
+### YAML Schemas
+- [ ] Research generating and hosting private YAML schemas
