@@ -7,3 +7,4 @@ resources:
   - ./flux-operator/ks.yaml
   - ./flux-instance/ks.yaml
   - ./flux-receivers/ks.yaml
+  - ./flux-sso/ks.yaml

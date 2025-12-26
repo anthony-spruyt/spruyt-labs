@@ -153,6 +153,12 @@ global:
             path: ceph-dashboard-sso.yaml
           - key: headlamp-sso.yaml
             path: headlamp-sso.yaml
+          - key: hubble-sso.yaml
+            path: hubble-sso.yaml
+          - key: redisinsight-sso.yaml
+            path: redisinsight-sso.yaml
+          - key: flux-sso.yaml
+            path: flux-sso.yaml
 
 authentik:
   log_level: info

@@ -17,6 +17,9 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: n8n-system
+      - op: replace
+        path: /spec/forwardAuth/address
+        value: http://ak-outpost-n8n-outpost.n8n-system.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
   - target:
       kind: Middleware
       name: compress

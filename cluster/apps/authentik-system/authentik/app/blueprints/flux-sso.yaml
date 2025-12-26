@@ -1,0 +1,68 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Flux SSO
+entries:
+  - id: flux_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Flux Users
+    attrs:
+      name: Flux Users
+  - id: flux_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: Flux
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://flux.lan.${EXTERNAL_DOMAIN}
+  - id: flux_application
+    model: authentik_core.application
+    identifiers:
+      slug: flux
+    attrs:
+      name: Flux
+      provider: !KeyOf flux_provider
+      meta_launch_url: https://flux.lan.${EXTERNAL_DOMAIN}
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf flux_application
+      order: 0
+    attrs:
+      group: !KeyOf flux_users_group
+      negate: false
+      enabled: true
+      timeout: 30
+
+  # Standalone outpost deployed to flux-system namespace
+  # Requires RBAC: Role/RoleBinding in flux-system granting authentik SA permissions
+  - id: flux_outpost
+    model: authentik_outposts.outpost
+    identifiers:
+      name: Flux Outpost
+    attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: flux-system
+      providers:
+        - !KeyOf flux_provider

@@ -5,4 +5,5 @@ kind: Kustomization
 resources:
   - ./cilium/ks.yaml
   - ./descheduler/ks.yaml
+  - ./hubble-sso/ks.yaml
   - ./snapshot-controller/ks.yaml

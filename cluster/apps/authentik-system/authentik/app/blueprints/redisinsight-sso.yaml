@@ -1,0 +1,68 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: RedisInsight SSO
+entries:
+  - id: redisinsight_users_group
+    model: authentik_core.group
+    identifiers:
+      name: RedisInsight Users
+    attrs:
+      name: RedisInsight Users
+  - id: redisinsight_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: RedisInsight
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://redisinsight.lan.${EXTERNAL_DOMAIN}
+  - id: redisinsight_application
+    model: authentik_core.application
+    identifiers:
+      slug: redisinsight
+    attrs:
+      name: RedisInsight
+      provider: !KeyOf redisinsight_provider
+      meta_launch_url: https://redisinsight.lan.${EXTERNAL_DOMAIN}
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf redisinsight_application
+      order: 0
+    attrs:
+      group: !KeyOf redisinsight_users_group
+      negate: false
+      enabled: true
+      timeout: 30
+
+  # Standalone outpost deployed to redisinsight namespace
+  # Requires RBAC: Role/RoleBinding in redisinsight granting authentik SA permissions
+  - id: redisinsight_outpost
+    model: authentik_outposts.outpost
+    identifiers:
+      name: RedisInsight Outpost
+    attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: redisinsight
+      providers:
+        - !KeyOf redisinsight_provider

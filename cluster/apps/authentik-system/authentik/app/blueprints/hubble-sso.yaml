@@ -1,0 +1,68 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Hubble SSO
+entries:
+  - id: hubble_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Hubble Users
+    attrs:
+      name: Hubble Users
+  - id: hubble_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: Hubble
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://hubble.lan.${EXTERNAL_DOMAIN}
+  - id: hubble_application
+    model: authentik_core.application
+    identifiers:
+      slug: hubble
+    attrs:
+      name: Hubble
+      provider: !KeyOf hubble_provider
+      meta_launch_url: https://hubble.lan.${EXTERNAL_DOMAIN}
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf hubble_application
+      order: 0
+    attrs:
+      group: !KeyOf hubble_users_group
+      negate: false
+      enabled: true
+      timeout: 30
+
+  # Standalone outpost deployed to kube-system namespace
+  # Requires RBAC: Role/RoleBinding in kube-system granting authentik SA permissions
+  - id: hubble_outpost
+    model: authentik_outposts.outpost
+    identifiers:
+      name: Hubble Outpost
+    attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: kube-system
+      providers:
+        - !KeyOf hubble_provider

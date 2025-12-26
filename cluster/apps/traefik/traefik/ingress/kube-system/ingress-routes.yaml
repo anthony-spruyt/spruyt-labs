@@ -13,9 +13,18 @@ spec:
   entryPoints:
     - websecure
   routes:
+    # Authentik outpost path - required for SSO auth flow redirects
+    - kind: Rule
+      match: Host(`hubble.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      services:
+        - name: ak-outpost-hubble-outpost
+          passHostHeader: true
+          port: 9000
+    # Main route with SSO forward-auth
     - kind: Rule
       match: Host(`hubble.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
+        - name: authentik-forward-auth
         - name: lan-ip-whitelist
         - name: compress
       services:

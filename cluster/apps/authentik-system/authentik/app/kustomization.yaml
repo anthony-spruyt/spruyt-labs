@@ -35,5 +35,8 @@ configMapGenerator:
       - blueprints/n8n-sso.yaml
       - blueprints/ceph-dashboard-sso.yaml
       - blueprints/headlamp-sso.yaml
+      - blueprints/hubble-sso.yaml
+      - blueprints/redisinsight-sso.yaml
+      - blueprints/flux-sso.yaml
 configurations:
   - ./kustomizeconfig.yaml

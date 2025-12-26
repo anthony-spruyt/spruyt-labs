@@ -8,11 +8,10 @@ metadata:
   namespace: placeholder
 spec:
   forwardAuth:
-    # Uses standalone outpost deployed to n8n-system namespace by Authentik
+    # Placeholder address - each namespace patches with their outpost address
     # Service name format: ak-outpost-<outpost-name-slug>
-    # Outpost name "N8N Outpost" -> service "ak-outpost-n8n-outpost"
     # FQDN required because Traefik resolves from its own namespace context
-    address: http://ak-outpost-n8n-outpost.n8n-system.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
+    address: http://OUTPOST_PLACEHOLDER:9000/outpost.goauthentik.io/auth/traefik
     trustForwardHeader: true
     authResponseHeaders:
       - X-authentik-username

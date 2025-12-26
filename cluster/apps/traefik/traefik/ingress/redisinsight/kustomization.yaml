@@ -3,12 +3,23 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - ../base/authentik-forward-auth.yaml
   - ../base/compress.yaml
   - ../base/lan-ip-whitelist.yaml
   - ../base/rate-limit.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
 patches:
+  - target:
+      kind: Middleware
+      name: authentik-forward-auth
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: redisinsight
+      - op: replace
+        path: /spec/forwardAuth/address
+        value: http://ak-outpost-redisinsight-outpost.redisinsight.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
   - target:
       kind: Middleware
       name: compress
