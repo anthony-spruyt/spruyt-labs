@@ -35,6 +35,14 @@ vmsingle:
   # Requests based on P99: 774m (+20% headroom)
   spec:
     priorityClassName: high-priority
+    # Spread across worker nodes to prevent thermal throttling from co-location
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: vmsingle
     resources:
       limits:
         memory: 2048Mi
@@ -74,6 +82,13 @@ vmalert:
   # Requests based on P99: 82m (+20% headroom)
   spec:
     priorityClassName: high-priority
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: vmalert
     resources:
       limits:
         memory: 128Mi
@@ -91,6 +106,13 @@ vmagent:
   # Memory increased to 512Mi - OOMKilled at 256Mi during service discovery
   spec:
     priorityClassName: high-priority
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: vmagent
     resources:
       limits:
         memory: 512Mi
@@ -141,6 +163,13 @@ grafana:
     type: Recreate
   podAnnotations:
     reloader.stakater.com/auto: "true"
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: grafana
   # High-priority - no CPU limit (CPU is compressible)
   resources:
     limits:
