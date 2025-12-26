@@ -2,6 +2,7 @@
 # Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
 defaultPodOptions:
+  priorityClassName: standard
   securityContext:
     runAsUser: 1000
     runAsGroup: 1000
@@ -10,11 +11,10 @@ defaultPodOptions:
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
-# Probes: Deferred - app currently disabled (replicas: 0)
-# TODO: Add HTTP probes on port 8099 when re-enabling
+# TODO: Add HTTP probes on port 8099 once app is stable
 controllers:
   sungather:
-    replicas: 0
+    replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"
     strategy: Recreate
@@ -26,13 +26,14 @@ controllers:
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
-        # resources:
-        #   requests:
-        #     cpu: 20m
-        #     memory: 32M
-        #   limits:
-        #     cpu: 500m
-        #     memory: 64M
+        # standard: CPU limit 5-10x request per resource policy
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
