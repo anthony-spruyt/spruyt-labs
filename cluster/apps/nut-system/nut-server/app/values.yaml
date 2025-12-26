@@ -20,8 +20,8 @@ controllers:
     containers:
       upsd:
         image:
-          repository: ghcr.io/jr0dd/nut-upsd
-          tag: 2.8.1@sha256:98c212dbc67c3fb1f8c0fcac03e8848a989a5c3c1dcdd14d5e9e74c9060884f5
+          repository: instantlinux/nut-upsd
+          tag: 2.8.3-r3
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
@@ -108,19 +108,19 @@ persistence:
       nut-server:
         upsd:
           - path: /dev
-  # NUT configuration files
+  # NUT configuration files (instantlinux/nut-upsd uses /etc/nut/local/)
   nut-config:
     type: secret
     name: nut-secrets
     advancedMounts:
       nut-server:
         upsd:
-          - path: /etc/nut/ups.conf
+          - path: /etc/nut/local/ups.conf
             subPath: ups.conf
             readOnly: true
-          - path: /etc/nut/upsd.conf
+          - path: /etc/nut/local/upsd.conf
             subPath: upsd.conf
             readOnly: true
-          - path: /etc/nut/upsd.users
+          - path: /etc/nut/local/upsd.users
             subPath: upsd.users
             readOnly: true
