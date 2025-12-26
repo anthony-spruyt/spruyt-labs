@@ -3,99 +3,17 @@
 version: "3"
 
 vars:
-  hubbleDropsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/hubble-drops.sh"
-  installAgeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-age.sh"
-  installCiliumScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-cilium.sh"
-  installClaudeCodeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-claude-code.sh"
-  installCnpgScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-cnpg.sh"
-  installFluxCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux-capacitor.sh"
-  installFluxScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-flux.sh"
-  installHelmfileScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helmfile.sh"
-  installHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm-plugins.sh"
-  installHelmScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-helm.sh"
-  installHubbleScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-hubble.sh"
-  installKubectlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-kubectl.sh"
-  installKustomizeScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-kustomize.sh"
-  installSafeChainScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-safe-chain.sh"
-  installTalhelperScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talhelper.sh"
-  installTalosctlScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-talosctl.sh"
-  installVeleroScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/install-velero.sh"
-  runMegaLinterScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/run-mega-linter.sh"
-  updateHelmPluginsScript: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts/update-helm-plugins.sh"
+  scriptsDir: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts"
 
 tasks:
   hubble-drops:
     desc: Shows recent dropped network traffic (blocked by network policies)
     cmds:
-      - bash {{ .hubbleDropsScript }}
-  install-age:
-    desc: Installs age and age-keygen
-    cmds:
-      - bash {{ .installAgeScript }}
-  install-cilium:
-    desc: Installs the Cilium CLI
-    cmds:
-      - bash {{ .installCiliumScript }}
-  install-claude-code:
-    desc: Installs the Claude Code CLI
-    cmds:
-      - bash {{ .installClaudeCodeScript }}
-  install-cnpg:
-    desc: Installs the CNPG kubectl plugin for CloudNativePG
-    cmds:
-      - bash {{ .installCnpgScript }}
-  install-flux:
-    desc: Installs the Flux CLI
-    cmds:
-      - bash {{ .installFluxScript }}
-  install-flux-capacitor:
-    desc: Installs Flux Capacitor v2 local FluxCD GUI
-    cmds:
-      - bash {{ .installFluxCapacitorScript }}
-  install-helm:
-    desc: Installs Helm
-    cmds:
-      - bash {{ .installHelmScript }}
-  install-helmfile:
-    desc: Installs Helmfile
-    cmds:
-      - bash {{ .installHelmfileScript }}
-  install-helm-plugins:
-    desc: Installs Helm schema gen and diff
-    cmds:
-      - bash {{ .installHelmPluginsScript }}
-  install-hubble:
-    desc: Installs the Hubble CLI for Cilium network observability
-    cmds:
-      - bash {{ .installHubbleScript }}
-  install-kubectl:
-    desc: Installs kubectl
-    cmds:
-      - bash {{ .installKubectlScript }}
-  install-kustomize:
-    desc: Installs kustomize
-    cmds:
-      - bash {{ .installKustomizeScript }}
-  install-safe-chain:
-    desc: Installs safe-chain
-    cmds:
-      - bash {{ .installSafeChainScript }}
-  install-talhelper:
-    desc: Installs the Talhelper CLI
-    cmds:
-      - bash {{ .installTalhelperScript }}
-  install-talosctl:
-    desc: Installs talosctl
-    cmds:
-      - bash {{ .installTalosctlScript }}
-  install-velero:
-    desc: Installs the Velero CLI
-    cmds:
-      - bash {{ .installVeleroScript }}
+      - bash {{ .scriptsDir }}/hubble-drops.sh
   lint:
     desc: Runs mega-linter against the repo
     cmds:
-      - bash {{ .runMegaLinterScript }}
+      - bash {{ .scriptsDir }}/run-mega-linter.sh
   priv-pod:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on a specified node'
     cmd: |
@@ -129,7 +47,3 @@ tasks:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on ms-01-3'
     cmd: |
       task dev-env:priv-pod node=ms-01-3
-  update-helm-plugins:
-    desc: Updates Helm plugins
-    cmds:
-      - bash {{ .updateHelmPluginsScript }}

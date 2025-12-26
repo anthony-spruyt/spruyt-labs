@@ -9,21 +9,21 @@ curl -sSfL https://taskfile.dev/install.sh \
 echo "🔧 Running dev env setup tasks..."
 
 # IMPORTANT: safe-chain MUST be first - it secures npm before any node-based installs
-task dev-env:install-safe-chain
+task install:safe-chain
 
-task dev-env:install-kubectl
-task dev-env:install-kustomize
-task dev-env:install-helm
-task dev-env:install-helmfile
-task dev-env:install-helm-plugins
-task dev-env:install-cilium
-task dev-env:install-hubble
-task dev-env:install-talosctl
-task dev-env:install-talhelper
-task dev-env:install-flux
-task dev-env:install-flux-capacitor
-task dev-env:install-age
-task dev-env:install-velero
-task dev-env:install-cnpg
-task dev-env:install-claude-code
+task install:kubectl
+task install:kustomize
+task install:helm
+task install:helmfile
+task install:helm-plugins
+task install:cilium
+task install:hubble
+task install:talosctl
+task install:talhelper
+task install:flux
+task install:flux-capacitor
+task install:age
+task install:velero
+task install:cnpg
+task install:claude-code
 task pre-commit:init

@@ -26,9 +26,9 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
 2. **Install required tooling**:
 
    ```bash
-   task dev-env:install-age
-   task dev-env:install-flux
-   task dev-env:install-talosctl
+   task install:age
+   task install:flux
+   task install:talosctl
    ```
 
 3. **Decrypt secrets** (requires Age identity):
