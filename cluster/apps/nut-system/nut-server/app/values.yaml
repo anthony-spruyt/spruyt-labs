@@ -124,3 +124,6 @@ persistence:
           - path: /etc/nut/local/upsd.users
             subPath: upsd.users
             readOnly: true
+          - path: /etc/nut/local/upsmon.conf
+            subPath: upsmon.conf
+            readOnly: true
