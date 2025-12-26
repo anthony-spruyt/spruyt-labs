@@ -2,6 +2,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/headlamp/main/charts/headlamp/values.schema.json
 # Headlamp Helm Chart Reference -> https://headlamp.dev/docs/latest/installation/in-cluster/
 # Default values for headlamp: https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml
+priorityClassName: low-priority
 deploymentAnnotations:
   reloader.stakater.com/auto: "true"
 

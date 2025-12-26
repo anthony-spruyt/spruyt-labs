@@ -5,7 +5,6 @@ kind: Cluster
 metadata:
   name: n8n-cnpg-cluster
 spec:
-  priorityClassName: high-priority
   affinity:
     enablePodAntiAffinity: true
     podAntiAffinityType: required

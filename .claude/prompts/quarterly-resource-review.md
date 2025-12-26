@@ -189,7 +189,9 @@ This avoids the switchover process and the instance starts fresh with new resour
 
 ## Reference: Resource Tiers
 
-Aligned with priority classes in `cluster/flux/meta/priority-classes.yaml`:
+Aligned with priority classes in `cluster/flux/meta/priority-classes.yaml`.
+
+> **See also**: [docs/workload-classification.md](../../docs/workload-classification.md) for the authoritative workload classification reference.
 
 | Priority Class          | CPU Limit Policy         | Rationale                                    |
 | ----------------------- | ------------------------ | -------------------------------------------- |
@@ -201,13 +203,13 @@ Aligned with priority classes in `cluster/flux/meta/priority-classes.yaml`:
 
 ### Classification Guidelines
 
-| Priority Class          | Criteria                                              | Examples                                                                                           |
-| ----------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| critical-infrastructure | Cluster won't function without it; CNI, DNS, storage  | cilium, traefik, rook-ceph-\*, cnpg-\*, flux-\*, cert-manager, external-dns, technitium-\*, spegel |
-| high-priority           | User-facing auth, monitoring, cluster utilities       | authentik-\*, victoria-metrics-\*, grafana, reloader, chrono, valkey, kyverno                      |
-| standard                | Business applications with availability expectations  | vaultwarden, n8n-\*, velero, qdrant                                                                |
-| low-priority            | Internal tools, gaming, hobby projects                | headlamp, redisinsight, whoami, minecraft-\*, foundryvtt                                           |
-| best-effort             | Batch jobs, cron tasks, one-off workloads             | backup jobs, maintenance tasks                                                                     |
+| Priority Class          | Criteria                                              | Examples                                                                                                  |
+| ----------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| critical-infrastructure | Cluster won't function without it; CNI, DNS, storage  | cilium, traefik, rook-ceph-\*, cnpg-\*, flux-\*, cert-manager, external-secrets, technitium, kyverno      |
+| high-priority           | User-facing auth, monitoring, cluster utilities       | authentik-\*, victoria-metrics-\*, grafana, reloader, chrony, valkey, spegel, vaultwarden, velero         |
+| standard                | Business applications with availability expectations  | n8n-\*, qdrant, mosquitto, technitium-secondary, external-dns                                             |
+| low-priority            | Internal tools, gaming, hobby projects                | headlamp, redisinsight, whoami, minecraft-\*, foundryvtt                                                  |
+| best-effort             | Batch jobs, cron tasks, one-off workloads             | backup jobs, maintenance tasks                                                                            |
 
 ### Reclassification Triggers
 
