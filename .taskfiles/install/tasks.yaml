@@ -3,78 +3,78 @@
 version: "3"
 
 vars:
-  scriptsDir: "{{ .ROOT_DIR }}/.taskfiles/install/scripts"
+  installScriptsDir: "{{ .ROOT_DIR }}/.taskfiles/install/scripts"
 
 tasks:
   age:
     desc: Installs age and age-keygen
     cmds:
-      - bash {{ .scriptsDir }}/install-age.sh
+      - bash {{ .installScriptsDir }}/install-age.sh
   cilium:
     desc: Installs the Cilium CLI
     cmds:
-      - bash {{ .scriptsDir }}/install-cilium.sh
+      - bash {{ .installScriptsDir }}/install-cilium.sh
   claude-code:
     desc: Installs the Claude Code CLI
     cmds:
-      - bash {{ .scriptsDir }}/install-claude-code.sh
+      - bash {{ .installScriptsDir }}/install-claude-code.sh
   cnpg:
     desc: Installs the CNPG kubectl plugin for CloudNativePG
     cmds:
-      - bash {{ .scriptsDir }}/install-cnpg.sh
+      - bash {{ .installScriptsDir }}/install-cnpg.sh
   flux:
     desc: Installs the Flux CLI
     cmds:
-      - bash {{ .scriptsDir }}/install-flux.sh
+      - bash {{ .installScriptsDir }}/install-flux.sh
   flux-capacitor:
     desc: Installs Flux Capacitor v2 local FluxCD GUI
     cmds:
-      - bash {{ .scriptsDir }}/install-flux-capacitor.sh
+      - bash {{ .installScriptsDir }}/install-flux-capacitor.sh
   helm:
     desc: Installs Helm
     cmds:
-      - bash {{ .scriptsDir }}/install-helm.sh
+      - bash {{ .installScriptsDir }}/install-helm.sh
   helmfile:
     desc: Installs Helmfile
     cmds:
-      - bash {{ .scriptsDir }}/install-helmfile.sh
+      - bash {{ .installScriptsDir }}/install-helmfile.sh
   helm-plugins:
     desc: Installs Helm schema gen and diff
     cmds:
-      - bash {{ .scriptsDir }}/install-helm-plugins.sh
+      - bash {{ .installScriptsDir }}/install-helm-plugins.sh
   hubble:
     desc: Installs the Hubble CLI for Cilium network observability
     cmds:
-      - bash {{ .scriptsDir }}/install-hubble.sh
+      - bash {{ .installScriptsDir }}/install-hubble.sh
   kubectl:
     desc: Installs kubectl
     cmds:
-      - bash {{ .scriptsDir }}/install-kubectl.sh
+      - bash {{ .installScriptsDir }}/install-kubectl.sh
   kustomize:
     desc: Installs kustomize
     cmds:
-      - bash {{ .scriptsDir }}/install-kustomize.sh
+      - bash {{ .installScriptsDir }}/install-kustomize.sh
   safe-chain:
     desc: Installs safe-chain
     cmds:
-      - bash {{ .scriptsDir }}/install-safe-chain.sh
+      - bash {{ .installScriptsDir }}/install-safe-chain.sh
   talhelper:
     desc: Installs the Talhelper CLI
     cmds:
-      - bash {{ .scriptsDir }}/install-talhelper.sh
+      - bash {{ .installScriptsDir }}/install-talhelper.sh
   talosctl:
     desc: Installs talosctl
     cmds:
-      - bash {{ .scriptsDir }}/install-talosctl.sh
+      - bash {{ .installScriptsDir }}/install-talosctl.sh
   velero:
     desc: Installs the Velero CLI
     cmds:
-      - bash {{ .scriptsDir }}/install-velero.sh
+      - bash {{ .installScriptsDir }}/install-velero.sh
   task:
     desc: Updates Task (go-task) to the latest version
     cmds:
-      - bash {{ .scriptsDir }}/update-task.sh
+      - bash {{ .installScriptsDir }}/update-task.sh
   update-helm-plugins:
     desc: Updates Helm plugins
     cmds:
-      - bash {{ .scriptsDir }}/update-helm-plugins.sh
+      - bash {{ .installScriptsDir }}/update-helm-plugins.sh

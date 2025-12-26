@@ -3,17 +3,17 @@
 version: "3"
 
 vars:
-  scriptsDir: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts"
+  devEnvScriptsDir: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts"
 
 tasks:
   hubble-drops:
     desc: Shows recent dropped network traffic (blocked by network policies)
     cmds:
-      - bash {{ .scriptsDir }}/hubble-drops.sh
+      - bash {{ .devEnvScriptsDir }}/hubble-drops.sh
   lint:
     desc: Runs mega-linter against the repo
     cmds:
-      - bash {{ .scriptsDir }}/run-mega-linter.sh
+      - bash {{ .devEnvScriptsDir }}/run-mega-linter.sh
   priv-pod:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on a specified node'
     cmd: |
