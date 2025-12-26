@@ -11,19 +11,19 @@ echo "🔧 Running dev env setup tasks..."
 # IMPORTANT: safe-chain MUST be first - it secures npm before any node-based installs
 task install:safe-chain
 
-task install:kubectl
-task install:kustomize
-task install:helm
-task install:helmfile
+task install:kubectl-cli
+task install:kustomize-cli
+task install:helm-cli
+task install:helmfile-cli
 task install:helm-plugins
-task install:cilium
-task install:hubble
-task install:talosctl
-task install:talhelper
-task install:flux
+task install:cilium-cli
+task install:hubble-cli
+task install:talosctl-cli
+task install:talhelper-cli
+task install:flux-cli
 task install:flux-capacitor
-task install:age
-task install:velero
-task install:cnpg
-task install:claude-code
+task install:age-cli
+task install:velero-cli
+task install:cnpg-plugin
+task install:claude-code-cli
 task pre-commit:init

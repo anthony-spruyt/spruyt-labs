@@ -6,23 +6,23 @@ vars:
   installScriptsDir: "{{ .ROOT_DIR }}/.taskfiles/install/scripts"
 
 tasks:
-  age:
+  age-cli:
     desc: Installs age and age-keygen
     cmds:
       - bash {{ .installScriptsDir }}/install-age.sh
-  cilium:
+  cilium-cli:
     desc: Installs the Cilium CLI
     cmds:
       - bash {{ .installScriptsDir }}/install-cilium.sh
-  claude-code:
+  claude-code-cli:
     desc: Installs the Claude Code CLI
     cmds:
       - bash {{ .installScriptsDir }}/install-claude-code.sh
-  cnpg:
+  cnpg-plugin:
     desc: Installs the CNPG kubectl plugin for CloudNativePG
     cmds:
       - bash {{ .installScriptsDir }}/install-cnpg.sh
-  flux:
+  flux-cli:
     desc: Installs the Flux CLI
     cmds:
       - bash {{ .installScriptsDir }}/install-flux.sh
@@ -30,11 +30,11 @@ tasks:
     desc: Installs Flux Capacitor v2 local FluxCD GUI
     cmds:
       - bash {{ .installScriptsDir }}/install-flux-capacitor.sh
-  helm:
+  helm-cli:
     desc: Installs Helm
     cmds:
       - bash {{ .installScriptsDir }}/install-helm.sh
-  helmfile:
+  helmfile-cli:
     desc: Installs Helmfile
     cmds:
       - bash {{ .installScriptsDir }}/install-helmfile.sh
@@ -42,15 +42,15 @@ tasks:
     desc: Installs Helm schema gen and diff
     cmds:
       - bash {{ .installScriptsDir }}/install-helm-plugins.sh
-  hubble:
+  hubble-cli:
     desc: Installs the Hubble CLI for Cilium network observability
     cmds:
       - bash {{ .installScriptsDir }}/install-hubble.sh
-  kubectl:
+  kubectl-cli:
     desc: Installs kubectl
     cmds:
       - bash {{ .installScriptsDir }}/install-kubectl.sh
-  kustomize:
+  kustomize-cli:
     desc: Installs kustomize
     cmds:
       - bash {{ .installScriptsDir }}/install-kustomize.sh
@@ -58,15 +58,15 @@ tasks:
     desc: Installs safe-chain
     cmds:
       - bash {{ .installScriptsDir }}/install-safe-chain.sh
-  talhelper:
+  talhelper-cli:
     desc: Installs the Talhelper CLI
     cmds:
       - bash {{ .installScriptsDir }}/install-talhelper.sh
-  talosctl:
+  talosctl-cli:
     desc: Installs talosctl
     cmds:
       - bash {{ .installScriptsDir }}/install-talosctl.sh
-  velero:
+  velero-cli:
     desc: Installs the Velero CLI
     cmds:
       - bash {{ .installScriptsDir }}/install-velero.sh
