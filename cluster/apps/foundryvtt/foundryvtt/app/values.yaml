@@ -9,7 +9,7 @@ controllers:
       reloader.stakater.com/auto: "true"
     strategy: Recreate
     replicas: 1
-    type: deployment
+    type: statefulset
     serviceAccount:
       identifier: foundryvtt
     initContainers:

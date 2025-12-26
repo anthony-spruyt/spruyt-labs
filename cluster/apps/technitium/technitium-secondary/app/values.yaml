@@ -16,6 +16,7 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   technitium-secondary:
+    type: statefulset
     replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"

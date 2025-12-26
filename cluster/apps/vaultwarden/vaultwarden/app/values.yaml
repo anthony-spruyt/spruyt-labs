@@ -5,6 +5,7 @@ defaultPodOptions:
   priorityClassName: high-priority
 controllers:
   main:
+    type: statefulset
     annotations:
       reloader.stakater.com/auto: "true"
     # pod:
