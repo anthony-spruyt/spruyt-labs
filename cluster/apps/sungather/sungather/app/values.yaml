@@ -11,7 +11,6 @@ defaultPodOptions:
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
-# TODO: Add HTTP probes on port 8099 once app is stable
 controllers:
   sungather:
     # Must be 1 - Modbus inverters accept only one connection at a time
@@ -27,6 +26,19 @@ controllers:
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: 8099
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness: *probes
         # standard: CPU limit 5-10x request per resource policy
         resources:
           requests:
