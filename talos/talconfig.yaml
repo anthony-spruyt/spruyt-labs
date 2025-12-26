@@ -233,10 +233,9 @@ nodes:
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
     nodeLabels:
       ups.spruyt-labs.io/connected: "true"
-    patches: &ms01Patches
-      # Enable Thunderbolt
-      # and net
-      - |-
+    patches:
+      # ===== MS-01 shared patches (anchors defined here, referenced by ms-01-2/3) =====
+      - &patchThunderbolt |-
         machine:
           kernel:
             modules:
@@ -256,7 +255,7 @@ nodes:
       #       net.ipv6.conf.enp89s0.autoconf: "0"
       #       net.ipv6.conf.enp89s0.accept_ra: "0"
       # Optimize networking for 10Gb/s NICs
-      - |-
+      - &patchNetworking |-
         machine:
           sysctls:
             net.core.default_qdisc: fq                      # 10Gb/s
@@ -267,36 +266,36 @@ nodes:
             net.ipv4.tcp_window_scaling: 1                  # 10Gb/s
             net.ipv4.tcp_wmem: 4096 65536 33554432          # 10Gb/s
       # Enable Intel CPU boost
-      - |-
+      - &patchCpuBoost |-
         machine:
           sysfs:
-            devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1 # Enable CPU boost
+            devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1
       # Intel GPU passthrough
-      - |-
+      - &patchGpuPassthrough |-
         machine:
           udev:
             rules:
               - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
       # Auto authorize Thunderbolt devices
-      - |-
+      - &patchThunderboltAuth |-
         machine:
           udev:
             rules:
               - ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
       # Boost transmit queue length - high-throughput workloads
-      - |-
+      - &patchTxQueue |-
         machine:
           udev:
             rules:
               - SUBSYSTEM=="net", ACTION=="add", KERNEL=="tap*", ATTR{tx_queue_len}="10000"
               - SUBSYSTEM=="net", ACTION=="add", KERNEL=="tun*", ATTR{tx_queue_len}="10000"
       # Set all disks to `none` scheduler (optimal setting for Ceph and ZFS)
-      - |-
+      - &patchDiskScheduler |-
         machine:
           udev:
             rules:
               - SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"
-      # USB UPS (CyberPower CP1500) access for NUT server
+      # USB UPS (CyberPower CP1500) access for NUT server - move with nodeLabels when relocating UPS
       - |-
         machine:
           udev:
@@ -389,7 +388,14 @@ nodes:
           - network: 169.254.255.103/32 # ms-01-3 direct peer
             metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
-    patches: *ms01Patches
+    patches:
+      - *patchThunderbolt
+      - *patchNetworking
+      - *patchCpuBoost
+      - *patchGpuPassthrough
+      - *patchThunderboltAuth
+      - *patchTxQueue
+      - *patchDiskScheduler
     schematic: *ms01Scehmatic
     volumes: *ms01TpmEncryptedVolumes
   - hostname: ms-01-3
@@ -437,7 +443,14 @@ nodes:
           - network: 169.254.255.102/32 # ms-01-2 direct peer
             metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
-    patches: *ms01Patches
+    patches:
+      - *patchThunderbolt
+      - *patchNetworking
+      - *patchCpuBoost
+      - *patchGpuPassthrough
+      - *patchThunderboltAuth
+      - *patchTxQueue
+      - *patchDiskScheduler
     schematic: *ms01Scehmatic
     volumes: *ms01TpmEncryptedVolumes
 
