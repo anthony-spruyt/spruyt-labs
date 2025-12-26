@@ -7,7 +7,6 @@ controllers:
   foundryvtt:
     annotations:
       reloader.stakater.com/auto: "true"
-    strategy: Recreate
     replicas: 1
     type: statefulset
     serviceAccount:
