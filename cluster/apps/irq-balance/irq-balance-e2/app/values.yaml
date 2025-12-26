@@ -22,6 +22,7 @@ controllers:
         securityContext:
           privileged: true
 defaultPodOptions:
+  priorityClassName: critical-infrastructure
   hostIPC: true
   hostPID: true
   affinity:

@@ -42,13 +42,13 @@ spec:
       shared_buffers: 256MB # 25% of the memory defined under requests memory
   primaryUpdateMethod: switchover
   primaryUpdateStrategy: unsupervised
-  # P99 34m - reduce over-provisioned CPU
+  # P99 70m, +20% headroom
   resources:
     limits:
       cpu: 2000m
       memory: 4Gi
     requests:
-      cpu: 50m
+      cpu: 85m
       memory: 1Gi # shared_buffers under parameters should be 25% of the memory defined here
   storage:
     pvcTemplate:

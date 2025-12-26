@@ -1,5 +1,6 @@
 # #yaml-language-server: $schema=TODO
 # Default values for kubelet-csr-approver: https://github.com/postfinance/kubelet-csr-approver/blob/main/charts/kubelet-csr-approver/values.yaml
+priorityClassName: critical-infrastructure
 global:
   clusterDomain: ${CLUSTER_DOMAIN}
 providerRegex: |

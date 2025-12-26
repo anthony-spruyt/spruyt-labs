@@ -154,6 +154,11 @@ worker:
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
   deploymentAnnotations: *deploymentAnnotations
+  # P99 12m, +25% headroom
+  resources:
+    requests:
+      cpu: 15m
+      memory: 64Mi
 webhook:
   enabled: true
   extraEnv: *extraEnv

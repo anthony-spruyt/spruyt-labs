@@ -32,14 +32,14 @@ vmsingle:
   enabled: true
   # -- Full spec for VMSingle CRD. Allowed values describe [here](https://docs.victoriametrics.com/operator/api#vmsinglespec)
   # High-priority - no CPU limit (CPU is compressible)
-  # Requests based on P99: 359m (+25% headroom)
+  # Requests based on P99: 774m (+20% headroom)
   spec:
     priorityClassName: high-priority
     resources:
       limits:
         memory: 2048Mi
       requests:
-        cpu: 450m
+        cpu: 930m
         memory: 1664Mi
     # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
     retentionPeriod: 7d
@@ -71,14 +71,14 @@ vmalert:
   enabled: true
   # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
   # High-priority - no CPU limit (CPU is compressible)
-  # Requests based on P99: 45m
+  # Requests based on P99: 82m (+20% headroom)
   spec:
     priorityClassName: high-priority
     resources:
       limits:
         memory: 128Mi
       requests:
-        cpu: 55m
+        cpu: 100m
         memory: 80Mi
     # Override external.url for alert source links (chart defaults to dummy URL when using Traefik IngressRoutes)
     extraArgs:
@@ -87,7 +87,7 @@ vmalert:
 vmagent:
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
   # High-priority - no CPU limit (CPU is compressible)
-  # Requests based on P99: 139m (+20% headroom)
+  # Requests based on P99: 373m (+20% headroom)
   # Memory increased to 512Mi - OOMKilled at 256Mi during service discovery
   spec:
     priorityClassName: high-priority
@@ -95,7 +95,7 @@ vmagent:
       limits:
         memory: 512Mi
       requests:
-        cpu: 170m
+        cpu: 450m
         memory: 256Mi
     env:
       - name: GOGC
@@ -201,13 +201,14 @@ grafana:
 
 # -- prometheus-node-exporter dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-node-exporter/values.yaml)
 # No CPU limit (CPU is compressible)
+# Requests based on P99: 42m (+20% headroom)
 prometheus-node-exporter:
   enabled: true
   resources:
     limits:
       memory: 128Mi
     requests:
-      cpu: 25m
+      cpu: 50m
       memory: 64Mi
   # Talos-optimized filesystem filters - exclude noisy tmpfs/rootfs metrics
   extraArgs:

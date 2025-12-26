@@ -62,10 +62,10 @@ controllers:
               timeoutSeconds: 1
               failureThreshold: 3
           readiness: *probes
-        # P99 14m per pod (42m/3 replicas) - no CPU limit
+        # P99 42m total (3 replicas) - no CPU limit, +20% headroom
         resources:
           requests:
-            cpu: 15m
+            cpu: 17m
             memory: 64Mi
           limits:
             memory: 128Mi

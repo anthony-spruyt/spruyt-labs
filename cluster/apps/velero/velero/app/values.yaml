@@ -4,10 +4,10 @@
 priorityClassName: high-priority
 
 # High-priority - no CPU limit (CPU is compressible)
-# Requests based on P99: 20m CPU, 180Mi memory
+# Requests based on P99: 29m CPU, +20% headroom
 resources:
   requests:
-    cpu: 25m
+    cpu: 35m
     memory: 216Mi
   limits:
     memory: 512Mi
@@ -70,10 +70,10 @@ deployNodeAgent: true
 nodeAgent:
   priorityClassName: high-priority
   # High-priority - no CPU limit (CPU is compressible)
-  # Requests based on P99: 12m CPU, 100Mi memory
+  # Requests based on P99: 17m CPU, +20% headroom
   resources:
     requests:
-      cpu: 15m
+      cpu: 20m
       memory: 120Mi
     limits:
       memory: 256Mi

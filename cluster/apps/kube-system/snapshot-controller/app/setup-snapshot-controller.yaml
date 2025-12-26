@@ -42,10 +42,11 @@ spec:
             # For example, in https://github.com/kubernetes-csi/csi-release-tools/pull/209, the snapshot-controller YAML is updated to add --prevent-volume-mode-conversion=true so that the feature can be enabled for certain e2e tests.
             # end snapshot controller args
           imagePullPolicy: IfNotPresent
+          # P99 7.4m, +35% headroom
           resources:
             limits:
               cpu: 500m
               memory: 1Gi
             requests:
-              cpu: 5m
+              cpu: 10m
               memory: 16Mi
