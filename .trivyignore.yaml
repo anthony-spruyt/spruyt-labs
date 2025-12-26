@@ -1,0 +1,59 @@
+---
+# Path-specific trivy ignores
+# https://trivy.dev/latest/docs/configuration/filtering
+
+misconfigurations:
+  # Hubble SSO ingress needs to be in kube-system (where Cilium runs)
+  - id: AVD-KSV-0037
+    paths:
+      - cluster/apps/traefik/traefik/ingress/kube-system/certificates.yaml
+      - cluster/apps/traefik/traefik/ingress/kube-system/ingress-routes.yaml
+
+  # ESO/OAuth readers need cross-namespace secret access (least-privilege via resourceNames)
+  - id: AVD-KSV-0113
+    paths:
+      - cluster/apps/authentik-system/authentik/app/external-secrets-rbac.yaml
+      - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/role.yaml
+
+  # Shutdown orchestrator needs deployment access for Ceph scaling
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/nut-system/shutdown-orchestrator/app/rbac.yaml
+
+  # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)
+  - id: AVD-KSV-0013
+    paths:
+      - cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml
+      - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/cronjob.yaml
+  # Bitnami is a trusted publisher (VMware/Broadcom) - trivy flags all Docker Hub as "untrusted"
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml
+      - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/cronjob.yaml
+
+  # Shutdown orchestrator needs pods/exec to run ceph commands via rook-ceph-tools
+  # (scoped to rook-ceph namespace only via namespace-scoped Role)
+  - id: AVD-KSV-0053
+    paths:
+      - cluster/apps/nut-system/shutdown-orchestrator/app/rbac.yaml
+
+  # AWS - Terraform infrastructure ignores
+  # Dont need S3 bucket logging
+  - id: AVD-AWS-0089
+    paths:
+      - infra/terraform/**
+
+  # AWS encryption is good enough
+  - id: AVD-AWS-0132
+    paths:
+      - infra/terraform/**
+
+  # Terraform cloud workspaces do need unrestricted S3 IAM policies
+  - id: AVD-AWS-0345
+    paths:
+      - infra/terraform/**
+
+  # Attach policy directly to user, policies are user specific
+  - id: AVD-AWS-0143
+    paths:
+      - infra/terraform/**
