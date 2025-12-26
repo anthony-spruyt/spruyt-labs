@@ -35,14 +35,18 @@ vmsingle:
   # Requests based on P99: 774m (+20% headroom)
   spec:
     priorityClassName: high-priority
-    # Spread across worker nodes to prevent thermal throttling from co-location
-    topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app.kubernetes.io/name: vmsingle
+    # Prefer different nodes from other heavy VM components to prevent thermal throttling
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values: [vmagent, grafana]
+              topologyKey: kubernetes.io/hostname
     resources:
       limits:
         memory: 2048Mi
@@ -82,13 +86,7 @@ vmalert:
   # Requests based on P99: 82m (+20% headroom)
   spec:
     priorityClassName: high-priority
-    topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app.kubernetes.io/name: vmalert
+    # vmalert is lightweight (~100m CPU) - no anti-affinity needed
     resources:
       limits:
         memory: 128Mi
@@ -106,13 +104,17 @@ vmagent:
   # Memory increased to 512Mi - OOMKilled at 256Mi during service discovery
   spec:
     priorityClassName: high-priority
-    topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app.kubernetes.io/name: vmagent
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values: [vmsingle, grafana]
+              topologyKey: kubernetes.io/hostname
     resources:
       limits:
         memory: 512Mi
@@ -163,13 +165,17 @@ grafana:
     type: Recreate
   podAnnotations:
     reloader.stakater.com/auto: "true"
-  topologySpreadConstraints:
-    - maxSkew: 1
-      topologyKey: kubernetes.io/hostname
-      whenUnsatisfiable: ScheduleAnyway
-      labelSelector:
-        matchLabels:
-          app.kubernetes.io/name: grafana
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values: [vmsingle, vmagent]
+            topologyKey: kubernetes.io/hostname
   # High-priority - no CPU limit (CPU is compressible)
   resources:
     limits:
