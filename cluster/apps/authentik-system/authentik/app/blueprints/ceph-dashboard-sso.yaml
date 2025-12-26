@@ -63,7 +63,7 @@ entries:
       name: Ceph Dashboard
       provider: !KeyOf ceph_dashboard_provider
       meta_launch_url: https://ceph.lan.${EXTERNAL_DOMAIN}
-      meta_icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/ceph.png
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/ceph.png
 
   # Policy binding to restrict access to group members only
   - model: authentik_policies.policybinding

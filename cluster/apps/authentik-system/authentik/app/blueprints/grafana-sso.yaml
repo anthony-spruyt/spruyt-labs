@@ -71,7 +71,7 @@ entries:
       name: Grafana
       provider: !KeyOf grafana_provider
       meta_launch_url: https://grafana.lan.${EXTERNAL_DOMAIN}
-      meta_icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/grafana.png
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/grafana.png
 
   # Policy binding to restrict access to group members only
   # Users must be in Grafana Users (or child groups Admins/Editors)

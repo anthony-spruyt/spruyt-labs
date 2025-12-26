@@ -76,7 +76,7 @@ entries:
       name: Headlamp
       provider: !KeyOf headlamp_provider
       meta_launch_url: https://headlamp.lan.${EXTERNAL_DOMAIN}
-      meta_icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/headlamp.png
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/headlamp.png
 
   # Policy binding to restrict access to group members only
   - model: authentik_policies.policybinding
