@@ -36,6 +36,7 @@ entries:
       name: Hubble
       provider: !KeyOf hubble_provider
       meta_launch_url: https://hubble.lan.${EXTERNAL_DOMAIN}
+      meta_icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/cilium.png
 
   # Policy binding to restrict access to group members only
   - model: authentik_policies.policybinding

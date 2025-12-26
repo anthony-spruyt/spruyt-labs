@@ -65,6 +65,7 @@ entries:
       name: Vaultwarden
       provider: !KeyOf vaultwarden_provider
       meta_launch_url: https://vaultwarden.${EXTERNAL_DOMAIN}
+      meta_icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/vaultwarden.png
 
   # Policy binding to restrict access to group members only
   - model: authentik_policies.policybinding

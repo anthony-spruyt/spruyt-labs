@@ -36,6 +36,7 @@ entries:
       name: N8N
       provider: !KeyOf n8n_provider
       meta_launch_url: https://n8n.${EXTERNAL_DOMAIN}
+      meta_icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/n8n.png
 
   # Policy binding to restrict access to group members only
   - model: authentik_policies.policybinding
