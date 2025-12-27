@@ -37,6 +37,12 @@ kubectl:
 configuration:
   # Name of the default backup storage location. Default: default
   defaultBackupStorageLocation: aws-primary
+  # Repository maintenance job settings
+  repositoryMaintenanceJob:
+    repositoryConfigData:
+      global:
+        # Keep only latest job per repo to prevent pod accumulation
+        keepLatestMaintenanceJobs: 1
   # Name of the default volume snapshot location.
   defaultVolumeSnapshotLocations: csi:aws-primary
   # Set log-format for Velero pod. Default: text. Other option: json.

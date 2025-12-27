@@ -69,11 +69,31 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
+        - name: LowNodeUtilization
+          args:
+            # Nodes below these thresholds are considered underutilized
+            thresholds:
+              cpu: 20
+              memory: 20
+            # Nodes above these thresholds are considered overutilized
+            # Pods will be evicted from overutilized nodes
+            targetThresholds:
+              cpu: 50
+              memory: 50
+            evictableNamespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
       plugins:
         balance:
           enabled:
             - RemoveDuplicates
             - RemovePodsViolatingTopologySpreadConstraint
+            - LowNodeUtilization
         deschedule:
           enabled:
             - RemoveFailedPods
