@@ -69,6 +69,7 @@ CPU limits protect hardware from thermal throttling caused by unbounded workload
 | valkey-system | valkey | Redis-compatible cache |
 | vaultwarden | vaultwarden | Password manager |
 | velero | velero, node-agent | Backup and DR |
+| falco-system | falco, falcosidekick | Runtime security monitoring |
 
 ### standard (default)
 

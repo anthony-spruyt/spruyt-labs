@@ -35,6 +35,7 @@ resources:
   - ./authentik-system
   - ./headlamp-system
   - ./kyverno
+  - ./falco-system
   - ./nut-system
   # - ./snmp
   # - ./smtp

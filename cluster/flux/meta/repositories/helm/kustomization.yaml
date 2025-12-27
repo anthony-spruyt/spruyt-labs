@@ -7,6 +7,7 @@ resources:
   - ./external-dns-charts.yaml
   - ./cloudnative-pg-charts.yaml
   - ./external-secrets-charts.yaml
+  - ./falcosecurity-charts.yaml
   - ./goauthentik-charts.yaml
   - ./headlamp-charts.yaml
   - ./jetstack-charts.yaml

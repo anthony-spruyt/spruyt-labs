@@ -1,0 +1,48 @@
+---
+# #yaml-language-server: $schema=TODO
+# High-priority: security observability (per docs/workload-classification.md)
+# CPU limit: 5x request per high-priority policy
+
+driver:
+  kind: modern_ebpf
+
+# Priority class for scheduling precedence
+priorityClassName: high-priority
+
+# Run on all nodes including control plane
+tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+    operator: Exists
+
+# Resources: high-priority tier (5x CPU limit)
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Enable Falcosidekick for alert forwarding
+falcosidekick:
+  enabled: true
+  priorityClassName: high-priority
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+  config:
+    loki:
+      hostport: http://victoria-logs-single-server.observability.svc:9428
+
+# Disable Falco-talon (alerts only, no automated response)
+falco-talon:
+  enabled: false
+
+# Disable k8s-metacollector (optional, adds pod metadata enrichment)
+k8s-metacollector:
+  enabled: false

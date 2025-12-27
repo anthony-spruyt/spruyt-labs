@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=TODO
+# # yaml-language-server: $schema=TODO
 # Documentation: https://github.com/qdrant/qdrant-helm
 # Default values: https://github.com/qdrant/qdrant-helm/blob/main/charts/qdrant/values.yaml
 env:
