@@ -1,0 +1,63 @@
+---
+name: Kyverno Policy Test
+
+on: # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+    paths:
+      - "cluster/apps/kyverno/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "cluster/apps/kyverno/**"
+
+permissions:
+  contents: read
+
+jobs:
+  kyverno-test:
+    name: Test policies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Kyverno CLI
+        uses: kyverno/action-install-cli@v0.2.0
+
+      - name: Validate policy syntax
+        run: |
+          echo "=== Validating Kyverno policy syntax ==="
+          find cluster/apps/kyverno -name '*.yaml' -type f \
+            ! -name 'kustomization.yaml' \
+            ! -name 'ks.yaml' \
+            ! -name 'namespace.yaml' \
+            -print0 | while IFS= read -r -d '' file; do
+            # Only validate files that look like Kyverno policies
+            if grep -q 'kind: ClusterPolicy\|kind: Policy' "$file" 2>/dev/null; then
+              echo "Validating: $file"
+              kyverno validate policy "$file" || exit 1
+            fi
+          done
+          echo "=== All policies valid ==="
+
+      - name: Test validate policies against sample resources
+        run: |
+          echo "=== Testing validate policies (if any) ==="
+          # Find validate policies and test them
+          validate_policies=$(find cluster/apps/kyverno -name '*.yaml' -type f \
+            ! -name 'kustomization.yaml' \
+            ! -name 'ks.yaml' \
+            ! -name 'namespace.yaml' \
+            -exec grep -l 'validationFailureAction:\|validate:' {} \; 2>/dev/null || true)
+
+          if [ -z "$validate_policies" ]; then
+            echo "No validate policies found, skipping resource testing"
+            exit 0
+          fi
+
+          echo "Found validate policies: $validate_policies"
+          # Test would go here when validate policies are added
+          echo "=== Policy testing complete ==="

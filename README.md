@@ -1,6 +1,8 @@
 # spruyt-labs
 
 [![Lint](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/lint.yaml/badge.svg)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/lint.yaml)
+[![Kubeconform](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/kubeconform.yaml/badge.svg)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/kubeconform.yaml)
+[![Kyverno](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/kyverno-test.yaml/badge.svg)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/kyverno-test.yaml)
 [![Terraform](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/terraform-validate.yaml/badge.svg)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/terraform-validate.yaml)
 [![Flux Diff](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/flux-differ.yaml/badge.svg)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/flux-differ.yaml)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)](https://github.com/anthony-spruyt/spruyt-labs/issues?q=is%3Aissue+is%3Aopen+label%3Arenovate)

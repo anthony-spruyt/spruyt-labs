@@ -51,5 +51,17 @@
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
     },
+    {
+      customType: "regex",
+      description: [
+        "Process renovate-annotated env vars in GitHub Actions workflows.",
+      ],
+      managerFilePatterns: ["/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/"],
+      matchStrings: [
+        // # renovate: datasource=X depName=Y \n  VAR: "1.2.3"
+        'datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n[^:]+:\\s*"(?<currentValue>\\d[^"]+)"',
+      ],
+      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
+    },
   ],
 }

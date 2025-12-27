@@ -1,0 +1,45 @@
+---
+name: Kubeconform
+
+on: # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+    paths:
+      - "cluster/**.yaml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "cluster/**.yaml"
+
+permissions:
+  contents: read
+
+env:
+  # renovate: datasource=github-releases depName=kubernetes/kubernetes
+  KUBERNETES_VERSION: "1.35.0"
+
+jobs:
+  kubeconform:
+    name: Validate manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubeconform
+        uses: bmuschko/setup-kubeconform@v1
+
+      - name: Validate cluster manifests
+        run: |
+          find cluster -name '*.yaml' -type f \
+            ! -name '*sops*' \
+            ! -name 'namespace.yaml' \
+            ! -path '*/flux-system/*' \
+            -print0 | xargs -0 kubeconform \
+              -summary \
+              -skip CustomResourceDefinition \
+              -ignore-missing-schemas \
+              -kubernetes-version "$KUBERNETES_VERSION" \
+              -output json
