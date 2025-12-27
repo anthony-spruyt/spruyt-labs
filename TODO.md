@@ -27,3 +27,11 @@
 
 ### YAML Schemas
 - [ ] Research generating and hosting private YAML schemas
+
+## Testing / CI
+
+### Pre-deployment Testing
+- [ ] Research testing strategies for GitOps/Flux workflows (preview environments, PR validation)
+- [ ] Evaluate options: Flux diff/dry-run, ephemeral clusters, policy validation (Kyverno/OPA)
+- [ ] Implement PR validation pipeline for manifests (schema validation, policy checks)
+- [ ] Set up pre-deployment testing mechanism (staging namespace or ephemeral cluster)
