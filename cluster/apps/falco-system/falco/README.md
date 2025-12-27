@@ -45,7 +45,8 @@ kubectl logs -n falco-system -l app.kubernetes.io/name=falcosidekick --tail=20
 
 2. **Alerts not appearing in VictoriaLogs**
    - **Symptom**: Falco detecting events but not visible in Grafana
-   - **Resolution**: Check Falcosidekick connectivity to VictoriaLogs endpoint
+   - **Resolution**: VictoriaLogs requires `/insert` prefix for Loki-compatible endpoint.
+     Verify hostport includes `/insert`: `http://victoria-logs-single-server.observability.svc:9428/insert`
 
 ## Future Enhancements
 

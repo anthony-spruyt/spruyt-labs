@@ -37,7 +37,8 @@ falcosidekick:
       memory: 64Mi
   config:
     loki:
-      hostport: http://victoria-logs-single-server.observability.svc:9428
+      # VictoriaLogs Loki-compatible endpoint (uses /insert prefix)
+      hostport: http://victoria-logs-single-server.observability.svc:9428/insert
 
 # Disable Falco-talon (alerts only, no automated response)
 falco-talon:
