@@ -44,6 +44,8 @@ Run all queries using `--command` flag for reliability:
 kubectl -n dev-debug run vmquery-throttle --labels=app.kubernetes.io/purpose=metrics-query --image=curlimages/curl --restart=Never --rm -i --command -- curl -s 'http://vmsingle-victoria-metrics-k8s-stack.observability:8428/api/v1/query' --data-urlencode 'query=sum by (namespace,pod,container)(rate(container_cpu_cfs_throttled_periods_total[24h])) / sum by (namespace,pod,container)(rate(container_cpu_cfs_periods_total[24h]))*100'
 ```
 
+> **Important**: Throttle metrics include historical data from deleted pods and old replicasets within the 24h window. After resource changes, old pods with different limits will still appear in results. Cross-reference with current running pods (Step 1d) before taking action.
+
 **Container Count** - Completeness check (compare against Step 1a inventory):
 
 ```bash
@@ -78,14 +80,27 @@ kubectl -n dev-debug run vmquery-overprov --labels=app.kubernetes.io/purpose=met
 
 ### Step 1d: Analyze Results
 
-Parse JSON results locally and create a comparison table:
+Parse JSON results locally and create a comparison table.
+
+> **Aggregation note**: P99 CPU/memory queries aggregate by `(namespace, container)`, summing across all replicas. For multi-replica workloads (Deployments, DaemonSets), divide by replica count to get per-pod values:
+> - **Deployments**: Check `kubectl get deploy -n <ns> <name> -o jsonpath='{.spec.replicas}'`
+> - **DaemonSets**: Check `kubectl get ds -n <ns> <name> -o jsonpath='{.status.numberReady}'`
+>
+> Example: If Falco (DaemonSet) shows 660m P99 CPU across 6 nodes, per-pod P99 ≈ 110m.
 
 1. **Verify completeness**: Container count from query should match Step 1a inventory
 2. **Filter throttled**: Containers with throttle >5%
-3. **Flag over-provisioned (REPORT ONLY)**: Containers with usage/request ratio <0.3
+3. **Cross-reference with current pods**: For any throttled containers, verify the pod still exists:
+   ```bash
+   kubectl get pods -n <namespace> -o name | grep <pod-name-prefix>
+   ```
+   - If pod doesn't exist, it's historical data from old replicasets - ignore
+   - Only action throttle issues for **currently running** pods
+4. **Flag over-provisioned (REPORT ONLY)**: Containers with usage/request ratio <0.3
    - **DO NOT** reduce resources automatically
    - Present findings to user and wait for explicit approval before any changes
-4. **Check for missing workloads**: Compare 7d vs 24h results - use 24h data for new workloads
+5. **Check for missing workloads**: Compare 7d vs 24h results - use 24h data for new workloads
+6. **Recent resource changes**: If resources were tuned within the last 24h, throttle metrics will include old pods with previous limits. Wait 24h for metrics to stabilize or filter by current pod names when interpreting results
 
 ---
 
