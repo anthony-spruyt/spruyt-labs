@@ -47,3 +47,15 @@ falco-talon:
 # Disable k8s-metacollector (optional, adds pod metadata enrichment)
 k8s-metacollector:
   enabled: false
+
+# Mount custom exception rules from ConfigMap
+mounts:
+  volumes:
+    - name: falco-exceptions
+      configMap:
+        name: falco-exceptions
+  volumeMounts:
+    - name: falco-exceptions
+      mountPath: /etc/falco/rules.d/exceptions.yaml
+      subPath: exceptions.yaml
+      readOnly: true
