@@ -36,7 +36,7 @@ jobs:
         uses: fluxcd/flux2/action@v2.7.5
 
       - name: Diff resources
-        uses: allenporter/flux-local/action/diff@8.0.1
+        uses: allenporter/flux-local/action/diff@8.1.0
         id: diff
         with:
           sources: flux-system
@@ -57,37 +57,3 @@ jobs:
           # 2) Chop it down to 65 000 bytes
           head -c 65000 full-diff.txt \
             > truncated-diff.txt
-
-      - name: Comment truncated diff via github-script
-        uses: actions/github-script@v8
-        if: false
-        with:
-          github-token: ${{ steps.generate-token.outputs.token }}
-          script: |
-            const fs = require('fs')
-            const path = 'truncated-diff.txt'
-
-            if (!fs.existsSync(path)) {
-              core.info('No diff file to post.')
-              return
-            }
-
-            const diff = fs.readFileSync(path, 'utf8')
-            if (!diff) {
-              core.info('Diff file is empty.')
-              return
-            }
-
-            // build the comment body
-            const body = [
-              '```diff',
-              diff,
-              '```'
-            ].join('\n')
-
-            // create or update a comment
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: context.payload.pull_request.number,
-              body
-            })
