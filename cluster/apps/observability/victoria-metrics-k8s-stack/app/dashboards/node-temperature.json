@@ -143,7 +143,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -219,7 +223,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -309,7 +317,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -385,7 +397,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -475,7 +491,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -551,7 +571,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -641,7 +665,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -723,7 +751,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -866,7 +898,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -956,7 +992,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -1038,7 +1078,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -1181,7 +1225,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -1271,7 +1319,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -1353,7 +1405,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
@@ -1496,7 +1552,11 @@
                 "id": "custom.lineStyle",
                 "value": { "dash": [10, 10], "fill": "dash" }
               },
-              { "id": "custom.fillOpacity", "value": 0 }
+              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": false }
+              }
             ]
           }
         ]
