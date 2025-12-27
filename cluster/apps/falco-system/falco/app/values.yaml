@@ -16,25 +16,27 @@ tolerations:
     operator: Exists
 
 # Resources: high-priority tier (5x CPU limit)
+# Based on P99 metrics + 20% headroom
 resources:
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 70m
+    memory: 200Mi
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 350m
+    memory: 400Mi
 
 # Enable Falcosidekick for alert forwarding
 falcosidekick:
   enabled: true
   priorityClassName: high-priority
+  # Based on P99 metrics + 20% headroom
   resources:
     requests:
-      cpu: 20m
-      memory: 32Mi
+      cpu: 15m
+      memory: 24Mi
     limits:
-      cpu: 100m
-      memory: 64Mi
+      cpu: 75m
+      memory: 48Mi
   config:
     loki:
       # VictoriaLogs Loki-compatible endpoint (uses /insert prefix)
