@@ -11,6 +11,7 @@
       "Bash(talhelper:*)",
       "Bash(cilium:*)",
       "Bash(hubble:*)",
+      "Bash(falcoctl:*)",
       "Bash(velero:*)",
       "Bash(task:*)",
 
