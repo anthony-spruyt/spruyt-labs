@@ -39,10 +39,10 @@ pluginsManager:
       parallel: true
       maxConcurrent: 2
 
-# low-priority - P99 79m, limit 5x requests
+# P99 25m - idle unless dashboard active, generous limit for bursts
 resources:
   requests:
-    cpu: 95m
+    cpu: 35m
     memory: 192Mi
   limits:
     cpu: 500m

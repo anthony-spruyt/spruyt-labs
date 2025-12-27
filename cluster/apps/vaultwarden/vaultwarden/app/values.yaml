@@ -38,10 +38,10 @@ controllers:
               timeoutSeconds: 1
               failureThreshold: 3
           readiness: *probes
-        # standard priority - generous CPU limit (5x requests)
+        # P99 2.7m - idle unless actively used, generous limit for bursts
         resources:
           requests:
-            cpu: 100m
+            cpu: 10m
             memory: 256Mi
           limits:
             cpu: 500m

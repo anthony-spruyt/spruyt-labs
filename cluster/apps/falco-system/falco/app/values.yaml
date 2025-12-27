@@ -16,13 +16,13 @@ tolerations:
     operator: Exists
 
 # Resources: high-priority tier (5x CPU limit)
-# Based on P99 metrics + 20% headroom
+# Based on P99 metrics (110m/pod) + 20% headroom
 resources:
   requests:
-    cpu: 70m
+    cpu: 130m
     memory: 200Mi
   limits:
-    cpu: 350m
+    cpu: 650m
     memory: 400Mi
 
 # Enable Falcosidekick for alert forwarding

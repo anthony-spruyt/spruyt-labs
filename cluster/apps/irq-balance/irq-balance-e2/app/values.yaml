@@ -13,9 +13,10 @@ controllers:
           pullPolicy: IfNotPresent
         env:
           IRQBALANCE_DEBUG: false
+        # P99 0.5m per pod - minimal steady-state usage
         resources:
           requests:
-            cpu: 25m
+            cpu: 5m
             memory: 128Mi
           limits:
             memory: 128Mi

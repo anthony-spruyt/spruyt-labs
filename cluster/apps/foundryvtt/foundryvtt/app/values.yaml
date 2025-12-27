@@ -89,10 +89,11 @@ controllers:
         envFrom:
           - secretRef:
               name: foundryvtt-secrets
-        # Gaming workload - P99 1m
+        # Gaming workload - P99 1.6m, bursty during active games
+        # Low request for idle, high limit for gaming sessions
         resources:
           requests:
-            cpu: 1000m
+            cpu: 10m
             memory: 1Gi
           limits:
             cpu: 4000m
