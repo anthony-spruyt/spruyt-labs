@@ -1,0 +1,105 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-dns-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: foundryvtt
+      app.kubernetes.io/instance: foundryvtt
+      app.kubernetes.io/name: foundryvtt
+  egress:
+    # Allow DNS to kube-dns Service on UDP/TCP 53
+    - toServices:
+        - k8sService:
+            serviceName: kube-dns
+            namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-icmps
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: foundryvtt
+      app.kubernetes.io/instance: foundryvtt
+      app.kubernetes.io/name: foundryvtt
+  egress:
+    - icmps:
+        - fields:
+            - family: IPv4
+              type: EchoRequest
+            - family: IPv4
+              type: EchoReply
+            - family: IPv4
+              type: DestinationUnreachable
+            - family: IPv4
+              type: TimeExceeded
+  ingress:
+    - icmps:
+        - fields:
+            - family: IPv4
+              type: EchoRequest
+            - family: IPv4
+              type: EchoReply
+            - family: IPv4
+              type: DestinationUnreachable
+            - family: IPv4
+              type: TimeExceeded
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# FoundryVTT needs external access to download modules, updates, and connect to external services
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-world-web-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: foundryvtt
+      app.kubernetes.io/instance: foundryvtt
+      app.kubernetes.io/name: foundryvtt
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: foundryvtt
+      app.kubernetes.io/instance: foundryvtt
+      app.kubernetes.io/name: foundryvtt
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "30000"
+              protocol: TCP

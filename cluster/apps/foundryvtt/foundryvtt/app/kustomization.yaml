@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./persistent-volume-claim.yaml
   - ./foundryvtt-secrets.sops.yaml
+  - ./network-policies.yaml
   - ./release.yaml
 configMapGenerator:
   - name: foundryvtt-values
