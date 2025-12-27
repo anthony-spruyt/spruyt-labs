@@ -196,12 +196,12 @@ server:
   #podAnnotations: {}
 
   # Critical observability infrastructure - no CPU limit (CPU is compressible)
-  # P99 58m - increase request to match
+  # P99 65m + 20% headroom
   resources:
     limits:
       memory: 512Mi
     requests:
-      cpu: 70m
+      cpu: 80m
       memory: 256Mi
 
   #probe:

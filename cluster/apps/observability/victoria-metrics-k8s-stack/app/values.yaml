@@ -84,15 +84,15 @@ vmalert:
   enabled: true
   # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
   # High-priority - no CPU limit (CPU is compressible)
-  # Requests based on P99: 82m (+20% headroom)
+  # Requests based on P99: 89m (+20% headroom)
   spec:
     priorityClassName: high-priority
-    # vmalert is lightweight (~100m CPU) - no anti-affinity needed
+    # vmalert is lightweight (~110m CPU) - no anti-affinity needed
     resources:
       limits:
         memory: 128Mi
       requests:
-        cpu: 100m
+        cpu: 110m
         memory: 80Mi
     # Override external.url for alert source links (chart defaults to dummy URL when using Traefik IngressRoutes)
     extraArgs:
