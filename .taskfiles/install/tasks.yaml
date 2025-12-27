@@ -22,6 +22,10 @@ tasks:
     desc: Installs the CNPG kubectl plugin for CloudNativePG
     cmds:
       - bash {{ .installScriptsDir }}/install-cnpg.sh
+  falcoctl-cli:
+    desc: Installs the Falcoctl CLI for managing Falco rules and plugins
+    cmds:
+      - bash {{ .installScriptsDir }}/install-falcoctl.sh
   flux-cli:
     desc: Installs the Flux CLI
     cmds:
