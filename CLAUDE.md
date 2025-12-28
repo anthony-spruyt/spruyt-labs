@@ -299,6 +299,7 @@ spec:
 - [docs/rules/documentation.md](docs/rules/documentation.md) - Documentation standards
 - [docs/rules/procedures.md](docs/rules/procedures.md) - Ingress, certificates
 - [docs/rules/renovate.md](docs/rules/renovate.md) - Renovate config, testing, troubleshooting
+- [docs/intel-hybrid-architecture.md](docs/intel-hybrid-architecture.md) - P-core/E-core tuning, IRQ balance
 - [docs/](docs/) - Bootstrap, maintenance, DR runbooks
 
 After completing tasks, review and update relevant docs for accuracy.
