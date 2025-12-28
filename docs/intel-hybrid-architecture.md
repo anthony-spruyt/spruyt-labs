@@ -50,17 +50,27 @@ irqbalance can move these interrupts to P-cores:
 
 - Network interfaces (eth0, eth1-TxRx queues)
 - USB controllers (xhci_hcd)
-- Thunderbolt controllers
+- Thunderbolt data queues (high-throughput)
 - Generic PCI devices
+
+> **Note**: Some low-frequency control interrupts (PCIe hotplug, thunderbolt control) may still appear on E-cores. These handle minimal traffic and don't impact performance.
 
 ### What irqbalance Cannot Control
 
 NVMe "managed interrupts" are pinned by the kernel at boot:
 
-| NVMe Queue | IRQ | CPU Affinity | Core Type |
-|------------|-----|--------------|-----------|
-| nvme1q1-q4 | 164-167 | 0-7 | P-cores |
-| nvme1q5-q8 | 168-171 | 8-15 | E-cores |
+| NVMe Queue | CPU Affinity | Core Type |
+|------------|--------------|-----------|
+| nvme1q1 | 0-1 | P-core |
+| nvme1q2 | 2-3 | P-core |
+| nvme1q3 | 4-5 | P-core |
+| nvme1q4 | 6-7 | P-core |
+| nvme1q5 | 8-9 | E-core |
+| nvme1q6 | 10-11 | E-core |
+| nvme1q7 | 12-13 | E-core |
+| nvme1q8 | 14-15 | E-core |
+
+> **Note**: IRQ numbers are assigned at boot and may vary. Use the verification commands below to check actual values on your nodes.
 
 **This is by design**: NVMe creates per-CPU queues for cache locality. When a thread on CPU 10 does I/O, the completion interrupt stays on CPU 10, avoiding cache bouncing.
 
