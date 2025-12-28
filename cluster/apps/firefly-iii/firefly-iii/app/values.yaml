@@ -9,7 +9,7 @@ image:
   repository: fireflyiii/core
   pullPolicy: IfNotPresent
 
-# Use existing secret for sensitive values (APP_KEY, DB creds from CNPG)
+# Use existing secret for sensitive values (APP_KEY, cron token)
 config:
   existingSecret: firefly-iii-secrets
   env:
@@ -21,12 +21,8 @@ config:
     TRUSTED_PROXIES: "*"
     TZ: ${TIMEZONE}
 
-    # Database - uses CNPG auto-generated secret
+    # Database connection type (credentials from envValueFrom below)
     DB_CONNECTION: pgsql
-    DB_HOST: firefly-iii-cnpg-cluster-rw
-    DB_PORT: "5432"
-    DB_DATABASE: firefly
-    DB_USERNAME: firefly
 
     # Authentication - uses Authentik forward-auth via header
     # The proxy provider sets X-authentik-email header which Firefly III uses
@@ -44,6 +40,29 @@ config:
 
     # Cron settings (internal cron handled by cronjob)
     STATIC_CRON_TOKEN: ""
+
+  # Database credentials from CNPG auto-generated secret
+  envValueFrom:
+    DB_HOST:
+      secretKeyRef:
+        name: firefly-iii-cnpg-cluster-app
+        key: host
+    DB_PORT:
+      secretKeyRef:
+        name: firefly-iii-cnpg-cluster-app
+        key: port
+    DB_DATABASE:
+      secretKeyRef:
+        name: firefly-iii-cnpg-cluster-app
+        key: dbname
+    DB_USERNAME:
+      secretKeyRef:
+        name: firefly-iii-cnpg-cluster-app
+        key: user
+    DB_PASSWORD:
+      secretKeyRef:
+        name: firefly-iii-cnpg-cluster-app
+        key: password
 
 # Service configuration
 service:
@@ -143,8 +162,3 @@ extraVolumeMounts:
   - name: db-ca-cert
     mountPath: /var/www/html/storage/certs/postgresql
     readOnly: true
-
-# Environment variables from secrets (DB password from CNPG secret)
-envFrom:
-  - secretRef:
-      name: firefly-iii-cnpg-cluster-app
