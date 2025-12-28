@@ -38,9 +38,6 @@ config:
     SEND_ERROR_MESSAGE: "true"
     SEND_REPORT_JOURNALS: "true"
 
-    # Cron settings (internal cron handled by cronjob)
-    STATIC_CRON_TOKEN: ""
-
   # Database credentials from CNPG auto-generated secret
   envValueFrom:
     DB_HOST:
@@ -112,7 +109,7 @@ ingress:
 # Cronjob for recurring transactions (runs internally)
 cronjob:
   enabled: true
-  schedule: "0 3 * * *"
+  schedule: "0 15 * * *" # At 01:00 daily Melbourne (UTC+10)
   auth:
     existingSecret: firefly-iii-secrets
     secretKey: STATIC_CRON_TOKEN
