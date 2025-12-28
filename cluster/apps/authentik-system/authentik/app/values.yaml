@@ -159,6 +159,8 @@ global:
             path: redisinsight-sso.yaml
           - key: flux-sso.yaml
             path: flux-sso.yaml
+          - key: firefly-iii-sso.yaml
+            path: firefly-iii-sso.yaml
 
 authentik:
   log_level: info

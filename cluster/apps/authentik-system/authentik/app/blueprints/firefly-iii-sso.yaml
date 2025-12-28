@@ -1,0 +1,69 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Firefly III SSO
+entries:
+  - id: firefly_iii_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Firefly III Users
+    attrs:
+      name: Firefly III Users
+  - id: firefly_iii_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: Firefly III
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://firefly.${EXTERNAL_DOMAIN}
+  - id: firefly_iii_application
+    model: authentik_core.application
+    identifiers:
+      slug: firefly-iii
+    attrs:
+      name: Firefly III
+      provider: !KeyOf firefly_iii_provider
+      meta_launch_url: https://firefly.${EXTERNAL_DOMAIN}
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/firefly.png
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf firefly_iii_application
+      order: 0
+    attrs:
+      group: !KeyOf firefly_iii_users_group
+      negate: false
+      enabled: true
+      timeout: 30
+
+  # Standalone outpost deployed to firefly-iii namespace
+  # Requires RBAC: Role/RoleBinding in firefly-iii granting authentik SA permissions
+  - id: firefly_iii_outpost
+    model: authentik_outposts.outpost
+    identifiers:
+      name: Firefly III Outpost
+    attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: firefly-iii
+      providers:
+        - !KeyOf firefly_iii_provider

@@ -79,6 +79,8 @@ CPU limits protect hardware from thermal throttling caused by unbounded workload
 |-----------|----------|-----------|
 | n8n-system | n8n, n8n-worker, n8n-webhook, n8n-cnpg-cluster | Workflow automation |
 | n8n-system | ak-outpost-n8n-outpost | Authentik outpost |
+| firefly-iii | firefly-iii, firefly-iii-cnpg-cluster | Personal finance manager |
+| firefly-iii | ak-outpost-firefly-iii-outpost | Authentik outpost |
 | observability | victoria-logs-single, vector | Log aggregation |
 | observability | victoria-metrics-operator, kube-state-metrics | Metrics operators |
 | qdrant-system | qdrant | Vector database |

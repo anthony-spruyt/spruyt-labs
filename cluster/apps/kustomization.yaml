@@ -36,6 +36,7 @@ resources:
   - ./headlamp-system
   - ./kyverno
   - ./falco-system
+  - ./firefly-iii
   - ./nut-system
   # - ./snmp
   # - ./smtp

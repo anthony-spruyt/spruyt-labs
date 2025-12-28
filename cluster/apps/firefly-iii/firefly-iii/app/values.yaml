@@ -1,0 +1,150 @@
+---
+# #yaml-language-server: $schema=TODO
+# Documentation: https://github.com/firefly-iii/kubernetes/tree/main/charts/firefly-iii
+# Default values: https://github.com/firefly-iii/kubernetes/blob/main/charts/firefly-iii/values.yaml
+# standard tier: Business application with availability expectations (per docs/workload-classification.md)
+# CPU limit: 3x request per standard policy
+
+image:
+  repository: fireflyiii/core
+  pullPolicy: IfNotPresent
+
+# Use existing secret for sensitive values (APP_KEY, DB creds from CNPG)
+config:
+  existingSecret: firefly-iii-secrets
+  env:
+    # Application settings
+    APP_ENV: production
+    APP_DEBUG: "false"
+    APP_LOG_LEVEL: notice
+    APP_URL: https://firefly.${EXTERNAL_DOMAIN}
+    TRUSTED_PROXIES: "*"
+    TZ: ${TIMEZONE}
+
+    # Database - uses CNPG auto-generated secret
+    DB_CONNECTION: pgsql
+    DB_HOST: firefly-iii-cnpg-cluster-rw
+    DB_PORT: "5432"
+    DB_DATABASE: firefly
+    DB_USERNAME: firefly
+
+    # Authentication - uses Authentik forward-auth via header
+    # The proxy provider sets X-authentik-email header which Firefly III uses
+    AUTHENTICATION_GUARD: remote_user_guard
+    AUTHENTICATION_GUARD_HEADER: HTTP_X_AUTHENTIK_EMAIL
+    AUTHENTICATION_GUARD_EMAIL: HTTP_X_AUTHENTIK_EMAIL
+
+    # Disable 2FA since we use Authentik SSO
+    DISABLE_FRAME_HEADER: "false"
+    DISABLE_CSP_HEADER: "false"
+
+    # Send error reporting emails
+    SEND_ERROR_MESSAGE: "true"
+    SEND_REPORT_JOURNALS: "true"
+
+    # Cron settings (internal cron handled by cronjob)
+    STATIC_CRON_TOKEN: ""
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Persistence for uploads/attachments
+persistence:
+  enabled: true
+  storageClassName: rbd-fast
+  accessModes:
+    - ReadWriteOnce
+  size: 5Gi
+
+# Resources - standard tier (3x CPU limit)
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi
+
+# Security context
+securityContext:
+  fsGroup: 33
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 33
+  runAsGroup: 33
+
+# Priority class
+priorityClassName: standard
+
+# Deployment annotations for config reloading
+deploymentAnnotations:
+  reloader.stakater.com/auto: "true"
+
+# Pod annotations
+podAnnotations: {}
+
+# Ingress disabled - using Traefik IngressRoute instead
+ingress:
+  enabled: false
+
+# Cronjob for recurring transactions (runs internally)
+cronjob:
+  enabled: true
+  schedule: "0 3 * * *"
+  auth:
+    existingSecret: firefly-iii-secrets
+    secretKey: STATIC_CRON_TOKEN
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# Probes
+startupProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 0
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Extra volumes for CNPG CA certificate
+extraVolumes:
+  - name: db-ca-cert
+    secret:
+      secretName: firefly-iii-cnpg-cluster-ca
+      items:
+        - key: ca.crt
+          path: ca.crt
+
+extraVolumeMounts:
+  - name: db-ca-cert
+    mountPath: /var/www/html/storage/certs/postgresql
+    readOnly: true
+
+# Environment variables from secrets (DB password from CNPG secret)
+envFrom:
+  - secretRef:
+      name: firefly-iii-cnpg-cluster-app

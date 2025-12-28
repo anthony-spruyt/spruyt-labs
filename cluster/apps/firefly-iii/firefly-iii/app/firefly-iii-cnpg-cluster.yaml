@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: firefly-iii-cnpg-cluster
+spec:
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: preferred
+    topologyKey: kubernetes.io/hostname
+  bootstrap:
+    initdb:
+      database: firefly
+      owner: firefly
+  enableSuperuserAccess: true
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18"
+  # Single instance for personal finance app (HA optional)
+  instances: 1
+  monitoring:
+    enablePodMonitor: true
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      enabled: true
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: firefly-iii-cnpg-aws-object-store
+  postgresql:
+    parameters:
+      shared_buffers: 128MB # 25% of the memory defined under requests memory
+  primaryUpdateMethod: switchover
+  primaryUpdateStrategy: unsupervised
+  # standard tier - lower resource requirements for personal finance app
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 50m
+      memory: 512Mi # shared_buffers under parameters should be 25% of the memory defined here
+  storage:
+    pvcTemplate:
+      storageClassName: rbd-fast
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi

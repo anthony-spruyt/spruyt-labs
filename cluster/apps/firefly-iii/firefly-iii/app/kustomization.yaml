@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./authentik-outpost-rbac.yaml
+  - ./firefly-iii-secrets.sops.yaml
+  - ./firefly-iii-cnpg-object-stores.yaml
+  - ./firefly-iii-cnpg-cluster.yaml
+  - ./firefly-iii-cnpg-scheduled-backups.yaml
+  - ./release.yaml
+configMapGenerator:
+  - name: firefly-iii-values
+    namespace: firefly-iii
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

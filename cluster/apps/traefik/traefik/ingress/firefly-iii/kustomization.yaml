@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base/authentik-forward-auth.yaml
+  - ../base/compress.yaml
+  - ./certificates.yaml
+  - ./ingress-routes.yaml
+patches:
+  - target:
+      kind: Middleware
+      name: authentik-forward-auth
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: firefly-iii
+      - op: replace
+        path: /spec/forwardAuth/address
+        value: http://ak-outpost-firefly-iii-outpost.firefly-iii.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
+  - target:
+      kind: Middleware
+      name: compress
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: firefly-iii
