@@ -110,7 +110,8 @@ hubble:
       namespace: observability
     enabled:
       - dns:query;ignoreAAAA
-      - drop
+      # Drop metrics with source/destination context for debugging policy issues
+      - drop:sourceContext=namespace|workload|pod;destinationContext=namespace|workload|pod
       - tcp
       - flow
       - port-distribution
