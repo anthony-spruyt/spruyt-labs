@@ -8,6 +8,7 @@ resources:
   - ./cloudnative-pg-charts.yaml
   - ./external-secrets-charts.yaml
   - ./falcosecurity-charts.yaml
+  - ./firefly-iii-charts.yaml
   - ./goauthentik-charts.yaml
   - ./headlamp-charts.yaml
   - ./jetstack-charts.yaml

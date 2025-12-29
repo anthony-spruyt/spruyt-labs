@@ -6,25 +6,6 @@ exit-on-eol: 2
 scan:
   skip-dirs:
     - talos/clusterconfig
-  skip-files:
-    - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/csi-addons-config.yaml
-    - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/rbac.yaml
-    - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
-    - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
-    - cluster/apps/minecraft/maintenance/minecraft-bedrock-restart.yaml
-    - cluster/apps/minecraft/maintenance/role.yaml
-    - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
-    - cluster/apps/observability/victoria-metrics-secret-writer/app/role.yaml
-    # hooks.js contains code that reads email headers - false positive for sensitive data
-    - cluster/apps/n8n-system/n8n/app/hooks-configmap.yaml
-    # Authentik outpost deployer RBAC - required permissions from official helm chart
-    # https://github.com/goauthentik/helm/blob/main/charts/authentik-remote-cluster/templates/role.yaml
-    - cluster/apps/n8n-system/n8n/app/authentik-outpost-rbac.yaml
-    - cluster/apps/kube-system/hubble-sso/rbac/authentik-outpost-rbac.yaml
-    - cluster/apps/redisinsight/redisinsight/app/authentik-outpost-rbac.yaml
-    - cluster/apps/flux-system/flux-sso/rbac/authentik-outpost-rbac.yaml
-    # Headlamp OIDC user binding - intentional cluster-admin for single-user homelab
-    - cluster/apps/headlamp-system/headlamp/app/user-rbac.yaml
   scanners:
     - vuln
     - misconfig

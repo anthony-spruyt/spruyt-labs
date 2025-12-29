@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-wan-https
+  namespace: firefly-iii
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: firefly.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # Authentik outpost path - required for SSO auth flow redirects
+    # Uses standalone outpost deployed to local namespace by Authentik
+    - kind: Rule
+      match: Host(`firefly.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      services:
+        - name: ak-outpost-firefly-iii-outpost
+          passHostHeader: true
+          port: 9000
+    # Main Firefly III route with SSO forward-auth
+    - kind: Rule
+      match: Host(`firefly.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: authentik-forward-auth
+        - name: compress
+      services:
+        - name: firefly-iii
+          namespace: firefly-iii
+          passHostHeader: true
+          port: 80
+  tls:
+    secretName: "firefly-${EXTERNAL_DOMAIN/./-}-tls"

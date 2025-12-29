@@ -15,6 +15,21 @@ misconfigurations:
       - cluster/apps/authentik-system/authentik/app/external-secrets-rbac.yaml
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/role.yaml
 
+  # Authentik outpost deployer needs access to secrets/services/configmaps/deployments to deploy outposts
+  # Required for forward-auth SSO pattern
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/**/authentik-outpost-rbac.yaml
+  - id: AVD-KSV-0049
+    paths:
+      - cluster/apps/**/authentik-outpost-rbac.yaml
+  - id: AVD-KSV-0056
+    paths:
+      - cluster/apps/**/authentik-outpost-rbac.yaml
+  - id: AVD-KSV-0113
+    paths:
+      - cluster/apps/**/authentik-outpost-rbac.yaml
+
   # Shutdown orchestrator needs deployment access for Ceph scaling
   - id: AVD-KSV-0048
     paths:
@@ -57,3 +72,161 @@ misconfigurations:
   - id: AVD-AWS-0143
     paths:
       - infra/terraform/**
+
+  # ==============================================================================
+  # CSI Addons Controller Manager - third-party manifest from csi-addons project
+  # https://github.com/csi-addons/kubernetes-csi-addons
+  # ==============================================================================
+  # False positive - config values (max-concurrent-reconciles, max-group-pvcs) are not sensitive
+  - id: AVD-KSV-01010
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/csi-addons-config.yaml
+  # Leader election role needs configmap create/update for controller coordination
+  - id: AVD-KSV-0049
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/rbac.yaml
+  # Third-party manifest - upstream securityContext choices (can't modify without forking)
+  - id: AVD-KSV-0003
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+  - id: AVD-KSV-0004
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+  - id: AVD-KSV-0020
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+  - id: AVD-KSV-0021
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+  - id: AVD-KSV-0030
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+  - id: AVD-KSV-0104
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+  - id: AVD-KSV-0106
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+  # quay.io is a trusted registry but trivy flags all non-standard registries
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+
+  # ==============================================================================
+  # Snapshot Controller - third-party manifest from kubernetes-csi project
+  # https://github.com/kubernetes-csi/external-snapshotter
+  # ==============================================================================
+  # Third-party manifest - upstream securityContext choices (can't modify without forking)
+  - id: AVD-KSV-0001
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0003
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0004
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0012
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0014
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0020
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0021
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0030
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0104
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0106
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  # Deployed to kube-system, not default - but manifests use default namespace placeholder
+  - id: AVD-KSV-0110
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  - id: AVD-KSV-0118
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+  # registry.k8s.io is a trusted registry
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
+
+  # ==============================================================================
+  # Headlamp OIDC user binding - intentional cluster-admin for single-user homelab
+  # ==============================================================================
+  - id: AVD-KSV-0111
+    paths:
+      - cluster/apps/headlamp-system/headlamp/app/user-rbac.yaml
+
+  # ==============================================================================
+  # Minecraft maintenance CronJob - uses bitnami/kubectl to restart servers daily
+  # ==============================================================================
+  # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)
+  - id: AVD-KSV-0013
+    paths:
+      - cluster/apps/minecraft/maintenance/minecraft-bedrock-restart.yaml
+  # Bitnami is a trusted publisher (VMware/Broadcom)
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/minecraft/maintenance/minecraft-bedrock-restart.yaml
+  # Maintenance role needs to restart deployments/statefulsets for scheduled maintenance
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/minecraft/maintenance/role.yaml
+
+  # ==============================================================================
+  # N8N hooks ConfigMap - JavaScript code for webhook processing
+  # ==============================================================================
+  # False positive - contains JavaScript code that READS email headers, not sensitive data
+  - id: AVD-KSV-01010
+    paths:
+      - cluster/apps/n8n-system/n8n/app/hooks-configmap.yaml
+
+  # ==============================================================================
+  # Victoria Metrics etcd secret writer - writes etcd certs for vmagent discovery
+  # Uses bitnami/kubectl for one-time Job to copy secrets
+  # ==============================================================================
+  # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)
+  - id: AVD-KSV-0013
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  # Job runs as default user - acceptable for one-time init job
+  - id: AVD-KSV-0020
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  - id: AVD-KSV-0021
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  # Needs hostPath to read etcd certs from node filesystem
+  - id: AVD-KSV-0023
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  - id: AVD-KSV-0030
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  - id: AVD-KSV-0106
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  # Job deployed to observability namespace, not default - but template uses placeholder
+  - id: AVD-KSV-0110
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  - id: AVD-KSV-0118
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  # Bitnami is a trusted publisher (VMware/Broadcom)
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/etcd-secret-writer.yaml
+  # Role needs to write secrets for vmagent etcd discovery
+  - id: AVD-KSV-0113
+    paths:
+      - cluster/apps/observability/victoria-metrics-secret-writer/app/role.yaml

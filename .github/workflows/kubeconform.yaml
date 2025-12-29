@@ -36,7 +36,10 @@ jobs:
           find cluster -name '*.yaml' -type f \
             ! -name '*sops*' \
             ! -name 'namespace.yaml' \
+            ! -name 'values.yaml' \
+            ! -name 'kustomizeconfig.yaml' \
             ! -path '*/flux-system/*' \
+            ! -path '*/blueprints/*' \
             -print0 | xargs -0 kubeconform \
               -summary \
               -skip CustomResourceDefinition \

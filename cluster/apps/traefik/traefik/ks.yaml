@@ -26,6 +26,7 @@ spec:
   dependsOn:
     - name: traefik
     - name: authentik
+    - name: firefly-iii
     - name: foundryvtt
     - name: headlamp
     - name: n8n
