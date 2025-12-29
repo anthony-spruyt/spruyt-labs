@@ -205,7 +205,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "label_replace(label_replace(sum by (source, destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])), \"source\", \"external\", \"source\", \"^$\"), \"destination\", \"external\", \"destination\", \"^$\")",
+          "expr": "label_replace(label_replace(sum by (source, destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])), \"source\", \"external\", \"source\", \"^$\"), \"destination\", \"external\", \"destination\", \"^$\") > 0",
           "legendFormat": "{{ source }} -> {{ destination }}",
           "refId": "A"
         }
