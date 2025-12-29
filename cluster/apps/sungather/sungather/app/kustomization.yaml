@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./sungather-secrets.sops.yaml
   - ./release.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: sungather-values
     namespace: sungather

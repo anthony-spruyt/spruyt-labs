@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow DNS egress to kube-dns
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-dns-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: sungather
+      app.kubernetes.io/instance: sungather
+      app.kubernetes.io/name: sungather
+  egress:
+    - toServices:
+        - k8sService:
+            serviceName: kube-dns
+            namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow Modbus TCP egress to solar inverter
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-modbus-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: sungather
+      app.kubernetes.io/instance: sungather
+      app.kubernetes.io/name: sungather
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "502"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow MQTT egress to mosquitto
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-mosquitto-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: sungather
+      app.kubernetes.io/instance: sungather
+      app.kubernetes.io/name: sungather
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: mosquitto
+            k8s:app.kubernetes.io/name: mosquitto
+      toPorts:
+        - ports:
+            - port: "1883"
+              protocol: TCP
