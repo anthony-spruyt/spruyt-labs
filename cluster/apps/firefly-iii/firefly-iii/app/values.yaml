@@ -70,7 +70,7 @@ service:
 # Persistence for uploads/attachments
 persistence:
   enabled: true
-  storageClassName: rbd-fast
+  storageClassName: rbd-fast-delete
   accessModes: ReadWriteOnce
   storage: 5Gi
 
