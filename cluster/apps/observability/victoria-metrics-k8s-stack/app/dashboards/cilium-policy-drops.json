@@ -143,7 +143,8 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "count(sum by (source, destination, protocol) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])) >= 1)",
+          "expr": "count(max_over_time((sum by (source, destination, protocol) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m]) >= 1)",
+          "instant": true,
           "legendFormat": "",
           "refId": "A"
         }
@@ -263,28 +264,22 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (source, destination, protocol) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])) >= 1",
-          "legendFormat": "{{ source }} -> {{ destination }}",
+          "expr": "max_over_time((sum by (source, destination, protocol) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m]) >= 1",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
           "refId": "A"
         }
       ],
       "title": "Policy Drops in Range (Detailed)",
       "transformations": [
         {
-          "id": "reduce",
-          "options": {
-            "reducers": ["max"],
-            "includeTimeField": false,
-            "labelsToFields": true
-          }
-        },
-        {
           "id": "organize",
           "options": {
-            "excludeByName": { "Field": true },
+            "excludeByName": { "Time": true },
             "indexByName": {},
             "renameByName": {
-              "Max": "Drop Count",
+              "Value": "Drop Count",
               "destination": "Destination",
               "protocol": "Protocol",
               "source": "Source"
@@ -353,7 +348,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(5, sum by (source) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])))",
+          "expr": "topk(5, max_over_time((sum by (source) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m]))",
           "format": "table",
           "instant": true,
           "legendFormat": "{{ source }}",
@@ -414,7 +409,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(5, sum by (destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])))",
+          "expr": "topk(5, max_over_time((sum by (destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m]))",
           "format": "table",
           "instant": true,
           "legendFormat": "{{ destination }}",
