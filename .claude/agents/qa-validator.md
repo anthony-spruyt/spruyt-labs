@@ -140,7 +140,14 @@ helm template <release> <chart> -f values.yaml --dry-run
 - [ ] No sensitive data in commit messages or comments
 - [ ] Service accounts have minimal required permissions
 
-### 8. Cross-Reference Validation
+### 8. Semantic Validation
+
+Beyond syntax, verify configurations will actually work:
+- For network policies: every traffic flow needs BOTH egress (sender) AND ingress (receiver)
+- For dependencies: if A calls B, both sides need appropriate policies/config
+- Ask: "Will this actually function, or just parse correctly?"
+
+### 9. Cross-Reference Validation
 
 - Compare against existing similar apps in the codebase for pattern consistency
 - Verify naming conventions match existing resources
