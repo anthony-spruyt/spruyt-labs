@@ -232,6 +232,24 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-world-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  egress:
+    # Outpost needs HTTPS for OAuth/OIDC flows and certificate validation
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
 # CNPG PostgreSQL Cluster Policies
 # =============================================================================
