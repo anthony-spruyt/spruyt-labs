@@ -25,6 +25,8 @@ controllers:
         runAsGroup: 1883
         runAsNonRoot: true
         fsGroup: 1883
+        seccompProfile:
+          type: RuntimeDefault
     containers:
       mosquitto:
         image:
