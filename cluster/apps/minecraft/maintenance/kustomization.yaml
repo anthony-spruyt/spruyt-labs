@@ -8,3 +8,4 @@ resources:
   - ./service-account.yaml
   - ./role-binding.yaml
   - ./minecraft-bedrock-restart.yaml
+  - ./network-policies.yaml

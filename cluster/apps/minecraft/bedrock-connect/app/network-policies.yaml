@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow DNS egress to kube-dns
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-bedrock-connect-kube-dns-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: bedrock-connect
+      app.kubernetes.io/name: bedrock-connect
+  egress:
+    - toServices:
+        - k8sService:
+            serviceName: kube-dns
+            namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow game traffic ingress from world (LoadBalancer)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-bedrock-connect-game-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: bedrock-connect
+      app.kubernetes.io/name: bedrock-connect
+  ingress:
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "19132"
+              protocol: UDP
