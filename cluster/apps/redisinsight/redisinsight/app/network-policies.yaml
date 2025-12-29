@@ -1,7 +1,7 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # CiliumNetworkPolicy for redisinsight
-# Redis GUI tool with authentik outpost proxy for authentication
+# Redis GUI tool with authentik forward auth (traefik proxies to app after outpost auth)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -45,11 +45,11 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow outpost to proxy to redisinsight app
+# Allow traefik ingress to redisinsight app (forward auth mode - traefik proxies to app)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-outpost-to-app-ingress
+  name: allow-traefik-to-app-ingress
   namespace: redisinsight
 spec:
   endpointSelector:
@@ -58,27 +58,8 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            goauthentik.io/outpost-name: redisinsight-outpost
-      toPorts:
-        - ports:
-            - port: "5540"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow outpost egress to redisinsight app (proxy backend)
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-outpost-to-app-egress
-  namespace: redisinsight
-spec:
-  endpointSelector:
-    matchLabels:
-      goauthentik.io/outpost-name: redisinsight-outpost
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: redisinsight
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
       toPorts:
         - ports:
             - port: "5540"
