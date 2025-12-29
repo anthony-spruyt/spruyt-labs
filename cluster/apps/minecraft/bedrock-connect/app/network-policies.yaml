@@ -24,6 +24,26 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow HTTPS egress for Xbox/Microsoft discovery services
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-bedrock-connect-xbox-auth-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: bedrock-connect
+      app.kubernetes.io/name: bedrock-connect
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow game traffic ingress from world (LoadBalancer)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
