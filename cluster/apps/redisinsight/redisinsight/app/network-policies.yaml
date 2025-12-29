@@ -77,12 +77,14 @@ spec:
     matchLabels:
       goauthentik.io/outpost-name: redisinsight-outpost
   egress:
-    - toServices:
-        - k8sService:
-            serviceName: authentik-server
-            namespace: authentik-system
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:app.kubernetes.io/name: authentik
       toPorts:
         - ports:
+            - port: "9000"
+              protocol: TCP
             - port: "9443"
               protocol: TCP
 ---

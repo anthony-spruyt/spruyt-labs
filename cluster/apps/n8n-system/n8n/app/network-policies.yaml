@@ -175,6 +175,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow outpost egress to authentik server
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
