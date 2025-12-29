@@ -1,7 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
-# CiliumNetworkPolicy for whoami app - test policy for dashboard validation
-# INTENTIONALLY WRONG: Using port 8080 instead of 80 to generate policy drops for testing
+# CiliumNetworkPolicy for whoami app
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -18,8 +17,7 @@ spec:
             io.kubernetes.pod.namespace: traefik-system
       toPorts:
         - ports:
-            # INTENTIONALLY WRONG PORT (should be 80) - to test policy drop monitoring
-            - port: "8080"
+            - port: "80"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
