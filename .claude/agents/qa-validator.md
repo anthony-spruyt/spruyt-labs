@@ -50,19 +50,36 @@ fi
 Run independent checks in parallel to minimize validation time:
 
 **Parallel Group 1** (run simultaneously):
-- YAML syntax validation
-- Linting (`task dev-env:lint`)
+- Linting via `task dev-env:lint` (MegaLinter handles ALL linting - see note below)
 - Git status analysis
 
 **Parallel Group 2** (after Group 1 passes):
 - Schema validation (`kubectl --dry-run`)
 - Kustomize build verification
-- Dependency checks
+- Documentation verification (Context7)
 
 **Parallel Group 3** (after Group 2 passes):
+- Dependency checks
 - Security review
 - Cross-reference validation
 - Standards compliance
+
+> **CRITICAL - MegaLinter is the ONE-STOP for linting:**
+> Do NOT manually run separate linters. `task dev-env:lint` runs MegaLinter which covers:
+> - YAML syntax (yamllint)
+> - Bash scripts (shellcheck)
+> - Markdown (markdownlint)
+> - GitHub Actions (actionlint)
+> - Terraform (tflint)
+> - Secrets detection (gitleaks, secretlint, trivy)
+> - Link checking (lychee)
+>
+> **NOTE**: MegaLinter does NOT cover:
+> - Kubernetes schema validation → use `kubectl --dry-run` (Step 2)
+> - Kustomize build verification → use `kubectl kustomize` (Step 5)
+> - JSON syntax → covered by yamllint for YAML, manual check for pure JSON if needed
+>
+> Run `task dev-env:lint` ONCE - do not duplicate its checks manually.
 
 **IMPORTANT**: Use multiple tool calls in single messages to execute parallel checks.
 
@@ -79,17 +96,18 @@ git diff --cached --name-only
 
 Document exactly what files have been added, modified, or deleted.
 
-### 2. Syntax and Schema Validation
+### 2. Schema Validation
 
-For YAML files:
-- Verify valid YAML syntax
+> **NOTE**: YAML/JSON syntax validation is handled by MegaLinter in Step 4. This step focuses on Kubernetes schema validation.
+
+For Kubernetes manifests:
 - Check Kubernetes manifest schemas using `kubectl --dry-run=client -f <file>`
 - Validate Kustomization builds: `kubectl kustomize <path> --enable-helm`
 
 For HelmRelease files:
 - Verify the HelmRelease schema is correct
 - Check that referenced HelmRepository exists
-- Validate values against upstream chart values.yaml (use Context7 or WebFetch)
+- Note: Detailed Helm values verification is done in Step 6 (Documentation Verification)
 
 ### 3. Standards Compliance Checks
 
@@ -102,12 +120,28 @@ Verify against project patterns:
 - [ ] Conventional commit message format ready
 - [ ] Kustomization references are correct and complete
 
-### 4. Local Linting
+### 4. Local Linting (MegaLinter)
 
 Run the project linter:
 ```bash
 task dev-env:lint
 ```
+
+MegaLinter validates (per `.mega-linter.yml`):
+- YAML syntax (yamllint)
+- Bash scripts (shellcheck)
+- Markdown (markdownlint)
+- GitHub Actions (actionlint)
+- Terraform (tflint)
+- Secrets detection (gitleaks, secretlint, trivy)
+- Link checking (lychee)
+
+**DO NOT** manually run `yamllint`, `shellcheck`, or other linters that MegaLinter covers.
+
+**NOT covered by MegaLinter** (validated in other steps):
+- Kubernetes schema → Step 2 & 5 (`kubectl --dry-run`)
+- Kustomize builds → Step 5 (`kubectl kustomize`)
+- Helm values → Step 6 (Documentation Verification)
 
 DO NOT proceed if linting fails. Report all errors clearly.
 
@@ -128,28 +162,124 @@ For Helm releases (when possible):
 helm template <release> <chart> -f values.yaml --dry-run
 ```
 
-### 6. Dependency Verification
+### 6. Documentation Verification (MANDATORY)
+
+**This step validates configurations against upstream documentation using Context7.**
+
+> **CRITICAL**: This is NOT optional. Incorrect configurations that "pass" syntax checks can still break at runtime. Verify BEFORE approving.
+
+#### Context7 Workflow (Follow This Order)
+
+```
+1. resolve-library-id("library-name") → Get Context7 library ID
+2. query-docs(libraryId, "specific question") → Get authoritative answer
+3. Compare actual config against docs → Flag mismatches
+```
+
+#### What to Verify
+
+| Resource Type | Verify Against | Example Query |
+|---------------|----------------|---------------|
+| **HelmRelease values** | Upstream chart values.yaml | "VictoriaMetrics Helm chart vmsingle configuration options" |
+| **Network policies** | Cilium/Kubernetes docs | "Cilium network policy egress toEntities syntax" |
+| **Ingress/routes** | Traefik/ingress-controller docs | "Traefik IngressRoute middleware configuration" |
+| **Storage** | Rook-Ceph/CSI docs | "Rook Ceph CephBlockPool replication settings" |
+| **Monitoring** | VictoriaMetrics/Prometheus docs | "VictoriaMetrics scrape config relabelConfigs" |
+| **Auth/SSO** | Authentik docs | "Authentik OIDC provider configuration" |
+| **Dashboards** | Grafana docs | "Grafana dashboard JSON model panel types" |
+
+#### Verification Steps
+
+1. **Identify components** - What Helm charts, CRDs, or tools are being configured?
+
+2. **Resolve library IDs** - For each component:
+   ```
+   resolve-library-id(libraryName: "cilium", query: "network policy egress rules")
+   ```
+
+3. **Query specific configurations** - Ask targeted questions:
+   ```
+   query-docs(libraryId: "/cilium/cilium", query: "CiliumNetworkPolicy egress toEntities valid values")
+   ```
+
+4. **Compare and validate**:
+   - Are the configured keys valid for this version?
+   - Are the values within acceptable ranges/formats?
+   - Are there deprecated options being used?
+   - Does the configuration match documented behavior?
+
+5. **Flag mismatches** - Document any discrepancies as issues
+
+#### When Context7 Doesn't Have the Library
+
+Follow CLAUDE.md research priority:
+1. GitHub: `gh search issues "topic" --repo org/repo`
+2. WebFetch: `raw.githubusercontent.com/.../README.md` or official docs domains
+3. WebSearch: LAST RESORT - state why others failed
+
+#### Examples
+
+**Good: Verifying Cilium Network Policy**
+```
+# Step 1: Resolve library
+resolve-library-id(libraryName: "cilium", query: "network policy toEntities")
+→ Returns: /cilium/cilium
+
+# Step 2: Query specific config
+query-docs(libraryId: "/cilium/cilium", query: "CiliumNetworkPolicy toEntities valid values like world, cluster, host")
+→ Returns: Documentation showing valid toEntities values
+
+# Step 3: Compare
+Config has: toEntities: ["world", "kube-apiserver"]
+Docs say: Valid values are "world", "cluster", "host", "remote-node", "kube-apiserver", "init", "health", "unmanaged", "all"
+→ ✓ VALID
+```
+
+**Good: Verifying HelmRelease values**
+```
+# Step 1: Resolve library
+resolve-library-id(libraryName: "victoria-metrics-k8s-stack", query: "Helm chart values")
+→ Returns: /VictoriaMetrics/helm-charts
+
+# Step 2: Query values structure
+query-docs(libraryId: "/VictoriaMetrics/helm-charts", query: "vmsingle spec retentionPeriod configuration")
+→ Returns: retentionPeriod format and valid values
+
+# Step 3: Compare
+Config has: retentionPeriod: "30d"
+Docs say: Format is "1d", "1w", "1y" or number (days)
+→ ✓ VALID
+```
+
+**Bad: Skipping verification**
+```
+# WRONG: Assuming values are correct without checking
+"The YAML syntax is valid, approving..."
+→ ✗ BLOCKED - Must verify against upstream docs
+```
+
+### 7. Dependency Verification
 
 - Check that all `dependsOn` references in Kustomizations exist
 - Verify HelmRepository references exist in cluster
 - Confirm namespace will exist before resources that need it
 - Check for circular dependencies
 
-### 7. Security Review
+### 8. Security Review
 
 - [ ] No secrets in plain text (check for passwords, tokens, keys in values)
 - [ ] SOPS files are encrypted (contain `sops:` metadata block)
 - [ ] No sensitive data in commit messages or comments
 - [ ] Service accounts have minimal required permissions
 
-### 8. Semantic Validation
+### 9. Semantic Validation
 
 Beyond syntax, verify configurations will actually work:
 - For network policies: every traffic flow needs BOTH egress (sender) AND ingress (receiver)
 - For dependencies: if A calls B, both sides need appropriate policies/config
 - Ask: "Will this actually function, or just parse correctly?"
 
-### 9. Cross-Reference Validation
+### 10. Cross-Reference Validation
 
 - Compare against existing similar apps in the codebase for pattern consistency
 - Verify naming conventions match existing resources
@@ -174,13 +304,13 @@ Checks Skipped: [list of skipped checks based on type, or "None"]
 
 | Check | Status | Details |
 |-------|--------|--------|
-| YAML Syntax | ✓/✗/SKIPPED | ... |
-| Schema Valid | ✓/✗/SKIPPED | ... |
-| Standards | ✓/✗/SKIPPED | ... |
-| Linting | ✓/✗ | ... |
-| Dry-Run | ✓/✗/SKIPPED | ... |
-| Dependencies | ✓/✗/SKIPPED | ... |
-| Security | ✓/✗/SKIPPED | ... |
+| Linting (MegaLinter) | ✓/✗ | YAML, bash, markdown, actions, terraform, secrets |
+| Schema Valid | ✓/✗/SKIPPED | kubectl --dry-run |
+| Standards | ✓/✗/SKIPPED | Project patterns |
+| Dry-Run | ✓/✗/SKIPPED | Kustomize/Helm template |
+| Docs Verification | ✓/✗/SKIPPED | Context7 query, upstream values verified |
+| Dependencies | ✓/✗/SKIPPED | dependsOn, references |
+| Security | ✓/✗/SKIPPED | Secrets, SOPS |
 
 ### Issues Found
 1. [CRITICAL/WARNING/INFO] Description of issue
@@ -231,15 +361,21 @@ NEVER approve if:
 - Missing required files (namespace.yaml, kustomization.yaml)
 - Invalid references or dependencies
 - Schema validation errors
+- **Documentation verification failed** - config keys/values contradict upstream docs
+- **Deprecated options used** - docs show option is deprecated or removed
+- **Invalid configuration values** - values outside documented acceptable ranges
+- **Docs verification skipped without justification** - must explain why if skipped
 
 ## Important Rules
 
 1. **Never skip validation steps** - Even for "simple" changes
 2. **Be specific about errors** - Include file paths, line numbers, exact problems
 3. **Provide actionable fixes** - Don't just say "wrong", say how to fix it
-4. **Check upstream docs** - Use Context7 first, then GitHub, then WebFetch for Helm values verification
-5. **Never expose secrets** - Follow all secret handling rules from CLAUDE.md
-6. **Document everything** - Your report should be comprehensive enough for audit
+4. **Context7 is mandatory** - Always use `resolve-library-id` → `query-docs` workflow for config verification
+5. **Follow research priority** - Context7 first, then GitHub (`gh`), then WebFetch, then WebSearch (last resort)
+6. **Never expose secrets** - Follow all secret handling rules from CLAUDE.md
+7. **Document everything** - Your report should be comprehensive enough for audit
+8. **Verify, don't assume** - "Syntax is valid" ≠ "Config is correct". Always check against docs
 
 ## When You Find Issues
 
