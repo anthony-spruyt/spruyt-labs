@@ -932,6 +932,105 @@ Users in `Grafana Admins` or `Grafana Editors` can access the application. Grafa
 
 ## Custom Scope Mappings
 
+### Custom Headers for Proxy Providers
+
+Proxy providers can inject custom HTTP headers to downstream applications using scope mappings. This is useful for:
+
+- Shared accounts (multiple users appearing as one)
+- Injecting user attributes into headers
+- Custom authentication schemes
+
+**Step 1: Create Scope Mapping**
+
+Add to the blueprint:
+
+```yaml
+- id: <app>_custom_header_scope
+  model: authentik_providers_oauth2.scopemapping
+  identifiers:
+    name: <App> Custom Header
+  attrs:
+    name: <App> Custom Header
+    scope_name: ak_proxy
+    description: Custom header for <app>
+    expression: |
+      return {
+          "ak_proxy": {
+              "user_attributes": {
+                  "additionalHeaders": {
+                      "X-Custom-Header": "static-value"
+                  }
+              }
+          }
+      }
+```
+
+For dynamic values, use Python expressions:
+
+```python
+expression: |
+  return {
+      "ak_proxy": {
+          "user_attributes": {
+              "additionalHeaders": {
+                  "X-App-User": request.user.username,
+                  "X-App-Email": request.user.email
+              }
+          }
+      }
+  }
+```
+
+**Step 2: Add to Provider property_mappings**
+
+Include BOTH the default proxy scope AND custom scope:
+
+```yaml
+- id: <app>_provider
+  model: authentik_providers_proxy.proxyprovider
+  attrs:
+    # ... other attrs ...
+    property_mappings:
+      # Default proxy scope - REQUIRED for proxy auth to work
+      - !Find [
+          authentik_providers_oauth2.scopemapping,
+          [managed, "goauthentik.io/providers/proxy/scope-proxy"],
+        ]
+      # Custom scope mapping
+      - !KeyOf <app>_custom_header_scope
+```
+
+**Important**: Omitting the default proxy scope breaks authentication. Always include both.
+
+**Step 3: Add Header to Traefik authResponseHeaders**
+
+Traefik only forwards headers explicitly listed in `authResponseHeaders`. Add a patch to the app's ingress kustomization:
+
+```yaml
+# In traefik/ingress/<app-namespace>/kustomization.yaml
+patches:
+  - target:
+      kind: Middleware
+      name: authentik-forward-auth
+    patch: |
+      # ... existing patches ...
+      - op: add
+        path: /spec/forwardAuth/authResponseHeaders/-
+        value: X-Custom-Header
+```
+
+**Firefly III Example** (shared household finance):
+
+Uses `X-Firefly-Household-Email` header so multiple family members share one Firefly III account:
+
+| Component     | Location                                         |
+| ------------- | ------------------------------------------------ |
+| Blueprint     | `app/blueprints/firefly-iii-sso.yaml`            |
+| Scope mapping | `firefly_iii_shared_email_scope`                 |
+| Header        | `X-Firefly-Household-Email`                      |
+| Value         | `household@firefly.local` (static)               |
+| Traefik patch | `traefik/ingress/firefly-iii/kustomization.yaml` |
+
 ### email_verified Claim
 
 **Problem**: Some OIDC consumers (notably Kubernetes API server) reject tokens with `email_verified: false`. Authentik v2025.10+ returns `email_verified: false` by default and has **no native email verification system**.

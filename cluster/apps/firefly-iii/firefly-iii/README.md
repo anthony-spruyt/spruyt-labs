@@ -25,14 +25,39 @@ Internet → Traefik → Authentik Outpost → Firefly III → CNPG PostgreSQL
 
 ## Authentication
 
-Firefly III uses header-based authentication via Authentik forward-auth:
+Firefly III uses header-based authentication via Authentik forward-auth with a **shared household email** for multi-user access to the same financial data.
+
+### How It Works
 
 1. User accesses `https://firefly.${EXTERNAL_DOMAIN}`
 2. Traefik forwards request to Authentik outpost for authentication
-3. Authentik validates session and sets `X-authentik-email` header
-4. Firefly III reads email from header and auto-creates/logs in user
+3. Authentik validates session and injects `X-Firefly-Household-Email: household@firefly.local` header
+4. Firefly III reads email from header and logs in as the shared household user
 
-Users must be added to the "Firefly III Users" group in Authentik.
+### Shared Household Finance
+
+Since Firefly III doesn't natively support multiple users managing shared finances, we use a custom Authentik scope mapping to make all authorized users appear as the same Firefly III user:
+
+- **Header**: `X-Firefly-Household-Email`
+- **Value**: `household@firefly.local` (static for all users)
+- **Effect**: All family members in the "Firefly III Users" group share one Firefly III account
+
+This allows multiple people to manage household finances without needing Firefly III's planned (post-6.0) multi-user feature.
+
+### Configuration Components
+
+| Component              | Location                                                            |
+| ---------------------- | ------------------------------------------------------------------- |
+| Authentik blueprint    | `authentik-system/authentik/app/blueprints/firefly-iii-sso.yaml`    |
+| Scope mapping          | `firefly_iii_shared_email_scope` (in blueprint)                     |
+| Traefik header patch   | `traefik/traefik/ingress/firefly-iii/kustomization.yaml`            |
+| Firefly III auth guard | `AUTHENTICATION_GUARD_HEADER: HTTP_X_FIREFLY_HOUSEHOLD_EMAIL`       |
+
+**Note**: Traefik requires custom headers to be explicitly listed in `authResponseHeaders` - see Authentik README for details.
+
+### Access Control
+
+Users must be added to the "Firefly III Users" group in Authentik to access the application.
 
 ## Operation
 
