@@ -348,6 +348,8 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "topk(5, sum by (source) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
+          "format": "table",
+          "instant": true,
           "legendFormat": "{{ source }}",
           "refId": "A"
         }
@@ -407,6 +409,8 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "topk(5, sum by (destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
+          "format": "table",
+          "instant": true,
           "legendFormat": "{{ destination }}",
           "refId": "A"
         }
