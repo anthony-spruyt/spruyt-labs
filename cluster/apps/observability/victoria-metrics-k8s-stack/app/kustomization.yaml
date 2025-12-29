@@ -182,5 +182,13 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  # Cilium network policy drops dashboard
+  - name: grafana-dashboard-cilium-policy-drops
+    namespace: observability
+    files:
+      - dashboards/cilium-policy-drops.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml
