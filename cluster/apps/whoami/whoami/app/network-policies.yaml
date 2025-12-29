@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# CiliumNetworkPolicy for whoami app
+# Allow DNS egress to kube-dns
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
