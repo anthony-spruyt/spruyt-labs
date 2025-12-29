@@ -329,3 +329,37 @@ spec:
         - ports:
             - port: "6443"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cnpg-internal-cluster
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: authentik-cnpg-cluster
+  egress:
+    # CNPG pods need to communicate with each other for replication and status
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:cnpg.io/cluster: authentik-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
+  ingress:
+    # Allow incoming replication and status from other cluster members
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:cnpg.io/cluster: authentik-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
