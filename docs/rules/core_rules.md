@@ -74,11 +74,14 @@ helm rollback <release> <revision> -n <ns>
 1. Plan changes (review docs)
 2. Use `task` commands
 3. Validate with `task dev-env:lint`
-4. Commit and let Flux reconcile
-5. **Verify deployment** - Always confirm changes are healthy before continuing:
+4. **Stage only YOUR files** - Use `git add <specific-files>`, NEVER `git add -A` or `git add .`
+5. Commit and let Flux reconcile
+6. **Verify deployment** - Always confirm changes are healthy before continuing:
    - `flux get kustomizations -A` - Check reconciliation status
    - `kubectl get pods -n <ns>` - Verify pods are running
    - Check logs if issues: `kubectl logs -n <ns> -l app.kubernetes.io/name=<app>`
+
+> **Multi-agent warning:** Multiple agents may work simultaneously. Using `git add -A` will stage other agents' uncommitted work, causing conflicts and data loss.
 
 ## Related
 

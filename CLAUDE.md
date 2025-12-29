@@ -71,6 +71,7 @@ Wrong: WebSearch("Technitium SSO")  ← NEVER do this first
 7. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
 8. **No reading live secrets** - Never `kubectl get secret -o yaml/jsonpath`
 9. **Taskfile first** - Prefer `task` commands over raw CLI
+10. **Explicit git add** - Only stage files YOU explicitly changed; NEVER use `git add -A` or `git add .`
 
 ## Secrets (NEVER EXPOSE)
 
@@ -188,7 +189,7 @@ Use Claude's native tools instead of shell commands when possible:
 **Before commit (non-trivial changes):**
 
 ```bash
-task dev-env:lint && git add -A && git commit -m "type(scope): message"
+task dev-env:lint && git add <specific-files> && git commit -m "type(scope): message"
 ```
 
 Skip linting for trivial changes (typos, single-line fixes, SOPS-only). Pre-commit hooks catch issues.
@@ -196,6 +197,25 @@ Skip linting for trivial changes (typos, single-line fixes, SOPS-only). Pre-comm
 **Conventional commits:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
 
 **After push:** Flux webhooks auto-reconcile - no manual `flux reconcile` needed.
+
+### Multi-Agent Environment
+
+> **CRITICAL: Multiple agents may work in the same local environment simultaneously.**
+
+- **NEVER use `git add -A` or `git add .`** - This will stage other agents' uncommitted work
+- **ALWAYS use `git add <specific-file>`** - Only stage files you explicitly modified
+- **Check `git status` before committing** - Verify only your files are staged
+- If you accidentally commit another agent's files, the damage may be irreversible
+
+```text
+# BAD: Stages everything including other agents' work-in-progress
+git add -A
+git add .
+
+# CORRECT: Stage only the files you changed
+git add cluster/apps/myapp/values.yaml
+git add cluster/apps/myapp/release.yaml
+```
 
 ## Validation (MANDATORY)
 
