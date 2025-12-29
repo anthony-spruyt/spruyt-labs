@@ -324,7 +324,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 21 },
       "id": 7,
       "options": {
         "barRadius": 0,
@@ -340,14 +340,14 @@
         "showValue": "auto",
         "stacking": "none",
         "tooltip": { "mode": "single", "sort": "none" },
-        "xTickLabelMaxLength": 0,
+        "xTickLabelMaxLength": 40,
         "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
+        "xTickLabelSpacing": 100
       },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(10, sum by (source) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
+          "expr": "topk(5, sum by (source) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
           "legendFormat": "{{ source }}",
           "refId": "A"
         }
@@ -383,7 +383,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 21 },
       "id": 8,
       "options": {
         "barRadius": 0,
@@ -399,14 +399,14 @@
         "showValue": "auto",
         "stacking": "none",
         "tooltip": { "mode": "single", "sort": "none" },
-        "xTickLabelMaxLength": 0,
+        "xTickLabelMaxLength": 40,
         "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
+        "xTickLabelSpacing": 100
       },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(10, sum by (destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
+          "expr": "topk(5, sum by (destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
           "legendFormat": "{{ destination }}",
           "refId": "A"
         }
@@ -416,7 +416,7 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
       "id": 101,
       "panels": [],
       "title": "Drop Reasons (All Types)",
@@ -461,7 +461,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
       "id": 9,
       "options": {
         "legend": {
