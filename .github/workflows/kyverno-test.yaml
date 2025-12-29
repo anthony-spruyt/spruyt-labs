@@ -27,37 +27,101 @@ jobs:
       - name: Install Kyverno CLI
         uses: kyverno/action-install-cli@v0.2.0
 
-      - name: Validate policy syntax
+      - name: Create test resources
         run: |
-          echo "=== Validating Kyverno policy syntax ==="
-          find cluster/apps/kyverno -name '*.yaml' -type f \
-            ! -name 'kustomization.yaml' \
-            ! -name 'ks.yaml' \
-            ! -name 'namespace.yaml' \
-            -print0 | while IFS= read -r -d '' file; do
-            # Only validate files that look like Kyverno policies
+          mkdir -p /tmp/kyverno-test
+
+          # Basic pod for testing mutate policies
+          printf '%s\n' \
+            'apiVersion: v1' \
+            'kind: Pod' \
+            'metadata:' \
+            '  name: test-pod' \
+            '  namespace: default' \
+            'spec:' \
+            '  containers:' \
+            '    - name: app' \
+            '      image: nginx:latest' \
+            > /tmp/kyverno-test/pod.yaml
+
+          # Deployment for testing autogen rules
+          printf '%s\n' \
+            'apiVersion: apps/v1' \
+            'kind: Deployment' \
+            'metadata:' \
+            '  name: test-deployment' \
+            '  namespace: default' \
+            'spec:' \
+            '  replicas: 1' \
+            '  selector:' \
+            '    matchLabels:' \
+            '      app: test' \
+            '  template:' \
+            '    metadata:' \
+            '      labels:' \
+            '        app: test' \
+            '    spec:' \
+            '      containers:' \
+            '        - name: app' \
+            '          image: nginx:latest' \
+            > /tmp/kyverno-test/deployment.yaml
+
+          # StatefulSet for testing topology spread policy
+          printf '%s\n' \
+            'apiVersion: apps/v1' \
+            'kind: StatefulSet' \
+            'metadata:' \
+            '  name: test-statefulset' \
+            '  namespace: default' \
+            'spec:' \
+            '  serviceName: test' \
+            '  replicas: 1' \
+            '  selector:' \
+            '    matchLabels:' \
+            '      app: test-sts' \
+            '  template:' \
+            '    metadata:' \
+            '      labels:' \
+            '        app: test-sts' \
+            '    spec:' \
+            '      containers:' \
+            '        - name: app' \
+            '          image: nginx:latest' \
+            > /tmp/kyverno-test/statefulset.yaml
+
+          # Namespace for testing generate policy
+          printf '%s\n' \
+            'apiVersion: v1' \
+            'kind: Namespace' \
+            'metadata:' \
+            '  name: test-namespace' \
+            > /tmp/kyverno-test/namespace.yaml
+
+      - name: Test policies against sample resources
+        run: |
+          echo "=== Collecting Kyverno policies ==="
+          policy_files=()
+          while IFS= read -r -d '' file; do
             if grep -q 'kind: ClusterPolicy\|kind: Policy' "$file" 2>/dev/null; then
-              echo "Validating: $file"
-              kyverno validate policy "$file" || exit 1
+              echo "Found policy: $file"
+              policy_files+=("$file")
             fi
-          done
-          echo "=== All policies valid ==="
-
-      - name: Test validate policies against sample resources
-        run: |
-          echo "=== Testing validate policies (if any) ==="
-          # Find validate policies and test them
-          validate_policies=$(find cluster/apps/kyverno -name '*.yaml' -type f \
+          done < <(find cluster/apps/kyverno -name '*.yaml' -type f \
             ! -name 'kustomization.yaml' \
             ! -name 'ks.yaml' \
             ! -name 'namespace.yaml' \
-            -exec grep -l 'validationFailureAction:\|validate:' {} \; 2>/dev/null || true)
+            -print0)
 
-          if [ -z "$validate_policies" ]; then
-            echo "No validate policies found, skipping resource testing"
+          if [ ${#policy_files[@]} -eq 0 ]; then
+            echo "No policies found to test"
             exit 0
           fi
 
-          echo "Found validate policies: $validate_policies"
-          # Test would go here when validate policies are added
-          echo "=== Policy testing complete ==="
+          echo "=== Testing policies with kyverno apply ==="
+          kyverno apply "${policy_files[@]}" \
+            --resource /tmp/kyverno-test/pod.yaml \
+            --resource /tmp/kyverno-test/deployment.yaml \
+            --resource /tmp/kyverno-test/statefulset.yaml \
+            --resource /tmp/kyverno-test/namespace.yaml
+
+          echo "=== All policy tests passed ==="
