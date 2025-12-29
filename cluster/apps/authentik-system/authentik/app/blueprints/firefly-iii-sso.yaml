@@ -12,6 +12,27 @@ entries:
     attrs:
       name: Firefly III Users
 
+  # Custom scope mapping for shared household email
+  - id: firefly_iii_shared_email_scope
+    model: authentik_providers_oauth2.scopemapping
+    identifiers:
+      name: Firefly III Shared Household Email
+    attrs:
+      name: Firefly III Shared Household Email
+      scope_name: ak_proxy
+      description: Override email header for shared household finance
+      expression: |
+        # Return shared email for all Firefly III users
+        return {
+            "ak_proxy": {
+                "user_attributes": {
+                    "additionalHeaders": {
+                        "X-Firefly-Household-Email": "household@firefly.local"
+                    }
+                }
+            }
+        }
+
   - id: firefly_iii_provider
     model: authentik_providers_proxy.proxyprovider
     identifiers:
@@ -29,6 +50,8 @@ entries:
         ]
       mode: forward_single
       external_host: https://firefly.${EXTERNAL_DOMAIN}
+      property_mappings:
+        - !KeyOf firefly_iii_shared_email_scope
   - id: firefly_iii_application
     model: authentik_core.application
     identifiers:
