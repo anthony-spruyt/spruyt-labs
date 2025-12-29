@@ -25,10 +25,11 @@ config:
     DB_CONNECTION: pgsql
 
     # Authentication - uses Authentik forward-auth via header
-    # The proxy provider sets X-authentik-email header which Firefly III uses
+    # Custom scope mapping provides shared email for household finance management
+    # Both users appear as "household@firefly.local" to share financial data
     AUTHENTICATION_GUARD: remote_user_guard
-    AUTHENTICATION_GUARD_HEADER: HTTP_X_AUTHENTIK_EMAIL
-    AUTHENTICATION_GUARD_EMAIL: HTTP_X_AUTHENTIK_EMAIL
+    AUTHENTICATION_GUARD_HEADER: HTTP_X_FIREFLY_SHARED_EMAIL
+    AUTHENTICATION_GUARD_EMAIL: HTTP_X_FIREFLY_SHARED_EMAIL
 
     # Disable 2FA since we use Authentik SSO
     DISABLE_FRAME_HEADER: "false"
