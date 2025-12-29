@@ -70,9 +70,8 @@ service:
 persistence:
   enabled: true
   storageClassName: rbd-fast
-  accessModes:
-    - ReadWriteOnce
-  size: 5Gi
+  accessModes: ReadWriteOnce
+  storage: 5Gi
 
 # Resources - standard tier (3x CPU limit)
 resources:
@@ -83,21 +82,17 @@ resources:
     cpu: 300m
     memory: 512Mi
 
-# Security context
-securityContext:
-  fsGroup: 33
+# Security context (container-level)
+securityContext: {}
 
+# Pod security context (pod-level)
 podSecurityContext:
+  fsGroup: 33
   runAsNonRoot: true
   runAsUser: 33
   runAsGroup: 33
 
-# Priority class
-priorityClassName: standard
-
-# Deployment annotations for config reloading
-deploymentAnnotations:
-  reloader.stakater.com/auto: "true"
+# NOTE: priorityClassName and deploymentAnnotations added via postRenderers in release.yaml
 
 # Pod annotations
 podAnnotations: {}
@@ -121,26 +116,28 @@ cronjob:
       cpu: 100m
       memory: 128Mi
 
-# Probes
+# Probes (native K8s format)
 startupProbe:
-  enabled: true
-  path: /health
+  httpGet:
+    path: /health
+    port: http
   initialDelaySeconds: 30
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 30
 
 livenessProbe:
-  enabled: true
-  path: /health
-  initialDelaySeconds: 0
+  httpGet:
+    path: /health
+    port: http
   periodSeconds: 30
   timeoutSeconds: 5
   failureThreshold: 3
 
 readinessProbe:
-  enabled: true
-  path: /health
+  httpGet:
+    path: /health
+    port: http
   initialDelaySeconds: 5
   periodSeconds: 10
   timeoutSeconds: 5

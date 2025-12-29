@@ -16,3 +16,18 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: firefly-iii-values
+  # Patch deployment with fields not supported by upstream chart
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: firefly-iii
+            patch: |
+              - op: add
+                path: /spec/template/spec/priorityClassName
+                value: standard
+              - op: add
+                path: /metadata/annotations
+                value:
+                  reloader.stakater.com/auto: "true"
