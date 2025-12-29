@@ -264,21 +264,27 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum by (source, destination, protocol) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])) >= 1",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "",
+          "legendFormat": "{{ source }} -> {{ destination }}",
           "refId": "A"
         }
       ],
       "title": "Policy Drops in Range (Detailed)",
       "transformations": [
         {
+          "id": "reduce",
+          "options": {
+            "reducers": ["max"],
+            "includeTimeField": false,
+            "labelsToFields": true
+          }
+        },
+        {
           "id": "organize",
           "options": {
-            "excludeByName": { "Time": true },
+            "excludeByName": { "Field": true },
             "indexByName": {},
             "renameByName": {
-              "Value": "Drop Count",
+              "Max": "Drop Count",
               "destination": "Destination",
               "protocol": "Protocol",
               "source": "Source"
