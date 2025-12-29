@@ -278,3 +278,22 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cnpg-kube-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: firefly-iii-cnpg-cluster
+  egress:
+    # CNPG pods need Kubernetes API access for cluster coordination
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
