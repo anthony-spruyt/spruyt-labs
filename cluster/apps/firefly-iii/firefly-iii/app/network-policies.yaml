@@ -43,7 +43,7 @@ spec:
             k8s:app.kubernetes.io/name: traefik
       toPorts:
         - ports:
-            - port: "80"
+            - port: "8080"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
@@ -256,4 +256,25 @@ spec:
       toPorts:
         - ports:
             - port: "9187"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cnpg-operator-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: firefly-iii-cnpg-cluster
+  ingress:
+    # CNPG operator needs access to status port for cluster management
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+            k8s:app.kubernetes.io/name: cloudnative-pg
+      toPorts:
+        - ports:
+            - port: "8000"
               protocol: TCP
