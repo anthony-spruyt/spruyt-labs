@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./authentik-outpost-rbac.yaml
   - ./firefly-iii-secrets.sops.yaml
+  - ./network-policies.yaml
   - ./firefly-iii-cnpg-object-stores.yaml
   - ./firefly-iii-cnpg-cluster.yaml
   - ./firefly-iii-cnpg-scheduled-backups.yaml
