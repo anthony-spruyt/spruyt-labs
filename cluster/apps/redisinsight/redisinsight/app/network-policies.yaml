@@ -76,13 +76,53 @@ spec:
     matchLabels:
       goauthentik.io/outpost-name: redisinsight-outpost
   egress:
-    - toServices:
-        - k8sService:
-            serviceName: authentik-server
-            namespace: authentik-system
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:app.kubernetes.io/name: authentik
       toPorts:
         - ports:
+            - port: "9000"
+              protocol: TCP
             - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow outpost world HTTPS egress for Cloudflare/external authentik access
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-world-https-egress
+  namespace: redisinsight
+spec:
+  endpointSelector:
+    matchLabels:
+      goauthentik.io/outpost-name: redisinsight-outpost
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow outpost kube-api egress for service discovery
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-kube-api-egress
+  namespace: redisinsight
+spec:
+  endpointSelector:
+    matchLabels:
+      goauthentik.io/outpost-name: redisinsight-outpost
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
