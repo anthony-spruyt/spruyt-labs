@@ -205,7 +205,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (source, destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m]))",
+          "expr": "label_replace(label_replace(sum by (source, destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])), \"source\", \"external\", \"source\", \"^$\"), \"destination\", \"external\", \"destination\", \"^$\")",
           "legendFormat": "{{ source }} -> {{ destination }}",
           "refId": "A"
         }
@@ -387,7 +387,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(5, max_over_time((sum by (source) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m]))",
+          "expr": "topk(5, max_over_time((sum by (source) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m])) > 0",
           "format": "table",
           "instant": true,
           "legendFormat": "{{ source }}",
@@ -448,7 +448,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(5, max_over_time((sum by (destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m]))",
+          "expr": "topk(5, max_over_time((sum by (destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m])) > 0",
           "format": "table",
           "instant": true,
           "legendFormat": "{{ destination }}",
