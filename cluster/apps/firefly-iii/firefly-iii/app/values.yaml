@@ -111,6 +111,13 @@ cronjob:
   auth:
     existingSecret: firefly-iii-secrets
     secretKey: STATIC_CRON_TOKEN
+  # Security context required because curlimages/curl uses non-numeric USER (curl_user)
+  # which fails PSS validation when Kyverno sets runAsNonRoot: true
+  # See: https://github.com/curl/curl-docker/issues/62
+  podSecurityContext:
+    runAsUser: 100 # curl_user UID in curlimages/curl Alpine
+    runAsGroup: 101 # curl_group GID
+    runAsNonRoot: true
   resources:
     requests:
       cpu: 10m
