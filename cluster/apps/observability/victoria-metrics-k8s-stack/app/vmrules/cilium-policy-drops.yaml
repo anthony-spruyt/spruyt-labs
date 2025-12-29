@@ -1,0 +1,53 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+# Alerting rules for Cilium network policy drops
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: cilium-policy-drops
+  namespace: observability
+spec:
+  groups:
+    - name: cilium-policy-drops
+      interval: 30s
+      rules:
+        # Alert when pods are consistently dropping packets due to policy
+        - alert: CiliumPolicyDrops
+          expr: |
+            sum by (source_namespace, source_workload, destination_namespace) (
+              rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
+            ) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Network policy drops detected"
+            description: |
+              Pods in namespace {{ $labels.source_namespace }} (workload: {{ $labels.source_workload }})
+              are being blocked by network policy when trying to reach {{ $labels.destination_namespace }}.
+              Check if network policies need updating.
+            runbook_url: "Use 'task dev-env:hubble-drops' to see live dropped packets"
+
+        # Critical alert for sustained high drop rate
+        - alert: CiliumPolicyDropsCritical
+          expr: |
+            sum by (source_namespace, source_workload) (
+              rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
+            ) > 10
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High rate of network policy drops"
+            description: |
+              High drop rate ({{ $value | printf "%.1f" }}/s) for workload {{ $labels.source_workload }}
+              in namespace {{ $labels.source_namespace }}. This may indicate a misconfigured network policy
+              breaking application functionality.
+            runbook_url: "Use 'task dev-env:hubble-drops' to see live dropped packets"
+
+        # Recording rule for drop rate by namespace
+        - record: cilium:policy_drops:rate5m
+          expr: |
+            sum by (source_namespace, destination_namespace, reason) (
+              rate(hubble_drop_total[5m])
+            )

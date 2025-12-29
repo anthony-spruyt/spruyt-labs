@@ -8,3 +8,4 @@ resources:
   - ./node-temperature.yaml
   - ./node-thermal-throttling.yaml
   - ./nut-ups.yaml
+  - ./cilium-policy-drops.yaml
