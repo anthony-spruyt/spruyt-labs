@@ -25,11 +25,11 @@ config:
     DB_CONNECTION: pgsql
 
     # Authentication - uses Authentik forward-auth via header
-    # Group attributes override X-authentik-email to "household@firefly.local"
-    # Both users appear as the same user to share financial data
+    # Group attributes add X-Firefly-Household-Email header for shared finance
+    # Both users appear as "household@firefly.local" to share financial data
     AUTHENTICATION_GUARD: remote_user_guard
-    AUTHENTICATION_GUARD_HEADER: HTTP_X_AUTHENTIK_EMAIL
-    AUTHENTICATION_GUARD_EMAIL: HTTP_X_AUTHENTIK_EMAIL
+    AUTHENTICATION_GUARD_HEADER: HTTP_X_FIREFLY_HOUSEHOLD_EMAIL
+    AUTHENTICATION_GUARD_EMAIL: HTTP_X_FIREFLY_HOUSEHOLD_EMAIL
 
     # Disable 2FA since we use Authentik SSO
     DISABLE_FRAME_HEADER: "false"

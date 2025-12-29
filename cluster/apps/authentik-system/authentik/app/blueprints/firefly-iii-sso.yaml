@@ -11,10 +11,10 @@ entries:
       name: Firefly III Users
     attrs:
       name: Firefly III Users
-      # Override email header for all users in this group - enables shared household finance
+      # Add custom header for shared household finance
       attributes:
         additionalHeaders:
-          X-authentik-email: household@firefly.local
+          X-Firefly-Household-Email: household@firefly.local
 
   - id: firefly_iii_provider
     model: authentik_providers_proxy.proxyprovider
