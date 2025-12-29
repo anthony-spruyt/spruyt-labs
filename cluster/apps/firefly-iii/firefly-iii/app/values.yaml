@@ -9,6 +9,9 @@ image:
   repository: fireflyiii/core
   pullPolicy: IfNotPresent
 
+# Recreate strategy required for RWO volumes - RollingUpdate causes Multi-Attach deadlock
+deploymentStrategyType: Recreate
+
 # Use existing secret for sensitive values (APP_KEY, cron token)
 config:
   existingSecret: firefly-iii-secrets

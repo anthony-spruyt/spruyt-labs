@@ -1,37 +1,6 @@
 ---
 name: qa-validator
-description: |
-  Validates local changes before git commit. Runs linting, schema validation, dry-runs, and standards checks.
-
-  **When to use:**
-  - After creating/modifying HelmReleases, Kustomizations, or K8s manifests
-  - Before any git commit that affects cluster state
-  - When user says "let's commit" or "check if it looks good"
-  - After another agent completes code changes
-
-  **When NOT to use:**
-  - After git push (use cluster-validator instead)
-  - For pure research/exploration tasks
-  - When only reading files without modifications
-
-  **Handoff flow:** If QA fails → returns BLOCKED with exact fixes → calling agent applies fixes → calling agent re-invokes qa-validator → repeat until APPROVED
-
-  <example>
-  Context: Agent created HelmRelease, now needs validation before commit.
-  assistant: [creates HelmRelease files]
-  assistant: "I'll validate this with qa-validator before committing."
-  [qa-validator returns BLOCKED with fix instructions]
-  assistant: [applies the fixes]
-  assistant: "Fixes applied. Re-running qa-validator."
-  [qa-validator returns APPROVED]
-  assistant: "Validation passed. Ready to commit."
-  </example>
-
-  <example>
-  Context: User wants to commit changes.
-  user: "Let's commit this"
-  assistant: "I'll run qa-validator first to ensure everything is correct."
-  </example>
+description: Validates local changes before git commit. Runs linting, schema validation, dry-runs, and standards checks. See CLAUDE.md "Validation Agents" section for full workflow.\n\n**When to use:**\n- After creating/modifying HelmReleases, Kustomizations, or K8s manifests\n- Before any git commit that affects cluster state\n- When user says "let's commit" or "check if it looks good"\n- After another agent completes code changes\n\n**When NOT to use:**\n- After git push (use cluster-validator instead)\n- For pure research/exploration tasks\n- When only reading files without modifications\n\n**Handoff flow:** If QA fails → returns BLOCKED with exact fixes → calling agent applies fixes → re-invokes qa-validator → repeat until APPROVED\n\n<example>\nContext: Agent created HelmRelease, now needs validation before commit.\nassistant: [creates HelmRelease files]\nassistant: "I'll validate this with qa-validator before committing."\n[qa-validator returns BLOCKED with fix instructions]\nassistant: [applies the fixes]\nassistant: "Fixes applied. Re-running qa-validator."\n[qa-validator returns APPROVED]\nassistant: "Validation passed. Ready to commit."\n</example>\n\n<example>\nContext: User wants to commit changes.\nuser: "Let's commit this"\nassistant: "I'll run qa-validator first to ensure everything is correct."\n</example>
 model: opus
 ---
 

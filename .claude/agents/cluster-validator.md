@@ -1,38 +1,6 @@
 ---
 name: cluster-validator
-description: |
-  Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward on failures.
-
-  **When to use:**
-  - After user pushes to main branch (Flux will reconcile)
-  - When user says "pushed", "merged", or "deployed"
-  - When troubleshooting broken deployments
-  - To verify cluster health after infrastructure changes
-
-  **When NOT to use:**
-  - Before git commit (use qa-validator instead)
-  - After pushing to feature branches (Flux only watches main)
-  - For local validation before push
-
-  **Handoff flow:** On failure → assesses severity → returns ROLLBACK (with revert instructions) or ROLL-FORWARD (with exact fixes) → calling agent acts → re-invokes cluster-validator to confirm
-
-  <example>
-  Context: User pushed changes to main.
-  user: "Just pushed the redis deployment"
-  assistant: "I'll validate the deployment with cluster-validator."
-  [cluster-validator returns ROLL-FORWARD with fix]
-  assistant: [applies fix, commits, user pushes]
-  assistant: "Fix pushed. Re-running cluster-validator."
-  [cluster-validator returns SUCCESS]
-  </example>
-
-  <example>
-  Context: Critical failure detected.
-  [cluster-validator returns ROLLBACK - ingress controller down]
-  assistant: "Critical issue detected. I'll revert the commit."
-  assistant: [runs git revert, user pushes]
-  assistant: "Revert pushed. Re-running cluster-validator to confirm rollback."
-  </example>
+description: Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward on failures. See CLAUDE.md "Validation Agents" section for full workflow.\n\n**When to use:**\n- After user pushes to main branch (Flux will reconcile)\n- When user says "pushed", "merged", or "deployed"\n- When troubleshooting broken deployments\n- To verify cluster health after infrastructure changes\n\n**When NOT to use:**\n- Before git commit (use qa-validator instead)\n- After pushing to feature branches (Flux only watches main)\n- For local validation before push\n\n**Handoff flow:** On failure → assesses severity → returns ROLLBACK (with revert instructions) or ROLL-FORWARD (with exact fixes) → calling agent acts → re-invokes cluster-validator to confirm\n\n<example>\nContext: User pushed changes to main.\nuser: "Just pushed the redis deployment"\nassistant: "I'll validate the deployment with cluster-validator."\n[cluster-validator returns ROLL-FORWARD with fix]\nassistant: [applies fix, commits, user pushes]\nassistant: "Fix pushed. Re-running cluster-validator."\n[cluster-validator returns SUCCESS]\n</example>\n\n<example>\nContext: Critical failure detected.\n[cluster-validator returns ROLLBACK - ingress controller down]\nassistant: "Critical issue detected. I'll revert the commit."\nassistant: [runs git revert, user pushes]\nassistant: "Revert pushed. Re-running cluster-validator to confirm rollback."\n</example>
 model: opus
 ---
 

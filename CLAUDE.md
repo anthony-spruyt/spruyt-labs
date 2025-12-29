@@ -217,6 +217,33 @@ git add cluster/apps/myapp/values.yaml
 git add cluster/apps/myapp/release.yaml
 ```
 
+## Validation Agents (MANDATORY)
+
+> **Use these agents automatically - do NOT wait for user to request them.**
+
+| Agent | When to Use | Trigger |
+|-------|-------------|---------|
+| **qa-validator** | Before ANY git commit that modifies cluster resources | After editing HelmRelease, Kustomization, values.yaml, or K8s manifests |
+| **cluster-validator** | After user pushes to main | When user says "pushed", "merged", or "deployed" |
+
+### Validation Flow
+
+```text
+1. Make code changes
+2. ALWAYS run qa-validator (before commit)
+3. If BLOCKED → apply fixes → re-run qa-validator
+4. If APPROVED → commit
+5. User pushes
+6. ALWAYS run cluster-validator (after push)
+7. If ROLLBACK → revert commit → user pushes → re-run cluster-validator
+8. If ROLL-FORWARD → apply fix → commit → user pushes → re-run cluster-validator
+```
+
+### When to Skip Validation Agents
+
+- **qa-validator**: Only skip for docs-only changes (*.md files) or SOPS-only changes
+- **cluster-validator**: Only skip if changes don't affect cluster state (pure docs)
+
 ## Validation (MANDATORY)
 
 **After EVERY change that affects cluster state, you MUST validate:**
