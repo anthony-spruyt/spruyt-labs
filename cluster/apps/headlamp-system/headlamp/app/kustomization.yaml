@@ -8,6 +8,7 @@ resources:
   - ./oauth-rotation-rbac.yaml
   - ./user-rbac.yaml
   - ./release.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: headlamp-values
     namespace: headlamp-system

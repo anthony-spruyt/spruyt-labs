@@ -1,0 +1,64 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# CiliumNetworkPolicy for mosquitto
+# MQTT broker exposed via LoadBalancer for IoT devices
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-dns-egress
+  namespace: mosquitto
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mosquitto
+  egress:
+    - toServices:
+        - k8sService:
+            serviceName: kube-dns
+            namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow MQTT ingress from world (LoadBalancer traffic)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-mqtt-ingress
+  namespace: mosquitto
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mosquitto
+  ingress:
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "1883"
+              protocol: TCP
+            - port: "8883"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow health probe ingress from kubelet (host)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-health-probe-ingress
+  namespace: mosquitto
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mosquitto
+  ingress:
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "1883"
+              protocol: TCP

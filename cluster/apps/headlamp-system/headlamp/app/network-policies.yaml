@@ -1,0 +1,105 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# CiliumNetworkPolicy for headlamp
+# Kubernetes dashboard with OIDC authentication via authentik
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-dns-egress
+  namespace: headlamp-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+  egress:
+    - toServices:
+        - k8sService:
+            serviceName: kube-dns
+            namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow kube-api egress for Kubernetes dashboard functionality
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-api-egress
+  namespace: headlamp-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to authentik for OIDC authentication
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-authentik-egress
+  namespace: headlamp-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:app.kubernetes.io/name: authentik
+            k8s:app.kubernetes.io/component: server
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow traefik ingress
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+  namespace: headlamp-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "4466"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow health probe ingress from kubelet (host)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-health-probe-ingress
+  namespace: headlamp-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+  ingress:
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "4466"
+              protocol: TCP

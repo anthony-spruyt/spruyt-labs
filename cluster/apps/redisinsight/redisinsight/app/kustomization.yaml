@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./release.yaml
   - ./authentik-outpost-rbac.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: redisinsight-values
     namespace: redisinsight
