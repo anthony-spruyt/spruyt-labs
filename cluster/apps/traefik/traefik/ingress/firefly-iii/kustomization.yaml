@@ -18,6 +18,10 @@ patches:
       - op: replace
         path: /spec/forwardAuth/address
         value: http://ak-outpost-firefly-iii-outpost.firefly-iii.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
+      # Custom header for shared household email (via Authentik scope mapping)
+      - op: add
+        path: /spec/forwardAuth/authResponseHeaders/-
+        value: X-Firefly-Household-Email
   - target:
       kind: Middleware
       name: compress
