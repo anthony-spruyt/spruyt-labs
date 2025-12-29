@@ -195,7 +195,7 @@
       "id": 5,
       "options": {
         "legend": {
-          "calcs": ["total", "mean", "max"],
+          "calcs": ["mean", "max"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
