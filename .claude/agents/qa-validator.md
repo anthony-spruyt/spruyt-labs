@@ -1,6 +1,6 @@
 ---
 name: qa-validator
-description: Validates local changes before git commit. Runs linting, schema validation, dry-runs, and standards checks. See CLAUDE.md "Validation Agents" section for full workflow.\n\n**When to use:**\n- After creating/modifying HelmReleases, Kustomizations, or K8s manifests\n- Before any git commit that affects cluster state\n- When user says "let's commit" or "check if it looks good"\n- After another agent completes code changes\n\n**When NOT to use:**\n- After git push (use cluster-validator instead)\n- For pure research/exploration tasks\n- When only reading files without modifications\n\n**Handoff flow:** If QA fails → returns BLOCKED with exact fixes → calling agent applies fixes → re-invokes qa-validator → repeat until APPROVED\n\n<example>\nContext: Agent created HelmRelease, now needs validation before commit.\nassistant: [creates HelmRelease files]\nassistant: "I'll validate this with qa-validator before committing."\n[qa-validator returns BLOCKED with fix instructions]\nassistant: [applies the fixes]\nassistant: "Fixes applied. Re-running qa-validator."\n[qa-validator returns APPROVED]\nassistant: "Validation passed. Ready to commit."\n</example>\n\n<example>\nContext: User wants to commit changes.\nuser: "Let's commit this"\nassistant: "I'll run qa-validator first to ensure everything is correct."\n</example>
+description: Validates local changes before git commit. Runs linting, schema validation, dry-runs, and standards checks. See CLAUDE.md "Validation Agents" section for full workflow.\n\n**When to use:**\n- After modifying ANY file under `cluster/` (HelmReleases, Kustomizations, dashboards, ConfigMaps, network policies, etc.)\n- Before any git commit that affects cluster state\n- When user says "let's commit" or "check if it looks good"\n- After another agent completes code changes\n\n**Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → run qa-validator\n\n**When NOT to use:**\n- After git push (use cluster-validator instead)\n- For pure research/exploration tasks\n- When only reading files without modifications\n\n**Handoff flow:** If QA fails → returns BLOCKED with exact fixes → calling agent applies fixes → re-invokes qa-validator → repeat until APPROVED\n\n<example>\nContext: Agent created HelmRelease, now needs validation before commit.\nassistant: [creates HelmRelease files]\nassistant: "I'll validate this with qa-validator before committing."\n[qa-validator returns BLOCKED with fix instructions]\nassistant: [applies the fixes]\nassistant: "Fixes applied. Re-running qa-validator."\n[qa-validator returns APPROVED]\nassistant: "Validation passed. Ready to commit."\n</example>\n\n<example>\nContext: User wants to commit changes.\nuser: "Let's commit this"\nassistant: "I'll run qa-validator first to ensure everything is correct."\n</example>
 model: opus
 ---
 
@@ -23,8 +23,10 @@ Before running validations, classify the change type to skip irrelevant checks:
 | `secrets-only` | `*.sops.yaml` | Dry-run, schema validation (SOPS handles) |
 | `docs-only` | `*.md`, `docs/**` | ALL Kubernetes checks (lint only) |
 | `namespace` | `namespace.yaml` | Helm values verification |
-| `config-only` | `configmap*.yaml` | Helm values verification |
+| `config-only` | `configmap*.yaml`, dashboards (`*.json`), other data files | Helm values verification |
 | `mixed` | Multiple types | Run ALL checks |
+
+> **Important:** ANY file under `cluster/` is a cluster resource. If a file type isn't listed above, treat it as `config-only` or `mixed` - never skip validation.
 
 **Detection logic:**
 ```bash

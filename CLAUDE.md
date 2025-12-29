@@ -223,8 +223,10 @@ git add cluster/apps/myapp/release.yaml
 
 | Agent | When to Use | Trigger |
 |-------|-------------|---------|
-| **qa-validator** | Before ANY git commit that modifies cluster resources | After editing HelmRelease, Kustomization, values.yaml, or K8s manifests |
+| **qa-validator** | Before ANY git commit that modifies cluster resources | After editing ANY file under `cluster/` (includes dashboards, ConfigMaps, etc.) |
 | **cluster-validator** | After user pushes to main | When user says "pushed", "merged", or "deployed" |
+
+> **Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → it's a cluster resource → run qa-validator
 
 ### Validation Flow
 

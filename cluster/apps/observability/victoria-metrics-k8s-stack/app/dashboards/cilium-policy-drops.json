@@ -244,6 +244,40 @@
                 "value": { "type": "color-background" }
               }
             ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Source" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "empty",
+                      "result": { "text": "external", "color": "orange" }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Destination" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "empty",
+                      "result": { "text": "external", "color": "orange" }
+                    }
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -277,7 +311,12 @@
           "id": "organize",
           "options": {
             "excludeByName": { "Time": true },
-            "indexByName": {},
+            "indexByName": {
+              "source": 0,
+              "destination": 1,
+              "protocol": 2,
+              "Value": 3
+            },
             "renameByName": {
               "Value": "Drop Count",
               "destination": "Destination",
