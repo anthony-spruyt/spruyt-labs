@@ -51,6 +51,10 @@ entries:
       mode: forward_single
       external_host: https://firefly.${EXTERNAL_DOMAIN}
       property_mappings:
+        - !Find [
+            authentik_providers_oauth2.scopemapping,
+            [managed, "goauthentik.io/providers/proxy/scope-proxy"],
+          ]
         - !KeyOf firefly_iii_shared_email_scope
   - id: firefly_iii_application
     model: authentik_core.application
