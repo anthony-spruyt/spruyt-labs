@@ -45,6 +45,27 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow MQTT ingress from sungather (internal IoT data collector)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-sungather-ingress
+  namespace: mosquitto
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mosquitto
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: sungather
+            k8s:app.kubernetes.io/name: sungather
+      toPorts:
+        - ports:
+            - port: "1883"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow health probe ingress from kubelet (host)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

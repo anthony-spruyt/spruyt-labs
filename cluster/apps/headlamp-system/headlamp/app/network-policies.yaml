@@ -54,14 +54,32 @@ spec:
     matchLabels:
       app.kubernetes.io/name: headlamp
   egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: authentik-system
-            k8s:app.kubernetes.io/name: authentik
-            k8s:app.kubernetes.io/component: server
+    - toServices:
+        - k8sService:
+            serviceName: authentik-server
+            namespace: authentik-system
       toPorts:
         - ports:
             - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to world for plugin manager (artifacthub.io)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-plugin-manager-egress
+  namespace: headlamp-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
