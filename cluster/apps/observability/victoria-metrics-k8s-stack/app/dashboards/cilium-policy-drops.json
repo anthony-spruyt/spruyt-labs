@@ -38,7 +38,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
       "id": 1,
       "options": {
         "colorMode": "value",
@@ -82,7 +82,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
       "id": 2,
       "options": {
         "colorMode": "value",
@@ -126,7 +126,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
       "id": 3,
       "options": {
         "colorMode": "value",
@@ -143,7 +143,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "count(sum by (source_namespace, source_workload, destination_namespace, destination_workload) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m]) > 0))",
+          "expr": "count(sum by (source, destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m]) > 0))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -153,51 +153,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "Number of unique namespaces with policy drops",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1 },
-              { "color": "red", "value": 3 }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "count(count by (source_namespace) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m]) > 0))",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Affected Namespaces",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "Policy drops over time by source and destination",
+      "description": "Policy drops over time by source and destination workload",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -248,8 +204,8 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (source_namespace, source_workload, destination_namespace, destination_workload) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m]))",
-          "legendFormat": "{{ source_namespace }}/{{ source_workload }} -> {{ destination_namespace }}/{{ destination_workload }}",
+          "expr": "sum by (source, destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m]))",
+          "legendFormat": "{{ source }} -> {{ destination }}",
           "refId": "A"
         }
       ],
@@ -287,14 +243,10 @@
                 "value": { "type": "color-background" }
               }
             ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Total Drops" },
-            "properties": [{ "id": "unit", "value": "short" }]
           }
         ]
       },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 12 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
       "id": 6,
       "options": {
         "cellHeight": "sm",
@@ -311,7 +263,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (source_namespace, source_workload, source_pod, destination_namespace, destination_workload, destination_pod) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])) > 0",
+          "expr": "sum by (source, destination, protocol) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])) > 0",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -327,12 +279,9 @@
             "indexByName": {},
             "renameByName": {
               "Value": "Drop Rate",
-              "destination_namespace": "Dest Namespace",
-              "destination_pod": "Dest Pod",
-              "destination_workload": "Dest Workload",
-              "source_namespace": "Source Namespace",
-              "source_pod": "Source Pod",
-              "source_workload": "Source Workload"
+              "destination": "Destination",
+              "protocol": "Protocol",
+              "source": "Source"
             }
           }
         }
@@ -341,7 +290,7 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 },
       "id": 100,
       "panels": [],
       "title": "Top Sources & Destinations",
@@ -375,7 +324,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
       "id": 7,
       "options": {
         "barRadius": 0,
@@ -398,12 +347,12 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(10, sum by (source_namespace, source_workload) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
-          "legendFormat": "{{ source_namespace }}/{{ source_workload }}",
+          "expr": "topk(10, sum by (source) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
+          "legendFormat": "{{ source }}",
           "refId": "A"
         }
       ],
-      "title": "Top Source Workloads (by drop rate)",
+      "title": "Top Sources (by drop rate)",
       "type": "barchart"
     },
     {
@@ -434,7 +383,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
       "id": 8,
       "options": {
         "barRadius": 0,
@@ -457,17 +406,17 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(10, sum by (destination_namespace, destination_workload) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
-          "legendFormat": "{{ destination_namespace }}/{{ destination_workload }}",
+          "expr": "topk(10, sum by (destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
+          "legendFormat": "{{ destination }}",
           "refId": "A"
         }
       ],
-      "title": "Top Destination Workloads (by drop rate)",
+      "title": "Top Destinations (by drop rate)",
       "type": "barchart"
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
       "id": 101,
       "panels": [],
       "title": "Drop Reasons (All Types)",
@@ -512,7 +461,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
       "id": 9,
       "options": {
         "legend": {

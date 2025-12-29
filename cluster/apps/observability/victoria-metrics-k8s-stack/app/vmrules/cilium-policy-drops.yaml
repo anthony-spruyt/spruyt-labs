@@ -15,53 +15,51 @@ spec:
         # Alert when pods are consistently dropping packets due to policy
         - alert: CiliumPolicyDrops
           expr: |
-            sum by (source_namespace, source_workload, destination_namespace, destination_workload) (
+            sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
             ) > 0
           for: 2m
           labels:
             severity: warning
           annotations:
-            summary: "Network policy drops: {{ $labels.source_namespace }}/{{ $labels.source_workload }} → {{ $labels.destination_namespace }}"
+            summary: "Network policy drops: {{ $labels.source }} → {{ $labels.destination }}"
             description: |
-              Traffic from {{ $labels.source_namespace }}/{{ $labels.source_workload }}
-              to {{ $labels.destination_namespace }}/{{ $labels.destination_workload }} is being blocked.
+              Traffic from {{ $labels.source }} to {{ $labels.destination }} is being blocked.
               Rate: {{ $value | printf "%.2f" }}/s. Check network policies.
             runbook_url: "Use 'task dev-env:hubble-drops' to see live dropped packets"
 
         # Critical alert for sustained high drop rate
         - alert: CiliumPolicyDropsCritical
           expr: |
-            sum by (source_namespace, source_workload, destination_namespace, destination_workload) (
+            sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
             ) > 10
           for: 5m
           labels:
             severity: critical
           annotations:
-            summary: "High policy drop rate: {{ $labels.source_namespace }}/{{ $labels.source_workload }}"
+            summary: "High policy drop rate: {{ $labels.source }} → {{ $labels.destination }}"
             description: |
               High drop rate ({{ $value | printf "%.1f" }}/s) for traffic from
-              {{ $labels.source_namespace }}/{{ $labels.source_workload }} to
-              {{ $labels.destination_namespace }}/{{ $labels.destination_workload }}.
+              {{ $labels.source }} to {{ $labels.destination }}.
               This may be breaking application functionality.
             runbook_url: "Use 'task dev-env:hubble-drops' to see live dropped packets"
 
         # Recording rules for dashboard queries
         - record: cilium:policy_drops:rate5m
           expr: |
-            sum by (source_namespace, source_workload, destination_namespace, destination_workload, reason) (
+            sum by (source, destination, reason) (
               rate(hubble_drop_total[5m])
             )
 
         - record: cilium:policy_drops:by_source:rate5m
           expr: |
-            sum by (source_namespace, source_workload) (
+            sum by (source) (
               rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
             )
 
         - record: cilium:policy_drops:by_destination:rate5m
           expr: |
-            sum by (destination_namespace, destination_workload) (
+            sum by (destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
             )
