@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./nut-secrets.sops.yaml
   - ./release.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: nut-server-values
     namespace: nut-system

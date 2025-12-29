@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow DNS egress to kube-dns
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-dns-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: nut-server
+      app.kubernetes.io/instance: nut-server
+      app.kubernetes.io/name: nut-server
+  egress:
+    - toServices:
+        - k8sService:
+            serviceName: kube-dns
+            namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow NUT protocol ingress from world (LoadBalancer)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-nut-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: nut-server
+      app.kubernetes.io/instance: nut-server
+      app.kubernetes.io/name: nut-server
+  ingress:
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "3493"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow metrics scraping from vmagent
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: nut-server
+      app.kubernetes.io/instance: nut-server
+      app.kubernetes.io/name: nut-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9199"
+              protocol: TCP
