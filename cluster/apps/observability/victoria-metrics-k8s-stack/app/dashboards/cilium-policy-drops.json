@@ -143,13 +143,12 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "count(sum by (source, destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])) > 0)",
-          "instant": true,
+          "expr": "count(sum by (source, destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])) > 0)",
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "title": "Active Drop Pairs",
+      "title": "Drop Pairs in Range",
       "type": "stat"
     },
     {
@@ -191,7 +190,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
       "id": 5,
       "options": {
         "legend": {
@@ -236,9 +235,9 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Drop Rate" },
+            "matcher": { "id": "byName", "options": "Drop Count" },
             "properties": [
-              { "id": "unit", "value": "reqps" },
+              { "id": "unit", "value": "short" },
               {
                 "id": "custom.cellOptions",
                 "value": { "type": "color-background" }
@@ -247,7 +246,7 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
       "id": 6,
       "options": {
         "cellHeight": "sm",
@@ -259,19 +258,19 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "Drop Rate" }]
+        "sortBy": [{ "desc": true, "displayName": "Drop Count" }]
       },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (source, destination, protocol) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])) > 0",
+          "expr": "sum by (source, destination, protocol) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])) > 0",
           "format": "table",
           "instant": true,
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "title": "Active Policy Drops (Detailed)",
+      "title": "Policy Drops in Range (Detailed)",
       "transformations": [
         {
           "id": "organize",
@@ -279,7 +278,7 @@
             "excludeByName": { "Time": true },
             "indexByName": {},
             "renameByName": {
-              "Value": "Drop Rate",
+              "Value": "Drop Count",
               "destination": "Destination",
               "protocol": "Protocol",
               "source": "Source"
@@ -321,7 +320,7 @@
             "mode": "absolute",
             "steps": [{ "color": "green", "value": null }]
           },
-          "unit": "reqps"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -348,14 +347,14 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(5, sum by (source) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
+          "expr": "topk(5, sum by (source) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])))",
           "format": "table",
           "instant": true,
           "legendFormat": "{{ source }}",
           "refId": "A"
         }
       ],
-      "title": "Top Sources (by drop rate)",
+      "title": "Top Sources (by drop count)",
       "type": "barchart"
     },
     {
@@ -382,7 +381,7 @@
             "mode": "absolute",
             "steps": [{ "color": "green", "value": null }]
           },
-          "unit": "reqps"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -409,14 +408,14 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(5, sum by (destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))",
+          "expr": "topk(5, sum by (destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])))",
           "format": "table",
           "instant": true,
           "legendFormat": "{{ destination }}",
           "refId": "A"
         }
       ],
-      "title": "Top Destinations (by drop rate)",
+      "title": "Top Destinations (by drop count)",
       "type": "barchart"
     },
     {
