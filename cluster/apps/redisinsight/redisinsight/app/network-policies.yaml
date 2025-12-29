@@ -146,6 +146,25 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow redisinsight app world HTTPS egress
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-redisinsight-world-https-egress
+  namespace: redisinsight
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: redisinsight
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow redisinsight app egress to valkey for viewing data
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
