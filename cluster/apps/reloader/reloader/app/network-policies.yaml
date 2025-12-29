@@ -42,25 +42,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow health probe ingress from kubelet (host)
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-health-probe-ingress
-  namespace: reloader
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: reloader
-  ingress:
-    - fromEntities:
-        - host
-      toPorts:
-        - ports:
-            - port: "9090"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

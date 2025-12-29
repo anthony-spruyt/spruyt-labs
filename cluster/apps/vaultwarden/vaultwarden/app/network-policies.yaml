@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow DNS egress to kube-dns
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -25,42 +25,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-icmps
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/controller: main
-      app.kubernetes.io/instance: vaultwarden
-      app.kubernetes.io/name: vaultwarden
-  egress:
-    - icmps:
-        - fields:
-            - family: IPv4
-              type: EchoRequest
-            - family: IPv4
-              type: EchoReply
-            - family: IPv4
-              type: DestinationUnreachable
-            - family: IPv4
-              type: TimeExceeded
-  ingress:
-    - icmps:
-        - fields:
-            - family: IPv4
-              type: EchoRequest
-            - family: IPv4
-              type: EchoReply
-            - family: IPv4
-              type: DestinationUnreachable
-            - family: IPv4
-              type: TimeExceeded
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow SMTP egress for email notifications
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -80,11 +45,11 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow HTTP/HTTPS egress for favicons and external APIs
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-world-web-egress # favicons etc can disable this and block if risky
+  name: allow-world-web-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -102,7 +67,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow ingress from Traefik
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
