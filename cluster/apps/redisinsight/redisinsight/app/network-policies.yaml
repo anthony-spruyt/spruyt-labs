@@ -65,6 +65,26 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow outpost egress to redisinsight app (proxy backend)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-to-app-egress
+  namespace: redisinsight
+spec:
+  endpointSelector:
+    matchLabels:
+      goauthentik.io/outpost-name: redisinsight-outpost
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: redisinsight
+      toPorts:
+        - ports:
+            - port: "5540"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow outpost egress to authentik server for authentication
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -76,14 +96,12 @@ spec:
     matchLabels:
       goauthentik.io/outpost-name: redisinsight-outpost
   egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: authentik-system
-            k8s:app.kubernetes.io/name: authentik
+    - toServices:
+        - k8sService:
+            serviceName: authentik-server
+            namespace: authentik-system
       toPorts:
         - ports:
-            - port: "9000"
-              protocol: TCP
             - port: "9443"
               protocol: TCP
 ---
