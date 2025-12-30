@@ -276,8 +276,12 @@ Ref #123
 
 **Validators post to issues:**
 - qa-validator → Posts validation report as issue comment
-- cluster-validator → Posts deployment result as issue comment
-- On success → Agent asks user to confirm issue closure
+- cluster-validator → Posts deployment result as issue comment (when applicable)
+
+**Issue closure (calling agent responsibility):**
+- After successful validation → Ask user: "Close issue #X?"
+- If user confirms → `gh issue close <number> --repo anthony-spruyt/spruyt-labs`
+- If user declines → Leave issue open
 
 ## Validation Agents (MANDATORY)
 
@@ -285,10 +289,16 @@ Ref #123
 
 | Agent | When to Use | Trigger |
 |-------|-------------|---------|
-| **qa-validator** | Before ANY git commit that modifies cluster resources | After editing ANY file under `cluster/` (includes dashboards, ConfigMaps, etc.) |
-| **cluster-validator** | After user pushes to main | When user says "pushed", "merged", or "deployed" |
+| **qa-validator** | Before ANY git commit that modifies files | After editing files (validates syntax, standards, docs) |
+| **cluster-validator** | After user pushes changes that affect cluster | When user says "pushed", "merged", or "deployed" AND changes affect `cluster/` |
 
-> **Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → it's a cluster resource → run qa-validator
+> **Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → it's a cluster resource → run both validators
+
+**Skip cluster-validator for:**
+- Docs-only changes (`*.md`, `docs/**`)
+- Agent config changes (`.claude/**`)
+- GitHub config changes (`.github/**`)
+- Any change that doesn't affect Flux-managed resources
 
 ### Validation Flow
 

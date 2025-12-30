@@ -29,18 +29,12 @@ The calling agent is responsible for providing the issue number. This ensures al
 **When issue number IS provided:**
 - Track the issue number throughout validation
 - Post deployment results as a comment on the issue
-- On SUCCESS: Ask user if they want to close the issue
-- On ROLLBACK/ROLL-FORWARD: Update issue with current status
+- Return result to calling agent (SUCCESS/ROLLBACK/ROLL-FORWARD)
 
 **Post validation comment:**
 ```bash
 gh issue comment <issue_number> --repo anthony-spruyt/spruyt-labs --body "## Cluster Validation Report
 ...deployment results..."
-```
-
-**Issue closure (only after SUCCESS and user approval):**
-```bash
-gh issue close <issue_number> --repo anthony-spruyt/spruyt-labs --comment "Closed after successful cluster validation."
 ```
 
 ## Change-Type Detection (Run First)
@@ -392,14 +386,10 @@ Repository: anthony-spruyt/spruyt-labs
 [HelmRelease revision, image tags, etc.]
 ```
 
-**After SUCCESS, post to issue and ask user:**
+**After SUCCESS, post to issue:**
 ```bash
 gh issue comment <issue_number> --repo anthony-spruyt/spruyt-labs --body "<report>"
 ```
-
-Then ask the calling agent/user: "Cluster validation passed. Close issue #<number>?"
-- If user confirms → `gh issue close <issue_number> --repo anthony-spruyt/spruyt-labs --comment "Closed after successful deployment."`
-- If user declines → Leave issue open for further work
 
 ## Critical Rules
 
@@ -412,7 +402,6 @@ Then ask the calling agent/user: "Cluster validation passed. Close issue #<numbe
 7. **Use parallel checks** - Run independent commands simultaneously
 8. **Use flux CLI** - Prefer `flux get` over `kubectl get` for Flux resources
 9. **Post to issue** - Always comment validation results on the linked issue
-10. **Ask before closing** - Only close issue after user confirms
 
 ## Secret Safety
 
