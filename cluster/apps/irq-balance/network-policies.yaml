@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# irq-balance is a privileged system daemon that manages IRQ distribution.
+# It only accesses /proc and /sys on the host - no network access needed.
+# This policy denies all network traffic as defense-in-depth.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: deny-all
+  namespace: irq-balance
+spec:
+  endpointSelector: {}
+  egress: []
+  ingress: []
