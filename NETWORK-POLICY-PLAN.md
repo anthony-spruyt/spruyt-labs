@@ -79,6 +79,13 @@
 - Don't assume documentation lists all required connections
 - Always validate with actual app usage, not just "no drops in hubble"
 
+### redis_exporter Authentication (Valkey/Redis ACL)
+1. **Distroless images have no shell** - Can't use shell wrappers (`/bin/sh -c`), must use native env vars/args
+2. **Password file format is JSON** - `{"redis://user@host:port": "password"}`, NOT plain text
+3. **Password file key must include username** - When using `--redis.user=metrics`, the lookup constructs full URI `redis://metrics@localhost:6379` before matching
+4. **Valkey ACL categories** - `+@server` is invalid in Valkey; use specific commands like `+info +client +config|get`
+5. **Check source code for auth flow** - redis_exporter `lookupPasswordInPasswordMap()` shows exact URI construction logic
+
 ## Workflow (ONE workload at a time)
 
 ### For Each Workload
