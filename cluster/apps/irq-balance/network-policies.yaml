@@ -10,5 +10,7 @@ metadata:
   namespace: irq-balance
 spec:
   endpointSelector: {}
-  egress: []
-  ingress: []
+  ingressDeny:
+    - {}
+  egressDeny:
+    - {}
