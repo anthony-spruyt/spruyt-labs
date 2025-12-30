@@ -42,6 +42,15 @@ spec:
               protocol: TCP
             - port: "5001"
               protocol: TCP
+    # Allow to remote nodes (traffic may appear as remote-node when crossing node boundaries)
+    - toEntities:
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP
+            - port: "5001"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow world HTTPS egress for fallback registry pulls
