@@ -11,6 +11,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  dependsOn:
+    - name: kyverno
   prune: true
   timeout: 5m
   wait: true

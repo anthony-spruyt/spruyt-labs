@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+# Mutate policy to allow qdrant's init container to run as root for volume ownership
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: qdrant-allow-init-root
+  annotations:
+    policies.kyverno.io/title: Allow Qdrant Init Container Root
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      The qdrant ensure-dir-ownership init container requires root to chown
+      the data directory on first run. This policy explicitly allows it to
+      run as root while the main container remains restricted.
+spec:
+  background: false
+  rules:
+    - name: allow-init-container-root
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - qdrant-system
+              names:
+                - qdrant-*
+      mutate:
+        patchStrategicMerge:
+          spec:
+            initContainers:
+              - name: ensure-dir-ownership
+                securityContext:
+                  runAsNonRoot: false

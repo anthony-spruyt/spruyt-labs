@@ -6,6 +6,7 @@ resources:
   - ./qdrant-secrets.sops.yaml
   - ./release.yaml
   - ./network-policies.yaml
+  - ./init-container-policy.yaml
 configMapGenerator:
   - name: qdrant-values
     namespace: qdrant-system
