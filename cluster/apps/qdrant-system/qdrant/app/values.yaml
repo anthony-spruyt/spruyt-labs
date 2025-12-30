@@ -8,6 +8,8 @@ env:
       secretKeyRef:
         name: qdrant-secrets
         key: QDRANT__SERVICE__API_KEY
+  - name: QDRANT__TELEMETRY_DISABLED
+    value: "true"
 livenessProbe:
   enabled: true
 readinessProbe:
