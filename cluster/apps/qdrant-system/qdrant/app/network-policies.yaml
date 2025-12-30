@@ -2,6 +2,27 @@
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # CiliumNetworkPolicy for qdrant
 # Vector database for AI/ML embeddings storage
+# Allow ingress from Traefik for dashboard/API access
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: qdrant
+      app.kubernetes.io/name: qdrant
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "6333"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress from n8n-system for vector operations
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

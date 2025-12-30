@@ -81,7 +81,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-metrics-ingress
+  name: allow-operator-metrics-ingress
 spec:
   endpointSelector:
     matchLabels:
