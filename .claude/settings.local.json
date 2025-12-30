@@ -117,6 +117,7 @@
       "WebFetch(domain:fluxcd.io)",
       "WebFetch(domain:integrations.goauthentik.io)",
       "WebFetch(domain:goauthentik.io)",
+      "WebFetch(domain:qdrant.tech)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:rook.io)",
       "WebFetch(domain:talos.dev)",
