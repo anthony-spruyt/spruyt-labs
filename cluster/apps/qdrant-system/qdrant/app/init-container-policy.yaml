@@ -34,3 +34,6 @@ spec:
               - name: ensure-dir-ownership
                 securityContext:
                   runAsNonRoot: false
+                  capabilities:
+                    add:
+                      - CHOWN
