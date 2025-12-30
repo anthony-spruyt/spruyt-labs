@@ -24,7 +24,6 @@ metrics:
     enabled: true
   exporter:
     extraEnvs:
-      REDIS_USER: metrics
       REDIS_PASSWORD_FILE: /secrets/valkey/metrics-password-file
     extraExporterSecrets:
       - name: valkey-secrets
