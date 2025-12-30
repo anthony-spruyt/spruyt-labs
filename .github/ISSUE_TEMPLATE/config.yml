@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/anthony-spruyt/spruyt-labs/tree/main/docs
+    about: Check the documentation for guides and runbooks
+  - name: Discussions
+    url: https://github.com/anthony-spruyt/spruyt-labs/discussions
+    about: Ask questions or discuss ideas

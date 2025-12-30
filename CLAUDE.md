@@ -217,6 +217,68 @@ git add cluster/apps/myapp/values.yaml
 git add cluster/apps/myapp/release.yaml
 ```
 
+### GitHub Issues Workflow (MANDATORY)
+
+> **All work requires a linked GitHub issue. No exceptions.**
+
+| Step | Action | Who |
+|------|--------|-----|
+| 1 | Check if issue exists for the work | Agent at START |
+| 2 | If no issue → auto-create with labels | Agent |
+| 3 | Track issue # for all subsequent steps | Agent |
+| 4 | Reference issue in commits (`Closes #X`) | Agent |
+| 5 | Post validation results as comments | Validators |
+| 6 | Close issue after user confirms | Agent |
+
+**Issue check at start of work:**
+
+```bash
+# Search for existing issue
+gh issue list --repo anthony-spruyt/spruyt-labs --search "topic keywords" --json number,title
+
+# Create issue if none exists
+gh issue create --repo anthony-spruyt/spruyt-labs \
+  --title "feat(scope): description" \
+  --body "## Summary
+Description of the work" \
+  --label "enhancement"
+```
+
+**Label mapping (conventional commits → GitHub labels):**
+
+| Commit Type | Label | Use For |
+|-------------|-------|---------|
+| `feat:` | `enhancement` | New features |
+| `fix:` | `bug` | Bug fixes |
+| `chore:` | `chore` | Maintenance, refactoring |
+| `docs:` | `documentation` | Documentation changes |
+| `infra:` | `infra` | Infrastructure changes |
+
+**Additional labels:**
+- `blocked` - Waiting on upstream fix or external dependency
+- `dep/major`, `dep/minor`, `dep/patch` - Dependency version changes (Renovate)
+
+**Commit message format:**
+
+```text
+type(scope): description
+
+Closes #123
+```
+
+Or for work that spans multiple commits:
+
+```text
+type(scope): description
+
+Ref #123
+```
+
+**Validators post to issues:**
+- qa-validator → Posts validation report as issue comment
+- cluster-validator → Posts deployment result as issue comment
+- On success → Agent asks user to confirm issue closure
+
 ## Validation Agents (MANDATORY)
 
 > **Use these agents automatically - do NOT wait for user to request them.**

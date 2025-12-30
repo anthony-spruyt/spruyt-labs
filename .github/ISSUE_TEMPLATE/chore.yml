@@ -1,0 +1,95 @@
+name: Chore / Maintenance
+description: Maintenance tasks, refactoring, or configuration changes
+title: "chore(scope): "
+labels: ["chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Chore / Maintenance Task
+
+        Use this template for maintenance work that doesn't add features or fix bugs.
+        Examples: refactoring, dependency updates, configuration changes, cleanup.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What maintenance work is needed?
+      placeholder: Brief description of the task
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this maintenance needed?
+      placeholder: What problem does this solve? What improvement does it bring?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Chore Type
+      description: What kind of maintenance is this?
+      options:
+        - Refactoring
+        - Configuration change
+        - Dependency update
+        - Cleanup/removal
+        - Documentation
+        - CI/CD
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Affected Area
+      description: What part of the cluster does this affect?
+      options:
+        - Apps (cluster/apps/)
+        - Flux/GitOps (cluster/flux/)
+        - Infrastructure (Talos, networking, storage)
+        - Monitoring/Observability
+        - Security (network policies, auth)
+        - Documentation
+        - CI/CD (.github/)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Files Affected
+      description: Which files or directories will be changed?
+      placeholder: |
+        - cluster/apps/namespace/app/
+        - .github/workflows/
+    validations:
+      required: false
+
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Task Checklist
+      description: Break down the work into steps
+      placeholder: |
+        - [ ] Step 1
+        - [ ] Step 2
+        - [ ] Step 3
+    validations:
+      required: false
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks/Considerations
+      description: Any potential risks or things to watch out for?
+      placeholder: Describe any risks or considerations
+    validations:
+      required: false
