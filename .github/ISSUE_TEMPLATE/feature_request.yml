@@ -52,7 +52,9 @@ body:
         - Infrastructure (Talos, networking, storage)
         - Monitoring/Observability
         - Security (network policies, auth)
+        - Tooling (.taskfiles/, scripts)
         - Documentation
+        - CI/CD (.github/)
         - Other
     validations:
       required: true
@@ -74,5 +76,16 @@ body:
       placeholder: |
         - [ ] Test case 1
         - [ ] Test case 2
+    validations:
+      required: false
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related Issues/PRs
+      description: Link any related issues or PRs
+      placeholder: |
+        - #123
+        - #456
     validations:
       required: false

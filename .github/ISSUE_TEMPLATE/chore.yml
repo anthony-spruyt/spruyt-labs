@@ -39,7 +39,6 @@ body:
         - Configuration change
         - Dependency update
         - Cleanup/removal
-        - Documentation
         - CI/CD
         - Other
     validations:
@@ -56,7 +55,7 @@ body:
         - Infrastructure (Talos, networking, storage)
         - Monitoring/Observability
         - Security (network policies, auth)
-        - Documentation
+        - Tooling (.taskfiles/, scripts)
         - CI/CD (.github/)
         - Other
     validations:
@@ -91,5 +90,16 @@ body:
       label: Risks/Considerations
       description: Any potential risks or things to watch out for?
       placeholder: Describe any risks or considerations
+    validations:
+      required: false
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related Issues/PRs
+      description: Link any related issues or PRs
+      placeholder: |
+        - #123
+        - #456
     validations:
       required: false

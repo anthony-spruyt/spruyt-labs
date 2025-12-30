@@ -220,11 +220,12 @@ git add cluster/apps/myapp/release.yaml
 ### GitHub Issues Workflow (MANDATORY)
 
 > **All work requires a linked GitHub issue. No exceptions.**
+> **Templates are in `.github/ISSUE_TEMPLATE/` and `.github/pull_request_template.md`.**
 
 | Step | Action | Who |
 |------|--------|-----|
 | 1 | Check if issue exists for the work | Agent at START |
-| 2 | If no issue → auto-create with labels | Agent |
+| 2 | If no issue → create using CLI body format below | Agent |
 | 3 | Track issue # for all subsequent steps | Agent |
 | 4 | Reference issue in commits (`Closes #X`) | Agent |
 | 5 | Post validation results as comments | Validators |
@@ -233,26 +234,157 @@ git add cluster/apps/myapp/release.yaml
 **Issue check at start of work:**
 
 ```bash
-# Search for existing issue
 gh issue list --repo anthony-spruyt/spruyt-labs --search "topic keywords" --json number,title
-
-# Create issue if none exists
-gh issue create --repo anthony-spruyt/spruyt-labs \
-  --title "feat(scope): description" \
-  --body "## Summary
-Description of the work" \
-  --label "enhancement"
 ```
 
-**Label mapping (conventional commits → GitHub labels):**
+**Issue type → label mapping:**
 
-| Commit Type | Label | Use For |
-|-------------|-------|---------|
-| `feat:` | `enhancement` | New features |
-| `fix:` | `bug` | Bug fixes |
-| `chore:` | `chore` | Maintenance, refactoring |
-| `docs:` | `documentation` | Documentation changes |
-| `infra:` | `infra` | Infrastructure changes |
+| Work Type | Label | Title Prefix |
+|-----------|-------|--------------|
+| New feature | `enhancement` | `feat(scope):` |
+| Bug fix | `bug` | `fix(scope):` |
+| Maintenance | `chore` | `chore(scope):` |
+| Documentation | `documentation` | `docs(scope):` |
+| Infrastructure | `infra` | `infra(scope):` |
+
+**CLI body formats (use `--body` with HEREDOC):**
+
+Feature request:
+```bash
+gh issue create --repo anthony-spruyt/spruyt-labs \
+  --title "feat(scope): description" \
+  --label "enhancement" \
+  --body "$(cat <<'EOF'
+## Summary
+Brief description of the feature
+
+## Motivation
+Why is this feature needed?
+
+## Acceptance Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## Affected Area
+Apps (cluster/apps/)
+
+## Related Issues/PRs
+- None
+EOF
+)"
+```
+
+Bug report:
+```bash
+gh issue create --repo anthony-spruyt/spruyt-labs \
+  --title "fix(scope): description" \
+  --label "bug" \
+  --body "$(cat <<'EOF'
+## Description
+What's broken?
+
+## Expected Behavior
+What should happen?
+
+## Actual Behavior
+What actually happens?
+
+## Steps to Reproduce
+1. Step one
+2. Step two
+
+## Affected Area
+Apps (cluster/apps/)
+
+## Related Issues/PRs
+- None
+EOF
+)"
+```
+
+Chore/maintenance:
+```bash
+gh issue create --repo anthony-spruyt/spruyt-labs \
+  --title "chore(scope): description" \
+  --label "chore" \
+  --body "$(cat <<'EOF'
+## Summary
+What maintenance work is needed?
+
+## Motivation
+Why is this maintenance needed?
+
+## Chore Type
+Refactoring | Configuration change | Dependency update | Cleanup/removal | CI/CD | Other
+
+## Affected Area
+Apps (cluster/apps/)
+
+## Related Issues/PRs
+- None
+EOF
+)"
+```
+
+Documentation:
+```bash
+gh issue create --repo anthony-spruyt/spruyt-labs \
+  --title "docs(scope): description" \
+  --label "documentation" \
+  --body "$(cat <<'EOF'
+## Summary
+What documentation work is needed?
+
+## Motivation
+Why is this documentation needed or outdated?
+
+## Documentation Type
+New documentation | Update existing docs | Fix errors/typos | Reorganize/restructure | Add examples | API/reference docs | Runbook/procedure | Other
+
+## Affected Area
+General/README
+
+## Related Issues/PRs
+- None
+EOF
+)"
+```
+
+Infrastructure:
+```bash
+gh issue create --repo anthony-spruyt/spruyt-labs \
+  --title "infra(scope): description" \
+  --label "infra" \
+  --body "$(cat <<'EOF'
+## Summary
+What infrastructure work is needed?
+
+## Motivation
+Why is this infrastructure change needed?
+
+## Infrastructure Type
+Talos | Terraform | Networking | Storage | Nodes | Certificates | Other
+
+## Planned Changes
+- [ ] Change 1
+- [ ] Change 2
+
+## Rollback Plan
+1. Revert commit
+2. Additional steps if needed
+
+## Validation Steps
+- [ ] kubectl get nodes
+- [ ] Check pod status
+
+## Risk Level
+Low | Medium | High | Critical
+
+## Related Issues/PRs
+- None
+EOF
+)"
+```
 
 **Additional labels:**
 - `blocked` - Waiting on upstream fix or external dependency
@@ -272,6 +404,28 @@ Or for work that spans multiple commits:
 type(scope): description
 
 Ref #123
+```
+
+### Pull Request Workflow
+
+> **Follow the PR template** at `.github/pull_request_template.md`.
+
+```bash
+gh pr create --title "type(scope): description" --body "$(cat <<'EOF'
+## Summary
+Brief description of what this PR does
+
+## Linked Issue
+Closes #123
+
+## Changes
+- Change 1
+- Change 2
+
+## Testing
+Describe how this was tested
+EOF
+)"
 ```
 
 **Validators post to issues:**
