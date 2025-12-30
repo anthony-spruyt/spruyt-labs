@@ -16,10 +16,27 @@ auth:
       permissions: "~* &* +@read"
     authentik:
       permissions: "~authentik:* &* +@all"
+    metrics:
+      permissions: "~* &* +@read +@connection +@server +INFO +CLIENT +PING"
 metrics:
   enabled: true
   serviceMonitor:
     enabled: true
+  exporter:
+    extraEnvs:
+      REDIS_USER: metrics
+    extraExporterSecrets:
+      - name: valkey-secrets
+    extraVolumeMounts:
+      - name: valkey-secrets-exporter
+        mountPath: /secrets/valkey
+        readOnly: true
+    command:
+      - /bin/sh
+      - -c
+      - |
+        export REDIS_PASSWORD=$(cat /secrets/valkey/metrics)
+        exec /redis_exporter
 resources:
   limits:
     cpu: 500m
