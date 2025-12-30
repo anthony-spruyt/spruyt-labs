@@ -1,29 +1,8 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 # =============================================================================
 # Firefly III Application Policies
 # =============================================================================
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-kube-dns-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: firefly-iii
-      app.kubernetes.io/name: firefly-iii
-  egress:
-    - toServices:
-        - k8sService:
-            serviceName: kube-dns
-            namespace: kube-system
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
+# DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
@@ -123,30 +102,10 @@ spec:
             - port: "5432"
               protocol: TCP
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 # =============================================================================
 # Authentik Outpost Policies (deployed by Authentik to this namespace)
 # =============================================================================
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-outpost-kube-dns-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/managed-by: goauthentik.io
-  egress:
-    - toServices:
-        - k8sService:
-            serviceName: kube-dns
-            namespace: kube-system
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
+# DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
@@ -249,30 +208,10 @@ spec:
             - port: "443"
               protocol: TCP
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 # =============================================================================
 # CNPG PostgreSQL Cluster Policies
 # =============================================================================
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-cnpg-kube-dns-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      cnpg.io/cluster: firefly-iii-cnpg-cluster
-  egress:
-    - toServices:
-        - k8sService:
-            serviceName: kube-dns
-            namespace: kube-system
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
+# DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Documentation: https://docs.cilium.io/en/latest/security/policy/index.html

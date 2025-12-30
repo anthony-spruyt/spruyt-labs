@@ -1,29 +1,5 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow DNS egress to kube-dns
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-kube-dns-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/controller: foundryvtt
-      app.kubernetes.io/instance: foundryvtt
-      app.kubernetes.io/name: foundryvtt
-  egress:
-    - toServices:
-        - k8sService:
-            serviceName: kube-dns
-            namespace: kube-system
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow HTTP/HTTPS egress for modules, updates, and external services
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

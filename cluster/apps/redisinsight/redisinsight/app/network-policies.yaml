@@ -2,26 +2,6 @@
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # CiliumNetworkPolicy for redisinsight
 # Redis GUI tool with authentik forward auth (traefik proxies to app after outpost auth)
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-kube-dns-egress
-  namespace: redisinsight
-spec:
-  endpointSelector: {}
-  egress:
-    - toServices:
-        - k8sService:
-            serviceName: kube-dns
-            namespace: kube-system
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow traefik ingress to authentik outpost
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

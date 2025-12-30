@@ -1,29 +1,7 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # CiliumNetworkPolicy for reloader
-# Watches ConfigMaps/Secrets and triggers rolling updates - needs DNS and kube-api access
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-kube-dns-egress
-  namespace: reloader
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: reloader
-  egress:
-    - toServices:
-        - k8sService:
-            serviceName: kube-dns
-            namespace: kube-system
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Watches ConfigMaps/Secrets and triggers rolling updates - needs kube-api access
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
