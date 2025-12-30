@@ -17,9 +17,19 @@ spec:
         - ports:
             - port: "6443"
               protocol: TCP
-    # RFC2136 DNS UPDATE to Technitium (via LoadBalancer IP)
-    - toEntities:
-        - world
+    # RFC2136 DNS UPDATE to Technitium
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: technitium
+            k8s:app.kubernetes.io/name: technitium
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: technitium
+            k8s:app.kubernetes.io/name: technitium-secondary
       toPorts:
         - ports:
             - port: "53"
