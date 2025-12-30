@@ -307,6 +307,58 @@ Beyond syntax, verify configurations will actually work:
 - Verify naming conventions match existing resources
 - Check for potential conflicts with existing resources
 
+### 11. Solution Sanity Check (MANDATORY)
+
+**Before approving, critically evaluate the approach:**
+
+| Question | Red Flags |
+|----------|-----------|
+| **Is this the simplest solution?** | Over-engineered, excessive abstraction, "future-proofing" |
+| **Was there a built-in alternative?** | Custom code when Helm value/annotation exists |
+| **Does this match existing patterns?** | Reinventing what other apps already do |
+| **Is this even necessary?** | Solving problems that don't exist, premature optimization |
+| **Could scope be smaller?** | Touching files unrelated to stated goal |
+
+**Examples of questionable work:**
+
+```text
+# BAD: Custom script when Taskfile exists
+Issue: "Run linting before commit"
+Work: Created new bash script in scripts/lint.sh
+Better: `task dev-env:lint` already exists
+
+# BAD: Manual patching instead of declarative
+Issue: "Update app resource limits"
+Work: Added kubectl patch to a script
+Better: Update values.yaml, let Flux reconcile
+
+# BAD: Scope creep
+Issue: "Fix typo in dashboard title"
+Work: Fixed typo + refactored dashboard JSON + added 3 new panels
+Better: Just fix the typo
+
+# BAD: Reinventing existing patterns
+Issue: "Add monitoring for new app"
+Work: Created custom ServiceMonitor from scratch
+Better: Copy pattern from similar app in cluster/apps/
+
+# BAD: Complex workaround for upstream issue
+Issue: "App crashes on startup"
+Work: Added initContainer + sidecar + custom entrypoint
+Better: Check if upstream has fix, or pin to working version
+
+# BAD: Modifying shared infra for app-specific need
+Issue: "App needs feature X"
+Work: Modified cluster-wide Traefik config
+Better: Use app-specific middleware/annotation
+```
+
+**If approach seems suboptimal:**
+- Flag as WARNING (not CRITICAL unless egregious)
+- Suggest the simpler alternative
+- Ask: "Is there a reason the simpler approach wasn't used?"
+- Let calling agent/user decide whether to change approach
+
 ## Output Format
 
 Always provide a structured validation report:
@@ -337,6 +389,7 @@ Checks Skipped: [list of skipped checks based on type, or "None"]
 | Docs Verification | ✓/✗/SKIPPED | Context7 query, upstream values verified |
 | Dependencies | ✓/✗/SKIPPED | dependsOn, references |
 | Security | ✓/✗/SKIPPED | Secrets, SOPS |
+| Sanity Check | ✓/⚠/✗ | Simplest solution, existing patterns, scope |
 
 ### Issues Found
 1. [CRITICAL/WARNING/INFO] Description of issue
