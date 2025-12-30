@@ -59,7 +59,7 @@ spec:
       app.kubernetes.io/instance: firefly-iii
       app.kubernetes.io/name: firefly-iii
     matchExpressions:
-      - key: job-name
+      - key: batch.kubernetes.io/job-name
         operator: Exists
   egress:
     - toServices:
@@ -84,7 +84,7 @@ spec:
       app.kubernetes.io/instance: firefly-iii
       app.kubernetes.io/name: firefly-iii
     matchExpressions:
-      - key: job-name
+      - key: batch.kubernetes.io/job-name
         operator: DoesNotExist
   ingress:
     - fromEndpoints:
@@ -92,7 +92,7 @@ spec:
             k8s:io.kubernetes.pod.namespace: firefly-iii
             k8s:app.kubernetes.io/name: firefly-iii
           matchExpressions:
-            - key: k8s:job-name
+            - key: k8s:batch.kubernetes.io/job-name
               operator: Exists
       toPorts:
         - ports:
