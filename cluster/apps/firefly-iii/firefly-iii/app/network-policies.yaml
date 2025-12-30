@@ -1,11 +1,10 @@
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
 # Firefly III Application Policies
 # =============================================================================
 # DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow ingress from Traefik for web UI access
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -26,7 +25,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 # Allow cronjob pods to reach the Firefly service for recurring transaction processing
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -54,7 +52,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
 # Allow Firefly to receive requests from its own cronjob pods
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -82,7 +79,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow egress to CNPG PostgreSQL cluster for database access
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -102,13 +99,12 @@ spec:
             - port: "5432"
               protocol: TCP
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
 # Authentik Outpost Policies (deployed by Authentik to this namespace)
 # =============================================================================
 # DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow Traefik to reach authentik outpost for forward auth
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -170,7 +166,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -190,7 +186,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow world HTTPS for OAuth/OIDC flows and certificate validation
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -208,13 +204,12 @@ spec:
             - port: "443"
               protocol: TCP
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
 # CNPG PostgreSQL Cluster Policies
 # =============================================================================
 # DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow ingress from Firefly III app for database connections
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -234,7 +229,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow S3 backup uploads via Barman cloud plugin
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -253,7 +248,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -273,7 +268,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow CNPG operator access for cluster management
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -294,7 +289,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow kube-api egress for cluster coordination
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -313,7 +308,28 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Documentation: https://docs.cilium.io/en/latest/security/policy/index.html
+# Allow egress to Barman cloud plugin for backup operations
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cnpg-barman-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: firefly-iii-cnpg-cluster
+  egress:
+    # Barman cloud plugin for backup operations
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+            k8s:app.kubernetes.io/name: plugin-barman-cloud
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow internal cluster communication for replication and status
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

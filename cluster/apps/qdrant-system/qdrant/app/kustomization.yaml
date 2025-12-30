@@ -5,8 +5,7 @@ kind: Kustomization
 resources:
   - ./qdrant-secrets.sops.yaml
   - ./release.yaml
-  # Enable policy later
-  # - ./network-policies.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: qdrant-values
     namespace: qdrant-system
