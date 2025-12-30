@@ -22,6 +22,15 @@ spec:
               protocol: TCP
             - port: "5001"
               protocol: TCP
+    # Allow from remote nodes (traffic may appear as remote-node when crossing node boundaries)
+    - fromEntities:
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP
+            - port: "5001"
+              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:
