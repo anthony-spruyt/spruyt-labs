@@ -18,6 +18,8 @@ spec:
             k8s:app.kubernetes.io/name: spegel
       toPorts:
         - ports:
+            - port: "5000"
+              protocol: TCP
             - port: "5001"
               protocol: TCP
   egress:
@@ -27,6 +29,8 @@ spec:
             k8s:app.kubernetes.io/name: spegel
       toPorts:
         - ports:
+            - port: "5000"
+              protocol: TCP
             - port: "5001"
               protocol: TCP
 ---
