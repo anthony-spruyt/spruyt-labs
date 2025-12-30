@@ -24,7 +24,8 @@ metrics:
     enabled: true
   exporter:
     args:
-      - --redis.addr=redis://metrics@localhost:6379
+      - --redis.addr=localhost:6379
+      - --redis.user=metrics
     extraEnvs:
       REDIS_PASSWORD_FILE: /secrets/valkey/metrics-password-file
     extraExporterSecrets:
