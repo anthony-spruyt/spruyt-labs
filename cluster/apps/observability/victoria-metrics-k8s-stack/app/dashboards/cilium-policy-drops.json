@@ -99,7 +99,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m]))",
+          "expr": "sum(cilium:policy_drops:by_source:rate5m)",
           "legendFormat": "",
           "refId": "A"
         }
@@ -205,7 +205,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "label_replace(label_replace(sum by (source, destination) (rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])), \"source\", \"external\", \"source\", \"^$\"), \"destination\", \"external\", \"destination\", \"^$\") > 0",
+          "expr": "label_replace(label_replace(cilium:policy_drops:rate5m{reason=\"POLICY_DENIED\"}, \"source\", \"external\", \"source\", \"^$\"), \"destination\", \"external\", \"destination\", \"^$\") > 0",
           "legendFormat": "{{ source }} -> {{ destination }}",
           "refId": "A"
         }
@@ -390,7 +390,6 @@
           "expr": "topk(5, max_over_time((sum by (source) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m])) > 0",
           "format": "table",
           "instant": true,
-          "legendFormat": "{{ source }}",
           "refId": "A"
         }
       ],
@@ -451,7 +450,6 @@
           "expr": "topk(5, max_over_time((sum by (destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[5m])))[$__range:1m])) > 0",
           "format": "table",
           "instant": true,
-          "legendFormat": "{{ destination }}",
           "refId": "A"
         }
       ],
@@ -519,7 +517,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (reason) (rate(hubble_drop_total[5m]))",
+          "expr": "sum by (reason) (cilium:policy_drops:rate5m)",
           "legendFormat": "{{ reason }}",
           "refId": "A"
         }
