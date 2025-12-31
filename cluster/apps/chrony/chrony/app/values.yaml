@@ -30,7 +30,7 @@ controllers:
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
-            add: [CHOWN, DAC_OVERRIDE, SETUID, SETGID, NET_BIND_SERVICE]
+            add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID, NET_BIND_SERVICE]
         image:
           repository: dockurr/chrony
           tag: 4.8
