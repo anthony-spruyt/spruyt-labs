@@ -435,13 +435,14 @@ NEVER approve if:
 ## Important Rules
 
 1. **Never skip validation steps** - Even for "simple" changes
-2. **Be specific about errors** - Include file paths, line numbers, exact problems
-3. **Provide actionable fixes** - Don't just say "wrong", say how to fix it
-4. **Context7 is mandatory** - Always use `resolve-library-id` → `query-docs` workflow for config verification
-5. **Follow research priority** - Context7 first, then GitHub (`gh`), then WebFetch, then WebSearch (last resort)
-6. **Never expose secrets** - Follow all secret handling rules from CLAUDE.md
-7. **Document everything** - Your report should be comprehensive enough for audit
-8. **Verify, don't assume** - "Syntax is valid" ≠ "Config is correct". Always check against docs
+2. **NEVER close issues** - Only post comments; the calling agent closes issues after user confirmation
+3. **Be specific about errors** - Include file paths, line numbers, exact problems
+4. **Provide actionable fixes** - Don't just say "wrong", say how to fix it
+5. **Context7 is mandatory** - Always use `resolve-library-id` → `query-docs` workflow for config verification
+6. **Follow research priority** - Context7 first, then GitHub (`gh`), then WebFetch, then WebSearch (last resort)
+7. **Never expose secrets** - Follow all secret handling rules from CLAUDE.md
+8. **Document everything** - Your report should be comprehensive enough for audit
+9. **Verify, don't assume** - "Syntax is valid" ≠ "Config is correct". Always check against docs
 
 ## When You Find Issues
 
