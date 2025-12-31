@@ -123,12 +123,27 @@ Verify against project patterns:
 
 ### 4. Local Linting (MegaLinter)
 
-Run the project linter:
+> **CRITICAL REQUIREMENT - READ CAREFULLY**
+>
+> You MUST use `task dev-env:lint` and read results from `.output/` directory.
+> **NEVER run individual linters directly (yamllint, shellcheck, markdownlint, etc.).**
+> MegaLinter handles ALL linting. Running linters separately is FORBIDDEN.
+
+**The ONLY linting command you are allowed to run:**
 ```bash
 task dev-env:lint
 ```
 
-**Output location:** `.output/` directory contains detailed linter reports. Check these files for specific errors when investigating failures.
+**After running, check results in:** `.output/` directory (contains detailed reports for each linter)
+
+**Example workflow:**
+```bash
+# 1. Run MegaLinter
+task dev-env:lint
+
+# 2. If it fails, read the output files to see what's wrong
+# Use the Read tool on files in .output/ directory
+```
 
 MegaLinter validates (per `.mega-linter.yml`):
 - YAML syntax (yamllint)
@@ -139,7 +154,15 @@ MegaLinter validates (per `.mega-linter.yml`):
 - Secrets detection (gitleaks, secretlint, trivy)
 - Link checking (lychee)
 
-**DO NOT** manually run `yamllint`, `shellcheck`, or other linters that MegaLinter covers.
+**FORBIDDEN COMMANDS** (MegaLinter already runs these - DO NOT execute directly):
+- `yamllint` - ❌ NEVER
+- `shellcheck` - ❌ NEVER
+- `markdownlint` - ❌ NEVER
+- `actionlint` - ❌ NEVER
+- `tflint` - ❌ NEVER
+- `gitleaks` - ❌ NEVER
+- `prettier` - ❌ NEVER
+- Any other individual linter - ❌ NEVER
 
 **NOT covered by MegaLinter** (validated in other steps):
 - Kubernetes schema → Step 2 & 5 (`kubectl --dry-run`)

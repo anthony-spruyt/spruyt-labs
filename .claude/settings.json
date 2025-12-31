@@ -25,9 +25,7 @@
       "Bash(base64 --decode:*)",
       "Bash(printenv:*)",
       "Bash(age -d:*)",
-      "Bash(age --decrypt:*)",
-      "Bash(git push:*)",
-      "Bash(git commit --amend:*)"
+      "Bash(age --decrypt:*)"
     ]
   },
   "hooks": {

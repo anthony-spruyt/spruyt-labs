@@ -2,8 +2,8 @@
 name: block-issue-close
 enabled: true
 event: bash
-pattern: .*gh\s+issue\s+close
-action: warn
+pattern: gh issue close
+action: block
 ---
 
 **WARNING: Issue closing requires user confirmation**
