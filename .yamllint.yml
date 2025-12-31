@@ -1,7 +1,12 @@
 ---
 # https://yamllint.readthedocs.io/en/latest/configuration.html
+# Keep in sync with .mega-linter.yml exclusions
 ignore: |
   *.sops.*
+  talos/
+  clusterconfig/
+  legacy/
+  .taskfiles/talos/scripts/
 extends: default
 rules:
   truthy:

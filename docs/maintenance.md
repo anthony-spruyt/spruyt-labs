@@ -88,7 +88,7 @@ Complete these verification steps before submitting changes to ensure cluster st
 
 ## Renovate Dependency Management
 
-Renovate automates dependency updates. See [docs/rules/renovate.md](rules/renovate.md) for details.
+Renovate automates dependency updates. See [.claude/rules/renovate.md](../.claude/rules/renovate.md) for details.
 
 ### Quarterly Maintenance
 
@@ -146,5 +146,5 @@ This reviews and optimizes Kubernetes resource requests and limits based on actu
 ## Related
 
 - [docs/disaster-recovery.md](disaster-recovery.md) - DR procedures
-- [docs/rules/](rules/) - Operational rules
+- [.claude/rules/](../.claude/rules/) - Claude agent rules
 - [talos/README.md](../talos/README.md) - Talos-specific procedures

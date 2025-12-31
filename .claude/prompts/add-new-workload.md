@@ -6,6 +6,16 @@ Run this prompt when adding any new HelmRelease-based workload to the cluster.
 
 ---
 
+## Step 0: Create or Find GitHub Issue
+
+> **All work requires a linked GitHub issue. No exceptions.**
+
+1. Check if issue exists: `gh issue list --search "<workload-name>"`
+2. If not, create using `feature_request.yml` template (see @.claude/rules/github-workflow.md)
+3. Track the issue number for all subsequent steps
+
+---
+
 ## Step 1: Gather Requirements
 
 Before implementation, ask the user:
@@ -304,25 +314,32 @@ Add workload to appropriate tier table:
 
 ## Step 6: Validate
 
-### 6a. Run linter
+### 6a. Run qa-validator
 
-```bash
-task dev-env:lint
-```
+Invoke `qa-validator` agent with the GitHub issue number. This runs MegaLinter and all validation checks.
 
-Fix any issues before committing.
+Fix any issues until qa-validator returns APPROVED.
 
 ### 6b. Commit changes
 
-Follow conventional commits:
+Follow conventional commits. **NEVER use `git add -A`** - stage only files you created:
 
 ```bash
-git add -A
+git add cluster/apps/<namespace>/namespace.yaml
+git add cluster/apps/<namespace>/kustomization.yaml
+git add cluster/apps/<namespace>/<app>/ks.yaml
+git add cluster/apps/<namespace>/<app>/app/kustomization.yaml
+git add cluster/apps/<namespace>/<app>/app/release.yaml
+git add cluster/apps/<namespace>/<app>/app/values.yaml
+# Add any other files you created
+
 git commit -m "feat(<namespace>): add <app-name>
 
 <Brief description of what it does>
 - <key feature 1>
 - <key feature 2>
+
+Closes #<issue-number>
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -331,21 +348,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 ### 6c. Post-push validation
 
-After user pushes and Flux reconciles:
-
-```bash
-# Check Flux reconciliation
-flux get kustomization <app-name>
-
-# Check HelmRelease status
-kubectl get hr -n <namespace> <app-name>
-
-# Check pods
-kubectl get pods -n <namespace>
-
-# View logs for issues
-kubectl logs -n <namespace> -l app.kubernetes.io/name=<app-name> --tail=20
-```
+After user pushes, invoke `cluster-validator` agent with the GitHub issue number to verify deployment.
 
 ---
 
@@ -423,7 +426,7 @@ Before considering the task complete:
 
 - [docs/workload-classification.md](../../docs/workload-classification.md) - Priority tiers and CPU limits
 - [docs/templates/readme_template.md](../../docs/templates/readme_template.md) - README template
-- [docs/rules/documentation.md](../../docs/rules/documentation.md) - Documentation standards
+- [.claude/rules/documentation.md](../rules/documentation.md) - Documentation standards
 - [cluster/flux/meta/priority-classes.yaml](../../cluster/flux/meta/priority-classes.yaml) - Priority class definitions
 
 ### Common YAML Schema URLs

@@ -69,41 +69,20 @@ fi
 
 ## Parallel Execution Strategy
 
-Run independent checks in parallel to minimize validation time:
+Run independent checks in parallel using multiple tool calls in single messages.
 
-**Parallel Group 1** (run simultaneously):
-- Linting via `task dev-env:lint` (MegaLinter handles ALL linting - see note below)
+**Can run in parallel:**
+- `task dev-env:lint` (MegaLinter)
 - Git status analysis
-
-**Parallel Group 2** (after Group 1 passes):
 - Schema validation (`kubectl --dry-run`)
 - Kustomize build verification
-- Documentation verification (Context7)
 
-**Parallel Group 3** (after Group 2 passes):
+**Run after above pass:**
+- Documentation verification (Context7)
 - Dependency checks
 - Security review
 - Cross-reference validation
 - Standards compliance
-
-> **CRITICAL - MegaLinter is the ONE-STOP for linting:**
-> Do NOT manually run separate linters. `task dev-env:lint` runs MegaLinter which covers:
-> - YAML syntax (yamllint)
-> - Bash scripts (shellcheck)
-> - Markdown (markdownlint)
-> - GitHub Actions (actionlint)
-> - Terraform (tflint)
-> - Secrets detection (gitleaks, secretlint, trivy)
-> - Link checking (lychee)
->
-> **NOTE**: MegaLinter does NOT cover:
-> - Kubernetes schema validation → use `kubectl --dry-run` (Step 2)
-> - Kustomize build verification → use `kubectl kustomize` (Step 5)
-> - JSON syntax → covered by yamllint for YAML, manual check for pure JSON if needed
->
-> Run `task dev-env:lint` ONCE - do not duplicate its checks manually.
-
-**IMPORTANT**: Use multiple tool calls in single messages to execute parallel checks.
 
 ## Validation Workflow
 
@@ -148,6 +127,8 @@ Run the project linter:
 ```bash
 task dev-env:lint
 ```
+
+**Output location:** `.output/` directory contains detailed linter reports. Check these files for specific errors when investigating failures.
 
 MegaLinter validates (per `.mega-linter.yml`):
 - YAML syntax (yamllint)

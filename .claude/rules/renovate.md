@@ -1,39 +1,33 @@
-# Renovate Configuration Standards
+---
+paths: .github/renovate/**, .taskfiles/**, cluster/**
+---
 
-## Overview
+# Renovate Configuration
 
-Renovate automates dependency updates for Helm charts, Kubernetes manifests, Terraform, and other components. Configuration files are in `.github/renovate/`.
+Renovate automates dependency updates. Configuration files are in `.github/renovate/`.
 
-## How Helm Registries Work
+## Helm Registries
 
 Renovate's Flux manager auto-detects Helm registry URLs from `HelmRepository` resources. No manual registry configuration needed.
 
 When adding new Helm charts:
-
 1. Create a `HelmRepository` in `cluster/flux/meta/repositories/helm/`
 2. Reference it in your `HelmRelease` via `sourceRef`
 3. Renovate auto-resolves the registry URL
 
-## Annotating Shell Scripts
+## Shell Script Annotations
 
-For install scripts in `.taskfiles/`, use Renovate annotations to auto-update pinned versions:
+For install scripts in `.taskfiles/`, use Renovate annotations:
 
 ```bash
 #!/bin/bash
 # renovate: depName=kubernetes/kubernetes datasource=github-releases
 VERSION="v1.35.0"
-
-# Use $VERSION in download URLs...
 ```
 
-**Format:** Comment with `depName=<owner/repo>` and `datasource=<type>`, followed by `VERSION="<version>"` on the next line.
-
 **Common datasources:**
-
-- `github-releases` - GitHub release tags (most tools)
+- `github-releases` - GitHub release tags
 - `docker` - Container image tags
-
-**Examples:**
 
 | Tool    | depName               | datasource      |
 | ------- | --------------------- | --------------- |
@@ -41,9 +35,9 @@ VERSION="v1.35.0"
 | helm    | helm/helm             | github-releases |
 | velero  | vmware-tanzu/velero   | github-releases |
 
-## Adding Package Groupings
+## Package Groupings
 
-Edit `.github/renovate/groups.json5` to group related packages:
+Edit `.github/renovate/groups.json5`:
 
 ```json5
 {
@@ -59,30 +53,18 @@ Edit `.github/renovate/groups.json5` to group related packages:
 }
 ```
 
-## Maintenance
-
-- **Quarterly**: Review config files match current repo structure
-- **Groupings**: Ensure related packages (operators + CRDs, charts + images) update together
-- **Stability**: Adjust `minimumReleaseAge` for critical components (Cilium, cert-manager)
-- **Coverage**: Add regex managers for custom dependency formats
-
 ## Testing Config Changes
 
-### Before Committing
-
 ```bash
-# Validate all renovate configs
+# Validate before commit
 renovate-config-validator --strict .github/renovate.json5
-
-# Validate specific config files
 renovate-config-validator --strict .github/renovate/customDatasources.json5
 ```
 
-### After Pushing
-
-1. Trigger a manual Renovate run via the Dependency Dashboard issue
-2. Check the [Mend Renovate logs](https://developer.mend.io/github/anthony-spruyt/spruyt-labs) for errors
-3. Verify expected PRs are created or dependencies are detected
+After push:
+1. Trigger manual run via Dependency Dashboard issue
+2. Check [Mend Renovate logs](https://developer.mend.io/github/anthony-spruyt/spruyt-labs)
+3. Verify expected PRs are created
 
 ## Troubleshooting
 
@@ -95,7 +77,3 @@ renovate-config-validator --strict .github/renovate/customDatasources.json5
 | `Failed to look up custom.*`   | Check transform template or URL issues           |
 | `Response has failed validation` | JSONata output format wrong                    |
 | `Expected array, received object` | Use `$map()` for array outputs in transforms |
-
-## Related
-
-- [Maintenance - Renovate section](../maintenance.md#renovate-dependency-management)

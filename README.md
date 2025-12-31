@@ -92,7 +92,7 @@ The cluster enforces **baseline** Pod Security Standards by default (Kubernetes 
 | [docs/bootstrap.md](docs/bootstrap.md)                 | Initial cluster deployment       |
 | [docs/maintenance.md](docs/maintenance.md)             | Day-to-day operations            |
 | [docs/disaster-recovery.md](docs/disaster-recovery.md) | Backup and recovery procedures   |
-| [docs/rules/](docs/rules/)                             | Operational rules and procedures |
+| [.claude/rules/](.claude/rules/)                       | Claude agent rules               |
 
 ## Troubleshooting Matrix
 
