@@ -87,10 +87,10 @@ operator:
 # Agent resources based on P99 usage: 1051m CPU, 520Mi memory
 resources:
   limits:
-    memory: 2560Mi # ~720 MB expected + 20% headroom, rounded up for safety
+    memory: 1Gi # ~415 MB expected (buffer ~100MB + baseline ~315MB) + headroom
   requests:
     cpu: 1250m
-    memory: 768Mi
+    memory: 512Mi
 prometheus:
   enabled: true
   serviceMonitor:
@@ -98,8 +98,8 @@ prometheus:
     trustCRDsExist: true
 hubble:
   enabled: true
-  # Ring buffer for ~90s of flow history at ~2900 flows/s (must be 2^n - 1)
-  eventBufferCapacity: 262143
+  # Ring buffer for ~23s of flow history at ~2900 flows/s (max 65535, must be 2^n - 1)
+  eventBufferCapacity: 65535
   relay:
     enabled: true
     rollOutPods: true
