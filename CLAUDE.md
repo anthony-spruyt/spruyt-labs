@@ -444,7 +444,7 @@ EOF
 | Agent | When to Use | Trigger |
 |-------|-------------|---------|
 | **qa-validator** | Before ANY git commit that modifies files | After editing files (validates syntax, standards, docs) |
-| **cluster-validator** | After user pushes changes that affect cluster | When user says "pushed", "merged", or "deployed" AND changes affect `cluster/` |
+| **cluster-validator** | After changes are pushed/merged to main that affect cluster | When user says "pushed", "merged", or "deployed" OR when Claude merges a PR via `gh pr merge` AND changes affect `cluster/` |
 
 > **Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → it's a cluster resource → run both validators
 
