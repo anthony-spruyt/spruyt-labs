@@ -12,19 +12,10 @@ spec:
     matchLabels:
       app.kubernetes.io/name: spegel
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: spegel
-            k8s:app.kubernetes.io/name: spegel
-      toPorts:
-        - ports:
-            - port: "5000"
-              protocol: TCP
-            - port: "5001"
-              protocol: TCP
-    # Allow from remote nodes (traffic may appear as remote-node when crossing node boundaries)
+    # Allow P2P from cluster (other spegel pods) and host (containerd pulling images)
     - fromEntities:
-        - remote-node
+        - cluster
+        - host
       toPorts:
         - ports:
             - port: "5000"
@@ -32,19 +23,9 @@ spec:
             - port: "5001"
               protocol: TCP
   egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: spegel
-            k8s:app.kubernetes.io/name: spegel
-      toPorts:
-        - ports:
-            - port: "5000"
-              protocol: TCP
-            - port: "5001"
-              protocol: TCP
-    # Allow to remote nodes (traffic may appear as remote-node when crossing node boundaries)
+    # Allow P2P to any cluster IP (handles stale DHT entries pointing to old pod IPs)
     - toEntities:
-        - remote-node
+        - cluster
       toPorts:
         - ports:
             - port: "5000"
@@ -53,16 +34,19 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow world HTTPS egress for fallback registry pulls
+# Allow kube-apiserver (watches nodes/pods) and world HTTPS (registry pulls)
+# Note: DNS egress handled by cluster-wide allow-kube-dns-egress policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-world-https-egress
+  name: allow-apiserver-and-https-egress
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: spegel
   egress:
+    - toEntities:
+        - kube-apiserver
     - toEntities:
         - world
       toPorts:

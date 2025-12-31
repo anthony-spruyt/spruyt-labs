@@ -1,6 +1,6 @@
 # CiliumNetworkPolicy Rollout Plan
 
-## Completed (16 namespaces have policies)
+## Completed (22 namespaces have policies)
 
 ### Previously Completed
 - kubelet-csr-approver (2 pods) ✓
@@ -31,7 +31,7 @@
 - **nut-system** (1 pod) ✓
   - DNS egress, NUT TCP 3493 ingress (world), metrics TCP 9199 ingress (vmagent)
 
-## Remaining (15 namespaces need policies)
+## Remaining (6 namespaces need policies)
 
 ### Phase 5: System Pods ✓
 - **irq-balance** (6 pods) ✓ - Privileged system daemon, deny-all policy (defense-in-depth)
@@ -43,11 +43,11 @@
 - **cert-manager** (6 pods) ✓ - controller (kube-api, ACME 443, DNS 53), cainjector/webhook (kube-api), metrics 9402
 - **external-secrets** (3 pods) ✓ - Secret sync (kube-api, Kubernetes provider only), metrics 8080
 
-### Phase 7: Databases (6 pods total)
+### Phase 7: Databases (6 pods total) ✓
 - **valkey-system** (1 pod) ✓ - Redis (ingress from n8n, redisinsight, authentik; metrics 9121)
 - **qdrant-system** (1 pod) ✓ - Vector DB (traefik, n8n, internal-cluster, metrics)
 - **cnpg-system** (2 pods) ✓ - Postgres operator (kube-api, webhook, cluster comms, barman, metrics)
-- **technitium** (2 pods) - DNS server (UDP/TCP 53, recursion egress)
+- **technitium** (2 pods) ✓ - DNS server (fromEntities: all for DNS ingress, world egress for recursion/blocklists, catalog zone sync)
 
 ### Phase 8: Security (12 pods total)
 - **kyverno** (4 pods) - Policy engine (kube-api, webhook ingress)
@@ -78,6 +78,12 @@
 - Don't skip HTTPS egress for apps that do external API calls (Xbox auth, OAuth, etc.)
 - Don't assume documentation lists all required connections
 - Always validate with actual app usage, not just "no drops in hubble"
+
+### CNP Naming in Shared Namespaces (Technitium)
+1. **CNPs must have unique names within a namespace** - Multiple apps in same namespace (e.g., technitium + technitium-secondary) will overwrite each other's CNPs if names match
+2. **Prefix CNP names with app name** - Use `technitium-allow-dns-ingress` not `allow-dns-ingress`
+3. **Use `fromEntities: all` for DNS servers** - DNS should accept queries from any source (world + cluster + host + everything)
+4. **Hubble is unreliable** - Check actual logs and observability dashboards, not just hubble observe
 
 ### redis_exporter Authentication (Valkey/Redis ACL)
 1. **Distroless images have no shell** - Can't use shell wrappers (`/bin/sh -c`), must use native env vars/args
