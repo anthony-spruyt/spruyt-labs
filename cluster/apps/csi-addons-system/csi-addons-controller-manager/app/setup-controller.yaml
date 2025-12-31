@@ -79,6 +79,11 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           terminationMessagePolicy: FallbackToLogsOnError
       securityContext:
         runAsNonRoot: true
