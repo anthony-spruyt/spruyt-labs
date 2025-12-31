@@ -44,6 +44,13 @@ controllers:
             memory: 16Mi
     containers:
       main:
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         image:
           repository: vaultwarden/server
           tag: testing-alpine
