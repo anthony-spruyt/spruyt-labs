@@ -78,7 +78,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "rate(node_cpu_package_throttles_total[5m])",
+          "expr": "sum by (instance) (rate(node_cpu_package_throttles_total[5m]))",
           "legendFormat": "{{ instance }}",
           "refId": "A"
         }
@@ -688,13 +688,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -774,13 +774,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -841,7 +841,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         }
@@ -921,13 +921,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -1015,13 +1015,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -1101,13 +1101,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -1168,7 +1168,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         }
@@ -1248,13 +1248,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -1342,13 +1342,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -1428,13 +1428,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -1495,7 +1495,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         }
@@ -1575,13 +1575,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"}",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
