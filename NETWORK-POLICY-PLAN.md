@@ -45,8 +45,8 @@
 
 ### Phase 7: Databases (6 pods total)
 - **valkey-system** (1 pod) ✓ - Redis (ingress from n8n, redisinsight, authentik; metrics 9121)
-- **qdrant-system** (1 pod) - Vector DB (gRPC/HTTP ingress)
-- **cnpg-system** (2 pods) - Postgres operator (kube-api, postgres ports)
+- **qdrant-system** (1 pod) ✓ - Vector DB (traefik, n8n, internal-cluster, metrics)
+- **cnpg-system** (2 pods) ✓ - Postgres operator (kube-api, webhook, cluster comms, barman, metrics)
 - **technitium** (2 pods) - DNS server (UDP/TCP 53, recursion egress)
 
 ### Phase 8: Security (12 pods total)

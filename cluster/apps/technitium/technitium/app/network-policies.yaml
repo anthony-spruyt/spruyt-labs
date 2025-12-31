@@ -1,0 +1,124 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# CiliumNetworkPolicy for Technitium DNS Server (Primary)
+# Allow DNS queries from world (via LoadBalancer)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-dns-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: technitium
+  ingress:
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: TCP
+            - port: "53"
+              protocol: UDP
+            - port: "853"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow web admin UI access from world (via LoadBalancer)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-webui-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: technitium
+  ingress:
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "5380"
+              protocol: TCP
+            - port: "53443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow DNS recursion/forwarding and HTTPS for blocklist downloads
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-dns-and-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: technitium
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: TCP
+            - port: "53"
+              protocol: UDP
+            - port: "853"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow RFC2136 dynamic DNS updates from external-dns
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-external-dns-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: technitium
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: external-dns
+            k8s:app.kubernetes.io/name: external-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow catalog zone sync from secondary (AXFR/IXFR, XFR-over-TLS)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-catalog-zone-sync
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: technitium
+  ingress:
+    # Secondary pulls zones from primary
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: technitium
+            k8s:app.kubernetes.io/name: technitium-secondary
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: TCP
+            - port: "853"
+              protocol: TCP
+  egress:
+    # Primary sends NOTIFY to secondary
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: technitium
+            k8s:app.kubernetes.io/name: technitium-secondary
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: TCP
+            - port: "53"
+              protocol: UDP

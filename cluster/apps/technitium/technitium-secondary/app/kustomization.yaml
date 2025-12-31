@@ -6,6 +6,7 @@ resources:
   - ./certificate.yaml
   - ./persistent-volume-claim.yaml
   - ./release.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: technitium-secondary-values
     namespace: technitium
