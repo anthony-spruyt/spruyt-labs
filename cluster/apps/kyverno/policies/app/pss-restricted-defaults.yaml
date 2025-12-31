@@ -45,9 +45,6 @@ spec:
                 - observability
                 - nut-system
                 - dev-debug
-                # Temporary exclusions - remove after Helm releases stabilize
-                - chrony
-                - vaultwarden
       mutate:
         patchStrategicMerge:
           spec:
