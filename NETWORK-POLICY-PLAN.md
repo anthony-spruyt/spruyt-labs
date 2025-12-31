@@ -73,6 +73,7 @@
 2. **Game servers need auth egress** - Bedrock-connect needs HTTPS 443 egress for Xbox/Microsoft discovery (`client.discovery.minecraft-services.net`)
 3. **CronJob pods** - Use `matchExpressions` with `batch.kubernetes.io/job-name: Exists` to match dynamically-named job pods
 4. **Always check what app actually does** - Don't assume from README; check GitHub repo, issues, and actual runtime behavior
+5. **Spegel stale DHT entries cause transient drops** - Spegel's DHT has hardcoded 10-minute TTL. When pod IPs get recycled within that window (e.g., during rollouts), spegel tries to connect to stale entries. Traffic reaches the new pod but gets denied by its CNP → POLICY_DENIED drops. These are expected transient noise, not a CNP bug. Spegel needs `toEntities: cluster` (not `toEndpoints: spegel`) because stricter policies break when DHT has stale IPs that no longer match current spegel pod endpoints.
 
 ### Common Mistakes to Avoid
 - Don't skip HTTPS egress for apps that do external API calls (Xbox auth, OAuth, etc.)
