@@ -2,7 +2,7 @@
 name: block-individual-linters
 enabled: true
 event: bash
-pattern: (yamllint|shellcheck|markdownlint|actionlint|tflint|gitleaks|secretlint|trivy|lychee)\b
+pattern: (^|[;&|]\s*)(yamllint|shellcheck|markdownlint|actionlint|tflint|gitleaks|secretlint|trivy|lychee)\b
 action: block
 ---
 
