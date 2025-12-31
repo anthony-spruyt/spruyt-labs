@@ -19,12 +19,20 @@ spec:
               protocol: TCP
             - port: "53"
               protocol: UDP
+            - port: "80"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+            - port: "443"
+              protocol: UDP
+            - port: "538"
+              protocol: TCP
+            - port: "538"
+              protocol: UDP
             - port: "853"
               protocol: TCP
             - port: "853"
               protocol: UDP
-            - port: "443"
-              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow web admin UI access from world (via LoadBalancer, HTTP/3)
