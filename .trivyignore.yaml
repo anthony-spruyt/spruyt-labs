@@ -246,6 +246,15 @@ misconfigurations:
   - id: AVD-KSV-0011
     paths:
       - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0015
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0016
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0018
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
   - id: AVD-KSV-0012
     paths:
       - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
