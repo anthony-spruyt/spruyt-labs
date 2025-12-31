@@ -48,17 +48,14 @@
             "showPoints": "never",
             "spanNulls": false,
             "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "line" }
+            "thresholdsStyle": { "mode": "off" }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 0.001 }
-            ]
+            "steps": [{ "color": "green", "value": null }]
           },
           "unit": "short"
         },
