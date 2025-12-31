@@ -49,6 +49,7 @@
       "Bash(gh pr merge:*)",
       "Bash(gh pr comment:*)",
       "Bash(gh repo:*)",
+      "Bash(gh run:*)",
       "Bash(gh search:*)",
       "Bash(do)",
       "Bash(done)",
