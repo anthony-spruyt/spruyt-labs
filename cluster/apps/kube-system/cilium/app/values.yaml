@@ -25,6 +25,12 @@ autoDirectNodeRoutes: true # Enable installation of PodCIDR routes between worke
 ipv4NativeRoutingCIDR: "${CLUSTER_NODE_CIDR_IP4}" # Maintain native routing CIDR for direct routing
 bpf:
   masquerade: true # Enable native IP masquerade support in eBPF for native routing
+  # Reduce aggregation for better drop visibility (default: medium)
+  monitorAggregation: low
+  monitorInterval: "1s"
+  events:
+    policyVerdict:
+      enabled: true # Record policy verdicts to see which policy caused drops
   # datapathMode: netkit # Mode for Pod devices for the core datapath (veth, netkit, netkit-l2)
   # preallocateMaps: true # Enables pre-allocation of eBPF map values. This increases memory usage but can reduce latency.
   # tproxy: true # Configure the eBPF-based TPROXY (beta) to reduce reliance on iptables rules for implementing Layer 7 policy.
@@ -92,6 +98,8 @@ prometheus:
     trustCRDsExist: true
 hubble:
   enabled: true
+  # Increase ring buffer for debugging (default 4095 is too small, must be 2^n - 1)
+  eventBufferCapacity: 16383
   relay:
     enabled: true
     rollOutPods: true

@@ -8,6 +8,7 @@ vars:
   CLUSTER_DIR: "{{.PROJECT_DIR}}/cluster"
 
 includes:
+  cilium: .taskfiles/cilium/tasks.yaml
   dev-env: .taskfiles/dev-env/tasks.yaml
   flux: .taskfiles/flux/tasks.yaml
   install: .taskfiles/install/tasks.yaml

@@ -6,10 +6,6 @@ vars:
   devEnvScriptsDir: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts"
 
 tasks:
-  hubble-drops:
-    desc: Shows recent dropped network traffic (blocked by network policies)
-    cmds:
-      - bash {{ .devEnvScriptsDir }}/hubble-drops.sh
   lint:
     desc: Runs mega-linter against the repo
     cmds:

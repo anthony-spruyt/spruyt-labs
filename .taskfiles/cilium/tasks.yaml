@@ -1,0 +1,76 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  ciliumScriptsDir: "{{ .ROOT_DIR }}/.taskfiles/cilium/scripts"
+
+tasks:
+  # Hubble Status
+  status:
+    desc: Show Hubble status and flow buffer capacity
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-status.sh
+
+  # Drop debugging
+  drops:
+    desc: Show recent dropped flows (last 100)
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-drops.sh
+
+  drops-live:
+    desc: Stream dropped flows in real-time
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-drops-live.sh
+    interactive: true
+
+  drops-ns:
+    desc: Show drops for a specific namespace (pass namespace as CLI_ARGS)
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-drops-ns.sh {{.CLI_ARGS}}
+
+  drops-json:
+    desc: Show drops with full JSON detail (for debugging policy issues)
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-drops-json.sh
+
+  drops-policy:
+    desc: Show drops with policy match info
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-drops-policy.sh
+
+  # General flow observation
+  flows:
+    desc: Show recent flows (last 100)
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-flows.sh
+
+  flows-ns:
+    desc: Show flows for a specific namespace (pass namespace as CLI_ARGS)
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-flows-ns.sh {{.CLI_ARGS}}
+
+  # Policy debugging
+  policy-drops:
+    desc: Show only policy-related drops
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-policy-drops.sh
+
+  # Port-forward for local hubble CLI
+  relay-forward:
+    desc: Port-forward Hubble Relay for local CLI access
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-relay-forward.sh
+    interactive: true
+
+  # Connectivity test
+  connectivity-test:
+    desc: Run Cilium connectivity test (creates test namespace)
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/connectivity-test.sh
+
+  # Buffer check
+  buffer-status:
+    desc: Check Hubble ring buffer utilization across all nodes
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/hubble-buffer-status.sh
