@@ -4,8 +4,117 @@ version: "3"
 
 vars:
   testDiscordAlertScript: "{{ .ROOT_DIR }}/.taskfiles/test/scripts/test-discord-alert.sh"
+  stressTestPodTemplate: "{{ .ROOT_DIR }}/.taskfiles/test/resources/stress-test-pod.tmpl.yaml"
 
 tasks:
+  stress:
+    desc: "Run CPU stress test on a node (usage: task test:stress node=ms-01-1 [cpus=16] [duration=120])"
+    vars:
+      cpus: '{{ .cpus | default "16" }}'
+      duration: '{{ .duration | default "120" }}'
+    env:
+      node: "{{ .node }}"
+      cpus: "{{ .cpus }}"
+      duration: "{{ .duration }}"
+    preconditions:
+      - sh: test -n "{{ .node }}"
+        msg: "node is required (e.g., task test:stress node=ms-01-1)"
+      - sh: test -f {{ .stressTestPodTemplate }}
+        msg: "stress test pod template not found"
+    cmds:
+      - |
+        echo "=== Starting stress test on {{ .node }} ==="
+        echo "CPUs: {{ .cpus }}, Duration: {{ .duration }}s"
+        echo ""
+        echo "Baseline throttle counts:"
+        for cpu in 0 2 4 6; do
+          count=$(talosctl -n {{ .node }} read /sys/devices/system/cpu/cpu${cpu}/thermal_throttle/core_throttle_count 2>/dev/null || echo "N/A")
+          echo "  P-core $cpu: $count"
+        done
+        echo ""
+        echo "Applying stress test pod..."
+        envsubst < {{ .stressTestPodTemplate }} | kubectl apply -f -
+        echo ""
+        echo "Waiting for pod to start..."
+        kubectl wait --for=condition=Ready pod/stress-test-{{ .node }} -n dev-debug --timeout=60s
+        echo ""
+        echo "Stress test running. Monitor with: task test:throttle-watch node={{ .node }}"
+        echo "Or wait for completion: kubectl logs -f stress-test-{{ .node }} -n dev-debug"
+
+  stress-wait:
+    desc: "Wait for stress test to complete and show results (usage: task test:stress-wait node=ms-01-1)"
+    preconditions:
+      - sh: test -n "{{ .node }}"
+        msg: "node is required"
+    cmds:
+      - |
+        echo "Waiting for stress test on {{ .node }} to complete..."
+        kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/stress-test-{{ .node }} -n dev-debug --timeout=300s || true
+        echo ""
+        echo "=== Stress test results ==="
+        kubectl logs stress-test-{{ .node }} -n dev-debug 2>/dev/null | tail -10
+        echo ""
+        echo "Final throttle counts:"
+        for cpu in 0 2 4 6; do
+          count=$(talosctl -n {{ .node }} read /sys/devices/system/cpu/cpu${cpu}/thermal_throttle/core_throttle_count 2>/dev/null || echo "N/A")
+          echo "  P-core $cpu: $count"
+        done
+
+  stress-cleanup:
+    desc: "Delete stress test pod (usage: task test:stress-cleanup node=ms-01-1)"
+    preconditions:
+      - sh: test -n "{{ .node }}"
+        msg: "node is required"
+    cmds:
+      - kubectl delete pod stress-test-{{ .node }} -n dev-debug --ignore-not-found=true
+
+  throttle-check:
+    desc: "Show current thermal throttle counts for a node (usage: task test:throttle-check node=ms-01-1)"
+    preconditions:
+      - sh: test -n "{{ .node }}"
+        msg: "node is required"
+    cmds:
+      - |
+        echo "=== Thermal throttle counts for {{ .node }} ==="
+        echo ""
+        echo "P-cores (hyperthreaded):"
+        for cpu in 0 2 4 6; do
+          count=$(talosctl -n {{ .node }} read /sys/devices/system/cpu/cpu${cpu}/thermal_throttle/core_throttle_count 2>/dev/null || echo "N/A")
+          echo "  P-core $cpu (CPU $cpu-$((cpu+1))): $count"
+        done
+        echo ""
+        echo "E-cores:"
+        for cpu in 8 9 10 11 12 13 14 15; do
+          count=$(talosctl -n {{ .node }} read /sys/devices/system/cpu/cpu${cpu}/thermal_throttle/core_throttle_count 2>/dev/null || echo "N/A")
+          echo "  E-core $cpu: $count"
+        done
+        echo ""
+        echo "Load average: $(talosctl -n {{ .node }} read /proc/loadavg 2>/dev/null || echo 'N/A')"
+
+  throttle-check-all:
+    desc: "Show thermal throttle counts for all MS-01 worker nodes"
+    cmds:
+      - |
+        for node in ms-01-1 ms-01-2 ms-01-3; do
+          echo "=== $node ==="
+          total=0
+          for cpu in 0 2 4 6; do
+            count=$(talosctl -n $node read /sys/devices/system/cpu/cpu${cpu}/thermal_throttle/core_throttle_count 2>/dev/null || echo "0")
+            total=$((total + count))
+          done
+          load=$(talosctl -n $node read /proc/loadavg 2>/dev/null | cut -d' ' -f1 || echo "N/A")
+          uptime_sec=$(talosctl -n $node read /proc/uptime 2>/dev/null | cut -d' ' -f1 | cut -d'.' -f1 || echo "0")
+          uptime_hr=$((uptime_sec / 3600))
+          if [ $uptime_hr -gt 0 ]; then
+            rate=$((total / uptime_hr))
+          else
+            rate=$total
+          fi
+          echo "  Total P-core throttles: $total (${rate}/hr over ${uptime_hr}h)"
+          echo "  Current load: $load"
+          echo ""
+        done
+
   discord-alert:
     desc: Tests Discord alerting by creating a crashlooping pod (triggers KubePodCrashLooping after 15min)
     cmds:

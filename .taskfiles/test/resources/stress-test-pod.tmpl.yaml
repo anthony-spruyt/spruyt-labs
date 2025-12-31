@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-test-${node}
+  namespace: dev-debug
+  labels:
+    app: stress-test
+    node: ${node}
+spec:
+  restartPolicy: Never
+  nodeSelector:
+    kubernetes.io/hostname: ${node}
+  tolerations:
+    - operator: Exists
+  containers:
+    - name: stress
+      image: docker.io/polinux/stress-ng:latest
+      command:
+        - stress-ng
+        - --cpu
+        - "${cpus}"
+        - --cpu-load
+        - "100"
+        - --timeout
+        - "${duration}s"
+        - --metrics-brief
+      resources: {}
