@@ -230,3 +230,64 @@ misconfigurations:
   - id: AVD-KSV-0113
     paths:
       - cluster/apps/observability/victoria-metrics-secret-writer/app/role.yaml
+
+  # ==============================================================================
+  # Stress test pod - dev/test utility for CPU stress testing, not production
+  # ==============================================================================
+  - id: AVD-KSV-0001
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0003
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0004
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0011
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0012
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0013
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0014
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0020
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0021
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0022
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0025
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0028
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0029
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0030
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0104
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0106
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0110
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0118
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0125
+    paths:
+      - .taskfiles/test/resources/stress-test-pod.tmpl.yaml

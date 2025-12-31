@@ -22,6 +22,9 @@ sudo docker run \
   --rm \
   oxsecurity/megalinter:v9
 
+# Capture MegaLinter exit code
+LINT_EXIT_CODE=$?
+
 # Copy fixed changes back to workspace root
 # Use sudo because megalinter runs as root and creates root-owned files
 if compgen -G "/workspaces/spruyt-labs/.output/updated_sources/*" > /dev/null; then
@@ -30,4 +33,5 @@ if compgen -G "/workspaces/spruyt-labs/.output/updated_sources/*" > /dev/null; t
     sudo chown -R "$(id -u):$(id -g)" /workspaces/spruyt-labs/
 fi
 
-exit 0
+# Return MegaLinter's actual exit code so qa-validator sees failures
+exit $LINT_EXIT_CODE
