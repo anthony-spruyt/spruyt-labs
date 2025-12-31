@@ -5,7 +5,7 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-dns-ingress
+  name: technitium-secondary-allow-dns-ingress
 spec:
   endpointSelector:
     matchLabels:
@@ -39,7 +39,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-webui-ingress
+  name: technitium-secondary-allow-webui-ingress
 spec:
   endpointSelector:
     matchLabels:
@@ -61,7 +61,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-dns-and-https-egress
+  name: technitium-secondary-allow-dns-and-https-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -85,7 +85,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-catalog-zone-sync
+  name: technitium-secondary-allow-catalog-zone-sync
 spec:
   endpointSelector:
     matchLabels:
