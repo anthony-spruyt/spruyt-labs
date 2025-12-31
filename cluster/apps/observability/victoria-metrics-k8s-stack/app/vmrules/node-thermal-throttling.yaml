@@ -23,9 +23,10 @@ spec:
           expr: vector(95)
 
         # Throttle event rate threshold (events per second)
-        # 0.1 = ~6 events/min, filters brief spikes while catching real issues
+        # 1.0 = 60 events/min, only fires during severe sustained throttling
+        # indicating cooling failure or extreme thermal stress
         - record: node:thermal_throttle:threshold_rate_events_per_sec
-          expr: vector(0.1)
+          expr: vector(1.0)
 
     # ==========================================================================
     # ALERTS
