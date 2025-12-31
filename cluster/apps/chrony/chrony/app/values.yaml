@@ -12,6 +12,8 @@ controllers:
     replicas: 3
     strategy: Recreate
     pod:
+      securityContext:
+        runAsNonRoot: false
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname

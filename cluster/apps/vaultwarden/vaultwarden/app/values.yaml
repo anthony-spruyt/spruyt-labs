@@ -8,9 +8,40 @@ controllers:
     type: statefulset
     annotations:
       reloader.stakater.com/auto: "true"
-    # pod:
-    #   annotations:
-    #     backup.velero.io/backup-volumes: data
+    pod:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+    initContainers:
+      permissions:
+        image:
+          repository: busybox
+          tag: "1.37.0"
+        command:
+          - sh
+          - -c
+          - |
+            find /data -mindepth 1 -maxdepth 1 ! -name 'lost+found' -exec chown -R 1000:1000 {} \; || true
+            if [ -d /data/lost+found ]; then
+              chown 1000:1000 /data/lost+found 2>/dev/null || true
+            fi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+            add: [CHOWN]
+          runAsUser: 0
+          runAsGroup: 0
+          runAsNonRoot: false
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 16Mi
     containers:
       main:
         image:
