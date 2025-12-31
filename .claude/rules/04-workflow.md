@@ -1,33 +1,13 @@
 # Workflow
 
-## Linting Layers
-
-| Layer | When | Speed | Purpose |
-|-------|------|-------|---------|
-| **qa-validator** | Before commit | Minutes | Comprehensive MegaLinter + schema/docs verification (shift-left) |
-| **Pre-commit** | At commit | Seconds | Fast syntax guards (yamllint, gitleaks, prettier) |
-| **CI** | Push/PR | Minutes | Safety net, PR gate |
-
-> **Note:** qa-validator runs MegaLinter. No need to run `task dev-env:lint` separately if qa-validator passed.
-
-## Multi-Agent Environment
-
-> **CRITICAL: Multiple agents may work in the same local environment simultaneously.**
-
-- **NEVER use `git add -A` or `git add .`** - Stages other agents' uncommitted work
-- **ALWAYS use `git add <specific-file>`** - Only stage files you modified
-- **Check `git status` before committing** - Verify only your files are staged
-
 ## GitHub Issues
-
-> **All work requires a linked GitHub issue. No exceptions.**
 
 ### Lifecycle
 
 1. Check if issue exists: `gh issue list --repo anthony-spruyt/spruyt-labs --search "keywords"`
 2. Create issue if needed using template fields
 3. Track issue number throughout work
-4. Reference in commits: `Closes #123` or `Ref #123`
+4. Reference in commits: `Ref #123`
 5. Validators post results as issue comments
 6. Close after user confirms: `gh issue close <number> --repo anthony-spruyt/spruyt-labs`
 
@@ -86,6 +66,23 @@ EOF
 - `blocked` - Waiting on upstream fix or external dependency
 - `dep/major`, `dep/minor`, `dep/patch` - Dependency version changes (Renovate)
 
+## Commits
+
+**Conventional commits:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
+
+```text
+type(scope): description
+
+Ref #123
+```
+
+> **Never use `Closes #123` in commits** - GitHub auto-closes issues on push to main.
+> Use `Closes` only in PR descriptions where merge timing is controlled.
+
+Skip qa-validator for trivial changes (typos, single-line fixes, SOPS-only). Pre-commit hooks catch basic issues.
+
+**After push:** Flux webhooks auto-reconcile - no manual `flux reconcile` needed.
+
 ## Pull Requests
 
 Template: `.github/pull_request_template.md`
@@ -108,24 +105,12 @@ EOF
 )"
 ```
 
-## Commits
+## Linting Layers
 
-**Conventional commits:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
+| Layer | When | Speed | Purpose |
+|-------|------|-------|---------|
+| **qa-validator** | Before commit | Minutes | Comprehensive MegaLinter + schema/docs verification (shift-left) |
+| **Pre-commit** | At commit | Seconds | Fast syntax guards (yamllint, gitleaks, prettier) |
+| **CI** | Push/PR | Minutes | Safety net, PR gate |
 
-```text
-type(scope): description
-
-Closes #123
-```
-
-Or for multi-commit work:
-
-```text
-type(scope): description
-
-Ref #123
-```
-
-Skip qa-validator for trivial changes (typos, single-line fixes, SOPS-only). Pre-commit hooks catch basic issues.
-
-**After push:** Flux webhooks auto-reconcile - no manual `flux reconcile` needed.
+> **Note:** qa-validator runs MegaLinter. No need to run `task dev-env:lint` separately if qa-validator passed.

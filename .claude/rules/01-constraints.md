@@ -1,8 +1,29 @@
-# Secrets Handling
+# Constraints
+
+> **Hard rules that must never be violated.**
+
+## Work Requirements
+
+> **All work requires a linked GitHub issue. No exceptions.**
+
+1. Check if issue exists before starting work
+2. Create issue if needed using template fields
+3. Track issue number throughout work
+4. Reference in commits: `Closes #123` or `Ref #123`
+
+## Multi-Agent Environment
+
+> **CRITICAL: Multiple agents may work in the same local environment simultaneously.**
+
+- **NEVER use `git add -A` or `git add .`** - Stages other agents' uncommitted work
+- **ALWAYS use `git add <specific-file>`** - Only stage files you modified
+- **Check `git status` before committing** - Verify only your files are staged
+
+## Secrets Handling
 
 > **If in doubt, DON'T. Ask user before any command that might expose secrets.**
 
-## Forbidden Actions
+### Forbidden Actions
 
 | Action                                      | Why Dangerous                        |
 | ------------------------------------------- | ------------------------------------ |
@@ -15,7 +36,7 @@
 | Reading `*.sops.yaml` files                 | Blocked in settings, don't try       |
 | Reading `talos/clusterconfig/*`             | Contains machine secrets             |
 
-## kubectl Secret Access
+### kubectl Secret Access
 
 The allow list permits `kubectl:*` for operational flexibility, but you MUST NEVER:
 
@@ -37,7 +58,7 @@ The allow list permits `kubectl:*` for operational flexibility, but you MUST NEV
 - `kubectl exec <pod> -- env` - NEVER (may show secret env vars)
 - `kubectl exec <pod> -- printenv` - NEVER
 
-## Environment Variables
+### Environment Variables
 
 **NEVER display environment variable values.** Always check keys first, then decide:
 
@@ -56,7 +77,7 @@ env | cut -d= -f1 | grep -i password   - OK (keys only)
 test -n "${DB_PASSWORD+x}" && echo "DB_PASSWORD is set"  - OK
 ```
 
-## Safe Alternatives
+### Safe Alternatives
 
 | Instead of...                    | Do this...                                         |
 | -------------------------------- | -------------------------------------------------- |
@@ -66,7 +87,7 @@ test -n "${DB_PASSWORD+x}" && echo "DB_PASSWORD is set"  - OK
 | Checking if user exists          | Count entries, don't list names                    |
 | Debugging auth issues            | Check pod logs, not secret contents                |
 
-## SOPS File Handling
+### SOPS File Handling
 
 - **Never decrypt** SOPS files via CLI
 - **Edit pattern**: Use `sops <file>` (opens encrypted editor) - user does this manually
