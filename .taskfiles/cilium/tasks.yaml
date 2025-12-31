@@ -69,6 +69,11 @@ tasks:
     cmds:
       - bash {{ .ciliumScriptsDir }}/connectivity-test.sh
 
+  connectivity-test-cleanup:
+    desc: Clean up leftover namespaces from failed connectivity tests
+    cmds:
+      - bash {{ .ciliumScriptsDir }}/connectivity-test-cleanup.sh
+
   # Buffer check
   buffer-status:
     desc: Check Hubble ring buffer utilization across all nodes
