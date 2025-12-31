@@ -4,7 +4,6 @@
       "mcp__plugin_context7_context7__get-library-docs",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
-
       "Bash(kubectl:*)",
       "Bash(helm:*)",
       "Bash(flux:*)",
@@ -15,7 +14,6 @@
       "Bash(falcoctl:*)",
       "Bash(velero:*)",
       "Bash(task:*)",
-
       "Bash(git add:*)",
       "Bash(git -C /workspaces/spruyt-labs add:*)",
       "Bash(git -C /workspaces/spruyt-labs diff:*)",
@@ -38,9 +36,20 @@
       "Bash(git rev-parse:*)",
       "Bash(git config --get:*)",
       "Bash(git config --list:*)",
-
-      "Bash(gh:*)",
-
+      "Bash(gh api:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue create:*)",
+      "Bash(gh issue comment:*)",
+      "Bash(gh issue reopen:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr checkout:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh search:*)",
       "Bash(do)",
       "Bash(done)",
       "Bash(for file in:*)",
@@ -53,7 +62,6 @@
       "Bash(yq:*)",
       "Bash(sleep:*)",
       "Bash(kill:*)",
-
       "Bash(wc:*)",
       "Bash(sort:*)",
       "Bash(uniq:*)",
@@ -70,7 +78,6 @@
       "Bash(awk:*)",
       "Bash(sed:*)",
       "Bash(tee:*)",
-
       "Bash(curl:*)",
       "Bash(wget:*)",
       "Bash(ping:*)",
@@ -78,7 +85,6 @@
       "Bash(nslookup:*)",
       "Bash(nc:*)",
       "Bash(ss:*)",
-
       "Bash(ps:*)",
       "Bash(df:*)",
       "Bash(du:*)",
@@ -88,13 +94,11 @@
       "Bash(id:*)",
       "Bash(whoami:*)",
       "Bash(hostname:*)",
-
       "Bash(tar:*)",
       "Bash(zip:*)",
       "Bash(unzip:*)",
       "Bash(gzip:*)",
       "Bash(gunzip:*)",
-
       "Bash(make:*)",
       "Bash(npm:*)",
       "Bash(npx:*)",
@@ -104,9 +108,7 @@
       "Bash(cargo:*)",
       "Bash(pre-commit:*)",
       "Bash(renovate-config-validator:*)",
-
       "Bash(mkdir:*)",
-
       "WebFetch(domain:docs.ceph.com)",
       "WebFetch(domain:docs.cilium.io)",
       "WebFetch(domain:docs.goauthentik.io)",
