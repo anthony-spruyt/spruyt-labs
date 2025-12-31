@@ -12,10 +12,11 @@ spec:
     matchLabels:
       app.kubernetes.io/name: spegel
   ingress:
-    # Allow P2P from cluster (other spegel pods) and host (containerd pulling images)
+    # Allow P2P from cluster (other spegel pods), host (local containerd), and remote nodes
     - fromEntities:
         - cluster
         - host
+        - remote-node
       toPorts:
         - ports:
             - port: "5000"
@@ -23,9 +24,11 @@ spec:
             - port: "5001"
               protocol: TCP
   egress:
-    # Allow P2P to any cluster IP (handles stale DHT entries pointing to old pod IPs)
+    # Allow P2P to cluster, local host, and remote nodes (handles stale DHT entries and node-level routing)
     - toEntities:
         - cluster
+        - host
+        - remote-node
       toPorts:
         - ports:
             - port: "5000"
