@@ -44,6 +44,24 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow world HTTPS egress for pypi.org (uv package downloads at startup)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firemerge-allow-world-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: firemerge
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
 # Authentik Outpost Policies (deployed by Authentik to this namespace)
 # =============================================================================
