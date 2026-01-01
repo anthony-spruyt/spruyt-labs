@@ -1,6 +1,17 @@
 # #yaml-language-server: $schema=TODO
 # Default values for kubelet-csr-approver: https://github.com/postfinance/kubelet-csr-approver/blob/main/charts/kubelet-csr-approver/values.yaml
 priorityClassName: critical-infrastructure
+# PSS restricted compliance
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 global:
   clusterDomain: ${CLUSTER_DOMAIN}
 providerRegex: |
