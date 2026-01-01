@@ -2,6 +2,17 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/external-dns/refs/heads/master/charts/external-dns/values.schema.json
 # Documentation: https://github.com/kubernetes-sigs/external-dns/tree/master/charts/external-dns#values
 # Default values: https://github.com/kubernetes-sigs/external-dns/blob/master/charts/external-dns/values.yaml
+# PSS restricted compliance
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 # P99 9m - increase request to match
 resources:
   limits:
