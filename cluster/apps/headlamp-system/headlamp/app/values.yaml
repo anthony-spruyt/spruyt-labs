@@ -14,6 +14,17 @@ securityContext:
   capabilities:
     drop:
       - ALL
+# Writable volumes for readOnlyRootFilesystem compatibility
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: config
+    emptyDir: {}
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: config
+    mountPath: /home/headlamp/.config
 deploymentAnnotations:
   reloader.stakater.com/auto: "true"
 
