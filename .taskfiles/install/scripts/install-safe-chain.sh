@@ -2,4 +2,4 @@
 set -euo pipefail
 
 npm install -g @aikidosec/safe-chain
-safe-chain setup --include-python
+safe-chain setup
