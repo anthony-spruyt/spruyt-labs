@@ -47,6 +47,13 @@ config:
 
 pluginsManager:
   enabled: true
+  # Override readOnlyRootFilesystem for plugin manager - chart doesn't support sidecar-specific volumeMounts
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
   configContent: |
     plugins:
       # renovate: depName=headlamp-plugins/headlamp_flux
