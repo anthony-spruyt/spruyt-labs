@@ -12,6 +12,8 @@ controllers:
         runAsUser: 65534
         runAsGroup: 65534
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -22,6 +24,14 @@ controllers:
     replicas: 1
     containers:
       whoami:
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
         image:
           repository: docker.io/traefik/whoami
           tag: v1.11.0

@@ -12,8 +12,16 @@ controllers:
         runAsUser: 1000
         runAsGroup: 1000
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
     containers:
       main:
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
         image:
           repository: pugmatt/bedrock-connect
           tag: "1.63"
