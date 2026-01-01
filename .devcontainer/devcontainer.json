@@ -3,12 +3,14 @@
   "image": "mcr.microsoft.com/devcontainers/base:jammy",
   "runArgs": ["--env-file", "${localEnv:HOME}/.secrets/.env"],
   "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
-    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind",
+    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
     "source=${localEnv:HOME}/.secrets/.terraform.d,target=/home/vscode/.terraform.d,type=bind",
     "source=${localEnv:HOME}/.secrets,target=/home/vscode/.secrets,type=bind",
     "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind"
   ],
+  "containerEnv": {
+    "SSH_AUTH_SOCK": "/ssh-agent"
+  },
   "features": {
     "ghcr.io/devcontainers-extra/features/sops": {},
     "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
