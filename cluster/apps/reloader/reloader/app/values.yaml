@@ -6,6 +6,17 @@ nameOverride: reloader
 fullnameOverride: reloader
 reloader:
   deployment:
+    # PSS restricted compliance
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
     # Tier 1 critical infrastructure - no CPU limit (impacts all workloads)
     resources:
       limits:
