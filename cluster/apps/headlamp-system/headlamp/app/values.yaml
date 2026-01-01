@@ -3,28 +3,6 @@
 # Headlamp Helm Chart Reference -> https://headlamp.dev/docs/latest/installation/in-cluster/
 # Default values for headlamp: https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml
 priorityClassName: low-priority
-# PSS restricted compliance
-podSecurityContext:
-  runAsNonRoot: true
-  seccompProfile:
-    type: RuntimeDefault
-securityContext:
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop:
-      - ALL
-# Writable volumes for readOnlyRootFilesystem compatibility
-volumes:
-  - name: tmp
-    emptyDir: {}
-  - name: config
-    emptyDir: {}
-volumeMounts:
-  - name: tmp
-    mountPath: /tmp
-  - name: config
-    mountPath: /home/headlamp/.config
 deploymentAnnotations:
   reloader.stakater.com/auto: "true"
 
@@ -47,14 +25,6 @@ config:
 
 pluginsManager:
   enabled: true
-  # Override for plugin manager - node:lts-alpine runs as root, chart doesn't support sidecar-specific volumeMounts
-  securityContext:
-    runAsNonRoot: false
-    allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: false
-    capabilities:
-      drop:
-        - ALL
   configContent: |
     plugins:
       # renovate: depName=headlamp-plugins/headlamp_flux
