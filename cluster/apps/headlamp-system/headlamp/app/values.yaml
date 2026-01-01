@@ -47,8 +47,9 @@ config:
 
 pluginsManager:
   enabled: true
-  # Override readOnlyRootFilesystem for plugin manager - chart doesn't support sidecar-specific volumeMounts
+  # Override for plugin manager - node:lts-alpine runs as root, chart doesn't support sidecar-specific volumeMounts
   securityContext:
+    runAsNonRoot: false
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: false
     capabilities:
