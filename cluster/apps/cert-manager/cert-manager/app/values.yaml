@@ -3,6 +3,11 @@
 # Default values: https://github.com/cert-manager/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml
 global:
   priorityClassName: critical-infrastructure
+# PSS restricted compliance - add seccompProfile (container defaults already have capabilities.drop)
+securityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
 crds:
   enabled: true
 enableCertificateOwnerRef: true # When this flag is enabled, secrets will be automatically removed when the certificate resource is deleted.
@@ -22,6 +27,10 @@ resources:
 
 replicaCount: 2
 webhook:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
   # Critical infrastructure - no CPU limit (CPU is compressible)
   resources:
@@ -35,6 +44,10 @@ webhook:
   podDisruptionBudget:
     enabled: true
 cainjector:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
   # Critical infrastructure - no CPU limit (CPU is compressible)
   resources:
