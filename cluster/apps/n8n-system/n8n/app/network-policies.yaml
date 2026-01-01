@@ -86,11 +86,13 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow HTTP/HTTPS egress for webhooks and external APIs
+# Allow all egress to world - n8n is an integration platform that needs to reach
+# arbitrary external services (SMTP, databases, APIs on non-standard ports, etc.)
+# Security control is at the ingress layer (Traefik + Authentik)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-world-web-egress
+  name: allow-world-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -99,12 +101,6 @@ spec:
   egress:
     - toEntities:
         - world
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
-            - port: "80"
-              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
