@@ -48,6 +48,7 @@
       "Bash(gh pr checkout:*)",
       "Bash(gh pr merge:*)",
       "Bash(gh pr comment:*)",
+      "Bash(gh release list:*)",
       "Bash(gh repo:*)",
       "Bash(gh run:*)",
       "Bash(gh search:*)",

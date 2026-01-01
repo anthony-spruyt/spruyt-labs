@@ -56,12 +56,12 @@ configMaps:
         [
           {
             "name": "Spruyt fam survival",
-            "address": "mc1.lan.spruyt.xyz",
+            "address": "mc1.lan.${EXTERNAL_DOMAIN}",
             "port": 19132
           },
           {
             "name": "Spruyt fam creative",
-            "address": "mc2.lan.spruyt.xyz",
+            "address": "mc2.lan.${EXTERNAL_DOMAIN}",
             "port": 19132
           }
         ]

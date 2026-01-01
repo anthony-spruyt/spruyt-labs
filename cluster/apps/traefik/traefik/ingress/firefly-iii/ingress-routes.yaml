@@ -4,7 +4,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingress-routes-wan-https
+  name: firefly-iii-ingress-routes-wan-https
   namespace: firefly-iii
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
@@ -17,6 +17,8 @@ spec:
     # Uses standalone outpost deployed to local namespace by Authentik
     - kind: Rule
       match: Host(`firefly.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      middlewares:
+        - name: compress
       services:
         - name: ak-outpost-firefly-iii-outpost
           passHostHeader: true
@@ -25,7 +27,7 @@ spec:
     - kind: Rule
       match: Host(`firefly.${EXTERNAL_DOMAIN}`)
       middlewares:
-        - name: authentik-forward-auth
+        - name: authentik-forward-auth-firefly-iii
         - name: compress
       services:
         - name: firefly-iii
@@ -34,3 +36,43 @@ spec:
           port: 80
   tls:
     secretName: "firefly-${EXTERNAL_DOMAIN/./-}-tls"
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Firemerge - LAN-only access with Authentik SSO
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: firemerge-ingress-routes-lan-https
+  namespace: firefly-iii
+  label:
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: firemerge.lan.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # Authentik outpost path - required for SSO auth flow redirects
+    - kind: Rule
+      match: Host(`firemerge.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: compress
+      services:
+        - name: ak-outpost-firemerge-outpost
+          passHostHeader: true
+          port: 9000
+    # Main Firemerge route with LAN whitelist + SSO forward-auth
+    - kind: Rule
+      match: Host(`firemerge.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: authentik-forward-auth-firemerge
+        - name: compress
+      services:
+        - name: firemerge
+          namespace: firefly-iii
+          passHostHeader: true
+          port: 8080
+  tls:
+    secretName: "firemerge-lan-${EXTERNAL_DOMAIN/./-}-tls"

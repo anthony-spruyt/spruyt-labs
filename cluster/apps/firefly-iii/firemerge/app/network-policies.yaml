@@ -1,0 +1,154 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# =============================================================================
+# Firemerge Application Policies
+# =============================================================================
+# DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
+# Allow ingress from Traefik for web UI access
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firemerge-allow-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: firemerge
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Firefly III for API access
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firemerge-allow-firefly-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: firemerge
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: firefly-iii
+            k8s:app.kubernetes.io/name: firefly-iii
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# =============================================================================
+# Authentik Outpost Policies (deployed by Authentik to this namespace)
+# =============================================================================
+# DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
+# Allow Traefik to reach authentik outpost for forward auth
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firemerge-allow-outpost-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+      app.kubernetes.io/name: ak-outpost-firemerge-outpost
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow outpost egress to authentik server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firemerge-allow-outpost-authentik-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+      app.kubernetes.io/name: ak-outpost-firemerge-outpost
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:app.kubernetes.io/name: authentik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow outpost egress to kube-api
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firemerge-allow-outpost-kube-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+      app.kubernetes.io/name: ak-outpost-firemerge-outpost
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow metrics scraping from vmagent
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firemerge-allow-outpost-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+      app.kubernetes.io/name: ak-outpost-firemerge-outpost
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9300"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow world HTTPS for OAuth/OIDC flows and certificate validation
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firemerge-allow-outpost-world-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+      app.kubernetes.io/name: ak-outpost-firemerge-outpost
+  egress:
+    # Outpost needs HTTPS for OAuth/OIDC flows and certificate validation
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

@@ -16,6 +16,9 @@ spec:
     # Authentik outpost path - required for SSO auth flow redirects
     - kind: Rule
       match: Host(`redisinsight.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: compress
       services:
         - name: ak-outpost-redisinsight-outpost
           passHostHeader: true

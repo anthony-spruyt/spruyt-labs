@@ -65,7 +65,7 @@ entries:
         ]
       client_type: confidential
       redirect_uris:
-        - url: https://<app>.lan.spruyt.xyz/oauth/callback
+        - url: https://<app>.lan.${EXTERNAL_DOMAIN}/oauth/callback
           matching_mode: strict
       client_id: !Env <APP>_OAUTH_CLIENT_ID
       client_secret: !Env <APP>_OAUTH_CLIENT_SECRET
@@ -90,7 +90,7 @@ entries:
     attrs:
       name: <App>
       provider: !KeyOf <app>_provider
-      meta_launch_url: https://<app>.lan.spruyt.xyz
+      meta_launch_url: https://<app>.lan.${EXTERNAL_DOMAIN}
 
   # Policy binding to restrict access to group members only
   - model: authentik_policies.policybinding
@@ -275,7 +275,7 @@ This ensures each app can only read its own OAuth credentials.
 Use internal K8s URLs for server-to-server calls:
 
 ```yaml
-auth_url: https://auth.spruyt.xyz/application/o/authorize/ # External (browser)
+auth_url: https://auth.${EXTERNAL_DOMAIN}/application/o/authorize/ # External (browser)
 token_url: http://authentik-server.authentik-system/application/o/token/ # Internal
 api_url: http://authentik-server.authentik-system/application/o/userinfo/ # Internal
 ```

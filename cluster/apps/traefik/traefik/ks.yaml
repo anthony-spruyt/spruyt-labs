@@ -27,6 +27,7 @@ spec:
     - name: traefik
     - name: authentik
     - name: firefly-iii
+    - name: firemerge
     - name: foundryvtt
     - name: headlamp
     - name: n8n

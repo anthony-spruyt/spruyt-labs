@@ -1,0 +1,74 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0-standalone-strict/role-rbac-v1.json
+# Role allowing Authentik to deploy and manage outposts in this namespace
+# Note: This duplicates firefly-iii/app/authentik-outpost-rbac.yaml for the same namespace
+# Kubernetes will reconcile both to the same Role (idempotent)
+# Based on: https://github.com/goauthentik/helm/blob/main/charts/authentik-remote-cluster/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: authentik-outpost-deployer
+  namespace: firefly-iii
+rules:
+  # Core resources for outpost deployment
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - services
+      - configmaps
+    verbs:
+      - get
+      - create
+      - delete
+      - list
+      - patch
+  # Deployment management
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - create
+      - delete
+      - list
+      - patch
+  # Traefik middleware for forward-auth (optional - Authentik can auto-create)
+  - apiGroups:
+      - traefik.io
+    resources:
+      - middlewares
+    verbs:
+      - get
+      - create
+      - delete
+      - list
+      - patch
+  # ServiceMonitor for Prometheus (optional)
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - get
+      - create
+      - delete
+      - list
+      - patch
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0-standalone-strict/rolebinding-rbac-v1.json
+# Bind the role to Authentik's service account (cross-namespace)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: authentik-outpost-deployer
+  namespace: firefly-iii
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: authentik-outpost-deployer
+subjects:
+  - kind: ServiceAccount
+    name: authentik
+    namespace: authentik-system

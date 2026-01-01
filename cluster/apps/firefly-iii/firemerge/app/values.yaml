@@ -1,0 +1,68 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+# low-priority tier: Non-critical utility app (per docs/workload-classification.md)
+# CPU limit: 2x request per low-priority policy
+defaultPodOptions:
+  priorityClassName: low-priority
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  firemerge:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: ghcr.io/anthony-spruyt/firemerge
+          tag: v0.5.2
+          pullPolicy: IfNotPresent
+        env:
+          # Firefly III API connection
+          FIREFLY_BASE_URL: http://firefly-iii.firefly-iii.svc.cluster.local
+          FIREFLY_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: firemerge-secrets
+                key: FIREFLY_TOKEN
+        # low-priority - 2x CPU limit
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 20m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        # Probes: HTTP on Firemerge health endpoint
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: &port 8080
+              initialDelaySeconds: 10
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness: *probes
+service:
+  app:
+    controller: firemerge
+    ports:
+      http:
+        port: *port

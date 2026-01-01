@@ -39,5 +39,6 @@ configMapGenerator:
       - blueprints/redisinsight-sso.yaml
       - blueprints/flux-sso.yaml
       - blueprints/firefly-iii-sso.yaml
+      - blueprints/firemerge-sso.yaml
 configurations:
   - ./kustomizeconfig.yaml

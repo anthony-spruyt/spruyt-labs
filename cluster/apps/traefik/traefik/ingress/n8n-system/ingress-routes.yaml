@@ -17,6 +17,8 @@ spec:
     # Uses standalone outpost deployed to local namespace by Authentik
     - kind: Rule
       match: Host(`n8n.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      middlewares:
+        - name: compress
       services:
         - name: ak-outpost-n8n-outpost
           passHostHeader: true

@@ -1,0 +1,72 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Firemerge SSO
+entries:
+  # Reuse existing "Firefly III Users" group (defined in firefly-iii-sso.yaml)
+  # Users in this group can access both Firefly III and Firemerge
+
+  - id: firemerge_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: Firemerge
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://firemerge.lan.${EXTERNAL_DOMAIN}
+      property_mappings:
+        - !Find [
+            authentik_providers_oauth2.scopemapping,
+            [managed, "goauthentik.io/providers/proxy/scope-proxy"],
+          ]
+
+  - id: firemerge_application
+    model: authentik_core.application
+    identifiers:
+      slug: firemerge
+    attrs:
+      name: Firemerge
+      provider: !KeyOf firemerge_provider
+      meta_launch_url: https://firemerge.lan.${EXTERNAL_DOMAIN}
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/firefly.png
+
+  # Policy binding to restrict access to Firefly III Users group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf firemerge_application
+      order: 0
+    attrs:
+      group: !Find [authentik_core.group, [name, "Firefly III Users"]]
+      negate: false
+      enabled: true
+      timeout: 30
+
+  # Standalone outpost deployed to firefly-iii namespace
+  # Requires RBAC: Role/RoleBinding in firefly-iii granting authentik SA permissions
+  - id: firemerge_outpost
+    model: authentik_outposts.outpost
+    identifiers:
+      name: Firemerge Outpost
+    attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: firefly-iii
+      providers:
+        - !KeyOf firemerge_provider
