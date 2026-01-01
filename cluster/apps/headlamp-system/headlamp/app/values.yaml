@@ -3,6 +3,17 @@
 # Headlamp Helm Chart Reference -> https://headlamp.dev/docs/latest/installation/in-cluster/
 # Default values for headlamp: https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml
 priorityClassName: low-priority
+# PSS restricted compliance
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 deploymentAnnotations:
   reloader.stakater.com/auto: "true"
 
