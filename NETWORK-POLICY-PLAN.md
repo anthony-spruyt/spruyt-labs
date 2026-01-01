@@ -31,8 +31,6 @@
 - **nut-system** (1 pod) ✓
   - DNS egress, NUT TCP 3493 ingress (world), metrics TCP 9199 ingress (vmagent)
 
-## Remaining (6 namespaces need policies)
-
 ### Phase 5: System Pods ✓
 - **irq-balance** (6 pods) ✓ - Privileged system daemon, deny-all policy (defense-in-depth)
 - **spegel** (6 pods) ✓ - Image cache (has CNPs: metrics, p2p, https egress)
@@ -48,6 +46,8 @@
 - **qdrant-system** (1 pod) ✓ - Vector DB (traefik, n8n, internal-cluster, metrics)
 - **cnpg-system** (2 pods) ✓ - Postgres operator (kube-api, webhook, cluster comms, barman, metrics)
 - **technitium** (2 pods) ✓ - DNS server (fromEntities: all for DNS ingress, world egress for recursion/blocklists, catalog zone sync)
+
+## Remaining (6 namespaces need policies)
 
 ### Phase 8: Security (12 pods total)
 - **kyverno** (4 pods) - Policy engine (kube-api, webhook ingress)
