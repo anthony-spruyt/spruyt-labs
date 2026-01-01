@@ -66,3 +66,8 @@ service:
     ports:
       http:
         port: *port
+persistence:
+  cache:
+    type: emptyDir
+    globalMounts:
+      - path: /.cache
