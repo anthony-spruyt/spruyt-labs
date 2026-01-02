@@ -94,6 +94,7 @@ service:
     externalTrafficPolicy: Local
     annotations:
       lbipam.cilium.io/ips: "${TECHNITIUM_IP4}"
+      lbipam.cilium.io/sharing-key: technitium
     ports:
       dns:
         port: 53
@@ -126,6 +127,7 @@ service:
     externalTrafficPolicy: Local
     annotations:
       lbipam.cilium.io/ips: "${TECHNITIUM_IP4}"
+      lbipam.cilium.io/sharing-key: technitium
     ports:
       dns:
         port: 53
