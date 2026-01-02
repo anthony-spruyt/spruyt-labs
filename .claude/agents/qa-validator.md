@@ -311,7 +311,39 @@ Beyond syntax, verify configurations will actually work:
 - Verify naming conventions match existing resources
 - Check for potential conflicts with existing resources
 
-### 11. Solution Sanity Check (MANDATORY)
+### 11. Internal Documentation Compliance (MANDATORY)
+
+**For every changed file, locate and review related README.md files:**
+
+```bash
+# Find READMEs in same directory, parent directories, and app root
+# Example: change to cluster/apps/authentik-system/authentik/app/values.yaml
+# Check: cluster/apps/authentik-system/authentik/README.md
+#        cluster/apps/authentik-system/README.md
+```
+
+**Validation workflow:**
+1. For each changed file, find README.md in same dir or parent dirs (up to app root)
+2. Read the README and identify:
+   - Documented procedures (e.g., "When adding X, also update Y")
+   - Multi-file update requirements
+   - Cross-reference rules between files
+3. Verify the changes comply with ALL documented requirements
+4. If README documents a multi-step procedure, verify ALL steps were completed
+
+**Common patterns to watch for:**
+- "Update BOTH files" / "Add to X AND Y"
+- "When adding... also add..."
+- "Must match" / "Keep in sync"
+- ConfigMap keys vs volume mount items
+- Resource references between files
+
+**If documentation is unclear or not followed:**
+- BLOCKED with specific README reference (file path + line numbers)
+- Quote the relevant documentation section
+- Show exactly what was missed
+
+### 12. Solution Sanity Check (MANDATORY)
 
 **Before approving, critically evaluate the approach:**
 
@@ -393,7 +425,26 @@ Checks Skipped: [list of skipped checks based on type, or "None"]
 | Docs Verification | ✓/✗/SKIPPED | Context7 query, upstream values verified |
 | Dependencies | ✓/✗/SKIPPED | dependsOn, references |
 | Security | ✓/✗/SKIPPED | Secrets, SOPS |
+| Internal Docs | ✓/✗/SKIPPED | README compliance, multi-file procedures |
 | Sanity Check | ✓/⚠/✗ | Simplest solution, existing patterns, scope |
+
+### Internal Documentation Compliance
+READMEs checked:
+- path/to/README.md
+
+Documented procedures found:
+- [procedure description] → ✓ Followed / ✗ NOT followed
+
+Multi-file requirements:
+- [requirement] → Files updated: [list] → ✓ Complete / ✗ Incomplete
+
+### Solution Sanity Check
+| Question | Assessment |
+|----------|------------|
+| Simplest solution? | ✓ Yes / ⚠ Could be simpler: [suggestion] |
+| Built-in alternative? | ✓ None found / ⚠ Consider: [alternative] |
+| Matches existing patterns? | ✓ Yes / ⚠ Differs from [app]: [how] |
+| Scope appropriate? | ✓ Yes / ⚠ Scope creep: [files outside goal] |
 
 ### Issues Found
 1. [CRITICAL/WARNING/INFO] Description of issue
