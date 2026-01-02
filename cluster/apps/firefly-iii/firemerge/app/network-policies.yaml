@@ -25,6 +25,7 @@ spec:
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to Firefly III for API access
+# Note: Uses container port 8080, not service port 80, because CNP toEndpoints targets pods directly
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -40,7 +41,7 @@ spec:
             k8s:app.kubernetes.io/name: firefly-iii
       toPorts:
         - ports:
-            - port: "80"
+            - port: "8080"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json

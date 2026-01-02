@@ -25,6 +25,27 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Firemerge for API access
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-firemerge-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: firefly-iii
+      app.kubernetes.io/name: firefly-iii
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: firefly-iii
+            k8s:app.kubernetes.io/name: firemerge
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow cronjob pods to reach the Firefly service for recurring transaction processing
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
