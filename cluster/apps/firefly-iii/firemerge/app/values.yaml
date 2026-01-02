@@ -34,14 +34,14 @@ controllers:
               secretKeyRef:
                 name: firemerge-secrets
                 key: FIREFLY_TOKEN
-        # low-priority - 2x CPU limit
+        # low-priority tier with higher limits for startup build
         resources:
           requests:
-            cpu: 10m
-            memory: 64Mi
+            cpu: 50m
+            memory: 128Mi
           limits:
-            cpu: 20m
-            memory: 256Mi
+            cpu: 500m
+            memory: 512Mi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
