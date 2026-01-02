@@ -5,6 +5,27 @@
 controllers:
   fstrim:
     type: daemonset
+    initContainers:
+      tune-rss:
+        image:
+          repository: nicolaka/netshoot
+          tag: v0.13
+          pullPolicy: IfNotPresent
+        command:
+          - sh
+          - -c
+          - |
+            echo "Configuring RSS for enp89s0..."
+            ethtool -X enp89s0 equal 4 && echo "RSS configured successfully" || echo "RSS configuration failed (may not be supported)"
+        # One-time ethtool command - minimal resources
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 32Mi
+        securityContext:
+          privileged: true
     containers:
       app:
         image:
