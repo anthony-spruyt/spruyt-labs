@@ -110,6 +110,21 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Kopia-maintain jobs: kube-apiserver access to retrieve backup repository info
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kopia-job-allow-kube-apiserver-egress
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: velero.io/repo-name
+        operator: Exists
+  egress:
+    - toEntities:
+        - kube-apiserver
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Kopia-maintain jobs: HTTPS egress to AWS S3 for repository maintenance
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
