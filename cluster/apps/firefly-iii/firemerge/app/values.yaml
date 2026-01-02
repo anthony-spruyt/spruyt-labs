@@ -48,16 +48,26 @@ controllers:
           capabilities:
             drop:
               - ALL
-        # Probes: HTTP on Firemerge health endpoint
+        # Probes: startupProbe for long build, then liveness/readiness
         probes:
-          liveness: &probes
+          startup:
             enabled: true
             custom: true
             spec:
               httpGet:
                 path: /
                 port: &port 8080
-              initialDelaySeconds: 120
+              # Allow up to 10 min for startup (30s * 20 = 600s)
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 20
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: *port
               periodSeconds: 30
               timeoutSeconds: 5
               failureThreshold: 3
