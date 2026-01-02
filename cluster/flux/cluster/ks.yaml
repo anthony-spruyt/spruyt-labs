@@ -6,7 +6,9 @@ metadata:
   name: cluster-meta
   namespace: flux-system
 spec:
-  interval: 1h
+  # 4h interval - webhooks trigger immediate reconciliation on changes
+  # Ref: https://github.com/anthony-spruyt/spruyt-labs/issues/233
+  interval: 4h
   path: ./cluster/flux/meta
   prune: true
   sourceRef:
@@ -58,7 +60,9 @@ metadata:
 spec:
   dependsOn:
     - name: cluster-meta
-  interval: 1h
+  # 4h interval - webhooks trigger immediate reconciliation on changes
+  # Ref: https://github.com/anthony-spruyt/spruyt-labs/issues/233
+  interval: 4h
   path: ./cluster/apps
   prune: true
   sourceRef:
@@ -73,13 +77,15 @@ spec:
         name: cluster-secrets
   patches:
     # Add defaults to all Kustomizations
+    # 4h interval - webhooks trigger immediate reconciliation on changes
+    # Ref: https://github.com/anthony-spruyt/spruyt-labs/issues/233
     - patch: |-
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         metadata:
           name: not-used
         spec:
-          interval: 1h
+          interval: 4h
           sourceRef:
             kind: GitRepository
             name: flux-system
@@ -121,6 +127,8 @@ spec:
         kind: Kustomization
         labelSelector: substitution.flux.home.arpa/disabled notin (true)
     # Add defaults to all HelmRelease Kustomizations
+    # 4h interval - webhooks trigger immediate reconciliation on changes
+    # Ref: https://github.com/anthony-spruyt/spruyt-labs/issues/233
     - patch: |-
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
@@ -134,7 +142,7 @@ spec:
                 metadata:
                   name: not-used
                 spec:
-                  interval: 1h
+                  interval: 4h
                   install:
                     crds: CreateReplace
                     strategy:

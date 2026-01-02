@@ -56,7 +56,19 @@ instance:
             value: --requeue-dependency=5s
         target:
           kind: Deployment
-          name: (kustomize-controller|helm-controller|source-controller)
+          name: (kustomize-controller|source-controller)
+      # Reduce helm-controller concurrency to mitigate CPU spikes
+      # Ref: https://github.com/anthony-spruyt/spruyt-labs/issues/233
+      - patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --concurrent=5
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --requeue-dependency=5s
+        target:
+          kind: Deployment
+          name: helm-controller
       # Enable in-memory kustomize builds
       # Ref: https://fluxcd.io/flux/installation/configuration/vertical-scaling/#enable-in-memory-kustomize-builds
       - patch: |
@@ -188,3 +200,25 @@ instance:
         target:
           kind: Deployment
           name: source-controller
+      # Add pod anti-affinity to spread Flux controllers across nodes
+      # Ref: https://github.com/anthony-spruyt/spruyt-labs/issues/233
+      - patch: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: all
+          spec:
+            template:
+              spec:
+                affinity:
+                  podAntiAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                      - weight: 100
+                        podAffinityTerm:
+                          labelSelector:
+                            matchLabels:
+                              app.kubernetes.io/part-of: flux
+                          topologyKey: kubernetes.io/hostname
+        target:
+          kind: Deployment
+          name: (helm-controller|kustomize-controller|source-controller|notification-controller)
