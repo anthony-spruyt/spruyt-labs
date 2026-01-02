@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./velero-secret.sops.yaml
   - ./release.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: velero-values
     namespace: velero
