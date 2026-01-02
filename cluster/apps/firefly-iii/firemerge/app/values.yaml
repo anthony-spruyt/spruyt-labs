@@ -27,6 +27,7 @@ controllers:
         env:
           # Python/uv environment - use writable path for venv
           UV_PROJECT_ENVIRONMENT: /tmp/venv
+          UV_LINK_MODE: copy
           # Firefly III API connection
           FIREFLY_BASE_URL: http://firefly-iii.firefly-iii.svc.cluster.local
           FIREFLY_TOKEN:
