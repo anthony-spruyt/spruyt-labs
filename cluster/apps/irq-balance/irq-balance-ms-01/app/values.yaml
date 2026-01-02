@@ -9,7 +9,7 @@ controllers:
       tune-rss:
         image:
           repository: nicolaka/netshoot
-          tag: v0.13
+          tag: v0.14
           pullPolicy: IfNotPresent
         command:
           - sh
