@@ -161,6 +161,8 @@ global:
             path: flux-sso.yaml
           - key: firefly-iii-sso.yaml
             path: firefly-iii-sso.yaml
+          - key: firemerge-sso.yaml
+            path: firemerge-sso.yaml
 
 authentik:
   log_level: info
