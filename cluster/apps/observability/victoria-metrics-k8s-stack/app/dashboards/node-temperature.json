@@ -65,7 +65,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "id": 1,
       "options": {
         "legend": {
@@ -80,17 +80,76 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum by (instance) (irate(node_cpu_package_throttles_total[2m]))",
-          "legendFormat": "{{ instance }} (current)",
+          "legendFormat": "{{ instance }}",
           "refId": "A"
+        }
+      ],
+      "title": "CPU Throttling - Current (Intel only)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "5-minute average of CPU thermal throttle events. Provides historical context and trend visibility.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.1 },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "unit": "events/sec"
         },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": ["min", "mean", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum by (instance) (rate(node_cpu_package_throttles_total[5m]))",
-          "legendFormat": "{{ instance }} (5m avg)",
-          "refId": "B"
+          "legendFormat": "{{ instance }}",
+          "refId": "A"
         }
       ],
-      "title": "CPU Thermal Throttling (Intel only) - Current vs 5min Avg",
+      "title": "CPU Throttling - 5min Average (Intel only)",
       "type": "timeseries"
     },
     {
