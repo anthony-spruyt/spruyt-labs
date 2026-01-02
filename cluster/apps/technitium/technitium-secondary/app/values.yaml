@@ -86,55 +86,58 @@ controllers:
             exec:
               command: ["sh", "-c", "sleep 5"]
 service:
-  dns:
+  # TCP service - DNS, DoT, DoH, web UI
+  tcp:
     controller: *name
     type: LoadBalancer
     externalTrafficPolicy: Local
     annotations:
       lbipam.cilium.io/ips: "${TECHNITIUM_SECONDARY_IP4}"
     ports:
-      dns-tcp:
-        enabled: true
+      dns:
         port: 53
         protocol: TCP
-      dns-udp:
-        enabled: true
-        port: 53
-        protocol: UDP
       dns-over-http:
-        enabled: true
         port: 80
         protocol: TCP
       dns-over-tls:
-        enabled: true
         port: 853
         protocol: TCP
-      dns-over-quic:
-        enabled: true
-        port: 853
-        protocol: UDP
       dns-over-https:
-        enabled: true
         port: 443
         protocol: TCP
-      dns-over-http3:
-        enabled: true
-        port: 443
-        protocol: UDP
-      dns-proxy-tcp:
-        enabled: true
+      dns-proxy:
         port: 538
         protocol: TCP
-      dns-proxy-udp:
-        enabled: true
-        port: 538
-        protocol: UDP
       api-http:
         port: 5380
-        protocol: HTTP
+        protocol: TCP
       api-https:
         port: 53443
-        protocol: HTTPS
+        protocol: TCP
+    ipFamilyPolicy: SingleStack
+    ipFamilies:
+      - IPv4
+  # UDP service - DNS, DoQ, HTTP/3
+  udp:
+    controller: *name
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+    annotations:
+      lbipam.cilium.io/ips: "${TECHNITIUM_SECONDARY_IP4}"
+    ports:
+      dns:
+        port: 53
+        protocol: UDP
+      dns-over-quic:
+        port: 853
+        protocol: UDP
+      dns-over-http3:
+        port: 443
+        protocol: UDP
+      dns-proxy:
+        port: 538
+        protocol: UDP
       api-http3:
         port: 53443
         protocol: UDP
