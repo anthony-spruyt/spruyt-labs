@@ -100,11 +100,12 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Falco DaemonSet: HTTPS egress to download rules and artifacts
+# Falco DaemonSet: HTTP/HTTPS egress to download rules and artifacts
+# Some registries attempt HTTP before HTTPS, so both ports are allowed
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: falco-allow-world-https-egress
+  name: falco-allow-world-http-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -114,5 +115,7 @@ spec:
         - world
       toPorts:
         - ports:
+            - port: "80"
+              protocol: TCP
             - port: "443"
               protocol: TCP

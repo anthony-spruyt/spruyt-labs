@@ -37,12 +37,13 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow kube-apiserver (watches nodes/pods) and world HTTPS (registry pulls)
+# Allow kube-apiserver (watches nodes/pods) and world HTTP/HTTPS (registry pulls)
 # Note: DNS egress handled by cluster-wide allow-kube-dns-egress policy
+# Some registries attempt HTTP before HTTPS, so both ports are allowed
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-apiserver-and-https-egress
+  name: allow-apiserver-and-http-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -54,6 +55,8 @@ spec:
         - world
       toPorts:
         - ports:
+            - port: "80"
+              protocol: TCP
             - port: "443"
               protocol: TCP
 ---
