@@ -57,7 +57,7 @@ spec:
               protocol: UDP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow DNS recursion/forwarding and HTTPS for blocklist downloads
+# Allow DNS recursion/forwarding and HTTP/HTTPS for blocklist downloads
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -75,9 +75,11 @@ spec:
               protocol: TCP
             - port: "53"
               protocol: UDP
-            - port: "853"
+            - port: "80"
               protocol: TCP
             - port: "443"
+              protocol: TCP
+            - port: "853"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
