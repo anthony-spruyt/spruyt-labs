@@ -394,7 +394,6 @@ nodes:
     patches:
       - *patchThunderbolt
       - *patchNetworking
-
       # - *patchCpuBoost
       # Node-specific: hwp_dynamic_boost only, powersave governor due to cooling defect
       - |-
