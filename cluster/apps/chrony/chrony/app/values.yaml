@@ -27,6 +27,7 @@ controllers:
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
+            add: [CHOWN]
         image:
           repository: ghcr.io/anthony-spruyt/chrony
           tag: "0.1.0"
