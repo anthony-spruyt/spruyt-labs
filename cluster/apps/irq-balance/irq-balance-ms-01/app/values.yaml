@@ -49,6 +49,7 @@ defaultPodOptions:
   priorityClassName: critical-infrastructure
   hostIPC: true
   hostPID: true
+  hostNetwork: true
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
