@@ -56,5 +56,5 @@ spec:
         - world
       toPorts:
         - ports:
-            - port: "123"
+            - port: "1123"
               protocol: UDP

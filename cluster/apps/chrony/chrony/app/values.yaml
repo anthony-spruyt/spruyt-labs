@@ -24,21 +24,19 @@ controllers:
     containers:
       chrony:
         securityContext:
-          runAsUser: 0
-          runAsGroup: 0
-          runAsNonRoot: false
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
-            add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID, NET_BIND_SERVICE]
         image:
-          repository: dockurr/chrony
-          tag: 4.8
+          repository: ghcr.io/anthony-spruyt/chrony
+          tag: "0.1.0"
           pullPolicy: IfNotPresent
         ports:
-          - containerPort: 123
+          - containerPort: 1123
             protocol: UDP
         env:
+          - name: NTP_PORT
+            value: "1123"
           - name: "NTP_SERVERS"
             value: "time.cloudflare.com"
           - name: "TZ"
@@ -99,4 +97,5 @@ service:
     ports:
       ntp:
         port: 123
+        targetPort: 1123
         protocol: UDP
