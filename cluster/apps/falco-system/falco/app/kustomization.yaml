@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./exceptions-configmap.yaml
   - ./release.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: falco-values
     namespace: falco-system

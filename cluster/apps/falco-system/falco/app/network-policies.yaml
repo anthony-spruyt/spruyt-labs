@@ -1,0 +1,100 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Falco DaemonSet: send alerts to falcosidekick
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: falco-allow-sidekick-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: falco
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: falco-system
+            k8s:app.kubernetes.io/name: falcosidekick
+      toPorts:
+        - ports:
+            - port: "2801"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Falco DaemonSet: metrics ingress from vmagent
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: falco-allow-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: falco
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "8765"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Falcosidekick: receive alerts from falco
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: falcosidekick-allow-falco-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: falcosidekick
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: falco-system
+            k8s:app.kubernetes.io/name: falco
+      toPorts:
+        - ports:
+            - port: "2801"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Falcosidekick: forward logs to VictoriaLogs
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: falcosidekick-allow-victorialogs-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: falcosidekick
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: victoria-logs-single
+      toPorts:
+        - ports:
+            - port: "9428"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Falcosidekick: metrics ingress from vmagent
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: falcosidekick-allow-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: falcosidekick
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "2801"
+              protocol: TCP
