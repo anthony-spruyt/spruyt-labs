@@ -61,6 +61,17 @@ spec:
         - name: ak-outpost-firemerge-outpost
           passHostHeader: true
           port: 9000
+    # Static assets - skip auth to avoid CORS issues with webmanifest
+    - kind: Rule
+      match: Host(`firemerge.lan.${EXTERNAL_DOMAIN}`) && (Path(`/site.webmanifest`) || Path(`/favicon.ico`))
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: compress
+      services:
+        - name: firemerge
+          namespace: firefly-iii
+          passHostHeader: true
+          port: 8080
     # Main Firemerge route with LAN whitelist + SSO forward-auth
     - kind: Rule
       match: Host(`firemerge.lan.${EXTERNAL_DOMAIN}`)
