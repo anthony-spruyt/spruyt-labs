@@ -98,3 +98,21 @@ spec:
         - ports:
             - port: "2801"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Falco DaemonSet: HTTPS egress to download rules and artifacts
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: falco-allow-world-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: falco
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
