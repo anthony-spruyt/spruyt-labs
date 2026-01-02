@@ -394,7 +394,16 @@ nodes:
     patches:
       - *patchThunderbolt
       - *patchNetworking
-      - *patchCpuBoost
+
+      # - *patchCpuBoost
+      # Node-specific: hwp_dynamic_boost only, powersave governor due to cooling defect
+      - |-
+        machine:
+          sysfs:
+            devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1
+          udev:
+            rules:
+              - SUBSYSTEM=="cpu", ATTR{cpufreq/scaling_governor}="powersave"
       - *patchGpuPassthrough
       - *patchThunderboltAuth
       - *patchTxQueue
