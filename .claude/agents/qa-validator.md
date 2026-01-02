@@ -313,23 +313,18 @@ Beyond syntax, verify configurations will actually work:
 
 ### 11. Internal Documentation Compliance (MANDATORY)
 
-**For every changed file, locate and review related README.md files:**
+**For every changed file, locate and review related README.md files in same dir and parent dirs up to app root.**
 
-```bash
-# Find READMEs in same directory, parent directories, and app root
-# Example: change to cluster/apps/authentik-system/authentik/app/values.yaml
-# Check: cluster/apps/authentik-system/authentik/README.md
-#        cluster/apps/authentik-system/README.md
-```
+Example: change to `cluster/apps/authentik-system/authentik/app/values.yaml`
+→ Check: `cluster/apps/authentik-system/authentik/README.md`
 
 **Validation workflow:**
-1. For each changed file, find README.md in same dir or parent dirs (up to app root)
-2. Read the README and identify:
+1. Read each relevant README and identify:
    - Documented procedures (e.g., "When adding X, also update Y")
    - Multi-file update requirements
    - Cross-reference rules between files
-3. Verify the changes comply with ALL documented requirements
-4. If README documents a multi-step procedure, verify ALL steps were completed
+2. Verify the changes comply with ALL documented requirements
+3. If README documents a multi-step procedure, verify ALL steps were completed
 
 **Common patterns to watch for:**
 - "Update BOTH files" / "Add to X AND Y"
@@ -439,12 +434,9 @@ Multi-file requirements:
 - [requirement] → Files updated: [list] → ✓ Complete / ✗ Incomplete
 
 ### Solution Sanity Check
-| Question | Assessment |
-|----------|------------|
-| Simplest solution? | ✓ Yes / ⚠ Could be simpler: [suggestion] |
-| Built-in alternative? | ✓ None found / ⚠ Consider: [alternative] |
-| Matches existing patterns? | ✓ Yes / ⚠ Differs from [app]: [how] |
-| Scope appropriate? | ✓ Yes / ⚠ Scope creep: [files outside goal] |
+Assessment: ✓ Appropriate / ⚠ Concerns noted
+
+[If ⚠, list specific concerns from Step 12 checks with suggestions]
 
 ### Issues Found
 1. [CRITICAL/WARNING/INFO] Description of issue
