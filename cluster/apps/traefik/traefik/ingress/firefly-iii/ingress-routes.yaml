@@ -44,7 +44,6 @@ kind: IngressRoute
 metadata:
   name: firemerge-ingress-routes-lan-https
   namespace: firefly-iii
-  label:
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
     external-dns.alpha.kubernetes.io/hostname: firemerge.lan.${EXTERNAL_DOMAIN}
