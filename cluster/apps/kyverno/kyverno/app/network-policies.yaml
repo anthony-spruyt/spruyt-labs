@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# All kyverno controllers need kube-apiserver access
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-apiserver-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: kyverno
+  egress:
+    - toEntities:
+        - kube-apiserver
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Webhook ingress for admission-controller and cleanup-controller
+# kube-apiserver calls these webhooks on port 9443
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-webhook-ingress
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/instance
+        operator: In
+        values: [kyverno]
+      - key: app.kubernetes.io/component
+        operator: In
+        values: [admission-controller, cleanup-controller]
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Metrics ingress from vmagent for all controllers
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: kyverno
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
