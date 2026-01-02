@@ -55,9 +55,13 @@
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.1 },
+              { "color": "red", "value": 1 }
+            ]
           },
-          "unit": "short"
+          "unit": "events/sec"
         },
         "overrides": []
       },
@@ -75,12 +79,18 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (instance) (rate(node_cpu_package_throttles_total[5m]))",
-          "legendFormat": "{{ instance }}",
+          "expr": "sum by (instance) (irate(node_cpu_package_throttles_total[2m]))",
+          "legendFormat": "{{ instance }} (current)",
           "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum by (instance) (rate(node_cpu_package_throttles_total[5m]))",
+          "legendFormat": "{{ instance }} (5m avg)",
+          "refId": "B"
         }
       ],
-      "title": "CPU Thermal Throttling (Intel only)",
+      "title": "CPU Thermal Throttling (Intel only) - Current vs 5min Avg",
       "type": "timeseries"
     },
     {
