@@ -123,3 +123,11 @@ persistence:
           - path: /docker/brc/config.yml
             readOnly: true
             subPath: config.yml
+  # Player data storage - BedrockConnect writes player preferences here
+  players:
+    enabled: true
+    type: emptyDir
+    advancedMounts:
+      main:
+        main:
+          - path: /players
