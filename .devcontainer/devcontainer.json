@@ -3,7 +3,7 @@
   "image": "mcr.microsoft.com/devcontainers/base:jammy",
   "runArgs": ["--env-file", "${localEnv:HOME}/.secrets/.env"],
   "mounts": [
-    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
+    "source=${localEnv:HOME}/.ssh/agent.sock,target=/ssh-agent,type=bind",
     "source=${localEnv:HOME}/.secrets/.terraform.d,target=/home/vscode/.terraform.d,type=bind,readonly",
     "source=${localEnv:HOME}/.secrets,target=/home/vscode/.secrets,type=bind,readonly",
     "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
@@ -25,6 +25,7 @@
     "ghcr.io/devcontainers/features/node": {},
     "ghcr.io/devcontainers/features/python": {}
   },
+  "initializeCommand": "bash -c 'if [ ! -S \"$HOME/.ssh/agent.sock\" ]; then echo \"❌ ERROR: SSH agent socket not found at $HOME/.ssh/agent.sock\"; echo \"📖 Please see DEVELOPMENT.md SSH Agent Setup for configuration instructions.\"; exit 1; fi'",
   "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./.devcontainer/post-create.sh\"",
   "customizations": {
     "vscode": {
