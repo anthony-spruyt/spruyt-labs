@@ -55,7 +55,7 @@ configMaps:
       custom_servers.json: |-
         [
           {
-            "name": "Spruyt 1",
+            "name": "Better on Bedrock",
             "address": "minecraft.${EXTERNAL_DOMAIN}",
             "port": 19132
           },
