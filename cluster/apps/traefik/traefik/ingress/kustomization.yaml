@@ -9,6 +9,7 @@ resources:
   - ./foundryvtt
   - ./headlamp-system
   - ./kube-system
+  - ./minecraft
   - ./n8n-system
   - ./observability
   - ./qdrant-system

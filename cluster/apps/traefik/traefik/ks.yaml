@@ -26,6 +26,7 @@ spec:
   dependsOn:
     - name: traefik
     - name: authentik
+    - name: crafty-controller
     - name: firefly-iii
     - name: firemerge
     - name: foundryvtt

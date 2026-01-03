@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+# Crafty proxy config: https://docs.craftycontrol.com/pages/getting-started/proxies/#__tabbed_1_5
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: crafty-controller-lan-https
+  namespace: minecraft
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: crafty.lan.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`crafty.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: https-proto-header
+        - name: compress
+      services:
+        - name: crafty-controller-webui
+          namespace: minecraft
+          passHostHeader: true
+          port: 8443
+          # Crafty serves HTTPS with self-signed cert
+          scheme: https
+          serversTransport: insecure-backend
+  tls:
+    secretName: "crafty-lan-${EXTERNAL_DOMAIN/./-}-tls"

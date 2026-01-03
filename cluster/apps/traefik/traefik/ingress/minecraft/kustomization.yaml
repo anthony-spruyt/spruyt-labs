@@ -1,0 +1,40 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base/compress.yaml
+  - ../base/https-proto-header.yaml
+  - ../base/insecure-backend.yaml
+  - ../base/lan-ip-whitelist.yaml
+  - ./certificates.yaml
+  - ./ingress-routes.yaml
+patches:
+  - target:
+      kind: Middleware
+      name: compress
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: minecraft
+  - target:
+      kind: Middleware
+      name: https-proto-header
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: minecraft
+  - target:
+      kind: Middleware
+      name: lan-ip-whitelist
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: minecraft
+  - target:
+      kind: ServersTransport
+      name: insecure-backend
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: minecraft

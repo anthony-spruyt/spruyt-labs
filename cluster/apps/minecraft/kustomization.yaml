@@ -6,3 +6,4 @@ resources:
   - ./namespace.yaml
   - ./minecraft-bedrock/ks.yaml
   - ./bedrock-connect/ks.yaml
+  - ./crafty-controller/ks.yaml

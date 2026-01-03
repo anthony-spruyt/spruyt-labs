@@ -1,0 +1,155 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.5.0/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+controllers:
+  crafty:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    replicas: 1
+    type: statefulset
+    pod:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+    containers:
+      app:
+        image:
+          repository: arcadiatechnology/crafty-4
+          tag: "4.7.0"
+          pullPolicy: IfNotPresent
+        env:
+          TZ: ${TIMEZONE}
+        # Gaming workload - bursty during active games
+        # Low request for idle, high limit for gaming sessions
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          # Crafty writes to app directory, cannot use readOnlyRootFilesystem
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+        ports:
+          - name: https
+            containerPort: 8443
+            protocol: TCP
+          # Bedrock servers (19132-19139) - pre-defined so kids don't need to edit config
+          - name: bedrock-1
+            containerPort: 19132
+            protocol: UDP
+          - name: bedrock-2
+            containerPort: 19133
+            protocol: UDP
+          - name: bedrock-3
+            containerPort: 19134
+            protocol: UDP
+          - name: bedrock-4
+            containerPort: 19135
+            protocol: UDP
+          - name: bedrock-5
+            containerPort: 19136
+            protocol: UDP
+          - name: bedrock-6
+            containerPort: 19137
+            protocol: UDP
+          - name: bedrock-7
+            containerPort: 19138
+            protocol: UDP
+          - name: bedrock-8
+            containerPort: 19139
+            protocol: UDP
+        # Probes: HTTPS health check with long startup delay for initial setup
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: https
+                scheme: HTTPS
+              initialDelaySeconds: 120
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: https
+                scheme: HTTPS
+              initialDelaySeconds: 60
+              periodSeconds: 15
+              timeoutSeconds: 5
+              failureThreshold: 3
+persistence:
+  data:
+    existingClaim: "crafty-controller-data"
+    advancedMounts:
+      crafty:
+        app:
+          - path: /crafty/backups
+            subPath: backups
+          - path: /crafty/logs
+            subPath: logs
+          - path: /crafty/servers
+            subPath: servers
+          - path: /crafty/app/config
+            subPath: config
+          - path: /crafty/import
+            subPath: import
+service:
+  webui:
+    controller: crafty
+    type: ClusterIP
+    ports:
+      https:
+        port: 8443
+        protocol: HTTPS
+  bedrock:
+    controller: crafty
+    type: LoadBalancer
+    annotations:
+      lbipam.cilium.io/ips: "${CRAFTY_CONTROLLER_IP4}"
+    externalTrafficPolicy: Local
+    ports:
+      # Bedrock servers (19132-19139) - pre-defined so kids don't need to edit config
+      bedrock-1:
+        port: 19132
+        protocol: UDP
+      bedrock-2:
+        port: 19133
+        protocol: UDP
+      bedrock-3:
+        port: 19134
+        protocol: UDP
+      bedrock-4:
+        port: 19135
+        protocol: UDP
+      bedrock-5:
+        port: 19136
+        protocol: UDP
+      bedrock-6:
+        port: 19137
+        protocol: UDP
+      bedrock-7:
+        port: 19138
+        protocol: UDP
+      bedrock-8:
+        port: 19139
+        protocol: UDP
