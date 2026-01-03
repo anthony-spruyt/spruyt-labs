@@ -124,10 +124,11 @@ persistence:
             readOnly: true
             subPath: config.yml
   # Player data storage - BedrockConnect writes player preferences here
+  # Must be in WORKDIR (/docker/brc) alongside the JAR file
   players:
     enabled: true
     type: emptyDir
     advancedMounts:
       main:
         main:
-          - path: /players
+          - path: /docker/brc/players
