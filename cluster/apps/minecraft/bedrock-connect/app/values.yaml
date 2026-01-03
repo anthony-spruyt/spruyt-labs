@@ -97,6 +97,7 @@ configMaps:
         ]
       config.yml: |-
         custom_servers: /docker/brc/custom_servers.json
+        packet_limit: 10000000
 service:
   bedrockconnect:
     controller: main
