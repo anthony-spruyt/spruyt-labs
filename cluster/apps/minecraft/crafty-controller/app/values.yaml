@@ -42,11 +42,11 @@ controllers:
         env:
           TZ: ${TIMEZONE}
         # Gaming workload - bursty during active games
-        # Low request for idle, high limit for gaming sessions
+        # Requests based on P99 usage (Q1 2026), high limits for burst capacity
         resources:
           requests:
-            cpu: 100m
-            memory: 512Mi
+            cpu: 750m
+            memory: 1536Mi
           limits:
             cpu: 4000m
             memory: 8Gi
