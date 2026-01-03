@@ -21,8 +21,8 @@ controllers:
     containers:
       app:
         image:
-          repository: bohdans/sungather
-          tag: v@sha256:58304729d98e221be01f4fcd796f1200793fe958577b3b838893732034fd9169
+          repository: ghcr.io/anthony-spruyt/sungather
+          tag: v0.5.3
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}

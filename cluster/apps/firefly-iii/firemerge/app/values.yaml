@@ -22,7 +22,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/firemerge
-          tag: "0.5.2"
+          tag: "security-fix-cve-2025-64512-cve-2024-47874"
           pullPolicy: IfNotPresent
         env:
           # Python/uv environment - use writable path for venv
