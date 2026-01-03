@@ -60,39 +60,9 @@ configMaps:
             "port": 19132
           },
           {
-            "name": "Spruyt 2",
+            "name": "Better on Bedrock - Creative Edition",
             "address": "minecraft.${EXTERNAL_DOMAIN}",
             "port": 19133
-          },
-          {
-            "name": "Spruyt 3",
-            "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19134
-          },
-          {
-            "name": "Spruyt 4",
-            "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19135
-          },
-          {
-            "name": "Spruyt 5",
-            "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19136
-          },
-          {
-            "name": "Spruyt 6",
-            "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19137
-          },
-          {
-            "name": "Spruyt 7",
-            "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19138
-          },
-          {
-            "name": "Spruyt 8",
-            "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19139
           }
         ]
       config.yml: |-
