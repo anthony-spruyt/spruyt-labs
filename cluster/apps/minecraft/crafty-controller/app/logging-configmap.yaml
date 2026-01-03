@@ -1,0 +1,95 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crafty-controller-logging
+  namespace: minecraft
+data:
+  logging.json: |
+    {
+      "version": 1,
+      "disable_existing_loggers": false,
+      "formatters": {
+        "commander": {
+          "format": "%(asctime)s - [Crafty] - %(levelname)-8s - %(name)s - %(message)s"
+        },
+        "tornado_access": {
+          "format": "%(asctime)s - [Tornado] - [Access] - %(levelname)s - %(message)s"
+        },
+        "schedule": {
+          "format": "%(asctime)s - [Schedules] - %(levelname)s - %(message)s"
+        },
+        "auth": {
+          "format": "%(asctime)s - [AUTH] - %(levelname)s - %(message)s"
+        },
+        "audit": {
+          "()": "app.classes.logging.log_formatter.JsonFormatter"
+        },
+        "cmd_queue": {
+          "format": "%(asctime)s - [CMD_QUEUE] - %(levelname)s - %(message)s"
+        }
+      },
+      "handlers": {
+        "console": {
+          "class": "logging.StreamHandler",
+          "formatter": "commander",
+          "stream": "ext://sys.stdout"
+        },
+        "console_tornado": {
+          "class": "logging.StreamHandler",
+          "formatter": "tornado_access",
+          "stream": "ext://sys.stdout"
+        },
+        "console_schedule": {
+          "class": "logging.StreamHandler",
+          "formatter": "schedule",
+          "stream": "ext://sys.stdout"
+        },
+        "console_auth": {
+          "class": "logging.StreamHandler",
+          "formatter": "auth",
+          "stream": "ext://sys.stdout"
+        },
+        "console_audit": {
+          "class": "logging.StreamHandler",
+          "formatter": "audit",
+          "stream": "ext://sys.stdout"
+        },
+        "console_cmd_queue": {
+          "class": "logging.StreamHandler",
+          "formatter": "cmd_queue",
+          "stream": "ext://sys.stdout"
+        }
+      },
+      "loggers": {
+        "": {
+          "level": "INFO",
+          "handlers": ["console"],
+          "propagate": false
+        },
+        "tornado.access": {
+          "level": "INFO",
+          "handlers": ["console_tornado"],
+          "propagate": false
+        },
+        "apscheduler": {
+          "level": "INFO",
+          "handlers": ["console_schedule"],
+          "propagate": false
+        },
+        "auth": {
+          "level": "INFO",
+          "handlers": ["console_auth"],
+          "propagate": false
+        },
+        "cmd_queue": {
+          "level": "INFO",
+          "handlers": ["console_cmd_queue"],
+          "propagate": false
+        },
+        "audit_log": {
+          "level": "INFO",
+          "handlers": ["console_audit"]
+        }
+      }
+    }

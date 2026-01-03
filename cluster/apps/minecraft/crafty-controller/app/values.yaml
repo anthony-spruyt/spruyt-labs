@@ -18,6 +18,21 @@ controllers:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
+    initContainers:
+      install-logging-config:
+        image:
+          repository: busybox
+          tag: "1.37"
+        command:
+          - sh
+          - -c
+          - cp /logging-config/logging.json /crafty/app/config/logging.json
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
     containers:
       app:
         image:
@@ -102,17 +117,27 @@ persistence:
     existingClaim: "crafty-controller-data"
     advancedMounts:
       crafty:
+        install-logging-config:
+          - path: /crafty/app/config
+            subPath: config
         app:
           - path: /crafty/backups
             subPath: backups
-          - path: /crafty/logs
-            subPath: logs
           - path: /crafty/servers
             subPath: servers
           - path: /crafty/app/config
             subPath: config
           - path: /crafty/import
             subPath: import
+  # Console logging config - copied by init container to PVC
+  logging:
+    type: configMap
+    name: crafty-controller-logging
+    advancedMounts:
+      crafty:
+        install-logging-config:
+          - path: /logging-config
+            readOnly: true
 service:
   webui:
     controller: crafty
