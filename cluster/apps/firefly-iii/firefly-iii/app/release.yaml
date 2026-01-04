@@ -37,7 +37,7 @@ spec:
                 value:
                   - name: download-ff3-ofx
                     # renovate: datasource=docker depName=alpine
-                    image: alpine:3.21
+                    image: alpine:3.23
                     command: ["/bin/sh", "-c"]
                     args:
                       # renovate: depName=pelaxa/ff3-ofx datasource=github-releases
