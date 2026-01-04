@@ -155,7 +155,7 @@ readinessProbe:
   timeoutSeconds: 5
   failureThreshold: 3
 
-# Extra volumes for CNPG CA certificate
+# Extra volumes for CNPG CA certificate and ff3-ofx static files
 extraVolumes:
   - name: db-ca-cert
     secret:
@@ -163,8 +163,15 @@ extraVolumes:
       items:
         - key: ca.crt
           path: ca.crt
+  - name: ff3-ofx
+    emptyDir: {}
+  - name: init-tmp
+    emptyDir: {}
 
 extraVolumeMounts:
   - name: db-ca-cert
     mountPath: /var/www/html/storage/certs/postgresql
+    readOnly: true
+  - name: ff3-ofx
+    mountPath: /var/www/html/public/ofx
     readOnly: true

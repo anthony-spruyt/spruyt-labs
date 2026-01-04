@@ -19,9 +19,30 @@ Firefly III is a free and open-source personal finance manager that helps track 
 
 ```text
 Internet → Traefik → Authentik Outpost → Firefly III → CNPG PostgreSQL
-                      (forward-auth)                        ↓
-                                                     Barman S3 Backups
+                      (forward-auth)         ↓              ↓
+                                         ff3-ofx      Barman S3 Backups
+                                        (static)
 ```
+
+## Plugins
+
+### ff3-ofx (OFX Bank Import)
+
+[ff3-ofx](https://github.com/pelaxa/ff3-ofx) is a React application for importing bank statements in OFX format. It runs client-side and uses the Firefly III API.
+
+**Access**: `https://firefly.${EXTERNAL_DOMAIN}/ofx`
+
+**How it works**:
+- Static files downloaded via init container from GitHub releases
+- Mounted at `/var/www/html/public/ofx` (served by Apache)
+- Uses Personal Access Token (PAT) stored in browser localStorage
+- No Authentik SSO integration (manages its own PAT auth)
+
+**Setup**:
+1. Navigate to `https://firefly.${EXTERNAL_DOMAIN}/ofx`
+2. Create PAT in Firefly III: Options → Profile → OAuth → Create Token
+3. Enter PAT in ff3-ofx login prompt
+4. Optionally check "Store token for next time"
 
 ## Authentication
 

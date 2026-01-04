@@ -80,10 +80,11 @@
     },
     {
       customType: "regex",
-      description: "Container images in Taskfiles and scripts",
+      description: "Container images in Taskfiles, scripts, and cluster manifests",
       managerFilePatterns: [
         "/(^|/)\\.taskfiles/.+\\.(ya?ml|tmpl\\.ya?ml)$/",
         "/(^|/)\\.taskfiles/.+/scripts/.+\\.(sh|bash)$/",
+        "/(^|/)cluster/.+\\.ya?ml$/",
       ],
       matchStrings: [
         "(?<prefix>image:\\s*)(?<depName>[^:\\s]+):(?<currentValue>[^\\s\"']+)",

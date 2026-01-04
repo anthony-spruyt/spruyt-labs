@@ -31,3 +31,36 @@ spec:
                 path: /metadata/annotations
                 value:
                   reloader.stakater.com/auto: "true"
+              # Add init container to download ff3-ofx static files
+              - op: add
+                path: /spec/template/spec/initContainers
+                value:
+                  - name: download-ff3-ofx
+                    # renovate: datasource=docker depName=alpine
+                    image: alpine:3.21
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      # renovate: depName=pelaxa/ff3-ofx datasource=github-releases
+                      - wget -O /tmp/ff3-ofx.tar.gz https://github.com/pelaxa/ff3-ofx/releases/download/v1.1.0/ff3-ofx-1.1.0.tar.gz && tar -xzf /tmp/ff3-ofx.tar.gz -C /ofx --strip-components=1
+                    volumeMounts:
+                      - name: ff3-ofx
+                        mountPath: /ofx
+                      - name: init-tmp
+                        mountPath: /tmp
+                    securityContext:
+                      runAsUser: 33
+                      runAsGroup: 33
+                      runAsNonRoot: true
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      capabilities:
+                        drop: ["ALL"]
+                      seccompProfile:
+                        type: RuntimeDefault
+                    resources:
+                      requests:
+                        cpu: 10m
+                        memory: 32Mi
+                      limits:
+                        cpu: 100m
+                        memory: 64Mi
