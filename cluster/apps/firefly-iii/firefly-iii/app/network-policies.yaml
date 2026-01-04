@@ -121,22 +121,20 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow HTTPS egress to GitHub for init container to download ff3-ofx
-# Download URL: https://github.com/pelaxa/ff3-ofx/releases/download/v1.1.0/ff3-ofx-1.1.0.tar.gz
-# GitHub redirects to release-assets.githubusercontent.com for actual binary download
+# Allow world HTTPS egress for init container to download ff3-ofx from GitHub
+# Note: toFQDNs requires L7 DNS parsing which isn't enabled cluster-wide
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-firefly-github-https-egress
+  name: allow-firefly-world-https-egress
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/instance: firefly-iii
       app.kubernetes.io/name: firefly-iii
   egress:
-    - toFQDNs:
-        - matchName: github.com
-        - matchName: release-assets.githubusercontent.com
+    - toEntities:
+        - world
       toPorts:
         - ports:
             - port: "443"
