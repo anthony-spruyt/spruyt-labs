@@ -25,7 +25,7 @@
     "ghcr.io/devcontainers/features/node": {},
     "ghcr.io/devcontainers/features/python": {}
   },
-  "initializeCommand": "bash -c 'if [ ! -S \"$HOME/.ssh/agent.sock\" ]; then echo \"❌ ERROR: SSH agent socket not found at $HOME/.ssh/agent.sock\"; echo \"📖 Please see DEVELOPMENT.md SSH Agent Setup for configuration instructions.\"; exit 1; fi'",
+  "initializeCommand": "bash -lc 'eval $(keychain --eval --agents ssh id_ed25519); flock -x ~/.ssh/agent.lock -c \"rm -rf $HOME/.ssh/agent.sock; ln -sf $SSH_AUTH_SOCK $HOME/.ssh/agent.sock\"'",
   "postCreateCommand": "bash -lc \"cd ${containerWorkspaceFolder} && ./.devcontainer/post-create.sh\"",
   "customizations": {
     "vscode": {
