@@ -29,6 +29,8 @@ entries:
       mode: forward_single
       external_host: https://n8n.${EXTERNAL_DOMAIN}
       skip_path_regex: |
+        ^/assets/.*$
+        ^/rest/oauth2-credential/.*$
         ^/webhook/.*$
         ^/webhook-test/.*$
   - id: n8n_application

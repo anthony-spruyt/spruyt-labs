@@ -13,9 +13,6 @@ data:
     const Layer = require('router/lib/layer');
     const { issueCookie } = require(resolve(dirname(require.resolve('n8n')), 'auth/jwt'));
 
-    // Paths that bypass SSO - webhooks need external access without auth
-    const ignoreAuthRegexp = /^\/(assets|healthz|webhook|webhook-test|rest\/oauth2-credential)/;
-
     module.exports = {
       n8n: {
         ready: [
@@ -27,8 +24,6 @@ data:
               strict: false,
               end: false
             }, async (req, res, next) => {
-              // Skip auth for webhooks and assets
-              if (ignoreAuthRegexp.test(req.url)) return next();
 
               // Skip if instance owner not set up yet
               if (!config.get('userManagement.isInstanceOwnerSetUp', false)) return next();
