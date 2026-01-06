@@ -28,6 +28,9 @@ entries:
         ]
       mode: forward_single
       external_host: https://n8n.${EXTERNAL_DOMAIN}
+      skip_path_regex: |
+        ^/webhook/.*$
+        ^/webhook-test/.*$
   - id: n8n_application
     model: authentik_core.application
     identifiers:
