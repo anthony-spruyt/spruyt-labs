@@ -100,6 +100,20 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Falco DaemonSet: egress to K8s API server for metadata enrichment
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: falco-allow-kube-apiserver-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: falco
+  egress:
+    - toEntities:
+        - kube-apiserver
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Falco DaemonSet: HTTP/HTTPS egress to download rules and artifacts
 # Some registries attempt HTTP before HTTPS, so both ports are allowed
 apiVersion: cilium.io/v2
