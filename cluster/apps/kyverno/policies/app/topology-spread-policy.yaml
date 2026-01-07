@@ -12,7 +12,7 @@ metadata:
     policies.kyverno.io/description: >-
       Automatically injects topology spread constraints on Deployments and
       StatefulSets that don't already have them. Uses soft constraints
-      (ScheduleAnyway) with maxSkew: 3 to encourage balanced pod distribution
+      (ScheduleAnyway) with maxSkew: 1 to ensure balanced pod distribution
       across nodes without blocking scheduling.
 spec:
   background: false
@@ -48,7 +48,7 @@ spec:
             template:
               spec:
                 topologySpreadConstraints:
-                  - maxSkew: 3
+                  - maxSkew: 1
                     topologyKey: kubernetes.io/hostname
                     whenUnsatisfiable: ScheduleAnyway
                     labelSelector:
@@ -85,7 +85,7 @@ spec:
             template:
               spec:
                 topologySpreadConstraints:
-                  - maxSkew: 3
+                  - maxSkew: 1
                     topologyKey: kubernetes.io/hostname
                     whenUnsatisfiable: ScheduleAnyway
                     labelSelector:

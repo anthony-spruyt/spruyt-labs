@@ -1,6 +1,6 @@
 ---
 kind: CronJob
-schedule: "0 */2 * * *"
+schedule: "*/30 * * * *"
 timeZone: ${TIMEZONE}
 
 priorityClassName: high-priority
@@ -78,8 +78,8 @@ deschedulerPolicy:
             # Nodes above these thresholds are considered overutilized
             # Pods will be evicted from overutilized nodes
             targetThresholds:
-              cpu: 50
-              memory: 50
+              cpu: 40
+              memory: 40
             evictableNamespaces:
               exclude:
                 - kube-system
