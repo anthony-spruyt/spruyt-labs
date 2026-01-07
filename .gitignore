@@ -15,16 +15,13 @@ xanmanning.k3s*
 .terraform
 .terraform.tfstate*
 terraform.tfstate*
-# Working
-cluster/apps/other/
-# talos/
-testing.sops.yaml
+
 # go-task build cache
 .task/
 image_list.txt
 
-bootstrap/
-cluster/core/kube-system/kubelet-csr-approver/charts/
+# Project specific
 temp
 .capacitor
 .output
+agent.sock

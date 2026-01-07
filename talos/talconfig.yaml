@@ -214,20 +214,22 @@ nodes:
                 gateway: ${GATEWAY_IP4}
                 metric: 512
       # Thunderbolt ring network for Ceph cluster traffic
-      # Using link-local /32 addresses - no gateway for point-to-point
-      - interface: thunderbolt0
+      # Using deviceSelector with busPath for stable interface matching across reboots
+      - deviceSelector:
+          busPath: "0-1.0" # Physical path to ms-01-2
         addresses:
           - 169.254.255.101/32
         mtu: 65520
         routes:
-          - network: 169.254.255.102/32 # ms-01-2 direct peer
+          - network: 169.254.255.102/32
             metric: 2048
-      - interface: thunderbolt1
+      - deviceSelector:
+          busPath: "1-1.0" # Physical path to ms-01-3
         addresses:
           - 169.254.255.101/32
         mtu: 65520
         routes:
-          - network: 169.254.255.103/32 # ms-01-3 direct peer
+          - network: 169.254.255.103/32
             metric: 2048
     nodeAnnotations: &ms01NodeAnnotations
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
@@ -265,14 +267,14 @@ nodes:
             net.ipv4.tcp_rmem: 4096 87380 33554432          # 10Gb/s
             net.ipv4.tcp_window_scaling: 1                  # 10Gb/s
             net.ipv4.tcp_wmem: 4096 65536 33554432          # 10Gb/s
-      # Enable Intel CPU boost and set performance governor
+      # Enable Intel CPU boost and set performance governor powersave|performance
       - &patchCpuBoost |-
         machine:
           sysfs:
             devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1
           udev:
             rules:
-              - SUBSYSTEM=="cpu", ATTR{cpufreq/scaling_governor}="performance"
+              - SUBSYSTEM=="cpu", ATTR{cpufreq/scaling_governor}="powersave"
       # Intel GPU passthrough
       - &patchGpuPassthrough |-
         machine:
@@ -375,27 +377,29 @@ nodes:
                 gateway: ${GATEWAY_IP4}
                 metric: 512
       # Thunderbolt ring network for Ceph cluster traffic
-      # Using link-local /32 addresses - no gateway for point-to-point
-      - interface: thunderbolt0
+      # Using deviceSelector with busPath for stable interface matching across reboots
+      - deviceSelector:
+          busPath: "0-1.0" # Physical path to ms-01-1
         addresses:
           - 169.254.255.102/32
         mtu: 65520
         routes:
-          - network: 169.254.255.101/32 # ms-01-1 direct peer
+          - network: 169.254.255.101/32
             metric: 2048
-      - interface: thunderbolt1
+      - deviceSelector:
+          busPath: "1-1.0" # Physical path to ms-01-3
         addresses:
           - 169.254.255.102/32
         mtu: 65520
         routes:
-          - network: 169.254.255.103/32 # ms-01-3 direct peer
+          - network: 169.254.255.103/32
             metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
     patches:
       - *patchThunderbolt
       - *patchNetworking
       # - *patchCpuBoost
-      # Node-specific: hwp_dynamic_boost only, powersave governor due to cooling defect
+      # Node-specific: hwp_dynamic_boost only, powersave governor due to cooling defect powersave|performance
       - |-
         machine:
           sysfs:
@@ -438,20 +442,22 @@ nodes:
                 gateway: ${GATEWAY_IP4}
                 metric: 512
       # Thunderbolt ring network for Ceph cluster traffic
-      # Using link-local /32 addresses - no gateway for point-to-point
-      - interface: thunderbolt0
+      # Using deviceSelector with busPath for stable interface matching across reboots
+      - deviceSelector:
+          busPath: "0-1.0" # Physical path to ms-01-1
         addresses:
           - 169.254.255.103/32
         mtu: 65520
         routes:
-          - network: 169.254.255.101/32 # ms-01-1 direct peer
+          - network: 169.254.255.101/32
             metric: 2048
-      - interface: thunderbolt1
+      - deviceSelector:
+          busPath: "1-1.0" # Physical path to ms-01-2
         addresses:
           - 169.254.255.103/32
         mtu: 65520
         routes:
-          - network: 169.254.255.102/32 # ms-01-2 direct peer
+          - network: 169.254.255.102/32
             metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
     patches:
