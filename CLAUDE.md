@@ -20,7 +20,7 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 
 1. **No secrets output** - Never display credentials or env var values
 2. **Declarative only** - No manual kubectl patches; use Flux, Terraform, Talos configs
-3. **No git push** - User pushes manually (SSH passkey requires interactive auth)
+3. **No git push** - User pushes manually
 4. **No git amend** - Always new commits
 5. **No SOPS decrypt** - Never decrypt secrets via CLI
 6. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
