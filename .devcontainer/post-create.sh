@@ -11,6 +11,10 @@ echo "🔧 Running dev env setup tasks..."
 # IMPORTANT: safe-chain MUST be first - it secures npm before any node-based installs
 task install:safe-chain
 
+# Add safe-chain shims to PATH for all subsequent commands
+# This ensures pre-commit and other tools use protected pip/npm
+export PATH="$HOME/.safe-chain/shims:$PATH"
+
 task install:kubectl-cli
 task install:kustomize-cli
 task install:helm-cli

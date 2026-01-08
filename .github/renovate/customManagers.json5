@@ -46,8 +46,8 @@
       ],
       managerFilePatterns: ["/(^|/)\\.taskfiles/(?:[^/]+/)*[^/]+\\.sh$/"],
       matchStrings: [
-        // # renovate: depName=X datasource=Y \n VERSION="v1.2.3"
-        'depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\nVERSION="(?<currentValue>v[^"]+)"',
+        // # renovate: depName=X datasource=Y \n VERSION="1.2.3" or "v1.2.3"
+        'depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\nVERSION="(?<currentValue>v?\\d[^"]+)"',
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
     },
