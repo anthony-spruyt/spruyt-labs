@@ -11,7 +11,6 @@ action: block
 This repository requires manual pushes (see CLAUDE.md Hard Rules).
 
 **Why?**
-- SSH passkey requires interactive authentication
 - User must verify changes before pushing to remote
 - Prevents accidental pushes to protected branches
 

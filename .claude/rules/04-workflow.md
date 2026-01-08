@@ -68,17 +68,6 @@ EOF
 
 ## Commits
 
-**Conventional commits:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
-
-```text
-type(scope): description
-
-Ref #123
-```
-
-> **Never use `Closes #123` in commits** - GitHub auto-closes issues on push to main.
-> Use `Closes` only in PR descriptions where merge timing is controlled.
-
 Skip qa-validator for trivial changes (typos, single-line fixes, SOPS-only). Pre-commit hooks catch basic issues.
 
 **After push:** Flux webhooks auto-reconcile - no manual `flux reconcile` needed.

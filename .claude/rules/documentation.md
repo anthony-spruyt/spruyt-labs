@@ -39,4 +39,4 @@ Required sections:
 ## Maintenance
 
 - Update docs when repository changes affect accuracy
-- New app components require README.md before merge
+- New app components require README.md before commit/merge
