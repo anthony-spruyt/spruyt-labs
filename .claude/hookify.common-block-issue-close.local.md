@@ -1,6 +1,6 @@
 ---
 name: block-issue-close
-enabled: true
+enabled: false
 event: bash
 pattern: gh issue close
 action: block
