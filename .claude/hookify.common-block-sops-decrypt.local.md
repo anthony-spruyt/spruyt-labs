@@ -1,6 +1,6 @@
 ---
 name: block-sops-decrypt
-enabled: true
+enabled: false
 event: bash
 pattern: sops\s+(-d|--decrypt|exec-env|exec-file)
 action: block

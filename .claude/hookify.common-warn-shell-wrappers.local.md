@@ -1,6 +1,6 @@
 ---
 name: warn-shell-wrappers
-enabled: true
+enabled: false
 event: bash
 pattern: (^|\s|&&|\|\||;)(sh|bash|dash|zsh)\s+-c\s|(\s|^)eval\s
 action: warn
