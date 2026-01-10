@@ -1,6 +1,6 @@
 ---
 name: block-printenv
-enabled: true
+enabled: false
 event: bash
 pattern: (^|\s|&&|\|\||;|\(|`)printenv(\s|$|\)|`)
 action: block
