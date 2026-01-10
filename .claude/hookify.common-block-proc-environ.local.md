@@ -1,6 +1,6 @@
 ---
 name: block-proc-environ
-enabled: true
+enabled: false
 event: bash
 pattern: cat\s+/proc/(self|\$\$|[0-9]+)/environ
 action: block
