@@ -1,6 +1,6 @@
 ---
 name: block-age-decrypt
-enabled: true
+enabled: false
 event: bash
 pattern: age\s+(-d|--decrypt)
 action: block
