@@ -1,6 +1,6 @@
 ---
 name: warn-use-edit-tool
-enabled: true
+enabled: false
 event: bash
 pattern: (^|\s|&&|\|\||;|\(|`)(sed|awk)\s+.*-i
 action: warn
