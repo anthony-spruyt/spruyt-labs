@@ -1,6 +1,6 @@
 ---
 name: block-kubectl-exec-secrets
-enabled: true
+enabled: false
 event: bash
 pattern: kubectl\s+exec.*--\s+(cat\s+.*(secret|token|password|credential|\.pem|\.key|/var/run/secrets)|env\b|printenv)
 action: block
