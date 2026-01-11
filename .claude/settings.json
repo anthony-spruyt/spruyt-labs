@@ -1,4 +1,10 @@
 {
+  "includeCoAuthoredBy": true,
+  "env": {
+    "INSIDE_CLAUDE_CODE": "1",
+    "BASH_DEFAULT_TIMEOUT_MS": "420000",
+    "BASH_MAX_TIMEOUT_MS": "420000"
+  },
   "permissions": {
     "allow": [
       "Bash(gh issue comment:*)",
@@ -15,9 +21,11 @@
       "Bash(gh pr diff:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr merge:*)",
+      "Bash(gh pr review:*)",
       "Bash(gh pr view:*)",
       "Bash(gh release list:*)",
       "Bash(gh release view:*)",
+      "Bash(gh repo view:*)",
       "Bash(gh run list)",
       "Bash(gh run list:*)",
       "Bash(gh run view:*)",
@@ -32,6 +40,7 @@
       "Bash(git fetch:*)",
       "Bash(git log:*)",
       "Bash(git pull:*)",
+      "Bash(git rev-parse:*)",
       "Bash(git show:*)",
       "Bash(git stash:*)",
       "Bash(git status:*)",
@@ -39,9 +48,13 @@
       "Bash(pre-commit:*)",
       "Bash(mkdir:*)",
       "Bash(renovate-config-validator:*)",
+      "Bash(test:*)",
       "mcp__plugin_context7_context7__get-library-docs",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
+      "Skill(code-review:*)",
+      "Skill(code-review:code-review)",
+      "Skill(code-review:code-review:*)",
       "Skill(hookify:list)",
       "Skill(hookify:list:*)",
       "Skill(hookify:writing-rules)",
@@ -107,7 +120,36 @@
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/common-hookify-bridge.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/common-hookify-bridge.py"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/common-hookify-bridge.py --post"
+          }
+        ]
+      },
       {
         "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
