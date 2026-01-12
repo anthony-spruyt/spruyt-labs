@@ -39,7 +39,8 @@
         "esbenp.prettier-vscode",
         "hashicorp.terraform",
         "bierner.markdown-mermaid",
-        "anthropic.claude-code"
+        "anthropic.claude-code",
+        "github.vscode-github-actions"
       ]
     }
   },
