@@ -26,7 +26,7 @@ resources:
   - ./velero
   - ./cnpg-system
   - ./valkey-system
-  - ./qdrant-system
+  # - ./qdrant-system  # Disabled during RMA (issue #236)
   - ./n8n-system
   - ./redisinsight
   - ./foundryvtt
