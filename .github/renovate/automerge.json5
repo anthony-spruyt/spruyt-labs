@@ -1,6 +1,11 @@
 {
   packageRules: [
     {
+      description: "Disable automerge for rook-ceph during RMA (issue #236)",
+      matchPackagePatterns: ["^(ghcr\\.io/)?rook(/|-)ceph"],
+      automerge: false,
+    },
+    {
       description: "Automerge patch updates",
       matchUpdateTypes: ["patch", "digest", "pin"],
       automerge: true,
