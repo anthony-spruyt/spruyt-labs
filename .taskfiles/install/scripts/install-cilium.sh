@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=cilium/cilium-cli datasource=github-releases
-VERSION="v0.18.9"
+VERSION="v0.19.0"
 
 ARCH=$(uname -m)
 case "$ARCH" in
