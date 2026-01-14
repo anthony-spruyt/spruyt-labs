@@ -7,7 +7,7 @@ metadata:
   name: spruyt-labs-cluster-backup
   namespace: velero
 spec:
-  paused: false
+  paused: true # Temporarily paused during ms-01-2 RMA (issue #236)
   schedule: "0 17 * * *" # At 03:00 daily Melbourne (UTC+10)
   skipImmediately: false
   useOwnerReferencesInBackup: true
