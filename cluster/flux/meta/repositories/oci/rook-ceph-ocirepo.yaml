@@ -7,5 +7,5 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: v1.18.8
+    tag: v1.18.9
   url: oci://ghcr.io/rook/rook-ceph
