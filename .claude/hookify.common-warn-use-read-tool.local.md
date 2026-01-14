@@ -1,6 +1,6 @@
 ---
 name: warn-use-read-tool
-enabled: true
+enabled: false
 event: bash
 pattern: (^|\s|&&|\|\||;|\(|`)(cat|head|tail|less|more)\s+[^|]
 action: warn
