@@ -1,33 +1,4 @@
 {
-  "files.exclude": {
-    ".devcontainer": false,
-    ".github": false,
-    ".output": false,
-    ".taskfiles": false,
-    ".gitattributes": false,
-    ".gitignore": false,
-    ".gitleaksignore": false,
-    ".jscpd.json": false,
-    ".kilocodeignore": false,
-    ".lycheeignore": false,
-    ".markdownlint.json": false,
-    ".markdownlintignore": false,
-    ".mega-linter.yml": false,
-    ".pre-commit-config.yaml": false,
-    ".prettierignore": false,
-    ".prettierrc.yaml": false,
-    ".shellcheckrc": false,
-    ".sops.yaml": false,
-    ".tflint.hcl": false,
-    ".trivyignore.yaml": false,
-    ".yamllint.yml": false,
-    "LICENSE": false,
-    "trivy.yaml": false,
-    "Taskfile.yml": false,
-    "talos/clusterconfig": false,
-    "**/.terraform": false,
-    "**/.terraform.lock.hcl": false
-  },
   "search.exclude": {
     "**/*.secret.*": true,
     "**/temp/**": true
@@ -37,8 +8,6 @@
   "editor.formatOnSave": true,
   "editor.codeActions.triggerOnFocusChange": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "prettier.configPath": ".prettierrc.yaml",
-  "prettier.ignorePath": ".prettierignore",
   "explorer.sortOrder": "type",
   "editor.tabSize": 2,
   "[terraform]": {
