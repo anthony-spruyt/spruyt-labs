@@ -1,6 +1,6 @@
 ---
 name: block-env-dump
-enabled: true
+enabled: false
 event: bash
 pattern: (^|\s|&&|\|\||;|\(|`)env\s*($|\||;|&&|\|\||\)|`)
 action: block
