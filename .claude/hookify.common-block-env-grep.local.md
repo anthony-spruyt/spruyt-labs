@@ -1,6 +1,6 @@
 ---
 name: block-env-grep
-enabled: true
+enabled: false
 event: bash
 pattern: (env|printenv)\s*\|\s*grep
 action: block
