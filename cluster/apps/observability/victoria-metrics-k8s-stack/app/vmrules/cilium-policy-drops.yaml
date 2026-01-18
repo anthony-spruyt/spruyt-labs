@@ -46,20 +46,21 @@ spec:
             runbook_url: "Use 'task dev-env:hubble-drops' to see live dropped packets"
 
         # Recording rules for dashboard queries
+        # Use 'or vector(0)' to always produce a sample (avoids RecordingRulesNoData alert)
         - record: cilium:policy_drops:rate5m
           expr: |
             sum by (source, destination, reason) (
               rate(hubble_drop_total[5m])
-            )
+            ) or vector(0)
 
         - record: cilium:policy_drops:by_source:rate5m
           expr: |
             sum by (source) (
               rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
-            )
+            ) or vector(0)
 
         - record: cilium:policy_drops:by_destination:rate5m
           expr: |
             sum by (destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
-            )
+            ) or vector(0)
