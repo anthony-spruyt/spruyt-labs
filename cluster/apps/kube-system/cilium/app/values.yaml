@@ -118,13 +118,10 @@ hubble:
       namespace: observability
     enabled:
       - dns:query;ignoreAAAA
-      # Drop metrics with source/destination context for debugging policy issues
-      - drop:sourceContext=namespace|workload|pod;destinationContext=namespace|workload|pod
-      - tcp
-      - flow
-      - port-distribution
+      # Drop metrics with workload context for policy debugging (removed pod for lower cardinality)
+      - drop:sourceContext=namespace|workload;destinationContext=namespace|workload
+      # Removed: tcp, flow, port-distribution, http (high cardinality, not used in alerts/dashboards)
       - icmp
-      - http
     enableOpenMetrics: true
     port: 9966
 socketLB: # Configure socket LB
