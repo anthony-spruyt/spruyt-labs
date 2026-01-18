@@ -25,3 +25,7 @@ temp
 .capacitor
 .output
 agent.sock
+
+# Python
+__pycache__/
+*.py[cod]
