@@ -30,7 +30,7 @@ spec:
                 value:
                   - name: sso-config
                     # KEEP IN SYNC with cephImage.tag in values.yaml
-                    image: quay.io/ceph/ceph:v19.2.3
+                    image: quay.io/ceph/ceph:v20.2.0
                     restartPolicy: Always
                     command: ["/bin/bash", "-c"]
                     env:
