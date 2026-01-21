@@ -29,7 +29,8 @@ spec:
                 path: /spec/template/spec/initContainers
                 value:
                   - name: sso-config
-                    image: quay.io/ceph/ceph:v19
+                    # KEEP IN SYNC with cephImage.tag in values.yaml
+                    image: quay.io/ceph/ceph:v19.2.3
                     restartPolicy: Always
                     command: ["/bin/bash", "-c"]
                     env:

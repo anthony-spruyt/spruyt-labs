@@ -1,10 +1,14 @@
 {
   packageRules: [
     {
-      description: "Rook-Ceph image and chart",
+      description: "Rook-Ceph operator, cluster chart, and Ceph container image",
       groupName: "Rook Ceph",
-      matchPackageNames: ["rook.ceph", "rook/rook"],
-      matchDatasources: ["docker", "helm", "github-tags"],
+      matchPackageNames: [
+        "ghcr.io/rook/rook-ceph",
+        "ghcr.io/rook/rook-ceph-cluster",
+        "quay.io/ceph/ceph",
+      ],
+      matchDatasources: ["docker", "helm", "oci"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },

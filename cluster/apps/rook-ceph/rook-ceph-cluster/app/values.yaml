@@ -2,6 +2,13 @@
 # #yaml-language-server: $schema=TODO
 # Rook Ceph Cluster Helm Reference -> https://rook.io/docs/rook/v1.9/helm-ceph-cluster.html#configuration
 # Default values for rook-ceph-cluster: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph-cluster/values.yaml
+
+# Ceph container image - KEEP IN SYNC with toolbox init container in release.yaml
+# Issue #186 blocks v20 upgrade due to readAffinity data loss bug
+cephImage:
+  repository: quay.io/ceph/ceph
+  tag: v19.2.3
+
 toolbox:
   # -- Enable Ceph debugging pod deployment. See [toolbox](https://github.com/rook/rook/blob/master/Documentation/Troubleshooting/ceph-toolbox.md)
   # IMPORTANT: Must stay enabled - SSO config sidecar is patched onto this deployment via postRenderers in release.yaml
