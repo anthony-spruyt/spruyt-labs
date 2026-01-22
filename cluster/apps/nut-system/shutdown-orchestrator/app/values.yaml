@@ -34,7 +34,7 @@ controllers:
             set -e
             # Install talosctl with checksum verification
             # renovate: depName=siderolabs/talos datasource=github-releases
-            TALOS_URL="https://github.com/siderolabs/talos/releases/download/v1.12.1/talosctl-linux-amd64"
+            TALOS_URL="https://github.com/siderolabs/talos/releases/download/v1.12.2/talosctl-linux-amd64"
             TALOS_VERSION=$(echo "$TALOS_URL" | sed 's|.*/download/\([^/]*\)/.*|\1|')
             curl -sL "$TALOS_URL" -o /tools/talosctl
             curl -sL "https://github.com/siderolabs/talos/releases/download/${TALOS_VERSION}/sha256sum.txt" -o /tmp/sha256sum.txt
