@@ -41,21 +41,20 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to CSI sidecars for addon operations (ReclaimSpace, etc.)
-# Uses toEntities: cluster instead of toEndpoints to handle connection caching
-# issues when CSI nodeplugin pods restart and get new IPs
+# Allow egress to rook-ceph CSI sidecars for addon operations
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-csi-sidecar-egress
+  name: allow-rook-ceph-csi-egress
   namespace: csi-addons-system
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: csi-addons
   egress:
-    - toEntities:
-        - cluster
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: rook-ceph
       toPorts:
         - ports:
             - port: "9070"
