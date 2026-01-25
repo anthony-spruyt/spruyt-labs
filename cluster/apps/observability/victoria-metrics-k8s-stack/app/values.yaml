@@ -35,6 +35,9 @@ vmsingle:
   # Requests based on P99: 774m (+20% headroom)
   spec:
     priorityClassName: high-priority
+    storageMetadata:
+      annotations:
+        reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
     # Prefer different nodes from other heavy VM components to prevent thermal throttling
     affinity:
       podAntiAffinity:

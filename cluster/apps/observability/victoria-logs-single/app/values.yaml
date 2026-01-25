@@ -169,8 +169,9 @@ server:
     #       # -- Array of access modes. Must match those of existing PV or dynamic provisioner. Details are [here](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
     accessModes:
       - ReadWriteOnce
-    #       # -- Persistent volume annotations
-    #       annotations: {}
+    # -- Persistent volume annotations
+    annotations:
+      reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
     #
     # -- StorageClass to use for persistent volume. Requires server.persistentVolume.enabled: true. If defined, PVC created automatically
     storageClassName: "rbd-fast-delete"
