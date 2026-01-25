@@ -6,4 +6,4 @@ resources:
   - ./rbac.yaml
   - ./csi-addons-config.yaml
   - ./setup-controller.yaml
-  # - ./network-policies.yaml
+  - ./network-policies.yaml
