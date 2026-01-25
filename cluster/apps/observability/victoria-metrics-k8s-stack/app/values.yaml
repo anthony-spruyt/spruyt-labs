@@ -189,7 +189,10 @@ grafana:
   sidecar:
     datasources:
       enabled: true
-      initDatasources: true
+      # Disabled: Grafana helm chart 10.5.x has a bug where init container uses WATCH mode
+      # instead of LIST, causing pod to hang. Sidecar still loads datasources dynamically.
+      # Upstream issue: https://github.com/grafana/helm-charts/issues/4045 (related)
+      initDatasources: false
       label: grafana_datasource
       resource: both
     dashboards:
