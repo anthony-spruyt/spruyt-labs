@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=@anthropic-ai/claude-code datasource=npm
-VERSION="2.1.19"
+VERSION="2.1.20"
 
 # Install globally via npm (no sudo needed with nvm)
 npm install -g "@anthropic-ai/claude-code@${VERSION}" --safe-chain-skip-minimum-package-age
