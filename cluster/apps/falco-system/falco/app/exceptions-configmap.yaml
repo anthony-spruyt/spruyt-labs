@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/v1/configmap.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/configmap.json
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,80 +12,88 @@ data:
 
     # Exception: Grafana sidecar needs K8s API access for ConfigMap/Secret watching
     - rule: Contact K8S API Server From Container
-      append: true
       exceptions:
         - name: grafana_sidecar
           fields: [container.image.repository, k8s.ns.name]
           comps: [=, =]
           values:
             - [quay.io/kiwigrid/k8s-sidecar, observability]
+      override:
+        exceptions: append
 
     # Exception: Kyverno needs K8s API access for policy enforcement
     - rule: Contact K8S API Server From Container
-      append: true
       exceptions:
         - name: kyverno
           fields: [container.image.repository, k8s.ns.name]
           comps: [startswith, =]
           values:
             - [reg.kyverno.io/kyverno, kyverno]
+      override:
+        exceptions: append
 
     # Exception: External Secrets Operator needs K8s API access
     - rule: Contact K8S API Server From Container
-      append: true
       exceptions:
         - name: external_secrets
           fields: [container.image.repository, k8s.ns.name]
           comps: [=, =]
           values:
             - [ghcr.io/external-secrets/external-secrets, external-secrets]
+      override:
+        exceptions: append
 
     # Exception: Authentik needs K8s API access for outposts
     - rule: Contact K8S API Server From Container
-      append: true
       exceptions:
         - name: authentik
           fields: [container.image.repository, k8s.ns.name]
           comps: [=, =]
           values:
             - [ghcr.io/goauthentik/server, authentik-system]
+      override:
+        exceptions: append
 
     # Exception: Velero needs K8s API access for backup operations
     - rule: Contact K8S API Server From Container
-      append: true
       exceptions:
         - name: velero
           fields: [container.image.repository, k8s.ns.name]
           comps: [=, =]
           values:
             - [docker.io/velero/velero, velero]
+      override:
+        exceptions: append
 
     # Exception: kube-state-metrics needs K8s API access for metrics collection
     - rule: Contact K8S API Server From Container
-      append: true
       exceptions:
         - name: kube_state_metrics
           fields: [container.image.repository, k8s.ns.name]
           comps: [=, =]
           values:
             - [registry.k8s.io/kube-state-metrics/kube-state-metrics, observability]
+      override:
+        exceptions: append
 
     # Exception: Cilium CNI binary execution on host is expected
     - rule: Drop and execute new binary in container
-      append: true
       exceptions:
         - name: cilium_cni
           fields: [proc.name, proc.exepath]
           comps: [=, =]
           values:
             - [cilium-cni, /opt/cni/bin/cilium-cni]
+      override:
+        exceptions: append
 
     # Exception: CloudNativePG WAL archiver uses shell scripts
     - rule: Run shell untrusted
-      append: true
       exceptions:
         - name: cnpg_archiver
           fields: [container.image.repository, proc.cmdline]
           comps: [startswith, contains]
           values:
             - [ghcr.io/cloudnative-pg/postgresql, wal-archive]
+      override:
+        exceptions: append
