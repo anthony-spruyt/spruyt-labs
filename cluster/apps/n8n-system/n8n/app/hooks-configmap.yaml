@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/v1/configmap.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/configmap.json
 # N8N external hooks for Authentik SSO forward-auth integration
 # Documentation: https://docs.n8n.io/hosting/configuration/environment-variables/external-hooks/
 apiVersion: v1
