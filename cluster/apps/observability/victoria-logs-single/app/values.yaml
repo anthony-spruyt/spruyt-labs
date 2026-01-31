@@ -141,7 +141,16 @@ server:
           app.kubernetes.io/name: victoria-logs-single
   #
   ## -- Pod affinity
-  #affinity: {}
+  # Prefer different nodes from vmsingle to prevent CPU contention
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: vmsingle
+            topologyKey: kubernetes.io/hostname
   #
   ## -- Additional environment variables (ex.: secret tokens, flags). Details are [here](https://github.com/VictoriaMetrics/VictoriaMetrics#environment-variables)
   #env: []
