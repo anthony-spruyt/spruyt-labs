@@ -2,6 +2,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/giantswarm/cilium-app/main/helm/cilium/values.schema.json
 # Cilium Helm Reference -> https://docs.cilium.io/en/stable/helm-reference/
 # Default values for cilium: https://raw.githubusercontent.com/giantswarm/cilium-app/main/helm/cilium/values.yaml
+upgradeCompatibility: "1.18"
 priorityClassName: critical-infrastructure
 debug:
   enabled: false
@@ -49,7 +50,7 @@ ipMasqAgent: # Configure the eBPF-based ip-masq-agent
       - ${CLUSTER_NODE_CIDR_IP4}
     # masqLinkLocal: false
     # masqLinkLocalIPv6: false
-bgpControlPlane: # This feature set enables virtual BGP routers to be created via CiliumBGPPeeringPolicy CRDs.
+bgpControlPlane: # This feature set enables virtual BGP routers to be created via BGP CRDs.
   enabled: true # Enables the BGP control plane.
 gatewayAPI:
   enabled: true # Enable support for Gateway API in cilium This will automatically set enable-envoy-config as well.
