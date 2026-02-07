@@ -10,6 +10,19 @@ controllers:
     replicas: 1
     type: statefulset
     pod:
+      # Avoid co-locating with vmsingle - both are heavy CPU/memory consumers
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values: [vmsingle]
+                namespaces: ["observability"]
+                topologyKey: kubernetes.io/hostname
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
