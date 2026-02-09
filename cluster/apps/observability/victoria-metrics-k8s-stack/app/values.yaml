@@ -287,6 +287,46 @@ kube-state-metrics:
       cpu: 20m
       memory: 96Mi
 
+# Drop high-cardinality apiserver histogram buckets that aren't used by alerts
+# Keeps: apiserver_request_sli_duration_seconds_bucket (used by SLI alerts)
+# Drops: ~171K series (27% reduction)
+kubeApiServer:
+  vmScrape:
+    spec:
+      endpoints:
+        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          port: https
+          scheme: https
+          tlsConfig:
+            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            serverName: kubernetes
+          metricRelabelConfigs:
+            # Drop apiserver_request_duration_seconds_bucket (91K series)
+            # Different from apiserver_request_sli_duration_seconds_bucket which is kept for alerts
+            - action: drop
+              source_labels: [__name__]
+              regex: apiserver_request_duration_seconds_bucket
+            # Drop apiserver_request_body_size_bytes_bucket (27K series)
+            - action: drop
+              source_labels: [__name__]
+              regex: apiserver_request_body_size_bytes_bucket
+            # Drop apiserver_watch_list_duration_seconds_bucket (18K series)
+            - action: drop
+              source_labels: [__name__]
+              regex: apiserver_watch_list_duration_seconds_bucket
+            # Drop apiserver_response_sizes_bucket (15K series)
+            - action: drop
+              source_labels: [__name__]
+              regex: apiserver_response_sizes_bucket
+            # Drop apiserver_watch_cache_read_wait_seconds_bucket (12K series)
+            - action: drop
+              source_labels: [__name__]
+              regex: apiserver_watch_cache_read_wait_seconds_bucket
+            # Drop apiserver_watch_events_sizes_bucket (8K series)
+            - action: drop
+              source_labels: [__name__]
+              regex: apiserver_watch_events_sizes_bucket
+
 kubeEtcd:
   enabled: true
   service:
