@@ -740,7 +740,7 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 36 },
       "id": 131,
       "options": {
         "legend": {
@@ -826,7 +826,7 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
       "id": 132,
       "options": {
         "legend": {
@@ -893,7 +893,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
       "id": 133,
       "options": {
         "legend": {
@@ -913,92 +913,6 @@
         }
       ],
       "title": "Motherboard",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "ACPI thermal zone",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
-          },
-          "links": [],
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
-          },
-          "unit": "celsius"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
-            "properties": [
-              {
-                "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
-              },
-              { "id": "custom.fillOpacity", "value": 0 },
-              {
-                "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
-      "id": 134,
-      "options": {
-        "legend": {
-          "calcs": ["min", "mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
-          "legendFormat": "{{ chip_name }} {{ sensor }}",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
-          "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
-          "refId": "B"
-        }
-      ],
-      "title": "Other",
       "type": "timeseries"
     },
     {
@@ -1067,7 +981,7 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 53 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 53 },
       "id": 141,
       "options": {
         "legend": {
@@ -1153,7 +1067,7 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 53 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 61 },
       "id": 142,
       "options": {
         "legend": {
@@ -1220,7 +1134,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 61 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 61 },
       "id": 143,
       "options": {
         "legend": {
@@ -1240,92 +1154,6 @@
         }
       ],
       "title": "Motherboard",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "ACPI thermal zone",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
-          },
-          "links": [],
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
-          },
-          "unit": "celsius"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
-            "properties": [
-              {
-                "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
-              },
-              { "id": "custom.fillOpacity", "value": 0 },
-              {
-                "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 61 },
-      "id": 144,
-      "options": {
-        "legend": {
-          "calcs": ["min", "mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
-          "legendFormat": "{{ chip_name }} {{ sensor }}",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
-          "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
-          "refId": "B"
-        }
-      ],
-      "title": "Other",
       "type": "timeseries"
     },
     {
@@ -1394,7 +1222,7 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 70 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 70 },
       "id": 151,
       "options": {
         "legend": {
@@ -1480,7 +1308,7 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 70 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 78 },
       "id": 152,
       "options": {
         "legend": {
@@ -1547,7 +1375,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 78 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 78 },
       "id": 153,
       "options": {
         "legend": {
@@ -1567,92 +1395,6 @@
         }
       ],
       "title": "Motherboard",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "ACPI thermal zone",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
-          },
-          "links": [],
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
-          },
-          "unit": "celsius"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
-            "properties": [
-              {
-                "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
-              },
-              { "id": "custom.fillOpacity", "value": 0 },
-              {
-                "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 78 },
-      "id": 154,
-      "options": {
-        "legend": {
-          "calcs": ["min", "mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
-          "legendFormat": "{{ chip_name }} {{ sensor }}",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"thermal_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
-          "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
-          "refId": "B"
-        }
-      ],
-      "title": "Other",
       "type": "timeseries"
     }
   ],
