@@ -13,13 +13,10 @@ spec:
       interval: 30s
       rules:
         # Alert when pods are consistently dropping packets due to policy
-        # Excludes cloudflared ICMP drops (benign path MTU discovery probes)
         - alert: CiliumPolicyDrops
           expr: |
             sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
-              unless
-              rate(hubble_drop_total{reason="POLICY_DENIED", source=~"cloudflare-system/.*", protocol="ICMPv4"}[5m])
             ) > 0
           for: 2m
           labels:
@@ -32,13 +29,10 @@ spec:
             runbook_url: "Use 'task dev-env:hubble-drops' to see live dropped packets"
 
         # Critical alert for sustained high drop rate
-        # Excludes cloudflared ICMP drops (benign path MTU discovery probes)
         - alert: CiliumPolicyDropsCritical
           expr: |
             sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
-              unless
-              rate(hubble_drop_total{reason="POLICY_DENIED", source=~"cloudflare-system/.*", protocol="ICMPv4"}[5m])
             ) > 10
           for: 5m
           labels:

@@ -19,6 +19,13 @@ spec:
               protocol: UDP
             - port: "443"
               protocol: TCP
+    # Allow ICMP for path MTU discovery and network diagnostics
+    - toEntities:
+        - world
+      icmps:
+        - fields:
+            - type: 8
+              family: IPv4
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Backend: Traefik ingress controller
