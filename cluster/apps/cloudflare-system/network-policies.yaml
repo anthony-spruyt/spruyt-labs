@@ -19,11 +19,13 @@ spec:
               protocol: UDP
             - port: "443"
               protocol: TCP
-    # Allow ICMP for path MTU discovery (type 3 = Destination Unreachable)
+    # Allow ICMP for path MTU discovery and network diagnostics
     - toEntities:
         - world
       icmps:
         - fields:
+            - type: EchoRequest
+              family: IPv4
             - type: DestinationUnreachable
               family: IPv4
 ---
