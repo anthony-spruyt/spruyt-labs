@@ -96,8 +96,8 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
     useAllNodes: true
     useAllDevices: false
     # Use the following command to get the device name by-id "talosctl ls /dev/disk/by-id -n <node-ip>"
-    #devicePathFilter: /dev/disk/by-id/nvme-(KINGSTON_OM3PGP41024P-A0_50026B72836A9B64|KINGSTON_OM3PGP41024P-A0_50026B72836A034E|KINGSTON_OM3PGP41024P-A0_50026B72836A9C9E) # PRE RMA MS-01-1|MS-01-2|MS-01-3
-    devicePathFilter: /dev/disk/by-id/nvme-(KINGSTON_OM3PGP41024P-A0_50026B72836A9B64|KINGSTON_OM8TAP41024K1-A00_50026B738433E649|KINGSTON_OM3PGP41024P-A0_50026B72836A9C9E) # POST RMA MS-01-1|MS-01-2 (shitty disk)|MS-01-3
+    devicePathFilter: /dev/disk/by-id/nvme-(KINGSTON_OM3PGP41024P-A0_50026B72836A9B64|KINGSTON_OM3PGP41024P-A0_50026B72836A034E|KINGSTON_OM3PGP41024P-A0_50026B72836A9C9E) # PRE RMA MS-01-1|MS-01-2|MS-01-3
+    #devicePathFilter: /dev/disk/by-id/nvme-(KINGSTON_OM3PGP41024P-A0_50026B72836A9B64|KINGSTON_OM8TAP41024K1-A00_50026B738433E649|KINGSTON_OM3PGP41024P-A0_50026B72836A9C9E) # POST RMA MS-01-1|MS-01-2 (shitty disk)|MS-01-3
     config:
       encryptedDevice: "true"
   # Resource requests based on P99 metrics (7d): MGR=169m/737Mi, MON=188m/534Mi, OSD=483m/1078Mi
