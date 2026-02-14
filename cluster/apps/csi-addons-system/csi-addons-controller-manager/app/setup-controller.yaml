@@ -19,6 +19,7 @@ metadata:
   name: csi-addons-manager-config
   namespace: csi-addons-system
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/deployment-apps-v1.json
 apiVersion: apps/v1
 kind: Deployment
 metadata:
