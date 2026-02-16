@@ -29,3 +29,6 @@ agent.sock
 # Python
 __pycache__/
 *.py[cod]
+
+# Git worktrees
+.worktrees/
