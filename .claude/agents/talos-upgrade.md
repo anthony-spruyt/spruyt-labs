@@ -153,11 +153,13 @@ gh pr diff <pr-number> --repo anthony-spruyt/spruyt-labs | grep talosVersion
 
 ```bash
 # Parallel Group 1 - Cluster health
-talosctl health
+# IMPORTANT: talosctl health requires single-node targeting (it discovers the cluster from that node)
+talosctl health -n <any-cp-node-ip>
 kubectl get nodes -o wide
 
 # Parallel Group 2 - etcd and storage
-talosctl etcd status
+# IMPORTANT: Target only CP nodes to avoid "Unimplemented" warnings from workers
+talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
 # Parallel Group 3 - GitOps
@@ -225,17 +227,29 @@ SCHEMATIC=$(grep -A10 "controlPlane:" talos/talconfig.yaml | grep -i schematic |
 #### Step 3.2: Pre-node health check
 ```bash
 # Verify etcd quorum before proceeding
-talosctl etcd status
+# IMPORTANT: Target only CP nodes to avoid "Unimplemented" warnings from workers
+talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 # Must show 3 healthy members
 ```
 
 #### Step 3.3: Execute upgrade
 ```bash
+# IMPORTANT: For CP upgrades, use a SURVIVING CP node as endpoint, NOT the cluster VIP.
+# The VIP may route to the node being upgraded, causing the command to lose connection.
+# Choose an endpoint that is NOT the node being upgraded.
 talosctl upgrade \
   --nodes <node-ip> \
-  --endpoints <cluster-endpoint> \
+  --endpoints <surviving-cp-ip> \
   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<target-version>
 ```
+
+**Endpoint selection for control plane upgrades:**
+
+| Node Being Upgraded | Use as Endpoint |
+|---------------------|----------------|
+| 1st CP node | 2nd CP node |
+| 2nd CP node | 1st CP node (already upgraded) |
+| 3rd CP node | 1st CP node (already upgraded) |
 
 #### Step 3.4: Wait for node recovery (CRITICAL)
 ```bash
@@ -244,10 +258,11 @@ NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.addr
 kubectl wait --for=condition=Ready node/$NODE_NAME --timeout=300s
 
 # Verify Talos API is responsive
-talosctl health --nodes <node-ip>
+talosctl health -n <node-ip>
 
 # Verify etcd quorum restored (must show 3 healthy)
-talosctl etcd status
+# Target only CP nodes
+talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 ```
 
 #### Step 3.5: Post-node validation
@@ -321,7 +336,7 @@ talosctl upgrade \
 kubectl wait --for=condition=Ready node/<hostname> --timeout=300s
 
 # Verify Talos API is responsive
-talosctl health --nodes <node-ip>
+talosctl health -n <node-ip>
 ```
 
 #### Step 4.5: Wait for Ceph recovery (CRITICAL)
@@ -336,9 +351,12 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 | Time After Reboot | Expected State |
 |-------------------|----------------|
 | 0-60s | HEALTH_WARN (OSDs rejoining) |
-| 60-120s | HEALTH_WARN (peering) |
-| 120-300s | HEALTH_OK (if no degraded objects) |
+| 60-120s | HEALTH_WARN (peering, PGs recovering) |
+| 120-180s | All PGs active+clean, but HEALTH_WARN may persist due to NOOUT flag |
+| 180-300s | HEALTH_OK (NOOUT flag auto-clears ~60s after PGs are clean) |
 | 300s+ | HEALTH_OK expected; if still WARN, investigate |
+
+**Note:** Rook-Ceph sets a NOOUT flag on OSDs during planned disruptions to prevent unnecessary rebalancing. This flag auto-clears after the OSD rejoins, but adds ~60 seconds of HEALTH_WARN **after** all PGs are already active+clean. This is normal and does not indicate a problem.
 
 #### Step 4.6: Post progress to issue
 If tracking with an issue, post progress after each worker including Ceph recovery time.
@@ -353,8 +371,8 @@ talosctl version --short
 kubectl get nodes -o wide
 
 # Parallel Group 2 - Cluster health
-talosctl health
-talosctl etcd status
+talosctl health -n <any-cp-node-ip>
+talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 
 # Parallel Group 3 - Storage and GitOps
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
@@ -412,7 +430,9 @@ grep -n "v<old-version>" talos/README.md talos/docs/machine-lifecycle.md
 # Use Edit tool to update each reference
 ```
 
-**Do NOT update `talos/talconfig.yaml`** - this is already handled by the Renovate PR.
+**`talos/talconfig.yaml` version update:**
+- **If triggered by Renovate PR:** Do NOT update - Renovate already changed the version in the PR.
+- **If triggered by manual user request:** MUST update `talosVersion` in `talos/talconfig.yaml` to match the new version. Otherwise talconfig will be out of sync with the running cluster, causing issues with `talhelper` config generation.
 
 ### Phase 8: Final Report
 
@@ -505,6 +525,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 - Documentation: Updated
 
 ### Files Changed
+- talos/talconfig.yaml (talosVersion - manual upgrades only)
 - talos/README.md (version references)
 - talos/docs/machine-lifecycle.md (version references)
 
