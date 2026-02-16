@@ -8,7 +8,7 @@
 # Source: https://github.com/kubernetes-csi/external-snapshotter/tree/master/deploy/kubernetes/snapshot-controller
 
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/deployment-apps-v1.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.1/deployment-apps-v1.json
 kind: Deployment
 apiVersion: apps/v1
 metadata:
