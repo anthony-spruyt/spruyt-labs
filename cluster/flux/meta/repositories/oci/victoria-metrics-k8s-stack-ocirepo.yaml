@@ -7,5 +7,5 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "0.71.0"
+    tag: "0.71.1"
   url: oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack
