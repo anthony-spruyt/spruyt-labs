@@ -21,11 +21,12 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow HTTP/HTTPS egress for Anthropic API, ClawHub, npm registry, and web browsing (Chromium)
+# Allow all-port egress to external (world) only - no cluster resources
+# OpenClaw agents need unrestricted external access (APIs, npm, pip, git, etc.)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-world-web-egress
+  name: allow-world-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -34,12 +35,6 @@ spec:
   egress:
     - toEntities:
         - world
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
-            - port: "80"
-              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
