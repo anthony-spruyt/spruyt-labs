@@ -67,7 +67,7 @@ claude setup-token
 
 # 2. Copy the token output, then paste it into the running pod
 kubectl exec -it -n openclaw deploy/openclaw -c main -- \
-  openclaw models auth paste-token --provider anthropic
+  node dist/index.js models auth paste-token --provider anthropic
 ```
 
 The token is stored on the PVC at `/home/node/.openclaw` and persists across pod restarts.
@@ -78,7 +78,7 @@ The token is stored on the PVC at `/home/node/.openclaw` and persists across pod
 # Same process - generate locally, paste into pod
 claude setup-token
 kubectl exec -it -n openclaw deploy/openclaw -c main -- \
-  openclaw models auth paste-token --provider anthropic
+  node dist/index.js models auth paste-token --provider anthropic
 ```
 
 **Switching to API key** (alternative):

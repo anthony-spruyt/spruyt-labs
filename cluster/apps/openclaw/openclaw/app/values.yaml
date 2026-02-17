@@ -316,6 +316,9 @@ configMaps:
           "gateway": {
             "port": 18789,
             "mode": "local",
+            "controlUi": {
+              "allowInsecureAuth": true
+            }
           },
 
           "browser": {
