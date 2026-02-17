@@ -123,6 +123,7 @@
       "WebFetch(domain:integrations.goauthentik.io)",
       "WebFetch(domain:goauthentik.io)",
       "WebFetch(domain:qdrant.tech)",
+      "WebFetch(domain:docs.openclaw.ai)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:rook.io)",
       "WebFetch(domain:talos.dev)",

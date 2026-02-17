@@ -1,0 +1,68 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: OpenClaw SSO
+entries:
+  - id: openclaw_users_group
+    model: authentik_core.group
+    identifiers:
+      name: OpenClaw Users
+    attrs:
+      name: OpenClaw Users
+  - id: openclaw_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: OpenClaw
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://openclaw.${EXTERNAL_DOMAIN}
+  - id: openclaw_application
+    model: authentik_core.application
+    identifiers:
+      slug: openclaw
+    attrs:
+      name: OpenClaw
+      provider: !KeyOf openclaw_provider
+      meta_launch_url: https://openclaw.${EXTERNAL_DOMAIN}
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf openclaw_application
+      order: 0
+    attrs:
+      group: !KeyOf openclaw_users_group
+      negate: false
+      enabled: true
+      timeout: 30
+
+  # Standalone outpost deployed to openclaw namespace
+  # Requires RBAC: Role/RoleBinding in openclaw granting authentik SA permissions
+  - id: openclaw_outpost
+    model: authentik_outposts.outpost
+    identifiers:
+      name: OpenClaw Outpost
+    attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: openclaw
+      providers:
+        - !KeyOf openclaw_provider

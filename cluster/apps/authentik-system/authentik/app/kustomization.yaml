@@ -40,5 +40,6 @@ configMapGenerator:
       - blueprints/flux-sso.yaml
       - blueprints/firefly-iii-sso.yaml
       - blueprints/firemerge-sso.yaml
+      - blueprints/openclaw-sso.yaml
 configurations:
   - ./kustomizeconfig.yaml

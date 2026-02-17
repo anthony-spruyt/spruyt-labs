@@ -32,6 +32,7 @@ spec:
     - name: foundryvtt
     - name: headlamp
     - name: n8n
+    - name: openclaw
     - name: qdrant
     - name: redisinsight
     - name: rook-ceph-operator

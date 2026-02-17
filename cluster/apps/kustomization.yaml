@@ -38,6 +38,7 @@ resources:
   - ./falco-system
   - ./firefly-iii
   - ./nut-system
+  - ./openclaw
   # - ./snmp
   # - ./smtp
   # - ./mysql
