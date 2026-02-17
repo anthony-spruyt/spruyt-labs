@@ -380,6 +380,13 @@ configMaps:
                 "enabled": true
               }
             }
+          },
+
+          "channels": {
+            "whatsapp": {
+              "dmPolicy": "allowlist",
+              "allowFrom": ["+61467275883"]
+            }
           }
         }
 persistence:
