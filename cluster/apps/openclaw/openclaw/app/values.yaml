@@ -372,13 +372,19 @@ configMaps:
 
           "tools": {
             "profile": "full",
+            "deny": [
+              "nodes"
+            ],
             "web": {
               "search": {
-                "enabled": false
+                "enabled": true
               },
               "fetch": {
                 "enabled": true
               }
+            },
+            "fs": {
+              "workspaceOnly": false
             }
           },
 
@@ -393,6 +399,23 @@ configMaps:
                     "1473506635656990862": { "allow": true, "requireMention": false }
                   }
                 }
+              }
+            }
+          },
+
+          "discovery": {
+            "mdns": {
+              "mode": "off"
+            }
+          },
+
+          "plugins": {
+            "entries": {
+              "whatsapp": {
+                "enabled": false
+              },
+              "discord": {
+                "enabled": true
               }
             }
           }
