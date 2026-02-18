@@ -10,6 +10,10 @@ tasks:
     desc: Runs mega-linter against the repo
     cmds:
       - bash {{ .devEnvScriptsDir }}/run-mega-linter.sh
+  openclaw-schema:
+    desc: Fetches the OpenClaw config JSON Schema from the running pod
+    cmds:
+      - bash {{ .devEnvScriptsDir }}/fetch-openclaw-schema.sh
   priv-pod:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on a specified node'
     cmd: |

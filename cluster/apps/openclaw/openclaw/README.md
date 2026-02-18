@@ -53,6 +53,10 @@ kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c chromium
 # Check init container logs
 kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c init-config
 kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c init-skills
+
+# Run doctor (diagnose and fix common issues)
+kubectl exec -it -n openclaw deploy/openclaw -c main -- \
+  node dist/index.js doctor --fix
 ```
 
 ### Claude Subscription Token Setup
@@ -87,9 +91,9 @@ If you prefer usage-based billing with prompt caching support, add `ANTHROPIC_AP
 
 ### Adding ClawHub Skills
 
-Skills are installed declaratively via the `init-skills` init container. Edit the skill list in `app/values.yaml`:
+Skills are installed declaratively via the `init-skills` init container. Edit the skill list in `app/init-skills.sh`:
 
-```yaml
+```bash
 for skill in weather my-new-skill; do
 ```
 
@@ -97,7 +101,7 @@ Skills are installed from [ClawHub](https://clawhub.com) on pod startup and pers
 
 ### Config Changes
 
-OpenClaw config lives in `app/values.yaml` under the `configMaps.config` section. The init-config container merges Helm-provided config with any existing config on the PVC (preserving runtime changes like installed skills).
+OpenClaw config lives in `app/openclaw.json` (with JSON Schema validation via `openclaw-schema.json`). The init-config container merges Helm-provided config with any existing config on the PVC (preserving runtime changes like installed skills).
 
 To force a full config overwrite instead of merge:
 
@@ -158,7 +162,7 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
    - **Resolution**: Re-run `claude setup-token` locally and paste into pod (see setup instructions above)
 
 5. **Config changes not taking effect**
-   - **Symptom**: Updated values.yaml but behavior unchanged
+   - **Symptom**: Updated `openclaw.json` but behavior unchanged
    - **Diagnosis**: Merge mode preserves existing keys
    - **Resolution**: Either set `CONFIG_MODE: "overwrite"` or delete the PVC config and restart
 
@@ -170,6 +174,10 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
 | Kustomization | `openclaw/ks.yaml` |
 | HelmRelease | `openclaw/app/release.yaml` |
 | Helm values | `openclaw/app/values.yaml` |
+| OpenClaw config | `openclaw/app/openclaw.json` |
+| Config JSON Schema | `openclaw/app/openclaw-schema.json` |
+| Init: config merge | `openclaw/app/init-config.sh` |
+| Init: skill install | `openclaw/app/init-skills.sh` |
 | Secrets (SOPS) | `openclaw/app/openclaw-secrets.sops.yaml` |
 | PVC | `openclaw/app/persistent-volume-claim.yaml` |
 | Network policies | `openclaw/app/network-policies.yaml` |

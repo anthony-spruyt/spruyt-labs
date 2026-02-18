@@ -10,6 +10,9 @@ ssh:*
 # Internal/LAN URLs
 .*\.lan.*
 
+# Localhost URLs (e.g., chromium CDP, gateway)
+http://localhost:.*
+
 # Truncated URLs from ${VARIABLE} substitution (e.g., https://app/)
 https?://[a-z0-9-]+/$
 
