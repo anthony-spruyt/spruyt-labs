@@ -53,6 +53,10 @@ kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c chromium
 # Check init container logs
 kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c init-config
 kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c init-skills
+
+# Run doctor (diagnose and fix common issues)
+kubectl exec -it -n openclaw deploy/openclaw -c main -- \
+  node dist/index.js doctor --fix
 ```
 
 ### Claude Subscription Token Setup
