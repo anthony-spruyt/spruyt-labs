@@ -70,12 +70,12 @@ log "Config initialization complete"
 # ============================================================
 # Workspace Files (declarative from ConfigMap)
 # ============================================================
-# log "Syncing workspace files from ConfigMap"
-# mkdir -p /home/node/.openclaw/workspace
-# for f in /workspace-files/*; do
-#   [ -f "$f" ] || continue
-#   fname=$(basename "$f")
-#   log "Writing workspace/$fname"
-#   cp "$f" "/home/node/.openclaw/workspace/$fname"
-# done
-# log "Workspace sync complete"
+log "Syncing workspace files from ConfigMap"
+mkdir -p /home/node/.openclaw/workspace
+for f in /workspace-files/*; do
+  [ -f "$f" ] || continue
+  fname=$(basename "$f")
+  log "Writing workspace/$fname"
+  cp "$f" "/home/node/.openclaw/workspace/$fname"
+done
+log "Workspace sync complete"

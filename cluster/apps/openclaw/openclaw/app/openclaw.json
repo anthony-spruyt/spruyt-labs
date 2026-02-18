@@ -32,7 +32,12 @@
       "workspace": "/home/node/.openclaw/workspace",
       "userTimezone": "Australia/Melbourne",
       "timeoutSeconds": 600,
-      "maxConcurrent": 1
+      "maxConcurrent": 1,
+      "memorySearch": {
+        "enabled": true,
+        "provider": "openai",
+        "model": "text-embedding-3-small"
+      }
     },
     "list": [
       {

@@ -8,5 +8,4 @@
 
 ## Context
 
-- Runs OpenClaw in **Kubernetes** behind **Traefik** (reverse proxy) and **Authentik** (auth/SSO)
 - Technically competent — knows their way around infrastructure
