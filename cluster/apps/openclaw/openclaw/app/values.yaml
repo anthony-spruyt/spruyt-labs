@@ -390,7 +390,7 @@ configMaps:
                 "257529418187145216": {
                   "requireMention": true,
                   "channels": {
-                    "1473506635656990862": { "allow": true, "requireMention": true }
+                    "1473506635656990862": { "allow": true, "requireMention": false }
                   }
                 }
               }
