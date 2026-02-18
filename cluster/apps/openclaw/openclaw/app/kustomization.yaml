@@ -13,5 +13,18 @@ configMapGenerator:
     namespace: openclaw
     files:
       - values.yaml
+  - name: openclaw-config
+    namespace: openclaw
+    options:
+      disableNameSuffixHash: true
+    files:
+      - openclaw.json
+  - name: openclaw-scripts
+    namespace: openclaw
+    options:
+      disableNameSuffixHash: true
+    files:
+      - init-config.sh
+      - init-skills.sh
 configurations:
   - ./kustomizeconfig.yaml

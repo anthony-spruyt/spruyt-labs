@@ -1,0 +1,139 @@
+{
+  "$schema": "./openclaw-schema.json",
+  "logging": {
+    "level": "info",
+    "consoleLevel": "info",
+    "consoleStyle": "compact",
+    "redactSensitive": "tools"
+  },
+  "browser": {
+    "enabled": true,
+    "defaultProfile": "default",
+    "profiles": {
+      "default": {
+        "cdpUrl": "http://localhost:9222",
+        "color": "#4285F4"
+      }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:manual": {
+        "provider": "anthropic",
+        "mode": "token"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-opus-4-6"
+      },
+      "workspace": "/home/node/.openclaw/workspace",
+      "userTimezone": "Australia/Melbourne",
+      "timeoutSeconds": 600,
+      "maxConcurrent": 1
+    },
+    "list": [
+      {
+        "id": "main",
+        "default": true,
+        "identity": {
+          "name": "OpenClaw",
+          "emoji": "🦞"
+        }
+      }
+    ]
+  },
+  "tools": {
+    "profile": "full",
+    "allow": [
+      "read",
+      "write",
+      "edit",
+      "memory_search",
+      "memory_get",
+      "exec",
+      "process",
+      "message",
+      "web_search",
+      "web_fetch",
+      "browser",
+      "cron",
+      "session_status",
+      "sessions_list",
+      "sessions_history",
+      "sessions_send",
+      "sessions_spawn",
+      "image",
+      "tts",
+      "gateway"
+    ],
+    "deny": ["nodes", "canvas", "apply_patch"],
+    "web": {
+      "search": {
+        "enabled": true
+      },
+      "fetch": {
+        "enabled": true
+      }
+    },
+    "fs": {
+      "workspaceOnly": false
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "session": {
+    "scope": "per-sender",
+    "reset": {
+      "mode": "idle",
+      "idleMinutes": 60
+    },
+    "store": "/home/node/.openclaw/sessions"
+  },
+  "channels": {
+    "discord": {
+      "enabled": true,
+      "groupPolicy": "allowlist",
+      "dm": {
+        "enabled": false
+      },
+      "guilds": {
+        "257529418187145216": {
+          "requireMention": true,
+          "channels": {
+            "1473506635656990862": {
+              "allow": true,
+              "requireMention": false
+            }
+          }
+        }
+      }
+    }
+  },
+  "discovery": {
+    "mdns": {
+      "mode": "off"
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  },
+  "plugins": {
+    "entries": {
+      "whatsapp": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": true
+      }
+    }
+  }
+}
