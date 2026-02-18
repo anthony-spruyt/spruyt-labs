@@ -8,12 +8,12 @@ ENABLE_LINTERS:
   - SPELL_LYCHEE
   - TERRAFORM_TFLINT
   - YAML_YAMLLINT
-FILTER_REGEX_EXCLUDE: '.*sops.*|.*/mcp\.json$'
+FILTER_REGEX_EXCLUDE: '.*sops.*|.*/mcp\.json$|cluster/apps/openclaw/openclaw/app/workspace/|\.taskfiles/talos/scripts/'
 EXCLUDED_DIRECTORIES:
   - .git
   - talos
   - clusterconfig
   - legacy
-  - .taskfiles/talos/scripts
+  - plans
 DEFAULT_BRANCH: main
 IGNORE_GITIGNORED_FILES: true

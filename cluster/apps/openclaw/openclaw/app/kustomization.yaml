@@ -26,5 +26,17 @@ configMapGenerator:
     files:
       - init-config.sh
       - init-skills.sh
+  - name: openclaw-workspace
+    namespace: openclaw
+    options:
+      disableNameSuffixHash: true
+    files:
+      - workspace/AGENTS.md
+      - workspace/BOOTSTRAP.md
+      - workspace/HEARTBEAT.md
+      - workspace/IDENTITY.md
+      - workspace/SOUL.md
+      - workspace/TOOLS.md
+      - workspace/USER.md
 configurations:
   - ./kustomizeconfig.yaml

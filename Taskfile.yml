@@ -13,6 +13,7 @@ includes:
   flux: .taskfiles/flux/tasks.yaml
   install: .taskfiles/install/tasks.yaml
   kubectl: .taskfiles/kubectl/tasks.yaml
+  openclaw: .taskfiles/openclaw/tasks.yaml
   pre-commit: .taskfiles/pre-commit/tasks.yaml
   rook-ceph: .taskfiles/rook-ceph/tasks.yaml
   sops: .taskfiles/sops/tasks.yaml

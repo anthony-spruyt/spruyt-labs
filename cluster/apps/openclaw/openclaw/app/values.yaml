@@ -210,6 +210,15 @@ persistence:
           - path: /home/node/.openclaw
         main:
           - path: /home/node/.openclaw
+  # Workspace markdown files (SOUL.md, USER.md, etc.) synced to PVC on startup
+  workspace-files:
+    type: configMap
+    name: openclaw-workspace
+    advancedMounts:
+      main:
+        init-config:
+          - path: /workspace-files
+            readOnly: true
   # Init container scripts (created by Kustomize configMapGenerator)
   scripts:
     type: configMap
