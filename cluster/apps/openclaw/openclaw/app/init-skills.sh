@@ -93,7 +93,7 @@ fi
 # Always ensure stable symlinks exist (idempotent)
 # uv creates a nested cpython-x.y.z-<platform>/ directory; symlink for stable PATH
 if [ ! -f "$PYTHON_DIR/bin/python3" ]; then
-  PYTHON_BIN=$(find "$PYTHON_DIR" -name "python3" -type f 2>/dev/null | head -1)
+  PYTHON_BIN=$(find "$PYTHON_DIR" -name "python3" \( -type f -o -type l \) 2>/dev/null | head -1)
   if [ -n "$PYTHON_BIN" ]; then
     mkdir -p "$PYTHON_DIR/bin"
     ln -sf "$PYTHON_BIN" "$PYTHON_DIR/bin/python3"
