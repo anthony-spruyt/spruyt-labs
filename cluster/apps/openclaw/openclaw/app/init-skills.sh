@@ -130,7 +130,7 @@ fi
 MCPORTER_VERSION="0.7.3"
 if [ ! -f "$NPM_GLOBAL/bin/mcporter" ]; then
   log "Installing mcporter v$${MCPORTER_VERSION}..."
-  npm install -g "mcporter@$${MCPORTER_VERSION}" --prefix "$NPM_GLOBAL"
+  npm install -g "mcporter@$${MCPORTER_VERSION}" --prefix "$NPM_GLOBAL" --safe-chain-skip-minimum-package-age
   log "mcporter installed"
 else
   log "mcporter already installed"
