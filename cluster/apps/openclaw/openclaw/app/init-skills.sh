@@ -42,6 +42,27 @@ log "Starting skills initialization"
 BIN_DIR=/home/node/.openclaw/bin
 mkdir -p "$BIN_DIR"
 
+# --- Aikido safe-chain (supply chain security) ---
+# Intercepts npm/pip/uv/npx installs via a local proxy that checks packages
+# against Aikido Intel threat intelligence. Must be set up BEFORE any
+# package manager operations (npm, pip, uv) so they are protected.
+# renovate: depName=@aikidosec/safe-chain datasource=npm
+SAFE_CHAIN_VERSION="1.4.4"
+NPM_GLOBAL=/home/node/.openclaw/npm-global
+mkdir -p "$NPM_GLOBAL"
+if [ ! -f "$NPM_GLOBAL/bin/safe-chain" ]; then
+  log "Installing safe-chain v$${SAFE_CHAIN_VERSION}..."
+  npm install -g "@aikidosec/safe-chain@$${SAFE_CHAIN_VERSION}" --prefix "$NPM_GLOBAL"
+  log "safe-chain installed"
+else
+  log "safe-chain already installed"
+fi
+# Create CI shims in $HOME/.safe-chain/shims (HOME=/tmp in init container)
+# Re-run every startup since /tmp is ephemeral (emptyDir)
+log "Setting up safe-chain shims..."
+"$NPM_GLOBAL/bin/safe-chain" setup-ci
+export PATH="$HOME/.safe-chain/shims:$HOME/.safe-chain/bin:$NPM_GLOBAL/bin:$PATH"
+
 # --- GitHub CLI (gh) ---
 # renovate: depName=cli/cli datasource=github-releases
 GH_VERSION="2.87.0"
@@ -103,27 +124,6 @@ if [ ! -f "$PYTHON_DIR/bin/python3" ]; then
     log "WARNING: Python binary not found for symlinking"
   fi
 fi
-
-# --- Aikido safe-chain (supply chain security) ---
-# Intercepts npm/pip/npx installs via a local proxy that checks packages
-# against Aikido Intel threat intelligence. Must be set up BEFORE any
-# npm installs so they are protected.
-# renovate: depName=@aikidosec/safe-chain datasource=npm
-SAFE_CHAIN_VERSION="1.4.4"
-NPM_GLOBAL=/home/node/.openclaw/npm-global
-mkdir -p "$NPM_GLOBAL"
-if [ ! -f "$NPM_GLOBAL/bin/safe-chain" ]; then
-  log "Installing safe-chain v$${SAFE_CHAIN_VERSION}..."
-  npm install -g "@aikidosec/safe-chain@$${SAFE_CHAIN_VERSION}" --prefix "$NPM_GLOBAL"
-  log "safe-chain installed"
-else
-  log "safe-chain already installed"
-fi
-# Create CI shims in $HOME/.safe-chain/shims (HOME=/tmp in init container)
-# Re-run every startup since /tmp is ephemeral (emptyDir)
-log "Setting up safe-chain shims..."
-"$NPM_GLOBAL/bin/safe-chain" setup-ci
-export PATH="$HOME/.safe-chain/shims:$HOME/.safe-chain/bin:$NPM_GLOBAL/bin:$PATH"
 
 # --- mcporter (MCP client for Home Assistant etc.) ---
 # renovate: depName=mcporter datasource=npm
