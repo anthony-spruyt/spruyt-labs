@@ -46,10 +46,10 @@ mkdir -p "$BIN_DIR"
 # renovate: depName=cli/cli datasource=github-releases
 GH_VERSION="2.87.0"
 if [ ! -f "$BIN_DIR/gh" ]; then
-  log "Installing GitHub CLI v${GH_VERSION}..."
-  curl -LsSf "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" | tar xz -C /tmp
-  cp "/tmp/gh_${GH_VERSION}_linux_amd64/bin/gh" "$BIN_DIR/gh"
-  rm -rf "/tmp/gh_${GH_VERSION}_linux_amd64"
+  log "Installing GitHub CLI v$${GH_VERSION}..."
+  curl -LsSf "https://github.com/cli/cli/releases/download/v$${GH_VERSION}/gh_$${GH_VERSION}_linux_amd64.tar.gz" | tar xz -C /tmp
+  cp "/tmp/gh_$${GH_VERSION}_linux_amd64/bin/gh" "$BIN_DIR/gh"
+  rm -rf "/tmp/gh_$${GH_VERSION}_linux_amd64"
   log "GitHub CLI installed"
 else
   log "GitHub CLI already installed"
@@ -60,8 +60,8 @@ fi
 GO_VERSION="1.26.0"
 GO_DIR=/home/node/.openclaw/go
 if [ ! -d "$GO_DIR" ]; then
-  log "Installing Go v${GO_VERSION}..."
-  curl -LsSf "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar xz -C /home/node/.openclaw
+  log "Installing Go v$${GO_VERSION}..."
+  curl -LsSf "https://go.dev/dl/go$${GO_VERSION}.linux-amd64.tar.gz" | tar xz -C /home/node/.openclaw
   log "Go installed"
 else
   log "Go already installed"
@@ -71,8 +71,8 @@ fi
 # renovate: depName=astral-sh/uv datasource=github-releases
 UV_VERSION="0.10.4"
 if [ ! -f "$BIN_DIR/uv" ]; then
-  log "Installing uv v${UV_VERSION}..."
-  curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_INSTALL_DIR="$BIN_DIR" sh
+  log "Installing uv v$${UV_VERSION}..."
+  curl -LsSf "https://astral.sh/uv/$${UV_VERSION}/install.sh" | env UV_INSTALL_DIR="$BIN_DIR" sh
   log "uv installed"
 else
   log "uv already installed"

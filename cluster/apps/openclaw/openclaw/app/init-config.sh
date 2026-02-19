@@ -8,7 +8,7 @@ log() { echo "[$(date -Iseconds)] [init-config] $*"; }
 
 log "Starting config initialization"
 mkdir -p /home/node/.openclaw
-CONFIG_MODE="${CONFIG_MODE:-merge}"
+CONFIG_MODE="$${CONFIG_MODE:-merge}"
 
 if [ "$CONFIG_MODE" = "merge" ] && [ -f /home/node/.openclaw/openclaw.json ]; then
   log "Mode: merge - merging Helm config with existing config"
