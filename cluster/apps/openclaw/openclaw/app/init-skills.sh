@@ -104,6 +104,20 @@ if [ ! -f "$PYTHON_DIR/bin/python3" ]; then
   fi
 fi
 
+# --- mcporter (MCP client for Home Assistant etc.) ---
+# renovate: depName=mcporter datasource=npm
+MCPORTER_VERSION="0.7.3"
+NPM_GLOBAL=/home/node/.openclaw/npm-global
+mkdir -p "$NPM_GLOBAL"
+if [ ! -f "$NPM_GLOBAL/bin/mcporter" ]; then
+  log "Installing mcporter v$${MCPORTER_VERSION}..."
+  npm install -g "mcporter@$${MCPORTER_VERSION}" --prefix "$NPM_GLOBAL"
+  log "mcporter installed"
+else
+  log "mcporter already installed"
+fi
+ln -sf "$NPM_GLOBAL/bin/mcporter" "$BIN_DIR/mcporter"
+
 # ============================================================
 # Skill Installation
 # ============================================================
@@ -111,8 +125,8 @@ fi
 # Add skill slugs to the list below to install them declaratively.
 mkdir -p /home/node/.openclaw/workspace/skills
 cd /home/node/.openclaw/workspace
-# shellcheck disable=SC2043  # Single-item loop is intentional; add more skill slugs as needed
-for skill in weather; do
+# add more skill slugs as needed
+for skill in weather al-one/mcp-hass; do
   if [ -n "$skill" ] && [ ! -d "skills/${skill##*/}" ]; then
     log "Installing skill: $skill"
     if ! npx -y clawhub install "$skill" --no-input; then
