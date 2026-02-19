@@ -82,7 +82,9 @@ fi
 PYTHON_DIR=/home/node/.openclaw/python
 if [ ! -d "$PYTHON_DIR" ]; then
   log "Installing Python via uv..."
-  "$BIN_DIR/uv" python install --install-dir "$PYTHON_DIR"
+  # UV_PYTHON_INSTALL_DIR: store the cpython build on the PVC
+  # --no-bin: skip creating executables in $HOME/.local/bin (HOME=/tmp in init container)
+  UV_PYTHON_INSTALL_DIR="$PYTHON_DIR" "$BIN_DIR/uv" python install --no-bin
   # uv creates a nested cpython-x.y.z-<platform>/ directory; symlink for stable PATH
   PYTHON_BIN=$(find "$PYTHON_DIR" -name "python3" -type f 2>/dev/null | head -1)
   if [ -n "$PYTHON_BIN" ]; then
