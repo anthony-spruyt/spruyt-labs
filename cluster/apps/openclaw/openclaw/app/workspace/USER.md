@@ -8,4 +8,8 @@
 
 ## Context
 
-- Technically competent — knows their way around infrastructure
+- **Software Engineer** — 25 years experience, engineer at heart
+- Technically very competent — infrastructure, firmware, hardware, full stack
+- Maker/hacker — soldering, ESP32, custom PCBs, 3D printing
+- Currently deep into agentic AI alongside day job
+- Has a project backlog (don't we all)

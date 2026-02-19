@@ -64,9 +64,10 @@ controllers:
           tag: *tag
           pullPolicy: IfNotPresent
         command:
+          - /scripts/entrypoint.sh
+        args:
           - node
           - dist/index.js
-        args:
           - gateway
           - --bind
           - lan
@@ -219,7 +220,7 @@ persistence:
         init-config:
           - path: /workspace-files
             readOnly: true
-  # Init container scripts (created by Kustomize configMapGenerator)
+  # Scripts (created by Kustomize configMapGenerator)
   scripts:
     type: configMap
     name: openclaw-scripts
@@ -230,6 +231,9 @@ persistence:
           - path: /scripts
             readOnly: true
         init-skills:
+          - path: /scripts
+            readOnly: true
+        main:
           - path: /scripts
             readOnly: true
   # Writable /tmp for containers with readOnlyRootFilesystem

@@ -99,6 +99,18 @@ for skill in weather my-new-skill; do
 
 Skills are installed from [ClawHub](https://clawhub.com) on pod startup and persist on the PVC. Already-installed skills are skipped (idempotent).
 
+### Runtime Tools
+
+The `init-skills` init container also installs runtime tools that skills may depend on. These persist on the PVC and are made available to the main container via the `entrypoint.sh` wrapper (prepends custom paths to `$PATH`).
+
+| Tool | Version Source | Purpose |
+|------|---------------|---------|
+| GitHub CLI (`gh`) | `GH_VERSION` in `init-skills.sh` | GitHub API access for skills |
+| Go | `GO_VERSION` in `init-skills.sh` | Go runtime for skills |
+| Python (via uv) | `UV_VERSION` in `init-skills.sh` | Python runtime for skills |
+
+Versions are pinned with Renovate annotations for automated updates. `GH_TOKEN` is injected from `openclaw-secrets.sops.yaml` for `gh` authentication.
+
 ### Config Changes
 
 OpenClaw config lives in `app/openclaw.json` (with JSON Schema validation via `openclaw-schema.json`). The init-config container merges Helm-provided config with any existing config on the PVC (preserving runtime changes like installed skills).
@@ -178,6 +190,7 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
 | Config JSON Schema | `openclaw/app/openclaw-schema.json` |
 | Init: config merge | `openclaw/app/init-config.sh` |
 | Init: skill install | `openclaw/app/init-skills.sh` |
+| Entrypoint wrapper | `openclaw/app/entrypoint.sh` |
 | Secrets (SOPS) | `openclaw/app/openclaw-secrets.sops.yaml` |
 | PVC | `openclaw/app/persistent-volume-claim.yaml` |
 | Network policies | `openclaw/app/network-policies.yaml` |

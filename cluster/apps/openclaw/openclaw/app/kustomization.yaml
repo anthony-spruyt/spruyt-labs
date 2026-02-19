@@ -24,6 +24,7 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     files:
+      - entrypoint.sh
       - init-config.sh
       - init-skills.sh
   - name: openclaw-workspace

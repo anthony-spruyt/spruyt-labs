@@ -39,6 +39,64 @@ log "Starting skills initialization"
 # cd /home/node/.openclaw
 # pnpm install <your-package> --store-dir /home/node/.openclaw/.pnpm-store
 
+BIN_DIR=/home/node/.openclaw/bin
+mkdir -p "$BIN_DIR"
+
+# --- GitHub CLI (gh) ---
+# renovate: depName=cli/cli datasource=github-releases
+GH_VERSION="2.87.0"
+if [ ! -f "$BIN_DIR/gh" ]; then
+  log "Installing GitHub CLI v${GH_VERSION}..."
+  curl -LsSf "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" | tar xz -C /tmp
+  cp "/tmp/gh_${GH_VERSION}_linux_amd64/bin/gh" "$BIN_DIR/gh"
+  rm -rf "/tmp/gh_${GH_VERSION}_linux_amd64"
+  log "GitHub CLI installed"
+else
+  log "GitHub CLI already installed"
+fi
+
+# --- Go ---
+# renovate: depName=golang/go datasource=github-tags versioning=semver extractVersion=^go(?<version>.+)$
+GO_VERSION="1.26.0"
+GO_DIR=/home/node/.openclaw/go
+if [ ! -d "$GO_DIR" ]; then
+  log "Installing Go v${GO_VERSION}..."
+  curl -LsSf "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar xz -C /home/node/.openclaw
+  log "Go installed"
+else
+  log "Go already installed"
+fi
+
+# --- Python (via uv) ---
+# renovate: depName=astral-sh/uv datasource=github-releases
+UV_VERSION="0.10.4"
+if [ ! -f "$BIN_DIR/uv" ]; then
+  log "Installing uv v${UV_VERSION}..."
+  curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_INSTALL_DIR="$BIN_DIR" sh
+  log "uv installed"
+else
+  log "uv already installed"
+fi
+
+# Install a default Python via uv if not present
+PYTHON_DIR=/home/node/.openclaw/python
+if [ ! -d "$PYTHON_DIR" ]; then
+  log "Installing Python via uv..."
+  "$BIN_DIR/uv" python install --install-dir "$PYTHON_DIR"
+  # uv creates a nested cpython-x.y.z-<platform>/ directory; symlink for stable PATH
+  PYTHON_BIN=$(find "$PYTHON_DIR" -name "python3" -type f 2>/dev/null | head -1)
+  if [ -n "$PYTHON_BIN" ]; then
+    mkdir -p "$PYTHON_DIR/bin"
+    ln -sf "$PYTHON_BIN" "$PYTHON_DIR/bin/python3"
+    ln -sf "$PYTHON_BIN" "$PYTHON_DIR/bin/python"
+    log "Python installed and symlinked at $PYTHON_DIR/bin"
+  else
+    log "WARNING: Python installed but binary not found for symlinking"
+  fi
+else
+  log "Python already installed"
+fi
+
 # ============================================================
 # Skill Installation
 # ============================================================
