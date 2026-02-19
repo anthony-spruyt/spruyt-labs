@@ -85,18 +85,23 @@ if [ ! -d "$PYTHON_DIR" ]; then
   # UV_PYTHON_INSTALL_DIR: store the cpython build on the PVC
   # --no-bin: skip creating executables in $HOME/.local/bin (HOME=/tmp in init container)
   UV_PYTHON_INSTALL_DIR="$PYTHON_DIR" "$BIN_DIR/uv" python install --no-bin
-  # uv creates a nested cpython-x.y.z-<platform>/ directory; symlink for stable PATH
+  log "Python installed"
+else
+  log "Python already installed"
+fi
+
+# Always ensure stable symlinks exist (idempotent)
+# uv creates a nested cpython-x.y.z-<platform>/ directory; symlink for stable PATH
+if [ ! -f "$PYTHON_DIR/bin/python3" ]; then
   PYTHON_BIN=$(find "$PYTHON_DIR" -name "python3" -type f 2>/dev/null | head -1)
   if [ -n "$PYTHON_BIN" ]; then
     mkdir -p "$PYTHON_DIR/bin"
     ln -sf "$PYTHON_BIN" "$PYTHON_DIR/bin/python3"
     ln -sf "$PYTHON_BIN" "$PYTHON_DIR/bin/python"
-    log "Python installed and symlinked at $PYTHON_DIR/bin"
+    log "Python symlinked at $PYTHON_DIR/bin"
   else
-    log "WARNING: Python installed but binary not found for symlinking"
+    log "WARNING: Python binary not found for symlinking"
   fi
-else
-  log "Python already installed"
 fi
 
 # ============================================================
