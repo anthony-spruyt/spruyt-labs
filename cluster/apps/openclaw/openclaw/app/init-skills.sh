@@ -104,11 +104,30 @@ if [ ! -f "$PYTHON_DIR/bin/python3" ]; then
   fi
 fi
 
+# --- Aikido safe-chain (supply chain security) ---
+# Intercepts npm/pip/npx installs via a local proxy that checks packages
+# against Aikido Intel threat intelligence. Must be set up BEFORE any
+# npm installs so they are protected.
+# renovate: depName=@aikidosec/safe-chain datasource=npm
+SAFE_CHAIN_VERSION="1.4.4"
+NPM_GLOBAL=/home/node/.openclaw/npm-global
+mkdir -p "$NPM_GLOBAL"
+if [ ! -f "$NPM_GLOBAL/bin/safe-chain" ]; then
+  log "Installing safe-chain v$${SAFE_CHAIN_VERSION}..."
+  npm install -g "@aikidosec/safe-chain@$${SAFE_CHAIN_VERSION}" --prefix "$NPM_GLOBAL"
+  log "safe-chain installed"
+else
+  log "safe-chain already installed"
+fi
+# Create CI shims in $HOME/.safe-chain/shims (HOME=/tmp in init container)
+# Re-run every startup since /tmp is ephemeral (emptyDir)
+log "Setting up safe-chain shims..."
+"$NPM_GLOBAL/bin/safe-chain" setup-ci
+export PATH="$HOME/.safe-chain/shims:$HOME/.safe-chain/bin:$NPM_GLOBAL/bin:$PATH"
+
 # --- mcporter (MCP client for Home Assistant etc.) ---
 # renovate: depName=mcporter datasource=npm
 MCPORTER_VERSION="0.7.3"
-NPM_GLOBAL=/home/node/.openclaw/npm-global
-mkdir -p "$NPM_GLOBAL"
 if [ ! -f "$NPM_GLOBAL/bin/mcporter" ]; then
   log "Installing mcporter v$${MCPORTER_VERSION}..."
   npm install -g "mcporter@$${MCPORTER_VERSION}" --prefix "$NPM_GLOBAL"

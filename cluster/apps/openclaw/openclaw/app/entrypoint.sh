@@ -1,7 +1,15 @@
 #!/bin/sh
 set -e
 # Entrypoint wrapper: prepends custom paths to PATH
-export PATH="/home/node/.openclaw/bin:/home/node/.openclaw/go/bin:/home/node/.openclaw/python/bin:$PATH"
+NPM_GLOBAL=/home/node/.openclaw/npm-global
+export PATH="/home/node/.openclaw/bin:/home/node/.openclaw/go/bin:/home/node/.openclaw/python/bin:$NPM_GLOBAL/bin:$PATH"
 export GOPATH="/home/node/.openclaw/gopath"
 export GOROOT="/home/node/.openclaw/go"
+
+# Set up Aikido safe-chain shims for runtime npm/npx protection
+if [ -f "$NPM_GLOBAL/bin/safe-chain" ]; then
+  "$NPM_GLOBAL/bin/safe-chain" setup-ci 2>/dev/null
+  export PATH="$HOME/.safe-chain/shims:$HOME/.safe-chain/bin:$PATH"
+fi
+
 exec "$@"
