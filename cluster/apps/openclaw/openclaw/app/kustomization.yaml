@@ -33,7 +33,6 @@ configMapGenerator:
       disableNameSuffixHash: true
     files:
       # - workspace/AGENTS.md
-      # - workspace/BOOTSTRAP.md
       # - workspace/HEARTBEAT.md
       - workspace/IDENTITY.md
       # - workspace/SOUL.md

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copies workspace markdown files from the running OpenClaw pod back to the
+# Copies the entire workspace folder from the running OpenClaw pod back to the
 # local repo so runtime changes (e.g. agent edits) can be committed.
 #
 # Usage: bash sync-workspace.sh
@@ -21,14 +21,13 @@ if [[ -z "${POD}" ]]; then
 fi
 echo "Using pod: ${POD}"
 
+# Remove existing destination so deleted files on the pod are reflected locally
+rm -rf "${DEST}"
 mkdir -p "${DEST}"
 
-# Copy each .md file from the pod workspace to the local repo
-for file in $(kubectl exec -n "${NAMESPACE}" "${POD}" -c "${CONTAINER}" -- sh -c "ls ${WORKSPACE}/*.md 2>/dev/null"); do
-  fname=$(basename "${file}")
-  echo "Copying ${fname}..."
-  kubectl cp "${NAMESPACE}/${POD}:${file}" "${DEST}/${fname}" -c "${CONTAINER}"
-done
+# Copy the entire workspace folder from the pod to the local repo
+echo "Syncing workspace folder..."
+kubectl cp "${NAMESPACE}/${POD}:${WORKSPACE}" "${DEST}" -c "${CONTAINER}"
 
-echo "Workspace files synced to ${DEST}"
+echo "Workspace synced to ${DEST}"
 echo "Review changes with: git diff ${DEST}"
