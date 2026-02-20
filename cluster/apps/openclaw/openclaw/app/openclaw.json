@@ -31,13 +31,33 @@
       },
       "workspace": "/home/node/.openclaw/workspace",
       "userTimezone": "Australia/Melbourne",
-      "timeoutSeconds": 600,
-      "maxConcurrent": 1,
       "memorySearch": {
         "enabled": true,
         "provider": "openai",
-        "model": "text-embedding-3-small"
-      }
+        "model": "text-embedding-3-small",
+        "query": {
+          "hybrid": {
+            "enabled": true,
+            "vectorWeight": 0.7,
+            "textWeight": 0.3,
+            "candidateMultiplier": 4,
+            "mmr": {
+              "enabled": true,
+              "lambda": 0.7
+            },
+            "temporalDecay": {
+              "enabled": true,
+              "halfLifeDays": 30
+            }
+          }
+        },
+        "cache": {
+          "enabled": true,
+          "maxEntries": 50000
+        }
+      },
+      "timeoutSeconds": 600,
+      "maxConcurrent": 1
     },
     "list": [
       {

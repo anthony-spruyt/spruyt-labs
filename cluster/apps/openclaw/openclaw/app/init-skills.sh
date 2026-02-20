@@ -145,7 +145,7 @@ ln -sf "$NPM_GLOBAL/bin/mcporter" "$BIN_DIR/mcporter"
 mkdir -p /home/node/.openclaw/workspace/skills
 cd /home/node/.openclaw/workspace
 # add more skill slugs as needed
-for skill in weather al-one/mcp-hass; do
+for skill in weather mcp-hass ontology; do
   if [ -n "$skill" ] && [ ! -d "skills/${skill##*/}" ]; then
     log "Installing skill: $skill"
     if ! npx -y clawhub install "$skill" --no-input; then
