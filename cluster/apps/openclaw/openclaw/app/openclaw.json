@@ -64,8 +64,10 @@
         "id": "main",
         "default": true,
         "identity": {
-          "name": "OpenClaw",
-          "emoji": "🦞"
+          "name": "Skynet",
+          "emoji": "🔴",
+          "avatar": "avatar.png",
+          "theme": "Dry, slightly menacing, but ultimately helpful. Think Terminator meets butler."
         }
       }
     ]

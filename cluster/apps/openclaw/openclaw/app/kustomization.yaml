@@ -32,12 +32,13 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     files:
-      - workspace/AGENTS.md
+      # - workspace/AGENTS.md
       # - workspace/BOOTSTRAP.md
-      - workspace/HEARTBEAT.md
+      # - workspace/HEARTBEAT.md
       - workspace/IDENTITY.md
-      - workspace/SOUL.md
-      - workspace/TOOLS.md
-      - workspace/USER.md
+      # - workspace/SOUL.md
+      # - workspace/TOOLS.md
+      # - workspace/USER.md
+      - workspace/avatar.png
 configurations:
   - ./kustomizeconfig.yaml
