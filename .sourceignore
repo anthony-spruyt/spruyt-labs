@@ -1,0 +1,37 @@
+# Flux source controller exclusions
+# Overrides defaults to allow image files needed by workspace ConfigMaps
+# See: https://fluxcd.io/flux/components/source/gitrepositories/#sourceignore-file
+#
+# Default patterns (from fluxcd/pkg/sourceignore):
+#   VCS:    .git/ .gitignore .gitmodules .gitattributes
+#   Images: *.jpg *.jpeg *.gif *.png *.wmv *.flv
+#   Archives: *.tar.gz *.zip
+#   CI/CD:  .github/ .circleci/ .travis.yml .gitlab-ci.yml appveyor.yml
+#           .drone.yml cloudbuild.yaml codeship-services.yml codeship-steps.yml
+#   Extra:  **/.goreleaser.yml **/.sops.yaml **/.flux.yaml
+#
+# NOTE: VCS patterns are always applied by source-controller regardless of this file.
+# NOTE: *.png, *.jpg, *.jpeg, *.gif are intentionally NOT excluded
+#       to allow workspace binary files in ConfigMaps.
+
+# CI/CD configs (not needed in cluster)
+.github/
+.circleci/
+.travis.yml
+.gitlab-ci.yml
+appveyor.yml
+.drone.yml
+cloudbuild.yaml
+codeship-services.yml
+codeship-steps.yml
+
+# Large media/archive formats (not needed in cluster)
+*.wmv
+*.flv
+*.tar.gz
+*.zip
+
+# Extra
+**/.goreleaser.yml
+**/.sops.yaml
+**/.flux.yaml
