@@ -26,7 +26,7 @@ User -> Traefik (TLS) -> Authentik forward-auth -> OpenClaw gateway (:18789)
 
 | Layer | Control |
 |-------|---------|
-| Network | Cilium CNP: only Traefik ingress on 18789, world egress all ports (no cluster access) |
+| Network | Cilium CNP: Traefik ingress on 18789, n8n MCP egress on 5678, world egress all ports |
 | Auth | Authentik proxy provider with group-based access (OpenClaw Users) |
 | DNS | Split DNS - LAN-only, no Cloudflare tunnel exposure |
 | Container | read-only root filesystem, non-root (UID 1000), all caps dropped, seccomp RuntimeDefault |
