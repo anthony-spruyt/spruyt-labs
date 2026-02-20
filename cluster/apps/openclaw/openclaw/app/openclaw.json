@@ -74,29 +74,6 @@
   },
   "tools": {
     "profile": "full",
-    "allow": [
-      "read",
-      "write",
-      "edit",
-      "memory_search",
-      "memory_get",
-      "exec",
-      "process",
-      "message",
-      "web_search",
-      "web_fetch",
-      "browser",
-      "cron",
-      "session_status",
-      "sessions_list",
-      "sessions_history",
-      "sessions_send",
-      "sessions_spawn",
-      "image",
-      "tts",
-      "gateway"
-    ],
-    "deny": ["nodes", "canvas", "apply_patch"],
     "web": {
       "search": {
         "enabled": true
@@ -162,6 +139,20 @@
       "discord": {
         "enabled": true
       }
+    }
+  },
+  "skills": {
+    "allowBundled": [
+      "github",
+      "gh-issues",
+      "healthcheck",
+      "mcporter",
+      "skill-creator",
+      "weather"
+    ],
+    "entries": {
+      "mcp-hass": { "enabled": true },
+      "ontology": { "enabled": true }
     }
   }
 }
