@@ -151,6 +151,7 @@
       "weather"
     ],
     "entries": {
+      "humanizer": { "enabled": true },
       "mcp-hass": { "enabled": true },
       "ontology": { "enabled": true }
     }
