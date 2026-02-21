@@ -244,7 +244,6 @@ Add before `init-config` in `controllers.main.initContainers`:
       # Script: init-workspace.sh (mounted from openclaw-scripts ConfigMap)
       init-workspace:
         image:
-          # renovate: image=alpine/git
           repository: alpine/git
           tag: "2.47.2"
         command:
