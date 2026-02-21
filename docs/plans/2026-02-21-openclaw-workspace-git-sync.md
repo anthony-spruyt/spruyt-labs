@@ -102,15 +102,13 @@ if [ -d "$WORKSPACE/.git" ]; then
     log "WARNING: Pull failed (conflicts, diverged history, or uncommitted changes), continuing with existing workspace"
   fi
 elif [ -d "$WORKSPACE" ]; then
-  # Workspace directory exists but has no .git - move aside and clone
-  log "WARNING: Non-git workspace directory found, moving to ${WORKSPACE}.bak"
-  mv "$WORKSPACE" "${WORKSPACE}.bak" 2>/dev/null || true
+  # Workspace directory exists but has no .git - remove and clone fresh
+  log "WARNING: Non-git workspace directory found, removing to clone fresh"
+  rm -rf "$WORKSPACE"
   if git clone "$GIT_WORKSPACE_REPO" "$WORKSPACE" 2>&1; then
     log "Workspace cloned successfully"
   else
-    log "WARNING: Clone failed, restoring backup"
-    rm -rf "$WORKSPACE" 2>/dev/null || true
-    mv "${WORKSPACE}.bak" "$WORKSPACE" 2>/dev/null || true
+    log "WARNING: Clone failed, creating empty workspace directory"
     mkdir -p "$WORKSPACE"
   fi
 else

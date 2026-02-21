@@ -33,7 +33,7 @@ A new init container using `alpine/git` runs **before** `init-config` in the pod
 2. Write `.gitconfig` to `/home/node/.openclaw/.gitconfig` (on PVC) with credential helper, user identity, and `pull.ff = only`
 3. If `/home/node/.openclaw/workspace/.git` exists: `git pull --ff-only origin main`
    - On failure (conflicts, diverged history, uncommitted changes): log warning, continue with existing workspace
-4. If workspace directory exists but has no `.git`: move it aside to `.bak`, then clone
+4. If workspace directory exists but has no `.git`: remove it (`rm -rf`), then clone
 5. If no workspace directory: `git clone $GIT_WORKSPACE_REPO /home/node/.openclaw/workspace`
    - On failure (empty repo, network): `mkdir -p` the workspace dir, log error, continue
 
@@ -95,7 +95,7 @@ The existing `allow-world-egress` CiliumNetworkPolicy allows all-port egress to 
 
 Some workspace files contain secrets (e.g. `config/mcporter.json` with MCP API keys and auth tokens). These cannot be committed to the workspace repo.
 
-**Approach:** A small `openclaw-workspace-config` ConfigMap (via `configMapGenerator`) holds only the sensitive files with flat key names (e.g. key `mcporter.json` sourced from `workspace/config/mcporter.json`). The `init-config.sh` copies these to their correct workspace paths using explicit mappings. These files are gitignored in the workspace repo.
+**Approach:** A small `openclaw-workspace-config` ConfigMap (via `configMapGenerator`) holds only the sensitive files with flat key names (e.g. key `mcporter.json` sourced from `workspace/config/mcporter.json`). The ConfigMap is mounted at `/workspace-config-files` (read-only) in the `init-config` container. The `init-config.sh` copies files from `/workspace-config-files/` to their correct workspace paths using explicit mappings. These files are gitignored in the workspace repo.
 
 The workspace repo's `.gitignore` includes:
 ```
@@ -160,6 +160,6 @@ If the init container fails or the approach doesn't work:
 3. Re-add the workspace copy logic to `init-config.sh`
 4. Remove the `init-workspace` init container
 5. Remove `dependsOn` from `init-config` and `init-skills`
-6. Remove `GIT_CONFIG_GLOBAL` from main container env
+6. Remove `GIT_CONFIG_GLOBAL` and `GIT_TERMINAL_PROMPT` from main container env
 
 The PVC retains the workspace regardless, so data is never lost. Note: the PVC will retain a `.git` directory inside `workspace/` from the clone. This does not affect ConfigMap-based operation but is not cleaned up automatically.
