@@ -20,10 +20,32 @@ controllers:
       reloader.stakater.com/auto: "true"
     strategy: Recreate
     initContainers:
+      # Init container: git clone/pull workspace from private repo.
+      # Runs before init-config to ensure workspace is populated.
+      # Script: init-workspace.sh (mounted from openclaw-scripts ConfigMap)
+      init-workspace:
+        image:
+          repository: alpine/git
+          tag: "2.47.2"
+        command:
+          - sh
+          - /scripts/init-workspace.sh
+        env:
+          HOME: /home/node/.openclaw
+        envFrom:
+          - secretRef:
+              name: openclaw-secrets
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
       # Init container handles config setup with merge/overwrite modes.
       # Uses OpenClaw image for Node.js runtime (required for merge mode).
       # Script: init-config.sh (mounted from openclaw-scripts ConfigMap)
       init-config:
+        dependsOn: init-workspace
         image:
           repository: ghcr.io/openclaw/openclaw
           tag: &tag "2026.2.19"
@@ -41,6 +63,7 @@ controllers:
       # Install ClawHub skills and runtime dependencies (idempotent)
       # Script: init-skills.sh (mounted from openclaw-scripts ConfigMap)
       init-skills:
+        dependsOn: init-config
         image:
           repository: ghcr.io/openclaw/openclaw
           tag: *tag
@@ -78,7 +101,9 @@ controllers:
         envFrom:
           - secretRef:
               name: openclaw-secrets
-        env: {}
+        env:
+          GIT_CONFIG_GLOBAL: /home/node/.openclaw/.gitconfig
+          GIT_TERMINAL_PROMPT: "0"
         # Example: Add runtime dependency paths for skills and extra runtimes
         # env:
         #   PATH: /home/node/.openclaw/pnpm:/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -205,20 +230,23 @@ persistence:
     existingClaim: openclaw-data
     advancedMounts:
       main:
+        init-workspace:
+          - path: /home/node/.openclaw
         init-config:
           - path: /home/node/.openclaw
         init-skills:
           - path: /home/node/.openclaw
         main:
           - path: /home/node/.openclaw
-  # Workspace markdown files (SOUL.md, USER.md, etc.) synced to PVC on startup
-  workspace-files:
-    type: configMap
-    name: openclaw-workspace
+  # Sensitive workspace config files (e.g. MCP credentials) injected via Secret
+  workspace-config-files:
+    type: secret
+    name: openclaw-workspace-config
     advancedMounts:
       main:
-        init-config:
-          - path: /workspace-files
+        main:
+          - path: /home/node/.openclaw/workspace/config/mcporter.json
+            subPath: mcporter.json
             readOnly: true
   # Scripts (created by Kustomize configMapGenerator)
   scripts:
@@ -227,6 +255,9 @@ persistence:
     defaultMode: 0755
     advancedMounts:
       main:
+        init-workspace:
+          - path: /scripts
+            readOnly: true
         init-config:
           - path: /scripts
             readOnly: true
@@ -241,6 +272,8 @@ persistence:
     type: emptyDir
     advancedMounts:
       main:
+        init-workspace:
+          - path: /tmp
         init-config:
           - path: /tmp
         init-skills:
