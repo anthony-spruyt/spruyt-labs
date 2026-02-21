@@ -215,6 +215,36 @@ Print final report and post to tracking issue:
 
 Post this summary as a comment on the tracking issue. If all PRs were processed successfully (none reverted), close the tracking issue.
 
+### Phase 5b: SELF-IMPROVEMENT
+
+Collect all `### Suggested Improvements` sections from the analyzer agents' outputs. If any suggestions were made:
+
+1. Present them to the user grouped by type:
+   ```
+   ## Suggested Improvements from This Run
+
+   ### Missing Upstream Repo Mappings
+   - <helm-repo-url> → <github-org/repo>
+
+   ### New Changelog Patterns Discovered
+   - <description>
+
+   ### Analysis Pattern Gaps
+   - <description>
+
+   Apply these improvements to the agent/reference files? (Y/N)
+   ```
+
+2. If user approves, apply the improvements:
+   - **Repo mappings** → add to `references/analysis-patterns.md` under "Upstream Repo Discovery for Helm Charts"
+   - **Changelog patterns** → add to `references/analysis-patterns.md` under "GitHub Release Notes Patterns"
+   - **New breaking change signals** → add to `references/analysis-patterns.md` under appropriate dep type section
+   - **False positives** → add to "Common NO_IMPACT Scenarios" table
+
+3. Commit improvements with message: `fix(skills): update analysis patterns from renovate batch run <date>`
+
+This feedback loop means the analyzer gets smarter with every batch run.
+
 ## Edge Cases
 
 | Scenario | Handling |

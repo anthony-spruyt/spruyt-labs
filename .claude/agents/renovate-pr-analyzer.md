@@ -221,6 +221,15 @@ Return EXACTLY this format — the orchestrating skill parses it:
 
 ### Source
 <URLs consulted for this analysis>
+
+### Suggested Improvements
+<List any improvements to the agent or analysis-patterns reference based on this run, or "None">
+Examples of useful feedback:
+- "Missing upstream repo mapping: <helm-repo-url> → <github-org/repo>"
+- "Changelog format not covered: <describe format seen>"
+- "New breaking change signal worth adding: <pattern>"
+- "False positive: <pattern> flagged but never relevant for this repo"
+- "Config path not checked: <path> should be included in impact analysis"
 ```
 
 ## Critical Rules
