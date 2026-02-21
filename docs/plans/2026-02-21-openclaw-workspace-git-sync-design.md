@@ -124,7 +124,7 @@ kubectl cp openclaw/<pod>:/home/node/.openclaw/workspace/config/mcporter.json \
 |------|------|
 | `init-workspace.sh` | New script: git clone/pull with credential helper |
 | `kustomization.yaml` | `init-workspace.sh` added to `openclaw-scripts` configMapGenerator |
-| `kustomization.yaml` | `openclaw-workspace-config` configMapGenerator with flat keys for sensitive files only |
+| `kustomization.yaml` | `openclaw-workspace-config` configMapGenerator with flat keys for sensitive files only (`disableNameSuffixHash: true`) |
 | `values.yaml` | `init-workspace` init container definition with `dependsOn` ordering |
 | `values.yaml` | `workspace-config-files` persistence mount for the sensitive files ConfigMap |
 | `.gitignore` | Ignore `workspace/` directory (sync task still downloads here) |
