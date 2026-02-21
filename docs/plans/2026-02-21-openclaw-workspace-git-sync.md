@@ -52,10 +52,15 @@ CREDENTIAL_HELPER="/home/node/.openclaw/.git-credential-helper"
 log "Configuring git credential helper"
 cat > "$CREDENTIAL_HELPER" <<'HELPER'
 #!/bin/sh
-echo "protocol=https"
-echo "host=github.com"
-echo "username=x-access-token"
-echo "password=$GIT_WORKSPACE_TOKEN"
+# Git credential protocol: only respond to 'get' requests
+case "$1" in
+  get)
+    echo "protocol=https"
+    echo "host=github.com"
+    echo "username=x-access-token"
+    echo "password=$GIT_WORKSPACE_TOKEN"
+    ;;
+esac
 HELPER
 chmod +x "$CREDENTIAL_HELPER"
 
@@ -273,15 +278,16 @@ Add before `init-config` in `controllers.main.initContainers`:
           ...
 ```
 
-**Step 3: Add GIT_CONFIG_GLOBAL to main container env**
+**Step 3: Add git env vars to main container**
 
-The main container needs this so the agent's git operations find the credential helper on the PVC:
+The main container needs `GIT_CONFIG_GLOBAL` so the agent's git operations find the credential helper on the PVC, and `GIT_TERMINAL_PROMPT=0` to prevent git from hanging on credential prompts if the helper is misconfigured:
 
 ```yaml
       main:
         ...
         env:
           GIT_CONFIG_GLOBAL: /home/node/.openclaw/.gitconfig
+          GIT_TERMINAL_PROMPT: "0"
 ```
 
 **Step 4: Replace workspace-files persistence with workspace-config-files**
@@ -406,6 +412,8 @@ git rm -r --cached cluster/apps/openclaw/openclaw/app/workspace/
 Note: This must run AFTER Task 2 (which removes the old configMapGenerator references to `workspace/*.md` files). The `workspace/config/mcporter.json` file must remain on disk (not tracked by git) since the new configMapGenerator references it.
 
 **Step 2: Commit**
+
+Note: `git rm -r --cached` from Step 1 already stages the file deletions. The `git add` below only stages the `.gitignore`. Both the staged deletions and the `.gitignore` will be included in the commit.
 
 ```bash
 git add cluster/apps/openclaw/openclaw/app/.gitignore

@@ -56,10 +56,15 @@ The credential helper pattern keeps the token out of `.git/config`:
 ```sh
 # /home/node/.openclaw/.git-credential-helper
 #!/bin/sh
-echo "protocol=https"
-echo "host=github.com"
-echo "username=x-access-token"
-echo "password=$GIT_WORKSPACE_TOKEN"
+# Git credential protocol: only respond to 'get' requests
+case "$1" in
+  get)
+    echo "protocol=https"
+    echo "host=github.com"
+    echo "username=x-access-token"
+    echo "password=$GIT_WORKSPACE_TOKEN"
+    ;;
+esac
 ```
 
 The helper is written to the PVC using a **quoted heredoc** (`<<'HELPER'`) so `$GIT_WORKSPACE_TOKEN` remains as a literal variable reference in the file. It is resolved at invocation-time when git calls the helper, not at write-time. This means the token is never stored in plaintext on the PVC.
@@ -97,6 +102,12 @@ The workspace repo's `.gitignore` includes:
 config/mcporter.json
 ```
 
+**Bootstrap on fresh repo clone:** The `workspace/config/mcporter.json` file is gitignored in this repo. After a fresh clone, it must be restored before `kustomize build` can succeed. Restore from the running pod:
+```bash
+kubectl cp openclaw/<pod>:/home/node/.openclaw/workspace/config/mcporter.json \
+  cluster/apps/openclaw/openclaw/app/workspace/config/mcporter.json
+```
+
 ## Changes
 
 ### Remove
@@ -125,14 +136,14 @@ config/mcporter.json
 | `openclaw-secrets.sops.yaml` | ~~User adds `GIT_WORKSPACE_TOKEN` and `GIT_WORKSPACE_REPO`~~ DONE |
 | `values.yaml` | Add `init-workspace` to existing `data`, `scripts`, and `tmp` advancedMounts |
 | `values.yaml` | Add `dependsOn: init-workspace` to `init-config`, `dependsOn: init-config` to `init-skills` |
-| `values.yaml` | Add `GIT_CONFIG_GLOBAL` env var to main container |
+| `values.yaml` | Add `GIT_CONFIG_GLOBAL` and `GIT_TERMINAL_PROMPT=0` env vars to main container |
 | `init-config.sh` | Replace workspace file copy with explicit sensitive-file mappings |
 
 ### Unchanged
 
 | File | Why |
 |------|-----|
-| `sync-workspace.sh` | Stays as local download tool, outputs to gitignored `workspace/` |
+| `sync-workspace.sh` | Stays as local download tool for ad-hoc inspection. Output goes to gitignored `workspace/`. Now that the workspace lives in its own repo, the primary workflow for reviewing agent changes is `git pull` from `anthony-spruyt/openclaw-workspace` |
 | `init-skills.sh` | No changes needed |
 | `entrypoint.sh` | No changes needed |
 | `network-policies.yaml` | Existing `allow-world-egress` CNP covers init containers at pod level |
