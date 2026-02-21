@@ -4,7 +4,7 @@
 
 **Goal:** Replace ConfigMap-based workspace seeding with a git clone/pull init container so the OpenClaw workspace lives in its own repo with bidirectional sync.
 
-**Architecture:** New `init-workspace` init container using `alpine/git` clones on first boot, fast-forward pulls on restart. Git credential helper on the PVC enables both init container and agent to authenticate. The bulk `openclaw-workspace` ConfigMap is replaced by a small `openclaw-workspace-config` ConfigMap for sensitive files only (e.g. `config/mcporter.json`). The `init-config.sh` copy logic is updated to preserve subdirectory paths.
+**Architecture:** New `init-workspace` init container using `alpine/git` clones on first boot, fast-forward pulls on restart. Git credential helper on the PVC enables both init container and agent to authenticate. A small `openclaw-workspace-config` ConfigMap handles sensitive files (e.g. `config/mcporter.json`) that cannot go in the workspace repo. Init container ordering is enforced via `dependsOn`.
 
 **Tech Stack:** Kubernetes init containers, alpine/git, git credential helpers, SOPS secrets, Kustomize configMapGenerator
 
@@ -14,15 +14,13 @@
 
 ---
 
-## Prerequisites (User Actions)
+## Prerequisites (User Actions) - ALL DONE
 
-Before implementation begins, the user must complete these manual steps:
-
-1. Create private GitHub repo `anthony-spruyt/openclaw-workspace`
-2. Push current workspace contents to the repo (excluding sensitive files like `config/mcporter.json`)
-3. Add `.gitignore` to workspace repo excluding sensitive files (e.g. `config/mcporter.json`)
-4. Create a fine-grained PAT scoped to the workspace repo with Contents read/write
-5. ~~Add `GIT_WORKSPACE_TOKEN` and `GIT_WORKSPACE_REPO` to `openclaw-secrets.sops.yaml` using `sops`~~ DONE
+1. ~~Create private GitHub repo `anthony-spruyt/openclaw-workspace`~~ DONE
+2. ~~Push current workspace contents to the repo (excluding sensitive files)~~ DONE
+3. ~~Add `.gitignore` to workspace repo excluding `config/mcporter.json`~~ DONE
+4. ~~Create a fine-grained PAT scoped to the workspace repo with Contents read/write~~ DONE
+5. ~~Add `GIT_WORKSPACE_TOKEN` and `GIT_WORKSPACE_REPO` to `openclaw-secrets.sops.yaml`~~ DONE
 
 ---
 
@@ -64,7 +62,7 @@ chmod +x "$CREDENTIAL_HELPER"
 # ============================================================
 # Git Configuration
 # ============================================================
-# Write .gitconfig on the PVC (shared with main container).
+# Write .gitconfig on the PVC (shared with main container via GIT_CONFIG_GLOBAL).
 cat > "$GITCONFIG" <<GITCONF
 [credential]
     helper = $CREDENTIAL_HELPER
@@ -75,9 +73,8 @@ cat > "$GITCONFIG" <<GITCONF
     ff = only
 GITCONF
 
-# Tell git where to find config (HOME may not be writable)
+# Use GIT_CONFIG_GLOBAL so git finds config regardless of HOME
 export GIT_CONFIG_GLOBAL="$GITCONFIG"
-export HOME="/tmp"
 
 # ============================================================
 # Workspace Sync
@@ -94,7 +91,19 @@ if [ -d "$WORKSPACE/.git" ]; then
   if git pull --ff-only origin main 2>&1; then
     log "Workspace updated successfully"
   else
-    log "WARNING: Pull failed (conflicts or diverged history), continuing with existing workspace"
+    log "WARNING: Pull failed (conflicts, diverged history, or uncommitted changes), continuing with existing workspace"
+  fi
+elif [ -d "$WORKSPACE" ]; then
+  # Workspace directory exists but has no .git - move aside and clone
+  log "WARNING: Non-git workspace directory found, moving to ${WORKSPACE}.bak"
+  mv "$WORKSPACE" "${WORKSPACE}.bak" 2>/dev/null || true
+  if git clone "$GIT_WORKSPACE_REPO" "$WORKSPACE" 2>&1; then
+    log "Workspace cloned successfully"
+  else
+    log "WARNING: Clone failed, restoring backup"
+    rm -rf "$WORKSPACE" 2>/dev/null || true
+    mv "${WORKSPACE}.bak" "$WORKSPACE" 2>/dev/null || true
+    mkdir -p "$WORKSPACE"
   fi
 else
   log "No workspace found, cloning from $GIT_WORKSPACE_REPO"
@@ -125,14 +134,12 @@ Ref #502"
 
 ---
 
-### Task 2: Add `init-workspace.sh` to `openclaw-scripts` ConfigMap
+### Task 2: Update kustomization.yaml
 
 **Files:**
 - Modify: `cluster/apps/openclaw/openclaw/app/kustomization.yaml`
 
-**Step 1: Add init-workspace.sh to the openclaw-scripts configMapGenerator files list**
-
-In the `openclaw-scripts` configMapGenerator entry (currently has `entrypoint.sh`, `init-config.sh`, `init-skills.sh`), add `init-workspace.sh`:
+**Step 1: Add init-workspace.sh to openclaw-scripts configMapGenerator**
 
 ```yaml
   - name: openclaw-scripts
@@ -146,25 +153,82 @@ In the `openclaw-scripts` configMapGenerator entry (currently has `entrypoint.sh
       - init-workspace.sh
 ```
 
-**Step 2: Commit**
+**Step 2: Replace openclaw-workspace configMapGenerator with openclaw-workspace-config**
+
+Remove the old `openclaw-workspace` entry and replace with:
+
+```yaml
+  - name: openclaw-workspace-config
+    namespace: openclaw
+    options:
+      disableNameSuffixHash: true
+    files:
+      - mcporter.json=workspace/config/mcporter.json
+```
+
+Note: The key is `mcporter.json` (flat), not `config/mcporter.json`. Keys with `/` create unmountable ConfigMap volumes.
+
+**Step 3: Commit**
 
 ```bash
 git add cluster/apps/openclaw/openclaw/app/kustomization.yaml
-git commit -m "feat(openclaw): add init-workspace.sh to scripts ConfigMap
+git commit -m "feat(openclaw): update kustomization for workspace git sync
+
+Add init-workspace.sh to scripts ConfigMap. Replace bulk
+openclaw-workspace ConfigMap with openclaw-workspace-config
+for sensitive files only.
 
 Ref #502"
 ```
 
 ---
 
-### Task 3: Add `init-workspace` init container to values.yaml
+### Task 3: Update init-config.sh
+
+**Files:**
+- Modify: `cluster/apps/openclaw/openclaw/app/init-config.sh`
+
+**Step 1: Replace workspace file copy section (lines 70-81)**
+
+Remove the old generic loop and replace with explicit sensitive-file mappings:
+
+```bash
+# ============================================================
+# Workspace Config Files (sensitive files from ConfigMap)
+# ============================================================
+# These files contain secrets and are not stored in the workspace git repo.
+# They are injected via ConfigMap and copied to the correct workspace paths.
+log "Syncing sensitive workspace config files from ConfigMap"
+if [ -f /workspace-config-files/mcporter.json ]; then
+  mkdir -p "/home/node/.openclaw/workspace/config"
+  cp /workspace-config-files/mcporter.json "/home/node/.openclaw/workspace/config/mcporter.json"
+  log "Writing workspace/config/mcporter.json"
+fi
+log "Workspace config sync complete"
+```
+
+**Step 2: Commit**
+
+```bash
+git add cluster/apps/openclaw/openclaw/app/init-config.sh
+git commit -m "feat(openclaw): update init-config.sh for sensitive workspace files
+
+Replace basename-flattening loop with explicit path mappings
+for sensitive files injected via ConfigMap.
+
+Ref #502"
+```
+
+---
+
+### Task 4: Update values.yaml
 
 **Files:**
 - Modify: `cluster/apps/openclaw/openclaw/app/values.yaml`
 
-**Step 1: Add init-workspace init container BEFORE init-config**
+**Step 1: Add init-workspace init container**
 
-Insert the new init container block before the existing `init-config` entry in `controllers.main.initContainers`. It must come first so the workspace is available when `init-config` runs.
+Add before `init-config` in `controllers.main.initContainers`:
 
 ```yaml
       # Init container: git clone/pull workspace from private repo.
@@ -172,11 +236,14 @@ Insert the new init container block before the existing `init-config` entry in `
       # Script: init-workspace.sh (mounted from openclaw-scripts ConfigMap)
       init-workspace:
         image:
+          # renovate: image=alpine/git
           repository: alpine/git
           tag: "2.47.2"
         command:
           - sh
           - /scripts/init-workspace.sh
+        env:
+          HOME: /home/node/.openclaw
         envFrom:
           - secretRef:
               name: openclaw-secrets
@@ -188,13 +255,63 @@ Insert the new init container block before the existing `init-config` entry in `
               - ALL
 ```
 
-**Note:** Check https://hub.docker.com/r/alpine/git/tags for the latest stable tag. Use a pinned version, not `latest`.
+**Step 2: Add dependsOn to init-config and init-skills**
 
-**Step 2: Add persistence mounts for init-workspace**
+```yaml
+      init-config:
+        dependsOn: init-workspace
+        image:
+          ...
+      init-skills:
+        dependsOn: init-config
+        image:
+          ...
+```
 
-In the `persistence` section, add `init-workspace` to the mount lists for `data`, `scripts`, and `tmp`.
+**Step 3: Add GIT_CONFIG_GLOBAL to main container env**
 
-For `data` (the PVC):
+The main container needs this so the agent's git operations find the credential helper on the PVC:
+
+```yaml
+      main:
+        ...
+        env:
+          GIT_CONFIG_GLOBAL: /home/node/.openclaw/.gitconfig
+```
+
+**Step 4: Replace workspace-files persistence with workspace-config-files**
+
+Remove the old `workspace-files` entry:
+
+```yaml
+  # DELETE THIS:
+  workspace-files:
+    type: configMap
+    name: openclaw-workspace
+    advancedMounts:
+      main:
+        init-config:
+          - path: /workspace-files
+            readOnly: true
+```
+
+Add the new entry:
+
+```yaml
+  # Sensitive workspace config files (e.g. MCP credentials) injected via ConfigMap
+  workspace-config-files:
+    type: configMap
+    name: openclaw-workspace-config
+    advancedMounts:
+      main:
+        init-config:
+          - path: /workspace-config-files
+            readOnly: true
+```
+
+**Step 5: Add init-workspace to existing persistence advancedMounts**
+
+For `data` (PVC) - add `init-workspace` entry:
 ```yaml
   data:
     existingClaim: openclaw-data
@@ -210,7 +327,7 @@ For `data` (the PVC):
           - path: /home/node/.openclaw
 ```
 
-For `scripts`:
+For `scripts` - add `init-workspace` entry:
 ```yaml
   scripts:
     type: configMap
@@ -232,7 +349,7 @@ For `scripts`:
             readOnly: true
 ```
 
-For `tmp`:
+For `tmp` - add `init-workspace` entry:
 ```yaml
   tmp:
     type: emptyDir
@@ -250,122 +367,48 @@ For `tmp`:
           - path: /tmp
 ```
 
-**Step 3: Commit**
+**Step 6: Commit**
 
 ```bash
 git add cluster/apps/openclaw/openclaw/app/values.yaml
-git commit -m "feat(openclaw): add init-workspace init container
+git commit -m "feat(openclaw): add init-workspace container and update values
+
+- Add init-workspace init container with alpine/git
+- Add dependsOn for init container ordering
+- Add GIT_CONFIG_GLOBAL to main container
+- Replace workspace-files with workspace-config-files persistence
+- Add init-workspace to data, scripts, tmp advancedMounts
 
 Ref #502"
 ```
 
 ---
 
-### Task 4: Replace bulk ConfigMap with sensitive-files-only ConfigMap
+### Task 5: Remove workspace files from git tracking
 
 **Files:**
-- Modify: `cluster/apps/openclaw/openclaw/app/kustomization.yaml`
-- Modify: `cluster/apps/openclaw/openclaw/app/init-config.sh`
-- Modify: `cluster/apps/openclaw/openclaw/app/values.yaml`
+- Modify: `cluster/apps/openclaw/openclaw/app/.gitignore` (already exists with `workspace/`)
+- Delete from tracking: all files under `cluster/apps/openclaw/openclaw/app/workspace/`
 
-**Step 1: Replace `openclaw-workspace` configMapGenerator in kustomization.yaml**
+**Step 1: Remove workspace files from git tracking**
 
-Remove the old `openclaw-workspace` entry and replace with a smaller one for sensitive files only. Use the `key=path` syntax so keys preserve subdirectory paths:
-
-```yaml
-  - name: openclaw-workspace-config
-    namespace: openclaw
-    options:
-      disableNameSuffixHash: true
-    files:
-      - config/mcporter.json=workspace/config/mcporter.json
-```
-
-**Step 2: Update workspace file copy in init-config.sh**
-
-Replace the current workspace copy section (lines 70-81) with a path-preserving version:
-
-```bash
-# ============================================================
-# Workspace Config Files (sensitive files from ConfigMap)
-# ============================================================
-# These files contain secrets and are not stored in the workspace git repo.
-# They are injected via ConfigMap and copied to the correct workspace paths.
-log "Syncing sensitive workspace config files from ConfigMap"
-for f in /workspace-config-files/*; do
-  [ -f "$f" ] || continue
-  fname=$(basename "$f")
-  # Keys may contain paths (e.g. config/mcporter.json) - preserve directory structure
-  target="/home/node/.openclaw/workspace/$fname"
-  mkdir -p "$(dirname "$target")"
-  log "Writing workspace/$fname"
-  cp "$f" "$target"
-done
-log "Workspace config sync complete"
-```
-
-**Step 3: Replace `workspace-files` persistence in values.yaml**
-
-Remove the old `workspace-files` entry and replace with:
-
-```yaml
-  # Sensitive workspace config files (e.g. MCP credentials) injected via ConfigMap
-  workspace-config-files:
-    type: configMap
-    name: openclaw-workspace-config
-    advancedMounts:
-      main:
-        init-config:
-          - path: /workspace-config-files
-            readOnly: true
-```
-
-**Step 4: Commit**
-
-```bash
-git add cluster/apps/openclaw/openclaw/app/kustomization.yaml \
-        cluster/apps/openclaw/openclaw/app/init-config.sh \
-        cluster/apps/openclaw/openclaw/app/values.yaml
-git commit -m "feat(openclaw): replace bulk workspace ConfigMap with sensitive-files-only ConfigMap
-
-Non-sensitive workspace files now come from git (init-workspace).
-Only files with secrets (e.g. config/mcporter.json) remain in the ConfigMap.
-
-Ref #502"
-```
-
----
-
-### Task 5: Gitignore workspace directory and clean up
-
-**Files:**
-- Create or modify: `cluster/apps/openclaw/openclaw/app/.gitignore`
-- Delete: all files under `cluster/apps/openclaw/openclaw/app/workspace/`
-
-**Step 1: Create/update .gitignore**
-
-```
-workspace/
-```
-
-This ensures the sync task can still download to this directory without it being committed.
-
-**Step 2: Remove workspace files from git tracking**
+The `.gitignore` already exists with `workspace/`. Remove the tracked files:
 
 ```bash
 git rm -r --cached cluster/apps/openclaw/openclaw/app/workspace/
 ```
 
-This removes the files from git tracking but leaves them on disk (if present). The `.gitignore` prevents them from being re-added.
+Note: This must run AFTER Task 2 (which removes the old configMapGenerator references to `workspace/*.md` files). The `workspace/config/mcporter.json` file must remain on disk (not tracked by git) since the new configMapGenerator references it.
 
-**Step 3: Commit**
+**Step 2: Commit**
 
 ```bash
 git add cluster/apps/openclaw/openclaw/app/.gitignore
-git commit -m "chore(openclaw): gitignore workspace directory and remove tracked files
+git commit -m "chore(openclaw): remove workspace files from git tracking
 
-Workspace now lives in a separate private repo. The sync task
-still downloads here for ad-hoc inspection but files are not committed.
+Workspace now lives in anthony-spruyt/openclaw-workspace.
+Sensitive files are injected via ConfigMap from local copies.
+Directory is gitignored; sync task still downloads here.
 
 Ref #502"
 ```
@@ -376,20 +419,16 @@ Ref #502"
 
 **Step 1: Run qa-validator to validate all changes**
 
-Use the qa-validator agent to check syntax, schemas, and standards before the final commit set.
+Use the qa-validator agent to check syntax, schemas, and standards.
 
 Expected: APPROVED (or fix any issues flagged)
 
 ---
 
-### Task 7: User manual steps
+### Task 7: User post-implementation steps
 
-After all code changes are committed, the user must:
-
-1. ~~Create the private workspace repo on GitHub~~ (if not already done)
-2. ~~Push workspace contents to the repo (excluding sensitive files)~~ (if not already done)
-3. ~~Create a fine-grained PAT with Contents read/write on the workspace repo~~ DONE
-4. ~~Add secrets to `openclaw-secrets.sops.yaml`~~ DONE
-5. Push all changes to main
-6. Verify pod starts with all init containers passing
-7. Verify the agent can commit and sync to the workspace repo
+1. Push all changes to main
+2. Verify pod starts with all init containers passing
+3. Check init-workspace logs: `kubectl logs -n openclaw <pod> -c init-workspace`
+4. Verify the agent can commit and push to the workspace repo
+5. Update `AGENTS.md` in workspace repo to instruct agent to commit/push workspace changes
