@@ -51,6 +51,7 @@ kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c main
 kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c chromium
 
 # Check init container logs
+kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c init-workspace
 kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c init-config
 kubectl logs -n openclaw -l app.kubernetes.io/name=openclaw -c init-skills
 
@@ -156,7 +157,7 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
 
 1. **Pod stuck in Init**
    - **Symptom**: Pod never reaches Running state
-   - **Diagnosis**: Check init container logs (`init-config` or `init-skills`)
+   - **Diagnosis**: Check init container logs (`init-workspace`, `init-config`, or `init-skills`)
    - **Resolution**: `init-skills` requires outbound HTTPS for npm/ClawHub. Verify Cilium egress policy allows 443.
 
 2. **Authentik outpost not deploying**
@@ -188,10 +189,12 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
 | Helm values | `openclaw/app/values.yaml` |
 | OpenClaw config | `openclaw/app/openclaw.json` |
 | Config JSON Schema | `openclaw/app/openclaw-schema.json` |
+| Init: workspace sync | `openclaw/app/init-workspace.sh` |
 | Init: config merge | `openclaw/app/init-config.sh` |
 | Init: skill install | `openclaw/app/init-skills.sh` |
 | Entrypoint wrapper | `openclaw/app/entrypoint.sh` |
 | Secrets (SOPS) | `openclaw/app/openclaw-secrets.sops.yaml` |
+| Workspace config (SOPS) | `openclaw/app/openclaw-workspace-config.sops.yaml` |
 | PVC | `openclaw/app/persistent-volume-claim.yaml` |
 | Network policies | `openclaw/app/network-policies.yaml` |
 | Outpost RBAC | `openclaw/app/authentik-outpost-rbac.yaml` |
