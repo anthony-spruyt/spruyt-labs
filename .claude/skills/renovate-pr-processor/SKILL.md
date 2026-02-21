@@ -1,7 +1,6 @@
 ---
 name: renovate-pr-processor
 description: Use when reviewing, merging, or batch-processing open Renovate dependency update PRs. Triggers on "review renovate PRs", "merge renovate", "process renovate", "batch renovate", "handle renovate PRs", "check renovate PRs", or "/renovate".
-argument-hint: ''
 ---
 
 # Renovate PR Processor
