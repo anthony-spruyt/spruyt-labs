@@ -73,6 +73,13 @@ if [ -d "$WORKSPACE/.git" ]; then
     git remote set-url origin "$GIT_WORKSPACE_REPO"
   fi
 
+  # Ensure local branch is main (app may have init'd with master)
+  CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
+  if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "main" ]; then
+    log "Renaming branch $CURRENT_BRANCH to main"
+    git branch -m "$CURRENT_BRANCH" main 2>&1
+  fi
+
   log "Pulling latest changes"
   if git pull --ff-only origin main 2>&1; then
     log "Workspace updated successfully"
