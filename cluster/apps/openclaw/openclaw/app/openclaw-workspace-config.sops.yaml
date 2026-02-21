@@ -1,0 +1,24 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: openclaw-workspace-config
+    namespace: openclaw
+type: Opaque
+stringData:
+    mcporter.json: ENC[AES256_GCM,data:5KztJQfqoXqM+LpqKRtoE/Zfhiz4MTlyB9RDSnIlKMIgU0LRHqbN+tzpcvIGBDB5dcjhmjjbVBKWzTnbi1ffOEr1XssReov8AhGU1fy0eMNs1Z7u0YaZTpJKdCTSuwS5bKaHpElH6klt7bXRdRk2e5BDwGrN1NP8lLrDdKzl0gZVITleBL0gqwE3zYiY4NBot4AaM2zHUFQt0P7xcabVJqM2QKUp7nB4OMVQVQ1siEyR/AIXCj0bJ4HVpfgSaepNZoLyaNRUeEziLwROvsfKyQo17J/8n81iYjnuEOTUMn3rX8outXoU2VHZnR0BZ5w3MyzRjUayvEfWMclNcyVBVmElfZEHKkFUJwkw+VI3qY4SY0ubX0a1mwoI9lBQn/V6dZ0G1QZtNefKW1OW37rioae8YzzRJXAZWO4+bNq7NZz8ODqWnE2SpGoeR54bcPZ3OhrgDm+4hhQZHe4osXdwFI1EwfkTHwDYeIfyd3ABaYr43o08khaz0C5ADuQylc3kCNTOKTzDQt12hFUr9pemMqjoiWgMw381ZjZyDP1g58DH1WWyopOVT99yUegWSIOk8I24kEv9G7lGM5W18Q6nYitGiq92jmNWyLGWisX/rq6ScidlRhvtOkeB8LOI66k+TOlsZxd/FPNeYgc2wsiVUvL5VXBgQxvuh0/3l2eK47bUCh/qz+CGqsAUcDKDwpx0Qaq3uLmmxgsRwEpKE2JwGnCIf6hhZjyNhSA+LZlztDuVpWjOhKfPNzQUUBiFtPeMMOSPFU1Xv+74HesWtfZOJB6vpuNQ+xJJ3v6NY2hh41VjPqOwVEPf4ZLBAlcGTb0jYgZVBBip0tiFxrB4UVzvBoRW/Rzgmxy3MBG6BTrARvqNXXVxXNc+3CxAgU3dKuesDGFN6XBiz+6a22RB61TT+NB9Da2rzyCEIZYHLSUnUBjmpvymanSJqEjDyQCrG83cFx/aSvk7XXugr4RY9imffWIUdHfMgVZfrFZN+f1bUhCEkst0gFtY6b6gb5sLbIivf5VWjVtgh+p1kSmhfBad6bbffTCX,iv:TvETT1v4BnlX0XbQascPrgJ3aqEoIXxFASI8f7o7hRo=,tag:PTSp0cOTf/kt41dZHKSRBQ==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBtU3FQRmR2TER4aUg4UVBh
+            VFdtazdORzE4WFhYSVdyR3g0MmJpS0JWWnhJCmtMWTFxL08xU0tFYVp6TldyNmJW
+            b2VzZlFQMFBIMW5qa2EwZUp3clVCME0KLS0tIFR0eDF3aFo4NG9kV3VHQVFINU95
+            elh5MzB0OGJoRFJJMkRpbzQzc3ZWbUkKjZ+u/8nThId03Ju/sVuNrYPMV74wOiKD
+            bEEVE7Zj5Y21grPudBNGoJgOKsigLnajNVr8utT7KGg6ExhRqx+vOw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-02-21T05:19:03Z"
+    mac: ENC[AES256_GCM,data:79LFVw7l9S5PUamsHrqLLkRZBumRdH81588zVsPKA/9izXwvOQ8yB0K8z2r8/otqYBBAnKypgMGwQilYj4A/3KfIARs/ZfsyyxwAv9h7pxJc6xTAIK2/ByLWIwR4drfMWISJxrAHOX09FKlRwNHf8UIbs567OK8+SphtOn1lZpQ=,iv:ByDpi2Koy2fHaQZAVeO3IY+m+FFblOF0xxFMXeRY7pQ=,tag:4GR98nbsg5AD1nBTcagVrg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.11.0
