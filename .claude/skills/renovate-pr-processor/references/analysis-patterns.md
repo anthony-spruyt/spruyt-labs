@@ -176,3 +176,90 @@ When multiple signals are present:
 2. **Upgrading/Migration section** → verbatim quote
 3. **Changed section** → summarize behavior changes
 4. **Bug fixes** → note if they fix issues affecting this cluster
+
+## Impact Assessment Against Our Config
+
+**The most important analysis step.** A breaking change only matters if it affects what we actually use.
+
+### Where Our Config Lives
+
+```text
+cluster/apps/<namespace>/<app>/
+├── ks.yaml                    # Kustomization (dependencies, postBuild substitutions)
+├── app/
+│   ├── kustomization.yaml     # May have configMapGenerator for values
+│   ├── release.yaml           # HelmRelease (inline values or valuesFrom)
+│   ├── values.yaml            # Helm values — PRIMARY file to check
+│   └── *-secrets.sops.yaml    # Encrypted secrets (read key names only)
+└── <optional>/                # Ingress routes, network policies, extra CRDs
+```
+
+### Impact Assessment Patterns
+
+#### Helm Value Renamed/Removed
+
+```text
+Breaking change: "Renamed `ingress.enabled` to `ingress.main.enabled`"
+
+1. Read cluster/apps/<ns>/<app>/app/values.yaml
+2. Search for "ingress.enabled" or "ingress:" section
+3. If found → HIGH_IMPACT (our config uses the old key path)
+4. If not found → NO_IMPACT (we don't configure ingress for this chart)
+```
+
+#### CRD Change
+
+```text
+Breaking change: "CiliumNetworkPolicy v2 API changed field X"
+
+1. Grep for "kind: CiliumNetworkPolicy" in cluster/apps/ and cluster/flux/
+2. If found → check if the changed field is used in our manifests
+3. If we have CiliumNetworkPolicy but don't use field X → NO_IMPACT
+4. If we use field X → HIGH_IMPACT
+```
+
+#### Default Value Changed
+
+```text
+Breaking change: "Default replicas changed from 1 to 3"
+
+1. Check if we explicitly set `replicas` in our values.yaml
+2. If we set it explicitly → NO_IMPACT (our value overrides the default)
+3. If we don't set it → LOW_IMPACT (behavior changes silently)
+```
+
+#### Environment Variable Renamed
+
+```text
+Breaking change: "Renamed env var DB_HOST to DATABASE_HOST"
+
+1. Check our values.yaml for env/envFrom sections
+2. Check any ConfigMaps or secrets that set this env var
+3. If we set DB_HOST → HIGH_IMPACT
+4. If we don't → NO_IMPACT
+```
+
+### Common NO_IMPACT Scenarios
+
+These breaking changes almost never affect this homelab:
+
+| Breaking Change | Why Usually NO_IMPACT |
+|----------------|----------------------|
+| ARM64 support dropped | We run AMD64 only |
+| Windows container changes | Linux-only cluster |
+| Cloud provider integration changes | Bare metal, no cloud provider |
+| Horizontal Pod Autoscaler changes | Rarely used in homelab |
+| PodDisruptionBudget defaults changed | Usually not configured |
+| Service mesh integration changes | No service mesh |
+
+### Common HIGH_IMPACT Scenarios
+
+These breaking changes frequently affect this homelab:
+
+| Breaking Change | Why Usually HIGH_IMPACT |
+|----------------|------------------------|
+| CRD API version bump | We use many CRDs (Cilium, Cert-Manager, Traefik) |
+| Helm values restructured | We customize most charts heavily |
+| Default storage class changed | Rook Ceph is our storage backend |
+| Network policy format changed | Cilium policies are critical |
+| Ingress annotation changes | Traefik IngressRoutes used everywhere |
