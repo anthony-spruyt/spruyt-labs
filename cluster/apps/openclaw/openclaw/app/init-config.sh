@@ -66,16 +66,3 @@ else
   cp /config/openclaw.json /home/node/.openclaw/openclaw.json
 fi
 log "Config initialization complete"
-
-# ============================================================
-# Workspace Config Files (sensitive files from Secret)
-# ============================================================
-# These files contain secrets and are not stored in the workspace git repo.
-# They are injected via Secret and copied to the correct workspace paths.
-log "Syncing sensitive workspace config files from Secret"
-if [ -f /workspace-config-files/mcporter.json ]; then
-  mkdir -p "/home/node/.openclaw/workspace/config"
-  cp /workspace-config-files/mcporter.json "/home/node/.openclaw/workspace/config/mcporter.json"
-  log "Writing workspace/config/mcporter.json"
-fi
-log "Workspace config sync complete"
