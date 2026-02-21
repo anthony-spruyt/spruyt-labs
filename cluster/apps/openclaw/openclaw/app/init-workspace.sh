@@ -77,7 +77,11 @@ if [ -d "$WORKSPACE/.git" ]; then
   if git pull --ff-only origin main 2>&1; then
     log "Workspace updated successfully"
   else
-    log "WARNING: Pull failed (conflicts, diverged history, or uncommitted changes), continuing with existing workspace"
+    # Pull failed - untracked file conflicts or diverged history.
+    # Force-sync to remote state (remote is source of truth).
+    log "WARNING: Pull failed, force-syncing to origin/main"
+    git reset --hard origin/main 2>&1
+    log "Workspace synced to origin/main"
   fi
 elif [ -d "$WORKSPACE" ]; then
   # Workspace directory exists but has no .git - remove and clone fresh
