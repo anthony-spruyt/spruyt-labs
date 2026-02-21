@@ -26,7 +26,7 @@ controllers:
       init-workspace:
         image:
           repository: alpine/git
-          tag: "2.47.2"
+          tag: "v2.52.0"
         command:
           - sh
           - /scripts/init-workspace.sh
