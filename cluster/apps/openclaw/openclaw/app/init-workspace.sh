@@ -60,8 +60,20 @@ if [ -z "$GIT_WORKSPACE_REPO" ]; then
 fi
 
 if [ -d "$WORKSPACE/.git" ]; then
-  log "Existing workspace found, pulling latest changes"
+  log "Existing workspace found, verifying origin remote"
   cd "$WORKSPACE"
+
+  # Ensure origin remote is set and points to the correct repo
+  CURRENT_ORIGIN=$(git remote get-url origin 2>/dev/null || echo "")
+  if [ -z "$CURRENT_ORIGIN" ]; then
+    log "No origin remote configured, adding it"
+    git remote add origin "$GIT_WORKSPACE_REPO"
+  elif [ "$CURRENT_ORIGIN" != "$GIT_WORKSPACE_REPO" ]; then
+    log "Origin remote URL mismatch, updating to $GIT_WORKSPACE_REPO"
+    git remote set-url origin "$GIT_WORKSPACE_REPO"
+  fi
+
+  log "Pulling latest changes"
   if git pull --ff-only origin main 2>&1; then
     log "Workspace updated successfully"
   else
