@@ -1,38 +1,51 @@
 {
   "$schema": "./openclaw-schema.json",
-  "logging": {
-    "level": "info",
-    "consoleLevel": "info",
-    "consoleStyle": "compact",
-    "redactSensitive": "tools"
-  },
-  "browser": {
-    "enabled": true,
-    "defaultProfile": "default",
-    "profiles": {
-      "default": {
-        "cdpUrl": "http://localhost:9222",
-        "color": "#4285F4"
-      }
-    }
+  "update": {
+    "channel": "stable"
   },
   "auth": {
     "profiles": {
       "anthropic:manual": {
         "provider": "anthropic",
         "mode": "token"
+      },
+      "openai:default": {
+        "provider": "openai",
+        "mode": "api_key"
       }
     }
+  },
+  "logging": {
+    "level": "info",
+    "consoleLevel": "info",
+    "consoleStyle": "compact",
+    "redactSensitive": "tools"
   },
   "agents": {
     "defaults": {
       "model": {
-        "primary": "anthropic/claude-opus-4-6"
+        "primary": "anthropic/claude-sonnet-4-6",
+        "fallbacks": ["openai/gpt-5-mini"]
+      },
+      "models": {
+        "anthropic/claude-haiku-4-5": {
+          "alias": "haiku"
+        },
+        "anthropic/claude-sonnet-4-6": {
+          "alias": "sonnet"
+        },
+        "anthropic/claude-opus-4-6": {
+          "alias": "opus"
+        }
       },
       "workspace": "/home/node/.openclaw/workspace",
       "userTimezone": "Australia/Melbourne",
       "memorySearch": {
         "enabled": true,
+        "sources": ["memory", "sessions"],
+        "experimental": {
+          "sessionMemory": true
+        },
         "provider": "openai",
         "model": "text-embedding-3-small",
         "query": {
@@ -56,8 +69,28 @@
           "maxEntries": 50000
         }
       },
-      "timeoutSeconds": 600,
-      "maxConcurrent": 1
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "6h",
+        "keepLastAssistants": 3
+      },
+      "compaction": {
+        "mode": "default",
+        "memoryFlush": {
+          "enabled": true,
+          "softThresholdTokens": 40000,
+          "prompt": "Distill this session to memory/YYYY-MM-DD.md. Focus on decisions, state changes, lessons, blockers. If nothing worth storing: NO_FLUSH",
+          "systemPrompt": "Extract only what is worth remembering. No fluff."
+        }
+      },
+      "heartbeat": {
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "timeoutSeconds": 600
     },
     "list": [
       {
@@ -69,8 +102,46 @@
           "avatar": "avatar.png",
           "theme": "Dry, slightly menacing, but ultimately helpful. Think Terminator meets butler."
         }
+      },
+      {
+        "id": "monitor",
+        "model": {
+          "primary": "anthropic/claude-haiku-4-5",
+          "fallbacks": ["openai/gpt-5-nano"]
+        }
+      },
+      {
+        "id": "researcher",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6",
+          "fallbacks": ["openai/gpt-5-mini"]
+        }
+      },
+      {
+        "id": "communicator",
+        "model": {
+          "primary": "anthropic/claude-opus-4-6",
+          "fallbacks": ["openai/gpt-5.2"]
+        }
+      },
+      {
+        "id": "coordinator",
+        "model": {
+          "primary": "anthropic/claude-opus-4-6",
+          "fallbacks": ["openai/gpt-5.2"]
+        }
       }
     ]
+  },
+  "browser": {
+    "enabled": true,
+    "defaultProfile": "default",
+    "profiles": {
+      "default": {
+        "cdpUrl": "http://localhost:9222",
+        "color": "#4285F4"
+      }
+    }
   },
   "tools": {
     "profile": "full",
@@ -85,6 +156,9 @@
     "fs": {
       "workspaceOnly": false
     }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
   },
   "commands": {
     "native": "auto",
@@ -107,11 +181,14 @@
       "enabled": true,
       "groupPolicy": "allowlist",
       "dm": {
-        "enabled": false
+        "enabled": true,
+        "policy": "allowlist",
+        "allowFrom": ["249242152318664709"]
       },
       "guilds": {
         "257529418187145216": {
           "requireMention": true,
+          "users": ["249242152318664709"],
           "channels": {
             "1473506635656990862": {
               "allow": true,
