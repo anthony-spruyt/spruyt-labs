@@ -180,10 +180,10 @@
     "discord": {
       "enabled": true,
       "groupPolicy": "allowlist",
+      "dmPolicy": "allowlist",
+      "allowFrom": ["249242152318664709"],
       "dm": {
-        "enabled": true,
-        "policy": "allowlist",
-        "allowFrom": ["249242152318664709"]
+        "enabled": true
       },
       "guilds": {
         "257529418187145216": {
