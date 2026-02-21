@@ -67,6 +67,8 @@ For each PR, use Task tool with:
   subagent_type: "renovate-pr-analyzer"
   run_in_background: true
   prompt: "Analyze Renovate PR #<number> in anthony-spruyt/spruyt-labs for breaking changes.
+           GitHub issue: #<tracking-issue-number>
+           Repository: anthony-spruyt/spruyt-labs
            Return your analysis in the MANDATORY output format specified in your instructions."
 ```
 

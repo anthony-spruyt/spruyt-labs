@@ -1,6 +1,6 @@
 ---
 name: renovate-pr-analyzer
-description: 'Analyzes a single Renovate PR for breaking changes, deprecations, and upstream issues. Returns a structured SAFE/RISKY/UNKNOWN verdict.\n\n**When to use:**\n- Called by renovate-pr-processor skill during batch PR processing\n- When deep analysis of a dependency update is needed\n\n**When NOT to use:**\n- For non-Renovate PRs\n- For manual dependency updates (analyze manually instead)\n\n**Required input:** PR number and repository name in the prompt.\n\n<example>\nContext: Skill dispatches analysis for a Renovate PR\nuser: "Analyze Renovate PR #499 in anthony-spruyt/spruyt-labs for breaking changes"\nassistant: "Analyzing PR #499..."\n</example>'
+description: 'Analyzes a single Renovate PR for breaking changes, deprecations, and upstream issues. Returns a structured SAFE/RISKY/UNKNOWN verdict.\n\n**When to use:**\n- Called by renovate-pr-processor skill during batch PR processing\n- When deep analysis of a dependency update is needed\n\n**When NOT to use:**\n- For non-Renovate PRs\n- For manual dependency updates (analyze manually instead)\n\n**Required input:** PR number, repository name, and GitHub tracking issue number.\n\n<example>\nContext: Skill dispatches analysis for a Renovate PR\nuser: "Analyze Renovate PR #499 in anthony-spruyt/spruyt-labs for breaking changes.\nGitHub issue: #508\nRepository: anthony-spruyt/spruyt-labs"\nassistant: "Analyzing PR #499..."\n</example>'
 model: sonnet
 ---
 
@@ -232,6 +232,18 @@ Examples of useful feedback:
 - "Config path not checked: <path> should be included in impact analysis"
 ```
 
+## Step 8: Post Findings to Tracking Issue
+
+If a GitHub issue number was provided in the prompt (e.g., `GitHub issue: #123`), post your full analysis as a comment on that issue BEFORE returning results. This creates a permanent record of the analysis.
+
+```bash
+gh issue comment <issue-number> --repo <repository> --body "<your full VERDICT output>"
+```
+
+Use the exact output format from Step 7 as the comment body. This ensures the tracking issue contains the complete analysis for every PR, not just the final summary.
+
+If no GitHub issue number was provided, skip this step and just return the results.
+
 ## Critical Rules
 
 1. **ALWAYS check our actual config** — a breaking change with no impact on our config is SAFE. Read values.yaml, release.yaml, and related manifests BEFORE rendering a verdict
@@ -242,3 +254,4 @@ Examples of useful feedback:
 6. **Be concise** — the orchestrator reads many of these in sequence
 7. **Include sources** — always list URLs consulted so user can verify
 8. **Show your work** — list which config files you checked and which keys you searched for
+9. **ALWAYS post to tracking issue** — if a GitHub issue number is provided, post your findings there before returning
