@@ -95,7 +95,7 @@ If you prefer usage-based billing with prompt caching support, add `ANTHROPIC_AP
 Skills are installed declaratively via the `init-skills` init container. Edit the skill list in `app/init-skills.sh`:
 
 ```bash
-for skill in weather my-new-skill; do
+for skill in mcp-hass ontology humanizer; do
 ```
 
 Skills are installed from [ClawHub](https://clawhub.com) on pod startup and persist on the PVC. Already-installed skills are skipped (idempotent).
@@ -106,11 +106,34 @@ The `init-skills` init container also installs runtime tools that skills may dep
 
 | Tool | Version Source | Purpose |
 |------|---------------|---------|
+| Aikido safe-chain | `SAFE_CHAIN_VERSION` in `init-skills.sh` | Supply chain security for npm/pip/uv installs |
 | GitHub CLI (`gh`) | `GH_VERSION` in `init-skills.sh` | GitHub API access for skills |
 | Go | `GO_VERSION` in `init-skills.sh` | Go runtime for skills |
 | Python (via uv) | `UV_VERSION` in `init-skills.sh` | Python runtime for skills |
+| mcporter | `MCPORTER_VERSION` in `init-skills.sh` | MCP client for Home Assistant etc. |
 
-Versions are pinned with Renovate annotations for automated updates. `GH_TOKEN` is injected from `openclaw-secrets.sops.yaml` for `gh` authentication.
+Versions are pinned with Renovate annotations for automated updates. Version marker files (`.versions/` on the PVC) track what's installed so Renovate bumps trigger reinstallation on the next pod restart. `GH_TOKEN` is injected from `openclaw-secrets.sops.yaml` for `gh` authentication.
+
+### Workspace
+
+The OpenClaw workspace lives in a dedicated git repository ([anthony-spruyt/openclaw-workspace](https://github.com/anthony-spruyt/openclaw-workspace)) and is synced on every pod startup by the `init-workspace` init container.
+
+**How it works:**
+
+1. `init-workspace` configures a git credential helper using `GIT_WORKSPACE_TOKEN` from `openclaw-secrets`
+2. On first boot, clones the repo to `/home/node/.openclaw/workspace` on the PVC
+3. On subsequent restarts, fast-forward pulls the latest changes
+4. If pull fails (e.g. diverged history), force-syncs to `origin/main`
+5. The `.gitconfig` is shared with the main container via `GIT_CONFIG_GLOBAL` so the agent can push changes back
+
+**Environment variables** (in `openclaw-secrets.sops.yaml`):
+
+| Variable | Purpose |
+|----------|---------|
+| `GIT_WORKSPACE_REPO` | Clone URL (e.g. `https://github.com/anthony-spruyt/openclaw-workspace.git`) |
+| `GIT_WORKSPACE_TOKEN` | GitHub PAT for private repo access |
+
+Sensitive workspace config files (e.g. MCP credentials) are NOT stored in the workspace repo. Instead, they are mounted as read-only files from the SOPS-encrypted `openclaw-workspace-config` Secret (e.g. `mcporter.json` is mounted directly at `workspace/config/mcporter.json` via subPath).
 
 ### Config Changes
 
@@ -178,6 +201,11 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
    - **Symptom**: Updated `openclaw.json` but behavior unchanged
    - **Diagnosis**: Merge mode preserves existing keys
    - **Resolution**: Either set `CONFIG_MODE: "overwrite"` or delete the PVC config and restart
+
+6. **Workspace sync failed**
+   - **Symptom**: `init-workspace` logs show clone/pull failure
+   - **Diagnosis**: Check `GIT_WORKSPACE_REPO` and `GIT_WORKSPACE_TOKEN` in `openclaw-secrets`. Verify the token has repo read access.
+   - **Resolution**: The init container never fails the pod - a missing workspace is recoverable (OpenClaw bootstraps defaults). Fix the secret and restart.
 
 ## File Reference
 
