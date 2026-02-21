@@ -76,6 +76,9 @@ GITCONF
 # Use GIT_CONFIG_GLOBAL so git finds config regardless of HOME
 export GIT_CONFIG_GLOBAL="$GITCONFIG"
 
+# Prevent git from hanging on credential prompts in non-interactive containers
+export GIT_TERMINAL_PROMPT=0
+
 # ============================================================
 # Workspace Sync
 # ============================================================
@@ -135,6 +138,8 @@ Ref #502"
 ---
 
 ### Task 2: Update kustomization.yaml
+
+**Prerequisite:** Verify `cluster/apps/openclaw/openclaw/app/workspace/config/mcporter.json` exists on disk. The new `openclaw-workspace-config` configMapGenerator references this file. If absent, `kustomize build` will fail, blocking Flux reconciliation.
 
 **Files:**
 - Modify: `cluster/apps/openclaw/openclaw/app/kustomization.yaml`

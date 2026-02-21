@@ -62,11 +62,17 @@ echo "username=x-access-token"
 echo "password=$GIT_WORKSPACE_TOKEN"
 ```
 
+The helper is written to the PVC using a **quoted heredoc** (`<<'HELPER'`) so `$GIT_WORKSPACE_TOKEN` remains as a literal variable reference in the file. It is resolved at invocation-time when git calls the helper, not at write-time. This means the token is never stored in plaintext on the PVC.
+
+**Requirement:** `GIT_WORKSPACE_TOKEN` must be available in the environment of any container that uses `git push/pull`. The main container already satisfies this via `envFrom: secretRef: openclaw-secrets` (see `values.yaml`).
+
 The `.gitconfig` on the PVC references this helper. Both the init container and the main container use it - the init container for clone/pull, the agent for push during operation.
 
 **Main container requirement:** The main container must set `GIT_CONFIG_GLOBAL=/home/node/.openclaw/.gitconfig` in its env so the agent's git operations find the credential helper. Without this, git defaults to `$HOME/.gitconfig` which is on the read-only root filesystem.
 
 The existing `GH_TOKEN` (read-only, used by `gh` CLI) is unaffected since `gh` and `git` use separate auth mechanisms.
+
+**Non-interactive safety:** `GIT_TERMINAL_PROMPT=0` must be set in `init-workspace.sh` to prevent git from hanging on credential prompts if the token is misconfigured. This causes git to fail fast instead.
 
 ### Security Context
 
