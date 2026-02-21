@@ -89,7 +89,10 @@
   "commands": {
     "native": "auto",
     "nativeSkills": "auto",
-    "restart": true
+    "restart": true,
+    "allowFrom": {
+      "discord": ["user:249242152318664709"]
+    }
   },
   "session": {
     "scope": "per-sender",
@@ -131,16 +134,6 @@
       "allowInsecureAuth": true
     }
   },
-  "plugins": {
-    "entries": {
-      "whatsapp": {
-        "enabled": false
-      },
-      "discord": {
-        "enabled": true
-      }
-    }
-  },
   "skills": {
     "allowBundled": [
       "github",
@@ -151,9 +144,31 @@
       "weather"
     ],
     "entries": {
-      "humanizer": { "enabled": true },
-      "mcp-hass": { "enabled": true },
-      "ontology": { "enabled": true }
+      "mcp-context7": {
+        "enabled": true
+      },
+      "mcp-hass": {
+        "enabled": true
+      },
+      "mcp-n8n": {
+        "enabled": true
+      },
+      "ontology": {
+        "enabled": true
+      },
+      "humanizer": {
+        "enabled": true
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "whatsapp": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": true
+      }
     }
   }
 }

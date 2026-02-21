@@ -348,6 +348,27 @@
           },
           "additionalProperties": false
         },
+        "ssrfPolicy": {
+          "type": "object",
+          "properties": {
+            "allowPrivateNetwork": {
+              "type": "boolean"
+            },
+            "allowedHostnames": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "hostnameAllowlist": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
         "profiles": {
           "type": "object",
           "propertyNames": {
@@ -5846,7 +5867,8 @@
     "commands": {
       "default": {
         "native": "auto",
-        "nativeSkills": "auto"
+        "nativeSkills": "auto",
+        "restart": true
       },
       "type": "object",
       "properties": {
@@ -5892,6 +5914,7 @@
           "type": "boolean"
         },
         "restart": {
+          "default": true,
           "type": "boolean"
         },
         "useAccessGroups": {
@@ -5930,7 +5953,7 @@
           }
         }
       },
-      "required": ["native", "nativeSkills"],
+      "required": ["native", "nativeSkills", "restart"],
       "additionalProperties": false
     },
     "approvals": {
@@ -6827,6 +6850,24 @@
                     "type": "string"
                   },
                   "version": {
+                    "type": "string"
+                  },
+                  "resolvedName": {
+                    "type": "string"
+                  },
+                  "resolvedVersion": {
+                    "type": "string"
+                  },
+                  "resolvedSpec": {
+                    "type": "string"
+                  },
+                  "integrity": {
+                    "type": "string"
+                  },
+                  "shasum": {
+                    "type": "string"
+                  },
+                  "resolvedAt": {
                     "type": "string"
                   },
                   "installedAt": {
@@ -8388,6 +8429,10 @@
           "properties": {
             "mode": {
               "anyOf": [
+                {
+                  "type": "string",
+                  "const": "none"
+                },
                 {
                   "type": "string",
                   "const": "token"
@@ -10320,6 +10365,24 @@
                 "type": "string"
               },
               "version": {
+                "type": "string"
+              },
+              "resolvedName": {
+                "type": "string"
+              },
+              "resolvedVersion": {
+                "type": "string"
+              },
+              "resolvedSpec": {
+                "type": "string"
+              },
+              "integrity": {
+                "type": "string"
+              },
+              "shasum": {
+                "type": "string"
+              },
+              "resolvedAt": {
                 "type": "string"
               },
               "installedAt": {

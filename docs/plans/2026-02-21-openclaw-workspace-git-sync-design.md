@@ -70,15 +70,25 @@ The init container matches the existing security posture:
 - `capabilities.drop: [ALL]`
 - Runs as UID 1000 (matches pod security context)
 
+### Sensitive Workspace Files
+
+Some workspace files contain secrets (e.g. `config/mcporter.json` with MCP API keys and auth tokens). These cannot be committed to the workspace repo.
+
+**Approach:** A small `openclaw-workspace-config` ConfigMap (via `configMapGenerator`) holds only the sensitive files. The `init-config.sh` workspace copy section is updated (not removed) to handle subdirectory paths using `mkdir -p` instead of `basename`. These files are gitignored in the workspace repo.
+
+The workspace repo's `.gitignore` should include:
+```
+config/mcporter.json
+```
+
 ## Changes
 
 ### Remove
 
 | File | What |
 |------|------|
-| `kustomization.yaml` | `openclaw-workspace` configMapGenerator entry |
-| `init-config.sh` | Lines 70-81 (workspace file copy from ConfigMap) |
-| `values.yaml` | `workspace-files` persistence entry |
+| `kustomization.yaml` | `openclaw-workspace` configMapGenerator entry (replaced by smaller `openclaw-workspace-config`) |
+| `values.yaml` | `workspace-files` persistence entry (replaced by `workspace-config-files`) |
 | `workspace/*` | All files under `cluster/apps/openclaw/openclaw/app/workspace/` |
 
 ### Add
@@ -87,7 +97,9 @@ The init container matches the existing security posture:
 |------|------|
 | `init-workspace.sh` | New script: git clone/pull with credential helper |
 | `kustomization.yaml` | `init-workspace.sh` added to `openclaw-scripts` configMapGenerator |
+| `kustomization.yaml` | `openclaw-workspace-config` configMapGenerator with sensitive files only (e.g. `config/mcporter.json=workspace/config/mcporter.json`) |
 | `values.yaml` | `init-workspace` init container definition |
+| `values.yaml` | `workspace-config-files` persistence mount for the sensitive files ConfigMap |
 | `.gitignore` | Ignore `workspace/` directory (sync task still downloads here) |
 
 ### Modify
@@ -96,6 +108,7 @@ The init container matches the existing security posture:
 |------|------|
 | `openclaw-secrets.sops.yaml` | User adds `GIT_WORKSPACE_TOKEN` and `GIT_WORKSPACE_REPO` |
 | `values.yaml` | Mount scripts, PVC, and tmp into `init-workspace` |
+| `init-config.sh` | Replace `basename` flattening with `mkdir -p` + path-preserving copy for sensitive workspace files |
 
 ### Unchanged
 
