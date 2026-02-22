@@ -121,7 +121,7 @@ The OpenClaw workspace lives in a dedicated git repository ([anthony-spruyt/open
 
 **How it works:**
 
-1. `init-workspace` configures a single git credential dispatcher that routes tokens by repo path: `openclaw-workspace` uses `GIT_WORKSPACE_TOKEN`, all other GitHub repos use `GH_TOKEN`
+1. `init-workspace` configures a single git credential dispatcher that routes tokens by repo path: whitelisted repos use `GIT_CODE_TOKEN` (read-write), all other GitHub repos use `GH_TOKEN` (read-only)
 2. On first boot, clones the repo to `/home/node/.openclaw/workspace` on the PVC
 3. On subsequent restarts, fast-forward pulls the latest changes
 4. If pull fails (e.g. diverged history), force-syncs to `origin/main`
@@ -132,7 +132,7 @@ The OpenClaw workspace lives in a dedicated git repository ([anthony-spruyt/open
 | Variable | Purpose |
 |----------|---------|
 | `GIT_WORKSPACE_REPO` | Clone URL (e.g. `https://github.com/anthony-spruyt/openclaw-workspace.git`) |
-| `GIT_WORKSPACE_TOKEN` | GitHub PAT for workspace repo push/pull |
+| `GIT_CODE_TOKEN` | Fine-grained PAT with read-write access to whitelisted repos |
 | `GH_TOKEN` | GitHub PAT for all other GitHub repos (e.g. `spruyt-labs` pulls) |
 
 Sensitive workspace config files (e.g. MCP credentials) are NOT stored in the workspace repo. Instead, they are mounted as read-only files from the SOPS-encrypted `openclaw-workspace-config` Secret (e.g. `mcporter.json` is mounted directly at `workspace/config/mcporter.json` via subPath).
@@ -206,7 +206,7 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
 
 6. **Workspace sync failed**
    - **Symptom**: `init-workspace` logs show clone/pull failure
-   - **Diagnosis**: Check `GIT_WORKSPACE_REPO` and `GIT_WORKSPACE_TOKEN` in `openclaw-secrets`. Verify the token has repo read access.
+   - **Diagnosis**: Check `GIT_WORKSPACE_REPO` and `GIT_CODE_TOKEN` in `openclaw-secrets`. Verify the token has repo access.
    - **Resolution**: The init container never fails the pod - a missing workspace is recoverable (OpenClaw bootstraps defaults). Fix the secret and restart.
 
 ## File Reference

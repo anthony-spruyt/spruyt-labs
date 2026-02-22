@@ -13,7 +13,7 @@ CREDENTIAL_HELPER="/home/node/.openclaw/.git-credential-helper"
 # ============================================================
 # Git Credential Helper
 # ============================================================
-# Credential dispatcher: openclaw-workspace → GIT_WORKSPACE_TOKEN, all others → GH_TOKEN.
+# Credential dispatcher: whitelisted repos → GIT_CODE_TOKEN, all others → GH_TOKEN.
 log "Configuring git credential helper"
 cat > "$CREDENTIAL_HELPER" <<'HELPER'
 #!/bin/sh
@@ -21,13 +21,18 @@ case "$1" in
   get)
     input=$(cat)
     path=$(echo "$input" | grep '^path=' | cut -d= -f2-)
-    if echo "$path" | grep -q "openclaw-workspace"; then
-      token="$GIT_WORKSPACE_TOKEN"
-      var_name="GIT_WORKSPACE_TOKEN"
-    else
-      token="$GH_TOKEN"
-      var_name="GH_TOKEN"
-    fi
+    repo=$(echo "$path" | cut -d'/' -f2 | sed 's/\.git$//')
+    # Whitelist: repos that get write access via GIT_CODE_TOKEN
+    case "$repo" in
+      container-images|firemerge|openclaw-workspace|SunGather|xfg)
+        token="$GIT_CODE_TOKEN"
+        var_name="GIT_CODE_TOKEN"
+        ;;
+      *)
+        token="$GH_TOKEN"
+        var_name="GH_TOKEN"
+        ;;
+    esac
     if [ -z "$token" ]; then
       echo "[credential-helper] ERROR: $var_name is not set" >&2
       exit 1
