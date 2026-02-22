@@ -157,6 +157,16 @@ else
 fi
 ln -sf "$NPM_GLOBAL/bin/mcporter" "$BIN_DIR/mcporter"
 
+# --- Claude Code ---
+if [ ! -f /home/node/.openclaw/.local/bin/claude ]; then
+  log "Installing Claude Code..."
+  (export HOME=/home/node/.openclaw; curl -fsSL https://claude.ai/install.sh | bash)
+  log "Claude Code installed"
+else
+  log "Claude Code already installed"
+fi
+ln -sf /home/node/.openclaw/.local/bin/claude "$BIN_DIR/claude"
+
 # ============================================================
 # Skill Installation
 # ============================================================
