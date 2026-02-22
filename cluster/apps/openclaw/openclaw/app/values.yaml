@@ -53,7 +53,7 @@ controllers:
           - sh
           - /scripts/init-config.sh
         env:
-          CONFIG_MODE: "overwrite"
+          CONFIG_MODE: "merge"
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
