@@ -1631,6 +1631,16 @@
                     }
                   ]
                 },
+                "reserveTokens": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "keepRecentTokens": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
                 "reserveTokensFloor": {
                   "type": "integer",
                   "minimum": 0,
@@ -2201,10 +2211,16 @@
                     "containerPrefix": {
                       "type": "string"
                     },
+                    "network": {
+                      "type": "string"
+                    },
                     "cdpPort": {
                       "type": "integer",
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
+                    },
+                    "cdpSourceRange": {
+                      "type": "string"
                     },
                     "vncPort": {
                       "type": "integer",
@@ -2993,10 +3009,16 @@
                       "containerPrefix": {
                         "type": "string"
                       },
+                      "network": {
+                        "type": "string"
+                      },
                       "cdpPort": {
                         "type": "integer",
                         "exclusiveMinimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "cdpSourceRange": {
+                        "type": "string"
                       },
                       "vncPort": {
                         "type": "integer",
@@ -5679,6 +5701,76 @@
         "removeAckAfterReply": {
           "type": "boolean"
         },
+        "statusReactions": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "emojis": {
+              "type": "object",
+              "properties": {
+                "thinking": {
+                  "type": "string"
+                },
+                "tool": {
+                  "type": "string"
+                },
+                "coding": {
+                  "type": "string"
+                },
+                "web": {
+                  "type": "string"
+                },
+                "done": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "string"
+                },
+                "stallSoft": {
+                  "type": "string"
+                },
+                "stallHard": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "timing": {
+              "type": "object",
+              "properties": {
+                "debounceMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "stallSoftMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "stallHardMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "doneHoldMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "errorHoldMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "suppressToolErrors": {
           "type": "boolean"
         },
@@ -5868,7 +5960,8 @@
       "default": {
         "native": "auto",
         "nativeSkills": "auto",
-        "restart": true
+        "restart": true,
+        "ownerDisplay": "raw"
       },
       "type": "object",
       "properties": {
@@ -5933,6 +6026,14 @@
             ]
           }
         },
+        "ownerDisplay": {
+          "default": "raw",
+          "type": "string",
+          "enum": ["raw", "hash"]
+        },
+        "ownerDisplaySecret": {
+          "type": "string"
+        },
         "allowFrom": {
           "type": "object",
           "propertyNames": {
@@ -5953,7 +6054,7 @@
           }
         }
       },
-      "required": ["native", "nativeSkills", "restart"],
+      "required": ["native", "nativeSkills", "restart", "ownerDisplay"],
       "additionalProperties": false
     },
     "approvals": {
@@ -6381,6 +6482,19 @@
               "type": "integer",
               "minimum": 0,
               "maximum": 5
+            }
+          },
+          "additionalProperties": false
+        },
+        "threadBindings": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ttlHours": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "additionalProperties": false
@@ -7066,6 +7180,43 @@
               },
               "additionalProperties": false
             },
+            "streamMode": {
+              "default": "off",
+              "type": "string",
+              "enum": ["partial", "block", "off"]
+            },
+            "draftChunk": {
+              "type": "object",
+              "properties": {
+                "minChars": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "maxChars": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "breakPreference": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "paragraph"
+                    },
+                    {
+                      "type": "string",
+                      "const": "newline"
+                    },
+                    {
+                      "type": "string",
+                      "const": "sentence"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
             "maxLinesPerMessage": {
               "type": "integer",
               "exclusiveMinimum": 0,
@@ -7196,6 +7347,9 @@
                   }
                 ]
               }
+            },
+            "defaultTo": {
+              "type": "string"
             },
             "dm": {
               "type": "object",
@@ -7529,6 +7683,31 @@
               },
               "additionalProperties": false
             },
+            "slashCommand": {
+              "type": "object",
+              "properties": {
+                "ephemeral": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            },
+            "threadBindings": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "ttlHours": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "spawnSubagentSessions": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            },
             "intents": {
               "type": "object",
               "properties": {
@@ -7537,6 +7716,212 @@
                 },
                 "guildMembers": {
                   "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            },
+            "voice": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "autoJoin": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "guildId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "channelId": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": ["guildId", "channelId"],
+                    "additionalProperties": false
+                  }
+                },
+                "tts": {
+                  "type": "object",
+                  "properties": {
+                    "auto": {
+                      "type": "string",
+                      "enum": ["off", "always", "inbound", "tagged"]
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": ["final", "all"]
+                    },
+                    "provider": {
+                      "type": "string",
+                      "enum": ["elevenlabs", "openai", "edge"]
+                    },
+                    "summaryModel": {
+                      "type": "string"
+                    },
+                    "modelOverrides": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "allowText": {
+                          "type": "boolean"
+                        },
+                        "allowProvider": {
+                          "type": "boolean"
+                        },
+                        "allowVoice": {
+                          "type": "boolean"
+                        },
+                        "allowModelId": {
+                          "type": "boolean"
+                        },
+                        "allowVoiceSettings": {
+                          "type": "boolean"
+                        },
+                        "allowNormalization": {
+                          "type": "boolean"
+                        },
+                        "allowSeed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "elevenlabs": {
+                      "type": "object",
+                      "properties": {
+                        "apiKey": {
+                          "type": "string"
+                        },
+                        "baseUrl": {
+                          "type": "string"
+                        },
+                        "voiceId": {
+                          "type": "string"
+                        },
+                        "modelId": {
+                          "type": "string"
+                        },
+                        "seed": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 4294967295
+                        },
+                        "applyTextNormalization": {
+                          "type": "string",
+                          "enum": ["auto", "on", "off"]
+                        },
+                        "languageCode": {
+                          "type": "string"
+                        },
+                        "voiceSettings": {
+                          "type": "object",
+                          "properties": {
+                            "stability": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "similarityBoost": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "style": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "useSpeakerBoost": {
+                              "type": "boolean"
+                            },
+                            "speed": {
+                              "type": "number",
+                              "minimum": 0.5,
+                              "maximum": 2
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "openai": {
+                      "type": "object",
+                      "properties": {
+                        "apiKey": {
+                          "type": "string"
+                        },
+                        "model": {
+                          "type": "string"
+                        },
+                        "voice": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "edge": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "voice": {
+                          "type": "string"
+                        },
+                        "lang": {
+                          "type": "string"
+                        },
+                        "outputFormat": {
+                          "type": "string"
+                        },
+                        "pitch": {
+                          "type": "string"
+                        },
+                        "rate": {
+                          "type": "string"
+                        },
+                        "volume": {
+                          "type": "string"
+                        },
+                        "saveSubtitles": {
+                          "type": "boolean"
+                        },
+                        "proxy": {
+                          "type": "string"
+                        },
+                        "timeoutMs": {
+                          "type": "integer",
+                          "minimum": 1000,
+                          "maximum": 120000
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "prefsPath": {
+                      "type": "string"
+                    },
+                    "maxTextLength": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "timeoutMs": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "maximum": 120000
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -7733,6 +8118,43 @@
                     },
                     "additionalProperties": false
                   },
+                  "streamMode": {
+                    "default": "off",
+                    "type": "string",
+                    "enum": ["partial", "block", "off"]
+                  },
+                  "draftChunk": {
+                    "type": "object",
+                    "properties": {
+                      "minChars": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "maxChars": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "breakPreference": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": "paragraph"
+                          },
+                          {
+                            "type": "string",
+                            "const": "newline"
+                          },
+                          {
+                            "type": "string",
+                            "const": "sentence"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
                   "maxLinesPerMessage": {
                     "type": "integer",
                     "exclusiveMinimum": 0,
@@ -7863,6 +8285,9 @@
                         }
                       ]
                     }
+                  },
+                  "defaultTo": {
+                    "type": "string"
                   },
                   "dm": {
                     "type": "object",
@@ -8196,6 +8621,31 @@
                     },
                     "additionalProperties": false
                   },
+                  "slashCommand": {
+                    "type": "object",
+                    "properties": {
+                      "ephemeral": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "threadBindings": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "ttlHours": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "spawnSubagentSessions": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
                   "intents": {
                     "type": "object",
                     "properties": {
@@ -8204,6 +8654,212 @@
                       },
                       "guildMembers": {
                         "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "voice": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "autoJoin": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "guildId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "channelId": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": ["guildId", "channelId"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "tts": {
+                        "type": "object",
+                        "properties": {
+                          "auto": {
+                            "type": "string",
+                            "enum": ["off", "always", "inbound", "tagged"]
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "mode": {
+                            "type": "string",
+                            "enum": ["final", "all"]
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": ["elevenlabs", "openai", "edge"]
+                          },
+                          "summaryModel": {
+                            "type": "string"
+                          },
+                          "modelOverrides": {
+                            "type": "object",
+                            "properties": {
+                              "enabled": {
+                                "type": "boolean"
+                              },
+                              "allowText": {
+                                "type": "boolean"
+                              },
+                              "allowProvider": {
+                                "type": "boolean"
+                              },
+                              "allowVoice": {
+                                "type": "boolean"
+                              },
+                              "allowModelId": {
+                                "type": "boolean"
+                              },
+                              "allowVoiceSettings": {
+                                "type": "boolean"
+                              },
+                              "allowNormalization": {
+                                "type": "boolean"
+                              },
+                              "allowSeed": {
+                                "type": "boolean"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "elevenlabs": {
+                            "type": "object",
+                            "properties": {
+                              "apiKey": {
+                                "type": "string"
+                              },
+                              "baseUrl": {
+                                "type": "string"
+                              },
+                              "voiceId": {
+                                "type": "string"
+                              },
+                              "modelId": {
+                                "type": "string"
+                              },
+                              "seed": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 4294967295
+                              },
+                              "applyTextNormalization": {
+                                "type": "string",
+                                "enum": ["auto", "on", "off"]
+                              },
+                              "languageCode": {
+                                "type": "string"
+                              },
+                              "voiceSettings": {
+                                "type": "object",
+                                "properties": {
+                                  "stability": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1
+                                  },
+                                  "similarityBoost": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1
+                                  },
+                                  "style": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1
+                                  },
+                                  "useSpeakerBoost": {
+                                    "type": "boolean"
+                                  },
+                                  "speed": {
+                                    "type": "number",
+                                    "minimum": 0.5,
+                                    "maximum": 2
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "openai": {
+                            "type": "object",
+                            "properties": {
+                              "apiKey": {
+                                "type": "string"
+                              },
+                              "model": {
+                                "type": "string"
+                              },
+                              "voice": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "edge": {
+                            "type": "object",
+                            "properties": {
+                              "enabled": {
+                                "type": "boolean"
+                              },
+                              "voice": {
+                                "type": "string"
+                              },
+                              "lang": {
+                                "type": "string"
+                              },
+                              "outputFormat": {
+                                "type": "string"
+                              },
+                              "pitch": {
+                                "type": "string"
+                              },
+                              "rate": {
+                                "type": "string"
+                              },
+                              "volume": {
+                                "type": "string"
+                              },
+                              "saveSubtitles": {
+                                "type": "boolean"
+                              },
+                              "proxy": {
+                                "type": "string"
+                              },
+                              "timeoutMs": {
+                                "type": "integer",
+                                "minimum": 1000,
+                                "maximum": 120000
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "prefsPath": {
+                            "type": "string"
+                          },
+                          "maxTextLength": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "timeoutMs": {
+                            "type": "integer",
+                            "minimum": 1000,
+                            "maximum": 120000
+                          }
+                        },
+                        "additionalProperties": false
                       }
                     },
                     "additionalProperties": false
@@ -8266,12 +8922,12 @@
                     "format": "uri"
                   }
                 },
-                "required": ["groupPolicy"],
+                "required": ["groupPolicy", "streamMode"],
                 "additionalProperties": false
               }
             }
           },
-          "required": ["groupPolicy"],
+          "required": ["groupPolicy", "streamMode"],
           "additionalProperties": false
         }
       },
@@ -8397,6 +9053,9 @@
             }
           ]
         },
+        "customBindHost": {
+          "type": "string"
+        },
         "controlUi": {
           "type": "object",
           "properties": {
@@ -8505,6 +9164,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "allowRealIpFallback": {
+          "type": "boolean"
         },
         "tools": {
           "type": "object",
