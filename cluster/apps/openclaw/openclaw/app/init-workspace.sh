@@ -52,6 +52,7 @@ if [ -f "$SIGNING_KEY_SRC" ]; then
   mkdir -p "$(dirname "$SIGNING_KEY_DEST")"
   chmod 700 "$(dirname "$SIGNING_KEY_DEST")"
   cp "$SIGNING_KEY_SRC" "$SIGNING_KEY_DEST"
+  printf '\n' >> "$SIGNING_KEY_DEST"
   chmod 600 "$SIGNING_KEY_DEST"
   log "SSH signing key installed at $SIGNING_KEY_DEST"
 else
