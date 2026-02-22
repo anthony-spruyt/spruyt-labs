@@ -9,6 +9,7 @@ log() { echo "[$(date -Iseconds)] [init-workspace] $*"; }
 WORKSPACE="/home/node/.openclaw/workspace"
 GITCONFIG="/home/node/.openclaw/.gitconfig"
 CREDENTIAL_HELPER="/home/node/.openclaw/.git-credential-helper"
+CREDENTIAL_HELPER_GH="/home/node/.openclaw/.git-credential-helper-gh"
 
 # ============================================================
 # Git Credential Helper
@@ -30,6 +31,22 @@ esac
 HELPER
 chmod +x "$CREDENTIAL_HELPER"
 
+# Fallback helper for all other github.com repos using GH_TOKEN
+log "Configuring fallback git credential helper for github.com"
+cat > "$CREDENTIAL_HELPER_GH" <<'HELPER'
+#!/bin/sh
+# Git credential protocol: only respond to 'get' requests
+case "$1" in
+  get)
+    echo "protocol=https"
+    echo "host=github.com"
+    echo "username=x-access-token"
+    echo "password=$GH_TOKEN"
+    ;;
+esac
+HELPER
+chmod +x "$CREDENTIAL_HELPER_GH"
+
 # ============================================================
 # Git Configuration
 # ============================================================
@@ -37,6 +54,8 @@ chmod +x "$CREDENTIAL_HELPER"
 cat > "$GITCONFIG" <<GITCONF
 [credential "https://github.com/anthony-spruyt/openclaw-workspace"]
     helper = $CREDENTIAL_HELPER
+[credential "https://github.com"]
+    helper = $CREDENTIAL_HELPER_GH
 [user]
     name = OpenClaw Agent
     email = openclaw@noreply
