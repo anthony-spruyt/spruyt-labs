@@ -249,9 +249,9 @@ persistence:
             subPath: mcporter.json
             readOnly: true
         init-skills:
-          - path: /home/node/.openclaw/.claude/.credentials.json
+          - path: /tmp/.claude-credentials.json
             subPath: .credentials.json
-            readOnly: false
+            readOnly: true
   # Scripts (created by Kustomize configMapGenerator)
   scripts:
     type: configMap
