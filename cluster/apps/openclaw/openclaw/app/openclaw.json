@@ -208,6 +208,12 @@
     "port": 18789,
     "mode": "local",
     "trustedProxies": ["10.244.0.0/16"],
+    "auth": {
+      "mode": "trusted-proxy",
+      "trustedProxy": {
+        "userHeader": "X-authentik-username"
+      }
+    },
     "controlUi": {
       "allowInsecureAuth": true
     }
