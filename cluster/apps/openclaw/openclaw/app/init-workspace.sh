@@ -13,13 +13,10 @@ CREDENTIAL_HELPER="/home/node/.openclaw/.git-credential-helper"
 # ============================================================
 # Git Credential Helper
 # ============================================================
-# Single dispatcher: routes by repo path.
-# openclaw-workspace → GIT_WORKSPACE_TOKEN, all others → GH_TOKEN.
-# Requires useHttpPath = true in .gitconfig so git passes the path.
+# Credential dispatcher: openclaw-workspace → GIT_WORKSPACE_TOKEN, all others → GH_TOKEN.
 log "Configuring git credential helper"
 cat > "$CREDENTIAL_HELPER" <<'HELPER'
 #!/bin/sh
-# Routes by repo path: openclaw-workspace → GIT_WORKSPACE_TOKEN, else → GH_TOKEN
 case "$1" in
   get)
     input=$(cat)
@@ -48,8 +45,6 @@ chmod +x "$CREDENTIAL_HELPER"
 # Git Configuration
 # ============================================================
 # Write .gitconfig on the PVC (shared with main container via GIT_CONFIG_GLOBAL).
-# useHttpPath = true is critical: without it git never passes the repo path
-# to the credential helper, so it cannot discriminate between repos.
 cat > "$GITCONFIG" <<GITCONF
 [credential "https://github.com"]
     helper = $CREDENTIAL_HELPER
