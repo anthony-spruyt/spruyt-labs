@@ -56,7 +56,12 @@ cat > "$GITCONFIG" <<GITCONF
     useHttpPath = true
 [user]
     name = OpenClaw Agent
-    email = openclaw@noreply
+    email = 99536297+anthony-spruyt@users.noreply.github.com
+    signingKey = /home/node/.openclaw/.ssh/id_signing
+[commit]
+    gpgSign = true
+[gpg]
+    format = ssh
 [pull]
     ff = only
 GITCONF
