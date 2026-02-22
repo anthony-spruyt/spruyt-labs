@@ -9,53 +9,51 @@ log() { echo "[$(date -Iseconds)] [init-workspace] $*"; }
 WORKSPACE="/home/node/.openclaw/workspace"
 GITCONFIG="/home/node/.openclaw/.gitconfig"
 CREDENTIAL_HELPER="/home/node/.openclaw/.git-credential-helper"
-CREDENTIAL_HELPER_GH="/home/node/.openclaw/.git-credential-helper-gh"
 
 # ============================================================
 # Git Credential Helper
 # ============================================================
-# Write credential helper that reads token from environment.
-# Persists on PVC so the main container can also use it.
+# Single dispatcher: routes by repo path.
+# openclaw-workspace → GIT_WORKSPACE_TOKEN, all others → GH_TOKEN.
+# Requires useHttpPath = true in .gitconfig so git passes the path.
 log "Configuring git credential helper"
 cat > "$CREDENTIAL_HELPER" <<'HELPER'
 #!/bin/sh
-# Git credential protocol: only respond to 'get' requests
+# Routes by repo path: openclaw-workspace → GIT_WORKSPACE_TOKEN, else → GH_TOKEN
 case "$1" in
   get)
+    input=$(cat)
+    path=$(echo "$input" | grep '^path=' | cut -d= -f2-)
+    if echo "$path" | grep -q "openclaw-workspace"; then
+      token="$GIT_WORKSPACE_TOKEN"
+      var_name="GIT_WORKSPACE_TOKEN"
+    else
+      token="$GH_TOKEN"
+      var_name="GH_TOKEN"
+    fi
+    if [ -z "$token" ]; then
+      echo "[credential-helper] ERROR: $var_name is not set" >&2
+      exit 1
+    fi
     echo "protocol=https"
     echo "host=github.com"
     echo "username=x-access-token"
-    echo "password=$GIT_WORKSPACE_TOKEN"
+    echo "password=$token"
     ;;
 esac
 HELPER
 chmod +x "$CREDENTIAL_HELPER"
 
-# Fallback helper for all other github.com repos using GH_TOKEN
-log "Configuring fallback git credential helper for github.com"
-cat > "$CREDENTIAL_HELPER_GH" <<'HELPER'
-#!/bin/sh
-# Git credential protocol: only respond to 'get' requests
-case "$1" in
-  get)
-    echo "protocol=https"
-    echo "host=github.com"
-    echo "username=x-access-token"
-    echo "password=$GH_TOKEN"
-    ;;
-esac
-HELPER
-chmod +x "$CREDENTIAL_HELPER_GH"
-
 # ============================================================
 # Git Configuration
 # ============================================================
 # Write .gitconfig on the PVC (shared with main container via GIT_CONFIG_GLOBAL).
+# useHttpPath = true is critical: without it git never passes the repo path
+# to the credential helper, so it cannot discriminate between repos.
 cat > "$GITCONFIG" <<GITCONF
-[credential "https://github.com/anthony-spruyt/openclaw-workspace"]
-    helper = $CREDENTIAL_HELPER
 [credential "https://github.com"]
-    helper = $CREDENTIAL_HELPER_GH
+    helper = $CREDENTIAL_HELPER
+    useHttpPath = true
 [user]
     name = OpenClaw Agent
     email = openclaw@noreply
