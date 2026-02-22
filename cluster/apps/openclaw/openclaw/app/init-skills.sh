@@ -157,6 +157,24 @@ else
 fi
 ln -sf "$NPM_GLOBAL/bin/mcporter" "$BIN_DIR/mcporter"
 
+# --- Claude Code ---
+# Create .claude directory with proper ownership (must happen before install
+# to avoid kubelet creating it as root via subPath mounts)
+mkdir -p /home/node/.openclaw/.claude
+# Copy credentials from staging mount (secret subPath → /tmp)
+if [ -f /tmp/.claude-credentials.json ]; then
+  cp /tmp/.claude-credentials.json /home/node/.openclaw/.claude/.credentials.json
+  log "Claude Code credentials copied"
+fi
+if [ ! -f /home/node/.openclaw/.local/bin/claude ]; then
+  log "Installing Claude Code..."
+  (export HOME=/home/node/.openclaw; curl -fsSL https://claude.ai/install.sh | bash)
+  log "Claude Code installed"
+else
+  log "Claude Code already installed"
+fi
+ln -sf /home/node/.openclaw/.local/bin/claude "$BIN_DIR/claude"
+
 # ============================================================
 # Skill Installation
 # ============================================================
