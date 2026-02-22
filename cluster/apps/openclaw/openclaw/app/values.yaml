@@ -252,6 +252,24 @@ persistence:
           - path: /tmp/.claude-credentials.json
             subPath: .credentials.json
             readOnly: true
+  # SSH signing key for git commit signing (mode 0600 required by ssh-keygen)
+  signing-key:
+    type: custom
+    volumeSpec:
+      secret:
+        secretName: openclaw-workspace-config
+        items:
+          - key: id_signing
+            path: id_signing
+            mode: 0600
+    advancedMounts:
+      main:
+        init-workspace:
+          - path: /home/node/.openclaw/.ssh
+            readOnly: true
+        main:
+          - path: /home/node/.openclaw/.ssh
+            readOnly: true
   # Scripts (created by Kustomize configMapGenerator)
   scripts:
     type: configMap
