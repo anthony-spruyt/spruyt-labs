@@ -216,7 +216,6 @@ controllers:
               timeoutSeconds: 5
               failureThreshold: 12
 persistence:
-  # ConfigMap for init container to copy from (created by Kustomize configMapGenerator)
   config:
     type: configMap
     name: openclaw-config
@@ -225,7 +224,6 @@ persistence:
         init-config:
           - path: /config
             readOnly: true
-  # Entire .openclaw directory as PVC
   data:
     existingClaim: openclaw-data
     advancedMounts:
@@ -238,7 +236,6 @@ persistence:
           - path: /home/node/.openclaw
         main:
           - path: /home/node/.openclaw
-  # Sensitive workspace config files (e.g. MCP credentials) injected via Secret
   workspace-config-files:
     type: secret
     name: openclaw-workspace-config
@@ -252,25 +249,15 @@ persistence:
           - path: /tmp/.claude-credentials.json
             subPath: .credentials.json
             readOnly: true
-  # SSH signing key for git commit signing (mode 0600 required by ssh-keygen)
   signing-key:
-    type: custom
-    volumeSpec:
-      secret:
-        secretName: openclaw-workspace-config
-        items:
-          - key: id_signing
-            path: id_signing
-            mode: 0600
+    type: secret
+    name: openclaw-workspace-config
     advancedMounts:
       main:
         init-workspace:
-          - path: /home/node/.openclaw/.ssh
+          - path: /tmp/id_signing
+            subPath: id_signing
             readOnly: true
-        main:
-          - path: /home/node/.openclaw/.ssh
-            readOnly: true
-  # Scripts (created by Kustomize configMapGenerator)
   scripts:
     type: configMap
     name: openclaw-scripts
@@ -289,7 +276,6 @@ persistence:
         main:
           - path: /scripts
             readOnly: true
-  # Writable /tmp for containers with readOnlyRootFilesystem
   tmp:
     type: emptyDir
     advancedMounts:
