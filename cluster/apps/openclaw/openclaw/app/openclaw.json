@@ -207,6 +207,7 @@
   "gateway": {
     "port": 18789,
     "mode": "local",
+    "trustedProxies": ["10.244.0.0/16"],
     "controlUi": {
       "allowInsecureAuth": true
     }
