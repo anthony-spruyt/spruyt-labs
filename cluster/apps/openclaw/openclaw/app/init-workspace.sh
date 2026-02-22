@@ -35,7 +35,7 @@ chmod +x "$CREDENTIAL_HELPER"
 # ============================================================
 # Write .gitconfig on the PVC (shared with main container via GIT_CONFIG_GLOBAL).
 cat > "$GITCONFIG" <<GITCONF
-[credential]
+[credential "https://github.com/anthony-spruyt/openclaw-workspace"]
     helper = $CREDENTIAL_HELPER
 [user]
     name = OpenClaw Agent
