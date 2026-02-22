@@ -111,6 +111,7 @@ The `init-skills` init container also installs runtime tools that skills may dep
 | Go | `GO_VERSION` in `init-skills.sh` | Go runtime for skills |
 | Python (via uv) | `UV_VERSION` in `init-skills.sh` | Python runtime for skills |
 | mcporter | `MCPORTER_VERSION` in `init-skills.sh` | MCP client for Home Assistant etc. |
+| Claude Code (`claude`) | Installed via `claude.ai/install.sh` | Claude CLI for AI-assisted development |
 
 Versions are pinned with Renovate annotations for automated updates. Version marker files (`.versions/` on the PVC) track what's installed so Renovate bumps trigger reinstallation on the next pod restart. `GH_TOKEN` is injected from `openclaw-secrets.sops.yaml` for `gh` authentication.
 
@@ -120,7 +121,7 @@ The OpenClaw workspace lives in a dedicated git repository ([anthony-spruyt/open
 
 **How it works:**
 
-1. `init-workspace` configures a git credential helper using `GIT_WORKSPACE_TOKEN` from `openclaw-secrets`
+1. `init-workspace` configures a single git credential dispatcher that routes tokens by repo path: `openclaw-workspace` uses `GIT_WORKSPACE_TOKEN`, all other GitHub repos use `GH_TOKEN`
 2. On first boot, clones the repo to `/home/node/.openclaw/workspace` on the PVC
 3. On subsequent restarts, fast-forward pulls the latest changes
 4. If pull fails (e.g. diverged history), force-syncs to `origin/main`
@@ -131,7 +132,8 @@ The OpenClaw workspace lives in a dedicated git repository ([anthony-spruyt/open
 | Variable | Purpose |
 |----------|---------|
 | `GIT_WORKSPACE_REPO` | Clone URL (e.g. `https://github.com/anthony-spruyt/openclaw-workspace.git`) |
-| `GIT_WORKSPACE_TOKEN` | GitHub PAT for private repo access |
+| `GIT_WORKSPACE_TOKEN` | GitHub PAT for workspace repo push/pull |
+| `GH_TOKEN` | GitHub PAT for all other GitHub repos (e.g. `spruyt-labs` pulls) |
 
 Sensitive workspace config files (e.g. MCP credentials) are NOT stored in the workspace repo. Instead, they are mounted as read-only files from the SOPS-encrypted `openclaw-workspace-config` Secret (e.g. `mcporter.json` is mounted directly at `workspace/config/mcporter.json` via subPath).
 
