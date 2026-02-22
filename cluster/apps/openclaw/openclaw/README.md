@@ -137,6 +137,53 @@ The OpenClaw workspace lives in a dedicated git repository ([anthony-spruyt/open
 
 Sensitive workspace config files (e.g. MCP credentials) are NOT stored in the workspace repo. Instead, they are mounted as read-only files from the SOPS-encrypted `openclaw-workspace-config` Secret (e.g. `mcporter.json` is mounted directly at `workspace/config/mcporter.json` via subPath).
 
+### Commit Signing
+
+OpenClaw signs every git commit with a dedicated Ed25519 SSH key. GitHub verifies the signature against the public key registered on the account and marks commits as **Verified**. This satisfies branch protection rules that require signed commits.
+
+**Initial setup (one-time, performed locally):**
+
+1. Generate a dedicated Ed25519 key pair (no passphrase):
+
+   ```bash
+   ssh-keygen -t ed25519 -C "OpenClaw Agent" -f /tmp/openclaw-signing -N ""
+   ```
+
+2. Add the private key to the SOPS secret:
+
+   ```bash
+   sops cluster/apps/openclaw/openclaw/app/openclaw-workspace-config.sops.yaml
+   # Add field: id_signing: |
+   #   <paste full PEM content of /tmp/openclaw-signing, including header and footer lines>
+   ```
+
+3. Register the public key on GitHub as a **Signing Key** (not Authentication):
+   - Go to GitHub → Settings → SSH and GPG keys → New SSH key
+   - Key type: **Signing Key**
+   - Paste contents of `/tmp/openclaw-signing.pub`
+
+4. Clean up local key files:
+
+   ```bash
+   rm /tmp/openclaw-signing /tmp/openclaw-signing.pub
+   ```
+
+**How it works:**
+
+- The private key is mounted from `openclaw-workspace-config` at `/home/node/.openclaw/.ssh/id_signing` with mode `0600`
+- `init-workspace` writes a `.gitconfig` with `commit.gpgSign = true` and `gpg.format = ssh`
+- At commit time, git calls `ssh-keygen -Y sign` using the mounted key
+- The commit author email (`99536297+anthony-spruyt@users.noreply.github.com`) matches the GitHub account where the signing key is registered
+
+**Verifying signing works:**
+
+```bash
+kubectl exec -it -n openclaw deploy/openclaw -c main -- \
+  git -C /home/node/.openclaw/workspace log --show-signature -1
+```
+
+Look for `Good "git" signature` in the output.
+
 ### Config Changes
 
 OpenClaw config lives in `app/openclaw.json` (with JSON Schema validation via `openclaw-schema.json`). The init-config container merges Helm-provided config with any existing config on the PVC (preserving runtime changes like installed skills).
