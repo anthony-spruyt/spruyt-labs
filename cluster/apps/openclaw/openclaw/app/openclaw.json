@@ -207,7 +207,7 @@
   "gateway": {
     "port": 18789,
     "mode": "local",
-    "trustedProxies": ["10.244.0.0/16"],
+    "trustedProxies": ["${CLUSTER_POD_CIDR_IP4}"],
     "controlUi": {
       "allowInsecureAuth": true,
       "dangerouslyDisableDeviceAuth": true
