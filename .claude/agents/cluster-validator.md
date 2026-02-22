@@ -49,6 +49,7 @@ Before running validations, classify the change type to optimize checks:
 | `network-policy` | CiliumNetworkPolicy, NetworkPolicy | Connectivity, policy status | Application logs |
 | `namespace` | namespace.yaml only | Namespace exists, labels | Deep app validation |
 | `infrastructure` | Storage, ingress, certs | System services, cluster-wide health | App-specific checks |
+| `cronjob-workload` | HelmRelease where primary resource is CronJob | CronJob template, manual test job, pod logs | Deployment/StatefulSet rollout checks |
 | `mixed` | Multiple types | ALL checks | Nothing |
 
 **Detection logic:**
@@ -274,6 +275,7 @@ Classify every failure by impact:
 | **Service** | Endpoints populated | No endpoints | `kubectl get endpoints` |
 | **IngressRoute** | Routes configured | Missing middleware, TLS errors | `kubectl get ingressroute` |
 | **Certificate** | Ready=True, not expiring | Ready=False, renewal failed | `kubectl get cert` |
+| **CronJob** | Test job completes, logs clean | Test job timeout, RBAC errors, crash in logs | `kubectl create job --from=cronjob/<name>`, `kubectl wait`, `kubectl logs` |
 | **CiliumNetworkPolicy** | Applied, no denies in logs | Blocking traffic | `hubble observe` |
 
 ## What to Look For
@@ -448,5 +450,54 @@ kubectl get secret <name> -n <namespace> -o json | jq '.data | keys'
 2. Use Hubble for traffic visibility: `hubble observe -n <namespace> --verdict DROPPED`
 3. Verify expected traffic flows
 4. Check affected pods can communicate
+
+### CronJob / Batch Workload Upgrade
+
+CronJobs don't trigger new pods on Flux reconciliation — only the template is updated. You MUST manually trigger a test job to validate the upgrade actually works.
+
+**Step 1: Detect CronJob workloads**
+
+After identifying the affected HelmRelease and namespace, check if the primary workload is a CronJob:
+
+```bash
+kubectl get cronjobs -n <namespace> -l app.kubernetes.io/name=<app>
+```
+
+If a CronJob is found, do NOT rely on the last completed job — it ran the previous version.
+
+**Step 2: Trigger a manual test job**
+
+```bash
+# Create a one-off job from the updated CronJob template
+kubectl create job <app>-validate-$(date +%s) --from=cronjob/<app> -n <namespace>
+```
+
+**Step 3: Wait for completion**
+
+```bash
+# Wait with 120s timeout — most CronJobs complete in seconds
+kubectl wait --for=condition=complete job/<job-name> -n <namespace> --timeout=120s
+```
+
+**Step 4: Check job logs**
+
+Even if the job "completes", check logs for errors (some jobs exit 0 despite errors):
+
+```bash
+kubectl logs job/<job-name> -n <namespace> --tail=50
+```
+
+Look for: error messages, permission denied, RBAC forbidden, connection refused, crash traces.
+
+**Step 5: Clean up**
+
+```bash
+kubectl delete job <job-name> -n <namespace>
+```
+
+**Failure handling:**
+- If the job times out or fails → severity is **HIGH**, default action is **ROLLBACK**
+- Capture the pod logs and include them verbatim in the failure report
+- The CronJob template is broken — every future scheduled run will also fail
 
 Your validation should be thorough, evidence-based, and actionable. Never leave the user wondering whether their changes actually worked.
