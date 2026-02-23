@@ -153,7 +153,7 @@ For EACH breaking change or deprecation found in Steps 4-5:
 | **HIGH_IMPACT** | We use the affected config/feature — will break on upgrade |
 | **UNKNOWN_IMPACT** | Cannot determine if we use the affected feature |
 
-### Step 7: Evaluate and Verdict
+### Step 7: Evaluate and Format Findings
 
 **Red flag keywords in changelogs/release notes:**
 - "breaking", "BREAKING CHANGE", "migration required"
@@ -186,9 +186,7 @@ For EACH breaking change or deprecation found in Steps 4-5:
 - Cannot determine scope of changes
 - Breaking change found but **UNKNOWN_IMPACT** — cannot verify if we use the feature
 
-## Output Format (MANDATORY)
-
-Return EXACTLY this format — the orchestrating skill parses it:
+**Format your findings using EXACTLY this structure** — the orchestrating skill parses it:
 
 ```
 ## VERDICT: [SAFE|RISKY|UNKNOWN]
@@ -232,9 +230,9 @@ Examples of useful feedback:
 - "Config path not checked: <path> should be included in impact analysis"
 ```
 
-## Step 8: Post Findings to Tracking Issue
+### Step 8: Post Findings to Tracking Issue
 
-If a GitHub issue number was provided in the prompt (e.g., `GitHub issue: #123`), post your full analysis as a comment on that issue BEFORE returning results. This creates a permanent record of the analysis.
+If a GitHub issue number was provided in the prompt (e.g., `GitHub issue: #123`), post your formatted findings as a comment on that issue. This creates a permanent record of the analysis.
 
 ```bash
 gh issue comment <issue-number> --repo <repository> --body "<your full VERDICT output>"
@@ -242,7 +240,11 @@ gh issue comment <issue-number> --repo <repository> --body "<your full VERDICT o
 
 Use the exact output format from Step 7 as the comment body. This ensures the tracking issue contains the complete analysis for every PR, not just the final summary.
 
-If no GitHub issue number was provided, skip this step and just return the results.
+If no GitHub issue number was provided, skip this step.
+
+### Step 9: Return Results
+
+Return the formatted findings from Step 7 as your final output. The orchestrating skill will parse this to build the summary table.
 
 ## Critical Rules
 
@@ -254,4 +256,4 @@ If no GitHub issue number was provided, skip this step and just return the resul
 6. **Be concise** — the orchestrator reads many of these in sequence
 7. **Include sources** — always list URLs consulted so user can verify
 8. **Show your work** — list which config files you checked and which keys you searched for
-9. **ALWAYS post to tracking issue** — if a GitHub issue number is provided, post your findings there before returning
+9. **ALWAYS post to tracking issue** — if a GitHub issue number is provided, post findings before returning
