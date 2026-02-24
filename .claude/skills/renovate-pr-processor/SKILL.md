@@ -179,8 +179,12 @@ Use Task tool with:
      prompt: "Validate cluster after reverting PR #<number>. Confirm rollback is clean.
               GitHub issue: #<tracking-issue-number>"
    ```
-4. Post comment on the PR explaining the failure and revert
-5. Continue to next PR
+4. **Record correction**: Compare the first validator run (which triggered ROLLBACK) against the rollback confirmation. If the first run misdiagnosed the issue (e.g., flagged a pre-existing condition as caused by the change), append a correction to `.claude/agent-memory/cluster-validator/known-patterns.md`:
+   - Add to the appropriate table (False Positives, Failure Signatures, or Operational Patterns)
+   - Set Count=1, Last Seen=today, Added=today
+   - Commit: `fix(agents): update cluster-validator patterns from renovate run <date>`
+5. Post comment on the PR explaining the failure and revert
+6. Continue to next PR
 
 **On FAILURE (ROLL-FORWARD):**
 
@@ -188,7 +192,11 @@ Use Task tool with:
 2. Commit the fix
 3. Ask user to push
 4. Re-run cluster-validator to confirm
-5. Continue to next PR
+5. **Record correction**: If the original failure was caused by a pattern not yet in the cluster-validator's known patterns (e.g., a new failure signature), append it to `.claude/agent-memory/cluster-validator/known-patterns.md`:
+   - Add to Failure Signatures table with the error pattern, root cause, and resolution
+   - Set Count=1, Last Seen=today, Added=today
+   - Commit: `fix(agents): update cluster-validator patterns from renovate run <date>`
+6. Continue to next PR
 
 ### Phase 5: SUMMARY
 
