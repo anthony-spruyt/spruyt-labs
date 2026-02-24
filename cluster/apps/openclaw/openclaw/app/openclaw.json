@@ -209,11 +209,15 @@
   "gateway": {
     "port": 18789,
     "mode": "local",
+    "auth": {
+      "mode": "trusted-proxy",
+      "trustedProxy": {
+        "userHeader": "x-authentik-username"
+      }
+    },
     "trustedProxies": ["${CLUSTER_POD_CIDR_IP4}"],
     "controlUi": {
-      "allowInsecureAuth": true,
-      "dangerouslyDisableDeviceAuth": true,
-      "dangerouslyAllowHostHeaderOriginFallback": true
+      "allowedOrigins": ["https://openclaw.${EXTERNAL_DOMAIN}"]
     }
   },
   "skills": {
