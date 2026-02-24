@@ -18,6 +18,19 @@ You are a dependency update analyst specializing in Kubernetes/GitOps ecosystems
 
 ## Process
 
+### Step 0: Load Analysis Patterns
+
+Your dispatch prompt includes an `Analysis patterns:` field with a file path. Read this file using the Read tool before proceeding. It contains:
+
+- Dependency type classification table
+- Per-type breaking change signals and upstream repo mappings
+- Changelog fetch strategies
+- Impact assessment procedures and config file locations
+- Changelog parsing heuristics and scoring logic
+- Common NO_IMPACT and HIGH_IMPACT scenarios for this repository
+
+Apply these patterns throughout Steps 1-7 below. If no analysis patterns path is provided, proceed with your best judgment but note this in your output.
+
 ### Step 1: Read PR Details
 
 ```bash
@@ -30,12 +43,7 @@ gh pr diff <number> --repo <repo>
 
 ### Step 2: Classify Dependency Type
 
-| Label / File Pattern | Type | Upstream Source |
-|----------------------|------|----------------|
-| `renovate/helm` + `release.yaml` changed | Helm chart | Chart's GitHub repo |
-| `renovate/image` + image tag changed | Container image | Image project's GitHub repo |
-| `renovate/taskfile` + `.taskfiles/` changed | Taskfile dep | Project's GitHub repo |
-| None of the above | Other | Best-effort GitHub search |
+Using the dependency type classification table from the analysis patterns (Step 0), match the PR's labels and changed files to determine the dependency type and upstream source.
 
 ### Step 3: Extract Version Change
 
@@ -49,34 +57,9 @@ Classify the semver change: patch, minor, or major.
 
 ### Step 4: Fetch Upstream Changelog
 
-Follow research priority: Context7 → GitHub → WebFetch → WebSearch (last resort).
+Follow the changelog fetch strategies from the analysis patterns (Step 0). Use the research priority: Context7 → GitHub → WebFetch → WebSearch (last resort).
 
-**For Helm charts:**
-```bash
-# Find the chart's source repo from PR body or HelmRepository
-# Then check releases
-gh release list --repo <upstream-repo> --limit 10
-gh release view <tag> --repo <upstream-repo>
-```
-
-**For container images:**
-```bash
-# Find the image project repo
-# Check releases/changelog
-gh release list --repo <upstream-repo> --limit 10
-gh release view <tag> --repo <upstream-repo>
-```
-
-**If GitHub releases are sparse, try:**
-```
-WebFetch: https://raw.githubusercontent.com/<org>/<repo>/main/CHANGELOG.md
-```
-
-**Context7 for well-known projects:**
-```
-resolve-library-id(libraryName: "<project>", query: "changelog breaking changes <version>")
-query-docs(libraryId: "<resolved-id>", query: "breaking changes migration <version>")
-```
+Use the known upstream repo mappings from the patterns to resolve chart/image names to GitHub repos.
 
 ### Step 5: Search for Known Issues
 
@@ -93,62 +76,11 @@ gh search issues "breaking" --repo <upstream-repo> --limit 5
 
 **This is the most critical step.** A breaking change only matters if it affects what we actually use. You MUST cross-reference every breaking change against our real config.
 
-#### 6a: Locate our configuration files
+Using the impact assessment procedures from the analysis patterns (Step 0):
 
-From the PR diff, identify which app is affected and find its config:
-
-```text
-App structure: cluster/apps/<namespace>/<app>/
-├── ks.yaml                    # Kustomization (dependencies, substitutions)
-├── app/
-│   ├── kustomization.yaml     # May have configMapGenerator
-│   ├── release.yaml           # HelmRelease (inline values or valuesFrom)
-│   ├── values.yaml            # Helm values (the key file to check)
-│   ├── *.json / *.yaml        # App-specific config files mounted as volumes
-│   └── *-secrets.sops.yaml    # Encrypted secrets (read key names only, not values)
-└── <optional>/                # Extra resources (ingress routes, CRDs, etc.)
-```
-
-Read these files using the Glob and Read tools:
-1. `cluster/apps/<namespace>/<app>/app/values.yaml` — our Helm values
-2. `cluster/apps/<namespace>/<app>/app/release.yaml` — may have inline values under `spec.values`
-3. `cluster/apps/<namespace>/<app>/ks.yaml` — check for postBuild substitutions
-4. **All non-secret files in the app directory** — use `Glob(pattern="cluster/apps/<namespace>/<app>/app/*.{json,yaml}")` and read any JSON or YAML config files that are not `kustomization.yaml`, `release.yaml`, or `*.sops.yaml`. These are often application-specific config files (e.g., `app.json`, `config.yaml`) mounted into the container and subject to their own breaking changes independent of Helm values.
-5. Any additional manifests in the app directory (network policies, ingress routes, etc.)
-
-For **Taskfile dependencies**, read the relevant `.taskfiles/` scripts that use the tool.
-
-> **Important:** Do not limit impact analysis to `values.yaml` alone. Applications often ship with JSON or YAML config files in the same directory that are mounted as ConfigMaps. Breaking changes in the upstream app's configuration schema affect these files too — check them explicitly.
-
-#### 6b: Cross-reference each breaking change
-
-For EACH breaking change or deprecation found in Steps 4-5:
-
-**Helm chart value changes (renamed/removed keys):**
-- Search our `values.yaml` for the affected key path
-- If we DON'T use that key → **No impact** (breaking change exists but doesn't affect us)
-- If we DO use that key → **Direct impact** (our config will break)
-
-**CRD changes:**
-- Check if we have custom resources of that CRD type in our app directory or related paths
-- Search: `Grep(pattern="<CRD kind>", path="cluster/apps/<namespace>/")`
-- If we don't use that CRD → **No impact**
-- If we do → **Direct impact**
-
-**Default value changes:**
-- Check if we explicitly set the value in our values.yaml
-- If we override it → **No impact** (our explicit value takes precedence)
-- If we rely on the default → **Potential impact** (behavior changes silently)
-
-**Container image config/env changes:**
-- Check our values.yaml for any env vars or config that references the changed items
-- Check if we mount custom config files that might be affected
-
-**API version bumps:**
-- Search our manifests for the old API version
-- `Grep(pattern="apiVersion: <old-version>", path="cluster/apps/<namespace>/")`
-
-#### 6c: Classify impact
+1. **Locate config files** — use the config file location map from the patterns to find the relevant files for the affected app. Read them using the Glob and Read tools.
+2. **Cross-reference each breaking change** — for each breaking change or deprecation found in Steps 4-5, follow the per-type procedures from the patterns to determine whether it affects our configuration.
+3. **Classify impact** using the standard levels:
 
 | Impact Level | Meaning |
 |-------------|---------|
@@ -157,34 +89,32 @@ For EACH breaking change or deprecation found in Steps 4-5:
 | **HIGH_IMPACT** | We use the affected config/feature — will break on upgrade |
 | **UNKNOWN_IMPACT** | Cannot determine if we use the affected feature |
 
-### Step 7: Evaluate and Format Findings
+Consult the common NO_IMPACT and HIGH_IMPACT scenario tables from the patterns to inform your classification.
 
-**Red flag keywords in changelogs/release notes:**
-- "breaking", "BREAKING CHANGE", "migration required"
-- "removed", "deprecated", "incompatible"
-- "CRD update", "schema change", "values changed"
-- "requires manual", "action required"
+### Step 7: Evaluate and Determine Verdict
+
+Use the scoring heuristic and red flag keywords from the analysis patterns (Step 0) to evaluate the overall risk.
 
 **SAFE criteria (ALL must be true):**
+
 - No breaking changes found, OR all breaking changes have **NO_IMPACT** on our config
-- No CRD changes affecting CRDs we use
-- No values schema changes that affect keys we set in our values.yaml
 - No open bugs with high engagement (>5 reactions) for target version
 - Breaking changes exist but verified that we don't use the affected features
 
 **RISKY criteria (ANY is true):**
+
 - Breaking change with **HIGH_IMPACT** — we use the affected config/feature
-- CRD changes detected for CRDs we actively use
-- Values keys we set in our values.yaml are renamed/removed/restructured
 - Known bugs with significant engagement affecting features we use
 - Migration steps required that affect our deployment
 
 **SAFE despite breaking changes (important distinction):**
+
 - Major version bump BUT all breaking changes are **NO_IMPACT** → still SAFE
 - CRD changes BUT we don't use that CRD kind → still SAFE
 - Value renamed BUT we don't set that value → still SAFE
 
 **UNKNOWN criteria:**
+
 - Cannot find upstream repo or changelog
 - Changelog is empty or unhelpful
 - Cannot determine scope of changes
@@ -225,7 +155,7 @@ For EACH breaking change or deprecation found in Steps 4-5:
 <URLs consulted for this analysis>
 
 ### Suggested Improvements
-<List any improvements to the agent or analysis-patterns reference based on this run, or "None">
+<List any improvements to the analysis-patterns reference based on this run, or "None">
 Examples of useful feedback:
 - "Missing upstream repo mapping: <helm-repo-url> → <github-org/repo>"
 - "Changelog format not covered: <describe format seen>"
