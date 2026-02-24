@@ -204,6 +204,11 @@
         "file": {
           "type": "string"
         },
+        "maxFileBytes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
         "consoleLevel": {
           "anyOf": [
             {
@@ -294,6 +299,30 @@
         },
         "checkOnStart": {
           "type": "boolean"
+        },
+        "auto": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "stableDelayHours": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 168
+            },
+            "stableJitterHours": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 168
+            },
+            "betaCheckIntervalHours": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 24
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -352,6 +381,9 @@
           "type": "object",
           "properties": {
             "allowPrivateNetwork": {
+              "type": "boolean"
+            },
+            "dangerouslyAllowPrivateNetwork": {
               "type": "boolean"
             },
             "allowedHostnames": {
@@ -842,34 +874,48 @@
           "type": "object",
           "properties": {
             "model": {
-              "type": "object",
-              "properties": {
-                "primary": {
+              "anyOf": [
+                {
                   "type": "string"
                 },
-                "fallbacks": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                {
+                  "type": "object",
+                  "properties": {
+                    "primary": {
+                      "type": "string"
+                    },
+                    "fallbacks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
                 }
-              },
-              "additionalProperties": false
+              ]
             },
             "imageModel": {
-              "type": "object",
-              "properties": {
-                "primary": {
+              "anyOf": [
+                {
                   "type": "string"
                 },
-                "fallbacks": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                {
+                  "type": "object",
+                  "properties": {
+                    "primary": {
+                      "type": "string"
+                    },
+                    "fallbacks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
                 }
-              },
-              "additionalProperties": false
+              ]
             },
             "models": {
               "type": "object",
@@ -1267,6 +1313,10 @@
                     {
                       "type": "string",
                       "const": "voyage"
+                    },
+                    {
+                      "type": "string",
+                      "const": "mistral"
                     }
                   ]
                 },
@@ -1335,6 +1385,10 @@
                     {
                       "type": "string",
                       "const": "voyage"
+                    },
+                    {
+                      "type": "string",
+                      "const": "mistral"
                     },
                     {
                       "type": "string",
@@ -1993,6 +2047,16 @@
                 },
                 "thinking": {
                   "type": "string"
+                },
+                "runTimeoutSeconds": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "announceTimeoutMs": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
                 }
               },
               "additionalProperties": false
@@ -2195,6 +2259,12 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "dangerouslyAllowReservedContainerTargets": {
+                      "type": "boolean"
+                    },
+                    "dangerouslyAllowExternalBindSources": {
+                      "type": "boolean"
                     }
                   },
                   "additionalProperties": false
@@ -2381,6 +2451,10 @@
                       {
                         "type": "string",
                         "const": "voyage"
+                      },
+                      {
+                        "type": "string",
+                        "const": "mistral"
                       }
                     ]
                   },
@@ -2449,6 +2523,10 @@
                       {
                         "type": "string",
                         "const": "voyage"
+                      },
+                      {
+                        "type": "string",
+                        "const": "mistral"
                       },
                       {
                         "type": "string",
@@ -2993,6 +3071,12 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "dangerouslyAllowReservedContainerTargets": {
+                        "type": "boolean"
+                      },
+                      "dangerouslyAllowExternalBindSources": {
+                        "type": "boolean"
                       }
                     },
                     "additionalProperties": false
@@ -3222,6 +3306,46 @@
                         "type": "array",
                         "items": {
                           "type": "string"
+                        }
+                      },
+                      "safeBinTrustedDirs": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "safeBinProfiles": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "minPositional": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "maxPositional": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "allowedValueFlags": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "deniedFlags": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "additionalProperties": false
                         }
                       },
                       "backgroundMs": {
@@ -3478,6 +3602,14 @@
                     {
                       "type": "string",
                       "const": "grok"
+                    },
+                    {
+                      "type": "string",
+                      "const": "gemini"
+                    },
+                    {
+                      "type": "string",
+                      "const": "kimi"
                     }
                   ]
                 },
@@ -3524,6 +3656,33 @@
                     },
                     "inlineCitations": {
                       "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "gemini": {
+                  "type": "object",
+                  "properties": {
+                    "apiKey": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "kimi": {
+                  "type": "object",
+                  "properties": {
+                    "apiKey": {
+                      "type": "string"
+                    },
+                    "baseUrl": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
                     }
                   },
                   "additionalProperties": false
@@ -3624,9 +3783,6 @@
                       "type": "string"
                     }
                   },
-                  "prompt": {
-                    "type": "string"
-                  },
                   "maxChars": {
                     "type": "integer",
                     "exclusiveMinimum": 0,
@@ -3636,6 +3792,9 @@
                     "type": "integer",
                     "exclusiveMinimum": 0,
                     "maximum": 9007199254740991
+                  },
+                  "prompt": {
+                    "type": "string"
                   },
                   "timeoutSeconds": {
                     "type": "integer",
@@ -3960,9 +4119,6 @@
                           "type": "string"
                         }
                       },
-                      "prompt": {
-                        "type": "string"
-                      },
                       "maxChars": {
                         "type": "integer",
                         "exclusiveMinimum": 0,
@@ -3972,6 +4128,9 @@
                         "type": "integer",
                         "exclusiveMinimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "prompt": {
+                        "type": "string"
                       },
                       "timeoutSeconds": {
                         "type": "integer",
@@ -4294,9 +4453,6 @@
                           "type": "string"
                         }
                       },
-                      "prompt": {
-                        "type": "string"
-                      },
                       "maxChars": {
                         "type": "integer",
                         "exclusiveMinimum": 0,
@@ -4306,6 +4462,9 @@
                         "type": "integer",
                         "exclusiveMinimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "prompt": {
+                        "type": "string"
                       },
                       "timeoutSeconds": {
                         "type": "integer",
@@ -4628,9 +4787,6 @@
                           "type": "string"
                         }
                       },
-                      "prompt": {
-                        "type": "string"
-                      },
                       "maxChars": {
                         "type": "integer",
                         "exclusiveMinimum": 0,
@@ -4640,6 +4796,9 @@
                         "type": "integer",
                         "exclusiveMinimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "prompt": {
+                        "type": "string"
                       },
                       "timeoutSeconds": {
                         "type": "integer",
@@ -5012,6 +5171,46 @@
                 "type": "string"
               }
             },
+            "safeBinTrustedDirs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "safeBinProfiles": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "minPositional": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "maxPositional": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "allowedValueFlags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "deniedFlags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
             "backgroundMs": {
               "type": "integer",
               "exclusiveMinimum": 0,
@@ -5132,6 +5331,9 @@
         "type": "object",
         "properties": {
           "agentId": {
+            "type": "string"
+          },
+          "comment": {
             "type": "string"
           },
           "match": {
@@ -6535,6 +6737,40 @@
                   "type": "number"
                 }
               ]
+            },
+            "resetArchiveRetention": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean",
+                  "const": false
+                }
+              ]
+            },
+            "maxDiskBytes": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "highWaterBytes": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
             }
           },
           "additionalProperties": false
@@ -6573,6 +6809,27 @@
               "const": false
             }
           ]
+        },
+        "runLog": {
+          "type": "object",
+          "properties": {
+            "maxBytes": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "keepLines": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -7115,6 +7372,9 @@
             "allowBots": {
               "type": "boolean"
             },
+            "dangerouslyAllowNameMatching": {
+              "type": "boolean"
+            },
             "groupPolicy": {
               "default": "allowlist",
               "type": "string",
@@ -7180,8 +7440,18 @@
               },
               "additionalProperties": false
             },
+            "streaming": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string",
+                  "enum": ["off", "partial", "block", "progress"]
+                }
+              ]
+            },
             "streamMode": {
-              "default": "off",
               "type": "string",
               "enum": ["partial", "block", "off"]
             },
@@ -8053,6 +8323,9 @@
                   "allowBots": {
                     "type": "boolean"
                   },
+                  "dangerouslyAllowNameMatching": {
+                    "type": "boolean"
+                  },
                   "groupPolicy": {
                     "default": "allowlist",
                     "type": "string",
@@ -8118,8 +8391,18 @@
                     },
                     "additionalProperties": false
                   },
+                  "streaming": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string",
+                        "enum": ["off", "partial", "block", "progress"]
+                      }
+                    ]
+                  },
                   "streamMode": {
-                    "default": "off",
                     "type": "string",
                     "enum": ["partial", "block", "off"]
                   },
@@ -8922,12 +9205,12 @@
                     "format": "uri"
                   }
                 },
-                "required": ["groupPolicy", "streamMode"],
+                "required": ["groupPolicy"],
                 "additionalProperties": false
               }
             }
           },
-          "required": ["groupPolicy", "streamMode"],
+          "required": ["groupPolicy"],
           "additionalProperties": false
         }
       },
@@ -9073,6 +9356,9 @@
               "items": {
                 "type": "string"
               }
+            },
+            "dangerouslyAllowHostHeaderOriginFallback": {
+              "type": "boolean"
             },
             "allowInsecureAuth": {
               "type": "boolean"
@@ -9438,6 +9724,23 @@
                 }
               },
               "additionalProperties": false
+            },
+            "securityHeaders": {
+              "type": "object",
+              "properties": {
+                "strictTransportSecurity": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "boolean",
+                      "const": false
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -9524,6 +9827,21 @@
           "properties": {
             "command": {
               "type": "string"
+            },
+            "mcporter": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "serverName": {
+                  "type": "string"
+                },
+                "startDaemon": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
             },
             "searchMode": {
               "anyOf": [
@@ -10018,23 +10336,6 @@
               },
               "additionalProperties": false
             },
-            "google-antigravity-auth": {
-              "type": "object",
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "config": {
-                  "type": "object",
-                  "propertyNames": {
-                    "type": "string"
-                  },
-                  "additionalProperties": false,
-                  "properties": {}
-                }
-              },
-              "additionalProperties": false
-            },
             "google-gemini-cli-auth": {
               "type": "object",
               "properties": {
@@ -10415,6 +10716,23 @@
               "additionalProperties": false
             },
             "slack": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "config": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": false,
+                  "properties": {}
+                }
+              },
+              "additionalProperties": false
+            },
+            "synology-chat": {
               "type": "object",
               "properties": {
                 "enabled": {
