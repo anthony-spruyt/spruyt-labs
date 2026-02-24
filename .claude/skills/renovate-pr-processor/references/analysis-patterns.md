@@ -2,6 +2,17 @@
 
 Detailed patterns for detecting breaking changes in different dependency types found in this homelab repository.
 
+## Dependency Type Classification
+
+Classify each Renovate PR by matching its labels and changed files:
+
+| Label / File Pattern | Type | Upstream Source |
+|----------------------|------|----------------|
+| `renovate/helm` + `release.yaml` changed | Helm chart | Chart's GitHub repo |
+| `renovate/image` + image tag changed | Container image | Image project's GitHub repo |
+| `renovate/taskfile` + `.taskfiles/` changed | Taskfile dep | Project's GitHub repo |
+| None of the above | Other | Best-effort GitHub search |
+
 ## Helm Chart Updates
 
 ### Where Helm Charts Live
@@ -102,6 +113,50 @@ Taskfile dependencies are in `.taskfiles/` and reference external tools or binar
 **talhelper:** Check for talconfig.yaml schema changes.
 
 **flux:** Check for CLI command changes.
+
+## Upstream Changelog Fetch Strategies
+
+Follow research priority: Context7 → GitHub → WebFetch → WebSearch (last resort).
+
+**For Helm charts:**
+
+Find the chart's source repo from the PR body or HelmRepository source (see "Upstream Repo Discovery for Helm Charts" above).
+
+```bash
+gh release list --repo <upstream-repo> --limit 10
+gh release view <tag> --repo <upstream-repo>
+```
+
+**For container images:**
+
+Find the image project repo from the image name. Check the PR body for source links, or search GitHub.
+
+```bash
+gh release list --repo <upstream-repo> --limit 10
+gh release view <tag> --repo <upstream-repo>
+```
+
+**For Taskfile dependencies:**
+
+The project repo is usually in the Taskfile dependency URL or version comment.
+
+```bash
+gh release list --repo <upstream-repo> --limit 10
+gh release view <tag> --repo <upstream-repo>
+```
+
+**Fallback — CHANGELOG.md:**
+
+```
+WebFetch: https://raw.githubusercontent.com/<org>/<repo>/main/CHANGELOG.md
+```
+
+**Context7 for well-known projects:**
+
+```
+resolve-library-id(libraryName: "<project>", query: "changelog breaking changes <version>")
+query-docs(libraryId: "<resolved-id>", query: "breaking changes migration <version>")
+```
 
 ## Changelog Parsing Heuristics
 
@@ -237,6 +292,30 @@ Breaking change: "Renamed env var DB_HOST to DATABASE_HOST"
 2. Check any ConfigMaps or secrets that set this env var
 3. If we set DB_HOST → HIGH_IMPACT
 4. If we don't → NO_IMPACT
+```
+
+#### Container Image Config/Env Changes
+
+```text
+Breaking change: "Config file format changed from TOML to YAML" or "Env var X removed"
+
+1. Check our values.yaml for env vars or config that references the changed items
+2. Check if we mount custom config files (*.json, *.yaml in the app dir) that might be affected
+3. Glob for cluster/apps/<ns>/<app>/app/*.{json,yaml} — non-kustomization, non-release, non-sops files
+4. If we set the changed env var or use the old config format → HIGH_IMPACT
+5. If we don't reference the changed items → NO_IMPACT
+```
+
+#### API Version Bumps
+
+```text
+Breaking change: "API version changed from v1alpha1 to v1beta1"
+
+1. Search our manifests for the old API version
+2. Grep(pattern="apiVersion: <old-version>", path="cluster/apps/<namespace>/")
+3. Also check cluster/flux/ for any shared resources using the old API
+4. If found → HIGH_IMPACT (manifests must be updated)
+5. If not found → NO_IMPACT
 ```
 
 ### Common NO_IMPACT Scenarios
