@@ -90,7 +90,8 @@ Understand what to expect after push:
 | 30-60s | Kustomization reconciling, HelmRelease processing |
 | 60-120s | Resources applied, pods starting |
 | 120-180s | Pods running, health checks passing |
-| 180s+ | If not ready, likely an issue |
+| 180-300s | Dependency chains settling (e.g., firefly-iii → firemerge → traefik-ingress) |
+| 300s+ | If not ready, likely a genuine issue |
 
 **Smart Wait Strategy:**
 ```bash
@@ -103,6 +104,61 @@ flux get kustomization <name> -n flux-system
 # Force reconciliation if needed
 flux reconcile kustomization <name> -n flux-system --with-source
 ```
+
+## Full Cluster Reconciliation Wait (MANDATORY)
+
+> **Do NOT snapshot cluster state once and report. You MUST wait for the full reconciliation wave to settle.**
+
+After validating the directly-affected resource, you must verify the entire cluster has finished reconciling. Dependency chains (e.g., `firefly-iii` → `firemerge` → `traefik-ingress`) can take 3-5 minutes to fully settle.
+
+### Step 1: Get the current revision
+
+```bash
+# Get the HEAD commit short SHA (this is what Flux reconciles to)
+CURRENT_REV=$(git rev-parse --short HEAD)
+```
+
+### Step 2: Wait-and-retry loop for all Kustomizations
+
+```bash
+# Check all kustomizations — repeat up to 3 times with 60s between checks
+for attempt in 1 2 3; do
+  # Grep for "False" in the READY column (5th field) — excludes suspended (True in col 4)
+  # The flux output format is: NAMESPACE NAME REVISION SUSPENDED READY MESSAGE
+  NOT_READY=$(flux get kustomizations -A --no-header 2>/dev/null \
+    | grep -E "False\s+False" || true)
+  if [ -z "$NOT_READY" ]; then
+    echo "All kustomizations ready"
+    break
+  fi
+  if [ "$attempt" -lt 3 ]; then
+    echo "Attempt $attempt: some kustomizations not ready, waiting 60s..."
+    sleep 60
+  fi
+done
+```
+
+The pattern `False\s+False` matches lines where both Suspended=False AND Ready=False (the two adjacent columns). This correctly skips suspended kustomizations.
+
+### Step 3: Classify any remaining non-ready Kustomizations
+
+After retries, if any kustomizations are still not ready, classify them:
+
+| Condition | Classification | Action |
+|-----------|---------------|--------|
+| Revision matches current HEAD but `Ready=False` | **Still reconciling** | Wait another 60s and re-check; if still failing after 5 min total, treat as potential issue from this change |
+| Revision is OLD (doesn't match current HEAD) and `Ready=False` | **Pre-existing issue** | Report as pre-existing, NOT caused by this change |
+| `Suspended=True` | **Intentionally suspended** | Ignore completely |
+
+```bash
+# For each non-ready kustomization, check its revision:
+flux get kustomization <name> -n flux-system
+# Compare the "REVISION" column against the current HEAD commit
+# If revision contains $CURRENT_REV → still processing this push
+# If revision is older → pre-existing issue
+```
+
+**CRITICAL: Never label a kustomization as "pre-existing" if it is actively reconciling the current revision.** It's not a pre-existing issue — it just hasn't finished yet. Wait for it.
 
 ## Validation Workflow
 
@@ -124,6 +180,10 @@ flux get helmrelease <name> -n <namespace>
 # Check source sync status
 flux get sources git -A
 ```
+
+> **IMPORTANT:** After the initial check, follow the **Full Cluster Reconciliation Wait** procedure above.
+> Do NOT immediately report non-ready kustomizations as "pre-existing issues."
+> Wait for the full reconciliation wave to settle before classifying anything.
 
 ### Step 2: Verify Resource Status
 
@@ -399,7 +459,7 @@ gh issue comment <issue_number> --repo anthony-spruyt/spruyt-labs --body "<repor
 2. **NEVER close issues** - Only post comments; the calling agent closes issues after user confirmation
 3. **NEVER read secret values** - You can check secret existence but never output secret data
 4. **NEVER skip validation** - Always run actual commands to verify, don't assume success
-5. **Wait appropriately** - Flux needs 30-120 seconds to reconcile after push
+5. **Wait for FULL reconciliation** - Individual resources reconcile in 30-120s, but dependency chains take 3-5 minutes. Follow the Full Cluster Reconciliation Wait procedure — never snapshot once and report
 6. **Check dependencies** - If an app depends on others, verify the entire chain
 7. **Be thorough** - Check multiple aspects (Flux status, pod status, logs, events)
 8. **Use parallel checks** - Run independent commands simultaneously
