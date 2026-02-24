@@ -32,7 +32,7 @@ User -> Traefik (TLS) -> Authentik forward-auth -> OpenClaw gateway (:18789)
 | Container | read-only root filesystem, non-root (UID 1000), all caps dropped, seccomp RuntimeDefault |
 | Namespace | PSA restricted (enforce + audit + warn) |
 
-No application-layer auth is configured on OpenClaw itself. Cilium's trusted-proxy auth requires exact IP matching which is incompatible with Cilium's socket-level load balancing (dynamic pod IPs). The network + Authentik layers provide equivalent security.
+OpenClaw gateway uses trusted-proxy auth (`x-authentik-username` header) for CLI/API connections, but the Control UI ignores `gateway.auth.mode` and always uses device pairing ([openclaw#25293](https://github.com/openclaw/openclaw/issues/25293)). Device auth is disabled (`dangerouslyDisableDeviceAuth`) as a workaround. Authentik forward-auth + Cilium network policies provide the actual security layer.
 
 ## Operation
 
