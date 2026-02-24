@@ -212,7 +212,8 @@
     "trustedProxies": ["${CLUSTER_POD_CIDR_IP4}"],
     "controlUi": {
       "allowInsecureAuth": true,
-      "dangerouslyDisableDeviceAuth": true
+      "dangerouslyDisableDeviceAuth": true,
+      "dangerouslyAllowHostHeaderOriginFallback": true
     }
   },
   "skills": {
