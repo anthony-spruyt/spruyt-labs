@@ -73,6 +73,7 @@ For each PR, use Task tool with:
   prompt: "Analyze Renovate PR #<number> in anthony-spruyt/spruyt-labs for breaking changes.
            GitHub issue: #<tracking-issue-number>
            Repository: anthony-spruyt/spruyt-labs
+           Analysis patterns: .claude/skills/renovate-pr-processor/references/analysis-patterns.md
            Return your analysis in the MANDATORY output format specified in your instructions."
 ```
 
