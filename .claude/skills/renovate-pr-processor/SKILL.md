@@ -38,7 +38,7 @@ If no PRs found, report "No open Renovate PRs" and exit.
 
 ### Phase 2: ANALYZE (parallel)
 
-Create a GitHub tracking issue for the batch run:
+Create a GitHub tracking issue for the batch run, listing all discovered PRs:
 
 ```bash
 gh issue create --repo anthony-spruyt/spruyt-labs \
@@ -48,8 +48,10 @@ gh issue create --repo anthony-spruyt/spruyt-labs \
 ## Summary
 Batch processing of open Renovate dependency update PRs.
 
-## Motivation
-Automate review and merge of dependency updates with breaking change analysis and cluster validation.
+## PRs in This Batch
+| PR | Title | Risk |
+|----|-------|------|
+| #N | <title> | patch / minor / major / unknown |
 
 ## Chore Type
 Dependency management
@@ -59,6 +61,8 @@ Dependency management
 ISSUE_EOF
 )"
 ```
+
+Populate the PRs table with the actual discovered PRs before creating the issue.
 
 Dispatch `renovate-pr-analyzer` agent for EACH PR in parallel using the Task tool:
 

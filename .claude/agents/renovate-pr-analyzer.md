@@ -104,6 +104,7 @@ App structure: cluster/apps/<namespace>/<app>/
 │   ├── kustomization.yaml     # May have configMapGenerator
 │   ├── release.yaml           # HelmRelease (inline values or valuesFrom)
 │   ├── values.yaml            # Helm values (the key file to check)
+│   ├── *.json / *.yaml        # App-specific config files mounted as volumes
 │   └── *-secrets.sops.yaml    # Encrypted secrets (read key names only, not values)
 └── <optional>/                # Extra resources (ingress routes, CRDs, etc.)
 ```
@@ -112,9 +113,12 @@ Read these files using the Glob and Read tools:
 1. `cluster/apps/<namespace>/<app>/app/values.yaml` — our Helm values
 2. `cluster/apps/<namespace>/<app>/app/release.yaml` — may have inline values under `spec.values`
 3. `cluster/apps/<namespace>/<app>/ks.yaml` — check for postBuild substitutions
-4. Any additional manifests in the app directory (network policies, ingress routes, etc.)
+4. **All non-secret files in the app directory** — use `Glob(pattern="cluster/apps/<namespace>/<app>/app/*.{json,yaml}")` and read any JSON or YAML config files that are not `kustomization.yaml`, `release.yaml`, or `*.sops.yaml`. These are often application-specific config files (e.g., `app.json`, `config.yaml`) mounted into the container and subject to their own breaking changes independent of Helm values.
+5. Any additional manifests in the app directory (network policies, ingress routes, etc.)
 
 For **Taskfile dependencies**, read the relevant `.taskfiles/` scripts that use the tool.
+
+> **Important:** Do not limit impact analysis to `values.yaml` alone. Applications often ship with JSON or YAML config files in the same directory that are mounted as ConfigMaps. Breaking changes in the upstream app's configuration schema affect these files too — check them explicitly.
 
 #### 6b: Cross-reference each breaking change
 
