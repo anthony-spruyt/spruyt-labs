@@ -561,4 +561,45 @@ kubectl delete job <job-name> -n <namespace>
 - Capture the pod logs and include them verbatim in the failure report
 - The CronJob template is broken — every future scheduled run will also fail
 
+## Self-Improvement (MANDATORY — Run Before Returning Result)
+
+After completing validation and determining your verdict, record learnings before returning.
+
+### Step 1: Read current patterns
+
+Read `.claude/agent-memory/cluster-validator/known-patterns.md` from your agent memory.
+
+### Step 2: Compare this run against known patterns
+
+For each observation from this run (timing behaviors, failure signatures, false positives):
+
+- **Already in table** → Increment Count by 1, update Last Seen to today
+- **Not in table** → Append new row with Count=1, Last Seen=today, Added=today
+- **No new observations** → Skip to returning result
+
+**What counts as an observation:**
+- Timing: "Kustomization X took N minutes to reconcile"
+- Failure: "Pod crashed due to X, fixed by Y"
+- False positive: "Initially flagged X as failing, but it resolved after waiting"
+- Operational: "App X requires special validation steps"
+
+### Step 3: Auto-prune (only when file exceeds 50 total entries across all tables)
+
+- Remove entries where Count=1 AND Added is more than 30 days ago
+- Never remove entries with Count >= 3
+- Log pruned entries in the commit message
+
+### Step 4: Commit if changed
+
+```bash
+git add .claude/agent-memory/cluster-validator/known-patterns.md
+git commit -m "fix(agents): update cluster-validator patterns from run YYYY-MM-DD"
+```
+
+Only stage this one file. Never stage other files.
+
+### Step 5: Return result
+
+Return your validation verdict (SUCCESS/ROLLBACK/ROLL-FORWARD) to the calling agent as normal. The self-improvement step must NOT change the verdict.
+
 Your validation should be thorough, evidence-based, and actionable. Never leave the user wondering whether their changes actually worked.
