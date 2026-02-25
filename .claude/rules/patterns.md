@@ -1,5 +1,5 @@
 ---
-paths: cluster/**
+paths: [cluster/**]
 ---
 
 # Cluster Patterns

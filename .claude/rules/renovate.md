@@ -1,5 +1,5 @@
 ---
-paths: .github/renovate/**, .taskfiles/**, cluster/**
+paths: [.github/renovate/**, .taskfiles/**, cluster/**]
 ---
 
 # Renovate Configuration

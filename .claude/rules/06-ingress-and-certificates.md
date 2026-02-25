@@ -1,5 +1,5 @@
 ---
-paths: cluster/apps/traefik/**
+paths: [cluster/apps/traefik/**]
 ---
 
 # Ingress and Certificates

@@ -1,5 +1,5 @@
 ---
-paths: "**/*.md"
+paths: ["**/*.md"]
 ---
 
 # Documentation Standards
