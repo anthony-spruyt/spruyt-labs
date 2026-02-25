@@ -32,17 +32,7 @@ Helm charts are defined in HelmRelease manifests at `cluster/apps/<namespace>/<a
 
 ### Common Helm Chart Patterns
 
-**Traefik:** CRD updates are common and usually backward-compatible. Check for middleware API changes.
-
-**Cert-Manager:** CRD updates require careful review. Check for API version bumps (v1alpha1 → v1).
-
-**Grafana/VictoriaMetrics:** Usually safe. Watch for dashboard schema changes.
-
-**Rook-Ceph:** HIGH RISK. Ceph upgrades can affect data availability. Always check Rook compatibility matrix.
-
-**Cilium:** CRD changes are frequent. Check for CiliumNetworkPolicy API changes. BGP config changes can break routing.
-
-**External-Secrets:** Check for ClusterSecretStore API changes.
+Check the agent's `known-patterns.md` for dependency-specific quirks accumulated from previous runs. The "Changelog Quirks" table contains per-dependency notes about release patterns and analysis shortcuts.
 
 ### Upstream Repo Discovery for Helm Charts
 
@@ -53,14 +43,8 @@ To find the upstream GitHub repo for a Helm chart:
    grep -r "<chart-name>" cluster/flux/meta/repos/helm/ -l
    ```
 2. The `spec.url` points to the Helm repo; derive the GitHub org from it
-3. Common mappings:
-   - `https://traefik.github.io/charts` → `traefik/traefik-helm-chart`
-   - `https://charts.jetstack.io` → `cert-manager/cert-manager`
-   - `https://grafana.github.io/helm-charts` → `grafana/helm-charts`
-   - `https://charts.rook.io/release` → `rook/rook`
-   - `https://helm.cilium.io/` → `cilium/cilium`
-   - `https://charts.external-secrets.io` → `external-secrets/external-secrets`
-   - `https://bjw-s.github.io/helm-charts` → `bjw-s/helm-charts` (app-template)
+3. Check the agent's `known-patterns.md` "Upstream Repo Mappings" table for previously discovered mappings
+4. If not found, derive the GitHub org from the `spec.url` and search GitHub
 
 ## Container Image Updates
 
@@ -83,13 +67,7 @@ Container images are referenced in:
 
 ### Common Image Patterns
 
-**alpine/git:** Usually safe. Minor bumps add git features. Check for removed commands.
-
-**PostgreSQL:** Minor bumps are safe. Major bumps (15→16) require `pg_upgrade`.
-
-**Redis/Valkey:** Minor bumps are usually safe. Check for deprecated commands.
-
-**Grafana:** Usually safe. Check for plugin API changes.
+Check the agent's `known-patterns.md` "Changelog Quirks" table for image-specific notes from previous runs.
 
 ## Taskfile Dependency Updates
 
@@ -108,11 +86,7 @@ Taskfile dependencies are in `.taskfiles/` and reference external tools or binar
 
 ### Common Taskfile Dependencies
 
-**helmfile:** Check for command syntax changes. Minor bumps are usually safe.
-
-**talhelper:** Check for talconfig.yaml schema changes.
-
-**flux:** Check for CLI command changes.
+Check the agent's `known-patterns.md` "Changelog Quirks" table for taskfile dependency notes from previous runs.
 
 ## Upstream Changelog Fetch Strategies
 
@@ -320,25 +294,8 @@ Breaking change: "API version changed from v1alpha1 to v1beta1"
 
 ### Common NO_IMPACT Scenarios
 
-These breaking changes almost never affect this homelab:
-
-| Breaking Change | Why Usually NO_IMPACT |
-|----------------|----------------------|
-| ARM64 support dropped | We run AMD64 only |
-| Windows container changes | Linux-only cluster |
-| Cloud provider integration changes | Bare metal, no cloud provider |
-| Horizontal Pod Autoscaler changes | Rarely used in homelab |
-| PodDisruptionBudget defaults changed | Usually not configured |
-| Service mesh integration changes | No service mesh |
+Check the agent's `known-patterns.md` "Common NO_IMPACT Scenarios" and "Breaking Change False Positives" tables for patterns accumulated from previous runs.
 
 ### Common HIGH_IMPACT Scenarios
 
-These breaking changes frequently affect this homelab:
-
-| Breaking Change | Why Usually HIGH_IMPACT |
-|----------------|------------------------|
-| CRD API version bump | We use many CRDs (Cilium, Cert-Manager, Traefik) |
-| Helm values restructured | We customize most charts heavily |
-| Default storage class changed | Rook Ceph is our storage backend |
-| Network policy format changed | Cilium policies are critical |
-| Ingress annotation changes | Traefik IngressRoutes used everywhere |
+Check the agent's `known-patterns.md` "Common HIGH_IMPACT Scenarios" table for patterns accumulated from previous runs.
