@@ -212,9 +212,9 @@ worker:
   resources:
     requests:
       cpu: 265m
-      memory: 512Mi
-    limits:
       memory: 1Gi
+    limits:
+      memory: 2Gi
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000
