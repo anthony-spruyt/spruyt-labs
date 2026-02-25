@@ -218,8 +218,7 @@
     "trustedProxies": ["${CLUSTER_POD_CIDR_IP4}"],
     "controlUi": {
       "allowedOrigins": ["https://openclaw.${EXTERNAL_DOMAIN}"],
-      "dangerouslyDisableDeviceAuth": true,
-      "allowInsecureAuth": true
+      "dangerouslyDisableDeviceAuth": true
     }
   },
   "skills": {
