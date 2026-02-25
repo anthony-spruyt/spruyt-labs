@@ -6,6 +6,11 @@
       automerge: false,
     },
     {
+      description: "Disable automerge for openclaw",
+      matchPackagePatterns: ["^(ghcr\\.io/)?openclaw"],
+      automerge: false,
+    },
+    {
       description: "Automerge patch updates",
       matchUpdateTypes: ["patch", "digest", "pin"],
       automerge: true,
