@@ -29,27 +29,40 @@ kubectl exec -n "${NAMESPACE}" "${POD}" -c "${CONTAINER}" -- node -e '
 const WebSocket = require("ws");
 const crypto = require("crypto");
 const fs = require("fs");
+const token = process.env.OPENCLAW_GATEWAY_TOKEN;
+if (token === undefined) { console.error("No OPENCLAW_GATEWAY_TOKEN in pod env"); process.exit(1); }
+
+const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
+const spkiDer = publicKey.export({ type: "spki", format: "der" });
+const rawPubKey = spkiDer.subarray(spkiDer.length - 32);
+const pubKeyB64Url = rawPubKey.toString("base64url");
+const deviceId = crypto.createHash("sha256").update(rawPubKey).digest("hex");
 
 const clientId = "openclaw-control-ui";
 const clientMode = "ui";
 const role = "operator";
 const scopes = ["operator.admin", "operator.config"];
 
-const ws = new WebSocket("ws://localhost:18789", { headers: { origin: "http://localhost:18789", "x-authentik-username": "schema-fetch" } });
+const ws = new WebSocket("ws://localhost:18789", { headers: { origin: "http://localhost:18789" } });
 const send = (method, params) => {
   const id = crypto.randomUUID();
   ws.send(JSON.stringify({ type: "req", id, method, params }));
 };
-ws.on("open", () => {
-  send("connect", {
-    minProtocol: 3, maxProtocol: 3,
-    client: { id: clientId, version: "0.0.1", platform: "web", mode: clientMode },
-    role, scopes,
-  });
-});
 ws.on("message", (data) => {
   const msg = JSON.parse(data.toString());
-  if (msg.type === "res" && msg.payload && msg.payload.type === "hello-ok") {
+  if (msg.event === "connect.challenge") {
+    const nonce = msg.payload.nonce;
+    const signedAt = Date.now();
+    const payload = ["v2", deviceId, clientId, clientMode, role, scopes.join(","), String(signedAt), token, nonce].join("|");
+    const signature = crypto.sign(null, Buffer.from(payload, "utf8"), privateKey).toString("base64url");
+    send("connect", {
+      minProtocol: 3, maxProtocol: 3,
+      client: { id: clientId, version: "0.0.1", platform: "web", mode: clientMode },
+      role, scopes,
+      auth: { token },
+      device: { id: deviceId, publicKey: pubKeyB64Url, signature, signedAt, nonce }
+    });
+  } else if (msg.type === "res" && msg.payload && msg.payload.type === "hello-ok") {
     send("config.schema", {});
   } else if (msg.type === "res" && msg.ok && msg.payload && msg.payload.schema) {
     // Add $schema as allowed property (the upstream schema has additionalProperties: false)
