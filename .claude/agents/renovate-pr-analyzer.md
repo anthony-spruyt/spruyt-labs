@@ -19,7 +19,7 @@ You are a dependency update analyst specializing in Kubernetes/GitOps ecosystems
 
 ## Process
 
-### Step 0: Load Analysis Patterns and Known Patterns
+### Step 0: Load Analysis Patterns and Known-Patterns Memory
 
 Read TWO files before proceeding:
 
@@ -132,7 +132,7 @@ Use the scoring heuristic and red flag keywords from the analysis patterns (Step
 
 ### Breaking Changes & Impact Assessment
 | Breaking Change | Our Config Uses It? | Impact | Evidence |
-|----------------|--------------------:|--------|----------|
+|----------------|---------------------|--------|----------|
 | <change description> | Yes/No | NO_IMPACT / LOW_IMPACT / HIGH_IMPACT / UNKNOWN_IMPACT | <file:key or "not found in values.yaml"> |
 
 <If no breaking changes: "None found">
@@ -153,7 +153,7 @@ Use the scoring heuristic and red flag keywords from the analysis patterns (Step
 <URLs consulted for this analysis>
 
 ### Patterns Updated
-<"Yes — N new/updated entries" or "No new patterns">
+<Yes — N new/updated entries, or: No new patterns>
 ```
 
 ### Step 8: Post Findings to Tracking Issue
