@@ -29,8 +29,6 @@ kubectl exec -n "${NAMESPACE}" "${POD}" -c "${CONTAINER}" -- node -e '
 const WebSocket = require("ws");
 const crypto = require("crypto");
 const fs = require("fs");
-const token = process.env.OPENCLAW_GATEWAY_TOKEN;
-if (token === undefined) { console.error("No OPENCLAW_GATEWAY_TOKEN in pod env"); process.exit(1); }
 
 const clientId = "openclaw-control-ui";
 const clientMode = "ui";
@@ -47,7 +45,6 @@ ws.on("open", () => {
     minProtocol: 3, maxProtocol: 3,
     client: { id: clientId, version: "0.0.1", platform: "web", mode: clientMode },
     role, scopes,
-    auth: { token },
   });
 });
 ws.on("message", (data) => {
