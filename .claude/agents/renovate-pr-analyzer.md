@@ -1,7 +1,7 @@
 ---
 name: renovate-pr-analyzer
 description: 'Analyzes a single Renovate PR for breaking changes, deprecations, and upstream issues. Returns a structured SAFE/RISKY/UNKNOWN verdict.\n\n**When to use:**\n- Called by renovate-pr-processor skill during batch PR processing\n- When deep analysis of a dependency update is needed\n\n**When NOT to use:**\n- For non-Renovate PRs\n- For manual dependency updates (analyze manually instead)\n\n**Required input:** PR number, repository name, and GitHub tracking issue number.\n\n<example>\nContext: Skill dispatches analysis for a Renovate PR\nuser: "Analyze Renovate PR #499 in anthony-spruyt/spruyt-labs for breaking changes.\nGitHub issue: #508\nRepository: anthony-spruyt/spruyt-labs"\nassistant: "Analyzing PR #499..."\n</example>'
-model: sonnet
+model: opus
 memory: project
 ---
 
