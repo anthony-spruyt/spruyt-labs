@@ -26,3 +26,4 @@ Things that look like failures but aren't — avoid flagging these.
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 4 | 2026-02-25 | 2026-02-24 |
 | traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 1 | 2026-02-25 | 2026-02-25 |
 | Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 1 | 2026-02-25 | 2026-02-25 |
+| vmagent scrape failures for Grafana during k8s-stack upgrade | Pod IP changes during rollover cause transient scrape timeouts/connection refused — resolves once new pod is ready | 1 | 2026-02-25 | 2026-02-25 |
