@@ -1,16 +1,6 @@
 {
   packageRules: [
     {
-      description: "Disable automerge for rook-ceph during RMA (issue #236)",
-      matchPackagePatterns: ["^(ghcr\\.io/)?rook(/|-)ceph"],
-      automerge: false,
-    },
-    {
-      description: "Disable automerge for openclaw",
-      matchPackagePatterns: ["^(ghcr\\.io/)?openclaw"],
-      automerge: false,
-    },
-    {
       description: "Automerge patch updates",
       matchUpdateTypes: ["patch", "digest", "pin"],
       automerge: true,
@@ -30,6 +20,16 @@
       matchUpdateTypes: ["minor"],
       automerge: true,
       platformAutomerge: true,
+    },
+    {
+      description: "Disable automerge for rook-ceph during RMA (issue #236)",
+      matchPackagePatterns: ["^(ghcr\\.io/)?rook(/|-)ceph"],
+      automerge: false,
+    },
+    {
+      description: "Disable automerge for openclaw",
+      matchPackagePatterns: ["^(ghcr\\.io/)?openclaw"],
+      automerge: false,
     },
   ],
 }
