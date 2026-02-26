@@ -34,6 +34,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack` | `VictoriaMetrics/helm-charts` | 1 | 2026-02-25 | 2026-02-25 |
 | Velero Helm chart | `vmware-tanzu/helm-charts` (NOT `vmware-tanzu/velero` which is the app repo). Releases tagged `velero-X.Y.Z`. | 1 | 2026-02-25 | 2026-02-25 |
 | `ghcr.io/openclaw/openclaw` (container image) | `openclaw/openclaw` | 1 | 2026-02-25 | 2026-02-25 |
+| `oci://ghcr.io/victoriametrics/helm-charts/victoria-logs-single` | `VictoriaMetrics/helm-charts` (chart repo) + `VictoriaMetrics/VictoriaLogs` (app repo; VictoriaLogs moved to separate repo from VictoriaMetrics) | 1 | 2026-02-26 | 2026-02-26 |
 
 ## Common NO_IMPACT Scenarios
 
