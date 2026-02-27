@@ -78,7 +78,7 @@ Derived from this repo's 6 existing agents:
 
 ## Deletions
 
-- `.claude/rules/common-agent-format.md` — absorbed into skill
+- `.claude/rules/common-agent-format.md` — already deleted and committed (absorbed into skill)
 
 ## Test Plan
 

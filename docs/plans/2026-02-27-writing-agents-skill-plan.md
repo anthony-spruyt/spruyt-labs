@@ -192,31 +192,9 @@ git commit -m "feat(skills): add writing-agents skill for agent lifecycle manage
 
 ---
 
-### Task 4: Delete the Old Rule
+### Task 4: Test with qa-validator optimization
 
-**Files:**
-- Delete: `.claude/rules/common-agent-format.md`
-
-**Step 1: Verify skill covers all rule content**
-
-Read both files side by side. Confirm every useful piece of the rule is represented in the skill (frontmatter table, description syntax, template pattern, best practices).
-
-**Step 2: Delete the rule file**
-
-```bash
-rm .claude/rules/common-agent-format.md
-```
-
-**Step 3: Commit**
-
-```bash
-git add .claude/rules/common-agent-format.md
-git commit -m "chore(rules): remove common-agent-format rule, absorbed into writing-agents skill"
-```
-
----
-
-### Task 5: Test with qa-validator optimization
+> **Note:** The old rule `.claude/rules/common-agent-format.md` has already been deleted and committed separately.
 
 **Files:**
 - Modify: `.claude/agents/qa-validator.md`
@@ -248,7 +226,7 @@ git commit -m "refactor(agents): optimize qa-validator using writing-agents skil
 
 ---
 
-### Task 6: Create GitHub Issue
+### Task 5: Create GitHub Issue
 
 **Step 1: Create tracking issue**
 
