@@ -72,14 +72,34 @@ Not every agent needs all sections. Small focused agents may only need Persona, 
 
 ## Optimization Workflow
 
+Use sub-agents for each phase. Fresh context prevents sunk cost bias and keeps each step focused.
+
+### Phase 1: Optimize (sub-agent)
+
+Dispatch an optimization sub-agent. Provide it with: the agent file path, this skill, and all inherited context files (CLAUDE.md, `.claude/rules/*`). The sub-agent follows these steps:
+
 1. **Measure** — Count lines (`wc -l`) and words (`wc -w`). Identify largest sections
-2. **Remove inherited context** — Check CLAUDE.md and `.claude/rules/`. Agents inherit these; reference, don't repeat
-3. **Calibrate emphasis and explanations** — Soften CRITICAL/MUST/NEVER for Claude 4.5/4.6 (see `references/anthropic-best-practices.md` Section 3). Remove explanations of things Opus knows (Section 12). Reserve strong language for true safety gates only
-4. **Cut aggressively** — Remove content Opus already knows, inherited context, verbose examples. Agents are single files; do not extract to separate files or agent memory. **Keep:** domain-specific commands with non-obvious flags (e.g., `--sort-by`, `-l app.kubernetes.io/name=`), exact commit/git commands in self-improvement sections, and behavioral anchors that prevent shallow execution
-5. **Validate via sub-agents** — Dispatch two separate sub-agents (fresh context, no sunk cost bias from the optimization work). Both read the optimized file, the original (via `git show HEAD~1:<path>`), inherited context files (CLAUDE.md, `.claude/rules/`), and this skill. Run them in parallel:
-   - **Structural review**: Check frontmatter fields survived (`tools`, `model`, `memory`, description). Verify all System Prompt Structure sections present. Check emphasis calibration, safety gates, output format, handoff protocol. Return PASS/FAIL with specific issues.
-   - **Effectiveness review**: Compare original vs optimized for lost domain-specific knowledge not in inherited context and that Opus wouldn't know. Check all workflow steps still represented. Classify cuts as SAFE/RISKY/LOST. Return EFFECTIVE/DEGRADED/BROKEN.
-6. **Fix and re-validate** — If either sub-agent returns FAIL/DEGRADED, apply fixes and re-dispatch until both pass
+2. **Fix description field** — Must comply with the Description Field section of this skill:
+   - Under 1024 chars (measure and verify). If over: trim to 1-2 examples, remove workflow summaries, shorten dialogue
+   - No workflow summary (lines like "Handoff flow: X → Y → Z"). Only capability + triggering conditions
+   - Every `<example>` must contain `<commentary>` explaining why it triggers. Add if missing
+   - Max 2 `<example>` blocks
+   - Must have "When to use" and "When NOT to use" sections
+3. **Remove inherited context** — Read CLAUDE.md and every `.claude/rules/` file. Search the agent for duplicated content. Common: secret handling, git staging, research priority, domain substitution. Replace with single-line references (e.g., "Follow inherited secret handling rules")
+4. **Calibrate emphasis** — Soften CRITICAL/MUST/NEVER/FORBIDDEN/MANDATORY (see `references/anthropic-best-practices.md` Section 3). Remove explanations Opus knows (Section 12). **Safety gates** (hard stops preventing data loss, secret exposure, skipping required inputs) keep strong language. **Operational preferences** (tool choice, workflow ordering, style) use normal language — no bold, no CRITICAL, no blockquote emphasis
+5. **Cut aggressively** — Remove Opus-known content, inherited context, verbose examples. Agents are single files; do not extract. **Keep:** domain-specific commands with non-obvious flags, exact commit/git commands in self-improvement, behavioral anchors preventing shallow execution
+6. **Verify frontmatter** — All original fields must survive (`name`, `description`, `model`, `memory`, `tools`). Missing `tools` silently grants all tools
+
+### Phase 2: Validate (two parallel sub-agents)
+
+Dispatch two fresh sub-agents (no shared context with the optimizer). Both read: the optimized file, the original (via `git show <pre-optimization-ref>:<path>`), inherited context files, and this skill. Run in parallel:
+
+- **Structural review**: Frontmatter fields survived. Description under 1024 chars, no workflow summary, examples have `<commentary>`, max 2 examples. System prompt sections present. Emphasis calibrated (strong only on safety gates). Output format and handoff protocol present. Return PASS/FAIL with specific issues and exact fixes.
+- **Effectiveness review**: Compare for lost domain-specific knowledge not in inherited context and that Opus wouldn't know. All workflow steps still represented. Domain commands with non-obvious flags preserved. Classify cuts as SAFE/RISKY/LOST. Return EFFECTIVE/DEGRADED/BROKEN.
+
+### Phase 3: Fix loop
+
+If either validator returns FAIL/DEGRADED: dispatch a fix sub-agent with the specific issues and exact fixes. Then re-run Phase 2. Repeat until both validators return PASS + EFFECTIVE.
 
 ## Common Mistakes
 
