@@ -76,8 +76,10 @@ Not every agent needs all sections. Small focused agents may only need Persona, 
 2. **Remove inherited context** — Check CLAUDE.md and `.claude/rules/`. Agents inherit these; reference, don't repeat
 3. **Calibrate emphasis and explanations** — Soften CRITICAL/MUST/NEVER for Claude 4.5/4.6 (see `references/anthropic-best-practices.md` Section 3). Remove explanations of things Opus knows (Section 12). Reserve strong language for true safety gates only
 4. **Cut aggressively** — Remove content Opus already knows, inherited context, verbose examples. Agents are single files; do not extract to separate files or agent memory. **Keep:** domain-specific commands with non-obvious flags (e.g., `--sort-by`, `-l app.kubernetes.io/name=`), exact commit/git commands in self-improvement sections, and behavioral anchors that prevent shallow execution
-5. **Verify frontmatter** — Confirm all original frontmatter fields survived: `tools` (least privilege), `model`, `memory`, description unchanged. Dropping `tools` silently grants all tools
-6. **Verify effectiveness** — Compare original vs optimized: was any domain-specific knowledge lost that isn't in inherited context and Opus wouldn't know? Check that all workflow steps are still represented. If risky cuts found, restore them
+5. **Validate via sub-agents** — Dispatch two separate sub-agents (fresh context, no sunk cost bias from the optimization work). Both read the optimized file, the original (via `git show HEAD~1:<path>`), inherited context files (CLAUDE.md, `.claude/rules/`), and this skill. Run them in parallel:
+   - **Structural review**: Check frontmatter fields survived (`tools`, `model`, `memory`, description). Verify all System Prompt Structure sections present. Check emphasis calibration, safety gates, output format, handoff protocol. Return PASS/FAIL with specific issues.
+   - **Effectiveness review**: Compare original vs optimized for lost domain-specific knowledge not in inherited context and that Opus wouldn't know. Check all workflow steps still represented. Classify cuts as SAFE/RISKY/LOST. Return EFFECTIVE/DEGRADED/BROKEN.
+6. **Fix and re-validate** — If either sub-agent returns FAIL/DEGRADED, apply fixes and re-dispatch until both pass
 
 ## Common Mistakes
 
