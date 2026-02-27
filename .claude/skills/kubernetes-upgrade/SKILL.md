@@ -1,12 +1,12 @@
 ---
 name: kubernetes-upgrade
-description: This skill should be used when the user asks to "upgrade Kubernetes", "upgrade k8s", "update Kubernetes version", "bump Kubernetes version", mentions a target Kubernetes version like "upgrade to 1.35.1", or when Renovate updates kubernetesVersion in talconfig.yaml. Not for Talos OS upgrades (use talos-upgrade agent). Orchestrates safe Kubernetes upgrades with breaking change research, API deprecation scanning, cluster health gates, dry-run validation, and post-upgrade file updates.
+description: Use when the user asks to "upgrade Kubernetes", "upgrade k8s", "update Kubernetes version", "bump Kubernetes version", mentions a target version like "upgrade to 1.35.1", or when Renovate updates kubernetesVersion in talconfig.yaml. Not for Talos OS upgrades (use talos-upgrade agent).
 argument-hint: <target-version>
 ---
 
 # Kubernetes Upgrade
 
-Orchestrate safe Kubernetes version upgrades on the Talos Linux cluster. The primary value is comprehensive pre-flight safety — researching breaking changes, scanning for deprecated APIs, and gating on cluster health — before executing `talosctl upgrade-k8s`.
+Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comprehensive pre-flight safety before `talosctl upgrade-k8s`.
 
 ## Quick Reference
 
@@ -15,92 +15,55 @@ Orchestrate safe Kubernetes version upgrades on the Talos Linux cluster. The pri
 | Upgrade command | `talosctl upgrade-k8s -n <cp-node> --to v<version>` |
 | Config file | `talos/talconfig.yaml` (`kubernetesVersion` field) |
 | Node topology | 3 CP (e2-1/2/3), 3 workers (ms-01-1/2/3) |
-| Existing agent | `talos-upgrade` handles Talos OS upgrades (different) |
-| Expected duration | 5-15 minutes for full cluster |
+| Talos OS agent | `talos-upgrade` (different from this skill) |
 
 ## Workflow
 
 ### Phase 0: Input Parsing
 
-- Parse target version from the user's message (e.g., "upgrade to 1.35.1"). If no version is mentioned, prompt the user for one.
-- Read current version from `talos/talconfig.yaml` (`kubernetesVersion` field)
-- Validate format (vX.Y.Z), normalize (ensure `v` prefix for commands, strip for comparison)
-- Classify: **minor** upgrade (e.g., 1.34 -> 1.35) or **patch** (e.g., 1.35.0 -> 1.35.1)
-- Minor upgrades carry higher risk — enforce all gates strictly
+- Parse target version from user message; prompt if missing
+- Read current version from `talos/talconfig.yaml` (`kubernetesVersion`)
+- Classify: **minor** (1.34→1.35, higher risk) or **patch** (1.35.0→1.35.1)
 
 ### Phase 1: Breaking Changes Research
 
-Consult `references/breaking-changes-lookup.md` for detailed procedures.
+Consult `references/breaking-changes-lookup.md` for procedures.
 
-1. Query Context7 for Kubernetes changelog/breaking changes
-2. If insufficient, fetch changelog from GitHub raw content
-3. Summarize: removed APIs, deprecated APIs, behavior changes, notable features
-4. Present findings to user
-
-**HARD GATE:** Present breaking changes summary. Wait for user acknowledgment before proceeding. If removed APIs are found that match cluster resources, recommend aborting until remediated.
+**HARD GATE:** Present findings. Wait for user acknowledgment. If removed APIs match cluster resources, recommend aborting.
 
 ### Phase 2: Cluster API Compatibility Scan
 
-Consult `references/api-deprecation-scanning.md` for detailed procedures.
+Consult `references/api-deprecation-scanning.md` for procedures.
 
-1. From Phase 1, identify APIs being removed in target version
-2. Scan live cluster via kubectl:
-   ```bash
-   # Check deprecated API metrics
-   kubectl get --raw /metrics 2>/dev/null | grep apiserver_requested_deprecated_apis | grep 'removed_release="<minor>"'
-   # Direct resource queries for each removed API
-   kubectl get <resource>.<api-group> --all-namespaces 2>/dev/null
-   ```
-3. Scan git manifests using the Grep tool for deprecated `apiVersion` strings in `cluster/`
-4. Report findings with namespace/resource/kind
-
-**HARD GATE:** If removed APIs are in active use, BLOCK upgrade. List resources requiring migration.
+**HARD GATE:** If removed APIs are in active use, BLOCK. List resources requiring migration.
 
 ### Phase 3: Talos Compatibility Check
 
-Verify Talos supports the target Kubernetes version:
+1. Read Talos version from `talos/talconfig.yaml` (`talosVersion`)
+2. Query Context7: `query-docs(libraryId: "/siderolabs/talos", query: "supported kubernetes versions for Talos v<current>")`
 
-1. Read current Talos version from `talos/talconfig.yaml` (`talosVersion` field)
-2. Check Talos support matrix via Context7:
-   ```
-   query-docs(libraryId: "/siderolabs/talos", query: "supported kubernetes versions for Talos v<current-talos>")
-   ```
-3. General rule: Talos v1.x supports K8s versions within its tested range
-
-**HARD GATE:** If Talos version is incompatible, BLOCK. Recommend running Talos upgrade first via `talos-upgrade` agent.
+**HARD GATE:** If incompatible, BLOCK. Recommend `talos-upgrade` agent first.
 
 ### Phase 4: Cluster Health Gate
 
-Discover control plane node IPs dynamically (never hardcode):
-
+Discover CP node IPs dynamically:
 ```bash
 CP_NODES=$(kubectl get nodes -l node-role.kubernetes.io/control-plane \
   -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
 ```
 
-Run all checks. BLOCK on any failure.
-
-```bash
-# Parallel Group 1 - Nodes
-kubectl get nodes -o wide
-talosctl health -n <first-cp-ip>
-
-# Parallel Group 2 - etcd and Ceph
-talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
-
-# Parallel Group 3 - GitOps
-flux get kustomizations -A
-flux get helmreleases -A
-```
-
-**Pass criteria:** All nodes Ready, talosctl health passes, etcd 3 healthy members, Ceph HEALTH_OK, all Flux kustomizations Ready, no failing HelmReleases.
+| Check | Command | Pass Criteria |
+|-------|---------|---------------|
+| Nodes | `kubectl get nodes -o wide` | All Ready |
+| Talos health | `talosctl health -n <first-cp>` | Passes |
+| etcd | `talosctl etcd status -n <cp1>,<cp2>,<cp3>` | 3 healthy members |
+| Ceph | `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status` | HEALTH_OK |
+| Flux ks | `flux get kustomizations -A` | All Ready |
+| Flux hr | `flux get helmreleases -A` | No failures |
 
 **HARD GATE:** All checks must pass. Report specific failures.
 
 ### Phase 5: etcd Backup
-
-Mandatory before upgrade:
 
 ```bash
 CP_NODE=$(kubectl get nodes -l node-role.kubernetes.io/control-plane \
@@ -108,17 +71,13 @@ CP_NODE=$(kubectl get nodes -l node-role.kubernetes.io/control-plane \
 talosctl -n $CP_NODE etcd snapshot /tmp/etcd-backup-$(date +%Y%m%d-%H%M%S).snapshot
 ```
 
-Verify snapshot created successfully.
-
 ### Phase 6: Dry Run
 
 ```bash
 talosctl upgrade-k8s -n <cp-node-ip> --to v<version> --dry-run
 ```
 
-Report what will change.
-
-**HARD GATE:** Dry run must succeed. Report errors if it fails.
+**HARD GATE:** Must succeed.
 
 ### Phase 7: Execute Upgrade
 
@@ -126,74 +85,28 @@ Report what will change.
 talosctl upgrade-k8s -n <cp-node-ip> --to v<version>
 ```
 
-Monitor: `kubectl get nodes` — wait for all nodes to show new version. Expect 5-15 minutes for the full cluster. If no progress after 20 minutes, investigate with `talosctl dmesg` and `kubectl describe nodes`.
+Wait for all nodes to show new version (`kubectl get nodes`). If no progress after 20 min, investigate with `talosctl dmesg` and `kubectl describe nodes`.
 
 ### Phase 8: Post-Upgrade Validation
 
-Re-run Phase 4 health checks plus version verification:
-
-```bash
-kubectl version
-kubectl get nodes -o wide
-```
-
-Confirm all nodes report new Kubernetes version. Report any regressions.
+Re-run Phase 4 health checks plus `kubectl version` and `kubectl get nodes -o wide`. Confirm all nodes report new version.
 
 ### Phase 9: Update Files & Report
 
-1. Update `kubernetesVersion` in `talos/talconfig.yaml` to match new version
-2. Search for **all** old version references across the repo:
-   - Use the Grep tool: search for `<old-version>` (without `v` prefix to catch both forms) in `talos/` with glob `*.yaml`, in `docs/` with glob `*.md`, and in `cluster/` with glob `*.yaml`
-   - **IMPORTANT: Grep tool may miss files blocked by permission rules** (e.g., hookify rules blocking files with "secret" in the name). Always follow up with a bash grep fallback:
-     ```bash
-     grep -r "v<old-version>" cluster/ --include="*.yaml" -l 2>/dev/null
-     ```
-   - Compare results — any files found by bash but not Grep are permission-blocked and must be updated via `sed -i` instead of the Edit tool
-3. Common version reference locations:
-   - `talos/talconfig.yaml` — `kubernetesVersion` field
-   - `talos/README.md` — example upgrade commands
-   - `cluster/flux/meta/cluster-settings.yaml` — cluster settings
-   - `cluster/apps/**/` — `yaml-language-server` schema URLs containing the K8s version (pattern: `kubernetes-json-schema/master/v<version>-standalone-strict/` or `kubernetes-json-schema/master/v<version>/`). There are typically 30+ of these across RBAC, ConfigMap, NetworkPolicy, and other manifest files.
-4. Update all found references using Edit tool (or `sed -i` for permission-blocked files)
-5. Verify zero old version references remain: `grep -r "v<old-version>" cluster/ talos/ --include="*.yaml" -l`
-6. Present final report:
-   - Version change (from -> to)
-   - Node status table
-   - Health check results
-   - Total files changed
-   - Ready for commit
+1. Update `kubernetesVersion` in `talos/talconfig.yaml`
+2. Search for **all** old version references:
+   - Grep tool: search `<old-version>` (no `v` prefix) in `talos/*.yaml`, `docs/*.md`, `cluster/*.yaml`
+   - **Grep may miss hookify-blocked files.** Fallback: `grep -r "v<old-version>" cluster/ --include="*.yaml" -l 2>/dev/null`. Files found only by bash need `sed -i` instead of Edit tool.
+3. Common locations: `talos/talconfig.yaml`, `talos/README.md`, `cluster/flux/meta/cluster-settings.yaml`, `kubernetes-json-schema` URLs in 30+ manifest files
+4. Update all references; verify zero remain
+5. Present final report: version change, node status, health results, files changed
 
 ## Rollback
 
-If the upgrade fails or causes issues:
-
-- `talosctl upgrade-k8s` can be re-run if it fails partway through — it is idempotent
-- The etcd backup from Phase 5 is the primary recovery mechanism. **WARNING: etcd restore is destructive and resets cluster state to the snapshot point. Only use as a last resort.**
-  ```bash
-  talosctl -n <cp-node> etcd snapshot restore /tmp/etcd-backup-<timestamp>.snapshot
-  ```
-- If specific components fail to start after upgrade, check logs:
-  ```bash
-  talosctl -n <node-ip> logs kubelet
-  talosctl -n <node-ip> dmesg
-  ```
-- For critical failures, consult Talos docs via Context7:
-  ```
-  query-docs(libraryId: "/siderolabs/talos", query: "kubernetes upgrade rollback recovery")
-  ```
-
-## GitHub Issue Tracking
-
-Create or reference a tracking issue per project workflow:
-
-```bash
-gh issue create --repo anthony-spruyt/spruyt-labs \
-  --title "infra(k8s): upgrade Kubernetes v<current> to v<target>" \
-  --label "infra" \
-  --body "..."
-```
-
-Post progress updates as issue comments after each phase.
+- `talosctl upgrade-k8s` is idempotent — re-run if it fails partway
+- etcd backup from Phase 5 is primary recovery (**WARNING:** restore is destructive, resets to snapshot point)
+- Debug: `talosctl -n <ip> logs kubelet`, `talosctl -n <ip> dmesg`
+- Context7: `query-docs(libraryId: "/siderolabs/talos", query: "kubernetes upgrade rollback recovery")`
 
 ## Commit Pattern
 
@@ -202,10 +115,3 @@ infra(k8s): upgrade Kubernetes to v<version>
 
 Ref #<issue-number>
 ```
-
-## Additional Resources
-
-### Reference Files
-
-- **`references/breaking-changes-lookup.md`** — Detailed procedures for researching K8s breaking changes via Context7, GitHub, changelogs
-- **`references/api-deprecation-scanning.md`** — kubectl commands, metrics queries, and remediation for deprecated API scanning
