@@ -1978,6 +1978,18 @@
                 "target": {
                   "type": "string"
                 },
+                "directPolicy": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "allow"
+                    },
+                    {
+                      "type": "string",
+                      "const": "block"
+                    }
+                  ]
+                },
                 "to": {
                   "type": "string"
                 },
@@ -2788,6 +2800,18 @@
                   },
                   "target": {
                     "type": "string"
+                  },
+                  "directPolicy": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "const": "allow"
+                      },
+                      {
+                        "type": "string",
+                        "const": "block"
+                      }
+                    ]
                   },
                   "to": {
                     "type": "string"
@@ -6609,6 +6633,11 @@
               "const": "message"
             }
           ]
+        },
+        "parentForkMaxTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
         "mainKey": {
           "type": "string"
