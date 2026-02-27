@@ -61,14 +61,33 @@ Not every agent needs all sections. Small focused agents may only need Persona, 
 
 ## Creation Workflow
 
-1. **Define persona** — See Persona/Role in System Prompt Structure above
-2. **Write frontmatter** — Description with triggering conditions + examples (third person). Choose model and tools (least privilege — see `references/anthropic-best-practices.md` Section 9)
-3. **Structure system prompt** — Follow section order above
-4. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
-5. **Scope-limit Opus** — For agents that make modifications, add "Only make changes directly requested." Prefer direct Grep/Read over spawning subagents for simple lookups (see `references/anthropic-best-practices.md` Section 4)
-6. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, use strong language despite the general softening rule (e.g., "stop immediately with BLOCKED"). Add "stop on error" termination conditions for sequential multi-step workflows
-7. **Size check** — Target under 300 lines / 2,000 words for focused agents, under 500 lines max. Agents are single `.md` files in `.claude/agents/` — cut content rather than extracting. Run `wc -l` and `wc -w` to verify
-8. **Test** — Run the agent against representative scenarios. Verify triggering. Check for overtriggering
+Use sub-agents for each phase, same as optimization. Fresh context prevents drift.
+
+### Phase 1: Create (sub-agent)
+
+Dispatch a creation sub-agent. Provide it with: the agent requirements, this skill, existing agents (for pattern reference), and all inherited context files (CLAUDE.md, `.claude/rules/*`). The sub-agent follows these steps:
+
+1. **Discover patterns** — Read 2-3 existing agents in `.claude/agents/` for local conventions
+2. **Define persona** — Expert identity with domain expertise, 1-2 sentences
+3. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, 1-2 examples with `<commentary>`, "When to use" and "When NOT to use" sections). Choose model and tools (least privilege — see `references/anthropic-best-practices.md` Section 9)
+4. **Structure system prompt** — Follow section order from System Prompt Structure above. Include output format template and handoff protocol
+5. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
+6. **Scope-limit Opus** — For agents that make modifications, add "Only make changes directly requested." Prefer direct Grep/Read over spawning subagents for simple lookups (see `references/anthropic-best-practices.md` Section 4)
+7. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, use strong language (e.g., "stop immediately with BLOCKED"). Add "stop on error" for sequential workflows
+8. **Calibrate emphasis** — Same rules as Optimization Phase 1 step 4. Safety gates keep strong language; operational preferences use normal language
+9. **Avoid inherited duplication** — Read CLAUDE.md and `.claude/rules/*`. Do not duplicate content. Use single-line references (e.g., "Follow inherited secret handling rules")
+10. **Size check** — Target under 300 lines / 2,000 words. Run `wc -l` and `wc -w` to verify
+
+### Phase 2: Validate (two parallel sub-agents)
+
+Same as Optimization Phase 2, but the effectiveness review checks completeness rather than comparing to an original:
+
+- **Structural review**: Same checks as optimization — frontmatter fields, description under 1024 chars, no workflow summary, examples have `<commentary>`, max 2 examples, emphasis calibrated, output format and handoff protocol present. Return PASS/FAIL with specific issues and exact fixes.
+- **Completeness review**: All System Prompt Structure sections present (at minimum: Persona, Workflow, Rules, Output Format). No inherited context duplicated. No Opus-known explanations. Domain-specific commands have non-obvious flags where needed. Return COMPLETE/INCOMPLETE with specific gaps.
+
+### Phase 3: Fix loop
+
+If either validator returns FAIL/INCOMPLETE: dispatch a fix sub-agent with the specific issues and exact fixes. Then re-run Phase 2. Repeat until both validators return PASS + COMPLETE.
 
 ## Optimization Workflow
 
