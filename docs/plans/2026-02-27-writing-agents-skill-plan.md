@@ -195,7 +195,7 @@ Write the main skill file with YAML frontmatter and body. Target ~200-300 lines.
 ```yaml
 ---
 name: writing-agents
-description: Use when creating new agents, editing existing agent system prompts, optimizing agent token efficiency, or maintaining agent quality. Triggers on "create agent", "improve agent", "optimize agent", "agent is too long", "agent isn't working well", or when reviewing agent files in .claude/agents/.
+description: Guides creating, editing, and maintaining Claude Code agents using Anthropic best practices. Use when creating new agents, editing existing agent system prompts, optimizing agent token efficiency, or maintaining agent quality. Triggers on "create agent", "improve agent", "optimize agent", "agent is too long", "agent isn't working well", or when reviewing agent files in .claude/agents/.
 ---
 ```
 
@@ -211,14 +211,14 @@ Reference guide for creating, editing, and maintaining Claude Code agents. Incor
 - When NOT: skills, hooks, commands, slash commands (different components)
 
 **3. Agent Anatomy — Frontmatter** (table)
-Required fields: name, description. Optional fields: model, tools, disallowedTools, permissionMode, maxTurns, skills, mcpServers, hooks, memory, background, isolation. Include format and notes for each.
+Required fields: name (lowercase letters, numbers, hyphens only; max 64 chars; no reserved words "anthropic"/"claude"), description (max 1024 chars). Optional fields: model, tools, disallowedTools, permissionMode, maxTurns, skills, mcpServers, hooks, memory, background, isolation. Include format and notes for each.
 
 **4. Description Field** (concise rules)
 - Syntax: single line with `\n` for newlines, wrap in `'...'` if contains `#` after whitespace
 - Write in third person (description is injected into the system prompt)
-- Content: triggering conditions — contexts, symptoms, and situations that signal this agent applies. A brief "what" clause is acceptable (e.g., "Performs X. Use when...") but do NOT summarize the agent's workflow or process steps
+- Content: Include both what the agent does and when to use it (per official Anthropic guidance). Lead with a brief capability statement, then triggering conditions. Pattern: "Does X and Y. Use when [conditions]."
 - Include 1-2 `<example>` blocks with `<commentary>` explaining why it triggers
-- Anti-pattern: Do NOT summarize workflow in description — Claude follows description shortcut instead of reading full system prompt body. (Empirically tested via writing-skills CSO. Official Anthropic skill docs recommend "both what and when" — the key is keeping the "what" to a single clause, not a workflow summary.)
+- Anti-pattern: Do NOT expand the capability statement into a workflow summary — Claude follows description shortcut instead of reading full system prompt body. Keep "what" to a single clause, put process details in the body. (Empirically tested via writing-skills CSO.)
 - See `references/project-patterns.md` for working examples
 
 **5. System Prompt Structure** (ordered list)
@@ -253,7 +253,7 @@ Canonical section order for this project:
 
 | Mistake | Fix |
 |---------|-----|
-| Workflow summary in description | Description = triggering conditions only. Put workflow in body |
+| Workflow summary in description | Brief capability + triggering conditions only. Put workflow in body |
 | CRITICAL/MANDATORY/NEVER overuse | Normal language. Claude 4.5/4.6 overtriggers on aggressive emphasis |
 | Explaining Kubernetes/YAML/Git basics | Remove. Opus knows these |
 | Copying CLAUDE.md secret rules | Remove. Agent inherits project rules |
