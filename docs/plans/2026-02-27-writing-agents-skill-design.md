@@ -48,7 +48,9 @@ Distilled from 4 official Anthropic sources:
 |-------|--------------|
 | Token efficiency | Context is finite, "context rot" degrades accuracy |
 | Right altitude | Match specificity to task fragility |
-| Claude 4.6 calibration | Soften CRITICAL/MUST/NEVER emphasis |
+| Opus 4.5/4.6 calibration | Soften CRITICAL/MUST/NEVER emphasis for all 4.5/4.6 models |
+| Opus 4.5/4.6 overengineering | Targeted scope instructions to prevent extra files/abstractions |
+| Autonomy and safety | Confirmation gates for destructive/externally-visible operations |
 | Parallel execution | Explicitly state independent checks |
 | Progressive disclosure | Overview in main file, heavy content in references |
 | Subagent design | One clear goal, input, output, handoff per agent |
@@ -71,7 +73,7 @@ Derived from this repo's 6 existing agents:
 
 - **Model selection:** opus for complex analysis, sonnet for focused operations
 - **Memory patterns:** `known-patterns.md` table format (pattern, count, last-seen, added)
-- **Size benchmarks:** Small (100-150 lines), medium (150-200), large (200-250)
+- **Size benchmarks:** Small (100-150 lines), medium (150-235 lines), large (500+ lines — overdue for optimization)
 - **Output formats:** Verdict headers, evidence tables, reasoning sections
 - **Handoff patterns:** Structured results for calling skills/agents
 - **GitHub integration:** Results posted as issue comments via `gh` CLI

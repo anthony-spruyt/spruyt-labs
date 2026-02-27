@@ -98,32 +98,37 @@ Write `references/anthropic-best-practices.md` with a table of contents at the t
 2. **Right Altitude** — Match specificity to task fragility. High freedom (text guidance) for judgment calls where multiple approaches are valid. Low freedom (exact commands) for fragile, error-prone operations. Think: narrow bridge with cliffs = exact commands; open field = general direction.
    Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
 
-3. **Claude 4.5/4.6 Calibration** — Claude Opus 4.5 and Opus 4.6 are more responsive to system prompts than previous models. Instructions designed to reduce undertriggering will now cause overtriggering. Replace "CRITICAL: You MUST use this tool when..." with "Use this tool when...". Soften CRITICAL/MANDATORY/NEVER markers to normal language.
+3. **Opus 4.5/4.6 Calibration** — Opus 4.5 and Opus 4.6 are more responsive to system prompts than previous models. Instructions designed to reduce undertriggering will now cause overtriggering. Replace "CRITICAL: You MUST use this tool when..." with "Use this tool when...". Soften CRITICAL/MANDATORY/NEVER markers to normal language. Note: Sonnet 4.6 defaults to `high` effort and may also overtrigger — dial back aggressive language for all 4.5/4.6 models.
    Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
-4. **Opus 4.5/4.6 Overengineering Tendency** — Claude Opus 4.5 and 4.6 tend to overengineer by creating extra files, adding unnecessary abstractions, or building in flexibility that wasn't requested. Opus 4.6 also does significantly more upfront exploration than previous models. Use targeted scope instructions: "only make changes that are directly requested." Prefer direct grep/read over spawning subagents for simple lookups.
+4. **Opus 4.5/4.6 Overengineering Tendency** — Opus 4.5 and Opus 4.6 tend to overengineer by creating extra files, adding unnecessary abstractions, or building in flexibility that wasn't requested. Opus 4.6 also does significantly more upfront exploration than previous models. Use targeted scope instructions: "only make changes that are directly requested." Prefer direct grep/read over spawning subagents for simple lookups.
    Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
-5. **Parallel Execution** — Claude 4.6 excels at parallel tool calls. Explicitly state which checks are independent to boost parallel calling to ~100%. Group independent operations and mark dependencies.
+5. **Autonomy and Safety** — Without guidance, Opus 4.6 may take actions that are hard to reverse (deleting files, force-pushing, posting to external services). Agents performing destructive or externally-visible operations should include confirmation gates. Add explicit guidance on which actions require user confirmation vs. which can proceed autonomously.
    Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
-6. **Progressive Disclosure** — Main file as overview pointing to detailed materials loaded on demand. Keep main body under 500 lines. Reference files one level deep only (no nested references). Include table of contents in files over 100 lines.
+6. **Parallel Execution** — Claude 4.6 excels at parallel tool calls. Explicitly state which checks are independent to boost parallel calling to ~100%. Group independent operations and mark dependencies.
+   Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
+
+7. **Progressive Disclosure** — Main file as overview pointing to detailed materials loaded on demand. Keep main body under 500 lines. Reference files one level deep only (no nested references). Include table of contents in files over 100 lines.
    Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
 
-7. **Subagent Design** — One clear goal, input, output, and handoff rule per agent. Well-scoped tools make it easier for Claude to decide next steps. Minimize tool set overlap. Agents with vague goal definitions will over-spawn subagents on Opus 4.6 — add explicit guidance on when NOT to use subagents for focused agents.
+8. **Subagent Design** — One clear goal, input, output, and handoff rule per agent. Well-scoped tools make it easier for Claude to decide next steps. Minimize tool set overlap. Agents with vague goal definitions will over-spawn subagents on Opus 4.6 — add explicit guidance on when NOT to use subagents for focused agents.
    Sources: https://claude.com/blog/building-agents-with-the-claude-agent-sdk, https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
-8. **Tool Scoping** — Least privilege. Restrict to essential tools. Read-only agents should not have Write/Edit. Operational agents need Bash. Analysis agents need Read/Grep/Glob.
+9. **Tool Scoping** — Least privilege. Restrict to essential tools. Read-only agents should not have Write/Edit. Operational agents need Bash. Analysis agents need Read/Grep/Glob.
    Source: https://claude.com/blog/building-agents-with-the-claude-agent-sdk
 
-9. **Feedback Loops** — Run validator -> fix errors -> repeat. This pattern greatly improves output quality. Structure output for the calling agent to parse and act on. Provide exact fixes, not vague guidance.
-   Sources: https://claude.com/blog/building-agents-with-the-claude-agent-sdk, https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
+10. **Feedback Loops** — Run validator -> fix errors -> repeat. This pattern greatly improves output quality. Structure output for the calling agent to parse and act on. Provide exact fixes, not vague guidance.
+    Sources: https://claude.com/blog/building-agents-with-the-claude-agent-sdk, https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
 
-10. **Don't Over-Explain to Opus** — Claude Opus already knows Kubernetes, YAML, Git, common tools. Remove explanations of concepts Opus understands. Focus on project-specific context it can't infer.
+11. **Don't Over-Explain to Opus** — Claude Opus already knows Kubernetes, YAML, Git, common tools. Remove explanations of concepts Opus understands. Focus on project-specific context it can't infer.
     Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
 
-11. **Don't Duplicate Inherited Context** — Agents inherit CLAUDE.md and project rules. Don't repeat secret handling rules, git conventions, or workflow constraints already in rules files. Reference them if needed, don't copy them.
+12. **Don't Duplicate Inherited Context** — Agents inherit CLAUDE.md and project rules. Don't repeat secret handling rules, git conventions, or workflow constraints already in rules files. Reference them if needed, don't copy them.
     Source: https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
+
+**Note:** These reference files are library/reference content, not skill-as-discipline content. The strict TDD requirement to shape content from baseline failures applies to the SKILL.md guidance sections; the reference files document objective facts from sources and project patterns.
 
 **Target:** ~100-150 lines. Include table of contents if file reaches 100+ lines.
 
@@ -184,7 +189,7 @@ Ref #<issue_number>"
 
 **Step 1: Write SKILL.md**
 
-Write the main skill file with YAML frontmatter and body. Target ~200-300 lines. Verify word count stays reasonable (aim for under 2000 words).
+Write the main skill file with YAML frontmatter and body. Target ~200-300 lines. Verify word count stays reasonable (aim for under 2000 words — higher than the writing-skills 500-word guideline because this is a reference/technique skill with tables and structured workflows that are inherently word-dense).
 
 **Frontmatter:**
 ```yaml
@@ -211,9 +216,9 @@ Required fields: name, description. Optional fields: model, tools, disallowedToo
 **4. Description Field** (concise rules)
 - Syntax: single line with `\n` for newlines, wrap in `'...'` if contains `#` after whitespace
 - Write in third person (description is injected into the system prompt)
-- Content: triggering conditions only — contexts, symptoms, and situations that signal this agent applies. Do NOT include a summary of what the agent does or its workflow
+- Content: triggering conditions — contexts, symptoms, and situations that signal this agent applies. A brief "what" clause is acceptable (e.g., "Performs X. Use when...") but do NOT summarize the agent's workflow or process steps
 - Include 1-2 `<example>` blocks with `<commentary>` explaining why it triggers
-- Anti-pattern: Do NOT summarize workflow in description — Claude follows description shortcut instead of reading full system prompt body
+- Anti-pattern: Do NOT summarize workflow in description — Claude follows description shortcut instead of reading full system prompt body. (Empirically tested via writing-skills CSO. Official Anthropic skill docs recommend "both what and when" — the key is keeping the "what" to a single clause, not a workflow summary.)
 - See `references/project-patterns.md` for working examples
 
 **5. System Prompt Structure** (ordered list)
@@ -259,6 +264,7 @@ Canonical section order for this project:
 | Magic commands without explanation | Add brief comment explaining why (right altitude) |
 | No self-improvement for high-touch agents | Add memory pattern if agent runs frequently |
 | Vague agent goal encouraging subagent sprawl | One clear goal per agent. Add "when NOT to use subagents" guidance |
+| No confirmation gates for destructive actions | Add explicit guidance on which actions need user confirmation |
 
 **Step 2: Commit**
 
@@ -334,7 +340,7 @@ Run the optimization workflow again to verify the updates address the gaps.
 **Step 4: Commit any skill updates**
 
 ```bash
-git add .claude/skills/writing-agents/
+git add .claude/skills/writing-agents/SKILL.md .claude/skills/writing-agents/references/anthropic-best-practices.md .claude/skills/writing-agents/references/project-patterns.md
 git commit -m "refactor(skills): close loopholes in writing-agents skill from test results
 
 Ref #<issue_number>"
