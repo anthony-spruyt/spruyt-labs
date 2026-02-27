@@ -40,11 +40,13 @@ This is more reliable than a static inventory that goes stale.
 | Medium | 150-300 | 800-1,500 |
 | Large (overdue for optimization) | 500+ | 2,800+ |
 
-**Targets:** Under 500 lines per Anthropic guidance. Under 300 lines and 2,000 words for focused agents. Extract heavy reference content to separate files or agent memory when exceeding these.
+**Targets:** Under 500 lines per Anthropic guidance. Under 300 lines and 2,000 words for focused agents. Cut aggressively when exceeding — remove content Opus already knows, inherited context from CLAUDE.md/rules, and verbose examples. Agents are single `.md` files; do not extract content to separate files.
 
 ## 4. Memory Patterns
 
 **When to use `memory: project`:** Agents that run frequently and benefit from learning across invocations.
+
+**Directory:** `.claude/agent-memory/<agent-name>/` (created automatically when `memory: project` is set). This is for runtime learning only — things the agent discovers and writes during execution. Do not pre-author static reference files here.
 
 **`known-patterns.md` table format:**
 

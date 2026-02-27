@@ -6,7 +6,7 @@
 | CRITICAL/MANDATORY/NEVER overuse | Normal language. Claude 4.5/4.6 overtriggers on aggressive emphasis |
 | Explaining Kubernetes/YAML/Git basics | Remove. Opus knows these |
 | Copying CLAUDE.md secret rules | Remove. Agent inherits project rules |
-| 500+ line system prompt | Extract reference content to files. Target < 300 lines |
+| 500+ line system prompt | Cut aggressively — remove what Opus knows, inherited context. Target < 300 lines |
 | All tools inherited | Restrict to what's needed (least privilege) |
 | No output format specified | Add structured output template |
 | No examples in description | Add 1-2 `<example>` blocks with context/user/assistant/commentary |

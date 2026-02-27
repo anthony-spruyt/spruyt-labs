@@ -67,7 +67,7 @@ Not every agent needs all sections. Small focused agents may only need Persona, 
 4. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
 5. **Scope-limit Opus** — For agents that make modifications, add "Only make changes directly requested." Prefer direct Grep/Read over spawning subagents for simple lookups (see `references/anthropic-best-practices.md` Section 4)
 6. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, use strong language despite the general softening rule (e.g., "stop immediately with BLOCKED"). Add "stop on error" termination conditions for sequential multi-step workflows
-7. **Size check** — Target under 300 lines / 2,000 words for focused agents, under 500 lines max. Extract heavy reference to separate files or agent memory. Run `wc -l` and `wc -w` to verify
+7. **Size check** — Target under 300 lines / 2,000 words for focused agents, under 500 lines max. Agents are single `.md` files in `.claude/agents/` — cut content rather than extracting. Run `wc -l` and `wc -w` to verify
 8. **Test** — Run the agent against representative scenarios. Verify triggering. Check for overtriggering
 
 ## Optimization Workflow
@@ -75,7 +75,7 @@ Not every agent needs all sections. Small focused agents may only need Persona, 
 1. **Measure** — Count lines (`wc -l`) and words (`wc -w`). Identify largest sections
 2. **Remove inherited context** — Check CLAUDE.md and `.claude/rules/`. Agents inherit these; reference, don't repeat
 3. **Calibrate emphasis and explanations** — Soften CRITICAL/MUST/NEVER for Claude 4.5/4.6 (see `references/anthropic-best-practices.md` Section 3). Remove explanations of things Opus knows (Section 12). Reserve strong language for true safety gates only
-4. **Extract heavy content** — Move large tables, verbose examples, or command libraries to reference files or agent memory
+4. **Cut aggressively** — Remove content Opus already knows, inherited context, verbose examples. Agents are single files; do not extract to separate files or agent memory
 5. **Verify** — Compare against `references/project-patterns.md` size benchmarks. Target: under 300 lines / 2,000 words for focused agents
 
 ## Common Mistakes
@@ -84,7 +84,7 @@ Not every agent needs all sections. Small focused agents may only need Persona, 
 |---------|-----|
 | Workflow summary in description | Brief capability + triggering conditions only. Put workflow in body |
 | CRITICAL/MANDATORY/NEVER overuse | Normal language. Claude 4.5/4.6 overtriggers on aggressive emphasis |
-| 500+ line system prompt | Extract reference content to files. Target < 300 lines |
+| 500+ line system prompt | Cut aggressively — remove what Opus knows. Target < 300 lines |
 | No output format specified | Add structured output template |
 | No examples in description | Add 1-2 `<example>` blocks with context/user/assistant/commentary |
 | See full list | `references/common-mistakes.md` |
