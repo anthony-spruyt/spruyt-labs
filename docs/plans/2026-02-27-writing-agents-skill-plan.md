@@ -340,7 +340,9 @@ Run the optimization workflow again to verify the updates address the gaps.
 **Step 4: Commit any skill updates**
 
 ```bash
-git add .claude/skills/writing-agents/SKILL.md .claude/skills/writing-agents/references/anthropic-best-practices.md .claude/skills/writing-agents/references/project-patterns.md
+# Only stage files that were actually modified in Step 2 — check git status first
+git status
+git add <only-modified-files>
 git commit -m "refactor(skills): close loopholes in writing-agents skill from test results
 
 Ref #<issue_number>"
