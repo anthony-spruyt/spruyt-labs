@@ -1,10 +1,10 @@
-# Project Patterns for Agent Authoring
+# Patterns for Agent Authoring
 
-Patterns observed across the 6 existing agents in this repository. Use as reference when creating or optimizing agents.
+Portable patterns for creating and optimizing Claude Code agents. Derived from Anthropic guidance and field observations.
 
 ## Contents
 
-1. [Agent Inventory](#1-agent-inventory)
+1. [Discover Existing Patterns](#1-discover-existing-patterns)
 2. [Model Selection](#2-model-selection)
 3. [Size Benchmarks](#3-size-benchmarks)
 4. [Memory Patterns](#4-memory-patterns)
@@ -14,40 +14,37 @@ Patterns observed across the 6 existing agents in this repository. Use as refere
 
 ---
 
-## 1. Agent Inventory
+## 1. Discover Existing Patterns
 
-> **Maintenance:** Update this table when agents are created, deleted, or significantly modified.
+Before creating or optimizing an agent, scan the project's agent directory:
 
-| Agent | Lines | Words | Model | Tools | Memory | Purpose |
-|-------|-------|-------|-------|-------|--------|---------|
-| etcd-maintenance | 133 | 716 | sonnet | Bash | — | etcd health checks, defrag |
-| renovate-pr-analyzer | 154 | 810 | opus | (all) | project | Analyze single Renovate PR for breaking changes |
-| cluster-validator | 190 | 1,027 | opus | Bash, Read, Edit, Grep, Glob | project | Post-push cluster health validation |
-| cnp-drop-investigator | 235 | 1,028 | sonnet | Bash, Read, Grep, Glob | — | Investigate Cilium network policy drops |
-| qa-validator | 569 | 3,079 | opus | (all) | project | Pre-commit validation (linting, schema, docs) |
-| talos-upgrade | 617 | 2,887 | opus | Bash, Read, Grep, Glob, Edit | — | Orchestrate Talos OS upgrades across nodes |
+1. List agents: `ls .claude/agents/`
+2. Read 2-3 agents to understand local conventions
+3. Note: model choices, tool restrictions, description structure, output format, size
+
+This is more reliable than a static inventory that goes stale.
 
 ## 2. Model Selection
 
-| Model | When to Use | Examples |
-|-------|-------------|---------|
-| **opus** | Complex multi-step analysis, decision-making under uncertainty, machine-parseable output, orchestration | cluster-validator, qa-validator, renovate-pr-analyzer, talos-upgrade |
-| **sonnet** | Focused single-domain operations, lower token cost, pre-baked queries/templates | etcd-maintenance, cnp-drop-investigator |
-| **haiku** | Quick lookups, simple classification | (none currently; consider for lightweight analysis) |
+| Model | When to Use |
+|-------|-------------|
+| **opus** | Complex multi-step analysis, decision-making under uncertainty, machine-parseable output, orchestration |
+| **sonnet** | Focused single-domain operations, lower token cost, pre-baked queries/templates |
+| **haiku** | Quick lookups, simple classification |
 
 ## 3. Size Benchmarks
 
-| Category | Lines | Words | Examples |
-|----------|-------|-------|----------|
-| Small | 100-150 | <800 | etcd-maintenance (133/716) |
-| Medium | 150-235 | 800-1,100 | cluster-validator, renovate-pr-analyzer, cnp-drop-investigator |
-| Large (overdue for optimization) | 500+ | 2,800+ | qa-validator (569/3,079), talos-upgrade (617/2,887) |
+| Category | Lines | Words |
+|----------|-------|-------|
+| Small | 100-150 | <800 |
+| Medium | 150-300 | 800-1,500 |
+| Large (overdue for optimization) | 500+ | 2,800+ |
 
 **Targets:** Under 500 lines per Anthropic guidance. Under 300 lines and 2,000 words for focused agents. Extract heavy reference content to separate files or agent memory when exceeding these.
 
 ## 4. Memory Patterns
 
-**When to use `memory: project`:** Agents that run frequently and benefit from learning across invocations (cluster-validator, renovate-pr-analyzer, qa-validator).
+**When to use `memory: project`:** Agents that run frequently and benefit from learning across invocations.
 
 **`known-patterns.md` table format:**
 
@@ -71,16 +68,16 @@ All agents use structured output templates. Common structure:
 3. **Reasoning** — Why this verdict was reached
 4. **Actionable next steps** — Exact commands or file changes needed
 
-Agents feeding orchestrators (renovate-pr-analyzer) use rigid parseable formats. Standalone agents (etcd-maintenance) use human-readable reports.
+Agents feeding orchestrators use rigid parseable formats. Standalone agents use human-readable reports.
 
 ## 6. Handoff Patterns
 
-| Pattern | Description | Used By |
-|---------|-------------|---------|
-| GitHub issue comment | Post results via `gh issue comment` | cluster-validator, qa-validator, renovate-pr-analyzer |
-| Structured return to caller | Return verdict + evidence for calling skill to parse | renovate-pr-analyzer, qa-validator |
-| Terminal states | Named end states (SUCCESS/ROLLBACK/PARTIAL) with different templates | cluster-validator, talos-upgrade |
-| Fix-and-retry loop | Return BLOCKED with exact fixes; caller applies and re-invokes | qa-validator |
+| Pattern | Description |
+|---------|-------------|
+| GitHub issue comment | Post results via `gh issue comment` |
+| Structured return to caller | Return verdict + evidence for calling skill to parse |
+| Terminal states | Named end states (SUCCESS/ROLLBACK/PARTIAL) with different templates |
+| Fix-and-retry loop | Return BLOCKED with exact fixes; caller applies and re-invokes |
 
 Agents never chain directly to each other. Results flow through skills or the main conversation.
 
@@ -92,30 +89,27 @@ Agents never chain directly to each other. Results flow through skills or the ma
 3. Anti-conditions ("When NOT to use")
 4. 1-3 `<example>` blocks with `<commentary>`
 
-**Working example (cluster-validator):**
+**Template:**
 
 ```
-Validates live cluster state after changes are pushed to main.
-Checks Flux reconciliation, pod health, logs, and decides
-rollback vs roll-forward on failures.
+<Brief capability statement — what the agent does, one sentence.>
 
 **When to use:**
-- After user pushes to main branch
-- When user says "pushed", "merged", or "deployed"
-- After Claude merges a PR via `gh pr merge`
+- <Triggering condition 1>
+- <Triggering condition 2>
 
 **When NOT to use:**
-- Before git commit (use qa-validator instead)
-- After pushing to feature branches
+- <Anti-condition 1>
+- <Anti-condition 2>
 
 <example>
-Context: User pushed changes to main.
-user: "Just pushed the redis deployment"
-assistant: "I'll validate the deployment with cluster-validator."
+Context: <Situation that should trigger this agent.>
+user: "<Representative user message>"
+assistant: "<How the assistant should respond>"
 <commentary>
-Push to main triggers cluster-validator.
+<Why this triggers the agent.>
 </commentary>
 </example>
 ```
 
-**Anti-pattern (cnp-drop-investigator):** Flat prose description without structured when/not-to sections or examples. Harder for the routing system to match.
+**Anti-pattern:** Flat prose description without structured when/not-to sections or examples. Harder for the routing system to match.

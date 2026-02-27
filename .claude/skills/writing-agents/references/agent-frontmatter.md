@@ -3,7 +3,7 @@
 | Field | Format | Notes |
 |-------|--------|-------|
 | `name` | lowercase, numbers, hyphens | Max 64 chars. No reserved words ("anthropic", "claude") |
-| `description` | string, max 1024 chars | What + when. See [Description Field](../SKILL.md#description-field) |
+| `description` | string, max 1024 chars | What + when. See the Description Field section in SKILL.md |
 | `model` | `opus` / `sonnet` / `haiku` | Optional. See `project-patterns.md` Section 2 for selection guide |
 | `tools` | list of tool names | Optional. Omit for all tools. Prefer least privilege |
 | `disallowedTools` | list of tool names | Optional. Block specific tools |

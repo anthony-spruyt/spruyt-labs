@@ -22,6 +22,7 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 | Handoff patterns | `references/project-patterns.md` Section 6 |
 | Emphasis calibration | `references/anthropic-best-practices.md` Section 3 |
 | Parallel execution | `references/anthropic-best-practices.md` Section 6 |
+| Common mistakes | `references/common-mistakes.md` |
 
 ## Description Field
 
@@ -52,7 +53,7 @@ Canonical section order for this project:
 8. **Critical Rules** — Numbered constraints
 9. **Self-Improvement** — If using memory (see `references/project-patterns.md` Section 4)
 
-Not every agent needs all sections. Small focused agents (etcd-maintenance style) may only need Persona, Workflow, Rules, and Output Format.
+Not every agent needs all sections. Small focused agents may only need Persona, Workflow, Rules, and Output Format.
 
 **Output format:** Agents feeding orchestrators use rigid parseable formats. Standalone agents use human-readable reports. See `references/project-patterns.md` Section 5.
 
@@ -60,7 +61,7 @@ Not every agent needs all sections. Small focused agents (etcd-maintenance style
 
 ## Creation Workflow
 
-1. **Define persona** — Expert identity with domain expertise, 1-2 sentences
+1. **Define persona** — See Persona/Role in System Prompt Structure above
 2. **Write frontmatter** — Description with triggering conditions + examples (third person). Choose model and tools (least privilege — see `references/anthropic-best-practices.md` Section 9)
 3. **Structure system prompt** — Follow section order above
 4. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
@@ -72,11 +73,10 @@ Not every agent needs all sections. Small focused agents (etcd-maintenance style
 ## Optimization Workflow
 
 1. **Measure** — Count lines (`wc -l`) and words (`wc -w`). Identify largest sections
-2. **Remove duplicate context** — Check what's already in CLAUDE.md and `.claude/rules/`. Agents inherit these automatically. Don't repeat them — reference if needed ("follow inherited rules for X")
-3. **Calibrate emphasis** — Replace CRITICAL/MUST/NEVER with normal language for Claude 4.5/4.6. These models overtrigger on aggressive emphasis (see `references/anthropic-best-practices.md` Section 3). Reserve strong language only for true safety gates (e.g., "never expose secrets")
-4. **Remove over-explanations** — Delete explanations of things Opus already knows (Kubernetes, YAML, Git, bash, common tools). Focus on project-specific context it can't infer (see `references/anthropic-best-practices.md` Section 11)
-5. **Extract heavy content** — Move large reference tables, verbose examples, or command libraries to reference files or agent memory. Keep the main prompt as a workflow guide, not an encyclopedia
-6. **Verify** — Compare against `references/project-patterns.md` size benchmarks. Target: under 500 lines, under 300 for focused agents, under 2,000 words
+2. **Remove inherited context** — Check CLAUDE.md and `.claude/rules/`. Agents inherit these; reference, don't repeat
+3. **Calibrate emphasis and explanations** — Soften CRITICAL/MUST/NEVER for Claude 4.5/4.6 (see `references/anthropic-best-practices.md` Section 3). Remove explanations of things Opus knows (Section 12). Reserve strong language for true safety gates only
+4. **Extract heavy content** — Move large tables, verbose examples, or command libraries to reference files or agent memory
+5. **Verify** — Compare against `references/project-patterns.md` size benchmarks. Target: under 300 lines / 2,000 words for focused agents
 
 ## Common Mistakes
 
@@ -84,16 +84,7 @@ Not every agent needs all sections. Small focused agents (etcd-maintenance style
 |---------|-----|
 | Workflow summary in description | Brief capability + triggering conditions only. Put workflow in body |
 | CRITICAL/MANDATORY/NEVER overuse | Normal language. Claude 4.5/4.6 overtriggers on aggressive emphasis |
-| Explaining Kubernetes/YAML/Git basics | Remove. Opus knows these |
-| Copying CLAUDE.md secret rules | Remove. Agent inherits project rules |
 | 500+ line system prompt | Extract reference content to files. Target < 300 lines |
-| All tools inherited | Restrict to what's needed (least privilege) |
 | No output format specified | Add structured output template |
 | No examples in description | Add 1-2 `<example>` blocks with context/user/assistant/commentary |
-| Magic commands without explanation | Add brief comment explaining why (right altitude) |
-| No self-improvement for high-touch agents | Add memory pattern if agent runs frequently |
-| Vague scope enabling unnecessary subagent spawning | Add "Only make changes directly requested." Prefer Grep/Read over subagents for lookups |
-| Multi-goal agent | Split into focused agents. One clear goal, input, output per agent |
-| No confirmation gates for destructive actions | Add explicit guidance on which actions need user confirmation |
-| Independent checks run sequentially | Mark parallel groups: "Run in parallel: [list]. After those pass: [list]" (see `references/anthropic-best-practices.md` Section 6) |
-| No feedback loop for validation agents | Add validator -> fix -> retry pattern with structured output (file paths, line numbers, exact fixes) |
+| See full list | `references/common-mistakes.md` |
