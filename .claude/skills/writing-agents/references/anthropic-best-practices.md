@@ -14,8 +14,9 @@ Reference material from official Anthropic documentation. Each principle include
 8. [Subagent Design](#8-subagent-design)
 9. [Tool Scoping](#9-tool-scoping)
 10. [Feedback Loops](#10-feedback-loops)
-11. [Don't Over-Explain to Opus](#11-dont-over-explain-to-opus)
-12. [Don't Duplicate Inherited Context](#12-dont-duplicate-inherited-context)
+11. [Stop on Error](#11-stop-on-error)
+12. [Don't Over-Explain to Opus](#12-dont-over-explain-to-opus)
+13. [Don't Duplicate Inherited Context](#13-dont-duplicate-inherited-context)
 
 ---
 
@@ -79,13 +80,19 @@ Run validator -> fix errors -> repeat. This pattern greatly improves output qual
 
 Sources: https://claude.com/blog/building-agents-with-the-claude-agent-sdk, https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
 
-## 11. Don't Over-Explain to Opus
+## 11. Stop on Error
+
+For sequential multi-step workflows, add explicit termination conditions at each step. If an intermediate step fails, halt execution and report — do not continue to subsequent steps. Example patterns: "Do not proceed if linting fails", "If defrag fails on any node, stop and report." This prevents cascading failures where a broken intermediate state causes worse damage in later steps.
+
+Source: Observed pattern in project agents (qa-validator, etcd-maintenance, cluster-validator)
+
+## 12. Don't Over-Explain to Opus
 
 Claude Opus already knows Kubernetes, YAML, Git, common tools, and standard libraries. Remove explanations of concepts Opus understands. Focus on project-specific context it can't infer. Only add context Claude doesn't already have. Challenge each piece: "Can I assume Claude knows this?"
 
 Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
 
-## 12. Don't Duplicate Inherited Context
+## 13. Don't Duplicate Inherited Context
 
 Agents inherit CLAUDE.md and project rules automatically. Don't repeat secret handling rules, git conventions, or workflow constraints already in rules files. Reference them if needed ("follow inherited rules for X"), don't copy them. Once a tool executes deep in history, the raw output doesn't need to persist — discard intermediate outputs once their purpose is served.
 

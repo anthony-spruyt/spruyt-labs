@@ -7,15 +7,7 @@ description: Use when creating new agents, editing existing agent system prompts
 
 ## Overview
 
-Agents are system-prompt-driven autonomous workers. This skill provides the patterns and workflows for writing effective, token-efficient agent prompts.
-
-## When to Use
-
-- When NOT: skills, hooks, commands, slash commands — these are different components
-
-## Agent Anatomy — Frontmatter
-
-See `references/agent-frontmatter.md` for the complete field reference.
+Patterns and workflows for writing effective, token-efficient agent system prompts.
 
 ## Quick Reference
 
@@ -73,7 +65,7 @@ Not every agent needs all sections. Small focused agents (etcd-maintenance style
 3. **Structure system prompt** — Follow section order above
 4. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
 5. **Scope-limit Opus** — For agents that make modifications, add "Only make changes directly requested." Prefer direct Grep/Read over spawning subagents for simple lookups (see `references/anthropic-best-practices.md` Section 4)
-6. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. Add "stop on error" termination conditions for sequential multi-step workflows (see `references/anthropic-best-practices.md` Section 5)
+6. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, use strong language despite the general softening rule (e.g., "stop immediately with BLOCKED"). Add "stop on error" termination conditions for sequential multi-step workflows
 7. **Size check** — Target under 300 lines / 2,000 words for focused agents, under 500 lines max. Extract heavy reference to separate files or agent memory. Run `wc -l` and `wc -w` to verify
 8. **Test** — Run the agent against representative scenarios. Verify triggering. Check for overtriggering
 
