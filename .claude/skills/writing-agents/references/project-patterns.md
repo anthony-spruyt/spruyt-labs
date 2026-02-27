@@ -16,6 +16,8 @@ Patterns observed across the 6 existing agents in this repository. Use as refere
 
 ## 1. Agent Inventory
 
+> **Maintenance:** Update this table when agents are created, deleted, or significantly modified.
+
 | Agent | Lines | Words | Model | Tools | Memory | Purpose |
 |-------|-------|-------|-------|-------|--------|---------|
 | etcd-maintenance | 133 | 716 | sonnet | Bash | — | etcd health checks, defrag |

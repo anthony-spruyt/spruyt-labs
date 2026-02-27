@@ -1,36 +1,35 @@
 ---
 name: writing-agents
-description: Guides creating, editing, and maintaining Claude Code agents using Anthropic best practices. Use when creating new agents, editing existing agent system prompts, optimizing agent token efficiency, or maintaining agent quality. Triggers on "create agent", "improve agent", "optimize agent", "agent is too long", "agent isn't working well", or when reviewing agent files in .claude/agents/.
+description: Use when creating new agents, editing existing agent system prompts, optimizing agent token efficiency, or maintaining agent quality. Applies when agent is too long, not performing well, overtriggering, or when reviewing agent files in .claude/agents/. Does not apply to skills, hooks, commands, or slash commands.
 ---
 
 # Writing Agents
 
-Reference guide for creating, editing, and maintaining Claude Code agents. Incorporates Anthropic's official best practices for token efficiency, prompt calibration, and progressive disclosure.
+## Overview
+
+Agents are system-prompt-driven autonomous workers. This skill provides the patterns and workflows for writing effective, token-efficient agent prompts.
 
 ## When to Use
 
-- Creating a new agent
-- Optimizing an existing agent (too long, not performing well, overtriggering)
-- Reviewing agent quality
 - When NOT: skills, hooks, commands, slash commands — these are different components
 
 ## Agent Anatomy — Frontmatter
 
-| Field | Format | Notes |
-|-------|--------|-------|
-| `name` | lowercase, numbers, hyphens | Max 64 chars. No reserved words ("anthropic", "claude") |
-| `description` | string, max 1024 chars | What + when. See [Description Field](#description-field) below |
-| `model` | `opus` / `sonnet` / `haiku` | Optional. See `references/project-patterns.md` for selection guide |
-| `tools` | list of tool names | Optional. Omit for all tools. Prefer least privilege |
-| `disallowedTools` | list of tool names | Optional. Block specific tools |
-| `permissionMode` | string | Optional. Permission level for the agent |
-| `maxTurns` | integer | Optional. Limit agentic turns |
-| `skills` | list of skill names | Optional. Skills available to the agent |
-| `mcpServers` | list of server names | Optional. MCP servers available |
-| `hooks` | hook config object | Optional. Agent-specific hooks |
-| `memory` | `project` | Optional. Enables agent memory directory |
-| `background` | boolean | Optional. Run in background |
-| `isolation` | `worktree` | Optional. Run in isolated worktree |
+See `references/agent-frontmatter.md` for the complete field reference.
+
+## Quick Reference
+
+| Task | Reference |
+|------|-----------|
+| Frontmatter fields | `references/agent-frontmatter.md` |
+| Description examples | `references/project-patterns.md` Section 7 |
+| Model selection | `references/project-patterns.md` Section 2 |
+| Size targets | `references/project-patterns.md` Section 3 |
+| Memory patterns | `references/project-patterns.md` Section 4 |
+| Output format patterns | `references/project-patterns.md` Section 5 |
+| Handoff patterns | `references/project-patterns.md` Section 6 |
+| Emphasis calibration | `references/anthropic-best-practices.md` Section 3 |
+| Parallel execution | `references/anthropic-best-practices.md` Section 6 |
 
 ## Description Field
 
@@ -63,14 +62,20 @@ Canonical section order for this project:
 
 Not every agent needs all sections. Small focused agents (etcd-maintenance style) may only need Persona, Workflow, Rules, and Output Format.
 
+**Output format:** Agents feeding orchestrators use rigid parseable formats. Standalone agents use human-readable reports. See `references/project-patterns.md` Section 5.
+
+**Handoff patterns:** Choose from: GitHub issue comment, structured return to caller, terminal states (SUCCESS/ROLLBACK/PARTIAL), or fix-and-retry loop. See `references/project-patterns.md` Section 6.
+
 ## Creation Workflow
 
 1. **Define persona** — Expert identity with domain expertise, 1-2 sentences
 2. **Write frontmatter** — Description with triggering conditions + examples (third person). Choose model and tools (least privilege — see `references/anthropic-best-practices.md` Section 9)
 3. **Structure system prompt** — Follow section order above
 4. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
-5. **Size check** — Target under 300 lines / 2,000 words for focused agents, under 500 lines max. Extract heavy reference to separate files or agent memory. Run `wc -l` and `wc -w` to verify
-6. **Test** — Run the agent against representative scenarios. Verify triggering. Check for overtriggering
+5. **Scope-limit Opus** — For agents that make modifications, add "Only make changes directly requested." Prefer direct Grep/Read over spawning subagents for simple lookups (see `references/anthropic-best-practices.md` Section 4)
+6. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. Add "stop on error" termination conditions for sequential multi-step workflows (see `references/anthropic-best-practices.md` Section 5)
+7. **Size check** — Target under 300 lines / 2,000 words for focused agents, under 500 lines max. Extract heavy reference to separate files or agent memory. Run `wc -l` and `wc -w` to verify
+8. **Test** — Run the agent against representative scenarios. Verify triggering. Check for overtriggering
 
 ## Optimization Workflow
 
@@ -95,5 +100,8 @@ Not every agent needs all sections. Small focused agents (etcd-maintenance style
 | No examples in description | Add 1-2 `<example>` blocks with context/user/assistant/commentary |
 | Magic commands without explanation | Add brief comment explaining why (right altitude) |
 | No self-improvement for high-touch agents | Add memory pattern if agent runs frequently |
-| Vague agent goal encouraging subagent sprawl | One clear goal per agent. Add "when NOT to use subagents" guidance |
+| Vague scope enabling unnecessary subagent spawning | Add "Only make changes directly requested." Prefer Grep/Read over subagents for lookups |
+| Multi-goal agent | Split into focused agents. One clear goal, input, output per agent |
 | No confirmation gates for destructive actions | Add explicit guidance on which actions need user confirmation |
+| Independent checks run sequentially | Mark parallel groups: "Run in parallel: [list]. After those pass: [list]" (see `references/anthropic-best-practices.md` Section 6) |
+| No feedback loop for validation agents | Add validator -> fix -> retry pattern with structured output (file paths, line numbers, exact fixes) |

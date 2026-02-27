@@ -6,8 +6,8 @@ Reference material from official Anthropic documentation. Each principle include
 
 1. [Token Efficiency](#1-token-efficiency)
 2. [Right Altitude](#2-right-altitude)
-3. [Opus 4546 Calibration](#3-opus-4546-calibration)
-4. [Opus 4546 Overengineering Tendency](#4-opus-4546-overengineering-tendency)
+3. [Opus 4.5/4.6 Calibration](#3-opus-4546-calibration)
+4. [Opus 4.5/4.6 Overengineering Tendency](#4-opus-4546-overengineering-tendency)
 5. [Autonomy and Safety](#5-autonomy-and-safety)
 6. [Parallel Execution](#6-parallel-execution)
 7. [Progressive Disclosure](#7-progressive-disclosure)
