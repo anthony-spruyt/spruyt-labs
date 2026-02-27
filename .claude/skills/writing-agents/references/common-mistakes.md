@@ -18,3 +18,8 @@
 | Independent checks run sequentially | Mark parallel groups: "Run in parallel: [list]. After those pass: [list]" (see `references/anthropic-best-practices.md` Section 6) |
 | No feedback loop for validation agents | Add validator -> fix -> retry pattern with structured output (file paths, line numbers, exact fixes) |
 | Sequential workflow with no halt conditions | Add "stop on error" at each step. Do not proceed if intermediate step fails |
+| Dropping `tools` field during optimization | Verify all frontmatter fields survived. Missing `tools` silently grants all tools |
+| Description exceeds 1024 chars | Trim to 1-2 examples, remove workflow summary, shorten example dialogue |
+| Replacing exact commands with prose during optimization | Keep domain-specific commands with non-obvious flags. Prose like "then commit" loses precision vs exact `git commit -m "..."` |
+| Cutting behavioral anchor commands | Commands with specific flags (`--sort-by`, `-l app.kubernetes.io/name=`) guide behavior — not "basics Opus knows" |
+| No effectiveness check after optimization | Compare original vs optimized for lost domain-specific content not covered by inherited context |
