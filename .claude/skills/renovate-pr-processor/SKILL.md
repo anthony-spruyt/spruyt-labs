@@ -1,44 +1,36 @@
 ---
 name: renovate-pr-processor
-description: Use when reviewing, merging, or batch-processing open Renovate dependency update PRs. Triggers on "review renovate PRs", "merge renovate", "process renovate", "batch renovate", "handle renovate PRs", "check renovate PRs", or "/renovate".
+description: Use when reviewing, merging, or batch-processing open Renovate dependency update PRs. Triggers on "review renovate", "merge renovate", "process renovate", "batch renovate", "handle renovate PRs", or "/renovate".
 ---
 
 # Renovate PR Processor
-
-Batch-process all open Renovate PRs: analyze each for breaking changes in parallel, present findings for user confirmation, merge safe ones sequentially with cluster validation between each, and auto-revert on failures.
 
 ## Quick Reference
 
 | Item | Value |
 |------|-------|
-| Analysis agent | `renovate-pr-analyzer` (dispatched per PR) |
+| Analysis agent | `renovate-pr-analyzer` (per PR, parallel) |
 | Validation agent | `cluster-validator` (after each merge) |
-| Merge strategy | Squash via `gh pr merge --squash` |
+| Merge strategy | `gh pr merge --squash` |
 | Merge order | patch → minor → major → unlabeled |
-| Failure handling | Auto-revert, ask user to push, continue |
+| Failure handling | Auto-revert → user pushes → continue |
 
 ## Workflow
 
 ### Phase 1: DISCOVER
-
-Fetch all open Renovate PRs and sort by risk level.
 
 ```bash
 gh pr list --repo anthony-spruyt/spruyt-labs --author "renovate[bot]" \
   --json number,title,labels,headRefName --limit 50
 ```
 
-Sort PRs by risk level using labels:
-1. `dep/patch` — lowest risk
-2. `dep/minor` — medium risk
-3. `dep/major` — highest risk
-4. No `dep/*` label — treat as unknown risk, process last
+Sort by risk using labels: `dep/patch` (lowest) → `dep/minor` → `dep/major` (highest) → no label (last).
 
-If no PRs found, report "No open Renovate PRs" and exit.
+If no PRs found, report and exit.
 
 ### Phase 2: ANALYZE (parallel)
 
-Create a GitHub tracking issue for the batch run, listing all discovered PRs:
+Create a GitHub tracking issue for the batch run with all discovered PRs listed:
 
 ```bash
 gh issue create --repo anthony-spruyt/spruyt-labs \
@@ -51,7 +43,7 @@ Batch processing of open Renovate dependency update PRs.
 ## PRs in This Batch
 | PR | Title | Risk |
 |----|-------|------|
-| #N | <title> | patch / minor / major / unknown |
+| #N | <title> | patch/minor/major/unknown |
 
 ## Chore Type
 Dependency management
@@ -62,173 +54,79 @@ ISSUE_EOF
 )"
 ```
 
-Populate the PRs table with the actual discovered PRs before creating the issue.
-
-Dispatch `renovate-pr-analyzer` agent for EACH PR in parallel using the Task tool:
+Dispatch `renovate-pr-analyzer` per PR in parallel:
 
 ```
-For each PR, use Task tool with:
+Task tool with:
   subagent_type: "renovate-pr-analyzer"
   run_in_background: true
   prompt: "Analyze Renovate PR #<number> in anthony-spruyt/spruyt-labs for breaking changes.
            GitHub issue: #<tracking-issue-number>
-           Repository: anthony-spruyt/spruyt-labs
-           Analysis patterns: .claude/skills/renovate-pr-processor/references/analysis-patterns.md
-           Return your analysis in the MANDATORY output format specified in your instructions."
+           Repository: anthony-spruyt/spruyt-labs"
 ```
 
-Wait for all analysis agents to complete. Collect their verdicts.
+Wait for all agents to complete. Collect verdicts.
 
 ### Phase 3: REPORT & CONFIRM
 
-Present a summary table to the user:
+Present summary table grouped by verdict (SAFE/RISKY/UNKNOWN) with PR number, title, version change, and reasoning. Ask user to confirm which PRs to merge.
 
-```
-## Renovate PR Analysis Results
-
-### SAFE (will merge)
-| PR | Title | Version Change | Reasoning |
-|----|-------|---------------|-----------|
-| #N | ...   | X → Y (patch) | No breaking changes found |
-
-### RISKY (will skip)
-| PR | Title | Version Change | Reasoning |
-|----|-------|---------------|-----------|
-| #N | ...   | X → Y (major) | CRD changes detected |
-
-### UNKNOWN (will skip)
-| PR | Title | Reasoning |
-|----|-------|-----------|
-| #N | ...   | Could not find upstream changelog |
-
-Proceed with merging N SAFE PRs? (You can override any verdict)
-```
-
-Wait for user confirmation. The user may:
-- Approve as-is
-- Promote RISKY/UNKNOWN → merge (override)
-- Demote SAFE → skip (override)
+User may override any verdict (promote RISKY→merge or demote SAFE→skip).
 
 ### Phase 4: MERGE (sequential)
 
 For each confirmed PR, in risk order (patch → minor → major):
 
-#### Step 4.1: Check merge eligibility
+#### 4.1: Check eligibility & merge
 
 ```bash
 gh pr view <number> --repo anthony-spruyt/spruyt-labs --json mergeable,mergeStateStatus
-```
-
-If not mergeable (conflicts), skip with comment and continue.
-
-#### Step 4.2: Merge
-
-```bash
 gh pr merge <number> --squash --repo anthony-spruyt/spruyt-labs
 ```
 
-#### Step 4.3: Determine if cluster validation is needed
+If not mergeable (conflicts), skip with comment and continue to next PR.
 
-Check what files the PR changed:
+#### 4.2: Determine if cluster validation needed
 
 ```bash
 gh pr view <number> --repo anthony-spruyt/spruyt-labs --json files --jq '.files[].path'
 ```
 
-- If ANY file is under `cluster/` → run cluster-validator (Flux-managed resources changed)
-- If files are ONLY in `.taskfiles/`, `docs/`, `.github/`, or other non-cluster paths → skip cluster-validator
+- Files under `cluster/` → run cluster-validator
+- Files only in `.taskfiles/`, `docs/`, `.github/` → skip validation
 
-#### Step 4.4: Validate (if cluster resources changed)
-
-Pull locally to stay in sync:
+#### 4.3: Validate (if cluster resources changed)
 
 ```bash
 git pull origin main
 ```
 
-Dispatch `cluster-validator` agent with the tracking issue number:
+Dispatch `cluster-validator` with tracking issue number, PR details, dep version change, and affected namespace/app.
 
-```
-Use Task tool with:
-  subagent_type: "cluster-validator"
-  prompt: "Validate cluster after merging Renovate PR #<number> (<title>).
-           GitHub issue: #<tracking-issue-number>
-           Repository: anthony-spruyt/spruyt-labs
+#### 4.4: Handle validation result
 
-           The PR updated <dep-type> from <old-version> to <new-version>.
-           Focus validation on the affected namespace/app: <namespace>/<app>."
-```
+**SUCCESS:** Post comment on tracking issue, continue to next PR.
 
-#### Step 4.5: Handle validation result
-
-**On SUCCESS:**
-- Post comment on the tracking issue noting successful merge and validation
-- Continue to next PR
-
-**On FAILURE (ROLLBACK):**
-
-1. Revert the merge commit locally:
-   ```bash
-   git pull origin main
-   git revert HEAD --no-edit
-   ```
+**ROLLBACK:**
+1. `git pull origin main && git revert HEAD --no-edit`
 2. Ask user to push the revert
-3. After user confirms push, re-run cluster-validator to confirm rollback:
-   ```
-   Dispatch cluster-validator with:
-     prompt: "Validate cluster after reverting PR #<number>. Confirm rollback is clean.
-              GitHub issue: #<tracking-issue-number>"
-   ```
-4. **Record correction**: Compare the first validator run (which triggered ROLLBACK) against the rollback confirmation. If the first run misdiagnosed the issue (e.g., flagged a pre-existing condition as caused by the change), append a correction to `.claude/agent-memory/cluster-validator/known-patterns.md`:
-   - Add to the appropriate table (False Positives, Failure Signatures, or Operational Patterns)
-   - Set Count=1, Last Seen=today, Added=today
-   - Commit: `fix(agents): update cluster-validator patterns from renovate run <date>`
-5. Post comment on the PR explaining the failure and revert
+3. Re-run cluster-validator to confirm rollback
+4. **Record correction**: If first run misdiagnosed the issue, append correction to `.claude/agent-memory/cluster-validator/known-patterns.md` (Count=1, Last Seen=today, Added=today). Commit: `fix(agents): update cluster-validator patterns from renovate run <date>`
+5. Post comment on PR explaining failure and revert
 6. Continue to next PR
 
-**On FAILURE (ROLL-FORWARD):**
-
-1. Apply the suggested fix from cluster-validator
-2. Commit the fix
-3. Ask user to push
-4. Re-run cluster-validator to confirm
-5. **Record correction**: If the original failure was caused by a pattern not yet in the cluster-validator's known patterns (e.g., a new failure signature), append it to `.claude/agent-memory/cluster-validator/known-patterns.md`:
-   - Add to Failure Signatures table with the error pattern, root cause, and resolution
-   - Set Count=1, Last Seen=today, Added=today
-   - Commit: `fix(agents): update cluster-validator patterns from renovate run <date>`
-6. Continue to next PR
+**ROLL-FORWARD:**
+1. Apply suggested fix from cluster-validator, commit
+2. Ask user to push
+3. Re-run cluster-validator to confirm
+4. **Record correction**: If new failure signature, append to cluster-validator known-patterns. Commit: `fix(agents): update cluster-validator patterns from renovate run <date>`
+5. Continue to next PR
 
 ### Phase 5: SUMMARY
 
-Print final report and post to tracking issue:
+Post final report to tracking issue with tables for: Merged (PR, title, version, validated?), Skipped (PR, title, reason), Reverted (PR, title, failure reason), and totals.
 
-```
-## Renovate Batch Processing Complete
-
-### Merged Successfully
-| PR | Title | Version Change | Cluster Validated |
-|----|-------|---------------|-------------------|
-| #N | ...   | X → Y         | Yes / Skipped     |
-
-### Skipped (RISKY/UNKNOWN)
-| PR | Title | Reason |
-|----|-------|--------|
-| #N | ...   | Breaking changes: CRD update required |
-
-### Reverted (failed validation)
-| PR | Title | Failure Reason |
-|----|-------|----------------|
-| #N | ...   | Pod CrashLoopBackOff after upgrade |
-
-### Summary
-- Total PRs: N
-- Merged: N
-- Skipped: N
-- Reverted: N
-- Tracking issue: #<number>
-```
-
-Post this summary as a comment on the tracking issue. If all PRs were processed successfully (none reverted), close the tracking issue.
+If all PRs processed successfully (none reverted), close the tracking issue.
 
 ## Edge Cases
 
@@ -242,9 +140,7 @@ Post this summary as a comment on the tracking issue. If all PRs were processed 
 | PR changes only non-cluster files | Skip cluster-validator after merge |
 | Multiple PRs touch same app | Process sequentially; second PR may conflict after first merges — check mergeable state |
 
-## Additional Resources
+## References
 
-### Reference Files
-
-- **`references/analysis-patterns.md`** — Static reference: dependency type classification, breaking change signals, changelog fetch strategies, parsing heuristics, and impact assessment procedures
-- **Agent memory** — The `renovate-pr-analyzer` agent maintains its own `known-patterns.md` with dynamic learnings (repo mappings, false positives, impact scenarios) that accumulate across runs
+- `references/analysis-patterns.md` — Breaking change detection patterns by dependency type
+- `.claude/agent-memory/renovate-pr-analyzer/known-patterns.md` — Dynamic learnings from previous runs
