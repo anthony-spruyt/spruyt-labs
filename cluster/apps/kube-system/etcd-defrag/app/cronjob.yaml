@@ -37,6 +37,7 @@ spec:
                 - -c
                 - |
                   set -e
+                  # renovate: depName=siderolabs/talos datasource=github-releases
                   wget -qO /tmp/talosctl "https://github.com/siderolabs/talos/releases/download/v1.12.4/talosctl-linux-amd64"
                   chmod +x /tmp/talosctl
                   export PATH="/tmp:$${PATH}"
