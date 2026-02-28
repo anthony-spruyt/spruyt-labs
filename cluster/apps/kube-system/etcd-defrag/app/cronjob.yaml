@@ -1,0 +1,122 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.1-standalone-strict/cronjob-batch-v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-defrag
+  namespace: kube-system
+spec:
+  schedule: "0 16 * * 0" # Monday 2:00 AM AEST (UTC+10)
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+          serviceAccountName: etcd-defrag
+          automountServiceAccountToken: false
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+          containers:
+            - name: etcd-defrag
+              image: ghcr.io/siderolabs/talosctl:v1.12.4
+              env:
+                - name: NODES
+                  value: "e2-1 e2-2 e2-3"
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  echo "=== etcd Defragmentation Job ==="
+                  echo "Nodes: $${NODES}"
+                  echo ""
+
+                  # Get etcd status to find the leader
+                  echo "Checking etcd status..."
+                  LEADER=""
+                  FOLLOWERS=""
+
+                  for node in $${NODES}; do
+                    STATUS=$$(talosctl etcd status --nodes "$${node}" 2>&1) || {
+                      echo "ERROR: Failed to get etcd status from $${node}"
+                      exit 1
+                    }
+                    echo "$${STATUS}"
+
+                    # Check if this node is the leader
+                    # talosctl etcd status output has columns: NODE, MEMBER, LEADER, TERM, INDEX, etc.
+                    # When MEMBER ID equals LEADER ID, that node is the leader
+                    if echo "$${STATUS}" | tail -1 | awk '{if ($2 == $3) exit 0; else exit 1}'; then
+                      LEADER="$${node}"
+                      echo "  -> $${node} is the LEADER"
+                    else
+                      FOLLOWERS="$${FOLLOWERS} $${node}"
+                      echo "  -> $${node} is a follower"
+                    fi
+                  done
+
+                  if [ -z "$${LEADER}" ]; then
+                    echo "ERROR: Could not determine etcd leader"
+                    exit 1
+                  fi
+
+                  echo ""
+                  echo "Defrag order: followers [$${FOLLOWERS} ] then leader [ $${LEADER} ]"
+                  echo ""
+
+                  # Defrag followers first
+                  for node in $${FOLLOWERS}; do
+                    echo "=== Defragging follower: $${node} ==="
+                    talosctl etcd defrag --nodes "$${node}"
+                    echo "Status after defrag:"
+                    talosctl etcd status --nodes "$${node}"
+                    echo "Waiting 10s for cluster to stabilize..."
+                    sleep 10
+                  done
+
+                  # Defrag leader last
+                  echo "=== Defragging leader: $${LEADER} ==="
+                  talosctl etcd defrag --nodes "$${LEADER}"
+                  echo "Status after defrag:"
+                  talosctl etcd status --nodes "$${LEADER}"
+
+                  echo ""
+                  echo "=== etcd defragmentation complete ==="
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 10001
+                runAsGroup: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /var/run/secrets/talos.dev
+                  name: talos-secrets
+                  readOnly: true
+          volumes:
+            - name: talos-secrets
+              secret:
+                secretName: etcd-defrag-talos-secrets
+          restartPolicy: OnFailure
