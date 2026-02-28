@@ -67,35 +67,59 @@ Run independent checks simultaneously using multiple tool calls per message.
 
 ## Full Cluster Reconciliation Wait
 
-**Do not snapshot cluster state once and report.** Wait for the full reconciliation wave to settle. Dependency chains (e.g., `firefly-iii` -> `firemerge` -> `traefik-ingress`) take 3-5 minutes.
+**STOP: You MUST wait for reconciliation to complete before reporting any verdict.** Do not snapshot cluster state once and report. Dependency chains take 3-5 minutes to settle.
 
-### Get current revision
+### Reconciliation Timeline
+
+| Time After Push | Expected State |
+|-----------------|----------------|
+| 0-30s | Source controller fetching |
+| 30-60s | Kustomizations reconciling |
+| 60-120s | Resources applied, pods starting |
+| 120-180s | Health checks passing |
+| 180-300s | Dependency chains settling |
+| 300s+ | If not ready, likely a genuine issue |
+
+### Step 1: Wait for directly affected resource
+
+```bash
+# Wait for the specific kustomization that was changed
+kubectl wait --for=condition=Ready kustomization/<name> -n flux-system --timeout=180s
+```
+
+### Step 2: Wait for full cluster to settle
 
 ```bash
 CURRENT_REV=$(git rev-parse --short HEAD)
-```
 
-### Wait-and-retry loop
-
-```bash
-# Repeat up to 3 times with 60s between checks
+# Repeat up to 5 times with 60s between checks (5 min total)
 # flux output: NAMESPACE NAME REVISION SUSPENDED READY MESSAGE
 # Pattern matches Suspended=False AND Ready=False (adjacent columns)
-for attempt in 1 2 3; do
+for attempt in 1 2 3 4 5; do
   NOT_READY=$(flux get kustomizations -A --no-header 2>/dev/null \
     | grep -E "False\s+False" || true)
   if [ -z "$NOT_READY" ]; then
     echo "All kustomizations ready"
     break
   fi
-  if [ "$attempt" -lt 3 ]; then
-    echo "Attempt $attempt: some kustomizations not ready, waiting 60s..."
+  echo "Attempt $attempt/5: some kustomizations not ready..."
+  echo "$NOT_READY"
+  if [ "$attempt" -lt 5 ]; then
+    echo "Waiting 60s..."
     sleep 60
   fi
 done
 ```
 
-### Classify remaining non-ready Kustomizations
+**If kustomizations are still not ready after 5 attempts, check each one individually before classifying.**
+
+### Step 3: Classify remaining non-ready Kustomizations
+
+```bash
+# For each non-ready kustomization, check its revision:
+flux get kustomization <name> -n flux-system
+# Compare REVISION column against $CURRENT_REV
+```
 
 | Condition | Classification | Action |
 |-----------|---------------|--------|
@@ -238,7 +262,7 @@ flux resume kustomization <name>
 2. **Never close issues** — only post comments
 3. Follow inherited secret handling rules
 4. Always run actual commands to verify; never assume success
-5. Wait for full reconciliation wave before classifying results
+5. **Wait for full reconciliation wave** — run the wait loop (5 attempts × 60s) before classifying ANY results. Never report a verdict based on a single snapshot
 6. Verify dependency chains end-to-end
 7. Follow inherited research priority (Context7 -> GitHub -> WebFetch -> WebSearch)
 
