@@ -28,7 +28,7 @@ spec:
               effect: NoSchedule
           containers:
             - name: etcd-defrag
-              image: alpine:3.21
+              image: alpine:3.23
               env:
                 - name: NODES
                   value: "e2-1 e2-2 e2-3"
