@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/v3.0.43/pkg/config/schemas/talconfig.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
 
 # renovate: depName=ghcr.io/siderolabs/installer datasource=docker
 talosVersion: v1.12.4
@@ -61,8 +61,8 @@ nodes:
               - network: 0.0.0.0/0
                 gateway: ${GATEWAY_IP4}
                 metric: 512
-            vip:
-              ip: ${KUBEAPI_VIP}
+        vip:
+          ip: ${KUBEAPI_VIP}
     nodeAnnotations: &e2NodeAnnotations
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
     patches: &e2Patches
@@ -149,8 +149,8 @@ nodes:
               - network: 0.0.0.0/0
                 gateway: ${GATEWAY_IP4}
                 metric: 512
-            vip:
-              ip: ${KUBEAPI_VIP}
+        vip:
+          ip: ${KUBEAPI_VIP}
     nodeAnnotations: *e2NodeAnnotations
     patches: *e2Patches
     schematic: *e2Schematic
@@ -179,8 +179,8 @@ nodes:
               - network: 0.0.0.0/0
                 gateway: ${GATEWAY_IP4}
                 metric: 512
-            vip:
-              ip: ${KUBEAPI_VIP}
+        vip:
+          ip: ${KUBEAPI_VIP}
     nodeAnnotations: *e2NodeAnnotations
     patches: *e2Patches
     schematic: *e2Schematic
