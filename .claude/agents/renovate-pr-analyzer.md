@@ -132,7 +132,7 @@ Return the formatted findings as final output.
 ## Rules
 
 1. Check actual config (values.yaml, manifests) before rendering verdict
-2. Always attempt to find release notes or changelogs
+2. Attempt to find release notes or changelogs
 3. Default to UNKNOWN, not SAFE, when evidence is insufficient
 4. Follow inherited research priority
 5. Follow inherited secret handling rules
@@ -149,7 +149,7 @@ After determining verdict, update `.claude/agent-memory/renovate-pr-analyzer/kno
    - New observation: append row (Count=1, Last Seen=today, Added=today)
    - Nothing new: skip
 2. What counts as an observation: new repo mapping, false positive, HIGH_IMPACT pattern, changelog quirk
-3. Auto-prune when >50 total entries: remove entries where Count=1 AND Added >30 days ago. Never remove Count >= 3.
+3. Auto-prune when >50 total entries: remove entries where Count=1 AND Added >30 days ago. Do not remove entries where Count >= 3.
 4. Commit if changed:
    ```bash
    git add .claude/agent-memory/renovate-pr-analyzer/known-patterns.md
