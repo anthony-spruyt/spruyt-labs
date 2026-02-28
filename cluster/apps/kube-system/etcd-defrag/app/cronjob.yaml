@@ -28,7 +28,7 @@ spec:
               effect: NoSchedule
           containers:
             - name: etcd-defrag
-              image: ghcr.io/siderolabs/talosctl:v1.12.4
+              image: alpine:3.21
               env:
                 - name: NODES
                   value: "e2-1 e2-2 e2-3"
@@ -37,6 +37,9 @@ spec:
                 - -c
                 - |
                   set -e
+                  wget -qO /tmp/talosctl "https://github.com/siderolabs/talos/releases/download/v1.12.4/talosctl-linux-amd64"
+                  chmod +x /tmp/talosctl
+                  export PATH="/tmp:$${PATH}"
 
                   echo "=== etcd Defragmentation Job ==="
                   echo "Nodes: $${NODES}"
@@ -115,8 +118,12 @@ spec:
                 - mountPath: /var/run/secrets/talos.dev
                   name: talos-secrets
                   readOnly: true
+                - mountPath: /tmp
+                  name: tmp
           volumes:
             - name: talos-secrets
               secret:
                 secretName: etcd-defrag-talos-secrets
+            - name: tmp
+              emptyDir: {}
           restartPolicy: OnFailure

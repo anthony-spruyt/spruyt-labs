@@ -13,7 +13,7 @@ misconfigurations:
   - id: AVD-KSV-0037
     paths:
       - cluster/apps/kube-system/etcd-defrag/app/cronjob.yaml
-  # ghcr.io/siderolabs is the official Talos registry (Sidero Labs)
+  # Alpine is a trusted base image (Docker Official Image)
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/kube-system/etcd-defrag/app/cronjob.yaml
