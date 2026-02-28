@@ -17,6 +17,7 @@ Error patterns and their known resolutions.
 | Error Pattern | Root Cause | Resolution | Count | Last Seen | Added |
 |---------------|------------|------------|-------|-----------|-------|
 | `exec: "/bin/sh": stat /bin/sh: no such file or directory` in CronJob pod | Scratch-based container image (e.g., `ghcr.io/siderolabs/talosctl`) has no shell | Use an image with a shell or restructure command to avoid shell | 1 | 2026-02-28 | 2026-02-28 |
+| Flux envsubst mangles awk `$N` field references in inline scripts | Flux post-build `envsubst` treats `$N` as variable references even inside YAML strings/single-quoted awk | Escape all awk field refs as `$$N` in Flux-managed YAML (e.g., `$$2`, `$$8`) | 1 | 2026-02-28 | 2026-02-28 |
 
 ## False Positives
 

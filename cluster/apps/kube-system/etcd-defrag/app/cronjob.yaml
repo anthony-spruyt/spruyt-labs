@@ -61,7 +61,8 @@ spec:
                     # Check if this node is the leader
                     # talosctl etcd status output has columns: NODE, MEMBER, LEADER, TERM, INDEX, etc.
                     # When MEMBER ID equals LEADER ID, that node is the leader
-                    if echo "$${STATUS}" | tail -1 | awk '{if ($2 == $3) exit 0; else exit 1}'; then
+                    # Fields: $$1=NODE $$2=MEMBER $$3=DB_SIZE_NUM $$4=DB_SIZE_UNIT ... $$8=LEADER
+                    if echo "$${STATUS}" | tail -1 | awk '{if ($$2 == $$8) exit 0; else exit 1}'; then
                       LEADER="$${node}"
                       echo "  -> $${node} is the LEADER"
                     else
