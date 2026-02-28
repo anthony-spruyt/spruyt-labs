@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.1-standalone-strict/role-rbac-v1.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/role-rbac-v1.json
 # Role allowing Authentik to deploy and manage outposts in this namespace
 # Note: This duplicates firefly-iii/app/authentik-outpost-rbac.yaml for the same namespace
 # Kubernetes will reconcile both to the same Role (idempotent)
@@ -57,7 +57,7 @@ rules:
       - list
       - patch
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.1-standalone-strict/rolebinding-rbac-v1.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/rolebinding-rbac-v1.json
 # Bind the role to Authentik's service account (cross-namespace)
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
