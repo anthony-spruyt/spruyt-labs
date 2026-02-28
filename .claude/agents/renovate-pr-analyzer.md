@@ -6,6 +6,8 @@ memory: project
 tools:
   - Bash
   - Read
+  - Write
+  - Edit
   - Grep
   - Glob
   - WebFetch
