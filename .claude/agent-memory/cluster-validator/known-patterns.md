@@ -10,6 +10,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 2 | 2026-02-28 | 2026-02-25 |
 | authentik dependency chain (authentik → many apps → traefik-ingress) settles within ~90s | Full cluster reconciliation wait after flux-system changes | 3 | 2026-02-28 | 2026-02-25 |
 | CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 2 | 2026-02-28 | 2026-02-28 |
+| YAML comment-only changes (e.g., schema directives) reconcile instantly with no resource drift | Kustomize strips comments, producing identical output | 1 | 2026-03-01 | 2026-03-01 |
 
 ## Failure Signatures
 
