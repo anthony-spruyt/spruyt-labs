@@ -9,10 +9,11 @@ misconfigurations:
       - cluster/apps/traefik/traefik/ingress/kube-system/certificates.yaml
       - cluster/apps/traefik/traefik/ingress/kube-system/ingress-routes.yaml
 
-  # etcd-defrag CronJob - must run in kube-system (etcd is a control-plane component)
+  # etcd-defrag - must run in kube-system (etcd is a control-plane component)
   - id: AVD-KSV-0037
     paths:
       - cluster/apps/kube-system/etcd-defrag/app/cronjob.yaml
+      - cluster/apps/kube-system/etcd-defrag/app/serviceaccount.yaml
   # Alpine is a trusted base image (Docker Official Image)
   - id: AVD-KSV-0125
     paths:
