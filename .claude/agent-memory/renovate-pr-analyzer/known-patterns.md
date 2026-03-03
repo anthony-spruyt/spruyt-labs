@@ -33,7 +33,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance` | `controlplaneio-fluxcd/flux-operator` (same repo; chart is OCI artifact from operator project) | 1 | 2026-02-25 | 2026-02-25 |
 | `oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack` | `VictoriaMetrics/helm-charts` | 1 | 2026-02-25 | 2026-02-25 |
 | Velero Helm chart | `vmware-tanzu/helm-charts` (NOT `vmware-tanzu/velero` which is the app repo). Releases tagged `velero-X.Y.Z`. | 1 | 2026-02-25 | 2026-02-25 |
-| `ghcr.io/openclaw/openclaw` (container image) | `openclaw/openclaw` | 1 | 2026-02-25 | 2026-02-25 |
+| `ghcr.io/openclaw/openclaw` (container image) | `openclaw/openclaw` | 2 | 2026-03-03 | 2026-02-25 |
 | `oci://ghcr.io/victoriametrics/helm-charts/victoria-logs-single` | `VictoriaMetrics/helm-charts` (chart repo) + `VictoriaMetrics/VictoriaLogs` (app repo; VictoriaLogs moved to separate repo from VictoriaMetrics) | 1 | 2026-02-26 | 2026-02-26 |
 | `redis/redisinsight` (Docker image) | `redis/RedisInsight` | 1 | 2026-02-28 | 2026-02-28 |
 
@@ -43,6 +43,9 @@ Breaking changes that never matter for this homelab.
 
 | Breaking Change | Why Usually NO_IMPACT | Count | Last Seen | Added |
 |----------------|----------------------|------:|-----------|-------|
+| openclaw channel-specific breaking changes (Zalo, Telegram, LINE, Feishu, WhatsApp defaults) | We only use Discord; channel-specific breaks for other platforms are irrelevant | 1 | 2026-03-03 | 2026-03-03 |
+| openclaw `tools.profile` default changes | We explicitly configure `tools.profile: "full"` so default changes are overridden | 1 | 2026-03-03 | 2026-03-03 |
+| openclaw Plugin SDK API changes (`registerHttpHandler` etc.) | We do not develop custom openclaw plugins; only use bundled/community plugins | 1 | 2026-03-03 | 2026-03-03 |
 
 ## Common HIGH_IMPACT Scenarios
 
