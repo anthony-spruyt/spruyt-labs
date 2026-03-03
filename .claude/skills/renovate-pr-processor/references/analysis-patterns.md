@@ -138,3 +138,41 @@ Check agent memory tables for accumulated patterns:
 - "Breaking Change False Positives" — changes that don't affect our config
 - "Common NO_IMPACT Scenarios" — changes that never matter for this homelab
 - "Common HIGH_IMPACT Scenarios" — changes that frequently affect this homelab
+
+## Feature Opportunity Signals
+
+### Keywords (case-insensitive)
+
+**High signal (likely notable feature):**
+- "now supports", "introducing", "new feature", "added support for"
+- "enabled by default", "native support", "built-in"
+
+**Medium signal (possibly notable):**
+- "added", "new option", "new flag", "new parameter"
+- "experimental", "beta", "preview", "opt-in"
+
+**Low signal (skip):**
+- "internal", "refactor", "cleanup", "minor improvement"
+- "documentation", "typo", "CI", "test"
+
+### Relevance Assessment Against Our Config
+
+A new feature is only relevant if it applies to what we deploy.
+
+| Feature Type | Check | HIGH_RELEVANCE | MEDIUM_RELEVANCE | LOW_RELEVANCE |
+|-------------|-------|----------------|------------------|---------------|
+| New config option | Is the parent feature in our values.yaml? | Yes, and we'd benefit from the option | Yes, but unclear benefit | Parent feature not used |
+| New capability | Do we deploy this component? | Yes, replaces a workaround or fills a gap | Yes, but no immediate need | Component not deployed |
+| Performance improvement | Do we use the affected codepath? | Yes, and we have resource constraints | Possibly | Unrelated codepath |
+| New integration | Do we run both systems? | Yes, currently using manual glue | Yes, one or both deployed | Neither deployed |
+| Security feature | Does it affect our exposure? | Yes, hardens something we expose | Possibly relevant | Not applicable |
+
+### Architecture-Aware Matching
+
+Cross-reference features against deployed stack by checking:
+
+1. **CRDs in cluster** — `Grep for 'kind:' in cluster/apps/` to find deployed resource types
+2. **Helm values** — Features matching keys in `values.yaml` files
+3. **Ingress/networking** — Features related to Cilium, Traefik, Cloudflare patterns we use
+4. **Storage** — Features related to Rook Ceph patterns we use
+5. **Observability** — Features related to VictoriaMetrics, Grafana patterns we use
