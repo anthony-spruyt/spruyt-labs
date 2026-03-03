@@ -198,6 +198,11 @@
             }
           }
         }
+      },
+      "threadBindings": {
+        "enabled": true,
+        "idleHours": 72,
+        "maxAgeHours": 0
       }
     }
   },
