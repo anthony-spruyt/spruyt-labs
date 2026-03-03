@@ -69,6 +69,19 @@ A breaking change only matters if it affects what we actually use. Read values.y
 
 Consult agent memory tables (False Positives, NO_IMPACT, HIGH_IMPACT scenarios) for known patterns.
 
+### 5.5 Feature Opportunity Analysis
+
+Parse "Added"/"Features"/"New" sections from the changelog (already fetched in step 3).
+
+For each notable new feature (matching high/medium signal keywords from analysis-patterns):
+
+1. Research what it does — use Context7, upstream GitHub docs, or README
+2. Cross-reference against deployed config (already loaded in step 5): what components are deployed, what config patterns are used, what CRDs exist
+3. Evaluate: Does it replace a current workaround? Fill a known gap? Improve an existing pattern?
+4. Classify using the relevance assessment table in analysis-patterns
+
+Skip this step entirely if the changelog has no "Added"/"Features" sections or only low-signal items.
+
 ### 6. Determine Verdict
 
 Use scoring heuristic from analysis-patterns.
@@ -108,6 +121,13 @@ Use this structure — the orchestrating skill parses it:
 
 ### Upstream Issues
 <Relevant open issues, or "None found">
+
+### Feature Opportunities
+| Feature | Relevance | Why Relevant | Current State |
+|---------|-----------|-------------|---------------|
+| <feature name> | HIGH/MEDIUM | <how it applies to our setup> | <what we currently do instead> |
+
+<If none found or all LOW_RELEVANCE: omit this section entirely>
 
 ### Changelog Summary
 <3-5 bullet points>
