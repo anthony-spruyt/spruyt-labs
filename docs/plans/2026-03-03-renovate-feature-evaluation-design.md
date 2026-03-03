@@ -12,7 +12,8 @@ Add feature opportunity evaluation to the renovate PR processing workflow. When 
 | Output | Separate GitHub issue | Decouples safety analysis from feature exploration |
 | Merge impact | Purely informational | Never affects SAFE/RISKY/UNKNOWN verdict |
 | Relevance matching | Derive from deployed stack | Uses the config already loaded during impact analysis |
-| Adoption tracking | None (implicit) | Agent sees adopted features in config on next run; memory tracks false relevance only |
+| Adoption tracking | None (implicit) | Agent sees adopted features in config on next run; no feedback mechanism for false relevance |
+| Memory | No new tables | Agent has no feedback signal to learn from — relevance matching is config-derived at runtime |
 
 ## Changes
 
@@ -29,8 +30,7 @@ Add feature opportunity evaluation to the renovate PR processing workflow. When 
    - `HIGH_RELEVANCE` — Directly applicable to current deployment (replaces workaround, improves existing feature we use)
    - `MEDIUM_RELEVANCE` — Potentially useful but requires investigation or config changes
    - `LOW_RELEVANCE` — Not applicable to current setup (skip from output)
-4. Check `known-patterns.md` "Feature Relevance False Positives" table — suppress features matching known false patterns
-5. Add `### Feature Opportunities` section to output (only if HIGH/MEDIUM items exist)
+4. Add `### Feature Opportunities` section to output (only if HIGH/MEDIUM items exist)
 
 **New output section:**
 
@@ -40,19 +40,6 @@ Add feature opportunity evaluation to the renovate PR processing workflow. When 
 |---------|-----------|-------------|---------------|
 | <feature name> | HIGH/MEDIUM | <how it applies to our setup> | <what we currently use/do instead> |
 ```
-
-**Memory: new table in `known-patterns.md`:**
-
-```
-## Feature Relevance False Positives
-
-Features flagged as relevant that don't apply to this homelab.
-
-| Dependency | Feature | Why NOT Relevant | Count | Last Seen | Added |
-|------------|---------|-----------------|------:|-----------|-------|
-```
-
-Self-improvement step updates this table when agent detects a mismatch pattern (e.g., Windows-only feature flagged because we use the dependency on Linux).
 
 ### Skill: `renovate-pr-processor`
 

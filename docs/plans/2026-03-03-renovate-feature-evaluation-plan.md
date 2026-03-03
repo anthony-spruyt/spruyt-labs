@@ -32,7 +32,6 @@ Currently the renovate workflow only evaluates merge safety (breaking changes, d
 - [ ] Analyzer classifies features as HIGH_RELEVANCE, MEDIUM_RELEVANCE, or LOW_RELEVANCE
 - [ ] Analyzer includes `### Feature Opportunities` section in output (HIGH/MEDIUM only)
 - [ ] Skill collects feature opportunities from all analyzers and creates a separate GitHub issue
-- [ ] New "Feature Relevance False Positives" memory table in known-patterns.md
 - [ ] analysis-patterns.md has new "Feature Opportunity Signals" section
 - [ ] Existing verdict logic (SAFE/RISKY/UNKNOWN) is completely unchanged
 
@@ -116,36 +115,7 @@ Ref #<issue>"
 
 ---
 
-### Task 3: Add Feature Relevance False Positives Table to known-patterns.md
-
-**Files:**
-- Modify: `.claude/agent-memory/renovate-pr-analyzer/known-patterns.md`
-
-**Step 1: Add new table section**
-
-Insert before the existing `## Analysis Notes` section:
-
-```markdown
-## Feature Relevance False Positives
-
-Features flagged as relevant that don't apply to this homelab.
-
-| Dependency | Feature | Why NOT Relevant | Count | Last Seen | Added |
-|------------|---------|-----------------|------:|-----------|-------|
-```
-
-**Step 2: Commit**
-
-```bash
-git add .claude/agent-memory/renovate-pr-analyzer/known-patterns.md
-git commit -m "feat(agents): add feature relevance false positives table to analyzer memory
-
-Ref #<issue>"
-```
-
----
-
-### Task 4: Update renovate-pr-analyzer Agent
+### Task 3: Update renovate-pr-analyzer Agent
 
 **Files:**
 - Modify: `.claude/agents/renovate-pr-analyzer.md`
@@ -176,7 +146,6 @@ For each notable new feature (matching high/medium signal keywords from analysis
 2. Cross-reference against deployed config (already loaded in step 5): what components are deployed, what config patterns are used, what CRDs exist
 3. Evaluate: Does it replace a current workaround? Fill a known gap? Improve an existing pattern?
 4. Classify using the relevance assessment table in analysis-patterns
-5. Check "Feature Relevance False Positives" in agent memory — suppress matches
 
 Skip this step entirely if the changelog has no "Added"/"Features" sections or only low-signal items.
 ```
@@ -194,15 +163,7 @@ In step 7 (Format Output), insert after `### Upstream Issues`:
 <If none found or all LOW_RELEVANCE: omit this section entirely>
 ```
 
-**Step 4: Update self-improvement section**
-
-In step 9 (Self-Improvement), add to the "What counts as an observation" list:
-
-```
-feature relevance false positive (feature flagged HIGH/MEDIUM that clearly doesn't apply)
-```
-
-**Step 5: Verify size is within targets**
+**Step 4: Verify size is within targets**
 
 ```bash
 wc -l .claude/agents/renovate-pr-analyzer.md
@@ -211,7 +172,7 @@ wc -w .claude/agents/renovate-pr-analyzer.md
 
 Target: under 300 lines, under 2,000 words. If over, look for Opus-known content or inherited context to trim elsewhere in the agent.
 
-**Step 6: Commit**
+**Step 5: Commit**
 
 ```bash
 git add .claude/agents/renovate-pr-analyzer.md
@@ -219,14 +180,14 @@ git commit -m "feat(agents): add feature opportunity analysis to renovate-pr-ana
 
 Adds step 5.5 for evaluating new features from changelogs against
 deployed config. Outputs Feature Opportunities table for HIGH/MEDIUM
-relevance items. Updates self-improvement to track false positives.
+relevance items.
 
 Ref #<issue>"
 ```
 
 ---
 
-### Task 5: Update renovate-pr-processor Skill
+### Task 4: Update renovate-pr-processor Skill
 
 **Files:**
 - Modify: `.claude/skills/renovate-pr-processor/SKILL.md`
@@ -316,7 +277,7 @@ Ref #<issue>"
 
 ---
 
-### Task 6: Validate Agent Changes (writing-agents Phase 2)
+### Task 5: Validate Agent Changes (writing-agents Phase 2)
 
 Follow the writing-agents validation workflow. Dispatch two parallel sub-agents:
 
@@ -334,7 +295,7 @@ Follow the writing-agents validation workflow. Dispatch two parallel sub-agents:
 
 ---
 
-### Task 7: Validate Skill Changes (writing-skills quality checks)
+### Task 6: Validate Skill Changes (writing-skills quality checks)
 
 Review the modified skill against writing-skills quality checks:
 - Description still matches triggering conditions
@@ -345,13 +306,13 @@ Review the modified skill against writing-skills quality checks:
 
 ---
 
-### Task 8: Run qa-validator
+### Task 7: Run qa-validator
 
 Dispatch qa-validator agent to validate all changes before final commit (if any fixes needed from Tasks 6-7).
 
 ---
 
-### Task 9: Close Issue
+### Task 8: Close Issue
 
 After user pushes and confirms everything works:
 
