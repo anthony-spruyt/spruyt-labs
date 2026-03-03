@@ -50,7 +50,7 @@ controllers:
       app:
         image:
           repository: arcadiatechnology/crafty-4
-          tag: "4.9.0"
+          tag: "4.10.0"
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
