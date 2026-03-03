@@ -87,6 +87,10 @@ Notable new features from dependency updates that may be relevant to the homelab
 ## Motivation
 These features were identified during automated Renovate PR analysis. Review at your convenience — none affect merge safety.
 
+## Acceptance Criteria
+- [ ] Review each listed feature for homelab applicability
+- [ ] Create follow-up issues for any features worth implementing
+
 ## Affected Area
 - Apps (cluster/apps/)
 EOF
