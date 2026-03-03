@@ -65,9 +65,39 @@ Task tool with:
 
 Wait for all agents. Each agent output begins with `## VERDICT: [SAFE|RISKY|UNKNOWN]`. Extract `**Version Change:**`, `**Dep Type:**`, and `### Reasoning` for the Phase 3 summary table.
 
+### Phase 2.5: FEATURE OPPORTUNITIES
+
+After all analyzers complete, collect `### Feature Opportunities` sections from their outputs.
+
+If any HIGH/MEDIUM relevance features found:
+
+```bash
+gh issue create --repo anthony-spruyt/spruyt-labs \
+  --title "feat(deps): feature opportunities from renovate batch $(date +%Y-%m-%d)" \
+  --label "enhancement" \
+  --body "$(cat <<'EOF'
+## Summary
+Notable new features from dependency updates that may be relevant to the homelab.
+
+## Feature Opportunities
+| PR | Dependency | Feature | Relevance | Why Relevant | Current State |
+|----|-----------|---------|-----------|-------------|---------------|
+| #N | <dep> | <feature> | HIGH/MEDIUM | <why> | <current> |
+
+## Motivation
+These features were identified during automated Renovate PR analysis. Review at your convenience — none affect merge safety.
+
+## Affected Area
+- Apps (cluster/apps/)
+EOF
+)"
+```
+
+If no HIGH/MEDIUM features found across any PR, skip issue creation entirely.
+
 ### Phase 3: REPORT & CONFIRM
 
-Present summary table grouped by verdict (SAFE/RISKY/UNKNOWN) with PR number, title, version change, and reasoning. Ask user which PRs to merge. User may override any verdict.
+Present summary table grouped by verdict (SAFE/RISKY/UNKNOWN) with PR number, title, version change, and reasoning. If a feature opportunities issue was created in Phase 2.5, mention it: "Feature opportunities tracked in #&lt;number&gt;." Ask user which PRs to merge. User may override any verdict.
 
 ### Phase 4: MERGE (one at a time, risk order: patch → minor → major)
 
@@ -136,7 +166,7 @@ Files under `cluster/` → run cluster-validator. Only `.taskfiles/`, `docs/`, `
 
 ### Phase 5: SUMMARY
 
-Post final report to tracking issue: Merged (PR, title, version, validated?), Skipped (PR, title, reason), Reverted (PR, title, failure reason), and totals. Close tracking issue if all PRs processed successfully.
+Post final report to tracking issue: Merged (PR, title, version, validated?), Skipped (PR, title, reason), Reverted (PR, title, failure reason), Feature Opportunities: #&lt;number&gt; (or "None identified"), and totals. Close tracking issue if all PRs processed successfully.
 
 ## Edge Cases
 
