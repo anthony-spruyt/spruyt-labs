@@ -22,6 +22,11 @@
       platformAutomerge: true,
     },
     {
+      description: "Disable automerge for calver packages (date-based versions are not true semver patches)",
+      matchCurrentVersion: "/^20\\d{2}\\./",
+      automerge: false,
+    },
+    {
       description: "Disable automerge for rook-ceph during RMA (issue #236)",
       matchPackagePatterns: ["^(ghcr\\.io/)?rook(/|-)ceph"],
       automerge: false,
