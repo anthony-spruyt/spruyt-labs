@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=vmware-tanzu/velero datasource=github-releases
-VERSION="v1.17.2"
+VERSION="v1.18.0"
 
 ARCH=$(uname -m)
 case "$ARCH" in
