@@ -40,6 +40,35 @@ Infrastructure and critical namespaces are excluded to avoid conflicts with thei
 - Observability: observability
 - System utilities: chrony, irq-balance
 
+### add-helmrelease-defaults
+
+Injects default configuration into all HelmReleases that don't already specify them, using Kyverno's `+(anchor)` syntax for true "default if not set" semantics.
+
+**Defaults Applied:**
+
+| Field | Default Value |
+|-------|---------------|
+| `spec.timeout` | 10m |
+| `spec.interval` | 4h |
+| `spec.install.crds` | CreateReplace |
+| `spec.install.strategy.name` | RetryOnFailure |
+| `spec.rollback.cleanupOnFail` | true |
+| `spec.rollback.recreate` | true |
+| `spec.upgrade.cleanupOnFail` | true |
+| `spec.upgrade.crds` | CreateReplace |
+| `spec.upgrade.strategy.name` | RemediateOnFailure |
+| `spec.upgrade.remediation.remediateLastFailure` | true |
+| `spec.upgrade.remediation.retries` | 2 |
+
+**Overriding Defaults:**
+
+Set the field explicitly in the HelmRelease spec. For example, to use a 15m timeout:
+
+```yaml
+spec:
+  timeout: 15m
+```
+
 ## Operation
 
 ### Key Commands
