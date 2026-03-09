@@ -158,7 +158,7 @@ controllers:
             drop:
               - ALL
         probes:
-          liveness: &probes
+          liveness:
             enabled: true
             custom: true
             spec:
@@ -169,7 +169,17 @@ controllers:
               periodSeconds: 10
               timeoutSeconds: 3
               failureThreshold: 3
-          readiness: *probes
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health/readiness
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
 service:
   app:
     controller: mcp-victoriametrics
@@ -178,7 +188,7 @@ service:
         port: 8080
 ```
 
-Note: Uses `runAsUser: 65534` (nobody) since the Go binary doesn't need a specific user. Readiness probe reuses the liveness path — both `/health/liveness` and `/health/readiness` are available but liveness is sufficient for both since the server is stateless.
+Note: Uses `runAsUser: 65534` (nobody) since the Go binary doesn't need a specific user. Liveness and readiness use their respective dedicated endpoints. `MCP_DISABLED_TOOLS` is intentionally omitted — the server's built-in defaults already disable export, flags, and debug tools.
 
 **Step 2: Validate kustomize build**
 
@@ -358,7 +368,7 @@ Deployed as a `low-priority` workload using bjw-s app-template.
 ```bash
 # Check status
 kubectl get pods -n observability -l app.kubernetes.io/name=mcp-victoriametrics
-flux get helmrelease -n flux-system mcp-victoriametrics
+flux get helmrelease -n observability mcp-victoriametrics
 
 # Force reconcile (GitOps approach)
 flux reconcile kustomization mcp-victoriametrics --with-source
