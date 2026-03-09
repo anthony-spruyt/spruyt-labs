@@ -1,76 +1,164 @@
-# HelmRelease Defaults Kyverno Policy Implementation Plan
+# HelmRelease Defaults Kyverno Policy Implementation Plan (v2)
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Move HelmRelease defaults from Flux Kustomization patches to a Kyverno ClusterPolicy with `+(anchor)` syntax so individual HelmReleases can override specific fields.
+**Goal:** Move HelmRelease defaults from Flux Kustomization patches to a Kyverno ClusterPolicy for optional fields, and add `interval` explicitly to all HelmRelease manifests.
 
-**Architecture:** A single Kyverno ClusterPolicy mutates all HelmReleases on CREATE/UPDATE, injecting defaults only for fields not already set. The existing Flux nested patch block is removed entirely.
+**Architecture:** Add `interval: 4h` to all 45 HelmRelease files (required CRD field). Create a Kyverno ClusterPolicy with `+(anchor)` syntax for optional defaults (timeout, install, upgrade, rollback). Remove the Flux nested patch block entirely.
 
 **Tech Stack:** Kyverno ClusterPolicy, Flux Kustomization, Kustomize
 
 ---
 
-### Task 1: Create GitHub issue
+### Task 1: Add `interval: 4h` to all HelmRelease files (batch 1 — files with `timeout` already set)
 
-**Step 1: Create the issue**
-
-Run:
-```bash
-gh issue create --repo anthony-spruyt/spruyt-labs \
-  --title "feat(kyverno): move HelmRelease defaults to Kyverno policy" \
-  --label "enhancement" \
-  --body "$(cat <<'EOF'
-## Summary
-Move HelmRelease default patches (timeout, interval, install, upgrade, rollback) from Flux Kustomization patches in `cluster/flux/cluster/ks.yaml` to a Kyverno ClusterPolicy using `+(anchor)` syntax.
-
-## Motivation
-Flux strategic merge patches always overwrite scalar fields, making it impossible for individual HelmReleases to override specific fields like `timeout` without opting out of all defaults. Kyverno's `+(field)` anchor syntax provides true "default if not set" semantics.
-
-## Acceptance Criteria
-- [ ] New ClusterPolicy `add-helmrelease-defaults` in `cluster/apps/kyverno/policies/app/`
-- [ ] HelmRelease defaults removed from `cluster/flux/cluster/ks.yaml`
-- [ ] Existing HelmReleases with custom `timeout` (openclaw, n8n, rook-ceph-cluster) retain their overrides
-- [ ] `helmreleasedefaults.flux.home.arpa/disabled` label mechanism removed
-- [ ] qa-validator passes
-
-## Affected Area
-- Apps (cluster/apps/)
-- Flux/GitOps (cluster/flux/)
-EOF
-)"
-```
-
-**Step 2: Note the issue number for commits**
-
----
-
-### Task 2: Revert unstaged changes
-
-The working tree has unstaged changes from the earlier attempt. Revert them before starting clean.
+These 4 files already have `timeout:` in spec. Add `interval: 4h` adjacent to timeout.
 
 **Files:**
-- Revert: `cluster/apps/openclaw/openclaw/app/release.yaml`
-- Revert: `cluster/flux/cluster/ks.yaml`
+- Modify: `cluster/apps/n8n-system/n8n/app/release.yaml`
+- Modify: `cluster/apps/rook-ceph/rook-ceph-cluster/app/release.yaml`
+- Modify: `cluster/apps/kube-system/cilium/app/release.yaml`
+- Modify: `cluster/apps/openclaw/openclaw/app/release.yaml`
 
-**Step 1: Revert unstaged changes**
+**Step 1: Add `interval` and `timeout` to each file**
 
-Run:
-```bash
-git checkout -- cluster/apps/openclaw/openclaw/app/release.yaml cluster/flux/cluster/ks.yaml
+For n8n (has `timeout: 15m` before `chartRef`):
+```yaml
+spec:
+  interval: 4h
+  timeout: 15m
+  chartRef:
 ```
 
-**Step 2: Verify clean state**
-
-Run:
-```bash
-git status
+For rook-ceph-cluster (has `timeout: 15m` before `chartRef`):
+```yaml
+spec:
+  interval: 4h
+  timeout: 15m
+  chartRef:
 ```
 
-Expected: no modified files
+For cilium (has `timeout: 2m` after `chart` block):
+```yaml
+spec:
+  chart:
+    ...
+  interval: 4h
+  timeout: 2m
+  valuesFrom:
+```
+
+For openclaw (no timeout — add `interval` and `timeout: 15m` per design):
+```yaml
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  interval: 4h
+  timeout: 15m
+  valuesFrom:
+```
 
 ---
 
-### Task 3: Create the Kyverno ClusterPolicy
+### Task 2: Add `interval: 4h` to all HelmRelease files (batch 2 — `chartRef` pattern, lines 6-7)
+
+These files have `spec:` followed by `chartRef:` and no existing `interval` or `timeout`. Add `interval: 4h` after the `chartRef` block, before `valuesFrom` or next field.
+
+**Files (14 files with `chartRef` and spec at line 6-7):**
+- Modify: `cluster/apps/spegel/spegel/app/release.yaml`
+- Modify: `cluster/apps/whoami/whoami/app/release.yaml`
+- Modify: `cluster/apps/redisinsight/redisinsight/app/release.yaml`
+- Modify: `cluster/apps/mosquitto/mosquitto/app/release.yaml`
+- Modify: `cluster/apps/sungather/sungather/app/release.yaml`
+- Modify: `cluster/apps/cloudflare-system/cloudflared/app/release.yaml`
+- Modify: `cluster/apps/chrony/chrony/app/release.yaml`
+- Modify: `cluster/apps/foundryvtt/foundryvtt/app/release.yaml`
+- Modify: `cluster/apps/technitium/technitium-secondary/app/release.yaml`
+- Modify: `cluster/apps/technitium/technitium/app/release.yaml`
+- Modify: `cluster/apps/minecraft/bedrock-connect/app/release.yaml`
+- Modify: `cluster/apps/vaultwarden/vaultwarden/app/release.yaml`
+- Modify: `cluster/apps/kyverno/kyverno/app/release.yaml`
+- Modify: `cluster/apps/minecraft/crafty-controller/app/release.yaml`
+
+**Step 1: For each file, add `interval: 4h` after the `chartRef` block**
+
+Pattern — find:
+```yaml
+    namespace: flux-system
+  valuesFrom:
+```
+
+Replace with:
+```yaml
+    namespace: flux-system
+  interval: 4h
+  valuesFrom:
+```
+
+If file has no `valuesFrom`, add `interval: 4h` after the chartRef block's last line.
+
+---
+
+### Task 3: Add `interval: 4h` to all HelmRelease files (batch 3 — `chartRef` pattern, remaining)
+
+**Files (7 files with `chartRef`):**
+- Modify: `cluster/apps/observability/victoria-logs-single/app/release.yaml`
+- Modify: `cluster/apps/observability/victoria-metrics-k8s-stack/app/release.yaml`
+- Modify: `cluster/apps/observability/victoria-metrics-operator/app/release.yaml`
+- Modify: `cluster/apps/rook-ceph/rook-ceph-operator/app/release.yaml`
+- Modify: `cluster/apps/flux-system/flux-operator/app/release.yaml`
+- Modify: `cluster/apps/flux-system/flux-instance/app/release.yaml`
+- Modify: `cluster/apps/irq-balance/irq-balance-ms-01/app/release.yaml`
+
+**Step 1: Same pattern as Task 2**
+
+Find `namespace: flux-system` + next line, insert `interval: 4h` after chartRef block.
+
+---
+
+### Task 4: Add `interval: 4h` to all HelmRelease files (batch 4 — remaining `chartRef` pattern)
+
+**Files (4 files):**
+- Modify: `cluster/apps/irq-balance/irq-balance-e2/app/release.yaml`
+- Modify: `cluster/apps/nut-system/nut-server/app/release.yaml`
+- Modify: `cluster/apps/nut-system/shutdown-orchestrator/app/release.yaml`
+- Modify: `cluster/apps/firefly-iii/firemerge/app/release.yaml`
+
+**Step 1: Same pattern as Task 2**
+
+---
+
+### Task 5: Add `interval: 4h` to all HelmRelease files (batch 5 — `chart:` spec pattern)
+
+These files use inline `chart.spec` instead of `chartRef`. Add `interval: 4h` after the chart block.
+
+**Files (16 files with `chart:` pattern):**
+- Modify: `cluster/apps/external-dns/external-dns-technitium/app/release.yaml`
+- Modify: `cluster/apps/firefly-iii/firefly-iii/app/release.yaml`
+- Modify: `cluster/apps/valkey-system/valkey/app/release.yaml`
+- Modify: `cluster/apps/cnpg-system/cnpg-operator/app/release.yaml`
+- Modify: `cluster/apps/kubelet-csr-approver/kubelet-csr-approver/app/release.yaml`
+- Modify: `cluster/apps/headlamp-system/headlamp/app/release.yaml`
+- Modify: `cluster/apps/cnpg-system/plugin-barman-cloud/app/release.yaml`
+- Modify: `cluster/apps/qdrant-system/qdrant/app/release.yaml`
+- Modify: `cluster/apps/kube-system/descheduler/app/release.yaml`
+- Modify: `cluster/apps/velero/velero/app/release.yaml`
+- Modify: `cluster/apps/falco-system/falco/app/release.yaml`
+- Modify: `cluster/apps/external-secrets/external-secrets/app/release.yaml`
+- Modify: `cluster/apps/cert-manager/cert-manager/app/release.yaml`
+- Modify: `cluster/apps/authentik-system/authentik/app/release.yaml`
+- Modify: `cluster/apps/reloader/reloader/app/release.yaml`
+- Modify: `cluster/apps/traefik/traefik/app/release.yaml`
+
+**Step 1: For each file, read and add `interval: 4h` after the chart block**
+
+Pattern — find the end of the `chart.spec` block and insert `interval: 4h` before `valuesFrom:` or next field.
+
+---
+
+### Task 6: Create the Kyverno ClusterPolicy (optional fields only)
 
 **Files:**
 - Create: `cluster/apps/kyverno/policies/app/helmrelease-defaults.yaml`
@@ -90,9 +178,10 @@ metadata:
     policies.kyverno.io/severity: low
     policies.kyverno.io/subject: HelmRelease
     policies.kyverno.io/description: >-
-      Injects default timeout, interval, install, upgrade, and rollback
-      configuration into HelmReleases that don't already specify them.
-      Individual HelmReleases can override any field by setting it explicitly.
+      Injects default timeout, install, upgrade, and rollback configuration
+      into HelmReleases that don't already specify them. Individual
+      HelmReleases can override any field by setting it explicitly.
+      The interval field is set explicitly in each HelmRelease manifest.
 spec:
   background: false
   rules:
@@ -109,7 +198,6 @@ spec:
         patchStrategicMerge:
           spec:
             +(timeout): 10m
-            +(interval): 4h
             +(install):
               crds: CreateReplace
               strategy:
@@ -127,9 +215,11 @@ spec:
                 retries: 2
 ```
 
+Note: `+(interval)` is intentionally NOT included — it's a required CRD field that must be in the manifest.
+
 ---
 
-### Task 4: Register policy in kustomization
+### Task 7: Register policy in kustomization
 
 **Files:**
 - Modify: `cluster/apps/kyverno/policies/app/kustomization.yaml:5-8`
@@ -155,60 +245,43 @@ resources:
 
 ---
 
-### Task 5: Remove HelmRelease defaults from Flux ks.yaml
+### Task 8: Remove HelmRelease defaults from Flux ks.yaml
 
 **Files:**
-- Modify: `cluster/flux/cluster/ks.yaml:129-173`
+- Modify: `cluster/flux/cluster/ks.yaml:129-168`
 
 **Step 1: Remove the entire HelmRelease defaults patch block**
 
-Remove lines 129-173 (from `# Add defaults to all HelmRelease Kustomizations` comment through the `labelSelector: helmreleasedefaults...` line).
+Remove from `# Add defaults to all HelmRelease Kustomizations` through `labelSelector: helmreleasedefaults...` (lines 129-168).
 
 The file should end after line 128 (`labelSelector: substitution.flux.home.arpa/disabled notin (true)`), with only a trailing newline.
 
 ---
 
-### Task 6: Add openclaw timeout override
-
-The openclaw HelmRelease needs `timeout: 15m` set explicitly so Kyverno's `+(timeout): 10m` default is skipped.
+### Task 9: Update README
 
 **Files:**
-- Modify: `cluster/apps/openclaw/openclaw/app/release.yaml`
+- Modify: `cluster/apps/kyverno/policies/README.md`
 
-**Step 1: Add timeout to openclaw release**
+**Step 1: Add documentation for the new policy**
 
-Current (committed):
-```yaml
-spec:
-  chartRef:
-    kind: OCIRepository
-    name: app-template
-    namespace: flux-system
-  valuesFrom:
-```
-
-Change to:
-```yaml
-spec:
-  chartRef:
-    kind: OCIRepository
-    name: app-template
-    namespace: flux-system
-  timeout: 15m
-  valuesFrom:
-```
+Add a section for `add-helmrelease-defaults` after the `add-default-limitrange` section, before `## Operation`. Document:
+- What it does (injects optional defaults via Kyverno)
+- Table of defaults applied
+- How to override (set field explicitly in HelmRelease spec)
+- Note that `interval` is set explicitly in manifests, not via Kyverno
 
 ---
 
-### Task 7: Run qa-validator
+### Task 10: Run qa-validator
 
 **Step 1: Run qa-validator agent**
 
-Validate all modified files pass linting, schema validation, and dry-runs before committing.
+Validate all 49 modified files pass linting, schema validation, and dry-runs before committing.
 
 ---
 
-### Task 8: Commit
+### Task 11: Commit
 
 **Step 1: Stage only modified files**
 
@@ -216,28 +289,33 @@ Validate all modified files pass linting, schema validation, and dry-runs before
 git add \
   cluster/apps/kyverno/policies/app/helmrelease-defaults.yaml \
   cluster/apps/kyverno/policies/app/kustomization.yaml \
+  cluster/apps/kyverno/policies/README.md \
   cluster/flux/cluster/ks.yaml \
-  cluster/apps/openclaw/openclaw/app/release.yaml
+  cluster/apps/*/*/app/release.yaml
 ```
+
+IMPORTANT: Verify with `git status` that only expected files are staged. Do NOT use `git add -A`.
 
 **Step 2: Commit**
 
 ```bash
 git commit -m "feat(kyverno): move HelmRelease defaults to Kyverno policy
 
-Move timeout, interval, install, upgrade, and rollback defaults from
-Flux Kustomization patches to a Kyverno ClusterPolicy using +(anchor)
-syntax. This allows individual HelmReleases to override specific fields
-without opting out of all defaults.
+Add interval: 4h explicitly to all 45 HelmRelease manifests (required
+CRD field). Move optional defaults (timeout, install, upgrade, rollback)
+to a Kyverno ClusterPolicy using +(anchor) syntax for true default-if-
+not-set semantics. Remove the Flux nested patch block.
 
-Ref #<issue-number>"
+Ref #616"
 ```
 
 ---
 
-### Task 9: Post-push cluster validation
+### Task 12: Post-push cluster validation
 
 After user pushes to main, run cluster-validator to verify:
-- Kyverno policy is applied
+- All Flux kustomizations reconcile successfully
+- Kyverno policy is applied and ready
 - HelmReleases have correct defaults
 - openclaw/n8n/rook-ceph-cluster retain their 15m timeout overrides
+- cilium retains its 2m timeout override
