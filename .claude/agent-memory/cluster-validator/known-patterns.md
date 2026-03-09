@@ -12,6 +12,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 2 | 2026-02-28 | 2026-02-28 |
 | YAML comment-only changes (e.g., schema directives) reconcile instantly with no resource drift | Kustomize strips comments, producing identical output | 1 | 2026-03-01 | 2026-03-01 |
 | n8n queue-mode deployment (main + worker + webhook) all roll simultaneously on image bump | HelmRelease values.yaml image tag change triggers rolling update of all 3 deployments | 2 | 2026-03-03 | 2026-03-03 |
+| Large image first-pull (~1GB) can exceed 10m HelmRelease timeout; Flux auto-rollback then retries successfully with cached image | openclaw image update, image pulled in 10m1s exceeding timeout, auto-retry succeeded | 1 | 2026-03-09 | 2026-03-09 |
 
 ## Failure Signatures
 
@@ -34,7 +35,7 @@ Things that look like failures but aren't — avoid flagging these.
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
 | authentik default OAuth Mapping uses deprecated `ak_groups` — emits deprecation warning on outpost proxy requests | Not a failure — requests succeed with HTTP 200. Migrate to `User.groups` in admin UI | 1 | 2026-02-25 | 2026-02-25 |
 | vmagent scrape failures for Grafana during k8s-stack upgrade | Pod IP changes during rollover cause transient scrape timeouts/connection refused — resolves once new pod is ready | 1 | 2026-02-25 | 2026-02-25 |
-| openclaw startup probe fails with "connection refused" for ~20s after pod start | App takes ~20s to bind port 18789 — startup probe catches this normally, pod becomes ready within 30s | 3 | 2026-03-03 | 2026-02-25 |
+| openclaw startup probe fails with "connection refused" for ~20s after pod start | App takes ~20s to bind port 18789 — startup probe catches this normally, pod becomes ready within 30s | 4 | 2026-03-09 | 2026-02-25 |
 | n8n readiness probe "connection refused" for ~20s after pod start during rolling update | n8n takes ~20s to bind port 5678 after container start — transient, resolves once app initializes | 2 | 2026-03-03 | 2026-03-03 |
 | n8n `DB_POSTGRESDB_SSL_CA_FILE` whitespace warning on startup | Pre-existing config issue, does not affect DB connectivity | 2 | 2026-03-03 | 2026-03-03 |
 | n8n `N8N_RUNNERS_ENABLED` deprecation warning | Env var no longer needed in newer versions — cosmetic, not functional | 2 | 2026-03-03 | 2026-03-03 |
