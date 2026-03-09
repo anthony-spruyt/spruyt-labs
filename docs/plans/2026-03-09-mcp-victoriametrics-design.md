@@ -31,7 +31,7 @@ VMSingle (:8428)        OpenClaw pod (openclaw ns)
 - **Helm chart**: bjw-s app-template via existing OCIRepository
 - **Namespace**: `observability`
 - **Priority**: `low-priority`
-- **Resources**: ~50m CPU request, 128Mi memory limit
+- **Resources**: 10m CPU request, 128Mi memory limit
 - **Security context**: non-root, read-only root filesystem, drop all capabilities
 - **Probes**: `/health/liveness` and `/health/readiness`
 - **DependsOn**: `victoria-metrics-k8s-stack`
@@ -44,7 +44,7 @@ VMSingle (:8428)        OpenClaw pod (openclaw ns)
 | `VM_INSTANCE_TYPE` | `single` |
 | `MCP_SERVER_MODE` | `sse` |
 | `MCP_LISTEN_ADDR` | `:8080` |
-| `MCP_DISABLED_TOOLS` | defaults (export, flags, debug tools disabled) |
+| `MCP_DISABLED_TOOLS` | omitted — server built-in defaults disable export, flags, debug tools |
 
 ## Ingress & Networking
 
@@ -87,7 +87,7 @@ Uses the actual domain value (no Flux substitution in `.mcp.json`).
 Add to `mcporter.json` SOPS secret (manual step):
 
 ```
-http://mcp-victoriametrics.observability.svc.cluster.local:8080/sse
+http://mcp-victoriametrics-app.observability.svc.cluster.local:8080/sse
 ```
 
 ## Files
