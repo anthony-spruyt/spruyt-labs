@@ -15,9 +15,10 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Large image first-pull (~1GB) can exceed 10m HelmRelease timeout; Flux auto-rollback then retries successfully with cached image | openclaw image update, image pulled in 10m1s exceeding timeout, auto-retry succeeded | 1 | 2026-03-09 | 2026-03-09 |
 | Revert of failed kyverno policy change recovers full cluster within ~90s; Flux cleans up removed ClusterPolicy resources automatically | Revert commit after kyverno-policies reconciliation failure | 1 | 2026-03-09 | 2026-03-09 |
 | Kyverno policy matching CRDs (e.g., HelmRelease) requires full GVK path `group/version/Kind` in `kinds` field; bare Kind name only works for core/built-in resources | Kyverno webhook registration, CRD matching | 1 | 2026-03-10 | 2026-03-10 |
-| Kyverno `--crdWatcher=false` prevents webhook auto-registration of CRD-based resources; policy is accepted but webhook never routes CRD admission requests to Kyverno | Kyverno config, CRD policy, webhook rules | 2 | 2026-03-10 | 2026-03-10 |
+| Kyverno `--crdWatcher=false` prevents webhook auto-registration of CRD-based resources; policy is accepted but webhook never routes CRD admission requests to Kyverno | Kyverno config, CRD policy, webhook rules | 3 | 2026-03-10 | 2026-03-10 |
 | Kyverno chart v3.7.1 `config.crdWatcher` maps to ConfigMap, NOT container args; correct path is `admissionController.crdWatcher: true` | Helm values path mismatch, silent no-op | 1 | 2026-03-10 | 2026-03-10 |
 | Helm silently ignores unknown/misplaced values keys -- always verify rendered manifest with `helm get manifest` | Helm chart values validation | 1 | 2026-03-10 | 2026-03-10 |
+| Kyverno 1.17.x on K8s 1.35: webhooks not auto-updated for CRD-targeted policies due to v1alpha1.MutatingAdmissionPolicy reflector failures (upstream kyverno/kyverno#15362) | Kyverno webhook, CRD policy, K8s API version mismatch | 1 | 2026-03-10 | 2026-03-10 |
 
 ## Failure Signatures
 
