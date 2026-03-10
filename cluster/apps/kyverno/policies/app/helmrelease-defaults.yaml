@@ -22,7 +22,7 @@ spec:
         any:
           - resources:
               kinds:
-                - HelmRelease
+                - helm.toolkit.fluxcd.io/v2/HelmRelease
               operations:
                 - CREATE
                 - UPDATE
