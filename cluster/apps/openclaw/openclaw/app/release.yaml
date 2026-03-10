@@ -8,6 +8,8 @@ spec:
     kind: OCIRepository
     name: app-template
     namespace: flux-system
+  interval: 4h
+  timeout: 15m
   valuesFrom:
     - kind: ConfigMap
       name: openclaw-values

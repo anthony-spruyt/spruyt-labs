@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: headlamp-charts
         namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: headlamp-values

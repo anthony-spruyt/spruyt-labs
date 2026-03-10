@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: victoria-logs-single-ocirepo
     namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: victoria-logs-single-values
