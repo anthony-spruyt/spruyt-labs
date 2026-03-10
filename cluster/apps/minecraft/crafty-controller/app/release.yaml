@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: app-template
     namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: crafty-controller-values

@@ -40,6 +40,38 @@ Infrastructure and critical namespaces are excluded to avoid conflicts with thei
 - Observability: observability
 - System utilities: chrony, irq-balance
 
+### add-helmrelease-defaults
+
+Injects default timeout, install, upgrade, and rollback configuration into HelmReleases that don't already specify them. Uses Kyverno `+(anchor)` syntax so individual HelmReleases can override any field by setting it explicitly.
+
+The `interval` field is **not** managed by this policy — it is set explicitly to `4h` in each HelmRelease manifest (required CRD field).
+
+**Defaults Applied:**
+
+| Field | Default Value |
+|-------|---------------|
+| `spec.timeout` | `10m` |
+| `spec.install.crds` | `CreateReplace` |
+| `spec.install.strategy.name` | `RetryOnFailure` |
+| `spec.rollback.cleanupOnFail` | `true` |
+| `spec.rollback.recreate` | `true` |
+| `spec.upgrade.cleanupOnFail` | `true` |
+| `spec.upgrade.crds` | `CreateReplace` |
+| `spec.upgrade.strategy.name` | `RemediateOnFailure` |
+| `spec.upgrade.remediation.remediateLastFailure` | `true` |
+| `spec.upgrade.remediation.retries` | `2` |
+
+**Overriding Defaults:**
+
+Set the field explicitly in the HelmRelease spec. For example, to use a longer timeout:
+
+```yaml
+spec:
+  timeout: 15m  # Overrides the 10m default
+```
+
+Current overrides: cilium (`timeout: 2m`), n8n/rook-ceph-cluster/openclaw (`timeout: 15m`).
+
 ## Operation
 
 ### Key Commands

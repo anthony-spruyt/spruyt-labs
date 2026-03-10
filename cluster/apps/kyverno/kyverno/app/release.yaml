@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: kyverno-ocirepo
     namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: kyverno-values

@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: victoria-metrics-k8s-stack-ocirepo
     namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: victoria-metrics-k8s-stack-values

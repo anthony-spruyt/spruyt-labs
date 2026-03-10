@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: descheduler-charts
         namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: descheduler-values

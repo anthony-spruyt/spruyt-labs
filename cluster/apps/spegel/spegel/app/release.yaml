@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: spegel-ocirepo
     namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: spegel-values

@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: rook-ceph-ocirepo
     namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: rook-ceph-operator-values

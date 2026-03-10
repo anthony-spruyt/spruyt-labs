@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: victoria-metrics-operator-ocirepo
     namespace: flux-system
+  interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: victoria-metrics-operator-values
