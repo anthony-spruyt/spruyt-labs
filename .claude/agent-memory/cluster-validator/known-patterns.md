@@ -19,6 +19,8 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Kyverno chart v3.7.1 `config.crdWatcher` maps to ConfigMap, NOT container args; correct path is `admissionController.crdWatcher: true` | Helm values path mismatch, silent no-op | 1 | 2026-03-10 | 2026-03-10 |
 | Helm silently ignores unknown/misplaced values keys -- always verify rendered manifest with `helm get manifest` | Helm chart values validation | 1 | 2026-03-10 | 2026-03-10 |
 | Kyverno 1.17.x on K8s 1.35: webhooks not auto-updated for CRD-targeted policies due to v1alpha1.MutatingAdmissionPolicy reflector failures (upstream kyverno/kyverno#15362) | Kyverno webhook, CRD policy, K8s API version mismatch | 1 | 2026-03-10 | 2026-03-10 |
+| Kyverno downgrade (3.7.1->3.6.1 / v1.17->v1.16) succeeds cleanly; crdWatcher works in v1.16.1 on K8s 1.35; webhook auto-registers CRD resources within seconds of policy creation | Kyverno version workaround, crdWatcher validation | 1 | 2026-03-10 | 2026-03-10 |
+| Kyverno mutate policy with `+(anchor)` only fires on CREATE/UPDATE; existing resources need forced reconciliation to receive mutations | Kyverno admission-only mutation, no background | 1 | 2026-03-10 | 2026-03-10 |
 
 ## Failure Signatures
 
