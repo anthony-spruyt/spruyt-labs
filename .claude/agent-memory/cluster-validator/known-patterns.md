@@ -22,6 +22,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Kyverno downgrade (3.7.1->3.6.1 / v1.17->v1.16) succeeds cleanly; crdWatcher works in v1.16.1 on K8s 1.35; webhook auto-registers CRD resources within seconds of policy creation | Kyverno version workaround, crdWatcher validation | 1 | 2026-03-10 | 2026-03-10 |
 | Kyverno minor chart upgrade (3.6.1->3.6.3 / v1.16.1->v1.16.3) reconciles within ~3 min; migration job runs and completes; downstream deps (kyverno-policies, descheduler, qdrant) settle immediately after | Kyverno patch upgrade, helm-release type | 1 | 2026-03-10 | 2026-03-10 |
 | Kyverno mutate policy with `+(anchor)` only fires on CREATE/UPDATE; existing resources need forced reconciliation to receive mutations | Kyverno admission-only mutation, no background | 1 | 2026-03-10 | 2026-03-10 |
+| Talos extraManifests CRD updates via SSA: bundle-version annotations on existing CRDs may not update due to field ownership conflict between `talos` manager and previous manager; CRD schemas are updated correctly | Talos config, CRD update, SSA field ownership | 1 | 2026-03-10 | 2026-03-10 |
 
 ## Failure Signatures
 
