@@ -5,6 +5,11 @@
 
 # Tier 1 - critical infrastructure (no CPU limit)
 
+# Enable CRD watcher so Kyverno discovers CRD-based resources (e.g. HelmRelease)
+# and registers them in its admission webhook
+config:
+  crdWatcher: true
+
 # Admission controller configuration
 admissionController:
   priorityClassName: critical-infrastructure
