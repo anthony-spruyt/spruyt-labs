@@ -36,6 +36,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `ghcr.io/openclaw/openclaw` (container image) | `openclaw/openclaw` | 2 | 2026-03-03 | 2026-02-25 |
 | `oci://ghcr.io/victoriametrics/helm-charts/victoria-logs-single` | `VictoriaMetrics/helm-charts` (chart repo) + `VictoriaMetrics/VictoriaLogs` (app repo; VictoriaLogs moved to separate repo from VictoriaMetrics) | 1 | 2026-02-26 | 2026-02-26 |
 | `redis/redisinsight` (Docker image) | `redis/RedisInsight` | 1 | 2026-02-28 | 2026-02-28 |
+| `oci://ghcr.io/kyverno/charts/kyverno` | `kyverno/kyverno` (app repo contains chart; chart version 3.6.x = app v1.16.x) | 1 | 2026-03-10 | 2026-03-10 |
 
 ## Common NO_IMPACT Scenarios
 
