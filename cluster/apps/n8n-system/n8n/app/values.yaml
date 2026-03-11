@@ -6,7 +6,7 @@
 image:
   repository: n8nio/n8n
   pullPolicy: IfNotPresent
-  tag: "2.11.3"
+  tag: "2.12.1"
 main:
   config:
     queue:
