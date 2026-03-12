@@ -12,3 +12,4 @@ spec:
       - ${LAN_CIDR_IP4}
       - ${TELEPORT_CIDR_IP4}
       - ${VPN_CIDR_IP4}
+      - ${DEVCONTAINER_CIDR_IP4}
