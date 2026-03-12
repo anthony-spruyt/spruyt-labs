@@ -73,7 +73,7 @@ spec:
         - name: lan-ip-whitelist
         - name: compress
       services:
-        - name: mcp-victoriametrics-app
+        - name: mcp-victoriametrics
           namespace: observability
           passHostHeader: true
           port: 8080

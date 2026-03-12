@@ -18,7 +18,7 @@ Deployed as a `low-priority` workload using bjw-s app-template.
 | Consumer | URL | Transport |
 |----------|-----|-----------|
 | Claude Code (dev container) | `https://mcp-vm.lan.${EXTERNAL_DOMAIN}/sse` | SSE over HTTPS (LAN-only) |
-| OpenClaw (in-cluster) | `http://mcp-victoriametrics-app.observability.svc.cluster.local:8080/sse` | SSE over HTTP (cluster DNS) |
+| OpenClaw (in-cluster) | `http://mcp-victoriametrics.observability.svc.cluster.local:8080/sse` | SSE over HTTP (cluster DNS) |
 | Streamable HTTP | Same hosts, `/mcp` endpoint | HTTP (alternative transport) |
 
 ## Operation
