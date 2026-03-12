@@ -6,6 +6,7 @@ tasks:
   init:
     desc: Initialize pre-commit hooks
     cmds:
+      - git config --unset-all core.hooksPath || true
       - pre-commit install --install-hooks
   run:
     desc: Run pre-commit
