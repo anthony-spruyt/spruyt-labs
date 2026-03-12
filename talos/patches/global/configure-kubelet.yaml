@@ -7,8 +7,8 @@ machine:
       logging-format: json # Deprecated, needs to be moved to config file IE --config string
     # https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration
     extraConfig:
-      imageGCHighThresholdPercent: 70
-      imageGCLowThresholdPercent: 60
+      imageGCHighThresholdPercent: 40
+      imageGCLowThresholdPercent: 30
       maxParallelImagePulls: 10
       maxPods: 150
       serializeImagePulls: false
