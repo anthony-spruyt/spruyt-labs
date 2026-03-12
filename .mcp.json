@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "victoriametrics": {
+      "type": "sse",
+      "url": "https://mcp-vm.lan.${EXTERNAL_DOMAIN}/sse"
+    }
+  }
+}

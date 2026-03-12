@@ -52,3 +52,30 @@ spec:
           port: 8429
   tls:
     secretName: "vmagent-lan-${EXTERNAL_DOMAIN/./-}-tls"
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-lan-https-mcp-vm
+  namespace: observability
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: mcp-vm.lan.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`mcp-vm.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: compress
+      services:
+        - name: mcp-victoriametrics-app
+          namespace: observability
+          passHostHeader: true
+          port: 8080
+  tls:
+    secretName: "mcp-vm-lan-${EXTERNAL_DOMAIN/./-}-tls"
