@@ -23,6 +23,8 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Kyverno minor chart upgrade (3.6.1->3.6.3 / v1.16.1->v1.16.3) reconciles within ~3 min; migration job runs and completes; downstream deps (kyverno-policies, descheduler, qdrant) settle immediately after | Kyverno patch upgrade, helm-release type | 1 | 2026-03-10 | 2026-03-10 |
 | Kyverno mutate policy with `+(anchor)` only fires on CREATE/UPDATE; existing resources need forced reconciliation to receive mutations | Kyverno admission-only mutation, no background | 1 | 2026-03-10 | 2026-03-10 |
 | Talos extraManifests CRD updates via SSA: bundle-version annotations on existing CRDs may not update due to field ownership conflict between `talos` manager and previous manager; CRD schemas are updated correctly | Talos config, CRD update, SSA field ownership | 1 | 2026-03-10 | 2026-03-10 |
+| Middleware base template with Flux envsubst deploys to all consuming namespaces simultaneously; verify substitution in multiple namespaces | lan-ip-whitelist shared middleware, kustomize base pattern | 1 | 2026-03-12 | 2026-03-12 |
+| SSE endpoints return HTTP 200 but curl hangs (timeout) because connection is long-lived; use short --max-time and check headers for `text/event-stream` | MCP VM SSE endpoint validation | 1 | 2026-03-12 | 2026-03-12 |
 
 ## Failure Signatures
 
