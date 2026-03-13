@@ -127,30 +127,30 @@ controllers:
         probes:
           liveness:
             enabled: true
-            type: TCP
+            type: HTTP
+            port: 18789
+            path: /healthz
             spec:
-              tcpSocket:
-                port: 18789
               initialDelaySeconds: 30
               periodSeconds: 30
               timeoutSeconds: 5
               failureThreshold: 3
           readiness:
             enabled: true
-            type: TCP
+            type: HTTP
+            port: 18789
+            path: /ready
             spec:
-              tcpSocket:
-                port: 18789
               initialDelaySeconds: 10
               periodSeconds: 10
               timeoutSeconds: 5
               failureThreshold: 3
           startup:
             enabled: true
-            type: TCP
+            type: HTTP
+            port: 18789
+            path: /healthz
             spec:
-              tcpSocket:
-                port: 18789
               initialDelaySeconds: 5
               periodSeconds: 5
               timeoutSeconds: 5
