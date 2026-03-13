@@ -7,7 +7,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Pattern | Context | Count | Last Seen | Added |
 |---------|---------|-------|-----------|-------|
 | firemerge dependency chain (firefly-iii → firemerge → traefik-ingress) takes 3-5 min to fully reconcile | Full cluster reconciliation wait | 6 | 2026-03-03 | 2026-02-24 |
-| flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 3 | 2026-03-13 | 2026-02-25 |
+| flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 4 | 2026-03-13 | 2026-02-25 |
 | authentik dependency chain (authentik → many apps → traefik-ingress) settles within ~90s | Full cluster reconciliation wait after flux-system changes | 8 | 2026-03-13 | 2026-02-25 |
 | CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 3 | 2026-03-13 | 2026-02-28 |
 | YAML comment-only changes (e.g., schema directives) reconcile instantly with no resource drift | Kustomize strips comments, producing identical output | 1 | 2026-03-01 | 2026-03-01 |
