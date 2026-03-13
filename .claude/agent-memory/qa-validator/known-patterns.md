@@ -25,6 +25,7 @@ Cases where Context7 or upstream docs are missing or misleading.
 | Library | Gap Description | Correct Behavior | Count | Last Seen | Added |
 |---------|----------------|------------------|-------|-----------|-------|
 | openclaw | Context7 docs show `ttlHours` for threadBindings but v2026.3.2 schema uses `idleHours`/`maxAgeHours` | Local schema (from app source) is authoritative over Context7 when schema was recently updated | 1 | 2026-03-03 | 2026-03-03 |
+| bjw-s app-template | Context7 docs lack detailed probe field placement (top-level vs spec) | Must read actual Helm template `_probes.tpl` to verify field placement. Unit tests in `field_probes_test.yaml` are authoritative | 1 | 2026-03-13 | 2026-03-13 |
 
 ## Failure Signatures
 
@@ -36,3 +37,4 @@ Common validation failures and their known fixes.
 | gh issue comment blocked by block-individual-linters hook | Hook falsely triggers on gh commands containing lint-related words in body | Write report to /tmp file, use --body-file flag. NOTE: hook also blocks python3, tee, and heredocs if body contains trigger words. Use short --body without trigger words as fallback | 3 | 2026-02-28 | 2026-02-28 |
 | openclaw channels.additionalProperties:true means channel-level config not schema-validated | Schema only validates session.threadBindings, not channels.discord.threadBindings | Manually verify property names against upstream docs or running app when changing channel-level config | 1 | 2026-03-03 | 2026-03-03 |
 | descheduler DefaultEvictor namespaceLabelSelector ignores matchExpressions-only | v0.35.1 guard checks `len(MatchLabels) > 0`, skipping filtering when only matchExpressions is set | Must use per-plugin namespaces.exclude or wait for upstream fix. matchExpressions alone is silently ineffective | 1 | 2026-03-13 | 2026-03-13 |
+| bjw-s app-template `type: HTTP` probe with `spec.httpGet` | Non-custom probes read `path`/`port` from top-level fields, NOT from `spec.httpGet`. `spec` is only used for timing params | Use top-level `path`/`port` with `type: HTTP`, or use `custom: true` with full `spec.httpGet`. Never mix non-custom type with spec.httpGet | 1 | 2026-03-13 | 2026-03-13 |
