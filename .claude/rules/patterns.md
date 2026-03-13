@@ -70,7 +70,9 @@ Before modifying Helm values, ALWAYS check upstream/source values.yaml first:
 
 ## Descheduler Namespace Exclusion
 
-To exclude a namespace from descheduler eviction, add this label to its `namespace.yaml`:
+To exclude a namespace from descheduler eviction:
+
+1. Add the label to its `namespace.yaml`:
 
 ```yaml
 metadata:
@@ -78,4 +80,6 @@ metadata:
     descheduler.kubernetes.io/exclude: "true"
 ```
 
-The descheduler's `DefaultEvictor` uses a `namespaceLabelSelector` with `DoesNotExist` to skip labeled namespaces. No per-plugin configuration needed.
+2. Add the namespace to the per-plugin `namespaces.exclude` lists in `cluster/apps/kube-system/descheduler/app/values.yaml`.
+
+> **Note:** Per-plugin exclusion lists are required due to an upstream bug in descheduler v0.35.1 where `namespaceLabelSelector` ignores `matchExpressions` when `matchLabels` is empty. The labels are maintained for future migration to `DefaultEvictor.namespaceLabelSelector` once the bug is fixed.

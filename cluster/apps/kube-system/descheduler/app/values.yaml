@@ -10,9 +10,12 @@ resources:
     cpu: 10m
     memory: 64Mi
 
-# Namespace exclusion uses label selectors on DefaultEvictor instead of per-plugin lists.
-# To exclude a namespace from descheduler eviction, add this label to its namespace.yaml:
-#   descheduler.kubernetes.io/exclude: "true"
+# Namespace exclusion: namespaces are labeled with descheduler.kubernetes.io/exclude: "true"
+# for documentation purposes, but due to an upstream bug in descheduler v0.35.1
+# (namespaceLabelSelector ignores matchExpressions when matchLabels is empty),
+# we must keep per-plugin exclusion lists until the fix lands.
+# See: https://github.com/kubernetes-sigs/descheduler/issues/PENDING
+# TODO: Switch to DefaultEvictor namespaceLabelSelector once upstream is fixed.
 
 deschedulerPolicy:
   profiles:
@@ -24,23 +27,51 @@ deschedulerPolicy:
             evictSystemCriticalPods: false
             evictFailedBarePods: true
             nodeFit: true
-            namespaceLabelSelector:
-              matchExpressions:
-                - key: descheduler.kubernetes.io/exclude
-                  operator: DoesNotExist
         - name: RemoveDuplicates
-          args: {}
+          args:
+            namespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
         - name: RemovePodsViolatingTopologySpreadConstraint
           args:
             constraints:
               - DoNotSchedule
+            namespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
         - name: RemoveFailedPods
           args:
             minPodLifetimeSeconds: 3600
+            namespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
         - name: RemovePodsHavingTooManyRestarts
           args:
             podRestartThreshold: 10
             includingInitContainers: true
+            namespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
         - name: LowNodeUtilization
           args:
             thresholds:
@@ -49,6 +80,14 @@ deschedulerPolicy:
             targetThresholds:
               cpu: 40
               memory: 40
+            evictableNamespaces:
+              exclude:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - flux-system
+                - rook-ceph
+                - cloudflare-system
       plugins:
         balance:
           enabled:
