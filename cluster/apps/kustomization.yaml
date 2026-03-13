@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./flux-system
   - ./kube-system
+  - ./kube-public
   - ./kubelet-csr-approver
   - ./external-secrets
   - ./reloader
