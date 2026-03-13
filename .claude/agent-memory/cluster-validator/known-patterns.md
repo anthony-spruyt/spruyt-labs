@@ -54,3 +54,4 @@ Things that look like failures but aren't — avoid flagging these.
 | n8n readiness probe "connection refused" for ~20s after pod start during rolling update | n8n takes ~20s to bind port 5678 after container start — transient, resolves once app initializes | 2 | 2026-03-03 | 2026-03-03 |
 | n8n `DB_POSTGRESDB_SSL_CA_FILE` whitespace warning on startup | Pre-existing config issue, does not affect DB connectivity | 2 | 2026-03-03 | 2026-03-03 |
 | n8n `N8N_RUNNERS_ENABLED` deprecation warning | Env var no longer needed in newer versions — cosmetic, not functional | 2 | 2026-03-03 | 2026-03-03 |
+| cloudflared connIndex=3 `control stream encountered a failure while serving` during startup | Transient QUIC reconnect on 4th tunnel connection — self-resolves within seconds, other 3 connections healthy | 1 | 2026-03-13 | 2026-03-13 |
