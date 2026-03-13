@@ -6,6 +6,7 @@ resources:
   - ./flux-system
   - ./kube-system
   - ./kube-public
+  - ./kube-node-lease
   - ./kubelet-csr-approver
   - ./external-secrets
   - ./reloader
