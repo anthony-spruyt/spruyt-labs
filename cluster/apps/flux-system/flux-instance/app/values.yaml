@@ -26,6 +26,15 @@ instance:
     pullSecret: "flux-gitops-key"
   kustomize:
     patches:
+      # Add descheduler exclusion label to flux-system namespace
+      # The flux-operator manages this namespace and overrides labels from namespace.yaml
+      - target:
+          kind: Namespace
+          name: flux-system
+        patch: |
+          - op: add
+            path: /metadata/labels/descheduler.kubernetes.io~1exclude
+            value: "true"
       # SOPS decryption for flux system kustomization
       - patch: |
           - op: add
