@@ -13,6 +13,14 @@
 
 ---
 
+## Prerequisites
+
+- [ ] **Create feature branch**
+
+```bash
+git checkout -b feat/descheduler-label-selectors
+```
+
 ## Chunk 1: Namespace Labeling
 
 ### Task 1: Add descheduler exclusion label to existing namespace manifests
@@ -186,7 +194,24 @@ resources:
 
 - [ ] **Step 4: Add to `cluster/apps/kustomization.yaml`**
 
-Add `- ./kube-public` after the `- ./kube-system` entry (line 7). Keep alphabetical grouping of kube-* namespaces together.
+Add `- ./kube-public` after the `- ./kube-system` entry. The relevant section currently reads:
+
+```yaml
+resources:
+  - ./flux-system
+  - ./kube-system
+  - ./kubelet-csr-approver
+```
+
+Change to:
+
+```yaml
+resources:
+  - ./flux-system
+  - ./kube-system
+  - ./kube-public
+  - ./kubelet-csr-approver
+```
 
 - [ ] **Step 5: Commit**
 
@@ -237,7 +262,26 @@ resources:
 
 - [ ] **Step 4: Add to `cluster/apps/kustomization.yaml`**
 
-Add `- ./kube-node-lease` after `- ./kube-public` (or grouped with the other kube-* entries).
+> **Note:** This file was modified by Task 3. Re-read it before editing. The relevant section now reads:
+
+```yaml
+resources:
+  - ./flux-system
+  - ./kube-system
+  - ./kube-public
+  - ./kubelet-csr-approver
+```
+
+Change to:
+
+```yaml
+resources:
+  - ./flux-system
+  - ./kube-system
+  - ./kube-public
+  - ./kube-node-lease
+  - ./kubelet-csr-approver
+```
 
 - [ ] **Step 5: Commit**
 
@@ -339,21 +383,19 @@ Ref #641"
 
 - [ ] **Step 1: Add descheduler label convention section**
 
-Append after the "Helm Values" section at the end of the file:
+Append the following after the "Helm Values" section at the end of `.claude/rules/patterns.md`. The section to add:
 
-```markdown
+Section heading: `## Descheduler Namespace Exclusion`
 
-## Descheduler Namespace Exclusion
+Content:
 
-To exclude a namespace from descheduler eviction, add this label to its `namespace.yaml`:
+> To exclude a namespace from descheduler eviction, add this label to its `namespace.yaml`:
+>
+> `descheduler.kubernetes.io/exclude: "true"` (in the `metadata.labels` block)
+>
+> The descheduler's `DefaultEvictor` uses a `namespaceLabelSelector` with `DoesNotExist` to skip labeled namespaces. No per-plugin configuration needed.
 
-```yaml
-labels:
-  descheduler.kubernetes.io/exclude: "true"
-```
-
-The descheduler's `DefaultEvictor` uses a `namespaceLabelSelector` with `DoesNotExist` to skip labeled namespaces. No per-plugin configuration needed.
-```
+Include a YAML code block example showing the label under `labels:`.
 
 - [ ] **Step 2: Commit**
 
