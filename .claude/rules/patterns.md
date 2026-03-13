@@ -67,3 +67,15 @@ Before modifying Helm values, ALWAYS check upstream/source values.yaml first:
 - Use Context7 or WebFetch with raw.githubusercontent.com to find correct key paths
 - Never assume key names
 - Verify the chart version matches when checking upstream docs
+
+## Descheduler Namespace Exclusion
+
+To exclude a namespace from descheduler eviction, add this label to its `namespace.yaml`:
+
+```yaml
+metadata:
+  labels:
+    descheduler.kubernetes.io/exclude: "true"
+```
+
+The descheduler's `DefaultEvictor` uses a `namespaceLabelSelector` with `DoesNotExist` to skip labeled namespaces. No per-plugin configuration needed.
