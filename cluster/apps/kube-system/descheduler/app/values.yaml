@@ -14,7 +14,7 @@ resources:
 # for documentation purposes, but due to an upstream bug in descheduler v0.35.1
 # (namespaceLabelSelector ignores matchExpressions when matchLabels is empty),
 # we must keep per-plugin exclusion lists until the fix lands.
-# See: https://github.com/kubernetes-sigs/descheduler/issues/PENDING
+# Upstream bug: defaultevictor.go guards with len(MatchLabels) > 0, ignoring MatchExpressions.
 # TODO: Switch to DefaultEvictor namespaceLabelSelector once upstream is fixed.
 
 deschedulerPolicy:
