@@ -10,6 +10,10 @@ resources:
     cpu: 10m
     memory: 64Mi
 
+# Namespace exclusion uses label selectors on DefaultEvictor instead of per-plugin lists.
+# To exclude a namespace from descheduler eviction, add this label to its namespace.yaml:
+#   descheduler.kubernetes.io/exclude: "true"
+
 deschedulerPolicy:
   profiles:
     - name: default
@@ -20,74 +24,31 @@ deschedulerPolicy:
             evictSystemCriticalPods: false
             evictFailedBarePods: true
             nodeFit: true
+            namespaceLabelSelector:
+              matchExpressions:
+                - key: descheduler.kubernetes.io/exclude
+                  operator: DoesNotExist
         - name: RemoveDuplicates
-          args:
-            namespaces:
-              exclude:
-                # K8s system
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                # GitOps controller
-                - flux-system
-                # Storage (OSD eviction could cause data issues)
-                - rook-ceph
-                # Ingress tunnel (1 per node, eviction causes connectivity loss)
-                - cloudflare-system
+          args: {}
         - name: RemovePodsViolatingTopologySpreadConstraint
           args:
             constraints:
               - DoNotSchedule
-            namespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
         - name: RemoveFailedPods
           args:
             minPodLifetimeSeconds: 3600
-            namespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
         - name: RemovePodsHavingTooManyRestarts
           args:
             podRestartThreshold: 10
             includingInitContainers: true
-            namespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
         - name: LowNodeUtilization
           args:
-            # Nodes below these thresholds are considered underutilized
             thresholds:
               cpu: 20
               memory: 20
-            # Nodes above these thresholds are considered overutilized
-            # Pods will be evicted from overutilized nodes
             targetThresholds:
               cpu: 40
               memory: 40
-            evictableNamespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
       plugins:
         balance:
           enabled:
