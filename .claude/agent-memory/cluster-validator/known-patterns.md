@@ -26,6 +26,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Middleware base template with Flux envsubst deploys to all consuming namespaces simultaneously; verify substitution in multiple namespaces | lan-ip-whitelist shared middleware, kustomize base pattern | 1 | 2026-03-12 | 2026-03-12 |
 | SSE endpoints return HTTP 200 but curl hangs (timeout) because connection is long-lived; use short --max-time and check headers for `text/event-stream` | MCP VM SSE endpoint validation | 1 | 2026-03-12 | 2026-03-12 |
 | ConfigMap hash change (configMapGenerator) triggers pod rollout even when HelmRelease version unchanged; verify new pod logs after values.yaml env var changes | mcp-victoriametrics SSE-to-HTTP mode switch, configMapGenerator hash | 1 | 2026-03-13 | 2026-03-13 |
+| flux-operator overrides flux-system namespace labels; labels declared in cluster/apps/flux-system/namespace.yaml are not applied because flux-operator manages the namespace with `app.kubernetes.io/managed-by: flux-operator` | flux-system namespace, descheduler label exclusion | 1 | 2026-03-13 | 2026-03-13 |
 
 ## Failure Signatures
 
