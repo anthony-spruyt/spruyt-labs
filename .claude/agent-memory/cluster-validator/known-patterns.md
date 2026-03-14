@@ -47,7 +47,7 @@ Things that look like failures but aren't — avoid flagging these.
 | Signal | Why It's Not a Problem | Count | Last Seen | Added |
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 7 | 2026-03-13 | 2026-02-24 |
-| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 8 | 2026-03-13 | 2026-02-25 |
+| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 9 | 2026-03-14 | 2026-02-25 |
 | Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 9 | 2026-03-13 | 2026-02-25 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
 | authentik default OAuth Mapping uses deprecated `ak_groups` — emits deprecation warning on outpost proxy requests | Not a failure — requests succeed with HTTP 200. Migrate to `User.groups` in admin UI | 1 | 2026-02-25 | 2026-02-25 |
@@ -58,4 +58,4 @@ Things that look like failures but aren't — avoid flagging these.
 | n8n `N8N_RUNNERS_ENABLED` deprecation warning | Env var no longer needed in newer versions — cosmetic, not functional | 3 | 2026-03-13 | 2026-03-03 |
 | cloudflared connIndex=3 `control stream encountered a failure while serving` during startup | Transient QUIC reconnect on 4th tunnel connection — self-resolves within seconds, other 3 connections healthy | 1 | 2026-03-13 | 2026-03-13 |
 | openclaw `/ready` returns HTTP 503 for ~5 min after startup due to health-monitor grace periods (startup-grace: 60s, channel-connect-grace: 120s) | App health-monitor waits for Discord channel connection before reporting ready; switching readiness probe to `/healthz` avoids this issue entirely | 3 | 2026-03-14 | 2026-03-13 |
-| headlamp HelmRelease stalled on old revision with `Helm rollback to previous release` message | Pre-existing failure unrelated to current changes; headlamp chart upgrade failed and Flux rolled back; blocks traefik-ingress dependency | 1 | 2026-03-14 | 2026-03-14 |
+| headlamp v0.40.1 session-ttl crash workaround: `sessionTTL: null` in values.yaml suppresses `-session-ttl` flag that causes crash on startup (upstream kubernetes-sigs/headlamp#4883) | HelmRelease upgrade after rollback, helm-release type | 1 | 2026-03-14 | 2026-03-14 |
