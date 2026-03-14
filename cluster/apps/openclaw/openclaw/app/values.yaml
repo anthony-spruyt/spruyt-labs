@@ -144,7 +144,7 @@ controllers:
               initialDelaySeconds: 10
               periodSeconds: 10
               timeoutSeconds: 5
-              failureThreshold: 3
+              failureThreshold: 12
           startup:
             enabled: true
             type: HTTP
