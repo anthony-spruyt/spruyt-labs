@@ -7,6 +7,9 @@ deploymentAnnotations:
   reloader.stakater.com/auto: "true"
 
 config:
+  # Workaround: binary doesn't support -session-ttl yet, chart renders it by default
+  # See: https://github.com/kubernetes-sigs/headlamp/issues/4883
+  sessionTTL: null
   watchPlugins: true
   # Provide system CA bundle to fix empty CA cert bug in chart
   # See: https://github.com/kubernetes-sigs/headlamp/issues/3884
