@@ -6,7 +6,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 
 | Pattern | Context | Count | Last Seen | Added |
 |---------|---------|-------|-----------|-------|
-| firemerge dependency chain (firefly-iii → firemerge → traefik-ingress) takes 3-5 min to fully reconcile | Full cluster reconciliation wait | 7 | 2026-03-13 | 2026-02-24 |
+| firemerge dependency chain (firefly-iii → firemerge → traefik-ingress) takes 3-5 min to fully reconcile | Full cluster reconciliation wait | 8 | 2026-03-14 | 2026-02-24 |
 | flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 4 | 2026-03-13 | 2026-02-25 |
 | authentik dependency chain (authentik → many apps → traefik-ingress) settles within ~90s | Full cluster reconciliation wait after flux-system changes | 8 | 2026-03-13 | 2026-02-25 |
 | CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 3 | 2026-03-13 | 2026-02-28 |
@@ -25,7 +25,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Talos extraManifests CRD updates via SSA: bundle-version annotations on existing CRDs may not update due to field ownership conflict between `talos` manager and previous manager; CRD schemas are updated correctly | Talos config, CRD update, SSA field ownership | 1 | 2026-03-10 | 2026-03-10 |
 | Middleware base template with Flux envsubst deploys to all consuming namespaces simultaneously; verify substitution in multiple namespaces | lan-ip-whitelist shared middleware, kustomize base pattern | 1 | 2026-03-12 | 2026-03-12 |
 | SSE endpoints return HTTP 200 but curl hangs (timeout) because connection is long-lived; use short --max-time and check headers for `text/event-stream` | MCP VM SSE endpoint validation | 1 | 2026-03-12 | 2026-03-12 |
-| ConfigMap hash change (configMapGenerator) triggers pod rollout even when HelmRelease version unchanged; verify new pod logs after values.yaml env var changes | mcp-victoriametrics SSE-to-HTTP mode switch, configMapGenerator hash | 1 | 2026-03-13 | 2026-03-13 |
+| ConfigMap hash change (configMapGenerator) triggers pod rollout even when HelmRelease version unchanged; verify new pod logs after values.yaml env var changes | mcp-victoriametrics SSE-to-HTTP mode switch, configMapGenerator hash | 2 | 2026-03-14 | 2026-03-13 |
 | flux-operator overrides flux-system namespace labels; labels declared in cluster/apps/flux-system/namespace.yaml are not applied because flux-operator manages the namespace with `app.kubernetes.io/managed-by: flux-operator`; use kustomize patch in flux-instance values.yaml instead | flux-system namespace, descheduler label exclusion | 2 | 2026-03-13 | 2026-03-13 |
 
 ## Failure Signatures
@@ -47,12 +47,12 @@ Things that look like failures but aren't — avoid flagging these.
 | Signal | Why It's Not a Problem | Count | Last Seen | Added |
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 7 | 2026-03-13 | 2026-02-24 |
-| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 9 | 2026-03-14 | 2026-02-25 |
+| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 10 | 2026-03-14 | 2026-02-25 |
 | Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 9 | 2026-03-13 | 2026-02-25 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
 | authentik default OAuth Mapping uses deprecated `ak_groups` — emits deprecation warning on outpost proxy requests | Not a failure — requests succeed with HTTP 200. Migrate to `User.groups` in admin UI | 1 | 2026-02-25 | 2026-02-25 |
 | vmagent scrape failures for Grafana during k8s-stack upgrade | Pod IP changes during rollover cause transient scrape timeouts/connection refused — resolves once new pod is ready | 1 | 2026-02-25 | 2026-02-25 |
-| openclaw startup probe fails with "connection refused" for ~20s after pod start | App takes ~20s to bind port 18789 — startup probe catches this normally, pod becomes ready within 30s | 8 | 2026-03-14 | 2026-02-25 |
+| openclaw startup probe fails with "connection refused" for ~20s after pod start | App takes ~20s to bind port 18789 — startup probe catches this normally, pod becomes ready within 30s | 9 | 2026-03-14 | 2026-02-25 |
 | n8n readiness probe "connection refused" for ~20s after pod start during rolling update | n8n takes ~20s to bind port 5678 after container start — transient, resolves once app initializes | 3 | 2026-03-13 | 2026-03-03 |
 | n8n `DB_POSTGRESDB_SSL_CA_FILE` whitespace warning on startup | Pre-existing config issue, does not affect DB connectivity | 3 | 2026-03-13 | 2026-03-03 |
 | n8n `N8N_RUNNERS_ENABLED` deprecation warning | Env var no longer needed in newer versions — cosmetic, not functional | 3 | 2026-03-13 | 2026-03-03 |
