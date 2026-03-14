@@ -25,6 +25,7 @@ Cases where Context7 or upstream docs are missing or misleading.
 | Library | Gap Description | Correct Behavior | Count | Last Seen | Added |
 |---------|----------------|------------------|-------|-----------|-------|
 | openclaw | Context7 docs show `ttlHours` for threadBindings but v2026.3.2 schema uses `idleHours`/`maxAgeHours` | Local schema (from app source) is authoritative over Context7 when schema was recently updated | 1 | 2026-03-03 | 2026-03-03 |
+| openclaw | Context7 lacks gateway HTTP probe endpoint docs (/healthz vs /readyz) | Upstream source server-http.ts is authoritative: /healthz,/health=live; /ready,/readyz=ready. Context7 only shows WS-based health RPC. Use `gh search code` against openclaw/openclaw repo | 1 | 2026-03-14 | 2026-03-14 |
 | bjw-s app-template | Context7 docs lack detailed probe field placement (top-level vs spec) | Must read actual Helm template `_probes.tpl` to verify field placement. Unit tests in `field_probes_test.yaml` are authoritative | 1 | 2026-03-13 | 2026-03-13 |
 
 ## Failure Signatures
