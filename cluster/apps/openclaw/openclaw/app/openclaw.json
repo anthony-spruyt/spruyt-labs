@@ -219,7 +219,8 @@
       "token": "${OPENCLAW_GATEWAY_TOKEN}"
     },
     "controlUi": {
-      "allowedOrigins": ["https://openclaw.${EXTERNAL_DOMAIN}"]
+      "allowedOrigins": ["https://openclaw.${EXTERNAL_DOMAIN}"],
+      "dangerouslyDisableDeviceAuth": true
     }
   },
   "skills": {
