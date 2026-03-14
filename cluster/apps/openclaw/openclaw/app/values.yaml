@@ -139,12 +139,12 @@ controllers:
             enabled: true
             type: HTTP
             port: 18789
-            path: /ready
+            path: /healthz
             spec:
               initialDelaySeconds: 10
               periodSeconds: 10
               timeoutSeconds: 5
-              failureThreshold: 12
+              failureThreshold: 3
           startup:
             enabled: true
             type: HTTP
