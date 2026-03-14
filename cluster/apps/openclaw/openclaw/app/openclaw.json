@@ -215,12 +215,9 @@
     "port": 18789,
     "mode": "local",
     "auth": {
-      "mode": "trusted-proxy",
-      "trustedProxy": {
-        "userHeader": "x-authentik-username"
-      }
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
     },
-    "trustedProxies": ["${CLUSTER_POD_CIDR_IP4}", "127.0.0.1/8"],
     "controlUi": {
       "allowedOrigins": ["https://openclaw.${EXTERNAL_DOMAIN}"]
     }
