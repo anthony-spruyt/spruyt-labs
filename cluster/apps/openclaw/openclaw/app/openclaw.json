@@ -220,7 +220,7 @@
         "userHeader": "x-authentik-username"
       }
     },
-    "trustedProxies": ["${CLUSTER_POD_CIDR_IP4}"],
+    "trustedProxies": ["${CLUSTER_POD_CIDR_IP4}", "127.0.0.1/8"],
     "controlUi": {
       "allowedOrigins": ["https://openclaw.${EXTERNAL_DOMAIN}"]
     }
