@@ -465,6 +465,10 @@
                 "anyOf": [
                   {
                     "type": "string",
+                    "const": "openclaw"
+                  },
+                  {
+                    "type": "string",
                     "const": "clawd"
                   },
                   {
@@ -490,6 +494,20 @@
           "items": {
             "type": "string"
           }
+        },
+        "relayBindHost": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "ipv4",
+              "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"
+            },
+            {
+              "type": "string",
+              "format": "ipv6",
+              "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -982,8 +1000,7 @@
                             "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                           },
                           "id": {
-                            "type": "string",
-                            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                            "type": "string"
                           }
                         },
                         "required": ["source", "provider", "id"],
@@ -1035,7 +1052,70 @@
                   "type": "string"
                 },
                 "additionalProperties": {
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "source": {
+                              "type": "string",
+                              "const": "env"
+                            },
+                            "provider": {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                            },
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
+                            }
+                          },
+                          "required": ["source", "provider", "id"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "source": {
+                              "type": "string",
+                              "const": "file"
+                            },
+                            "provider": {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["source", "provider", "id"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "source": {
+                              "type": "string",
+                              "const": "exec"
+                            },
+                            "provider": {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["source", "provider", "id"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  ]
                 }
               },
               "authHeader": {
@@ -1135,6 +1215,9 @@
                         "supportsUsageInStreaming": {
                           "type": "boolean"
                         },
+                        "supportsTools": {
+                          "type": "boolean"
+                        },
                         "supportsStrictMode": {
                           "type": "boolean"
                         },
@@ -1176,6 +1259,9 @@
                           "type": "boolean"
                         },
                         "requiresMistralToolIds": {
+                          "type": "boolean"
+                        },
+                        "requiresOpenAiAnthropicToolPayload": {
                           "type": "boolean"
                         }
                       },
@@ -1372,6 +1458,22 @@
               "type": "integer",
               "exclusiveMinimum": 0,
               "maximum": 9007199254740991
+            },
+            "bootstrapPromptTruncationWarning": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "off"
+                },
+                {
+                  "type": "string",
+                  "const": "once"
+                },
+                {
+                  "type": "string",
+                  "const": "always"
+                }
+              ]
             },
             "userTimezone": {
               "type": "string"
@@ -1699,6 +1801,39 @@
                     "type": "string"
                   }
                 },
+                "multimodal": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "modalities": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": "image"
+                          },
+                          {
+                            "type": "string",
+                            "const": "audio"
+                          },
+                          {
+                            "type": "string",
+                            "const": "all"
+                          }
+                        ]
+                      }
+                    },
+                    "maxFileBytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "experimental": {
                   "type": "object",
                   "properties": {
@@ -1798,8 +1933,7 @@
                                   "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                                 },
                                 "id": {
-                                  "type": "string",
-                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                                  "type": "string"
                                 }
                               },
                               "required": ["source", "provider", "id"],
@@ -1882,6 +2016,11 @@
                 },
                 "model": {
                   "type": "string"
+                },
+                "outputDimensionality": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "local": {
                   "type": "object",
@@ -2206,6 +2345,34 @@
                   ]
                 },
                 "identifierInstructions": {
+                  "type": "string"
+                },
+                "recentTurnsPreserve": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 12
+                },
+                "qualityGuard": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "maxRetries": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "postCompactionSections": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "model": {
                   "type": "string"
                 },
                 "memoryFlush": {
@@ -2982,6 +3149,39 @@
                       "type": "string"
                     }
                   },
+                  "multimodal": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "modalities": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": "image"
+                            },
+                            {
+                              "type": "string",
+                              "const": "audio"
+                            },
+                            {
+                              "type": "string",
+                              "const": "all"
+                            }
+                          ]
+                        }
+                      },
+                      "maxFileBytes": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false
+                  },
                   "experimental": {
                     "type": "object",
                     "properties": {
@@ -3081,8 +3281,7 @@
                                     "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                                   },
                                   "id": {
-                                    "type": "string",
-                                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                                    "type": "string"
                                   }
                                 },
                                 "required": ["source", "provider", "id"],
@@ -3165,6 +3364,11 @@
                   },
                   "model": {
                     "type": "string"
+                  },
+                  "outputDimensionality": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
                   },
                   "local": {
                     "type": "object",
@@ -4125,6 +4329,51 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "runtime": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "embedded"
+                      }
+                    },
+                    "required": ["type"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "acp"
+                      },
+                      "acp": {
+                        "type": "object",
+                        "properties": {
+                          "agent": {
+                            "type": "string"
+                          },
+                          "backend": {
+                            "type": "string"
+                          },
+                          "mode": {
+                            "type": "string",
+                            "enum": ["persistent", "oneshot"]
+                          },
+                          "cwd": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["type"],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": ["id"],
@@ -4314,8 +4563,7 @@
                               "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                             },
                             "id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                              "type": "string"
                             }
                           },
                           "required": ["source", "provider", "id"],
@@ -4398,8 +4646,7 @@
                                   "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                                 },
                                 "id": {
-                                  "type": "string",
-                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                                  "type": "string"
                                 }
                               },
                               "required": ["source", "provider", "id"],
@@ -4477,8 +4724,7 @@
                                   "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                                 },
                                 "id": {
-                                  "type": "string",
-                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                                  "type": "string"
                                 }
                               },
                               "required": ["source", "provider", "id"],
@@ -4556,8 +4802,7 @@
                                   "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                                 },
                                 "id": {
-                                  "type": "string",
-                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                                  "type": "string"
                                 }
                               },
                               "required": ["source", "provider", "id"],
@@ -4632,8 +4877,7 @@
                                   "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                                 },
                                 "id": {
-                                  "type": "string",
-                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                                  "type": "string"
                                 }
                               },
                               "required": ["source", "provider", "id"],
@@ -4648,6 +4892,24 @@
                     },
                     "model": {
                       "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "brave": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "web"
+                        },
+                        {
+                          "type": "string",
+                          "const": "llm-context"
+                        }
+                      ]
                     }
                   },
                   "additionalProperties": false
@@ -6338,72 +6600,171 @@
     "bindings": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "agentId": {
-            "type": "string"
-          },
-          "comment": {
-            "type": "string"
-          },
-          "match": {
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
-              "channel": {
+              "type": {
+                "type": "string",
+                "const": "route"
+              },
+              "agentId": {
                 "type": "string"
               },
-              "accountId": {
+              "comment": {
                 "type": "string"
               },
-              "peer": {
+              "match": {
                 "type": "object",
                 "properties": {
-                  "kind": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "const": "direct"
-                      },
-                      {
-                        "type": "string",
-                        "const": "group"
-                      },
-                      {
-                        "type": "string",
-                        "const": "channel"
-                      },
-                      {
-                        "type": "string",
-                        "const": "dm"
-                      }
-                    ]
+                  "channel": {
+                    "type": "string"
                   },
-                  "id": {
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "peer": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": "direct"
+                          },
+                          {
+                            "type": "string",
+                            "const": "group"
+                          },
+                          {
+                            "type": "string",
+                            "const": "channel"
+                          },
+                          {
+                            "type": "string",
+                            "const": "dm"
+                          }
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["kind", "id"],
+                    "additionalProperties": false
+                  },
+                  "guildId": {
+                    "type": "string"
+                  },
+                  "teamId": {
+                    "type": "string"
+                  },
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["channel"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["agentId", "match"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "acp"
+              },
+              "agentId": {
+                "type": "string"
+              },
+              "comment": {
+                "type": "string"
+              },
+              "match": {
+                "type": "object",
+                "properties": {
+                  "channel": {
+                    "type": "string"
+                  },
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "peer": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": "direct"
+                          },
+                          {
+                            "type": "string",
+                            "const": "group"
+                          },
+                          {
+                            "type": "string",
+                            "const": "channel"
+                          },
+                          {
+                            "type": "string",
+                            "const": "dm"
+                          }
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["kind", "id"],
+                    "additionalProperties": false
+                  },
+                  "guildId": {
+                    "type": "string"
+                  },
+                  "teamId": {
+                    "type": "string"
+                  },
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["channel"],
+                "additionalProperties": false
+              },
+              "acp": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": ["persistent", "oneshot"]
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "cwd": {
+                    "type": "string"
+                  },
+                  "backend": {
                     "type": "string"
                   }
                 },
-                "required": ["kind", "id"],
                 "additionalProperties": false
-              },
-              "guildId": {
-                "type": "string"
-              },
-              "teamId": {
-                "type": "string"
-              },
-              "roles": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
               }
             },
-            "required": ["channel"],
+            "required": ["type", "agentId", "match"],
             "additionalProperties": false
           }
-        },
-        "required": ["agentId", "match"],
-        "additionalProperties": false
+        ]
       }
     },
     "broadcast": {
@@ -6450,6 +6811,11 @@
       "properties": {
         "preserveFilenames": {
           "type": "boolean"
+        },
+        "ttlHours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 168
         }
       },
       "additionalProperties": false
@@ -7103,8 +7469,7 @@
                               "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                             },
                             "id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                              "type": "string"
                             }
                           },
                           "required": ["source", "provider", "id"],
@@ -7226,8 +7591,7 @@
                               "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                             },
                             "id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                              "type": "string"
                             }
                           },
                           "required": ["source", "provider", "id"],
@@ -7237,10 +7601,21 @@
                     }
                   ]
                 },
+                "baseUrl": {
+                  "type": "string"
+                },
                 "model": {
                   "type": "string"
                 },
                 "voice": {
+                  "type": "string"
+                },
+                "speed": {
+                  "type": "number",
+                  "minimum": 0.25,
+                  "maximum": 4
+                },
+                "instructions": {
                   "type": "string"
                 }
               },
@@ -7969,7 +8344,13 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["rate_limit", "network", "timeout", "server_error"]
+                "enum": [
+                  "rate_limit",
+                  "overloaded",
+                  "network",
+                  "timeout",
+                  "server_error"
+                ]
               }
             }
           },
@@ -8035,8 +8416,7 @@
                       "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                     },
                     "id": {
-                      "type": "string",
-                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                      "type": "string"
                     }
                   },
                   "required": ["source", "provider", "id"],
@@ -8734,8 +9114,7 @@
                             "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                           },
                           "id": {
-                            "type": "string",
-                            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                            "type": "string"
                           }
                         },
                         "required": ["source", "provider", "id"],
@@ -8823,8 +9202,7 @@
                       "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                     },
                     "id": {
-                      "type": "string",
-                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                      "type": "string"
                     }
                   },
                   "required": ["source", "provider", "id"],
@@ -8836,6 +9214,11 @@
         },
         "interruptOnSpeech": {
           "type": "boolean"
+        },
+        "silenceTimeoutMs": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
         }
       },
       "additionalProperties": false
@@ -8941,7 +9324,70 @@
               ]
             },
             "token": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "source": {
+                          "type": "string",
+                          "const": "env"
+                        },
+                        "provider": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                        },
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
+                        }
+                      },
+                      "required": ["source", "provider", "id"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "source": {
+                          "type": "string",
+                          "const": "file"
+                        },
+                        "provider": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                        },
+                        "id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["source", "provider", "id"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "source": {
+                          "type": "string",
+                          "const": "exec"
+                        },
+                        "provider": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                        },
+                        "id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["source", "provider", "id"],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              ]
             },
             "password": {
               "anyOf": [
@@ -8999,8 +9445,7 @@
                           "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                         },
                         "id": {
-                          "type": "string",
-                          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                          "type": "string"
                         }
                       },
                       "required": ["source", "provider", "id"],
@@ -9188,8 +9633,7 @@
                           "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                         },
                         "id": {
-                          "type": "string",
-                          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                          "type": "string"
                         }
                       },
                       "required": ["source", "provider", "id"],
@@ -9255,8 +9699,7 @@
                           "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                         },
                         "id": {
-                          "type": "string",
-                          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                          "type": "string"
                         }
                       },
                       "required": ["source", "provider", "id"],
@@ -9341,6 +9784,57 @@
                   "properties": {
                     "enabled": {
                       "type": "boolean"
+                    },
+                    "maxBodyBytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "maxImageParts": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "maxTotalImageBytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "images": {
+                      "type": "object",
+                      "properties": {
+                        "allowUrl": {
+                          "type": "boolean"
+                        },
+                        "urlAllowlist": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "allowedMimes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "maxBytes": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "maxRedirects": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "timeoutMs": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "additionalProperties": false
@@ -9939,8 +10433,7 @@
                             "pattern": "^[a-z][a-z0-9_-]{0,63}$"
                           },
                           "id": {
-                            "type": "string",
-                            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                            "type": "string"
                           }
                         },
                         "required": ["source", "provider", "id"],
@@ -10008,6 +10501,9 @@
           "properties": {
             "memory": {
               "type": "string"
+            },
+            "contextEngine": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -10022,6 +10518,15 @@
             "properties": {
               "enabled": {
                 "type": "boolean"
+              },
+              "hooks": {
+                "type": "object",
+                "properties": {
+                  "allowPromptInjection": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
               },
               "config": {
                 "type": "object",
@@ -10039,6 +10544,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10074,6 +10588,33 @@
                     "queueOwnerTtlSeconds": {
                       "type": "number",
                       "minimum": 0
+                    },
+                    "mcpServers": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "command": {
+                            "type": "string",
+                            "description": "Command to run the MCP server"
+                          },
+                          "args": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Arguments to pass to the command"
+                          },
+                          "env": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "Environment variables for the MCP server"
+                          }
+                        },
+                        "required": ["command"]
+                      }
                     }
                   }
                 }
@@ -10085,6 +10626,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10103,6 +10653,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10119,6 +10678,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10141,6 +10709,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10157,6 +10734,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10284,6 +10870,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10300,6 +10895,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10318,6 +10922,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10334,6 +10947,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10352,6 +10974,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10368,6 +10999,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10386,6 +11026,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10402,6 +11051,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10443,6 +11101,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10459,6 +11126,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10477,6 +11153,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10494,6 +11179,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10510,6 +11204,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10563,6 +11266,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10579,6 +11291,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10597,6 +11318,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10613,6 +11343,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10631,6 +11370,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10647,6 +11395,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10665,6 +11422,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10681,6 +11447,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10699,6 +11474,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10715,6 +11499,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10733,6 +11526,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10750,6 +11552,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10766,6 +11577,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10794,6 +11614,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10811,6 +11640,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -10827,6 +11665,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
@@ -10921,6 +11768,10 @@
                       "type": "integer",
                       "minimum": 1
                     },
+                    "staleCallReaperSeconds": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
                     "silenceTimeoutMs": {
                       "type": "integer",
                       "minimum": 1
@@ -10990,6 +11841,27 @@
                         }
                       }
                     },
+                    "webhookSecurity": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "allowedHosts": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "trustForwardingHeaders": {
+                          "type": "boolean"
+                        },
+                        "trustedProxyIPs": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "streaming": {
                       "type": "object",
                       "additionalProperties": false,
@@ -11018,6 +11890,22 @@
                         },
                         "streamPath": {
                           "type": "string"
+                        },
+                        "preStartTimeoutMs": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "maxPendingConnections": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "maxPendingConnectionsPerIp": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "maxConnections": {
+                          "type": "integer",
+                          "minimum": 1
                         }
                       }
                     },
@@ -11158,10 +12046,21 @@
                             "apiKey": {
                               "type": "string"
                             },
+                            "baseUrl": {
+                              "type": "string"
+                            },
                             "model": {
                               "type": "string"
                             },
                             "voice": {
+                              "type": "string"
+                            },
+                            "speed": {
+                              "type": "number",
+                              "minimum": 0.25,
+                              "maximum": 4
+                            },
+                            "instructions": {
                               "type": "string"
                             }
                           }
@@ -11242,6 +12141,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -11259,6 +12167,15 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "config": {
                   "type": "object",
                   "propertyNames": {
@@ -11275,6 +12192,15 @@
               "properties": {
                 "enabled": {
                   "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "config": {
                   "type": "object",
