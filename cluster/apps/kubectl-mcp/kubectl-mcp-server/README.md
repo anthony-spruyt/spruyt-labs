@@ -32,6 +32,7 @@ kubectl logs -n kubectl-mcp -l app.kubernetes.io/name=kubectl-mcp-server
 - **Traefik ingress**: LAN-only via `kubectl-mcp.lan.${EXTERNAL_DOMAIN}`, requires `X-API-KEY` header
 - **Pod-to-pod**: OpenClaw connects directly (no API key needed, secured by CiliumNetworkPolicy)
 - **Network policies**: Ingress allowed from Traefik and OpenClaw only; egress allowed to kube-apiserver only
+- **RBAC scope**: Read-only access to core resources, apps, batch, networking, storage, RBAC, metrics, and Flux CRDs (HelmReleases, Kustomizations, Sources)
 
 ## Troubleshooting
 
