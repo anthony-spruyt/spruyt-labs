@@ -280,7 +280,7 @@
         "action": "agent",
         "agentId": "sre",
         "sessionKey": "hook:sre:{{groupKey}}",
-        "messageTemplate": "Alertmanager webhook received. Triage this alert.",
+        "messageTemplate": "Alertmanager webhook received.\n\nStatus: {{status}}\nGroup: {{groupLabels}}\n\nAlerts:\n{{#alerts}}- [{{status}}] {{labels.alertname}} ({{labels.severity}}): {{annotations.description}}\n{{/alerts}}\n\nTriage this alert.",
         "deliver": true,
         "channel": "discord"
       }
