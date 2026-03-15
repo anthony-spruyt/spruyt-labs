@@ -11,5 +11,13 @@ configMapGenerator:
     namespace: traefik
     files:
       - values.yaml
+  - name: traefik-api-key-auth-plugin
+    namespace: traefik
+    options:
+      disableNameSuffixHash: true
+    files:
+      - plugin.go=plugins/traefik-api-key-auth/plugin.go
+      - go.mod=plugins/traefik-api-key-auth/go.mod
+      - .traefik.yml=plugins/traefik-api-key-auth/.traefik.yml
 configurations:
   - ./kustomizeconfig.yaml

@@ -35,11 +35,19 @@ tlsStore:
   default:
     defaultCertificate:
       secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+deployment:
+  additionalVolumes:
+    - name: traefik-api-key-auth-plugin
+      configMap:
+        name: traefik-api-key-auth-plugin
+additionalVolumeMounts:
+  - name: traefik-api-key-auth-plugin
+    mountPath: /plugins-local/src/github.com/linkphoenix/traefik-api-key-auth
+    readOnly: true
 experimental:
-  plugins:
+  localPlugins:
     traefik-api-key-auth:
       moduleName: "github.com/linkphoenix/traefik-api-key-auth"
-      version: "v1.0.4"
 env:
   - name: KUBECTL_MCP_API_KEY
     valueFrom:
