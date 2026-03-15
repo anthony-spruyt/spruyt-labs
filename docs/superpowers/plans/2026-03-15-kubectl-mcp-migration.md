@@ -65,7 +65,11 @@
 | `kubectl taint` | `taint_node` |
 | `kubectl auth can-i` | `audit_rbac_permissions` |
 | `kubectl cp` | `kubectl_cp` |
+| `kubectl port-forward` | `port_forward` |
 | `hubble observe` | `hubble_flows_query_tool` |
+| `kubectl get secret` (metadata) | `get_secrets` |
+
+> **Note:** `get_secrets` is deferred -- RBAC currently excludes secrets (Trivy AVD-KSV-0041). `port_forward` may time out for long sessions; consider kubectl fallback for extended debugging.
 
 ### Cilium-Specific Tools
 
@@ -92,7 +96,6 @@
 | `kubectl exec` | Pod exec with side effects (e.g., Ceph toolbox) |
 | `kubectl --dry-run=client` | Validation mode, no MCP equivalent |
 | `kubectl kustomize` | Build tool, no MCP equivalent |
-| `kubectl port-forward` | Long-running session, may time out via MCP |
 
 `flux` and `talosctl` are separate tools -- not kubectl, not in scope.
 
@@ -234,9 +237,13 @@ git commit -m "docs(rules): add MCP tool preference for ingress/cert validation"
 
 - [ ] **Step 1: Add `mcpServers` to frontmatter**
 
-Add `mcpServers: ["kubernetes"]` to the YAML frontmatter (after the `tools:` block, before the closing `---`).
+This agent uses **list format** for `tools:`. Add `mcpServers: ["kubernetes"]` after the last `tools:` entry, before the closing `---`:
 
-Also add `Write` to the tools list (needed for agent memory pattern file updates -- already used by agent but may be missing).
+```yaml
+  - mcp__plugin_context7_context7__query-docs
+mcpServers: ["kubernetes"]
+---
+```
 
 - [ ] **Step 2: Add MCP Tools section**
 
@@ -253,7 +260,7 @@ Key mappings:
 - `kubectl get pods -n <ns>` -> `get_pods`
 - `kubectl get events` -> `get_events`
 - `kubectl get endpoints` -> `get_endpoints`
-- `kubectl logs` -> `get_logs`
+- `kubectl logs` -> `get_logs` / `get_previous_logs`
 - `kubectl wait` -> `wait_for_condition`
 - `kubectl create job` -> keep as kubectl (no direct MCP equivalent)
 - `kubectl delete job` -> `delete_resource`
@@ -294,7 +301,15 @@ git commit -m "feat(agents): migrate cluster-validator to kubernetes MCP tools"
 
 - [ ] **Step 1: Update frontmatter**
 
-Change `mcpServers: victoriametrics` to `mcpServers: ["victoriametrics", "kubernetes"]`.
+This agent uses **inline format** for `tools:` and already has `mcpServers: victoriametrics` (string, not array). Change from string to array format:
+
+```yaml
+# Before:
+mcpServers: victoriametrics
+
+# After:
+mcpServers: ["victoriametrics", "kubernetes"]
+```
 
 - [ ] **Step 2: Add MCP Tools section**
 
@@ -335,7 +350,12 @@ git commit -m "feat(agents): migrate cnp-drop-investigator to kubernetes MCP too
 
 - [ ] **Step 1: Update frontmatter**
 
-Add `mcpServers: ["kubernetes"]` to the frontmatter.
+This agent uses **inline format** (`tools: Bash`). Add `mcpServers` on a new line after `tools:`:
+
+```yaml
+tools: Bash
+mcpServers: ["kubernetes"]
+```
 
 - [ ] **Step 2: Add MCP Tools section**
 
@@ -373,7 +393,12 @@ This agent has the most kubectl references (24). Many are `kubectl exec` into Ce
 
 - [ ] **Step 1: Update frontmatter**
 
-Add `mcpServers: ["kubernetes"]` to the frontmatter.
+This agent uses **inline format** (`tools: Bash, Read, Grep, Glob, Edit`). Add `mcpServers` on a new line after `tools:`:
+
+```yaml
+tools: Bash, Read, Grep, Glob, Edit
+mcpServers: ["kubernetes"]
+```
 
 - [ ] **Step 2: Add MCP Tools section**
 
@@ -409,7 +434,7 @@ Replacements (keep `kubectl exec` for Ceph as-is):
 | ~390 | `kubectl get cronjob -n kube-system descheduler` | `Use mcp__kubernetes__get_jobs namespace=kube-system` |
 | ~396 | `kubectl get jobs -n kube-system \| grep descheduler` | `Use mcp__kubernetes__get_jobs namespace=kube-system` |
 | ~399 | `kubectl get pods -A -o wide --watch` | Keep as kubectl (--watch is long-running) |
-| ~410 | `kubectl get pods -A -o wide` | `Use mcp__kubernetes__get_pods` |
+| ~410 | `kubectl get pods -A -o wide \| grep -v Completed \| awk ...` | `Use mcp__kubernetes__get_pods` (purpose: count pod distribution per node -- post-process MCP results to count per-node) |
 
 Lines with `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph ...` (163, 291, 294, 346, 378, 509, 512): Keep as kubectl -- exec exception.
 
@@ -429,7 +454,12 @@ Almost all kubectl usage is `kubectl exec` into Ceph toolbox -- only one is repl
 
 - [ ] **Step 1: Update frontmatter**
 
-Add `mcpServers: ["kubernetes"]` to the frontmatter.
+This agent uses **list format** for `tools:`. Add `mcpServers` after the last `tools:` entry:
+
+```yaml
+  - Glob
+mcpServers: ["kubernetes"]
+```
 
 - [ ] **Step 2: Add MCP Tools section**
 
@@ -488,15 +518,18 @@ Core API group (add `delete` to pods, `patch` to nodes):
 
 Note: `nodes` is currently under the same rule as `pods` with other core resources. Split `pods` and `nodes` into separate rules so they can have different verbs. Keep all other core resources as read-only.
 
-Apps API group (add `patch`):
+Apps API group — split into read-only (replicasets) and read-write:
 ```yaml
   - apiGroups: ["apps"]
     resources:
       - deployments
       - statefulsets
       - daemonsets
-      - replicasets
     verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: ["apps"]
+    resources:
+      - replicasets
+    verbs: ["get", "list", "watch"]
 ```
 
 Batch API group (add `create`, `delete`):
