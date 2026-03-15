@@ -34,9 +34,10 @@ Alertmanager receives alert
          Routes to SRE agent session (keyed by groupKey)
               │
               ▼
-         Agent investigates via kubectl-mcp:
+         Agent investigates via kubectl-mcp + VictoriaMetrics MCP:
            - Pod logs, events, restart history
            - HelmRelease/Kustomization state
+           - Metrics queries, alert history, resource usage
            - Recent Renovate/git activity
               │
               ▼
