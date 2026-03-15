@@ -40,6 +40,7 @@ Error patterns and their known resolutions.
 | OOMKilled (exit code 137) on mcp-victoriametrics with 128Mi-1Gi limits | Container memory limit too low for application startup; process killed within 7s after single log line | Increase memory limit aggressively (2Gi worked); mcp-victoriametrics v1.18.0 in SSE mode needs >1Gi at startup | 4 | 2026-03-12 | 2026-03-12 |
 | HelmRelease stuck in `pending-upgrade` with no successful revision history | All revisions failed (install + upgrades), Flux error: `missing target release for rollback: cannot remediate failed release` | Manual `helm rollback <release> <revision> -n <ns>` to unstick, then Flux retries with new values | 1 | 2026-03-12 | 2026-03-12 |
 | `Startup probe failed: HTTP probe failed with statuscode: 404` on FastMCP-based apps | FastMCP streamable-http transport serves only `/mcp` endpoint; no `/health` path exists | Switch probes from `httpGet` to `tcpSocket` on the app port | 1 | 2026-03-15 | 2026-03-15 |
+| Traefik chart v39.0.5 `experimental.localPlugins` requires `type` field (`hostPath`, `inlinePlugin`, or `localPath`); bare `moduleName` alone causes template error | Chart template `_helpers.tpl` `getLocalPluginType` enforces type selection | Add `type: localPath` with `volumeName` and `mountPath`; chart auto-creates volumeMount | 1 | 2026-03-15 | 2026-03-15 |
 
 ## False Positives
 
