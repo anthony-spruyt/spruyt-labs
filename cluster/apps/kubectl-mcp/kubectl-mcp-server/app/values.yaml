@@ -1,0 +1,70 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: true
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  kubectl-mcp-server:
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: docker.io/rohitghumare64/kubectl-mcp-server
+          tag: latest@sha256:ad90bf2effc3926d22e8490c08f44299fb899b697214c957595c475841147439
+          pullPolicy: IfNotPresent
+        args:
+          - "--transport"
+          - "streamable-http"
+        env:
+          - name: KUBERNETES_SERVICE_HOST
+            value: "kubernetes.default.svc.cluster.local"
+          - name: MCP_DEBUG
+            value: "false"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 8000
+              initialDelaySeconds: 10
+              periodSeconds: 30
+              timeoutSeconds: 3
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 8000
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+serviceAccount:
+  name: kubectl-mcp-server
+  create: false
+service:
+  app:
+    controller: kubectl-mcp-server
+    ports:
+      http:
+        port: 8000
