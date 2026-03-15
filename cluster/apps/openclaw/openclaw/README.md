@@ -2,7 +2,7 @@
 
 ## Overview
 
-OpenClaw is a self-hosted AI agent platform providing a web gateway for interacting with Claude models. It includes a Chromium sidecar for browser automation and supports extensible skills via ClawHub.
+OpenClaw is a self-hosted AI agent platform providing a web gateway and Discord bot for interacting with Claude and OpenAI models. It includes a Chromium sidecar for browser automation, extensible skills via ClawHub, MCP tool integrations, and an alertmanager webhook receiver for SRE automation.
 
 OpenClaw does NOT support horizontal scaling - it runs as a single replica with Recreate strategy.
 
@@ -19,20 +19,85 @@ OpenClaw does NOT support horizontal scaling - it runs as a single replica with 
 ```text
 User -> Traefik (TLS) -> Authentik forward-auth -> OpenClaw gateway (:18789)
                                                         |
-                                                   Chromium sidecar (:9222, localhost only)
+Discord <-> OpenClaw agents <-> MCP servers (kubectl, n8n, VictoriaMetrics)
+                   |
+              Chromium sidecar (:9222, localhost only)
+
+Alertmanager -> webhook hook -> SRE agent -> Discord
 ```
+
+### Agents
+
+OpenClaw runs multiple specialized agents, each with a tuned model:
+
+| Agent | Model | Fallback | Purpose |
+|-------|-------|----------|---------|
+| main (Skynet) | claude-sonnet-4-6 | gpt-5-mini | Default agent, general purpose |
+| monitor | claude-haiku-4-5 | gpt-5-nano | Lightweight monitoring |
+| researcher | claude-sonnet-4-6 | gpt-5-mini | Research tasks |
+| communicator | claude-opus-4-6 | gpt-5.2 | User-facing communication |
+| coordinator | claude-opus-4-6 | gpt-5.2 | Multi-agent orchestration |
+| sre | claude-sonnet-4-6 | gpt-5-mini | SRE automation, alert triage |
 
 ### Security Model
 
 | Layer | Control |
 |-------|---------|
-| Network | Cilium CNP: Traefik ingress on 18789, n8n MCP egress on 5678, world egress all ports |
-| Auth | Authentik proxy provider with group-based access (OpenClaw Users) |
+| Network | Cilium CNP: Traefik ingress on 18789, alertmanager ingress on 18789, kubectl-mcp egress on 8000, n8n MCP egress on 5678, VictoriaMetrics MCP egress on 8080, world egress all ports |
+| Auth | Gateway token auth (`OPENCLAW_GATEWAY_TOKEN`), Authentik proxy provider with group-based access (OpenClaw Users) for Control UI |
 | DNS | Split DNS - LAN-only, no Cloudflare tunnel exposure |
 | Container | read-only root filesystem, non-root (UID 1000), all caps dropped, seccomp RuntimeDefault |
 | Namespace | PSA restricted (enforce + audit + warn) |
 
-OpenClaw gateway uses trusted-proxy auth (`x-authentik-username` header) for CLI/API connections, but the Control UI ignores `gateway.auth.mode` and always uses device pairing ([openclaw#25293](https://github.com/openclaw/openclaw/issues/25293)). Device auth is disabled (`dangerouslyDisableDeviceAuth`) as a workaround. Authentik forward-auth + Cilium network policies provide the actual security layer.
+The gateway uses token-based auth for API/CLI connections. The Control UI ignores `gateway.auth.mode` and always uses device pairing ([openclaw#25293](https://github.com/openclaw/openclaw/issues/25293)). Device auth is disabled (`dangerouslyDisableDeviceAuth`) as a workaround. Authentik forward-auth + Cilium network policies provide the actual security layer.
+
+### Discord Integration
+
+OpenClaw's primary user interface is Discord. Configuration:
+
+- **Stream mode**: off (full responses, not streamed)
+- **DM policy**: allowlist (owner only)
+- **Guild policy**: allowlist with per-channel overrides
+- **Thread bindings**: enabled with 72-hour idle TTL
+- **Commands**: restricted to owner (`allowFrom`)
+
+### Hooks (Webhooks)
+
+The alertmanager webhook hook routes alerts to the SRE agent:
+
+- **Path**: `/hooks/alertmanager` (authenticated via `OPENCLAW_HOOKS_TOKEN`)
+- **Action**: Spawns an SRE agent session keyed by alert `groupKey`
+- **Delivery**: Triage results delivered to Discord
+
+### MCP Integrations
+
+| MCP Server | Network Policy | Purpose |
+|------------|---------------|---------|
+| kubectl-mcp-server | `allow-mcp-kubectl-egress` (kubectl-mcp:8000) | Kubernetes cluster operations |
+| n8n | `allow-n8n-egress` (n8n-system:5678) | Workflow automation |
+| mcp-victoriametrics | `allow-mcp-vm-egress` (observability:8080) | Metrics queries |
+| Context7 | world egress | Library documentation |
+| mcporter (Home Assistant) | world egress | Home automation |
+
+### Skills
+
+**Bundled skills** (enabled in config): github, gh-issues, healthcheck, mcporter, skill-creator, weather
+
+**Custom skills** (installed from ClawHub via init-skills): mcp-hass, ontology, humanizer
+
+**MCP-based skills** (enabled in config): mcp-context7, mcp-hass, mcp-n8n
+
+### Memory and Sessions
+
+| Feature | Setting |
+|---------|---------|
+| Session scope | per-sender |
+| Session idle reset | 60 minutes |
+| Memory search | Hybrid vector/text (OpenAI `text-embedding-3-small`) |
+| Context pruning | cache-ttl mode, 6h TTL, keep last 3 assistant messages |
+| Compaction | Memory flush at 40k tokens to `memory/YYYY-MM-DD.md` |
+| Max concurrent agents | 4 (8 subagents) |
+| Agent timeout | 600 seconds |
 
 ## Operation
 
@@ -60,35 +125,20 @@ kubectl exec -it -n openclaw deploy/openclaw -c main -- \
   node dist/index.js doctor --fix
 ```
 
-### Claude Subscription Token Setup
+### Claude Code Credentials
 
-OpenClaw uses Claude's subscription-based auth (setup-token) instead of an API key. This avoids per-token API billing but requires an interactive setup step after deployment.
+Claude Code authentication is managed via credentials stored in the `openclaw-workspace-config` SOPS secret. The `init-skills` container copies `.credentials.json` from the secret mount to `/home/node/.openclaw/.claude/.credentials.json` on the PVC.
 
-**Initial setup:**
+To update credentials: edit the `.credentials.json` field in `openclaw-workspace-config.sops.yaml` and redeploy.
 
-```bash
-# 1. Generate token on your local machine (requires Claude CLI)
-claude setup-token
+### Anthropic API Auth
 
-# 2. Copy the token output, then paste it into the running pod
-kubectl exec -it -n openclaw deploy/openclaw -c main -- \
-  node dist/index.js models auth paste-token --provider anthropic
-```
+OpenClaw supports two Anthropic auth modes (configured in `openclaw.json` under `auth.profiles`):
 
-The token is stored on the PVC at `/home/node/.openclaw` and persists across pod restarts.
+- **Subscription token** (`mode: "token"`): Uses Claude subscription auth. Generate with `claude setup-token` locally, then paste into the running pod.
+- **API key** (`mode: "api_key"`): Add `ANTHROPIC_API_KEY` to `openclaw-secrets.sops.yaml`. OpenClaw auto-detects the env var.
 
-**Token renewal** (when expired):
-
-```bash
-# Same process - generate locally, paste into pod
-claude setup-token
-kubectl exec -it -n openclaw deploy/openclaw -c main -- \
-  node dist/index.js models auth paste-token --provider anthropic
-```
-
-**Switching to API key** (alternative):
-
-If you prefer usage-based billing with prompt caching support, add `ANTHROPIC_API_KEY` to `openclaw-secrets.sops.yaml` and redeploy. No config changes needed - OpenClaw auto-detects the env var.
+The current config uses subscription token auth for Anthropic and API key auth for OpenAI.
 
 ### Adding ClawHub Skills
 
@@ -102,7 +152,7 @@ Skills are installed from [ClawHub](https://clawhub.com) on pod startup and pers
 
 ### Runtime Tools
 
-The `init-skills` init container also installs runtime tools that skills may depend on. These persist on the PVC and are made available to the main container via the `entrypoint.sh` wrapper (prepends custom paths to `$PATH`).
+The `init-skills` init container installs runtime tools that skills depend on. These persist on the PVC and are made available to the main container via the `entrypoint.sh` wrapper (prepends custom paths to `$PATH`).
 
 | Tool | Version Source | Purpose |
 |------|---------------|---------|
@@ -158,7 +208,7 @@ OpenClaw signs every git commit with a dedicated Ed25519 SSH key. GitHub verifie
    ```
 
 3. Register the public key on GitHub as a **Signing Key** (not Authentication):
-   - Go to GitHub → Settings → SSH and GPG keys → New SSH key
+   - Go to GitHub > Settings > SSH and GPG keys > New SSH key
    - Key type: **Signing Key**
    - Paste contents of `/tmp/openclaw-signing.pub`
 
@@ -170,9 +220,9 @@ OpenClaw signs every git commit with a dedicated Ed25519 SSH key. GitHub verifie
 
 **How it works:**
 
-- The private key is mounted from `openclaw-workspace-config` at `/home/node/.openclaw/.ssh/id_signing` with mode `0600`
+- The private key is staged at `/tmp/id_signing` (secret subPath mount) and copied to `/home/node/.openclaw/.ssh/id_signing` by `init-workspace`
 - `init-workspace` writes a `.gitconfig` with `commit.gpgSign = true` and `gpg.format = ssh`
-- At commit time, git calls `ssh-keygen -Y sign` using the mounted key
+- At commit time, git calls `ssh-keygen -Y sign` using the installed key
 - The commit author email (`99536297+anthony-spruyt@users.noreply.github.com`) matches the GitHub account where the signing key is registered
 
 **Verifying signing works:**
@@ -186,14 +236,12 @@ Look for `Good "git" signature` in the output.
 
 ### Config Changes
 
-OpenClaw config lives in `app/openclaw.json` (with JSON Schema validation via `openclaw-schema.json`). The init-config container merges Helm-provided config with any existing config on the PVC (preserving runtime changes like installed skills).
+OpenClaw config lives in `app/openclaw.json` (with JSON Schema validation via `openclaw-schema.json`). The init-config container handles config setup with two modes:
 
-To force a full config overwrite instead of merge:
+- **overwrite** (current default): Replaces PVC config with Helm-managed config on every restart
+- **merge**: Deep-merges Helm config into existing PVC config (preserves runtime changes)
 
-```yaml
-env:
-  CONFIG_MODE: "overwrite"  # default is "merge"
-```
+To switch modes, change `CONFIG_MODE` in `values.yaml` under the `init-config` container.
 
 ## SSO Authentication
 
@@ -211,7 +259,7 @@ SSO is implemented via Authentik's Proxy Provider with Traefik forward-auth.
 1. Verify the Authentik blueprint is applied: check for "OpenClaw SSO" in Authentik admin
 2. Add your user to the "OpenClaw Users" group in Authentik
 3. Verify the outpost is deployed: `kubectl get deploy -n openclaw -l app.kubernetes.io/managed-by=goauthentik.io`
-4. Configure the Claude setup-token (see above)
+4. Configure Claude credentials (see above)
 
 ### Configuration Files
 
@@ -242,19 +290,24 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
    - **Diagnosis**: Outpost may not be ready yet, or OpenClaw pod not running
    - **Resolution**: Wait for outpost deployment, check pod readiness
 
-4. **Claude token expired**
+4. **Claude credentials expired**
    - **Symptom**: Agent responds with auth errors
-   - **Resolution**: Re-run `claude setup-token` locally and paste into pod (see setup instructions above)
+   - **Resolution**: Update credentials in `openclaw-workspace-config.sops.yaml` or re-run `claude setup-token` and paste into pod
 
 5. **Config changes not taking effect**
    - **Symptom**: Updated `openclaw.json` but behavior unchanged
-   - **Diagnosis**: Merge mode preserves existing keys
-   - **Resolution**: Either set `CONFIG_MODE: "overwrite"` or delete the PVC config and restart
+   - **Diagnosis**: Current config mode is `overwrite` - changes should apply on next restart
+   - **Resolution**: Reconcile the kustomization to trigger a restart, or delete the pod manually
 
 6. **Workspace sync failed**
    - **Symptom**: `init-workspace` logs show clone/pull failure
    - **Diagnosis**: Check `GIT_WORKSPACE_REPO` and `GIT_CODE_TOKEN` in `openclaw-secrets`. Verify the token has repo access.
    - **Resolution**: The init container never fails the pod - a missing workspace is recoverable (OpenClaw bootstraps defaults). Fix the secret and restart.
+
+7. **MCP server unreachable**
+   - **Symptom**: Agent cannot reach kubectl-mcp, n8n, or VictoriaMetrics MCP
+   - **Diagnosis**: Check Cilium network policies and target service health
+   - **Resolution**: Verify the corresponding CNP exists and the target pod is running in its namespace
 
 ## File Reference
 
