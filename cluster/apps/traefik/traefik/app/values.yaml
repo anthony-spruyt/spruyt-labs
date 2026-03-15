@@ -40,14 +40,13 @@ deployment:
     - name: traefik-api-key-auth-plugin
       configMap:
         name: traefik-api-key-auth-plugin
-additionalVolumeMounts:
-  - name: traefik-api-key-auth-plugin
-    mountPath: /plugins-local/src/github.com/linkphoenix/traefik-api-key-auth
-    readOnly: true
 experimental:
   localPlugins:
     traefik-api-key-auth:
       moduleName: "github.com/linkphoenix/traefik-api-key-auth"
+      mountPath: /plugins-local/src/github.com/linkphoenix/traefik-api-key-auth
+      type: localPath
+      volumeName: traefik-api-key-auth-plugin
 env:
   - name: KUBECTL_MCP_API_KEY
     valueFrom:
