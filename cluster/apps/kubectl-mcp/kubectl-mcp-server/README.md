@@ -27,6 +27,12 @@ flux reconcile kustomization kubectl-mcp-server --with-source
 kubectl logs -n kubectl-mcp -l app.kubernetes.io/name=kubectl-mcp-server
 ```
 
+## Access
+
+- **Traefik ingress**: LAN-only via `kubectl-mcp.lan.${EXTERNAL_DOMAIN}`, requires `X-API-KEY` header
+- **Pod-to-pod**: OpenClaw connects directly (no API key needed, secured by CiliumNetworkPolicy)
+- **Network policies**: Ingress allowed from Traefik and OpenClaw only; egress allowed to kube-apiserver only
+
 ## Troubleshooting
 
 ### Common Issues
