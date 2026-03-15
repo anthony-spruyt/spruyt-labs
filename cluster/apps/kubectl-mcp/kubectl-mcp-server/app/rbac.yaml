@@ -21,9 +21,6 @@ rules:
   - apiGroups: [""]
     resources:
       - nodes
-    verbs: ["get", "list", "watch", "patch"]
-  - apiGroups: [""]
-    resources:
       - services
       - configmaps
       - events
@@ -41,16 +38,18 @@ rules:
       - deployments
       - statefulsets
       - daemonsets
-    verbs: ["get", "list", "watch", "patch"]
-  - apiGroups: ["apps"]
-    resources:
       - replicasets
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments/scale
+      - statefulsets/scale
+    verbs: ["patch"]
   - apiGroups: ["batch"]
     resources:
       - jobs
       - cronjobs
-    verbs: ["get", "list", "watch", "create", "delete"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["networking.k8s.io"]
     resources:
       - ingresses

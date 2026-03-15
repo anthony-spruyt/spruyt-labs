@@ -89,9 +89,10 @@ MCP tools do NOT bypass secrets rules in `01-constraints.md`. Never use MCP tool
 
 ## Write Operations
 
-MCP write tools (patch, delete, scale, restart, node_management) are permitted for **operational tasks** only:
-- Incident response (restart pods, scale deployments)
-- Node management (cordon, drain, taint)
-- Pod cleanup (delete failed/completed pods)
+MCP write operations are intentionally limited to minimize blast radius via OpenClaw:
+- **Pod delete/eviction** -- cleanup failed pods, drain with PDB respect
+- **Scale** (subresource only) -- adjust replicas on deployments/statefulsets
+
+Operations requiring broad `patch` or `create` (restart, cordon/drain/taint, job creation) are NOT available via MCP. Agents fall back to local `kubectl` for these, which does not traverse OpenClaw.
 
 MCP write tools must NOT be used for declarative config changes -- use Flux/GitOps instead.

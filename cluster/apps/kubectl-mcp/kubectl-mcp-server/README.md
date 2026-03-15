@@ -32,7 +32,7 @@ kubectl logs -n kubectl-mcp -l app.kubernetes.io/name=kubectl-mcp-server
 - **Traefik ingress**: LAN-only via `kubectl-mcp.lan.${EXTERNAL_DOMAIN}`, requires `X-API-KEY` header
 - **Pod-to-pod**: OpenClaw connects directly (no API key needed, secured by CiliumNetworkPolicy)
 - **Network policies**: Ingress allowed from Traefik and OpenClaw only; egress allowed to kube-apiserver only
-- **RBAC scope**: Read-only access to most resources. Write access: pods (delete), nodes (patch for cordon/drain/taint), apps (patch for restart/scale), batch jobs (create/delete for validation)
+- **RBAC scope**: Read-only access to most resources. Limited writes: pods (delete, eviction), deployments/statefulsets scale subresource only. Cordon/drain/taint/restart/job-creation fall back to local kubectl.
 
 ## Troubleshooting
 
