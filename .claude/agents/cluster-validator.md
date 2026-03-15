@@ -113,10 +113,10 @@ CURRENT_REV=$(git rev-parse --short HEAD)
 
 # Repeat up to 5 times with 60s between checks (5 min total)
 # flux output: NAMESPACE NAME REVISION SUSPENDED READY MESSAGE
-# Pattern matches Suspended=False AND Ready=False (adjacent columns)
+# Pattern matches Suspended=False AND Ready=False or Unknown (adjacent columns)
 for attempt in 1 2 3 4 5; do
   NOT_READY=$(flux get kustomizations -A --no-header 2>/dev/null \
-    | grep -E "False\s+False" || true)
+    | grep -E "False\s+(False|Unknown)" || true)
   if [ -z "$NOT_READY" ]; then
     echo "All kustomizations ready"
     break
@@ -142,11 +142,12 @@ flux get kustomization <name> -n flux-system
 
 | Condition | Classification | Action |
 |-----------|---------------|--------|
-| Revision matches HEAD, Ready=False | Still reconciling | Wait another 60s; if still failing after 5 min total, treat as issue from this change |
+| Revision matches HEAD, Ready=False/Unknown | Still reconciling | Wait another 60s; if still failing after 5 min total, treat as issue from this change |
+| Revision is OLD, Ready=Unknown | Still fetching new revision | Wait another 60s; kustomizations show old revision + Unknown while actively reconciling the new one |
 | Revision is OLD, Ready=False | Pre-existing issue | Report as pre-existing, not caused by this change |
 | Suspended=True | Intentionally suspended | Ignore |
 
-**Never label a kustomization as "pre-existing" if it is actively reconciling the current revision.** Wait for it.
+**Never label a kustomization as "pre-existing" if it has Ready=Unknown.** Unknown means actively reconciling — wait for it to settle before classifying.
 
 ## Validation Workflow
 
