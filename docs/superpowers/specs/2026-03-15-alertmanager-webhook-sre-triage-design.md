@@ -190,7 +190,7 @@ spec:
 
 - **SRE agent system prompt** — user creates separately; defines triage methodology, tool usage, report format
 - **Token value management** — `OPENCLAW_HOOKS_TOKEN` already added to `openclaw-secrets.sops.yaml`
-- **Alert tuning** — route matchers start broad; refined based on operational experience
+- **Alert tuning** — route matchers start broad; refined based on operational experience. To silence a noisy alert from the SRE webhook, add matchers to the `openclaw-sre` route in `victoria-metrics-k8s-stack-secrets.sops.yaml` (e.g. `alertname!="NoisyAlert"`). The SOPS secret is the single point of control for which alerts reach OpenClaw.
 
 ## Verification
 
