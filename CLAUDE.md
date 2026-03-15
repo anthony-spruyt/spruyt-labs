@@ -19,7 +19,7 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 ## Hard Rules
 
 1. **No secrets output** - Never display credentials or env var values
-2. **Declarative only** - No manual kubectl patches; use Flux, Terraform, Talos configs
+2. **Declarative only** - No manual kubectl patches for config changes; use Flux, Terraform, Talos configs. Operational commands (restart, scale, drain) via MCP tools are permitted.
 3. **No git push** - User pushes manually
 4. **No git amend** - Always new commits
 5. **No SOPS decrypt** - Never decrypt secrets via CLI
@@ -48,3 +48,4 @@ Use Claude's native tools instead of shell commands:
 | Find files | `Glob` tool | `find`, `ls -R` |
 | Edit files | `Edit` tool | `sed -i`, `awk -i` |
 | List env keys | `env \| cut -d= -f1` | `env`, `printenv`, `echo $VAR` |
+| Kubernetes ops | `mcp__kubernetes__*` tools | `kubectl` (fallback only) |
