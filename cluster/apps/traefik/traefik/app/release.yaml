@@ -13,6 +13,10 @@ spec:
         kind: HelmRepository
         name: traefik-charts
         namespace: flux-system
+  install:
+    crds: Skip
+  upgrade:
+    crds: Skip
   interval: 4h
   valuesFrom:
     - kind: ConfigMap
