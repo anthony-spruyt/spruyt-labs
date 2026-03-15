@@ -2,7 +2,7 @@
 
 ## Overview
 
-MCP (Model Context Protocol) server providing AI assistants with read-only access to Kubernetes cluster resources. Deployed as a low-priority workload.
+MCP (Model Context Protocol) server providing AI assistants with access to Kubernetes cluster resources. Primarily read-only with targeted write permissions for operational tasks. Deployed as a low-priority workload.
 
 > **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the target namespace specified in ks.yaml.
 
@@ -32,7 +32,7 @@ kubectl logs -n kubectl-mcp -l app.kubernetes.io/name=kubectl-mcp-server
 - **Traefik ingress**: LAN-only via `kubectl-mcp.lan.${EXTERNAL_DOMAIN}`, requires `X-API-KEY` header
 - **Pod-to-pod**: OpenClaw connects directly (no API key needed, secured by CiliumNetworkPolicy)
 - **Network policies**: Ingress allowed from Traefik and OpenClaw only; egress allowed to kube-apiserver only
-- **RBAC scope**: Read-only access to core resources, apps, batch, networking, storage, RBAC, metrics, and Flux CRDs (HelmReleases, Kustomizations, Sources)
+- **RBAC scope**: Read-only access to most resources. Write access: pods (delete), nodes (patch for cordon/drain/taint), apps (patch for restart/scale), batch jobs (create/delete for validation)
 
 ## Troubleshooting
 
@@ -44,7 +44,7 @@ kubectl logs -n kubectl-mcp -l app.kubernetes.io/name=kubectl-mcp-server
 
 2. **MCP tools return 403 errors**
    - **Symptom**: Tool calls fail with permission denied
-   - **Resolution**: Check ClusterRole has the required resource/verb. The ClusterRole is read-only by design.
+   - **Resolution**: Check ClusterRole has the required resource/verb. See Access section for RBAC scope details.
 
 ## References
 
