@@ -45,7 +45,7 @@ Claude Code (devcontainer)
 
 - **Image:** `docker.io/rohitghumare64/kubectl-mcp-server` pinned by digest (no versioned tags published)
 - **Transport:** `streamable-http` on port 8000 (current MCP standard, supported by Claude Code)
-- **Namespace:** `kubectl-mcp` with privileged PSA (container requires root for kubectl binary)
+- **Namespace:** `kubectl-mcp` with `baseline` PSA enforce / `restricted` audit+warn (root UID is allowed under baseline; no privileged capabilities needed)
 - **RBAC:** Read-only ClusterRole (`get`, `list`, `watch`) including secrets — the `get_secrets` tool only returns metadata (name, namespace, type), not data values. Full `get` exists at RBAC level as a deliberate trade-off; the application masks data.
 - **Network policies:** CiliumNetworkPolicy restricting ingress to Traefik and OpenClaw, egress to kube-apiserver only
 - **Priority:** `low-priority` (not critical infrastructure)
