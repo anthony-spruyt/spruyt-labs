@@ -2,7 +2,17 @@
   "mcpServers": {
     "victoriametrics": {
       "type": "http",
-      "url": "https://mcp-vm.lan.${EXTERNAL_DOMAIN}/mcp"
+      "url": "https://mcp-vm.lan.${EXTERNAL_DOMAIN}/mcp",
+      "headers": {
+        "X-API-KEY": "${VM_MCP_API_KEY}"
+      }
+    },
+    "kubernetes": {
+      "type": "http",
+      "url": "https://kubectl-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
+      "headers": {
+        "X-API-KEY": "${KUBECTL_MCP_API_KEY}"
+      }
     }
   }
 }
