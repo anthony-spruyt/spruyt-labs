@@ -223,7 +223,7 @@
     "mode": "local",
     "auth": {
       "mode": "token",
-      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+      "token": "$${OPENCLAW_GATEWAY_TOKEN}"
     },
     "controlUi": {
       "allowedOrigins": ["https://openclaw.${EXTERNAL_DOMAIN}"],
@@ -269,7 +269,7 @@
   },
   "hooks": {
     "enabled": true,
-    "token": "${OPENCLAW_HOOKS_TOKEN}",
+    "token": "$${OPENCLAW_HOOKS_TOKEN}",
     "allowedAgentIds": ["sre"],
     "mappings": [
       {
