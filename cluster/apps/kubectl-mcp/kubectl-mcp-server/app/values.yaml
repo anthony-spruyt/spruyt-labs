@@ -5,6 +5,8 @@ defaultPodOptions:
   priorityClassName: low-priority
   automountServiceAccountToken: true
   securityContext:
+    runAsNonRoot: false
+    runAsUser: 0
     seccompProfile:
       type: RuntimeDefault
 controllers:
