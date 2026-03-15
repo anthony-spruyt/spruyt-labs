@@ -38,7 +38,7 @@ The kubectl-mcp-server is deployed in-cluster with API key auth and CiliumNetwor
 
 Add a row to the existing "Tool Usage" table:
 
-```
+```markdown
 | Kubernetes ops | `mcp__kubernetes__*` tools | `kubectl` (fallback only) |
 ```
 
@@ -107,7 +107,7 @@ Contains:
 
 #### Fallback Behavior
 
-```
+```text
 1. Try MCP tool first
 2. If MCP returns error or tool not found:
    a. If 403/permission denied -> flag to user: "kubectl-mcp-server RBAC may need updating"
