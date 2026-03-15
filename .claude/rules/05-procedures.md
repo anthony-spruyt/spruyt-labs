@@ -48,7 +48,7 @@ This transforms `valuesFrom.name: <app>-values` to `valuesFrom.name: <app>-value
 ## Error Recovery
 
 ```bash
-# RBAC issues
+# RBAC issues (prefer MCP: mcp__kubernetes__audit_rbac_permissions)
 kubectl auth can-i <verb> <resource>
 
 # Flux rollback
