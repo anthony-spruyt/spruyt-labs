@@ -45,8 +45,7 @@ controllers:
             enabled: true
             custom: true
             spec:
-              httpGet:
-                path: /health
+              tcpSocket:
                 port: 8000
               initialDelaySeconds: 10
               periodSeconds: 30
@@ -56,8 +55,7 @@ controllers:
             enabled: true
             custom: true
             spec:
-              httpGet:
-                path: /health
+              tcpSocket:
                 port: 8000
               initialDelaySeconds: 5
               periodSeconds: 10
@@ -67,8 +65,7 @@ controllers:
             enabled: true
             custom: true
             spec:
-              httpGet:
-                path: /health
+              tcpSocket:
                 port: 8000
               failureThreshold: 30
               periodSeconds: 5
