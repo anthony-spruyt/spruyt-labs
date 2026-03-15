@@ -71,6 +71,7 @@ spec:
       match: Host(`mcp-vm.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: lan-ip-whitelist
+        - name: api-key-auth-vm-mcp
       services:
         - name: mcp-victoriametrics
           namespace: observability
