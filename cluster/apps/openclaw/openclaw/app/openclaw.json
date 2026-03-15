@@ -280,7 +280,7 @@
         "action": "agent",
         "agentId": "sre",
         "sessionKey": "hook:sre:{{groupKey}}",
-        "messageTemplate": "Alertmanager webhook received.\n\nStatus: {{status}}\nGroup: {{groupLabels}}\n\nAlerts:\n{{#alerts}}- [{{status}}] {{labels.alertname}} ({{labels.severity}}): {{annotations.description}}\n{{/alerts}}\n\nTriage this alert.",
+        "messageTemplate": "Alertmanager webhook received.\n\nStatus: {{status}}\nGroup: {{groupLabels}}\nCommon Labels: {{commonLabels}}\nCommon Annotations: {{commonAnnotations}}\n\nFirst alert: {{alerts[0].labels.alertname}} ({{alerts[0].labels.severity}}): {{alerts[0].annotations.description}}\n\nTriage this alert. The full alerts array is in the webhook payload.",
         "deliver": true,
         "channel": "discord"
       }
