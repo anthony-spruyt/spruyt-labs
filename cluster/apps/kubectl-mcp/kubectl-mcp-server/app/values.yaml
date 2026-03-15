@@ -9,6 +9,8 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   kubectl-mcp-server:
+    serviceAccount:
+      name: kubectl-mcp-server
     strategy: Recreate
     containers:
       app:
@@ -59,9 +61,6 @@ controllers:
               periodSeconds: 10
               timeoutSeconds: 3
               failureThreshold: 3
-serviceAccount:
-  name: kubectl-mcp-server
-  create: false
 service:
   app:
     controller: kubectl-mcp-server

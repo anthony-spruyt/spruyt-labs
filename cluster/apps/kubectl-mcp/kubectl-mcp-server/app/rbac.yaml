@@ -15,7 +15,6 @@ rules:
       - pods
       - services
       - configmaps
-      - secrets
       - nodes
       - events
       - namespaces
