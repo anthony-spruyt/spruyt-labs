@@ -161,14 +161,14 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: observability
-            app: vmalertmanager
+            k8s:app.kubernetes.io/name: vmalertmanager
       toPorts:
         - ports:
             - port: "18789"
               protocol: TCP
 ```
 
-> **Note:** The vmalertmanager pod label selector needs verification against the actual pod labels in cluster. The victoria-metrics-operator creates pods with labels like `app: vmalertmanager` but this should be confirmed.
+> **Verified:** vmalertmanager pod labels confirmed as `app.kubernetes.io/name: vmalertmanager` (standard Kubernetes labels, set by vm-operator).
 
 ## Files Changed
 
