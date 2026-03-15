@@ -25,6 +25,13 @@ misconfigurations:
       - cluster/apps/authentik-system/authentik/app/external-secrets-rbac.yaml
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/role.yaml
 
+  # kubectl-mcp-server needs pod delete for cleanup and pods/eviction for drain
+  # Scale subresources (deployments/scale, statefulsets/scale) are also granted but
+  # AVD-KSV-0048 only triggers on the pods delete rule (lines 13-16)
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/kubectl-mcp/kubectl-mcp-server/app/rbac.yaml
+
   # Authentik outpost deployer needs access to secrets/services/configmaps/deployments to deploy outposts
   # Required for forward-auth SSO pattern
   - id: AVD-KSV-0048
