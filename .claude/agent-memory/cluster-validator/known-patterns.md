@@ -39,6 +39,7 @@ Error patterns and their known resolutions.
 | `spec.interval: Required value` on HelmRelease dry-run after moving defaults from Flux patches to Kyverno mutating policy | Kyverno admission webhooks fire AFTER server-side apply dry-run validation; CRD-required fields must be present in the manifest before dry-run | Keep required fields (spec.interval) in Flux kustomization patches or set them explicitly in each HelmRelease; Kyverno +(anchor) mutation cannot inject CRD-required fields | 3 | 2026-03-12 | 2026-03-09 |
 | OOMKilled (exit code 137) on mcp-victoriametrics with 128Mi-1Gi limits | Container memory limit too low for application startup; process killed within 7s after single log line | Increase memory limit aggressively (2Gi worked); mcp-victoriametrics v1.18.0 in SSE mode needs >1Gi at startup | 4 | 2026-03-12 | 2026-03-12 |
 | HelmRelease stuck in `pending-upgrade` with no successful revision history | All revisions failed (install + upgrades), Flux error: `missing target release for rollback: cannot remediate failed release` | Manual `helm rollback <release> <revision> -n <ns>` to unstick, then Flux retries with new values | 1 | 2026-03-12 | 2026-03-12 |
+| `Startup probe failed: HTTP probe failed with statuscode: 404` on FastMCP-based apps | FastMCP streamable-http transport serves only `/mcp` endpoint; no `/health` path exists | Switch probes from `httpGet` to `tcpSocket` on the app port | 1 | 2026-03-15 | 2026-03-15 |
 
 ## False Positives
 
@@ -47,7 +48,7 @@ Things that look like failures but aren't — avoid flagging these.
 | Signal | Why It's Not a Problem | Count | Last Seen | Added |
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 7 | 2026-03-13 | 2026-02-24 |
-| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 12 | 2026-03-15 | 2026-02-25 |
+| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 13 | 2026-03-15 | 2026-02-25 |
 | Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 9 | 2026-03-13 | 2026-02-25 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
 | authentik default OAuth Mapping uses deprecated `ak_groups` — emits deprecation warning on outpost proxy requests | Not a failure — requests succeed with HTTP 200. Migrate to `User.groups` in admin UI | 1 | 2026-02-25 | 2026-02-25 |
