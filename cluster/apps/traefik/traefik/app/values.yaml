@@ -35,3 +35,19 @@ tlsStore:
   default:
     defaultCertificate:
       secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
+experimental:
+  plugins:
+    traefik-api-key-auth:
+      moduleName: "github.com/linkphoenix/traefik-api-key-auth"
+      version: "v1.0.4"
+env:
+  - name: KUBECTL_MCP_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: traefik-mcp-api-keys
+        key: KUBECTL_MCP_API_KEY
+  - name: VM_MCP_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: traefik-mcp-api-keys
+        key: VM_MCP_API_KEY
