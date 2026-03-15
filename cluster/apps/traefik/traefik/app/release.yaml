@@ -15,8 +15,19 @@ spec:
         namespace: flux-system
   install:
     crds: Skip
+    strategy:
+      name: RetryOnFailure
+  rollback:
+    cleanupOnFail: true
+    recreate: true
   upgrade:
+    cleanupOnFail: true
     crds: Skip
+    strategy:
+      name: RemediateOnFailure
+    remediation:
+      remediateLastFailure: true
+      retries: 2
   interval: 4h
   valuesFrom:
     - kind: ConfigMap
