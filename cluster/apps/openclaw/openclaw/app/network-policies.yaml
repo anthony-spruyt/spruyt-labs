@@ -181,3 +181,24 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to kubectl MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-mcp-kubectl-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: openclaw
+      app.kubernetes.io/name: openclaw
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kubectl-mcp
+            k8s:app.kubernetes.io/name: kubectl-mcp-server
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP

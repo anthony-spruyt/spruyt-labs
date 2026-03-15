@@ -41,6 +41,7 @@ resources:
   - ./firefly-iii
   - ./nut-system
   - ./openclaw
+  - ./kubectl-mcp
   # - ./snmp
   # - ./smtp
   # - ./mysql

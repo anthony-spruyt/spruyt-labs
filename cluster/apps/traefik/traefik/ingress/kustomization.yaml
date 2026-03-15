@@ -17,4 +17,5 @@ resources:
   - ./redisinsight
   - ./rook-ceph
   - ./vaultwarden
+  - ./kubectl-mcp
   - ./whoami

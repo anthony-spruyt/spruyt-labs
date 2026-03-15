@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Traefik
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kubectl-mcp-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from OpenClaw (pod-to-pod MCP access)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-openclaw-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kubectl-mcp-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: openclaw
+            k8s:app.kubernetes.io/instance: openclaw
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to kube-apiserver
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kubectl-mcp-server
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP

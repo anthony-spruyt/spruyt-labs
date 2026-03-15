@@ -32,6 +32,7 @@ spec:
     - name: foundryvtt
     - name: headlamp
     - name: n8n
+    - name: kubectl-mcp-server
     - name: openclaw
     - name: qdrant
     - name: redisinsight
