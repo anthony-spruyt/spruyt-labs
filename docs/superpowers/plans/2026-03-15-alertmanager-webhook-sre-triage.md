@@ -22,7 +22,7 @@
 
 - [ ] **Step 1: Add SRE agent to `agents.list`**
 
-In `cluster/apps/openclaw/openclaw/app/openclaw.json`, add a new entry to the `agents.list` array (after the existing `coordinator` entry at line 133):
+In `cluster/apps/openclaw/openclaw/app/openclaw.json`, insert a new entry at the end of the `agents.list` array — after the `coordinator` object (which ends on line 133) and before the closing `]` on line 134. Add a comma after line 133's `}` before inserting:
 
 ```json
 {
@@ -36,7 +36,7 @@ In `cluster/apps/openclaw/openclaw/app/openclaw.json`, add a new entry to the `a
 
 - [ ] **Step 2: Add `hooks` config block**
 
-In the same file, add the `hooks` top-level key. Place it after the `plugins` block (after line 262, before the closing `}`). **Add a trailing comma after the `plugins` closing `}`** to keep the JSON valid:
+In the same file, add the `hooks` top-level key. Change line 262 (the `plugins` closing `}`) from `  }` to `  },` and insert the `hooks` block between lines 262 and 263 (the root closing `}`):
 
 ```json
 "hooks": {
@@ -65,12 +65,7 @@ In the same file, add the `hooks` top-level key. Place it after the `plugins` bl
 Run: `python3 -m json.tool cluster/apps/openclaw/openclaw/app/openclaw.json > /dev/null`
 Expected: No output (valid JSON)
 
-- [ ] **Step 4: Validate against schema**
-
-Run: `python3 -c "import json; d=json.load(open('cluster/apps/openclaw/openclaw/app/openclaw.json')); s=json.load(open('cluster/apps/openclaw/openclaw/app/openclaw-schema.json')); print('Schema loaded, keys:', len(s.get('properties',{})))"`
-Expected: Schema loads without error. Full jsonschema validation is not required — the OpenClaw pod validates on startup.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add cluster/apps/openclaw/openclaw/app/openclaw.json
