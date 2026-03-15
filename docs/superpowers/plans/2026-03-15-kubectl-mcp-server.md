@@ -172,7 +172,7 @@ git commit -m "feat(kubectl-mcp): add read-only RBAC for kubectl-mcp-server"
 
 ```yaml
 ---
-# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -217,6 +217,9 @@ spec:
 defaultPodOptions:
   priorityClassName: low-priority
   automountServiceAccountToken: true
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
 controllers:
   kubectl-mcp-server:
     strategy: Recreate
@@ -574,7 +577,6 @@ spec:
       middlewares:
         - name: lan-ip-whitelist
         - name: api-key-auth-kubectl-mcp
-        - name: compress
       services:
         - name: kubectl-mcp-server
           namespace: kubectl-mcp
@@ -611,19 +613,11 @@ spec:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../base/compress.yaml
   - ../base/lan-ip-whitelist.yaml
   - ./api-key-auth.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
 patches:
-  - target:
-      kind: Middleware
-      name: compress
-    patch: |
-      - op: replace
-        path: /metadata/namespace
-        value: kubectl-mcp
   - target:
       kind: Middleware
       name: lan-ip-whitelist
