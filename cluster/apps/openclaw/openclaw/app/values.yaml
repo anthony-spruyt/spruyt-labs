@@ -104,6 +104,7 @@ controllers:
         env:
           GIT_CONFIG_GLOBAL: /home/node/.openclaw/.gitconfig
           GIT_TERMINAL_PROMPT: "0"
+          OPENCLAW_TZ: ${TIMEZONE}
         # Example: Add runtime dependency paths for skills and extra runtimes
         # env:
         #   PATH: /home/node/.openclaw/pnpm:/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
