@@ -1,0 +1,7 @@
+machine:
+  registries:
+    config:
+      ghcr.io:
+        auth:
+          username: ${GH_USERNAME}
+          password: ${GH_TOKEN}

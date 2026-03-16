@@ -508,6 +508,7 @@ worker:
 patches:
   - "@patches/global/configure-containerd.yaml"
   - "@patches/global/configure-kubelet.yaml"
+  - "@patches/global/configure-registries.yaml"
   - "@patches/global/configure-ntp.yaml"
   - "@patches/global/disable-kube-proxy-for-cilium.yaml"
   - "@patches/global/enable-kube-prism.yaml"
