@@ -5,3 +5,7 @@ machine:
         auth:
           username: ${GH_USERNAME}
           password: ${GH_TOKEN}
+      registry-1.docker.io:
+        auth:
+          username: ${DOCKER_USERNAME}
+          password: ${DOCKER_TOKEN}
