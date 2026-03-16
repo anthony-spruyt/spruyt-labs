@@ -186,7 +186,7 @@ cd /home/node/.openclaw/workspace
 for skill in mcp-hass ontology humanizer; do
   if [ -n "$skill" ] && [ ! -d "skills/${skill##*/}" ]; then
     log "Installing skill: $skill"
-    if ! npx -y clawhub install "$skill" --no-input; then
+    if ! HOME=/home/node/.openclaw npx -y clawhub install "$skill" --no-input; then
       log "WARNING: Failed to install skill: $skill"
     fi
   else
