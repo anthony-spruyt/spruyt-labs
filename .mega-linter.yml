@@ -9,11 +9,15 @@ ENABLE_LINTERS:
   - TERRAFORM_TFLINT
   - YAML_YAMLLINT
 FILTER_REGEX_EXCLUDE: '.*sops.*|.*/mcp\.json$|cluster/apps/openclaw/openclaw/app/workspace/|\.taskfiles/talos/scripts/'
+REPOSITORY_SECRETLINT_ARGUMENTS:
+  - "--secretlintignore"
+  - ".secretlintignore"
 EXCLUDED_DIRECTORIES:
   - .git
-  - talos
+  - .output
   - clusterconfig
   - legacy
   - plans
+  - talos
 DEFAULT_BRANCH: main
 IGNORE_GITIGNORED_FILES: true
