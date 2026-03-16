@@ -124,7 +124,7 @@ resources:
 
 - [ ] **Step 3: Add vpa-system to cluster/apps/kustomization.yaml**
 
-Add `- ./vpa-system` to the resources list. Insert alphabetically — after `./velero` and before the commented-out entries.
+Add `- ./vpa-system` to the end of the active resources list, after `./kubectl-mcp` and before the commented-out entries.
 
 - [ ] **Step 4: Commit**
 
@@ -468,7 +468,7 @@ Components:
 - **Updater**: Evicts pods needing updates (inactive with `updateMode: "Off"`)
 - **Admission Controller**: Mutating webhook that sets resources on pod creation (inactive with `updateMode: "Off"`)
 
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the vpa-system namespace specified in ks.yaml.
+> **Note**: The Flux Kustomization lives in flux-system but the HelmRelease and workloads are deployed to the vpa-system namespace via `targetNamespace` in ks.yaml.
 
 ## Prerequisites
 
@@ -481,7 +481,7 @@ Components:
 ```bash
 # Check status
 kubectl get pods -n vpa-system
-flux get helmrelease -n flux-system vertical-pod-autoscaler
+flux get helmrelease -n vpa-system vertical-pod-autoscaler
 
 # View VPA recommendations for all workloads
 kubectl describe vpa -A
