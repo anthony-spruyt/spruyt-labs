@@ -94,8 +94,9 @@ The alertmanager webhook hook routes alerts to the SRE agent:
 | Session scope | per-sender |
 | Session idle reset | 60 minutes |
 | Memory search | Hybrid vector/text (OpenAI `text-embedding-3-small`) |
-| Context pruning | cache-ttl mode, 6h TTL, keep last 3 assistant messages |
-| Compaction | Memory flush at 40k tokens to `memory/YYYY-MM-DD.md` |
+| Context tokens | 1M (with `context1m` enabled on Sonnet 4.6 and Opus 4.6) |
+| Context pruning | cache-ttl mode, 3h TTL, keep last 3 assistant messages, soft-trim 0.3 / hard-clear 0.5 |
+| Compaction | safeguard mode, 50% max history share, 24k reserve floor, memory flush at 40k tokens to `memory/YYYY-MM-DD.md` |
 | Max concurrent agents | 4 (8 subagents) |
 | Agent timeout | 600 seconds |
 

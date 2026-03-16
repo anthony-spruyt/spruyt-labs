@@ -32,10 +32,16 @@
           "alias": "haiku"
         },
         "anthropic/claude-sonnet-4-6": {
-          "alias": "sonnet"
+          "alias": "sonnet",
+          "params": {
+            "context1m": true
+          }
         },
         "anthropic/claude-opus-4-6": {
-          "alias": "opus"
+          "alias": "opus",
+          "params": {
+            "context1m": true
+          }
         }
       },
       "workspace": "/home/node/.openclaw/workspace",
@@ -69,13 +75,24 @@
           "maxEntries": 50000
         }
       },
+      "contextTokens": 1000000,
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "6h",
-        "keepLastAssistants": 3
+        "ttl": "3h",
+        "keepLastAssistants": 3,
+        "softTrimRatio": 0.3,
+        "hardClearRatio": 0.5,
+        "minPrunableToolChars": 50000,
+        "hardClear": {
+          "enabled": true,
+          "placeholder": "[Old tool result content cleared]"
+        },
+        "tools": { "deny": ["browser", "canvas"] }
       },
       "compaction": {
-        "mode": "default",
+        "mode": "safeguard",
+        "maxHistoryShare": 0.5,
+        "reserveTokensFloor": 24000,
         "memoryFlush": {
           "enabled": true,
           "softThresholdTokens": 40000,
