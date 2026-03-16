@@ -26,7 +26,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Middleware base template with Flux envsubst deploys to all consuming namespaces simultaneously; verify substitution in multiple namespaces | lan-ip-whitelist shared middleware, kustomize base pattern | 1 | 2026-03-12 | 2026-03-12 |
 | SSE endpoints return HTTP 200 but curl hangs (timeout) because connection is long-lived; use short --max-time and check headers for `text/event-stream` | MCP VM SSE endpoint validation | 1 | 2026-03-12 | 2026-03-12 |
 | OCIRepository secretRef addition reconciles instantly with no downstream impact; source controller re-authenticates on next poll cycle without triggering pod rollouts | Flux OCI source auth config change, ghcr-docker-config secret | 1 | 2026-03-16 | 2026-03-16 |
-| ConfigMap hash change (configMapGenerator) triggers pod rollout even when HelmRelease version unchanged; verify new pod logs after values.yaml env var changes | mcp-victoriametrics SSE-to-HTTP mode switch, configMapGenerator hash; openclaw gateway auth/config changes; openclaw init-skills script changes; openclaw env var additions; openclaw JSON config changes | 10 | 2026-03-16 | 2026-03-13 |
+| ConfigMap hash change (configMapGenerator) triggers pod rollout even when HelmRelease version unchanged; verify new pod logs after values.yaml env var changes | mcp-victoriametrics SSE-to-HTTP mode switch, configMapGenerator hash; openclaw gateway auth/config changes; openclaw init-skills script changes; openclaw env var additions; openclaw JSON config changes; openclaw subagent spawn permissions | 11 | 2026-03-16 | 2026-03-13 |
 | flux-operator overrides flux-system namespace labels; labels declared in cluster/apps/flux-system/namespace.yaml are not applied because flux-operator manages the namespace with `app.kubernetes.io/managed-by: flux-operator`; use kustomize patch in flux-instance values.yaml instead | flux-system namespace, descheduler label exclusion | 2 | 2026-03-13 | 2026-03-13 |
 
 ## Failure Signatures
@@ -53,12 +53,12 @@ Things that look like failures but aren't — avoid flagging these.
 | Signal | Why It's Not a Problem | Count | Last Seen | Added |
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 7 | 2026-03-13 | 2026-02-24 |
-| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 16 | 2026-03-16 | 2026-02-25 |
+| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 17 | 2026-03-16 | 2026-02-25 |
 | Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 11 | 2026-03-16 | 2026-02-25 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
 | authentik default OAuth Mapping uses deprecated `ak_groups` — emits deprecation warning on outpost proxy requests | Not a failure — requests succeed with HTTP 200. Migrate to `User.groups` in admin UI | 1 | 2026-02-25 | 2026-02-25 |
 | vmagent scrape failures for Grafana during k8s-stack upgrade | Pod IP changes during rollover cause transient scrape timeouts/connection refused — resolves once new pod is ready | 1 | 2026-02-25 | 2026-02-25 |
-| openclaw startup probe fails with "connection refused" for ~20s after pod start | App takes ~20s to bind port 18789 — startup probe catches this normally, pod becomes ready within 30s | 19 | 2026-03-16 | 2026-02-25 |
+| openclaw startup probe fails with "connection refused" for ~20s after pod start | App takes ~20s to bind port 18789 — startup probe catches this normally, pod becomes ready within 30s | 20 | 2026-03-16 | 2026-02-25 |
 | openclaw gateway token auth: `token_missing` and `pairing required` WS rejections after switching to token mode | Expected behavior — clients must complete token pairing via Control UI; not a failure | 1 | 2026-03-14 | 2026-03-14 |
 | openclaw `Proxy headers detected from untrusted address` when trustedProxies doesn't include Traefik pod CIDR | Gateway ignores X-Forwarded-For from non-trusted IPs; functional but loses real client IP detection | 1 | 2026-03-14 | 2026-03-14 |
 | n8n readiness probe "connection refused" for ~20s after pod start during rolling update | n8n takes ~20s to bind port 5678 after container start — transient, resolves once app initializes | 3 | 2026-03-13 | 2026-03-03 |
