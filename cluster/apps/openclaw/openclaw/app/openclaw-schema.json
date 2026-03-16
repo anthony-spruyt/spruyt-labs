@@ -474,6 +474,10 @@
                   {
                     "type": "string",
                     "const": "extension"
+                  },
+                  {
+                    "type": "string",
+                    "const": "existing-session"
                   }
                 ]
               },
@@ -2109,6 +2113,9 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 9007199254740991
+                        },
+                        "postCompactionForce": {
+                          "type": "boolean"
                         }
                       },
                       "additionalProperties": false
@@ -2328,6 +2335,9 @@
                   "minimum": 0.1,
                   "maximum": 0.9
                 },
+                "customInstructions": {
+                  "type": "string"
+                },
                 "identifierPolicy": {
                   "anyOf": [
                     {
@@ -2365,6 +2375,10 @@
                     }
                   },
                   "additionalProperties": false
+                },
+                "postIndexSync": {
+                  "type": "string",
+                  "enum": ["off", "async", "await"]
                 },
                 "postCompactionSections": {
                   "type": "array",
@@ -3457,6 +3471,9 @@
                             "type": "integer",
                             "minimum": 0,
                             "maximum": 9007199254740991
+                          },
+                          "postCompactionForce": {
+                            "type": "boolean"
                           }
                         },
                         "additionalProperties": false
@@ -4007,6 +4024,13 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "params": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
               },
               "tools": {
                 "type": "object",
@@ -4949,6 +4973,100 @@
                 },
                 "userAgent": {
                   "type": "string"
+                },
+                "readability": {
+                  "type": "boolean"
+                },
+                "firecrawl": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "apiKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "source": {
+                                  "type": "string",
+                                  "const": "env"
+                                },
+                                "provider": {
+                                  "type": "string",
+                                  "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
+                                }
+                              },
+                              "required": ["source", "provider", "id"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "source": {
+                                  "type": "string",
+                                  "const": "file"
+                                },
+                                "provider": {
+                                  "type": "string",
+                                  "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                                },
+                                "id": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": ["source", "provider", "id"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "source": {
+                                  "type": "string",
+                                  "const": "exec"
+                                },
+                                "provider": {
+                                  "type": "string",
+                                  "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                                },
+                                "id": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": ["source", "provider", "id"],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "baseUrl": {
+                      "type": "string"
+                    },
+                    "onlyMainContent": {
+                      "type": "boolean"
+                    },
+                    "maxAgeMs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "timeoutSeconds": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -7318,6 +7436,9 @@
                 },
                 "stallHard": {
                   "type": "string"
+                },
+                "compacting": {
+                  "type": "string"
                 }
               },
               "additionalProperties": false
@@ -8989,6 +9110,9 @@
           "properties": {
             "enabled": {
               "type": "boolean"
+            },
+            "domain": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -9972,6 +10096,32 @@
                       "const": false
                     }
                   ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "push": {
+          "type": "object",
+          "properties": {
+            "apns": {
+              "type": "object",
+              "properties": {
+                "relay": {
+                  "type": "object",
+                  "properties": {
+                    "baseUrl": {
+                      "type": "string"
+                    },
+                    "timeoutMs": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -11364,6 +11514,32 @@
               },
               "additionalProperties": false
             },
+            "ollama": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "config": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": false,
+                  "properties": {}
+                }
+              },
+              "additionalProperties": false
+            },
             "open-prose": {
               "type": "object",
               "properties": {
@@ -11417,6 +11593,32 @@
               "additionalProperties": false
             },
             "qwen-portal-auth": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "config": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": false,
+                  "properties": {}
+                }
+              },
+              "additionalProperties": false
+            },
+            "sglang": {
               "type": "object",
               "properties": {
                 "enabled": {
@@ -11635,6 +11837,32 @@
               "additionalProperties": false
             },
             "twitch": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "allowPromptInjection": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "config": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": false,
+                  "properties": {}
+                }
+              },
+              "additionalProperties": false
+            },
+            "vllm": {
               "type": "object",
               "properties": {
                 "enabled": {
