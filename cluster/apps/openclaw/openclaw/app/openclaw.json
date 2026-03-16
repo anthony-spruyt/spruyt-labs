@@ -231,7 +231,7 @@
             },
             "1403996226046787634": {
               "allow": true,
-              "requireMention": false
+              "requireMention": true
             }
           }
         }
