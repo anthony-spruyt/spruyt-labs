@@ -9,7 +9,7 @@ MegaLinter or schema check results that are not actual issues.
 | AVD-KSV-0037 on kube-system resources | Trivy | etcd/control-plane components legitimately run in kube-system | 3 | 2026-02-28 | 2026-02-28 |
 | AVD-KSV-0125 on ghcr.io images | Trivy | ghcr.io/siderolabs is the official Talos registry | 2 | 2026-02-28 | 2026-02-28 |
 | AVD-KSV-0048 on intentional write RBAC | Trivy | Expected when ClusterRole intentionally grants write verbs (delete, patch, create) for operational use cases | 3 | 2026-03-15 | 2026-03-15 |
-| GITHUB_TOKEN in talos/clusterconfig/*.yaml | secretlint | Generated Talos machine configs contain registry auth env var placeholders that secretlint flags as GitHub tokens. Files are gitignored in production | 2 | 2026-03-16 | 2026-03-16 |
+| GITHUB_TOKEN in talos/clusterconfig/*.yaml | secretlint | Generated Talos machine configs contain registry auth env var placeholders that secretlint flags as GitHub tokens. Files are gitignored in production | 3 | 2026-03-16 | 2026-03-16 |
 
 ## Schema Quirks
 
@@ -28,6 +28,7 @@ Cases where Context7 or upstream docs are missing or misleading.
 |---------|----------------|------------------|-------|-----------|-------|
 | openclaw | Context7 docs show `ttlHours` for threadBindings but v2026.3.2 schema uses `idleHours`/`maxAgeHours` | Local schema (from app source) is authoritative over Context7 when schema was recently updated | 1 | 2026-03-03 | 2026-03-03 |
 | openclaw | Context7 lacks gateway HTTP probe endpoint docs (/healthz vs /readyz) | Upstream source server-http.ts is authoritative: /healthz,/health=live; /ready,/readyz=ready. Context7 only shows WS-based health RPC. Use `gh search code` against openclaw/openclaw repo | 1 | 2026-03-14 | 2026-03-14 |
+| openclaw | OPENCLAW_TZ is not a valid env var; timezone is set via agents.defaults.userTimezone in openclaw.json | Context7 confirms timezone config is JSON-only (agents.defaults.userTimezone). No OPENCLAW_TZ env var exists. Always check openclaw.json first for existing timezone config | 1 | 2026-03-16 | 2026-03-16 |
 | bjw-s app-template | Context7 docs lack detailed probe field placement (top-level vs spec) | Must read actual Helm template `_probes.tpl` to verify field placement. Unit tests in `field_probes_test.yaml` are authoritative | 1 | 2026-03-13 | 2026-03-13 |
 | bjw-s app-template | Context7 docs don't clarify serviceAccount v2 vs v4 syntax difference | v4 uses named-map `serviceAccount: { name: {} }` + controller `serviceAccount.identifier`. v2 `name`/`create` fields are invalid. Check schema at `schemas/serviceAccount.json` | 1 | 2026-03-15 | 2026-03-15 |
 | talos | Context7 returns only new RegistryAuthConfig format for registry auth queries; does not surface that `.machine.registries` is deprecated-but-supported | `.machine.registries.config` still works on v1.12.x but is deprecated. New format is `RegistryAuthConfig` document. For Talhelper patch workflows the old format may be simpler | 1 | 2026-03-16 | 2026-03-16 |
