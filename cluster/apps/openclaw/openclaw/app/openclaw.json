@@ -219,6 +219,10 @@
             "1473506635656990862": {
               "allow": true,
               "requireMention": false
+            },
+            "1403996226046787634": {
+              "allow": true,
+              "requireMention": false
             }
           }
         }
