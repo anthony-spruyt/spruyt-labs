@@ -9,7 +9,7 @@ MegaLinter or schema check results that are not actual issues.
 | AVD-KSV-0037 on kube-system resources | Trivy | etcd/control-plane components legitimately run in kube-system | 3 | 2026-02-28 | 2026-02-28 |
 | AVD-KSV-0125 on ghcr.io images | Trivy | ghcr.io/siderolabs is the official Talos registry | 2 | 2026-02-28 | 2026-02-28 |
 | AVD-KSV-0048 on intentional write RBAC | Trivy | Expected when ClusterRole intentionally grants write verbs (delete, patch, create) for operational use cases | 3 | 2026-03-15 | 2026-03-15 |
-| GITHUB_TOKEN in talos/clusterconfig/*.yaml | secretlint | Generated Talos machine configs contain registry auth env var placeholders that secretlint flags as GitHub tokens. Files are gitignored in production | 1 | 2026-03-16 | 2026-03-16 |
+| GITHUB_TOKEN in talos/clusterconfig/*.yaml | secretlint | Generated Talos machine configs contain registry auth env var placeholders that secretlint flags as GitHub tokens. Files are gitignored in production | 2 | 2026-03-16 | 2026-03-16 |
 
 ## Schema Quirks
 
