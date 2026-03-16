@@ -118,6 +118,9 @@
           "emoji": "💀",
           "avatar": "avatar.png",
           "theme": "Dry, slightly menacing, but ultimately helpful. Think Terminator meets butler."
+        },
+        "subagents": {
+          "allowAgents": ["researcher", "communicator", "coordinator"]
         }
       },
       {
