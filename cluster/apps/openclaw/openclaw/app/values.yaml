@@ -48,7 +48,7 @@ controllers:
         dependsOn: init-workspace
         image:
           repository: ghcr.io/openclaw/openclaw
-          tag: &tag "2026.3.13"
+          tag: &tag "2026.3.11"
         command:
           - sh
           - /scripts/init-config.sh
