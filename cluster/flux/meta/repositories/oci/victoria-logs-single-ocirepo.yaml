@@ -9,3 +9,5 @@ spec:
   ref:
     tag: "0.11.29"
   url: oci://ghcr.io/victoriametrics/helm-charts/victoria-logs-single
+  secretRef:
+    name: ghcr-docker-config

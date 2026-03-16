@@ -9,3 +9,5 @@ spec:
   ref:
     tag: v1.19.2
   url: oci://ghcr.io/rook/rook-ceph
+  secretRef:
+    name: ghcr-docker-config

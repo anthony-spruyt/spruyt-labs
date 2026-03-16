@@ -9,3 +9,5 @@ spec:
   ref:
     tag: "0.59.2"
   url: oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-operator
+  secretRef:
+    name: ghcr-docker-config
