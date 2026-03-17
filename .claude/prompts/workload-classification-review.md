@@ -153,5 +153,4 @@ kubectl get pods -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metad
 ## Related
 
 - [docs/workload-classification.md](../../docs/workload-classification.md) - Full classification reference
-- [quarterly-resource-review.md](quarterly-resource-review.md) - Resource optimization
 - [cluster/flux/meta/priority-classes.yaml](../../cluster/flux/meta/priority-classes.yaml) - Priority class definitions

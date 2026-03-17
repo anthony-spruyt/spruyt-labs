@@ -156,5 +156,4 @@ Run `.claude/prompts/workload-classification-review.md` quarterly or when:
 
 ## Related
 
-- [quarterly-resource-review.md](../.claude/prompts/quarterly-resource-review.md) - Resource optimization
 - [cluster/flux/meta/priority-classes.yaml](../cluster/flux/meta/priority-classes.yaml) - Priority class definitions

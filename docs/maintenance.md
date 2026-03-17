@@ -133,16 +133,6 @@ kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd set noout
 kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd unset noout
 ```
 
-## Quarterly Resource Review
-
-Run the quarterly resource review prompt with Claude Code:
-
-```text
-.claude/prompts/quarterly-resource-review.md
-```
-
-This reviews and optimizes Kubernetes resource requests and limits based on actual metrics.
-
 ## Related
 
 - [docs/disaster-recovery.md](disaster-recovery.md) - DR procedures
