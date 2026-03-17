@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - ./bjw-s-charts.yaml
   - ./cilium-charts.yaml
+  - ./cowboysysop-charts.yaml
   - ./descheduler-charts.yaml
   - ./external-dns-charts.yaml
   - ./cloudnative-pg-charts.yaml
