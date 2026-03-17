@@ -22,6 +22,8 @@ spegel:
   # -- When true enables debug web page.
   debugWebEnabled: false
 verticalPodAutoscaler:
+  updatePolicy:
+    updateMode: "Off"
   maxAllowed:
     cpu: 10m
     memory: 128Mi
