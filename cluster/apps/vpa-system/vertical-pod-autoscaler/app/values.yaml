@@ -1,0 +1,29 @@
+# Default values for vertical-pod-autoscaler
+# Chart: https://github.com/cowboysysop/charts/tree/master/charts/vertical-pod-autoscaler
+
+admissionController:
+  priorityClassName: high-priority
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+recommender:
+  priorityClassName: high-priority
+  resources:
+    requests:
+      cpu: 50m
+      memory: 512Mi
+    limits:
+      memory: 1024Mi
+
+updater:
+  priorityClassName: high-priority
+  resources:
+    requests:
+      cpu: 50m
+      memory: 512Mi
+    limits:
+      memory: 1024Mi
