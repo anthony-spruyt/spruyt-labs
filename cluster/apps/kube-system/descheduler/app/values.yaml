@@ -37,6 +37,7 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
+                - vpa-system
         - name: RemovePodsViolatingTopologySpreadConstraint
           args:
             constraints:
@@ -49,6 +50,7 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
+                - vpa-system
         - name: RemoveFailedPods
           args:
             minPodLifetimeSeconds: 3600
@@ -60,6 +62,7 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
+                - vpa-system
         - name: RemovePodsHavingTooManyRestarts
           args:
             podRestartThreshold: 10
@@ -72,6 +75,7 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
+                - vpa-system
         - name: LowNodeUtilization
           args:
             thresholds:
@@ -88,6 +92,7 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
+                - vpa-system
       plugins:
         balance:
           enabled:
