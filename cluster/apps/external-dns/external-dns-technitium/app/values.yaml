@@ -13,7 +13,6 @@ securityContext:
   capabilities:
     drop:
       - ALL
-# P99 9m - increase request to match
 resources:
   limits:
     memory: 96Mi

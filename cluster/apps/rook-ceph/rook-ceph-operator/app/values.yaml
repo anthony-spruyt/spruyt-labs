@@ -4,8 +4,6 @@
 priorityClassName: critical-infrastructure
 crds:
   enabled: true
-# Critical infrastructure - no CPU limit (already correct)
-# Increased requests to better reflect P99 usage spikes during reconciliation
 resources:
   limits:
     memory: 1Gi

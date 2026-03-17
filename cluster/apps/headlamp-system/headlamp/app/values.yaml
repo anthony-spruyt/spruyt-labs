@@ -42,7 +42,6 @@ pluginsManager:
       parallel: true
       maxConcurrent: 2
 
-# P99 25m - idle unless dashboard active, generous limit for bursts
 resources:
   requests:
     cpu: 35m

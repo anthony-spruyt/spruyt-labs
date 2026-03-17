@@ -131,8 +131,6 @@ instance:
           kind: Deployment
           name: helm-controller
       # Adjust resources and limits
-      # Critical infrastructure - no CPU limits (CPU is compressible)
-      # Requests: P99 usage + 20% buffer
       - patch: |
           apiVersion: apps/v1
           kind: Deployment

@@ -10,7 +10,6 @@ logs:
   general:
     format: json
     level: INFO
-# Critical ingress infrastructure - no CPU limit (CPU is compressible)
 resources:
   requests:
     cpu: 50m

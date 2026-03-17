@@ -55,7 +55,6 @@ controllers:
               periodSeconds: 5
               timeoutSeconds: 1
               failureThreshold: 3
-        # Already no CPU limit - add memory request
         resources:
           limits:
             memory: 256Mi

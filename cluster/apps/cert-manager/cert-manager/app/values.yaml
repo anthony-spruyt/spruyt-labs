@@ -17,7 +17,6 @@ dns01RecursiveNameservers: 1.1.1.1:53,1.0.0.1:53
 # Enabling this option could cause the DNS01 self check to take longer owing to caching performed by the recursive nameservers.
 dns01RecursiveNameserversOnly: true
 # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
-# Critical infrastructure - no CPU limit (CPU is compressible)
 resources:
   limits:
     memory: 192Mi
@@ -32,7 +31,6 @@ webhook:
     seccompProfile:
       type: RuntimeDefault
   # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
-  # Critical infrastructure - no CPU limit (CPU is compressible)
   resources:
     limits:
       memory: 256Mi
@@ -49,7 +47,6 @@ cainjector:
     seccompProfile:
       type: RuntimeDefault
   # For more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
-  # Critical infrastructure - no CPU limit (CPU is compressible)
   resources:
     limits:
       memory: 256Mi

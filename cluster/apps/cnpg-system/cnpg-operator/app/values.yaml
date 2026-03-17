@@ -7,7 +7,6 @@ config:
   clusterWide: true
 monitoring:
   podMonitorEnabled: true
-# Critical infrastructure - no CPU limit (CPU is compressible)
 resources:
   limits:
     memory: 512Mi

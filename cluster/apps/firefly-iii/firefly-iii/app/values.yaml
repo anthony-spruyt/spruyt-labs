@@ -3,8 +3,6 @@
 # Documentation: https://github.com/firefly-iii/kubernetes/tree/main/charts/firefly-iii
 # Default values: https://github.com/firefly-iii/kubernetes/blob/main/charts/firefly-iii/values.yaml
 # standard tier: Business application with availability expectations (per docs/workload-classification.md)
-# CPU limit: 5x request to handle burst patterns (elevated from standard 3x policy)
-
 image:
   repository: fireflyiii/core
   pullPolicy: IfNotPresent
@@ -77,8 +75,6 @@ persistence:
   storage: 5Gi
 
 # Resources - standard tier with elevated limit for burst behavior
-# P99 CPU: 55m, but observed 11.89% throttling at 300m limit
-# Increasing limit to 5x request to handle burst workload patterns
 resources:
   requests:
     cpu: 100m

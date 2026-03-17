@@ -131,7 +131,6 @@ spec:
 
                         echo "Configuration complete. Sleeping..."
                         sleep infinity
-                    # Critical infrastructure - no CPU limit, high requests for bursty startup
                     resources:
                       limits:
                         memory: 256Mi

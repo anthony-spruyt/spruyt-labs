@@ -13,7 +13,6 @@ toolbox:
   # -- Enable Ceph debugging pod deployment. See [toolbox](https://github.com/rook/rook/blob/master/Documentation/Troubleshooting/ceph-toolbox.md)
   # IMPORTANT: Must stay enabled - SSO config sidecar is patched onto this deployment via postRenderers in release.yaml
   enabled: true
-  # Critical infrastructure - no CPU limit (CPU is compressible)
   resources:
     limits:
       memory: 256Mi
@@ -100,7 +99,6 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
     #devicePathFilter: /dev/disk/by-id/nvme-(KINGSTON_OM3PGP41024P-A0_50026B72836A9B64|KINGSTON_OM8TAP41024K1-A00_50026B738433E649|KINGSTON_OM3PGP41024P-A0_50026B72836A9C9E) # POST RMA MS-01-1|MS-01-2 (shitty disk)|MS-01-3
     config:
       encryptedDevice: "true"
-  # Resource requests based on P99 metrics (7d): MGR=169m/737Mi, MON=188m/534Mi, OSD=483m/1078Mi
   resources:
     mgr:
       limits:
@@ -144,7 +142,6 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
       requests:
         cpu: 10m
         memory: 24Mi
-    # P99 1m per container
     logcollector:
       limits:
         memory: 1Gi

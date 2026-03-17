@@ -55,7 +55,6 @@ controllers:
           readOnlyRootFilesystem: false
           capabilities:
             drop: ["ALL"]
-        # Critical DNS infrastructure - no CPU limit (P99: 180m, +20% headroom)
         resources:
           requests:
             cpu: 220m

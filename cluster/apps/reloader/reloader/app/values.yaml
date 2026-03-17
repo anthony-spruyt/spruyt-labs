@@ -17,7 +17,6 @@ reloader:
       capabilities:
         drop:
           - ALL
-    # Tier 1 critical infrastructure - no CPU limit (impacts all workloads)
     resources:
       limits:
         memory: 192Mi

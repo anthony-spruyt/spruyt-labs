@@ -36,7 +36,6 @@ controllers:
           repository: docker.io/traefik/whoami
           tag: v1.11.0
           pullPolicy: IfNotPresent
-        # low-priority - no CPU limit (was 25-80% throttled due to bursty startup)
         resources:
           requests:
             cpu: 5m

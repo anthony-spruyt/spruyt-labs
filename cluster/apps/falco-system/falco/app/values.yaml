@@ -1,8 +1,6 @@
 ---
 # #yaml-language-server: $schema=TODO
 # High-priority: security observability (per docs/workload-classification.md)
-# CPU limit: 5x request per high-priority policy
-
 driver:
   kind: modern_ebpf
 
@@ -15,8 +13,6 @@ tolerations:
     key: node-role.kubernetes.io/control-plane
     operator: Exists
 
-# Resources: high-priority tier with extra startup headroom
-# Based on P99 metrics (110m/pod) + 20% headroom, limit increased for eBPF probe loading
 resources:
   requests:
     cpu: 130m
@@ -29,7 +25,6 @@ resources:
 falcosidekick:
   enabled: true
   priorityClassName: high-priority
-  # Based on P99 metrics + 20% headroom
   resources:
     requests:
       cpu: 15m

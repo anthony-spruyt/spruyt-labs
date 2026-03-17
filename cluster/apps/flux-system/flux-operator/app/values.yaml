@@ -3,7 +3,6 @@
 # Default values for flux-operator: https://github.com/controlplaneio-fluxcd/charts/blob/main/charts/flux-operator/values.yaml
 priorityClassName: high-priority
 # -- Container resources requests and limits settings.
-# Critical infrastructure - no CPU limit (CPU is compressible)
 resources: # @schema required: true
   limits:
     memory: 1Gi

@@ -76,7 +76,6 @@ controllers:
               timeoutSeconds: 1
               failureThreshold: 3
           readiness: *probes
-        # P99 2.7m - idle unless actively used, generous limit for bursts
         resources:
           requests:
             cpu: 10m

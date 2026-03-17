@@ -2,7 +2,6 @@
 # Default values for spegel: https://github.com/spegel-org/spegel/blob/main/charts/spegel/values.yaml
 # Values documentation: https://artifacthub.io/packages/helm/spegel/spegel
 priorityClassName: high-priority
-# P99: 177m CPU, 69Mi memory - add CPU request for scheduler awareness
 resources:
   requests:
     cpu: 200m

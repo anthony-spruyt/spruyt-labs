@@ -205,8 +205,6 @@ server:
   # -- Pod's annotations
   #podAnnotations: {}
 
-  # Critical observability infrastructure - no CPU limit (CPU is compressible)
-  # P99 65m + 20% headroom
   resources:
     limits:
       memory: 512Mi
@@ -389,8 +387,6 @@ vector:
   # -- Enable deployment of vector
   enabled: true
 
-  # No CPU limit (CPU is compressible)
-  # Requests based on P99: 168m (+20% headroom)
   resources:
     requests:
       cpu: 200m

@@ -23,7 +23,6 @@ spec:
   gateway:
     port: 8080
     instances: 2
-    # P99 127m total (4 RGWs), +20% headroom per instance
     resources:
       requests:
         cpu: 155m
@@ -55,7 +54,6 @@ spec:
   gateway:
     port: 8081
     instances: 2
-    # P99 127m total (4 RGWs), +20% headroom per instance
     resources:
       requests:
         cpu: 155m

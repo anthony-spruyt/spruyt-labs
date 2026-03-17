@@ -55,7 +55,6 @@ controllers:
         env:
           TZ: ${TIMEZONE}
         # Gaming workload - bursty during active games
-        # Requests based on P99 usage (Q1 2026), high limits for burst capacity
         resources:
           requests:
             cpu: 750m

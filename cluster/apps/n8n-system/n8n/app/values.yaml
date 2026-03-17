@@ -140,7 +140,6 @@ main:
     readOnlyRootFilesystem: true
     runAsNonRoot: true
     runAsUser: 1000
-  # Increased memory request based on P99: 369Mi
   resources:
     limits:
       cpu: 2000m
@@ -154,7 +153,6 @@ worker:
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
   deploymentAnnotations: *deploymentAnnotations
-  # P99 12m, +25% headroom
   resources:
     requests:
       cpu: 15m

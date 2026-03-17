@@ -77,18 +77,15 @@ ipam:
 operator:
   rollOutPods: true # Roll out cilium-operator pods automatically when configmap is updated.
   priorityClassName: critical-infrastructure
-  # Critical networking infrastructure - no CPU limit (CPU is compressible)
   resources:
     limits:
       memory: 512Mi
     requests:
       cpu: 50m
       memory: 128Mi
-# Critical networking infrastructure - no CPU limit (CPU is compressible)
-# Agent resources based on P99 usage: 1051m CPU, 520Mi memory
 resources:
   limits:
-    memory: 1Gi # ~415 MB expected (buffer ~100MB + baseline ~315MB) + headroom
+    memory: 1Gi
   requests:
     cpu: 1250m
     memory: 512Mi

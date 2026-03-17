@@ -18,8 +18,6 @@ crds:
     # -- Enables CRD upgrade job
     enabled: true
 
-# Critical infrastructure - no CPU limit (CPU is compressible)
-# P99 16m - increase request to match
 resources:
   limits:
     memory: 256Mi

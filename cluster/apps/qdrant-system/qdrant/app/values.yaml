@@ -16,7 +16,6 @@ readinessProbe:
   enabled: true
 startupProbe:
   enabled: true
-# P99 16m - increase request to match
 resources:
   limits:
     cpu: 1000m

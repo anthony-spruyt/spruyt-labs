@@ -30,7 +30,6 @@ spec:
       shared_buffers: 128MB # 25% of the memory defined under requests memory
   primaryUpdateMethod: switchover
   primaryUpdateStrategy: unsupervised
-  # standard tier - lower resource requirements for personal finance app
   resources:
     limits:
       cpu: 1000m

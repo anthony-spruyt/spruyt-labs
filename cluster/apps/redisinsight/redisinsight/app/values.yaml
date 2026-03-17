@@ -29,7 +29,6 @@ controllers:
             value: "false"
           - name: RI_STDOUT_LOGGER
             value: "true"
-        # low-priority - no CPU limit (was 88-92% throttled due to bursty startup)
         resources:
           requests:
             cpu: 10m

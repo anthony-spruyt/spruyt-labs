@@ -31,8 +31,6 @@ victoria-metrics-operator:
 vmsingle:
   enabled: true
   # -- Full spec for VMSingle CRD. Allowed values describe [here](https://docs.victoriametrics.com/operator/api#vmsinglespec)
-  # High-priority: CPU limit 5x request per workload-classification.md
-  # Requests based on P99: 774m (+20% headroom)
   spec:
     priorityClassName: high-priority
     storageMetadata:
@@ -71,7 +69,6 @@ vmsingle:
 alertmanager:
   enabled: true
   # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
-  # High-priority - no CPU limit (CPU is compressible)
   spec:
     priorityClassName: high-priority
     resources:
@@ -86,8 +83,6 @@ alertmanager:
 vmalert:
   enabled: true
   # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
-  # High-priority - no CPU limit (CPU is compressible)
-  # Requests based on P99: 89m (+20% headroom)
   spec:
     priorityClassName: high-priority
     # vmalert is lightweight (~110m CPU) - no anti-affinity needed
@@ -103,8 +98,6 @@ vmalert:
 
 vmagent:
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
-  # High-priority: CPU limit 5x request per workload-classification.md
-  # Requests based on P99: 373m (+20% headroom)
   # Memory increased to 512Mi - OOMKilled at 256Mi during service discovery
   spec:
     priorityClassName: high-priority
@@ -181,7 +174,6 @@ grafana:
                   operator: In
                   values: [vmsingle, vmagent]
             topologyKey: kubernetes.io/hostname
-  # High-priority: CPU limit 5x request per workload-classification.md
   resources:
     limits:
       cpu: 500m
@@ -244,8 +236,6 @@ grafana:
       optional: false
 
 # -- prometheus-node-exporter dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-node-exporter/values.yaml)
-# No CPU limit (CPU is compressible)
-# Requests based on P99: 42m (+20% headroom)
 prometheus-node-exporter:
   enabled: true
   resources:
@@ -276,8 +266,6 @@ prometheus-node-exporter:
               regex: node_hwmon_temp_celsius;platform_nct6775_2592;temp(1|3|4|5|6|8|9|10|11|12)
 
 # -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
-# No CPU limit (CPU is compressible)
-# Requests based on P99: 16m
 kube-state-metrics:
   enabled: true
   resources:

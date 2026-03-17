@@ -3,8 +3,6 @@
 # Documentation: https://github.com/kyverno/kyverno/blob/main/charts/kyverno/README.md
 # Default values: https://github.com/kyverno/kyverno/blob/main/charts/kyverno/values.yaml
 
-# Tier 1 - critical infrastructure (no CPU limit)
-
 # Admission controller configuration
 admissionController:
   # Enable CRD watcher so Kyverno discovers CRD-based resources (e.g. HelmRelease)

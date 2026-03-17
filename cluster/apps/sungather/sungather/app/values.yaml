@@ -38,7 +38,6 @@ controllers:
               timeoutSeconds: 5
               failureThreshold: 3
           readiness: *probes
-        # standard: CPU limit 5-10x request per resource policy
         resources:
           requests:
             cpu: 20m

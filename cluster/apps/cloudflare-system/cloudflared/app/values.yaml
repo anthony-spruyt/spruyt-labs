@@ -62,7 +62,6 @@ controllers:
               timeoutSeconds: 1
               failureThreshold: 3
           readiness: *probes
-        # P99 42m total (3 replicas) - no CPU limit, +20% headroom
         resources:
           requests:
             cpu: 17m
