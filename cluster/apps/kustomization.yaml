@@ -42,6 +42,7 @@ resources:
   - ./nut-system
   - ./openclaw
   - ./kubectl-mcp
+  - ./vpa-system
   # - ./snmp
   # - ./smtp
   # - ./mysql
