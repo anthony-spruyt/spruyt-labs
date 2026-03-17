@@ -8,6 +8,8 @@ metadata:
 spec:
   targetNamespace: spegel
   path: ./cluster/apps/spegel/spegel/app
+  dependsOn:
+    - name: vertical-pod-autoscaler
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app

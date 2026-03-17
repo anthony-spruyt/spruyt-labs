@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: spegel
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: DaemonSet
+    name: spegel
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: spegel
+        minAllowed:
+          cpu: 2m
+          memory: 24Mi
+        maxAllowed:
+          cpu: 10m
+          memory: 128Mi

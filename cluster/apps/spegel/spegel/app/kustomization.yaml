@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./release.yaml
   - ./network-policies.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: spegel-values
     namespace: spegel

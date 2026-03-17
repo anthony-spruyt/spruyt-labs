@@ -20,12 +20,3 @@ spegel:
   resolveLatestTag: false # Default was true
   # -- When true enables debug web page.
   debugWebEnabled: false
-verticalPodAutoscaler:
-  updatePolicy:
-    updateMode: "Off"
-  maxAllowed:
-    cpu: 10m
-    memory: 128Mi
-  minAllowed:
-    cpu: 2m
-    memory: 24Mi
