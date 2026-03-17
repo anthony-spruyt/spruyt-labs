@@ -119,6 +119,9 @@
           "avatar": "avatar.png",
           "theme": "Dry, slightly menacing, but ultimately helpful. Think Terminator meets butler."
         },
+        "heartbeat": {
+          "target": "none"
+        },
         "subagents": {
           "allowAgents": ["researcher", "communicator", "coordinator"]
         }
