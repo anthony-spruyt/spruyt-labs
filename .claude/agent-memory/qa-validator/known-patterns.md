@@ -18,7 +18,7 @@ Valid configurations that fail dry-run or schema checks.
 | Resource | Quirk | Workaround | Count | Last Seen | Added |
 |----------|-------|------------|-------|-----------|-------|
 | talos.dev/v1alpha1 ServiceAccount | CRD not available in dev env, dry-run fails | Expected failure -- CRD is built into Talos Linux, not deployed via Flux | 2 | 2026-02-28 | 2026-02-28 |
-| configMapGenerator nameReference not applied in local kustomize build | `kubectl kustomize` shows unhashed name in HelmRelease valuesFrom but Flux applies it correctly | Known behavior -- kustomizeconfig.yaml nameReference works at Flux apply time, not in local kustomize output. Verified with working apps (e.g. whoami) | 1 | 2026-03-12 | 2026-03-12 |
+| configMapGenerator nameReference not applied in local kustomize build | `kubectl kustomize` shows unhashed name in HelmRelease valuesFrom but Flux applies it correctly | Known behavior -- kustomizeconfig.yaml nameReference works at Flux apply time, not in local kustomize output. Verified with working apps (e.g. whoami, descheduler, spegel, VPA) | 2 | 2026-03-17 | 2026-03-12 |
 
 ## Documentation Gaps
 
