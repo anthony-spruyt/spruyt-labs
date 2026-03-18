@@ -120,7 +120,7 @@
         "snapshot-controller",
         "kubernetes-csi/external-snapshotter",
       ],
-      matchDatasources: ["helm", "docker"],
+      matchDatasources: ["helm", "docker", "github-releases"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },

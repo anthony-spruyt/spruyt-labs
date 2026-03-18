@@ -36,6 +36,9 @@
         "depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\n.+ (?<currentValue>(v|\\d)\\S+)",
         // URL path: # renovate: depName=X datasource=Y \n .../v1.2.3/...
         "depName=(?<depName>\\S+) datasource=(?<datasource>\\S+)\\n.+/(?<currentValue>(v|\\d)[^/]+)",
+        // raw.githubusercontent.com URL: extracts git ref (supports optional versioning= param)
+        // Matches: # renovate: depName=X datasource=Y [versioning=Z] \n https://raw.githubusercontent.com/owner/repo/<ref>/...
+        "depName=(?<depName>\\S+)\\s+datasource=(?<datasource>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/(?<currentValue>[^/]+)/",
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
     },

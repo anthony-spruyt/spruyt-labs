@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./external-dns-technitium-secrets.sops.yaml
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: external-dns-technitium-values
     namespace: external-dns

@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./cloudflared-secrets.sops.yaml
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: cloudflared-values
     namespace: cloudflare-system

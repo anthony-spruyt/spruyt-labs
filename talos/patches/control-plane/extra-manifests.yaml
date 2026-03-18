@@ -2,12 +2,19 @@ cluster:
   extraManifests:
     - # renovate: depName=kubernetes-sigs/gateway-api datasource=github-releases
       https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/experimental-install.yaml
-    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
-    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
-    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
-    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotclasses.yaml
-    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotcontents.yaml
-    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/refs/heads/release-8.3/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshots.yaml
-    - https://raw.githubusercontent.com/csi-addons/kubernetes-csi-addons/v0.14.0/deploy/controller/crds.yaml
+    - # renovate: depName=kubernetes-csi/external-snapshotter datasource=github-releases
+      https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+    - # renovate: depName=kubernetes-csi/external-snapshotter datasource=github-releases
+      https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+    - # renovate: depName=kubernetes-csi/external-snapshotter datasource=github-releases
+      https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+    - # renovate: depName=kubernetes-csi/external-snapshotter datasource=github-releases
+      https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotclasses.yaml
+    - # renovate: depName=kubernetes-csi/external-snapshotter datasource=github-releases
+      https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotcontents.yaml
+    - # renovate: depName=kubernetes-csi/external-snapshotter datasource=github-releases
+      https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshots.yaml
+    - # renovate: depName=csi-addons/kubernetes-csi-addons datasource=github-releases
+      https://raw.githubusercontent.com/csi-addons/kubernetes-csi-addons/v0.14.0/deploy/controller/crds.yaml
     - # renovate: depName=kubernetes/autoscaler datasource=github-tags versioning=regex:^vertical-pod-autoscaler-(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)$
       https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-1.6.0/vertical-pod-autoscaler/deploy/vpa-v1-crd-gen.yaml

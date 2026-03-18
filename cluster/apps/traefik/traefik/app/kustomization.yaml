@@ -6,6 +6,7 @@ resources:
   - ./fallback-certificate.yaml
   - ./mcp-api-keys-secrets.sops.yaml
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: traefik-values
     namespace: traefik

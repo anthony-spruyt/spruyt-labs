@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: external-dns-technitium
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: external-dns-technitium
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: external-dns
+        minAllowed:
+          cpu: 10m
+          memory: 32Mi
+        maxAllowed:
+          memory: 96Mi

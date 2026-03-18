@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: traefik
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: traefik
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: traefik
+        minAllowed:
+          cpu: 50m
+          memory: 256Mi
+        maxAllowed:
+          memory: 1Gi
