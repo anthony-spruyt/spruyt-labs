@@ -13,6 +13,7 @@ resources:
   - ./release.yaml
   - ./hooks-configmap.yaml
   - ./network-policies.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: n8n-values
     namespace: n8n-system

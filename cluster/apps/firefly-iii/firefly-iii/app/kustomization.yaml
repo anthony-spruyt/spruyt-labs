@@ -10,6 +10,7 @@ resources:
   - ./firefly-iii-cnpg-cluster.yaml
   - ./firefly-iii-cnpg-scheduled-backups.yaml
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: firefly-iii-values
     namespace: firefly-iii
