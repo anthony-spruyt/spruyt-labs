@@ -6,6 +6,7 @@ resources:
   - ./release.yaml
   - ./rbac.yaml
   - ./network-policies.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: kubectl-mcp-server-values
     namespace: kubectl-mcp
