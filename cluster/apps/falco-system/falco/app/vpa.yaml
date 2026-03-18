@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: falco
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: DaemonSet
+    name: falco
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: falco
+        minAllowed:
+          cpu: 130m
+          memory: 200Mi
+        maxAllowed:
+          cpu: 1000m
+          memory: 400Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: falco-falcosidekick
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: falco-falcosidekick
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: falcosidekick
+        minAllowed:
+          cpu: 15m
+          memory: 24Mi
+        maxAllowed:
+          cpu: 75m
+          memory: 48Mi
