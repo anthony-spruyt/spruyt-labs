@@ -160,8 +160,8 @@
       {
         "id": "sre",
         "model": {
-          "primary": "anthropic/claude-sonnet-4-6",
-          "fallbacks": ["openai/gpt-5-mini"]
+          "primary": "anthropic/claude-opus-4-6",
+          "fallbacks": ["openai/gpt-5.2"]
         }
       }
     ]
