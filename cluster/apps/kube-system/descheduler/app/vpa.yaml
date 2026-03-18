@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: descheduler
+spec:
+  targetRef:
+    apiVersion: batch/v1
+    kind: CronJob
+    name: descheduler
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: descheduler
+        minAllowed:
+          cpu: 10m
+          memory: 64Mi

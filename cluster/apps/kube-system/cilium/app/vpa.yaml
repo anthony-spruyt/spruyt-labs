@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: cilium
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: DaemonSet
+    name: cilium
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: cilium-agent
+        minAllowed:
+          cpu: 1250m
+          memory: 512Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: cilium-operator
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cilium-operator
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: cilium-operator
+        minAllowed:
+          cpu: 50m
+          memory: 128Mi
+        maxAllowed:
+          memory: 512Mi
