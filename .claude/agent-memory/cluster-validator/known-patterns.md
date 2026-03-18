@@ -57,8 +57,8 @@ Things that look like failures but aren't — avoid flagging these.
 | Signal | Why It's Not a Problem | Count | Last Seen | Added |
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 7 | 2026-03-13 | 2026-02-24 |
-| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 20 | 2026-03-18 | 2026-02-25 |
-| Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 11 | 2026-03-16 | 2026-02-25 |
+| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 21 | 2026-03-18 | 2026-02-25 |
+| Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 12 | 2026-03-18 | 2026-02-25 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
 | authentik default OAuth Mapping uses deprecated `ak_groups` — emits deprecation warning on outpost proxy requests | Not a failure — requests succeed with HTTP 200. Migrate to `User.groups` in admin UI | 1 | 2026-02-25 | 2026-02-25 |
 | vmagent scrape failures for Grafana during k8s-stack upgrade | Pod IP changes during rollover cause transient scrape timeouts/connection refused — resolves once new pod is ready | 1 | 2026-02-25 | 2026-02-25 |
@@ -74,6 +74,7 @@ Things that look like failures but aren't — avoid flagging these.
 | FastMCP 3.0.2 streamable-http transport has no `/health` endpoint; only `/mcp` responds (406 without MCP headers); use `tcpSocket` probes instead of `httpGet` | kubectl-mcp-server probe config, FastMCP health check | 1 | 2026-03-15 | 2026-03-15 |
 | Traefik chart 39.x installs Gateway API CRDs by default; on clusters with `safe-upgrades.gateway.networking.k8s.io` VAP, set `install.crds: Skip` and `upgrade.crds: Skip` in HelmRelease | Traefik HR CRD management, Gateway API VAP conflict | 1 | 2026-03-15 | 2026-03-15 |
 | MCP detection tools (certs_detect_tool, cilium_detect_tool etc.) previously failed with Forbidden due to missing apiextensions.k8s.io CRD read access; resolved by adding CRD read rule to ClusterRole (commit c157a8cc, issue #696) | kubectl-mcp-server RBAC, MCP tool detection | 2 | 2026-03-18 | 2026-03-18 |
+| `check_crd_exists` MCP tool may return false negatives for CRDs that exist; verify with `kubectl get crd <name>` as fallback | VPA CRD existed but check_crd_exists returned false | 1 | 2026-03-18 | 2026-03-18 |
 | OpenClaw hooks feature requires OPENCLAW_HOOKS_TOKEN in openclaw-secrets.sops.yaml; config uses env-var substitution and gateway refuses to start if hooks.enabled=true with empty token | openclaw hooks config, missing secret key | 2 | 2026-03-15 | 2026-03-15 |
 | SOPS secret change for alertmanager config triggers config reload without pod restart; verify via "Loading configuration file" / "Completed loading" log lines | VMAlertmanager config reload, SOPS secret update | 1 | 2026-03-15 | 2026-03-15 |
 | Alertmanager webhook DNS failure (`no such host`) produces cascading self-referential alerts (AlertmanagerFailedToSendAlerts, AlertmanagerClusterFailedToSendAlerts) that resolve automatically once the config is corrected | Alertmanager webhook misconfiguration, openclaw service name | 1 | 2026-03-15 | 2026-03-15 |
