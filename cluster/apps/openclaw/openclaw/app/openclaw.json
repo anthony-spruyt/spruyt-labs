@@ -303,6 +303,9 @@
   "hooks": {
     "enabled": true,
     "token": "$${OPENCLAW_HOOKS_TOKEN}",
+    "defaultSessionKey": "hook:ingress",
+    "allowRequestSessionKey": false,
+    "allowedSessionKeyPrefixes": ["hook:"],
     "allowedAgentIds": ["sre"],
     "mappings": [
       {
