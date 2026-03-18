@@ -33,7 +33,7 @@ crds:
 
 **Remove `dependsOn: vertical-pod-autoscaler` from Spegel's `ks.yaml`** — This dependency existed solely for CRD ordering. With CRDs at the Talos level, it is unnecessary. New apps with `vpa.yaml` must NOT add `dependsOn: vertical-pod-autoscaler`.
 
-**CRD version coordination:** The Talos extraManifests CRD version (`kubernetes/autoscaler` tags) and the cowboysysop Helm chart version are independently versioned. Renovate tracks both — if the chart upgrades and expects newer CRD fields, update the extraManifests URL to match. Add a comment in the Helm values referencing the extraManifests entry:
+**CRD version coordination:** The Talos extraManifests CRD version (`kubernetes/autoscaler` tags) and the cowboysysop Helm chart version are independently versioned. Renovate tracks both — if the chart upgrades and expects newer CRD fields, update the extraManifests URL to match.
 
 ### 2. VPA Object Per Workload
 
@@ -62,7 +62,7 @@ spec:
           cpu: <current-request-cpu>
           memory: <current-request-memory>
         maxAllowed:
-          cpu: <current-limit-cpu>
+          cpu: <current-limit-cpu>  # omit if no CPU limit is set
           memory: <current-limit-memory>
 ```
 
