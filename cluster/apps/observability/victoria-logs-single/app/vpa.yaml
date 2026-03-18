@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: victoria-logs-single-server
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: victoria-logs-single-server
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: vlogs
+        minAllowed:
+          cpu: 80m
+          memory: 256Mi
+        maxAllowed:
+          memory: 512Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: victoria-logs-single-vector
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: DaemonSet
+    name: victoria-logs-single-vector
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: vector
+        minAllowed:
+          cpu: 200m
+          memory: 128Mi
+        maxAllowed:
+          memory: 256Mi

@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./victoria-logs-single-secrets.sops.yaml
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: victoria-logs-single-values
     namespace: observability

@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./network-policies.yaml
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: mcp-victoriametrics-values
     namespace: observability

@@ -11,6 +11,7 @@ resources:
   - ./vm-service-scrapes.yaml
   - ./vmrules
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: victoria-metrics-k8s-stack-values
     namespace: observability

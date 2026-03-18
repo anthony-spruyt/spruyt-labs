@@ -1,0 +1,150 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: vmsingle-victoria-metrics-k8s-stack
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vmsingle-victoria-metrics-k8s-stack
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: vmsingle
+        minAllowed:
+          cpu: 930m
+          memory: 1664Mi
+        maxAllowed:
+          cpu: 4650m
+          memory: 2048Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: vmagent-victoria-metrics-k8s-stack
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vmagent-victoria-metrics-k8s-stack
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: vmagent
+        minAllowed:
+          cpu: 450m
+          memory: 256Mi
+        maxAllowed:
+          cpu: 2250m
+          memory: 512Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: vmalert-victoria-metrics-k8s-stack
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vmalert-victoria-metrics-k8s-stack
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: vmalert
+        minAllowed:
+          cpu: 110m
+          memory: 80Mi
+        maxAllowed:
+          memory: 128Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: vmalertmanager-victoria-metrics-k8s-stack
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: vmalertmanager-victoria-metrics-k8s-stack
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: alertmanager
+        minAllowed:
+          cpu: 5m
+          memory: 32Mi
+        maxAllowed:
+          memory: 64Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: victoria-metrics-k8s-stack-grafana
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: victoria-metrics-k8s-stack-grafana
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: grafana
+        minAllowed:
+          cpu: 100m
+          memory: 1Gi
+        maxAllowed:
+          cpu: 500m
+          memory: 2Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: victoria-metrics-k8s-stack-kube-state-metrics
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: victoria-metrics-k8s-stack-kube-state-metrics
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: kube-state-metrics
+        minAllowed:
+          cpu: 20m
+          memory: 96Mi
+        maxAllowed:
+          memory: 256Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: victoria-metrics-k8s-stack-prometheus-node-exporter
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: DaemonSet
+    name: victoria-metrics-k8s-stack-prometheus-node-exporter
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: node-exporter
+        minAllowed:
+          cpu: 50m
+          memory: 64Mi
+        maxAllowed:
+          memory: 128Mi
