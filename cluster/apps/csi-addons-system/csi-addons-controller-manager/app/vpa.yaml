@@ -4,6 +4,7 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: csi-addons-controller-manager
+  namespace: csi-addons-system
 spec:
   targetRef:
     apiVersion: apps/v1
