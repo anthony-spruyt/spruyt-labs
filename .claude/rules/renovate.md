@@ -56,10 +56,19 @@ Edit `.github/renovate/groups.json5`:
 ## Testing Config Changes
 
 ```bash
-# Validate before commit
+# Validate syntax before commit
 renovate-config-validator --strict .github/renovate.json5
-renovate-config-validator --strict .github/renovate/customDatasources.json5
+renovate-config-validator --strict .github/renovate/<file>.json5
+
+# Dry-run with local config changes (merges github> presets from disk)
+task dev-env:renovate-dry-run
+
+# Check results
+grep -E '"depName"|"currentValue"|"skipReason"' /tmp/renovate-dry-run.log
 ```
+
+> **Note:** `github>` self-referencing presets resolve from the default branch via API, not local files.
+> The dry-run task works around this by merging all preset files into a temporary config.
 
 After push:
 1. Trigger manual run via Dependency Dashboard issue
