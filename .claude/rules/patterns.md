@@ -16,6 +16,7 @@ cluster/apps/<namespace>/
 │   │   ├── kustomization.yaml
 │   │   ├── release.yaml        # HelmRelease
 │   │   ├── values.yaml         # Helm values
+│   │   ├── vpa.yaml            # VPA (recommendation-only)
 │   │   └── *-secrets.sops.yaml # Encrypted secrets
 │   └── <optional>/         # Optional dependent resources (e.g., ingress/)
 ├── <app1>/                 # Multiple apps (e.g., operator + instance)
@@ -67,6 +68,21 @@ Before modifying Helm values, ALWAYS check upstream/source values.yaml first:
 - Use Context7 or WebFetch with raw.githubusercontent.com to find correct key paths
 - Never assume key names
 - Verify the chart version matches when checking upstream docs
+
+## VPA (Vertical Pod Autoscaler)
+
+Every workload must include a `vpa.yaml` in its `app/` directory.
+
+- `updateMode: "Off"` — recommendation-only
+- Per-container `containerPolicies` (no wildcards)
+- `minAllowed` = current resource requests
+- `maxAllowed` = current resource limits (omit CPU if no CPU limit is set)
+- Containers with no resource specs: omit from `containerPolicies`
+- `targetRef.name` must match the actual resource name in the cluster
+- No `dependsOn: vertical-pod-autoscaler` needed — CRDs are installed via Talos `extraManifests`
+- Schema: `https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json`
+
+If a recommendation hits a boundary, adjust `minAllowed`/`maxAllowed` and recheck.
 
 ## Descheduler Namespace Exclusion
 
