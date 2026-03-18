@@ -13,10 +13,9 @@ spec:
     updateMode: "Off"
   resourcePolicy:
     containerPolicies:
-      - containerName: spegel
+      - containerName: registry
         minAllowed:
-          cpu: 2m
-          memory: 24Mi
+          cpu: 200m
+          memory: 128Mi
         maxAllowed:
-          cpu: 10m
           memory: 128Mi

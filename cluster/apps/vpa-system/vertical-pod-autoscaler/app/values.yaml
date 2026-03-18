@@ -1,6 +1,10 @@
 # Default values for vertical-pod-autoscaler
 # Chart: https://github.com/cowboysysop/charts/tree/master/charts/vertical-pod-autoscaler
 
+crds:
+  # CRDs managed via Talos extraManifests (talos/patches/control-plane/extra-manifests.yaml)
+  enabled: false
+
 admissionController:
   priorityClassName: high-priority
   resources:

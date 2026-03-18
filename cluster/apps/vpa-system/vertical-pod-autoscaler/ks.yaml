@@ -13,4 +13,3 @@ spec:
       app.kubernetes.io/name: *app
   prune: true
   timeout: 5m
-  wait: true # Ensures VPA CRDs are registered before dependents (e.g., Spegel) reconcile
