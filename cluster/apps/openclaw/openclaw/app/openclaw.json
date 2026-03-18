@@ -16,7 +16,7 @@
     }
   },
   "logging": {
-    "level": "info",
+    "level": "debug",
     "consoleLevel": "info",
     "consoleStyle": "compact",
     "redactSensitive": "tools"
