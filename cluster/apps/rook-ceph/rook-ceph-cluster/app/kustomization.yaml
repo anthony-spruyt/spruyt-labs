@@ -6,6 +6,7 @@ resources:
   - ./config-maps.yaml
   - ./storage-encryption-secret.sops.yaml
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: rook-ceph-cluster-values
     namespace: rook-ceph

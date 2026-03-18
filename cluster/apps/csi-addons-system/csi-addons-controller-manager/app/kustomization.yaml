@@ -7,3 +7,4 @@ resources:
   - ./csi-addons-config.yaml
   - ./setup-controller.yaml
   - ./network-policies.yaml
+  - ./vpa.yaml

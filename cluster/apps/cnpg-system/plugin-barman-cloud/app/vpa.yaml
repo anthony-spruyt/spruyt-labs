@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: plugin-barman-cloud
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: plugin-barman-cloud
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: barman-cloud
+        minAllowed:
+          cpu: 7m
+          memory: 78Mi
+        maxAllowed:
+          memory: 128Mi

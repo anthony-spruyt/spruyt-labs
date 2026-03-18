@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: cnpg-operator-cloudnative-pg
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cnpg-operator-cloudnative-pg
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: manager
+        minAllowed:
+          cpu: 50m
+          memory: 256Mi
+        maxAllowed:
+          memory: 512Mi

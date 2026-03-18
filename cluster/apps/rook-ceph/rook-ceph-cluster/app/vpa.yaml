@@ -1,0 +1,393 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-mgr-a
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-mgr-a
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: mgr
+        minAllowed:
+          cpu: 200m
+          memory: 1Gi
+        maxAllowed:
+          memory: 2Gi
+      - containerName: watch-active
+        minAllowed:
+          cpu: 100m
+          memory: 40Mi
+        maxAllowed:
+          memory: 100Mi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-mgr-b
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-mgr-b
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: mgr
+        minAllowed:
+          cpu: 200m
+          memory: 1Gi
+        maxAllowed:
+          memory: 2Gi
+      - containerName: watch-active
+        minAllowed:
+          cpu: 100m
+          memory: 40Mi
+        maxAllowed:
+          memory: 100Mi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-mon-f
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-mon-f
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: mon
+        minAllowed:
+          cpu: 225m
+          memory: 640Mi
+        maxAllowed:
+          memory: 2Gi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-mon-g
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-mon-g
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: mon
+        minAllowed:
+          cpu: 225m
+          memory: 640Mi
+        maxAllowed:
+          memory: 2Gi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-mon-h
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-mon-h
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: mon
+        minAllowed:
+          cpu: 225m
+          memory: 640Mi
+        maxAllowed:
+          memory: 2Gi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-osd-0
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-osd-0
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: osd
+        minAllowed:
+          cpu: 600m
+          memory: 1280Mi
+        maxAllowed:
+          memory: 4Gi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-osd-1
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-osd-1
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: osd
+        minAllowed:
+          cpu: 600m
+          memory: 1280Mi
+        maxAllowed:
+          memory: 4Gi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-osd-2
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-osd-2
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: osd
+        minAllowed:
+          cpu: 600m
+          memory: 1280Mi
+        maxAllowed:
+          memory: 4Gi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-crashcollector-ms-01-1
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-crashcollector-ms-01-1
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: ceph-crash
+        minAllowed:
+          cpu: 10m
+          memory: 24Mi
+        maxAllowed:
+          memory: 60Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-crashcollector-ms-01-2
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-crashcollector-ms-01-2
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: ceph-crash
+        minAllowed:
+          cpu: 10m
+          memory: 24Mi
+        maxAllowed:
+          memory: 60Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-crashcollector-ms-01-3
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-crashcollector-ms-01-3
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: ceph-crash
+        minAllowed:
+          cpu: 10m
+          memory: 24Mi
+        maxAllowed:
+          memory: 60Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-exporter-ms-01-1
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-exporter-ms-01-1
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: ceph-exporter
+        minAllowed:
+          cpu: 25m
+          memory: 32Mi
+        maxAllowed:
+          memory: 128Mi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-exporter-ms-01-2
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-exporter-ms-01-2
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: ceph-exporter
+        minAllowed:
+          cpu: 25m
+          memory: 32Mi
+        maxAllowed:
+          memory: 128Mi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-exporter-ms-01-3
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-exporter-ms-01-3
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: ceph-exporter
+        minAllowed:
+          cpu: 25m
+          memory: 32Mi
+        maxAllowed:
+          memory: 128Mi
+      - containerName: log-collector
+        minAllowed:
+          cpu: 10m
+          memory: 100Mi
+        maxAllowed:
+          memory: 1Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: rook-ceph-tools
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rook-ceph-tools
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: rook-ceph-tools
+        minAllowed:
+          cpu: 25m
+          memory: 64Mi
+        maxAllowed:
+          memory: 256Mi
