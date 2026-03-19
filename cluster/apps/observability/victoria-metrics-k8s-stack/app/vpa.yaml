@@ -25,28 +25,6 @@ spec:
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: vmagent-victoria-metrics-k8s-stack
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: vmagent-victoria-metrics-k8s-stack
-  updatePolicy:
-    updateMode: "Off"
-  resourcePolicy:
-    containerPolicies:
-      - containerName: vmagent
-        minAllowed:
-          cpu: 1m
-          memory: 1Mi
-        maxAllowed:
-          cpu: 2250m
-          memory: 512Mi
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
   name: vmalert-victoria-metrics-k8s-stack
 spec:
   targetRef:
