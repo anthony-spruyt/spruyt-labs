@@ -179,7 +179,8 @@
   "tools": {
     "profile": "full",
     "exec": {
-      "ask": "off"
+      "ask": "off",
+      "security": "full"
     },
     "web": {
       "search": {
