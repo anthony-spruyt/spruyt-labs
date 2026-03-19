@@ -149,6 +149,8 @@ flux get kustomization <name> -n flux-system
 
 **Never label a kustomization as "pre-existing" if it has Ready=Unknown.** Unknown means actively reconciling — wait for it to settle before classifying.
 
+**CRITICAL:** You MUST run the full 5-attempt wait loop BEFORE classifying ANY resource. Do not snapshot once and guess. If something is not ready, WAIT. Do not fabricate narratives about resources "resolving during the validation window" — either they are ready or they are not. Wait until they settle.
+
 ## Validation Workflow
 
 ### Step 1: Flux Reconciliation
@@ -267,6 +269,10 @@ Always post results to the GitHub issue via `gh issue comment <issue_number> --r
 ### Deployed Version
 [revision, image tags]
 ```
+
+**Output rules:**
+- **Omit sections with nothing to report.** Do not write "Pre-existing Issues: None" — just leave the section out entirely.
+- **Never fabricate context.** Only report what you observed in actual command output. Do not speculate about what "might have" happened.
 
 ## Flux Recovery
 
