@@ -182,7 +182,7 @@ Detailed provisioning guidance lives in
 2. Perform a dry run to surface API deprecations and preview the upgrade plan:
 
    ```bash
-   talosctl --nodes {CP_IP} upgrade-k8s --to v1.35.1 --dry-run
+   talosctl --nodes {CP_IP} upgrade-k8s --to v1.35.2 --dry-run
    ```
 
    - Replace `{CP_IP}` with the control-plane node you are validating.
@@ -191,7 +191,7 @@ Detailed provisioning guidance lives in
 3. Execute the upgrade after the dry run succeeds:
 
    ```bash
-   talosctl --nodes {CP_IP} upgrade-k8s --to v1.35.1
+   talosctl --nodes {CP_IP} upgrade-k8s --to v1.35.2
    ```
 
    - Talos orchestrates control-plane members sequentially and updates kube-proxy/kubelet while `--upgrade-kubelet` remains enabled (default).
