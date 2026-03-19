@@ -15,20 +15,20 @@ spec:
     containerPolicies:
       - containerName: mgr
         minAllowed:
-          cpu: 200m
-          memory: 1Gi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: watch-active
         minAllowed:
-          cpu: 100m
-          memory: 40Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 100Mi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -48,20 +48,20 @@ spec:
     containerPolicies:
       - containerName: mgr
         minAllowed:
-          cpu: 200m
-          memory: 1Gi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: watch-active
         minAllowed:
-          cpu: 100m
-          memory: 40Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 100Mi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -81,14 +81,14 @@ spec:
     containerPolicies:
       - containerName: mon
         minAllowed:
-          cpu: 225m
-          memory: 640Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -108,14 +108,14 @@ spec:
     containerPolicies:
       - containerName: mon
         minAllowed:
-          cpu: 225m
-          memory: 640Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -135,14 +135,14 @@ spec:
     containerPolicies:
       - containerName: mon
         minAllowed:
-          cpu: 225m
-          memory: 640Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -162,14 +162,14 @@ spec:
     containerPolicies:
       - containerName: osd
         minAllowed:
-          cpu: 600m
-          memory: 1280Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 4Gi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -189,14 +189,14 @@ spec:
     containerPolicies:
       - containerName: osd
         minAllowed:
-          cpu: 600m
-          memory: 1280Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 4Gi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -216,14 +216,14 @@ spec:
     containerPolicies:
       - containerName: osd
         minAllowed:
-          cpu: 600m
-          memory: 1280Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 4Gi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -243,8 +243,8 @@ spec:
     containerPolicies:
       - containerName: ceph-crash
         minAllowed:
-          cpu: 10m
-          memory: 24Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 60Mi
 ---
@@ -264,8 +264,8 @@ spec:
     containerPolicies:
       - containerName: ceph-crash
         minAllowed:
-          cpu: 10m
-          memory: 24Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 60Mi
 ---
@@ -285,8 +285,8 @@ spec:
     containerPolicies:
       - containerName: ceph-crash
         minAllowed:
-          cpu: 10m
-          memory: 24Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 60Mi
 ---
@@ -306,14 +306,14 @@ spec:
     containerPolicies:
       - containerName: ceph-exporter
         minAllowed:
-          cpu: 25m
-          memory: 32Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 128Mi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -333,14 +333,14 @@ spec:
     containerPolicies:
       - containerName: ceph-exporter
         minAllowed:
-          cpu: 25m
-          memory: 32Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 128Mi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -360,14 +360,14 @@ spec:
     containerPolicies:
       - containerName: ceph-exporter
         minAllowed:
-          cpu: 25m
-          memory: 32Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 128Mi
       - containerName: log-collector
         minAllowed:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi
 ---
@@ -387,7 +387,7 @@ spec:
     containerPolicies:
       - containerName: rook-ceph-tools
         minAllowed:
-          cpu: 25m
-          memory: 64Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 256Mi

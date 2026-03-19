@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: external-secrets
         minAllowed:
-          cpu: 10m
-          memory: 64Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 192Mi
 ---
@@ -36,8 +36,8 @@ spec:
     containerPolicies:
       - containerName: cert-controller
         minAllowed:
-          cpu: 10m
-          memory: 64Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 192Mi
 ---
@@ -57,7 +57,7 @@ spec:
     containerPolicies:
       - containerName: webhook
         minAllowed:
-          cpu: 10m
-          memory: 64Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 192Mi

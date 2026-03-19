@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: server
         minAllowed:
-          cpu: 375m
-          memory: 768Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 2Gi
 ---
@@ -36,7 +36,7 @@ spec:
     containerPolicies:
       - containerName: worker
         minAllowed:
-          cpu: 265m
-          memory: 1Gi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 2Gi

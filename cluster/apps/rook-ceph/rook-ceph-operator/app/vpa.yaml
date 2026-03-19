@@ -15,7 +15,7 @@ spec:
     containerPolicies:
       - containerName: rook-ceph-operator
         minAllowed:
-          cpu: 500m
-          memory: 512Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi

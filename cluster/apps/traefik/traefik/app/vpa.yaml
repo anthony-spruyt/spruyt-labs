@@ -15,7 +15,7 @@ spec:
     containerPolicies:
       - containerName: traefik
         minAllowed:
-          cpu: 50m
-          memory: 256Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi

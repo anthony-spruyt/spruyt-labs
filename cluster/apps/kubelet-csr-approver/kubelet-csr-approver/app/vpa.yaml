@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: kubelet-csr-approver
         minAllowed:
-          cpu: 5m
-          memory: 32Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 500m
           memory: 64Mi

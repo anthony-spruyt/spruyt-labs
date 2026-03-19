@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: falco
         minAllowed:
-          cpu: 130m
-          memory: 200Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 1000m
           memory: 400Mi
@@ -37,8 +37,8 @@ spec:
     containerPolicies:
       - containerName: falcosidekick
         minAllowed:
-          cpu: 15m
-          memory: 24Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 75m
           memory: 48Mi

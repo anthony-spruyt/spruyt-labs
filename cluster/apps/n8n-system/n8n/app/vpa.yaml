@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: n8n
         minAllowed:
-          cpu: 100m
-          memory: 512Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 2000m
           memory: 2048Mi
@@ -37,5 +37,5 @@ spec:
     containerPolicies:
       - containerName: n8n-worker
         minAllowed:
-          cpu: 15m
-          memory: 64Mi
+          cpu: 1m
+          memory: 1Mi

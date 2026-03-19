@@ -15,7 +15,7 @@ spec:
     containerPolicies:
       - containerName: technitium
         minAllowed:
-          cpu: 220m
-          memory: 384Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi

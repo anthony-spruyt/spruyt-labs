@@ -15,7 +15,7 @@ spec:
     containerPolicies:
       - containerName: whoami
         minAllowed:
-          cpu: 5m
-          memory: 32Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 64Mi

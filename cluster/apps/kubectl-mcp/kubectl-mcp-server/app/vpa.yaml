@@ -15,7 +15,7 @@ spec:
     containerPolicies:
       - containerName: app
         minAllowed:
-          cpu: 100m
-          memory: 128Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 512Mi

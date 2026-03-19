@@ -75,7 +75,7 @@ Every workload must include a `vpa.yaml` in its `app/` directory.
 
 - `updateMode: "Off"` — recommendation-only
 - Per-container `containerPolicies` (no wildcards)
-- `minAllowed` = current resource requests
+- `minAllowed` = `cpu: 1m, memory: 1Mi` (unclamped for accurate recommendations)
 - `maxAllowed` = current resource limits (omit CPU if no CPU limit is set)
 - Containers with no resource specs: omit from `containerPolicies`
 - `targetRef.name` must match the actual resource name in the cluster

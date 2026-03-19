@@ -15,13 +15,13 @@ spec:
     containerPolicies:
       - containerName: upsd
         minAllowed:
-          cpu: 10m
-          memory: 32Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 64Mi
       - containerName: exporter
         minAllowed:
-          cpu: 5m
-          memory: 16Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 32Mi

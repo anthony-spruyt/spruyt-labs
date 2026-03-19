@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: cert-manager-controller
         minAllowed:
-          cpu: 10m
-          memory: 64Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 192Mi
 ---
@@ -36,8 +36,8 @@ spec:
     containerPolicies:
       - containerName: cert-manager-cainjector
         minAllowed:
-          cpu: 10m
-          memory: 128Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 256Mi
 ---
@@ -57,7 +57,7 @@ spec:
     containerPolicies:
       - containerName: cert-manager-webhook
         minAllowed:
-          cpu: 10m
-          memory: 128Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 256Mi

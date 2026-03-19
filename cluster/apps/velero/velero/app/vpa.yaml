@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: velero
         minAllowed:
-          cpu: 35m
-          memory: 216Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 512Mi
 ---
@@ -36,7 +36,7 @@ spec:
     containerPolicies:
       - containerName: node-agent
         minAllowed:
-          cpu: 20m
-          memory: 120Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 256Mi

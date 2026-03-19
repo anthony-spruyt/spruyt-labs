@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: vmsingle
         minAllowed:
-          cpu: 930m
-          memory: 1664Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 4650m
           memory: 2048Mi
@@ -37,8 +37,8 @@ spec:
     containerPolicies:
       - containerName: vmagent
         minAllowed:
-          cpu: 450m
-          memory: 256Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 2250m
           memory: 512Mi
@@ -59,8 +59,8 @@ spec:
     containerPolicies:
       - containerName: vmalert
         minAllowed:
-          cpu: 110m
-          memory: 80Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 128Mi
 ---
@@ -80,8 +80,8 @@ spec:
     containerPolicies:
       - containerName: alertmanager
         minAllowed:
-          cpu: 5m
-          memory: 32Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 64Mi
 ---
@@ -101,8 +101,8 @@ spec:
     containerPolicies:
       - containerName: grafana
         minAllowed:
-          cpu: 100m
-          memory: 1Gi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 500m
           memory: 2Gi
@@ -123,8 +123,8 @@ spec:
     containerPolicies:
       - containerName: kube-state-metrics
         minAllowed:
-          cpu: 20m
-          memory: 96Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 256Mi
 ---
@@ -144,7 +144,7 @@ spec:
     containerPolicies:
       - containerName: node-exporter
         minAllowed:
-          cpu: 50m
-          memory: 64Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 128Mi

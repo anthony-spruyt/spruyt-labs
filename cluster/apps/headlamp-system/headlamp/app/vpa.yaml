@@ -15,8 +15,8 @@ spec:
     containerPolicies:
       - containerName: headlamp
         minAllowed:
-          cpu: 35m
-          memory: 192Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 500m
           memory: 384Mi

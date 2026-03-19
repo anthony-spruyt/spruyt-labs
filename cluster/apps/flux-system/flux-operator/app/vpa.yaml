@@ -15,7 +15,7 @@ spec:
     containerPolicies:
       - containerName: manager
         minAllowed:
-          cpu: 50m
-          memory: 128Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 1Gi

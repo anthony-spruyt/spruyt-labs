@@ -15,15 +15,15 @@ spec:
     containerPolicies:
       - containerName: main
         minAllowed:
-          cpu: 200m
-          memory: 512Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 2000m
           memory: 2Gi
       - containerName: chromium
         minAllowed:
-          cpu: 100m
-          memory: 256Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           cpu: 1000m
           memory: 1Gi

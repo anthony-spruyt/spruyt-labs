@@ -15,7 +15,7 @@ spec:
     containerPolicies:
       - containerName: chrony
         minAllowed:
-          cpu: 16m
-          memory: 10Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 64Mi

@@ -15,7 +15,7 @@ spec:
     containerPolicies:
       - containerName: reloader
         minAllowed:
-          cpu: 10m
-          memory: 128Mi
+          cpu: 1m
+          memory: 1Mi
         maxAllowed:
           memory: 192Mi

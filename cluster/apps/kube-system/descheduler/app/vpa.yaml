@@ -15,5 +15,5 @@ spec:
     containerPolicies:
       - containerName: descheduler
         minAllowed:
-          cpu: 10m
-          memory: 64Mi
+          cpu: 1m
+          memory: 1Mi
