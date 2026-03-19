@@ -101,7 +101,7 @@
         }
       },
       "heartbeat": {
-        "model": "anthropic/claude-haiku-4-5"
+        "every": "0m"
       },
       "maxConcurrent": 4,
       "subagents": {
@@ -119,11 +119,12 @@
           "avatar": "avatar.png",
           "theme": "Dry, slightly menacing, but ultimately helpful. Think Terminator meets butler."
         },
-        "heartbeat": {
-          "target": "none"
+        "model": {
+          "primary": "anthropic/claude-opus-4-6",
+          "fallbacks": ["openai/gpt-5.2"]
         },
         "subagents": {
-          "allowAgents": ["researcher", "communicator", "coordinator"]
+          "allowAgents": ["researcher", "communicator", "coordinator", "sre"]
         }
       },
       {
@@ -155,6 +156,9 @@
         "model": {
           "primary": "anthropic/claude-opus-4-6",
           "fallbacks": ["openai/gpt-5.2"]
+        },
+        "subagents": {
+          "allowAgents": ["communicator", "monitor", "researcher", "sre"]
         }
       },
       {
