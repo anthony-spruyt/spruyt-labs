@@ -21,18 +21,6 @@
     },
     {
       customType: "regex",
-      description: "URL-based versions in Talos manifests",
-      managerFilePatterns: ["/(^|/)talos/.+\\.ya?ml$/"],
-      matchStrings: [
-        // Pattern: - # renovate: depName=X datasource=Y \n https://...
-        "-\\s+#\\s*renovate:\\s+depName=(?<depName>\\S+)\\s+datasource=(?<datasource>\\S+)\\s*\\n[^\\S\\n]*(?<currentValue>https?://[^\\s\"']+)",
-      ],
-      depNameTemplate: "{{{depName}}}",
-      packageNameTemplate: "{{{depName}}}",
-      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
-    },
-    {
-      customType: "regex",
       description: "OCI Helm charts in Talos helmfile",
       managerFilePatterns: ["/(^|/)talos/helmfile/.+\\.ya?ml$/"],
       matchStrings: [
