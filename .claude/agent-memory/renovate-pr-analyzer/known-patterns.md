@@ -40,6 +40,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `redis/redisinsight` (Docker image) | `redis/RedisInsight` | 1 | 2026-02-28 | 2026-02-28 |
 | `oci://ghcr.io/kyverno/charts/kyverno` | `kyverno/kyverno` (app repo contains chart; chart version 3.6.x = app v1.16.x) | 1 | 2026-03-10 | 2026-03-10 |
 | `ghcr.io/siderolabs/kubelet` (Talos kubelet image) | `siderolabs/kubelet` (mirror repo; actual changelog lives in `kubernetes/kubernetes` CHANGELOG-1.XX.md) | 1 | 2026-03-19 | 2026-03-19 |
+| `ghcr.io/siderolabs/installer` (Talos installer image) | `siderolabs/talos` (release tags: `vX.Y.Z`; release notes list component updates, commit log, and dependency changes) | 1 | 2026-03-19 | 2026-03-19 |
 
 ## Common NO_IMPACT Scenarios
 
@@ -66,3 +67,5 @@ Breaking changes that frequently affect this homelab.
 - `renovate/image` label + `oci/` path in changed files = Helm chart delivered via OCI (treat as Helm chart, not container image, for analysis)
 - flux-instance OCIRepository tag tracks the flux-operator chart version, NOT the Flux distribution version — these are independent; distribution version is controlled by `instance.distribution.version` in values.yaml
 - Config path: `cluster/flux/meta/repositories/oci/` contains OCI chart sources that are the actual version-pinning mechanism for flux-operator/flux-instance
+- Talos installer upgrades require `talosctl upgrade` per node (not GitOps auto-apply). Merging `talconfig.yaml` changes only updates the config source; actual node upgrade is a manual step. Workers running Rook Ceph may freeze during upgrade due to pod unmount delays — use `--staged` flag as workaround (fixed in Talos 1.13)
+- Talos `renovate/talos` label = OS-level change; check kernel version bump impact on Cilium BPF (kernel regression history: 6.18.5 broke BPF verifier, patched in pkgs for 6.18.13+)
