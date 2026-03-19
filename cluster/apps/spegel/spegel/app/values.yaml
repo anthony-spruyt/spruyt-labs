@@ -8,6 +8,10 @@ resources:
     memory: 128Mi
   limits:
     memory: 128Mi
+service:
+  registry:
+    hostPort: 0
+    usePreferSameNodeTrafficDistribution: true
 serviceMonitor:
   enabled: true
 grafanaDashboard:
