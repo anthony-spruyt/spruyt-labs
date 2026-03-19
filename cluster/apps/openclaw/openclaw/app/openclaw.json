@@ -113,6 +113,7 @@
       {
         "id": "main",
         "default": true,
+        "workspace": "/home/node/.openclaw/workspace",
         "identity": {
           "name": "Skynet",
           "emoji": "💀",
@@ -129,6 +130,7 @@
       },
       {
         "id": "monitor",
+        "workspace": "/home/node/.openclaw/workspace/workspaces/monitor",
         "model": {
           "primary": "anthropic/claude-haiku-4-5",
           "fallbacks": ["openai/gpt-5-nano"]
@@ -139,6 +141,7 @@
       },
       {
         "id": "researcher",
+        "workspace": "/home/node/.openclaw/workspace",
         "model": {
           "primary": "anthropic/claude-sonnet-4-6",
           "fallbacks": ["openai/gpt-5-mini"]
@@ -146,6 +149,7 @@
       },
       {
         "id": "communicator",
+        "workspace": "/home/node/.openclaw/workspace",
         "model": {
           "primary": "anthropic/claude-opus-4-6",
           "fallbacks": ["openai/gpt-5.2"]
@@ -153,6 +157,7 @@
       },
       {
         "id": "coordinator",
+        "workspace": "/home/node/.openclaw/workspace",
         "model": {
           "primary": "anthropic/claude-opus-4-6",
           "fallbacks": ["openai/gpt-5.2"]
@@ -163,6 +168,7 @@
       },
       {
         "id": "sre",
+        "workspace": "/home/node/.openclaw/workspace/workspaces/sre",
         "model": {
           "primary": "anthropic/claude-opus-4-6",
           "fallbacks": ["openai/gpt-5.2"]
