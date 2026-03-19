@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=kubernetes/kubernetes datasource=github-releases
-VERSION="v1.35.2"
+VERSION="v1.35.3"
 
 ARCH=$(uname -m)
 case "$ARCH" in
