@@ -114,48 +114,32 @@ Ref #578"
 
 - [ ] **Step 1: Replace talosconfig-secret.sops.yaml with talos-serviceaccount.yaml**
 
-In the `resources:` list, replace `./talosconfig-secret.sops.yaml` with `./talos-serviceaccount.yaml`.
+In the `resources:` list, replace only `./talosconfig-secret.sops.yaml` with `./talos-serviceaccount.yaml`. Do NOT modify `configMapGenerator` or `configurations` sections — they must remain unchanged.
 
-Before:
+Replace this single line:
 
 ```yaml
-resources:
-  - ./rbac.yaml
-  - ./shutdown-script-configmap.yaml
-  - ./recovery-script-configmap.yaml
   - ./talosconfig-secret.sops.yaml
-  - ./release.yaml
-  - ./vpa.yaml
-  # NOTE: recovery-job.yaml is NOT included - apply manually after power restoration:
-  #   kubectl apply -f cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml
 ```
 
-After:
+With:
 
 ```yaml
-resources:
-  - ./rbac.yaml
-  - ./shutdown-script-configmap.yaml
-  - ./recovery-script-configmap.yaml
   - ./talos-serviceaccount.yaml
-  - ./release.yaml
-  - ./vpa.yaml
-  # NOTE: recovery-job.yaml is NOT included - apply manually after power restoration:
-  #   kubectl apply -f cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml
 ```
 
-- [ ] **Step 2: Validate kustomize build**
-
-Run: `kubectl kustomize cluster/apps/nut-system/shutdown-orchestrator/app/`
-Expected: Renders without errors. Output should include the `talos.dev/v1alpha1 ServiceAccount` resource.
-
-- [ ] **Step 3: Delete the legacy SOPS secret file**
+- [ ] **Step 2: Delete the legacy SOPS secret file**
 
 ```bash
 git rm cluster/apps/nut-system/shutdown-orchestrator/app/talosconfig-secret.sops.yaml
 ```
 
 This removes the SOPS-encrypted talosconfig from the repo. The Talos SA CRD replaces it.
+
+- [ ] **Step 3: Validate kustomize build**
+
+Run: `kubectl kustomize cluster/apps/nut-system/shutdown-orchestrator/app/`
+Expected: Renders without errors. Output should include the `talos.dev/v1alpha1 ServiceAccount` resource and the `shutdown-orchestrator-values` ConfigMap (from `configMapGenerator`).
 
 - [ ] **Step 4: Commit**
 
@@ -169,7 +153,7 @@ kustomization to reference talos-serviceaccount.yaml.
 Ref #578"
 ```
 
-Note: `git rm` in step 3 already stages the deletion, so the commit includes both changes.
+Note: `git rm` in step 2 already staged the deletion, so the commit includes both the kustomization edit and the SOPS file removal.
 
 ---
 
