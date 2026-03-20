@@ -86,7 +86,7 @@ The Talos SA controller creates a Secret named `shutdown-orchestrator-talos-secr
 
 #### Image pinning
 
-Do NOT pin image digests. The Renovate config (`.github/renovate.json5`) explicitly sets `pinDigests: false` for docker/OCI images. Adding digests manually would conflict with Renovate's management of these images. The `bitnami/kubectl:latest` tag is used consistently across the repo and is the only published tag for this image.
+Pin `bitnami/kubectl` by digest using the `tag@sha256:` format (e.g., `latest@sha256:7fc66a99...`). This pattern is already used across the repo (kubectl-mcp-server, redisinsight, mcp-victoriametrics). The Renovate `pinDigests: false` setting only prevents Renovate from *auto-adding* digests — it still updates digests that are already present. Apply to both init and main container images in `values.yaml`.
 
 #### Persistence note
 
@@ -110,7 +110,9 @@ The Kubernetes ServiceAccount (`shutdown-orchestrator` in `rbac.yaml`) does not 
 
 **File:** `cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml`
 
-No changes. The recovery job already has `seccompProfile: RuntimeDefault` and `readOnlyRootFilesystem: true`. Image digest pinning is not used per Renovate config. Note: this file is not included in the kustomization (applied manually after power restoration).
+- Pin `bitnami/kubectl` image by digest
+- Note: `seccompProfile: RuntimeDefault` and `readOnlyRootFilesystem: true` are already present — no changes needed for those
+- This file is not included in the kustomization (applied manually after power restoration), so Renovate may not auto-discover it for digest updates
 
 ### 6. Delete Legacy Secret
 
@@ -126,12 +128,13 @@ Already absent from working tree. No action needed — the kustomization referen
 | `cluster/apps/nut-system/shutdown-orchestrator/app/talos-serviceaccount.yaml` | Create |
 | `cluster/apps/nut-system/shutdown-orchestrator/app/values.yaml` | Edit — auth + security |
 | `cluster/apps/nut-system/shutdown-orchestrator/app/kustomization.yaml` | Edit — swap resources |
+| `cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml` | Edit — pin image digest |
 
 ## No Changes Required
 
 - **shutdown-script-configmap.yaml** — `talosctl` auto-discovers credentials at `/var/run/secrets/talos.dev`, no script changes needed
 - **recovery-script-configmap.yaml** — recovery script uses `kubectl` only, not `talosctl`
-- **recovery-job.yaml** — already has seccomp + read-only root filesystem; no digest pinning per Renovate config
+- **recovery-job.yaml** — already has seccomp + read-only root filesystem (only digest pin added)
 - **rbac.yaml** — Kubernetes RBAC unchanged (SA name stays `shutdown-orchestrator`); `automountServiceAccountToken` intentionally not set to `false` (kubectl needs the token)
 - **vpa.yaml** — resource limits unchanged; init container has no resource specs so no VPA policy needed per patterns doc
 - **ks.yaml** — no dependency changes
