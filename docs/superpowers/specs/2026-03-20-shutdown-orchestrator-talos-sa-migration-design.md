@@ -80,7 +80,8 @@ The Talos SA controller creates a Secret named `shutdown-orchestrator-talos-secr
 
 - **Pod-level securityContext:** Change to `runAsUser: 10001, runAsGroup: 10001`. Do NOT set `runAsNonRoot: true` at pod level — the init container requires root and Kubernetes rejects `runAsUser: 0` when `runAsNonRoot: true` is set at pod level.
 - **Init container securityContext:** Add explicit `runAsUser: 0, runAsGroup: 0` override (required for `apt-get`). Also set `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, and `readOnlyRootFilesystem: false` (explicit, since `apt-get` writes to root filesystem).
-- **Main container securityContext:** Set `runAsNonRoot: true`, `readOnlyRootFilesystem: true`, `seccompProfile: type: RuntimeDefault`. Note: emptyDir mounts (`/tools`) remain writable — `readOnlyRootFilesystem` only affects the container's root filesystem, not volume mounts.
+- **Main container securityContext:** Set `runAsNonRoot: true`, `readOnlyRootFilesystem: true`, `seccompProfile: type: RuntimeDefault`. Note: emptyDir mounts (`/tools`, `/tmp`) remain writable — `readOnlyRootFilesystem` only affects the container's root filesystem, not volume mounts.
+- **Add `/tmp` emptyDir persistence:** `talosctl` and `kubectl` may write temporary files to `/tmp` (TLS session caching, credential files). Following the etcd-defrag reference pattern, add a `tmp` emptyDir mount at `/tmp`.
 - **Seccomp profile:** Set `seccompProfile: type: RuntimeDefault` at pod level so it applies to both init and main containers.
 - **Remove `reloader.stakater.com/auto` annotation:** The Talos SA controller auto-rotates the credential secret. With the reloader annotation, every rotation would restart the orchestrator — resetting the `on_battery_since` counter and potentially delaying an in-progress shutdown. The orchestrator does not need to restart on secret rotation; talosctl reads credentials from disk on each invocation.
 
@@ -118,7 +119,7 @@ The Kubernetes ServiceAccount (`shutdown-orchestrator` in `rbac.yaml`) does not 
 
 **Delete:** `cluster/apps/nut-system/shutdown-orchestrator/app/talosconfig-secret.sops.yaml`
 
-Already absent from working tree. No action needed — the kustomization reference removal (step 4) is the actual fix.
+Delete this file as part of the kustomization update (step 4). Removes SOPS-encrypted talosconfig from the repo.
 
 ## Files Changed
 

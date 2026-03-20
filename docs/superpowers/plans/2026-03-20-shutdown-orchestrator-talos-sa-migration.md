@@ -110,10 +110,11 @@ Ref #578"
 
 **Files:**
 - Modify: `cluster/apps/nut-system/shutdown-orchestrator/app/kustomization.yaml`
+- Delete: `cluster/apps/nut-system/shutdown-orchestrator/app/talosconfig-secret.sops.yaml`
 
 - [ ] **Step 1: Replace talosconfig-secret.sops.yaml with talos-serviceaccount.yaml**
 
-In the `resources:` list, replace `./talosconfig-secret.sops.yaml` with `./talos-serviceaccount.yaml`. The SOPS file is already absent from the working tree — this fixes the broken reference. No separate delete step is needed.
+In the `resources:` list, replace `./talosconfig-secret.sops.yaml` with `./talos-serviceaccount.yaml`.
 
 Before:
 
@@ -148,17 +149,27 @@ resources:
 Run: `kubectl kustomize cluster/apps/nut-system/shutdown-orchestrator/app/`
 Expected: Renders without errors. Output should include the `talos.dev/v1alpha1 ServiceAccount` resource.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Delete the legacy SOPS secret file**
+
+```bash
+git rm cluster/apps/nut-system/shutdown-orchestrator/app/talosconfig-secret.sops.yaml
+```
+
+This removes the SOPS-encrypted talosconfig from the repo. The Talos SA CRD replaces it.
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add cluster/apps/nut-system/shutdown-orchestrator/app/kustomization.yaml
 git commit -m "chore(nut-system): swap talosconfig secret for Talos SA CRD in kustomization
 
-Removes broken reference to deleted talosconfig-secret.sops.yaml and adds
-the new talos-serviceaccount.yaml resource.
+Remove talosconfig-secret.sops.yaml (replaced by Talos SA CRD) and update
+kustomization to reference talos-serviceaccount.yaml.
 
 Ref #578"
 ```
+
+Note: `git rm` in step 3 already stages the deletion, so the commit includes both changes.
 
 ---
 
@@ -322,9 +333,22 @@ After:
             type: RuntimeDefault
 ```
 
-`readOnlyRootFilesystem: true` is safe because the main container only writes to emptyDir mounts (`/tools`), which are unaffected.
+`readOnlyRootFilesystem: true` is safe because the main container only writes to emptyDir mounts (`/tools`, `/tmp`), which are unaffected.
 
-- [ ] **Step 4: Pin image digests**
+- [ ] **Step 4: Add `/tmp` emptyDir persistence**
+
+Add a `tmp` emptyDir to the `persistence:` block in values.yaml. `talosctl` and `kubectl` may write temporary files to `/tmp` (TLS session caching, credential files). Without this, those writes fail with EROFS when `readOnlyRootFilesystem: true`. This follows the etcd-defrag reference pattern (`cronjob.yaml` lines 123-130).
+
+Add after the existing `tools` persistence entry:
+
+```yaml
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+```
+
+- [ ] **Step 5: Pin image digests**
 
 Update both image tags from `latest` to `latest@sha256:7fc66a99e38500a5ceb81583856f89ee589bdffd885c895e42a76dce45a3bc73`.
 
@@ -342,7 +366,7 @@ Main container:
 
 This follows the existing repo pattern (see `cluster/apps/kubectl-mcp/kubectl-mcp-server/app/values.yaml`). Renovate will auto-update the digest on future changes.
 
-- [ ] **Step 5: Validate kustomize build**
+- [ ] **Step 6: Validate kustomize build**
 
 Run: `kubectl kustomize cluster/apps/nut-system/shutdown-orchestrator/app/`
 Expected: Renders without errors. Verify:
@@ -350,8 +374,9 @@ Expected: Renders without errors. Verify:
 - Init container has `runAsUser: 0`, `allowPrivilegeEscalation: false`
 - Main container has `runAsNonRoot: true`, `readOnlyRootFilesystem: true`
 - Both images include the `@sha256:` digest
+- A `/tmp` emptyDir volume and mount exists
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add cluster/apps/nut-system/shutdown-orchestrator/app/values.yaml
@@ -360,6 +385,7 @@ git commit -m "chore(nut-system): harden shutdown-orchestrator security
 - Pod runs as non-root (10001:10001) with seccomp RuntimeDefault
 - Init container explicit root override for apt-get
 - Main container: runAsNonRoot, readOnlyRootFilesystem, seccomp
+- Add /tmp emptyDir for talosctl/kubectl temp file writes
 - Pin bitnami/kubectl image by digest
 
 Ref #578"
@@ -431,7 +457,8 @@ Closes #578
 - Replace `TALOSCONFIG` env var + secret mount with auto-discovered SA credentials
 - Harden pod/container security contexts
 - Pin `bitnami/kubectl` images by digest
-- Remove broken kustomization reference to deleted SOPS file
+- Delete legacy SOPS-encrypted talosconfig secret
+- Add /tmp emptyDir mount for readOnlyRootFilesystem compatibility
 
 ## Post-Merge Prerequisites
 **Before Flux deploys these changes**, Talos machine configs must be updated:
