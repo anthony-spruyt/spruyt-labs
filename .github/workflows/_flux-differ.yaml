@@ -47,14 +47,14 @@ jobs:
       - if: ${{ steps.diff.outputs.diff != '' }}
         name: Truncate diff to file
         shell: bash
+        env:
+          DIFF_OUTPUT: "${{ steps.diff.outputs.diff }}"
         run: |
           set -eo pipefail
 
-          # 1) Slurp the full diff into a file via heredoc
-          cat > full-diff.txt <<'DIFF'
-          ${{ steps.diff.outputs.diff }}
-          DIFF
+          # Write diff via env var to avoid heredoc injection
+          printf '%s' "$DIFF_OUTPUT" > full-diff.txt
 
-          # 2) Chop it down to 65 000 bytes
+          # Chop it down to 65 000 bytes
           head -c 65000 full-diff.txt \
             > truncated-diff.txt
