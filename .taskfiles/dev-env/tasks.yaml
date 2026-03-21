@@ -9,7 +9,7 @@ tasks:
   lint:
     desc: Runs mega-linter against the repo
     cmds:
-      - bash {{ .devEnvScriptsDir }}/run-mega-linter.sh
+      - bash {{ .ROOT_DIR }}/lint.sh
   renovate-dry-run:
     desc: Runs Renovate dry-run with local config changes (merges github> presets from disk)
     cmds:

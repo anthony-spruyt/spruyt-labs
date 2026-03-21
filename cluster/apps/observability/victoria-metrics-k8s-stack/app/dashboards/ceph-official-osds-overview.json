@@ -246,7 +246,9 @@
           "countRows": false,
           "enablePagination": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 1,
@@ -508,7 +510,9 @@
           "countRows": false,
           "enablePagination": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 1,
@@ -578,13 +582,18 @@
       },
       "id": 6,
       "options": {
-        "displayLabels": ["percent"],
+        "displayLabels": [
+          "percent"
+        ],
         "legend": {
           "calcs": [],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "values": ["percent", "value"]
+          "values": [
+            "percent",
+            "value"
+          ]
         },
         "pieType": "pie",
         "reduceOptions": {},
@@ -632,13 +641,18 @@
       },
       "id": 7,
       "options": {
-        "displayLabels": ["percent"],
+        "displayLabels": [
+          "percent"
+        ],
         "legend": {
           "calcs": [],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "values": ["percent", "value"]
+          "values": [
+            "percent",
+            "value"
+          ]
         },
         "pieType": "pie",
         "reduceOptions": {},
@@ -693,13 +707,18 @@
       },
       "id": 8,
       "options": {
-        "displayLabels": ["percent"],
+        "displayLabels": [
+          "percent"
+        ],
         "legend": {
           "calcs": [],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "values": ["percent", "value"]
+          "values": [
+            "percent",
+            "value"
+          ]
         },
         "pieType": "pie",
         "reduceOptions": {},
@@ -875,7 +894,11 @@
       "cacheTimeout": null,
       "colorBackground": false,
       "colorValue": true,
-      "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
       "datasource": "$datasource",
       "description": "This gauge panel shows onode Hits ratio to help determine if increasing RAM per OSD could help improve the performance of the cluster",
       "format": "percentunit",
@@ -1146,7 +1169,9 @@
           "countRows": false,
           "enablePagination": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 1,
@@ -1198,7 +1223,10 @@
   "rows": [],
   "schemaVersion": 16,
   "style": "dark",
-  "tags": ["ceph-mixin", "overview"],
+  "tags": [
+    "ceph-mixin",
+    "overview"
+  ],
   "templating": {
     "list": [
       {
@@ -1251,7 +1279,17 @@
       "2h",
       "1d"
     ],
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
   },
   "timezone": "",
   "title": "Ceph OSDs - Overview",

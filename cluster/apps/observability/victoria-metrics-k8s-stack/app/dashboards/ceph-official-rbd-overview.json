@@ -484,7 +484,9 @@
           "countRows": false,
           "enablePagination": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 1,
@@ -631,7 +633,9 @@
           "countRows": false,
           "enablePagination": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 1,
@@ -778,7 +782,9 @@
           "countRows": false,
           "enablePagination": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 1,
@@ -814,7 +820,10 @@
   "rows": [],
   "schemaVersion": 16,
   "style": "dark",
-  "tags": ["ceph-mixin", "overview"],
+  "tags": [
+    "ceph-mixin",
+    "overview"
+  ],
   "templating": {
     "list": [
       {
@@ -867,7 +876,17 @@
       "2h",
       "1d"
     ],
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
   },
   "timezone": "",
   "title": "Ceph Block - Overview",

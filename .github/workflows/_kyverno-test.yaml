@@ -2,17 +2,7 @@
 name: Kyverno Policy Test
 
 on: # yamllint disable-line rule:truthy
-  workflow_dispatch: {}
-  push:
-    branches:
-      - main
-    paths:
-      - "cluster/apps/kyverno/**"
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "cluster/apps/kyverno/**"
+  workflow_call: {}
 
 permissions:
   contents: read

@@ -2,16 +2,7 @@
 name: Kubeconform
 
 on: # yamllint disable-line rule:truthy
-  push:
-    branches:
-      - main
-    paths:
-      - "cluster/**.yaml"
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "cluster/**.yaml"
+  workflow_call: {}
 
 permissions:
   contents: read

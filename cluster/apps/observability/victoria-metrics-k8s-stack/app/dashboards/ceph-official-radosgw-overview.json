@@ -1248,7 +1248,9 @@
       "nullPointMode": "null as zero",
       "options": {
         "legend": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "list",
           "placement": "right",
           "showLegend": true,
@@ -1352,7 +1354,9 @@
       "nullPointMode": "null as zero",
       "options": {
         "legend": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "list",
           "placement": "right",
           "showLegend": true,
@@ -1418,7 +1422,11 @@
   "rows": [],
   "schemaVersion": 16,
   "style": "dark",
-  "tags": ["ceph-mixin", "overview", "protocol"],
+  "tags": [
+    "ceph-mixin",
+    "overview",
+    "protocol"
+  ],
   "templating": {
     "list": [
       {
@@ -1551,7 +1559,17 @@
       "2h",
       "1d"
     ],
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
   },
   "timezone": "",
   "title": "Ceph Object - Overview",

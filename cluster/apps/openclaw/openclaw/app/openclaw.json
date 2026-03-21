@@ -25,7 +25,9 @@
     "defaults": {
       "model": {
         "primary": "anthropic/claude-sonnet-4-6",
-        "fallbacks": ["openai/gpt-5-mini"]
+        "fallbacks": [
+          "openai/gpt-5-mini"
+        ]
       },
       "models": {
         "anthropic/claude-haiku-4-5": {
@@ -48,7 +50,10 @@
       "userTimezone": "Australia/Melbourne",
       "memorySearch": {
         "enabled": true,
-        "sources": ["memory", "sessions"],
+        "sources": [
+          "memory",
+          "sessions"
+        ],
         "experimental": {
           "sessionMemory": true
         },
@@ -87,7 +92,12 @@
           "enabled": true,
           "placeholder": "[Old tool result content cleared]"
         },
-        "tools": { "deny": ["browser", "canvas"] }
+        "tools": {
+          "deny": [
+            "browser",
+            "canvas"
+          ]
+        }
       },
       "compaction": {
         "mode": "safeguard",
@@ -122,10 +132,17 @@
         },
         "model": {
           "primary": "anthropic/claude-opus-4-6",
-          "fallbacks": ["openai/gpt-5.2"]
+          "fallbacks": [
+            "openai/gpt-5.2"
+          ]
         },
         "subagents": {
-          "allowAgents": ["researcher", "communicator", "coordinator", "sre"]
+          "allowAgents": [
+            "researcher",
+            "communicator",
+            "coordinator",
+            "sre"
+          ]
         }
       },
       {
@@ -133,10 +150,14 @@
         "workspace": "/home/node/.openclaw/workspace/workspaces/monitor",
         "model": {
           "primary": "anthropic/claude-haiku-4-5",
-          "fallbacks": ["openai/gpt-5-nano"]
+          "fallbacks": [
+            "openai/gpt-5-nano"
+          ]
         },
         "subagents": {
-          "allowAgents": ["sre"]
+          "allowAgents": [
+            "sre"
+          ]
         }
       },
       {
@@ -144,7 +165,9 @@
         "workspace": "/home/node/.openclaw/workspace/workspaces/researcher",
         "model": {
           "primary": "anthropic/claude-sonnet-4-6",
-          "fallbacks": ["openai/gpt-5-mini"]
+          "fallbacks": [
+            "openai/gpt-5-mini"
+          ]
         }
       },
       {
@@ -152,7 +175,9 @@
         "workspace": "/home/node/.openclaw/workspace/workspaces/communicator",
         "model": {
           "primary": "anthropic/claude-opus-4-6",
-          "fallbacks": ["openai/gpt-5.2"]
+          "fallbacks": [
+            "openai/gpt-5.2"
+          ]
         }
       },
       {
@@ -160,10 +185,17 @@
         "workspace": "/home/node/.openclaw/workspace/workspaces/coordinator",
         "model": {
           "primary": "anthropic/claude-opus-4-6",
-          "fallbacks": ["openai/gpt-5.2"]
+          "fallbacks": [
+            "openai/gpt-5.2"
+          ]
         },
         "subagents": {
-          "allowAgents": ["communicator", "monitor", "researcher", "sre"]
+          "allowAgents": [
+            "communicator",
+            "monitor",
+            "researcher",
+            "sre"
+          ]
         }
       },
       {
@@ -171,7 +203,9 @@
         "workspace": "/home/node/.openclaw/workspace/workspaces/sre",
         "model": {
           "primary": "anthropic/claude-opus-4-6",
-          "fallbacks": ["openai/gpt-5.2"]
+          "fallbacks": [
+            "openai/gpt-5.2"
+          ]
         }
       }
     ]
@@ -213,7 +247,9 @@
     "nativeSkills": "auto",
     "restart": true,
     "allowFrom": {
-      "discord": ["user:249242152318664709"]
+      "discord": [
+        "user:249242152318664709"
+      ]
     }
   },
   "session": {
@@ -230,14 +266,18 @@
       "streamMode": "off",
       "groupPolicy": "allowlist",
       "dmPolicy": "allowlist",
-      "allowFrom": ["249242152318664709"],
+      "allowFrom": [
+        "249242152318664709"
+      ],
       "dm": {
         "enabled": true
       },
       "guilds": {
         "257529418187145216": {
           "requireMention": true,
-          "users": ["249242152318664709"],
+          "users": [
+            "249242152318664709"
+          ],
           "channels": {
             "1473506635656990862": {
               "allow": true,
@@ -270,7 +310,9 @@
       "token": "$${OPENCLAW_GATEWAY_TOKEN}"
     },
     "controlUi": {
-      "allowedOrigins": ["https://openclaw.${EXTERNAL_DOMAIN}"],
+      "allowedOrigins": [
+        "https://openclaw.${EXTERNAL_DOMAIN}"
+      ],
       "dangerouslyDisableDeviceAuth": true
     }
   },
@@ -316,8 +358,12 @@
     "token": "$${OPENCLAW_HOOKS_TOKEN}",
     "defaultSessionKey": "hook:ingress",
     "allowRequestSessionKey": false,
-    "allowedSessionKeyPrefixes": ["hook:"],
-    "allowedAgentIds": ["sre"],
+    "allowedSessionKeyPrefixes": [
+      "hook:"
+    ],
+    "allowedAgentIds": [
+      "sre"
+    ],
     "mappings": [
       {
         "id": "alertmanager",

@@ -1,23 +1,12 @@
+EXTENDS: .mega-linter-base.yml
+CONFIG_PROPERTIES_TO_APPEND:
+  - ENABLE_LINTERS
+  - EXCLUDED_DIRECTORIES
 ENABLE_LINTERS:
-  - ACTION_ACTIONLINT
-  - BASH_SHELLCHECK
-  - MARKDOWN_MARKDOWNLINT
-  - REPOSITORY_GITLEAKS
-  - REPOSITORY_SECRETLINT
-  - REPOSITORY_TRIVY
-  - SPELL_LYCHEE
   - TERRAFORM_TFLINT
-  - YAML_YAMLLINT
-FILTER_REGEX_EXCLUDE: '.*sops.*|.*/mcp\.json$|cluster/apps/openclaw/openclaw/app/workspace/|\.taskfiles/talos/scripts/'
-REPOSITORY_SECRETLINT_ARGUMENTS:
-  - "--secretlintignore"
-  - ".secretlintignore"
+FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|.*sops.*|.*/mcp\.json$|cluster/apps/openclaw/openclaw/app/workspace/|\.taskfiles/talos/scripts/'
 EXCLUDED_DIRECTORIES:
-  - .git
   - .output
   - clusterconfig
   - legacy
-  - plans
   - talos
-DEFAULT_BRANCH: main
-IGNORE_GITIGNORED_FILES: true

@@ -2,11 +2,12 @@
 name: Flux differ
 
 on: # yamllint disable-line rule:truthy
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "cluster/**.yaml"
+  workflow_call:
+    secrets:
+      BOT_APP_ID:
+        required: true
+      BOT_APP_PRIVATE_KEY:
+        required: true
 
 permissions: read-all
 
