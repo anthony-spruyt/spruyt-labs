@@ -4,7 +4,7 @@
 # This file is sourced by lint.sh for both local and CI runs
 
 # MegaLinter Docker image
-MEGALINTER_IMAGE="ghcr.io/anthony-spruyt/megalinter-container-images:latest"
+MEGALINTER_IMAGE="oxsecurity/megalinter:v9"
 
 # Skip linting for renovate/dependabot commits in CI
 SKIP_BOT_COMMITS=true
