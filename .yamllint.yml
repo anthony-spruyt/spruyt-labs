@@ -22,12 +22,9 @@ rules:
     max-spaces-inside: 0
   indentation: "enable"
   document-start: "disable"
-ignore: "*.sops.*
-
+ignore: |
+  *.sops.*
   talos/
-
   clusterconfig/
-
   legacy/
-
-  .taskfiles/talos/scripts/\n"
+  .taskfiles/talos/scripts/
