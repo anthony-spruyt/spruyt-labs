@@ -15,10 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
-      actions: write
-      checks: read
-      statuses: write
     strategy:
       matrix:
         path: ["cluster"]
