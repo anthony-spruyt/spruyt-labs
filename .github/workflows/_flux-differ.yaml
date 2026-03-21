@@ -9,8 +9,6 @@ on: # yamllint disable-line rule:truthy
       BOT_APP_PRIVATE_KEY:
         required: true
 
-permissions: read-all
-
 jobs:
   flux-differ:
     name: Flux differ
