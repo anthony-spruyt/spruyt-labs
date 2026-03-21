@@ -15,7 +15,7 @@ CREDENTIAL_HELPER="/home/node/.openclaw/.git-credential-helper"
 # ============================================================
 # Credential dispatcher: whitelisted repos → GIT_CODE_TOKEN, all others → GH_TOKEN.
 log "Configuring git credential helper"
-cat > "$CREDENTIAL_HELPER" <<'HELPER'
+cat >"$CREDENTIAL_HELPER" <<'HELPER'
 #!/bin/sh
 case "$1" in
   get)
@@ -52,7 +52,7 @@ if [ -f "$SIGNING_KEY_SRC" ]; then
   mkdir -p "$(dirname "$SIGNING_KEY_DEST")"
   chmod 700 "$(dirname "$SIGNING_KEY_DEST")"
   cp "$SIGNING_KEY_SRC" "$SIGNING_KEY_DEST"
-  printf '\n' >> "$SIGNING_KEY_DEST"
+  printf '\n' >>"$SIGNING_KEY_DEST"
   chmod 600 "$SIGNING_KEY_DEST"
   log "SSH signing key installed at $SIGNING_KEY_DEST"
 else
@@ -63,7 +63,7 @@ fi
 # Git Configuration
 # ============================================================
 # Write .gitconfig on the PVC (shared with main container via GIT_CONFIG_GLOBAL).
-cat > "$GITCONFIG" <<GITCONF
+cat >"$GITCONFIG" <<GITCONF
 [credential "https://github.com"]
     helper = $CREDENTIAL_HELPER
     useHttpPath = true

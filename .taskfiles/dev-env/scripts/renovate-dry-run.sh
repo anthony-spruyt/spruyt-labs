@@ -18,23 +18,23 @@ trap 'rm -f "$MERGED_CONFIG"' EXIT
 # Resolve GitHub token
 TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 if [[ -z "$TOKEN" ]] && command -v gh &>/dev/null; then
-    TOKEN="$(gh auth token 2>/dev/null || true)"
+  TOKEN="$(gh auth token 2>/dev/null || true)"
 fi
 if [[ -z "$TOKEN" ]]; then
-    echo "ERROR: No GitHub token found. Set GITHUB_TOKEN, GH_TOKEN, or authenticate with 'gh auth login'." >&2
-    exit 1
+  echo "ERROR: No GitHub token found. Set GITHUB_TOKEN, GH_TOKEN, or authenticate with 'gh auth login'." >&2
+  exit 1
 fi
 
 # Check renovate is installed
 if ! command -v renovate &>/dev/null; then
-    echo "ERROR: renovate CLI not found. Install with: npm install -g renovate" >&2
-    exit 1
+  echo "ERROR: renovate CLI not found. Install with: npm install -g renovate" >&2
+  exit 1
 fi
 
 # Check python3 + json5 are available
 if ! python3 -c "import json5" 2>/dev/null; then
-    echo "Installing json5 Python package..." >&2
-    pip install -q json5
+  echo "Installing json5 Python package..." >&2
+  pip install -q json5
 fi
 
 # Merge all preset files into one config
@@ -78,17 +78,17 @@ cp "$MAIN_CONFIG" "$BACKUP"
 cp "$MERGED_CONFIG" "$MAIN_CONFIG"
 
 restore_config() {
-    mv "$BACKUP" "$MAIN_CONFIG"
-    rm -f "$MERGED_CONFIG"
+  mv "$BACKUP" "$MAIN_CONFIG"
+  rm -f "$MERGED_CONFIG"
 }
 trap restore_config EXIT
 
 LOG_LEVEL="${LOG_LEVEL:-debug}" \
-GITHUB_TOKEN="$TOKEN" \
-renovate \
-    --platform=local \
-    --dry-run \
-    "$@" 2>&1 | tee /tmp/renovate-dry-run.log
+  GITHUB_TOKEN="$TOKEN" \
+  renovate \
+  --platform=local \
+  --dry-run \
+  "$@" 2>&1 | tee /tmp/renovate-dry-run.log
 
 echo ""
 echo "Full log saved to /tmp/renovate-dry-run.log"

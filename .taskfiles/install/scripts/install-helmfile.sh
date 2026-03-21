@@ -6,9 +6,12 @@ VERSION="v1.4.2"
 
 ARCH=$(uname -m)
 case "$ARCH" in
-  x86_64) ARCH="amd64" ;;
-  aarch64) ARCH="arm64" ;;
-  *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
+x86_64) ARCH="amd64" ;;
+aarch64) ARCH="arm64" ;;
+*)
+  echo "Unsupported architecture: $ARCH"
+  exit 1
+  ;;
 esac
 
 # Remove existing to ensure version update

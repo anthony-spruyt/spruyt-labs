@@ -16,8 +16,8 @@ IMAGE="ghcr.io/openclaw/openclaw"
 
 # Determine the image tag from the HelmRelease values.yaml (tag: &tag "x.y.z" pattern)
 CHART_VERSION=$(grep -E 'tag: &tag ' \
-  "${ROOT_DIR}/cluster/apps/openclaw/openclaw/app/values.yaml" \
-  | grep -oP '"\K[^"]+' | head -1)
+  "${ROOT_DIR}/cluster/apps/openclaw/openclaw/app/values.yaml" |
+  grep -oP '"\K[^"]+' | head -1)
 if [[ -n "${CHART_VERSION}" ]]; then
   IMAGE="${IMAGE}:${CHART_VERSION}"
 fi
@@ -59,7 +59,7 @@ RAW=$(docker exec "${CONTAINER_NAME}" \
 docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
 
 # Extract the schema and add $schema as allowed property
-echo "${RAW}" | jq '.schema | .properties["$schema"] = {"type": "string"}' > "${OUTPUT}"
+echo "${RAW}" | jq '.schema | .properties["$schema"] = {"type": "string"}' >"${OUTPUT}"
 
 # Validate
 if jq empty "${OUTPUT}" 2>/dev/null; then

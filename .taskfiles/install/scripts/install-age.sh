@@ -4,10 +4,10 @@ set -euo pipefail
 echo "🔍 Checking OS and package manager..."
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-  if command -v apt &> /dev/null; then
+  if command -v apt &>/dev/null; then
     echo "📦 Using apt (Debian/Ubuntu)"
     sudo apt update
-    if dpkg -s age &> /dev/null; then
+    if dpkg -s age &>/dev/null; then
       echo "🔄 Updating age..."
       sudo apt install --only-upgrade -y age
     else
@@ -15,14 +15,14 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
       sudo apt install -y age
     fi
 
-  elif command -v dnf &> /dev/null; then
+  elif command -v dnf &>/dev/null; then
     echo "📦 Using dnf (Fedora/RHEL)"
     sudo dnf check-update || true
-    sudo dnf install -y age  # dnf handles upgrades automatically
+    sudo dnf install -y age # dnf handles upgrades automatically
 
-  elif command -v pacman &> /dev/null; then
+  elif command -v pacman &>/dev/null; then
     echo "📦 Using pacman (Arch)"
-    sudo pacman -Sy --noconfirm age  # pacman also upgrades if installed
+    sudo pacman -Sy --noconfirm age # pacman also upgrades if installed
 
   else
     echo "❌ No supported package manager found! Install age manually."
@@ -31,11 +31,11 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
 
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo "🍎 macOS detected"
-  if ! command -v brew &> /dev/null; then
+  if ! command -v brew &>/dev/null; then
     echo "❌ Homebrew is required but not found. Please install Homebrew first."
     exit 1
   fi
-  if brew list age &> /dev/null; then
+  if brew list age &>/dev/null; then
     echo "🔄 Upgrading age..."
     brew upgrade age || echo "✅ Already up to date."
   else

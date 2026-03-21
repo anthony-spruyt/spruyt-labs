@@ -51,7 +51,7 @@ needs_install() {
 }
 
 mark_version() {
-  echo "$2" > "$VERSION_DIR/$1"
+  echo "$2" >"$VERSION_DIR/$1"
 }
 
 # --- Aikido safe-chain (supply chain security) ---
@@ -168,7 +168,10 @@ if [ -f /tmp/.claude-credentials.json ]; then
 fi
 if [ ! -f /home/node/.openclaw/.local/bin/claude ]; then
   log "Installing Claude Code..."
-  (export HOME=/home/node/.openclaw; curl -fsSL https://claude.ai/install.sh | bash)
+  (
+    export HOME=/home/node/.openclaw
+    curl -fsSL https://claude.ai/install.sh | bash
+  )
   log "Claude Code installed"
 else
   log "Claude Code already installed"
