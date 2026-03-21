@@ -489,7 +489,9 @@
                 "pattern": "^#?[0-9a-fA-F]{6}$"
               }
             },
-            "required": ["color"],
+            "required": [
+              "color"
+            ],
             "additionalProperties": false
           }
         },
@@ -564,7 +566,9 @@
                     }
                   }
                 },
-                "required": ["source"],
+                "required": [
+                  "source"
+                ],
                 "additionalProperties": false
               },
               {
@@ -601,7 +605,10 @@
                     "maximum": 20971520
                   }
                 },
-                "required": ["source", "path"],
+                "required": [
+                  "source",
+                  "path"
+                ],
                 "additionalProperties": false
               },
               {
@@ -673,7 +680,10 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["source", "command"],
+                "required": [
+                  "source",
+                  "command"
+                ],
                 "additionalProperties": false
               }
             ]
@@ -755,7 +765,10 @@
                 "type": "string"
               }
             },
-            "required": ["provider", "mode"],
+            "required": [
+              "provider",
+              "mode"
+            ],
             "additionalProperties": false
           }
         },
@@ -971,7 +984,11 @@
                             "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       },
                       {
@@ -989,7 +1006,11 @@
                             "type": "string"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       },
                       {
@@ -1007,7 +1028,11 @@
                             "type": "string"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       }
                     ]
@@ -1078,7 +1103,11 @@
                               "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         },
                         {
@@ -1096,7 +1125,11 @@
                               "type": "string"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         },
                         {
@@ -1114,7 +1147,11 @@
                               "type": "string"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         }
                       ]
@@ -1272,12 +1309,18 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["id", "name"],
+                  "required": [
+                    "id",
+                    "name"
+                  ],
                   "additionalProperties": false
                 }
               }
             },
-            "required": ["baseUrl", "models"],
+            "required": [
+              "baseUrl",
+              "models"
+            ],
             "additionalProperties": false
           }
         },
@@ -1774,7 +1817,9 @@
                     "additionalProperties": false
                   }
                 },
-                "required": ["command"],
+                "required": [
+                  "command"
+                ],
                 "additionalProperties": false
               }
             },
@@ -1904,7 +1949,11 @@
                                   "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -1922,7 +1971,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -1940,7 +1993,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             }
                           ]
@@ -2378,7 +2435,11 @@
                 },
                 "postIndexSync": {
                   "type": "string",
-                  "enum": ["off", "async", "await"]
+                  "enum": [
+                    "off",
+                    "async",
+                    "await"
+                  ]
                 },
                 "postCompactionSections": {
                   "type": "array",
@@ -3262,7 +3323,11 @@
                                     "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                                   }
                                 },
-                                "required": ["source", "provider", "id"],
+                                "required": [
+                                  "source",
+                                  "provider",
+                                  "id"
+                                ],
                                 "additionalProperties": false
                               },
                               {
@@ -3280,7 +3345,11 @@
                                     "type": "string"
                                   }
                                 },
-                                "required": ["source", "provider", "id"],
+                                "required": [
+                                  "source",
+                                  "provider",
+                                  "id"
+                                ],
                                 "additionalProperties": false
                               },
                               {
@@ -3298,7 +3367,11 @@
                                     "type": "string"
                                   }
                                 },
-                                "required": ["source", "provider", "id"],
+                                "required": [
+                                  "source",
+                                  "provider",
+                                  "id"
+                                ],
                                 "additionalProperties": false
                               }
                             ]
@@ -4156,15 +4229,27 @@
                     "properties": {
                       "host": {
                         "type": "string",
-                        "enum": ["sandbox", "gateway", "node"]
+                        "enum": [
+                          "sandbox",
+                          "gateway",
+                          "node"
+                        ]
                       },
                       "security": {
                         "type": "string",
-                        "enum": ["deny", "allowlist", "full"]
+                        "enum": [
+                          "deny",
+                          "allowlist",
+                          "full"
+                        ]
                       },
                       "ask": {
                         "type": "string",
-                        "enum": ["off", "on-miss", "always"]
+                        "enum": [
+                          "off",
+                          "on-miss",
+                          "always"
+                        ]
                       },
                       "node": {
                         "type": "string"
@@ -4364,7 +4449,9 @@
                         "const": "embedded"
                       }
                     },
-                    "required": ["type"],
+                    "required": [
+                      "type"
+                    ],
                     "additionalProperties": false
                   },
                   {
@@ -4385,7 +4472,10 @@
                           },
                           "mode": {
                             "type": "string",
-                            "enum": ["persistent", "oneshot"]
+                            "enum": [
+                              "persistent",
+                              "oneshot"
+                            ]
                           },
                           "cwd": {
                             "type": "string"
@@ -4394,13 +4484,17 @@
                         "additionalProperties": false
                       }
                     },
-                    "required": ["type"],
+                    "required": [
+                      "type"
+                    ],
                     "additionalProperties": false
                   }
                 ]
               }
             },
-            "required": ["id"],
+            "required": [
+              "id"
+            ],
             "additionalProperties": false
           }
         }
@@ -4554,7 +4648,11 @@
                               "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         },
                         {
@@ -4572,7 +4670,11 @@
                               "type": "string"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         },
                         {
@@ -4590,7 +4692,11 @@
                               "type": "string"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         }
                       ]
@@ -4637,7 +4743,11 @@
                                   "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -4655,7 +4765,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -4673,7 +4787,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             }
                           ]
@@ -4715,7 +4833,11 @@
                                   "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -4733,7 +4855,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -4751,7 +4877,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             }
                           ]
@@ -4793,7 +4923,11 @@
                                   "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -4811,7 +4945,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -4829,7 +4967,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             }
                           ]
@@ -4868,7 +5010,11 @@
                                   "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -4886,7 +5032,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -4904,7 +5054,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             }
                           ]
@@ -5006,7 +5160,11 @@
                                   "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -5024,7 +5182,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -5042,7 +5204,11 @@
                                   "type": "string"
                                 }
                               },
-                              "required": ["source", "provider", "id"],
+                              "required": [
+                                "source",
+                                "provider",
+                                "id"
+                              ],
                               "additionalProperties": false
                             }
                           ]
@@ -5290,7 +5456,9 @@
                             "additionalProperties": false
                           }
                         },
-                        "required": ["action"],
+                        "required": [
+                          "action"
+                        ],
                         "additionalProperties": false
                       }
                     }
@@ -5630,7 +5798,9 @@
                             "additionalProperties": false
                           }
                         },
-                        "required": ["action"],
+                        "required": [
+                          "action"
+                        ],
                         "additionalProperties": false
                       }
                     }
@@ -5970,7 +6140,9 @@
                             "additionalProperties": false
                           }
                         },
-                        "required": ["action"],
+                        "required": [
+                          "action"
+                        ],
                         "additionalProperties": false
                       }
                     }
@@ -6313,7 +6485,9 @@
                         "additionalProperties": false
                       }
                     },
-                    "required": ["action"],
+                    "required": [
+                      "action"
+                    ],
                     "additionalProperties": false
                   }
                 }
@@ -6355,7 +6529,9 @@
                     "maximum": 9007199254740991
                   }
                 },
-                "required": ["command"],
+                "required": [
+                  "command"
+                ],
                 "additionalProperties": false
               }
             }
@@ -6367,7 +6543,12 @@
           "properties": {
             "visibility": {
               "type": "string",
-              "enum": ["self", "tree", "agent", "all"]
+              "enum": [
+                "self",
+                "tree",
+                "agent",
+                "all"
+              ]
             }
           },
           "additionalProperties": false
@@ -6509,15 +6690,27 @@
           "properties": {
             "host": {
               "type": "string",
-              "enum": ["sandbox", "gateway", "node"]
+              "enum": [
+                "sandbox",
+                "gateway",
+                "node"
+              ]
             },
             "security": {
               "type": "string",
-              "enum": ["deny", "allowlist", "full"]
+              "enum": [
+                "deny",
+                "allowlist",
+                "full"
+              ]
             },
             "ask": {
               "type": "string",
-              "enum": ["off", "on-miss", "always"]
+              "enum": [
+                "off",
+                "on-miss",
+                "always"
+              ]
             },
             "node": {
               "type": "string"
@@ -6768,7 +6961,10 @@
                         "type": "string"
                       }
                     },
-                    "required": ["kind", "id"],
+                    "required": [
+                      "kind",
+                      "id"
+                    ],
                     "additionalProperties": false
                   },
                   "guildId": {
@@ -6784,11 +6980,16 @@
                     }
                   }
                 },
-                "required": ["channel"],
+                "required": [
+                  "channel"
+                ],
                 "additionalProperties": false
               }
             },
-            "required": ["agentId", "match"],
+            "required": [
+              "agentId",
+              "match"
+            ],
             "additionalProperties": false
           },
           {
@@ -6840,7 +7041,10 @@
                         "type": "string"
                       }
                     },
-                    "required": ["kind", "id"],
+                    "required": [
+                      "kind",
+                      "id"
+                    ],
                     "additionalProperties": false
                   },
                   "guildId": {
@@ -6856,7 +7060,9 @@
                     }
                   }
                 },
-                "required": ["channel"],
+                "required": [
+                  "channel"
+                ],
                 "additionalProperties": false
               },
               "acp": {
@@ -6864,7 +7070,10 @@
                 "properties": {
                   "mode": {
                     "type": "string",
-                    "enum": ["persistent", "oneshot"]
+                    "enum": [
+                      "persistent",
+                      "oneshot"
+                    ]
                   },
                   "label": {
                     "type": "string"
@@ -6879,7 +7088,11 @@
                 "additionalProperties": false
               }
             },
-            "required": ["type", "agentId", "match"],
+            "required": [
+              "type",
+              "agentId",
+              "match"
+            ],
             "additionalProperties": false
           }
         ]
@@ -6890,7 +7103,10 @@
       "properties": {
         "strategy": {
           "type": "string",
-          "enum": ["parallel", "sequential"]
+          "enum": [
+            "parallel",
+            "sequential"
+          ]
         }
       },
       "additionalProperties": {
@@ -6918,7 +7134,9 @@
               "maximum": 9007199254740991
             }
           },
-          "required": ["command"],
+          "required": [
+            "command"
+          ],
           "additionalProperties": false
         }
       },
@@ -7485,18 +7703,30 @@
           "properties": {
             "auto": {
               "type": "string",
-              "enum": ["off", "always", "inbound", "tagged"]
+              "enum": [
+                "off",
+                "always",
+                "inbound",
+                "tagged"
+              ]
             },
             "enabled": {
               "type": "boolean"
             },
             "mode": {
               "type": "string",
-              "enum": ["final", "all"]
+              "enum": [
+                "final",
+                "all"
+              ]
             },
             "provider": {
               "type": "string",
-              "enum": ["elevenlabs", "openai", "edge"]
+              "enum": [
+                "elevenlabs",
+                "openai",
+                "edge"
+              ]
             },
             "summaryModel": {
               "type": "string"
@@ -7557,7 +7787,11 @@
                               "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         },
                         {
@@ -7575,7 +7809,11 @@
                               "type": "string"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         },
                         {
@@ -7593,7 +7831,11 @@
                               "type": "string"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         }
                       ]
@@ -7616,7 +7858,11 @@
                 },
                 "applyTextNormalization": {
                   "type": "string",
-                  "enum": ["auto", "on", "off"]
+                  "enum": [
+                    "auto",
+                    "on",
+                    "off"
+                  ]
                 },
                 "languageCode": {
                   "type": "string"
@@ -7679,7 +7925,11 @@
                               "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         },
                         {
@@ -7697,7 +7947,11 @@
                               "type": "string"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         },
                         {
@@ -7715,7 +7969,11 @@
                               "type": "string"
                             }
                           },
-                          "required": ["source", "provider", "id"],
+                          "required": [
+                            "source",
+                            "provider",
+                            "id"
+                          ],
                           "additionalProperties": false
                         }
                       ]
@@ -7872,7 +8130,10 @@
         "ownerDisplay": {
           "default": "raw",
           "type": "string",
-          "enum": ["raw", "hash"]
+          "enum": [
+            "raw",
+            "hash"
+          ]
         },
         "ownerDisplaySecret": {
           "type": "string"
@@ -7897,7 +8158,12 @@
           }
         }
       },
-      "required": ["native", "nativeSkills", "restart", "ownerDisplay"],
+      "required": [
+        "native",
+        "nativeSkills",
+        "restart",
+        "ownerDisplay"
+      ],
       "additionalProperties": false
     },
     "approvals": {
@@ -7964,7 +8230,10 @@
                     ]
                   }
                 },
-                "required": ["channel", "to"],
+                "required": [
+                  "channel",
+                  "to"
+                ],
                 "additionalProperties": false
               }
             }
@@ -8316,7 +8585,9 @@
                     "additionalProperties": false
                   }
                 },
-                "required": ["action"],
+                "required": [
+                  "action"
+                ],
                 "additionalProperties": false
               }
             }
@@ -8356,7 +8627,10 @@
           "properties": {
             "mode": {
               "type": "string",
-              "enum": ["enforce", "warn"]
+              "enum": [
+                "enforce",
+                "warn"
+              ]
             },
             "pruneAfter": {
               "anyOf": [
@@ -8504,7 +8778,11 @@
                       "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                     }
                   },
-                  "required": ["source", "provider", "id"],
+                  "required": [
+                    "source",
+                    "provider",
+                    "id"
+                  ],
                   "additionalProperties": false
                 },
                 {
@@ -8522,7 +8800,11 @@
                       "type": "string"
                     }
                   },
-                  "required": ["source", "provider", "id"],
+                  "required": [
+                    "source",
+                    "provider",
+                    "id"
+                  ],
                   "additionalProperties": false
                 },
                 {
@@ -8540,7 +8822,11 @@
                       "type": "string"
                     }
                   },
-                  "required": ["source", "provider", "id"],
+                  "required": [
+                    "source",
+                    "provider",
+                    "id"
+                  ],
                   "additionalProperties": false
                 }
               ]
@@ -8597,7 +8883,10 @@
             },
             "mode": {
               "type": "string",
-              "enum": ["announce", "webhook"]
+              "enum": [
+                "announce",
+                "webhook"
+              ]
             },
             "accountId": {
               "type": "string"
@@ -8619,7 +8908,10 @@
             },
             "mode": {
               "type": "string",
-              "enum": ["announce", "webhook"]
+              "enum": [
+                "announce",
+                "webhook"
+              ]
             }
           },
           "additionalProperties": false
@@ -8800,7 +9092,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["module"],
+                "required": [
+                  "module"
+                ],
                 "additionalProperties": false
               }
             },
@@ -8940,7 +9234,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["event", "module"],
+                "required": [
+                  "event",
+                  "module"
+                ],
                 "additionalProperties": false
               }
             },
@@ -9044,7 +9341,9 @@
                     }
                   }
                 },
-                "required": ["source"],
+                "required": [
+                  "source"
+                ],
                 "additionalProperties": false
               }
             }
@@ -9122,7 +9421,11 @@
           "properties": {
             "mode": {
               "type": "string",
-              "enum": ["off", "minimal", "full"]
+              "enum": [
+                "off",
+                "minimal",
+                "full"
+              ]
             }
           },
           "additionalProperties": false
@@ -9205,7 +9508,11 @@
                             "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       },
                       {
@@ -9223,7 +9530,11 @@
                             "type": "string"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       },
                       {
@@ -9241,7 +9552,11 @@
                             "type": "string"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       }
                     ]
@@ -9293,7 +9608,11 @@
                       "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                     }
                   },
-                  "required": ["source", "provider", "id"],
+                  "required": [
+                    "source",
+                    "provider",
+                    "id"
+                  ],
                   "additionalProperties": false
                 },
                 {
@@ -9311,7 +9630,11 @@
                       "type": "string"
                     }
                   },
-                  "required": ["source", "provider", "id"],
+                  "required": [
+                    "source",
+                    "provider",
+                    "id"
+                  ],
                   "additionalProperties": false
                 },
                 {
@@ -9329,7 +9652,11 @@
                       "type": "string"
                     }
                   },
-                  "required": ["source", "provider", "id"],
+                  "required": [
+                    "source",
+                    "provider",
+                    "id"
+                  ],
                   "additionalProperties": false
                 }
               ]
@@ -9470,7 +9797,11 @@
                           "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     },
                     {
@@ -9488,7 +9819,11 @@
                           "type": "string"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     },
                     {
@@ -9506,7 +9841,11 @@
                           "type": "string"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     }
                   ]
@@ -9536,7 +9875,11 @@
                           "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     },
                     {
@@ -9554,7 +9897,11 @@
                           "type": "string"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     },
                     {
@@ -9572,7 +9919,11 @@
                           "type": "string"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     }
                   ]
@@ -9620,7 +9971,9 @@
                   }
                 }
               },
-              "required": ["userHeader"],
+              "required": [
+                "userHeader"
+              ],
               "additionalProperties": false
             }
           },
@@ -9724,7 +10077,11 @@
                           "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     },
                     {
@@ -9742,7 +10099,11 @@
                           "type": "string"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     },
                     {
@@ -9760,7 +10121,11 @@
                           "type": "string"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     }
                   ]
@@ -9790,7 +10155,11 @@
                           "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     },
                     {
@@ -9808,7 +10177,11 @@
                           "type": "string"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     },
                     {
@@ -9826,7 +10199,11 @@
                           "type": "string"
                         }
                       },
-                      "required": ["source", "provider", "id"],
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
                       "additionalProperties": false
                     }
                   ]
@@ -10261,7 +10638,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["path"],
+                "required": [
+                  "path"
+                ],
                 "additionalProperties": false
               }
             },
@@ -10414,7 +10793,9 @@
                         "additionalProperties": false
                       }
                     },
-                    "required": ["action"],
+                    "required": [
+                      "action"
+                    ],
                     "additionalProperties": false
                   }
                 }
@@ -10550,7 +10931,11 @@
                             "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       },
                       {
@@ -10568,7 +10953,11 @@
                             "type": "string"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       },
                       {
@@ -10586,7 +10975,11 @@
                             "type": "string"
                           }
                         },
-                        "required": ["source", "provider", "id"],
+                        "required": [
+                          "source",
+                          "provider",
+                          "id"
+                        ],
                         "additionalProperties": false
                       }
                     ]
@@ -10722,11 +11115,18 @@
                     },
                     "permissionMode": {
                       "type": "string",
-                      "enum": ["approve-all", "approve-reads", "deny-all"]
+                      "enum": [
+                        "approve-all",
+                        "approve-reads",
+                        "deny-all"
+                      ]
                     },
                     "nonInteractivePermissions": {
                       "type": "string",
-                      "enum": ["deny", "fail"]
+                      "enum": [
+                        "deny",
+                        "fail"
+                      ]
                     },
                     "strictWindowsCmdWrapper": {
                       "type": "boolean"
@@ -10763,7 +11163,9 @@
                             "description": "Environment variables for the MCP server"
                           }
                         },
-                        "required": ["command"]
+                        "required": [
+                          "command"
+                        ]
                       }
                     }
                   }
@@ -10923,7 +11325,10 @@
                         },
                         "layout": {
                           "type": "string",
-                          "enum": ["unified", "split"],
+                          "enum": [
+                            "unified",
+                            "split"
+                          ],
                           "default": "unified"
                         },
                         "showLineNumbers": {
@@ -10932,7 +11337,11 @@
                         },
                         "diffIndicators": {
                           "type": "string",
-                          "enum": ["bars", "classic", "none"],
+                          "enum": [
+                            "bars",
+                            "classic",
+                            "none"
+                          ],
                           "default": "bars"
                         },
                         "wordWrap": {
@@ -10945,21 +11354,34 @@
                         },
                         "theme": {
                           "type": "string",
-                          "enum": ["light", "dark"],
+                          "enum": [
+                            "light",
+                            "dark"
+                          ],
                           "default": "dark"
                         },
                         "fileFormat": {
                           "type": "string",
-                          "enum": ["png", "pdf"],
+                          "enum": [
+                            "png",
+                            "pdf"
+                          ],
                           "default": "png"
                         },
                         "format": {
                           "type": "string",
-                          "enum": ["png", "pdf"]
+                          "enum": [
+                            "png",
+                            "pdf"
+                          ]
                         },
                         "fileQuality": {
                           "type": "string",
-                          "enum": ["standard", "hq", "print"],
+                          "enum": [
+                            "standard",
+                            "hq",
+                            "print"
+                          ],
                           "default": "standard"
                         },
                         "fileScale": {
@@ -10976,11 +11398,18 @@
                         },
                         "imageFormat": {
                           "type": "string",
-                          "enum": ["png", "pdf"]
+                          "enum": [
+                            "png",
+                            "pdf"
+                          ]
                         },
                         "imageQuality": {
                           "type": "string",
-                          "enum": ["standard", "hq", "print"]
+                          "enum": [
+                            "standard",
+                            "hq",
+                            "print"
+                          ]
                         },
                         "imageScale": {
                           "type": "number",
@@ -10994,7 +11423,12 @@
                         },
                         "mode": {
                           "type": "string",
-                          "enum": ["view", "image", "file", "both"],
+                          "enum": [
+                            "view",
+                            "image",
+                            "file",
+                            "both"
+                          ],
                           "default": "both"
                         }
                       }
@@ -11388,7 +11822,9 @@
                           "type": "number"
                         }
                       },
-                      "required": ["apiKey"]
+                      "required": [
+                        "apiKey"
+                      ]
                     },
                     "dbPath": {
                       "type": "string"
@@ -11405,7 +11841,9 @@
                       "maximum": 10000
                     }
                   },
-                  "required": ["embedding"]
+                  "required": [
+                    "embedding"
+                  ]
                 }
               },
               "additionalProperties": false
@@ -11915,7 +12353,12 @@
                     },
                     "provider": {
                       "type": "string",
-                      "enum": ["telnyx", "twilio", "plivo", "mock"]
+                      "enum": [
+                        "telnyx",
+                        "twilio",
+                        "plivo",
+                        "mock"
+                      ]
                     },
                     "telnyx": {
                       "type": "object",
@@ -11966,7 +12409,12 @@
                     },
                     "inboundPolicy": {
                       "type": "string",
-                      "enum": ["disabled", "allowlist", "pairing", "open"]
+                      "enum": [
+                        "disabled",
+                        "allowlist",
+                        "pairing",
+                        "open"
+                      ]
                     },
                     "allowFrom": {
                       "type": "array",
@@ -11984,7 +12432,10 @@
                       "properties": {
                         "defaultMode": {
                           "type": "string",
-                          "enum": ["notify", "conversation"]
+                          "enum": [
+                            "notify",
+                            "conversation"
+                          ]
                         },
                         "notifyHangupDelaySec": {
                           "type": "integer",
@@ -12038,7 +12489,11 @@
                       "properties": {
                         "mode": {
                           "type": "string",
-                          "enum": ["off", "serve", "funnel"]
+                          "enum": [
+                            "off",
+                            "serve",
+                            "funnel"
+                          ]
                         },
                         "path": {
                           "type": "string"
@@ -12099,7 +12554,9 @@
                         },
                         "sttProvider": {
                           "type": "string",
-                          "enum": ["openai-realtime"]
+                          "enum": [
+                            "openai-realtime"
+                          ]
                         },
                         "openaiApiKey": {
                           "type": "string"
@@ -12149,7 +12606,9 @@
                       "properties": {
                         "provider": {
                           "type": "string",
-                          "enum": ["openai"]
+                          "enum": [
+                            "openai"
+                          ]
                         },
                         "model": {
                           "type": "string"
@@ -12162,18 +12621,30 @@
                       "properties": {
                         "auto": {
                           "type": "string",
-                          "enum": ["off", "always", "inbound", "tagged"]
+                          "enum": [
+                            "off",
+                            "always",
+                            "inbound",
+                            "tagged"
+                          ]
                         },
                         "enabled": {
                           "type": "boolean"
                         },
                         "mode": {
                           "type": "string",
-                          "enum": ["final", "all"]
+                          "enum": [
+                            "final",
+                            "all"
+                          ]
                         },
                         "provider": {
                           "type": "string",
-                          "enum": ["openai", "elevenlabs", "edge"]
+                          "enum": [
+                            "openai",
+                            "elevenlabs",
+                            "edge"
+                          ]
                         },
                         "summaryModel": {
                           "type": "string"
@@ -12231,7 +12702,11 @@
                             },
                             "applyTextNormalization": {
                               "type": "string",
-                              "enum": ["auto", "on", "off"]
+                              "enum": [
+                                "auto",
+                                "on",
+                                "off"
+                              ]
                             },
                             "languageCode": {
                               "type": "string"
@@ -12501,7 +12976,9 @@
                 "type": "string"
               }
             },
-            "required": ["source"],
+            "required": [
+              "source"
+            ],
             "additionalProperties": false
           }
         }
@@ -12512,7 +12989,9 @@
       "type": "string"
     }
   },
-  "required": ["commands"],
+  "required": [
+    "commands"
+  ],
   "additionalProperties": false,
   "title": "OpenClawConfig"
 }

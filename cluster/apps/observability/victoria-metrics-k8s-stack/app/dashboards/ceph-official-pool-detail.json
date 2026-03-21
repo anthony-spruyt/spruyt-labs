@@ -60,7 +60,11 @@
       "cacheTimeout": null,
       "colorBackground": false,
       "colorValue": true,
-      "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
       "datasource": "$datasource",
       "format": "percentunit",
       "gauge": {
@@ -137,7 +141,11 @@
       "cacheTimeout": null,
       "colorBackground": false,
       "colorValue": 100,
-      "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
       "datasource": "$datasource",
       "description": "Time till pool is full assuming the average fill rate of the last 6 hours",
       "format": "s",
@@ -556,7 +564,9 @@
   "rows": [],
   "schemaVersion": 22,
   "style": "dark",
-  "tags": ["ceph-mixin"],
+  "tags": [
+    "ceph-mixin"
+  ],
   "templating": {
     "list": [
       {
@@ -629,7 +639,17 @@
       "2h",
       "1d"
     ],
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
   },
   "timezone": "",
   "title": "Ceph Pool - Details",

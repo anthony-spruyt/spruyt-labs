@@ -2,16 +2,7 @@
 name: Terraform Validate
 
 on: # yamllint disable-line rule:truthy
-  push:
-    branches:
-      - main
-    paths:
-      - "infra/terraform/**"
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "infra/terraform/**"
+  workflow_call: {}
 
 permissions:
   contents: read

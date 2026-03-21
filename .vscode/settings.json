@@ -1,17 +1,28 @@
 {
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "agent.sock": true
+  },
   "search.exclude": {
+    "**/node_modules": true,
     "**/*.secret.*": true,
     "**/temp/**": true
   },
+  "search.useIgnoreFiles": false,
+  "search.useGlobalIgnoreFiles": false,
   "files.autoSave": "afterDelay",
   "files.autoSaveWorkspaceFilesOnly": true,
   "editor.formatOnSave": true,
   "editor.codeActions.triggerOnFocusChange": false,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "explorer.sortOrder": "type",
   "editor.tabSize": 2,
+  "chat.agent.enabled": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[terraform]": {
     "editor.defaultFormatter": "hashicorp.terraform"
-  },
-  "chat.agent.enabled": false
+  }
 }

@@ -23,11 +23,16 @@
   "links": [],
   "panels": [
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "Rate of CPU thermal throttle events. Only Intel CPUs expose this metric (AMD k10temp does not). Any value above 0 indicates the CPU is throttling due to overheating.",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -39,16 +44,27 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
@@ -56,29 +72,54 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.1 },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           },
           "unit": "events/sec"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "sum by (instance) (irate(node_cpu_package_throttles_total[2m]))",
           "legendFormat": "{{ instance }}",
           "refId": "A"
@@ -88,11 +129,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "5-minute average of CPU thermal throttle events. Provides historical context and trend visibility.",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -104,16 +150,27 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
@@ -121,29 +178,54 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.1 },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           },
           "unit": "events/sec"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
       "id": 2,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "sum by (instance) (rate(node_cpu_package_throttles_total[5m]))",
           "legendFormat": "{{ instance }}",
           "refId": "A"
@@ -154,18 +236,28 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
       "id": 100,
       "panels": [],
       "title": "E2-1 (192.168.20.11)",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "AMD k10temp CPU temperature",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -177,61 +269,112 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
       "id": 101,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.11:9100\", chip=~\"pci0000:00_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.11:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
@@ -241,11 +384,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "NVMe drive temperatures",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -257,67 +405,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
       "id": 102,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.11:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.11:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.11:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.11:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -328,18 +530,28 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
       "id": 110,
       "panels": [],
       "title": "E2-2 (192.168.20.12)",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "AMD k10temp CPU temperature",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -351,61 +563,112 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
       "id": 111,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.12:9100\", chip=~\"pci0000:00_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.12:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
@@ -415,11 +678,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "NVMe drive temperatures",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -431,67 +699,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
       "id": 112,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.12:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.12:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.12:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.12:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -502,18 +824,28 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
       "id": 120,
       "panels": [],
       "title": "E2-3 (192.168.20.13)",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "AMD k10temp CPU temperature",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -525,61 +857,112 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 27 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
       "id": 121,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.13:9100\", chip=~\"pci0000:00_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.13:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
@@ -589,11 +972,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "NVMe drive temperatures",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -605,67 +993,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 27 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
       "id": 122,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_celsius{instance=\"192.168.20.13:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.13:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "node_hwmon_temp_crit_celsius{instance=\"192.168.20.13:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.13:9100\"}",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -676,18 +1118,28 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 35 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
       "id": 130,
       "panels": [],
       "title": "MS-01-1 (192.168.20.14)",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "Intel coretemp CPU temperature",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -699,67 +1151,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 36 },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
       "id": 131,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -769,11 +1275,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "NVMe drive temperatures",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -785,67 +1296,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 44
+      },
       "id": 132,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.14:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -855,11 +1420,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "nct6798 motherboard sensors (VRM, PECI)",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -871,42 +1441,74 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 44
+      },
       "id": 133,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.14:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.14:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
@@ -917,18 +1519,28 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 52 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      },
       "id": 140,
       "panels": [],
       "title": "MS-01-2 (192.168.20.15)",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "Intel coretemp CPU temperature",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -940,67 +1552,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 53 },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 53
+      },
       "id": 141,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -1010,11 +1676,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "NVMe drive temperatures",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -1026,67 +1697,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 61 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 61
+      },
       "id": 142,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.15:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -1096,11 +1821,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "nct6798 motherboard sensors (VRM, PECI)",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -1112,42 +1842,74 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 61 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 61
+      },
       "id": 143,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.15:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.15:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
@@ -1158,18 +1920,28 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 69 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 69
+      },
       "id": 150,
       "panels": [],
       "title": "MS-01-3 (192.168.20.16)",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "Intel coretemp CPU temperature",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -1181,67 +1953,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 70 },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 70
+      },
       "id": 151,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -1251,11 +2077,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "NVMe drive temperatures",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -1267,67 +2098,121 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "/.*Critical.*/" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Critical.*/"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "#E24D42", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "#E24D42",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [10, 10], "fill": "dash" }
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
               },
-              { "id": "custom.fillOpacity", "value": 0 },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": false }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 78 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 78
+      },
       "id": 152,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"192.168.20.16:9100\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
@@ -1337,11 +2222,16 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "nct6798 motherboard sensors (VRM, PECI)",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -1353,42 +2243,74 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "celsius"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 78 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 78
+      },
       "id": 153,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max"],
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"192.168.20.16:9100\", chip=~\"platform_nct6775_.*\", sensor=~\"temp2|temp7\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"192.168.20.16:9100\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
@@ -1399,7 +2321,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["node", "temperature", "hardware"],
+  "tags": [
+    "node",
+    "temperature",
+    "hardware"
+  ],
   "templating": {
     "list": [
       {
@@ -1423,7 +2349,10 @@
       }
     ]
   },
-  "time": { "from": "now-6h", "to": "now" },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "Node Temperature",
