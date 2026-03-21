@@ -78,7 +78,7 @@ export PATH="$HOME/.safe-chain/shims:$HOME/.safe-chain/bin:$NPM_GLOBAL/bin:$PATH
 
 # --- GitHub CLI (gh) ---
 # renovate: depName=cli/cli datasource=github-releases
-GH_VERSION="2.87.0"
+GH_VERSION="2.87.3"
 if needs_install gh "$GH_VERSION"; then
   log "Installing GitHub CLI v$${GH_VERSION}..."
   rm -f "$BIN_DIR/gh"
