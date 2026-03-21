@@ -1,48 +1,62 @@
----
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/pre-commit-config.json
+
 fail_fast: false
 repos:
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.38.0
+  - repo: "https://github.com/adrienverge/yamllint"
+    rev: "v1.38.0"
     hooks:
-      - id: yamllint
-        args: [--config-file, .yamllint.yml]
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+      - id: "yamllint"
+        args:
+          - "--config-file"
+          - ".yamllint.yml"
+  - repo: "https://github.com/pre-commit/pre-commit-hooks"
+    rev: "v6.0.0"
     hooks:
-      - id: check-merge-conflict
-      - id: trailing-whitespace
-        args: [--markdown-linebreak-ext=md]
-      - id: end-of-file-fixer
-      - id: mixed-line-ending
-  - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.6
+      - id: "check-merge-conflict"
+      - id: "trailing-whitespace"
+        args:
+          - "--markdown-linebreak-ext=md"
+      - id: "end-of-file-fixer"
+      - id: "mixed-line-ending"
+  - repo: "https://github.com/Lucas-C/pre-commit-hooks"
+    rev: "v1.5.6"
     hooks:
-      - id: remove-crlf
-      - id: remove-tabs
-  - repo: https://github.com/sirosen/texthooks
-    rev: 0.7.1
+      - id: "remove-crlf"
+      - id: "remove-tabs"
+        args:
+          - "--whitespaces-count"
+          - "2"
+  - repo: "https://github.com/sirosen/texthooks"
+    rev: "0.7.1"
     hooks:
-      - id: fix-smartquotes
-      - id: fix-ligatures
-  - repo: https://github.com/k8s-at-home/sops-pre-commit
-    rev: v2.1.1
+      - id: "fix-smartquotes"
+      - id: "fix-ligatures"
+  - repo: "https://github.com/zricethezav/gitleaks"
+    rev: "v8.30.1"
     hooks:
-      - id: forbid-secrets
-  - repo: https://github.com/zricethezav/gitleaks
-    rev: v8.30.1
+      - id: "gitleaks"
+        args:
+          - "--config"
+          - ".gitleaks.toml"
+  - repo: "local"
     hooks:
-      - id: gitleaks
-  - repo: local
+      - id: "prettier"
+        name: "prettier"
+        entry: "npx prettier --write --config=.prettierrc.yaml
+          --ignore-path=.prettierignore"
+        language: "system"
+        types_or:
+          - "json"
+          - "yaml"
+          - "markdown"
+  - repo: "https://github.com/k8s-at-home/sops-pre-commit"
+    rev: "v2.1.1"
     hooks:
-      - id: prettier
-        name: prettier
-        entry: npx prettier --write --config=.prettierrc.yaml --ignore-path=.prettierignore
-        language: system
-        types_or: [json, yaml, markdown]
-  - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.105.0
+      - id: "forbid-secrets"
+  - repo: "https://github.com/antonbabenko/pre-commit-terraform"
+    rev: "v1.105.0"
     hooks:
-      - id: terraform_fmt
-        files: ^infra/terraform/
-      - id: terraform_tflint
-        files: ^infra/terraform/
+      - id: "terraform_fmt"
+        files: "^infra/terraform/"
+      - id: "terraform_tflint"
+        files: "^infra/terraform/"
