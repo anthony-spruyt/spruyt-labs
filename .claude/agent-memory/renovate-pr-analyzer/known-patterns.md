@@ -41,6 +41,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `oci://ghcr.io/kyverno/charts/kyverno` | `kyverno/kyverno` (app repo contains chart; chart version 3.6.x = app v1.16.x) | 1 | 2026-03-10 | 2026-03-10 |
 | `ghcr.io/siderolabs/kubelet` (Talos kubelet image) | `siderolabs/kubelet` (mirror repo; actual changelog lives in `kubernetes/kubernetes` CHANGELOG-1.XX.md) | 1 | 2026-03-19 | 2026-03-19 |
 | `ghcr.io/siderolabs/installer` (Talos installer image) | `siderolabs/talos` (release tags: `vX.Y.Z`; release notes list component updates, commit log, and dependency changes) | 1 | 2026-03-19 | 2026-03-19 |
+| `external-secrets` (Helm chart via HelmRepository) | `external-secrets/external-secrets` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-22 | 2026-03-22 |
 
 ## Common NO_IMPACT Scenarios
 
