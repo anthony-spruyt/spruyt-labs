@@ -4,17 +4,17 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 
 ## Architecture
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| OS | Talos Linux | Immutable, API-driven Kubernetes OS |
-| GitOps | FluxCD | Reconciles `cluster/` to cluster state |
-| CNI | Cilium | Networking, network policies, BGP |
-| Ingress | Traefik + Cloudflare Tunnel | Routing, no direct public ingress |
-| Storage | Rook Ceph | Block, filesystem, object storage |
-| Backup | Velero + S3 | Disaster recovery |
-| Cache | Valkey | Redis-compatible in-memory store |
-| Observability | VictoriaMetrics + Grafana | Metrics, dashboards |
-| Secrets | SOPS/Age | Encrypted at rest in Git |
+| Layer         | Technology                  | Purpose                                |
+| ------------- | --------------------------- | -------------------------------------- |
+| OS            | Talos Linux                 | Immutable, API-driven Kubernetes OS    |
+| GitOps        | FluxCD                      | Reconciles `cluster/` to cluster state |
+| CNI           | Cilium                      | Networking, network policies, BGP      |
+| Ingress       | Traefik + Cloudflare Tunnel | Routing, no direct public ingress      |
+| Storage       | Rook Ceph                   | Block, filesystem, object storage      |
+| Backup        | Velero + S3                 | Disaster recovery                      |
+| Cache         | Valkey                      | Redis-compatible in-memory store       |
+| Observability | VictoriaMetrics + Grafana   | Metrics, dashboards                    |
+| Secrets       | SOPS/Age                    | Encrypted at rest in Git               |
 
 ## Hard Rules
 
@@ -28,24 +28,24 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 
 ## Codebase
 
-| Path | Purpose |
-|------|---------|
-| `cluster/apps/<ns>/<app>/` | Application deployments |
-| `cluster/flux/meta/` | Flux config, cluster secrets |
-| `talos/` | Talos machine configs |
-| `infra/terraform/` | Cloud infrastructure (AWS backups, OIDC) |
-| `.taskfiles/` | Automation (`task --list`) |
-| `docs/` | Human runbooks (bootstrap, DR, maintenance) |
+| Path                       | Purpose                                     |
+| -------------------------- | ------------------------------------------- |
+| `cluster/apps/<ns>/<app>/` | Application deployments                     |
+| `cluster/flux/meta/`       | Flux config, cluster secrets                |
+| `talos/`                   | Talos machine configs                       |
+| `infra/terraform/`         | Cloud infrastructure (AWS backups, OIDC)    |
+| `.taskfiles/`              | Automation (`task --list`)                  |
+| `docs/`                    | Human runbooks (bootstrap, DR, maintenance) |
 
 ## Tool Usage
 
 Use Claude's native tools instead of shell commands:
 
-| Task | Use | Avoid |
-|------|-----|-------|
-| Read files | `Read` tool | `cat`, `head`, `tail` |
-| Search content | `Grep` tool | `grep`, `rg` |
-| Find files | `Glob` tool | `find`, `ls -R` |
-| Edit files | `Edit` tool | `sed -i`, `awk -i` |
-| List env keys | `env \| cut -d= -f1` | `env`, `printenv`, `echo $VAR` |
-| Kubernetes ops | `mcp__kubernetes__*` tools | `kubectl` (fallback only) |
+| Task           | Use                        | Avoid                          |
+| -------------- | -------------------------- | ------------------------------ |
+| Read files     | `Read` tool                | `cat`, `head`, `tail`          |
+| Search content | `Grep` tool                | `grep`, `rg`                   |
+| Find files     | `Glob` tool                | `find`, `ls -R`                |
+| Edit files     | `Edit` tool                | `sed -i`, `awk -i`             |
+| List env keys  | `env \| cut -d= -f1`       | `env`, `printenv`, `echo $VAR` |
+| Kubernetes ops | `mcp__kubernetes__*` tools | `kubectl` (fallback only)      |

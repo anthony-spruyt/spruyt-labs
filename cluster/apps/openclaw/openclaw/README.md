@@ -30,24 +30,24 @@ Alertmanager -> webhook hook -> SRE agent -> Discord
 
 OpenClaw runs multiple specialized agents, each with a tuned model:
 
-| Agent | Model | Fallback | Purpose |
-|-------|-------|----------|---------|
+| Agent         | Model             | Fallback   | Purpose                        |
+| ------------- | ----------------- | ---------- | ------------------------------ |
 | main (Skynet) | claude-sonnet-4-6 | gpt-5-mini | Default agent, general purpose |
-| monitor | claude-haiku-4-5 | gpt-5-nano | Lightweight monitoring |
-| researcher | claude-sonnet-4-6 | gpt-5-mini | Research tasks |
-| communicator | claude-opus-4-6 | gpt-5.2 | User-facing communication |
-| coordinator | claude-opus-4-6 | gpt-5.2 | Multi-agent orchestration |
-| sre | claude-sonnet-4-6 | gpt-5-mini | SRE automation, alert triage |
+| monitor       | claude-haiku-4-5  | gpt-5-nano | Lightweight monitoring         |
+| researcher    | claude-sonnet-4-6 | gpt-5-mini | Research tasks                 |
+| communicator  | claude-opus-4-6   | gpt-5.2    | User-facing communication      |
+| coordinator   | claude-opus-4-6   | gpt-5.2    | Multi-agent orchestration      |
+| sre           | claude-sonnet-4-6 | gpt-5-mini | SRE automation, alert triage   |
 
 ### Security Model
 
-| Layer | Control |
-|-------|---------|
-| Network | Cilium CNP: Traefik ingress on 18789, alertmanager ingress on 18789, kubectl-mcp egress on 8000, n8n MCP egress on 5678, VictoriaMetrics MCP egress on 8080, world egress all ports |
-| Auth | Gateway token auth (`OPENCLAW_GATEWAY_TOKEN`), Authentik proxy provider with group-based access (OpenClaw Users) for Control UI |
-| DNS | Split DNS - LAN-only, no Cloudflare tunnel exposure |
-| Container | read-only root filesystem, non-root (UID 1000), all caps dropped, seccomp RuntimeDefault |
-| Namespace | PSA restricted (enforce + audit + warn) |
+| Layer     | Control                                                                                                                                                                             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Network   | Cilium CNP: Traefik ingress on 18789, alertmanager ingress on 18789, kubectl-mcp egress on 8000, n8n MCP egress on 5678, VictoriaMetrics MCP egress on 8080, world egress all ports |
+| Auth      | Gateway token auth (`OPENCLAW_GATEWAY_TOKEN`), Authentik proxy provider with group-based access (OpenClaw Users) for Control UI                                                     |
+| DNS       | Split DNS - LAN-only, no Cloudflare tunnel exposure                                                                                                                                 |
+| Container | read-only root filesystem, non-root (UID 1000), all caps dropped, seccomp RuntimeDefault                                                                                            |
+| Namespace | PSA restricted (enforce + audit + warn)                                                                                                                                             |
 
 The gateway uses token-based auth for API/CLI connections. The Control UI ignores `gateway.auth.mode` and always uses device pairing ([openclaw#25293](https://github.com/openclaw/openclaw/issues/25293)). Device auth is disabled (`dangerouslyDisableDeviceAuth`) as a workaround. Authentik forward-auth + Cilium network policies provide the actual security layer.
 
@@ -71,13 +71,13 @@ The alertmanager webhook hook routes alerts to the SRE agent:
 
 ### MCP Integrations
 
-| MCP Server | Network Policy | Purpose |
-|------------|---------------|---------|
-| kubectl-mcp-server | `allow-mcp-kubectl-egress` (kubectl-mcp:8000) | Kubernetes cluster operations |
-| n8n | `allow-n8n-egress` (n8n-system:5678) | Workflow automation |
-| mcp-victoriametrics | `allow-mcp-vm-egress` (observability:8080) | Metrics queries |
-| Context7 | world egress | Library documentation |
-| mcporter (Home Assistant) | world egress | Home automation |
+| MCP Server                | Network Policy                                | Purpose                       |
+| ------------------------- | --------------------------------------------- | ----------------------------- |
+| kubectl-mcp-server        | `allow-mcp-kubectl-egress` (kubectl-mcp:8000) | Kubernetes cluster operations |
+| n8n                       | `allow-n8n-egress` (n8n-system:5678)          | Workflow automation           |
+| mcp-victoriametrics       | `allow-mcp-vm-egress` (observability:8080)    | Metrics queries               |
+| Context7                  | world egress                                  | Library documentation         |
+| mcporter (Home Assistant) | world egress                                  | Home automation               |
 
 ### Skills
 
@@ -89,16 +89,16 @@ The alertmanager webhook hook routes alerts to the SRE agent:
 
 ### Memory and Sessions
 
-| Feature | Setting |
-|---------|---------|
-| Session scope | per-sender |
-| Session idle reset | 60 minutes |
-| Memory search | Hybrid vector/text (OpenAI `text-embedding-3-small`) |
-| Context tokens | 1M (with `context1m` enabled on Sonnet 4.6 and Opus 4.6) |
-| Context pruning | cache-ttl mode, 3h TTL, keep last 3 assistant messages, soft-trim 0.3 / hard-clear 0.5 |
-| Compaction | safeguard mode, 50% max history share, 24k reserve floor, memory flush at 40k tokens to `memory/YYYY-MM-DD.md` |
-| Max concurrent agents | 4 (8 subagents) |
-| Agent timeout | 600 seconds |
+| Feature               | Setting                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Session scope         | per-sender                                                                                                     |
+| Session idle reset    | 60 minutes                                                                                                     |
+| Memory search         | Hybrid vector/text (OpenAI `text-embedding-3-small`)                                                           |
+| Context tokens        | 1M (with `context1m` enabled on Sonnet 4.6 and Opus 4.6)                                                       |
+| Context pruning       | cache-ttl mode, 3h TTL, keep last 3 assistant messages, soft-trim 0.3 / hard-clear 0.5                         |
+| Compaction            | safeguard mode, 50% max history share, 24k reserve floor, memory flush at 40k tokens to `memory/YYYY-MM-DD.md` |
+| Max concurrent agents | 4 (8 subagents)                                                                                                |
+| Agent timeout         | 600 seconds                                                                                                    |
 
 ## Operation
 
@@ -155,14 +155,14 @@ Skills are installed from [ClawHub](https://clawhub.com) on pod startup and pers
 
 The `init-skills` init container installs runtime tools that skills depend on. These persist on the PVC and are made available to the main container via the `entrypoint.sh` wrapper (prepends custom paths to `$PATH`).
 
-| Tool | Version Source | Purpose |
-|------|---------------|---------|
-| Aikido safe-chain | `SAFE_CHAIN_VERSION` in `init-skills.sh` | Supply chain security for npm/pip/uv installs |
-| GitHub CLI (`gh`) | `GH_VERSION` in `init-skills.sh` | GitHub API access for skills |
-| Go | `GO_VERSION` in `init-skills.sh` | Go runtime for skills |
-| Python (via uv) | `UV_VERSION` in `init-skills.sh` | Python runtime for skills |
-| mcporter | `MCPORTER_VERSION` in `init-skills.sh` | MCP client for Home Assistant etc. |
-| Claude Code (`claude`) | Installed via `claude.ai/install.sh` | Claude CLI for AI-assisted development |
+| Tool                   | Version Source                           | Purpose                                       |
+| ---------------------- | ---------------------------------------- | --------------------------------------------- |
+| Aikido safe-chain      | `SAFE_CHAIN_VERSION` in `init-skills.sh` | Supply chain security for npm/pip/uv installs |
+| GitHub CLI (`gh`)      | `GH_VERSION` in `init-skills.sh`         | GitHub API access for skills                  |
+| Go                     | `GO_VERSION` in `init-skills.sh`         | Go runtime for skills                         |
+| Python (via uv)        | `UV_VERSION` in `init-skills.sh`         | Python runtime for skills                     |
+| mcporter               | `MCPORTER_VERSION` in `init-skills.sh`   | MCP client for Home Assistant etc.            |
+| Claude Code (`claude`) | Installed via `claude.ai/install.sh`     | Claude CLI for AI-assisted development        |
 
 Versions are pinned with Renovate annotations for automated updates. Version marker files (`.versions/` on the PVC) track what's installed so Renovate bumps trigger reinstallation on the next pod restart. `GH_TOKEN` is injected from `openclaw-secrets.sops.yaml` for `gh` authentication.
 
@@ -180,11 +180,11 @@ The OpenClaw workspace lives in a dedicated git repository ([anthony-spruyt/open
 
 **Environment variables** (in `openclaw-secrets.sops.yaml`):
 
-| Variable | Purpose |
-|----------|---------|
+| Variable             | Purpose                                                                     |
+| -------------------- | --------------------------------------------------------------------------- |
 | `GIT_WORKSPACE_REPO` | Clone URL (e.g. `https://github.com/anthony-spruyt/openclaw-workspace.git`) |
-| `GIT_CODE_TOKEN` | Fine-grained PAT with read-write access to whitelisted repos |
-| `GH_TOKEN` | GitHub PAT for all other GitHub repos (e.g. `spruyt-labs` pulls) |
+| `GIT_CODE_TOKEN`     | Fine-grained PAT with read-write access to whitelisted repos                |
+| `GH_TOKEN`           | GitHub PAT for all other GitHub repos (e.g. `spruyt-labs` pulls)            |
 
 Sensitive workspace config files (e.g. MCP credentials) are NOT stored in the workspace repo. Instead, they are mounted as read-only files from the SOPS-encrypted `openclaw-workspace-config` Secret (e.g. `mcporter.json` is mounted directly at `workspace/config/mcporter.json` via subPath).
 
@@ -264,11 +264,11 @@ SSO is implemented via Authentik's Proxy Provider with Traefik forward-auth.
 
 ### Configuration Files
 
-| Component | Location |
-|-----------|----------|
-| Blueprint | `authentik-system/authentik/app/blueprints/openclaw-sso.yaml` |
-| Outpost RBAC | `app/authentik-outpost-rbac.yaml` |
-| Ingress Routes | `traefik/traefik/ingress/openclaw/` |
+| Component      | Location                                                      |
+| -------------- | ------------------------------------------------------------- |
+| Blueprint      | `authentik-system/authentik/app/blueprints/openclaw-sso.yaml` |
+| Outpost RBAC   | `app/authentik-outpost-rbac.yaml`                             |
+| Ingress Routes | `traefik/traefik/ingress/openclaw/`                           |
 
 See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via-proxy-provider-forward-auth) for the complete SSO integration pattern.
 
@@ -312,25 +312,25 @@ See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via
 
 ## File Reference
 
-| Component | Location |
-|-----------|----------|
-| Namespace | `namespace.yaml` |
-| Kustomization | `openclaw/ks.yaml` |
-| HelmRelease | `openclaw/app/release.yaml` |
-| Helm values | `openclaw/app/values.yaml` |
-| OpenClaw config | `openclaw/app/openclaw.json` |
-| Config JSON Schema | `openclaw/app/openclaw-schema.json` |
-| Init: workspace sync | `openclaw/app/init-workspace.sh` |
-| Init: config merge | `openclaw/app/init-config.sh` |
-| Init: skill install | `openclaw/app/init-skills.sh` |
-| Entrypoint wrapper | `openclaw/app/entrypoint.sh` |
-| Secrets (SOPS) | `openclaw/app/openclaw-secrets.sops.yaml` |
-| Workspace config (SOPS) | `openclaw/app/openclaw-workspace-config.sops.yaml` |
-| PVC | `openclaw/app/persistent-volume-claim.yaml` |
-| Network policies | `openclaw/app/network-policies.yaml` |
-| Outpost RBAC | `openclaw/app/authentik-outpost-rbac.yaml` |
-| Ingress routes | `traefik/traefik/ingress/openclaw/` |
-| Authentik blueprint | `authentik-system/authentik/app/blueprints/openclaw-sso.yaml` |
+| Component               | Location                                                      |
+| ----------------------- | ------------------------------------------------------------- |
+| Namespace               | `namespace.yaml`                                              |
+| Kustomization           | `openclaw/ks.yaml`                                            |
+| HelmRelease             | `openclaw/app/release.yaml`                                   |
+| Helm values             | `openclaw/app/values.yaml`                                    |
+| OpenClaw config         | `openclaw/app/openclaw.json`                                  |
+| Config JSON Schema      | `openclaw/app/openclaw-schema.json`                           |
+| Init: workspace sync    | `openclaw/app/init-workspace.sh`                              |
+| Init: config merge      | `openclaw/app/init-config.sh`                                 |
+| Init: skill install     | `openclaw/app/init-skills.sh`                                 |
+| Entrypoint wrapper      | `openclaw/app/entrypoint.sh`                                  |
+| Secrets (SOPS)          | `openclaw/app/openclaw-secrets.sops.yaml`                     |
+| Workspace config (SOPS) | `openclaw/app/openclaw-workspace-config.sops.yaml`            |
+| PVC                     | `openclaw/app/persistent-volume-claim.yaml`                   |
+| Network policies        | `openclaw/app/network-policies.yaml`                          |
+| Outpost RBAC            | `openclaw/app/authentik-outpost-rbac.yaml`                    |
+| Ingress routes          | `traefik/traefik/ingress/openclaw/`                           |
+| Authentik blueprint     | `authentik-system/authentik/app/blueprints/openclaw-sso.yaml` |
 
 ## References
 

@@ -63,10 +63,10 @@ pluginsManager:
 
 ### Available Plugins
 
-| Plugin       | ArtifactHub URL                                                                     | Description            |
-| ------------ | ----------------------------------------------------------------------------------- | ---------------------- |
-| Flux         | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux`           | GitOps visualization   |
-| cert-manager | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager`   | Certificate management |
+| Plugin       | ArtifactHub URL                                                                   | Description            |
+| ------------ | --------------------------------------------------------------------------------- | ---------------------- |
+| Flux         | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux`         | GitOps visualization   |
+| cert-manager | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager` | Certificate management |
 
 ### Plugin Installation Troubleshooting
 
@@ -78,11 +78,11 @@ kubectl logs -n headlamp-system -l app.kubernetes.io/name=headlamp -c headlamp-p
 
 Common errors:
 
-| Error                                    | Cause                             | Fix                                  |
-| ---------------------------------------- | --------------------------------- | ------------------------------------ |
-| `name must match pattern`                | Used `@org/plugin` npm format     | Use `plugin_name` ArtifactHub format |
-| `source must match pattern`              | Used npmjs.com URL                | Use `artifacthub.io/packages/...`    |
-| `Installation failed`                    | Network/version issue             | Check version exists on ArtifactHub  |
+| Error                       | Cause                         | Fix                                  |
+| --------------------------- | ----------------------------- | ------------------------------------ |
+| `name must match pattern`   | Used `@org/plugin` npm format | Use `plugin_name` ArtifactHub format |
+| `source must match pattern` | Used npmjs.com URL            | Use `artifacthub.io/packages/...`    |
+| `Installation failed`       | Network/version issue         | Check version exists on ArtifactHub  |
 
 ## OIDC Configuration
 
@@ -167,11 +167,11 @@ Headlamp is integrated with the Authentik OAuth rotation CronJob. Only `client_s
 
 ### Rotation Components
 
-| Component       | Location                                            |
-| --------------- | --------------------------------------------------- |
-| Rotation Call   | `authentik/app/oauth-secret-rotation/cronjob.yaml`  |
-| Secret RBAC     | `authentik/app/oauth-secret-rotation/role.yaml`     |
-| ES Patch RBAC   | `headlamp/app/oauth-rotation-rbac.yaml`             |
+| Component     | Location                                           |
+| ------------- | -------------------------------------------------- |
+| Rotation Call | `authentik/app/oauth-secret-rotation/cronjob.yaml` |
+| Secret RBAC   | `authentik/app/oauth-secret-rotation/role.yaml`    |
+| ES Patch RBAC | `headlamp/app/oauth-rotation-rbac.yaml`            |
 
 The rotation job:
 
@@ -182,17 +182,17 @@ The rotation job:
 
 ## File Reference
 
-| Component              | Location                                           |
-| ---------------------- | -------------------------------------------------- |
-| HelmRelease            | `app/release.yaml`                                 |
-| Helm values            | `app/values.yaml`                                  |
-| SecretStore            | `app/authentik-secret-store.yaml`                  |
-| ExternalSecret         | `app/headlamp-oauth-external-secret.yaml`          |
-| Rotation RBAC          | `app/oauth-rotation-rbac.yaml`                     |
-| User RBAC              | `app/user-rbac.yaml`                               |
-| ConfigMap transformer  | `app/kustomizeconfig.yaml`                         |
-| Ingress                | `traefik/traefik/ingress/headlamp-system`          |
-| API Server OIDC        | `talos/patches/control-plane/configure-api-server.yaml` |
+| Component             | Location                                                |
+| --------------------- | ------------------------------------------------------- |
+| HelmRelease           | `app/release.yaml`                                      |
+| Helm values           | `app/values.yaml`                                       |
+| SecretStore           | `app/authentik-secret-store.yaml`                       |
+| ExternalSecret        | `app/headlamp-oauth-external-secret.yaml`               |
+| Rotation RBAC         | `app/oauth-rotation-rbac.yaml`                          |
+| User RBAC             | `app/user-rbac.yaml`                                    |
+| ConfigMap transformer | `app/kustomizeconfig.yaml`                              |
+| Ingress               | `traefik/traefik/ingress/headlamp-system`               |
+| API Server OIDC       | `talos/patches/control-plane/configure-api-server.yaml` |
 
 ## Troubleshooting
 

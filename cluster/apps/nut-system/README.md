@@ -9,10 +9,10 @@ Network UPS Tools (NUT) integration for UPS monitoring with automated graceful c
 
 ## Components
 
-| Component             | Purpose                                    | Namespace  | Status   |
-|-----------------------|--------------------------------------------|------------|----------|
+| Component             | Purpose                                     | Namespace  | Status   |
+| --------------------- | ------------------------------------------- | ---------- | -------- |
 | nut-server            | USB driver + upsd daemon + metrics exporter | nut-system | Active   |
-| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown   | nut-system | Disabled |
+| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown    | nut-system | Disabled |
 
 > **Note**: The shutdown-orchestrator is disabled pending validation. Enable by uncommenting in [kustomization.yaml](kustomization.yaml).
 
@@ -57,15 +57,15 @@ When power is lost for 30+ seconds:
 
 **Timeline Budget** (~2 min UPS runtime):
 
-| Phase | Duration | Cumulative |
-|-------|----------|------------|
-| Power loss detection | 0s | 0s |
-| Delay timer | 30s | 30s |
-| CNPG hibernation | 5s | 35s |
-| Ceph flags | 5s | 40s |
-| Ceph scaling | 15s | 55s |
-| Worker shutdown | 30s | 85s |
-| Control plane shutdown | 30s | 115s |
+| Phase                  | Duration | Cumulative |
+| ---------------------- | -------- | ---------- |
+| Power loss detection   | 0s       | 0s         |
+| Delay timer            | 30s      | 30s        |
+| CNPG hibernation       | 5s       | 35s        |
+| Ceph flags             | 5s       | 40s        |
+| Ceph scaling           | 15s      | 55s        |
+| Worker shutdown        | 30s      | 85s        |
+| Control plane shutdown | 30s      | 115s       |
 
 ## Operation
 
@@ -191,24 +191,24 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
 ### Environment Variables (shutdown-orchestrator)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| NUT_SERVER | nut-server-nut.nut-system.svc.cluster.local | NUT server address |
-| NUT_PORT | 3493 | NUT server port |
-| UPS_NAME | cp1500 | UPS name in NUT config |
-| SHUTDOWN_DELAY | 30 | Seconds on battery before shutdown |
-| POLL_INTERVAL | 5 | Seconds between UPS status checks |
-| DRY_RUN | true | Set to "false" for live mode |
+| Variable       | Default                                     | Description                        |
+| -------------- | ------------------------------------------- | ---------------------------------- |
+| NUT_SERVER     | nut-server-nut.nut-system.svc.cluster.local | NUT server address                 |
+| NUT_PORT       | 3493                                        | NUT server port                    |
+| UPS_NAME       | cp1500                                      | UPS name in NUT config             |
+| SHUTDOWN_DELAY | 30                                          | Seconds on battery before shutdown |
+| POLL_INTERVAL  | 5                                           | Seconds between UPS status checks  |
+| DRY_RUN        | true                                        | Set to "false" for live mode       |
 
 ### Alerts (VMRule)
 
-| Alert | Severity | Condition |
-|-------|----------|-----------|
-| UPSOnBattery | critical | UPS running on battery (immediate) |
-| UPSBatteryLow | critical | Battery < 30% |
-| UPSBatteryWarning | warning | Battery < 50% for 1m |
-| UPSExporterOffline | warning | Exporter unreachable for 1m |
-| UPSHighLoad | warning | Load > 80% for 5m |
+| Alert              | Severity | Condition                          |
+| ------------------ | -------- | ---------------------------------- |
+| UPSOnBattery       | critical | UPS running on battery (immediate) |
+| UPSBatteryLow      | critical | Battery < 30%                      |
+| UPSBatteryWarning  | warning  | Battery < 50% for 1m               |
+| UPSExporterOffline | warning  | Exporter unreachable for 1m        |
+| UPSHighLoad        | warning  | Load > 80% for 5m                  |
 
 ## Security
 

@@ -24,7 +24,7 @@ Automatically generates a LimitRange in application namespaces to provide defaul
 **Default Requests Applied:**
 
 | Resource | Default Request |
-|----------|-----------------|
+| -------- | --------------- |
 | CPU      | 10m             |
 | Memory   | 64Mi            |
 
@@ -48,18 +48,18 @@ The `interval` field is **not** managed by this policy — it is set explicitly 
 
 **Defaults Applied:**
 
-| Field | Default Value |
-|-------|---------------|
-| `spec.timeout` | `10m` |
-| `spec.install.crds` | `CreateReplace` |
-| `spec.install.strategy.name` | `RetryOnFailure` |
-| `spec.rollback.cleanupOnFail` | `true` |
-| `spec.rollback.recreate` | `true` |
-| `spec.upgrade.cleanupOnFail` | `true` |
-| `spec.upgrade.crds` | `CreateReplace` |
-| `spec.upgrade.strategy.name` | `RemediateOnFailure` |
-| `spec.upgrade.remediation.remediateLastFailure` | `true` |
-| `spec.upgrade.remediation.retries` | `2` |
+| Field                                           | Default Value        |
+| ----------------------------------------------- | -------------------- |
+| `spec.timeout`                                  | `10m`                |
+| `spec.install.crds`                             | `CreateReplace`      |
+| `spec.install.strategy.name`                    | `RetryOnFailure`     |
+| `spec.rollback.cleanupOnFail`                   | `true`               |
+| `spec.rollback.recreate`                        | `true`               |
+| `spec.upgrade.cleanupOnFail`                    | `true`               |
+| `spec.upgrade.crds`                             | `CreateReplace`      |
+| `spec.upgrade.strategy.name`                    | `RemediateOnFailure` |
+| `spec.upgrade.remediation.remediateLastFailure` | `true`               |
+| `spec.upgrade.remediation.retries`              | `2`                  |
 
 **Overriding Defaults:**
 

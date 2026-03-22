@@ -39,16 +39,16 @@ kubectl logs -n falco-system -l app.kubernetes.io/name=falcosidekick --tail=20
 
 Workload-specific exceptions are configured in `values.yaml` to suppress expected behavior:
 
-| Rule | Workload | Namespace | Reason |
-|------|----------|-----------|--------|
-| Contact K8S API Server | grafana-sidecar | observability | ConfigMap/Secret watching |
-| Contact K8S API Server | kyverno | kyverno | Policy enforcement |
-| Contact K8S API Server | external-secrets | external-secrets | Secret synchronization |
-| Contact K8S API Server | authentik | authentik-system | Outpost management |
-| Contact K8S API Server | velero | velero | Backup operations |
-| Contact K8S API Server | kube-state-metrics | observability | Metrics collection |
-| Drop and execute new binary | cilium-cni | host | CNI plugin execution |
-| Run shell untrusted | cloudnative-pg | * | WAL archiver scripts |
+| Rule                        | Workload           | Namespace        | Reason                    |
+| --------------------------- | ------------------ | ---------------- | ------------------------- |
+| Contact K8S API Server      | grafana-sidecar    | observability    | ConfigMap/Secret watching |
+| Contact K8S API Server      | kyverno            | kyverno          | Policy enforcement        |
+| Contact K8S API Server      | external-secrets   | external-secrets | Secret synchronization    |
+| Contact K8S API Server      | authentik          | authentik-system | Outpost management        |
+| Contact K8S API Server      | velero             | velero           | Backup operations         |
+| Contact K8S API Server      | kube-state-metrics | observability    | Metrics collection        |
+| Drop and execute new binary | cilium-cni         | host             | CNI plugin execution      |
+| Run shell untrusted         | cloudnative-pg     | *                | WAL archiver scripts      |
 
 To add new exceptions, edit `exceptions-configmap.yaml` in the app directory.
 See [Falco Exceptions](https://falco.org/docs/rules/exceptions/) for syntax.

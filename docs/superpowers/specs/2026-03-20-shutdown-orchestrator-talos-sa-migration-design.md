@@ -123,13 +123,13 @@ Delete this file as part of the kustomization update (step 4). Removes SOPS-encr
 
 ## Files Changed
 
-| File | Action |
-|------|--------|
-| `talos/patches/control-plane/enable-talos-api-access.yaml` | Edit — add `nut-system` |
-| `cluster/apps/nut-system/shutdown-orchestrator/app/talos-serviceaccount.yaml` | Create |
-| `cluster/apps/nut-system/shutdown-orchestrator/app/values.yaml` | Edit — auth + security |
-| `cluster/apps/nut-system/shutdown-orchestrator/app/kustomization.yaml` | Edit — swap resources |
-| `cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml` | Edit — pin image digest |
+| File                                                                          | Action                  |
+| ----------------------------------------------------------------------------- | ----------------------- |
+| `talos/patches/control-plane/enable-talos-api-access.yaml`                    | Edit — add `nut-system` |
+| `cluster/apps/nut-system/shutdown-orchestrator/app/talos-serviceaccount.yaml` | Create                  |
+| `cluster/apps/nut-system/shutdown-orchestrator/app/values.yaml`               | Edit — auth + security  |
+| `cluster/apps/nut-system/shutdown-orchestrator/app/kustomization.yaml`        | Edit — swap resources   |
+| `cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml`         | Edit — pin image digest |
 
 ## No Changes Required
 
@@ -142,11 +142,11 @@ Delete this file as part of the kustomization update (step 4). Removes SOPS-encr
 
 ## Risks
 
-| Risk | Mitigation |
-|------|------------|
-| Talos configs not applied before deploy | Elevated to prerequisite section; Flux HelmRelease will fail until secret is provisioned (obvious, self-healing once Talos config is applied) |
-| `os:operator` broader than needed | Minimum role for shutdown; no finer-grained option exists in Talos RBAC |
-| `nut-system` namespace expansion | Low risk — only workloads with RBAC to create Talos SA CRDs can obtain credentials |
-| Init container runs as root | Required for `apt-get install nut-client`; explicit container-level override with minimal capabilities; main container is fully hardened; init is ephemeral. Namespace PSA is `privileged` so no admission rejection. |
-| SA secret rotation during power event | Reloader annotation removed; talosctl reads creds from disk per-invocation; no restart on rotation |
-| `runAsNonRoot` not set at pod level | Cannot set at pod level due to root init container conflict; set on main container only. Future improvement: eliminate root init requirement by pre-building a container image with tools baked in. |
+| Risk                                    | Mitigation                                                                                                                                                                                                            |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Talos configs not applied before deploy | Elevated to prerequisite section; Flux HelmRelease will fail until secret is provisioned (obvious, self-healing once Talos config is applied)                                                                         |
+| `os:operator` broader than needed       | Minimum role for shutdown; no finer-grained option exists in Talos RBAC                                                                                                                                               |
+| `nut-system` namespace expansion        | Low risk — only workloads with RBAC to create Talos SA CRDs can obtain credentials                                                                                                                                    |
+| Init container runs as root             | Required for `apt-get install nut-client`; explicit container-level override with minimal capabilities; main container is fully hardened; init is ephemeral. Namespace PSA is `privileged` so no admission rejection. |
+| SA secret rotation during power event   | Reloader annotation removed; talosctl reads creds from disk per-invocation; no restart on rotation                                                                                                                    |
+| `runAsNonRoot` not set at pod level     | Cannot set at pod level due to root init container conflict; set on main container only. Future improvement: eliminate root init requirement by pre-building a container image with tools baked in.                   |

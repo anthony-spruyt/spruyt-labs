@@ -13,6 +13,8 @@
 
 ---
 
+## Tasks
+
 ### Task 0: Create Feature Branch
 
 - [ ] **Step 1: Create feature branch from latest main**

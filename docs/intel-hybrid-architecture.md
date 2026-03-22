@@ -6,10 +6,10 @@ Configuration and tuning for Intel 12th+ Gen hybrid CPUs in the MS-01 worker nod
 
 The MS-01 worker nodes use Intel i5-12600H processors with hybrid architecture:
 
-| Core Type | CPU IDs | Physical Cores | Threads | Purpose |
-|-----------|---------|----------------|---------|---------|
-| P-cores (Performance) | 0-7 | 4 | 8 (HT enabled) | Low-latency, high single-thread perf |
-| E-cores (Efficiency) | 8-15 | 8 | 8 (no HT) | Throughput, background tasks |
+| Core Type             | CPU IDs | Physical Cores | Threads        | Purpose                              |
+| --------------------- | ------- | -------------- | -------------- | ------------------------------------ |
+| P-cores (Performance) | 0-7     | 4              | 8 (HT enabled) | Low-latency, high single-thread perf |
+| E-cores (Efficiency)  | 8-15    | 8              | 8 (no HT)      | Throughput, background tasks         |
 
 ### When Each Core Type Is Used
 
@@ -60,15 +60,15 @@ irqbalance can move these interrupts to P-cores:
 NVMe "managed interrupts" are pinned by the kernel at boot:
 
 | NVMe Queue | CPU Affinity | Core Type |
-|------------|--------------|-----------|
-| nvme1q1 | 0-1 | P-core |
-| nvme1q2 | 2-3 | P-core |
-| nvme1q3 | 4-5 | P-core |
-| nvme1q4 | 6-7 | P-core |
-| nvme1q5 | 8-9 | E-core |
-| nvme1q6 | 10-11 | E-core |
-| nvme1q7 | 12-13 | E-core |
-| nvme1q8 | 14-15 | E-core |
+| ---------- | ------------ | --------- |
+| nvme1q1    | 0-1          | P-core    |
+| nvme1q2    | 2-3          | P-core    |
+| nvme1q3    | 4-5          | P-core    |
+| nvme1q4    | 6-7          | P-core    |
+| nvme1q5    | 8-9          | E-core    |
+| nvme1q6    | 10-11        | E-core    |
+| nvme1q7    | 12-13        | E-core    |
+| nvme1q8    | 14-15        | E-core    |
 
 > **Note**: IRQ numbers are assigned at boot and may vary. Use the verification commands below to check actual values on your nodes.
 
