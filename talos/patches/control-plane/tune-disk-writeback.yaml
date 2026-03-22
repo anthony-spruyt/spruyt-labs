@@ -1,0 +1,8 @@
+machine:
+  sysctls:
+    # Smooth disk write bursts to reduce etcd commit latency spikes
+    # on budget NVMe drives (Patriot P300) during auto-compaction
+    vm.dirty_ratio: "10"
+    vm.dirty_background_ratio: "5"
+    vm.dirty_expire_centisecs: "1000"
+    vm.dirty_writeback_centisecs: "100"
