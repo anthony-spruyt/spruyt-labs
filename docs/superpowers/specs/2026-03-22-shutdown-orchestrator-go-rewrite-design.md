@@ -75,7 +75,7 @@ Runs automatically on pod startup (monitor mode) or after test mode shutdown:
 3. **Wake CNPG clusters** — remove `cnpg.io/hibernation` annotation from all hibernated clusters
 4. **Verify health** — poll node readiness, Ceph health status, CNPG cluster status
 
-5. **Scale Ceph back up** — reverse of scale-down: monitors → managers → OSDs → operator (each back to 1 replica). Flux does not reliably restore Ceph replica counts after a manual scale-down, so this must be done explicitly.
+5. **Scale Ceph back up** — reverse of scale-down: monitors → managers → OSDs → operator (each back to 1 replica). `kubectl scale` persists the replica count on the resource, so Ceph components remain at 0 until explicitly scaled back up.
 
 ### Preflight Mode
 
