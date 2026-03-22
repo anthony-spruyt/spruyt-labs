@@ -5,7 +5,7 @@ source "/workspaces/spruyt-labs/talos/config.sh"
 
 wait_for_talos() {
   local node_ip="$1"
-  local timeout="${2:-300}"  # default: 5 minutes
+  local timeout="${2:-300}" # default: 5 minutes
   local interval=5
   local elapsed=0
 
@@ -15,7 +15,7 @@ wait_for_talos() {
     sleep "${interval}"
     elapsed=$((elapsed + interval))
 
-    if (( elapsed >= timeout )); then
+    if ((elapsed >= timeout)); then
       echo "❌ Timeout waiting for Talos node at ${node_ip} to respond."
       return 1
     fi

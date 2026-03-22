@@ -5,7 +5,7 @@ source "/workspaces/spruyt-labs/talos/config.sh"
 
 wait_for_talos() {
   local node_ip="$1"
-  local timeout="${2:-300}"  # default: 5 minutes
+  local timeout="${2:-300}" # default: 5 minutes
   local interval=5
   local elapsed=0
 
@@ -15,7 +15,7 @@ wait_for_talos() {
     sleep "${interval}"
     elapsed=$((elapsed + interval))
 
-    if (( elapsed >= timeout )); then
+    if ((elapsed >= timeout)); then
       echo "❌ Timeout waiting for Talos node at ${node_ip} to respond."
       return 1
     fi
@@ -27,7 +27,7 @@ wait_for_talos() {
 
 wait_for_bootstrap() {
   local endpoint_ip="$1"
-  local timeout="${2:-300}"  # default: 5 minutes
+  local timeout="${2:-300}" # default: 5 minutes
   local interval=5
   local elapsed=0
 
@@ -37,7 +37,7 @@ wait_for_bootstrap() {
     sleep "${interval}"
     elapsed=$((elapsed + interval))
 
-    if (( elapsed >= timeout )); then
+    if ((elapsed >= timeout)); then
       echo "❌ Timeout waiting for Kubernetes API to become available."
       return 1
     fi
@@ -106,7 +106,7 @@ cat "$SOPS_AGE_KEY_FILE" | kubectl create secret generic sops-age --namespace=fl
 
 #read -rp "Press any key to add flux-gitops-key secret to cluster: "
 
-ssh-keyscan github.com > /home/vscode/.secrets/known_hosts
+ssh-keyscan github.com >/home/vscode/.secrets/known_hosts
 
 kubectl create secret generic flux-gitops-key \
   --namespace=flux-system \
