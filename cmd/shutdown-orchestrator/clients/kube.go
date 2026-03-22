@@ -227,8 +227,18 @@ func (k *RealKubeClient) GetNodes(ctx context.Context) ([]Node, error) {
         break
       }
     }
+    // Extract the InternalIP address from node status.
+    var ip string
+    for _, addr := range n.Status.Addresses {
+      if addr.Type == corev1.NodeInternalIP {
+        ip = addr.Address
+        break
+      }
+    }
+
     nodes = append(nodes, Node{
       Name:  n.Name,
+      IP:    ip,
       Ready: ready,
     })
   }

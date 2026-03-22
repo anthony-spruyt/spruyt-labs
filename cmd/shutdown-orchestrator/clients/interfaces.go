@@ -12,6 +12,7 @@ type CNPGCluster struct {
 // Node represents a Kubernetes node.
 type Node struct {
   Name  string
+  IP    string
   Ready bool
 }
 

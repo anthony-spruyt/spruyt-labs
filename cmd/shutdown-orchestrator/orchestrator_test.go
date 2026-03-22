@@ -158,13 +158,22 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
 
   cfg := Config{
     Mode:                     "test",
-    NodeName:                 "cp-1",
+    NodeName:                 "e2-1",
     CNPGPhaseTimeout:         5 * time.Second,
     CephFlagPhaseTimeout:     5 * time.Second,
     CephScalePhaseTimeout:    5 * time.Second,
     NodeShutdownPhaseTimeout: 5 * time.Second,
     WorkerIPs:                []string{"10.0.0.1"},
     ControlPlaneIPs:          []string{"10.0.0.10", "10.0.0.11"},
+  }
+
+  // Ensure mock nodes include IP-to-name mappings for resolveNodeNames.
+  if kube.nodes == nil {
+    kube.nodes = []clients.Node{
+      {Name: "ms-01-1", IP: "10.0.0.1", Ready: true},
+      {Name: "e2-1", IP: "10.0.0.10", Ready: true},
+      {Name: "e2-2", IP: "10.0.0.11", Ready: true},
+    }
   }
 
   return NewOrchestrator(cnpg, ceph, nodes, kube, cfg, logger)
@@ -177,7 +186,9 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
     },
     toolsExists: true,
     nodes: []clients.Node{
-      {Name: "cp-1", Ready: true},
+      {Name: "ms-01-1", IP: "10.0.0.1", Ready: true},
+      {Name: "e2-1", IP: "10.0.0.10", Ready: true},
+      {Name: "e2-2", IP: "10.0.0.11", Ready: true},
     },
   }
   talos := &orchestratorMockTalos{}
@@ -238,6 +249,9 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
       {Namespace: "db", Name: "pg-main", Hibernated: true},
     },
     toolsExists: true,
+    nodes: []clients.Node{
+      {Name: "cp-1", Ready: true},
+    },
   }
   talos := &orchestratorMockTalos{}
   orch := newTestOrchestrator(kube, talos)
@@ -291,6 +305,10 @@ func TestOrchestratorPhaseTimeout(t *testing.T) {
   kube := &orchestratorMockKube{
     getClustersBlocks: true, // CNPG will block forever
     toolsExists:       true,
+    nodes: []clients.Node{
+      {Name: "ms-01-1", IP: "10.0.0.1", Ready: true},
+      {Name: "e2-1", IP: "10.0.0.10", Ready: true},
+    },
   }
   talos := &orchestratorMockTalos{}
   logger := discardLogger()
@@ -300,7 +318,7 @@ func TestOrchestratorPhaseTimeout(t *testing.T) {
 
   cfg := Config{
     Mode:                     "test",
-    NodeName:                 "cp-1",
+    NodeName:                 "e2-1",
     CNPGPhaseTimeout:         100 * time.Millisecond, // Short timeout
     CephFlagPhaseTimeout:     5 * time.Second,
     CephScalePhaseTimeout:    5 * time.Second,
@@ -312,8 +330,8 @@ func TestOrchestratorPhaseTimeout(t *testing.T) {
   orch := NewOrchestrator(cnpg, ceph, nodes, kube, cfg, logger)
 
   err := orch.Shutdown(context.Background())
-  if err != nil {
-    t.Fatalf("Shutdown() returned error: %v", err)
+  if err == nil {
+    t.Fatal("Shutdown() should return error when CNPG phase times out")
   }
 
   // Ceph phases should still run even though CNPG timed out
@@ -379,7 +397,9 @@ func TestOrchestratorTestMode(t *testing.T) {
     },
     toolsExists: true,
     nodes: []clients.Node{
-      {Name: "cp-1", Ready: true},
+      {Name: "ms-01-1", IP: "10.0.0.1", Ready: true},
+      {Name: "e2-1", IP: "10.0.0.10", Ready: true},
+      {Name: "e2-2", IP: "10.0.0.11", Ready: true},
     },
   }
   talos := &orchestratorMockTalos{}

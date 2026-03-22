@@ -2,6 +2,7 @@ package main
 
 import (
   "context"
+  "errors"
   "fmt"
   "log/slog"
   "time"
@@ -47,24 +48,38 @@ func NewOrchestrator(
 func (o *Orchestrator) Shutdown(ctx context.Context) error {
   o.logger.Info("starting shutdown sequence")
 
-  runPhase(ctx, o.logger, "cnpg-hibernate", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
+  var errs []error
+
+  if err := runPhase(ctx, o.logger, "cnpg-hibernate", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
     return o.cnpg.Hibernate(pctx)
-  })
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("cnpg-hibernate: %w", err))
+  }
 
-  runPhase(ctx, o.logger, "ceph-set-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+  if err := runPhase(ctx, o.logger, "ceph-set-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
     return o.ceph.SetNoout(pctx)
-  })
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("ceph-set-noout: %w", err))
+  }
 
-  runPhase(ctx, o.logger, "ceph-scale-down", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
+  if err := runPhase(ctx, o.logger, "ceph-scale-down", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
     return o.ceph.ScaleDown(pctx)
-  })
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("ceph-scale-down: %w", err))
+  }
 
-  runPhase(ctx, o.logger, "node-shutdown", o.cfg.NodeShutdownPhaseTimeout, func(pctx context.Context) error {
-    return o.nodes.ShutdownAll(pctx, o.nodeConfig())
-  })
+  if err := runPhase(ctx, o.logger, "node-shutdown", o.cfg.NodeShutdownPhaseTimeout, func(pctx context.Context) error {
+    nc, ncErr := o.nodeConfig(pctx)
+    if ncErr != nil {
+      return ncErr
+    }
+    return o.nodes.ShutdownAll(pctx, nc)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("node-shutdown: %w", err))
+  }
 
   o.logger.Info("shutdown sequence complete")
-  return nil
+  return errors.Join(errs...)
 }
 
 // Recover runs the full recovery sequence:
@@ -75,26 +90,39 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
 func (o *Orchestrator) Recover(ctx context.Context) error {
   o.logger.Info("starting recovery sequence")
 
+  var errs []error
+
   if err := runPhase(ctx, o.logger, "ceph-wait-tools", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
     return o.ceph.WaitForToolsPod(pctx)
   }); err != nil {
-    return fmt.Errorf("recovery aborted: ceph tools pod not ready: %w", err)
+    errs = append(errs, fmt.Errorf("ceph-wait-tools: %w", err))
   }
 
-  runPhase(ctx, o.logger, "ceph-scale-up", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
+  if err := runPhase(ctx, o.logger, "ceph-scale-up", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
     return o.ceph.ScaleUp(pctx)
-  })
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("ceph-scale-up: %w", err))
+  }
 
-  runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+  if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
     return o.ceph.UnsetNoout(pctx)
-  })
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("ceph-unset-noout: %w", err))
+  }
 
-  runPhase(ctx, o.logger, "cnpg-wake", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
+  if err := runPhase(ctx, o.logger, "cnpg-wake", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
     return o.cnpg.Wake(pctx)
-  })
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("cnpg-wake: %w", err))
+  }
+
+  // Verify cluster health — log warning only, do not fail recovery.
+  if err := o.verifyHealth(ctx); err != nil {
+    o.logger.Warn("post-recovery health check failed", "error", err)
+  }
 
   o.logger.Info("recovery sequence complete")
-  return nil
+  return errors.Join(errs...)
 }
 
 // NeedsRecovery checks if a previous shutdown needs recovery.
@@ -168,19 +196,38 @@ func (o *Orchestrator) verifyHealth(ctx context.Context) error {
 }
 
 // nodeConfig builds a NodeConfig from the orchestrator's Config.
-func (o *Orchestrator) nodeConfig() phases.NodeConfig {
+// It resolves configured IPs to real Kubernetes node names via the API.
+func (o *Orchestrator) nodeConfig(ctx context.Context) (phases.NodeConfig, error) {
+  // Build IP-to-name map from the Kubernetes API.
+  ipToName, err := o.resolveNodeNames(ctx)
+  if err != nil {
+    return phases.NodeConfig{}, fmt.Errorf("resolving node names: %w", err)
+  }
+
   workers := make([]phases.NodeEntry, 0, len(o.cfg.WorkerIPs))
   for i, ip := range o.cfg.WorkerIPs {
+    name := ipToName[ip]
+    if name == "" {
+      name = fmt.Sprintf("worker-%d", i+1)
+      o.logger.Warn("could not resolve node name for worker IP, using fallback",
+        "ip", ip, "fallbackName", name)
+    }
     workers = append(workers, phases.NodeEntry{
-      Name: fmt.Sprintf("worker-%d", i+1),
+      Name: name,
       IP:   ip,
     })
   }
 
   controlPlane := make([]phases.NodeEntry, 0, len(o.cfg.ControlPlaneIPs))
   for i, ip := range o.cfg.ControlPlaneIPs {
+    name := ipToName[ip]
+    if name == "" {
+      name = fmt.Sprintf("cp-%d", i+1)
+      o.logger.Warn("could not resolve node name for control plane IP, using fallback",
+        "ip", ip, "fallbackName", name)
+    }
     controlPlane = append(controlPlane, phases.NodeEntry{
-      Name: fmt.Sprintf("cp-%d", i+1),
+      Name: name,
       IP:   ip,
     })
   }
@@ -191,7 +238,24 @@ func (o *Orchestrator) nodeConfig() phases.NodeConfig {
     NodeName:       o.cfg.NodeName,
     TestMode:       o.cfg.Mode == "test",
     PerNodeTimeout: 30 * time.Second,
+  }, nil
+}
+
+// resolveNodeNames calls the Kubernetes API to build a map of IP -> node name.
+func (o *Orchestrator) resolveNodeNames(ctx context.Context) (map[string]string, error) {
+  nodes, err := o.kube.GetNodes(ctx)
+  if err != nil {
+    return nil, err
   }
+
+  ipToName := make(map[string]string, len(nodes))
+  for _, n := range nodes {
+    if n.IP != "" {
+      ipToName[n.IP] = n.Name
+    }
+  }
+
+  return ipToName, nil
 }
 
 // runPhase executes a phase function with a timeout, logging start/end and errors.

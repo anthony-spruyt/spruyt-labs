@@ -35,6 +35,10 @@ func (c *NUTClient) GetStatus(ctx context.Context) (string, error) {
   }
   defer conn.Close()
 
+  if deadline, ok := ctx.Deadline(); ok {
+    conn.SetDeadline(deadline)
+  }
+
   cmd := fmt.Sprintf("GET VAR %s ups.status\n", c.upsName)
   if _, err := conn.Write([]byte(cmd)); err != nil {
     return "", fmt.Errorf("sending GET VAR command: %w", err)

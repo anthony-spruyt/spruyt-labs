@@ -108,12 +108,11 @@ func (p *CephPhase) ScaleUp(ctx context.Context) error {
 }
 
 // WaitForToolsPod waits for the Ceph tools deployment to exist with
-// exponential backoff (1s, 2s, 4s, ... max 30s) up to 10 minutes total.
+// exponential backoff (1s, 2s, 4s, ... max 30s). The timeout is controlled
+// by the context passed in from the caller.
 func (p *CephPhase) WaitForToolsPod(ctx context.Context) error {
-  timeout := 10 * time.Minute
   maxBackoff := 30 * time.Second
   backoff := 1 * time.Second
-  deadline := time.Now().Add(timeout)
 
   for {
     exists, err := p.kube.DeploymentExists(ctx, cephNamespace, cephToolsDeploy)
@@ -122,12 +121,12 @@ func (p *CephPhase) WaitForToolsPod(ctx context.Context) error {
       return nil
     }
 
-    if time.Now().After(deadline) {
+    if ctx.Err() != nil {
       p.logger.Error("timed out waiting for ceph tools deployment")
       if err != nil {
         return err
       }
-      return context.DeadlineExceeded
+      return ctx.Err()
     }
 
     p.logger.Info("waiting for ceph tools deployment", "backoff", backoff)
