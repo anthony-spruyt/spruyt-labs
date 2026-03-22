@@ -4,7 +4,7 @@
 
 misconfigurations:
   # Kubernetes handles health checks via liveness/readiness probes
-  - id: DS-0026
+  - id: AVD-DS-0026
     paths:
       - cmd/shutdown-orchestrator/Dockerfile
 
