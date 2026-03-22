@@ -51,8 +51,12 @@ This eliminates the manual recovery job. After a power outage, nodes boot, Kuber
 Identical for both real and test mode (except test skips last CP):
 
 1. **CNPG hibernation** — annotate all CNPG clusters with `cnpg.io/hibernation=on`
-2. **Ceph flag setting** — set `noout`, `nodown`, `norebalance`, `nobackfill`, `norecover` via Ceph tools pod
-3. **Ceph scale-down** — scale operator → OSDs → managers → monitors to 0 replicas
+2. **Ceph flag setting** — set `noout` via Ceph tools pod. This is the only flag needed — it prevents monitors from marking down OSDs as `out` (which would trigger rebalancing). The other flags (`nodown`, `norebalance`, `nobackfill`, `norecover`) are redundant when `noout` is set.
+3. **Ceph scale-down** — scale operator → OSDs → monitors → managers to 0 replicas
+   (per Rook official [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/)).
+   Wait for OSD pods to terminate before proceeding to node shutdown — not for data
+   safety (BlueStore is crash-safe) but so OSDs can notify monitors they are shutting
+   down, which makes startup peering faster.
 4. **Node shutdown** — workers concurrently (goroutines with WaitGroup, phase timeout covers all), then control plane sequentially (`--force --wait=false`). The orchestrator's own node (discovered via `NODE_NAME` downward API env var) is always last — in real mode it shuts itself down as the final action, in test mode it skips itself entirely.
 
 ### Test Mode
@@ -70,12 +74,11 @@ This validates the exact code paths that would execute during a real outage, inc
 
 Runs automatically on pod startup (monitor mode) or after test mode shutdown:
 
-1. **Wait for Ceph tools pod** — retry with exponential backoff (1s, 2s, 4s, ..., max 30s interval) up to 10 minutes. Ceph tools pod depends on monitors/OSDs which depend on nodes being ready with storage. If tools pod never becomes available, log error and continue to CNPG recovery (flags can be unset manually later).
-2. **Unset Ceph flags** — remove `noout`, `nodown`, `norebalance`, `nobackfill`, `norecover`
-3. **Wake CNPG clusters** — remove `cnpg.io/hibernation` annotation from all hibernated clusters
-4. **Verify health** — poll node readiness, Ceph health status, CNPG cluster status
-
-5. **Scale Ceph back up** — reverse of scale-down: monitors → managers → OSDs → operator (each back to 1 replica). `kubectl scale` persists the replica count on the resource, so Ceph components remain at 0 until explicitly scaled back up.
+1. **Wait for Ceph tools pod** — retry with exponential backoff (1s, 2s, 4s, ..., max 30s interval) up to 10 minutes. Ceph tools pod depends on monitors/OSDs which depend on nodes being ready with storage. If tools pod never becomes available, log error and continue to CNPG recovery (flag can be unset manually later).
+2. **Scale Ceph back up** — monitors → managers → OSDs → operator (per Rook recommended startup order). `kubectl scale` persists the replica count, so Ceph components remain at 0 until explicitly scaled back up.
+3. **Unset Ceph flag** — remove `noout`
+4. **Wake CNPG clusters** — remove `cnpg.io/hibernation` annotation from all hibernated clusters
+5. **Verify health** — poll node readiness, Ceph health status, CNPG cluster status
 
 ### Preflight Mode
 
@@ -105,8 +108,7 @@ UPS runtime budget (configurable, default 600s)
   └─ Remaining = deadline for shutdown sequence
        ├─ CNPG hibernation:  phase timeout (default 60s)
        │    └─ per-cluster:  command timeout (default 10s)
-       ├─ Ceph flags:        phase timeout (default 30s)
-       │    └─ per-flag:     command timeout (default 5s)
+       ├─ Ceph noout flag:   phase timeout (default 15s)
        ├─ Ceph scale-down:   phase timeout (default 60s)
        │    └─ per-deploy:   command timeout (default 10s)
        └─ Node shutdown:     phase timeout (default 120s)
@@ -125,8 +127,8 @@ Each failure has a defined severity and action. No blanket `|| true`.
 | ----- | ------- | -------- | ------ |
 | CNPG hibernate | CRD not installed | **info** | Skip — no databases to protect |
 | CNPG hibernate | Can list but can't annotate | **error** | Log, continue — databases survive unclean shutdown |
-| Ceph flags | Tools pod missing | **warning** | Continue — Ceph self-heals, just slower recovery |
-| Ceph flags | Individual flag fails | **warning** | Continue with remaining flags |
+| Ceph noout flag | Tools pod missing | **warning** | Continue — Ceph self-heals, just slower recovery |
+| Ceph noout flag | Flag set fails | **warning** | Continue — noout is protective, not required for data safety |
 | Ceph scale-down | Can't scale operator | **warning** | Continue — Flux reconciles on recovery anyway |
 | Ceph scale-down | Can't scale OSDs/mons | **warning** | Continue — node shutdown kills them anyway |
 | Node shutdown | Single node timeout | **error** | Move to next node — can't let one node burn the window |
@@ -184,7 +186,7 @@ type KubeClient interface {
     GetNodes(ctx context.Context) ([]Node, error)
 
     // Recovery detection
-    GetCephFlags(ctx context.Context) ([]string, error) // execs "ceph osd dump" in tools pod, parses flags
+    IsCephNooutSet(ctx context.Context) (bool, error) // execs "ceph osd dump" in tools pod, checks noout flag
 }
 
 type TalosClient interface {
@@ -199,7 +201,7 @@ type UPSClient interface {
 **Notes:**
 - `SetCNPGHibernation(hibernate=true)` sets the annotation, `SetCNPGHibernation(hibernate=false)` removes it. Single method handles both shutdown and recovery.
 - `ExecInDeployment` takes a deploy name but internally resolves to a pod (list pods by deployment label selector, pick first ready pod, exec). This matches the `kubectl exec deploy/` convenience pattern.
-- `GetCephFlags` wraps exec + parsing for recovery detection — returns currently set flags so the orchestrator can determine if recovery is needed.
+- `IsCephNooutSet` wraps exec + parsing for recovery detection — checks if the `noout` flag is set so the orchestrator can determine if recovery is needed.
 
 All methods accept `context.Context` for timeout propagation and cancellation.
 
@@ -266,7 +268,7 @@ All configuration via environment variables (compatible with Flux substitution):
 | `POLL_INTERVAL` | `5` | Seconds between UPS status checks |
 | `UPS_RUNTIME_BUDGET` | `600` | Total UPS runtime in seconds (for deadline calculation) |
 | `CNPG_PHASE_TIMEOUT` | `60` | CNPG phase timeout in seconds |
-| `CEPH_FLAGS_PHASE_TIMEOUT` | `30` | Ceph flags phase timeout in seconds |
+| `CEPH_FLAG_PHASE_TIMEOUT` | `15` | Ceph noout flag phase timeout in seconds |
 | `CEPH_SCALE_PHASE_TIMEOUT` | `60` | Ceph scale-down phase timeout in seconds |
 | `NODE_SHUTDOWN_PHASE_TIMEOUT` | `120` | Node shutdown phase timeout in seconds |
 | `HEALTH_PORT` | `8080` | HTTP health endpoint port |
