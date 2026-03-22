@@ -11,6 +11,7 @@ MegaLinter or schema check results that are not actual issues.
 | AVD-KSV-0048 on intentional write RBAC | Trivy | Expected when ClusterRole intentionally grants write verbs (delete, patch, create) for operational use cases | 3 | 2026-03-15 | 2026-03-15 |
 | GITHUB_TOKEN in talos/clusterconfig/*.yaml | secretlint | Generated Talos machine configs contain registry auth env var placeholders that secretlint flags as GitHub tokens. Files are gitignored in production | 4 | 2026-03-16 | 2026-03-16 |
 | markdownlint MD040 in design spec docs | markdownlint | Pre-existing fenced code blocks without language identifiers in docs/superpowers/specs/. Not introduced by feature branches | 1 | 2026-03-18 | 2026-03-18 |
+| AVD-DS-0026 Dockerfile HEALTHCHECK in .trivyignore.yaml | Trivy | .trivyignore.yaml used `DS-0026` without `AVD-` prefix. All other entries use `AVD-` prefix (e.g. AVD-KSV-0037). Must use `AVD-DS-0026` to match Trivy-reported ID format | 1 | 2026-03-22 | 2026-03-22 |
 
 ## Schema Quirks
 
