@@ -53,7 +53,7 @@ Identical for both real and test mode (except test skips last CP):
 1. **CNPG hibernation** — annotate all CNPG clusters with `cnpg.io/hibernation=on`
 2. **Ceph flag setting** — set `noout`, `nodown`, `norebalance`, `nobackfill`, `norecover` via Ceph tools pod
 3. **Ceph scale-down** — scale operator → OSDs → managers → monitors to 0 replicas
-4. **Node shutdown** — workers concurrently (goroutines with WaitGroup, phase timeout covers all), then control plane sequentially (`--force --wait=false`). In test mode: discover own node via Kubernetes downward API (`NODE_NAME` env var) and exclude it from shutdown.
+4. **Node shutdown** — workers concurrently (goroutines with WaitGroup, phase timeout covers all), then control plane sequentially (`--force --wait=false`). The orchestrator's own node (discovered via `NODE_NAME` downward API env var) is always last — in real mode it shuts itself down as the final action, in test mode it skips itself entirely.
 
 ### Test Mode
 
