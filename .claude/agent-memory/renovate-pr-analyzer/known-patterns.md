@@ -7,7 +7,7 @@ Dependency-specific notes about changelog formats, release patterns, and analysi
 | Dependency | Quirk | Count | Last Seen | Added |
 |------------|-------|------:|-----------|-------|
 | n8nio/n8n | Patch changelog body is always empty (cherry-picked from private repo). Use GitHub compare API (`/compare/n8n@X...n8n@Y`) for actual code changes. | 1 | 2026-02-25 | 2026-02-25 |
-| n8nio/n8n | Minor versions (2.13.x) are pre-releases; stable is the latest even minor (2.12.x). Renovate picks up pre-release tags from Docker Hub. Always check `gh release list --repo n8n-io/n8n` and verify `prerelease: false` before approving minor bumps. Release tags use `n8n@X.Y.Z` format (not `vX.Y.Z`). | 2 | 2026-03-19 | 2026-03-18 |
+| n8nio/n8n | Minor versions (2.13.x) are pre-releases; stable is the latest even minor (2.12.x). Renovate picks up pre-release tags from Docker Hub. Always check `gh release list --repo n8n-io/n8n` and verify `prerelease: false` before approving minor bumps. Release tags use `n8n@X.Y.Z` format (not `vX.Y.Z`). | 3 | 2026-03-22 | 2026-03-18 |
 | openclaw/openclaw | GitHub release tags may use `-N` suffix (e.g., `v2026.3.13-1`) when a tag needs re-release due to immutable releases. The npm/Docker version remains the base version (e.g., `2026.3.13`). Try `gh release list` first if exact tag lookup fails. | 1 | 2026-03-16 | 2026-03-16 |
 
 ## Breaking Change False Positives
