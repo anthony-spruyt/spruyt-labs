@@ -39,11 +39,11 @@ USB (ms-01-1) --> NUT Server Pod --> LoadBalancer (:3493) --> Home Assistant
                        |
     +------------------+------------------+
     v                  v                  v
-Hibernate CNPG     Set Ceph Flags    Scale Ceph
+Hibernate CNPG    Set noout flag    Scale Ceph down
     |                  |                  |
     +------------------+------------------+
                        v
-            talosctl shutdown (workers, then CP)
+       talosctl shutdown --force (workers, then CP)
 ```
 
 ## Shutdown Sequence
@@ -51,21 +51,23 @@ Hibernate CNPG     Set Ceph Flags    Scale Ceph
 When power is lost for 30+ seconds:
 
 1. **Hibernate CNPG clusters** - Graceful database shutdown preserving PVCs
-2. **Set Ceph OSD flags** - noout, nodown, norebalance, nobackfill, norecover
-3. **Scale Ceph down** - Operator, OSDs, Managers, Monitors (in order)
-4. **Shutdown nodes** - Workers first, then control plane
+2. **Set Ceph noout flag** - prevents monitors from marking down OSDs as out
+3. **Scale Ceph down** - Operator → OSDs → Monitors → Managers (per Rook
+   [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/))
+4. **Shutdown nodes** - Workers first (concurrent), then control plane (sequential,
+   orchestrator's node last)
 
-**Timeline Budget** (~2 min UPS runtime):
+**Timeline Budget** (~10-20 min UPS runtime):
 
 | Phase                  | Duration | Cumulative |
 | ---------------------- | -------- | ---------- |
 | Power loss detection   | 0s       | 0s         |
 | Delay timer            | 30s      | 30s        |
-| CNPG hibernation       | 5s       | 35s        |
-| Ceph flags             | 5s       | 40s        |
-| Ceph scaling           | 15s      | 55s        |
-| Worker shutdown        | 30s      | 85s        |
-| Control plane shutdown | 30s      | 115s       |
+| CNPG hibernation       | 60s      | 90s        |
+| Ceph noout flag        | 15s      | 105s       |
+| Ceph scaling           | 60s      | 165s       |
+| Worker shutdown        | 30s      | 195s       |
+| Control plane shutdown | 30s      | 225s       |
 
 ## Operation
 
@@ -88,60 +90,50 @@ flux reconcile kustomization nut-server --with-source
 flux reconcile kustomization shutdown-orchestrator --with-source
 ```
 
-### Dry-Run Testing
+### Testing
 
-The orchestrator starts in dry-run mode (`DRY_RUN=true`). To test:
+The orchestrator supports three modes via `MODE` env var:
+
+- **`monitor`** (default) — preflight checks → auto-recover if needed → UPS polling
+- **`test`** — executes real shutdown sequence, skips orchestrator's own CP node,
+  waits for nodes to be powered back on, then auto-recovers and verifies health
+- **`preflight`** — validates all prerequisites against live cluster, reports
+  pass/fail, exits
 
 ```bash
-# Watch logs during test
+# Run preflight checks
+kubectl -n nut-system set env deploy/shutdown-orchestrator MODE=preflight
+
+# Watch logs
 kubectl logs -n nut-system -l app.kubernetes.io/name=shutdown-orchestrator -f
-
-# Unplug UPS briefly (<30s) to test detection
-# Logs will show power loss detection and countdown
-
-# For full dry-run test, unplug >30s
-# Logs will show [DRY-RUN] prefix for all actions without executing
-```
-
-To enable live mode after validation:
-
-```bash
-# Edit values.yaml: DRY_RUN: "false"
-# Or patch directly:
-kubectl -n nut-system set env deploy/shutdown-orchestrator DRY_RUN=false
 ```
 
 ### Recovery After Power Outage
 
-After power is restored and nodes boot:
+Recovery is automatic — the shutdown-orchestrator pod detects stale state on startup
+and recovers before entering the UPS monitoring loop.
 
-```bash
-# Apply recovery job
-kubectl apply -f cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml
+Recovery sequence:
 
-# Watch recovery progress
-kubectl logs -n nut-system job/power-recovery -f
-
-# Clean up job
-kubectl delete job -n nut-system power-recovery
-```
-
-Recovery script will:
-1. Unset Ceph OSD flags
-2. Wake hibernated CNPG clusters
-3. Verify cluster health
+1. Wait for Ceph tools pod to become available
+2. Scale Ceph back up: Monitors → Managers → OSDs → Operator
+3. Unset Ceph noout flag
+4. Wake hibernated CNPG clusters
+5. Verify cluster health
 
 ### Manual Recovery
 
-If recovery job fails:
+If automatic recovery fails or the orchestrator pod is not running:
 
 ```bash
-# Unset Ceph flags
+# Scale Ceph back up (in order)
+kubectl -n rook-ceph scale deploy -l app=rook-ceph-mon --replicas=1
+kubectl -n rook-ceph scale deploy -l app=rook-ceph-mgr --replicas=1
+kubectl -n rook-ceph scale deploy -l app=rook-ceph-osd --replicas=1
+kubectl -n rook-ceph scale deploy rook-ceph-operator --replicas=1
+
+# Unset Ceph noout flag
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset nodown
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset norebalance
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset nobackfill
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset norecover
 
 # Check Ceph status
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
