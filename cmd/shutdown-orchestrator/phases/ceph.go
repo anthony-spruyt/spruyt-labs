@@ -1,0 +1,172 @@
+package phases
+
+import (
+  "context"
+  "log/slog"
+  "time"
+
+  "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
+)
+
+const (
+  cephNamespace      = "rook-ceph"
+  cephToolsDeploy    = "rook-ceph-tools"
+  cephOperatorDeploy = "rook-ceph-operator"
+)
+
+// CephPhase handles Ceph cluster shutdown and recovery operations.
+type CephPhase struct {
+  kube   clients.KubeClient
+  logger *slog.Logger
+}
+
+// NewCephPhase creates a new CephPhase.
+func NewCephPhase(kube clients.KubeClient, logger *slog.Logger) *CephPhase {
+  return &CephPhase{
+    kube:   kube,
+    logger: logger,
+  }
+}
+
+// SetNoout sets the noout flag on the Ceph cluster via the tools pod.
+// If the tools deployment does not exist, it logs a warning and returns nil.
+func (p *CephPhase) SetNoout(ctx context.Context) error {
+  exists, err := p.kube.DeploymentExists(ctx, cephNamespace, cephToolsDeploy)
+  if err != nil {
+    return err
+  }
+  if !exists {
+    p.logger.Warn("ceph tools deployment not found, skipping noout set")
+    return nil
+  }
+
+  _, err = p.kube.ExecInDeployment(ctx, cephNamespace, cephToolsDeploy, []string{"ceph", "osd", "set", "noout"})
+  if err != nil {
+    return err
+  }
+
+  p.logger.Info("ceph noout flag set")
+  return nil
+}
+
+// UnsetNoout removes the noout flag from the Ceph cluster via the tools pod.
+func (p *CephPhase) UnsetNoout(ctx context.Context) error {
+  exists, err := p.kube.DeploymentExists(ctx, cephNamespace, cephToolsDeploy)
+  if err != nil {
+    return err
+  }
+  if !exists {
+    p.logger.Warn("ceph tools deployment not found, skipping noout unset")
+    return nil
+  }
+
+  _, err = p.kube.ExecInDeployment(ctx, cephNamespace, cephToolsDeploy, []string{"ceph", "osd", "unset", "noout"})
+  if err != nil {
+    return err
+  }
+
+  p.logger.Info("ceph noout flag unset")
+  return nil
+}
+
+// ScaleDown scales Ceph components to 0 replicas in order:
+// operator -> OSDs -> monitors -> managers.
+// If scaling one component fails, it logs a warning and continues.
+func (p *CephPhase) ScaleDown(ctx context.Context) error {
+  // 1. Operator
+  p.scaleComponent(ctx, cephOperatorDeploy, 0)
+
+  // 2. OSDs
+  p.scaleByLabel(ctx, "app=rook-ceph-osd", 0)
+
+  // 3. Monitors
+  p.scaleByLabel(ctx, "app=rook-ceph-mon", 0)
+
+  // 4. Managers
+  p.scaleByLabel(ctx, "app=rook-ceph-mgr", 0)
+
+  return nil
+}
+
+// ScaleUp scales Ceph components to 1 replica in reverse order:
+// monitors -> managers -> OSDs -> operator.
+// If scaling one component fails, it logs a warning and continues.
+func (p *CephPhase) ScaleUp(ctx context.Context) error {
+  // 1. Monitors
+  p.scaleByLabel(ctx, "app=rook-ceph-mon", 1)
+
+  // 2. Managers
+  p.scaleByLabel(ctx, "app=rook-ceph-mgr", 1)
+
+  // 3. OSDs
+  p.scaleByLabel(ctx, "app=rook-ceph-osd", 1)
+
+  // 4. Operator
+  p.scaleComponent(ctx, cephOperatorDeploy, 1)
+
+  return nil
+}
+
+// WaitForToolsPod waits for the Ceph tools deployment to exist with
+// exponential backoff (1s, 2s, 4s, ... max 30s) up to 10 minutes total.
+func (p *CephPhase) WaitForToolsPod(ctx context.Context) error {
+  timeout := 10 * time.Minute
+  maxBackoff := 30 * time.Second
+  backoff := 1 * time.Second
+  deadline := time.Now().Add(timeout)
+
+  for {
+    exists, err := p.kube.DeploymentExists(ctx, cephNamespace, cephToolsDeploy)
+    if err == nil && exists {
+      p.logger.Info("ceph tools deployment is ready")
+      return nil
+    }
+
+    if time.Now().After(deadline) {
+      p.logger.Error("timed out waiting for ceph tools deployment")
+      if err != nil {
+        return err
+      }
+      return context.DeadlineExceeded
+    }
+
+    p.logger.Info("waiting for ceph tools deployment", "backoff", backoff)
+    select {
+    case <-ctx.Done():
+      return ctx.Err()
+    case <-time.After(backoff):
+    }
+
+    backoff *= 2
+    if backoff > maxBackoff {
+      backoff = maxBackoff
+    }
+  }
+}
+
+// NeedsRecovery checks if the Ceph noout flag is set, indicating a
+// previous shutdown that needs recovery.
+func (p *CephPhase) NeedsRecovery(ctx context.Context) (bool, error) {
+  return p.kube.IsCephNooutSet(ctx)
+}
+
+// scaleComponent scales a single named deployment, logging warnings on failure.
+func (p *CephPhase) scaleComponent(ctx context.Context, name string, replicas int32) {
+  p.logger.Info("scaling deployment", "name", name, "replicas", replicas)
+  if err := p.kube.ScaleDeployment(ctx, cephNamespace, name, replicas); err != nil {
+    p.logger.Warn("failed to scale deployment", "name", name, "replicas", replicas, "error", err)
+  }
+}
+
+// scaleByLabel lists deployments matching the label selector and scales each one.
+func (p *CephPhase) scaleByLabel(ctx context.Context, labelSelector string, replicas int32) {
+  names, err := p.kube.ListDeploymentNames(ctx, cephNamespace, labelSelector)
+  if err != nil {
+    p.logger.Warn("failed to list deployments", "selector", labelSelector, "error", err)
+    return
+  }
+
+  for _, name := range names {
+    p.scaleComponent(ctx, name, replicas)
+  }
+}
