@@ -75,7 +75,7 @@ Runs automatically on pod startup (monitor mode) or after test mode shutdown:
 3. **Wake CNPG clusters** — remove `cnpg.io/hibernation` annotation from all hibernated clusters
 4. **Verify health** — poll node readiness, Ceph health status, CNPG cluster status
 
-**Note on Ceph scale-up:** The recovery sequence does not explicitly scale Ceph components back up. Flux reconciles the rook-ceph HelmRelease on startup, which restores the operator's replica count. The operator then reconciles OSDs, managers, and monitors to their desired state. This is the standard Flux recovery path and has been validated in manual power-off tests.
+5. **Scale Ceph back up** — reverse of scale-down: monitors → managers → OSDs → operator (each back to 1 replica). Flux does not reliably restore Ceph replica counts after a manual scale-down, so this must be done explicitly.
 
 ### Preflight Mode
 
