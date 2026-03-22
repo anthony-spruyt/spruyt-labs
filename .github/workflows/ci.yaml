@@ -37,7 +37,7 @@ jobs:
         with:
           filters: |
             cluster:
-              - 'cluster/**.yaml'
+              - 'cluster/**/*.yaml'
             kyverno:
               - 'cluster/apps/kyverno/**'
             terraform:
