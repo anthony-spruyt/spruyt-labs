@@ -1,3 +1,6 @@
-*.sops.*
-mcp.json
+*.json
+*.json5
+*.yaml
+*.yml
 *.md
+*.sops.*
