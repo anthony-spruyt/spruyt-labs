@@ -1,0 +1,71 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+
+name: "Shutdown Orchestrator"
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "cmd/shutdown-orchestrator/**"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "cmd/shutdown-orchestrator/**"
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+permissions:
+  contents: "read"
+  packages: "write"
+env:
+  IMAGE: "ghcr.io/anthony-spruyt/shutdown-orchestrator"
+  WORKDIR: "cmd/shutdown-orchestrator"
+jobs:
+  test:
+    name: "Test"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - name: "Setup Go"
+        uses: "actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5" # v5
+        with:
+          go-version-file: "${{ env.WORKDIR }}/go.mod"
+          cache-dependency-path: "${{ env.WORKDIR }}/go.sum"
+      - name: "Run tests"
+        working-directory: "${{ env.WORKDIR }}"
+        run: go test ./...
+  build-and-push:
+    name: "Build and push image"
+    needs: "test"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - name: "Set up Docker Buildx"
+        uses: "docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2" # v3
+      - name: "Login to GHCR"
+        if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
+        uses: "docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772" # v3
+        with:
+          registry: "ghcr.io"
+          username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
+      - name: "Docker metadata"
+        id: "meta"
+        uses: "docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804" # v5
+        with:
+          images: "${{ env.IMAGE }}"
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: "Build and push"
+        uses: "docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1" # v6
+        with:
+          context: "${{ env.WORKDIR }}"
+          push: "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}"
+          tags: "${{ steps.meta.outputs.tags }}"
+          labels: "${{ steps.meta.outputs.labels }}"
+          cache-from: "type=gha"
+          cache-to: "type=gha,mode=max"
