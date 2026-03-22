@@ -27,9 +27,6 @@ type Config struct {
   // Node IPs
   WorkerIPs       []string
   ControlPlaneIPs []string
-
-  // Talos config path
-  TalosConfigPath string
 }
 
 func LoadConfig() Config {
@@ -47,7 +44,6 @@ func LoadConfig() Config {
     CephFlagPhaseTimeout:     time.Duration(envIntOrDefault("CEPH_FLAG_PHASE_TIMEOUT", 15)) * time.Second,
     CephScalePhaseTimeout:    time.Duration(envIntOrDefault("CEPH_SCALE_PHASE_TIMEOUT", 60)) * time.Second,
     NodeShutdownPhaseTimeout: time.Duration(envIntOrDefault("NODE_SHUTDOWN_PHASE_TIMEOUT", 120)) * time.Second,
-    TalosConfigPath:          envOrDefault("TALOSCONFIG", "/talos/talosconfig"),
   }
 
   // Collect non-empty node IPs

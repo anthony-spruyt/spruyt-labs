@@ -8,22 +8,18 @@ import (
 )
 
 // RealTalosClient implements TalosClient using the Talos machinery client.
-type RealTalosClient struct {
-  configPath string
-}
+// Credentials are auto-discovered from /var/run/secrets/talos.dev (Talos SA CRD).
+type RealTalosClient struct{}
 
-// NewTalosClient creates a new Talos client that reads its config from the
-// given file path.
-func NewTalosClient(configPath string) *RealTalosClient {
-  return &RealTalosClient{
-    configPath: configPath,
-  }
+// NewTalosClient creates a new Talos client that uses auto-discovered credentials.
+func NewTalosClient() *RealTalosClient {
+  return &RealTalosClient{}
 }
 
 // Shutdown initiates a shutdown on the specified Talos node.
 func (t *RealTalosClient) Shutdown(ctx context.Context, nodeIP string, force bool) error {
   c, err := client.New(ctx,
-    client.WithConfigFromFile(t.configPath),
+    client.WithDefaultConfig(),
     client.WithEndpoints(nodeIP),
   )
   if err != nil {

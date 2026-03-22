@@ -48,7 +48,7 @@ func buildClients(cfg Config, logger *slog.Logger) (clients.KubeClient, clients.
     return nil, nil, nil, fmt.Errorf("creating kube client: %w", err)
   }
 
-  talos := clients.NewTalosClient(cfg.TalosConfigPath)
+  talos := clients.NewTalosClient()
   ups := clients.NewNUTClient(cfg.NUTServer, cfg.NUTPort, cfg.UPSName)
 
   return kube, talos, ups, nil

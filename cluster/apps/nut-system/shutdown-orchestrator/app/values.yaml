@@ -5,8 +5,7 @@ controllers:
     type: deployment
     replicas: 1
     strategy: Recreate
-    annotations:
-      reloader.stakater.com/auto: "true"
+    annotations: {}
     serviceAccount:
       name: shutdown-orchestrator
     pod:
@@ -30,8 +29,6 @@ controllers:
           tag: latest
           pullPolicy: IfNotPresent
         env:
-          - name: TALOSCONFIG
-            value: /talos/talosconfig
           - name: NUT_SERVER
             value: nut-server-nut.nut-system.svc.cluster.local
           - name: NUT_PORT
@@ -110,9 +107,9 @@ controllers:
               timeoutSeconds: 5
               failureThreshold: 3
 persistence:
-  talos:
+  talos-secrets:
     type: secret
-    name: talosconfig-secret
+    name: shutdown-orchestrator-talos-secrets
     globalMounts:
-      - path: /talos
+      - path: /var/run/secrets/talos.dev
         readOnly: true
