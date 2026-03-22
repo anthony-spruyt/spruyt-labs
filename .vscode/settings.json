@@ -21,7 +21,6 @@
   "explorer.sortOrder": "type",
   "editor.tabSize": 2,
   "chat.agent.enabled": false,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[terraform]": {
     "editor.defaultFormatter": "hashicorp.terraform"
   }
