@@ -3,6 +3,11 @@
 # https://trivy.dev/latest/docs/configuration/filtering
 
 misconfigurations:
+  # Kubernetes handles health checks via liveness/readiness probes
+  - id: DS-0026
+    paths:
+      - cmd/shutdown-orchestrator/Dockerfile
+
   # Hubble SSO ingress needs to be in kube-system (where Cilium runs)
   - id: AVD-KSV-0037
     paths:
@@ -55,12 +60,10 @@ misconfigurations:
   # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)
   - id: AVD-KSV-0013
     paths:
-      - cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/cronjob.yaml
   # Bitnami is a trusted publisher (VMware/Broadcom) - trivy flags all Docker Hub as "untrusted"
   - id: AVD-KSV-0125
     paths:
-      - cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/cronjob.yaml
 
   # Shutdown orchestrator needs pods/exec to run ceph commands via rook-ceph-tools
