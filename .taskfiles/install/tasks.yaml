@@ -18,6 +18,10 @@ tasks:
     desc: Installs the Claude Code CLI
     cmds:
       - bash {{ .installScriptsDir }}/install-claude-code.sh
+  cclsp:
+    desc: Installs cclsp (LSP-MCP bridge for AI coding agents)
+    cmds:
+      - bash {{ .installScriptsDir }}/install-cclsp.sh
   cnpg-plugin:
     desc: Installs the CNPG kubectl plugin for CloudNativePG
     cmds:
@@ -30,6 +34,10 @@ tasks:
     desc: Installs the Flux CLI
     cmds:
       - bash {{ .installScriptsDir }}/install-flux.sh
+  gopls:
+    desc: Installs gopls (Go language server)
+    cmds:
+      - bash {{ .installScriptsDir }}/install-gopls.sh
   flux-capacitor:
     desc: Installs Flux Capacitor v2 local FluxCD GUI
     cmds:

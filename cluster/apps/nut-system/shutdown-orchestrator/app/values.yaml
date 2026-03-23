@@ -5,8 +5,7 @@ controllers:
     type: deployment
     replicas: 1
     strategy: Recreate
-    annotations:
-      reloader.stakater.com/auto: "true"
+    annotations: {}
     serviceAccount:
       name: shutdown-orchestrator
     pod:
@@ -19,54 +18,17 @@ controllers:
           operator: Exists
           effect: NoSchedule
       securityContext:
-        runAsUser: 0
-        runAsGroup: 0
-    initContainers:
-      install-tools:
-        image:
-          repository: bitnami/kubectl
-          tag: latest
-          pullPolicy: IfNotPresent
-        command:
-          - /bin/sh
-          - -c
-          - |
-            set -e
-            # Install talosctl with checksum verification
-            # renovate: depName=siderolabs/talos datasource=github-releases
-            TALOS_URL="https://github.com/siderolabs/talos/releases/download/v1.12.6/talosctl-linux-amd64"
-            TALOS_VERSION=$(echo "$TALOS_URL" | sed 's|.*/download/\([^/]*\)/.*|\1|')
-            curl -sL "$TALOS_URL" -o /tools/talosctl
-            curl -sL "https://github.com/siderolabs/talos/releases/download/${TALOS_VERSION}/sha256sum.txt" -o /tmp/sha256sum.txt
-            EXPECTED=$(grep "talosctl-linux-amd64$" /tmp/sha256sum.txt | awk '{print $1}')
-            ACTUAL=$(sha256sum /tools/talosctl | awk '{print $1}')
-            if [ "$EXPECTED" != "$ACTUAL" ]; then
-              echo "ERROR: talosctl checksum mismatch!"
-              echo "Expected: $EXPECTED"
-              echo "Actual:   $ACTUAL"
-              exit 1
-            fi
-            echo "talosctl checksum verified: $ACTUAL"
-            chmod +x /tools/talosctl
-            # Install nut-client (for upsc command)
-            apt-get update && apt-get install -y --no-install-recommends nut-client && rm -rf /var/lib/apt/lists/*
-            cp /usr/bin/upsc /tools/
-            echo "Tools installed successfully"
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        runAsNonRoot: true
     containers:
       app:
         image:
-          repository: bitnami/kubectl
+          repository: ghcr.io/anthony-spruyt/shutdown-orchestrator
           tag: latest
-          pullPolicy: IfNotPresent
-        command:
-          - /bin/sh
-          - -c
-          - |
-            export PATH="/tools:$PATH"
-            exec /scripts/shutdown.sh
+          pullPolicy: Always
         env:
-          - name: TALOSCONFIG
-            value: /talos/talosconfig
           - name: NUT_SERVER
             value: nut-server-nut.nut-system.svc.cluster.local
           - name: NUT_PORT
@@ -77,10 +39,31 @@ controllers:
             value: "30"
           - name: POLL_INTERVAL
             value: "5"
-          # Set to "true" to test without executing destructive actions
-          # TODO: Set to "false" after validating dry-run behavior
-          - name: DRY_RUN
-            value: "true"
+          - name: UPS_RUNTIME_BUDGET
+            value: "600"
+          - name: HEALTH_PORT
+            value: "8080"
+          - name: MODE
+            value: monitor
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          # Phase timeouts (seconds)
+          - name: CNPG_PHASE_TIMEOUT
+            value: "60"
+          - name: CEPH_FLAG_PHASE_TIMEOUT
+            value: "15"
+          - name: CEPH_SCALE_PHASE_TIMEOUT
+            value: "60"
+          - name: CEPH_HEALTH_WAIT_TIMEOUT
+            value: "300"
+          - name: NODE_SHUTDOWN_PHASE_TIMEOUT
+            value: "120"
+          - name: PER_NODE_TIMEOUT
+            value: "15"
+          - name: CEPH_WAIT_TOOLS_TIMEOUT
+            value: "600"
           # Node IPs from cluster secrets (Flux substitution)
           - name: MS_01_1_IP4
             value: "${MS_01_1_IP4}"
@@ -97,12 +80,12 @@ controllers:
         resources:
           requests:
             cpu: 10m
-            memory: 64Mi
+            memory: 32Mi
           limits:
-            memory: 128Mi
+            memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false
+          readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL
@@ -111,12 +94,10 @@ controllers:
             enabled: true
             custom: true
             spec:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - pgrep -f shutdown.sh
-              initialDelaySeconds: 30
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 10
               periodSeconds: 30
               timeoutSeconds: 5
               failureThreshold: 3
@@ -124,29 +105,17 @@ controllers:
             enabled: true
             custom: true
             spec:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - pgrep -f shutdown.sh
-              initialDelaySeconds: 10
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 5
               periodSeconds: 10
               timeoutSeconds: 5
               failureThreshold: 3
 persistence:
-  scripts:
-    type: configMap
-    name: shutdown-script
-    defaultMode: 0755
-    globalMounts:
-      - path: /scripts
-  talos:
+  talos-secrets:
     type: secret
-    name: talosconfig-secret
+    name: shutdown-orchestrator-talos-secrets
     globalMounts:
-      - path: /talos
+      - path: /var/run/secrets/talos.dev
         readOnly: true
-  tools:
-    type: emptyDir
-    globalMounts:
-      - path: /tools

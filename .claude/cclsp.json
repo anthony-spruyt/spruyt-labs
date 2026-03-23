@@ -1,0 +1,9 @@
+{
+  "servers": [
+    {
+      "extensions": ["go"],
+      "command": ["/home/vscode/go/bin/gopls", "serve"],
+      "rootDir": "."
+    }
+  ]
+}

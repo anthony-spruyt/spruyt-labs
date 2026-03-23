@@ -6,3 +6,4 @@ machine:
         - os:operator
       allowedKubernetesNamespaces:
         - kube-system
+        - nut-system

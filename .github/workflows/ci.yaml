@@ -15,6 +15,7 @@ concurrency:
 permissions:
   actions: "write"
   contents: "write"
+  packages: "write"
   pull-requests: "write"
   security-events: "write"
   statuses: "write"
@@ -26,6 +27,7 @@ jobs:
       cluster: "${{ steps.filter.outputs.cluster }}"
       kyverno: "${{ steps.filter.outputs.kyverno }}"
       terraform: "${{ steps.filter.outputs.terraform }}"
+      shutdown-orchestrator: "${{ steps.filter.outputs.shutdown-orchestrator }}"
     steps:
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
@@ -35,11 +37,13 @@ jobs:
         with:
           filters: |
             cluster:
-              - 'cluster/**.yaml'
+              - 'cluster/**/*.yaml'
             kyverno:
               - 'cluster/apps/kyverno/**'
             terraform:
               - 'infra/terraform/**'
+            shutdown-orchestrator:
+              - 'cmd/shutdown-orchestrator/**'
   lint:
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@main"
     secrets: "inherit"
@@ -62,6 +66,11 @@ jobs:
     secrets:
       BOT_APP_ID: "${{ secrets.BOT_APP_ID }}"
       BOT_APP_PRIVATE_KEY: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
+  shutdown-orchestrator:
+    needs: "changes"
+    if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
+    uses: "./.github/workflows/_shutdown-orchestrator.yaml"
+    secrets: "inherit"
   summary:
     needs:
       - "lint"
@@ -69,5 +78,6 @@ jobs:
       - "kyverno-test"
       - "terraform-validate"
       - "flux-differ"
+      - "shutdown-orchestrator"
     if: "always()"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_summary.yaml@main"

@@ -108,6 +108,8 @@
       "Bash(pnpm:*)",
       "Bash(yarn:*)",
       "Bash(go:*)",
+      "Bash(gopls:*)",
+      "mcp__cclsp__*",
       "Bash(cargo:*)",
       "Bash(pre-commit:*)",
       "Bash(renovate-config-validator:*)",

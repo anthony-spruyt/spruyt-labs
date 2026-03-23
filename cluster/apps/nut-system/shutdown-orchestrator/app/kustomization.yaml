@@ -4,13 +4,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./rbac.yaml
-  - ./shutdown-script-configmap.yaml
-  - ./recovery-script-configmap.yaml
-  - ./talosconfig-secret.sops.yaml
+  - ./talos-serviceaccount.yaml
   - ./release.yaml
   - ./vpa.yaml
-  # NOTE: recovery-job.yaml is NOT included - apply manually after power restoration:
-  #   kubectl apply -f cluster/apps/nut-system/shutdown-orchestrator/app/recovery-job.yaml
 configMapGenerator:
   - name: shutdown-orchestrator-values
     namespace: nut-system

@@ -12,9 +12,7 @@ Network UPS Tools (NUT) integration for UPS monitoring with automated graceful c
 | Component             | Purpose                                     | Namespace  | Status   |
 | --------------------- | ------------------------------------------- | ---------- | -------- |
 | nut-server            | USB driver + upsd daemon + metrics exporter | nut-system | Active   |
-| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown    | nut-system | Disabled |
-
-> **Note**: The shutdown-orchestrator is disabled pending validation. Enable by uncommenting in [kustomization.yaml](kustomization.yaml).
+| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown    | nut-system | Active   |
 
 ## Prerequisites
 
@@ -23,6 +21,12 @@ Network UPS Tools (NUT) integration for UPS monitoring with automated graceful c
 - Talos udev rules configured for USB UPS access
 - rook-ceph with rook-ceph-tools deployment
 - CNPG operator installed
+- **Talos API access patch applied**: The `enable-talos-api-access.yaml` patch
+  (`talos/patches/control-plane/`) must include `nut-system` in the allowed
+  namespaces list. This patch must be applied and Talos configs regenerated
+  **before** deploying the shutdown-orchestrator — the Talos ServiceAccount CRD
+  auto-provisions the `shutdown-orchestrator-talos-secrets` Kubernetes Secret via
+  the Talos API, and the pod will fail to start if this secret does not exist.
 
 ## Architecture
 
@@ -96,7 +100,8 @@ The orchestrator supports three modes via `MODE` env var:
 
 - **`monitor`** (default) — preflight checks → auto-recover if needed → UPS polling
 - **`test`** — executes real shutdown sequence, skips orchestrator's own CP node,
-  waits for nodes to be powered back on, then auto-recovers and verifies health
+  waits for nodes to be powered back on, then auto-recovers and verifies health.
+  Requires `CONFIRM_TEST=yes` to prevent accidental execution.
 - **`preflight`** — validates all prerequisites against live cluster, reports
   pass/fail, exits
 
@@ -152,19 +157,19 @@ kubectl annotate cluster <name> -n <namespace> cnpg.io/hibernation-
 
 2. **Orchestrator not detecting power loss**
    - **Symptom**: No logs when UPS unplugged
-   - **Resolution**: Check NUT server connectivity: `kubectl exec -n nut-system deploy/shutdown-orchestrator -- upsc cp1500@nut-server-nut:3493 ups.status`
+   - **Resolution**: Check NUT server connectivity, verify NUT_SERVER and UPS_NAME env vars, check orchestrator pod logs
 
 3. **CNPG clusters not hibernating**
-   - **Symptom**: `[DRY-RUN]` in logs or annotation errors
-   - **Resolution**: Verify RBAC permissions, check DRY_RUN setting
+   - **Symptom**: Annotation errors in logs
+   - **Resolution**: Verify RBAC permissions, check pod logs for details
 
 4. **Ceph flags not setting**
    - **Symptom**: "rook-ceph-tools deployment not found"
    - **Resolution**: Ensure rook-ceph-tools is deployed: `kubectl -n rook-ceph get deploy rook-ceph-tools`
 
-5. **Recovery job fails**
-   - **Symptom**: Job errors or timeout
-   - **Resolution**: Run manual recovery commands, check pod logs
+5. **Automatic recovery fails**
+   - **Symptom**: Orchestrator pod logs show recovery errors
+   - **Resolution**: Run manual recovery commands (see Manual Recovery section), check pod logs
 
 ### Validation Commands
 
@@ -183,14 +188,25 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
 ### Environment Variables (shutdown-orchestrator)
 
-| Variable       | Default                                     | Description                        |
-| -------------- | ------------------------------------------- | ---------------------------------- |
-| NUT_SERVER     | nut-server-nut.nut-system.svc.cluster.local | NUT server address                 |
-| NUT_PORT       | 3493                                        | NUT server port                    |
-| UPS_NAME       | cp1500                                      | UPS name in NUT config             |
-| SHUTDOWN_DELAY | 30                                          | Seconds on battery before shutdown |
-| POLL_INTERVAL  | 5                                           | Seconds between UPS status checks  |
-| DRY_RUN        | true                                        | Set to "false" for live mode       |
+| Variable                    | Default                                     | Description                              |
+| --------------------------- | ------------------------------------------- | ---------------------------------------- |
+| MODE                        | monitor                                     | Operating mode: monitor, test, preflight |
+| CONFIRM_TEST                | (unset)                                     | Must be "yes" to allow test mode         |
+| NUT_SERVER                  | nut-server-nut.nut-system.svc.cluster.local | NUT server address                       |
+| NUT_PORT                    | 3493                                        | NUT server port                          |
+| UPS_NAME                    | cp1500                                      | UPS name in NUT config                   |
+| SHUTDOWN_DELAY              | 30                                          | Seconds on battery before shutdown       |
+| POLL_INTERVAL               | 5                                           | Seconds between UPS status checks        |
+| UPS_RUNTIME_BUDGET          | 600                                         | Total UPS runtime budget (seconds)       |
+| HEALTH_PORT                 | 8080                                        | Health endpoint port (/healthz)          |
+| NODE_NAME                   | (downward API)                              | Kubernetes node name (auto-set)          |
+| CNPG_PHASE_TIMEOUT          | 60                                          | CNPG hibernation timeout (seconds)       |
+| CEPH_FLAG_PHASE_TIMEOUT     | 15                                          | Ceph noout flag timeout (seconds)        |
+| CEPH_SCALE_PHASE_TIMEOUT    | 60                                          | Ceph scale down timeout (seconds)        |
+| CEPH_HEALTH_WAIT_TIMEOUT    | 300                                         | Ceph health wait after scale-up (secs)   |
+| NODE_SHUTDOWN_PHASE_TIMEOUT | 120                                         | Node shutdown timeout (seconds)          |
+| PER_NODE_TIMEOUT            | 15                                          | Per-node shutdown timeout (seconds)      |
+| CEPH_WAIT_TOOLS_TIMEOUT     | 600                                         | Ceph tools pod readiness timeout (secs)  |
 
 ### Alerts (VMRule)
 
@@ -206,7 +222,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
 - Orchestrator runs on control plane (tolerates taint) for maximum uptime during shutdown
 - RBAC scoped: ClusterRole for nodes/CNPG, Role in rook-ceph for pods/exec and deployments
-- talosctl binary verified via SHA256 checksum
+- Go binary from GHCR with read-only root filesystem and non-root execution
 - Secrets (NUT users, talosconfig) encrypted with SOPS
 
 ## References
