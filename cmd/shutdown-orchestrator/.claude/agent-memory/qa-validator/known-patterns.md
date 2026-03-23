@@ -17,7 +17,7 @@ type: reference
 | nil error appending to error slice with errors.Join              | code-pattern | 1     | 2026-03-23 | 2026-03-23 | append(errs, possiblyNilErr) adds nil to slice; errors.Join ignores nils but len(errs) misleads  |
 | Persistent TCP client lazy connect pattern                       | code-pattern | 1     | 2026-03-23 | 2026-03-23 | NewNUTClient stores config only; connection deferred to first GetStatus call                     |
 | values.yaml env vars must match config.go env var names+defaults | validation   | 2     | 2026-03-23 | 2026-03-23 | Cross-check values.yaml env entries against envOrDefault/envIntOrDefault calls in config.go      |
-| hookify local config must not be committed                       | validation   | 4     | 2026-03-23 | 2026-03-23 | .claude/hookify.\*.local.md files are local dev settings, should never be staged                 |
+| hookify local config must not be committed                       | validation   | 5     | 2026-03-23 | 2026-03-23 | .claude/hookify.\*.local.md files are local dev settings, should never be staged                 |
 | RBAC verbs must match actual code usage                          | validation   | 1     | 2026-03-23 | 2026-03-23 | Grep codebase for actual API calls before approving RBAC verb changes (e.g., nodes patch/update) |
 | time.NewTimer replaces time.After in select                      | code-pattern | 1     | 2026-03-23 | 2026-03-23 | time.After leaks goroutine if ctx cancels before timer fires; NewTimer + Stop() is correct       |
 | README env var table must list all config.go env vars            | validation   | 1     | 2026-03-23 | 2026-03-23 | Cross-check README env var table against LoadConfig() to ensure completeness                     |
