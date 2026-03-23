@@ -5,3 +5,8 @@
 # Extend the default gitleaks config
 # https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
 useDefault = true
+
+# ExternalSecret CRDs contain only key references (remoteRef), not actual secret values.
+# The kubernetes-secret-yaml rule false-positives on these because they reference secret key names.
+[allowlist]
+paths = ['''external-secret\.yaml$''']
