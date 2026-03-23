@@ -114,29 +114,29 @@ func (p *CephPhase) ScaleUp(ctx context.Context) error {
   return errors.Join(errs...)
 }
 
-// WaitForToolsPod waits for the Ceph tools deployment to exist with
-// exponential backoff (1s, 2s, 4s, ... max 30s). The timeout is controlled
-// by the context passed in from the caller.
+// WaitForToolsPod waits for a ready pod in the Ceph tools deployment with
+// exponential backoff (1s, 2s, 4s, ... max 30s). It verifies readiness by
+// executing a no-op command, not just checking deployment existence.
+// The timeout is controlled by the context passed in from the caller.
 func (p *CephPhase) WaitForToolsPod(ctx context.Context) error {
   maxBackoff := 30 * time.Second
   backoff := 1 * time.Second
 
   for {
-    exists, err := p.kube.DeploymentExists(ctx, cephNamespace, cephToolsDeploy)
-    if err == nil && exists {
-      p.logger.Info("ceph tools deployment is ready")
+    // Verify a pod is actually running and ready by executing a command,
+    // not just checking if the deployment object exists in the API.
+    _, err := p.kube.ExecInDeployment(ctx, cephNamespace, cephToolsDeploy, []string{"true"})
+    if err == nil {
+      p.logger.Info("ceph tools pod is ready")
       return nil
     }
 
     if ctx.Err() != nil {
-      p.logger.Error("timed out waiting for ceph tools deployment")
-      if err != nil {
-        return err
-      }
+      p.logger.Error("timed out waiting for ceph tools pod", "lastError", err)
       return ctx.Err()
     }
 
-    p.logger.Info("waiting for ceph tools deployment", "backoff", backoff)
+    p.logger.Info("waiting for ceph tools pod", "backoff", backoff, "lastError", err)
     select {
     case <-ctx.Done():
       return ctx.Err()

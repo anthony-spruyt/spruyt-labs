@@ -81,6 +81,11 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
       status, err := m.ups.GetStatus(ctx)
       if err != nil {
         m.logger.Error("failed to poll UPS", "error", err)
+        // Don't reset or advance onBatteryElapsed on poll errors.
+        // Resetting would be dangerous: if NUT crashes during a real
+        // outage, the countdown would reset and shutdown never triggers.
+        // Not advancing is conservative — the countdown holds its
+        // position until a successful poll confirms the UPS state.
         continue
       }
 
@@ -95,7 +100,19 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
         if onBatteryElapsed >= shutdownDelay {
           m.logger.Warn("shutdown delay exceeded, triggering shutdown")
           m.shuttingDown.Store(true)
-          if err := m.shutdownFn(ctx); err != nil {
+
+          // Enforce UPS runtime budget as an overall deadline for the
+          // shutdown sequence. Remaining budget = total budget minus
+          // time already spent on battery.
+          budgetRemaining := time.Duration(m.cfg.UPSRuntimeBudget)*time.Second - onBatteryElapsed
+          if budgetRemaining <= 0 {
+            budgetRemaining = 30 * time.Second // absolute minimum
+          }
+          shutdownCtx, shutdownCancel := context.WithTimeout(ctx, budgetRemaining)
+          defer shutdownCancel()
+          m.logger.Info("shutdown budget", "remaining", budgetRemaining)
+
+          if err := m.shutdownFn(shutdownCtx); err != nil {
             m.logger.Error("shutdown failed", "error", err)
             return fmt.Errorf("shutdown failed: %w", err)
           }

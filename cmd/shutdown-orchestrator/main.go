@@ -15,7 +15,7 @@ import (
 func main() {
   logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-  cfg := LoadConfig()
+  cfg := LoadConfig(logger)
   if err := cfg.Validate(); err != nil {
     logger.Error("invalid configuration", "error", err)
     os.Exit(1)
@@ -42,7 +42,7 @@ func main() {
   }
 }
 
-func buildClients(cfg Config, logger *slog.Logger) (clients.KubeClient, clients.TalosClient, clients.UPSClient, error) {
+func buildClients(cfg Config, logger *slog.Logger) (clients.KubeClient, *clients.RealTalosClient, clients.UPSClient, error) {
   kube, err := clients.NewKubeClient()
   if err != nil {
     return nil, nil, nil, fmt.Errorf("creating kube client: %w", err)
@@ -66,6 +66,7 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
   if err != nil {
     return err
   }
+  defer talos.Close()
 
   orch := buildOrchestrator(kube, talos, cfg, logger)
 
@@ -90,6 +91,7 @@ func runTest(ctx context.Context, cfg Config, logger *slog.Logger) error {
   if err != nil {
     return err
   }
+  defer talos.Close()
 
   orch := buildOrchestrator(kube, talos, cfg, logger)
   return orch.RunTest(ctx)
@@ -102,6 +104,7 @@ func runPreflight(ctx context.Context, cfg Config, logger *slog.Logger) {
     fmt.Println("FAIL: could not create clients")
     os.Exit(1)
   }
+  defer talos.Close()
 
   checker := NewPreflightChecker(kube, talos, ups, cfg, logger)
   results := checker.RunAll(ctx)

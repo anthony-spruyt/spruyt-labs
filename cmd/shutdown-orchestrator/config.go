@@ -32,23 +32,26 @@ type Config struct {
   ControlPlaneIPs []string
 }
 
-func LoadConfig() Config {
+func LoadConfig(logger *slog.Logger) Config {
+  if logger == nil {
+    logger = slog.Default()
+  }
   cfg := Config{
     Mode:                     envOrDefault("MODE", "monitor"),
     NUTServer:                envOrDefault("NUT_SERVER", "nut-server-nut.nut-system.svc.cluster.local"),
-    NUTPort:                  envIntOrDefault("NUT_PORT", 3493),
+    NUTPort:                  envIntOrDefault(logger, "NUT_PORT", 3493),
     UPSName:                  envOrDefault("UPS_NAME", "cp1500"),
-    ShutdownDelay:            envIntOrDefault("SHUTDOWN_DELAY", 30),
-    PollInterval:             envIntOrDefault("POLL_INTERVAL", 5),
-    UPSRuntimeBudget:         envIntOrDefault("UPS_RUNTIME_BUDGET", 600),
-    HealthPort:               envIntOrDefault("HEALTH_PORT", 8080),
+    ShutdownDelay:            envIntOrDefault(logger, "SHUTDOWN_DELAY", 30),
+    PollInterval:             envIntOrDefault(logger, "POLL_INTERVAL", 5),
+    UPSRuntimeBudget:         envIntOrDefault(logger, "UPS_RUNTIME_BUDGET", 600),
+    HealthPort:               envIntOrDefault(logger, "HEALTH_PORT", 8080),
     NodeName:                 os.Getenv("NODE_NAME"),
-    CNPGPhaseTimeout:         time.Duration(envIntOrDefault("CNPG_PHASE_TIMEOUT", 60)) * time.Second,
-    CephFlagPhaseTimeout:     time.Duration(envIntOrDefault("CEPH_FLAG_PHASE_TIMEOUT", 15)) * time.Second,
-    CephScalePhaseTimeout:    time.Duration(envIntOrDefault("CEPH_SCALE_PHASE_TIMEOUT", 60)) * time.Second,
-    NodeShutdownPhaseTimeout: time.Duration(envIntOrDefault("NODE_SHUTDOWN_PHASE_TIMEOUT", 120)) * time.Second,
-    PerNodeTimeout:           time.Duration(envIntOrDefault("PER_NODE_TIMEOUT", 15)) * time.Second,
-    CephWaitToolsTimeout:     time.Duration(envIntOrDefault("CEPH_WAIT_TOOLS_TIMEOUT", 600)) * time.Second,
+    CNPGPhaseTimeout:         time.Duration(envIntOrDefault(logger, "CNPG_PHASE_TIMEOUT", 60)) * time.Second,
+    CephFlagPhaseTimeout:     time.Duration(envIntOrDefault(logger, "CEPH_FLAG_PHASE_TIMEOUT", 15)) * time.Second,
+    CephScalePhaseTimeout:    time.Duration(envIntOrDefault(logger, "CEPH_SCALE_PHASE_TIMEOUT", 60)) * time.Second,
+    NodeShutdownPhaseTimeout: time.Duration(envIntOrDefault(logger, "NODE_SHUTDOWN_PHASE_TIMEOUT", 120)) * time.Second,
+    PerNodeTimeout:           time.Duration(envIntOrDefault(logger, "PER_NODE_TIMEOUT", 15)) * time.Second,
+    CephWaitToolsTimeout:     time.Duration(envIntOrDefault(logger, "CEPH_WAIT_TOOLS_TIMEOUT", 600)) * time.Second,
   }
 
   // Collect non-empty node IPs
@@ -83,11 +86,11 @@ func envOrDefault(key, def string) string {
   return def
 }
 
-func envIntOrDefault(key string, def int) int {
+func envIntOrDefault(logger *slog.Logger, key string, def int) int {
   if v := os.Getenv(key); v != "" {
     n, err := strconv.Atoi(v)
     if err != nil {
-      slog.Warn("invalid integer env var, using default", "key", key, "value", v, "default", def)
+      logger.Warn("invalid integer env var, using default", "key", key, "value", v, "default", def)
       return def
     }
     return n

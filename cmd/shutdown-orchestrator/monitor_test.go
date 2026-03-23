@@ -49,10 +49,11 @@ func (s *shutdownTracker) shutdownFn(_ context.Context) error {
 
 func testConfig(pollMs, delayMs, healthPort int) Config {
   return Config{
-    Mode:          "monitor",
-    PollInterval:  pollMs,
-    ShutdownDelay: delayMs,
-    HealthPort:    healthPort,
+    Mode:             "monitor",
+    PollInterval:     pollMs,
+    ShutdownDelay:    delayMs,
+    HealthPort:       healthPort,
+    UPSRuntimeBudget: 600, // default 10 min budget
   }
 }
 

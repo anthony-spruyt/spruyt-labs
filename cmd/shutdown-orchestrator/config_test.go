@@ -1,7 +1,6 @@
 package main
 
 import (
-  "os"
   "testing"
 )
 
@@ -9,10 +8,10 @@ func TestLoadConfigDefaults(t *testing.T) {
   // Clear any env vars that might interfere
   for _, key := range []string{"MODE", "NUT_SERVER", "NUT_PORT", "UPS_NAME",
     "SHUTDOWN_DELAY", "POLL_INTERVAL", "UPS_RUNTIME_BUDGET", "HEALTH_PORT"} {
-    os.Unsetenv(key)
+    t.Setenv(key, "")
   }
 
-  cfg := LoadConfig()
+  cfg := LoadConfig(nil)
 
   if cfg.Mode != "monitor" {
     t.Errorf("Mode = %q, want %q", cfg.Mode, "monitor")
@@ -41,16 +40,11 @@ func TestLoadConfigDefaults(t *testing.T) {
 }
 
 func TestLoadConfigFromEnv(t *testing.T) {
-  os.Setenv("MODE", "test")
-  os.Setenv("SHUTDOWN_DELAY", "60")
-  os.Setenv("UPS_RUNTIME_BUDGET", "900")
-  defer func() {
-    os.Unsetenv("MODE")
-    os.Unsetenv("SHUTDOWN_DELAY")
-    os.Unsetenv("UPS_RUNTIME_BUDGET")
-  }()
+  t.Setenv("MODE", "test")
+  t.Setenv("SHUTDOWN_DELAY", "60")
+  t.Setenv("UPS_RUNTIME_BUDGET", "900")
 
-  cfg := LoadConfig()
+  cfg := LoadConfig(nil)
 
   if cfg.Mode != "test" {
     t.Errorf("Mode = %q, want %q", cfg.Mode, "test")
@@ -64,20 +58,14 @@ func TestLoadConfigFromEnv(t *testing.T) {
 }
 
 func TestLoadConfigNodeIPs(t *testing.T) {
-  os.Setenv("MS_01_1_IP4", "10.0.0.1")
-  os.Setenv("MS_01_2_IP4", "10.0.0.2")
-  os.Setenv("MS_01_3_IP4", "10.0.0.3")
-  os.Setenv("E2_1_IP4", "10.0.1.1")
-  os.Setenv("E2_2_IP4", "10.0.1.2")
-  os.Setenv("E2_3_IP4", "10.0.1.3")
-  defer func() {
-    for _, k := range []string{"MS_01_1_IP4", "MS_01_2_IP4", "MS_01_3_IP4",
-      "E2_1_IP4", "E2_2_IP4", "E2_3_IP4"} {
-      os.Unsetenv(k)
-    }
-  }()
+  t.Setenv("MS_01_1_IP4", "10.0.0.1")
+  t.Setenv("MS_01_2_IP4", "10.0.0.2")
+  t.Setenv("MS_01_3_IP4", "10.0.0.3")
+  t.Setenv("E2_1_IP4", "10.0.1.1")
+  t.Setenv("E2_2_IP4", "10.0.1.2")
+  t.Setenv("E2_3_IP4", "10.0.1.3")
 
-  cfg := LoadConfig()
+  cfg := LoadConfig(nil)
 
   if len(cfg.WorkerIPs) != 3 {
     t.Fatalf("WorkerIPs len = %d, want 3", len(cfg.WorkerIPs))
@@ -91,10 +79,9 @@ func TestLoadConfigNodeIPs(t *testing.T) {
 }
 
 func TestLoadConfigInvalidMode(t *testing.T) {
-  os.Setenv("MODE", "invalid")
-  defer os.Unsetenv("MODE")
+  t.Setenv("MODE", "invalid")
 
-  cfg := LoadConfig()
+  cfg := LoadConfig(nil)
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for invalid mode")
   }

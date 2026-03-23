@@ -277,7 +277,7 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
 
   for i, c := range calls {
     switch {
-    case c == "DeploymentExists:rook-ceph-tools" && toolsIdx == -1:
+    case c == "ExecInDeployment" && toolsIdx == -1:
       toolsIdx = i
     case c == "ScaleDeployment:rook-ceph-operator:1" && scaleUpIdx == -1:
       // ScaleUp calls operator last but we just need some scale-up call
