@@ -1,9 +1,6 @@
 # spruyt-labs
 
-[![Lint](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/lint.yaml/badge.svg?branch=main)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/lint.yaml)
-[![Kubeconform](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/kubeconform.yaml/badge.svg?branch=main)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/kubeconform.yaml)
-[![Kyverno](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/kyverno-test.yaml/badge.svg?branch=main)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/kyverno-test.yaml)
-[![Terraform](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/terraform-validate.yaml/badge.svg?branch=main)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/terraform-validate.yaml)
+[![CI](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/anthony-spruyt/spruyt-labs/actions/workflows/ci.yaml)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)](https://github.com/anthony-spruyt/spruyt-labs/issues?q=is%3Aissue+is%3Aopen+label%3Arenovate)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/anthony-spruyt/spruyt-labs/blob/main/LICENSE)
 
