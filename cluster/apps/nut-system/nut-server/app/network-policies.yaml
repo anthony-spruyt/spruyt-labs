@@ -20,6 +20,28 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow NUT protocol ingress from shutdown-orchestrator
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-orchestrator-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: nut-server
+      app.kubernetes.io/instance: nut-server
+      app.kubernetes.io/name: nut-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: nut-system
+            k8s:app.kubernetes.io/name: shutdown-orchestrator
+      toPorts:
+        - ports:
+            - port: "3493"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
