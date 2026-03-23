@@ -60,6 +60,10 @@ controllers:
             value: "300"
           - name: NODE_SHUTDOWN_PHASE_TIMEOUT
             value: "120"
+          - name: PER_NODE_TIMEOUT
+            value: "15"
+          - name: CEPH_WAIT_TOOLS_TIMEOUT
+            value: "600"
           # Node IPs from cluster secrets (Flux substitution)
           - name: MS_01_1_IP4
             value: "${MS_01_1_IP4}"

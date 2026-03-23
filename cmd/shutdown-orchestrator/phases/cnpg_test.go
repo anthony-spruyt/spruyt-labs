@@ -158,8 +158,8 @@ func TestCNPGHibernateAnnotationFailure(t *testing.T) {
   phase := NewCNPGPhase(mock, newTestLogger())
 
   err := phase.Hibernate(context.Background())
-  if err != nil {
-    t.Fatalf("Hibernate() returned error: %v", err)
+  if err == nil {
+    t.Fatal("Hibernate() should return error when a cluster fails")
   }
 
   calls := mock.getHibernationCalls()

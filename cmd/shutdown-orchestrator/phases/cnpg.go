@@ -3,6 +3,7 @@ package phases
 import (
   "context"
   "errors"
+  "fmt"
   "log/slog"
 
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
@@ -27,7 +28,8 @@ func NewCNPGPhase(kube clients.KubeClient, logger *slog.Logger) *CNPGPhase {
 
 // Hibernate sets hibernation on all CNPG clusters.
 // If the CNPG CRD is not installed, it logs and returns nil.
-// If setting hibernation fails on a cluster, it logs the error and continues.
+// Per-cluster errors are collected and returned via errors.Join so the caller
+// knows the phase did not fully succeed, while still attempting all clusters.
 func (p *CNPGPhase) Hibernate(ctx context.Context) error {
   clusters, err := p.kube.GetCNPGClusters(ctx)
   if err != nil {
@@ -38,20 +40,23 @@ func (p *CNPGPhase) Hibernate(ctx context.Context) error {
     return err
   }
 
+  var errs []error
   for _, c := range clusters {
     p.logger.Info("hibernating CNPG cluster", "namespace", c.Namespace, "name", c.Name)
     if err := p.kube.SetCNPGHibernation(ctx, c.Namespace, c.Name, true); err != nil {
       p.logger.Error("failed to hibernate CNPG cluster", "namespace", c.Namespace, "name", c.Name, "error", err)
+      errs = append(errs, fmt.Errorf("hibernate %s/%s: %w", c.Namespace, c.Name, err))
       continue
     }
   }
 
-  return nil
+  return errors.Join(errs...)
 }
 
 // Wake unsets hibernation on all hibernated CNPG clusters.
 // If the CNPG CRD is not installed, it logs and returns nil.
-// If unsetting hibernation fails on a cluster, it logs the error and continues.
+// Per-cluster errors are collected and returned via errors.Join so the caller
+// knows the phase did not fully succeed, while still attempting all clusters.
 func (p *CNPGPhase) Wake(ctx context.Context) error {
   clusters, err := p.kube.GetCNPGClusters(ctx)
   if err != nil {
@@ -62,6 +67,7 @@ func (p *CNPGPhase) Wake(ctx context.Context) error {
     return err
   }
 
+  var errs []error
   for _, c := range clusters {
     if !c.Hibernated {
       continue
@@ -69,11 +75,12 @@ func (p *CNPGPhase) Wake(ctx context.Context) error {
     p.logger.Info("waking CNPG cluster", "namespace", c.Namespace, "name", c.Name)
     if err := p.kube.SetCNPGHibernation(ctx, c.Namespace, c.Name, false); err != nil {
       p.logger.Error("failed to wake CNPG cluster", "namespace", c.Namespace, "name", c.Name, "error", err)
+      errs = append(errs, fmt.Errorf("wake %s/%s: %w", c.Namespace, c.Name, err))
       continue
     }
   }
 
-  return nil
+  return errors.Join(errs...)
 }
 
 // isCRDNotInstalled checks if the error indicates the CNPG CRD is not installed

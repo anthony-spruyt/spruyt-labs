@@ -5,6 +5,25 @@ import (
   "time"
 )
 
+// validConfig returns a Config with all fields set to valid values.
+func validConfig() Config {
+  return Config{
+    Mode:                     "monitor",
+    PollInterval:             5 * time.Second,
+    ShutdownDelay:            30 * time.Second,
+    UPSRuntimeBudget:         600 * time.Second,
+    CNPGPhaseTimeout:         60 * time.Second,
+    CephFlagPhaseTimeout:     15 * time.Second,
+    CephScalePhaseTimeout:    60 * time.Second,
+    CephHealthWaitTimeout:    300 * time.Second,
+    NodeShutdownPhaseTimeout: 120 * time.Second,
+    PerNodeTimeout:           15 * time.Second,
+    CephWaitToolsTimeout:     600 * time.Second,
+    WorkerIPs:                []string{"10.0.0.1"},
+    ControlPlaneIPs:          []string{"10.0.1.1"},
+  }
+}
+
 func TestLoadConfigDefaults(t *testing.T) {
   // Ensure env vars are empty so defaults are used (t.Setenv restores originals on cleanup).
   // Setting to "" is sufficient since envOrDefault treats empty as unset.
@@ -90,88 +109,68 @@ func TestLoadConfigInvalidMode(t *testing.T) {
 }
 
 func TestValidateZeroPollInterval(t *testing.T) {
-  cfg := Config{
-    Mode:             "monitor",
-    PollInterval:     0,
-    ShutdownDelay:    30 * time.Second,
-    UPSRuntimeBudget: 600 * time.Second,
-  }
+  cfg := validConfig()
+  cfg.PollInterval = 0
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for zero PollInterval")
   }
 }
 
 func TestValidateZeroShutdownDelay(t *testing.T) {
-  cfg := Config{
-    Mode:             "monitor",
-    PollInterval:     5 * time.Second,
-    ShutdownDelay:    0,
-    UPSRuntimeBudget: 600 * time.Second,
-  }
+  cfg := validConfig()
+  cfg.ShutdownDelay = 0
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for zero ShutdownDelay")
   }
 }
 
 func TestValidateZeroUPSRuntimeBudget(t *testing.T) {
-  cfg := Config{
-    Mode:             "monitor",
-    PollInterval:     5 * time.Second,
-    ShutdownDelay:    30 * time.Second,
-    UPSRuntimeBudget: 0,
-  }
+  cfg := validConfig()
+  cfg.UPSRuntimeBudget = 0
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for zero UPSRuntimeBudget")
   }
 }
 
 func TestValidateNoControlPlaneIPs(t *testing.T) {
-  cfg := Config{
-    Mode:             "monitor",
-    PollInterval:     5 * time.Second,
-    ShutdownDelay:    30 * time.Second,
-    UPSRuntimeBudget: 600 * time.Second,
-    WorkerIPs:        []string{"10.0.0.1"},
-    ControlPlaneIPs:  nil,
-  }
+  cfg := validConfig()
+  cfg.ControlPlaneIPs = nil
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for missing control plane IPs")
   }
 }
 
 func TestValidateNoWorkerIPs(t *testing.T) {
-  cfg := Config{
-    Mode:             "monitor",
-    PollInterval:     5 * time.Second,
-    ShutdownDelay:    30 * time.Second,
-    UPSRuntimeBudget: 600 * time.Second,
-    WorkerIPs:        nil,
-    ControlPlaneIPs:  []string{"10.0.1.1"},
-  }
+  cfg := validConfig()
+  cfg.WorkerIPs = nil
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for missing worker IPs")
   }
 }
 
 func TestValidateNoIPsInTestMode(t *testing.T) {
-  cfg := Config{
-    Mode:             "test",
-    PollInterval:     5 * time.Second,
-    ShutdownDelay:    30 * time.Second,
-    UPSRuntimeBudget: 600 * time.Second,
-  }
+  cfg := validConfig()
+  cfg.Mode = "test"
+  cfg.WorkerIPs = nil
+  cfg.ControlPlaneIPs = nil
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for missing IPs in test mode")
   }
 }
 
-func TestValidatePreflightSkipsIPCheck(t *testing.T) {
-  cfg := Config{
-    Mode:             "preflight",
-    PollInterval:     5 * time.Second,
-    ShutdownDelay:    30 * time.Second,
-    UPSRuntimeBudget: 600 * time.Second,
+func TestValidateZeroPerNodeTimeout(t *testing.T) {
+  cfg := validConfig()
+  cfg.PerNodeTimeout = 0
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for zero PerNodeTimeout")
   }
+}
+
+func TestValidatePreflightSkipsIPCheck(t *testing.T) {
+  cfg := validConfig()
+  cfg.Mode = "preflight"
+  cfg.WorkerIPs = nil
+  cfg.ControlPlaneIPs = nil
   if err := cfg.Validate(); err != nil {
     t.Errorf("Validate() = %v, want nil for preflight without IPs", err)
   }

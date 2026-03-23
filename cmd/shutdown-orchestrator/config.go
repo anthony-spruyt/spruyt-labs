@@ -89,6 +89,24 @@ func (c Config) Validate() error {
     return fmt.Errorf("UPS_RUNTIME_BUDGET must be positive, got %s", c.UPSRuntimeBudget)
   }
 
+  // Phase timeouts must be positive to avoid immediately-cancelled contexts.
+  for _, check := range []struct {
+    name  string
+    value time.Duration
+  }{
+    {"CNPG_PHASE_TIMEOUT", c.CNPGPhaseTimeout},
+    {"CEPH_FLAG_PHASE_TIMEOUT", c.CephFlagPhaseTimeout},
+    {"CEPH_SCALE_PHASE_TIMEOUT", c.CephScalePhaseTimeout},
+    {"CEPH_HEALTH_WAIT_TIMEOUT", c.CephHealthWaitTimeout},
+    {"NODE_SHUTDOWN_PHASE_TIMEOUT", c.NodeShutdownPhaseTimeout},
+    {"PER_NODE_TIMEOUT", c.PerNodeTimeout},
+    {"CEPH_WAIT_TOOLS_TIMEOUT", c.CephWaitToolsTimeout},
+  } {
+    if check.value <= 0 {
+      return fmt.Errorf("%s must be positive, got %s", check.name, check.value)
+    }
+  }
+
   // Node IPs are required for monitor and test modes to perform shutdown/recovery.
   // Preflight mode checks IPs as part of its own validation.
   if c.Mode == "monitor" || c.Mode == "test" {

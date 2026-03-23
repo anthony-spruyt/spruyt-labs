@@ -122,27 +122,30 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
     return o.ceph.WaitForToolsPod(pctx)
   }); err != nil {
     errs = append(errs, fmt.Errorf("ceph-wait-tools: %w", err))
-  }
+    // Ceph recovery phases depend on the tools pod; skip them to avoid
+    // cascading failures from exec commands that would all fail.
+    o.logger.Warn("skipping remaining Ceph recovery phases because tools pod is unavailable")
+  } else {
+    if err := runPhase(ctx, o.logger, "ceph-scale-up", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
+      return o.ceph.ScaleUp(pctx)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("ceph-scale-up: %w", err))
+    }
 
-  if err := runPhase(ctx, o.logger, "ceph-scale-up", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
-    return o.ceph.ScaleUp(pctx)
-  }); err != nil {
-    errs = append(errs, fmt.Errorf("ceph-scale-up: %w", err))
-  }
+    // Wait for Ceph to become healthy before removing noout protection.
+    // Without this, monitors could mark OSDs as "out" and trigger data
+    // rebalancing before OSD pods have fully started and peered.
+    if err := runPhase(ctx, o.logger, "ceph-health-wait", o.cfg.CephHealthWaitTimeout, func(pctx context.Context) error {
+      return o.ceph.WaitForCephHealthy(pctx)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("ceph-health-wait: %w", err))
+    }
 
-  // Wait for Ceph to become healthy before removing noout protection.
-  // Without this, monitors could mark OSDs as "out" and trigger data
-  // rebalancing before OSD pods have fully started and peered.
-  if err := runPhase(ctx, o.logger, "ceph-health-wait", o.cfg.CephHealthWaitTimeout, func(pctx context.Context) error {
-    return o.ceph.WaitForCephHealthy(pctx)
-  }); err != nil {
-    errs = append(errs, fmt.Errorf("ceph-health-wait: %w", err))
-  }
-
-  if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
-    return o.ceph.UnsetNoout(pctx)
-  }); err != nil {
-    errs = append(errs, fmt.Errorf("ceph-unset-noout: %w", err))
+    if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+      return o.ceph.UnsetNoout(pctx)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("ceph-unset-noout: %w", err))
+    }
   }
 
   if err := runPhase(ctx, o.logger, "cnpg-wake", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
@@ -346,7 +349,7 @@ func (o *Orchestrator) resolveNodeNames(ctx context.Context) (map[string]string,
 }
 
 // runPhase executes a phase function with a timeout, logging start/end and errors.
-// Errors are logged but not propagated — the sequence continues.
+// Errors are logged and returned to the caller for collection.
 func runPhase(
   ctx context.Context,
   logger *slog.Logger,
