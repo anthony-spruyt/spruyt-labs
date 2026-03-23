@@ -3,8 +3,8 @@ package phases
 import (
   "context"
   "fmt"
+  "io"
   "log/slog"
-  "os"
   "strings"
   "testing"
   "time"
@@ -125,7 +125,7 @@ func (m *mockCephKubeClient) GetNodes(ctx context.Context) ([]clients.Node, erro
 }
 
 func testLogger() *slog.Logger {
-  return slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+  return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
 
 func TestCephSetNoout(t *testing.T) {

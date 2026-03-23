@@ -192,3 +192,25 @@ func TestMonitorHealthEndpoint(t *testing.T) {
     t.Errorf("expected body %q, got %q", "ok\n", string(body))
   }
 }
+
+func TestIsOnBattery(t *testing.T) {
+  tests := []struct {
+    status string
+    want   bool
+  }{
+    {"OL", false},
+    {"OB", true},
+    {"OB DISCHRG", true},
+    {"OL CHRG", false},
+    {"", false},
+    {"OB LB", true},
+  }
+
+  for _, tt := range tests {
+    t.Run(fmt.Sprintf("status=%q", tt.status), func(t *testing.T) {
+      if got := isOnBattery(tt.status); got != tt.want {
+        t.Errorf("isOnBattery(%q) = %v, want %v", tt.status, got, tt.want)
+      }
+    })
+  }
+}

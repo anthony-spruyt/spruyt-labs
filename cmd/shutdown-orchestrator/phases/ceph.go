@@ -72,7 +72,9 @@ func (p *CephPhase) UnsetNoout(ctx context.Context) error {
 }
 
 // ScaleDown scales Ceph components to 0 replicas in order:
-// operator -> OSDs -> monitors -> managers.
+// operator -> OSDs -> monitors -> managers
+// per Rook node-maintenance docs: https://rook.io/docs/rook/latest/Upgrade/node-maintenance/
+//
 // If scaling one component fails, it logs a warning and continues.
 // Returns a combined error of all failures for inclusion in the phase summary.
 func (p *CephPhase) ScaleDown(ctx context.Context) error {
@@ -105,7 +107,8 @@ func (p *CephPhase) ScaleDown(ctx context.Context) error {
 }
 
 // ScaleUp scales Ceph components to 1 replica in reverse order:
-// monitors -> managers -> OSDs -> operator.
+// monitors -> managers -> OSDs -> operator
+// per Rook node-maintenance docs: https://rook.io/docs/rook/latest/Upgrade/node-maintenance/
 //
 // Each Rook component (mon, mgr, osd) is its own individual deployment with
 // 1 replica. Rook manages the count of each component type by creating or
@@ -113,6 +116,10 @@ func (p *CephPhase) ScaleDown(ctx context.Context) error {
 // deployment back to 1 is the correct target. The Rook operator (scaled up
 // last) will reconcile and recreate any missing deployments to match the
 // CephCluster CR spec.
+//
+// Unlike ScaleDown, this does not check ctx.Err() between steps because
+// recovery runs without UPS budget pressure — best effort to restore all
+// components even if the context is near expiry.
 //
 // If scaling one component fails, it logs a warning and continues.
 // Returns a combined error of all failures for inclusion in the phase summary.
