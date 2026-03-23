@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
   "name": "Ubuntu",
   "image": "mcr.microsoft.com/devcontainers/base:jammy",
   "runArgs": [
@@ -42,10 +43,11 @@
         "esbenp.prettier-vscode",
         "mhutchie.git-graph",
         "redhat.vscode-yaml",
-        "task.vscode-task",
-        "tim-koehler.helm-intellisense",
+        "github.vscode-github-actions",
+        "golang.go",
         "hashicorp.terraform",
-        "github.vscode-github-actions"
+        "task.vscode-task",
+        "tim-koehler.helm-intellisense"
       ]
     }
   },

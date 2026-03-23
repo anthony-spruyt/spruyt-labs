@@ -1,4 +1,5 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>anthony-spruyt/repo-operator//.github/renovate/base.json5",
     "github>anthony-spruyt/repo-operator//.github/renovate/managers.json5",
