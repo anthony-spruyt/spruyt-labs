@@ -40,10 +40,11 @@ func NewOrchestrator(
   }
 }
 
-// minNodeBudget is the minimum time reserved for node shutdown. If the
-// overall context deadline leaves less than this after accounting for the
-// node-shutdown phase timeout, non-critical phases (CNPG, Ceph) are skipped
-// so the orchestrator can proceed directly to shutting down nodes.
+// minNodeBudget is a safety margin beyond NodeShutdownPhaseTimeout. If the
+// overall context deadline leaves less than NodeShutdownPhaseTimeout + minNodeBudget,
+// non-critical phases (CNPG, Ceph) are skipped so the orchestrator can proceed
+// directly to shutting down nodes. This accounts for overhead like node name
+// resolution and API latency that falls outside the per-phase timeout.
 const minNodeBudget = 60 * time.Second
 
 // Shutdown runs the full shutdown sequence:

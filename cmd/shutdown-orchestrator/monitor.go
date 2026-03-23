@@ -13,6 +13,12 @@ import (
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
 )
 
+// minShutdownBudget is the absolute minimum time given to the shutdown
+// sequence when the entire UPS budget has already been consumed during the
+// countdown delay. This gives the orchestrator a last-chance window to
+// attempt node shutdown even under extreme time pressure.
+const minShutdownBudget = 30 * time.Second
+
 // Monitor polls the UPS for status changes and triggers shutdown when power
 // has been lost for longer than the configured ShutdownDelay.
 type Monitor struct {
@@ -112,7 +118,7 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
           // actual wall-clock time spent on battery.
           budgetRemaining := m.cfg.UPSRuntimeBudget - onBatteryElapsed
           if budgetRemaining <= 0 {
-            budgetRemaining = 30 * time.Second // absolute minimum
+            budgetRemaining = minShutdownBudget
           }
           // Use context.Background() instead of ctx so that a SIGTERM
           // (which cancels ctx) cannot abort the shutdown mid-flight.
