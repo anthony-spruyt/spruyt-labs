@@ -8,7 +8,7 @@ type: reference
 
 | Pattern                                                          | Category     | Count | Last Seen  | Added      | Notes                                                                                                 |
 | ---------------------------------------------------------------- | ------------ | ----- | ---------- | ---------- | ----------------------------------------------------------------------------------------------------- |
-| Go project skips K8s schema/dry-run checks                       | skip-logic   | 5     | 2026-03-23 | 2026-03-23 | Go code changes don't need kubectl dry-run or kustomize build (but RBAC yaml still needs it)          |
+| Go project skips K8s schema/dry-run checks                       | skip-logic   | 6     | 2026-03-23 | 2026-03-23 | Go code changes don't need kubectl dry-run or kustomize build (but RBAC yaml still needs it)          |
 | Dockerfile base image version must match go.mod                  | validation   | 1     | 2026-03-23 | 2026-03-23 | Verify Docker Hub tag exists when Dockerfile pins a specific Go patch version                         |
 | defer inside for-loop in monitor.go shutdown path                | code-pattern | 2     | 2026-03-23 | 2026-03-23 | Fixed: now calls shutdownCancel() explicitly instead of defer inside loop                             |
 | t.Setenv("key", "") equivalent to os.Unsetenv for envOrDefault   | code-pattern | 2     | 2026-03-23 | 2026-03-23 | Fixed: now calls os.Unsetenv in addition to t.Setenv("", "") for proper clearing                      |
