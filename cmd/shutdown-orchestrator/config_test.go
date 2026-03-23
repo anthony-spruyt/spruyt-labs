@@ -9,6 +9,7 @@ import (
 func validConfig() Config {
   return Config{
     Mode:                     "monitor",
+    NodeName:                 "test-node",
     PollInterval:             5 * time.Second,
     ShutdownDelay:            30 * time.Second,
     UPSRuntimeBudget:         600 * time.Second,
@@ -96,6 +97,21 @@ func TestLoadConfigNodeIPs(t *testing.T) {
   }
   if cfg.WorkerIPs[0] != "10.0.0.1" {
     t.Errorf("WorkerIPs[0] = %q, want %q", cfg.WorkerIPs[0], "10.0.0.1")
+  }
+}
+
+func TestValidateValidConfig(t *testing.T) {
+  cfg := validConfig()
+  if err := cfg.Validate(); err != nil {
+    t.Errorf("Validate() = %v, want nil for valid config", err)
+  }
+}
+
+func TestValidateEmptyNodeName(t *testing.T) {
+  cfg := validConfig()
+  cfg.NodeName = ""
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for empty NodeName in monitor mode")
   }
 }
 

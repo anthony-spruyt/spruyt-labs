@@ -1,2 +1,5 @@
 *_test.go
+*.md
 .claude/
+.dockerignore
+Dockerfile
