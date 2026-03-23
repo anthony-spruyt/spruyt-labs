@@ -100,7 +100,8 @@ The orchestrator supports three modes via `MODE` env var:
 
 - **`monitor`** (default) — preflight checks → auto-recover if needed → UPS polling
 - **`test`** — executes real shutdown sequence, skips orchestrator's own CP node,
-  waits for nodes to be powered back on, then auto-recovers and verifies health
+  waits for nodes to be powered back on, then auto-recovers and verifies health.
+  Requires `CONFIRM_TEST=yes` to prevent accidental execution.
 - **`preflight`** — validates all prerequisites against live cluster, reports
   pass/fail, exits
 
@@ -190,6 +191,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 | Variable                    | Default                                     | Description                              |
 | --------------------------- | ------------------------------------------- | ---------------------------------------- |
 | MODE                        | monitor                                     | Operating mode: monitor, test, preflight |
+| CONFIRM_TEST                | (unset)                                     | Must be "yes" to allow test mode         |
 | NUT_SERVER                  | nut-server-nut.nut-system.svc.cluster.local | NUT server address                       |
 | NUT_PORT                    | 3493                                        | NUT server port                          |
 | UPS_NAME                    | cp1500                                      | UPS name in NUT config                   |

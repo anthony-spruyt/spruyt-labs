@@ -12,6 +12,12 @@ import (
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/phases"
 )
 
+// version and commit are set at build time via -ldflags.
+var (
+  version = "dev"
+  commit  = "unknown"
+)
+
 func main() {
   logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
@@ -21,7 +27,7 @@ func main() {
     os.Exit(1)
   }
 
-  logger.Info("starting shutdown-orchestrator", "mode", cfg.Mode)
+  logger.Info("starting shutdown-orchestrator", "mode", cfg.Mode, "version", version, "commit", commit)
 
   ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
   defer cancel()
@@ -33,6 +39,10 @@ func main() {
       os.Exit(1)
     }
   case "test":
+    if os.Getenv("CONFIRM_TEST") != "yes" {
+      logger.Error("test mode executes a REAL shutdown against the live cluster; set CONFIRM_TEST=yes to proceed")
+      os.Exit(1)
+    }
     if err := runTest(ctx, cfg, logger); err != nil {
       logger.Error("test failed", "error", err)
       os.Exit(1)
