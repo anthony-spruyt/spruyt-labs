@@ -228,7 +228,9 @@ func (p *CephPhase) scaleByLabel(ctx context.Context, labelSelector string, repl
 
   var errs []error
   for _, name := range names {
-    errs = append(errs, p.scaleComponent(ctx, name, replicas))
+    if err := p.scaleComponent(ctx, name, replicas); err != nil {
+      errs = append(errs, err)
+    }
   }
   return errs
 }

@@ -65,10 +65,7 @@ func (m *Monitor) Run(ctx context.Context) error {
 // RunPollLoop polls the UPS at PollInterval and triggers shutdown after
 // ShutdownDelay seconds on battery. Exposed separately for testability.
 func (m *Monitor) RunPollLoop(ctx context.Context) error {
-  pollInterval := time.Duration(m.cfg.PollInterval) * time.Second
-  shutdownDelay := time.Duration(m.cfg.ShutdownDelay) * time.Second
-
-  ticker := time.NewTicker(pollInterval)
+  ticker := time.NewTicker(m.cfg.PollInterval)
   defer ticker.Stop()
 
   var onBatteryElapsed time.Duration
@@ -90,21 +87,21 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
       }
 
       if strings.Contains(status, "OB") {
-        onBatteryElapsed += pollInterval
+        onBatteryElapsed += m.cfg.PollInterval
         m.logger.Warn("UPS on battery",
           "status", status,
           "elapsed", onBatteryElapsed,
-          "delay", shutdownDelay,
+          "delay", m.cfg.ShutdownDelay,
         )
 
-        if onBatteryElapsed >= shutdownDelay {
+        if onBatteryElapsed >= m.cfg.ShutdownDelay {
           m.logger.Warn("shutdown delay exceeded, triggering shutdown")
           m.shuttingDown.Store(true)
 
           // Enforce UPS runtime budget as an overall deadline for the
           // shutdown sequence. Remaining budget = total budget minus
           // time already spent on battery.
-          budgetRemaining := time.Duration(m.cfg.UPSRuntimeBudget)*time.Second - onBatteryElapsed
+          budgetRemaining := m.cfg.UPSRuntimeBudget - onBatteryElapsed
           if budgetRemaining <= 0 {
             budgetRemaining = 30 * time.Second // absolute minimum
           }

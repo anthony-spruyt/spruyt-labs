@@ -3,6 +3,7 @@ package main
 import (
   "os"
   "testing"
+  "time"
 )
 
 func TestLoadConfigDefaults(t *testing.T) {
@@ -27,14 +28,14 @@ func TestLoadConfigDefaults(t *testing.T) {
   if cfg.UPSName != "cp1500" {
     t.Errorf("UPSName = %q, want %q", cfg.UPSName, "cp1500")
   }
-  if cfg.ShutdownDelay != 30 {
-    t.Errorf("ShutdownDelay = %d, want 30", cfg.ShutdownDelay)
+  if cfg.ShutdownDelay != 30*time.Second {
+    t.Errorf("ShutdownDelay = %s, want 30s", cfg.ShutdownDelay)
   }
-  if cfg.PollInterval != 5 {
-    t.Errorf("PollInterval = %d, want 5", cfg.PollInterval)
+  if cfg.PollInterval != 5*time.Second {
+    t.Errorf("PollInterval = %s, want 5s", cfg.PollInterval)
   }
-  if cfg.UPSRuntimeBudget != 600 {
-    t.Errorf("UPSRuntimeBudget = %d, want 600", cfg.UPSRuntimeBudget)
+  if cfg.UPSRuntimeBudget != 600*time.Second {
+    t.Errorf("UPSRuntimeBudget = %s, want 10m0s", cfg.UPSRuntimeBudget)
   }
   if cfg.HealthPort != 8080 {
     t.Errorf("HealthPort = %d, want 8080", cfg.HealthPort)
@@ -51,11 +52,11 @@ func TestLoadConfigFromEnv(t *testing.T) {
   if cfg.Mode != "test" {
     t.Errorf("Mode = %q, want %q", cfg.Mode, "test")
   }
-  if cfg.ShutdownDelay != 60 {
-    t.Errorf("ShutdownDelay = %d, want 60", cfg.ShutdownDelay)
+  if cfg.ShutdownDelay != 60*time.Second {
+    t.Errorf("ShutdownDelay = %s, want 1m0s", cfg.ShutdownDelay)
   }
-  if cfg.UPSRuntimeBudget != 900 {
-    t.Errorf("UPSRuntimeBudget = %d, want 900", cfg.UPSRuntimeBudget)
+  if cfg.UPSRuntimeBudget != 900*time.Second {
+    t.Errorf("UPSRuntimeBudget = %s, want 15m0s", cfg.UPSRuntimeBudget)
   }
 }
 
@@ -86,5 +87,41 @@ func TestLoadConfigInvalidMode(t *testing.T) {
   cfg := LoadConfig(nil)
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for invalid mode")
+  }
+}
+
+func TestValidateZeroPollInterval(t *testing.T) {
+  cfg := Config{
+    Mode:             "monitor",
+    PollInterval:     0,
+    ShutdownDelay:    30 * time.Second,
+    UPSRuntimeBudget: 600 * time.Second,
+  }
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for zero PollInterval")
+  }
+}
+
+func TestValidateZeroShutdownDelay(t *testing.T) {
+  cfg := Config{
+    Mode:             "monitor",
+    PollInterval:     5 * time.Second,
+    ShutdownDelay:    0,
+    UPSRuntimeBudget: 600 * time.Second,
+  }
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for zero ShutdownDelay")
+  }
+}
+
+func TestValidateZeroUPSRuntimeBudget(t *testing.T) {
+  cfg := Config{
+    Mode:             "monitor",
+    PollInterval:     5 * time.Second,
+    ShutdownDelay:    30 * time.Second,
+    UPSRuntimeBudget: 0,
+  }
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for zero UPSRuntimeBudget")
   }
 }

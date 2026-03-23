@@ -47,13 +47,13 @@ func (s *shutdownTracker) shutdownFn(_ context.Context) error {
   return s.err
 }
 
-func testConfig(pollMs, delayMs, healthPort int) Config {
+func testConfig(poll, delay time.Duration, healthPort int) Config {
   return Config{
     Mode:             "monitor",
-    PollInterval:     pollMs,
-    ShutdownDelay:    delayMs,
+    PollInterval:     poll,
+    ShutdownDelay:    delay,
     HealthPort:       healthPort,
-    UPSRuntimeBudget: 600, // default 10 min budget
+    UPSRuntimeBudget: 10 * time.Minute,
   }
 }
 
@@ -62,24 +62,10 @@ func TestMonitorUPSOnline(t *testing.T) {
     statuses: []string{"OL", "OL", "OL", "OL", "OL"},
   }
   tracker := &shutdownTracker{}
-  // PollInterval=50ms, ShutdownDelay=200ms (in seconds for config, but we use
-  // small values and treat them as milliseconds in test config).
-  // Actually Config uses seconds. We'll use 1s poll and 3s delay to keep tests
-  // fast but correct. Instead, let's use very small second values.
-  // The monitor uses time.Duration(cfg.PollInterval) * time.Second, so we need
-  // to work in seconds. For fast tests we'll override with millisecond-scale.
-  // Better: use millisecond values and adjust the monitor to accept Duration.
-  // Since Config stores int seconds, let's keep PollInterval=1, ShutdownDelay=3
-  // and use a context timeout to limit the test. 5 polls at 1s = 5s is too slow.
-  //
-  // We'll use PollInterval=1 (1 second) but cancel after 3 polls worth.
-  // Actually for unit tests we want them fast. Let's just set poll=1, delay=5
-  // and cancel the context after a few polls. The monitor should exit cleanly.
-
-  cfg := testConfig(1, 5, 0) // poll=1s, delay=5s
+  cfg := testConfig(50*time.Millisecond, 500*time.Millisecond, 0)
   mon := NewMonitor(ups, tracker.shutdownFn, cfg, nil)
 
-  ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
   defer cancel()
 
   err := mon.RunPollLoop(ctx)
@@ -97,11 +83,10 @@ func TestMonitorPowerLossDetection(t *testing.T) {
     statuses: []string{"OB", "OB", "OB"},
   }
   tracker := &shutdownTracker{}
-  // Poll every 1s, shutdown delay 10s — cancel before shutdown triggers.
-  cfg := testConfig(1, 10, 0)
+  cfg := testConfig(50*time.Millisecond, 500*time.Millisecond, 0)
   mon := NewMonitor(ups, tracker.shutdownFn, cfg, nil)
 
-  ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
   defer cancel()
 
   _ = mon.RunPollLoop(ctx)
@@ -123,10 +108,10 @@ func TestMonitorPowerRestoredDuringCountdown(t *testing.T) {
     statuses: []string{"OB", "OB", "OL", "OL", "OL"},
   }
   tracker := &shutdownTracker{}
-  cfg := testConfig(1, 10, 0) // delay 10s, won't expire in 2s
+  cfg := testConfig(50*time.Millisecond, 500*time.Millisecond, 0)
   mon := NewMonitor(ups, tracker.shutdownFn, cfg, nil)
 
-  ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
   defer cancel()
 
   _ = mon.RunPollLoop(ctx)
@@ -146,11 +131,11 @@ func TestMonitorCountdownExpires(t *testing.T) {
     statuses: []string{"OB", "OB", "OB", "OB", "OB", "OB", "OB", "OB", "OB", "OB"},
   }
   tracker := &shutdownTracker{}
-  // Poll every 1s, shutdown delay 2s — should trigger after 2 OB polls.
-  cfg := testConfig(1, 2, 0)
+  // Poll every 50ms, shutdown delay 100ms — should trigger after 2 OB polls.
+  cfg := testConfig(50*time.Millisecond, 100*time.Millisecond, 0)
   mon := NewMonitor(ups, tracker.shutdownFn, cfg, nil)
 
-  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
   defer cancel()
 
   _ = mon.RunPollLoop(ctx)
@@ -166,7 +151,7 @@ func TestMonitorHealthEndpoint(t *testing.T) {
   }
   tracker := &shutdownTracker{}
   // Use a random available port.
-  cfg := testConfig(60, 300, 0)
+  cfg := testConfig(60*time.Second, 300*time.Second, 0)
   mon := NewMonitor(ups, tracker.shutdownFn, cfg, nil)
 
   // Start health server on a free port.

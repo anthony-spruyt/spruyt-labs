@@ -2,10 +2,12 @@ package phases
 
 import (
   "context"
+  "errors"
   "log/slog"
-  "strings"
 
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
+  apierrors "k8s.io/apimachinery/pkg/api/errors"
+  "k8s.io/apimachinery/pkg/api/meta"
 )
 
 // CNPGPhase handles hibernation and wake of CloudNativePG clusters.
@@ -75,6 +77,9 @@ func (p *CNPGPhase) Wake(ctx context.Context) error {
 
 // isCRDNotInstalled checks if the error indicates the CNPG CRD is not installed.
 func isCRDNotInstalled(err error) bool {
-  msg := strings.ToLower(err.Error())
-  return strings.Contains(msg, "not found") || strings.Contains(msg, "no matches")
+  if apierrors.IsNotFound(err) {
+    return true
+  }
+  var noKindMatch *meta.NoKindMatchError
+  return errors.As(err, &noKindMatch)
 }

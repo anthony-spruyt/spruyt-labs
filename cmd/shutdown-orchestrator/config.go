@@ -13,9 +13,9 @@ type Config struct {
   NUTServer        string
   NUTPort          int
   UPSName          string
-  ShutdownDelay    int
-  PollInterval     int
-  UPSRuntimeBudget int
+  ShutdownDelay    time.Duration
+  PollInterval     time.Duration
+  UPSRuntimeBudget time.Duration
   HealthPort       int
   NodeName         string
 
@@ -42,9 +42,9 @@ func LoadConfig(logger *slog.Logger) Config {
     NUTServer:                envOrDefault("NUT_SERVER", "nut-server-nut.nut-system.svc.cluster.local"),
     NUTPort:                  envIntOrDefault(logger, "NUT_PORT", 3493),
     UPSName:                  envOrDefault("UPS_NAME", "cp1500"),
-    ShutdownDelay:            envIntOrDefault(logger, "SHUTDOWN_DELAY", 30),
-    PollInterval:             envIntOrDefault(logger, "POLL_INTERVAL", 5),
-    UPSRuntimeBudget:         envIntOrDefault(logger, "UPS_RUNTIME_BUDGET", 600),
+    ShutdownDelay:            time.Duration(envIntOrDefault(logger, "SHUTDOWN_DELAY", 30)) * time.Second,
+    PollInterval:             time.Duration(envIntOrDefault(logger, "POLL_INTERVAL", 5)) * time.Second,
+    UPSRuntimeBudget:         time.Duration(envIntOrDefault(logger, "UPS_RUNTIME_BUDGET", 600)) * time.Second,
     HealthPort:               envIntOrDefault(logger, "HEALTH_PORT", 8080),
     NodeName:                 os.Getenv("NODE_NAME"),
     CNPGPhaseTimeout:         time.Duration(envIntOrDefault(logger, "CNPG_PHASE_TIMEOUT", 60)) * time.Second,
@@ -79,11 +79,21 @@ func (c Config) Validate() error {
     return fmt.Errorf("invalid mode %q: must be monitor, test, or preflight", c.Mode)
   }
 
+  if c.PollInterval <= 0 {
+    return fmt.Errorf("POLL_INTERVAL must be positive, got %s", c.PollInterval)
+  }
+  if c.ShutdownDelay <= 0 {
+    return fmt.Errorf("SHUTDOWN_DELAY must be positive, got %s", c.ShutdownDelay)
+  }
+  if c.UPSRuntimeBudget <= 0 {
+    return fmt.Errorf("UPS_RUNTIME_BUDGET must be positive, got %s", c.UPSRuntimeBudget)
+  }
+
   // Warn if phase timeouts exceed the UPS runtime budget minus shutdown delay.
   totalPhaseTime := c.CNPGPhaseTimeout + c.CephFlagPhaseTimeout + c.CephScalePhaseTimeout + c.NodeShutdownPhaseTimeout
-  availableBudget := time.Duration(c.UPSRuntimeBudget)*time.Second - time.Duration(c.ShutdownDelay)*time.Second
+  availableBudget := c.UPSRuntimeBudget - c.ShutdownDelay
   if totalPhaseTime > availableBudget {
-    return fmt.Errorf("phase timeouts (%s) exceed available UPS budget (%s = %ds runtime - %ds delay)",
+    return fmt.Errorf("phase timeouts (%s) exceed available UPS budget (%s = %s runtime - %s delay)",
       totalPhaseTime, availableBudget, c.UPSRuntimeBudget, c.ShutdownDelay)
   }
 

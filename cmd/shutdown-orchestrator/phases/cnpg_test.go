@@ -10,6 +10,8 @@ import (
   "time"
 
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
+  "k8s.io/apimachinery/pkg/api/meta"
+  "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // mockKubeClient records calls to CNPG methods.
@@ -126,8 +128,14 @@ func TestCNPGHibernateNoClusters(t *testing.T) {
 }
 
 func TestCNPGHibernateCRDNotInstalled(t *testing.T) {
+  // Simulate the error returned by the dynamic client when the CNPG CRD
+  // group is not installed (NoKindMatchError from the REST mapper).
+  noMatchErr := &meta.NoKindMatchError{
+    GroupKind:        schema.GroupKind{Group: "postgresql.cnpg.io", Kind: "Cluster"},
+    SearchedVersions: []string{"v1"},
+  }
   mock := &mockKubeClient{
-    getClustersErr: fmt.Errorf("the server could not find the requested resource: not found"),
+    getClustersErr: fmt.Errorf("listing CNPG clusters: %w", noMatchErr),
   }
   phase := NewCNPGPhase(mock, newTestLogger())
 
