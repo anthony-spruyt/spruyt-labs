@@ -286,6 +286,15 @@ func TestPreflightNodeIPsMissing(t *testing.T) {
   if found.Passed {
     t.Error("expected Node IPs check to fail")
   }
+
+  // Talos API check should also fail when no IPs are configured
+  talosResult := findResult(results, "Talos API reachable")
+  if talosResult == nil {
+    t.Fatal("expected 'Talos API reachable' check in results")
+  }
+  if talosResult.Passed {
+    t.Error("expected Talos API check to fail when no node IPs configured")
+  }
 }
 
 // findResult returns the first PreflightResult with the given check name.

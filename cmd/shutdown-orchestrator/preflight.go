@@ -116,22 +116,30 @@ func (p *PreflightChecker) RunAll(ctx context.Context) []PreflightResult {
 
   // 7. Talos API reachable (check each node)
   allNodeIPs := append(append([]string{}, p.cfg.WorkerIPs...), p.cfg.ControlPlaneIPs...)
-  talosOK := true
-  var talosErrs []string
-  for _, ip := range allNodeIPs {
-    if pingErr := p.talos.Ping(ctx, ip); pingErr != nil {
-      talosOK = false
-      talosErrs = append(talosErrs, fmt.Sprintf("%s: %v", ip, pingErr))
-    }
-  }
-  if talosOK {
-    results = append(results, PreflightResult{Check: "Talos API reachable", Passed: true})
-  } else {
+  if len(allNodeIPs) == 0 {
     results = append(results, PreflightResult{
       Check:  "Talos API reachable",
       Passed: false,
-      Error:  fmt.Sprintf("unreachable nodes: %s", strings.Join(talosErrs, "; ")),
+      Error:  "no node IPs configured, cannot verify Talos API",
     })
+  } else {
+    talosOK := true
+    var talosErrs []string
+    for _, ip := range allNodeIPs {
+      if pingErr := p.talos.Ping(ctx, ip); pingErr != nil {
+        talosOK = false
+        talosErrs = append(talosErrs, fmt.Sprintf("%s: %v", ip, pingErr))
+      }
+    }
+    if talosOK {
+      results = append(results, PreflightResult{Check: "Talos API reachable", Passed: true})
+    } else {
+      results = append(results, PreflightResult{
+        Check:  "Talos API reachable",
+        Passed: false,
+        Error:  fmt.Sprintf("unreachable nodes: %s", strings.Join(talosErrs, "; ")),
+      })
+    }
   }
 
   // 8. UPS reachable
