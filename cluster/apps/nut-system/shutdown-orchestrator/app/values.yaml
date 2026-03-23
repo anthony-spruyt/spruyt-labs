@@ -27,7 +27,7 @@ controllers:
         image:
           repository: ghcr.io/anthony-spruyt/shutdown-orchestrator
           tag: latest
-          pullPolicy: IfNotPresent
+          pullPolicy: Always
         env:
           - name: NUT_SERVER
             value: nut-server-nut.nut-system.svc.cluster.local

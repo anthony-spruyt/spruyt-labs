@@ -79,7 +79,9 @@ func (p *CephPhase) ScaleDown(ctx context.Context) error {
   var errs []error
 
   // 1. Operator
-  errs = append(errs, p.scaleComponent(ctx, cephOperatorDeploy, 0))
+  if err := p.scaleComponent(ctx, cephOperatorDeploy, 0); err != nil {
+    errs = append(errs, err)
+  }
 
   // 2. OSDs
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 0)...)
@@ -118,7 +120,9 @@ func (p *CephPhase) ScaleUp(ctx context.Context) error {
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 1)...)
 
   // 4. Operator
-  errs = append(errs, p.scaleComponent(ctx, cephOperatorDeploy, 1))
+  if err := p.scaleComponent(ctx, cephOperatorDeploy, 1); err != nil {
+    errs = append(errs, err)
+  }
 
   return errors.Join(errs...)
 }
@@ -224,7 +228,7 @@ func (p *CephPhase) scaleComponent(ctx context.Context, name string, replicas in
 }
 
 // scaleByLabel lists deployments matching the label selector and scales each one.
-// Returns a slice of errors (which may contain nils) for collection by callers.
+// Returns a slice of non-nil errors for collection by callers.
 func (p *CephPhase) scaleByLabel(ctx context.Context, labelSelector string, replicas int32) []error {
   names, err := p.kube.ListDeploymentNames(ctx, cephNamespace, labelSelector)
   if err != nil {

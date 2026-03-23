@@ -9,6 +9,7 @@ import (
 )
 
 // fakeNUTServer starts a TCP listener that responds to NUT protocol GET VAR commands.
+// It handles multiple commands per connection to test persistent connection reuse.
 func fakeNUTServer(t *testing.T, upsName, statusValue string) (string, int, func()) {
   t.Helper()
 
@@ -28,17 +29,22 @@ func fakeNUTServer(t *testing.T, upsName, statusValue string) (string, int, func
       go func(c net.Conn) {
         defer c.Close()
         buf := make([]byte, 1024)
-        n, err := c.Read(buf)
-        if err != nil {
-          return
-        }
-        line := strings.TrimSpace(string(buf[:n]))
-        expected := fmt.Sprintf("GET VAR %s ups.status", upsName)
-        if line == expected {
-          resp := fmt.Sprintf("VAR %s ups.status \"%s\"\n", upsName, statusValue)
-          c.Write([]byte(resp))
-        } else {
-          c.Write([]byte("ERR UNKNOWN\n"))
+        for {
+          n, err := c.Read(buf)
+          if err != nil {
+            return
+          }
+          line := strings.TrimSpace(string(buf[:n]))
+          if line == "LOGOUT" {
+            return
+          }
+          expected := fmt.Sprintf("GET VAR %s ups.status", upsName)
+          if line == expected {
+            resp := fmt.Sprintf("VAR %s ups.status \"%s\"\n", upsName, statusValue)
+            c.Write([]byte(resp))
+          } else {
+            c.Write([]byte("ERR UNKNOWN\n"))
+          }
         }
       }(conn)
     }
@@ -52,6 +58,8 @@ func TestNUTClientGetStatus(t *testing.T) {
   defer cleanup()
 
   client := NewNUTClient(host, port, "ups1")
+  defer client.Close()
+
   status, err := client.GetStatus(context.Background())
   if err != nil {
     t.Fatalf("unexpected error: %v", err)
@@ -66,6 +74,8 @@ func TestNUTClientGetStatusOnBattery(t *testing.T) {
   defer cleanup()
 
   client := NewNUTClient(host, port, "ups1")
+  defer client.Close()
+
   status, err := client.GetStatus(context.Background())
   if err != nil {
     t.Fatalf("unexpected error: %v", err)
@@ -77,8 +87,65 @@ func TestNUTClientGetStatusOnBattery(t *testing.T) {
 
 func TestNUTClientConnectionRefused(t *testing.T) {
   client := NewNUTClient("127.0.0.1", 1, "ups1")
+  defer client.Close()
+
   _, err := client.GetStatus(context.Background())
   if err == nil {
     t.Fatal("expected error for connection refused, got nil")
+  }
+}
+
+func TestNUTClientReusesConnection(t *testing.T) {
+  host, port, cleanup := fakeNUTServer(t, "ups1", "OL")
+  defer cleanup()
+
+  client := NewNUTClient(host, port, "ups1")
+  defer client.Close()
+
+  // First call establishes connection.
+  status, err := client.GetStatus(context.Background())
+  if err != nil {
+    t.Fatalf("first call: unexpected error: %v", err)
+  }
+  if status != "OL" {
+    t.Errorf("first call: expected %q, got %q", "OL", status)
+  }
+
+  // Second call reuses the same connection.
+  status, err = client.GetStatus(context.Background())
+  if err != nil {
+    t.Fatalf("second call: unexpected error: %v", err)
+  }
+  if status != "OL" {
+    t.Errorf("second call: expected %q, got %q", "OL", status)
+  }
+}
+
+func TestNUTClientReconnectsAfterClose(t *testing.T) {
+  host, port, cleanup := fakeNUTServer(t, "ups1", "OL")
+  defer cleanup()
+
+  client := NewNUTClient(host, port, "ups1")
+  defer client.Close()
+
+  // Establish connection.
+  status, err := client.GetStatus(context.Background())
+  if err != nil {
+    t.Fatalf("first call: unexpected error: %v", err)
+  }
+  if status != "OL" {
+    t.Errorf("first call: expected %q, got %q", "OL", status)
+  }
+
+  // Force-close the persistent connection to simulate a network failure.
+  client.Close()
+
+  // Next call should reconnect transparently.
+  status, err = client.GetStatus(context.Background())
+  if err != nil {
+    t.Fatalf("reconnect call: unexpected error: %v", err)
+  }
+  if status != "OL" {
+    t.Errorf("reconnect call: expected %q, got %q", "OL", status)
   }
 }

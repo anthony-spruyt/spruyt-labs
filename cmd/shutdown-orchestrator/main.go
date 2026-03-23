@@ -42,7 +42,7 @@ func main() {
   }
 }
 
-func buildClients(cfg Config, logger *slog.Logger) (clients.KubeClient, *clients.RealTalosClient, clients.UPSClient, error) {
+func buildClients(cfg Config, logger *slog.Logger) (clients.KubeClient, *clients.RealTalosClient, *clients.NUTClient, error) {
   kube, err := clients.NewKubeClient()
   if err != nil {
     return nil, nil, nil, fmt.Errorf("creating kube client: %w", err)
@@ -67,6 +67,7 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
     return err
   }
   defer talos.Close()
+  defer ups.Close()
 
   // Run preflight checks before starting the monitor loop.
   // If any check fails, refuse to start monitoring.
@@ -103,11 +104,12 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
 }
 
 func runTest(ctx context.Context, cfg Config, logger *slog.Logger) error {
-  kube, talos, _, err := buildClients(cfg, logger)
+  kube, talos, ups, err := buildClients(cfg, logger)
   if err != nil {
     return err
   }
   defer talos.Close()
+  defer ups.Close()
 
   orch := buildOrchestrator(kube, talos, cfg, logger)
   return orch.RunTest(ctx)
@@ -121,6 +123,7 @@ func runPreflight(ctx context.Context, cfg Config, logger *slog.Logger) {
     os.Exit(1)
   }
   defer talos.Close()
+  defer ups.Close()
 
   checker := NewPreflightChecker(kube, talos, ups, cfg, logger)
   results := checker.RunAll(ctx)

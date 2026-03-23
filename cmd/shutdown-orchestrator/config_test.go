@@ -124,3 +124,55 @@ func TestValidateZeroUPSRuntimeBudget(t *testing.T) {
     t.Error("Validate() = nil, want error for zero UPSRuntimeBudget")
   }
 }
+
+func TestValidateNoControlPlaneIPs(t *testing.T) {
+  cfg := Config{
+    Mode:             "monitor",
+    PollInterval:     5 * time.Second,
+    ShutdownDelay:    30 * time.Second,
+    UPSRuntimeBudget: 600 * time.Second,
+    WorkerIPs:        []string{"10.0.0.1"},
+    ControlPlaneIPs:  nil,
+  }
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for missing control plane IPs")
+  }
+}
+
+func TestValidateNoWorkerIPs(t *testing.T) {
+  cfg := Config{
+    Mode:             "monitor",
+    PollInterval:     5 * time.Second,
+    ShutdownDelay:    30 * time.Second,
+    UPSRuntimeBudget: 600 * time.Second,
+    WorkerIPs:        nil,
+    ControlPlaneIPs:  []string{"10.0.1.1"},
+  }
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for missing worker IPs")
+  }
+}
+
+func TestValidateNoIPsInTestMode(t *testing.T) {
+  cfg := Config{
+    Mode:             "test",
+    PollInterval:     5 * time.Second,
+    ShutdownDelay:    30 * time.Second,
+    UPSRuntimeBudget: 600 * time.Second,
+  }
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for missing IPs in test mode")
+  }
+}
+
+func TestValidatePreflightSkipsIPCheck(t *testing.T) {
+  cfg := Config{
+    Mode:             "preflight",
+    PollInterval:     5 * time.Second,
+    ShutdownDelay:    30 * time.Second,
+    UPSRuntimeBudget: 600 * time.Second,
+  }
+  if err := cfg.Validate(); err != nil {
+    t.Errorf("Validate() = %v, want nil for preflight without IPs", err)
+  }
+}

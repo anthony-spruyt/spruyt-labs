@@ -89,6 +89,17 @@ func (c Config) Validate() error {
     return fmt.Errorf("UPS_RUNTIME_BUDGET must be positive, got %s", c.UPSRuntimeBudget)
   }
 
+  // Node IPs are required for monitor and test modes to perform shutdown/recovery.
+  // Preflight mode checks IPs as part of its own validation.
+  if c.Mode == "monitor" || c.Mode == "test" {
+    if len(c.ControlPlaneIPs) == 0 {
+      return fmt.Errorf("no control plane node IPs configured (E2_*_IP4 env vars)")
+    }
+    if len(c.WorkerIPs) == 0 {
+      return fmt.Errorf("no worker node IPs configured (MS_*_IP4 env vars)")
+    }
+  }
+
   // Warn if phase timeouts exceed the UPS runtime budget minus shutdown delay.
   totalPhaseTime := c.CNPGPhaseTimeout + c.CephFlagPhaseTimeout + c.CephScalePhaseTimeout + c.NodeShutdownPhaseTimeout
   availableBudget := c.UPSRuntimeBudget - c.ShutdownDelay
