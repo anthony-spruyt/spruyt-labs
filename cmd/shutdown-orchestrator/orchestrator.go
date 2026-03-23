@@ -40,32 +40,54 @@ func NewOrchestrator(
   }
 }
 
+// minNodeBudget is the minimum time reserved for node shutdown. If the
+// overall context deadline leaves less than this after accounting for the
+// node-shutdown phase timeout, non-critical phases (CNPG, Ceph) are skipped
+// so the orchestrator can proceed directly to shutting down nodes.
+const minNodeBudget = 60 * time.Second
+
 // Shutdown runs the full shutdown sequence:
-// 1. CNPG hibernate
-// 2. Ceph set noout
-// 3. Ceph scale down
-// 4. Node shutdown
+// 1. CNPG hibernate (skipped if budget is low)
+// 2. Ceph set noout (skipped if budget is low)
+// 3. Ceph scale down (skipped if budget is low)
+// 4. Node shutdown (always runs)
 func (o *Orchestrator) Shutdown(ctx context.Context) error {
   o.logger.Info("starting shutdown sequence")
 
   var errs []error
 
-  if err := runPhase(ctx, o.logger, "cnpg-hibernate", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
-    return o.cnpg.Hibernate(pctx)
-  }); err != nil {
-    errs = append(errs, fmt.Errorf("cnpg-hibernate: %w", err))
+  // Check whether we have enough budget for non-critical phases.
+  // If the context has a deadline and remaining time is tight, skip
+  // CNPG and Ceph phases to preserve time for node shutdown.
+  skipNonCritical := false
+  if deadline, ok := ctx.Deadline(); ok {
+    remaining := time.Until(deadline)
+    needed := o.cfg.NodeShutdownPhaseTimeout + minNodeBudget
+    if remaining < needed {
+      o.logger.Warn("budget too low for non-critical phases, skipping to node shutdown",
+        "remaining", remaining, "needed", needed)
+      skipNonCritical = true
+    }
   }
 
-  if err := runPhase(ctx, o.logger, "ceph-set-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
-    return o.ceph.SetNoout(pctx)
-  }); err != nil {
-    errs = append(errs, fmt.Errorf("ceph-set-noout: %w", err))
-  }
+  if !skipNonCritical {
+    if err := runPhase(ctx, o.logger, "cnpg-hibernate", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
+      return o.cnpg.Hibernate(pctx)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("cnpg-hibernate: %w", err))
+    }
 
-  if err := runPhase(ctx, o.logger, "ceph-scale-down", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
-    return o.ceph.ScaleDown(pctx)
-  }); err != nil {
-    errs = append(errs, fmt.Errorf("ceph-scale-down: %w", err))
+    if err := runPhase(ctx, o.logger, "ceph-set-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+      return o.ceph.SetNoout(pctx)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("ceph-set-noout: %w", err))
+    }
+
+    if err := runPhase(ctx, o.logger, "ceph-scale-down", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
+      return o.ceph.ScaleDown(pctx)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("ceph-scale-down: %w", err))
+    }
   }
 
   if err := runPhase(ctx, o.logger, "node-shutdown", o.cfg.NodeShutdownPhaseTimeout, func(pctx context.Context) error {

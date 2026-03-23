@@ -33,6 +33,20 @@ func (c *NUTClient) GetStatus(ctx context.Context) (string, error) {
   if err != nil {
     return "", fmt.Errorf("connecting to NUT server at %s: %w", addr, err)
   }
+
+  // Close connection on context cancellation. This ensures the connection
+  // is cleaned up even if the context is cancelled mid-read/write, and
+  // the LOGOUT below fails. The goroutine exits when the function returns
+  // and the done channel is closed.
+  done := make(chan struct{})
+  defer close(done)
+  go func() {
+    select {
+    case <-ctx.Done():
+      conn.Close()
+    case <-done:
+    }
+  }()
   defer conn.Close()
 
   if deadline, ok := ctx.Deadline(); ok {

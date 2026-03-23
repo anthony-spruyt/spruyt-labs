@@ -21,6 +21,12 @@ Network UPS Tools (NUT) integration for UPS monitoring with automated graceful c
 - Talos udev rules configured for USB UPS access
 - rook-ceph with rook-ceph-tools deployment
 - CNPG operator installed
+- **Talos API access patch applied**: The `enable-talos-api-access.yaml` patch
+  (`talos/patches/control-plane/`) must include `nut-system` in the allowed
+  namespaces list. This patch must be applied and Talos configs regenerated
+  **before** deploying the shutdown-orchestrator — the Talos ServiceAccount CRD
+  auto-provisions the `shutdown-orchestrator-talos-secrets` Kubernetes Secret via
+  the Talos API, and the pod will fail to start if this secret does not exist.
 
 ## Architecture
 

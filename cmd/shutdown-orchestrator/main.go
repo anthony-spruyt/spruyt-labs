@@ -68,6 +68,22 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
   }
   defer talos.Close()
 
+  // Run preflight checks before starting the monitor loop.
+  // If any check fails, refuse to start monitoring.
+  checker := NewPreflightChecker(kube, talos, ups, cfg, logger)
+  results := checker.RunAll(ctx)
+  failed := 0
+  for _, r := range results {
+    if !r.Passed {
+      logger.Error("preflight check failed", "check", r.Check, "error", r.Error)
+      failed++
+    }
+  }
+  if failed > 0 {
+    return fmt.Errorf("preflight failed: %d/%d checks failed, refusing to start monitor", failed, len(results))
+  }
+  logger.Info("all preflight checks passed")
+
   orch := buildOrchestrator(kube, talos, cfg, logger)
 
   // Check for recovery on startup

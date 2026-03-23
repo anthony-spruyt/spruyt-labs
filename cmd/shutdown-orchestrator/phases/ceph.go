@@ -172,9 +172,15 @@ func (p *CephPhase) WaitForCephHealthy(ctx context.Context) error {
     if err == nil {
       // Accept HEALTH_OK or HEALTH_WARN. During recovery, HEALTH_WARN
       // with only the noout flag is expected and safe to proceed.
+      // Log the full status so operators can review what warnings are active.
       trimmed := strings.TrimSpace(output)
-      if strings.HasPrefix(trimmed, "HEALTH_OK") || strings.HasPrefix(trimmed, "HEALTH_WARN") {
+      if strings.HasPrefix(trimmed, "HEALTH_OK") {
         p.logger.Info("ceph cluster is healthy", "status", trimmed)
+        return nil
+      }
+      if strings.HasPrefix(trimmed, "HEALTH_WARN") {
+        p.logger.Warn("ceph cluster has warnings, proceeding with recovery",
+          "status", trimmed)
         return nil
       }
       p.logger.Info("ceph cluster not yet healthy", "status", trimmed)

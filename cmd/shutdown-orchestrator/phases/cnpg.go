@@ -8,6 +8,7 @@ import (
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
   apierrors "k8s.io/apimachinery/pkg/api/errors"
   "k8s.io/apimachinery/pkg/api/meta"
+  "k8s.io/client-go/discovery"
 )
 
 // CNPGPhase handles hibernation and wake of CloudNativePG clusters.
@@ -75,11 +76,18 @@ func (p *CNPGPhase) Wake(ctx context.Context) error {
   return nil
 }
 
-// isCRDNotInstalled checks if the error indicates the CNPG CRD is not installed.
+// isCRDNotInstalled checks if the error indicates the CNPG CRD is not installed
+// or the API group is unavailable.
 func isCRDNotInstalled(err error) bool {
   if apierrors.IsNotFound(err) {
     return true
   }
   var noKindMatch *meta.NoKindMatchError
-  return errors.As(err, &noKindMatch)
+  if errors.As(err, &noKindMatch) {
+    return true
+  }
+  // Handle partial API group discovery failure (e.g., when the API server
+  // is under load and some groups are temporarily unavailable).
+  var discoveryErr *discovery.ErrGroupDiscoveryFailed
+  return errors.As(err, &discoveryErr)
 }

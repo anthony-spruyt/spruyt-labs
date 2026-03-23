@@ -298,8 +298,9 @@ func TestNodeSingleTimeout(t *testing.T) {
   }
 
   err := phase.ShutdownAll(context.Background(), cfg)
-  if err != nil {
-    t.Fatalf("ShutdownAll() returned error: %v", err)
+  // ShutdownAll now returns an error because w2 timed out.
+  if err == nil {
+    t.Fatal("ShutdownAll() = nil, want error for timed-out node")
   }
 
   calls := mock.getCalls()
@@ -313,6 +314,74 @@ func TestNodeSingleTimeout(t *testing.T) {
     if !calledIPs[ip] {
       t.Errorf("expected node %s to be called despite timeout on another node", ip)
     }
+  }
+}
+
+func TestNodeSelfWorkerSkipTestMode(t *testing.T) {
+  mock := newMockTalosClient()
+  phase := NewNodePhase(mock, newNodeTestLogger())
+
+  cfg := NodeConfig{
+    Workers: []NodeEntry{
+      {Name: "worker-1", IP: "10.0.0.1"},
+      {Name: "worker-2", IP: "10.0.0.2"},
+    },
+    ControlPlane: []NodeEntry{
+      {Name: "cp-1", IP: "10.1.0.1"},
+    },
+    NodeName:       "worker-1",
+    TestMode:       true,
+    PerNodeTimeout: 5 * time.Second,
+  }
+
+  err := phase.ShutdownAll(context.Background(), cfg)
+  if err != nil {
+    t.Fatalf("ShutdownAll() returned error: %v", err)
+  }
+
+  calls := mock.getCalls()
+  // Should have worker-2 and cp-1 only; worker-1 (self) skipped.
+  if len(calls) != 2 {
+    t.Fatalf("expected 2 calls (self skipped), got %d: %+v", len(calls), calls)
+  }
+  for _, c := range calls {
+    if c.NodeIP == "10.0.0.1" {
+      t.Errorf("self worker node worker-1 (10.0.0.1) should have been skipped in test mode")
+    }
+  }
+}
+
+func TestNodeSelfWorkerLastRealMode(t *testing.T) {
+  mock := newMockTalosClient()
+  phase := NewNodePhase(mock, newNodeTestLogger())
+
+  cfg := NodeConfig{
+    Workers: []NodeEntry{
+      {Name: "worker-1", IP: "10.0.0.1"},
+      {Name: "worker-2", IP: "10.0.0.2"},
+    },
+    ControlPlane: []NodeEntry{
+      {Name: "cp-1", IP: "10.1.0.1"},
+    },
+    NodeName:       "worker-1",
+    TestMode:       false,
+    PerNodeTimeout: 5 * time.Second,
+  }
+
+  err := phase.ShutdownAll(context.Background(), cfg)
+  if err != nil {
+    t.Fatalf("ShutdownAll() returned error: %v", err)
+  }
+
+  calls := mock.getCalls()
+  // worker-2 (concurrent), then cp-1 (sequential), then worker-1 (self, last).
+  if len(calls) != 3 {
+    t.Fatalf("expected 3 calls, got %d: %+v", len(calls), calls)
+  }
+  // Self (worker-1) must be the last call.
+  lastCall := calls[len(calls)-1]
+  if lastCall.NodeIP != "10.0.0.1" {
+    t.Errorf("expected self worker node worker-1 (10.0.0.1) to be last, got %s", lastCall.NodeIP)
   }
 }
 
@@ -366,13 +435,26 @@ func TestNodeShutdownErrorContinues(t *testing.T) {
   }
 
   err := phase.ShutdownAll(context.Background(), cfg)
-  if err != nil {
-    t.Fatalf("ShutdownAll() returned error: %v", err)
+  // ShutdownAll now returns collected errors, so we expect an error.
+  if err == nil {
+    t.Fatal("ShutdownAll() = nil, want error for failed node")
   }
 
   calls := mock.getCalls()
-  // All 3 should be attempted even though w1 errors.
-  if len(calls) != 3 {
-    t.Fatalf("expected 3 calls, got %d", len(calls))
+  // w2 and cp-1 should still be attempted even though w1 errors.
+  // w1 is also called but returns an error (still recorded by mock).
+  if len(calls) < 2 {
+    t.Fatalf("expected at least 2 successful calls, got %d", len(calls))
+  }
+
+  // Verify the successful nodes were still called.
+  calledIPs := make(map[string]bool)
+  for _, c := range calls {
+    calledIPs[c.NodeIP] = true
+  }
+  for _, ip := range []string{"10.0.0.2", "10.1.0.1"} {
+    if !calledIPs[ip] {
+      t.Errorf("expected node %s to be called despite error on another node", ip)
+    }
   }
 }

@@ -105,7 +105,10 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
           if budgetRemaining <= 0 {
             budgetRemaining = 30 * time.Second // absolute minimum
           }
-          shutdownCtx, shutdownCancel := context.WithTimeout(ctx, budgetRemaining)
+          // Use context.Background() instead of ctx so that a SIGTERM
+          // (which cancels ctx) cannot abort the shutdown mid-flight.
+          // The UPS budget timeout is the only deadline that matters here.
+          shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), budgetRemaining)
           m.logger.Info("shutdown budget", "remaining", budgetRemaining)
 
           err := m.shutdownFn(shutdownCtx)
