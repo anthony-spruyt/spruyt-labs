@@ -44,7 +44,7 @@ controllers:
           - name: HEALTH_PORT
             value: "8080"
           - name: MODE
-            value: monitor
+            value: preflight
           - name: NODE_NAME
             valueFrom:
               fieldRef:

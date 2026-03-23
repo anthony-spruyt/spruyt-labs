@@ -5,5 +5,4 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./nut-server/ks.yaml
-  # TODO: Enable after nut-server is validated
-  # - ./shutdown-orchestrator/ks.yaml
+  - ./shutdown-orchestrator/ks.yaml
