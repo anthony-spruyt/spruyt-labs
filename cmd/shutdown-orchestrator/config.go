@@ -78,6 +78,15 @@ func (c Config) Validate() error {
   default:
     return fmt.Errorf("invalid mode %q: must be monitor, test, or preflight", c.Mode)
   }
+
+  // Warn if phase timeouts exceed the UPS runtime budget minus shutdown delay.
+  totalPhaseTime := c.CNPGPhaseTimeout + c.CephFlagPhaseTimeout + c.CephScalePhaseTimeout + c.NodeShutdownPhaseTimeout
+  availableBudget := time.Duration(c.UPSRuntimeBudget)*time.Second - time.Duration(c.ShutdownDelay)*time.Second
+  if totalPhaseTime > availableBudget {
+    return fmt.Errorf("phase timeouts (%s) exceed available UPS budget (%s = %ds runtime - %ds delay)",
+      totalPhaseTime, availableBudget, c.UPSRuntimeBudget, c.ShutdownDelay)
+  }
+
   return nil
 }
 

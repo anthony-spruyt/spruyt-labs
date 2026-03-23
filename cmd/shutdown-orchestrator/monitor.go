@@ -109,24 +109,24 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
             budgetRemaining = 30 * time.Second // absolute minimum
           }
           shutdownCtx, shutdownCancel := context.WithTimeout(ctx, budgetRemaining)
-          defer shutdownCancel()
           m.logger.Info("shutdown budget", "remaining", budgetRemaining)
 
-          if err := m.shutdownFn(shutdownCtx); err != nil {
+          err := m.shutdownFn(shutdownCtx)
+          shutdownCancel()
+          if err != nil {
             m.logger.Error("shutdown failed", "error", err)
             return fmt.Errorf("shutdown failed: %w", err)
           }
           return nil
         }
       } else {
-        if m.shuttingDown.Load() {
+        if onBatteryElapsed > 0 {
           m.logger.Info("power restored, resetting countdown",
             "status", status,
             "elapsed", onBatteryElapsed,
           )
         }
         onBatteryElapsed = 0
-        m.shuttingDown.Store(false)
       }
     }
   }

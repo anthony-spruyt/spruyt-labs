@@ -114,7 +114,7 @@ func (p *PreflightChecker) RunAll(ctx context.Context) []PreflightResult {
     })
   }
 
-  // 6. Talos API reachable (check each node)
+  // 7. Talos API reachable (check each node)
   allNodeIPs := append(append([]string{}, p.cfg.WorkerIPs...), p.cfg.ControlPlaneIPs...)
   talosOK := true
   var talosErrs []string
@@ -134,7 +134,7 @@ func (p *PreflightChecker) RunAll(ctx context.Context) []PreflightResult {
     })
   }
 
-  // 7. UPS reachable
+  // 8. UPS reachable
   _, err = p.ups.GetStatus(ctx)
   results = append(results, makeResult("UPS reachable", err))
 

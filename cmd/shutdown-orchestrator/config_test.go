@@ -1,14 +1,16 @@
 package main
 
 import (
+  "os"
   "testing"
 )
 
 func TestLoadConfigDefaults(t *testing.T) {
-  // Clear any env vars that might interfere
+  // Unset env vars that might interfere (t.Setenv restores originals on cleanup)
   for _, key := range []string{"MODE", "NUT_SERVER", "NUT_PORT", "UPS_NAME",
     "SHUTDOWN_DELAY", "POLL_INTERVAL", "UPS_RUNTIME_BUDGET", "HEALTH_PORT"} {
     t.Setenv(key, "")
+    os.Unsetenv(key)
   }
 
   cfg := LoadConfig(nil)
