@@ -78,7 +78,11 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
     errs = append(errs, fmt.Errorf("node-shutdown: %w", err))
   }
 
-  o.logger.Info("shutdown sequence complete")
+  if len(errs) > 0 {
+    o.logger.Warn("shutdown sequence complete with errors", "count", len(errs))
+  } else {
+    o.logger.Info("shutdown sequence complete")
+  }
   return errors.Join(errs...)
 }
 
@@ -121,7 +125,11 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
     o.logger.Warn("post-recovery health check failed", "error", err)
   }
 
-  o.logger.Info("recovery sequence complete")
+  if len(errs) > 0 {
+    o.logger.Warn("recovery sequence complete with errors", "count", len(errs))
+  } else {
+    o.logger.Info("recovery sequence complete")
+  }
   return errors.Join(errs...)
 }
 

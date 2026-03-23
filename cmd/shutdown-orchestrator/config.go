@@ -2,6 +2,7 @@ package main
 
 import (
   "fmt"
+  "log/slog"
   "os"
   "strconv"
   "time"
@@ -80,9 +81,12 @@ func envOrDefault(key, def string) string {
 
 func envIntOrDefault(key string, def int) int {
   if v := os.Getenv(key); v != "" {
-    if n, err := strconv.Atoi(v); err == nil {
-      return n
+    n, err := strconv.Atoi(v)
+    if err != nil {
+      slog.Warn("invalid integer env var, using default", "key", key, "value", v, "default", def)
+      return def
     }
+    return n
   }
   return def
 }
