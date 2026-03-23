@@ -42,6 +42,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `ghcr.io/siderolabs/kubelet` (Talos kubelet image) | `siderolabs/kubelet` (mirror repo; actual changelog lives in `kubernetes/kubernetes` CHANGELOG-1.XX.md) | 1 | 2026-03-19 | 2026-03-19 |
 | `ghcr.io/siderolabs/installer` (Talos installer image) | `siderolabs/talos` (release tags: `vX.Y.Z`; release notes list component updates, commit log, and dependency changes) | 1 | 2026-03-19 | 2026-03-19 |
 | `external-secrets` (Helm chart via HelmRepository) | `external-secrets/external-secrets` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-22 | 2026-03-22 |
+| `headlamp-plugins/headlamp_flux` (ArtifactHub plugin) | `headlamp-k8s/plugins` (monorepo for all official Headlamp plugins; release tags: `flux-X.Y.Z`; no changelog file, use GitHub release notes) | 1 | 2026-03-23 | 2026-03-23 |
 
 ## Common NO_IMPACT Scenarios
 
