@@ -203,6 +203,8 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 | CEPH_SCALE_PHASE_TIMEOUT    | 60                                          | Ceph scale down timeout (seconds)        |
 | CEPH_HEALTH_WAIT_TIMEOUT    | 300                                         | Ceph health wait after scale-up (secs)   |
 | NODE_SHUTDOWN_PHASE_TIMEOUT | 120                                         | Node shutdown timeout (seconds)          |
+| PER_NODE_TIMEOUT            | 15                                          | Per-node shutdown timeout (seconds)      |
+| CEPH_WAIT_TOOLS_TIMEOUT     | 600                                         | Ceph tools pod readiness timeout (secs)  |
 
 ### Alerts (VMRule)
 

@@ -118,7 +118,9 @@ func (c Config) Validate() error {
     }
   }
 
-  // Warn if phase timeouts exceed the UPS runtime budget minus shutdown delay.
+  // Warn if shutdown phase timeouts exceed the UPS runtime budget minus shutdown delay.
+  // CephHealthWaitTimeout and CephWaitToolsTimeout are excluded because they only
+  // apply during recovery (power restored), not during the battery-constrained shutdown.
   totalPhaseTime := c.CNPGPhaseTimeout + c.CephFlagPhaseTimeout + c.CephScalePhaseTimeout + c.NodeShutdownPhaseTimeout
   availableBudget := c.UPSRuntimeBudget - c.ShutdownDelay
   if totalPhaseTime > availableBudget {
