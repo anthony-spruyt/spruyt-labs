@@ -17,8 +17,9 @@ type NUTClient struct {
   port    int
   upsName string
 
-  mu   sync.Mutex
-  conn net.Conn
+  mu      sync.Mutex
+  conn    net.Conn
+  scanner *bufio.Scanner
 }
 
 // NewNUTClient creates a new NUT client for the given server and UPS name.
@@ -45,6 +46,7 @@ func (c *NUTClient) GetStatus(ctx context.Context) (string, error) {
     // Connection is stale or broken — close and reconnect.
     c.conn.Close()
     c.conn = nil
+    c.scanner = nil
   }
 
   if err := c.connect(ctx); err != nil {
@@ -56,6 +58,7 @@ func (c *NUTClient) GetStatus(ctx context.Context) (string, error) {
     // Fresh connection failed — close it so next call retries.
     c.conn.Close()
     c.conn = nil
+    c.scanner = nil
     return "", err
   }
   return status, nil
@@ -69,6 +72,7 @@ func (c *NUTClient) Close() error {
     _, _ = c.conn.Write([]byte("LOGOUT\n"))
     err := c.conn.Close()
     c.conn = nil
+    c.scanner = nil
     return err
   }
   return nil
@@ -84,6 +88,7 @@ func (c *NUTClient) connect(ctx context.Context) error {
     return fmt.Errorf("connecting to NUT server at %s: %w", addr, err)
   }
   c.conn = conn
+  c.scanner = bufio.NewScanner(conn)
   return nil
 }
 
@@ -102,15 +107,14 @@ func (c *NUTClient) queryStatus(ctx context.Context) (string, error) {
     return "", fmt.Errorf("sending GET VAR command: %w", err)
   }
 
-  scanner := bufio.NewScanner(c.conn)
-  if !scanner.Scan() {
-    if err := scanner.Err(); err != nil {
+  if !c.scanner.Scan() {
+    if err := c.scanner.Err(); err != nil {
       return "", fmt.Errorf("reading NUT response: %w", err)
     }
     return "", fmt.Errorf("no response from NUT server")
   }
 
-  return parseNUTVar(scanner.Text(), c.upsName, "ups.status")
+  return parseNUTVar(c.scanner.Text(), c.upsName, "ups.status")
 }
 
 // parseNUTVar extracts the value from a NUT protocol response line.

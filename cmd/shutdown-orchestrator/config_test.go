@@ -182,6 +182,17 @@ func TestValidateZeroPerNodeTimeout(t *testing.T) {
   }
 }
 
+func TestValidateBudgetOverflow(t *testing.T) {
+  cfg := validConfig()
+  // Set phase timeouts that exceed the available budget (runtime - delay).
+  cfg.UPSRuntimeBudget = 60 * time.Second
+  cfg.ShutdownDelay = 30 * time.Second
+  // Total phase timeouts: 60+15+60+120 = 255s, available: 60-30 = 30s
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for phase timeouts exceeding UPS budget")
+  }
+}
+
 func TestValidatePreflightSkipsIPCheck(t *testing.T) {
   cfg := validConfig()
   cfg.Mode = "preflight"

@@ -224,6 +224,7 @@ func (o *Orchestrator) RunTest(ctx context.Context) error {
 func (o *Orchestrator) waitForNodesReady(ctx context.Context) error {
   maxBackoff := 60 * time.Second
   backoff := 5 * time.Second
+  expectedNodes := len(o.cfg.WorkerIPs) + len(o.cfg.ControlPlaneIPs)
 
   for {
     nodes, err := o.kube.GetNodes(ctx)
@@ -235,9 +236,13 @@ func (o *Orchestrator) waitForNodesReady(ctx context.Context) error {
           o.logger.Info("node not yet ready", "name", n.Name)
         }
       }
-      if allReady && len(nodes) > 0 {
-        o.logger.Info("all nodes are ready")
+      if allReady && len(nodes) >= expectedNodes {
+        o.logger.Info("all nodes are ready", "count", len(nodes), "expected", expectedNodes)
         return nil
+      }
+      if allReady && len(nodes) > 0 {
+        o.logger.Info("all visible nodes ready but waiting for more",
+          "count", len(nodes), "expected", expectedNodes)
       }
     } else {
       o.logger.Warn("failed to check node readiness", "error", err)
