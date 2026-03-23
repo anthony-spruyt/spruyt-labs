@@ -24,3 +24,5 @@ task install:age-cli
 task install:velero-cli
 task install:cnpg-plugin
 task install:falcoctl-cli
+task install:gopls
+task install:cclsp

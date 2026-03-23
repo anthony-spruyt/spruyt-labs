@@ -13,6 +13,13 @@
       "headers": {
         "X-API-KEY": "${KUBECTL_MCP_API_KEY}"
       }
+    },
+    "cclsp": {
+      "type": "stdio",
+      "command": "cclsp",
+      "env": {
+        "CCLSP_CONFIG_PATH": "/workspaces/spruyt-labs/.claude/cclsp.json"
+      }
     }
   }
 }
