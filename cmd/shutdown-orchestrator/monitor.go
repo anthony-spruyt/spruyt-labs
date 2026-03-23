@@ -4,6 +4,7 @@ import (
   "context"
   "fmt"
   "log/slog"
+  "net"
   "net/http"
   "strings"
   "sync/atomic"
@@ -38,17 +39,22 @@ func NewMonitor(ups clients.UPSClient, shutdownFn func(context.Context) error, c
 // Run starts both the health server and the poll loop. It blocks until ctx is
 // cancelled or the shutdown sequence completes.
 func (m *Monitor) Run(ctx context.Context) error {
-  // Start health server.
+  // Start health server. Bind the port synchronously so failures are
+  // detected immediately instead of silently running without health checks.
   mux := http.NewServeMux()
   mux.HandleFunc("/healthz", m.healthHandler)
   srv := &http.Server{
-    Addr:    fmt.Sprintf(":%d", m.cfg.HealthPort),
     Handler: mux,
   }
 
+  ln, err := net.Listen("tcp", fmt.Sprintf(":%d", m.cfg.HealthPort))
+  if err != nil {
+    return fmt.Errorf("binding health server port %d: %w", m.cfg.HealthPort, err)
+  }
+  m.logger.Info("starting health server", "port", m.cfg.HealthPort)
+
   go func() {
-    m.logger.Info("starting health server", "port", m.cfg.HealthPort)
-    if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+    if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
       m.logger.Error("health server error", "error", err)
     }
   }()
@@ -86,7 +92,7 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
         continue
       }
 
-      if strings.Contains(status, "OB") {
+      if isOnBattery(status) {
         if onBatteryStart.IsZero() {
           onBatteryStart = time.Now()
         }
@@ -133,6 +139,17 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
       }
     }
   }
+}
+
+// isOnBattery checks whether the UPS status indicates battery power.
+// NUT statuses are space-delimited tokens (e.g., "OB DISCHRG").
+func isOnBattery(status string) bool {
+  for _, token := range strings.Fields(status) {
+    if token == "OB" {
+      return true
+    }
+  }
+  return false
 }
 
 // healthHandler responds to health check requests.

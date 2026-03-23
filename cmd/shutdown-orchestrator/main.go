@@ -38,11 +38,14 @@ func main() {
       os.Exit(1)
     }
   case "preflight":
-    runPreflight(ctx, cfg, logger)
+    if err := runPreflight(ctx, cfg, logger); err != nil {
+      logger.Error("preflight failed", "error", err)
+      os.Exit(1)
+    }
   }
 }
 
-func buildClients(cfg Config, logger *slog.Logger) (clients.KubeClient, *clients.RealTalosClient, *clients.NUTClient, error) {
+func buildClients(cfg Config, logger *slog.Logger) (clients.KubeClient, clients.TalosClient, clients.UPSClient, error) {
   kube, err := clients.NewKubeClient()
   if err != nil {
     return nil, nil, nil, fmt.Errorf("creating kube client: %w", err)
@@ -115,12 +118,10 @@ func runTest(ctx context.Context, cfg Config, logger *slog.Logger) error {
   return orch.RunTest(ctx)
 }
 
-func runPreflight(ctx context.Context, cfg Config, logger *slog.Logger) {
+func runPreflight(ctx context.Context, cfg Config, logger *slog.Logger) error {
   kube, talos, ups, err := buildClients(cfg, logger)
   if err != nil {
-    logger.Error("failed to create clients", "error", err)
-    fmt.Println("FAIL: could not create clients")
-    os.Exit(1)
+    return fmt.Errorf("creating clients: %w", err)
   }
   defer talos.Close()
   defer ups.Close()
@@ -140,6 +141,7 @@ func runPreflight(ctx context.Context, cfg Config, logger *slog.Logger) {
 
   fmt.Printf("\n%d/%d checks passed\n", len(results)-failed, len(results))
   if failed > 0 {
-    os.Exit(1)
+    return fmt.Errorf("%d/%d preflight checks failed", failed, len(results))
   }
+  return nil
 }

@@ -70,6 +70,8 @@ func (m *mockTalos) Ping(ctx context.Context, nodeIP string) error {
   return m.pingErr
 }
 
+func (m *mockTalos) Close() error { return nil }
+
 // mockUPS implements clients.UPSClient.
 type mockUPS struct {
   status    string
@@ -79,6 +81,8 @@ type mockUPS struct {
 func (m *mockUPS) GetStatus(ctx context.Context) (string, error) {
   return m.status, m.statusErr
 }
+
+func (m *mockUPS) Close() error { return nil }
 
 func newDiscardLogger() *slog.Logger {
   return slog.New(slog.NewTextHandler(io.Discard, nil))

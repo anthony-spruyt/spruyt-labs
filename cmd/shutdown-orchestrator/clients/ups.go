@@ -62,14 +62,16 @@ func (c *NUTClient) GetStatus(ctx context.Context) (string, error) {
 }
 
 // Close closes the persistent connection if open.
-func (c *NUTClient) Close() {
+func (c *NUTClient) Close() error {
   c.mu.Lock()
   defer c.mu.Unlock()
   if c.conn != nil {
     _, _ = c.conn.Write([]byte("LOGOUT\n"))
-    c.conn.Close()
+    err := c.conn.Close()
     c.conn = nil
+    return err
   }
+  return nil
 }
 
 // connect establishes a new TCP connection to the NUT server.

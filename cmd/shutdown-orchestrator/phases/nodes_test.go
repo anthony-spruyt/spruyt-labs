@@ -59,6 +59,8 @@ func (m *mockTalosClient) Ping(ctx context.Context, nodeIP string) error {
   return nil
 }
 
+func (m *mockTalosClient) Close() error { return nil }
+
 func (m *mockTalosClient) getCalls() []shutdownCall {
   m.mu.Lock()
   defer m.mu.Unlock()

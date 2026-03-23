@@ -112,7 +112,17 @@ func (m *orchestratorMockKube) ScaleDeployment(ctx context.Context, ns, name str
 }
 
 func (m *orchestratorMockKube) ListDeploymentNames(ctx context.Context, ns, labelSelector string) ([]string, error) {
-  return []string{}, nil
+  m.record("ListDeploymentNames:" + labelSelector)
+  switch labelSelector {
+  case "app=rook-ceph-osd":
+    return []string{"rook-ceph-osd-0", "rook-ceph-osd-1", "rook-ceph-osd-2"}, nil
+  case "app=rook-ceph-mon":
+    return []string{"rook-ceph-mon-a", "rook-ceph-mon-b", "rook-ceph-mon-c"}, nil
+  case "app=rook-ceph-mgr":
+    return []string{"rook-ceph-mgr-a", "rook-ceph-mgr-b"}, nil
+  default:
+    return []string{}, nil
+  }
 }
 
 func (m *orchestratorMockKube) GetNodes(ctx context.Context) ([]clients.Node, error) {
@@ -142,6 +152,10 @@ func (m *orchestratorMockTalos) Shutdown(ctx context.Context, nodeIP string, for
 }
 
 func (m *orchestratorMockTalos) Ping(ctx context.Context, nodeIP string) error {
+  return nil
+}
+
+func (m *orchestratorMockTalos) Close() error {
   return nil
 }
 
@@ -458,5 +472,25 @@ func TestOrchestratorTestMode(t *testing.T) {
   }
   if foundHibernate && foundWake && hibernateIdx >= wakeIdx {
     t.Errorf("hibernate (idx %d) should come before wake (idx %d)", hibernateIdx, wakeIdx)
+  }
+}
+
+func TestOrchestratorNeedsRecoveryCNPGHibernated(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters: []clients.CNPGCluster{
+      {Namespace: "db", Name: "pg-main", Hibernated: true},
+    },
+    isCephNooutResult: false,
+    toolsExists:       true,
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  needs, err := orch.NeedsRecovery(context.Background())
+  if err != nil {
+    t.Fatalf("NeedsRecovery() returned error: %v", err)
+  }
+  if !needs {
+    t.Error("NeedsRecovery() = false, want true when CNPG cluster is hibernated")
   }
 }

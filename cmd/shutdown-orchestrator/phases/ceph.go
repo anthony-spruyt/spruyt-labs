@@ -82,12 +82,21 @@ func (p *CephPhase) ScaleDown(ctx context.Context) error {
   if err := p.scaleComponent(ctx, cephOperatorDeploy, 0); err != nil {
     errs = append(errs, err)
   }
+  if ctx.Err() != nil {
+    return errors.Join(append(errs, ctx.Err())...)
+  }
 
   // 2. OSDs
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 0)...)
+  if ctx.Err() != nil {
+    return errors.Join(append(errs, ctx.Err())...)
+  }
 
   // 3. Monitors
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mon", 0)...)
+  if ctx.Err() != nil {
+    return errors.Join(append(errs, ctx.Err())...)
+  }
 
   // 4. Managers
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mgr", 0)...)
@@ -150,10 +159,12 @@ func (p *CephPhase) WaitForToolsPod(ctx context.Context) error {
     }
 
     p.logger.Info("waiting for ceph tools pod", "backoff", backoff, "lastError", err)
+    timer := time.NewTimer(backoff)
     select {
     case <-ctx.Done():
+      timer.Stop()
       return ctx.Err()
-    case <-time.After(backoff):
+    case <-timer.C:
     }
 
     backoff *= 2
@@ -197,10 +208,12 @@ func (p *CephPhase) WaitForCephHealthy(ctx context.Context) error {
       return ctx.Err()
     }
 
+    timer := time.NewTimer(backoff)
     select {
     case <-ctx.Done():
+      timer.Stop()
       return ctx.Err()
-    case <-time.After(backoff):
+    case <-timer.C:
     }
 
     backoff *= 2

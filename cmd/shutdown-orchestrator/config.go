@@ -107,9 +107,12 @@ func (c Config) Validate() error {
     }
   }
 
-  // Node IPs are required for monitor and test modes to perform shutdown/recovery.
-  // Preflight mode checks IPs as part of its own validation.
+  // Node IPs and NODE_NAME are required for monitor and test modes to perform
+  // shutdown/recovery. Preflight mode checks IPs as part of its own validation.
   if c.Mode == "monitor" || c.Mode == "test" {
+    if c.NodeName == "" {
+      return fmt.Errorf("NODE_NAME must be set in %s mode", c.Mode)
+    }
     if len(c.ControlPlaneIPs) == 0 {
       return fmt.Errorf("no control plane node IPs configured (E2_*_IP4 env vars)")
     }

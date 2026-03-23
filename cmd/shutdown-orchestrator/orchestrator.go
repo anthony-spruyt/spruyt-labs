@@ -247,10 +247,12 @@ func (o *Orchestrator) waitForNodesReady(ctx context.Context) error {
       return fmt.Errorf("timed out waiting for nodes to be ready: %w", ctx.Err())
     }
 
+    timer := time.NewTimer(backoff)
     select {
     case <-ctx.Done():
+      timer.Stop()
       return ctx.Err()
-    case <-time.After(backoff):
+    case <-timer.C:
     }
 
     backoff *= 2

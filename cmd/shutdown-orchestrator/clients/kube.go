@@ -3,6 +3,7 @@ package clients
 import (
   "bytes"
   "context"
+  "encoding/json"
   "fmt"
   "strings"
 
@@ -246,15 +247,27 @@ func (k *RealKubeClient) GetNodes(ctx context.Context) ([]Node, error) {
   return nodes, nil
 }
 
-// IsCephNooutSet runs "ceph osd dump" in the rook-ceph-tools deployment and
-// checks whether the noout flag is set.
+// IsCephNooutSet runs "ceph osd dump --format json" in the rook-ceph-tools
+// deployment and checks whether the noout flag is set in the cluster flags.
 func (k *RealKubeClient) IsCephNooutSet(ctx context.Context) (bool, error) {
-  output, err := k.ExecInDeployment(ctx, "rook-ceph", "rook-ceph-tools", []string{"ceph", "osd", "dump"})
+  output, err := k.ExecInDeployment(ctx, "rook-ceph", "rook-ceph-tools", []string{"ceph", "osd", "dump", "--format", "json"})
   if err != nil {
     return false, fmt.Errorf("checking Ceph noout flag: %w", err)
   }
 
-  return strings.Contains(output, "noout"), nil
+  var dump struct {
+    Flags string `json:"flags"`
+  }
+  if err := json.Unmarshal([]byte(output), &dump); err != nil {
+    return false, fmt.Errorf("parsing ceph osd dump JSON: %w", err)
+  }
+
+  for _, flag := range strings.Split(dump.Flags, ",") {
+    if strings.TrimSpace(flag) == "noout" {
+      return true, nil
+    }
+  }
+  return false, nil
 }
 
 // isPodReady returns true if the pod is running and its Ready condition is true.
