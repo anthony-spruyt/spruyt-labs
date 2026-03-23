@@ -4,6 +4,7 @@ import (
   "context"
   "errors"
   "log/slog"
+  "strings"
   "time"
 
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
@@ -94,6 +95,14 @@ func (p *CephPhase) ScaleDown(ctx context.Context) error {
 
 // ScaleUp scales Ceph components to 1 replica in reverse order:
 // monitors -> managers -> OSDs -> operator.
+//
+// Each Rook component (mon, mgr, osd) is its own individual deployment with
+// 1 replica. Rook manages the count of each component type by creating or
+// deleting deployments — not by adjusting replica counts. Scaling each
+// deployment back to 1 is the correct target. The Rook operator (scaled up
+// last) will reconcile and recreate any missing deployments to match the
+// CephCluster CR spec.
+//
 // If scaling one component fails, it logs a warning and continues.
 // Returns a combined error of all failures for inclusion in the phase summary.
 func (p *CephPhase) ScaleUp(ctx context.Context) error {
@@ -137,6 +146,47 @@ func (p *CephPhase) WaitForToolsPod(ctx context.Context) error {
     }
 
     p.logger.Info("waiting for ceph tools pod", "backoff", backoff, "lastError", err)
+    select {
+    case <-ctx.Done():
+      return ctx.Err()
+    case <-time.After(backoff):
+    }
+
+    backoff *= 2
+    if backoff > maxBackoff {
+      backoff = maxBackoff
+    }
+  }
+}
+
+// WaitForCephHealthy polls "ceph health" via the tools pod until the cluster
+// reports HEALTH_OK or HEALTH_WARN (excluding the noout warning which is
+// expected during recovery). Uses exponential backoff (2s, 4s, 8s, ... max 30s).
+// The timeout is controlled by the context passed in from the caller.
+func (p *CephPhase) WaitForCephHealthy(ctx context.Context) error {
+  maxBackoff := 30 * time.Second
+  backoff := 2 * time.Second
+
+  for {
+    output, err := p.kube.ExecInDeployment(ctx, cephNamespace, cephToolsDeploy, []string{"ceph", "health"})
+    if err == nil {
+      // Accept HEALTH_OK or HEALTH_WARN. During recovery, HEALTH_WARN
+      // with only the noout flag is expected and safe to proceed.
+      trimmed := strings.TrimSpace(output)
+      if strings.HasPrefix(trimmed, "HEALTH_OK") || strings.HasPrefix(trimmed, "HEALTH_WARN") {
+        p.logger.Info("ceph cluster is healthy", "status", trimmed)
+        return nil
+      }
+      p.logger.Info("ceph cluster not yet healthy", "status", trimmed)
+    } else {
+      p.logger.Warn("failed to check ceph health", "error", err)
+    }
+
+    if ctx.Err() != nil {
+      p.logger.Error("timed out waiting for ceph to become healthy")
+      return ctx.Err()
+    }
+
     select {
     case <-ctx.Done():
       return ctx.Err()

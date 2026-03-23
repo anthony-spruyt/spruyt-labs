@@ -23,7 +23,7 @@ jobs:
           cache-dependency-path: "${{ env.WORKDIR }}/go.sum"
       - name: "Run tests"
         working-directory: "${{ env.WORKDIR }}"
-        run: go test ./...
+        run: go test -race ./...
   build-and-push:
     name: "Build and push image"
     needs: "test"

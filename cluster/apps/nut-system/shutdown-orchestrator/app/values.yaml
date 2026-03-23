@@ -56,6 +56,8 @@ controllers:
             value: "15"
           - name: CEPH_SCALE_PHASE_TIMEOUT
             value: "60"
+          - name: CEPH_HEALTH_WAIT_TIMEOUT
+            value: "300"
           - name: NODE_SHUTDOWN_PHASE_TIMEOUT
             value: "120"
           # Node IPs from cluster secrets (Flux substitution)

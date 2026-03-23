@@ -23,6 +23,7 @@ type Config struct {
   CNPGPhaseTimeout         time.Duration
   CephFlagPhaseTimeout     time.Duration
   CephScalePhaseTimeout    time.Duration
+  CephHealthWaitTimeout    time.Duration
   NodeShutdownPhaseTimeout time.Duration
   PerNodeTimeout           time.Duration
   CephWaitToolsTimeout     time.Duration
@@ -49,6 +50,7 @@ func LoadConfig(logger *slog.Logger) Config {
     CNPGPhaseTimeout:         time.Duration(envIntOrDefault(logger, "CNPG_PHASE_TIMEOUT", 60)) * time.Second,
     CephFlagPhaseTimeout:     time.Duration(envIntOrDefault(logger, "CEPH_FLAG_PHASE_TIMEOUT", 15)) * time.Second,
     CephScalePhaseTimeout:    time.Duration(envIntOrDefault(logger, "CEPH_SCALE_PHASE_TIMEOUT", 60)) * time.Second,
+    CephHealthWaitTimeout:    time.Duration(envIntOrDefault(logger, "CEPH_HEALTH_WAIT_TIMEOUT", 300)) * time.Second,
     NodeShutdownPhaseTimeout: time.Duration(envIntOrDefault(logger, "NODE_SHUTDOWN_PHASE_TIMEOUT", 120)) * time.Second,
     PerNodeTimeout:           time.Duration(envIntOrDefault(logger, "PER_NODE_TIMEOUT", 15)) * time.Second,
     CephWaitToolsTimeout:     time.Duration(envIntOrDefault(logger, "CEPH_WAIT_TOOLS_TIMEOUT", 600)) * time.Second,

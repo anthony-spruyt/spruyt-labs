@@ -76,7 +76,31 @@ func (p *PreflightChecker) RunAll(ctx context.Context) []PreflightResult {
   _, err = p.kube.ExecInDeployment(ctx, "rook-ceph", "rook-ceph-tools", []string{"ceph", "status"})
   results = append(results, makeResult("Ceph tools exec works", err))
 
-  // 5. Node IPs configured
+  // 5. Ceph deployments listable (verify label selectors return deployments)
+  cephLabels := []string{"app=rook-ceph-osd", "app=rook-ceph-mon", "app=rook-ceph-mgr"}
+  allListable := true
+  var listErrs []string
+  for _, label := range cephLabels {
+    names, listErr := p.kube.ListDeploymentNames(ctx, "rook-ceph", label)
+    if listErr != nil {
+      allListable = false
+      listErrs = append(listErrs, fmt.Sprintf("%s: %v", label, listErr))
+    } else if len(names) == 0 {
+      allListable = false
+      listErrs = append(listErrs, fmt.Sprintf("%s: no deployments found", label))
+    }
+  }
+  if allListable {
+    results = append(results, PreflightResult{Check: "Ceph deployments listable", Passed: true})
+  } else {
+    results = append(results, PreflightResult{
+      Check:  "Ceph deployments listable",
+      Passed: false,
+      Error:  strings.Join(listErrs, "; "),
+    })
+  }
+
+  // 6. Node IPs configured
   if len(p.cfg.WorkerIPs) == 0 || len(p.cfg.ControlPlaneIPs) == 0 {
     results = append(results, PreflightResult{
       Check:  "Node IPs configured",

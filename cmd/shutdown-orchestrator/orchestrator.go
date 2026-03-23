@@ -108,6 +108,15 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
     errs = append(errs, fmt.Errorf("ceph-scale-up: %w", err))
   }
 
+  // Wait for Ceph to become healthy before removing noout protection.
+  // Without this, monitors could mark OSDs as "out" and trigger data
+  // rebalancing before OSD pods have fully started and peered.
+  if err := runPhase(ctx, o.logger, "ceph-health-wait", o.cfg.CephHealthWaitTimeout, func(pctx context.Context) error {
+    return o.ceph.WaitForCephHealthy(pctx)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("ceph-health-wait: %w", err))
+  }
+
   if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
     return o.ceph.UnsetNoout(pctx)
   }); err != nil {

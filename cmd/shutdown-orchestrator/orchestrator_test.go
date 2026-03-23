@@ -97,6 +97,9 @@ func (m *orchestratorMockKube) DeploymentExists(ctx context.Context, ns, name st
 func (m *orchestratorMockKube) ExecInDeployment(ctx context.Context, ns, deploy string, cmd []string) (string, error) {
   if len(cmd) >= 4 {
     m.record("ExecInDeployment:" + cmd[2] + ":" + cmd[3])
+  } else if len(cmd) == 2 && cmd[0] == "ceph" && cmd[1] == "health" {
+    m.record("ExecInDeployment:ceph:health")
+    return "HEALTH_OK", nil
   } else {
     m.record("ExecInDeployment")
   }
@@ -166,6 +169,7 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
     CNPGPhaseTimeout:         5 * time.Second,
     CephFlagPhaseTimeout:     5 * time.Second,
     CephScalePhaseTimeout:    5 * time.Second,
+    CephHealthWaitTimeout:    5 * time.Second,
     CephWaitToolsTimeout:     5 * time.Second,
     NodeShutdownPhaseTimeout: 5 * time.Second,
     PerNodeTimeout:           5 * time.Second,
@@ -269,9 +273,10 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify ordering: wait for tools pod -> Ceph scale up -> Ceph unset noout -> CNPG wake
+  // Verify ordering: wait for tools pod -> Ceph scale up -> Ceph health wait -> Ceph unset noout -> CNPG wake
   toolsIdx := -1
   scaleUpIdx := -1
+  healthWaitIdx := -1
   unsetNooutIdx := -1
   wakeIdx := -1
 
@@ -280,8 +285,9 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
     case c == "ExecInDeployment" && toolsIdx == -1:
       toolsIdx = i
     case c == "ScaleDeployment:rook-ceph-operator:1" && scaleUpIdx == -1:
-      // ScaleUp calls operator last but we just need some scale-up call
       scaleUpIdx = i
+    case c == "ExecInDeployment:ceph:health" && healthWaitIdx == -1:
+      healthWaitIdx = i
     case c == "ExecInDeployment:unset:noout" && unsetNooutIdx == -1:
       unsetNooutIdx = i
     case c == "SetCNPGHibernation:false" && wakeIdx == -1:
@@ -292,6 +298,9 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
   if toolsIdx == -1 {
     t.Fatal("WaitForToolsPod was not called")
   }
+  if healthWaitIdx == -1 {
+    t.Fatal("Ceph health wait was not called")
+  }
   if unsetNooutIdx == -1 {
     t.Fatal("Ceph unset noout was not called")
   }
@@ -301,6 +310,12 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
 
   if toolsIdx >= unsetNooutIdx {
     t.Errorf("WaitForToolsPod (idx %d) should come before Ceph unset noout (idx %d)", toolsIdx, unsetNooutIdx)
+  }
+  if scaleUpIdx != -1 && scaleUpIdx >= healthWaitIdx {
+    t.Errorf("Ceph scale up (idx %d) should come before Ceph health wait (idx %d)", scaleUpIdx, healthWaitIdx)
+  }
+  if healthWaitIdx >= unsetNooutIdx {
+    t.Errorf("Ceph health wait (idx %d) should come before Ceph unset noout (idx %d)", healthWaitIdx, unsetNooutIdx)
   }
   if unsetNooutIdx >= wakeIdx {
     t.Errorf("Ceph unset noout (idx %d) should come before CNPG wake (idx %d)", unsetNooutIdx, wakeIdx)

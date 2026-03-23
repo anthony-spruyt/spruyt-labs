@@ -7,6 +7,7 @@ import (
   "os"
   "strings"
   "testing"
+  "time"
 
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
 )
@@ -366,6 +367,49 @@ func TestCephNeedsRecovery(t *testing.T) {
       t.Error("NeedsRecovery() = true, want false when noout is not set")
     }
   })
+}
+
+func TestCephWaitForCephHealthyOK(t *testing.T) {
+  mock := newMockCephKubeClient()
+  mock.execInDeploymentResult["rook-ceph/rook-ceph-tools"] = "HEALTH_OK"
+  phase := NewCephPhase(mock, testLogger())
+
+  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  defer cancel()
+
+  err := phase.WaitForCephHealthy(ctx)
+  if err != nil {
+    t.Fatalf("WaitForCephHealthy() returned error: %v", err)
+  }
+}
+
+func TestCephWaitForCephHealthyWarn(t *testing.T) {
+  mock := newMockCephKubeClient()
+  mock.execInDeploymentResult["rook-ceph/rook-ceph-tools"] = "HEALTH_WARN noout flag(s) set"
+  phase := NewCephPhase(mock, testLogger())
+
+  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  defer cancel()
+
+  err := phase.WaitForCephHealthy(ctx)
+  if err != nil {
+    t.Fatalf("WaitForCephHealthy() returned error: %v", err)
+  }
+}
+
+func TestCephWaitForCephHealthyTimeout(t *testing.T) {
+  mock := newMockCephKubeClient()
+  // Return HEALTH_ERR to force retry until timeout
+  mock.execInDeploymentResult["rook-ceph/rook-ceph-tools"] = "HEALTH_ERR 1 osds down"
+  phase := NewCephPhase(mock, testLogger())
+
+  ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+  defer cancel()
+
+  err := phase.WaitForCephHealthy(ctx)
+  if err == nil {
+    t.Fatal("WaitForCephHealthy() should return error on timeout")
+  }
 }
 
 // indexOf returns the index of s in slice, or -1.

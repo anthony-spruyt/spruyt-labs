@@ -92,17 +92,25 @@ func (p *NodePhase) prepareControlPlane(cfg NodeConfig) []NodeEntry {
   }
 
   if cfg.TestMode {
-    // Skip self entirely.
+    // Skip self entirely. Build a new slice to avoid mutating the copy's
+    // underlying array (a common Go foot-gun with append on sub-slices).
     p.logger.Info("test mode: skipping self node", "name", cfg.NodeName)
-    return append(cpNodes[:selfIndex], cpNodes[selfIndex+1:]...)
+    result := make([]NodeEntry, 0, len(cpNodes)-1)
+    result = append(result, cpNodes[:selfIndex]...)
+    result = append(result, cpNodes[selfIndex+1:]...)
+    return result
   }
 
-  // Real mode: move self to last position.
+  // Real mode: move self to last position using a fresh slice to avoid
+  // mutating the underlying array.
   if selfIndex < len(cpNodes)-1 {
     self := cpNodes[selfIndex]
-    cpNodes = append(cpNodes[:selfIndex], cpNodes[selfIndex+1:]...)
-    cpNodes = append(cpNodes, self)
+    result := make([]NodeEntry, 0, len(cpNodes))
+    result = append(result, cpNodes[:selfIndex]...)
+    result = append(result, cpNodes[selfIndex+1:]...)
+    result = append(result, self)
     p.logger.Info("real mode: self node moved to last", "name", cfg.NodeName)
+    return result
   }
 
   return cpNodes

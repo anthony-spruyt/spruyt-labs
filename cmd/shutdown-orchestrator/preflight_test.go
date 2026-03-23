@@ -12,14 +12,16 @@ import (
 
 // mockKube implements clients.KubeClient for preflight tests.
 type mockKube struct {
-  nodes             []clients.Node
-  getNodesErr       error
-  cnpgClusters      []clients.CNPGCluster
-  getCNPGErr        error
-  deploymentExists  bool
-  deploymentExistsE error
-  execOutput        string
-  execErr           error
+  nodes              []clients.Node
+  getNodesErr        error
+  cnpgClusters       []clients.CNPGCluster
+  getCNPGErr         error
+  deploymentExists   bool
+  deploymentExistsE  error
+  execOutput         string
+  execErr            error
+  listDeployNames    map[string][]string // labelSelector -> names
+  listDeployErr      error
 }
 
 func (m *mockKube) GetNodes(ctx context.Context) ([]clients.Node, error) {
@@ -41,7 +43,15 @@ func (m *mockKube) ScaleDeployment(ctx context.Context, ns, name string, replica
   return nil
 }
 func (m *mockKube) ListDeploymentNames(ctx context.Context, ns, labelSelector string) ([]string, error) {
-  return nil, nil
+  if m.listDeployErr != nil {
+    return nil, m.listDeployErr
+  }
+  if m.listDeployNames != nil {
+    if names, ok := m.listDeployNames[labelSelector]; ok {
+      return names, nil
+    }
+  }
+  return []string{}, nil
 }
 func (m *mockKube) IsCephNooutSet(ctx context.Context) (bool, error) {
   return false, nil
@@ -187,6 +197,11 @@ func TestPreflightAllPass(t *testing.T) {
     cnpgClusters:     []clients.CNPGCluster{},
     deploymentExists: true,
     execOutput:       "HEALTH_OK",
+    listDeployNames: map[string][]string{
+      "app=rook-ceph-osd": {"rook-ceph-osd-0"},
+      "app=rook-ceph-mon": {"rook-ceph-mon-a"},
+      "app=rook-ceph-mgr": {"rook-ceph-mgr-a"},
+    },
   }
   ups := &mockUPS{status: "OL"}
   checker := NewPreflightChecker(kube, &mockTalos{}, ups, goodConfig(), newDiscardLogger())
@@ -197,8 +212,8 @@ func TestPreflightAllPass(t *testing.T) {
       t.Errorf("expected all checks to pass, but %q failed: %s", r.Check, r.Error)
     }
   }
-  if len(results) < 7 {
-    t.Errorf("expected at least 7 checks, got %d", len(results))
+  if len(results) < 8 {
+    t.Errorf("expected at least 8 checks, got %d", len(results))
   }
 }
 
@@ -240,8 +255,8 @@ func TestPreflightMultipleFails(t *testing.T) {
       failCount++
     }
   }
-  if failCount != 3 {
-    t.Errorf("expected 3 failures, got %d", failCount)
+  if failCount != 4 {
+    t.Errorf("expected 4 failures, got %d", failCount)
   }
 }
 

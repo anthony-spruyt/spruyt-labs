@@ -195,6 +195,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 | CNPG_PHASE_TIMEOUT          | 60                                          | CNPG hibernation timeout (seconds)       |
 | CEPH_FLAG_PHASE_TIMEOUT     | 15                                          | Ceph noout flag timeout (seconds)        |
 | CEPH_SCALE_PHASE_TIMEOUT    | 60                                          | Ceph scale down timeout (seconds)        |
+| CEPH_HEALTH_WAIT_TIMEOUT    | 300                                         | Ceph health wait after scale-up (secs)   |
 | NODE_SHUTDOWN_PHASE_TIMEOUT | 120                                         | Node shutdown timeout (seconds)          |
 
 ### Alerts (VMRule)
