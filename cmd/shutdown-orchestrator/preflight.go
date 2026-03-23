@@ -2,7 +2,9 @@ package main
 
 import (
   "context"
+  "fmt"
   "log/slog"
+  "strings"
 
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
 )
@@ -88,7 +90,27 @@ func (p *PreflightChecker) RunAll(ctx context.Context) []PreflightResult {
     })
   }
 
-  // 6. UPS reachable
+  // 6. Talos API reachable (check each node)
+  allNodeIPs := append(append([]string{}, p.cfg.WorkerIPs...), p.cfg.ControlPlaneIPs...)
+  talosOK := true
+  var talosErrs []string
+  for _, ip := range allNodeIPs {
+    if pingErr := p.talos.Ping(ctx, ip); pingErr != nil {
+      talosOK = false
+      talosErrs = append(talosErrs, fmt.Sprintf("%s: %v", ip, pingErr))
+    }
+  }
+  if talosOK {
+    results = append(results, PreflightResult{Check: "Talos API reachable", Passed: true})
+  } else {
+    results = append(results, PreflightResult{
+      Check:  "Talos API reachable",
+      Passed: false,
+      Error:  fmt.Sprintf("unreachable nodes: %s", strings.Join(talosErrs, "; ")),
+    })
+  }
+
+  // 7. UPS reachable
   _, err = p.ups.GetStatus(ctx)
   results = append(results, makeResult("UPS reachable", err))
 

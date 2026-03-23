@@ -24,6 +24,8 @@ type Config struct {
   CephFlagPhaseTimeout     time.Duration
   CephScalePhaseTimeout    time.Duration
   NodeShutdownPhaseTimeout time.Duration
+  PerNodeTimeout           time.Duration
+  CephWaitToolsTimeout     time.Duration
 
   // Node IPs
   WorkerIPs       []string
@@ -45,6 +47,8 @@ func LoadConfig() Config {
     CephFlagPhaseTimeout:     time.Duration(envIntOrDefault("CEPH_FLAG_PHASE_TIMEOUT", 15)) * time.Second,
     CephScalePhaseTimeout:    time.Duration(envIntOrDefault("CEPH_SCALE_PHASE_TIMEOUT", 60)) * time.Second,
     NodeShutdownPhaseTimeout: time.Duration(envIntOrDefault("NODE_SHUTDOWN_PHASE_TIMEOUT", 120)) * time.Second,
+    PerNodeTimeout:           time.Duration(envIntOrDefault("PER_NODE_TIMEOUT", 15)) * time.Second,
+    CephWaitToolsTimeout:     time.Duration(envIntOrDefault("CEPH_WAIT_TOOLS_TIMEOUT", 600)) * time.Second,
   }
 
   // Collect non-empty node IPs

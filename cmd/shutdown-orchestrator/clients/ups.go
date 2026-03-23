@@ -53,6 +53,10 @@ func (c *NUTClient) GetStatus(ctx context.Context) (string, error) {
   }
 
   line := scanner.Text()
+
+  // Send LOGOUT before closing to cleanly terminate the NUT session.
+  _, _ = conn.Write([]byte("LOGOUT\n"))
+
   return parseNUTVar(line, c.upsName, "ups.status")
 }
 

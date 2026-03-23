@@ -109,9 +109,10 @@ func TestMonitorPowerLossDetection(t *testing.T) {
     t.Error("shutdown should not trigger before delay expires")
   }
 
-  // Verify the monitor detected on-battery state (shuttingDown flag set).
-  if !mon.shuttingDown.Load() {
-    t.Error("expected shuttingDown to be true after OB detection")
+  // shuttingDown should only be true once the delay expires and shutdown begins,
+  // not during the countdown period.
+  if mon.shuttingDown.Load() {
+    t.Error("expected shuttingDown to be false during countdown (before delay expires)")
   }
 }
 

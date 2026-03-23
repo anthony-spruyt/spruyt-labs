@@ -48,10 +48,16 @@ func (m *mockKube) IsCephNooutSet(ctx context.Context) (bool, error) {
 }
 
 // mockTalos implements clients.TalosClient.
-type mockTalos struct{}
+type mockTalos struct {
+  pingErr error
+}
 
 func (m *mockTalos) Shutdown(ctx context.Context, nodeIP string, force bool) error {
   return nil
+}
+
+func (m *mockTalos) Ping(ctx context.Context, nodeIP string) error {
+  return m.pingErr
 }
 
 // mockUPS implements clients.UPSClient.
@@ -191,8 +197,29 @@ func TestPreflightAllPass(t *testing.T) {
       t.Errorf("expected all checks to pass, but %q failed: %s", r.Check, r.Error)
     }
   }
-  if len(results) < 6 {
-    t.Errorf("expected at least 6 checks, got %d", len(results))
+  if len(results) < 7 {
+    t.Errorf("expected at least 7 checks, got %d", len(results))
+  }
+}
+
+func TestPreflightTalosAPIUnreachable(t *testing.T) {
+  kube := &mockKube{
+    nodes:            []clients.Node{{Name: "node1", Ready: true}},
+    cnpgClusters:     []clients.CNPGCluster{},
+    deploymentExists: true,
+    execOutput:       "HEALTH_OK",
+  }
+  ups := &mockUPS{status: "OL"}
+  talos := &mockTalos{pingErr: fmt.Errorf("connection refused")}
+  checker := NewPreflightChecker(kube, talos, ups, goodConfig(), newDiscardLogger())
+
+  results := checker.RunAll(context.Background())
+  found := findResult(results, "Talos API reachable")
+  if found == nil {
+    t.Fatal("expected 'Talos API reachable' check in results")
+  }
+  if found.Passed {
+    t.Error("expected Talos API check to fail")
   }
 }
 

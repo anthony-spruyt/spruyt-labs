@@ -2,6 +2,7 @@ package phases
 
 import (
   "context"
+  "errors"
   "log/slog"
   "time"
 
@@ -72,39 +73,45 @@ func (p *CephPhase) UnsetNoout(ctx context.Context) error {
 // ScaleDown scales Ceph components to 0 replicas in order:
 // operator -> OSDs -> monitors -> managers.
 // If scaling one component fails, it logs a warning and continues.
+// Returns a combined error of all failures for inclusion in the phase summary.
 func (p *CephPhase) ScaleDown(ctx context.Context) error {
+  var errs []error
+
   // 1. Operator
-  p.scaleComponent(ctx, cephOperatorDeploy, 0)
+  errs = append(errs, p.scaleComponent(ctx, cephOperatorDeploy, 0))
 
   // 2. OSDs
-  p.scaleByLabel(ctx, "app=rook-ceph-osd", 0)
+  errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 0)...)
 
   // 3. Monitors
-  p.scaleByLabel(ctx, "app=rook-ceph-mon", 0)
+  errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mon", 0)...)
 
   // 4. Managers
-  p.scaleByLabel(ctx, "app=rook-ceph-mgr", 0)
+  errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mgr", 0)...)
 
-  return nil
+  return errors.Join(errs...)
 }
 
 // ScaleUp scales Ceph components to 1 replica in reverse order:
 // monitors -> managers -> OSDs -> operator.
 // If scaling one component fails, it logs a warning and continues.
+// Returns a combined error of all failures for inclusion in the phase summary.
 func (p *CephPhase) ScaleUp(ctx context.Context) error {
+  var errs []error
+
   // 1. Monitors
-  p.scaleByLabel(ctx, "app=rook-ceph-mon", 1)
+  errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mon", 1)...)
 
   // 2. Managers
-  p.scaleByLabel(ctx, "app=rook-ceph-mgr", 1)
+  errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mgr", 1)...)
 
   // 3. OSDs
-  p.scaleByLabel(ctx, "app=rook-ceph-osd", 1)
+  errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 1)...)
 
   // 4. Operator
-  p.scaleComponent(ctx, cephOperatorDeploy, 1)
+  errs = append(errs, p.scaleComponent(ctx, cephOperatorDeploy, 1))
 
-  return nil
+  return errors.Join(errs...)
 }
 
 // WaitForToolsPod waits for the Ceph tools deployment to exist with
@@ -150,22 +157,28 @@ func (p *CephPhase) NeedsRecovery(ctx context.Context) (bool, error) {
 }
 
 // scaleComponent scales a single named deployment, logging warnings on failure.
-func (p *CephPhase) scaleComponent(ctx context.Context, name string, replicas int32) {
+// Returns the error (or nil) so callers can collect it.
+func (p *CephPhase) scaleComponent(ctx context.Context, name string, replicas int32) error {
   p.logger.Info("scaling deployment", "name", name, "replicas", replicas)
   if err := p.kube.ScaleDeployment(ctx, cephNamespace, name, replicas); err != nil {
     p.logger.Warn("failed to scale deployment", "name", name, "replicas", replicas, "error", err)
+    return err
   }
+  return nil
 }
 
 // scaleByLabel lists deployments matching the label selector and scales each one.
-func (p *CephPhase) scaleByLabel(ctx context.Context, labelSelector string, replicas int32) {
+// Returns a slice of errors (which may contain nils) for collection by callers.
+func (p *CephPhase) scaleByLabel(ctx context.Context, labelSelector string, replicas int32) []error {
   names, err := p.kube.ListDeploymentNames(ctx, cephNamespace, labelSelector)
   if err != nil {
     p.logger.Warn("failed to list deployments", "selector", labelSelector, "error", err)
-    return
+    return []error{err}
   }
 
+  var errs []error
   for _, name := range names {
-    p.scaleComponent(ctx, name, replicas)
+    errs = append(errs, p.scaleComponent(ctx, name, replicas))
   }
+  return errs
 }

@@ -38,5 +38,26 @@ func (t *RealTalosClient) Shutdown(ctx context.Context, nodeIP string, force boo
   return nil
 }
 
+// Ping verifies connectivity to a Talos node by requesting its version.
+func (t *RealTalosClient) Ping(ctx context.Context, nodeIP string) error {
+  c, err := client.New(ctx,
+    client.WithDefaultConfig(),
+    client.WithEndpoints(nodeIP),
+  )
+  if err != nil {
+    return fmt.Errorf("creating Talos client for node %s: %w", nodeIP, err)
+  }
+  defer c.Close() //nolint:errcheck
+
+  nodeCtx := client.WithNodes(ctx, nodeIP)
+
+  _, err = c.Version(nodeCtx)
+  if err != nil {
+    return fmt.Errorf("pinging Talos node %s: %w", nodeIP, err)
+  }
+
+  return nil
+}
+
 // Compile-time interface conformance check.
 var _ TalosClient = (*RealTalosClient)(nil)

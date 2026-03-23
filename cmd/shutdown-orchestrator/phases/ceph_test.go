@@ -277,10 +277,13 @@ func TestCephScaleDownOperatorFails(t *testing.T) {
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mgr"] = []string{"rook-ceph-mgr-a"}
   phase := NewCephPhase(mock, testLogger())
 
-  // Should NOT return error (warning only, continues to next component)
+  // Should return error summarizing failures, but still continue to all components.
   err := phase.ScaleDown(context.Background())
-  if err != nil {
-    t.Fatalf("ScaleDown() returned error: %v, want nil (warning only)", err)
+  if err == nil {
+    t.Fatal("ScaleDown() returned nil, want error when operator scale fails")
+  }
+  if !strings.Contains(err.Error(), "scale failed") {
+    t.Errorf("error should contain 'scale failed', got: %v", err)
   }
 
   // Should still attempt to scale other components

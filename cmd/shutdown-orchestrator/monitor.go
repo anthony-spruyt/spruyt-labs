@@ -86,7 +86,6 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
 
       if strings.Contains(status, "OB") {
         onBatteryElapsed += pollInterval
-        m.shuttingDown.Store(true)
         m.logger.Warn("UPS on battery",
           "status", status,
           "elapsed", onBatteryElapsed,
@@ -95,6 +94,7 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
 
         if onBatteryElapsed >= shutdownDelay {
           m.logger.Warn("shutdown delay exceeded, triggering shutdown")
+          m.shuttingDown.Store(true)
           if err := m.shutdownFn(ctx); err != nil {
             m.logger.Error("shutdown failed", "error", err)
             return fmt.Errorf("shutdown failed: %w", err)

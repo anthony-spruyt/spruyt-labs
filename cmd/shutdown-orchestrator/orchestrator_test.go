@@ -138,6 +138,10 @@ func (m *orchestratorMockTalos) Shutdown(ctx context.Context, nodeIP string, for
   return nil
 }
 
+func (m *orchestratorMockTalos) Ping(ctx context.Context, nodeIP string) error {
+  return nil
+}
+
 func (m *orchestratorMockTalos) getCalls() []string {
   m.mu.Lock()
   defer m.mu.Unlock()
@@ -162,7 +166,9 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
     CNPGPhaseTimeout:         5 * time.Second,
     CephFlagPhaseTimeout:     5 * time.Second,
     CephScalePhaseTimeout:    5 * time.Second,
+    CephWaitToolsTimeout:     5 * time.Second,
     NodeShutdownPhaseTimeout: 5 * time.Second,
+    PerNodeTimeout:           5 * time.Second,
     WorkerIPs:                []string{"10.0.0.1"},
     ControlPlaneIPs:          []string{"10.0.0.10", "10.0.0.11"},
   }

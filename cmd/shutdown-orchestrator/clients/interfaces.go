@@ -38,6 +38,8 @@ type KubeClient interface {
 // TalosClient abstracts Talos node operations.
 type TalosClient interface {
   Shutdown(ctx context.Context, nodeIP string, force bool) error
+  // Ping verifies connectivity to a Talos node by requesting its version.
+  Ping(ctx context.Context, nodeIP string) error
 }
 
 // UPSClient abstracts UPS status queries.

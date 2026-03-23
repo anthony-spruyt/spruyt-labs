@@ -96,7 +96,7 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
 
   var errs []error
 
-  if err := runPhase(ctx, o.logger, "ceph-wait-tools", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
+  if err := runPhase(ctx, o.logger, "ceph-wait-tools", o.cfg.CephWaitToolsTimeout, func(pctx context.Context) error {
     return o.ceph.WaitForToolsPod(pctx)
   }); err != nil {
     errs = append(errs, fmt.Errorf("ceph-wait-tools: %w", err))
@@ -163,11 +163,18 @@ func (o *Orchestrator) NeedsRecovery(ctx context.Context) (bool, error) {
 }
 
 // RunTest runs a full shutdown followed by recovery for test/validation.
+// After shutdown, it waits for nodes to rejoin (user powers them back on)
+// before running recovery.
 func (o *Orchestrator) RunTest(ctx context.Context) error {
   o.logger.Info("starting test mode: shutdown then recovery")
 
   if err := o.Shutdown(ctx); err != nil {
     return fmt.Errorf("test shutdown failed: %w", err)
+  }
+
+  o.logger.Info("waiting for nodes to rejoin before recovery")
+  if err := o.waitForNodesReady(ctx); err != nil {
+    o.logger.Warn("not all nodes ready, proceeding with recovery anyway", "error", err)
   }
 
   if err := o.Recover(ctx); err != nil {
@@ -176,6 +183,47 @@ func (o *Orchestrator) RunTest(ctx context.Context) error {
 
   o.logger.Info("test mode complete")
   return nil
+}
+
+// waitForNodesReady polls until all configured nodes are Ready or the context
+// is cancelled. Uses exponential backoff (5s, 10s, 20s, ... max 60s).
+func (o *Orchestrator) waitForNodesReady(ctx context.Context) error {
+  maxBackoff := 60 * time.Second
+  backoff := 5 * time.Second
+
+  for {
+    nodes, err := o.kube.GetNodes(ctx)
+    if err == nil {
+      allReady := true
+      for _, n := range nodes {
+        if !n.Ready {
+          allReady = false
+          o.logger.Info("node not yet ready", "name", n.Name)
+        }
+      }
+      if allReady && len(nodes) > 0 {
+        o.logger.Info("all nodes are ready")
+        return nil
+      }
+    } else {
+      o.logger.Warn("failed to check node readiness", "error", err)
+    }
+
+    if ctx.Err() != nil {
+      return fmt.Errorf("timed out waiting for nodes to be ready: %w", ctx.Err())
+    }
+
+    select {
+    case <-ctx.Done():
+      return ctx.Err()
+    case <-time.After(backoff):
+    }
+
+    backoff *= 2
+    if backoff > maxBackoff {
+      backoff = maxBackoff
+    }
+  }
 }
 
 // verifyHealth checks that all nodes are ready and logs the results.
@@ -245,7 +293,7 @@ func (o *Orchestrator) nodeConfig(ctx context.Context) (phases.NodeConfig, error
     ControlPlane:   controlPlane,
     NodeName:       o.cfg.NodeName,
     TestMode:       o.cfg.Mode == "test",
-    PerNodeTimeout: 30 * time.Second,
+    PerNodeTimeout: o.cfg.PerNodeTimeout,
   }, nil
 }
 
