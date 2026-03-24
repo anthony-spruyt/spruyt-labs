@@ -7,6 +7,7 @@ EXTENDS: .mega-linter-base.yml
 CONFIG_PROPERTIES_TO_APPEND:
   - ENABLE_LINTERS
   - EXCLUDED_DIRECTORIES
+# Add project-specific linters below:
 ENABLE_LINTERS:
   - GO_GOLANGCI_LINT
   - TERRAFORM_TFLINT
