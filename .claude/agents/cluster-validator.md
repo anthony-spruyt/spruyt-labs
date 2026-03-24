@@ -298,7 +298,7 @@ flux resume kustomization <name>
 
 After determining your verdict, record learnings before returning.
 
-1. Read `.claude/agent-memory/cluster-validator/known-patterns.md`
+1. Read `/workspaces/spruyt-labs/.claude/agent-memory/cluster-validator/known-patterns.md`
 2. For each observation (timing, failure signatures, false positives):
    - Already in table: increment Count, update Last Seen
    - New: append row with Count=1, Last Seen=today, Added=today
@@ -306,7 +306,7 @@ After determining your verdict, record learnings before returning.
 3. Auto-prune when file exceeds 50 entries: remove Count=1 entries older than 30 days. Never remove Count >= 3
 4. Commit if changed:
    ```bash
-   git add .claude/agent-memory/cluster-validator/known-patterns.md
+   git add /workspaces/spruyt-labs/.claude/agent-memory/cluster-validator/known-patterns.md
    git commit -m "fix(agents): update cluster-validator patterns from run YYYY-MM-DD"
    ```
    Only stage this one file.

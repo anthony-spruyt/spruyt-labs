@@ -22,12 +22,16 @@ var (
 )
 
 func main() {
+  os.Exit(run())
+}
+
+func run() int {
   logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
   cfg := LoadConfig(logger)
   if err := cfg.Validate(); err != nil {
     logger.Error("invalid configuration", "error", err)
-    os.Exit(1)
+    return 1
   }
 
   logger.Info("starting shutdown-orchestrator", "mode", cfg.Mode, "version", version, "commit", commit)
@@ -39,26 +43,27 @@ func main() {
   case "monitor":
     if err := runMonitor(ctx, cfg, logger); err != nil {
       logger.Error("monitor failed", "error", err)
-      os.Exit(1)
+      return 1
     }
   case "test":
     if os.Getenv("CONFIRM_TEST") != "yes" {
       logger.Error("test mode executes a REAL shutdown against the live cluster; set CONFIRM_TEST=yes to proceed")
-      os.Exit(1)
+      return 1
     }
     if err := runTest(ctx, cfg, logger); err != nil {
       logger.Error("test failed", "error", err)
-      os.Exit(1)
+      return 1
     }
   case "preflight":
     if err := runPreflight(ctx, cfg, logger); err != nil {
       logger.Error("preflight failed", "error", err)
-      os.Exit(1)
+      return 1
     }
   }
+  return 0
 }
 
-func buildClients(cfg Config, logger *slog.Logger) (clients.KubeClient, clients.TalosClient, clients.UPSClient, error) {
+func buildClients(cfg Config) (clients.KubeClient, clients.TalosClient, clients.UPSClient, error) {
   kube, err := clients.NewKubeClient()
   if err != nil {
     return nil, nil, nil, fmt.Errorf("creating kube client: %w", err)
@@ -78,7 +83,7 @@ func buildOrchestrator(kube clients.KubeClient, talos clients.TalosClient, cfg C
 }
 
 func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
-  kube, talos, ups, err := buildClients(cfg, logger)
+  kube, talos, ups, err := buildClients(cfg)
   if err != nil {
     return err
   }
@@ -120,7 +125,7 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
 }
 
 func runTest(ctx context.Context, cfg Config, logger *slog.Logger) error {
-  kube, talos, ups, err := buildClients(cfg, logger)
+  kube, talos, ups, err := buildClients(cfg)
   if err != nil {
     return err
   }
@@ -132,7 +137,7 @@ func runTest(ctx context.Context, cfg Config, logger *slog.Logger) error {
 }
 
 func runPreflight(ctx context.Context, cfg Config, logger *slog.Logger) error {
-  kube, talos, ups, err := buildClients(cfg, logger)
+  kube, talos, ups, err := buildClients(cfg)
   if err != nil {
     return fmt.Errorf("creating clients: %w", err)
   }
