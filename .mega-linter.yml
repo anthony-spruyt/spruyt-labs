@@ -1,4 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oxsecurity/megalinter/main/megalinter/descriptors/schemas/megalinter-configuration.jsonschema.json
+# Project-specific MegaLinter configuration
+# Extends the base config from repo-operator
+# Add custom linters or overrides below
 EXTENDS: .mega-linter-base.yml
+# Append additional linters to base config (don't replace)
 CONFIG_PROPERTIES_TO_APPEND:
   - ENABLE_LINTERS
   - EXCLUDED_DIRECTORIES
@@ -10,6 +15,7 @@ GO_GOLANGCI_LINT_PRE_COMMANDS:
   - command: "export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath && cd cmd/shutdown-orchestrator && go mod download && printf '#!/bin/sh\nexport GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath\nWS=\"${DEFAULT_WORKSPACE:-/tmp/lint}\"\ncd \"$WS/cmd/shutdown-orchestrator\" || exit 1\nexec golangci-lint \"$@\"\n' > /tmp/golangci-lint-wrapper.sh && chmod +x /tmp/golangci-lint-wrapper.sh"
     cwd: "workspace"
 GO_GOLANGCI_LINT_CLI_EXECUTABLE: "/tmp/golangci-lint-wrapper.sh"
+GO_GOLANGCI_LINT_CONFIG_FILE: cmd/shutdown-orchestrator/.golangci.yml
 EXCLUDED_DIRECTORIES:
   - .output
   - clusterconfig
