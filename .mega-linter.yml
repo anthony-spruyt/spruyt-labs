@@ -15,7 +15,8 @@ FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|.*sops.*|.*/mcp\.json$|cluster/apps/opencla
 GO_GOLANGCI_LINT_PRE_COMMANDS:
   - command: "export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath && cd cmd/shutdown-orchestrator && go mod download && printf '#!/bin/sh\nexport GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath\nWS=\"${DEFAULT_WORKSPACE:-/tmp/lint}\"\ncd \"$WS/cmd/shutdown-orchestrator\" || exit 1\nexec golangci-lint \"$@\"\n' > /tmp/golangci-lint-wrapper.sh && chmod +x /tmp/golangci-lint-wrapper.sh"
     cwd: "workspace"
-GO_GOLANGCI_LINT_CLI_EXECUTABLE: "/tmp/golangci-lint-wrapper.sh"
+GO_GOLANGCI_LINT_CLI_EXECUTABLE:
+  - "/tmp/golangci-lint-wrapper.sh"
 GO_GOLANGCI_LINT_CONFIG_FILE: cmd/shutdown-orchestrator/.golangci.yml
 EXCLUDED_DIRECTORIES:
   - .output
