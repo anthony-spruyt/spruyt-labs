@@ -57,15 +57,16 @@ func (p *PreflightChecker) RunAll(ctx context.Context) []PreflightResult {
 
   // 3. Ceph tools pod exists
   exists, err := p.kube.DeploymentExists(ctx, "rook-ceph", "rook-ceph-tools")
-  if err != nil {
+  switch {
+  case err != nil:
     results = append(results, makeResult("Ceph tools pod exists", err))
-  } else if !exists {
+  case !exists:
     results = append(results, PreflightResult{
       Check:  "Ceph tools pod exists",
       Passed: false,
       Error:  "deployment rook-ceph-tools not found in rook-ceph namespace",
     })
-  } else {
+  default:
     results = append(results, PreflightResult{
       Check:  "Ceph tools pod exists",
       Passed: true,

@@ -15,22 +15,22 @@ import (
 // mockCephKubeClient implements clients.KubeClient for testing Ceph phases.
 type mockCephKubeClient struct {
   // Call tracking
-  deploymentExistsCalls   []deploymentExistsCall
-  execInDeploymentCalls   []execInDeploymentCall
-  scaleDeploymentCalls    []scaleDeploymentCall
-  listDeploymentCalls     []listDeploymentCall
-  isCephNooutSetCalls     int
+  deploymentExistsCalls []deploymentExistsCall
+  execInDeploymentCalls []execInDeploymentCall
+  scaleDeploymentCalls  []scaleDeploymentCall
+  listDeploymentCalls   []listDeploymentCall
+  isCephNooutSetCalls   int
 
   // Configurable return values
-  deploymentExistsResult  map[string]bool
-  deploymentExistsErr     map[string]error
-  execInDeploymentResult  map[string]string
-  execInDeploymentErr     map[string]error
-  scaleDeploymentErr      map[string]error
-  listDeploymentResult    map[string][]string
-  listDeploymentErr       map[string]error
-  isCephNooutSetResult    bool
-  isCephNooutSetErr       error
+  deploymentExistsResult map[string]bool
+  deploymentExistsErr    map[string]error
+  execInDeploymentResult map[string]string
+  execInDeploymentErr    map[string]error
+  scaleDeploymentErr     map[string]error
+  listDeploymentResult   map[string][]string
+  listDeploymentErr      map[string]error
+  isCephNooutSetResult   bool
+  isCephNooutSetErr      error
 }
 
 type deploymentExistsCall struct {
