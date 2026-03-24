@@ -17,7 +17,7 @@ GO_GOLANGCI_LINT_PRE_COMMANDS:
     cwd: "workspace"
 GO_GOLANGCI_LINT_CLI_EXECUTABLE:
   - "/tmp/golangci-lint-wrapper.sh"
-GO_GOLANGCI_LINT_CONFIG_FILE: cmd/shutdown-orchestrator/.golangci.yml
+GO_GOLANGCI_LINT_CONFIG_FILE: .golangci.yml
 EXCLUDED_DIRECTORIES:
   - .output
   - clusterconfig
