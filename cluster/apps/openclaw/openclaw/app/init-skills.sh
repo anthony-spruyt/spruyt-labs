@@ -107,7 +107,7 @@ fi
 
 # --- Python (via uv) ---
 # renovate: depName=astral-sh/uv datasource=github-releases
-UV_VERSION="0.11.0"
+UV_VERSION="0.11.1"
 if needs_install uv "$UV_VERSION"; then
   log "Installing uv v$${UV_VERSION}..."
   rm -f "$BIN_DIR/uv" "$BIN_DIR/uvx"
