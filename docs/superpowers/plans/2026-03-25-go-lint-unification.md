@@ -22,6 +22,9 @@
 | `scripts/golangci-lint-multi.sh` | Create | Multi-module wrapper script |
 | `.mega-linter.yml` | Modify | Rewrite `GO_GOLANGCI_LINT_PRE_COMMANDS` to use new wrapper |
 
+**Skipped from spec:** Section 3 (fix traefik plugin lint findings) — verified unnecessary.
+Both modules pass golangci-lint v2 with 0 issues locally. No fixes needed.
+
 ---
 
 ### Task 1: Update issue #769
@@ -129,7 +132,10 @@ through a different mechanism. For a two-module repo this is acceptable.
 
 - [ ] **Step 1: Write the wrapper script file**
 
-Create `/workspaces/spruyt-labs/scripts/golangci-lint-multi.sh` with the wrapper logic. This avoids the heredoc-inside-YAML problem by keeping the script as a standalone file that gets copied into place by the pre-command.
+Create the `scripts/` directory if it doesn't exist (`mkdir -p scripts`), then create
+`scripts/golangci-lint-multi.sh` with the wrapper logic. This avoids the
+heredoc-inside-YAML problem by keeping the script as a standalone file that gets copied
+into place by the pre-command.
 
 ```bash
 #!/bin/sh
@@ -183,7 +189,7 @@ Replace lines 15-20 in `.mega-linter.yml` with:
 
 ```yaml
 GO_GOLANGCI_LINT_PRE_COMMANDS:
-  - command: "export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath && find . -name go.mod -not -path '*/vendor/*' -not -path '*/.output/*' -not -path '*/clusterconfig/*' -not -path '*/legacy/*' -not -path '*/talos/*' -not -path '*/.claude/*' -not -path '*/.git/*' | while read -r modfile; do moddir=\"$(dirname \"$modfile\")\"; echo \"go mod download: $moddir\"; (cd \"$moddir\" && go mod download) || true; done && cp scripts/golangci-lint-multi.sh /tmp/golangci-lint-wrapper.sh && chmod +x /tmp/golangci-lint-wrapper.sh"
+  - command: "export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath && find . -name go.mod -not -path '*/vendor/*' -not -path '*/.output/*' -not -path '*/clusterconfig/*' -not -path '*/legacy/*' -not -path '*/talos/*' -not -path '*/.claude/*' -not -path '*/.git/*' -not -path '*/plans/*' | while read -r modfile; do moddir=\"$(dirname \"$modfile\")\"; echo \"go mod download: $moddir\"; (cd \"$moddir\" && go mod download) || true; done && cp scripts/golangci-lint-multi.sh /tmp/golangci-lint-wrapper.sh && chmod +x /tmp/golangci-lint-wrapper.sh"
     cwd: "workspace"
 GO_GOLANGCI_LINT_CLI_EXECUTABLE:
   - "/tmp/golangci-lint-wrapper.sh"

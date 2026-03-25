@@ -71,4 +71,4 @@ Rewrite the issue body to reflect the actual scope (Go version alignment + multi
 
 - **Yaegi compatibility:** The traefik plugin runs under Yaegi (Traefik's Go interpreter). Yaegi supports a subset of Go — lint fixes must not introduce stdlib features Yaegi doesn't support. The plugin currently uses only basic stdlib packages (net/http, crypto/subtle, encoding/json, etc.) which are well-supported.
 - **Go 1.26.1 upgrade for shutdown-orchestrator:** Minor version bump from 1.25.3. Dependencies may need updating via `go mod tidy`. Low risk — no breaking changes expected between 1.25 and 1.26.
-- **MegaLinter wrapper failure isolation:** If one module fails to lint, the wrapper still attempts all modules before reporting failure. This ensures all findings are surfaced in a single run.
+- **MegaLinter wrapper failure isolation:** MegaLinter invokes the wrapper per `.go` file, so each module is linted independently. However, MegaLinter may stop invoking the wrapper after the first non-zero exit, meaning a failure in one module could prevent linting of others in the same run. For a two-module repo this is acceptable.
