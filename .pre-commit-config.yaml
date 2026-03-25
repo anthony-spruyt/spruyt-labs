@@ -50,10 +50,6 @@ repos:
     rev: "v0.48.0"
     hooks:
       - id: "markdownlint"
-  - repo: "https://github.com/rhysd/actionlint"
-    rev: "v1.7.11"
-    hooks:
-      - id: "actionlint"
   - repo: "local"
     hooks:
       - id: "jsonlint"
@@ -62,10 +58,10 @@ repos:
         language: "system"
         types:
           - "json"
-  - repo: "https://github.com/k8s-at-home/sops-pre-commit"
-    rev: "v2.1.1"
+  - repo: "https://github.com/rhysd/actionlint"
+    rev: "v1.7.11"
     hooks:
-      - id: "forbid-secrets"
+      - id: "actionlint"
   - repo: "https://github.com/antonbabenko/pre-commit-terraform"
     rev: "v1.105.0"
     hooks:
@@ -73,3 +69,7 @@ repos:
         files: "^infra/terraform/"
       - id: "terraform_tflint"
         files: "^infra/terraform/"
+  - repo: "https://github.com/k8s-at-home/sops-pre-commit"
+    rev: "v2.1.1"
+    hooks:
+      - id: "forbid-secrets"

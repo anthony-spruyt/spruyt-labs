@@ -24,10 +24,12 @@
     "ghcr.io/devcontainers/features/github-cli": {},
     "ghcr.io/devcontainers/features/docker-in-docker": {},
     "ghcr.io/devcontainers/features/node": {},
-    "ghcr.io/devcontainers/features/python": {},
+    "ghcr.io/devcontainers/features/python": {
+      "version": "latest"
+    },
     "ghcr.io/devcontainers/features/go": {},
-    "ghcr.io/devcontainers/features/terraform": {},
     "ghcr.io/devcontainers-extra/features/renovate-cli": {},
+    "ghcr.io/devcontainers/features/terraform": {},
     "ghcr.io/devcontainers-extra/features/sops": {},
     "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
       "yqVersion": "latest"
