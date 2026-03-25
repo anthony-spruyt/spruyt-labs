@@ -11,9 +11,19 @@ WS="${DEFAULT_WORKSPACE:-/tmp/lint}"
 CACHE_DIR="/tmp/golangci-lint-done"
 mkdir -p "$CACHE_DIR"
 
-# Find the module root for the given .go file
-target="$1"
-if [ -z "$target" ]; then
+# Handle version queries from MegaLinter
+case "${1:-}" in
+--version | -version | version)
+  golangci-lint version
+  exit $?
+  ;;
+esac
+
+# MegaLinter passes: run --fix -c <config> <filepath>.go
+# Extract the last argument (the actual .go file path)
+target=""
+for _arg in "$@"; do target="$_arg"; done
+if [ -z "$target" ] || [ "${target%.go}" = "$target" ]; then
   exit 0
 fi
 dir="$(cd "$(dirname "$target")" && pwd)" || exit 0
