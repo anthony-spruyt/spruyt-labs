@@ -14,7 +14,63 @@ ENABLE_LINTERS:
 FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|.*sops.*|.*/mcp\.json$|cluster/apps/openclaw/openclaw/app/workspace/|\.taskfiles/talos/scripts/'
 GO_GOLANGCI_LINT_CLI_LINT_MODE: file
 GO_GOLANGCI_LINT_PRE_COMMANDS:
-  - command: "export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath GOTOOLCHAIN=auto && find . -name go.mod -not -path '*/vendor/*' -not -path '*/.output/*' -not -path '*/clusterconfig/*' -not -path '*/legacy/*' -not -path '*/talos/*' -not -path '*/.claude/*' -not -path '*/.git/*' -not -path '*/plans/*' | while read -r modfile; do moddir=\"$(dirname \"$modfile\")\"; echo \"go mod download: $moddir\"; (cd \"$moddir\" && go mod download) || true; done && cp \"${DEFAULT_WORKSPACE:-/tmp/lint}/scripts/golangci-lint-multi.sh\" /tmp/golangci-lint-wrapper.sh && chmod +x /tmp/golangci-lint-wrapper.sh"
+  - command: |
+      export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath GOTOOLCHAIN=auto
+      find . -name go.mod \
+        -not -path '*/vendor/*' \
+        -not -path '*/.output/*' \
+        -not -path '*/clusterconfig/*' \
+        -not -path '*/legacy/*' \
+        -not -path '*/talos/*' \
+        -not -path '*/.claude/*' \
+        -not -path '*/.git/*' \
+        -not -path '*/plans/*' \
+        | while read -r modfile; do
+            moddir="$(dirname "$modfile")"
+            echo "go mod download: $moddir"
+            (cd "$moddir" && go mod download) || true
+          done
+      cat > /tmp/golangci-lint-wrapper.sh <<'WRAPPER'
+      #!/bin/sh
+      set -eu
+      export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath GOTOOLCHAIN=auto
+      WS="${DEFAULT_WORKSPACE:-/tmp/lint}"
+      CACHE_DIR="/tmp/golangci-lint-done"
+      mkdir -p "$CACHE_DIR"
+      case "${1:-}" in
+        --version|-version|version) golangci-lint version; exit $?;;
+      esac
+      target=""
+      for _arg in "$@"; do target="$_arg"; done
+      if [ -z "$target" ] || [ "${target%.go}" = "$target" ]; then
+        exit 0
+      fi
+      dir="$(cd "$(dirname "$target")" && pwd)" || exit 0
+      modroot=""
+      while [ "$dir" != "/" ] && [ -n "$dir" ]; do
+        if [ -f "$dir/go.mod" ]; then
+          modroot="$dir"
+          break
+        fi
+        dir="$(dirname "$dir")"
+      done
+      if [ -z "$modroot" ]; then
+        echo "No go.mod found for $target, skipping"
+        exit 0
+      fi
+      cache_key="$(echo "$modroot" | md5sum | cut -d' ' -f1)"
+      if [ -f "$CACHE_DIR/$cache_key" ]; then
+        cached_rc="$(cat "$CACHE_DIR/$cache_key")"
+        exit "$cached_rc"
+      fi
+      echo "golangci-lint: $modroot"
+      cd "$modroot" || exit 1
+      golangci-lint run --config "$WS/.golangci.yml" ./...
+      rc=$?
+      printf '%s' "$rc" >"$CACHE_DIR/$cache_key"
+      exit $rc
+      WRAPPER
+      chmod +x /tmp/golangci-lint-wrapper.sh
     cwd: "workspace"
 GO_GOLANGCI_LINT_CLI_EXECUTABLE:
   - "/tmp/golangci-lint-wrapper.sh"
