@@ -6,7 +6,7 @@
 # Note: MegaLinter args ($@) are intentionally not forwarded;
 # the wrapper controls golangci-lint invocation directly.
 set -eu
-export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath
+export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath GOTOOLCHAIN=auto
 WS="${DEFAULT_WORKSPACE:-/tmp/lint}"
 CACHE_DIR="/tmp/golangci-lint-done"
 mkdir -p "$CACHE_DIR"

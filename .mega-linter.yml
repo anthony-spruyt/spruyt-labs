@@ -12,8 +12,9 @@ ENABLE_LINTERS:
   - GO_GOLANGCI_LINT
   - TERRAFORM_TFLINT
 FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|.*sops.*|.*/mcp\.json$|cluster/apps/openclaw/openclaw/app/workspace/|\.taskfiles/talos/scripts/'
+GO_GOLANGCI_LINT_CLI_LINT_MODE: file
 GO_GOLANGCI_LINT_PRE_COMMANDS:
-  - command: "export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath && find . -name go.mod -not -path '*/vendor/*' -not -path '*/.output/*' -not -path '*/clusterconfig/*' -not -path '*/legacy/*' -not -path '*/talos/*' -not -path '*/.claude/*' -not -path '*/.git/*' -not -path '*/plans/*' | while read -r modfile; do moddir=\"$(dirname \"$modfile\")\"; echo \"go mod download: $moddir\"; (cd \"$moddir\" && go mod download) || true; done && cp \"${DEFAULT_WORKSPACE:-/tmp/lint}/scripts/golangci-lint-multi.sh\" /tmp/golangci-lint-wrapper.sh && chmod +x /tmp/golangci-lint-wrapper.sh"
+  - command: "export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath GOTOOLCHAIN=auto && find . -name go.mod -not -path '*/vendor/*' -not -path '*/.output/*' -not -path '*/clusterconfig/*' -not -path '*/legacy/*' -not -path '*/talos/*' -not -path '*/.claude/*' -not -path '*/.git/*' -not -path '*/plans/*' | while read -r modfile; do moddir=\"$(dirname \"$modfile\")\"; echo \"go mod download: $moddir\"; (cd \"$moddir\" && go mod download) || true; done && cp \"${DEFAULT_WORKSPACE:-/tmp/lint}/scripts/golangci-lint-multi.sh\" /tmp/golangci-lint-wrapper.sh && chmod +x /tmp/golangci-lint-wrapper.sh"
     cwd: "workspace"
 GO_GOLANGCI_LINT_CLI_EXECUTABLE:
   - "/tmp/golangci-lint-wrapper.sh"
