@@ -18,7 +18,7 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 512Mi
+          memory: 896Mi
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
 apiVersion: autoscaling.k8s.io/v1
@@ -39,4 +39,4 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 256Mi
+          memory: 512Mi
