@@ -43,6 +43,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `ghcr.io/siderolabs/installer` (Talos installer image) | `siderolabs/talos` (release tags: `vX.Y.Z`; release notes list component updates, commit log, and dependency changes) | 1 | 2026-03-19 | 2026-03-19 |
 | `external-secrets` (Helm chart via HelmRepository) | `external-secrets/external-secrets` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-22 | 2026-03-22 |
 | `headlamp-plugins/headlamp_flux` (ArtifactHub plugin) | `headlamp-k8s/plugins` (monorepo for all official Headlamp plugins; release tags: `flux-X.Y.Z`; no changelog file, use GitHub release notes) | 1 | 2026-03-23 | 2026-03-23 |
+| `headlamp` (Helm chart via HelmRepository) | `kubernetes-sigs/headlamp` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-26 | 2026-03-26 |
 
 ## Common NO_IMPACT Scenarios
 
@@ -63,6 +64,14 @@ Breaking changes that frequently affect this homelab.
 | Upstream memory regression (worker/server memory usage increase) | Must cross-reference open performance issues against current resource limits. If new baseline approaches or exceeds limits, OOM restarts will occur. | 1 | 2026-02-25 | 2026-02-25 |
 | Velero CSI snapshot restore bugs on Ceph RBD | Rook Ceph + CSI + snapshotMoveData is our primary backup strategy. Any Velero change to VolumeSnapshotContent restore logic (e.g., stripping VolumeSnapshotClassName) breaks DR restore path. Check vmware-tanzu/velero issues for CSI/Ceph/RBD restore before merging. | 1 | 2026-03-18 | 2026-03-18 |
 | openclaw Anthropic model initialization regression (TDZ crash on startup) | Our primary model is always Anthropic; any init-order bug in Anthropic model alias resolution will crash gateway on startup. Check openclaw/openclaw issues for `ANTHROPIC_MODEL_ALIASES` or startup crash reports before merging patch releases. Fixed in v2026.3.13 (PR #45520). | 2 | 2026-03-16 | 2026-03-13 |
+
+## Changelog Workarounds
+
+Workarounds in our config that upstream releases may resolve.
+
+| Dependency | Workaround | Upstream Issue | Resolved In | Count | Last Seen | Added |
+|------------|-----------|----------------|-------------|------:|-----------|-------|
+| headlamp | `config.sessionTTL: null` in values.yaml to prevent `-session-ttl` flag rendering (binary didn't support it) | [#4883](https://github.com/kubernetes-sigs/headlamp/issues/4883) | v0.41.0 (binary now supports `-session-ttl`; safe to remove null override or set explicit value) | 1 | 2026-03-26 | 2026-03-26 |
 
 ## Analysis Notes
 
