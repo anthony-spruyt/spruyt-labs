@@ -41,7 +41,12 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to rook-ceph CSI sidecars for addon operations
+# Allow egress to rook-ceph CSI sidecars for addon operations.
+# Uses toEndpoints for live pods (matched by namespace label) and toCIDR
+# for stale/recycled pod IPs: when a CSI sidecar pod restarts its IP changes,
+# but csi-addons holds the old IP in its connection pool cache. Cilium has no
+# endpoint entry for the recycled IP so it is classified as "world" and dropped.
+# toCIDR 10.244.0.0/16 (cluster pod CIDR) covers reconnect attempts to stale IPs.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -55,6 +60,14 @@ spec:
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: rook-ceph
+      toPorts:
+        - ports:
+            - port: "9070"
+              protocol: TCP
+            - port: "9071"
+              protocol: TCP
+    - toCIDR:
+        - 10.244.0.0/16
       toPorts:
         - ports:
             - port: "9070"
