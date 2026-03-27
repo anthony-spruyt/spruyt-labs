@@ -16,7 +16,7 @@ spec:
         - alert: CiliumPolicyDrops
           expr: |
             sum by (source, destination) (
-              rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
+              rate(hubble_drop_total{reason="POLICY_DENIED", source!="csi-addons-system"}[5m])
             ) > 0
           for: 2m
           labels:
@@ -32,7 +32,7 @@ spec:
         - alert: CiliumPolicyDropsCritical
           expr: |
             sum by (source, destination) (
-              rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
+              rate(hubble_drop_total{reason="POLICY_DENIED", source!="csi-addons-system"}[5m])
             ) > 10
           for: 5m
           labels:
