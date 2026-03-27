@@ -68,7 +68,7 @@ Things that look like failures but aren't — avoid flagging these.
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 9 | 2026-03-19 | 2026-02-24 |
 | traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 25 | 2026-03-23 | 2026-02-25 |
-| Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 13 | 2026-03-26 | 2026-02-25 |
+| Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 14 | 2026-03-26 | 2026-02-25 |
 | mcp-victoriametrics shows "dependency victoria-metrics-k8s-stack is not ready" during reconciliation wave | Dependency chain, resolves within 2 min — parent KS already Ready but child hasn't re-evaluated yet | 1 | 2026-03-19 | 2026-03-19 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
 | authentik default OAuth Mapping uses deprecated `ak_groups` — emits deprecation warning on outpost proxy requests | Not a failure — requests succeed with HTTP 200. Migrate to `User.groups` in admin UI | 1 | 2026-02-25 | 2026-02-25 |
