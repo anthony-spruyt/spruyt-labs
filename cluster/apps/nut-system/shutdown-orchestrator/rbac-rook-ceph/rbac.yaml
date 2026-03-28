@@ -1,0 +1,39 @@
+---
+# Namespace-scoped permissions for rook-ceph operations
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: shutdown-orchestrator
+  namespace: rook-ceph
+rules:
+  # Scale Ceph deployments (operator, OSDs, mgrs, mons)
+  # NOTE: Cannot use resourceNames - OSD/mgr/mon deployment names are dynamic
+  # (e.g., rook-ceph-osd-0, rook-ceph-mgr-a, rook-ceph-mon-b)
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    verbs: ["get", "list", "patch", "update"]
+  # Execute commands in rook-ceph-tools pod
+  # NOTE: RBAC cannot restrict pods/exec to specific pods (resourceNames requires
+  # exact pod names which are dynamic). This is scoped to rook-ceph namespace only.
+  # Further restriction would require OPA/Gatekeeper/Kyverno policies.
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+  # Find rook-ceph-tools pod and list OSD/mon/mgr pods
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: shutdown-orchestrator
+  namespace: rook-ceph
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: shutdown-orchestrator
+subjects:
+  - kind: ServiceAccount
+    name: shutdown-orchestrator
+    namespace: nut-system

@@ -12,16 +12,16 @@ import (
 
 // mockKube implements clients.KubeClient for preflight tests.
 type mockKube struct {
-  nodes              []clients.Node
-  getNodesErr        error
-  cnpgClusters       []clients.CNPGCluster
-  getCNPGErr         error
-  deploymentExists   bool
-  deploymentExistsE  error
-  execOutput         string
-  execErr            error
-  listDeployNames    map[string][]string // labelSelector -> names
-  listDeployErr      error
+  nodes             []clients.Node
+  getNodesErr       error
+  cnpgClusters      []clients.CNPGCluster
+  getCNPGErr        error
+  deploymentExists  bool
+  deploymentExistsE error
+  execOutput        string
+  execErr           error
+  listDeployNames   map[string][]string // labelSelector -> names
+  listDeployErr     error
 }
 
 func (m *mockKube) GetNodes(ctx context.Context) ([]clients.Node, error) {

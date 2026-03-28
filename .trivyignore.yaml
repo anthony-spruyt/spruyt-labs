@@ -55,7 +55,7 @@ misconfigurations:
   # Shutdown orchestrator needs deployment access for Ceph scaling
   - id: AVD-KSV-0048
     paths:
-      - cluster/apps/nut-system/shutdown-orchestrator/app/rbac.yaml
+      - cluster/apps/nut-system/shutdown-orchestrator/rbac-rook-ceph/rbac.yaml
 
   # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)
   - id: AVD-KSV-0013
@@ -70,7 +70,7 @@ misconfigurations:
   # (scoped to rook-ceph namespace only via namespace-scoped Role)
   - id: AVD-KSV-0053
     paths:
-      - cluster/apps/nut-system/shutdown-orchestrator/app/rbac.yaml
+      - cluster/apps/nut-system/shutdown-orchestrator/rbac-rook-ceph/rbac.yaml
 
   # AWS - Terraform infrastructure ignores
   # Dont need S3 bucket logging

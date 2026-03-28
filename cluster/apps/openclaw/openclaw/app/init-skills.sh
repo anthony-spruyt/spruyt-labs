@@ -78,7 +78,7 @@ export PATH="$HOME/.safe-chain/shims:$HOME/.safe-chain/bin:$NPM_GLOBAL/bin:$PATH
 
 # --- GitHub CLI (gh) ---
 # renovate: depName=cli/cli datasource=github-releases
-GH_VERSION="2.88.1"
+GH_VERSION="2.89.0"
 if needs_install gh "$GH_VERSION"; then
   log "Installing GitHub CLI v$${GH_VERSION}..."
   rm -f "$BIN_DIR/gh"
@@ -107,7 +107,7 @@ fi
 
 # --- Python (via uv) ---
 # renovate: depName=astral-sh/uv datasource=github-releases
-UV_VERSION="0.10.12"
+UV_VERSION="0.11.2"
 if needs_install uv "$UV_VERSION"; then
   log "Installing uv v$${UV_VERSION}..."
   rm -f "$BIN_DIR/uv" "$BIN_DIR/uvx"

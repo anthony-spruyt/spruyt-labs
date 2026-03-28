@@ -16,11 +16,11 @@ import (
 
 // mockKubeClient records calls to CNPG methods.
 type mockKubeClient struct {
-  mu                    sync.Mutex
-  clusters              []clients.CNPGCluster
-  getClustersErr        error
-  setHibernationErr     map[string]error // key: "ns/name"
-  hibernationCalls      []hibernationCall
+  mu                      sync.Mutex
+  clusters                []clients.CNPGCluster
+  getClustersErr          error
+  setHibernationErr       map[string]error // key: "ns/name"
+  hibernationCalls        []hibernationCall
   getClustersBlockForever bool
 }
 

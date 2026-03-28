@@ -7,9 +7,6 @@ deploymentAnnotations:
   reloader.stakater.com/auto: "true"
 
 config:
-  # Workaround: binary doesn't support -session-ttl yet, chart renders it by default
-  # See: https://github.com/kubernetes-sigs/headlamp/issues/4883
-  sessionTTL: null
   watchPlugins: true
   # Provide system CA bundle to fix empty CA cert bug in chart
   # See: https://github.com/kubernetes-sigs/headlamp/issues/3884
@@ -33,7 +30,7 @@ pluginsManager:
       # renovate: depName=headlamp-plugins/headlamp_flux
       - name: headlamp_flux
         source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux
-        version: 0.5.0
+        version: 0.6.0
       # renovate: depName=headlamp-plugins/headlamp_cert-manager
       - name: headlamp_cert-manager
         source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager

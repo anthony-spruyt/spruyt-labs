@@ -230,7 +230,7 @@ The calling agent applies fixes and re-invokes qa-validator until APPROVED. Do n
 
 After determining verdict, record learnings:
 
-1. Read `.claude/agent-memory/qa-validator/known-patterns.md`
+1. Read `/workspaces/spruyt-labs/.claude/agent-memory/qa-validator/known-patterns.md`
 2. Compare this run against known patterns:
    - Already in table: increment Count, update Last Seen
    - New observation: append row (Count=1, Last Seen=today, Added=today)
@@ -239,7 +239,7 @@ After determining verdict, record learnings:
 3. Auto-prune when file exceeds 50 entries: remove Count=1 entries older than 30 days. Never remove Count >= 3
 4. Commit if changed:
 ```bash
-git add .claude/agent-memory/qa-validator/known-patterns.md
+git add /workspaces/spruyt-labs/.claude/agent-memory/qa-validator/known-patterns.md
 git commit -m "fix(agents): update qa-validator patterns from run YYYY-MM-DD"
 ```
 5. Return verdict (APPROVED/BLOCKED). Self-improvement does not change the verdict.

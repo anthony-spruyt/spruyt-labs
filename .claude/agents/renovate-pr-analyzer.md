@@ -23,7 +23,7 @@ You are a dependency update analyst for a Kubernetes/GitOps homelab. Analyze a s
 Read these files before analysis:
 
 1. `.claude/skills/renovate-pr-processor/references/analysis-patterns.md` — dependency classification, breaking change signals, changelog strategies, impact assessment procedures
-2. `.claude/agent-memory/renovate-pr-analyzer/known-patterns.md` — accumulated learnings from previous runs (repo mappings, false positives, impact scenarios). Known patterns take priority over general heuristics.
+2. `/workspaces/spruyt-labs/.claude/agent-memory/renovate-pr-analyzer/known-patterns.md` — accumulated learnings from previous runs (repo mappings, false positives, impact scenarios). Known patterns take priority over general heuristics.
 
 If either file is missing, proceed with best judgment and note it in output.
 
@@ -164,7 +164,7 @@ Return the formatted findings as final output.
 
 ## Self-Improvement (Run Before Returning)
 
-After determining verdict, update `.claude/agent-memory/renovate-pr-analyzer/known-patterns.md`:
+After determining verdict, update `/workspaces/spruyt-labs/.claude/agent-memory/renovate-pr-analyzer/known-patterns.md`:
 
 1. Compare observations against existing entries:
    - Already in table: increment Count, update Last Seen
@@ -174,7 +174,7 @@ After determining verdict, update `.claude/agent-memory/renovate-pr-analyzer/kno
 3. Auto-prune when >50 total entries: remove entries where Count=1 AND Added >30 days ago. Do not remove entries where Count >= 3.
 4. Commit if changed:
    ```bash
-   git add .claude/agent-memory/renovate-pr-analyzer/known-patterns.md
+   git add /workspaces/spruyt-labs/.claude/agent-memory/renovate-pr-analyzer/known-patterns.md
    git commit -m "fix(agents): update renovate-pr-analyzer patterns from run YYYY-MM-DD"
    ```
 

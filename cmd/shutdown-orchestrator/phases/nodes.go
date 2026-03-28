@@ -56,7 +56,9 @@ func (p *NodePhase) ShutdownAll(ctx context.Context, cfg NodeConfig) error {
   // Phase 2: Control plane sequentially.
   cpErrs := p.shutdownControlPlaneSequentially(ctx, cpNodes, cfg.PerNodeTimeout)
 
-  allErrs := append(workerErrs, cpErrs...)
+  allErrs := make([]error, 0, len(workerErrs)+len(cpErrs))
+  allErrs = append(allErrs, workerErrs...)
+  allErrs = append(allErrs, cpErrs...)
   return errors.Join(allErrs...)
 }
 
