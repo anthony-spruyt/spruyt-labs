@@ -22,7 +22,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/sungather
-          tag: v0.5.3
+          tag: 1.0.0@sha256:bc0517b0a81721b9d6970ab1b35c3dda46fd44bcdfa9500776b58da8e77ca47c
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
@@ -31,7 +31,8 @@ controllers:
             enabled: true
             custom: true
             spec:
-              tcpSocket:
+              httpGet:
+                path: /health
                 port: 8099
               initialDelaySeconds: 30
               periodSeconds: 30
