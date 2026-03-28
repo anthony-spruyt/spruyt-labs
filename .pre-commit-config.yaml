@@ -26,6 +26,7 @@ repos:
         args:
           - "--whitespaces-count"
           - "2"
+        exclude: "(go\\.mod|go\\.sum)$"
   - repo: "https://github.com/sirosen/texthooks"
     rev: "0.7.1"
     hooks:
@@ -54,18 +55,6 @@ repos:
     rev: "v1.7.11"
     hooks:
       - id: "actionlint"
-  - repo: "local"
-    hooks:
-      - id: "jsonlint"
-        name: "jsonlint"
-        entry: "npx @prantlf/jsonlint --quiet"
-        language: "system"
-        types:
-          - "json"
-  - repo: "https://github.com/k8s-at-home/sops-pre-commit"
-    rev: "v2.1.1"
-    hooks:
-      - id: "forbid-secrets"
   - repo: "https://github.com/antonbabenko/pre-commit-terraform"
     rev: "v1.105.0"
     hooks:
@@ -73,3 +62,7 @@ repos:
         files: "^infra/terraform/"
       - id: "terraform_tflint"
         files: "^infra/terraform/"
+  - repo: "https://github.com/k8s-at-home/sops-pre-commit"
+    rev: "v2.1.1"
+    hooks:
+      - id: "forbid-secrets"

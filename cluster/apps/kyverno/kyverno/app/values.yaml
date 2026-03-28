@@ -10,12 +10,13 @@ admissionController:
   crdWatcher: true
   priorityClassName: critical-infrastructure
   replicas: 1
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      memory: 384Mi
+  container:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
   serviceMonitor:
     enabled: true
 

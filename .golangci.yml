@@ -1,0 +1,18 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - gocritic
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+# formatters intentionally omitted — pre-commit handles formatting
+# (repo uses 2-space indent; gofmt enforces tabs, causing conflicts)

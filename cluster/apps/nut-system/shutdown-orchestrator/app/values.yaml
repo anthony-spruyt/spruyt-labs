@@ -26,8 +26,8 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/shutdown-orchestrator
-          tag: latest
-          pullPolicy: Always
+          tag: 1.1.2
+          pullPolicy: IfNotPresent
         env:
           - name: NUT_SERVER
             value: nut-server-nut.nut-system.svc.cluster.local
@@ -44,7 +44,7 @@ controllers:
           - name: HEALTH_PORT
             value: "8080"
           - name: MODE
-            value: monitor
+            value: preflight
           - name: NODE_NAME
             valueFrom:
               fieldRef:

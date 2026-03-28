@@ -25,35 +25,49 @@ Objectives:
 
 ## Architecture Overview
 
-- **Operating system** – Talos Linux 1.11 on control plane and worker nodes.
-  Talos image schematics and lifecycle procedures live in [`talos/README.md`](talos/README.md).
+- **Operating system** – Talos Linux on 3 control-plane and 3 worker
+  nodes. Talos image schematics and lifecycle procedures
+  live in [`talos/README.md`](talos/README.md).
 - **GitOps control plane** – FluxCD manages reconciliation for all Kubernetes
   resources defined under `cluster/`.
-- **Networking** – Cilium supplies CNI, network policy, and BGP integrations for
-  sensitive services.
+- **Networking** – Cilium supplies CNI, network policy, and BGP integrations.
+  Worker nodes are interconnected via a Thunderbolt ring topology carrying Ceph
+  cluster traffic.
 - **Ingress** – Traefik handles internal ingress routing with Cloudflare tunnels
   (cloudflared) for remote access.
 - **Storage** – Rook Ceph provides block, filesystem, and object storage with
-  Velero handling backup and disaster recovery.
+  Velero handling backup and disaster recovery to AWS S3.
 - **Caching** – Valkey provides Redis-compatible in-memory data storage.
-- **Observability** – VictoriaMetrics pairs with Vector for log shipping.
-  Dashboards are maintained in Grafana for monitoring cluster health.
+- **Identity** – Authentik provides SSO and identity management.
+- **Security** – Kyverno enforces admission policies; Falco provides runtime
+  threat detection.
+- **Secrets** – SOPS/Age for Git-encrypted secrets; External Secrets Operator
+  for AWS Secrets Manager integration and cross-namespace secret sync with
+  auto-rotation.
+- **Observability** – VictoriaMetrics for metrics, Vector for log shipping, and
+  Grafana for dashboards.
 
 ## Security Posture
 
 ### Pod Security Standards
 
-The cluster enforces **baseline** Pod Security Standards by default (Kubernetes 1.34).
+The cluster enforces **baseline** Pod Security Standards by default.
 
 - Namespaces without explicit labels → baseline enforcement
 - Infrastructure namespaces (rook-ceph, observability, velero, etc.) → privileged
   (explicitly labeled)
 
+### Admission & Runtime
+
+- **Kyverno** enforces admission policies cluster-wide
+- **Falco** provides runtime threat detection and alerting
+
 ### Secrets Management
 
-- All application secrets encrypted with **SOPS/Age**
+- All application secrets encrypted with **SOPS/Age** at rest in Git
+- **External Secrets Operator** syncs secrets from AWS Secrets Manager and
+  handles cross-namespace secret distribution with auto-rotation
 - No hardcoded credentials in manifests
-- External Secrets Operator available for future AWS Secrets Manager integration
 
 ### Network Policies
 
@@ -76,7 +90,7 @@ The cluster enforces **baseline** Pod Security Standards by default (Kubernetes 
 | `cluster/`         | Flux GitOps definitions for core, apps, CRDs, and machine overlays.      |
 | `cluster/apps/`    | Workload manifests grouped by namespace and Helm release overlays.       |
 | `cluster/flux/`    | Flux bootstrap resources, controllers, and repository definitions.       |
-| `infra/terraform/` | Terraform workspaces for AWS backups, OIDC, and supporting cloud assets. |
+| `infra/terraform/` | Terraform modules for AWS backups, secrets, and storage integration.     |
 | `talos/`           | Talos schematics, graceful shutdown steps, and upgrade guidance.         |
 | `docs/`            | Runbooks (bootstrap, maintenance, DR) and shared rules.                  |
 | `.taskfiles/`      | Taskfile automation for Talos, Flux, Terraform, and developer tooling.   |
@@ -86,12 +100,14 @@ The cluster enforces **baseline** Pod Security Standards by default (Kubernetes 
 
 ## Runbooks
 
-| Document                                               | Purpose                          |
-| ------------------------------------------------------ | -------------------------------- |
-| [docs/bootstrap.md](docs/bootstrap.md)                 | Initial cluster deployment       |
-| [docs/maintenance.md](docs/maintenance.md)             | Day-to-day operations            |
-| [docs/disaster-recovery.md](docs/disaster-recovery.md) | Backup and recovery procedures   |
-| [.claude/rules/](.claude/rules/)                       | Claude agent rules               |
+| Document                                                                   | Purpose                            |
+| -------------------------------------------------------------------------- | ---------------------------------- |
+| [docs/bootstrap.md](docs/bootstrap.md)                                     | Initial cluster deployment         |
+| [docs/maintenance.md](docs/maintenance.md)                                 | Day-to-day operations              |
+| [docs/disaster-recovery.md](docs/disaster-recovery.md)                     | Backup and recovery procedures     |
+| [docs/intel-hybrid-architecture.md](docs/intel-hybrid-architecture.md)     | Hardware architecture notes        |
+| [docs/workload-classification.md](docs/workload-classification.md)         | Workload priority tiers            |
+| [.claude/rules/](.claude/rules/)                                           | Claude agent rules                 |
 
 ## Troubleshooting Matrix
 
@@ -132,6 +148,12 @@ Common failure modes across the cluster. For component-specific issues, referenc
 - [Velero](https://velero.io/) — Backup and restore
 - [VictoriaMetrics](https://docs.victoriametrics.com/) — Monitoring
 - [CloudNativePG](https://cloudnative-pg.io/docs/) — PostgreSQL operator
+
+### CI/CD
+
+- **CI** — Kubeconform, Kyverno policy tests, Terraform validate, Trivy scan
+- **Flux differ** — Detects drift on pull requests
+- **Renovate** — Automated dependency updates
 
 ### Tooling
 

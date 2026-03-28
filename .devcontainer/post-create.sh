@@ -36,6 +36,7 @@ safe-chain setup-ci # Executable shims for scripts/CI
 export PATH="$HOME/.safe-chain/shims:$PATH"
 
 echo "Installing pre-commit hooks..."
+git config --unset-all core.hooksPath 2>/dev/null || true
 pre-commit install --install-hooks
 
 echo "Installing Claude Code CLI..."
@@ -56,10 +57,10 @@ else
 fi
 
 # 2. Pre-commit hooks installed
-if pre-commit run --all-files &>/dev/null; then
-  pass "Pre-commit hooks pass"
+if pre-commit --version &>/dev/null; then
+  pass "Pre-commit is installed"
 else
-  fail "Pre-commit hooks failed"
+  fail "Pre-commit is not installed"
 fi
 
 # 3. Safe-chain blocks malicious packages

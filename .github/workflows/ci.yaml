@@ -15,7 +15,7 @@ concurrency:
 permissions:
   actions: "write"
   contents: "write"
-  packages: "write"
+
   pull-requests: "write"
   security-events: "write"
   statuses: "write"

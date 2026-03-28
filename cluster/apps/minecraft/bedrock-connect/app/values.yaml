@@ -24,7 +24,7 @@ controllers:
               - ALL
         image:
           repository: pugmatt/bedrock-connect
-          tag: "1.65"
+          tag: "1.66"
           pullPolicy: IfNotPresent
         resources:
           requests:

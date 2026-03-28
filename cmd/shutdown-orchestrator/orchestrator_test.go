@@ -5,6 +5,7 @@ import (
   "fmt"
   "io"
   "log/slog"
+  "slices"
   "sync"
   "testing"
   "time"
@@ -19,8 +20,8 @@ type orchestratorMockKube struct {
   calls []string
 
   // CNPG config
-  clusters       []clients.CNPGCluster
-  getClustersErr error
+  clusters          []clients.CNPGCluster
+  getClustersErr    error
   getClustersBlocks bool
   // Track hibernation state changes so Wake sees hibernated=true after Hibernate
   hibernationState map[string]bool
@@ -95,12 +96,13 @@ func (m *orchestratorMockKube) DeploymentExists(ctx context.Context, ns, name st
 }
 
 func (m *orchestratorMockKube) ExecInDeployment(ctx context.Context, ns, deploy string, cmd []string) (string, error) {
-  if len(cmd) >= 4 {
+  switch {
+  case len(cmd) >= 4:
     m.record("ExecInDeployment:" + cmd[2] + ":" + cmd[3])
-  } else if len(cmd) == 2 && cmd[0] == "ceph" && cmd[1] == "health" {
+  case len(cmd) == 2 && cmd[0] == "ceph" && cmd[1] == "health":
     m.record("ExecInDeployment:ceph:health")
     return "HEALTH_OK", nil
-  } else {
+  default:
     m.record("ExecInDeployment")
   }
   return "", nil
@@ -371,14 +373,7 @@ func TestOrchestratorPhaseTimeout(t *testing.T) {
 
   // Ceph phases should still run even though CNPG timed out
   calls := kube.getCalls()
-  foundCeph := false
-  for _, c := range calls {
-    if c == "ExecInDeployment:set:noout" {
-      foundCeph = true
-      break
-    }
-  }
-  if !foundCeph {
+  if !slices.Contains(calls, "ExecInDeployment:set:noout") {
     t.Error("Ceph set noout should still run after CNPG phase timeout")
   }
 
