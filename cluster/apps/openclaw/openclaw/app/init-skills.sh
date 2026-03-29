@@ -146,7 +146,7 @@ fi
 
 # --- mcporter (MCP client for Home Assistant etc.) ---
 # renovate: depName=mcporter datasource=npm
-MCPORTER_VERSION="0.7.3"
+MCPORTER_VERSION="0.8.1"
 if needs_install mcporter "$MCPORTER_VERSION"; then
   log "Installing mcporter v$${MCPORTER_VERSION}..."
   npm install -g "mcporter@$${MCPORTER_VERSION}" --prefix "$NPM_GLOBAL" --safe-chain-skip-minimum-package-age
