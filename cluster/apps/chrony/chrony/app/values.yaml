@@ -29,7 +29,7 @@ controllers:
             drop: [ALL]
         image:
           repository: ghcr.io/anthony-spruyt/chrony
-          tag: "4.8"
+          tag: "4.8@sha256:928144bf27d73b6d1a5e445c4e0fb03bb4acbc71753ca8ca4717766992091d9b"
           pullPolicy: IfNotPresent
         ports:
           - containerPort: 1123

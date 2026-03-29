@@ -35,7 +35,7 @@ controllers:
       install-logging-config:
         image:
           repository: busybox
-          tag: "1.37"
+          tag: "1.37@sha256:1487d0af5f52b4ba31c7e465126ee2123fe3f2305d638e7827681e7cf6c83d5e"
         command:
           - sh
           - -c
@@ -50,7 +50,7 @@ controllers:
       app:
         image:
           repository: arcadiatechnology/crafty-4
-          tag: "4.10.2"
+          tag: "4.10.2@sha256:914ccf8232ba591db3d9c3f97bac368ae1e6dd8218f4618e2b4699e05018acfd"
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
