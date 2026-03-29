@@ -41,13 +41,13 @@ jobs:
       - if: ${{ steps.diff.outputs.diff != '' }}
         name: Truncate diff to file
         shell: bash
-        env:
-          DIFF_OUTPUT: "${{ steps.diff.outputs.diff }}"
         run: |
           set -eo pipefail
 
-          # Write diff via env var to avoid heredoc injection
-          printf '%s' "$DIFF_OUTPUT" > full-diff.txt
+          # Read diff.patch directly from the file the flux-local action
+          # generated, instead of expanding the step output into an env var
+          # which hits ARG_MAX on large diffs (e.g. bulk pin PRs)
+          cp diff.patch full-diff.txt
 
           # Chop it down to 65 000 bytes
           head -c 65000 full-diff.txt \
