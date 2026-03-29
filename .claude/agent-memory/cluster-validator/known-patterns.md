@@ -9,7 +9,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | firemerge dependency chain (firefly-iii → firemerge → traefik-ingress) takes 3-5 min to fully reconcile | Full cluster reconciliation wait | 10 | 2026-03-19 | 2026-02-24 |
 | flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 5 | 2026-03-18 | 2026-02-25 |
 | authentik dependency chain (authentik → many apps → traefik-ingress) settles within ~90s | Full cluster reconciliation wait after flux-system changes | 9 | 2026-03-26 | 2026-02-25 |
-| CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 3 | 2026-03-13 | 2026-02-28 |
+| CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 4 | 2026-03-29 | 2026-02-28 |
 | YAML comment-only changes (e.g., schema directives, resource-sizing comments) reconcile instantly with no resource drift | Kustomize strips comments, producing identical output | 2 | 2026-03-17 | 2026-03-01 |
 | Dashboard JSON reformatting (whitespace/indentation changes) reconciles as configmap update with no functional impact; Grafana/VictoriaMetrics reloads the dashboard without errors | Prettier/formatter cosmetic changes to JSON dashboard files | 1 | 2026-03-21 | 2026-03-21 |
 | n8n queue-mode deployment (main + worker + webhook) all roll simultaneously on image bump | HelmRelease values.yaml image tag change triggers rolling update of all 3 deployments | 5 | 2026-03-29 | 2026-03-03 |
@@ -31,6 +31,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | cowboysysop VPA chart installs CRDs via a pre-install Job (`vertical-pod-autoscaler-crds`) using `bitnamilegacy/kubectl` image; CRD creation takes ~13s; all 3 VPA pods start after CRDs are ready | VPA initial deployment, helm-release type | 1 | 2026-03-17 | 2026-03-17 |
 | Large-scale VPA rollout (50 files, 86 objects) reconciles within ~5 min across all namespaces; VPA objects with `updateMode: Off` show recommendations within minutes of creation; newly created VPAs may show empty status initially | VPA workload rollout, kustomization type | 2 | 2026-03-19 | 2026-03-18 |
 | cert-manager version upgrade rolls all 3 deployments (controller, cainjector, webhook) in ~20-30s; webhook regenerates TLS certs; ACME registrations re-verified; all certificates remain Ready | cert-manager helm-release upgrade (v1.19.4->v1.20.0, v1.20.0->v1.20.1) | 2 | 2026-03-29 | 2026-03-18 |
+| cert-manager upgrade can leave wildcard certificate in InProgress state; traefik KS health check times out waiting for Certificate/traefik/wildcard-spruyt-xyz; traefik-ingress blocked as downstream dependency | cert-manager upgrade (PR #807 aac39cf5), certificate renewal stall; persists across subsequent reconciliation waves | 1 | 2026-03-29 | 2026-03-29 |
 | Spegel DaemonSet rolling update across 6 nodes completes in ~60s; transient startup probe 500s are normal (~5s per pod); P2P bootstrap connectivity takes ~5s per pod | Spegel helm-release config change, DaemonSet rollout | 1 | 2026-03-19 | 2026-03-19 |
 | Spegel chart (spegel@0.6.0) silently accepts `verticalPodAutoscaler` values but does NOT template VPA resources; a standalone VPA manifest is needed for VPA monitoring of Spegel | Helm chart values no-op, VPA integration | 1 | 2026-03-17 | 2026-03-17 |
 | Preflight idle mode (MODE=preflight) keeps pod alive on :8080 serving /healthz after checks pass; v1.1.0 fixed the exit-after-check bug that caused CrashLoopBackOff in v1.0.0 | shutdown-orchestrator preflight mode, health probes | 4 | 2026-03-25 | 2026-03-23 |
@@ -70,7 +71,7 @@ Things that look like failures but aren't — avoid flagging these.
 | Signal | Why It's Not a Problem | Count | Last Seen | Added |
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 9 | 2026-03-19 | 2026-02-24 |
-| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 25 | 2026-03-23 | 2026-02-25 |
+| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds | 26 | 2026-03-29 | 2026-02-25 |
 | Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 14 | 2026-03-26 | 2026-02-25 |
 | mcp-victoriametrics shows "dependency victoria-metrics-k8s-stack is not ready" during reconciliation wave | Dependency chain, resolves within 2 min — parent KS already Ready but child hasn't re-evaluated yet | 1 | 2026-03-19 | 2026-03-19 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
