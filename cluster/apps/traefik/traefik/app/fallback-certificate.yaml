@@ -10,5 +10,4 @@ spec:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
   dnsNames:
-    - "${EXTERNAL_DOMAIN}"
     - "*.${EXTERNAL_DOMAIN}"
