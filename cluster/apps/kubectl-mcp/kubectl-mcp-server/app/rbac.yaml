@@ -116,6 +116,11 @@ rules:
       - issuers
       - clusterissuers
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["acme.cert-manager.io"]
+    resources:
+      - challenges
+      - orders
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["velero.io"]
     resources:
       - backups
