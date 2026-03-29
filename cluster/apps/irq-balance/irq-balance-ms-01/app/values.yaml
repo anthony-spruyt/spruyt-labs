@@ -9,7 +9,7 @@ controllers:
       tune-rss:
         image:
           repository: nicolaka/netshoot
-          tag: v0.15
+          tag: v0.15@sha256:47b907d662d139d1e2f22bfe14f4efca1e3f1feed283572f47c970c780c03b61
           pullPolicy: IfNotPresent
         command:
           - sh
@@ -30,7 +30,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/home-operations/irqbalance
-          tag: 1.9.4
+          tag: 1.9.4@sha256:6cc768c3f074c221412d56b341a19c8432f9a6d76eda0b346285f9c5e2d3b2cc
           pullPolicy: IfNotPresent
         env:
           # See: https://gist.github.com/gavinmcfall/ea6cb1233d3a300e9f44caf65a32d519

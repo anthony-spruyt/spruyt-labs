@@ -21,7 +21,7 @@ controllers:
       upsd:
         image:
           repository: instantlinux/nut-upsd
-          tag: 2.8.3-r3
+          tag: 2.8.3-r3@sha256:edadf0d18b7e240fba0e4073dfcc13f19f93839de0656f4b39752c0cad880cd5
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
@@ -57,7 +57,7 @@ controllers:
       exporter:
         image:
           repository: ghcr.io/druggeri/nut_exporter
-          tag: "3.2.5"
+          tag: "3.2.5@sha256:76fc9fb623bf8b7f1ee8ffc018ad7ffc568d297c04360accb54ef76981e0fa32"
           pullPolicy: IfNotPresent
         args:
           - --nut.server=127.0.0.1

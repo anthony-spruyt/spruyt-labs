@@ -19,7 +19,7 @@ controllers:
       permissions:
         image:
           repository: busybox
-          tag: "1.37.0"
+          tag: "1.37.0@sha256:1487d0af5f52b4ba31c7e465126ee2123fe3f2305d638e7827681e7cf6c83d5e"
         command:
           - sh
           - -c
@@ -53,7 +53,7 @@ controllers:
             drop: [ALL]
         image:
           repository: vaultwarden/server
-          tag: testing-alpine
+          tag: testing-alpine@sha256:279a8c191d69df9791d63d062f360455ad35090d8da82d6c777fdb53527ae251
           pullPolicy: Always
         env:
           TZ: ${TIMEZONE}
