@@ -121,7 +121,7 @@ jobs:
           sbom: true
           provenance: "mode=max"
       - name: "Generate provenance attestation"
-        uses: "actions/attest-build-provenance@10334b5f1e684784025c3fc0a277c88c19089275" # v4
+        uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
         with:
           subject-name: "${{ env.IMAGE }}"
           subject-digest: "${{ steps.push.outputs.digest }}"
