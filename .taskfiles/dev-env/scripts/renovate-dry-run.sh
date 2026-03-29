@@ -87,7 +87,7 @@ LOG_LEVEL="${LOG_LEVEL:-debug}" \
   GITHUB_TOKEN="$TOKEN" \
   renovate \
   --platform=local \
-  --dry-run \
+  --dry-run=full \
   "$@" 2>&1 | tee /tmp/renovate-dry-run.log
 
 echo ""
