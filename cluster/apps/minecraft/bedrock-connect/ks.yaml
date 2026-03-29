@@ -17,4 +17,4 @@ spec:
       name: *app
       namespace: *namespace
   prune: true
-  timeout: 1m
+  timeout: 2m
