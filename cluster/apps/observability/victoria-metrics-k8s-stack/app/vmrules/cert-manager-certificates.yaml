@@ -1,0 +1,55 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+# Alerting rules for cert-manager certificate health
+# Requires VMServiceScrape for cert-manager controller metrics (certmanager_*)
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: cert-manager-certificates
+  namespace: observability
+spec:
+  groups:
+    - name: cert-manager-certificates
+      rules:
+        # Alert when a certificate has been in non-Ready state for more than 15 minutes
+        - alert: CertificateNotReady
+          expr: |
+            max by (name, namespace) (
+              certmanager_certificate_ready_status{condition="False"} == 1
+            )
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} is not Ready"
+            description: |
+              cert-manager Certificate {{ $labels.namespace }}/{{ $labels.name }} has been in a
+              non-Ready state for more than 15 minutes. Check certificate requests and orders.
+
+        # Alert when a certificate expires in less than 7 days
+        - alert: CertificateExpiringSoon
+          expr: |
+            (certmanager_certificate_expiration_timestamp_seconds - time()) < 604800
+            and
+            (certmanager_certificate_expiration_timestamp_seconds - time()) > 0
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in less than 7 days"
+            description: |
+              cert-manager Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in
+              {{ $value | humanizeDuration }}. Renewal may be failing.
+
+        # Alert when a certificate has expired
+        - alert: CertificateExpired
+          expr: |
+            (certmanager_certificate_expiration_timestamp_seconds - time()) < 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} has expired"
+            description: |
+              cert-manager Certificate {{ $labels.namespace }}/{{ $labels.name }} has expired.
+              Services using this certificate will have TLS errors.
