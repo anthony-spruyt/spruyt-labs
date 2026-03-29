@@ -44,6 +44,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `external-secrets` (Helm chart via HelmRepository) | `external-secrets/external-secrets` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-22 | 2026-03-22 |
 | `headlamp-plugins/headlamp_flux` (ArtifactHub plugin) | `headlamp-k8s/plugins` (monorepo for all official Headlamp plugins; release tags: `flux-X.Y.Z`; no changelog file, use GitHub release notes) | 1 | 2026-03-23 | 2026-03-23 |
 | `headlamp` (Helm chart via HelmRepository) | `kubernetes-sigs/headlamp` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-26 | 2026-03-26 |
+| `mcporter` (npm package in init script) | `steipete/mcporter` (releases tagged `vX.Y.Z`; changelog in CHANGELOG.md; npm datasource) | 1 | 2026-03-29 | 2026-03-29 |
 
 ## Common NO_IMPACT Scenarios
 
