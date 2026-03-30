@@ -62,5 +62,6 @@ kubectl logs -n claude-agents -l app.kubernetes.io/name=claude-agent
 
 ## References
 
-- Spec document: `docs/claude-agents/` (implementation plan and architecture)
+- Spec: `docs/superpowers/specs/2026-03-30-n8n-claude-code-cli-phase1-design.md`
+- Plan: `docs/superpowers/plans/2026-03-30-n8n-claude-code-cli-phase1.md`
 - GitHub issue: [#823](https://github.com/anthony-spruyt/spruyt-labs/issues/823)
