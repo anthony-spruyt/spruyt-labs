@@ -14,6 +14,7 @@ resources:
   - ./hooks-configmap.yaml
   - ./n8n-claude-spawner.yaml
   - ./n8n-claude-spawner-token.sops.yaml
+  - ./n8n-claude-spawner-config.yaml
   - ./network-policies.yaml
   - ./vpa.yaml
 configMapGenerator:

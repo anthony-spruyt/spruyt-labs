@@ -123,6 +123,12 @@ main:
       mountPath: /home/node/.n8n/hooks.js
       subPath: hooks.js
       readOnly: true
+    - name: claude-spawner-token
+      mountPath: /var/run/secrets/claude-spawner
+      readOnly: true
+    - name: claude-spawner-config
+      mountPath: /home/node/.claude-spawner
+      readOnly: true
   extraVolumes: &extraVolumes
     - name: db-ca-cert
       secret:
@@ -137,6 +143,20 @@ main:
     - name: n8n-hooks
       configMap:
         name: n8n-hooks
+    - name: claude-spawner-token
+      secret:
+        secretName: n8n-claude-spawner-token
+        items:
+          - key: token
+            path: token
+          - key: ca.crt
+            path: ca.crt
+    - name: claude-spawner-config
+      configMap:
+        name: n8n-claude-spawner-config
+        items:
+          - key: config.yaml
+            path: config.yaml
   deploymentAnnotations: &deploymentAnnotations
     reloader.stakater.com/auto: "true"
   securityContext:
