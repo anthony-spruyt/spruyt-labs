@@ -421,7 +421,13 @@ cluster/apps/claude-agents/
 
 **Notes:**
 
-- `rbac-spawner.yaml` creates the SA in `n8n-system` and binds it to a Role in `claude-agents`. The SA resource must have an explicit `namespace: n8n-system` metadata field to override the Kustomization's `targetNamespace: claude-agents`.
+- `rbac-spawner.yaml` creates the SA in `n8n-system` and binds it to a Role in
+  `claude-agents`. **Flux `targetNamespace` risk:** Flux may override the SA's
+  explicit `namespace: n8n-system` with `targetNamespace: claude-agents`, creating
+  it in the wrong namespace. If this happens, move the SA creation to the n8n
+  Kustomization instead and keep only the Role + RoleBinding in `claude-agents`.
+  The RoleBinding's `subjects` must include `namespace: n8n-system` for the
+  cross-namespace SA reference.
 - The entrypoint script reads a secret via `kubectl get secret -o jsonpath` to
   export the setup token as an env var. This is the entrypoint script in the
   container image, not Claude itself — the project constraint against
