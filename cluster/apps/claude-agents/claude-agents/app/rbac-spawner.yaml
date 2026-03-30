@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
 # SA in n8n-system — explicit namespace to override targetNamespace
 apiVersion: v1
 kind: ServiceAccount
@@ -16,6 +17,7 @@ metadata:
     kubernetes.io/service-account.name: n8n-claude-spawner
 type: kubernetes.io/service-account-token
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/role-rbac-v1.json
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -34,6 +36,7 @@ rules:
     resources: ["pods/exec"]
     verbs: ["create"]
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/rolebinding-rbac-v1.json
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
