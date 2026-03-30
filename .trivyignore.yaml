@@ -211,6 +211,18 @@ misconfigurations:
       - cluster/apps/n8n-system/n8n/app/hooks-configmap.yaml
 
   # ==============================================================================
+  # Claude Agents - RBAC for ephemeral agent pods and n8n spawner
+  # ==============================================================================
+  # Spawner role needs pod create/delete to manage ephemeral Claude agent pods
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/claude-agents/claude-agents/app/rbac-spawner.yaml
+  # Agent role needs resourceName-scoped secret get for claude-credentials only
+  - id: AVD-KSV-0113
+    paths:
+      - cluster/apps/claude-agents/claude-agents/app/rbac.yaml
+
+  # ==============================================================================
   # Victoria Metrics etcd secret writer - writes etcd certs for vmagent discovery
   # Uses bitnami/kubectl for one-time Job to copy secrets
   # ==============================================================================
