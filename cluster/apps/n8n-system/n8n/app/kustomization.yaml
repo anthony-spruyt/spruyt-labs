@@ -12,6 +12,8 @@ resources:
   - ./n8n-cnpg-scheduled-backups.yaml
   - ./release.yaml
   - ./hooks-configmap.yaml
+  - ./n8n-claude-spawner.yaml
+  - ./n8n-claude-spawner-token.sops.yaml
   - ./network-policies.yaml
   - ./vpa.yaml
 configMapGenerator:

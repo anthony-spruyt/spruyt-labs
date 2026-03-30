@@ -1,0 +1,24 @@
+# yamllint disable
+# Long-lived token for the spawner SA (used to generate kubeconfig for n8n)
+apiVersion: v1
+kind: Secret
+metadata:
+    name: n8n-claude-spawner-token
+    annotations:
+        kubernetes.io/service-account.name: n8n-claude-spawner
+type: kubernetes.io/service-account-token
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBQY001OSt4YjJsR2w1RWVY
+            d1VNakFxdDdOTStKRlErNXlFbGJsZElTWUVFClhRSVFCU3d6eHlJSXJmMVNzWVVv
+            RTlpQkkvZGEvMDZueXNQZEVNZDVoVmMKLS0tIC93bEpBdDk0TExpWHhxYTlZYStR
+            a0k0MDg2dU0wR3VTckFseUZzdmlyN00KU+AScv07tWolXntucQ+yX7KRRKA+bdDE
+            zQ4o8zFXdQBIQFZkNQFZ/qjvx8E6xWQgiNWjj9HMbfPmdi82P5OzUQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-03-30T11:19:28Z"
+    mac: ENC[AES256_GCM,data:F27FW3W+z/qAlmZXUtluTj+lCCN3Xp2+TwyJBm/HuVwhMvoHG/N4E6BFpbOjhAunENk59Quxvs6ts1t8bPhlGYCJGk2ICmtw12KWCGUs7kuEFD6lA/YElgeiYCkO6PKsTRk2ogWv8a6TRZkQTQs3yxZvMZwdg3HeX9iZr3+XNrM=,iv://raLW4Sbsvg8QyCcLdrVOTQ8spY+Vj6gTWM9YcjwOY=,tag:rtE66bFiEhqmz7UWwlkfEg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.1

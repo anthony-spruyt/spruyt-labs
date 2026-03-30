@@ -38,6 +38,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - vpa-system
+                - claude-agents
         - name: RemovePodsViolatingTopologySpreadConstraint
           args:
             constraints:
@@ -51,6 +52,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - vpa-system
+                - claude-agents
         - name: RemoveFailedPods
           args:
             minPodLifetimeSeconds: 3600
@@ -63,6 +65,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - vpa-system
+                - claude-agents
         - name: RemovePodsHavingTooManyRestarts
           args:
             podRestartThreshold: 10
@@ -76,6 +79,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - vpa-system
+                - claude-agents
         - name: LowNodeUtilization
           args:
             thresholds:
@@ -93,6 +97,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - vpa-system
+                - claude-agents
       plugins:
         balance:
           enabled:
