@@ -109,6 +109,8 @@ main:
           key: QUEUE_BULL_REDIS_PASSWORD
     WEBHOOK_URL:
       value: https://n8n.${EXTERNAL_DOMAIN}
+    N8N_REINSTALL_MISSING_PACKAGES:
+      value: "true"
   extraVolumeMounts: &extraVolumeMounts
     - name: db-ca-cert
       mountPath: /home/ssl/certs/postgresql
