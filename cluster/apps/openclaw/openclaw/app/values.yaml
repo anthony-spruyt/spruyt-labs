@@ -102,6 +102,7 @@ controllers:
           - secretRef:
               name: openclaw-secrets
         env:
+          NODE_OPTIONS: "--max-old-space-size=1536"
           GIT_CONFIG_GLOBAL: /home/node/.openclaw/.gitconfig
           GIT_TERMINAL_PROMPT: "0"
           OPENCLAW_TZ: ${TIMEZONE}
