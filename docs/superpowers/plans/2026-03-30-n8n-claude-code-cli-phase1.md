@@ -223,7 +223,6 @@ in the n8n credential config.
 
 ```yaml
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/v1/namespace.json
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -395,13 +394,16 @@ subjects:
     namespace: n8n-system
 ```
 
-- [ ] **Step 3: Validate with kustomize build**
+- [ ] **Step 3: Validate kustomize build renders correctly**
 
 Run: `kubectl kustomize cluster/apps/claude-agents/claude-agents/app/`
 
-Check that the SA's `namespace: n8n-system` is preserved (not overridden
-to `claude-agents`). If Flux strips it, move the SA + token Secret to
-`cluster/apps/n8n-system/n8n/app/` and remove them from this file.
+Verify all resources render without errors. **Note:** `kubectl kustomize`
+does NOT simulate Flux's `targetNamespace` override — the SA's
+`namespace: n8n-system` will appear preserved here regardless. The real
+test happens post-deploy in Task 10 Step 2: verify the SA exists in
+`n8n-system` (not `claude-agents`). If Flux overrides it, move the SA +
+token Secret to `cluster/apps/n8n-system/n8n/app/` instead.
 
 - [ ] **Step 4: Commit**
 
@@ -466,8 +468,11 @@ data:
 
 - [ ] **Step 3: Create claude-credentials.sops.yaml**
 
-This step requires the user to encrypt the setup token with SOPS. Provide
-the template, user fills in the token and encrypts:
+**Prerequisite:** The user must have a setup token from
+`claude setup-token` (run interactively, 1-year lifetime). The user
+has confirmed the token is already generated.
+
+Encrypt the setup token with SOPS:
 
 ```bash
 cat > /tmp/claude-credentials.yaml << 'EOF'
@@ -811,6 +816,14 @@ Run the cluster-validator agent to verify all resources reconcile cleanly.
 Check that the `claude-agents` namespace is created with all expected
 resources: SA, Role, RoleBinding, ConfigMaps, Secret, CNPs.
 
+**Critical: verify spawner SA namespace.** Run:
+`kubectl get sa n8n-claude-spawner -n n8n-system`
+
+If this fails (SA was created in `claude-agents` instead due to Flux
+`targetNamespace` override), move the SA + token Secret to
+`cluster/apps/n8n-system/n8n/app/`, remove from `rbac-spawner.yaml`,
+re-push, and re-validate.
+
 - [ ] **Step 3: Verify n8n restarts with community node**
 
 Check that n8n pods restart and the community node is installed. Look for
@@ -880,7 +893,14 @@ In n8n UI:
    - Max turns: 5
    - Max budget: $1.00
 4. Execute workflow
-5. Verify:
+5. **While the pod is running**, check its labels:
+   `kubectl get pod -n claude-agents --show-labels`
+   Verify the pod has `app.kubernetes.io/name: claude-agent` (or similar).
+   **If the community node does NOT apply this label**, all CNPs are
+   no-ops. Fix by either: (a) configuring labels in the community node's
+   credential settings, (b) using a Kyverno mutating policy, or
+   (c) updating CNP selectors to match the actual pod labels.
+6. Verify:
    - Pod appears in `claude-agents` namespace
    - Workflow completes successfully
    - Output contains namespace list and metric data
