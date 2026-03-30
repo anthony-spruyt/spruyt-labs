@@ -102,7 +102,7 @@ controllers:
           - secretRef:
               name: openclaw-secrets
         env:
-          NODE_OPTIONS: "--max-old-space-size=1536"
+          NODE_OPTIONS: "--max-old-space-size=2560"
           GIT_CONFIG_GLOBAL: /home/node/.openclaw/.gitconfig
           GIT_TERMINAL_PROMPT: "0"
           OPENCLAW_TZ: ${TIMEZONE}
@@ -125,7 +125,7 @@ controllers:
             memory: 512Mi
           limits:
             cpu: 2000m
-            memory: 3Gi
+            memory: 4Gi
         probes:
           liveness:
             enabled: true
