@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./claude-credentials.sops.yaml
+  - ./claude-mcp-config.yaml
+  - ./claude-settings.yaml
+  - ./rbac.yaml
+  - ./rbac-spawner.yaml
+  - ./network-policies.yaml
