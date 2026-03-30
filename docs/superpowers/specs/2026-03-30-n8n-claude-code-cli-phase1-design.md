@@ -102,6 +102,15 @@ rm -f "$(which kubectl)"
 exec claude "$@"
 ```
 
+**Filesystem writability:** The entrypoint writes to `~/.claude/` and `/workspace/`,
+and deletes kubectl from the filesystem. PSA `restricted` does NOT enforce
+`readOnlyRootFilesystem` — it only requires `runAsNonRoot`,
+`allowPrivilegeEscalation: false`, `seccompProfile`, and dropping capabilities.
+The community node's pod spec builder does not set `readOnlyRootFilesystem`, so
+the container filesystem is writable by default. kubectl should be installed to a
+user-writable path (e.g., `~/bin/kubectl`) to ensure the `rm` succeeds regardless
+of the runtime user.
+
 **What is NOT in the image:** No credentials, MCP config, or settings. All injected at runtime from K8s resources.
 
 **Published to:** `ghcr.io/anthony-spruyt/claude-agent`
@@ -122,7 +131,9 @@ metadata:
     descheduler.kubernetes.io/exclude: "true"
 ```
 
-Descheduler excluded — ephemeral pods are short-lived, eviction wastes work.
+Descheduler excluded — ephemeral pods are short-lived, eviction wastes work. Per the upstream descheduler bug, dual-exclusion is required: the namespace label above AND adding `claude-agents` to per-plugin `namespaces.exclude` lists in `cluster/apps/kube-system/descheduler/app/values.yaml`.
+
+**VPA exception:** No `vpa.yaml` is included. VPA targets Deployments/StatefulSets — this namespace only has ephemeral pods with no persistent controller. This is a documented exception to the "every workload must include VPA" pattern.
 
 ### 4. RBAC
 
@@ -135,17 +146,24 @@ Descheduler excluded — ephemeral pods are short-lived, eviction wastes work.
   - `pods`: create, get, list, watch, delete
   - `pods/log`: get
   - `pods/status`: get
+  - `pods/exec`: create (may be needed if community node uses exec API for output streaming — verify during implementation)
 - **RoleBinding:** `n8n-claude-spawner-binding` in `claude-agents`
   - Binds Role to SA across namespaces
 
-Used by the community node's K8s credential config. Not mounted on n8n worker pods.
+The community node's K8s credential supports three auth methods: in-cluster SA,
+kubeconfig file, or inline kubeconfig. Since `n8n-claude-spawner` is a dedicated
+SA (not the n8n worker's own SA), the node must authenticate via a **kubeconfig**
+referencing the spawner SA's token. Implementation approach: create a long-lived
+token Secret for the SA, generate a kubeconfig from it, and store it as an n8n
+credential (inline kubeconfig in the n8n UI). This is the one piece of config that
+lives in n8n's database rather than Git.
 
 #### Agent (reads its own config)
 
 - **ServiceAccount:** `claude-agent` in `claude-agents`
 - **Role:** `claude-config-reader` in `claude-agents`
-  - `secrets`: get (named: `claude-credentials`)
-  - `configmaps`: get (named: `claude-mcp-config`, `claude-settings`)
+  - `secrets`: get — restricted via `resourceNames: [claude-credentials]`
+  - `configmaps`: get — restricted via `resourceNames: [claude-mcp-config, claude-settings]`
 - **RoleBinding:** `claude-agent-binding` in `claude-agents`
 
 Mounted on ephemeral pods. Minimal read-only access to its own config resources only. kubectl is removed from the pod after bootstrap, so even if the agent tries to use it, it can't.
@@ -153,6 +171,21 @@ Mounted on ephemeral pods. Minimal read-only access to its own config resources 
 ### 5. Network Policies (CiliumNetworkPolicies)
 
 #### In `claude-agents` namespace (new)
+
+**allow-kube-api-egress** — ephemeral pods to K8s API (bootstrap only — kubectl is removed after):
+
+```yaml
+endpointSelector:
+  matchLabels:
+    app.kubernetes.io/name: claude-agent
+egress:
+  - toEntities:
+      - kube-apiserver
+    toPorts:
+      - ports:
+          - port: "6443"
+            protocol: TCP
+```
 
 **allow-world-egress** — ephemeral pods to external services:
 
@@ -309,7 +342,24 @@ dependsOn:
   - name: claude-agents  # new
 ```
 
-### 8. PoC Workflow
+The `claude-agents` ks.yaml itself should include `prune: true`, `wait: true`, and `timeout: 5m` following the existing pattern. No `dependsOn` needed — the namespace resources (RBAC, ConfigMaps, CNPs) have no external dependencies beyond the cluster-wide defaults.
+
+### 8. Ephemeral Pod Resources & Timeouts
+
+**Resource limits** (configured in community node's K8s credential):
+
+- CPU limit: `1` (default)
+- Memory limit: `2Gi`
+- Memory request: `512Mi` (if configurable, otherwise inherits from limit)
+
+**Timeout control:**
+
+- Community node timeout: 300s default, configurable up to 3600s per workflow node
+- `--max-turns`: per-workflow, limits agentic loop iterations
+- `--max-budget-usd`: per-workflow, cost cap
+- Pod `activeDeadlineSeconds`: not set by community node — if a pod hangs past the node timeout, the node deletes it in its `finally` block. If the n8n worker itself crashes mid-execution, orphaned pods remain until manual cleanup or a CronJob sweeper (phase 2 consideration).
+
+### 9. PoC Workflow
 
 Manual trigger in n8n UI to validate end-to-end:
 
@@ -347,9 +397,13 @@ cluster/apps/claude-agents/
         ├── rbac.yaml                     # SA + Role + RoleBinding (agent)
         ├── rbac-spawner.yaml             # SA + Role + RoleBinding (spawner, in n8n-system)
         └── network-policies.yaml         # CNPs for claude-agents namespace
+    └── README.md
 ```
 
-**Note:** `rbac-spawner.yaml` creates the SA in `n8n-system` and binds it to a Role in `claude-agents`. This cross-namespace binding is applied from the `claude-agents` Kustomization.
+**Notes:**
+
+- `rbac-spawner.yaml` creates the SA in `n8n-system` and binds it to a Role in `claude-agents`. The SA resource must have an explicit `namespace: n8n-system` metadata field to override the Kustomization's `targetNamespace: claude-agents`.
+- The entrypoint script reads a secret via `kubectl get secret -o jsonpath`. This is the entrypoint script in the container image, not Claude itself — the project constraint against `kubectl get secret -o jsonpath` applies to Claude's behavior, not to infrastructure bootstrap scripts.
 
 **Changes to existing files:**
 
@@ -358,6 +412,7 @@ cluster/apps/claude-agents/
 - `cluster/apps/kubectl-mcp/kubectl-mcp-server/app/network-policies.yaml` — Add ingress from `claude-agents`
 - `cluster/apps/observability/mcp-victoriametrics/app/network-policies.yaml` — Add ingress from `claude-agents`
 - `cluster/apps/kustomization.yaml` — Add `claude-agents` entry
+- `cluster/apps/kube-system/descheduler/app/values.yaml` — Add `claude-agents` to per-plugin `namespaces.exclude` lists
 
 **Separate repo:**
 
@@ -389,4 +444,15 @@ cluster/apps/claude-agents/
 1. **Ephemeral pod labels:** What labels does the community node apply to spawned pods? CNP selectors depend on this. Verify during implementation — may need to configure via the node's credential settings or fork if not configurable.
 2. **Discord channels in ephemeral pods:** The Discord plugin requires a bot token and pairing. How is the bot token injected? Likely via env var (`DISCORD_BOT_TOKEN`) through the community node's `envVars` field, but pairing flow needs investigation for headless/ephemeral context.
 3. **Claude CLI version pinning:** The native installer (`claude.ai/install.sh`) installs latest. For reproducibility, we may want to pin a specific version in the Dockerfile. Check if the installer supports version arguments.
-4. **Pod security context:** The `restricted` PSA requires `runAsNonRoot`, `seccompProfile: RuntimeDefault`, drop all capabilities. Verify the community node's pod spec builder sets these, or if they need to be configured via the node or added via a fork.
+4. **Pod security context:** The `restricted` PSA requires `runAsNonRoot`,
+   `seccompProfile: RuntimeDefault`, drop all capabilities. The community node's
+   pod spec builder does NOT set `securityContext` fields. Options: (a) fork the
+   node to add security context support, (b) drop PSA to `baseline` for this
+   namespace, (c) use a mutating admission webhook/policy to inject security
+   context. Verify during implementation.
+5. **OAuth token refresh lifecycle:** The `.credentials.json` contains an OAuth
+   token from `claude login`. OAuth tokens expire. Questions to resolve: What is
+   the token lifetime? Does Claude Code handle refresh automatically if the
+   refresh token is present? If not, who refreshes — manual `claude login` and
+   re-encrypt the secret? Could a scheduled n8n workflow handle refresh? This is
+   a potential operational burden that needs a clear answer before production use.
