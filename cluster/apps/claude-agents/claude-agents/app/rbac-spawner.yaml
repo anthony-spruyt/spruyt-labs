@@ -1,23 +1,7 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
-# SA in n8n-system — explicit namespace to override targetNamespace
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: n8n-claude-spawner
-  namespace: n8n-system
----
-# Long-lived token for the spawner SA (used to generate kubeconfig for n8n)
-apiVersion: v1
-kind: Secret
-metadata:
-  name: n8n-claude-spawner-token
-  namespace: n8n-system
-  annotations:
-    kubernetes.io/service-account.name: n8n-claude-spawner
-type: kubernetes.io/service-account-token
----
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/role-rbac-v1.json
+# Role for n8n spawner SA to manage ephemeral Claude agent pods
+# SA and token Secret live in n8n-system (see cluster/apps/n8n-system/n8n/app/)
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -32,9 +16,6 @@ rules:
   - apiGroups: [""]
     resources: ["pods/status"]
     verbs: ["get"]
-  - apiGroups: [""]
-    resources: ["pods/exec"]
-    verbs: ["create"]
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/rolebinding-rbac-v1.json
 apiVersion: rbac.authorization.k8s.io/v1

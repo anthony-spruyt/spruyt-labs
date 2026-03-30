@@ -109,8 +109,6 @@ main:
           key: QUEUE_BULL_REDIS_PASSWORD
     WEBHOOK_URL:
       value: https://n8n.${EXTERNAL_DOMAIN}
-    N8N_COMMUNITY_PACKAGES:
-      value: "n8n-nodes-claude-code-cli"
   extraVolumeMounts: &extraVolumeMounts
     - name: db-ca-cert
       mountPath: /home/ssl/certs/postgresql
