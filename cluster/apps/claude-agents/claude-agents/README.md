@@ -2,28 +2,28 @@
 
 ## Overview
 
-Provides ephemeral Claude Code agent pods spawned by n8n workflows. Each pod runs a `claude-agent` container that bootstraps configuration from the Kubernetes API, removes `kubectl` from its filesystem, then executes `claude -p` with the provided prompt and flags. Pods are short-lived and auto-deleted after the workflow completes.
+Provides the namespace and RBAC for ephemeral Claude Code agent pods spawned by n8n workflows via the `n8n-nodes-claude-code-cli` community node. Pods are short-lived and auto-deleted after the workflow completes.
 
-Two ServiceAccounts are used:
+- `claude-agent` SA — assigned to ephemeral pods
+- n8n's own SA — bound to `claude-pod-manager` Role for pod lifecycle management (in-cluster auth)
 
-- `claude-agent` — mounted on ephemeral pods; read-only access to ConfigMaps/Secrets in the `claude-agents` namespace
-- `n8n-claude-spawner` — lives in `n8n-system`; creates and manages pods in `claude-agents`
+Auth, MCP config, and settings are handled by the community node and baked into the container image — no K8s secrets or configmaps needed.
 
 ## Prerequisites
 
 - n8n deployed and operational (`n8n-system` namespace)
 - `kubectl-mcp` MCP server available to agent pods
 - `mcp-victoriametrics` MCP server available to agent pods
+- Community node `n8n-nodes-claude-code-cli` installed in n8n
 
 ## Operation
 
 ### Pod Lifecycle
 
-1. n8n workflow calls the `n8n-claude-spawner` SA to create a pod in `claude-agents`
-2. Pod starts, bootstraps config from the K8s API (setup token, MCP config, Claude settings)
-3. `kubectl` binary is removed from the pod filesystem
-4. `claude -p` runs with the provided prompt
-5. Pod exits; n8n deletes it via the spawner SA
+1. n8n workflow triggers the Claude Code node
+2. Community node creates an ephemeral pod in `claude-agents` using n8n's in-cluster SA
+3. Pod runs `claude -p` with the configured prompt and MCP servers
+4. Pod exits; community node deletes it
 
 ### Key Commands
 
@@ -41,7 +41,7 @@ flux reconcile kustomization claude-agents --with-source
 kubectl logs -n claude-agents <pod-name>
 
 # View logs for all agent pods (label selector)
-kubectl logs -n claude-agents -l app.kubernetes.io/name=claude-agent
+kubectl logs -n claude-agents -l managed-by=n8n-claude-code
 ```
 
 ## Troubleshooting
@@ -50,15 +50,19 @@ kubectl logs -n claude-agents -l app.kubernetes.io/name=claude-agent
 
 1. **Pod stuck in Pending**
    - **Symptom**: Pod shows `Pending` with no node assigned
-   - **Resolution**: Check events with `kubectl get events -n claude-agents --sort-by='.lastTimestamp'`. Common causes are image pull failures (check image tag/registry credentials) or Pod Security Admission rejections (verify pod spec matches `restricted` policy)
+   - **Resolution**: Check events with `kubectl get events -n claude-agents --sort-by='.lastTimestamp'`. Common causes are image pull failures (check image tag/registry) or Pod Security Admission rejections (image must use numeric UID)
 
-2. **Auth failures (setup token expired or invalid)**
-   - **Symptom**: Pod logs show authentication errors when bootstrapping config
-   - **Resolution**: The setup token in `claude-credentials.sops.yaml` may be expired or rotated. Update the SOPS secret with a fresh token and let Flux reconcile. Check token expiry via Claude API console.
+2. **Auth failures (Not logged in)**
+   - **Symptom**: Pod logs show "Not logged in" or authentication errors
+   - **Resolution**: Check the `CLAUDE_CODE_OAUTH_TOKEN` environment variable in the n8n credential's Environment Variables field. Setup tokens expire after 1 year.
 
 3. **MCP servers unreachable**
-   - **Symptom**: Agent logs show MCP connection errors for `kubectl-mcp` or `mcp-victoriametrics`
-   - **Resolution**: Inspect CiliumNetworkPolicies — egress rules on the `claude-agents` namespace must permit traffic to the MCP server endpoints. Run `kubectl get ciliumnetworkpolicy -n claude-agents` and verify egress selectors match the MCP pod labels/namespaces.
+   - **Symptom**: Agent reports no MCP tools available
+   - **Resolution**: Verify MCP config is baked into the image (`/workspace/.mcp.json`). Check CiliumNetworkPolicies allow egress from `claude-agents` to MCP server endpoints. CNP selectors must match `managed-by: n8n-claude-code` label.
+
+4. **Connection timeout creating pod**
+   - **Symptom**: n8n node times out before pod is created
+   - **Resolution**: Check n8n has kube-apiserver egress CNP (`allow-kube-api-egress` in n8n-system). Check Hubble/Grafana for CNP drops.
 
 ## References
 
