@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: claude-settings
+data:
+  settings.json: |
+    {
+      "permissions": {
+        "deny": []
+      }
+    }

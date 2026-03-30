@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: claude-mcp-config
+data:
+  mcp.json: |
+    {
+      "mcpServers": {
+        "victoriametrics": {
+          "type": "http",
+          "url": "http://mcp-victoriametrics.observability.svc:8080/mcp"
+        },
+        "kubernetes": {
+          "type": "http",
+          "url": "http://kubectl-mcp-server.kubectl-mcp.svc:8000/mcp"
+        }
+      }
+    }
