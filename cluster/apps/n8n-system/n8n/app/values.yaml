@@ -117,6 +117,8 @@ main:
       readOnly: true
     - name: n8n-cache
       mountPath: /home/node/.cache
+    - name: n8n-npm-cache
+      mountPath: /home/node/.npm
     - name: n8n-hooks
       mountPath: /home/node/.n8n/hooks.js
       subPath: hooks.js
@@ -129,6 +131,8 @@ main:
           - key: ca.crt
             path: ca.crt
     - name: n8n-cache
+      emptyDir: {}
+    - name: n8n-npm-cache
       emptyDir: {}
     - name: n8n-hooks
       configMap:
