@@ -71,7 +71,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: claude-agents
-            k8s:app.kubernetes.io/name: claude-agent
+            k8s:managed-by: n8n-claude-code
       toPorts:
         - ports:
             - port: "8000"

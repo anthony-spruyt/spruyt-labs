@@ -8,7 +8,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: claude-agent
+      managed-by: n8n-claude-code
   egress:
     - toEntities:
         - kube-apiserver
@@ -26,7 +26,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: claude-agent
+      managed-by: n8n-claude-code
   egress:
     - toEntities:
         - world
@@ -40,7 +40,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: claude-agent
+      managed-by: n8n-claude-code
   egress:
     - toEndpoints:
         - matchLabels:
@@ -60,7 +60,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: claude-agent
+      managed-by: n8n-claude-code
   egress:
     - toEndpoints:
         - matchLabels:
