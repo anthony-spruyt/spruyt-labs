@@ -19,7 +19,7 @@ spec:
           memory: 1Mi
         maxAllowed:
           cpu: 2000m
-          memory: 2Gi
+          memory: 3Gi
       - containerName: chromium
         minAllowed:
           cpu: 1m
