@@ -11,5 +11,7 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  dependsOn:
+    - name: github-token-rotation
   prune: true
   timeout: 15m
