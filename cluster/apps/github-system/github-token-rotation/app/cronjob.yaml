@@ -30,7 +30,8 @@ spec:
                 - /bin/sh
                 - -c
                 - |
-                  set -e
+                  set -eE
+                  trap 'echo "FAILED at line $$LINENO: exit code $$?"' ERR
 
                   # Install openssl CLI to /tmp (shared libs already in image via curl)
                   _ARCH=$$(uname -m)
