@@ -211,12 +211,31 @@ misconfigurations:
       - cluster/apps/n8n-system/n8n/app/hooks-configmap.yaml
 
   # ==============================================================================
-  # Claude Agents - RBAC for n8n pod spawner
+  # Claude Agents (read+write) - RBAC for n8n pod spawner
   # ==============================================================================
   # Spawner role needs pod create/delete to manage ephemeral Claude agent pods
   - id: AVD-KSV-0048
     paths:
-      - cluster/apps/claude-agents/claude-agents/app/rbac-spawner.yaml
+      - cluster/apps/claude-agents-read/claude-agents/app/rbac-spawner.yaml
+      - cluster/apps/claude-agents-write/claude-agents/app/rbac-spawner.yaml
+  # Git config contains public bot email and signingkey path - not sensitive data
+  - id: AVD-KSV-01010
+    paths:
+      - cluster/apps/claude-agents-read/claude-agents/app/github-bot-gitconfig.yaml
+      - cluster/apps/claude-agents-write/claude-agents/app/github-bot-gitconfig.yaml
+
+  # ==============================================================================
+  # GitHub Token Rotation - CronJob and RBAC
+  # ==============================================================================
+  # alpine/k8s is a trusted Docker Hub image for kubectl operations
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/github-system/github-token-rotation/app/cronjob.yaml
+  # Token rotation and reader roles need resourceName-scoped secret access (least-privilege)
+  - id: AVD-KSV-0113
+    paths:
+      - cluster/apps/github-system/github-token-rotation/app/reader-role.yaml
+      - cluster/apps/github-system/github-token-rotation/app/role.yaml
 
   # ==============================================================================
   # Victoria Metrics etcd secret writer - writes etcd certs for vmagent discovery
