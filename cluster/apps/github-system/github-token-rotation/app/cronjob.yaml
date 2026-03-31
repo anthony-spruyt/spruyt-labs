@@ -6,12 +6,13 @@ metadata:
   name: github-token-rotation
   namespace: github-system
 spec:
-  schedule: "0 */4 * * *"
+  schedule: "*/30 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
+      backoffLimit: 2
       template:
         metadata:
           labels:
@@ -33,46 +34,61 @@ spec:
 
                   MAX_RETRIES=3
 
-                  # Refresh a GitHub App OAuth token and update the source secret
-                  refresh_token() {
-                    PREFIX="$$1"          # "write" or "read"
-                    CLIENT_ID="$$2"
-                    CLIENT_SECRET="$$3"
+                  # Base64url encode (no padding, URL-safe)
+                  b64url() {
+                    openssl base64 -A | tr '+/' '-_' | tr -d '='
+                  }
 
-                    echo "=== Refreshing $${PREFIX} App token ==="
+                  # Generate a JWT for a GitHub App
+                  generate_jwt() {
+                    APP_ID="$$1"
+                    KEY_FILE="$$2"
 
-                    # Read current refresh token from source secret
-                    CURRENT_REFRESH=$$(kubectl get secret github-bot-credentials \
-                      -n github-system \
-                      -o jsonpath="{.data.$${PREFIX}-refresh-token}" | base64 -d)
+                    NOW=$$(date +%s)
+                    IAT=$$((NOW - 60))
+                    EXP=$$((NOW + 600))
 
-                    if [ -z "$${CURRENT_REFRESH}" ]; then
-                      echo "ERROR: No refresh token found for $${PREFIX}"
+                    HEADER=$$(printf '{"alg":"RS256","typ":"JWT"}' | b64url)
+                    PAYLOAD=$$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' "$$IAT" "$$EXP" "$$APP_ID" | b64url)
+
+                    SIGNATURE=$$(printf '%s.%s' "$$HEADER" "$$PAYLOAD" | \
+                      openssl dgst -sha256 -sign "$$KEY_FILE" -binary | b64url)
+
+                    printf '%s.%s.%s' "$$HEADER" "$$PAYLOAD" "$$SIGNATURE"
+                  }
+
+                  # Mint an installation access token and update the source secret
+                  mint_token() {
+                    PREFIX="$$1"
+                    APP_ID="$$2"
+                    INSTALLATION_ID="$$3"
+                    KEY_FILE="$$4"
+
+                    echo "=== Minting $${PREFIX} installation token ==="
+
+                    JWT=$$(generate_jwt "$$APP_ID" "$$KEY_FILE")
+
+                    RESPONSE=$$(curl -sf -X POST \
+                      "https://api.github.com/app/installations/$${INSTALLATION_ID}/access_tokens" \
+                      -H "Authorization: Bearer $${JWT}" \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "X-GitHub-Api-Version: 2022-11-28")
+
+                    TOKEN=$$(echo "$${RESPONSE}" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+                    if [ -z "$${TOKEN}" ]; then
+                      echo "ERROR: Failed to mint installation token for $${PREFIX}"
+                      echo "Response: $${RESPONSE}" | grep -o '"message[^}]*' || true
                       return 1
                     fi
 
-                    # Call GitHub OAuth token refresh endpoint
-                    RESPONSE=$$(curl -sf -X POST https://github.com/login/oauth/access_token \
-                      -d "client_id=$${CLIENT_ID}" \
-                      -d "client_secret=$${CLIENT_SECRET}" \
-                      -d "grant_type=refresh_token" \
-                      -d "refresh_token=$${CURRENT_REFRESH}" \
-                      -H "Accept: application/json")
+                    echo "Token minted, updating source secret..."
 
-                    # Parse response
-                    NEW_ACCESS=$$(echo "$${RESPONSE}" | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
-                    NEW_REFRESH=$$(echo "$${RESPONSE}" | grep -o '"refresh_token":"[^"]*"' | cut -d'"' -f4)
+                    # Build hosts.yml for gh CLI
+                    HOSTS_YML=$$(printf 'github.com:\n  oauth_token: %s\n  user: spruyt-labs-bot\n' "$${TOKEN}")
 
-                    if [ -z "$${NEW_ACCESS}" ] || [ -z "$${NEW_REFRESH}" ]; then
-                      echo "ERROR: Failed to parse tokens from response"
-                      echo "Response: $${RESPONSE}" | grep -o '"error[^}]*' || true
-                      return 1
-                    fi
-
-                    echo "Tokens received, updating source secret..."
-
-                    # Build hosts.yml content
-                    HOSTS_YML=$$(printf 'github.com:\n  oauth_token: %s\n  user: spruyt-labs-bot\n' "$${NEW_ACCESS}")
+                    # Build .git-credentials for git CLI
+                    GIT_CREDS=$$(printf 'https://x-access-token:%s@github.com\n' "$${TOKEN}")
 
                     # Atomic patch - all keys in one operation
                     ATTEMPT=0
@@ -80,31 +96,28 @@ spec:
                       ATTEMPT=$$((ATTEMPT + 1))
                       echo "Write attempt $${ATTEMPT}/$${MAX_RETRIES}..."
 
-                      kubectl patch secret github-bot-credentials -n github-system --type='json' -p="[
-                        {\"op\": \"replace\", \"path\": \"/data/$${PREFIX}-access-token\", \"value\": \"$$(echo -n $${NEW_ACCESS} | base64 -w0)\"},
-                        {\"op\": \"replace\", \"path\": \"/data/$${PREFIX}-refresh-token\", \"value\": \"$$(echo -n $${NEW_REFRESH} | base64 -w0)\"},
-                        {\"op\": \"replace\", \"path\": \"/data/$${PREFIX}-hosts.yml\", \"value\": \"$$(echo -n "$${HOSTS_YML}" | base64 -w0)\"}
-                      ]"
+                      kubectl patch secret github-bot-credentials -n github-system --type='merge' -p="{
+                        \"stringData\": {
+                          \"$${PREFIX}-access-token\": \"$${TOKEN}\",
+                          \"$${PREFIX}-hosts.yml\": \"$${HOSTS_YML}\",
+                          \"$${PREFIX}-git-credentials\": \"$${GIT_CREDS}\"
+                        }
+                      }"
 
-                      # Read-after-write verification
-                      VERIFIED=$$(kubectl get secret github-bot-credentials \
-                        -n github-system \
-                        -o jsonpath="{.data.$${PREFIX}-access-token}" | base64 -d)
-
-                      if [ "$${VERIFIED}" = "$${NEW_ACCESS}" ]; then
-                        echo "Write verified for $${PREFIX}"
+                      if [ $$? -eq 0 ]; then
+                        echo "Write succeeded for $${PREFIX}"
                         break
                       fi
 
-                      echo "WARNING: Write verification failed, retrying..."
+                      echo "WARNING: Write failed, retrying..."
                       if [ $$ATTEMPT -eq $$MAX_RETRIES ]; then
-                        echo "ERROR: Write verification failed after $${MAX_RETRIES} attempts"
+                        echo "ERROR: Write failed after $${MAX_RETRIES} attempts"
                         return 1
                       fi
                       sleep 2
                     done
 
-                    echo "=== $${PREFIX} App token refreshed ==="
+                    echo "=== $${PREFIX} installation token minted ==="
                   }
 
                   # Force-sync ExternalSecrets in consumer namespaces
@@ -113,7 +126,6 @@ spec:
 
                     for NS in claude-agents-write claude-agents-read openclaw github-mcp; do
                       for ES_NAME in github-bot-credentials github-bot-ssh-key; do
-                        # Check if ExternalSecret exists before patching
                         if kubectl get externalsecret "$${ES_NAME}" -n "$${NS}" >/dev/null 2>&1; then
                           echo "Force-syncing $${ES_NAME} in $${NS}..."
                           kubectl patch externalsecret "$${ES_NAME}" -n "$${NS}" \
@@ -126,33 +138,50 @@ spec:
                     echo "=== Force-sync complete ==="
                   }
 
+                  # Write private keys from env vars to temp files for openssl
+                  echo "$${WRITE_PRIVATE_KEY}" > /tmp/write-key.pem
+                  echo "$${READ_PRIVATE_KEY}" > /tmp/read-key.pem
+
                   # Main
-                  refresh_token "write" "$${WRITE_CLIENT_ID}" "$${WRITE_CLIENT_SECRET}"
-                  refresh_token "read" "$${READ_CLIENT_ID}" "$${READ_CLIENT_SECRET}"
+                  mint_token "write" "$${WRITE_APP_ID}" "$${WRITE_INSTALLATION_ID}" /tmp/write-key.pem
+                  mint_token "read" "$${READ_APP_ID}" "$${READ_INSTALLATION_ID}" /tmp/read-key.pem
                   force_sync_consumers
+
+                  # Clean up key files
+                  rm -f /tmp/write-key.pem /tmp/read-key.pem
 
                   echo "All token rotations completed successfully!"
               env:
-                - name: WRITE_CLIENT_ID
+                - name: WRITE_APP_ID
                   valueFrom:
                     secretKeyRef:
                       name: github-app-credentials
-                      key: write-client-id
-                - name: WRITE_CLIENT_SECRET
+                      key: write-app-id
+                - name: WRITE_INSTALLATION_ID
                   valueFrom:
                     secretKeyRef:
                       name: github-app-credentials
-                      key: write-client-secret
-                - name: READ_CLIENT_ID
+                      key: write-installation-id
+                - name: WRITE_PRIVATE_KEY
                   valueFrom:
                     secretKeyRef:
                       name: github-app-credentials
-                      key: read-client-id
-                - name: READ_CLIENT_SECRET
+                      key: write-private-key
+                - name: READ_APP_ID
                   valueFrom:
                     secretKeyRef:
                       name: github-app-credentials
-                      key: read-client-secret
+                      key: read-app-id
+                - name: READ_INSTALLATION_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-app-credentials
+                      key: read-installation-id
+                - name: READ_PRIVATE_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-app-credentials
+                      key: read-private-key
               resources:
                 requests:
                   cpu: 10m
@@ -160,6 +189,9 @@ spec:
                 limits:
                   cpu: 100m
                   memory: 128Mi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -171,4 +203,9 @@ spec:
                 runAsGroup: 10001
                 seccompProfile:
                   type: RuntimeDefault
+          volumes:
+            - name: tmp
+              emptyDir:
+                medium: Memory
+                sizeLimit: 64Mi
           restartPolicy: OnFailure

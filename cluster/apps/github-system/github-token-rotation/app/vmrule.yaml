@@ -16,12 +16,13 @@ spec:
             severity: warning
           annotations:
             summary: "GitHub token rotation CronJob failed"
-            description: "CronJob {{ $labels.job_name }} failed. Current access tokens remain valid for up to 4 more hours."
+            description: "CronJob {{ $labels.job_name }} failed. Installation tokens expire after 1 hour."
         - alert: GitHubTokenRotationConsecutiveFailures
           expr: |
-            time() - kube_cronjob_status_last_successful_time{namespace="github-system", cronjob="github-token-rotation"} > 28800
+            time() - kube_cronjob_status_last_successful_time{namespace="github-system", cronjob="github-token-rotation"} > 3600
+          for: 10m
           labels:
             severity: critical
           annotations:
-            summary: "GitHub token rotation has not succeeded in 8+ hours"
-            description: "Access tokens have likely expired. Workloads using gh/git are degraded. Tokens will self-heal on next successful CronJob run."
+            summary: "GitHub token rotation has not succeeded in 1+ hours"
+            description: "Installation tokens have likely expired. Workloads using gh/git are degraded. Tokens will self-heal on next successful CronJob run."
