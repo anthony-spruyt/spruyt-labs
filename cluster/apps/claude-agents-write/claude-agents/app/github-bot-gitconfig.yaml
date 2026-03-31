@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: github-bot-gitconfig
+data:
+  gitconfig: |
+    [user]
+        name = spruyt-labs-bot
+        email = spruyt-labs-bot@users.noreply.github.com
+    [gpg]
+        format = ssh
+    [commit]
+        gpgsign = true
+    [user]
+        signingkey = /etc/git-ssh/id_ed25519
+    [core]
+        sshCommand = ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=accept-new
