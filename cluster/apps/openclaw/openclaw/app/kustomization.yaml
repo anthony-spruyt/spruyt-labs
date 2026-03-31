@@ -10,6 +10,7 @@ resources:
   - ./authentik-outpost-rbac.yaml
   - ./network-policies.yaml
   - ./vpa.yaml
+  - ./github-rotation-rbac.yaml
 configMapGenerator:
   - name: openclaw-values
     namespace: openclaw
