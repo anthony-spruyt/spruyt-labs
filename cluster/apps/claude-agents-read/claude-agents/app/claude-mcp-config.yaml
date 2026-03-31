@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: claude-mcp-config
+data:
+  mcp.json: |
+    {
+      "mcpServers": {
+        "kubernetes": {
+          "type": "http",
+          "url": "http://kubectl-mcp-server.kubectl-mcp.svc:8000/mcp"
+        },
+        "victoriametrics": {
+          "type": "http",
+          "url": "http://mcp-victoriametrics.observability.svc:8080/mcp"
+        },
+        "github": {
+          "type": "http",
+          "url": "http://github-mcp-server.github-mcp.svc:8082/mcp",
+          "headers": {
+            "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+          }
+        }
+      }
+    }

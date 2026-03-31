@@ -11,3 +11,4 @@ resources:
   - ./github-ssh-external-secret.yaml
   - ./github-bot-gitconfig.yaml
   - ./github-rotation-rbac.yaml
+  - ./claude-mcp-config.yaml
