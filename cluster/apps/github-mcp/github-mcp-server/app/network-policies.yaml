@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to GitHub API
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-github-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: github-mcp-server
+  egress:
+    - toFQDNs:
+        - matchName: api.github.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Claude agent write pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-claude-agents-write-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: github-mcp-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-write
+            k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports:
+            - port: "8082"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Claude agent read pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-claude-agents-read-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: github-mcp-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-read
+            k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports:
+            - port: "8082"
+              protocol: TCP

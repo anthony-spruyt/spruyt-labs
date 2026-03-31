@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./release.yaml
+  - ./network-policies.yaml
+  - ./github-secret-store.yaml
+  - ./github-external-secret.yaml
+  - ./github-rotation-rbac.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: github-mcp-server-values
+    namespace: github-mcp
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
