@@ -1,6 +1,7 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to GitHub API
+# DNS egress with L7 rule required for toFQDNs to populate Cilium's FQDN cache
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -10,6 +11,18 @@ spec:
     matchLabels:
       app.kubernetes.io/name: github-mcp-server
   egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchPattern: "*.github.com"
+              - matchPattern: "github.com"
     - toFQDNs:
         - matchName: api.github.com
       toPorts:

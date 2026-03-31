@@ -1,6 +1,7 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to github.com for token refresh
+# DNS egress with L7 rule required for toFQDNs to populate Cilium's FQDN cache
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -10,6 +11,17 @@ spec:
     matchLabels:
       app: github-token-rotation
   egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchPattern: "github.com"
     - toFQDNs:
         - matchName: github.com
       toPorts:
