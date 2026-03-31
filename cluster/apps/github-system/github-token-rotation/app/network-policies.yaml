@@ -25,6 +25,7 @@ spec:
     - toFQDNs:
         - matchName: github.com
         - matchName: api.github.com
+        - matchName: dl-cdn.alpinelinux.org
       toPorts:
         - ports:
             - port: "443"

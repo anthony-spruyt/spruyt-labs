@@ -32,6 +32,20 @@ spec:
                 - |
                   set -e
 
+                  # Install openssl CLI to /tmp (shared libs already in image via curl)
+                  _ARCH=$$(uname -m)
+                  _VER=$$(curl -sL "https://dl-cdn.alpinelinux.org/alpine/edge/main/$${_ARCH}/APKINDEX.tar.gz" | \
+                    tar -Oxz APKINDEX 2>/dev/null | awk '/^P:openssl$$/,/^$$/' | grep '^V:' | head -1 | cut -d: -f2)
+                  if [ -z "$${_VER}" ]; then
+                    echo "ERROR: Failed to resolve openssl package version"
+                    exit 1
+                  fi
+                  curl -sL "https://dl-cdn.alpinelinux.org/alpine/edge/main/$${_ARCH}/openssl-$${_VER}.apk" | \
+                    tar -xz -C /tmp usr/bin/openssl 2>/dev/null
+                  chmod +x /tmp/usr/bin/openssl
+                  export PATH="/tmp/usr/bin:$$PATH"
+                  echo "Installed openssl $${_VER}"
+
                   MAX_RETRIES=3
 
                   # Base64url encode (no padding, URL-safe)
@@ -197,7 +211,7 @@ spec:
                 capabilities:
                   drop:
                     - ALL
-                readOnlyRootFilesystem: true
+                readOnlyRootFilesystem: false
                 runAsNonRoot: true
                 runAsUser: 10001
                 runAsGroup: 10001
