@@ -1,0 +1,7 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
+# SA assigned to ephemeral Claude agent pods by the community node
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: claude-agent

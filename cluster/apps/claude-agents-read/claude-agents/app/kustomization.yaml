@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./rbac.yaml
+  - ./rbac-spawner.yaml
+  - ./network-policies.yaml
+  - ./github-secret-store.yaml
+  - ./github-external-secret.yaml
+  - ./github-ssh-external-secret.yaml
+  - ./github-bot-gitconfig.yaml
+  - ./github-rotation-rbac.yaml

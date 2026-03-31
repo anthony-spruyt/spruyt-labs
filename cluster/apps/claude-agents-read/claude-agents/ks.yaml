@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app claude-agents-read
+  namespace: flux-system
+spec:
+  targetNamespace: claude-agents-read
+  path: ./cluster/apps/claude-agents-read/claude-agents/app
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: github-token-rotation
+  prune: true
+  timeout: 5m
+  wait: true
