@@ -8,9 +8,10 @@ MegaLinter or schema check results that are not actual issues.
 |---------|------|----------------------|-------|-----------|-------|
 | AVD-KSV-0037 on kube-system resources | Trivy | etcd/control-plane components legitimately run in kube-system | 3 | 2026-02-28 | 2026-02-28 |
 | AVD-KSV-0125 on ghcr.io images | Trivy | ghcr.io/siderolabs is the official Talos registry | 2 | 2026-02-28 | 2026-02-28 |
-| AVD-KSV-0048 on intentional write RBAC | Trivy | Expected when Role/ClusterRole intentionally grants write verbs (delete, patch, create) for operational use cases | 5 | 2026-03-30 | 2026-03-15 |
+| AVD-KSV-0048 on intentional write RBAC | Trivy | Expected when Role/ClusterRole intentionally grants write verbs (delete, patch, create) for operational use cases | 6 | 2026-03-31 | 2026-03-15 |
 | AVD-KSV-0053 on intentional pods/exec RBAC | Trivy | Expected when Role grants pods/exec create for spawner/orchestrator patterns (e.g., n8n-claude-spawner). Scoped by Role (not ClusterRole) + PSA restricted namespace | 1 | 2026-03-30 | 2026-03-30 |
-| AVD-KSV-0113 on resourceName-scoped secret access | Trivy | Expected when Role grants secret get scoped to specific resourceNames (e.g., claude-credentials). Not broad secret access | 2 | 2026-03-30 | 2026-03-30 |
+| AVD-KSV-0113 on resourceName-scoped secret access | Trivy | Expected when Role grants secret get scoped to specific resourceNames (e.g., claude-credentials). Not broad secret access | 3 | 2026-03-31 | 2026-03-30 |
+| AVD-KSV-01010 on gitconfig ConfigMaps with email/signingkey | Trivy | Git config contains public bot email and signingkey path, not sensitive data. False positive on keyword match | 1 | 2026-03-31 | 2026-03-31 |
 | GITHUB_TOKEN in talos/clusterconfig/*.yaml | secretlint | Generated Talos machine configs contain registry auth env var placeholders that secretlint flags as GitHub tokens. Files are gitignored in production | 4 | 2026-03-16 | 2026-03-16 |
 | markdownlint MD040 in design spec docs | markdownlint | Pre-existing fenced code blocks without language identifiers in docs/superpowers/specs/. Not introduced by feature branches | 1 | 2026-03-18 | 2026-03-18 |
 | AVD-DS-0026 Dockerfile HEALTHCHECK in .trivyignore.yaml | Trivy | .trivyignore.yaml used `DS-0026` without `AVD-` prefix. All other entries use `AVD-` prefix (e.g. AVD-KSV-0037). Must use `AVD-DS-0026` to match Trivy-reported ID format. Fixed and confirmed working | 2 | 2026-03-23 | 2026-03-22 |
