@@ -1,0 +1,25 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: github-bot-ssh-key
+    namespace: github-system
+type: Opaque
+stringData:
+    id_ed25519: ENC[AES256_GCM,data:+yiqTvqNbRTiqdUqrTlNADq4u4oPVjgyCSRifkaORZ6w6HH4qYUBzTdctfu7AI3CEXFiWjitXxlwV09ieifrjvD74CovSfTyJE9b3syQBW2a8BOZvfEbysmUBfO60eY35JP9iiNfPzSeuV+lqD5oCTLzho2eL/Y8w/FNoBgtUYTQTBQW53xTeNZBYFR3En6sgqB3vvEcblyu5FdGAlWmF8emjLpUBa1+i1DeyhygYXIXyq/4ENzkYbxDwqloNhpmrXWs5TTOqXOCBI3k7Ltke7ijCvWfKdknl12Xw1d/vDf2s93bHCHDdkpQhK4PY2u3vNVFp3LH6M7iPBJfnchSe68dKIeZVZx39M8a+1rRZb8eChPU/jkfhANaHyFJ8DLsgPhxKLsWy7GvKEgQmikVAWEe/kosvEB/FXhUHU5Jdf+xMEvkbFt47JJ1ttkwg1ovW92TU9VMnXAA2SUe0Tu+oWU815vXWdKWRA4OfYPV4ibzWwF/+XwaJMPoxpe9ZTw11z1QEtYUMNHGK1D/971ze83g6Ex/ZZGH63f20hl7m3CxcMuUFrBGVlWq+Ffj5HpsqB9HFRoEMxtFdGW+,iv:nQ5WG76Mn7IeYV81w72G8lsbH2cvbhpn5ULJwyZjeH8=,tag:dALd2WyQKwQqXCKoO2+c7A==,type:str]
+    id_ed25519.pub: ENC[AES256_GCM,data:yvbW53PZJHgly3lxBZ2BmPrvUQ7lEE1MPq9YDJObh4GZz058K7YKllnbMXuf0b3m9c1kE+zlIAopWxugOj+Paqeld25Br1AwTcVV9z5uhM5rB6S4lpGXsjs5U6/RpFqD0nMaLbUy4hn0tpzYZgIu9Xp1TU4eP9rNMA==,iv:kTBo8cFi+jJ/h30k/kBsrOvYxlTMnb4Tx1nhwwzawi4=,tag:+vzzcvq8KKuDu+wzKALdrg==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAxWXZER1laNVFSb2xua3Y0
+            N0p6ZDlMenJPTUkvYUlPTTBDeGVGYWJRK1JrCmt4dzBSVjlnS0hSMkxjdHovdDNs
+            ZzZwenhXSnBnOUQ0bmMweHdRNjI0Zk0KLS0tIHR4ZEdyYTRDTVlEODNyZFJkSm1D
+            cGk0NnlyYTlQbUVLcTRFaTB6NnVnVmsKSz4X4Dv08Q2Tf+GANWg342Id+fTdftGc
+            7HvzosLrUuumnHVv2W43G3q5dawmHKw9oTC1gGVAwehIwmWbxtoMyQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-03-31T10:21:34Z"
+    mac: ENC[AES256_GCM,data:/LxTxFJ6p8FNSkRsIbUPTbOOv6KA1DKEHLxNIa8rrldWLdypshf5zIUyNtq7WiKa2AWJLX7ePMlOrXBDskkMU97VJafMimM7O9KChSnMmcVRMB9sTajwUkxSV/XFlAWcMFO6REq/W6hAJ/TMDpGR9Mw2QViVW8HgX76Kzz196T0=,iv:Pc/G9o/reZX6erPQy9nmedd2gQZD9ejtx9nAmrdOV/4=,tag:rwpGnS8zUYakrSkAdlt/fA==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.1

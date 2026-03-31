@@ -1,1 +1,5 @@
 # Ignore vaultwarden IDs
+
+# False positives: id_ed25519 is an SSH key filename, not a secret
+docs/superpowers/specs/2026-03-31-github-app-token-rotation-design.md:generic-api-key:520
+docs/superpowers/plans/2026-03-31-github-app-token-rotation.md:generic-api-key:1050
