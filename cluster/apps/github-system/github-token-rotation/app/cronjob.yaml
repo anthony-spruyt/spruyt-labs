@@ -114,21 +114,24 @@ spec:
                     # Build .git-credentials for git CLI
                     GIT_CREDS=$$(printf 'https://x-access-token:%s@github.com\n' "$${TOKEN}")
 
-                    # Atomic patch - all keys in one operation
+                    # Build patch JSON with jq (handles newlines/special chars)
+                    PATCH_JSON=$$(jq -n \
+                      --arg token "$${TOKEN}" \
+                      --arg hosts "$${HOSTS_YML}" \
+                      --arg creds "$${GIT_CREDS}" \
+                      --arg at_key "$${PREFIX}-access-token" \
+                      --arg hy_key "$${PREFIX}-hosts.yml" \
+                      --arg gc_key "$${PREFIX}-git-credentials" \
+                      '{stringData: {($$at_key): $$token, ($$hy_key): $$hosts, ($$gc_key): $$creds}}')
+
+                    # Atomic patch with retry
                     ATTEMPT=0
                     while [ $$ATTEMPT -lt $$MAX_RETRIES ]; do
                       ATTEMPT=$$((ATTEMPT + 1))
                       echo "Write attempt $${ATTEMPT}/$${MAX_RETRIES}..."
 
-                      kubectl patch secret github-bot-credentials -n github-system --type='merge' -p="{
-                        \"stringData\": {
-                          \"$${PREFIX}-access-token\": \"$${TOKEN}\",
-                          \"$${PREFIX}-hosts.yml\": \"$${HOSTS_YML}\",
-                          \"$${PREFIX}-git-credentials\": \"$${GIT_CREDS}\"
-                        }
-                      }"
-
-                      if [ $$? -eq 0 ]; then
+                      if kubectl patch secret github-bot-credentials -n github-system \
+                        --type='merge' -p="$${PATCH_JSON}"; then
                         echo "Write succeeded for $${PREFIX}"
                         break
                       fi
