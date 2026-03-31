@@ -10,3 +10,4 @@ resources:
   - ./role.yaml
   - ./role-binding.yaml
   - ./network-policies.yaml
+  - ./cronjob.yaml

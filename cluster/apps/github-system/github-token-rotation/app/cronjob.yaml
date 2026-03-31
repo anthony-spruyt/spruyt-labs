@@ -1,0 +1,174 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/cronjob-batch-v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: github-token-rotation
+  namespace: github-system
+spec:
+  schedule: "0 */4 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: github-token-rotation
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+          serviceAccountName: github-token-rotation
+          containers:
+            - name: rotate-tokens
+              image: alpine/k8s:1.35.3@sha256:097aa60cbef561146757c7494468e9d7b04d843597ad1a1515ed09d0708c8014
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  MAX_RETRIES=3
+
+                  # Refresh a GitHub App OAuth token and update the source secret
+                  refresh_token() {
+                    PREFIX="$$1"          # "write" or "read"
+                    CLIENT_ID="$$2"
+                    CLIENT_SECRET="$$3"
+
+                    echo "=== Refreshing $${PREFIX} App token ==="
+
+                    # Read current refresh token from source secret
+                    CURRENT_REFRESH=$$(kubectl get secret github-bot-credentials \
+                      -n github-system \
+                      -o jsonpath="{.data.$${PREFIX}-refresh-token}" | base64 -d)
+
+                    if [ -z "$${CURRENT_REFRESH}" ]; then
+                      echo "ERROR: No refresh token found for $${PREFIX}"
+                      return 1
+                    fi
+
+                    # Call GitHub OAuth token refresh endpoint
+                    RESPONSE=$$(curl -sf -X POST https://github.com/login/oauth/access_token \
+                      -d "client_id=$${CLIENT_ID}" \
+                      -d "client_secret=$${CLIENT_SECRET}" \
+                      -d "grant_type=refresh_token" \
+                      -d "refresh_token=$${CURRENT_REFRESH}" \
+                      -H "Accept: application/json")
+
+                    # Parse response
+                    NEW_ACCESS=$$(echo "$${RESPONSE}" | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+                    NEW_REFRESH=$$(echo "$${RESPONSE}" | grep -o '"refresh_token":"[^"]*"' | cut -d'"' -f4)
+
+                    if [ -z "$${NEW_ACCESS}" ] || [ -z "$${NEW_REFRESH}" ]; then
+                      echo "ERROR: Failed to parse tokens from response"
+                      echo "Response: $${RESPONSE}" | grep -o '"error[^}]*' || true
+                      return 1
+                    fi
+
+                    echo "Tokens received, updating source secret..."
+
+                    # Build hosts.yml content
+                    HOSTS_YML=$$(printf 'github.com:\n  oauth_token: %s\n  user: spruyt-labs-bot\n' "$${NEW_ACCESS}")
+
+                    # Atomic patch - all keys in one operation
+                    ATTEMPT=0
+                    while [ $$ATTEMPT -lt $$MAX_RETRIES ]; do
+                      ATTEMPT=$$((ATTEMPT + 1))
+                      echo "Write attempt $${ATTEMPT}/$${MAX_RETRIES}..."
+
+                      kubectl patch secret github-bot-credentials -n github-system --type='json' -p="[
+                        {\"op\": \"replace\", \"path\": \"/data/$${PREFIX}-access-token\", \"value\": \"$$(echo -n $${NEW_ACCESS} | base64 -w0)\"},
+                        {\"op\": \"replace\", \"path\": \"/data/$${PREFIX}-refresh-token\", \"value\": \"$$(echo -n $${NEW_REFRESH} | base64 -w0)\"},
+                        {\"op\": \"replace\", \"path\": \"/data/$${PREFIX}-hosts.yml\", \"value\": \"$$(echo -n "$${HOSTS_YML}" | base64 -w0)\"}
+                      ]"
+
+                      # Read-after-write verification
+                      VERIFIED=$$(kubectl get secret github-bot-credentials \
+                        -n github-system \
+                        -o jsonpath="{.data.$${PREFIX}-access-token}" | base64 -d)
+
+                      if [ "$${VERIFIED}" = "$${NEW_ACCESS}" ]; then
+                        echo "Write verified for $${PREFIX}"
+                        break
+                      fi
+
+                      echo "WARNING: Write verification failed, retrying..."
+                      if [ $$ATTEMPT -eq $$MAX_RETRIES ]; then
+                        echo "ERROR: Write verification failed after $${MAX_RETRIES} attempts"
+                        return 1
+                      fi
+                      sleep 2
+                    done
+
+                    echo "=== $${PREFIX} App token refreshed ==="
+                  }
+
+                  # Force-sync ExternalSecrets in consumer namespaces
+                  force_sync_consumers() {
+                    echo "=== Force-syncing ExternalSecrets in consumer namespaces ==="
+
+                    for NS in claude-agents-write claude-agents-read openclaw github-mcp; do
+                      for ES_NAME in github-bot-credentials github-bot-ssh-key; do
+                        # Check if ExternalSecret exists before patching
+                        if kubectl get externalsecret "$${ES_NAME}" -n "$${NS}" >/dev/null 2>&1; then
+                          echo "Force-syncing $${ES_NAME} in $${NS}..."
+                          kubectl patch externalsecret "$${ES_NAME}" -n "$${NS}" \
+                            --type='merge' \
+                            -p="{\"metadata\":{\"annotations\":{\"force-sync\":\"$$(date +%s)\"}}}"
+                        fi
+                      done
+                    done
+
+                    echo "=== Force-sync complete ==="
+                  }
+
+                  # Main
+                  refresh_token "write" "$${WRITE_CLIENT_ID}" "$${WRITE_CLIENT_SECRET}"
+                  refresh_token "read" "$${READ_CLIENT_ID}" "$${READ_CLIENT_SECRET}"
+                  force_sync_consumers
+
+                  echo "All token rotations completed successfully!"
+              env:
+                - name: WRITE_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-app-credentials
+                      key: write-client-id
+                - name: WRITE_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-app-credentials
+                      key: write-client-secret
+                - name: READ_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-app-credentials
+                      key: read-client-id
+                - name: READ_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-app-credentials
+                      key: read-client-secret
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 10001
+                runAsGroup: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+          restartPolicy: OnFailure
