@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: github-token-rotation
+spec:
+  groups:
+    - name: github-token-rotation
+      rules:
+        - alert: GitHubTokenRotationFailed
+          expr: |
+            kube_job_status_failed{namespace="github-system", job_name=~"github-token-rotation.*"} > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "GitHub token rotation CronJob failed"
+            description: "CronJob {{ $labels.job_name }} failed. Current access tokens remain valid for up to 4 more hours."
+        - alert: GitHubTokenRotationConsecutiveFailures
+          expr: |
+            time() - kube_cronjob_status_last_successful_time{namespace="github-system", cronjob="github-token-rotation"} > 28800
+          labels:
+            severity: critical
+          annotations:
+            summary: "GitHub token rotation has not succeeded in 8+ hours"
+            description: "Access tokens have likely expired. Workloads using gh/git are degraded. Tokens will self-heal on next successful CronJob run."
