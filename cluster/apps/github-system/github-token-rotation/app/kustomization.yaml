@@ -6,3 +6,7 @@ resources:
   - ./github-app-credentials.sops.yaml
   - ./github-bot-credentials.sops.yaml
   - ./github-bot-ssh-key.sops.yaml
+  - ./service-account.yaml
+  - ./role.yaml
+  - ./role-binding.yaml
+  - ./network-policies.yaml
