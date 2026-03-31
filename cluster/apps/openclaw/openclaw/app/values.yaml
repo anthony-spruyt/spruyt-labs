@@ -32,6 +32,11 @@ controllers:
           - /scripts/init-workspace.sh
         env:
           HOME: /home/node/.openclaw
+          GIT_CODE_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: github-bot-credentials
+                key: GIT_CODE_TOKEN
         envFrom:
           - secretRef:
               name: openclaw-secrets
@@ -106,6 +111,11 @@ controllers:
           GIT_CONFIG_GLOBAL: /home/node/.openclaw/.gitconfig
           GIT_TERMINAL_PROMPT: "0"
           OPENCLAW_TZ: ${TIMEZONE}
+          GIT_CODE_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: github-bot-credentials
+                key: GIT_CODE_TOKEN
         # Example: Add runtime dependency paths for skills and extra runtimes
         # env:
         #   PATH: /home/node/.openclaw/pnpm:/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin

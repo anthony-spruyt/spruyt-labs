@@ -11,6 +11,8 @@ resources:
   - ./network-policies.yaml
   - ./vpa.yaml
   - ./github-rotation-rbac.yaml
+  - ./github-secret-store.yaml
+  - ./github-external-secret.yaml
 configMapGenerator:
   - name: openclaw-values
     namespace: openclaw
