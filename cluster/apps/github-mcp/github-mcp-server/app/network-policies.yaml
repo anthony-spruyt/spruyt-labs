@@ -18,11 +18,10 @@ spec:
       toPorts:
         - ports:
             - port: "53"
-              protocol: UDP
+              protocol: ANY
           rules:
             dns:
-              - matchPattern: "*.github.com"
-              - matchPattern: "github.com"
+              - matchPattern: "*"
     - toFQDNs:
         - matchName: api.github.com
       toPorts:
