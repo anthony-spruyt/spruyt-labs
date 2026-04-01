@@ -39,6 +39,7 @@ Cases where Context7 or upstream docs are missing or misleading.
 | bjw-s app-template | Context7 docs don't clarify serviceAccount v2 vs v4 syntax difference | v4 uses named-map `serviceAccount: { name: {} }` + controller `serviceAccount.identifier`. v2 `name`/`create` fields are invalid. Check schema at `schemas/serviceAccount.json` | 1 | 2026-03-15 | 2026-03-15 |
 | talos | Context7 returns only new RegistryAuthConfig format for registry auth queries; does not surface that `.machine.registries` is deprecated-but-supported | `.machine.registries.config` still works on v1.12.x but is deprecated. New format is `RegistryAuthConfig` document. For Talhelper patch workflows the old format may be simpler | 1 | 2026-03-16 | 2026-03-16 |
 | n8n | N8N_COMMUNITY_PACKAGES is not a valid env var; often assumed to auto-install community nodes | Community nodes install via UI (Settings > Community Nodes) or npm in init container. Valid env vars: N8N_COMMUNITY_PACKAGES_ENABLED, _REGISTRY, _PREVENT_LOADING. Verified against n8n source community-packages.config.ts | 1 | 2026-03-30 | 2026-03-30 |
+| megalinter | Per-linter _SARIF_REPORTER keys (e.g. GO_GOLANGCI_LINT_SARIF_REPORTER) do not exist | SARIF controlled globally: SARIF_REPORTER (bool) + SARIF_REPORTER_LINTERS (list). Schema has additionalProperties:false so invalid keys are rejected. SARIF_REPORTER defaults to false | 1 | 2026-04-01 | 2026-04-01 |
 
 ## Failure Signatures
 
