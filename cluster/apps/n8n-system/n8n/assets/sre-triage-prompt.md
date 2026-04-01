@@ -186,7 +186,9 @@ From Step 0's Discord read, find the Alertmanager bot message that matches this 
 
 ## Output — Structured JSON
 
-Always output valid JSON and nothing else. No markdown, no commentary, no explanation outside the JSON. The JSON must match this schema exactly:
+**CRITICAL: Your final output MUST be a single raw JSON object and absolutely nothing else.** No preamble, no summary, no markdown code fences, no explanation before or after. The very first character of your response must be `{` and the very last must be `}`. Any text outside the JSON will cause a parse failure.
+
+The JSON must match this schema exactly:
 
 ```json
 {
