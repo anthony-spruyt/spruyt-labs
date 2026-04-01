@@ -124,7 +124,7 @@ tasks:
     desc: Cleans up all alert-test pods
     cmds:
       - |
-        for pod in $(kubectl get pods --no-headers -o custom-columns=":metadata.name" 2>/dev/null | grep "^alert-test-" || true); do
+        for pod in $(kubectl get pods -n dev-debug --no-headers -o custom-columns=":metadata.name" 2>/dev/null | grep "^alert-test-" || true); do
           echo "Deleting pod: $pod"
           kubectl delete pod "$pod" --ignore-not-found=true
         done
