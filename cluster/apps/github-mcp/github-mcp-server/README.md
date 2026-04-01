@@ -2,7 +2,7 @@
 
 ## Overview
 
-GitHub MCP (Model Context Protocol) server that provides GitHub API access to Claude agents. It uses a read-tier OAuth access token for all API operations (issues, PRs, code search, repository contents). The server runs in HTTP transport mode on port 8082 inside the `github-mcp` namespace and is accessible only to permitted workloads via Cilium network policies.
+GitHub MCP (Model Context Protocol) server that provides GitHub API access to Claude agents. It uses a read-tier GitHub App installation token for all API operations (issues, PRs, code search, repository contents). The server runs in HTTP transport mode on port 8082 inside the `github-mcp` namespace and is accessible only to permitted workloads via Cilium network policies.
 
 The read-tier token is synced from `github-system` by an ESO ExternalSecret and refreshed whenever `github-token-rotation` runs.
 

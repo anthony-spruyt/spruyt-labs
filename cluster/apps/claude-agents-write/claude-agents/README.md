@@ -88,4 +88,4 @@ kubectl auth can-i create pods -n claude-agents-write \
 
 - [External Secrets Operator - Kubernetes SecretStore](https://external-secrets.io/latest/provider/kubernetes/)
 - [Kyverno Policy Documentation](https://kyverno.io/docs/)
-- [GitHub App OAuth - User Access Tokens](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app)
+- [GitHub App Installation Tokens](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app)
