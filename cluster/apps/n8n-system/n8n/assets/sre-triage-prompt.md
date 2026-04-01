@@ -259,3 +259,4 @@ Field notes:
 - **Max 12 MCP investigation calls** for single-alert payloads, **18 for multi-alert**
 - Discord reads and GitHub calls do **not** count toward this limit
 - If an MCP server is unavailable, state explicitly as a gap in findings — do not silently omit it
+- **Keep output concise** — the `summary` field must be under 100 characters. Each entry in `findings` must be under 200 characters. The `probable_cause` and `recommended_action` fields must each be under 300 characters. The total JSON output will be formatted into a Discord message with a 2000 character limit — brevity is essential
