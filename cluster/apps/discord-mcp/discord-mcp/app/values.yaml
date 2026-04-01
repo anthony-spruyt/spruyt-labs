@@ -1,0 +1,88 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  discord-mcp:
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: ghcr.io/anthony-spruyt/discord-mcp
+          tag: "0.1.0"
+          pullPolicy: IfNotPresent
+        env:
+          - name: DISCORD_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: discord-mcp-secrets
+                key: DISCORD_TOKEN
+          - name: DISCORD_GUILD_ID
+            valueFrom:
+              secretKeyRef:
+                name: discord-mcp-secrets
+                key: DISCORD_GUILD_ID
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              failureThreshold: 30
+              periodSeconds: 5
+persistence:
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+service:
+  app:
+    controller: discord-mcp
+    ports:
+      http:
+        port: 8080

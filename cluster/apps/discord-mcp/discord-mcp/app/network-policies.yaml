@@ -1,0 +1,74 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Discord API
+# DNS egress with L7 rule required for toFQDNs to populate Cilium's FQDN cache
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-discord-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: discord-mcp
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toFQDNs:
+        - matchName: discord.com
+        - matchName: gateway.discord.gg
+        - matchPattern: "*.discord.com"
+        - matchPattern: "*.discord.gg"
+        - matchPattern: "*.discord.media"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Claude agent read pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-claude-agents-read-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: discord-mcp
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-read
+            k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Claude agent write pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-claude-agents-write-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: discord-mcp
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-write
+            k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
