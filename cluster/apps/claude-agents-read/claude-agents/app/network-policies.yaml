@@ -90,3 +90,23 @@ spec:
         - ports:
             - port: "8082"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Discord MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-discord-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      managed-by: n8n-claude-code
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: discord-mcp
+            k8s:app.kubernetes.io/name: discord-mcp
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
