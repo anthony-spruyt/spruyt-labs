@@ -22,6 +22,10 @@ data:
           "headers": {
             "Authorization": "Bearer $${GITHUB_MCP_TOKEN}"
           }
+        },
+        "discord": {
+          "type": "http",
+          "url": "http://discord-mcp.discord-mcp.svc:8080/mcp"
         }
       }
     }
