@@ -18,7 +18,7 @@ controllers:
       app:
         image:
           repository: docker.io/rohitghumare64/kubectl-mcp-server
-          tag: latest@sha256:ad90bf2effc3926d22e8490c08f44299fb899b697214c957595c475841147439
+          tag: latest@sha256:6a3a59b0a8d9936b808fdcb825f53012a3de9298eb5d368c61afae51aeed6ac0
           pullPolicy: IfNotPresent
         args:
           - "--transport"
