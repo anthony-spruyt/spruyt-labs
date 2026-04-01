@@ -42,7 +42,7 @@ jobs:
           if [ -z "$LATEST" ]; then
             NEXT="0.1.0"
           else
-            VER=${LATEST#${TAG_PREFIX}}
+            VER=${LATEST#"${TAG_PREFIX}"}
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VER"
             case "$BUMP" in
               major) NEXT="$((MAJOR+1)).0.0" ;;
