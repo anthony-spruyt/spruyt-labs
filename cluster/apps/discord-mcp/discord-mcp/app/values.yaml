@@ -24,12 +24,12 @@ controllers:
           - name: DISCORD_TOKEN
             valueFrom:
               secretKeyRef:
-                name: discord-mcp-secrets
+                name: discord-secrets
                 key: DISCORD_TOKEN
           - name: DISCORD_GUILD_ID
             valueFrom:
               secretKeyRef:
-                name: discord-mcp-secrets
+                name: discord-secrets
                 key: DISCORD_GUILD_ID
         securityContext:
           allowPrivilegeEscalation: false
