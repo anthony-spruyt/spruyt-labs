@@ -8,7 +8,7 @@ terraform {
     }
     tfe = {
       source  = "hashicorp/tfe"
-      version = "~> 0.75"
+      version = "~> 0.76"
     }
     tls = {
       source  = "hashicorp/tls"
