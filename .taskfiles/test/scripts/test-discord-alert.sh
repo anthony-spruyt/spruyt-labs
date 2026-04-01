@@ -7,7 +7,7 @@ set -euo pipefail
 POD_NAME="alert-test-$(date +%s)"
 
 echo "Creating crashloop test pod: $POD_NAME"
-kubectl run "$POD_NAME" --image=busybox --restart=Always -- /bin/sh -c "exit 1"
+kubectl run "$POD_NAME" -n dev-debug --image=busybox --restart=Always -- /bin/sh -c "exit 1"
 
 echo ""
 echo "Pod created. It will crash loop and trigger KubePodCrashLooping alert."
