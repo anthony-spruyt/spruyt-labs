@@ -209,8 +209,9 @@ Always output valid JSON and nothing else. No markdown, no commentary, no explan
 
 Field notes:
 
+- `status` — always `"firing"`. Resolved alerts are handled by n8n upstream and never reach this agent.
 - `alert_message_id` — Discord message ID of the matching Alertmanager notification, or `null` if not found
-- `skip` — set to `true` only if the alert is resolved before triage completes
+- `skip` — set to `true` for transient or self-resolving alerts not worth posting about (e.g., low-rate drops already declining)
 - `maintenance_context` — brief description of active maintenance if detected, otherwise `null`
 - `create_issue` — `true` if a new GitHub issue was created, `false` otherwise (including when an existing issue was updated)
 - `github_issue_url` — URL of the created or updated issue, or `null`
