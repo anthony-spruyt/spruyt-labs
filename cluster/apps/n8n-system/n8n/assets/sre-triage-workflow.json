@@ -1,0 +1,627 @@
+{
+  "name": "SRE Alertmanager Triage",
+  "nodes": [
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000001",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [0, 0],
+      "typeVersion": 2,
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alertmanager-triage",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode"
+      },
+      "webhookId": "alertmanager-triage"
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000002",
+      "name": "Watchdog Filter",
+      "type": "n8n-nodes-base.if",
+      "position": [250, 0],
+      "typeVersion": 2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-watchdog",
+              "leftValue": "={{ $json.alerts[0].labels.alertname }}",
+              "rightValue": "Watchdog",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000003",
+      "name": "Status Router",
+      "type": "n8n-nodes-base.if",
+      "position": [500, -100],
+      "typeVersion": 2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-status",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "resolved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000004",
+      "name": "Build Valkey Key (Resolved)",
+      "type": "n8n-nodes-base.code",
+      "position": [750, -200],
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const alerts = $input.first().json.alerts || [];\nconst alert = alerts[0] || {};\nconst labels = alert.labels || {};\nconst instance = labels.instance || labels.pod || labels.deployment || labels.namespace || 'cluster';\nconst alertname = labels.alertname || 'unknown';\nconst startsAt = alert.startsAt || '';\nconst key = `sre:thread:${alertname}:${instance}:${startsAt}`;\nconst endsAt = alert.endsAt || new Date().toISOString();\nreturn [{ json: { key, alertname, endsAt } }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000005",
+      "name": "Valkey Lookup",
+      "type": "n8n-nodes-base.redis",
+      "position": [1000, -200],
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "get",
+        "key": "={{ $json.key }}"
+      },
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Valkey"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000006",
+      "name": "Resolved Discord Post",
+      "type": "n8n-nodes-base.code",
+      "position": [1250, -200],
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const prev = $input.first().json;\nconst alertname = $('Build Valkey Key (Resolved)').first().json.alertname;\nconst endsAt = $('Build Valkey Key (Resolved)').first().json.endsAt;\nconst threadId = prev.value || prev.data || null;\nlet msg = `**Resolved:** ${alertname}\\n**Ended at:** ${endsAt}`;\nif (threadId) {\n  msg += `\\n\\nOriginal triage thread: <#${threadId}>`;\n}\nreturn [{ json: { discord_message: msg, thread_id: threadId, alertname, endsAt } }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000007",
+      "name": "Format Prompt",
+      "type": "n8n-nodes-base.code",
+      "position": [750, 0],
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const payload = $input.first().json;\nconst prompt = `Alertmanager webhook received. Triage this alert.\\n\\n${JSON.stringify(payload, null, 2)}`;\nreturn [{ json: { prompt } }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000008",
+      "name": "Claude Code CLI",
+      "type": "n8n-nodes-claude-code-cli.claudeCode",
+      "position": [1000, 0],
+      "typeVersion": 1,
+      "parameters": {
+        "prompt": "={{ $json.prompt }}",
+        "model": "claude-opus-4-6",
+        "outputFormat": "json",
+        "timeout": 300000
+      },
+      "credentials": {
+        "claudeCodeCliApi": {
+          "id": "",
+          "name": "Claude Code CLI"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000009",
+      "name": "Parse Output",
+      "type": "n8n-nodes-base.code",
+      "position": [1250, 0],
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output || $input.first().json.text || '{}';\nlet result;\ntry {\n  result = JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw));\n} catch (e) {\n  result = {\n    alert_message_id: null,\n    alertname: 'parse_error',\n    severity: 'warning',\n    status: 'firing',\n    skip: false,\n    maintenance_context: null,\n    summary: 'Failed to parse Claude Code output',\n    findings: [`Raw output: ${String(raw).substring(0, 500)}`],\n    probable_cause: 'Claude Code returned non-JSON output',\n    recommended_action: 'Check agent prompt and MCP connectivity',\n    confidence: 'low',\n    create_issue: false,\n    github_issue_url: null,\n    thread_name: `parse-error triage \\u2014 ${new Date().toISOString().substring(11, 16)} UTC`\n  };\n}\nreturn [{ json: result }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000010",
+      "name": "Skip Filter",
+      "type": "n8n-nodes-base.if",
+      "position": [1500, 0],
+      "typeVersion": 2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-skip",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000011",
+      "name": "Format Discord Message",
+      "type": "n8n-nodes-base.code",
+      "position": [1750, -100],
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nlet msg = '';\nif (d.maintenance_context) {\n  msg += `**Context:**\\n- ${d.maintenance_context}\\n\\n`;\n}\nmsg += `**What fired:**\\n- ${d.summary}\\n\\n`;\nmsg += `**Investigation:**\\n`;\n(d.findings || []).forEach(f => { msg += `- ${f}\\n`; });\nmsg += `\\n**Probable cause:**\\n${d.probable_cause}\\n\\n`;\nmsg += `**Recommended action:**\\n${d.recommended_action}\\n\\n`;\nmsg += `**Confidence:** ${d.confidence}`;\nif (msg.length > 1950) {\n  msg = msg.substring(0, 1947) + '...';\n}\nreturn [{ json: { ...d, discord_message: msg } }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000012",
+      "name": "Thread or Standalone Router",
+      "type": "n8n-nodes-base.if",
+      "position": [2000, -100],
+      "typeVersion": 2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-thread",
+              "leftValue": "={{ $json.alert_message_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000013",
+      "name": "Discord Create Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2250, -200],
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://discord.com/api/v10/channels/1403996226046787634/messages/{{ $json.alert_message_id }}/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json.thread_name || 'SRE Triage Thread', auto_archive_duration: 1440 }) }}"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000014",
+      "name": "Post Triage in Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2500, -200],
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://discord.com/api/v10/channels/{{ $json.id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: $('Format Discord Message').first().json.discord_message }) }}"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000015",
+      "name": "Discord Standalone",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2250, 0],
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/v10/channels/1403996226046787634/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: $json.discord_message }) }}"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000016",
+      "name": "Build Valkey Key (Firing)",
+      "type": "n8n-nodes-base.code",
+      "position": [2500, 0],
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const orig = $('Parse Output').first().json;\nconst alerts = $('Webhook Trigger').first().json.alerts || [];\nconst alert = alerts[0] || {};\nconst labels = alert.labels || {};\nconst instance = labels.instance || labels.pod || labels.deployment || labels.namespace || 'cluster';\nconst alertname = labels.alertname || 'unknown';\nconst startsAt = alert.startsAt || '';\nconst key = `sre:thread:${alertname}:${instance}:${startsAt}`;\nconst threadId = $json.id || null;\nreturn [{ json: { ...orig, key, thread_id: threadId } }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000017",
+      "name": "Store Thread ID in Valkey",
+      "type": "n8n-nodes-base.redis",
+      "position": [2750, 0],
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "set",
+        "key": "={{ $json.key }}",
+        "value": "={{ $json.thread_id }}",
+        "expire": true,
+        "ttl": 604800
+      },
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Valkey"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000018",
+      "name": "GitHub Issue Link Filter",
+      "type": "n8n-nodes-base.if",
+      "position": [3000, 0],
+      "typeVersion": 2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-issue-url",
+              "leftValue": "={{ $json.github_issue_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000019",
+      "name": "Post Issue Link in Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [3250, -100],
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://discord.com/api/v10/channels/{{ $json.thread_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: '**Tracking issue:** ' + $json.github_issue_url }) }}"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000020",
+      "name": "No Operation (Watchdog)",
+      "type": "n8n-nodes-base.noOp",
+      "position": [500, 150],
+      "typeVersion": 1,
+      "parameters": {}
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000021",
+      "name": "No Operation (Skipped)",
+      "type": "n8n-nodes-base.noOp",
+      "position": [1750, 100],
+      "typeVersion": 1,
+      "parameters": {}
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000022",
+      "name": "No Operation (No Issue Link)",
+      "type": "n8n-nodes-base.noOp",
+      "position": [3250, 100],
+      "typeVersion": 1,
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Watchdog Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Watchdog Filter": {
+      "main": [
+        [
+          {
+            "node": "Status Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation (Watchdog)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status Router": {
+      "main": [
+        [
+          {
+            "node": "Build Valkey Key (Resolved)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Valkey Key (Resolved)": {
+      "main": [
+        [
+          {
+            "node": "Valkey Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valkey Lookup": {
+      "main": [
+        [
+          {
+            "node": "Resolved Discord Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude Code CLI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Code CLI": {
+      "main": [
+        [
+          {
+            "node": "Parse Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Output": {
+      "main": [
+        [
+          {
+            "node": "Skip Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Filter": {
+      "main": [
+        [
+          {
+            "node": "Format Discord Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation (Skipped)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Discord Message": {
+      "main": [
+        [
+          {
+            "node": "Thread or Standalone Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Thread or Standalone Router": {
+      "main": [
+        [
+          {
+            "node": "Discord Create Thread",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord Standalone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Create Thread": {
+      "main": [
+        [
+          {
+            "node": "Post Triage in Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Triage in Thread": {
+      "main": [
+        [
+          {
+            "node": "Build Valkey Key (Firing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Standalone": {
+      "main": [
+        [
+          {
+            "node": "Build Valkey Key (Firing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Valkey Key (Firing)": {
+      "main": [
+        [
+          {
+            "node": "Store Thread ID in Valkey",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Thread ID in Valkey": {
+      "main": [
+        [
+          {
+            "node": "GitHub Issue Link Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Issue Link Filter": {
+      "main": [
+        [
+          {
+            "node": "Post Issue Link in Thread",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation (No Issue Link)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
