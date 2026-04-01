@@ -9,7 +9,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | firemerge dependency chain (firefly-iii → firemerge → traefik-ingress) takes 3-5 min to fully reconcile | Full cluster reconciliation wait | 11 | 2026-03-29 | 2026-02-24 |
 | flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 5 | 2026-03-18 | 2026-02-25 |
 | authentik dependency chain (authentik → many apps → traefik-ingress) settles within ~90s | Full cluster reconciliation wait after flux-system changes | 10 | 2026-03-29 | 2026-02-25 |
-| CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 5 | 2026-03-31 | 2026-02-28 |
+| CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 6 | 2026-04-01 | 2026-02-28 |
 | YAML comment-only changes (e.g., schema directives, resource-sizing comments) reconcile instantly with no resource drift | Kustomize strips comments, producing identical output | 2 | 2026-03-17 | 2026-03-01 |
 | Dashboard JSON reformatting (whitespace/indentation changes) reconciles as configmap update with no functional impact; Grafana/VictoriaMetrics reloads the dashboard without errors | Prettier/formatter cosmetic changes to JSON dashboard files | 1 | 2026-03-21 | 2026-03-21 |
 | n8n queue-mode deployment (main + worker + webhook) all roll simultaneously on values change | HelmRelease values.yaml change (image tag, env vars, volumes) triggers rolling update of all 3 deployments | 7 | 2026-03-30 | 2026-03-03 |
