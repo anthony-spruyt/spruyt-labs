@@ -109,6 +109,48 @@
       }
     },
     {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000023",
+      "name": "Send Resolved Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1500, -200],
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://discord.com/api/v10/channels/{{ $json.thread_id ? $json.thread_id : '1403996226046787634' }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: $json.discord_message }) }}"
+      }
+    },
+    {
+      "id": "a1b2c3d4-1111-4aaa-bbbb-000000000024",
+      "name": "Delete Resolved Valkey Key",
+      "type": "n8n-nodes-base.redis",
+      "position": [1750, -200],
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $('Build Valkey Key (Resolved)').first().json.key }}"
+      },
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Valkey"
+        }
+      }
+    },
+    {
       "id": "a1b2c3d4-1111-4aaa-bbbb-000000000007",
       "name": "Format Prompt",
       "type": "n8n-nodes-base.code",
@@ -460,6 +502,28 @@
         [
           {
             "node": "Resolved Discord Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolved Discord Post": {
+      "main": [
+        [
+          {
+            "node": "Send Resolved Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Resolved Message": {
+      "main": [
+        [
+          {
+            "node": "Delete Resolved Valkey Key",
             "type": "main",
             "index": 0
           }
