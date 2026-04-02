@@ -110,3 +110,23 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Brave Search MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-brave-search-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      managed-by: n8n-claude-code
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: brave-search-mcp
+            k8s:app.kubernetes.io/name: brave-search-mcp
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
