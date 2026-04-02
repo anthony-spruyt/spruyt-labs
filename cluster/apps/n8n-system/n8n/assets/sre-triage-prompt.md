@@ -76,7 +76,7 @@ Also check recent Renovate PRs:
 mcp__github__list_pull_requests(owner="anthony-spruyt", repo="spruyt-labs", state="all")
 ```
 
-Filter results for `renovate[bot]` author and PRs created in the last 24 hours.
+Filter results for `renovate[bot]` author and PRs merged in the last 48 hours. A recently merged version bump is a strong signal when correlating with failures.
 
 ### C. Correlate
 
@@ -139,19 +139,29 @@ Query relevant time-series to quantify the problem and understand trends. Exampl
 
 ## GitHub Issue Management
 
-### Search for Existing Issue
+### Search for Existing Issues and PRs
 
-Before creating a new issue, search for an existing open one:
+Before creating a new issue, search broadly — do NOT filter by label. A relevant issue may be labeled `alert`, `sre`, `bug`, `chore`, `health-check`, or anything else. A Renovate PR that broke the workload is equally relevant.
+
+**Search open issues by resource name/alertname:**
 
 ```text
-mcp__github__search_issues(query="repo:anthony-spruyt/spruyt-labs state:open label:alert <alertname>")
+mcp__github__search_issues(query="repo:anthony-spruyt/spruyt-labs state:open <alertname or affected resource name>")
 ```
 
-Post-filter results to verify the title contains the exact alertname. GitHub search is fuzzy — do not trust it blindly.
+Post-filter results to verify the title or body relates to the alert. GitHub search is fuzzy — do not trust it blindly.
 
-### If Found — Update
+**Search recent PRs (especially Renovate):**
 
-Comment with a triage update via `mcp__github__add_issue_comment`. Include new findings, updated metrics, and any changes in severity or scope.
+```text
+mcp__github__list_pull_requests(owner="anthony-spruyt", repo="spruyt-labs", state="all")
+```
+
+Filter for PRs merged in the last 48 hours that touch the affected chart/resource. A recently merged version bump is a strong signal for root cause.
+
+### If Existing Issue Found — Update
+
+Comment with a triage update via `mcp__github__add_issue_comment`. Include new findings, updated metrics, and any changes in severity or scope. If a recently merged PR correlates with the failure, reference it in the comment.
 
 ### If Not Found and Not Maintenance Noise — Create
 
