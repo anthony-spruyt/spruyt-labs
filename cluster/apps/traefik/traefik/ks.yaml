@@ -33,7 +33,6 @@ spec:
     - name: headlamp
     - name: n8n
     - name: kubectl-mcp-server
-    - name: openclaw
     - name: qdrant
     - name: redisinsight
     - name: rook-ceph-operator

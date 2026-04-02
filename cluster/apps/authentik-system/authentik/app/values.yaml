@@ -163,8 +163,6 @@ global:
             path: firefly-iii-sso.yaml
           - key: firemerge-sso.yaml
             path: firemerge-sso.yaml
-          - key: openclaw-sso.yaml
-            path: openclaw-sso.yaml
 
 authentik:
   log_level: info

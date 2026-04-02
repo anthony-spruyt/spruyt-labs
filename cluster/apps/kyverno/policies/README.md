@@ -70,7 +70,7 @@ spec:
   timeout: 15m  # Overrides the 10m default
 ```
 
-Current overrides: cilium (`timeout: 2m`), n8n/rook-ceph-cluster/openclaw (`timeout: 15m`).
+Current overrides: cilium (`timeout: 2m`), n8n/rook-ceph-cluster (`timeout: 15m`).
 
 ## Operation
 

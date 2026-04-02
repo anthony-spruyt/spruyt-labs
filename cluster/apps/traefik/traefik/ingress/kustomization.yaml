@@ -12,7 +12,6 @@ resources:
   - ./minecraft
   - ./n8n-system
   - ./observability
-  - ./openclaw
   - ./qdrant-system
   - ./redisinsight
   - ./rook-ceph

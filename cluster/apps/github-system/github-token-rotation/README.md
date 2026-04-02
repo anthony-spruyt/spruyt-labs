@@ -2,7 +2,7 @@
 
 ## Overview
 
-CronJob that mints GitHub App installation tokens every 30 minutes. It generates a JWT from each App's private key, exchanges it for a short-lived installation token (`ghs_*`) via the GitHub API, patches the `github-bot-credentials` source secret in `github-system`, and force-syncs ESO ExternalSecrets in all consumer namespaces (`claude-agents-write`, `claude-agents-read`, `openclaw`, `github-mcp`).
+CronJob that mints GitHub App installation tokens every 30 minutes. It generates a JWT from each App's private key, exchanges it for a short-lived installation token (`ghs_*`) via the GitHub API, patches the `github-bot-credentials` source secret in `github-system`, and force-syncs ESO ExternalSecrets in all consumer namespaces (`claude-agents-write`, `claude-agents-read`, `github-mcp`).
 
 Installation tokens expire after 1 hour (fixed by GitHub). The 30-minute rotation schedule provides a safety margin. Unlike the previous OAuth refresh token design, this flow is **stateless** — each run generates tokens from scratch using only the static App private key. If a run fails, the next run self-heals with no manual intervention.
 
@@ -38,7 +38,6 @@ flux reconcile kustomization github-token-rotation --with-source
 # Verify ESO ExternalSecrets synced in consumer namespaces
 kubectl get externalsecret -n claude-agents-write
 kubectl get externalsecret -n claude-agents-read
-kubectl get externalsecret -n openclaw
 kubectl get externalsecret -n github-mcp
 ```
 

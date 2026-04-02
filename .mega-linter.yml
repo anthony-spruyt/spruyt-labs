@@ -11,7 +11,7 @@ CONFIG_PROPERTIES_TO_APPEND:
 ENABLE_LINTERS:
   - GO_GOLANGCI_LINT
   - TERRAFORM_TFLINT
-FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|.*sops.*|.*/mcp\.json$|cluster/apps/openclaw/openclaw/app/workspace/|\.taskfiles/talos/scripts/'
+FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|.*sops.*|.*/mcp\.json$|\.taskfiles/talos/scripts/'
 GO_GOLANGCI_LINT_CLI_LINT_MODE: file
 GO_GOLANGCI_LINT_PRE_COMMANDS:
   - command: |

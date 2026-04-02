@@ -40,7 +40,6 @@ resources:
   - ./falco-system
   - ./firefly-iii
   - ./nut-system
-  - ./openclaw
   - ./kubectl-mcp
   - ./github-system
   - ./claude-agents-write

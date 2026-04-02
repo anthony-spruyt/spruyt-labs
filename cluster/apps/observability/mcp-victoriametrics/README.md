@@ -2,7 +2,7 @@
 
 ## Overview
 
-MCP (Model Context Protocol) server that provides AI assistants with access to VictoriaMetrics metrics data. Enables Claude Code and OpenClaw to query metrics, explore labels, analyze alerting rules, and debug queries without manual port-forwarding.
+MCP (Model Context Protocol) server that provides AI assistants with access to VictoriaMetrics metrics data. Enables Claude Code to query metrics, explore labels, analyze alerting rules, and debug queries without manual port-forwarding.
 
 Deployed as a `low-priority` workload using bjw-s app-template.
 
@@ -15,11 +15,10 @@ Deployed as a `low-priority` workload using bjw-s app-template.
 
 ## Access
 
-| Consumer                    | URL                                                                   | Transport                    |
-| --------------------------- | --------------------------------------------------------------------- | ---------------------------- |
-| Claude Code (dev container) | `https://mcp-vm.lan.${EXTERNAL_DOMAIN}/sse`                           | SSE over HTTPS (LAN-only)    |
-| OpenClaw (in-cluster)       | `http://mcp-victoriametrics.observability.svc.cluster.local:8080/sse` | SSE over HTTP (cluster DNS)  |
-| Streamable HTTP             | Same hosts, `/mcp` endpoint                                           | HTTP (alternative transport) |
+| Consumer                    | URL                                                         | Transport                    |
+| --------------------------- | ----------------------------------------------------------- | ---------------------------- |
+| Claude Code (dev container) | `https://mcp-vm.lan.${EXTERNAL_DOMAIN}/sse`                 | SSE over HTTPS (LAN-only)    |
+| Streamable HTTP             | Same host, `/mcp` endpoint                                  | HTTP (alternative transport) |
 
 ## Operation
 
@@ -51,10 +50,6 @@ kubectl exec -it deploy/mcp-victoriametrics -n observability -- wget -qO- http:/
 2. **Claude Code cannot connect**
    - **Symptom**: MCP connection error in Claude Code
    - **Resolution**: Verify IngressRoute is active: `kubectl get ingressroute -n observability ingress-routes-lan-https-mcp-vm` and certificate is ready: `kubectl get certificate -n observability -l app.kubernetes.io/name=mcp-victoriametrics`
-
-3. **OpenClaw cannot connect**
-   - **Symptom**: MCP connection error in OpenClaw logs
-   - **Resolution**: Verify CNP allows egress: `kubectl get cnp -n openclaw allow-mcp-vm-egress`
 
 ## References
 
