@@ -1,0 +1,70 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Brave Search API
+# DNS egress with L7 rule required for toFQDNs to populate Cilium's FQDN cache
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-brave-search-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: brave-search-mcp-server
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toFQDNs:
+        - matchName: api.search.brave.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Claude agent read pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-claude-agents-read-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: brave-search-mcp-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-read
+            k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Claude agent write pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-claude-agents-write-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: brave-search-mcp-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-write
+            k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
