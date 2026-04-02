@@ -60,6 +60,16 @@ spec:
                       secretKeyRef:
                         name: github-bot-credentials
                         key: access-token
+                  - name: CONTEXT7_API_KEY
+                    valueFrom:
+                      secretKeyRef:
+                        name: mcp-credentials
+                        key: context7-api-key
+                  - name: HA_API_KEY
+                    valueFrom:
+                      secretKeyRef:
+                        name: mcp-credentials
+                        key: ha-api-key
                 volumeMounts:
                   - name: github-gh-config
                     mountPath: /etc/gh
@@ -116,6 +126,16 @@ spec:
                       secretKeyRef:
                         name: github-bot-credentials
                         key: access-token
+                  - name: CONTEXT7_API_KEY
+                    valueFrom:
+                      secretKeyRef:
+                        name: mcp-credentials
+                        key: context7-api-key
+                  - name: HA_API_KEY
+                    valueFrom:
+                      secretKeyRef:
+                        name: mcp-credentials
+                        key: ha-api-key
                 volumeMounts:
                   - name: github-gh-config
                     mountPath: /etc/gh

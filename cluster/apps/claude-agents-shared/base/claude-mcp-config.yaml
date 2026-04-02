@@ -15,7 +15,7 @@ data:
           }
         },
         "homeassistant": {
-          "url": "http://192.168.1.97:8123/api/mcp",
+          "url": "http://${HOME_ASSISTANT_IP4}:8123/api/mcp",
           "headers": {
             "Authorization": "Bearer $${HA_API_KEY}"
           }
