@@ -14,7 +14,7 @@ MegaLinter or schema check results that are not actual issues.
 | AVD-KSV-01010 on gitconfig ConfigMaps with email/signingkey | Trivy | Git config contains public bot email and signingkey path, not sensitive data. False positive on keyword match | 3 | 2026-04-02 | 2026-03-31 |
 | AVD-KSV-0125 on alpine/k8s CronJob images | Trivy | alpine/k8s is a trusted community image for kubectl operations. Trivy flags non-standard registries | 1 | 2026-03-31 | 2026-03-31 |
 | GITHUB_TOKEN in talos/clusterconfig/*.yaml | secretlint | Generated Talos machine configs contain registry auth env var placeholders that secretlint flags as GitHub tokens. Files are gitignored in production | 4 | 2026-03-16 | 2026-03-16 |
-| markdownlint MD040 in design spec docs | markdownlint | Pre-existing fenced code blocks without language identifiers in docs/superpowers/specs/. Not introduced by feature branches | 2 | 2026-04-01 | 2026-03-18 |
+| markdownlint MD040 in design spec docs | markdownlint | Pre-existing fenced code blocks without language identifiers in docs/superpowers/specs/. Not introduced by feature branches | 3 | 2026-04-02 | 2026-03-18 |
 | AVD-DS-0026 Dockerfile HEALTHCHECK in .trivyignore.yaml | Trivy | .trivyignore.yaml used `DS-0026` without `AVD-` prefix. All other entries use `AVD-` prefix (e.g. AVD-KSV-0037). Must use `AVD-DS-0026` to match Trivy-reported ID format. Fixed and confirmed working | 3 | 2026-04-01 | 2026-03-22 |
 | AVD-DS-0026 on new Dockerfiles not added to .trivyignore.yaml paths | Trivy | When adding new Dockerfiles that use Kubernetes liveness/readiness probes, must add path to existing AVD-DS-0026 entry in .trivyignore.yaml | 1 | 2026-04-01 | 2026-04-01 |
 
@@ -25,7 +25,7 @@ Valid configurations that fail dry-run or schema checks.
 | Resource | Quirk | Workaround | Count | Last Seen | Added |
 |----------|-------|------------|-------|-----------|-------|
 | talos.dev/v1alpha1 ServiceAccount | CRD not always available in dev env, dry-run may fail | Expected failure when CRD missing -- CRD is built into Talos Linux, not deployed via Flux. Succeeds when kubectl has CRD registered | 3 | 2026-03-23 | 2026-02-28 |
-| configMapGenerator nameReference not applied in local kustomize build | `kubectl kustomize` shows unhashed name in HelmRelease valuesFrom but Flux applies it correctly | Known behavior -- kustomizeconfig.yaml nameReference works at Flux apply time, not in local kustomize output. Verified with working apps (e.g. whoami, descheduler, spegel, VPA, shutdown-orchestrator) | 3 | 2026-03-23 | 2026-03-12 |
+| configMapGenerator nameReference not applied in local kustomize build | `kubectl kustomize` shows unhashed name in HelmRelease valuesFrom but Flux applies it correctly | Known behavior -- kustomizeconfig.yaml nameReference works at Flux apply time, not in local kustomize output. Verified with working apps (e.g. whoami, descheduler, spegel, VPA, shutdown-orchestrator, brave-search-mcp) | 4 | 2026-04-02 | 2026-03-12 |
 
 ## Documentation Gaps
 
