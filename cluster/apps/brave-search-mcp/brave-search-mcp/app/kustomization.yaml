@@ -8,7 +8,7 @@ resources:
   - ./network-policies.yaml
   - ./vpa.yaml
 configMapGenerator:
-  - name: brave-search-mcp-server-values
+  - name: brave-search-mcp-values
     namespace: brave-search-mcp
     files:
       - values.yaml

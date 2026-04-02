@@ -12,7 +12,7 @@ defaultPodOptions:
     seccompProfile:
       type: RuntimeDefault
 controllers:
-  brave-search-mcp-server:
+  brave-search-mcp:
     strategy: Recreate
     containers:
       app:
@@ -78,7 +78,7 @@ persistence:
       - path: /tmp
 service:
   app:
-    controller: brave-search-mcp-server
+    controller: brave-search-mcp
     ports:
       http:
         port: 8000

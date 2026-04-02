@@ -1,4 +1,4 @@
-# brave-search-mcp-server - Brave Search MCP Server
+# brave-search-mcp - Brave Search MCP Server
 
 ## Overview
 
@@ -19,18 +19,18 @@ MCP (Model Context Protocol) server providing AI assistants with web search capa
 ```bash
 # Check status
 kubectl get pods -n brave-search-mcp
-flux get helmrelease -n flux-system brave-search-mcp-server
+flux get helmrelease -n flux-system brave-search-mcp
 
 # Force reconcile (GitOps approach)
-flux reconcile kustomization brave-search-mcp-server --with-source
+flux reconcile kustomization brave-search-mcp --with-source
 
 # View logs
-kubectl logs -n brave-search-mcp -l app.kubernetes.io/name=brave-search-mcp-server
+kubectl logs -n brave-search-mcp -l app.kubernetes.io/name=brave-search-mcp
 ```
 
 ## Access
 
-- **In-cluster only**: `http://brave-search-mcp-server.brave-search-mcp.svc:8000/mcp`
+- **In-cluster only**: `http://brave-search-mcp.brave-search-mcp.svc:8000/mcp`
 - **Network policies**: Ingress from claude-agents-read and claude-agents-write namespaces only; egress to api.search.brave.com only
 
 ## Troubleshooting
@@ -51,6 +51,6 @@ kubectl logs -n brave-search-mcp -l app.kubernetes.io/name=brave-search-mcp-serv
 
 ## References
 
-- [brave-search-mcp-server GitHub](https://github.com/brave/brave-search-mcp-server)
+- [brave-search-mcp GitHub](https://github.com/brave/brave-search-mcp)
 - [Brave Search API](https://api-dashboard.search.brave.com/)
 - [bjw-s app-template](https://github.com/bjw-s-labs/helm-charts)

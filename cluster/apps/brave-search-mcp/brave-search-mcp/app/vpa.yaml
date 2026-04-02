@@ -3,12 +3,12 @@
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: brave-search-mcp-server
+  name: brave-search-mcp
 spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: brave-search-mcp-server
+    name: brave-search-mcp
   updatePolicy:
     updateMode: "Off"
   resourcePolicy:

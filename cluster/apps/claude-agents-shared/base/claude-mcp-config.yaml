@@ -8,6 +8,10 @@ data:
   mcp.json: |
     {
       "mcpServers": {
+        "bravesearch": {
+          "type": "http",
+          "url": "http://brave-search-mcp.brave-search-mcp.svc:8000/mcp"
+        },
         "context7": {
           "type": "http",
           "url": "https://mcp.context7.com/mcp",
@@ -40,10 +44,6 @@ data:
         "victoriametrics": {
           "type": "http",
           "url": "http://mcp-victoriametrics.observability.svc:8080/mcp"
-        },
-        "brave-search": {
-          "type": "http",
-          "url": "http://brave-search-mcp-server.brave-search-mcp.svc:8000/mcp"
         }
       }
     }

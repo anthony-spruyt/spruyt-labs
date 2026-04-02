@@ -9,7 +9,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: brave-search-mcp-server
+      app.kubernetes.io/name: brave-search-mcp
   egress:
     - toEndpoints:
         - matchLabels:
@@ -38,7 +38,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: brave-search-mcp-server
+      app.kubernetes.io/name: brave-search-mcp
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -58,7 +58,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: brave-search-mcp-server
+      app.kubernetes.io/name: brave-search-mcp
   ingress:
     - fromEndpoints:
         - matchLabels:
