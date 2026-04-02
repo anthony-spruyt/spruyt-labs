@@ -7,7 +7,7 @@ metadata:
 data:
   mcp.json: |
     {
-      "mcpServers": {,
+      "mcpServers": {
         "context7": {
           "baseUrl": "https://mcp.context7.com/mcp",
           "headers": {
