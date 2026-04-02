@@ -1,0 +1,84 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  brave-search-mcp-server:
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: docker.io/mcp/brave-search
+          tag: latest
+          pullPolicy: IfNotPresent
+        env:
+          - name: BRAVE_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: brave-search-secrets
+                key: BRAVE_API_KEY
+          - name: BRAVE_MCP_TRANSPORT
+            value: "http"
+          - name: BRAVE_MCP_PORT
+            value: "8000"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 1024Mi
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 8000
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 8000
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 8000
+              failureThreshold: 30
+              periodSeconds: 5
+persistence:
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+service:
+  app:
+    controller: brave-search-mcp-server
+    ports:
+      http:
+        port: 8000
