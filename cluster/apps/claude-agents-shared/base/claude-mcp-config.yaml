@@ -9,7 +9,8 @@ data:
     {
       "mcpServers": {
         "context7": {
-          "baseUrl": "https://mcp.context7.com/mcp",
+          "type": "http",
+          "url": "https://mcp.context7.com/mcp",
           "headers": {
             "CONTEXT7_API_KEY": "$${CONTEXT7_API_KEY}"
           }
@@ -26,6 +27,7 @@ data:
           }
         },
         "homeassistant": {
+          "type": "http",
           "url": "http://${HOME_ASSISTANT_IP4}:8123/api/mcp",
           "headers": {
             "Authorization": "Bearer $${HA_API_KEY}"
