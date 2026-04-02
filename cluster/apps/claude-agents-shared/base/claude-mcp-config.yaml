@@ -25,10 +25,7 @@ data:
         },
         "github": {
           "type": "http",
-          "url": "http://github-mcp-server.github-mcp.svc:8082/mcp",
-          "headers": {
-            "Authorization": "Bearer $${GITHUB_MCP_TOKEN}"
-          }
+          "url": "http://github-mcp-server.github-mcp.svc:8082/mcp"
         },
         "homeassistant": {
           "type": "http",
