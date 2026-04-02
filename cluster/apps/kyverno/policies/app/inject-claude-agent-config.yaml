@@ -55,11 +55,6 @@ spec:
                     value: /etc/gh
                   - name: GIT_CONFIG_GLOBAL
                     value: /etc/gitconfig/gitconfig
-                  - name: GITHUB_MCP_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: github-bot-credentials
-                        key: access-token
                   - name: CONTEXT7_API_KEY
                     valueFrom:
                       secretKeyRef:
@@ -121,11 +116,6 @@ spec:
                     value: /etc/gh
                   - name: GIT_CONFIG_GLOBAL
                     value: /etc/gitconfig/gitconfig
-                  - name: GITHUB_MCP_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: github-bot-credentials
-                        key: access-token
                   - name: CONTEXT7_API_KEY
                     valueFrom:
                       secretKeyRef:
