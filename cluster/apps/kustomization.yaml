@@ -46,6 +46,7 @@ resources:
   - ./claude-agents-read
   - ./github-mcp
   - ./discord-mcp
+  - ./brave-search-mcp
   - ./vpa-system
   # - ./snmp
   # - ./smtp

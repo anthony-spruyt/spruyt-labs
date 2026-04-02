@@ -38,6 +38,10 @@ data:
         "victoriametrics": {
           "type": "http",
           "url": "http://mcp-victoriametrics.observability.svc:8080/mcp"
+        },
+        "brave-search": {
+          "type": "http",
+          "url": "http://brave-search-mcp-server.brave-search-mcp.svc:8000/mcp"
         }
       }
     }
