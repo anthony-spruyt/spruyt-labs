@@ -5,6 +5,6 @@ kind: Kustomization
 resources:
   - ./default-limitrange.yaml
   - ./helmrelease-defaults.yaml
-  - ./inject-github-credentials.yaml
+  - ./inject-claude-agent-config.yaml
   - ./pss-restricted-defaults.yaml
   - ./topology-spread-policy.yaml

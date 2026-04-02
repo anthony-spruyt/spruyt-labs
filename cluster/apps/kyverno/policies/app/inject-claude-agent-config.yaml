@@ -3,20 +3,21 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: inject-github-credentials
+  name: inject-claude-agent-config
   annotations:
-    policies.kyverno.io/title: Inject GitHub Credentials
-    policies.kyverno.io/category: Credential Management
+    policies.kyverno.io/title: Inject Claude Agent Config
+    policies.kyverno.io/category: Agent Configuration
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Injects GitHub bot credentials (gh CLI config, SSH key, gitconfig)
-      into Claude agent pods spawned by n8n. Write and read namespaces
-      get different OAuth scopes via ESO key mapping.
+      Injects configuration into Claude agent pods spawned by n8n,
+      including GitHub bot credentials (gh CLI config, SSH key, gitconfig),
+      MCP server config, and environment variables. Write and read
+      namespaces get different OAuth scopes via ESO key mapping.
 spec:
   background: false
   rules:
-    - name: inject-write-creds
+    - name: inject-write-config
       match:
         any:
           - resources:
@@ -72,7 +73,7 @@ spec:
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
                     readOnly: true
-    - name: inject-read-creds
+    - name: inject-read-config
       match:
         any:
           - resources:

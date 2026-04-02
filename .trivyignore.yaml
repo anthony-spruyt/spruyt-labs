@@ -218,6 +218,11 @@ misconfigurations:
     paths:
       - cluster/apps/claude-agents-read/claude-agents/app/rbac-spawner.yaml
       - cluster/apps/claude-agents-write/claude-agents/app/rbac-spawner.yaml
+  # Spawner role needs pods/exec to attach to persistent runner pods (get + create only)
+  - id: AVD-KSV-0053
+    paths:
+      - cluster/apps/claude-agents-read/claude-agents/app/rbac-spawner.yaml
+      - cluster/apps/claude-agents-write/claude-agents/app/rbac-spawner.yaml
   # Git config contains public bot email and signingkey path - not sensitive data
   - id: AVD-KSV-01010
     paths:

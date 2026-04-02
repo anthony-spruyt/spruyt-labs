@@ -23,18 +23,18 @@ Each alert in the array has:
 
 | Purpose | MCP Tool |
 | ------- | -------- |
-| Get pods | `mcp__kubernetes__get_pods` |
-| Get nodes | `mcp__kubernetes__get_nodes` |
-| Get events | `mcp__kubernetes__get_events` |
-| Get logs | `mcp__kubernetes__get_logs` |
-| Describe resource | `mcp__kubernetes__kubectl_describe` |
-| Generic kubectl | `mcp__kubernetes__kubectl_generic` |
-| Get deployments | `mcp__kubernetes__get_deployments` |
-| Get statefulsets | `mcp__kubernetes__get_statefulsets` |
-| Get daemonsets | `mcp__kubernetes__get_daemonsets` |
-| Custom resources (HelmRelease, Kustomization) | `mcp__kubernetes__get_custom_resource` |
-| Cilium policies | `mcp__kubernetes__cilium_policies_list_tool` |
-| Hubble flows | `mcp__kubernetes__hubble_flows_query_tool` |
+| Get pods | `mcp__kubectl__get_pods` |
+| Get nodes | `mcp__kubectl__get_nodes` |
+| Get events | `mcp__kubectl__get_events` |
+| Get logs | `mcp__kubectl__get_logs` |
+| Describe resource | `mcp__kubectl__kubectl_describe` |
+| Generic kubectl | `mcp__kubectl__kubectl_generic` |
+| Get deployments | `mcp__kubectl__get_deployments` |
+| Get statefulsets | `mcp__kubectl__get_statefulsets` |
+| Get daemonsets | `mcp__kubectl__get_daemonsets` |
+| Custom resources (HelmRelease, Kustomization) | `mcp__kubectl__get_custom_resource` |
+| Cilium policies | `mcp__kubectl__cilium_policies_list_tool` |
+| Hubble flows | `mcp__kubectl__hubble_flows_query_tool` |
 | Metrics query | `mcp__victoriametrics__query` |
 | Range query | `mcp__victoriametrics__query_range` |
 | Read Discord messages | `mcp__discord__read_messages` |
@@ -94,7 +94,7 @@ These are expected and self-resolve. Keep triage brief and skip the GitHub issue
 
 ## Steps 1-7 — Investigation Checklist
 
-Work through these steps systematically. You must use at least one `mcp__kubernetes__*` call AND one `mcp__victoriametrics__*` call per triage. For multi-alert payloads, investigate each affected resource. Prioritize breadth over depth.
+Work through these steps systematically. You must use at least one `mcp__kubectl__*` call AND one `mcp__victoriametrics__*` call per triage. For multi-alert payloads, investigate each affected resource. Prioritize breadth over depth.
 
 ### 1. Identify
 
@@ -223,8 +223,8 @@ Field notes:
 
 ### Cilium Investigation
 
-- **NEVER** use `mcp__kubernetes__analyze_network_policies` — it only checks Kubernetes NetworkPolicy, not Cilium CRDs
-- Use `mcp__kubernetes__kubectl_generic` with `command=get ciliumnetworkpolicies -n <namespace> -o yaml` to inspect Cilium policies
+- **NEVER** use `mcp__kubectl__analyze_network_policies` — it only checks Kubernetes NetworkPolicy, not Cilium CRDs
+- Use `mcp__kubectl__kubectl_generic` with `command=get ciliumnetworkpolicies -n <namespace> -o yaml` to inspect Cilium policies
 - Always check BOTH namespace-scoped CNPs AND cluster-wide CCNPs
 - The cluster-wide `allow-kube-dns-egress` CCNP covers all pods — never report "missing DNS egress"
 

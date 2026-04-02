@@ -9,12 +9,10 @@ ssh:*
 
 # Internal/LAN URLs
 .*\.lan.*
+.*192.168.*
 
 # Localhost URLs (e.g., chromium CDP, gateway)
 http://localhost:.*
 
 # Truncated URLs from ${VARIABLE} substitution (e.g., https://app/)
 https?://[a-z0-9-]+/$
-
-# Private repo (lychee can't authenticate)
-https://github.com/anthony-spruyt/spruyt-labs/*
