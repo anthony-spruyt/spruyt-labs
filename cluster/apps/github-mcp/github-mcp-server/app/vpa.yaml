@@ -19,3 +19,9 @@ spec:
           memory: 1Mi
         maxAllowed:
           memory: 256Mi
+      - containerName: auth-proxy
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 64Mi
