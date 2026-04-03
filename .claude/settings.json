@@ -80,6 +80,7 @@
       "WebFetch(domain:docs.github.com)",
       "WebFetch(domain:docs.goauthentik.io)",
       "WebFetch(domain:docs.n8n.io)",
+      "WebFetch(domain:docs.openclaw.ai)",
       "WebFetch(domain:docs.siderolabs.com)",
       "WebFetch(domain:docs.victoriametrics.com)",
       "WebFetch(domain:falco.org)",
