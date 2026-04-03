@@ -33,6 +33,8 @@ entries:
         ^/rest/oauth2-credential/.*$
         ^/webhook/.*$
         ^/webhook-test/.*$
+        ^/mcp/.*$
+        ^/mcp-test/.*$
         ^/mcp-server/.*$
   - id: n8n_application
     model: authentik_core.application
