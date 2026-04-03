@@ -37,7 +37,7 @@ Each alert in the array has:
 | Hubble flows | `mcp__kubectl__hubble_flows_query_tool` |
 | Metrics query | `mcp__victoriametrics__query` |
 | Range query | `mcp__victoriametrics__query_range` |
-| Read Discord messages | `mcp__discord__read_messages` |
+| Read Discord messages | `mcp__discord__discord_read_messages` |
 | Search GitHub issues | `mcp__github__search_issues` |
 | Read GitHub issue | `mcp__github__issue_read` |
 | Create/update issue | `mcp__github__issue_write` |
@@ -54,7 +54,7 @@ Before investigating the alert itself, gather context. This step is non-negotiab
 Read recent messages from the #k8s-alerts channel:
 
 ```text
-mcp__discord__read_messages(channelId="1403996226046787634", limit=30)
+mcp__discord__discord_read_messages(channelId="1403996226046787634", limit=30)
 ```
 
 Look for:
