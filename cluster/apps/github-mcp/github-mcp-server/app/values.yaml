@@ -14,8 +14,6 @@ defaultPodOptions:
 controllers:
   github-mcp-server:
     strategy: Recreate
-    annotations:
-      reloader.stakater.com/auto: "true"
     containers:
       app:
         image:
@@ -25,13 +23,7 @@ controllers:
         args:
           - "http"
           - "--port"
-          - "8082"
-        env:
-          - name: GITHUB_PERSONAL_ACCESS_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-mcp-credentials
-                key: GITHUB_PERSONAL_ACCESS_TOKEN
+          - "8083"
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -50,7 +42,7 @@ controllers:
             custom: true
             spec:
               tcpSocket:
-                port: 8082
+                port: 8083
               initialDelaySeconds: 10
               periodSeconds: 30
               timeoutSeconds: 3
@@ -60,7 +52,7 @@ controllers:
             custom: true
             spec:
               tcpSocket:
-                port: 8082
+                port: 8083
               initialDelaySeconds: 5
               periodSeconds: 10
               timeoutSeconds: 3
@@ -70,6 +62,58 @@ controllers:
             custom: true
             spec:
               tcpSocket:
+                port: 8083
+              failureThreshold: 30
+              periodSeconds: 5
+      auth-proxy:
+        image:
+          repository: caddy
+          tag: 2.11.2-alpine@sha256:fce4f15aad23222c0ac78a1220adf63bae7b94355d5ea28eee53910624acedfa
+          pullPolicy: IfNotPresent
+        args:
+          - "caddy"
+          - "run"
+          - "--config"
+          - "/etc/caddy/Caddyfile"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            memory: 64Mi
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8082
+              periodSeconds: 30
+              timeoutSeconds: 3
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8082
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
                 port: 8082
               failureThreshold: 30
               periodSeconds: 5
@@ -79,3 +123,31 @@ service:
     ports:
       http:
         port: 8082
+persistence:
+  caddyfile:
+    type: configMap
+    name: github-mcp-caddyfile
+    advancedMounts:
+      github-mcp-server:
+        auth-proxy:
+          - path: /etc/caddy/Caddyfile
+            subPath: Caddyfile
+            readOnly: true
+  github-pat:
+    type: secret
+    name: github-mcp-credentials
+    advancedMounts:
+      github-mcp-server:
+        auth-proxy:
+          - path: /etc/secrets/github-pat
+            subPath: GITHUB_PERSONAL_ACCESS_TOKEN
+            readOnly: true
+  caddy-data:
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 10Mi
+    advancedMounts:
+      github-mcp-server:
+        auth-proxy:
+          - path: /data
+          - path: /config
