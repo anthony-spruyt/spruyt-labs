@@ -184,23 +184,43 @@ Do not create a GitHub issue. Set `create_issue: false` in the output.
 
 ## Output — Structured JSON
 
-**CRITICAL: Your final output MUST be a single raw JSON object and absolutely nothing else.** No preamble, no summary, no markdown code fences, no explanation before or after. The very first character of your response must be `{` and the very last must be `}`. Any text outside the JSON will cause a parse failure.
+**CRITICAL: You MUST ALWAYS output a JSON object as your final response. This is non-negotiable — even when the cluster is healthy, even when there is nothing to report. An empty response or a text-only response is a failure.**
+
+Your final output MUST be a single raw JSON object and absolutely nothing else. No preamble, no summary, no markdown code fences, no explanation before or after. The very first character of your response must be `{` and the very last must be `}`. Any text outside the JSON will cause a parse failure in the downstream n8n workflow.
 
 The JSON must match this schema exactly:
 
 ```json
 {
   "healthy": true,
-  "skip": false,
-  "maintenance_context": "<string or null>",
-  "summary": "<one-line summary>",
-  "findings": ["<finding 1>", "<finding 2>"],
-  "probable_cause": "<root cause assessment or null>",
-  "recommended_action": "<concrete next step or null>",
-  "confidence": "<high|medium|low>",
+  "skip": true,
+  "maintenance_context": null,
+  "summary": "All GitOps resources reconciled, all certificates valid",
+  "findings": [],
+  "probable_cause": null,
+  "recommended_action": null,
+  "confidence": "high",
   "create_issue": false,
-  "github_issue_url": "<url or null>",
-  "thread_name": "Cluster Health — <HH:MM UTC>"
+  "github_issue_url": null,
+  "thread_name": "Cluster Health — 12:00 UTC"
+}
+```
+
+The above is the **healthy** example. When issues are found, output looks like:
+
+```json
+{
+  "healthy": false,
+  "skip": false,
+  "maintenance_context": null,
+  "summary": "1 HelmRelease failure in media-system",
+  "findings": ["HelmRelease media-system/sonarr: Ready=False for 3h — upgrade retries exhausted", "Renovate PR #850 merged 6h ago bumped sonarr chart from 16.3.0 to 17.0.0"],
+  "probable_cause": "Breaking change in sonarr Helm chart v17.0.0 (major version bump)",
+  "recommended_action": "Review sonarr chart v17.0.0 changelog for breaking changes, revert PR #850 if needed",
+  "confidence": "high",
+  "create_issue": true,
+  "github_issue_url": "https://github.com/anthony-spruyt/spruyt-labs/issues/860",
+  "thread_name": "Cluster Health — 06:00 UTC"
 }
 ```
 
