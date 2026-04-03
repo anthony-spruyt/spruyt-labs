@@ -45,6 +45,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `headlamp-plugins/headlamp_flux` (ArtifactHub plugin) | `headlamp-k8s/plugins` (monorepo for all official Headlamp plugins; release tags: `flux-X.Y.Z`; no changelog file, use GitHub release notes) | 1 | 2026-03-23 | 2026-03-23 |
 | `headlamp` (Helm chart via HelmRepository) | `kubernetes-sigs/headlamp` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-26 | 2026-03-26 |
 | `mcporter` (npm package in init script) | `steipete/mcporter` (releases tagged `vX.Y.Z`; changelog in CHANGELOG.md; npm datasource) | 1 | 2026-03-29 | 2026-03-29 |
+| `felddy/foundryvtt` (Docker image) | `felddy/foundryvtt-docker` (release tags: `vX.Y.Z`; Docker image version tracks Foundry VTT app version; app release notes at `foundryvtt.com/releases/<version>`) | 1 | 2026-04-03 | 2026-04-03 |
 
 ## Common NO_IMPACT Scenarios
 
