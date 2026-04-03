@@ -20,8 +20,8 @@ data:
           }
         },
         "discord": {
-          "type": "sse",
-          "url": "http://discord-mcp.discord-mcp.svc:8080/sse"
+          "type": "http",
+          "url": "http://discord-mcp.discord-mcp.svc:8080/mcp"
         },
         "github": {
           "type": "http",
