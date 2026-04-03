@@ -130,3 +130,23 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to n8n SRE MCP endpoint
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-n8n-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      managed-by: n8n-claude-code
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-system
+            k8s:app.kubernetes.io/name: n8n
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP

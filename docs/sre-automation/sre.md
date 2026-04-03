@@ -1,12 +1,8 @@
 # SRE Agent for Kubernetes Workloads
 
-Proof-of-concept: autonomous alert triage using Claude Code CLI agents orchestrated by n8n, running inside the cluster.
+Autonomous SRE operations using Claude Code CLI agents orchestrated by n8n, running inside the cluster. Two modes: reactive alert triage (Alertmanager webhook) and proactive scheduled health checks (cron). Both agents submit structured results via an MCP tool (`submit_result`) for validation and Discord posting.
 
 ## How It Works
-
-Alertmanager fires a webhook to n8n. n8n filters noise (Watchdog, InfoInhibitor, resolved alerts), formats the payload, and spawns an ephemeral Claude Code CLI agent with an SRE system prompt.
-The agent investigates the alert using MCP tools (kubectl, VictoriaMetrics, GitHub, Discord), creates or updates a GitHub issue with findings, and returns structured JSON.
-n8n posts the triage summary and issue link to Discord.
 
 ```mermaid
 flowchart TD
@@ -14,15 +10,24 @@ flowchart TD
     B --> C{Filter}
     C -->|Watchdog / InfoInhibitor / Resolved| D[Drop]
     C -->|Firing alert| E[Format Prompt]
-    E --> F[Claude Code CLI Agent]
-    F <--> G[MCP Tools]
-    G --- G1[Kubernetes]
-    G --- G2[VictoriaMetrics]
-    G --- G3[GitHub]
-    G --- G4[Discord]
-    F -->|Structured JSON| H[n8n Post-Processing]
-    H --> I[Discord Triage Message]
-    H -->|If issue created| J[Discord Issue Link]
+    E --> F1[Claude CLI — SRE Triage]
+
+    S[Cron 6h] --> G[Format Prompt]
+    G --> F2[Claude CLI — Health Check]
+
+    F1 & F2 <--> H[MCP Tools]
+    H --- H1[Kubernetes]
+    H --- H2[VictoriaMetrics]
+    H --- H3[GitHub]
+    H --- H4[Discord]
+
+    F1 & F2 -->|submit_result MCP tool| I[n8n MCP Server Trigger]
+    I --> J{Validate Schema}
+    J -->|Invalid| K[Return errors — agent retries]
+    J -->|Valid| L{Skip Filter}
+    L -->|skip=true| M[Drop]
+    L -->|skip=false| N[Discord Message]
+    N -->|If issue| O[Issue Link]
 ```
 
 ## Platform and Tools
@@ -59,9 +64,7 @@ The workflow is named **"SRE Alertmanager Triage Webhook"** and follows this pip
 
 ### Pipeline Stages
 
-![n8n workflow nodes](n8n-nodes.png)
-
-### Stage Details
+#### Path A — Alert Triage
 
 | Stage | Type | Purpose |
 | --- | --- | --- |
@@ -70,12 +73,26 @@ The workflow is named **"SRE Alertmanager Triage Webhook"** and follows this pip
 | **Alert Filter** | If | Drops Watchdog and InfoInhibitor alerts |
 | **Status Router** | If | Routes resolved alerts away (only firing alerts reach the agent) |
 | **Format Prompt** | Code | Wraps the alert payload into a prompt string |
-| **Claude Code CLI** | Custom | Spawns ephemeral agent with SRE system prompt and MCP config |
-| **Parse Output** | Code | Extracts JSON from agent output, with fallback for parse errors |
-| **Skip Filter** | If | Drops transient/self-resolving alerts the agent flagged as skip |
+| **Claude Code CLI** | Custom | Spawns ephemeral agent with SRE triage prompt and MCP config |
+
+#### Path B — Health Check
+
+| Stage | Type | Purpose |
+| --- | --- | --- |
+| **Cron Trigger** | Trigger | Fires every 6 hours |
+| **Format Prompt** | Code | Generates a timestamped health check prompt |
+| **Claude Code CLI** | Custom | Spawns ephemeral agent with health check prompt and MCP config |
+
+#### Path C — Result Processing (shared)
+
+| Stage | Type | Purpose |
+| --- | --- | --- |
+| **MCP Server Trigger** | Trigger | Receives `submit_result` tool call from agent |
+| **Validate Schema** | Code | Validates required fields, enums, trigger-specific rules |
+| **Skip Filter** | If | Drops results flagged as skip (transient/healthy) |
 | **Format Discord Message** | Code | Formats findings into Discord-length messages (max 1950 chars) |
-| **Send Triage Message** | Discord | Posts triage summary to alerts channel |
-| **GitHub Issue Link Filter** | If | Only proceeds if the agent created/updated a GitHub issue |
+| **Send Message** | Discord | Posts triage/health summary to #k8s-alerts |
+| **Issue Link Filter** | If | Only proceeds if the agent created/updated a GitHub issue |
 | **Send Issue Link** | Discord | Posts the tracking issue URL to Discord |
 
 ### Agent Configuration
@@ -83,30 +100,30 @@ The workflow is named **"SRE Alertmanager Triage Webhook"** and follows this pip
 - **Model:** `claude-opus-4-6`
 - **Connection mode:** `k8sEphemeral` (pod spun up per invocation)
 - **MCP config:** Mounted at `/etc/mcp/mcp.json`
-- **System prompt:** [sre-triage-prompt.md](../../cluster/apps/n8n-system/n8n/assets/sre-triage-prompt.md)
+- **System prompts:**
+  - SRE triage: [sre-triage-prompt.md](../../cluster/apps/n8n-system/n8n/assets/sre-triage-prompt.md)
+  - Health check: [health-check-prompt.md](../../cluster/apps/n8n-system/n8n/assets/health-check-prompt.md)
 
-### Agent Output Schema
+### Unified Schema
 
-The agent returns structured JSON that n8n uses for routing and formatting:
+Both agents submit through the same `submit_result` MCP tool:
 
-```json
-{
-  "alert_message_id": "<discord message id or null>",
-  "alertname": "<string>",
-  "severity": "<critical|warning|info>",
-  "status": "firing",
-  "skip": false,
-  "maintenance_context": "<string or null>",
-  "summary": "<one-line summary>",
-  "findings": ["<finding 1>", "<finding 2>"],
-  "probable_cause": "<root cause assessment>",
-  "recommended_action": "<concrete next step>",
-  "confidence": "<high|medium|low>",
-  "create_issue": false,
-  "github_issue_url": "<url or null>",
-  "thread_name": "<alertname> triage — <HH:MM UTC>"
-}
-```
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `trigger` | string | yes | `"alert"` or `"health-check"` |
+| `healthy` | boolean | health-check only | Cluster health status |
+| `skip` | boolean | yes | Skip Discord posting |
+| `alert_message_id` | string | alert only | Discord message ID of Alertmanager notification |
+| `alertname` | string | alert only | Name of firing alert |
+| `severity` | string | alert only | `"critical"`, `"warning"`, or `"info"` |
+| `maintenance_context` | string | no | Active maintenance description |
+| `summary` | string | yes | One-line summary |
+| `findings` | string | yes | Evidence-backed findings as free-form text |
+| `probable_cause` | string | no | Root cause assessment |
+| `recommended_action` | string | no | Concrete next step |
+| `confidence` | string | yes | `"high"`, `"medium"`, or `"low"` |
+| `create_issue` | boolean | yes | Whether a GitHub issue was created |
+| `github_issue_url` | string | no | URL of created or updated issue |
 
 ## Agent Investigation Flow
 

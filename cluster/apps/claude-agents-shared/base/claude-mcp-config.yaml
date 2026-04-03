@@ -41,6 +41,13 @@ data:
         "victoriametrics": {
           "type": "http",
           "url": "http://mcp-victoriametrics.observability.svc:8080/mcp"
+        },
+        "sre": {
+          "type": "sse",
+          "url": "http://n8n.n8n-system.svc:5678/mcp/sre/sse",
+          "headers": {
+            "Authorization": "Bearer $${SRE_MCP_AUTH_TOKEN}"
+          }
         }
       }
     }

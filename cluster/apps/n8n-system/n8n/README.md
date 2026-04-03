@@ -132,6 +132,33 @@ Webhooks are excluded from SSO authentication to allow external integrations:
 - `/webhook-test/*` - Test webhooks
 - `/healthz` - Health checks
 
+## Unified SRE Workflow
+
+n8n hosts a unified SRE workflow that combines alert triage and scheduled health checks. Both agent types submit results via an MCP Server Trigger (`submit_result` tool) which validates the schema and posts to Discord.
+
+### Triggers
+
+| Trigger | Source | Agent |
+| ------- | ------ | ----- |
+| Alertmanager Webhook | Firing alerts (filtered: Watchdog, InfoInhibitor, resolved) | SRE triage |
+| Cron (6h) | Scheduled | Health check |
+| MCP Server Trigger | Agent `submit_result` call | Result processing |
+
+### Authentication
+
+| Endpoint | Credential |
+| -------- | ---------- |
+| Alertmanager Webhook | `Alertmanager webhook for SRE agent` (headerAuth) |
+| MCP Server Trigger | `SRE Agent MCP auth` (headerAuth) |
+
+### Agent Configuration
+
+- **Model:** `claude-opus-4-6`
+- **Connection mode:** `k8sEphemeral`
+- **MCP config:** `/etc/mcp/mcp.json` (includes SRE MCP server for `submit_result`)
+
+See `docs/sre-automation/sre.md` for the full architecture and investigation flow.
+
 ### Configuration Files
 
 | Component       | Location                      |

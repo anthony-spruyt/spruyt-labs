@@ -43,6 +43,7 @@ Each alert in the array has:
 | Create/update issue | `mcp__github__issue_write` |
 | Comment on issue | `mcp__github__add_issue_comment` |
 | List PRs | `mcp__github__list_pull_requests` |
+| Submit triage result | `mcp__sre__submit_result` |
 
 ## Step 0 — Situational Awareness (mandatory, always first)
 
@@ -194,40 +195,29 @@ From Step 0's Discord read, find the Alertmanager bot message that matches this 
 - Extract the message `id` and return it as `alert_message_id`
 - If no match found, set `alert_message_id: null`
 
-## Output — Structured JSON
+## Output — MCP Tool Submission
 
-**CRITICAL: Your final output MUST be a single raw JSON object and absolutely nothing else.** No preamble, no summary, no markdown code fences, no explanation before or after. The very first character of your response must be `{` and the very last must be `}`. Any text outside the JSON will cause a parse failure.
+**CRITICAL: You MUST call `mcp__sre__submit_result` to submit your triage result. Do NOT output raw JSON. The tool validates your submission and returns success or error details. If validation fails, fix the payload and re-call (max 3 attempts).**
 
-The JSON must match this schema exactly:
+Call `mcp__sre__submit_result` with the following fields:
 
-```json
-{
-  "alert_message_id": "<discord message id or null>",
-  "alertname": "<string>",
-  "severity": "<critical|warning|info>",
-  "status": "firing",
-  "skip": false,
-  "maintenance_context": "<string or null>",
-  "summary": "<one-line summary>",
-  "findings": ["<finding 1>", "<finding 2>"],
-  "probable_cause": "<root cause assessment>",
-  "recommended_action": "<concrete next step>",
-  "confidence": "<high|medium|low>",
-  "create_issue": false,
-  "github_issue_url": "<url or null>",
-  "thread_name": "<alertname> triage — <HH:MM UTC>"
-}
-```
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `trigger` | string | yes | Always `"alert"` for SRE triage |
+| `skip` | boolean | yes | `true` for transient/self-resolving alerts |
+| `alert_message_id` | string | yes | Discord message ID of matching Alertmanager notification, or empty string if not found |
+| `alertname` | string | yes | Name of the firing alert |
+| `severity` | string | yes | `"critical"`, `"warning"`, or `"info"` |
+| `maintenance_context` | string | no | Active maintenance description, or empty string |
+| `summary` | string | yes | One-line summary |
+| `findings` | string | yes | Evidence-backed findings as free-form text |
+| `probable_cause` | string | no | Root cause assessment |
+| `recommended_action` | string | no | Concrete next step |
+| `confidence` | string | yes | `"high"`, `"medium"`, or `"low"` |
+| `create_issue` | boolean | yes | `true` if a new GitHub issue was created |
+| `github_issue_url` | string | no | URL of created or updated issue, or empty string |
 
-Field notes:
-
-- `status` — always `"firing"`. Resolved alerts are handled by n8n upstream and never reach this agent.
-- `alert_message_id` — Discord message ID of the matching Alertmanager notification, or `null` if not found
-- `skip` — set to `true` for transient or self-resolving alerts not worth posting about (e.g., low-rate drops already declining)
-- `maintenance_context` — brief description of active maintenance if detected, otherwise `null`
-- `create_issue` — `true` if a new GitHub issue was created, `false` otherwise (including when an existing issue was updated)
-- `github_issue_url` — URL of the created or updated issue, or `null`
-- `thread_name` — suggested Discord thread name for follow-up discussion
+If the tool returns `{ "valid": false, "errors": [...] }`, fix the listed errors and re-call. Do not output anything else after a successful submission.
 
 ## Common Mistakes
 

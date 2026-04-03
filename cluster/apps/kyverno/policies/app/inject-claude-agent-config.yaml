@@ -65,6 +65,11 @@ spec:
                       secretKeyRef:
                         name: mcp-credentials
                         key: ha-api-key
+                  - name: SRE_MCP_AUTH_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: mcp-credentials
+                        key: sre-mcp-auth-token
                 volumeMounts:
                   - name: github-gh-config
                     mountPath: /etc/gh
@@ -126,6 +131,11 @@ spec:
                       secretKeyRef:
                         name: mcp-credentials
                         key: ha-api-key
+                  - name: SRE_MCP_AUTH_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: mcp-credentials
+                        key: sre-mcp-auth-token
                 volumeMounts:
                   - name: github-gh-config
                     mountPath: /etc/gh

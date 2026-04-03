@@ -438,3 +438,27 @@ spec:
               protocol: TCP
             - port: "8000"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Claude agent pods (MCP submit_result)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-claude-agent-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-write
+            managed-by: n8n-claude-code
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-read
+            managed-by: n8n-claude-code
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP

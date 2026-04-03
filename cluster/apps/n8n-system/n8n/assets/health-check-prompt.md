@@ -34,6 +34,7 @@ You receive a simple prompt from an n8n cron trigger. No alert payload — you q
 | Create/update issue | `mcp__github__issue_write` |
 | Comment on issue | `mcp__github__add_issue_comment` |
 | List PRs | `mcp__github__list_pull_requests` |
+| Submit health check result | `mcp__sre__submit_result` |
 
 ## Step 0 — Situational Awareness (mandatory, always first)
 
@@ -182,61 +183,27 @@ Create a new issue via `mcp__github__issue_write`:
 
 Do not create a GitHub issue. Set `create_issue: false` in the output.
 
-## Output — Structured JSON
+## Output — MCP Tool Submission
 
-**CRITICAL: You MUST ALWAYS output a JSON object as your final response. This is non-negotiable — even when the cluster is healthy, even when there is nothing to report. An empty response or a text-only response is a failure.**
+**CRITICAL: You MUST call `mcp__sre__submit_result` to submit your health check result. Do NOT output raw JSON. The tool validates your submission and returns success or error details. If validation fails, fix the payload and re-call (max 3 attempts).**
 
-Your final output MUST be a single raw JSON object and absolutely nothing else. No preamble, no summary, no markdown code fences, no explanation before or after. The very first character of your response must be `{` and the very last must be `}`. Any text outside the JSON will cause a parse failure in the downstream n8n workflow.
+Call `mcp__sre__submit_result` with the following fields:
 
-The JSON must match this schema exactly:
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `trigger` | string | yes | Always `"health-check"` |
+| `healthy` | boolean | yes | `true` if all GitOps resources reconciled and certs valid |
+| `skip` | boolean | yes | `true` when healthy or all issues are expected maintenance noise |
+| `maintenance_context` | string | no | Active maintenance description, or empty string |
+| `summary` | string | yes | One-line summary |
+| `findings` | string | yes | Evidence-backed findings as free-form text. Empty string when healthy. |
+| `probable_cause` | string | no | Root cause assessment, or empty string if healthy |
+| `recommended_action` | string | no | Concrete next step, or empty string if healthy |
+| `confidence` | string | yes | `"high"`, `"medium"`, or `"low"` |
+| `create_issue` | boolean | yes | `true` if a new GitHub issue was created |
+| `github_issue_url` | string | no | URL of created or updated issue, or empty string |
 
-```json
-{
-  "healthy": true,
-  "skip": true,
-  "maintenance_context": null,
-  "summary": "All GitOps resources reconciled, all certificates valid",
-  "findings": [],
-  "probable_cause": null,
-  "recommended_action": null,
-  "confidence": "high",
-  "create_issue": false,
-  "github_issue_url": null,
-  "thread_name": "Cluster Health — 12:00 UTC"
-}
-```
-
-The above is the **healthy** example. When issues are found, output looks like:
-
-```json
-{
-  "healthy": false,
-  "skip": false,
-  "maintenance_context": null,
-  "summary": "1 HelmRelease failure in media-system",
-  "findings": ["HelmRelease media-system/sonarr: Ready=False for 3h — upgrade retries exhausted", "Renovate PR #850 merged 6h ago bumped sonarr chart from 16.3.0 to 17.0.0"],
-  "probable_cause": "Breaking change in sonarr Helm chart v17.0.0 (major version bump)",
-  "recommended_action": "Review sonarr chart v17.0.0 changelog for breaking changes, revert PR #850 if needed",
-  "confidence": "high",
-  "create_issue": true,
-  "github_issue_url": "https://github.com/anthony-spruyt/spruyt-labs/issues/860",
-  "thread_name": "Cluster Health — 06:00 UTC"
-}
-```
-
-Field notes:
-
-- `healthy` — `true` if all GitOps resources are reconciled and certificates are valid, `false` if any issues found
-- `skip` — set to `true` when healthy OR when all issues are expected maintenance noise already being tracked. When `true`, n8n skips Discord posting.
-- `maintenance_context` — brief description of active maintenance if detected (e.g., "Talos node upgrade in progress per #845"), otherwise `null`
-- `summary` — one-line summary (e.g., "2 HelmRelease failures, 1 expired certificate" or "All GitOps resources reconciled")
-- `findings` — bulleted list of evidence-backed findings. Empty array `[]` when healthy.
-- `probable_cause` — root cause assessment, or `null` if healthy
-- `recommended_action` — concrete next step, or `null` if healthy
-- `confidence` — `high`, `medium`, or `low`
-- `create_issue` — `true` if a new GitHub issue was created, `false` otherwise (including when an existing issue was updated or when healthy)
-- `github_issue_url` — URL of created or updated issue, or `null`
-- `thread_name` — suggested Discord thread name
+If the tool returns `{ "valid": false, "errors": [...] }`, fix the listed errors and re-call. Do not output anything else after a successful submission.
 
 ## Common Mistakes
 

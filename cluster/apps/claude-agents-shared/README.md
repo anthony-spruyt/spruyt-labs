@@ -123,6 +123,7 @@ patches:
 | GitHub OAuth tokens | Automated via `github-token-rotation` CronJob |
 | GitHub SSH key | Automated via `github-token-rotation` CronJob |
 | MCP API keys | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
+| n8n SRE MCP auth token | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
 
 ## Related Resources
 
