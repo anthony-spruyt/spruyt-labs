@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add an nginx auth-injecting reverse proxy sidecar to the github-mcp-server deployment so agent pods can connect without client-side credentials, and eliminate Reloader-triggered restarts from token rotation.
+**Goal:** Add a Caddy auth-injecting reverse proxy sidecar to the github-mcp-server deployment so agent pods can connect without client-side credentials, and eliminate Reloader-triggered restarts from token rotation.
 
-**Architecture:** An nginx sidecar container listens on port 8082 (the service port agents connect to), reads the GitHub PAT from a volume-mounted secret file, and proxies requests to the github-mcp-server container on port 8083 with `Authorization: Bearer <token>` injected. The secret is volume-mounted (not an env var) so kubelet auto-updates it without pod restarts. Reloader annotation is removed.
+**Architecture:** A Caddy sidecar listens on port 8082 (service port), reads the GitHub PAT from a volume-mounted secret file via `{file.*}` placeholder, and proxies to port 8083 with `Authorization: Bearer <token>` injected. Volume-mounted secret auto-updates via kubelet without restarts. Reloader annotation removed.
 
-**Tech Stack:** nginx (alpine), bjw-s app-template Helm chart, Cilium network policies
+**Tech Stack:** Caddy, bjw-s app-template Helm chart
 
 **Linked Issue:** Ref #861
 
@@ -16,26 +16,117 @@
 
 | File | Action | Purpose |
 | ---- | ------ | ------- |
-| `cluster/apps/github-mcp/github-mcp-server/app/values.yaml` | Modify | Add auth-proxy sidecar container, change app port to 8083, add nginx ConfigMap and secret volume mounts, remove Reloader annotation, remove env var secretKeyRef |
-| `cluster/apps/github-mcp/github-mcp-server/app/nginx-config.yaml` | Create | nginx/OpenResty ConfigMap with auth-injecting proxy config |
-| `cluster/apps/github-mcp/github-mcp-server/app/kustomization.yaml` | Modify | Add nginx-config.yaml resource |
+| `cluster/apps/github-mcp/github-mcp-server/app/values.yaml` | Modify | Add auth-proxy sidecar, change app port to 8083, add Caddyfile and secret volume mounts, remove Reloader annotation and env var |
+| `cluster/apps/github-mcp/github-mcp-server/app/caddy-config.yaml` | Create | ConfigMap with Caddyfile for auth-injecting reverse proxy |
+| `cluster/apps/github-mcp/github-mcp-server/app/kustomization.yaml` | Modify | Add caddy-config.yaml resource |
 | `cluster/apps/github-mcp/github-mcp-server/app/vpa.yaml` | Modify | Add auth-proxy container policy |
 | `cluster/apps/github-mcp/github-mcp-server/app/network-policies.yaml` | No change | Ingress policies match on pod labels, not container — sidecar is transparent |
 
 ---
 
-### Task 1: Modify values.yaml — add auth-proxy sidecar and restructure ports
+### Task 1: Create Caddyfile ConfigMap
+
+**Files:**
+- Create: `cluster/apps/github-mcp/github-mcp-server/app/caddy-config.yaml`
+- Modify: `cluster/apps/github-mcp/github-mcp-server/app/kustomization.yaml`
+
+- [ ] **Step 1: Create the Caddy config ConfigMap**
+
+Create `cluster/apps/github-mcp/github-mcp-server/app/caddy-config.yaml`:
+
+```yaml
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: github-mcp-caddyfile
+data:
+  Caddyfile: |
+    {
+      admin off
+      auto_https off
+    }
+
+    :8082 {
+      handle /healthz {
+        respond "ok" 200
+      }
+
+      handle {
+        reverse_proxy 127.0.0.1:8083 {
+          header_up Authorization "Bearer {file./etc/secrets/github-pat}"
+          header_up Host {host}
+          header_up X-Real-IP {remote_host}
+          flush_interval -1
+        }
+      }
+    }
+```
+
+> **Note:** `{file./etc/secrets/github-pat}` reads the token from disk on each request — picks up rotations automatically without restart or reload. `flush_interval -1` disables response buffering for MCP streaming support.
+
+- [ ] **Step 2: Add the ConfigMap resource to kustomization.yaml**
+
+In `cluster/apps/github-mcp/github-mcp-server/app/kustomization.yaml`, add the new resource:
+
+```yaml
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./release.yaml
+  - ./network-policies.yaml
+  - ./github-secret-store.yaml
+  - ./github-external-secret.yaml
+  - ./github-rotation-rbac.yaml
+  - ./vpa.yaml
+  - ./caddy-config.yaml
+configMapGenerator:
+  - name: github-mcp-server-values
+    namespace: github-mcp
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add cluster/apps/github-mcp/github-mcp-server/app/caddy-config.yaml \
+        cluster/apps/github-mcp/github-mcp-server/app/kustomization.yaml
+git commit -m "feat(github-mcp): add Caddyfile config for auth-injecting proxy
+
+Ref #861"
+```
+
+---
+
+### Task 2: Modify values.yaml — add Caddy sidecar and restructure ports
 
 **Files:**
 - Modify: `cluster/apps/github-mcp/github-mcp-server/app/values.yaml`
 
-- [ ] **Step 1: Change github-mcp-server container port from 8082 to 8083**
+- [ ] **Step 1: Rewrite values.yaml**
 
-The app container will now listen on 8083 (internal only). The sidecar takes over port 8082 (exposed via service).
-
-In `values.yaml`, change the `args` and all probe ports from `8082` to `8083`:
+Replace the full contents of `values.yaml` with:
 
 ```yaml
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
 controllers:
   github-mcp-server:
     strategy: Recreate
@@ -90,34 +181,16 @@ controllers:
                 port: 8083
               failureThreshold: 30
               periodSeconds: 5
-```
-
-- [ ] **Step 2: Remove the env var and Reloader annotation**
-
-Remove the `env` block from the `app` container (no longer needed — the app uses the token from the Authorization header injected by the proxy, not from its own env var).
-
-Remove the Reloader annotation from the controller:
-
-```yaml
-controllers:
-  github-mcp-server:
-    strategy: Recreate
-    # NOTE: reloader.stakater.com/auto annotation REMOVED
-    containers:
-      app:
-        # NOTE: env block REMOVED — no GITHUB_PERSONAL_ACCESS_TOKEN needed
-```
-
-- [ ] **Step 3: Add the auth-proxy sidecar container**
-
-Add a sibling container under `controllers.github-mcp-server.containers`:
-
-```yaml
       auth-proxy:
         image:
-          repository: openresty/openresty
-          tag: 1.27.1.2-alpine@sha256:<verify-at-implementation>
+          repository: caddy
+          tag: 2.9.1-alpine@sha256:<verify-at-implementation>
           pullPolicy: IfNotPresent
+        args:
+          - "caddy"
+          - "run"
+          - "--config"
+          - "/etc/caddy/Caddyfile"
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -129,7 +202,7 @@ Add a sibling container under `controllers.github-mcp-server.containers`:
             cpu: 5m
             memory: 16Mi
           limits:
-            memory: 32Mi
+            memory: 64Mi
         probes:
           liveness:
             enabled: true
@@ -160,26 +233,21 @@ Add a sibling container under `controllers.github-mcp-server.containers`:
                 port: 8082
               failureThreshold: 30
               periodSeconds: 5
-```
-
-> **Note:** OpenResty is used instead of plain nginx because `set_by_lua_block` is needed to read the token file on every request (picks up rotations without restart/reload). Verify the digest at implementation time:
-> `docker pull openresty/openresty:1.27.1.2-alpine && docker inspect --format='{{index .RepoDigests 0}}' openresty/openresty:1.27.1.2-alpine`
-> If 1.27.1.2 doesn't exist, use the latest stable alpine tag from Docker Hub.
-
-- [ ] **Step 4: Add persistence volumes for nginx config, secret, and tmp/cache**
-
-Add the following to the bottom of `values.yaml`:
-
-```yaml
+service:
+  app:
+    controller: github-mcp-server
+    ports:
+      http:
+        port: 8082
 persistence:
-  nginx-config:
+  caddyfile:
     type: configMap
-    name: github-mcp-nginx-config
+    name: github-mcp-caddyfile
     advancedMounts:
       github-mcp-server:
         auth-proxy:
-          - path: /etc/nginx/nginx.conf
-            subPath: nginx.conf
+          - path: /etc/caddy/Caddyfile
+            subPath: Caddyfile
             readOnly: true
   github-pat:
     type: secret
@@ -190,155 +258,33 @@ persistence:
           - path: /etc/secrets/github-pat
             subPath: GITHUB_PERSONAL_ACCESS_TOKEN
             readOnly: true
-  nginx-tmp:
+  caddy-data:
     type: emptyDir
     medium: Memory
     sizeLimit: 10Mi
     advancedMounts:
       github-mcp-server:
         auth-proxy:
-          - path: /tmp
-          - path: /var/cache/nginx
+          - path: /data
+          - path: /config
 ```
 
-- [ ] **Step 5: Update the service to point at port 8082 on the auth-proxy**
+Key changes from original:
+- `annotations` block with `reloader.stakater.com/auto` — **removed**
+- `env` block with `GITHUB_PERSONAL_ACCESS_TOKEN` secretKeyRef — **removed**
+- `app` container port — changed from `8082` to `8083`
+- `auth-proxy` container — **added** (Caddy sidecar on port 8082)
+- `persistence` — **added** (Caddyfile, secret volume, emptyDir for Caddy runtime)
 
-The service already targets port 8082. Since the auth-proxy now owns that port, update the service to explicitly target the correct container port:
+> **Note:** Verify the Caddy image digest at implementation time:
+> `crane digest caddy:2.9.1-alpine`
+> If 2.9.1 doesn't exist yet, use the latest stable 2.x alpine tag.
 
-```yaml
-service:
-  app:
-    controller: github-mcp-server
-    ports:
-      http:
-        port: 8082
-```
-
-This remains unchanged — port 8082 is now served by the auth-proxy sidecar instead of the app container. No service change needed.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 2: Commit**
 
 ```bash
 git add cluster/apps/github-mcp/github-mcp-server/app/values.yaml
-git commit -m "feat(github-mcp): add auth-proxy sidecar, remove Reloader restart
-
-Ref #861"
-```
-
----
-
-### Task 2: Create nginx ConfigMap with auth-injecting proxy config
-
-**Files:**
-- Create: `cluster/apps/github-mcp/github-mcp-server/app/nginx-config.yaml`
-- Modify: `cluster/apps/github-mcp/github-mcp-server/app/kustomization.yaml`
-
-- [ ] **Step 1: Create the nginx config ConfigMap**
-
-Create `cluster/apps/github-mcp/github-mcp-server/app/nginx-config.yaml`:
-
-```yaml
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/configmap-v1.json
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: github-mcp-nginx-config
-data:
-  nginx.conf: |
-    worker_processes 1;
-    error_log /tmp/error.log warn;
-    pid /tmp/nginx.pid;
-
-    events {
-      worker_connections 64;
-    }
-
-    http {
-      client_body_temp_path /tmp/client_body;
-      proxy_temp_path /tmp/proxy;
-      fastcgi_temp_path /tmp/fastcgi;
-      uwsgi_temp_path /tmp/uwsgi;
-      scgi_temp_path /tmp/scgi;
-
-      server {
-        listen 8082;
-        server_name _;
-
-        # Health check endpoint (no auth injection)
-        location = /healthz {
-          return 200 "ok";
-          add_header Content-Type text/plain;
-        }
-
-        # MCP proxy with auth injection
-        location / {
-          # Read token from file on each request (picks up rotations)
-          set_by_lua_block $github_token {
-            local f = io.open("/etc/secrets/github-pat", "r")
-            if f then
-              local token = f:read("*a")
-              f:close()
-              return token:gsub("%s+$", "")
-            end
-            return ""
-          }
-
-          proxy_pass http://127.0.0.1:8083;
-          proxy_set_header Authorization "Bearer $github_token";
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-
-          # MCP streaming support
-          proxy_http_version 1.1;
-          proxy_set_header Connection "";
-          proxy_buffering off;
-          proxy_cache off;
-          chunked_transfer_encoding on;
-
-          # Generous timeouts for long MCP operations
-          proxy_connect_timeout 10s;
-          proxy_read_timeout 300s;
-          proxy_send_timeout 300s;
-        }
-      }
-    }
-```
-
-> **Note:** The `set_by_lua_block` directive requires the Lua module — this is why OpenResty is used (Task 1 Step 3) instead of plain nginx. OpenResty includes LuaJIT natively, enabling per-request token file reads that pick up rotations without restart/reload.
-
-- [ ] **Step 2: Add the ConfigMap resource to kustomization.yaml**
-
-In `cluster/apps/github-mcp/github-mcp-server/app/kustomization.yaml`, add the new resource:
-
-```yaml
----
-# yaml-language-server: $schema=https://json.schemastore.org/kustomization
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - ./release.yaml
-  - ./network-policies.yaml
-  - ./github-secret-store.yaml
-  - ./github-external-secret.yaml
-  - ./github-rotation-rbac.yaml
-  - ./vpa.yaml
-  - ./nginx-config.yaml
-configMapGenerator:
-  - name: github-mcp-server-values
-    namespace: github-mcp
-    files:
-      - values.yaml
-configurations:
-  - ./kustomizeconfig.yaml
-```
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add cluster/apps/github-mcp/github-mcp-server/app/nginx-config.yaml \
-        cluster/apps/github-mcp/github-mcp-server/app/kustomization.yaml
-git commit -m "feat(github-mcp): add nginx auth-proxy config with token file injection
+git commit -m "feat(github-mcp): add Caddy auth-proxy sidecar, remove Reloader restart
 
 Ref #861"
 ```
@@ -351,6 +297,8 @@ Ref #861"
 - Modify: `cluster/apps/github-mcp/github-mcp-server/app/vpa.yaml`
 
 - [ ] **Step 1: Add containerPolicy for auth-proxy**
+
+Replace the full contents of `vpa.yaml` with:
 
 ```yaml
 ---
@@ -379,7 +327,7 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 32Mi
+          memory: 64Mi
 ```
 
 - [ ] **Step 2: Commit**
@@ -393,45 +341,19 @@ Ref #861"
 
 ---
 
-### Task 4: Remove the MCP config auth header for github (if present) and verify client config
+### Task 4: Validate and test
 
-**Files:**
-- Verify: `cluster/apps/claude-agents-shared/base/claude-mcp-config.yaml`
-
-- [ ] **Step 1: Verify no auth headers needed for github in MCP config**
-
-Read `cluster/apps/claude-agents-shared/base/claude-mcp-config.yaml` and confirm the `github` entry has no `headers` block. Currently it looks like:
-
-```json
-"github": {
-  "type": "http",
-  "url": "http://github-mcp-server.github-mcp.svc:8082/mcp"
-}
-```
-
-This is correct — no change needed. The auth-proxy sidecar injects the Authorization header server-side. Agent pods connect with no credentials.
-
-- [ ] **Step 2: No commit needed** — no changes.
-
----
-
-### Task 5: Validate and test
-
-- [ ] **Step 1: Run qa-validator**
-
-Run the qa-validator agent against all modified files before committing.
-
-- [ ] **Step 2: Verify the nginx image tag and digest**
-
-Look up the current stable OpenResty alpine image:
+- [ ] **Step 1: Verify Caddy image digest**
 
 ```bash
-# Check latest OpenResty alpine tag
-docker pull openresty/openresty:alpine
-docker inspect --format='{{index .RepoDigests 0}}' openresty/openresty:alpine
+crane digest caddy:2.9.1-alpine
 ```
 
-Update the `auth-proxy` image tag and digest in `values.yaml` if needed.
+Update the `auth-proxy` image tag and digest in `values.yaml`.
+
+- [ ] **Step 2: Run qa-validator**
+
+Run the qa-validator agent against all modified/created files.
 
 - [ ] **Step 3: After push, run cluster-validator**
 
