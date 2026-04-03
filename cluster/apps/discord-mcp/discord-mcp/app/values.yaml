@@ -18,7 +18,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/discord-mcp
-          tag: "0.1.1@sha256:f1dbfe50697009845a09547e169b2e6bbcfc3437525ea056e233feaed7a44f50"
+          tag: "0.1.2@sha256:088f8cdadbbff8e468b3684b4ce39eecd3f4d086626e3e146dde2dd967871048"
           pullPolicy: IfNotPresent
         env:
           - name: DISCORD_TOKEN
