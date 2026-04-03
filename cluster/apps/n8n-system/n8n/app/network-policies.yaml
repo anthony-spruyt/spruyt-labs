@@ -450,6 +450,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: n8n
       app.kubernetes.io/name: n8n
+      app.kubernetes.io/type: webhook
   ingress:
     - fromEndpoints:
         - matchLabels:

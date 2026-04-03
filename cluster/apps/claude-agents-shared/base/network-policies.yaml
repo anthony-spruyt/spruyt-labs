@@ -146,6 +146,7 @@ spec:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: n8n-system
             k8s:app.kubernetes.io/name: n8n
+            k8s:app.kubernetes.io/type: webhook
       toPorts:
         - ports:
             - port: "5678"
