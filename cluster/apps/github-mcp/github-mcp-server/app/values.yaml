@@ -139,8 +139,7 @@ persistence:
     advancedMounts:
       github-mcp-server:
         auth-proxy:
-          - path: /etc/secrets/github-pat
-            subPath: GITHUB_PERSONAL_ACCESS_TOKEN
+          - path: /etc/secrets
             readOnly: true
   caddy-data:
     type: emptyDir
