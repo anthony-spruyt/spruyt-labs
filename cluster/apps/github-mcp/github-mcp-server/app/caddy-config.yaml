@@ -19,8 +19,7 @@ data:
       handle {
         reverse_proxy 127.0.0.1:8083 {
           header_up Authorization "Bearer {file./etc/secrets/GITHUB_PERSONAL_ACCESS_TOKEN}"
-          header_up Host {host}
-          header_up X-Real-IP {remote_host}
+          header_up Host "localhost"
           flush_interval -1
         }
       }
