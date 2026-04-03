@@ -59,7 +59,7 @@ flowchart TD
 
 ## n8n Workflow
 
-The workflow is named **"SRE Alertmanager Triage Webhook"** and follows this pipeline:
+The workflow is named **"SRE Agent"** and follows this pipeline:
 
 ### Pipeline Stages
 
