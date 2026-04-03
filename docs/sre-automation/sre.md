@@ -1,6 +1,6 @@
 # SRE Agent for Kubernetes Workloads
 
-Autonomous SRE operations using Claude Code CLI agents orchestrated by n8n, running inside the cluster. Two modes: reactive alert triage (Alertmanager webhook) and proactive scheduled health checks (cron). Both agents submit structured results via an MCP tool (`submit_result`) for validation and Discord posting.
+Autonomous SRE operations using Claude Code CLI agents orchestrated by n8n, running inside the cluster. Two modes: reactive alert triage (Alertmanager webhook) and proactive scheduled health checks (cron). Each agent has a dedicated MCP tool (`submit_alert_triage` / `submit_health_check_triage`) for validation and Discord posting. The health check agent only calls its tool when issues are found.
 
 ## How It Works
 
@@ -21,12 +21,11 @@ flowchart TD
     H --- H3[GitHub]
     H --- H4[Discord]
 
-    F1 & F2 -->|submit_result MCP tool| I[n8n MCP Server Trigger]
+    F1 -->|submit_alert_triage| I[n8n MCP Server Trigger]
+    F2 -->|submit_health_check_triage\nonly when issues found| I
     I --> J{Validate Schema}
     J -->|Invalid| K[Return errors — agent retries]
-    J -->|Valid| L{Skip Filter}
-    L -->|skip=true| M[Drop]
-    L -->|skip=false| N[Discord Message]
+    J -->|Valid| N[Discord Message]
     N -->|If issue| O[Issue Link]
 ```
 
@@ -87,13 +86,14 @@ The workflow is named **"SRE Alertmanager Triage Webhook"** and follows this pip
 
 | Stage | Type | Purpose |
 | --- | --- | --- |
-| **MCP Server Trigger** | Trigger | Receives `submit_result` tool call from agent |
+| **MCP Server Trigger** | Trigger | Receives `submit_alert_triage` or `submit_health_check_triage` tool call from agent |
 | **Validate Schema** | Code | Validates required fields, enums, trigger-specific rules |
-| **Skip Filter** | If | Drops results flagged as skip (transient/healthy) |
 | **Format Discord Message** | Code | Formats findings into Discord-length messages (max 1950 chars) |
 | **Send Message** | Discord | Posts triage/health summary to #k8s-alerts |
 | **Issue Link Filter** | If | Only proceeds if the agent created/updated a GitHub issue |
 | **Send Issue Link** | Discord | Posts the tracking issue URL to Discord |
+
+> **Note:** The health check agent only calls the MCP tool when issues are found. Healthy results produce no Discord message — the agent simply exits.
 
 ### Agent Configuration
 
@@ -104,18 +104,32 @@ The workflow is named **"SRE Alertmanager Triage Webhook"** and follows this pip
   - SRE triage: [sre-triage-prompt.md](../../cluster/apps/n8n-system/n8n/assets/sre-triage-prompt.md)
   - Health check: [health-check-prompt.md](../../cluster/apps/n8n-system/n8n/assets/health-check-prompt.md)
 
-### Unified Schema
+### MCP Tool Schemas
 
-Both agents submit through the same `submit_result` MCP tool:
+Each agent has a dedicated MCP tool. The `trigger` field is hardcoded by n8n — agents do not set it.
+
+#### `submit_alert_triage`
 
 | Field | Type | Required | Description |
 | ----- | ---- | -------- | ----------- |
-| `trigger` | string | yes | `"alert"` or `"health-check"` |
-| `healthy` | boolean | health-check only | Cluster health status |
-| `skip` | boolean | yes | Skip Discord posting |
-| `alert_message_id` | string | alert only | Discord message ID of Alertmanager notification |
-| `alertname` | string | alert only | Name of firing alert |
-| `severity` | string | alert only | `"critical"`, `"warning"`, or `"info"` |
+| `alertname` | string | yes | Name of firing alert |
+| `severity` | string | yes | `"critical"`, `"warning"`, or `"info"` |
+| `maintenance_context` | string | no | Active maintenance description |
+| `summary` | string | yes | One-line summary |
+| `findings` | string | yes | Evidence-backed findings as free-form text |
+| `probable_cause` | string | no | Root cause assessment |
+| `recommended_action` | string | no | Concrete next step |
+| `confidence` | string | yes | `"high"`, `"medium"`, or `"low"` |
+| `create_issue` | boolean | yes | Whether a GitHub issue was created |
+| `github_issue_url` | string | no | URL of created or updated issue |
+
+#### `submit_health_check_triage`
+
+Only called when issues are found. Healthy checks produce no output.
+
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `severity` | string | yes | `"critical"`, `"warning"`, or `"info"` |
 | `maintenance_context` | string | no | Active maintenance description |
 | `summary` | string | yes | One-line summary |
 | `findings` | string | yes | Evidence-backed findings as free-form text |

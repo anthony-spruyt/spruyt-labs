@@ -34,7 +34,7 @@ You receive a simple prompt from an n8n cron trigger. No alert payload — you q
 | Create/update issue | `mcp__github__issue_write` |
 | Comment on issue | `mcp__github__add_issue_comment` |
 | List PRs | `mcp__github__list_pull_requests` |
-| Submit health check result | `mcp__sre__submit_result` |
+| Submit health check result | `mcp__sre__submit_health_check_triage` |
 
 ## Step 0 — Situational Awareness (mandatory, always first)
 
@@ -110,7 +110,7 @@ mcp__kubectl__kubectl_describe(resource="helmrelease", name="<name>", namespace=
 
 ## Step 2 — Investigate Failures
 
-If Step 1 found no issues, skip to the Output section and return a healthy result.
+If Step 1 found no issues, you are done. Do NOT call the MCP submission tool — there is nothing to report. Just end your response.
 
 For each identified issue:
 
@@ -185,20 +185,20 @@ Do not create a GitHub issue. Set `create_issue: false` in the output.
 
 ## Output — MCP Tool Submission
 
-**CRITICAL: You MUST call `mcp__sre__submit_result` to submit your health check result. Do NOT output raw JSON. The tool validates your submission and returns success or error details. If validation fails, fix the payload and re-call (max 3 attempts).**
+**Only call `mcp__sre__submit_health_check_triage` when issues are found.** If the cluster is healthy (all GitOps resources reconciled, certs valid), do NOT call the tool — just end your response. There is nothing to report.
 
-Call `mcp__sre__submit_result` with the following fields:
+For maintenance-noise-only findings that don't warrant a Discord post, also skip the tool call and end your response.
+
+Call `mcp__sre__submit_health_check_triage` with the following fields:
 
 | Field | Type | Required | Description |
 | ----- | ---- | -------- | ----------- |
-| `trigger` | string | yes | Always `"health-check"` |
-| `healthy` | boolean | yes | `true` if all GitOps resources reconciled and certs valid |
-| `skip` | boolean | yes | `true` when healthy or all issues are expected maintenance noise |
+| `severity` | string | yes | `"critical"`, `"warning"`, or `"info"` |
 | `maintenance_context` | string | no | Active maintenance description, or empty string |
 | `summary` | string | yes | One-line summary |
-| `findings` | string | yes | Evidence-backed findings as free-form text. Empty string when healthy. |
-| `probable_cause` | string | no | Root cause assessment, or empty string if healthy |
-| `recommended_action` | string | no | Concrete next step, or empty string if healthy |
+| `findings` | string | yes | Evidence-backed findings as free-form text |
+| `probable_cause` | string | no | Root cause assessment |
+| `recommended_action` | string | no | Concrete next step |
 | `confidence` | string | yes | `"high"`, `"medium"`, or `"low"` |
 | `create_issue` | boolean | yes | `true` if a new GitHub issue was created |
 | `github_issue_url` | string | no | URL of created or updated issue, or empty string |

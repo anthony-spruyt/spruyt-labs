@@ -43,7 +43,7 @@ Each alert in the array has:
 | Create/update issue | `mcp__github__issue_write` |
 | Comment on issue | `mcp__github__add_issue_comment` |
 | List PRs | `mcp__github__list_pull_requests` |
-| Submit triage result | `mcp__sre__submit_result` |
+| Submit triage result | `mcp__sre__submit_alert_triage` |
 
 ## Step 0 — Situational Awareness (mandatory, always first)
 
@@ -185,27 +185,16 @@ Create a new issue via `mcp__github__issue_write`:
 
 Do not create a GitHub issue. Set `create_issue: false` in the output.
 
-## Discord Message Identification
-
-From Step 0's Discord read, find the Alertmanager bot message that matches this alert:
-
-- Look for a message where the embed title starts with `[FIRING` and contains the alertname
-- Must be within the last 30 minutes (ignore stale matches)
-- Take the most recent match (messages are returned newest-first)
-- Extract the message `id` and return it as `alert_message_id`
-- If no match found, set `alert_message_id: null`
-
 ## Output — MCP Tool Submission
 
-**CRITICAL: You MUST call `mcp__sre__submit_result` to submit your triage result. Do NOT output raw JSON. The tool validates your submission and returns success or error details. If validation fails, fix the payload and re-call (max 3 attempts).**
+**CRITICAL: You MUST call `mcp__sre__submit_alert_triage` to submit your triage result. Do NOT output raw JSON. The tool validates your submission and returns success or error details. If validation fails, fix the payload and re-call (max 3 attempts).**
 
-Call `mcp__sre__submit_result` with the following fields:
+For transient or maintenance-noise alerts that don't warrant a Discord post, you may skip the tool call entirely and just end your response.
+
+Call `mcp__sre__submit_alert_triage` with the following fields:
 
 | Field | Type | Required | Description |
 | ----- | ---- | -------- | ----------- |
-| `trigger` | string | yes | Always `"alert"` for SRE triage |
-| `skip` | boolean | yes | `true` for transient/self-resolving alerts |
-| `alert_message_id` | string | yes | Discord message ID of matching Alertmanager notification, or empty string if not found |
 | `alertname` | string | yes | Name of the firing alert |
 | `severity` | string | yes | `"critical"`, `"warning"`, or `"info"` |
 | `maintenance_context` | string | no | Active maintenance description, or empty string |
