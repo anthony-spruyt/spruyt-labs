@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: github-mcp-caddyfile
+data:
+  Caddyfile: |
+    {
+      admin off
+      auto_https off
+    }
+
+    :8082 {
+      handle /healthz {
+        respond "ok" 200
+      }
+
+      handle {
+        reverse_proxy 127.0.0.1:8083 {
+          header_up Authorization "Bearer {file./etc/secrets/github-pat}"
+          header_up Host {host}
+          header_up X-Real-IP {remote_host}
+          flush_interval -1
+        }
+      }
+    }

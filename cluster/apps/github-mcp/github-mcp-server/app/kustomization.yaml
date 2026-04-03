@@ -9,6 +9,7 @@ resources:
   - ./github-external-secret.yaml
   - ./github-rotation-rbac.yaml
   - ./vpa.yaml
+  - ./caddy-config.yaml
 configMapGenerator:
   - name: github-mcp-server-values
     namespace: github-mcp
