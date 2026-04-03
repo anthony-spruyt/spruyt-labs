@@ -76,7 +76,7 @@ Things that look like failures but aren't — avoid flagging these.
 | Signal | Why It's Not a Problem | Count | Last Seen | Added |
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 10 | 2026-04-02 | 2026-02-24 |
-| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds; persistent when traefik KS stuck on cert health check | 31 | 2026-04-02 | 2026-02-25 |
+| traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds; persistent when traefik KS stuck on cert health check | 32 | 2026-04-03 | 2026-02-25 |
 | Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 17 | 2026-03-31 | 2026-02-25 |
 | mcp-victoriametrics shows "dependency victoria-metrics-k8s-stack is not ready" during reconciliation wave | Dependency chain, resolves within 2 min — parent KS already Ready but child hasn't re-evaluated yet | 2 | 2026-04-02 | 2026-03-19 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
