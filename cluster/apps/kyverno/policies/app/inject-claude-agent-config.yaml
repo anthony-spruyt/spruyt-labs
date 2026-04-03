@@ -55,6 +55,8 @@ spec:
                     value: /etc/gh
                   - name: GIT_CONFIG_GLOBAL
                     value: /etc/gitconfig/gitconfig
+                  - name: MCP_TIMEOUT
+                    value: "30000"
                   - name: CONTEXT7_API_KEY
                     valueFrom:
                       secretKeyRef:
@@ -121,6 +123,8 @@ spec:
                     value: /etc/gh
                   - name: GIT_CONFIG_GLOBAL
                     value: /etc/gitconfig/gitconfig
+                  - name: MCP_TIMEOUT
+                    value: "30000"
                   - name: CONTEXT7_API_KEY
                     valueFrom:
                       secretKeyRef:
