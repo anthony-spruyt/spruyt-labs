@@ -44,6 +44,9 @@ pre-commit install --install-hooks
 
 echo "Installing Claude Code CLI..."
 curl -fsSL https://claude.ai/install.sh | bash
+export PATH="$HOME/.local/bin:$PATH"
+# Ensure ~/.local/bin is in PATH for future shells
+grep -q 'local/bin' "$HOME/.bashrc" 2>/dev/null || echo 'export PATH="$HOME/.local/bin:$PATH"' >>"$HOME/.bashrc"
 
 echo ""
 echo "Setting up devcontainer..."
@@ -101,7 +104,7 @@ fi
 if command -v claude &>/dev/null; then
   pass "Claude Code CLI is installed"
 else
-  echo "  SKIP: Claude Code CLI not found (install may still be running)"
+  fail "Claude Code CLI is not installed"
 fi
 
 echo ""
