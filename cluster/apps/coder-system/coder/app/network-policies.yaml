@@ -107,7 +107,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: coder
+      app.kubernetes.io/name: coder-workspace
   egress:
     - toEntities:
         - world
