@@ -88,14 +88,13 @@ else
   fail "GitHub CLI is not installed"
 fi
 
-# 5. SSH agent forwarding
-# shellcheck disable=SC2157 # xfg template syntax $${} appears as literal to shellcheck
-if [[ -n "${SSH_AUTH_SOCK:-}" ]] && ssh-add -l &>/dev/null 2>&1; then
-  pass "SSH agent has keys loaded"
-elif [[ -f "/home/vscode/.ssh-keys/id_ed25519" ]]; then
+# 5. SSH key available (agent mount in Coder, or GIT_SSH_COMMAND set)
+if [[ -f "/home/vscode/.ssh-keys/id_ed25519" ]]; then
   pass "SSH key mounted (Coder direct mount)"
+elif [[ -n "${GIT_SSH_COMMAND:-}" ]]; then
+  pass "GIT_SSH_COMMAND configured"
 else
-  fail "SSH agent not available or no keys loaded"
+  echo "  SKIP: No SSH key configured"
 fi
 
 # 6. Claude Code CLI available
