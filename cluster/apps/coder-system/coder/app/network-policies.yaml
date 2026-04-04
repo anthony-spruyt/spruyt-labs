@@ -71,12 +71,15 @@ spec:
     matchLabels:
       app.kubernetes.io/name: coder
   egress:
-    # Traffic to Traefik LB IP (hostAliases resolves access URL here)
-    - toCIDR:
-        - "${TRAEFIK_IP4}/32"
+    # hostAliases resolves access URL to Traefik LB VIP, but Cilium DNATs
+    # to the Traefik pod IP before policy check, so use toEndpoints not toCIDR.
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
       toPorts:
         - ports:
-            - port: "443"
+            - port: "8443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
@@ -334,11 +337,13 @@ spec:
     matchLabels:
       app.kubernetes.io/name: coder-workspace
   egress:
-    - toCIDR:
-        - "${TRAEFIK_IP4}/32"
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
       toPorts:
         - ports:
-            - port: "443"
+            - port: "8443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
