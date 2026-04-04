@@ -5,23 +5,24 @@ metadata:
     name: coder-workspace-env
     namespace: coder-system
 stringData:
-    AZURE_DEVOPS_EXT_PAT: ENC[AES256_GCM,data:gsMO9pzDgR5xaNpyHZOlI4500ExVv4x9N4pBOTMi7Bx+TLyPhm2FfS/JSXfUEjIaAEioyEXyYdPdQs5U+iVTWCk3QF6gvl31MVsuK2wfVScjRdJB,iv:oxEr4EYJwlUsgZfp+Yku081QGJ/exRFJL5vcYfCreyk=,tag:uCgqzw84pIKme9Z5nTalLQ==,type:str]
-    CLAUDE_CODE_OAUTH_TOKEN: ENC[AES256_GCM,data:+/V5TobbjedSt56BLGvRfV++04IjCpJEzksufW9/A9j8H/25P/9lKkANjNWJRVjrVvLHaUxIa5qjqqlolmcei53VGSH0s27laDFEMtf6oKdY895AYhktcbhQufFpwmdfFG9yF8/BOv1JPHL7,iv:C5St060aB+8BRXA//WgTwJFHytx3f8Nfa0DfZi6/oK0=,tag:2BiyTRtfVL0Nsk04VDWD2A==,type:str]
-    EXTERNAL_DOMAIN: ENC[AES256_GCM,data:/AIbhAlRhhchqw==,iv:RL4V0re8ZrbOc9FzlwcV3zHEen3F/NnQQ08bQhqoDWs=,tag:aKusKZhbj072plOCHwRmRg==,type:str]
-    GITLAB_TOKEN: ENC[AES256_GCM,data:HjTMRgLtxdY1F9gY71+iLTpnm77h/A2jazTP+kIE1AohQykZy3WcHAlQwDkpoMYl+G/H+GJWaJYM,iv:wVDrQZ2XJ3B4Ta0fKJXYTKv2CaMs+pgzXL9x/eTSetg=,tag:uPt+Hwk+y5tqPNcmr9YhZA==,type:str]
-    SOPS_AGE_KEY_FILE: ENC[AES256_GCM,data:jOFtCWBfVPENmiX/G7U1wK2LpbboPhrLbHShX40=,iv:wq/t3Ka6pPDoWIxttMA+bPm30blSOZGayLnoomPcBQA=,tag:tql54v66QX9r4ZjzWVuNKA==,type:str]
+    AZURE_DEVOPS_EXT_PAT: ENC[AES256_GCM,data:hWbvvwv3mdTjnqivSSZtqrzlaXCZR9PPAtnfkFx79Jhi49rKy2YHJAeOhhjvSuUeHW1oChDN7tkCSWskMWE2z45+/YyaJuBPzJy1zKVFgutwj5NY,iv:Altd26TYzd2TUAgFZ0HNWQ6SMaIqMX6/CZrkdOLoPU8=,tag:xhb1APG0e7brVFk9k/CGkQ==,type:str]
+    CLAUDE_CODE_OAUTH_TOKEN: ENC[AES256_GCM,data:a2/1btTRtgB+IX+qH90ZbmZHEGV6BcDkjOzT8ExdYkkjY/uKJlXg7PiSOBkIPbKMgZFWisVaehOQ1X0ewsAZWsFRUmx8p+V+MjX0hjP5Hg8hNJgT8+T03e3/JW/12zXZf/QUBsh9BxdsGmci,iv:OnMuGshitgCc6hhjQjegh8cOuvokxILfHXaUWz1x9xQ=,tag:E0TB0yG3xDPcMlem4QZyUw==,type:str]
+    EXTERNAL_DOMAIN: ENC[AES256_GCM,data:vkPERa4GuwUS4Q==,iv:z7Q2AFADw/JIingqtfpGB9dAf5bA3IP8PPWV4FEqN30=,tag:bXodfYGQa6Alo7e6QGZPtQ==,type:str]
+    GITLAB_TOKEN: ENC[AES256_GCM,data:PBqq/NB4TDm8OtTa72wGLsfe8M7FsupJYL4jXZ27+HGDjoru0Ogeh11iDjI40KVu5MIVrpnAJYTQ,iv:d8tcJw0hkrk8jLBFJD0iyjAKPmsp83GojNvGRV1sahM=,tag:4KCsX5niMx2Au7rWBdsRLg==,type:str]
+    SOPS_AGE_KEY_FILE: ENC[AES256_GCM,data:mzDvFExVZeOXZgPNPf+DID7tZ+JUX/23sD65AfQ=,iv:AeMShGnlcfSpwOTlIVoIYxxhJtpfWDx2tX1XDgmZGa4=,tag:isEm82fq+YYv8rxBRXR26Q==,type:str]
+    ENVBUILDER_DOCKER_CONFIG_BASE64: ENC[AES256_GCM,data:oPmP9XRewo/CagDTBPyYZrIw6BMvDBDZJZyRCtqyMP7FPXBBUsTLAJQsUMNCMP7Oc+p8kIjwvIP7H09SMqLPdjsHW+G6jUreHASdRkpm41G9un3469q5Ng==,iv:j8J+CCupAg/M4eJD3vh9wJahBdwvFA+H/6ProJX08rI=,tag:xvfDCN0CLEwRhNjFepZL0w==,type:str]
 sops:
     age:
         - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBzenMrTVBsanRDUWtIY2hK
-            VmJDY1NIZ2ptWmNTVHdHWEZacjcwZFJGL1JnCjhIdlJhdlllOEJzZjVTVXB1ZmI1
-            MVV3enFZenNZYWVsM2ZNalh1K1ROWTAKLS0tIENHbURDb3lPOEw2K2JpcG40djVL
-            MmFId3JGaGJLTGg0VkV0QzJBZGlUQ0EK866eEPjnpPDRwfAI+YGTy0AOQ4KJ+3aX
-            o6CJEuaK+ezqYjRpJ9KD3JsBrHGT53VeRsKCN93ID/4Qqb4/wdLlqA==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBrQ2xZU0N5aXVHeEw0bWZh
+            andLcktVc2VreXNJamlHMmF0U1A2Sk5vWWo4CmxyRGIvRUN6K3B3YmM2WFp2NU1W
+            bGFJSEJqaHYvZUEybndvY083bVhvRmMKLS0tIFhROWk0dXh4bVI2SmpwblZZdFdM
+            L3FtZnRkcVRkL3ZUbUh1eFdBZFRZZ1kKv67WJ91lEsPI9JcBPog18C7Vcv3feKp5
+            KnTfqnjI2XX8EX7yle8AWRRbnw/vpViVJoRxsv41HMNupHaRN2GEZQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-04-04T06:55:50Z"
-    mac: ENC[AES256_GCM,data:NsV1Mrzojt5uumAYQ9t47U592dsuF7+RkPHpJ+02lzBkgeTskEs1TeeCj4BD8W7ueF6xSKo9mKRwNCXmiar833YspRpTvwV3dcg0R5R9Avv383EL/khW9S/EaUlHQX4z1a5QzNgXYvltc5sYBCPqEuA1mZNfsUQF2Tg8/LdL1MI=,iv:VQwvW0wdYYHh+KGILF1f8ld3syS+E4t9C/p61fhGOzc=,tag:g3zrzRbzlVB9G502NHForg==,type:str]
+    lastmodified: "2026-04-04T13:17:59Z"
+    mac: ENC[AES256_GCM,data:69NXvP5SkWEBnX6Z4PShm0BquO/UonQ3lzeBZ0ncG6KJHiXmRudo8E2Ww8O4JYURjK3QRKzK2QWYMfkXaelGqDVxTAHEwRz+maztvcwiSvNOcQfuEWA+376WYQMybEDd/07LV5aHGPJ6zyhpd3I0RoayI+/30xqYiFxZU/keUms=,iv:rngAzzhEdnD+yXx//pA9ghPcgiQDexovv0RcJTGSYZU=,tag:UnQjZzvp9HoCEFn5uWNSZA==,type:str]
     encrypted_regex: ^(data|stringData)$
     version: 3.12.1
