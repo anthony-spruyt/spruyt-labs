@@ -242,7 +242,11 @@ resource "coder_agent" "main" {
 
     # Symlink read-only secret mounts into home directory
     ln -sfn /etc/coder/talos /home/vscode/.talos
-    ln -sfn /etc/coder/terraform.d /home/vscode/.terraform.d
+
+    # Terraform credentials are root-only on projected volume, copy to readable location
+    mkdir -p /home/vscode/.terraform.d
+    sudo cp /etc/coder/terraform.d/credentials.tfrc.json /home/vscode/.terraform.d/credentials.tfrc.json
+    sudo chown vscode:vscode /home/vscode/.terraform.d/credentials.tfrc.json
 
     # Configure git commit signing using the read-only SSH key mount.
     # Points directly at the secret volume so key rotation takes effect
