@@ -46,6 +46,8 @@ locals {
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
 
+  workspace_folder = "/workspaces/${replace(element(split("/", replace(local.repo_url, ".git", "")), length(split("/", replace(local.repo_url, ".git", ""))) - 1), ".git", "")}"
+
   # Environment variables passed into the envbuilder container.
   envbuilder_env = {
     "CODER_AGENT_TOKEN" : coder_agent.main.token,
@@ -54,8 +56,10 @@ locals {
     "ENVBUILDER_INIT_SCRIPT" : coder_agent.main.init_script,
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
     "ENVBUILDER_PUSH_IMAGE" : "",
-    # Set workspace folder so envbuilder expands ${containerWorkspaceFolder} in lifecycle commands
-    "ENVBUILDER_WORKSPACE_FOLDER" : "/workspaces/${replace(element(split("/", replace(local.repo_url, ".git", "")), length(split("/", replace(local.repo_url, ".git", ""))) - 1), ".git", "")}",
+    "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
+    # Expose as shell variable so devcontainer.json lifecycle commands
+    # using ${containerWorkspaceFolder} expand correctly under envbuilder.
+    "containerWorkspaceFolder" : local.workspace_folder,
   }
 }
 

@@ -324,6 +324,24 @@ spec:
         - world
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow workspace pods to reach Traefik LB for access URL (hostAliases resolves here)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-workspace-traefik-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: coder-workspace
+  egress:
+    - toCIDR:
+        - "${TRAEFIK_IP4}/32"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
 # Workspace MCP Server Egress Policies
 # =============================================================================
