@@ -323,7 +323,7 @@ spec:
       app.kubernetes.io/name: coder-workspace
   egress:
     - toCIDR:
-        - "0.0.0.0/0"
+        - "${CLUSTER_NODE_CIDR_IP4}"
       toPorts:
         - ports:
             - port: "50000"
