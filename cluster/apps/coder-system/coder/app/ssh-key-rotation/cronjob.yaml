@@ -1,0 +1,156 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/cronjob-batch-v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ssh-key-rotation
+  namespace: coder-system
+spec:
+  schedule: "0 3 * * 1"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: ssh-key-rotation
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+          serviceAccountName: ssh-key-rotation
+          containers:
+            - name: rotate-ssh-key
+              image: alpine/k8s:1.35.3@sha256:097aa60cbef561146757c7494468e9d7b04d843597ad1a1515ed09d0708c8014
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  TITLE_PREFIX="coder-workspace"
+                  DATE_SUFFIX=$$(date +%Y%m%d)
+                  TITLE="$${TITLE_PREFIX}-$${DATE_SUFFIX}"
+
+                  echo "=== SSH key rotation (auth + signing) ==="
+
+                  # Generate new SSH key pair
+                  ssh-keygen -t ed25519 -f /tmp/id_ed25519 -N "" -C "$${TITLE}"
+                  PUB_KEY=$$(cat /tmp/id_ed25519.pub)
+                  echo "New key generated"
+
+                  # --- Register as AUTHENTICATION key ---
+                  echo "Adding authentication key to GitHub..."
+                  NEW_AUTH_ID=$$(curl -s -X POST \
+                    "https://api.github.com/user/keys" \
+                    -H "Authorization: token $${GITHUB_PAT}" \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    -d "{\"key\": \"$${PUB_KEY}\", \"title\": \"$${TITLE}\"}" \
+                    | jq -r '.id')
+
+                  if [ -z "$${NEW_AUTH_ID}" ] || [ "$${NEW_AUTH_ID}" = "null" ]; then
+                    echo "ERROR: Failed to add authentication key to GitHub"
+                    exit 1
+                  fi
+                  echo "Authentication key added with ID: $${NEW_AUTH_ID}"
+
+                  # --- Register as SIGNING key ---
+                  echo "Adding signing key to GitHub..."
+                  NEW_SIGN_ID=$$(curl -s -X POST \
+                    "https://api.github.com/user/ssh_signing_keys" \
+                    -H "Authorization: token $${GITHUB_PAT}" \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    -d "{\"key\": \"$${PUB_KEY}\", \"title\": \"$${TITLE}\"}" \
+                    | jq -r '.id')
+
+                  if [ -z "$${NEW_SIGN_ID}" ] || [ "$${NEW_SIGN_ID}" = "null" ]; then
+                    echo "ERROR: Failed to add signing key to GitHub"
+                    exit 1
+                  fi
+                  echo "Signing key added with ID: $${NEW_SIGN_ID}"
+
+                  # --- Clean up old AUTHENTICATION keys ---
+                  echo "Cleaning up old authentication keys..."
+                  curl -s \
+                    "https://api.github.com/user/keys?per_page=100" \
+                    -H "Authorization: token $${GITHUB_PAT}" \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    | jq -r ".[] | select(.title | startswith(\"$${TITLE_PREFIX}-\")) | select(.id != $${NEW_AUTH_ID}) | .id" \
+                    | while read OLD_ID; do
+                        echo "Removing old auth key ID: $${OLD_ID}"
+                        curl -s -X DELETE \
+                          "https://api.github.com/user/keys/$${OLD_ID}" \
+                          -H "Authorization: token $${GITHUB_PAT}" \
+                          -H "Accept: application/vnd.github+json" \
+                          -H "X-GitHub-Api-Version: 2022-11-28"
+                      done
+
+                  # --- Clean up old SIGNING keys ---
+                  echo "Cleaning up old signing keys..."
+                  curl -s \
+                    "https://api.github.com/user/ssh_signing_keys?per_page=100" \
+                    -H "Authorization: token $${GITHUB_PAT}" \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    | jq -r ".[] | select(.title | startswith(\"$${TITLE_PREFIX}-\")) | select(.id != $${NEW_SIGN_ID}) | .id" \
+                    | while read OLD_ID; do
+                        echo "Removing old signing key ID: $${OLD_ID}"
+                        curl -s -X DELETE \
+                          "https://api.github.com/user/ssh_signing_keys/$${OLD_ID}" \
+                          -H "Authorization: token $${GITHUB_PAT}" \
+                          -H "Accept: application/vnd.github+json" \
+                          -H "X-GitHub-Api-Version: 2022-11-28"
+                      done
+
+                  # --- Update Kubernetes secret ---
+                  echo "Updating Kubernetes secret..."
+                  PRIV_KEY=$$(cat /tmp/id_ed25519 | base64 -w0)
+                  PUB_KEY_B64=$$(echo -n "$${PUB_KEY}" | base64 -w0)
+                  kubectl patch secret coder-ssh-signing-key -n coder-system \
+                    --type='json' \
+                    -p="[{\"op\": \"replace\", \"path\": \"/data/id_ed25519\", \"value\": \"$${PRIV_KEY}\"},{\"op\": \"replace\", \"path\": \"/data/id_ed25519.pub\", \"value\": \"$${PUB_KEY_B64}\"}]"
+
+                  # Clean up
+                  rm -f /tmp/id_ed25519 /tmp/id_ed25519.pub
+
+                  echo "=== SSH key rotation complete (auth + signing) ==="
+              env:
+                - name: GITHUB_PAT
+                  valueFrom:
+                    secretKeyRef:
+                      name: coder-ssh-rotation-token
+                      key: GITHUB_PAT
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 10001
+                runAsGroup: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+          volumes:
+            - name: tmp
+              emptyDir:
+                medium: Memory
+                sizeLimit: 64Mi
+          restartPolicy: OnFailure

@@ -20,6 +20,7 @@ resources:
   - ./technitium
   - ./external-dns
   - ./cloudflare-system
+  - ./coder-system
   - ./vaultwarden
   - ./irq-balance
   - ./chrony

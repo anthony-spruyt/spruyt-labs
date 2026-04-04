@@ -89,6 +89,9 @@ spec:
                   # Rotate Headlamp OAuth
                   rotate_oauth "Headlamp" "authentik-headlamp-oauth" "HEADLAMP_OIDC_CLIENT_SECRET" "headlamp-oauth-credentials" "headlamp-system"
 
+                  # Rotate Coder OAuth
+                  rotate_oauth "Coder" "authentik-coder-oauth" "CODER_OIDC_CLIENT_SECRET" "coder-oauth-credentials" "coder-system"
+
                   echo "All OAuth secret rotations completed successfully!"
               env:
                 - name: AUTHENTIK_API_TOKEN

@@ -72,3 +72,23 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Coder workspace pods (pod-to-pod MCP access)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-coder-workspace-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: discord-mcp
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: coder-system
+            k8s:app.kubernetes.io/name: coder-workspace
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

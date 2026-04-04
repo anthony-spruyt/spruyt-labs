@@ -10,6 +10,8 @@ resources:
   - ./authentik-vaultwarden-oauth.sops.yaml
   # Created once by Flux (ssa: IfNotPresent), then managed by oauth-secret-rotation CronJob
   - ./authentik-headlamp-oauth.sops.yaml
+  # Created once by Flux (ssa: IfNotPresent), then managed by oauth-secret-rotation CronJob
+  - ./authentik-coder-oauth.sops.yaml
   - ./authentik-cnpg-object-stores.yaml
   - ./external-secrets-rbac.yaml
   - ./authentik-cnpg-cluster.yaml
@@ -35,6 +37,7 @@ configMapGenerator:
       - blueprints/oauth-rotation-service-account.yaml
       - blueprints/n8n-sso.yaml
       - blueprints/ceph-dashboard-sso.yaml
+      - blueprints/coder-sso.yaml
       - blueprints/headlamp-sso.yaml
       - blueprints/hubble-sso.yaml
       - blueprints/redisinsight-sso.yaml

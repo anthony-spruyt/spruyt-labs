@@ -1,0 +1,26 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: authentik-coder-oauth
+    namespace: authentik-system
+    annotations:
+        kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+stringData:
+    CODER_OIDC_CLIENT_ID: ENC[AES256_GCM,data:y0eJ+tKPNmT0SSX3WVeR/r7hBmA3D9L1mNhW3eZZPbk=,iv:Val5d9RW4ELmSO4ivzkH2f6fjKEwGtzdkjDP/5sXbrM=,tag:aUo9o3WVhouARehopDS9FQ==,type:str]
+    CODER_OIDC_CLIENT_SECRET: ENC[AES256_GCM,data:7SjnVGrDB9QC1pf1sccexbNcuCg/Dwyi/Uy/IU3z2sJzoC/nizQG1esOCUawtI6aO2mtILQR1E7FO4EUm5pOnT307f+/QFTpwDRR1ewz6+Dr8AatSY+ItZh/VA3QBj0nNnevJ4FhR98aRup7C0BH4XWBnWK63xTWe3PzizptYcY=,iv:jidfR44eeI30zaOD6VTIyGcZzxLPj5masQxIp+Q4DCY=,tag:qqJWTLfDPczZdaehG2czEw==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBONDNTWE0zNjdKVXp0cTBm
+            MTJkMW5kK0ZNeDVjeUZOZk9VZ0NPcW1yQmc0Cm5rMW5wRTFJMmZENEpyMGVTMCtq
+            VmxZcnN5RnBoeS9ucWZMdzdhRkg2MU0KLS0tIFMzbjJOaEVuTi9mcVpXK3J1WklQ
+            N0U4TTBIZGtRVDFwU1grRnphK0FZbTgK0vkCbauwWDOl3Ptv+UnIZOg1sVUubhmh
+            Aq3pixET3wexsivGA3AFgyGAtgDrLLJlmxJLQIrLZOYmtGWH62YUVA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-04T07:54:31Z"
+    mac: ENC[AES256_GCM,data:uk+NALJh/CCydflJRATuPWPJ1y/bGvYyV3B0Rv/RlJZkZwdBI3g/SCLIQp+0lltCcjHY53th4H28GpfolHx16a02Rx+S/1c71RClaVdcHF0VyVmU972RMRZmFTVvrqk7srJGqUsQIiiCERY6hjbh3l7XE33Pnp9EikGCwPJ4Qew=,iv:EYkBTumKUA2VOSp92SlF46s443AJrmuc5gqsQRQipAg=,tag:1WluH5xFPBwe3GyDEmk2ig==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.1

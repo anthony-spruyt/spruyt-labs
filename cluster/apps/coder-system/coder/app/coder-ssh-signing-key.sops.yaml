@@ -1,0 +1,26 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: coder-ssh-signing-key
+    namespace: coder-system
+    annotations:
+        kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+stringData:
+    id_ed25519: ENC[AES256_GCM,data:PSaN/xzELJgKli4Vdt2Ax+17ouALlDfzGAjwUlxEiQT1gY2pwtNZ1AMM4M+Lak3Om1tk4r0xptO0fQEqTYQUaZzV70K+mk2rFCy6qCwtRF+Nkw7C28uAP57dQegBiTLu4HBXqpdOMswxdhJ3twvzSQVNzA1+wRjUjY4uPUhLWtdmjvYOOqfBInCbZhlaY9yR9Pqe6uhIM3sNSwPZHlgZ/wUoleYZWnyiK+3MABgmIxeKIx3K+Z5/7l03cZ5h62SNaisM0qrdEmDkJhz/J5441zTx5p+euhpZdqnTSUE1vUYEg2uXXxaElDh6US3faZESTzDmPGLlrh6HFNi/WKxT31xDiHWhvpC0Mw3ghuTMqmS2sRg46pDlwlBmfywlOtH/zJfAcqWPOGfTpr8c4so7mALr55w77AtWKlXNVXnXXzzjrcaV09rkEWn6+9D1zmALEhjl7QQ2OzJrZKf4tEYhQXnZMTeC5Z+2DZXjOe9gPIcPvPAutd+GUlCCOAtc285yE2ctXL4InCFMpS4/I18L4PLVWC2O7QKby/1HWmK+OiX3idU=,iv:ZJCyyeC8f67usDfXdk3u9TiBYT8PShoDdj2jT/fq7IE=,tag:V0+VumI6YHb3AuRJJLN/jw==,type:str]
+    id_ed25519.pub: ENC[AES256_GCM,data:iUXT/FCVa6ev0Q3nP2Un87Y81WICtlU6Em8NHGd6Rf2dlpNRvX3nigAhyDH4buZnCAKnNpsigI8QrQD4XKbP9acwI5HBZ6+RkR+VkKty9Yk7jaE326JAxCCKy4/QwUvxkZ3L+VGIPrLd+X0k,iv:d8BW3ehjoB02O+TaRon1lZTaIlp0rPzkP/tY5+Vj+Cg=,tag:4vgB0FpaAu7kbNImUfDDTA==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBhWlduczhFMXJSSXdnYUpj
+            bFRZZTFpaVh2eDU0R0syekZWNkpkNGdWZlY0ClNRcEk0K1o1VVJ1ZzBUczVFQ1NL
+            dGZadVpWcUM2ZVJHS2lyM1RvbXBVSXcKLS0tIEFTeXV3WVdLMzNXM3Q0MGhkMFhV
+            VVgvWnNrQTN3WkVhQWkvaFZvQ05RRGMKZ/DCxX6OOEfjr3I5w2kZ4qH4GTanKEvE
+            d9s1zO7OE67iZ2gI+33dUYtRcZMUhjFMcaEgv/24/xKzFKiwmInQqA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-04T07:09:53Z"
+    mac: ENC[AES256_GCM,data:/rs7ZV4qoGTKgGgG+1QPrl98soFLOidMD0zeLIXaIReVHU/L7wFxcwbCwbN67GWBETgdkaFPZSG/IuGROHpiD1rEEXA2keTtFxgf1PddIQ/CTl6tP4NaPxYJURiyZQKOoVphhZC4jJHBxB5aUOYPLX2oRc/fMS10TIqFyfJfyOs=,iv:gg9YWFqwDp83FywOjgiBY5b6kyaZFkCmeHV5DgblnSQ=,tag:93UTyntBvqemsx/Qi8BpPw==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.1

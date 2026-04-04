@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/barmancloud.cnpg.io/objectstore_v1.json
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: coder-cnpg-aws-object-store
+spec:
+  retentionPolicy: 7d
+  configuration:
+    destinationPath: s3://spruyt-labs-470715245270-prod-cnpg-backup/object-store
+    s3Credentials:
+      accessKeyId:
+        name: coder-cnpg-credentials
+        key: AWS_ACCESS_KEY_ID
+      secretAccessKey:
+        name: coder-cnpg-credentials
+        key: AWS_SECRET_ACCESS_KEY
+    data:
+      compression: bzip2
+    wal:
+      compression: bzip2
+      maxParallel: 8
