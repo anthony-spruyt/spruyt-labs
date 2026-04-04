@@ -195,7 +195,7 @@ resource "kubernetes_persistent_volume_claim_v1" "home" {
 resource "coder_agent" "main" {
   arch = data.coder_provisioner.me.arch
   os   = "linux"
-  dir  = "/workspaces"
+  dir  = local.workspace_folder
 
   startup_script = <<-EOT
     set -e
@@ -306,11 +306,6 @@ resource "kubernetes_pod_v1" "main" {
     host_aliases {
       ip        = local.traefik_lb_ip
       hostnames = [replace(replace(data.coder_workspace.me.access_url, "https://", ""), "http://", "")]
-    }
-
-    # Allow privileged mode for Docker-in-Docker builds.
-    security_context {
-      run_as_user = 0
     }
 
     affinity {
