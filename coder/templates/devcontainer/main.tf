@@ -45,8 +45,6 @@ locals {
     "ENVBUILDER_INIT_SCRIPT" : coder_agent.main.init_script,
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
     "ENVBUILDER_PUSH_IMAGE" : "",
-    # Allow privileged operations required for Docker-in-Docker.
-    "ENVBUILDER_INIT_ARGS" : "--privileged",
   }
 }
 
