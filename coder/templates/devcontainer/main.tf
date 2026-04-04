@@ -183,7 +183,22 @@ resource "coder_agent" "main" {
 
   startup_script = <<-EOT
     set -e
-    # Workspace-level startup tasks go here.
+
+    # Configure git to use the mounted SSH key for auth and signing
+    git config --global gpg.format ssh
+    git config --global user.signingKey /home/vscode/.ssh/id_ed25519
+    git config --global commit.gpgSign true
+    git config --global tag.gpgSign true
+
+    # SSH config: use the mounted key for GitHub
+    mkdir -p /home/vscode/.ssh
+    cat > /home/vscode/.ssh/config <<'SSHEOF'
+    Host github.com
+      IdentityFile /home/vscode/.ssh/id_ed25519
+      IdentitiesOnly yes
+      StrictHostKeyChecking accept-new
+    SSHEOF
+    chmod 600 /home/vscode/.ssh/config
   EOT
 
   env = {
