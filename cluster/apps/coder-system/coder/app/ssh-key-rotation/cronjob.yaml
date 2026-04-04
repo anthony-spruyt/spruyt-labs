@@ -32,39 +32,77 @@ spec:
                 - |
                   set -e
 
-                  echo "=== SSH signing key rotation ==="
+                  TITLE_PREFIX="coder-workspace"
+                  DATE_SUFFIX=$$(date +%Y%m%d)
+                  TITLE="$${TITLE_PREFIX}-$${DATE_SUFFIX}"
+                  GH_HEADERS="-H \"Authorization: token $${GITHUB_PAT}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\""
+
+                  echo "=== SSH key rotation (auth + signing) ==="
 
                   # Generate new SSH key pair
-                  ssh-keygen -t ed25519 -f /tmp/id_ed25519 -N "" -C "coder-workspace-signing-key"
+                  ssh-keygen -t ed25519 -f /tmp/id_ed25519 -N "" -C "$${TITLE}"
                   PUB_KEY=$$(cat /tmp/id_ed25519.pub)
                   echo "New key generated"
 
-                  # Add new signing key to GitHub
-                  echo "Adding new signing key to GitHub..."
-                  NEW_KEY_ID=$$(curl -s -X POST \
+                  # --- Register as AUTHENTICATION key ---
+                  echo "Adding authentication key to GitHub..."
+                  NEW_AUTH_ID=$$(curl -s -X POST \
+                    "https://api.github.com/user/keys" \
+                    -H "Authorization: token $${GITHUB_PAT}" \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    -d "{\"key\": \"$${PUB_KEY}\", \"title\": \"$${TITLE}\"}" \
+                    | jq -r '.id')
+
+                  if [ -z "$${NEW_AUTH_ID}" ] || [ "$${NEW_AUTH_ID}" = "null" ]; then
+                    echo "ERROR: Failed to add authentication key to GitHub"
+                    exit 1
+                  fi
+                  echo "Authentication key added with ID: $${NEW_AUTH_ID}"
+
+                  # --- Register as SIGNING key ---
+                  echo "Adding signing key to GitHub..."
+                  NEW_SIGN_ID=$$(curl -s -X POST \
                     "https://api.github.com/user/ssh_signing_keys" \
                     -H "Authorization: token $${GITHUB_PAT}" \
                     -H "Accept: application/vnd.github+json" \
                     -H "X-GitHub-Api-Version: 2022-11-28" \
-                    -d "{\"key\": \"$${PUB_KEY}\", \"title\": \"coder-workspace-signing-$$(date +%Y%m%d)\"}" \
+                    -d "{\"key\": \"$${PUB_KEY}\", \"title\": \"$${TITLE}\"}" \
                     | jq -r '.id')
 
-                  if [ -z "$${NEW_KEY_ID}" ] || [ "$${NEW_KEY_ID}" = "null" ]; then
-                    echo "ERROR: Failed to add new signing key to GitHub"
+                  if [ -z "$${NEW_SIGN_ID}" ] || [ "$${NEW_SIGN_ID}" = "null" ]; then
+                    echo "ERROR: Failed to add signing key to GitHub"
                     exit 1
                   fi
-                  echo "New signing key added with ID: $${NEW_KEY_ID}"
+                  echo "Signing key added with ID: $${NEW_SIGN_ID}"
 
-                  # List existing signing keys and remove old ones with our prefix
+                  # --- Clean up old AUTHENTICATION keys ---
+                  echo "Cleaning up old authentication keys..."
+                  curl -s \
+                    "https://api.github.com/user/keys?per_page=100" \
+                    -H "Authorization: token $${GITHUB_PAT}" \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    | jq -r ".[] | select(.title | startswith(\"$${TITLE_PREFIX}-\")) | select(.id != $${NEW_AUTH_ID}) | .id" \
+                    | while read OLD_ID; do
+                        echo "Removing old auth key ID: $${OLD_ID}"
+                        curl -s -X DELETE \
+                          "https://api.github.com/user/keys/$${OLD_ID}" \
+                          -H "Authorization: token $${GITHUB_PAT}" \
+                          -H "Accept: application/vnd.github+json" \
+                          -H "X-GitHub-Api-Version: 2022-11-28"
+                      done
+
+                  # --- Clean up old SIGNING keys ---
                   echo "Cleaning up old signing keys..."
                   curl -s \
                     "https://api.github.com/user/ssh_signing_keys?per_page=100" \
                     -H "Authorization: token $${GITHUB_PAT}" \
                     -H "Accept: application/vnd.github+json" \
                     -H "X-GitHub-Api-Version: 2022-11-28" \
-                    | jq -r ".[] | select(.title | startswith(\"coder-workspace-signing-\")) | select(.id != $${NEW_KEY_ID}) | .id" \
+                    | jq -r ".[] | select(.title | startswith(\"$${TITLE_PREFIX}-\")) | select(.id != $${NEW_SIGN_ID}) | .id" \
                     | while read OLD_ID; do
-                        echo "Removing old key ID: $${OLD_ID}"
+                        echo "Removing old signing key ID: $${OLD_ID}"
                         curl -s -X DELETE \
                           "https://api.github.com/user/ssh_signing_keys/$${OLD_ID}" \
                           -H "Authorization: token $${GITHUB_PAT}" \
@@ -72,7 +110,7 @@ spec:
                           -H "X-GitHub-Api-Version: 2022-11-28"
                       done
 
-                  # Update Kubernetes secret with new key pair
+                  # --- Update Kubernetes secret ---
                   echo "Updating Kubernetes secret..."
                   PRIV_KEY=$$(cat /tmp/id_ed25519 | base64 -w0)
                   PUB_KEY_B64=$$(echo -n "$${PUB_KEY}" | base64 -w0)
@@ -83,7 +121,7 @@ spec:
                   # Clean up
                   rm -f /tmp/id_ed25519 /tmp/id_ed25519.pub
 
-                  echo "=== SSH signing key rotation complete ==="
+                  echo "=== SSH key rotation complete (auth + signing) ==="
               env:
                 - name: GITHUB_PAT
                   valueFrom:
