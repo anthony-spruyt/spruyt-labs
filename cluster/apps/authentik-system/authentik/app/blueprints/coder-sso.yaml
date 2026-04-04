@@ -12,6 +12,23 @@ entries:
     attrs:
       name: Coder Users
 
+  # Custom email mapping that always sets email_verified: true
+  # Required because Coder rejects tokens with email_verified: false
+  # Authentik v2025.10+ returns email_verified: false by default and has no native
+  # email verification system. Users are trusted since they must be in Coder Users group.
+  - id: coder_email_mapping
+    model: authentik_providers_oauth2.scopemapping
+    identifiers:
+      name: "Coder OAuth Mapping: email verified"
+    attrs:
+      scope_name: email
+      description: "Email claim with email_verified always true for Coder OIDC"
+      expression: |
+        return {
+            "email": request.user.email,
+            "email_verified": True,
+        }
+
   - id: coder_provider
     model: authentik_providers_oauth2.oauth2provider
     identifiers:
@@ -48,10 +65,8 @@ entries:
             authentik_core.propertymapping,
             [name, "authentik default OAuth Mapping: OpenID 'profile'"],
           ]
-        - !Find [
-            authentik_core.propertymapping,
-            [name, "authentik default OAuth Mapping: OpenID 'email'"],
-          ]
+        # Use custom email mapping that sets email_verified: true
+        - !KeyOf coder_email_mapping
 
   - id: coder_application
     model: authentik_core.application
