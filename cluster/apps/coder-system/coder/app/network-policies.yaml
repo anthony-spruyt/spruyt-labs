@@ -97,6 +97,24 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow STUN/DERP UDP egress for workspace relay connections
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-stun-derp-udp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: coder
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "3478"
+              protocol: UDP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
