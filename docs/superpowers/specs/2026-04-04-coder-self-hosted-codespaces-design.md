@@ -32,9 +32,8 @@ Internet -> Cloudflare Tunnel -> Traefik -> code.${EXTERNAL_DOMAIN}
 | CNPG PostgreSQL | Coder's database with Barman S3 backups | `cluster/apps/coder-system/coder/app/` |
 | Authentik blueprint | OIDC provider, application, group, policy | `cluster/apps/authentik-system/authentik/app/blueprints/coder-sso.yaml` |
 | IngressRoute + Certificate | `code.${EXTERNAL_DOMAIN}` via Traefik | `cluster/apps/traefik/traefik/ingress/coder-system/` |
-| SSH key rotation CronJob | Weekly rotation of workspace SSH signing key | `cluster/apps/coder-system/coder/app/` |
-| GitHub App token | Git auth via existing `github-system` rotation infra | ExternalSecret from `github-system` |
-| SOPS secrets | SSH key, tokens, OIDC creds | `cluster/apps/coder-system/coder/app/*-secrets.sops.yaml` |
+| SSH key rotation CronJob | Weekly rotation of workspace SSH key (auth + signing) | `cluster/apps/coder-system/coder/app/` |
+| SOPS secrets | SSH key, CNPG creds, workspace env, OIDC creds | `cluster/apps/coder-system/coder/app/*.sops.yaml` |
 | Coder Terraform template | Workspace pod definition | `coder/templates/devcontainer/` (manual `coder templates push`) |
 | VPA | Recommendation-only for `coder` Deployment | `cluster/apps/coder-system/coder/app/vpa.yaml` |
 | Network policies | CiliumNetworkPolicy resources | `cluster/apps/coder-system/coder/app/network-policies.yaml` |
@@ -163,26 +162,18 @@ All secrets SOPS-encrypted in git.
 
 ## Credentials & Security
 
-### Git Authentication (Clone/Push)
+### Git Authentication and Commit Signing
 
-HTTPS with a short-lived **GitHub App installation token**, leveraging the existing `github-system/github-token-rotation` infrastructure:
+A single SSH key handles **both** authentication (clone/push) and commit signing:
 
-1. The existing CronJob in `github-system` rotates GitHub App installation tokens every ~50 minutes
-2. Coder workspaces consume the token via an **ExternalSecret** in `coder-system` that reads from `github-system`
-3. Git credential helper in workspace reads the token on each operation
-4. No pod restart needed — Secret volume auto-refreshes
+- Registered on GitHub as both an **authentication key** and a **signing key**
+- Commits appear as the user (not a bot/app), and are verified by GitHub
+- Mounted from Kubernetes Secret into workspace via read-only volume
+- `GIT_SSH_COMMAND` env var points to the key for SSH auth
+- `git config gpg.format=ssh` + `user.signingKey` points to the same key for signing
+- Key rotation propagates automatically via Kubernetes secret volume refresh (~1 min)
 
-**Integration with existing infrastructure:**
-
-- Add `coder-system` as a consumer of the existing `github-token-rotation` CronJob
-- Add an ExternalSecret in `coder-system` to copy the token from `github-system`
-- Add a reader RoleBinding in `github-system` for the `coder-system` SecretStore ServiceAccount
-- Add `coder-system` to the `force_sync_consumers` list in the existing CronJob
-- If the Coder workspace needs different permissions (e.g., `contents: write` on additional repos), add those repos to the existing GitHub App installation or create a separate App managed by the same rotation CronJob
-
-### Git Commit Signing
-
-Dedicated SSH key used **only** for signing:
+**Design decision:** GitHub App tokens were evaluated but rejected because pushes would appear as the App, not the user. A single SSH key keeps the identity consistent for both auth and signing.
 
 - Registered on GitHub as a **signing key** (not authentication key)
 - Cannot clone, push, or authenticate — only sign commits
@@ -194,12 +185,14 @@ Dedicated SSH key used **only** for signing:
 Weekly CronJob (same pattern as `oauth-secret-rotation` in Authentik namespace):
 
 1. Generate new SSH key pair
-2. Add new public key to GitHub account via API (`POST /user/ssh_signing_keys`)
-3. Remove old public key from GitHub (`DELETE /user/ssh_signing_keys/{id}`)
-4. Update Kubernetes Secret with new private key
-5. Kubernetes auto-refreshes full volume mounts — no workspace restart needed (propagation delay ~1 minute)
+2. Register as authentication key via API (`POST /user/keys`)
+3. Register as signing key via API (`POST /user/ssh_signing_keys`)
+4. Remove old authentication keys from GitHub (`DELETE /user/keys/{id}`)
+5. Remove old signing keys from GitHub (`DELETE /user/ssh_signing_keys/{id}`)
+6. Update Kubernetes Secret with new private key
+7. Kubernetes auto-refreshes volume mounts — no workspace restart needed (propagation delay ~1 minute)
 
-Requires a GitHub PAT with `admin:ssh_signing_key` scope, stored in `coder-ssh-rotation-token` Secret.
+Requires a GitHub PAT with `admin:public_key` + `admin:ssh_signing_key` scopes, stored in `coder-ssh-rotation-token` Secret.
 
 ### kubectl Access
 
