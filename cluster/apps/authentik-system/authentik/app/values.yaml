@@ -85,6 +85,16 @@ global:
         secretKeyRef:
           name: authentik-headlamp-oauth
           key: HEADLAMP_OIDC_CLIENT_SECRET
+    - name: CODER_OIDC_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: authentik-coder-oauth
+          key: CODER_OIDC_CLIENT_ID
+    - name: CODER_OIDC_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: authentik-coder-oauth
+          key: CODER_OIDC_CLIENT_SECRET
     # OAuth rotation service account token (used via !Env tag in blueprint)
     - name: OAUTH_ROTATION_API_TOKEN
       valueFrom:
@@ -163,6 +173,8 @@ global:
             path: firefly-iii-sso.yaml
           - key: firemerge-sso.yaml
             path: firemerge-sso.yaml
+          - key: coder-sso.yaml
+            path: coder-sso.yaml
 
 authentik:
   log_level: info
