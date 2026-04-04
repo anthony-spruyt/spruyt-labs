@@ -61,6 +61,26 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow Coder to reach Traefik for access URL health checks (split DNS resolves to Traefik LB)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: coder
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow Coder to reach kube-api for workspace pod management
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
