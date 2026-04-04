@@ -29,11 +29,15 @@ coder:
       value: "true"
     - name: CODER_PROMETHEUS_ADDRESS
       value: "0.0.0.0:2112"
-    # Disable STUN — use built-in DERP relay only (avoids UDP egress issues)
+    # DERP relay uses pod IP internally instead of external URL (avoids hairpin)
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    - name: CODER_DERP_SERVER_RELAY_URL
+      value: "http://$(POD_IP):8080"
+    # Disable external STUN — use built-in DERP relay only
     - name: CODER_DERP_SERVER_STUN_ADDRESSES
       value: "disable"
-    # Health check can't reach external URL from inside cluster (hairpin)
-    - name: CODER_HEALTH_CHECK_THRESHOLD_DATABASE
-      value: "15s"
   service:
     type: ClusterIP
