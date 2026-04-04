@@ -14,5 +14,6 @@ rules:
         "authentik-grafana-oauth",
         "authentik-vaultwarden-oauth",
         "authentik-headlamp-oauth",
+        "authentik-coder-oauth",
       ]
     verbs: ["get", "patch"]
