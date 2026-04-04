@@ -33,6 +33,12 @@ entries:
           matching_mode: strict
       client_id: !Env CODER_OIDC_CLIENT_ID
       client_secret: !Env CODER_OIDC_CLIENT_SECRET
+      # RS256 signing for OIDC token validation
+      signing_key:
+        !Find [
+          authentik_crypto.certificatekeypair,
+          [name, "authentik Self-signed Certificate"],
+        ]
       property_mappings:
         - !Find [
             authentik_core.propertymapping,

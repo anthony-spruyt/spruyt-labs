@@ -1,14 +1,17 @@
 terraform {
+  required_version = ">= 1.0"
   required_providers {
     coder = {
       source  = "coder/coder"
       version = "~> 2.0"
     }
     kubernetes = {
-      source = "hashicorp/kubernetes"
+      source  = "hashicorp/kubernetes"
+      version = "~> 3.0"
     }
     envbuilder = {
-      source = "coder/envbuilder"
+      source  = "coder/envbuilder"
+      version = "~> 1.0"
     }
   }
 }
@@ -25,8 +28,8 @@ data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
 locals {
-  namespace       = "coder-system"
-  workspace_name  = "coder-${lower(data.coder_workspace.me.id)}"
+  namespace      = "coder-system"
+  workspace_name = "coder-${lower(data.coder_workspace.me.id)}"
 
   git_author_name  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
   git_author_email = data.coder_workspace_owner.me.email
@@ -37,7 +40,7 @@ locals {
   # Environment variables passed into the envbuilder container.
   envbuilder_env = {
     "CODER_AGENT_TOKEN" : coder_agent.main.token,
-    "CODER_AGENT_URL"   : data.coder_workspace.me.access_url,
+    "CODER_AGENT_URL" : data.coder_workspace.me.access_url,
     "ENVBUILDER_GIT_URL" : local.repo_url,
     "ENVBUILDER_INIT_SCRIPT" : coder_agent.main.init_script,
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
@@ -184,25 +187,11 @@ resource "coder_agent" "main" {
   startup_script = <<-EOT
     set -e
 
-    # Copy SSH keys from read-only secret mount to writable ~/.ssh
-    mkdir -p /home/vscode/.ssh
-    cp /home/vscode/.ssh-keys/id_ed25519 /home/vscode/.ssh/id_ed25519
-    cp /home/vscode/.ssh-keys/id_ed25519.pub /home/vscode/.ssh/id_ed25519.pub
-    chmod 600 /home/vscode/.ssh/id_ed25519
-    chmod 644 /home/vscode/.ssh/id_ed25519.pub
-
-    # SSH config: use the key for GitHub
-    cat > /home/vscode/.ssh/config <<'SSHEOF'
-    Host github.com
-      IdentityFile /home/vscode/.ssh/id_ed25519
-      IdentitiesOnly yes
-      StrictHostKeyChecking accept-new
-    SSHEOF
-    chmod 600 /home/vscode/.ssh/config
-
-    # Configure git commit signing with the SSH key
+    # Configure git commit signing using the read-only SSH key mount.
+    # Points directly at the secret volume so key rotation takes effect
+    # without a workspace restart (~1 min propagation delay).
     git config --global gpg.format ssh
-    git config --global user.signingKey /home/vscode/.ssh/id_ed25519
+    git config --global user.signingKey /home/vscode/.ssh-keys/id_ed25519
     git config --global commit.gpgSign true
     git config --global tag.gpgSign true
   EOT
@@ -212,6 +201,9 @@ resource "coder_agent" "main" {
     GIT_AUTHOR_EMAIL    = local.git_author_email
     GIT_COMMITTER_NAME  = local.git_author_name
     GIT_COMMITTER_EMAIL = local.git_author_email
+    # SSH auth uses the read-only key mount directly — no copy needed.
+    # Key rotation propagates automatically via Kubernetes secret volume refresh.
+    GIT_SSH_COMMAND = "ssh -i /home/vscode/.ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
   }
 
   metadata {

@@ -13,14 +13,14 @@ Push to Coder:
 - Builds from any repo's `.devcontainer/devcontainer.json`
 - Docker-in-Docker for MegaLinter and container builds
 - cluster-admin ServiceAccount for kubectl/helm/flux
-- SSH signing key for verified git commits
-- GitHub App token for git clone/push (rotated hourly)
+- SSH key for git auth and verified commit signing
 - Talosconfig and Terraform credentials mounted
 
 ## Secrets Required
 
 The following Kubernetes Secrets must exist in `coder-system`:
 
-- `coder-secrets` — SSH signing key, talosconfig, terraform creds, API keys
-- `coder-ssh-signing-key` — SSH ed25519 key pair (managed by ssh-key-rotation CronJob)
-- `github-bot-credentials` — GitHub App installation token (managed by github-system)
+- `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
+- `coder-talosconfig` — Talos client config mounted at `~/.talos/config`
+- `coder-terraform-credentials` — Terraform credentials at `~/.terraform.d/credentials.tfrc.json`
+- `coder-workspace-env` — Env vars injected into pods (e.g., `CLAUDE_CODE_OAUTH_TOKEN`)

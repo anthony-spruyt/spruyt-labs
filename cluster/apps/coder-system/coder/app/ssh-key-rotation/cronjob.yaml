@@ -35,7 +35,6 @@ spec:
                   TITLE_PREFIX="coder-workspace"
                   DATE_SUFFIX=$$(date +%Y%m%d)
                   TITLE="$${TITLE_PREFIX}-$${DATE_SUFFIX}"
-                  GH_HEADERS="-H \"Authorization: token $${GITHUB_PAT}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\""
 
                   echo "=== SSH key rotation (auth + signing) ==="
 
