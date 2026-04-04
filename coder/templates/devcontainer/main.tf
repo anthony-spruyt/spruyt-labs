@@ -266,6 +266,50 @@ resource "coder_agent" "main" {
     interval     = 10
     timeout      = 1
   }
+
+  display_apps {
+    vscode          = true
+    vscode_insiders = false
+    web_terminal    = true
+    ssh_helper      = true
+  }
+}
+
+# ---------------------------------------------------------------------------
+# code-server (VS Code in browser)
+# ---------------------------------------------------------------------------
+
+resource "coder_script" "code_server" {
+  agent_id           = coder_agent.main.id
+  display_name       = "code-server"
+  icon               = "/icon/code.svg"
+  run_on_start       = true
+  start_blocks_login = true
+  script             = <<-EOT
+    #!/bin/bash
+    set -e
+    if ! command -v code-server &>/dev/null; then
+      curl -fsSL https://code-server.dev/install.sh | sh
+    fi
+    code-server --auth none --port 13337 --host 127.0.0.1 "${local.workspace_folder}" &
+  EOT
+}
+
+resource "coder_app" "code_server" {
+  agent_id     = coder_agent.main.id
+  slug         = "code-server"
+  display_name = "VS Code Web"
+  icon         = "/icon/code.svg"
+  url          = "http://localhost:13337?folder=${local.workspace_folder}"
+  share        = "owner"
+  subdomain    = false
+  open_in      = "slim-window"
+
+  healthcheck {
+    url       = "http://localhost:13337/healthz"
+    interval  = 5
+    threshold = 6
+  }
 }
 
 # ---------------------------------------------------------------------------
