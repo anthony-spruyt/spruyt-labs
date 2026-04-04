@@ -15,7 +15,6 @@ resources:
   - ./coder-oauth-external-secret.yaml
   - ./oauth-rotation-rbac.yaml
   - ./workspace-rbac.yaml
-  - ./traefik-service-reader-rbac.yaml
   - ./ssh-key-rotation
   - ./network-policies.yaml
   - ./release.yaml
