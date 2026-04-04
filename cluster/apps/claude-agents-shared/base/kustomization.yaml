@@ -12,3 +12,13 @@ resources:
   - ./github-rotation-rbac.yaml
   - ./claude-mcp-config.yaml
   - ./mcp-credentials.sops.yaml
+configMapGenerator:
+  - name: claude-settings-profiles
+    files:
+      - settings/sre.json
+      - settings/dev.json
+      - settings/minimal.json
+      - settings/full.json
+      - settings/generic.json
+generatorOptions:
+  disableNameSuffixHash: true

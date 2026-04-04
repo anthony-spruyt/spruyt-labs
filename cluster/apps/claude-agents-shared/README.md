@@ -11,7 +11,7 @@ Each agent namespace references this base via its `kustomization.yaml` and only 
 ```text
 claude-agents-shared/
   base/
-    kustomization.yaml              # Resource list for the shared base
+    kustomization.yaml              # Resource list + configMapGenerator for settings
     claude-mcp-config.yaml          # MCP server endpoints and auth headers
     mcp-credentials.sops.yaml       # SOPS-encrypted API keys for MCP servers
     rbac.yaml                       # ServiceAccount for agent pods
@@ -21,7 +21,43 @@ claude-agents-shared/
     github-ssh-external-secret.yaml # ESO ExternalSecret for SSH key
     github-bot-gitconfig.yaml       # Git config (signing, user identity)
     github-rotation-rbac.yaml       # RBAC for token rotation CronJob
+    settings/                       # Claude Code settings profiles (deniedMcpServers)
+      sre.json                      # SRE agents: kubectl, victoriametrics, sre, discord
+      dev.json                      # Dev agents: github, context7, bravesearch
+      minimal.json                  # Minimal: github + context7 only
+      full.json                     # Full: all MCP servers enabled
+      generic.json                  # Generic: no-repo work (github, context7, sre, discord, bravesearch)
 ```
+
+## Settings Profiles
+
+Each profile is a Claude Code `settings.json` that uses `deniedMcpServers` to blacklist MCP servers not needed for that agent role. All MCP servers remain configured in `claude-mcp-config.yaml` — profiles only control which are denied at runtime.
+
+Profiles are bundled into a `claude-settings-profiles` ConfigMap via `configMapGenerator` and mounted at `/etc/claude/settings/` in all agent pods by the Kyverno injection policy.
+
+### Usage in n8n
+
+Set **Additional Arguments** on the Claude Code CLI node:
+
+```text
+--settings /etc/claude/settings/sre.json
+```
+
+### Adding a New Profile
+
+1. Create a new JSON file in `base/settings/`:
+
+```json
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "deniedMcpServers": [
+    { "serverName": "server-to-deny" }
+  ]
+}
+```
+
+2. Add the file to `configMapGenerator.files` in `base/kustomization.yaml`
+3. Commit and push — new pods will pick up the profile automatically
 
 ## Adding a New MCP Server
 
