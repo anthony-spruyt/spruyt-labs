@@ -348,21 +348,28 @@ resource "kubernetes_pod_v1" "main" {
         mount_path = "/home/vscode"
       }
 
-      # SSH signing key
+      # SSH signing key -> ~/.ssh/
       volume_mount {
         name       = "ssh-signing-key"
         mount_path = "/home/vscode/.ssh"
         read_only  = true
       }
 
-      # Talosconfig and Terraform credentials
+      # Talosconfig -> ~/.talos/config
       volume_mount {
-        name       = "coder-secrets"
-        mount_path = "/home/vscode/.secrets"
+        name       = "talosconfig"
+        mount_path = "/home/vscode/.talos"
         read_only  = true
       }
 
-      # GitHub App git credentials (~/.git-credentials)
+      # Terraform credentials -> ~/.terraform.d/credentials.tfrc.json
+      volume_mount {
+        name       = "terraform-credentials"
+        mount_path = "/home/vscode/.terraform.d"
+        read_only  = true
+      }
+
+      # GitHub App git credentials -> ~/.git-credentials
       volume_mount {
         name       = "github-bot-credentials"
         mount_path = "/home/vscode/.config/git-credentials"
@@ -392,11 +399,29 @@ resource "kubernetes_pod_v1" "main" {
       }
     }
 
+    # Mount only the talosconfig key as "config" file
     volume {
-      name = "coder-secrets"
+      name = "talosconfig"
       secret {
-        secret_name  = "coder-secrets"
+        secret_name  = "coder-talosconfig"
         default_mode = "0400"
+        items {
+          key  = "config"
+          path = "config"
+        }
+      }
+    }
+
+    # Mount only the terraform credentials key as "credentials.tfrc.json"
+    volume {
+      name = "terraform-credentials"
+      secret {
+        secret_name  = "coder-terraform-credentials"
+        default_mode = "0400"
+        items {
+          key  = "credentials.tfrc.json"
+          path = "credentials.tfrc.json"
+        }
       }
     }
 
