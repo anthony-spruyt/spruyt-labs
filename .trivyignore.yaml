@@ -187,6 +187,13 @@ misconfigurations:
       - cluster/apps/headlamp-system/headlamp/app/user-rbac.yaml
 
   # ==============================================================================
+  # Coder workspace RBAC - intentional cluster-admin binding for workspace service account
+  # ==============================================================================
+  - id: AVD-KSV-0111
+    paths:
+      - cluster/apps/coder-system/coder/app/workspace-rbac.yaml
+
+  # ==============================================================================
   # Minecraft maintenance CronJob - uses bitnami/kubectl to restart servers daily
   # ==============================================================================
   # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)

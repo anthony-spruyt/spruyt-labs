@@ -23,5 +23,9 @@ coder:
       value: "Sign in with Authentik"
     - name: CODER_OIDC_SCOPES
       value: "openid,profile,email"
+    - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
+      value: "false"
+    - name: CODER_PROMETHEUS_ADDRESS
+      value: "0.0.0.0:2112"
   service:
     type: ClusterIP
