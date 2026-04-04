@@ -55,7 +55,7 @@ locals {
     "ENVBUILDER_GIT_URL" : local.repo_url,
     "ENVBUILDER_INIT_SCRIPT" : coder_agent.main.init_script,
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
-    "ENVBUILDER_PUSH_IMAGE" : "",
+    "ENVBUILDER_CACHE_REPO" : "ghcr.io/anthony-spruyt/envbuilder-cache/${data.coder_workspace.me.name}",
     "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
     # Expose as shell variable so devcontainer.json lifecycle commands
     # using ${containerWorkspaceFolder} expand correctly under envbuilder.
@@ -413,12 +413,12 @@ resource "kubernetes_pod_v1" "main" {
 
       resources {
         requests = {
-          cpu    = "500m"
-          memory = "2Gi"
+          cpu    = "2000m"
+          memory = "4Gi"
         }
         limits = {
-          cpu    = "4000m"
-          memory = "8Gi"
+          cpu    = "8000m"
+          memory = "16Gi"
         }
       }
 
