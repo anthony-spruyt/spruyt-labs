@@ -324,14 +324,15 @@ resource "coder_script" "code_server" {
   display_name       = "code-server"
   icon               = "/icon/code.svg"
   run_on_start       = true
-  start_blocks_login = true
+  start_blocks_login = false
+  log_path           = "/tmp/code-server.log"
   script             = <<-EOT
     #!/bin/bash
     set -e
     if ! command -v code-server &>/dev/null; then
       curl -fsSL https://code-server.dev/install.sh | sh
     fi
-    code-server --auth none --port 13337 --host 127.0.0.1 "${local.workspace_folder}" &
+    exec code-server --auth none --port 13337 --host 127.0.0.1 "${local.workspace_folder}"
   EOT
 }
 
