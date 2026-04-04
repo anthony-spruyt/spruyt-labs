@@ -20,6 +20,6 @@ spec:
         - name: coder
           namespace: coder-system
           passHostHeader: true
-          port: 8080
+          port: 80
   tls:
     secretName: "code-${EXTERNAL_DOMAIN/./-}-tls"
