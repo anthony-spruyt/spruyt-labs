@@ -316,14 +316,10 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
-      # Claude Code OAuth token for Pro/Max subscription auth
-      env {
-        name = "CLAUDE_CODE_OAUTH_TOKEN"
-        value_from {
-          secret_key_ref {
-            name = "coder-secrets"
-            key  = "CLAUDE_CODE_OAUTH_TOKEN"
-          }
+      # All keys in coder-workspace-env are injected as environment variables
+      env_from {
+        secret_ref {
+          name = "coder-workspace-env"
         }
       }
 

@@ -10,10 +10,10 @@ spec:
     destinationPath: s3://spruyt-labs-470715245270-prod-cnpg-backup/object-store
     s3Credentials:
       accessKeyId:
-        name: coder-secrets
+        name: coder-cnpg-credentials
         key: AWS_ACCESS_KEY_ID
       secretAccessKey:
-        name: coder-secrets
+        name: coder-cnpg-credentials
         key: AWS_SECRET_ACCESS_KEY
     data:
       compression: bzip2
