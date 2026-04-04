@@ -346,6 +346,12 @@ resource "kubernetes_pod_v1" "main" {
     service_account_name = "coder-workspace"
     restart_policy       = "Never"
 
+    # Root required for Docker-in-Docker; remoteUser in devcontainer.json
+    # switches the agent shell to vscode.
+    security_context {
+      run_as_user = 0
+    }
+
     # Resolve access URL to Traefik LB internally (avoids Cloudflare hairpin)
     host_aliases {
       ip        = local.traefik_lb_ip
