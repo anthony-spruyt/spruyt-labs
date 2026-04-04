@@ -99,6 +99,26 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow UDP egress for DERP relay discovery (STUN disabled but DERP still probes)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-derp-udp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: coder
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "3478"
+              protocol: UDP
+            - port: "19302"
+              protocol: UDP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow Coder to reach world HTTPS (for devcontainer image pulls, Coder updates)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
