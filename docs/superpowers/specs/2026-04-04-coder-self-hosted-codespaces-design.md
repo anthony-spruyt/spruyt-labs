@@ -149,12 +149,13 @@ Follows the Authentik CNPG pattern:
 
 | Secret | Contents | How Used |
 | --- | --- | --- |
-| `coder-ssh-signing-key` | Dedicated SSH signing-only key | Full volume mount at `/home/vscode/.ssh/` (not subPath, for auto-refresh) |
+| `coder-ssh-signing-key` | SSH key for git auth + commit signing | Read-only volume at `/home/vscode/.ssh-keys/` (auto-refresh) |
 | `coder-talosconfig` | Talos client config | Mounted at `/home/vscode/.talos/config` |
-| `coder-terraform-creds` | Terraform credentials | Mounted at `/home/vscode/.terraform.d/` |
-| `coder-env-tokens` | API tokens (Claude, GitHub, etc.) | Injected as env vars |
+| `coder-terraform-credentials` | Terraform credentials | Mounted at `/home/vscode/.terraform.d/credentials.tfrc.json` |
+| `coder-workspace-env` | Env vars for workspace pods (e.g., Claude token) | Injected via `envFrom` |
+| `coder-cnpg-credentials` | AWS S3 keys for CNPG backups | Referenced by CNPG ObjectStore |
 | `coder-oidc` (in `authentik-system`) | Authentik OIDC client ID + secret | Consumed by blueprint, copied via ExternalSecret |
-| `coder-ssh-rotation-token` | GitHub PAT with `admin:ssh_signing_key` scope | Used by SSH key rotation CronJob |
+| `coder-ssh-rotation-token` | GitHub PAT (`admin:public_key` + `admin:ssh_signing_key`) | Used by SSH key rotation CronJob |
 
 All secrets SOPS-encrypted in git.
 
@@ -174,11 +175,6 @@ A single SSH key handles **both** authentication (clone/push) and commit signing
 - Key rotation propagates automatically via Kubernetes secret volume refresh (~1 min)
 
 **Design decision:** GitHub App tokens were evaluated but rejected because pushes would appear as the App, not the user. A single SSH key keeps the identity consistent for both auth and signing.
-
-- Registered on GitHub as a **signing key** (not authentication key)
-- Cannot clone, push, or authenticate — only sign commits
-- If exfiltrated, attacker can sign commits but cannot access repos
-- Mounted from Kubernetes Secret into workspace via full volume mount
 
 ### SSH Key Rotation
 

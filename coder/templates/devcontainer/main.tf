@@ -357,7 +357,7 @@ resource "kubernetes_pod_v1" "main" {
         mount_path = "/home/vscode"
       }
 
-      # SSH key (read-only mount, copied to ~/.ssh by startup script)
+      # SSH key (read-only mount, referenced directly via GIT_SSH_COMMAND)
       volume_mount {
         name       = "ssh-signing-key"
         mount_path = "/home/vscode/.ssh-keys"
