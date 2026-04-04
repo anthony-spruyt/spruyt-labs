@@ -101,11 +101,11 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow Coder to reach world HTTPS (for devcontainer image pulls, Coder updates)
+# Allow Coder control plane unrestricted world egress (image pulls, updates, DERP/WireGuard)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-world-https-egress
+  name: allow-world-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -113,14 +113,6 @@ spec:
   egress:
     - toEntities:
         - world
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
-            - port: "3478"
-              protocol: UDP
-            - port: "19302"
-              protocol: UDP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow WireGuard/Tailscale UDP tunnel between control plane and workspace pods
