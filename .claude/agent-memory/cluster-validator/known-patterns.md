@@ -53,6 +53,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 Error patterns and their known resolutions.
 
 | Error Pattern | Root Cause | Resolution | Count | Last Seen | Added |
+| falcosidekick liveness probe `context deadline exceeded` on `/ping` endpoint causing CrashLoopBackOff | CPU limit too low (75m) causes throttling; probe times out waiting for HTTP response | Increase CPU limit (75m -> 250m); update VPA maxAllowed to match | 1 | 2026-04-04 | 2026-04-04 |
 |---------------|------------|------------|-------|-----------|-------|
 | `exec: "/bin/sh": stat /bin/sh: no such file or directory` in CronJob pod | Scratch-based container image (e.g., `ghcr.io/siderolabs/talosctl`) has no shell | Use an image with a shell or restructure command to avoid shell | 1 | 2026-02-28 | 2026-02-28 |
 | `/bin/sh: openssl: not found` in CronJob pod using `alpine/k8s` image | `alpine/k8s` ships kubectl/helm/kustomize but NOT openssl; JWT signing (RS256) requires openssl | Switch to image with openssl or install at runtime; verify all script dependencies exist in chosen image | 1 | 2026-03-31 | 2026-03-31 |
