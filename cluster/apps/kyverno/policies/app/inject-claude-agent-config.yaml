@@ -48,6 +48,9 @@ spec:
               - name: claude-mcp-config
                 configMap:
                   name: claude-mcp-config
+              - name: claude-settings-profiles
+                configMap:
+                  name: claude-settings-profiles
             containers:
               - (name): "?*"
                 env:
@@ -84,6 +87,9 @@ spec:
                     readOnly: true
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
+                    readOnly: true
+                  - name: claude-settings-profiles
+                    mountPath: /etc/claude/settings
                     readOnly: true
     - name: inject-read-config
       match:
@@ -116,6 +122,9 @@ spec:
               - name: claude-mcp-config
                 configMap:
                   name: claude-mcp-config
+              - name: claude-settings-profiles
+                configMap:
+                  name: claude-settings-profiles
             containers:
               - (name): "?*"
                 env:
@@ -152,4 +161,7 @@ spec:
                     readOnly: true
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
+                    readOnly: true
+                  - name: claude-settings-profiles
+                    mountPath: /etc/claude/settings
                     readOnly: true
