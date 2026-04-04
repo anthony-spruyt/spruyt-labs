@@ -213,9 +213,31 @@ resource "coder_agent" "main" {
       sudo chmod 666 /var/run/docker.sock
     fi
 
-    # Fix SA token permissions for kubectl (mounted as root, need vscode access)
-    if [ -d /var/run/secrets/kubernetes.io/serviceaccount ]; then
-      sudo chmod -R 644 /var/run/secrets/kubernetes.io/serviceaccount/*
+    # SA token is mounted read-only as root. Copy to readable location for vscode.
+    if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
+      sudo cp /var/run/secrets/kubernetes.io/serviceaccount/token /tmp/sa-token
+      sudo chmod 644 /tmp/sa-token
+      mkdir -p /home/vscode/.kube
+      cat > /home/vscode/.kube/config <<KUBEEOF
+    apiVersion: v1
+    kind: Config
+    clusters:
+    - cluster:
+        certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        server: https://kubernetes.default.svc
+      name: default
+    contexts:
+    - context:
+        cluster: default
+        namespace: coder-system
+        user: default
+      name: default
+    current-context: default
+    users:
+    - name: default
+      user:
+        tokenFile: /tmp/sa-token
+    KUBEEOF
     fi
 
     # Configure git commit signing using the read-only SSH key mount.
