@@ -17,3 +17,18 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: coder-values
+  # Inject hostAliases so Coder resolves code.spruyt.xyz to Traefik LB internally
+  # (avoids Cloudflare hairpin for health checks and DERP)
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: coder
+            patch: |
+              - op: add
+                path: /spec/template/spec/hostAliases
+                value:
+                  - ip: "192.168.50.10"
+                    hostnames:
+                      - "code.${EXTERNAL_DOMAIN}"

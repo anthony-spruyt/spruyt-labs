@@ -29,14 +29,8 @@ coder:
       value: "true"
     - name: CODER_PROMETHEUS_ADDRESS
       value: "0.0.0.0:2112"
-    # DERP relay uses pod IP internally instead of external URL (avoids hairpin)
-    - name: POD_IP
-      valueFrom:
-        fieldRef:
-          fieldPath: status.podIP
-    - name: CODER_DERP_SERVER_RELAY_URL
-      value: "http://$(POD_IP):8080"
     # Disable external STUN — use built-in DERP relay only
+    # CODER_DERP_SERVER_RELAY_URL is set automatically by the chart using pod IP
     - name: CODER_DERP_SERVER_STUN_ADDRESSES
       value: "disable"
   service:
