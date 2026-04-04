@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./coder-secrets.sops.yaml
+  - ./coder-ssh-signing-key.sops.yaml
+  - ./coder-cnpg-cluster.yaml
+  - ./coder-cnpg-object-stores.yaml
+  - ./coder-cnpg-scheduled-backups.yaml
+  - ./authentik-secret-store.yaml
+  - ./coder-oauth-external-secret.yaml
+  - ./oauth-rotation-rbac.yaml
+  - ./github-secret-store.yaml
+  - ./github-external-secret.yaml
+  - ./workspace-rbac.yaml
+  - ./ssh-key-rotation
+  - ./network-policies.yaml
+  - ./release.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: coder-values
+    namespace: coder-system
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

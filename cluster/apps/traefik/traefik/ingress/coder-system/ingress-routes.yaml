@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-wan-https
+  namespace: coder-system
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: code.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`code.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: compress
+      services:
+        - name: coder
+          namespace: coder-system
+          passHostHeader: true
+          port: 8080
+  tls:
+    secretName: "code-${EXTERNAL_DOMAIN/./-}-tls"
