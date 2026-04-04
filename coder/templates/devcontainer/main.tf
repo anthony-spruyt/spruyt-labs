@@ -316,13 +316,13 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
-      # ANTHROPIC_API_KEY from coder-secrets
+      # Claude Code OAuth token for Pro/Max subscription auth
       env {
-        name = "ANTHROPIC_API_KEY"
+        name = "CLAUDE_CODE_OAUTH_TOKEN"
         value_from {
           secret_key_ref {
             name = "coder-secrets"
-            key  = "anthropic-api-key"
+            key  = "CLAUDE_CODE_OAUTH_TOKEN"
           }
         }
       }
