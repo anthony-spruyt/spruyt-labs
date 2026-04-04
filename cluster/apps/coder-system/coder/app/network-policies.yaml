@@ -111,8 +111,7 @@ spec:
         - world
       toPorts:
         - ports:
-            - port: "3478"
-              protocol: UDP
+            - protocol: UDP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow metrics scraping from vmagent
