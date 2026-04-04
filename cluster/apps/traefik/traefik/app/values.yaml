@@ -28,6 +28,8 @@ providers:
   kubernetesCRD:
     allowCrossNamespace: false
 service:
+  annotations:
+    lbipam.cilium.io/ips: "${TRAEFIK_IP4}"
   spec:
     externalTrafficPolicy: Local
 tlsStore:
