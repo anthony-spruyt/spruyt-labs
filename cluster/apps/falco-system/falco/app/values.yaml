@@ -30,7 +30,7 @@ falcosidekick:
       cpu: 15m
       memory: 24Mi
     limits:
-      cpu: 75m
+      cpu: 250m
       memory: 48Mi
   config:
     loki:

@@ -40,5 +40,5 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          cpu: 75m
+          cpu: 250m
           memory: 48Mi
