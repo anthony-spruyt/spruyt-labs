@@ -71,13 +71,12 @@ spec:
     matchLabels:
       app.kubernetes.io/name: coder
   egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: traefik
-            k8s:app.kubernetes.io/name: traefik
+    # Traffic to Traefik LB IP (hostAliases resolves access URL here)
+    - toCIDR:
+        - "${TRAEFIK_IP4}/32"
       toPorts:
         - ports:
-            - port: "8443"
+            - port: "443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
