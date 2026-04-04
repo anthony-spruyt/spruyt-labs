@@ -240,6 +240,10 @@ resource "coder_agent" "main" {
     KUBEEOF
     fi
 
+    # Symlink read-only secret mounts into home directory
+    ln -sfn /etc/coder/talos /home/vscode/.talos
+    ln -sfn /etc/coder/terraform.d /home/vscode/.terraform.d
+
     # Configure git commit signing using the read-only SSH key mount.
     # Points directly at the secret volume so key rotation takes effect
     # without a workspace restart (~1 min propagation delay).
@@ -469,17 +473,17 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
-      # Talosconfig -> ~/.talos/config
+      # Talosconfig (symlinked to ~/.talos in startup script)
       volume_mount {
         name       = "talosconfig"
-        mount_path = "/home/vscode/.talos"
+        mount_path = "/etc/coder/talos"
         read_only  = true
       }
 
-      # Terraform credentials -> ~/.terraform.d/credentials.tfrc.json
+      # Terraform credentials (symlinked to ~/.terraform.d in startup script)
       volume_mount {
         name       = "terraform-credentials"
-        mount_path = "/home/vscode/.terraform.d"
+        mount_path = "/etc/coder/terraform.d"
         read_only  = true
       }
 
