@@ -75,6 +75,15 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
+    # CNPG clusters in coder-system
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: coder-system
+            k8s:cnpg.io/cluster: coder-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to barman plugin for plugin registration/health checks
