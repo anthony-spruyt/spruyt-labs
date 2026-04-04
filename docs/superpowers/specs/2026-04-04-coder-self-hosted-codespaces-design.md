@@ -203,11 +203,10 @@ Primary concern: compromise of Claude CLI or a malicious package inside the work
 
 | Credential | Blast Radius | Mitigation |
 | --- | --- | --- |
-| GitHub App token | 1 hour of repo access, scoped repos | Auto-expires, rotates hourly |
-| SSH signing key | Can sign commits as user | Cannot access repos, revocable, rotates weekly |
+| SSH key (auth + signing) | Full repo access + can sign commits as user | Revocable, rotates weekly, single-purpose key |
 | kubectl (SA) | Full cluster access via SA token (no additional auth beyond pod access) | Workspace access gated by Authentik OIDC; restrict SA to custom ClusterRole later |
 | talosconfig | Talos API access | Workspace access gated by Authentik OIDC |
-| Claude API key | API billing | Workspace access gated by Authentik OIDC |
+| Claude OAuth token | Claude API access | Workspace access gated by Authentik OIDC |
 | Terraform creds | Cloud access | Workspace access gated by Authentik OIDC |
 
 **Note:** The ServiceAccount token provides direct Kubernetes API access without further authentication. The primary defense is preventing unauthorized workspace access via Authentik OIDC. A compromised process inside the workspace has full cluster-admin. This is acceptable for a single-user homelab but should be restricted for multi-user deployments.
