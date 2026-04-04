@@ -26,3 +26,4 @@ task install:cnpg-plugin
 task install:falcoctl-cli
 task install:gopls
 task install:cclsp
+task install:coder-cli
