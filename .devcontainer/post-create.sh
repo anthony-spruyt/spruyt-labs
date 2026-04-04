@@ -92,6 +92,8 @@ fi
 # shellcheck disable=SC2157 # xfg template syntax $${} appears as literal to shellcheck
 if [[ -n "${SSH_AUTH_SOCK:-}" ]] && ssh-add -l &>/dev/null 2>&1; then
   pass "SSH agent has keys loaded"
+elif [[ -f "/home/vscode/.ssh-keys/id_ed25519" ]]; then
+  pass "SSH key mounted (Coder direct mount)"
 else
   fail "SSH agent not available or no keys loaded"
 fi
