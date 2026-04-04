@@ -113,6 +113,7 @@ spec:
   egress:
     - toEntities:
         - world
+        - host
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow WireGuard/Tailscale UDP tunnel between control plane and workspace pods
