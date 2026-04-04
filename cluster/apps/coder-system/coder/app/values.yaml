@@ -1,0 +1,27 @@
+coder:
+  env:
+    - name: CODER_ACCESS_URL
+      value: "https://code.${EXTERNAL_DOMAIN}"
+    - name: CODER_PG_CONNECTION_URL
+      valueFrom:
+        secretKeyRef:
+          name: coder-cnpg-cluster-app
+          key: uri
+    - name: CODER_OIDC_ISSUER_URL
+      value: "https://auth.${EXTERNAL_DOMAIN}/application/o/coder/"
+    - name: CODER_OIDC_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: coder-oauth-credentials
+          key: CODER_OIDC_CLIENT_ID
+    - name: CODER_OIDC_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: coder-oauth-credentials
+          key: CODER_OIDC_CLIENT_SECRET
+    - name: CODER_OIDC_SIGN_IN_TEXT
+      value: "Sign in with Authentik"
+    - name: CODER_OIDC_SCOPES
+      value: "openid,profile,email"
+  service:
+    type: ClusterIP
