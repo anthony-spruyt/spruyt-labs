@@ -206,9 +206,16 @@ resource "coder_agent" "main" {
       sudo dockerd --iptables=false &>/tmp/dockerd.log &
       # Wait for Docker to be ready
       for i in $(seq 1 30); do
-        docker info &>/dev/null 2>&1 && break
+        sudo docker info &>/dev/null 2>&1 && break
         sleep 1
       done
+      # Allow vscode user to use Docker
+      sudo chmod 666 /var/run/docker.sock
+    fi
+
+    # Fix SA token permissions for kubectl (mounted as root, need vscode access)
+    if [ -d /var/run/secrets/kubernetes.io/serviceaccount ]; then
+      sudo chmod -R 644 /var/run/secrets/kubernetes.io/serviceaccount/*
     fi
 
     # Configure git commit signing using the read-only SSH key mount.
