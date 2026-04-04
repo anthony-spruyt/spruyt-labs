@@ -150,7 +150,7 @@ spec:
                   force_sync_consumers() {
                     echo "=== Force-syncing ExternalSecrets in consumer namespaces ==="
 
-                    for NS in claude-agents-write claude-agents-read github-mcp; do
+                    for NS in claude-agents-write claude-agents-read github-mcp coder-system; do
                       for ES_NAME in github-bot-credentials github-bot-ssh-key; do
                         if kubectl get externalsecret "$${ES_NAME}" -n "$${NS}" >/dev/null 2>&1; then
                           echo "Force-syncing $${ES_NAME} in $${NS}..."

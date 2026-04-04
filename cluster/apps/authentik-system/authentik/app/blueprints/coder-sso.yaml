@@ -1,0 +1,68 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Coder SSO
+entries:
+  - id: coder_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Coder Users
+    attrs:
+      name: Coder Users
+
+  - id: coder_provider
+    model: authentik_providers_oauth2.oauth2provider
+    identifiers:
+      name: Coder
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      client_type: confidential
+      redirect_uris:
+        - url: https://code.${EXTERNAL_DOMAIN}/api/v2/users/oidc/callback
+          matching_mode: strict
+      client_id: !Env CODER_OIDC_CLIENT_ID
+      client_secret: !Env CODER_OIDC_CLIENT_SECRET
+      property_mappings:
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'openid'"],
+          ]
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'profile'"],
+          ]
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'email'"],
+          ]
+
+  - id: coder_application
+    model: authentik_core.application
+    identifiers:
+      slug: coder
+    attrs:
+      name: Coder
+      provider: !KeyOf coder_provider
+      meta_launch_url: https://code.${EXTERNAL_DOMAIN}
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/coder.png
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf coder_application
+      order: 0
+    attrs:
+      group: !KeyOf coder_users_group
+      negate: false
+      enabled: true
+      timeout: 30
