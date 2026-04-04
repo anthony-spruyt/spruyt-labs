@@ -89,7 +89,7 @@ else
 fi
 
 # 5. SSH key available (agent mount in Coder, or GIT_SSH_COMMAND set)
-if [[ -f "/home/vscode/.ssh-keys/id_ed25519" ]]; then
+if [[ -f "/etc/coder/ssh-keys/id_ed25519" ]]; then
   pass "SSH key mounted (Coder direct mount)"
 elif [[ -n "${GIT_SSH_COMMAND:-}" ]]; then
   pass "GIT_SSH_COMMAND configured"

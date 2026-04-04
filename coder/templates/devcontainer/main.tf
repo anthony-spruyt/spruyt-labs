@@ -244,7 +244,7 @@ resource "coder_agent" "main" {
     # Points directly at the secret volume so key rotation takes effect
     # without a workspace restart (~1 min propagation delay).
     git config --global gpg.format ssh
-    git config --global user.signingKey /home/vscode/.ssh-keys/id_ed25519
+    git config --global user.signingKey /etc/coder/ssh-keys/id_ed25519
     git config --global commit.gpgSign true
     git config --global tag.gpgSign true
   EOT
@@ -256,7 +256,7 @@ resource "coder_agent" "main" {
     GIT_COMMITTER_EMAIL = local.git_author_email
     # SSH auth uses the read-only key mount directly — no copy needed.
     # Key rotation propagates automatically via Kubernetes secret volume refresh.
-    GIT_SSH_COMMAND = "ssh -i /home/vscode/.ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+    GIT_SSH_COMMAND = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
   }
 
   metadata {
@@ -465,7 +465,7 @@ resource "kubernetes_pod_v1" "main" {
       # SSH key (read-only mount, referenced directly via GIT_SSH_COMMAND)
       volume_mount {
         name       = "ssh-signing-key"
-        mount_path = "/home/vscode/.ssh-keys"
+        mount_path = "/etc/coder/ssh-keys"
         read_only  = true
       }
 
