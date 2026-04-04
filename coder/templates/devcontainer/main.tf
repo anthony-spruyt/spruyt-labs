@@ -380,12 +380,6 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
-      # GitHub App git credentials -> ~/.git-credentials
-      volume_mount {
-        name       = "github-bot-credentials"
-        mount_path = "/home/vscode/.config/git-credentials"
-        read_only  = true
-      }
     }
 
     volume {
@@ -436,13 +430,6 @@ resource "kubernetes_pod_v1" "main" {
       }
     }
 
-    volume {
-      name = "github-bot-credentials"
-      secret {
-        secret_name  = "github-bot-credentials"
-        default_mode = "0400"
-      }
-    }
   }
 }
 

@@ -14,8 +14,6 @@ resources:
   - ./authentik-secret-store.yaml
   - ./coder-oauth-external-secret.yaml
   - ./oauth-rotation-rbac.yaml
-  - ./github-secret-store.yaml
-  - ./github-external-secret.yaml
   - ./workspace-rbac.yaml
   - ./ssh-key-rotation
   - ./network-policies.yaml
