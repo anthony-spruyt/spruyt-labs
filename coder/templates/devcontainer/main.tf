@@ -203,7 +203,7 @@ resource "coder_agent" "main" {
     # Start Docker daemon (envbuilder doesn't run DinD feature entrypoint)
     if command -v dockerd &>/dev/null && ! docker info &>/dev/null 2>&1; then
       echo "Starting Docker daemon..."
-      sudo dockerd &>/tmp/dockerd.log &
+      sudo dockerd --iptables=false &>/tmp/dockerd.log &
       # Wait for Docker to be ready
       for i in $(seq 1 30); do
         docker info &>/dev/null 2>&1 && break
