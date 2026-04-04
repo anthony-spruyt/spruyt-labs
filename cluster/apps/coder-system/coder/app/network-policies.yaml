@@ -304,9 +304,11 @@ spec:
         - world
       toPorts:
         - ports:
-            - port: "443"
+            - port: "22"
               protocol: TCP
             - port: "80"
+              protocol: TCP
+            - port: "443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json

@@ -184,14 +184,14 @@ resource "coder_agent" "main" {
   startup_script = <<-EOT
     set -e
 
-    # Configure git to use the mounted SSH key for auth and signing
-    git config --global gpg.format ssh
-    git config --global user.signingKey /home/vscode/.ssh/id_ed25519
-    git config --global commit.gpgSign true
-    git config --global tag.gpgSign true
-
-    # SSH config: use the mounted key for GitHub
+    # Copy SSH keys from read-only secret mount to writable ~/.ssh
     mkdir -p /home/vscode/.ssh
+    cp /home/vscode/.ssh-keys/id_ed25519 /home/vscode/.ssh/id_ed25519
+    cp /home/vscode/.ssh-keys/id_ed25519.pub /home/vscode/.ssh/id_ed25519.pub
+    chmod 600 /home/vscode/.ssh/id_ed25519
+    chmod 644 /home/vscode/.ssh/id_ed25519.pub
+
+    # SSH config: use the key for GitHub
     cat > /home/vscode/.ssh/config <<'SSHEOF'
     Host github.com
       IdentityFile /home/vscode/.ssh/id_ed25519
@@ -199,6 +199,12 @@ resource "coder_agent" "main" {
       StrictHostKeyChecking accept-new
     SSHEOF
     chmod 600 /home/vscode/.ssh/config
+
+    # Configure git commit signing with the SSH key
+    git config --global gpg.format ssh
+    git config --global user.signingKey /home/vscode/.ssh/id_ed25519
+    git config --global commit.gpgSign true
+    git config --global tag.gpgSign true
   EOT
 
   env = {
@@ -359,10 +365,10 @@ resource "kubernetes_pod_v1" "main" {
         mount_path = "/home/vscode"
       }
 
-      # SSH signing key -> ~/.ssh/
+      # SSH key (read-only mount, copied to ~/.ssh by startup script)
       volume_mount {
         name       = "ssh-signing-key"
-        mount_path = "/home/vscode/.ssh"
+        mount_path = "/home/vscode/.ssh-keys"
         read_only  = true
       }
 
