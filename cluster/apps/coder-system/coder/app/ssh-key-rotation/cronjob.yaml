@@ -32,6 +32,9 @@ spec:
                 - |
                   set -e
 
+                  # alpine/k8s doesn't include ssh-keygen
+                  apk add --no-cache openssh-keygen >/dev/null 2>&1
+
                   TITLE_PREFIX="coder-workspace"
                   DATE_SUFFIX=$$(date +%Y%m%d)
                   TITLE="$${TITLE_PREFIX}-$${DATE_SUFFIX}"
