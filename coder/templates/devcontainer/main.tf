@@ -27,9 +27,18 @@ data "coder_provisioner" "me" {}
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
+data "kubernetes_service_v1" "traefik" {
+  metadata {
+    name      = "traefik"
+    namespace = "traefik"
+  }
+}
+
 locals {
   namespace      = "coder-system"
   workspace_name = "coder-${lower(data.coder_workspace.me.id)}"
+  # Traefik LB IP for hostAliases (avoids Cloudflare hairpin for agent downloads)
+  traefik_lb_ip = data.kubernetes_service_v1.traefik.status[0].load_balancer[0].ingress[0].ip
 
   git_author_name  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
   git_author_email = data.coder_workspace_owner.me.email
@@ -288,6 +297,12 @@ resource "kubernetes_pod_v1" "main" {
   spec {
     service_account_name = "coder-workspace"
     restart_policy       = "Never"
+
+    # Resolve access URL to Traefik LB internally (avoids Cloudflare hairpin)
+    host_aliases {
+      ip        = local.traefik_lb_ip
+      hostnames = [replace(replace(data.coder_workspace.me.access_url, "https://", ""), "http://", "")]
+    }
 
     # Allow privileged mode for Docker-in-Docker builds.
     security_context {
