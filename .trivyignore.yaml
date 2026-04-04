@@ -240,6 +240,18 @@ misconfigurations:
       - cluster/apps/github-system/github-token-rotation/app/role.yaml
 
   # ==============================================================================
+  # Coder SSH Key Rotation - CronJob and RBAC
+  # ==============================================================================
+  # alpine/k8s is a trusted Docker Hub image for kubectl operations
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/coder-system/coder/app/ssh-key-rotation/cronjob.yaml
+  # SSH key rotation role needs resourceName-scoped secret access (least-privilege)
+  - id: AVD-KSV-0113
+    paths:
+      - cluster/apps/coder-system/coder/app/ssh-key-rotation/role.yaml
+
+  # ==============================================================================
   # Victoria Metrics etcd secret writer - writes etcd certs for vmagent discovery
   # Uses bitnami/kubectl for one-time Job to copy secrets
   # ==============================================================================
