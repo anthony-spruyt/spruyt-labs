@@ -7,10 +7,8 @@ n8n is a workflow automation tool that connects various applications and service
 ## Prerequisites
 
 - Kubernetes cluster with Flux CD installed
-- PostgreSQL operator (CNPG) deployed
-- Storage class configured for persistent volumes
-- Ingress controller configured
-- TLS certificates available
+- CNPG operator deployed (dependency)
+- Barman Cloud plugin deployed (dependency)
 - Authentik deployed (dependency)
 - Valkey deployed (dependency)
 - Claude agents write deployed (dependency)
