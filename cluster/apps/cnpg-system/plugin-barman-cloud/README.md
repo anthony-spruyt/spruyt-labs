@@ -7,7 +7,8 @@ Barman Cloud Plugin provides cloud storage integration for PostgreSQL backups ma
 ## Prerequisites
 
 - Kubernetes cluster with Flux CD installed
-- CloudNativePG operator deployed and operational
+- CloudNativePG operator deployed and operational (Flux dependsOn: cnpg-operator)
+- cert-manager deployed and operational (Flux dependsOn: cert-manager)
 - Cloud storage credentials configured (AWS S3, Azure Blob, Google Cloud Storage)
 - Proper network connectivity to cloud storage providers
 
