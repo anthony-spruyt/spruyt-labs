@@ -53,7 +53,7 @@ controllers:
             drop: [ALL]
         image:
           repository: vaultwarden/server
-          tag: testing-alpine@sha256:522d0aa39af7e23e9d1907c1a5cbf6e4e165144bcb52d9691d8a4bab5eefbc48
+          tag: testing-alpine@sha256:c7c8456feb58382626f72049d3c1232766f742ec2c3af3fe6e3ea8dd852db9d6
           pullPolicy: Always
         env:
           TZ: ${TIMEZONE}
