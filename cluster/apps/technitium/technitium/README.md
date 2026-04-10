@@ -18,10 +18,9 @@ Technitium is a powerful, open-source DNS server that provides authoritative DNS
 
 1. **DNS zone management**:
 
-   ```bash
-   # Check DNS zones
-   kubectl exec -it <technitium-pod> -n technitium -- technitium list-zones
+   DNS zones are managed through the Technitium web UI or its HTTP API. Access the web interface to view and manage zones.
 
+   ```bash
    # Monitor DNS queries
    kubectl logs -n technitium <technitium-pod> | grep "query"
    ```
@@ -52,9 +51,7 @@ Run the following commands to validate the procedures:
 
 ```bash
 # Validate DNS zone management
-kubectl exec -it <technitium-pod> -n technitium -- technitium list-zones
-
-# Expected: DNS zones listed
+# Use the Technitium web UI or HTTP API to verify zones
 
 # Validate performance monitoring
 kubectl top pods -n technitium
@@ -104,18 +101,12 @@ kubectl get pods -n technitium --no-headers | grep 'Running'
 flux reconcile kustomization technitium --with-source
 
 # Check update status
-kubectl get helmreleases -n technitium
+flux get hr -n technitium technitium
 ```
 
 ### Zone Management
 
-```bash
-# Add new DNS zone
-kubectl exec -it <technitium-pod> -n technitium -- technitium add-zone <domain> <zone-file>
-
-# Remove DNS zone
-kubectl exec -it <technitium-pod> -n technitium -- technitium remove-zone <domain>
-```
+DNS zones are managed through the Technitium web UI or its HTTP API. There is no CLI tool for Technitium zone management.
 
 ## References
 

@@ -12,7 +12,7 @@ This deployment runs Foundry VTT in a Kubernetes cluster using Flux for GitOps m
 
 - **Namespace**: `foundryvtt` (created via `namespace.yaml`)
 - **Secrets**: `foundryvtt-secrets` containing Foundry VTT license key and other sensitive configuration
-- **Storage**: Ceph RBD storage class `rbd-fast` with 10Gi PVC for persistent data
+- **Storage**: Ceph RBD storage class `rbd-fast-delete` with 10Gi PVC for persistent data
 - **Dependencies**:
   - Flux for GitOps deployment management
   - cert-manager for TLS certificate management
@@ -80,8 +80,8 @@ flux get kustomizations foundryvtt -n flux-system
 **Diagnosis**:
 
 ```bash
-kubectl logs foundryvtt-0 -n foundryvtt --previous
-kubectl describe pod foundryvtt-0 -n foundryvtt
+kubectl logs -n foundryvtt -l app.kubernetes.io/name=foundryvtt --previous
+kubectl describe deployment foundryvtt -n foundryvtt
 ```
 
 **Common Causes**:
@@ -121,7 +121,7 @@ kubectl describe certificate foundryvtt-<domain>-tls -n foundryvtt
 
 ```bash
 kubectl top pods -n foundryvtt
-kubectl describe pod foundryvtt-0 -n foundryvtt | grep -A 10 "Containers:"
+kubectl describe deployment foundryvtt -n foundryvtt | grep -A 10 "Containers:"
 ```
 
 **Resolution**:
@@ -144,7 +144,7 @@ nslookup foundryvtt.${EXTERNAL_DOMAIN}
 **Resolution**:
 
 - Verify external-dns annotations on ingress routes
-- Check Traefik deployment: `kubectl get pods -n traefik-system`
+- Check Traefik deployment: `kubectl get pods -n traefik`
 - Confirm DNS propagation
 
 ## Maintenance
@@ -170,11 +170,11 @@ Foundry VTT updates are managed through Renovate. Major version updates should b
 
 ```bash
 # Check current version
-kubectl get pod foundryvtt-0 -n foundryvtt -o jsonpath='{.spec.containers[0].image}'
+kubectl get pods -n foundryvtt -l app.kubernetes.io/name=foundryvtt -o jsonpath='{.items[0].spec.containers[0].image}'
 
 # Update via Renovate PR or manual values.yaml change
 # Test after update
-kubectl logs foundryvtt-0 -n foundryvtt | grep "Foundry Virtual Tabletop"
+kubectl logs -n foundryvtt -l app.kubernetes.io/name=foundryvtt | grep "Foundry Virtual Tabletop"
 ```
 
 ### Log Rotation
@@ -183,7 +183,7 @@ Application logs are managed by Kubernetes. For extended retention:
 
 ```bash
 # Export logs for analysis
-kubectl logs foundryvtt-0 -n foundryvtt --since=24h > foundryvtt-logs.txt
+kubectl logs -n foundryvtt -l app.kubernetes.io/name=foundryvtt --since=24h > foundryvtt-logs.txt
 ```
 
 ### Performance Tuning
@@ -192,7 +192,7 @@ Monitor and adjust based on usage:
 
 - **Memory**: Increase NODE_OPTIONS --max-old-space-size for large worlds
 - **CPU**: Adjust UV_THREADPOOL_SIZE based on concurrent users
-- **Storage**: Monitor disk usage: `kubectl exec -n foundryvtt foundryvtt-0 -- df -h /data`
+- **Storage**: Monitor disk usage via PVC: `kubectl get pvc -n foundryvtt`
 
 ## References
 

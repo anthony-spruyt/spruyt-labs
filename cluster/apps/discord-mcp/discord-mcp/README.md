@@ -40,7 +40,7 @@ kubectl logs -n discord-mcp -l app.kubernetes.io/name=discord-mcp
 
 2. **MCP connection timeout from agent pods**
    - **Symptom**: Agent reports discord MCP server unavailable
-   - **Resolution**: Check network policies allow ingress from `claude-agents-read` / `claude-agents-write` namespaces on port 8080
+   - **Resolution**: Check network policies allow ingress from `claude-agents-read`, `claude-agents-write`, and `coder-system` namespaces on port 8080
 
 ## References
 

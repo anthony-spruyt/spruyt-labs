@@ -4,7 +4,7 @@
 
 Kyverno is a Kubernetes-native policy engine that validates, mutates, and generates resources. It runs as an admission controller, intercepting API requests to enforce policies without requiring a separate policy language.
 
-In this homelab, Kyverno is deployed as critical infrastructure (Tier 1) with four controllers:
+In this homelab, Kyverno is deployed as critical-infrastructure with four controllers:
 
 - **Admission Controller** - Validates/mutates resources during API requests
 - **Background Controller** - Processes existing resources and generate rules
@@ -25,7 +25,7 @@ In this homelab, Kyverno is deployed as critical infrastructure (Tier 1) with fo
 kubectl get pods -n kyverno
 
 # Check HelmRelease status
-flux get helmrelease -n flux-system kyverno
+flux get helmrelease -n kyverno kyverno
 
 # Force reconcile
 flux reconcile kustomization kyverno --with-source

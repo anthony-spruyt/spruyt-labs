@@ -72,6 +72,35 @@ spec:
 
 Current overrides: cilium (`timeout: 2m`), n8n/rook-ceph-cluster (`timeout: 15m`).
 
+### inject-claude-agent-config
+
+Injects configuration into Claude agent pods spawned by n8n, including GitHub bot credentials (gh CLI config, SSH key, gitconfig), MCP server config, and environment variables. Applies to pods with the `managed-by: n8n-claude-code` label in `claude-agents-write` and `claude-agents-read` namespaces. Write and read namespaces receive the same volume mounts and environment variables, with OAuth scopes differentiated via ESO key mapping.
+
+**Injected Resources:**
+
+| Type | Name | Purpose |
+| ---- | ---- | ------- |
+| Secret volume | `github-bot-credentials` | gh CLI hosts.yml |
+| Secret volume | `github-bot-ssh-key` | Git SSH key |
+| ConfigMap volume | `github-bot-gitconfig` | Global gitconfig |
+| ConfigMap volume | `claude-mcp-config` | MCP server configuration |
+| ConfigMap volume | `claude-settings-profiles` | Claude settings profiles |
+| Env (secret) | `CONTEXT7_API_KEY` | Context7 MCP API key |
+| Env (secret) | `HA_API_KEY` | Home Assistant MCP API key |
+| Env (secret) | `SRE_MCP_AUTH_TOKEN` | SRE MCP auth token |
+
+### add-pss-restricted-defaults
+
+Mutates incoming Pods to add security context fields required for Pod Security Standards (PSS) Restricted profile compliance. Only sets fields that are not already defined, preserving app-specific configurations. Adds `seccompProfile: RuntimeDefault`, `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, and drops all capabilities on containers and init containers.
+
+**Excluded Namespaces:** kube-system, kube-public, kube-node-lease, flux-system, kyverno, rook-ceph, falco-system, irq-balance, spegel, velero, observability, nut-system, dev-debug
+
+### add-default-topology-spread
+
+Automatically injects topology spread constraints on Deployments and StatefulSets that don't already have them. Uses soft constraints (`ScheduleAnyway`) with `maxSkew: 1` to ensure balanced pod distribution across nodes without blocking scheduling. Matches on `app.kubernetes.io/name` label for the label selector.
+
+**Excluded Namespaces:** kube-system, kube-public, kube-node-lease, flux-system, kyverno
+
 ## Operation
 
 ### Key Commands

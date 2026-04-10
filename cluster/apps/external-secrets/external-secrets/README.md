@@ -18,9 +18,6 @@ External Secrets Operator manages Kubernetes secrets by synchronizing them from 
 1. **External secret management**:
 
 ```bash
-# Create external secret
-kubectl apply -f externalsecret.yaml
-
 # Check external secret status
 kubectl get externalsecrets -A -o wide
 ```
@@ -41,9 +38,8 @@ kubectl get events -A | grep secretstore
 # Check synchronized secrets
 kubectl get secrets -A
 
-# Check secret data
-kubectl get secret <name> -n <namespace> -o yaml
-
+# Check secret exists (do not output secret data)
+kubectl get secret <name> -n <namespace>
 ```
 
 ## Troubleshooting
@@ -72,17 +68,13 @@ kubectl get secret <name> -n <namespace> -o yaml
 ### Updates
 
 ```bash
-# Update External Secrets Helm chart
-helm repo update
-helm upgrade external-secrets external-secrets/external-secrets -n external-secrets -f values.yaml
+# Update External Secrets using Flux
+flux reconcile kustomization external-secrets --with-source
 ```
 
 ### Secret Store Management
 
 ```bash
-# Update secret store configuration
-kubectl apply -f updated-cluster-secret-store.yaml
-
 # Check secret store status
 kubectl get clustersecretstores -A -o wide
 ```

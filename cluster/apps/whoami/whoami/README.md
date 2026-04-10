@@ -110,8 +110,8 @@ kubectl get helmreleases -n whoami
 ### Service Management
 
 ```bash
-# Scale service
-kubectl scale deployment whoami -n whoami --replicas=3
+# Scale service: edit replicas in values.yaml, then reconcile
+flux reconcile kustomization whoami --with-source
 
 # Restart service
 kubectl rollout restart deployment whoami -n whoami

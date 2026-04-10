@@ -1,8 +1,8 @@
-# Minecraft Bedrock Connect - Cross-Platform Bridge
+# Minecraft Bedrock Connect - Server List Tool
 
 ## Overview
 
-Minecraft Bedrock Connect is a proxy service that enables cross-platform play between Minecraft Bedrock Edition and Java Edition. In the spruyt-labs homelab, this service allows players on different platforms to connect and play together seamlessly.
+Minecraft Bedrock Connect is a DNS redirect and server list tool that allows Minecraft Bedrock Edition players on consoles (Xbox, PlayStation, Switch) to connect to third-party servers. It works by redirecting DNS queries for featured servers to the Bedrock Connect server, which presents a custom server list UI. In the spruyt-labs homelab, this enables console players to join self-hosted Minecraft servers that aren't on the official featured server list.
 
 ## Prerequisites
 

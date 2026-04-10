@@ -11,6 +11,7 @@ Qdrant is a high-performance vector similarity search engine and vector database
 - Network connectivity for search operations
 - Proper resource allocation for vector computations
 - Monitoring for performance metrics
+- Kyverno deployed (dependency - required for init container policies)
 
 ### Validation
 

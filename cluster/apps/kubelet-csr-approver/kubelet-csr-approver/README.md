@@ -92,9 +92,8 @@ kubectl logs -n kubelet-csr-approver deploy/kubelet-csr-approver
 ### Updates
 
 ```bash
-# Update kubelet CSR approver
-helm repo update
-helm upgrade kubelet-csr-approver kubelet-csr-approver/kubelet-csr-approver -n kubelet-csr-approver -f values.yaml
+# Update kubelet CSR approver using Flux
+flux reconcile kustomization kubelet-csr-approver --with-source
 ```
 
 ### CSR Management

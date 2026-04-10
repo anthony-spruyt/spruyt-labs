@@ -4,7 +4,7 @@
 
 [Brief description of the component, its purpose, and role in the homelab.]
 
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the target namespace specified in ks.yaml.
+> **Note**: HelmRelease resources are created in the target namespace specified by ks.yaml `targetNamespace`.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@
 ```bash
 # Check status
 kubectl get pods -n [namespace]
-flux get helmrelease -n flux-system [component]
+flux get helmrelease -n [namespace] [component]
 
 # Force reconcile (GitOps approach)
 flux reconcile kustomization [component] --with-source

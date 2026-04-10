@@ -95,9 +95,8 @@ kubectl get pods -A -l cluster-name=<cluster-name>
 ### Updates
 
 ```bash
-# Update CNPG operator
-helm repo update
-helm upgrade cnpg-operator cloudnative-pg/cloudnative-pg -n cnpg-system -f values.yaml
+# Update CNPG operator using Flux
+flux reconcile kustomization cnpg-operator --with-source
 ```
 
 ### Database Management

@@ -8,9 +8,7 @@ Mosquitto is an open-source MQTT broker that implements the MQTT protocol for li
 
 - Kubernetes cluster with Flux CD installed
 - Storage class configured for persistent volumes
-- Ingress controller configured for MQTT protocol
 - TLS certificates available for secure MQTT connections
-- Rook Ceph storage provisioned (dependency)
 
 ## Operation
 

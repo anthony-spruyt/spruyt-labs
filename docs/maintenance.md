@@ -92,7 +92,7 @@ Renovate automates dependency updates. See [.claude/rules/renovate.md](../.claud
 
 ### Quarterly Maintenance
 
-1. Review all Renovate configuration files in `.github/renovate/`
+1. Review the Renovate configuration file `.github/renovate.json5`
 2. Monitor update success rates and system stability
 3. Audit manager coverage for all dependency types
 

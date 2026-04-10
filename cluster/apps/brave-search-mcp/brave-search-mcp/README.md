@@ -31,7 +31,7 @@ kubectl logs -n brave-search-mcp -l app.kubernetes.io/name=brave-search-mcp
 ## Access
 
 - **In-cluster only**: `http://brave-search-mcp.brave-search-mcp.svc:8000/mcp`
-- **Network policies**: Ingress from claude-agents-read and claude-agents-write namespaces only; egress to api.search.brave.com only
+- **Network policies**: Ingress from claude-agents-read, claude-agents-write, and coder-system namespaces; egress to api.search.brave.com only
 
 ## Troubleshooting
 

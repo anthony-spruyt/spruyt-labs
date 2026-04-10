@@ -18,9 +18,6 @@ Traefik is a modern HTTP reverse proxy and load balancer that serves as the ingr
 1. **Ingress route management**:
 
 ```bash
-# Add new ingress route
-kubectl apply -f ingress/<workload>/ingress-route.yaml
-
 # Check ingress route status
 kubectl get ingressroutes -A -o wide
 ```
@@ -92,19 +89,8 @@ kubectl port-forward svc/traefik -n traefik 9000:9000
 ### Updates
 
 ```bash
-# Update Traefik Helm chart
-helm repo update
-helm upgrade traefik traefik/traefik -n traefik -f values.yaml
-```
-
-### Ingress Route Management
-
-```bash
-# Add new ingress route
-kubectl apply -f ingress/<workload>/ingress-route.yaml
-
-# Update existing ingress route
-kubectl apply -f ingress/<workload>/updated-ingress-route.yaml
+# Update Traefik using Flux
+flux reconcile kustomization traefik --with-source
 ```
 
 ## References

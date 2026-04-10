@@ -1,119 +1,63 @@
-# Victoria Metrics Secret Writer
+# Victoria Metrics Secret Writer - etcd TLS Certificate Provisioner
 
-## Summary
+## Overview
 
-Victoria Metrics Secret Writer automates the creation and management of Kubernetes secrets containing VictoriaMetrics configuration, credentials, and sensitive data. This component ensures secure and automated secret provisioning for the observability stack.
+One-shot Kubernetes Job that copies etcd TLS certificates from the host filesystem into a Kubernetes secret (`etcd-secrets`) in the `observability` namespace. This enables VictoriaMetrics to scrape etcd metrics over TLS.
 
-## Preconditions
+**Priority**: standard
 
-- Kubernetes cluster with FluxCD active
-- RBAC permissions for secret creation and management
-- Service account with appropriate permissions
-- Target namespaces exist for secret deployment
+> **Note**: This is a Job (not a Deployment). It runs once, copies the certs, and exits. To re-run, delete the completed Job and reconcile.
+
+## Prerequisites
+
+- Kubernetes cluster with Flux CD
+- Control plane nodes with etcd TLS certificates at `/system/secrets/etcd/`
+
+## Architecture
+
+The Job:
+
+1. Schedules on a control plane node (nodeAffinity + toleration)
+2. Mounts `/system/secrets/etcd` via hostPath
+3. Uses `bitnami/kubectl` to create/update the `etcd-secrets` secret from `ca.crt`, `server.crt`, and `server.key`
+4. Runs as the `secrets-writer` ServiceAccount with a Role scoped to secrets CRUD in the `observability` namespace
 
 ## Operation
 
-### Monitoring Commands
+### Key Commands
 
 ```bash
-# Check secret writer deployment
-kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-secret-writer
+# Check Job status
+kubectl get jobs -n observability etcd-secret-writer
 
-# Verify service account
-kubectl get sa -n observability victoria-metrics-secret-writer
+# Check if the secret was created
+kubectl get secret -n observability etcd-secrets
 
-# Check RBAC permissions
-kubectl get role,rolebinding -n observability | grep victoria-metrics
+# Force re-run (delete completed Job, then reconcile)
+kubectl delete job -n observability etcd-secret-writer
+flux reconcile kustomization victoria-metrics-secret-writer --with-source
 
-# Monitor secret creation
-kubectl get secrets -A --field-selector=type=victoriametrics.com/managed
+# View Job logs
+kubectl logs -n observability -l job-name=etcd-secret-writer
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### Symptom: Secrets not being created
+1. **Job stuck in Pending**
+   - **Symptom**: Pod not scheduled
+   - **Resolution**: Verify control plane node has the `node-role.kubernetes.io/control-plane` label and the toleration is correct
 
-**Diagnosis**:
+2. **Job fails with permission denied**
+   - **Symptom**: Pod logs show RBAC or filesystem errors
+   - **Resolution**: Check `secrets-writer` ServiceAccount, Role, and RoleBinding exist in `observability` namespace. Verify etcd certs are readable at `/system/secrets/etcd/` on control plane nodes.
 
-- Check secret writer logs for permission errors
-- Verify service account RBAC configuration
-- Review target namespace existence and accessibility
-
-**Resolution**:
-
-1. Validate service account permissions with `kubectl auth can-i`
-2. Check target namespace labels and annotations
-3. Review secret writer configuration in values.yaml
-
-#### Symptom: Secret content malformed or incomplete
-
-**Diagnosis**:
-
-- Examine secret writer logs for template errors
-- Verify input data sources and templates
-- Check for missing or incorrect values in configuration
-
-**Resolution**:
-
-1. Validate template syntax in configuration
-2. Check source data availability and format
-3. Review secret structure requirements
-
-## Validation
-
-### Expected Outcomes
-
-1. **Deployment Success**: Secret writer pod shows `Running` status
-2. **RBAC Functional**: Service account has required permissions
-3. **Secret Creation**: Target secrets created with correct structure
-4. **Content Validation**: Secrets contain expected VictoriaMetrics configuration
-
-### Validation Commands
-
-```bash
-# Verify deployment status
-kubectl get deployment -n observability victoria-metrics-secret-writer -o json | jq '.status.availableReplicas'
-
-# Check service account permissions
-kubectl auth can-i create secrets --as=system:serviceaccount:observability:victoria-metrics-secret-writer
-
-# Validate secret creation
-kubectl get secrets -n <target-namespace> --field-selector=type=victoriametrics.com/managed
-
-# Check secret content structure
-kubectl get secret -n <target-namespace> <secret-name> -o json | jq '.data | keys'
-```
-
-## Escalation
-
-- **RBAC Issues**: Contact security team for permission troubleshooting
-- **Secret Format Problems**: Engage observability team for configuration
-- **Template Errors**: Consult with Helm maintainers for syntax
-- **Namespace Access**: Escalate to cluster administrators for cross-namespace permissions
-
-## Maintenance
-
-### Updates
-
-1. Review secret structure changes in new versions
-2. Test template updates in staging environment
-3. Update values.yaml for new secret requirements
-
-### Backups
-
-1. Secret content managed by Git and Flux
-2. Configuration backed up via Velero
-3. Verify backup status: `velero get backups | grep observability`
+3. **Secret not updated after cert rotation**
+   - **Symptom**: `etcd-secrets` contains stale certificates
+   - **Resolution**: Delete the completed Job and reconcile to re-run it
 
 ## References
 
-- [VictoriaMetrics Documentation](https://docs.victoriametrics.com/)
-- [Kubernetes Secrets Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [RBAC for Service Accounts](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-- [Helm Secret Management Patterns](https://helm.sh/docs/chart_best_practices/values/)
-
-## Change History
-
-- **2025-12-04**: Initial documentation created during documentation maintenance workflow
+- [VictoriaMetrics etcd Monitoring](https://docs.victoriametrics.com/)
+- [Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/)

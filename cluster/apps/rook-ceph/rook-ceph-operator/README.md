@@ -76,7 +76,7 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
 
    ```bash
    kubectl get cephcluster -n rook-ceph
-   kubectl ceph status
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
 3. Monitor storage classes:
@@ -90,7 +90,7 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
 1. Check cluster health:
 
    ```bash
-   kubectl ceph health
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health
    ```
 
 2. View OSD status:
@@ -158,7 +158,7 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
 | `task dev-env:lint`                                     | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
 | `flux diff hr rook-ceph-operator --namespace rook-ceph` | Previews rendered Helm changes before reconciliation.                                            |
 | `kubectl get pods -n rook-ceph`                         | Validates pod deployment and readiness.                                                          |
-| `kubectl ceph status`                                   | Ensures Ceph cluster health.                                                                     |
+| `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status` | Ensures Ceph cluster health.                                                                     |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -168,4 +168,4 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
 - Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
 - Storage operations: [cluster/apps/README.md](/cluster/apps/README.md)
 - Rook Ceph documentation: <https://rook.io/docs/rook/latest/>
-- Rook Ceph Helm chart: <https://github.com/rook/rook/tree/master/deploy/charts/rook-ceph-cluster>
+- Rook Ceph Helm chart: <https://github.com/rook/rook/tree/master/deploy/charts/rook-ceph>

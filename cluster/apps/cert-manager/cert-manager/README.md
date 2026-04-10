@@ -18,7 +18,6 @@ cert-manager is a native Kubernetes certificate management controller that autom
 ## Prerequisites
 
 - Kubernetes cluster with Flux CD installed
-- Ingress controller configured
 - DNS records properly configured for domains
 - Cluster issuer credentials available
 
@@ -102,18 +101,6 @@ flux reconcile kustomization cert-manager --with-source
 
 # Update existing issuer using Flux
 flux reconcile kustomization cert-manager --with-source
-```
-
-### Backups
-
-```bash
-# Backup cert-manager configuration
-kubectl get clusterissuers -o yaml > cert-manager-clusterissuers-backup.yaml
-kubectl get certificates -A -o yaml > cert-manager-certificates-backup.yaml
-
-# Restore from backup
-kubectl apply -f cert-manager-clusterissuers-backup.yaml
-kubectl apply -f cert-manager-certificates-backup.yaml
 ```
 
 ## References

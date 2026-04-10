@@ -7,10 +7,12 @@ RedisInsight is a powerful visualization and management tool for Redis databases
 ## Prerequisites
 
 - Kubernetes cluster with Flux CD installed
-- Redis or Valky instances available
+- Redis or Valkey instances available
 - Network connectivity between RedisInsight and data stores
 - Proper RBAC permissions for monitoring
 - Browser access for web interface
+- Authentik deployed (dependency)
+- Valkey deployed (dependency)
 
 ## Operation
 
@@ -88,12 +90,11 @@ kubectl get helmreleases -n redisinsight
 
 ### Database Management
 
-```bash
-# Add new database connection
-kubectl apply -f new-database-config.yaml
+Database connections are managed through the RedisInsight web UI or via values.yaml configuration. Edit the values file and reconcile with Flux:
 
-# Remove database connection
-kubectl delete -f old-database-config.yaml
+```bash
+# Reconcile after configuration changes
+flux reconcile kustomization redisinsight --with-source
 ```
 
 ## References

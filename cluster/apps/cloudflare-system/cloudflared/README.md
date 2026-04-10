@@ -54,12 +54,11 @@ kubectl exec -n cloudflare-system deploy/cloudflared -- cloudflared tunnel metri
 3. **Configuration updates**:
 
 ```bash
-# Update cloudflared configuration
-kubectl apply -f updated-values.yaml
+# Reconcile cloudflared configuration changes
+flux reconcile kustomization cloudflared --with-source
 
 # Restart cloudflared
 kubectl rollout restart deploy/cloudflared -n cloudflare-system
-
 ```
 
 ## Troubleshooting
@@ -88,9 +87,8 @@ kubectl rollout restart deploy/cloudflared -n cloudflare-system
 ### Updates
 
 ```bash
-# Update cloudflared
-helm repo update
-helm upgrade cloudflared cloudflare/cloudflared -n cloudflare-system -f values.yaml
+# Update cloudflared using Flux (uses app-template OCIRepository, not a Cloudflare Helm chart)
+flux reconcile kustomization cloudflared --with-source
 ```
 
 ### Tunnel Management
@@ -98,9 +96,6 @@ helm upgrade cloudflared cloudflare/cloudflared -n cloudflare-system -f values.y
 ```bash
 # Check tunnel status
 kubectl exec -n cloudflare-system deploy/cloudflared -- cloudflared tunnel list
-
-# Update tunnel configuration
-kubectl apply -f updated-cloudflared-values.yaml
 ```
 
 ## References

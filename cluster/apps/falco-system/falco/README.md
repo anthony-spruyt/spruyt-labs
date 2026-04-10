@@ -2,7 +2,7 @@
 
 ## Overview
 
-Falco is a cloud-native runtime security tool that monitors system calls to detect anomalous behavior and potential threats. Deployed as high-priority (Tier 2) security observability infrastructure.
+Falco is a cloud-native runtime security tool that monitors system calls to detect anomalous behavior and potential threats. Deployed as high-priority security observability infrastructure.
 
 Components:
 
@@ -23,7 +23,7 @@ Components:
 ```bash
 # Check status
 kubectl get pods -n falco-system
-flux get helmrelease -n flux-system falco
+flux get helmrelease -n falco-system falco
 
 # Force reconcile (GitOps approach)
 flux reconcile kustomization falco --with-source

@@ -37,14 +37,14 @@ kubectl top pods -n observability --selector=app.kubernetes.io/name=victoria-log
 
 **Diagnosis**:
 
-- Verify fluent-bit or vector sidecar injection
+- Verify the separate vector deployment is running and collecting logs
 - Check log collection annotations on application pods
 - Review network policies for observability namespace
 
 **Resolution**:
 
 1. Add required annotations to application deployments
-2. Verify sidecar container status in application pods
+2. Verify the vector deployment status in the observability namespace
 3. Check Cilium network policies for log collection traffic
 
 #### Symptom: High storage usage or retention issues
