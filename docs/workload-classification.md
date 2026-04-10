@@ -100,7 +100,7 @@ CPU limits protect hardware from thermal throttling caused by unbounded workload
 | Namespace       | Workload                             | Rationale            |
 | --------------- | ------------------------------------ | -------------------- |
 | headlamp-system | headlamp                             | Kubernetes dashboard |
-| minecraft       | minecraft-bedrock-*, bedrock-connect | Gaming servers       |
+| minecraft       | crafty-controller, bedrock-connect   | Gaming servers       |
 | foundryvtt      | foundryvtt                           | Gaming (D&D)         |
 | redisinsight    | redisinsight                         | Redis GUI            |
 | whoami          | whoami                               | Test/debug service   |

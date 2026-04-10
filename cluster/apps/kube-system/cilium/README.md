@@ -43,9 +43,6 @@ kubectl get nodes -o wide
 1. **Network policy management**:
 
 ```bash
-# Apply network policy
-kubectl apply -f network-policy.yaml
-
 # Check network policies
 kubectl get networkpolicies -A
 ```
@@ -96,33 +93,15 @@ kubectl get ciliumloadbalancerippools -n kube-system
 ### Updates
 
 ```bash
-# Update Cilium Helm chart
-helm repo update
-helm upgrade cilium cilium/cilium -n kube-system -f values.yaml
+# Update Cilium using Flux
+flux reconcile kustomization cilium --with-source
 ```
 
 ### BGP Management
 
 ```bash
-# Update BGP configuration
-kubectl apply -f updated-bgp-config.yaml
-
 # Check BGP route advertisements
 kubectl get bgpadvertisements -n kube-system -o wide
-```
-
-### Backups
-
-```bash
-# Backup Cilium configuration
-kubectl get bgppeers -n kube-system -o yaml > cilium-bgp-peers-backup.yaml
-kubectl get bgpadvertisements -n kube-system -o yaml > cilium-bgp-ads-backup.yaml
-kubectl get ciliumnetworkpolicies -A -o yaml > cilium-network-policies-backup.yaml
-
-# Restore from backup
-kubectl apply -f cilium-bgp-peers-backup.yaml
-kubectl apply -f cilium-bgp-ads-backup.yaml
-kubectl apply -f cilium-network-policies-backup.yaml
 ```
 
 ## References

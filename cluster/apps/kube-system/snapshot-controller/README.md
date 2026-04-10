@@ -18,9 +18,6 @@ Snapshot Controller provides Kubernetes-native volume snapshot capabilities, ena
 1. **Volume snapshot management**:
 
 ```bash
-# Create volume snapshot
-kubectl apply -f volumesnapshot.yaml
-
 # Check snapshot status
 kubectl get volumesnapshots -A
 ```
@@ -30,17 +27,11 @@ kubectl get volumesnapshots -A
 ```bash
 # Check snapshot classes
 kubectl get volumesnapshotclasses
-
-# Create snapshot class
-kubectl apply -f volumesnapshotclass.yaml
 ```
 
 3. **Restore operations**:
 
 ```bash
-# Create volume from snapshot
-kubectl apply -f pvc-from-snapshot.yaml
-
 # Check restore status
 kubectl get pvc -A
 ```
@@ -71,8 +62,8 @@ kubectl get pvc -A
 ### Updates
 
 ```bash
-# Update snapshot controller
-kubectl apply -k . --force
+# Update snapshot controller using Flux
+flux reconcile kustomization snapshot-controller --with-source
 ```
 
 ### Snapshot Management
