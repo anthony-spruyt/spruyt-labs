@@ -2,7 +2,7 @@
 
 ## Overview
 
-GitHub MCP (Model Context Protocol) server that provides GitHub API access to Claude agents. It uses a read-tier GitHub App installation token for all API operations (issues, PRs, code search, repository contents). The server runs in HTTP transport mode on port 8082 inside the `github-mcp` namespace and is accessible only to permitted workloads via Cilium network policies.
+GitHub MCP (Model Context Protocol) server that provides GitHub API access to Claude agents. It uses a read-tier GitHub App installation token for all API operations (issues, PRs, code search, repository contents). The server uses a two-container architecture: the `app` container (github-mcp-server) runs on port 8083, while a `auth-proxy` container (Caddy) handles API key authentication and exposes port 8082 via the Kubernetes Service. Accessible only to permitted workloads via Cilium network policies.
 
 The read-tier token is synced from `github-system` by an ESO ExternalSecret and refreshed whenever `github-token-rotation` runs.
 
@@ -21,7 +21,7 @@ The read-tier token is synced from `github-system` by an ESO ExternalSecret and 
 ```bash
 # Check deployment and pod status
 kubectl get pods -n github-mcp
-flux get helmrelease -n flux-system github-mcp-server
+flux get helmrelease -n github-mcp github-mcp-server
 
 # Force reconcile
 flux reconcile kustomization github-mcp-server --with-source

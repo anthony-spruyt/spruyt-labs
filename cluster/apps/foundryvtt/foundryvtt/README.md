@@ -192,7 +192,7 @@ Monitor and adjust based on usage:
 
 - **Memory**: Increase NODE_OPTIONS --max-old-space-size for large worlds
 - **CPU**: Adjust UV_THREADPOOL_SIZE based on concurrent users
-- **Storage**: Monitor disk usage: `kubectl exec -n foundryvtt foundryvtt-0 -- df -h /data`
+- **Storage**: Monitor disk usage via PVC: `kubectl get pvc -n foundryvtt`
 
 ## References
 

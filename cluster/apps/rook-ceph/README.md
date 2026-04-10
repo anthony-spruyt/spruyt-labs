@@ -12,9 +12,10 @@ Objectives:
 
 ## Current Version
 
-- **Operator Chart Version**: v1.18.7 (rook-ceph)
-- **Cluster Chart Version**: v1.18.7 (rook-ceph-cluster)
-- **Last Updated**: Check `cluster/apps/rook-ceph/rook-ceph-operator/app/release.yaml` and `cluster/apps/rook-ceph/rook-ceph-cluster/app/release.yaml` for current pinned versions
+Chart versions are managed by Renovate and Flux. Check the release files for current pinned versions:
+
+- **Operator**: `cluster/apps/rook-ceph/rook-ceph-operator/app/release.yaml`
+- **Cluster**: `cluster/apps/rook-ceph/rook-ceph-cluster/app/release.yaml`
 
 ## Prerequisites
 

@@ -19,10 +19,9 @@ Technitium Secondary is a replica DNS server that provides redundant DNS service
 
 1. **DNS zone synchronization**:
 
-   ```bash
-   # Check zone transfer status
-   kubectl exec -it <technitium-secondary-pod> -n technitium -- technitium check-sync
+   Zone synchronization status is managed through the Technitium web UI or its HTTP API.
 
+   ```bash
    # Monitor zone transfer logs
    kubectl logs -n technitium <technitium-secondary-pod> | grep "transfer"
    ```
@@ -53,9 +52,7 @@ Run the following commands to validate the procedures:
 
 ```bash
 # Validate DNS zone synchronization
-kubectl exec -it <technitium-secondary-pod> -n technitium -- technitium check-sync
-
-# Expected: Synchronization status displayed
+# Use the Technitium web UI or HTTP API to verify sync status
 
 # Validate performance monitoring
 kubectl top pods -n technitium | grep secondary
@@ -105,18 +102,12 @@ kubectl get pods -n technitium --no-headers | grep secondary | grep 'Running'
 flux reconcile kustomization technitium-secondary --with-source
 
 # Check update status
-kubectl get helmreleases -n technitium | grep secondary
+flux get hr -n technitium technitium-secondary
 ```
 
 ### Zone Synchronization
 
-```bash
-# Force zone transfer
-kubectl exec -it <technitium-secondary-pod> -n technitium -- technitium force-sync
-
-# Check synchronization status
-kubectl exec -it <technitium-secondary-pod> -n technitium -- technitium sync-status
-```
+Zone synchronization is managed through the Technitium web UI or its HTTP API. There is no CLI tool for Technitium sync management.
 
 ## References
 

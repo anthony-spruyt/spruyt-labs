@@ -7,6 +7,9 @@ Victoria Metrics k8s stack provides comprehensive monitoring, alerting, and visu
 ## Preconditions
 
 - Kubernetes cluster operational with FluxCD reconciliation active
+- victoria-metrics-operator (dependsOn)
+- external-secrets (dependsOn)
+- authentik (dependsOn)
 - Storage class configured for persistent volume claims
 - Network connectivity between observability namespace and other cluster components
 - Appropriate RBAC permissions for service accounts
@@ -79,8 +82,8 @@ kubectl get deployment -n observability victoria-metrics-k8s-stack -o json | jq 
 # Test metrics endpoint
 kubectl exec -n observability <victoria-metrics-pod> -- curl -s "http://localhost:8428/api/v1/query?query=up"
 
-# Check alertmanager configuration
-kubectl get secret -n observability victoria-metrics-k8s-stack-alertmanager -o yaml
+# Check alertmanager secret exists
+kubectl get secret -n observability victoria-metrics-k8s-stack-alertmanager
 ```
 
 ## Escalation

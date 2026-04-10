@@ -10,7 +10,6 @@ Flux Operator is a Kubernetes operator that manages Flux deployments using custo
 - Git repository accessible from cluster
 - SSH keys or credentials for Git access
 - Proper network connectivity to Git repository
-- Flux instance already deployed
 
 ## Operation
 

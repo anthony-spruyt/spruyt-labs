@@ -76,7 +76,7 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 
    ```bash
    kubectl get cephcluster -n rook-ceph
-   kubectl ceph status
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
 3. Monitor OSD status:
@@ -90,13 +90,13 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 1. Check cluster health:
 
    ```bash
-   kubectl ceph health
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health
    ```
 
 2. View cluster details:
 
    ```bash
-   kubectl ceph cluster status
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
 3. Access toolbox for debugging:
@@ -131,7 +131,7 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 ### Validation
 
 - `kubectl get cephcluster -n rook-ceph` shows healthy Ceph clusters.
-- `kubectl ceph health` reports HEALTH_OK or HEALTH_WARN.
+- `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health` reports HEALTH_OK or HEALTH_WARN.
 - `kubectl get storageclass` shows Ceph storage classes available.
 - `flux get helmrelease rook-ceph-cluster -n rook-ceph` reports `Ready=True` with no pending upgrades.
 
@@ -158,7 +158,7 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 | `task dev-env:lint`                                    | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
 | `flux diff hr rook-ceph-cluster --namespace rook-ceph` | Previews rendered Helm changes before reconciliation.                                            |
 | `kubectl get cephcluster -n rook-ceph`                 | Validates Ceph cluster deployment.                                                               |
-| `kubectl ceph status`                                  | Ensures cluster health.                                                                          |
+| `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status` | Ensures cluster health.                                                                          |
 
 <!-- markdownlint-enable MD013 -->
 

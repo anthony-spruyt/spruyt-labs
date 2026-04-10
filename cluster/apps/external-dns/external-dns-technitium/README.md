@@ -7,7 +7,7 @@ ExternalDNS is a Kubernetes controller that automatically manages DNS records ba
 ## Prerequisites
 
 - Kubernetes cluster with Flux CD installed
-- Technitium DNS server configured and accessible
+- Technitium DNS server deployed and operational (Flux dependsOn: technitium)
 - Proper DNS zone configuration in Technitium
 - API credentials for Technitium DNS server
 - Network connectivity to Technitium DNS server

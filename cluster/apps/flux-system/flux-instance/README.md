@@ -7,6 +7,7 @@ Flux is a GitOps continuous delivery solution that automates the deployment and 
 ## Prerequisites
 
 - Kubernetes cluster with proper RBAC configured
+- flux-operator deployed and operational (Flux dependsOn: flux-operator)
 - Git repository accessible from cluster
 - SSH keys or credentials for Git access
 - Proper network connectivity to Git repository
@@ -38,11 +39,11 @@ flux reconcile kustomization <name> --with-source
 3. **Drift detection**:
 
    ```bash
-   # Check for drift
-   flux get status --watch
+   # Check all kustomizations for drift
+   flux get kustomizations -A
 
-   # Force reconciliation
-   flux reconcile --all
+   # Force reconciliation of a specific kustomization
+   flux reconcile kustomization <name> --with-source
    ```
 
 ### Validation
@@ -61,7 +62,7 @@ flux get kustomizations -A
 # Expected: Kustomizations listed with ready status
 
 # Validate drift detection
-flux get status --watch
+flux get kustomizations -A
 
 # Expected: No drift detected or reconciliation in progress
 ```
@@ -92,17 +93,13 @@ flux get status --watch
 ### Updates
 
 ```bash
-# Update Flux Helm chart
-helm repo update
-helm upgrade flux fluxcd/flux -n flux-system -f values.yaml
+# Update Flux instance using Flux (uses OCIRepository, not a Helm repo)
+flux reconcile kustomization flux-instance --with-source
 ```
 
 ### GitOps Management
 
 ```bash
-# Force full reconciliation
-flux reconcile --all
-
 # Check Flux version
 flux version
 ```

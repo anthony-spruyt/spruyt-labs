@@ -20,7 +20,7 @@ Victoria Metrics Operator manages the lifecycle of VictoriaMetrics custom resour
 kubectl get pods -n observability --selector=app.kubernetes.io/name=victoria-metrics-operator
 
 # Verify CRD status
-kubectl get crd victoriametrics.victoriametrics.com -o yaml
+kubectl get crd vmsingles.operator.victoriametrics.com vmagents.operator.victoriametrics.com
 
 # Check operator logs
 kubectl logs -n observability -l app.kubernetes.io/name=victoria-metrics-operator --tail=50
@@ -78,18 +78,6 @@ kubectl get deployment -n observability victoria-metrics-operator -o json | jq '
 
 # Check operator conditions
 kubectl get pods -n observability -l app.kubernetes.io/name=victoria-metrics-operator -o json | jq '.items[0].status.conditions'
-
-# Test CRD creation
-kubectl apply -f - <<EOF
-apiVersion: operator.victoriametrics.com/v1beta1
-kind: VMCluster
-metadata:
-  name: test-cluster
-  namespace: observability
-spec:
-  retentionPeriod: "1"
-  replicaCount: 1
-EOF
 ```
 
 ## Escalation

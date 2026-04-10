@@ -11,7 +11,9 @@ n8n is a workflow automation tool that connects various applications and service
 - Storage class configured for persistent volumes
 - Ingress controller configured
 - TLS certificates available
-- Rook Ceph storage provisioned (dependency)
+- Authentik deployed (dependency)
+- Valkey deployed (dependency)
+- Claude agents write deployed (dependency)
 
 ## Operation
 
@@ -99,7 +101,7 @@ N8N Community Edition doesn't support OAuth2 natively. SSO is implemented via Au
 ### How It Works
 
 1. User navigates to `https://n8n.${EXTERNAL_DOMAIN}`
-2. Traefik's forwardAuth middleware calls Authentik's embedded outpost
+2. Traefik's forwardAuth middleware calls Authentik's standalone outpost
 3. Authentik authenticates user and injects `X-authentik-email` header
 4. N8N's external hooks (`hooks.js`) read the header and issue a session cookie
 5. User is logged in with their pre-provisioned N8N account
