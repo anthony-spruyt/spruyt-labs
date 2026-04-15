@@ -48,6 +48,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | sungather v1.0.4 with HTTP /health probes starts cleanly in ~36s; no AttributeError, SungrowClient import fixed | sungather image upgrade fix verification | 1 | 2026-03-28 | 2026-03-28 |
 | New app deployment with CNPG dependency: initial Helm install times out (~10m) due to CNPG init + app startup race; Flux auto-retries upgrade which succeeds; kustomization health check fails on stale InProgress status, needs manual `flux reconcile` to clear | Coder first deployment PR #873; CNPG cluster init (PVC provisioning, initdb, multi-attach detach cycle) takes ~30s; app CrashLoopBackOff during DB init; upgrade succeeds once DB healthy | 1 | 2026-04-04 | 2026-04-04 |
 | Rook-ceph patch upgrade (v1.19.x) via OCIRepository bump: cluster chart upgrades first and settles fast; operator HR takes ~60s longer (single operator pod rollout); no OSD/mon restart, HEALTH_OK maintained throughout; Ceph daemon versions unchanged (patch = operator/sidecar only) | Renovate rook-ceph group v1.19.3->v1.19.4 PR #917 | 1 | 2026-04-15 | 2026-04-15 |
+| CNPG plugin-barman-cloud chart minor bump (0.5.0->0.6.0) reconciles via single Helm upgrade (~60-120s); single deployment rollout, no CNPG cluster disruption; metadata-only chart changes reconcile cleanly | Renovate plugin-barman-cloud 0.5.0->0.6.0 PR #920 | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Failure Signatures
 
