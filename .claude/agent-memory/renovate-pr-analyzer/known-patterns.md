@@ -10,6 +10,7 @@ Dependency-specific notes about changelog formats, release patterns, and analysi
 | n8nio/n8n | `.0` minor releases are always pre-release; they stabilize at `.2`+ (e.g., 2.12.0 pre-release -> 2.12.2 stable; 2.13.0 pre-release -> 2.13.2 stable). Renovate picks up pre-release tags from Docker Hub. Always check `gh release list --repo n8n-io/n8n` and verify `prerelease: false` before approving minor bumps. Release tags use `n8n@X.Y.Z` format (not `vX.Y.Z`). | 4 | 2026-03-25 | 2026-03-18 |
 | openclaw/openclaw | GitHub release tags may use `-N` suffix (e.g., `v2026.3.13-1`) when a tag needs re-release due to immutable releases. The npm/Docker version remains the base version (e.g., `2026.3.13`). Try `gh release list` first if exact tag lookup fails. | 1 | 2026-03-16 | 2026-03-16 |
 | cloudnative-pg/charts | Monorepo contains multiple charts (`cluster`, `cloudnative-pg`, `plugin-barman-cloud`). Renovate PR body may embed the wrong chart's release notes (e.g., `cluster-v0.6.0` shown for a `plugin-barman-cloud` bump). Always verify against the correctly-tagged release: `gh release view plugin-barman-cloud-vX.Y.Z --repo cloudnative-pg/charts`. | 1 | 2026-04-15 | 2026-04-15 |
+| github/github-mcp-server | ghcr.io image tags can appear before a matching git tag/GitHub release is published (Renovate picks up the Docker tag early). If `gh release view <tag>` and `gh api .../git/refs/tags/<tag>` both 404, release is unpublished — default to UNKNOWN and recommend waiting. | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Breaking Change False Positives
 
