@@ -48,8 +48,44 @@ export PATH="$HOME/.local/bin:$PATH"
 # Ensure ~/.local/bin is in PATH for future shells
 grep -q 'local/bin' "$HOME/.bashrc" 2>/dev/null || echo 'export PATH="$HOME/.local/bin:$PATH"' >>"$HOME/.bashrc"
 
+echo "Installing rootless Podman..."
+# Remove any moby/docker CLI that shipped with the base image so podman-docker
+# can claim /usr/bin/docker without dpkg file-conflict.
+sudo apt-get remove -y --purge moby-cli moby-engine moby-buildx moby-compose \
+  moby-containerd moby-runc docker-ce-cli docker-ce 2>/dev/null || true
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends \
+  podman \
+  podman-docker \
+  fuse-overlayfs \
+  uidmap \
+  slirp4netns
+
+# Confirm the vscode user has subuid/subgid allocations (required for rootless)
+if ! grep -q '^vscode:' /etc/subuid; then
+  echo "vscode:100000:65536" | sudo tee -a /etc/subuid >/dev/null
+fi
+if ! grep -q '^vscode:' /etc/subgid; then
+  echo "vscode:100000:65536" | sudo tee -a /etc/subgid >/dev/null
+fi
+
+# Suppress the podman-docker "emulated" MOTD on every docker invocation
+sudo mkdir -p /etc/containers
+sudo touch /etc/containers/nodocker
+
+# Default userns=keep-id so bind-mounted paths (e.g. MegaLinter's /tmp/lint
+# with `-u $(id -u):$(id -g)`) retain the invoking user's UID inside the
+# container and writes back through the bind mount succeed.
+mkdir -p "$HOME/.config/containers"
+if ! grep -q 'userns = "keep-id"' "$HOME/.config/containers/containers.conf" 2>/dev/null; then
+  cat >>"$HOME/.config/containers/containers.conf" <<'CONTAINERS_CONF'
+[containers]
+userns = "keep-id"
+CONTAINERS_CONF
+fi
+
 echo ""
-echo "Setting up devcontainer..."
+echo "Setting up devcontainer (repo-specific tooling)..."
 "$SCRIPT_DIR/setup-devcontainer.sh"
 
 echo "Running devcontainer verification tests..."
