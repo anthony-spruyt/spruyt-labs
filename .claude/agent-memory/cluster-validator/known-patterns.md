@@ -51,6 +51,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | CNPG plugin-barman-cloud chart minor bump (0.5.0->0.6.0) reconciles via single Helm upgrade (~60-120s); single deployment rollout, no CNPG cluster disruption; metadata-only chart changes reconcile cleanly | Renovate plugin-barman-cloud 0.5.0->0.6.0 PR #920 | 1 | 2026-04-15 | 2026-04-15 |
 | victoria-metrics-operator chart minor (0.59.3->0.60.0) with pre-merge orphan-delete workaround: new Deployment created with new selector labels, rolling update proceeds normally, old RSes scale to 0/0 with no cleanup needed; operator reconciles all managed workloads (vmagent/vmalert/vmalertmanager) to new config-reloader image within ~30s of pod ready | Renovate PR #919, issue #922, selector-rename pattern (same as #916 victoria-logs-single) | 1 | 2026-04-15 | 2026-04-15 |
 | Crafty-controller image patch bump (arcadiatechnology/crafty-4 4.10.2->4.10.3) via values.yaml: StatefulSet pod rolls ~2-3 min; Helm upgrade completes to v14; no PVC disruption | Renovate PR #913, issue #922, crafty-controller StatefulSet | 1 | 2026-04-15 | 2026-04-15 |
+| victoria-metrics-k8s-stack chart minor bump (0.72.6->0.73.0) with bundled vmsingle/vmagent/vmalert v1.140.0 app images: Helm upgrade takes ~60-120s; operator-managed workloads roll smoothly; no selector-rename issues on this chart bump | Renovate PR #911, issue #922, commit f324ba5b | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Failure Signatures
 
