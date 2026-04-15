@@ -11,9 +11,12 @@ resources:
   - ./vpa.yaml
 configMapGenerator:
   - name: coder-templates
+    # Flat keys (ConfigMap data keys cannot contain "/"); Job mounts with
+    # items[].path to restore the templates/<name>/ layout expected by
+    # push-templates.sh.
     files:
-      - templates/devcontainer/main.tf=./templates/devcontainer/main.tf
-      - templates/devcontainer/README.md=./templates/devcontainer/README.md
-      - templates/devcontainer/.terraform.lock.hcl=./templates/devcontainer/.terraform.lock.hcl
+      - devcontainer__main.tf=./templates/devcontainer/main.tf
+      - devcontainer__README.md=./templates/devcontainer/README.md
+      - devcontainer__.terraform.lock.hcl=./templates/devcontainer/.terraform.lock.hcl
 configurations:
   - ./kustomizeconfig.yaml
