@@ -7,7 +7,7 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "0.72.6"
+    tag: "0.73.0"
   url: oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack
   secretRef:
     name: ghcr-docker-config
