@@ -395,10 +395,13 @@ resource "kubernetes_pod_v1" "main" {
     service_account_name = "coder-workspace"
     restart_policy       = "Never"
 
-    # Root required for Docker-in-Docker; remoteUser in devcontainer.json
-    # switches the agent shell to vscode.
+    # Non-root (UID 1000, vscode) under PSA restricted. The workspace
+    # uses rootless Podman instead of dockerd, so no root is needed.
     security_context {
-      run_as_user = 0
+      run_as_user     = 1000
+      run_as_group    = 1000
+      fs_group        = 1000
+      run_as_non_root = true
     }
 
     # Resolve access URL to Traefik LB internally (avoids Cloudflare hairpin)
@@ -431,7 +434,12 @@ resource "kubernetes_pod_v1" "main" {
       image_pull_policy = "Always"
 
       security_context {
-        privileged = true
+        privileged                 = false
+        allow_privilege_escalation = false
+        read_only_root_filesystem  = false
+        capabilities {
+          drop = ["ALL"]
+        }
       }
 
       dynamic "env" {
