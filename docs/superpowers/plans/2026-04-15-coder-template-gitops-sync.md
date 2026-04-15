@@ -916,7 +916,7 @@ Read docs/templates/readme_template.md
   - Operation:
     - Add a new template: create dir under `app/templates/<name>/`, list files in `configMapGenerator.files`, commit.
     - Manual push (escape hatch): `coder templates push <name> -y` from a dev shell.
-    - Manual rotation: `kubectl -n coder-system create job --from=cronjob/coder-token-rotation rotate-manual`.
+    - Manual rotation: `kubectl -n coder-system create job --from=cronjob/coder-token-rotation rotation-smoke-test`.
   - Troubleshooting: rotation failure, token expired (delete Secret → Flux re-seeds from SOPS → re-run), ConfigMap >1MiB.
   - References: Coder docs on templates and long-lived tokens; Flux Kustomization `force`/`ssa` docs.
 
@@ -1033,4 +1033,4 @@ Add to runbook (optional follow-up task, not part of this plan's acceptance):
 
 - **Token expired, rotation failed:** user re-mints token manually, updates `token` + `token-id` in the live Secret (or deletes Secret to let Flux re-seed from SOPS), triggers the CronJob manually.
 - **Orphan token after partial rotation failure:** `coder tokens list --user gitops-bot` → identify stale tokens → `coder tokens remove <id>` each.
-- **Adding a new template:** create directory under `coder/templates/<name>/`, add its files to the `configMapGenerator.files` list in `app/kustomization.yaml`, commit, push. Job runs automatically on merge.
+- **Adding a new template:** create directory under `cluster/apps/coder-system/coder-template-sync/app/templates/<name>/`, add its files to the `configMapGenerator.files` list in `app/kustomization.yaml`, commit, push. Job runs automatically on merge.
