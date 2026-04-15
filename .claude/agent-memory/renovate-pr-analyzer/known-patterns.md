@@ -36,7 +36,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 |--------|-------------|------:|-----------|-------|
 | `n8nio/n8n` (Docker image) | `n8n-io/n8n` | 3 | 2026-03-25 | 2026-02-25 |
 | `oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator` | `controlplaneio-fluxcd/flux-operator` | 1 | 2026-02-25 | 2026-02-25 |
-| `oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance` | `controlplaneio-fluxcd/flux-operator` (same repo; chart is OCI artifact from operator project) | 1 | 2026-02-25 | 2026-02-25 |
+| `oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance` | `controlplaneio-fluxcd/flux-operator` (same repo; chart is OCI artifact from operator project) | 2 | 2026-04-15 | 2026-02-25 |
 | `oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack` | `VictoriaMetrics/helm-charts` | 1 | 2026-02-25 | 2026-02-25 |
 | Velero Helm chart | `vmware-tanzu/helm-charts` (NOT `vmware-tanzu/velero` which is the app repo). Releases tagged `velero-X.Y.Z`. Chart major bumps may embed Velero app major bumps (e.g., chart 12.0.0 = app 1.18.0). | 2 | 2026-03-18 | 2026-02-25 |
 | `ghcr.io/openclaw/openclaw` (container image) | `openclaw/openclaw` | 4 | 2026-03-16 | 2026-02-25 |
