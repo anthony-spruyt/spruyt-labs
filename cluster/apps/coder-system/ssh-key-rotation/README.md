@@ -37,7 +37,7 @@ flux reconcile kustomization ssh-key-rotation --with-source
 
 2. **NetworkPolicy drops egress**
    - **Symptom**: Job logs `connection refused` to kube-apiserver or GitHub.
-   - **Resolution**: Egress CNPs live in `coder/app/network-policies.yaml` (`allow-ssh-rotation-*`). Confirm the pod label `app: ssh-key-rotation` still matches.
+   - **Resolution**: Egress CNPs live in `app/network-policy.yaml` (`allow-ssh-rotation-*`). Confirm the pod label `app: ssh-key-rotation` still matches.
 
 ## References
 
