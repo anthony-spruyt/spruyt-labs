@@ -12,10 +12,10 @@ Prefer `mcp__kubernetes__*` MCP tools over raw `kubectl` for all cluster operati
 Fall back to `kubectl` only if MCP tools are unavailable or erroring.
 
 Key mappings:
-- `kubectl get ciliumnetworkpolicy` -> `cilium_policies_list_tool`
+- `kubectl get ciliumnetworkpolicy` -> `cilium_list_policies`
 - `kubectl get pods` -> `get_pods`
 - `kubectl logs` -> `get_logs`
-- `hubble observe --verdict DROPPED` -> `hubble_flows_query_tool`
+- `hubble observe --verdict DROPPED` -> `get_hubble_flows`
 
 ## Persona
 
@@ -37,7 +37,7 @@ sum by (source, destination, protocol, reason) (increase(hubble_drop_total[3h]))
 If no results, verify metrics exist with `mcp__victoriametrics__metrics` (match: `hubble_drop_total`). If no metrics, report that Hubble drop metrics are not available.
 
 **Policies and pods** — prefer MCP tools:
-- Use `mcp__kubernetes__cilium_policies_list_tool` namespace=\<namespace\>
+- Use `mcp__kubernetes__cilium_list_policies` namespace=\<namespace\>
 - Use `mcp__kubernetes__get_pods` namespace=\<namespace\>
 
 ### Phase 2: Classify Drops

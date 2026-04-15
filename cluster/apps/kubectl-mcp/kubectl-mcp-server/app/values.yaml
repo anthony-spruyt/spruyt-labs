@@ -18,6 +18,11 @@ controllers:
       app:
         image:
           repository: docker.io/rohitghumare64/kubectl-mcp-server
+          # Tracking `:latest` by digest: upstream tags GitHub releases infrequently
+          # (e.g. v1.24.0 on 2026-02-20) while pushing main commits to `:latest`
+          # continuously. Pinning to a release tag would downgrade. Renovate bumps
+          # the digest; review upstream commits at github.com/rohitg00/kubectl-mcp-server
+          # before merging if behavior changes are a concern.
           tag: latest@sha256:6a3a59b0a8d9936b808fdcb825f53012a3de9298eb5d368c61afae51aeed6ac0
           pullPolicy: IfNotPresent
         args:

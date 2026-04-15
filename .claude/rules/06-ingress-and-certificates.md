@@ -56,7 +56,7 @@ spec:
 
 ## Validation
 
-Prefer MCP tools: `mcp__kubernetes__list_custom_resources` (IngressRoutes), `mcp__kubernetes__certs_list_tool` (Certificates).
+Prefer MCP tools: `mcp__kubernetes__list_custom_resources` (IngressRoutes), `mcp__kubernetes__list_certs` (Certificates).
 
 Fallback:
 ```bash

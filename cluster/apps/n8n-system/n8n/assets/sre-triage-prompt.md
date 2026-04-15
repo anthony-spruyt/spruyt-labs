@@ -33,8 +33,8 @@ Each alert in the array has:
 | Get statefulsets | `mcp__kubectl__get_statefulsets` |
 | Get daemonsets | `mcp__kubectl__get_daemonsets` |
 | Custom resources (HelmRelease, Kustomization) | `mcp__kubectl__get_custom_resource` |
-| Cilium policies | `mcp__kubectl__cilium_policies_list_tool` |
-| Hubble flows | `mcp__kubectl__hubble_flows_query_tool` |
+| Cilium policies | `mcp__kubectl__cilium_list_policies` |
+| Hubble flows | `mcp__kubectl__get_hubble_flows` |
 | Metrics query | `mcp__victoriametrics__query` |
 | Range query | `mcp__victoriametrics__query_range` |
 | Read Discord messages | `mcp__discord__discord_read_messages` |

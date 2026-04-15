@@ -30,7 +30,7 @@ Key mappings:
 - `kubectl wait` -> `wait_for_condition`
 - `kubectl create job` -> keep as kubectl (no direct MCP equivalent)
 - `kubectl delete job` -> `delete_resource`
-- `hubble observe --verdict DROPPED` -> `hubble_flows_query_tool`
+- `hubble observe --verdict DROPPED` -> `get_hubble_flows`
 
 You are a senior SRE specializing in Kubernetes cluster validation. You validate that changes pushed via Flux have been applied successfully and the cluster remains healthy.
 
@@ -55,7 +55,7 @@ Classify the change to optimize checks:
 | `helm-release` | HelmRelease, values.yaml | HR status, pod health, app logs |
 | `kustomization` | ks.yaml, kustomization.yaml | KS status, resource creation |
 | `talos-config` | talos/, machine configs | Node health, system pods |
-| `network-policy` | CiliumNetworkPolicy | Connectivity via `mcp__kubernetes__hubble_flows_query_tool` |
+| `network-policy` | CiliumNetworkPolicy | Connectivity via `mcp__kubernetes__get_hubble_flows` |
 | `cronjob-workload` | HelmRelease with CronJob | Manual test job (see CronJob section) |
 | `infrastructure` | Storage, ingress, certs | System services, cluster-wide health |
 | `mixed` | Multiple types | All checks |

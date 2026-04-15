@@ -28,7 +28,7 @@
 | `kubectl get <crd>` | `get_custom_resource` / `list_custom_resources` |
 | `kubectl api-resources` | `get_api_resources` |
 | `kubectl wait` | `wait_for_condition` |
-| `kubectl top nodes` | `node_top_tool` / `get_node_metrics` |
+| `kubectl top nodes` | `node_top` / `get_node_metrics` |
 | `kubectl top pods` | `get_pod_metrics` |
 | `kubectl get pod conditions` | `get_pod_conditions` |
 | `kubectl patch` | `kubectl_patch` |
@@ -42,7 +42,7 @@
 | `kubectl auth can-i` | `audit_rbac_permissions` |
 | `kubectl cp` | `kubectl_cp` |
 | `kubectl port-forward` | `port_forward` |
-| `hubble observe` | `hubble_flows_query_tool` |
+| `hubble observe` | `get_hubble_flows` |
 | `kubectl get secret` (metadata) | `get_secrets` |
 
 > **Note:** `get_secrets` is deferred -- RBAC currently excludes secrets (Trivy AVD-KSV-0041). `port_forward` may time out for long sessions; consider kubectl fallback for extended debugging.
@@ -51,19 +51,19 @@
 
 | kubectl/CLI Command | MCP Tool |
 |---------------------|----------|
-| `kubectl get ciliumnetworkpolicy` | `cilium_policies_list_tool` / `cilium_policy_get_tool` |
-| `kubectl get ciliumendpoint` | `cilium_endpoints_list_tool` |
-| `cilium status` | `cilium_status_tool` |
-| `hubble observe --verdict DROPPED` | `hubble_flows_query_tool` |
+| `kubectl get ciliumnetworkpolicy` | `cilium_list_policies` / `cilium_get_policy` |
+| `kubectl get ciliumendpoint` | `cilium_list_endpoints` |
+| `cilium status` | `cilium_get_status` |
+| `hubble observe --verdict DROPPED` | `get_hubble_flows` |
 
 ### Cert-Manager Tools
 
 | kubectl Command | MCP Tool |
 |----------------|----------|
-| `kubectl get certificates` | `certs_list_tool` |
-| `kubectl get certificate <name>` | `certs_get_tool` |
-| `kubectl get certificaterequest` | `certs_requests_list_tool` |
-| `kubectl get issuer/clusterissuer` | `certs_issuers_list_tool` / `certs_issuer_get_tool` |
+| `kubectl get certificates` | `list_certs` |
+| `kubectl get certificate <name>` | `get_cert` |
+| `kubectl get certificaterequest` | `list_cert_requests` |
+| `kubectl get issuer/clusterissuer` | `list_cert_issuers` / `get_cert_issuer` |
 
 ## Exceptions (Must Remain kubectl)
 
