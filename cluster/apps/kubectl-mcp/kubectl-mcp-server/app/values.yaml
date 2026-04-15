@@ -23,7 +23,7 @@ controllers:
           # continuously. Pinning to a release tag would downgrade. Renovate bumps
           # the digest; review upstream commits at github.com/rohitg00/kubectl-mcp-server
           # before merging if behavior changes are a concern.
-          tag: latest@sha256:6a3a59b0a8d9936b808fdcb825f53012a3de9298eb5d368c61afae51aeed6ac0
+          tag: latest@sha256:c60ac164a0d69b661c46b1089b269640527bca7f349e8d3f313df26fa45b14f7
           pullPolicy: IfNotPresent
         args:
           - "--transport"
