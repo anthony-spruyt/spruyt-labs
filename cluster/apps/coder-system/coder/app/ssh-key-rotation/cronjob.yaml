@@ -12,123 +12,26 @@ spec:
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
-      backoffLimit: 2
+      backoffLimit: 3
+      ttlSecondsAfterFinished: 86400
       template:
         metadata:
           labels:
             app: ssh-key-rotation
         spec:
-          # TEMP: runs as root so `apk add openssh-keygen` can install the
-          # package at runtime (alpine/k8s image lacks it). Tracked by #921
-          # (Kata Containers) — once workspaces no longer need privileged,
-          # coder-system will drop to PSA restricted and this job moves to a
-          # curated image with ssh-keygen preinstalled.
           securityContext:
-            runAsNonRoot: false
-            runAsUser: 0
-            runAsGroup: 0
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           serviceAccountName: ssh-key-rotation
+          restartPolicy: Never
           containers:
             - name: rotate-ssh-key
-              image: alpine/k8s:1.35.3@sha256:097aa60cbef561146757c7494468e9d7b04d843597ad1a1515ed09d0708c8014
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  set -e
-
-                  # alpine/k8s doesn't include ssh-keygen
-                  apk add --no-cache openssh-keygen
-
-                  TITLE_PREFIX="coder-workspace"
-                  DATE_SUFFIX=$$(date +%Y%m%d)
-                  TITLE="$${TITLE_PREFIX}-$${DATE_SUFFIX}"
-
-                  echo "=== SSH key rotation (auth + signing) ==="
-
-                  # Generate new SSH key pair
-                  ssh-keygen -t ed25519 -f /tmp/id_ed25519 -N "" -C "$${TITLE}"
-                  PUB_KEY=$$(cat /tmp/id_ed25519.pub)
-                  echo "New key generated"
-
-                  # --- Register as AUTHENTICATION key ---
-                  echo "Adding authentication key to GitHub..."
-                  NEW_AUTH_ID=$$(curl -s -X POST \
-                    "https://api.github.com/user/keys" \
-                    -H "Authorization: token $${GITHUB_PAT}" \
-                    -H "Accept: application/vnd.github+json" \
-                    -H "X-GitHub-Api-Version: 2022-11-28" \
-                    -d "{\"key\": \"$${PUB_KEY}\", \"title\": \"$${TITLE}\"}" \
-                    | jq -r '.id')
-
-                  if [ -z "$${NEW_AUTH_ID}" ] || [ "$${NEW_AUTH_ID}" = "null" ]; then
-                    echo "ERROR: Failed to add authentication key to GitHub"
-                    exit 1
-                  fi
-                  echo "Authentication key added with ID: $${NEW_AUTH_ID}"
-
-                  # --- Register as SIGNING key ---
-                  echo "Adding signing key to GitHub..."
-                  NEW_SIGN_ID=$$(curl -s -X POST \
-                    "https://api.github.com/user/ssh_signing_keys" \
-                    -H "Authorization: token $${GITHUB_PAT}" \
-                    -H "Accept: application/vnd.github+json" \
-                    -H "X-GitHub-Api-Version: 2022-11-28" \
-                    -d "{\"key\": \"$${PUB_KEY}\", \"title\": \"$${TITLE}\"}" \
-                    | jq -r '.id')
-
-                  if [ -z "$${NEW_SIGN_ID}" ] || [ "$${NEW_SIGN_ID}" = "null" ]; then
-                    echo "ERROR: Failed to add signing key to GitHub"
-                    exit 1
-                  fi
-                  echo "Signing key added with ID: $${NEW_SIGN_ID}"
-
-                  # --- Clean up old AUTHENTICATION keys ---
-                  echo "Cleaning up old authentication keys..."
-                  curl -s \
-                    "https://api.github.com/user/keys?per_page=100" \
-                    -H "Authorization: token $${GITHUB_PAT}" \
-                    -H "Accept: application/vnd.github+json" \
-                    -H "X-GitHub-Api-Version: 2022-11-28" \
-                    | jq -r ".[] | select(.title | startswith(\"$${TITLE_PREFIX}-\")) | select(.id != $${NEW_AUTH_ID}) | .id" \
-                    | while read OLD_ID; do
-                        echo "Removing old auth key ID: $${OLD_ID}"
-                        curl -s -X DELETE \
-                          "https://api.github.com/user/keys/$${OLD_ID}" \
-                          -H "Authorization: token $${GITHUB_PAT}" \
-                          -H "Accept: application/vnd.github+json" \
-                          -H "X-GitHub-Api-Version: 2022-11-28"
-                      done
-
-                  # --- Clean up old SIGNING keys ---
-                  echo "Cleaning up old signing keys..."
-                  curl -s \
-                    "https://api.github.com/user/ssh_signing_keys?per_page=100" \
-                    -H "Authorization: token $${GITHUB_PAT}" \
-                    -H "Accept: application/vnd.github+json" \
-                    -H "X-GitHub-Api-Version: 2022-11-28" \
-                    | jq -r ".[] | select(.title | startswith(\"$${TITLE_PREFIX}-\")) | select(.id != $${NEW_SIGN_ID}) | .id" \
-                    | while read OLD_ID; do
-                        echo "Removing old signing key ID: $${OLD_ID}"
-                        curl -s -X DELETE \
-                          "https://api.github.com/user/ssh_signing_keys/$${OLD_ID}" \
-                          -H "Authorization: token $${GITHUB_PAT}" \
-                          -H "Accept: application/vnd.github+json" \
-                          -H "X-GitHub-Api-Version: 2022-11-28"
-                      done
-
-                  # --- Update Kubernetes secret ---
-                  echo "Updating Kubernetes secret..."
-                  PRIV_KEY=$$(cat /tmp/id_ed25519 | base64 -w0)
-                  PUB_KEY_B64=$$(echo -n "$${PUB_KEY}" | base64 -w0)
-                  kubectl patch secret coder-ssh-signing-key -n coder-system \
-                    --type='json' \
-                    -p="[{\"op\": \"replace\", \"path\": \"/data/id_ed25519\", \"value\": \"$${PRIV_KEY}\"},{\"op\": \"replace\", \"path\": \"/data/id_ed25519.pub\", \"value\": \"$${PUB_KEY_B64}\"}]"
-
-                  # Clean up
-                  rm -f /tmp/id_ed25519 /tmp/id_ed25519.pub
-
-                  echo "=== SSH key rotation complete (auth + signing) ==="
+              image: ghcr.io/anthony-spruyt/ssh-key-rotation:1.0.0@sha256:1c4166aeca89b2c04bcc6abbfa5493c9f7e8d64c1d6ef48ba448ea5bee0fdefc
+              command: ["/usr/local/bin/rotate-ssh-key.sh"]
               env:
                 - name: GITHUB_PAT
                   valueFrom:
@@ -147,17 +50,13 @@ spec:
                   mountPath: /tmp
               securityContext:
                 allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
                 capabilities:
                   drop:
                     - ALL
-                # apk add needs to write to /var/cache/apk, /var/lib/apk,
-                # /etc/apk and needs root — incompatible with RORFS and
-                # non-root. Mitigated by drop-ALL caps, no priv-escalation,
-                # seccomp runtime/default, restricted ServiceAccount RBAC.
-                readOnlyRootFilesystem: false
-                runAsNonRoot: false
-                runAsUser: 0
-                runAsGroup: 0
                 seccompProfile:
                   type: RuntimeDefault
           volumes:
@@ -165,4 +64,3 @@ spec:
               emptyDir:
                 medium: Memory
                 sizeLimit: 64Mi
-          restartPolicy: OnFailure
