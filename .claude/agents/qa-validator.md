@@ -237,9 +237,13 @@ After determining verdict, record learnings:
    - Observations: linting false positives, schema quirks, doc gaps, failure signatures
    - No new observations: skip to returning result
 3. Auto-prune when file exceeds 50 entries: remove Count=1 entries older than 30 days. Never remove Count >= 3
-4. Commit if changed:
+4. Commit if changed. **STRICT: stage ONLY the patterns file — NEVER `git add -A`, `git add .`, or `git add <dir>`. Never include any other user/staged/unstaged file in this commit, even if already staged. If `git diff --cached` shows anything besides `known-patterns.md`, run `git reset HEAD` to unstage everything, then stage only the patterns file. The calling agent owns all other files and may have uncommitted/staged work in progress.**
+
 ```bash
+git reset HEAD -- . >/dev/null 2>&1 || true   # drop any pre-staged files
 git add /workspaces/spruyt-labs/.claude/agent-memory/qa-validator/known-patterns.md
+# sanity: the staged set must be exactly one file
+test "$(git diff --cached --name-only | wc -l)" = "1" || { echo "refusing to commit: unexpected staged files"; exit 1; }
 git commit -m "fix(agents): update qa-validator patterns from run YYYY-MM-DD"
 ```
 5. Return verdict (APPROVED/BLOCKED). Self-improvement does not change the verdict.

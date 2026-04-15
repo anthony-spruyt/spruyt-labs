@@ -304,10 +304,12 @@ After determining your verdict, record learnings before returning.
    - New: append row with Count=1, Last Seen=today, Added=today
    - No observations: skip to step 5
 3. Auto-prune when file exceeds 50 entries: remove Count=1 entries older than 30 days. Never remove Count >= 3
-4. Commit if changed:
+4. Commit if changed. **STRICT: stage ONLY the patterns file — NEVER `git add -A`, `git add .`, or `git add <dir>`. If `git diff --cached` shows anything besides `known-patterns.md`, run `git reset HEAD` first to unstage the caller's in-progress work.**
+
    ```bash
+   git reset HEAD -- . >/dev/null 2>&1 || true
    git add /workspaces/spruyt-labs/.claude/agent-memory/cluster-validator/known-patterns.md
+   test "$(git diff --cached --name-only | wc -l)" = "1" || { echo "refusing to commit: unexpected staged files"; exit 1; }
    git commit -m "fix(agents): update cluster-validator patterns from run YYYY-MM-DD"
    ```
-   Only stage this one file.
 5. Return your verdict (SUCCESS/ROLLBACK/ROLL-FORWARD). Self-improvement does not change the verdict.
