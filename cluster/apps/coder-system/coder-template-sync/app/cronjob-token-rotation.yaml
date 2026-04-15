@@ -40,15 +40,12 @@ spec:
                     secretKeyRef:
                       name: coder-gitops-bot-token
                       key: token
-                - name: CODER_OLD_TOKEN_ID
-                  valueFrom:
-                    secretKeyRef:
-                      name: coder-gitops-bot-token
-                      key: token-id
                 - name: SECRET_NAME
                   value: coder-gitops-bot-token
                 - name: SECRET_NAMESPACE
                   value: coder-system
+                - name: SECRET_KEY
+                  value: token
                 - name: TOKEN_LIFETIME
                   value: "168h"
                 - name: TOKEN_NAME_PREFIX
