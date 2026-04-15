@@ -20,7 +20,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/github/github-mcp-server
-          tag: v0.33.0@sha256:0371f3ca3128f4fa516672838f8eceaeb3c8f32e0c58725cd5737432588091ff
+          tag: v0.33.1@sha256:078df53ba8b2175dbebd186fabb1a9f59ef365ddbd8c90b134c4f4f66c4a8832
           pullPolicy: IfNotPresent
         args:
           - "http"
