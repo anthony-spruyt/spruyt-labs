@@ -23,4 +23,4 @@ The following Kubernetes Secrets must exist in `coder-system`:
 - `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
 - `coder-talosconfig` — Talos client config mounted at `~/.talos/config`
 - `coder-terraform-credentials` — Terraform credentials at `~/.terraform.d/credentials.tfrc.json`
-- `coder-workspace-env` — Env vars injected into pods (e.g., `CLAUDE_CODE_OAUTH_TOKEN`)
+- `coder-workspace-env` — Env vars injected into pods
