@@ -152,12 +152,12 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 
 <!-- markdownlint-disable MD013 -->
 
-| Step                                                   | Purpose                                                                                          |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `task validate`                                        | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
-| `task dev-env:lint`                                    | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
-| `flux diff hr rook-ceph-cluster --namespace rook-ceph` | Previews rendered Helm changes before reconciliation.                                            |
-| `kubectl get cephcluster -n rook-ceph`                 | Validates Ceph cluster deployment.                                                               |
+| Step                                                              | Purpose                                                                                          |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `task validate`                                                   | Runs repository schema validation (kubeconform, yamllint, conftest) against component manifests. |
+| `task dev-env:lint`                                               | Executes markdownlint, prettier, and ancillary linters to keep documentation compliant.          |
+| `flux diff hr rook-ceph-cluster --namespace rook-ceph`            | Previews rendered Helm changes before reconciliation.                                            |
+| `kubectl get cephcluster -n rook-ceph`                            | Validates Ceph cluster deployment.                                                               |
 | `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status` | Ensures cluster health.                                                                          |
 
 <!-- markdownlint-enable MD013 -->
@@ -246,6 +246,6 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd dump | grep -E "^os
 
 - Runbook standards: [Repository root readme](../../../../README.md#runbook-standards)
 - Flux control plane operations: [cluster/apps/flux-system/flux-instance/README.md](../../../../cluster/apps/flux-system/flux-instance/README.md)
-- Storage operations: [cluster/apps/README.md](/cluster/apps/README.md)
+- Storage operations: [cluster/apps/README.md](../../README.md)
 - Rook Ceph documentation: <https://rook.io/docs/rook/latest/>
 - Rook Ceph cluster Helm chart: <https://github.com/rook/rook/tree/master/deploy/charts/rook-ceph-cluster>
