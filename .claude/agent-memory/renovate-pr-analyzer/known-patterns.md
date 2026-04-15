@@ -9,6 +9,7 @@ Dependency-specific notes about changelog formats, release patterns, and analysi
 | n8nio/n8n | Patch changelog body is always empty (cherry-picked from private repo). Use GitHub compare API (`/compare/n8n@X...n8n@Y`) for actual code changes. | 1 | 2026-02-25 | 2026-02-25 |
 | n8nio/n8n | `.0` minor releases are always pre-release; they stabilize at `.2`+ (e.g., 2.12.0 pre-release -> 2.12.2 stable; 2.13.0 pre-release -> 2.13.2 stable). Renovate picks up pre-release tags from Docker Hub. Always check `gh release list --repo n8n-io/n8n` and verify `prerelease: false` before approving minor bumps. Release tags use `n8n@X.Y.Z` format (not `vX.Y.Z`). | 4 | 2026-03-25 | 2026-03-18 |
 | openclaw/openclaw | GitHub release tags may use `-N` suffix (e.g., `v2026.3.13-1`) when a tag needs re-release due to immutable releases. The npm/Docker version remains the base version (e.g., `2026.3.13`). Try `gh release list` first if exact tag lookup fails. | 1 | 2026-03-16 | 2026-03-16 |
+| cloudnative-pg/charts | Monorepo contains multiple charts (`cluster`, `cloudnative-pg`, `plugin-barman-cloud`). Renovate PR body may embed the wrong chart's release notes (e.g., `cluster-v0.6.0` shown for a `plugin-barman-cloud` bump). Always verify against the correctly-tagged release: `gh release view plugin-barman-cloud-vX.Y.Z --repo cloudnative-pg/charts`. | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Breaking Change False Positives
 
@@ -46,6 +47,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `headlamp` (Helm chart via HelmRepository) | `kubernetes-sigs/headlamp` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-26 | 2026-03-26 |
 | `mcporter` (npm package in init script) | `steipete/mcporter` (releases tagged `vX.Y.Z`; changelog in CHANGELOG.md; npm datasource) | 1 | 2026-03-29 | 2026-03-29 |
 | `felddy/foundryvtt` (Docker image) | `felddy/foundryvtt-docker` (release tags: `vX.Y.Z`; Docker image version tracks Foundry VTT app version; app release notes at `foundryvtt.com/releases/<version>`) | 1 | 2026-04-03 | 2026-04-03 |
+| cloudnative-pg `plugin-barman-cloud` Helm chart | `cloudnative-pg/charts` (monorepo; release tag format: `plugin-barman-cloud-vX.Y.Z`) | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Common NO_IMPACT Scenarios
 
