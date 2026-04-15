@@ -5,3 +5,4 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./coder/ks.yaml
+  - ./coder-template-sync/ks.yaml

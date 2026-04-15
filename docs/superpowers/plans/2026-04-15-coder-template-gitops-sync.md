@@ -47,7 +47,6 @@ Existing files modified:
 | File | Change |
 | ---- | ------ |
 | `cluster/apps/coder-system/kustomization.yaml` | Add `./coder-template-sync` |
-| `cluster/apps/coder-system/coder/app/values.yaml` | Add `CODER_MAX_TOKEN_LIFETIME=8760h` env var |
 | `coder/templates/devcontainer/` | **Moved** via `git mv` to `cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/`. The top-level `coder/` directory is removed if empty after the move. |
 
 ---
@@ -57,8 +56,8 @@ Existing files modified:
 **User-driven; this task is a checklist, not code. Do not proceed past Task 3 without all items done.**
 
 - [x] **Step 1:** Image published: `ghcr.io/anthony-spruyt/coder-gitops:1.0.0@sha256:c28f9673fbdfce4755ac3b17033e9aa67b17b9ea78eaf641b4dcb2d7c945b1a1` (container-images#458 released).
-- [ ] **Step 2:** Bump max token lifetime by adding env var to Coder server. Done in Task 1 below (code change, not manual).
-- [ ] **Step 3:** After Task 1 is deployed, create the headless Coder user and initial token. Run from a shell with `coder` CLI logged in as an owner. **SECURITY: do NOT paste the resulting token into chat, logs, issues, or PRs. Move it directly into the SOPS file per Task 4.**
+- [x] **Step 2:** ~~Bump max token lifetime~~ — dropped. Default `CODER_MAX_ADMIN_TOKEN_LIFETIME=168h` accepted; rotation every 3 days keeps us well under expiry.
+- [ ] **Step 3:** Create the headless Coder user and initial token. Run from a shell with `coder` CLI logged in as an owner. **SECURITY: do NOT paste the resulting token into chat, logs, issues, or PRs. Move it directly into the SOPS file per Task 4.**
 
   ```bash
   coder users create \
@@ -71,8 +70,8 @@ Existing files modified:
   # OSS uses `template-admin`; older versions may use `template_admin`.
   coder organizations members edit-roles gitops-bot template-admin
 
-  # Mint 720h bootstrap token
-  coder tokens create --user gitops-bot --name bootstrap --lifetime 720h
+  # Mint 168h bootstrap token (cluster max for admin role)
+  coder tokens create --user gitops-bot --name bootstrap --lifetime 168h
   # Token prints once. Pipe directly into a file with 0600 perms, then sops-encrypt.
   ```
 
@@ -80,7 +79,12 @@ Existing files modified:
 
 ---
 
-## Task 1: Bump `CODER_MAX_TOKEN_LIFETIME` on Coder server
+## Task 1: ~~Bump `CODER_MAX_TOKEN_LIFETIME`~~ (DROPPED)
+
+Dropped: default cluster-wide max (876600h) and admin-role max (168h) are fine for a 168h rotating token refreshed every 3 days.
+
+<details>
+<summary>Original (superseded)</summary>
 
 **Files:**
 
@@ -116,6 +120,8 @@ git push
 Expected: APPROVED; coder Deployment rolls, `kubectl -n coder-system get deploy coder -o json | jq '.spec.template.spec.containers[0].env[] | select(.name==\"CODER_MAX_TOKEN_LIFETIME\").value'` prints `"8760h"`.
 
 - [ ] **Step 5: Complete Task 0 Step 3 (manual)** — user creates headless user and bootstrap token now.
+
+</details>
 
 ---
 
@@ -615,7 +621,7 @@ kind: CronJob
 metadata:
   name: coder-token-rotation
 spec:
-  schedule: "0 2 * * 0"
+  schedule: "0 2 */3 * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -660,7 +666,7 @@ spec:
                 - name: SECRET_NAMESPACE
                   value: coder-system
                 - name: NEW_TOKEN_LIFETIME
-                  value: "720h"
+                  value: "168h"
                 - name: HOME
                   value: /home/coder
               resources:

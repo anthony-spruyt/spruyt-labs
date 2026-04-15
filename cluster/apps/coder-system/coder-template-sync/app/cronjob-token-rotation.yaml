@@ -1,0 +1,87 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/cronjob-batch-v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: coder-token-rotation
+spec:
+  schedule: "0 2 */3 * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: coder-token-rotation
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: coder-token-rotation
+          automountServiceAccountToken: true
+          restartPolicy: Never
+          containers:
+            - name: rotate
+              image: ghcr.io/anthony-spruyt/coder-gitops:1.0.0@sha256:c28f9673fbdfce4755ac3b17033e9aa67b17b9ea78eaf641b4dcb2d7c945b1a1
+              command: ["/usr/local/bin/rotate-token.sh"]
+              env:
+                - name: CODER_URL
+                  value: "http://coder.coder-system.svc.cluster.local"
+                - name: CODER_SESSION_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: coder-gitops-bot-token
+                      key: token
+                - name: CODER_OLD_TOKEN_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: coder-gitops-bot-token
+                      key: token-id
+                - name: SECRET_NAME
+                  value: coder-gitops-bot-token
+                - name: SECRET_NAMESPACE
+                  value: coder-system
+                - name: NEW_TOKEN_LIFETIME
+                  value: "168h"
+                - name: HOME
+                  value: /home/coder
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+                - name: home
+                  mountPath: /home/coder
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          volumes:
+            - name: tmp
+              emptyDir:
+                medium: Memory
+                sizeLimit: 32Mi
+            - name: home
+              emptyDir:
+                medium: Memory
+                sizeLimit: 32Mi

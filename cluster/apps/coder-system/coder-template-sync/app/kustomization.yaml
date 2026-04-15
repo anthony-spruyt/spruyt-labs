@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./rbac.yaml
+  - ./secret-bootstrap.sops.yaml
+  - ./job-template-push.yaml
+  - ./cronjob-token-rotation.yaml
+  - ./network-policy.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: coder-templates
+    files:
+      - templates/devcontainer/main.tf=./templates/devcontainer/main.tf
+      - templates/devcontainer/README.md=./templates/devcontainer/README.md
+      - templates/devcontainer/.terraform.lock.hcl=./templates/devcontainer/.terraform.lock.hcl
+configurations:
+  - ./kustomizeconfig.yaml
