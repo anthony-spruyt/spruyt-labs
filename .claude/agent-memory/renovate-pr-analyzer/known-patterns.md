@@ -52,6 +52,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `docker.io/rohitghumare64/kubectl-mcp-server` (Docker image) | `rohitg00/kubectl-mcp-server` (GitHub username `rohitg00` does not match Docker namespace `rohitghumare64`; releases tagged `vX.Y.Z` but `latest` tag tracks HEAD ahead of last release) | 1 | 2026-04-15 | 2026-04-15 |
 | `felddy/foundryvtt` (Docker image) | `felddy/foundryvtt-docker` (release tags: `vX.Y.Z`; Docker image version tracks Foundry VTT app version; app release notes at `foundryvtt.com/releases/<version>`) | 1 | 2026-04-03 | 2026-04-03 |
 | cloudnative-pg `plugin-barman-cloud` Helm chart | `cloudnative-pg/charts` (monorepo; release tag format: `plugin-barman-cloud-vX.Y.Z`) | 1 | 2026-04-15 | 2026-04-15 |
+| `quay.io/ceph/ceph` (Ceph container image; codenames: v17 Quincy / v18 Reef / v19 Squid / v20 Tentacle) | No GitHub releases on `ceph/ceph` — release notes at docs.ceph.com/en/latest/releases/. For Rook-Ceph users, bug/regression tracking lives at `rook/rook` issues (search by Ceph codename: "Squid", "Tentacle"). Per-release trackers at tracker.ceph.com. | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Common NO_IMPACT Scenarios
 
@@ -72,6 +73,7 @@ Breaking changes that frequently affect this homelab.
 | Upstream memory regression (worker/server memory usage increase) | Must cross-reference open performance issues against current resource limits. If new baseline approaches or exceeds limits, OOM restarts will occur. | 1 | 2026-02-25 | 2026-02-25 |
 | Velero CSI snapshot restore bugs on Ceph RBD | Rook Ceph + CSI + snapshotMoveData is our primary backup strategy. Any Velero change to VolumeSnapshotContent restore logic (e.g., stripping VolumeSnapshotClassName) breaks DR restore path. Check vmware-tanzu/velero issues for CSI/Ceph/RBD restore before merging. | 1 | 2026-03-18 | 2026-03-18 |
 | openclaw Anthropic model initialization regression (TDZ crash on startup) | Our primary model is always Anthropic; any init-order bug in Anthropic model alias resolution will crash gateway on startup. Check openclaw/openclaw issues for `ANTHROPIC_MODEL_ALIASES` or startup crash reports before merging patch releases. Fixed in v2026.3.13 (PR #45520). | 2 | 2026-03-16 | 2026-03-13 |
+| Ceph major version bump (e.g., Squid v19 → Tentacle v20) while readAffinity/dashboard/prometheus-mgr are enabled | Rook/Ceph majors routinely ship regressions in the mgr/dashboard/prometheus stack for early point releases. Before merging a Ceph major image bump, search rook/rook open issues by the new codename; any open bug touching readAffinity, dashboard, or prometheus mgr module = HIGH_IMPACT given this homelab uses all three. Also honour in-repo `# Issue #N blocks vXX upgrade` comments in `values.yaml` — these are maintainer-imposed gates. | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Changelog Workarounds
 
