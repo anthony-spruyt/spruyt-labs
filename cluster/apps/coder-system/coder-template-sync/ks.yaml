@@ -5,6 +5,10 @@ kind: Kustomization
 metadata:
   name: &app coder-template-sync
   namespace: flux-system
+  labels:
+    # Terraform template sources use ${...} interpolation with nested quotes
+    # that cannot be escaped via $$ without breaking HCL string parsing.
+    substitution.flux.home.arpa/disabled: "true"
 spec:
   targetNamespace: coder-system
   path: ./cluster/apps/coder-system/coder-template-sync/app
