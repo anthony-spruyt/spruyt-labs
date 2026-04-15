@@ -51,6 +51,8 @@ spec:
                   value: coder-system
                 - name: NEW_TOKEN_LIFETIME
                   value: "168h"
+                - name: TOKEN_NAME_PREFIX
+                  value: "gitops-bot"
                 - name: HOME
                   value: /home/coder
               resources:
