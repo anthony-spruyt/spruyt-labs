@@ -56,6 +56,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | coder helm chart patch bump (2.30.6->2.30.7) rolls single coder Deployment pod within ~60-120s; Helm release advances to v3; CNPG cluster and workspace/provisioner pods unaffected; no DB migration | Renovate PR #903, issue #922, commit 5a1ad861 | 1 | 2026-04-15 | 2026-04-15 |
 | flux-operator + flux-instance minor bump (0.45.1->0.46.0) reconciles via rolling flux-operator pod (~2 min), FluxInstance re-reconciles in ~8s, no flux-system controller disruption; downstream KS dependency chain settles within one 60s wait cycle | Renovate PRs #892 + #891, issue #922, commits 2137a40c + c4737865 | 1 | 2026-04-15 | 2026-04-15 |
 | Paired small Renovate image-tag PRs (mcp-discord patch + n8n minor) reconcile in parallel within a single 60s wait cycle; n8n HR briefly shows `Running 'upgrade' action` then settles; discord-mcp Deployment rolls single pod; HR revisions unchanged (values-only image tag bump) | Renovate PRs #887 + #888, issue #922, commits eb09c76d + a4883820 | 1 | 2026-04-15 | 2026-04-15 |
+| vaultwarden image tag switch (testing-alpine -> 1.35.7-alpine stable) via values.yaml triggers single STS pod roll within ~60-120s; HelmRelease advances one revision (v23->v24); pod /alive probe passes immediately; data PVC retained | Issue #929, commit d6507c00, vaultwarden StatefulSet | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Failure Signatures
 
