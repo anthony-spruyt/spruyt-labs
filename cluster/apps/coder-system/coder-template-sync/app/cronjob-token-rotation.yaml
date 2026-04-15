@@ -49,7 +49,7 @@ spec:
                   value: coder-gitops-bot-token
                 - name: SECRET_NAMESPACE
                   value: coder-system
-                - name: NEW_TOKEN_LIFETIME
+                - name: TOKEN_LIFETIME
                   value: "168h"
                 - name: TOKEN_NAME_PREFIX
                   value: "gitops-bot"
