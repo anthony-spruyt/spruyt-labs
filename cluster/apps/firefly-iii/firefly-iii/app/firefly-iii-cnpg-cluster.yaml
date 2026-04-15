@@ -14,7 +14,7 @@ spec:
       database: firefly
       owner: firefly
   enableSuperuserAccess: true
-  imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:664ebfe87d1cda6f429613d265ae1db758eb19ee050a2752ac38e856b0bd24ad"
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:36f19b80864f5ae23bb6ce87166e413154bf8c1b705e893ec8360ebb4791e63e"
   # Single instance for personal finance app (HA optional)
   instances: 1
   monitoring:
