@@ -36,7 +36,7 @@ data "kubernetes_service_v1" "traefik" {
 
 locals {
   namespace      = "coder-system"
-  workspace_name = "coder-${lower(data.coder_workspace.me.id)}"
+  workspace_name = "coder-$${lower(data.coder_workspace.me.id)}"
   # Traefik LB IP for hostAliases (avoids Cloudflare hairpin for agent downloads)
   traefik_lb_ip = data.kubernetes_service_v1.traefik.status[0].load_balancer[0].ingress[0].ip
 
@@ -46,7 +46,7 @@ locals {
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
 
-  workspace_folder = "/workspaces/${replace(element(split("/", replace(local.repo_url, ".git", "")), length(split("/", replace(local.repo_url, ".git", ""))) - 1), ".git", "")}"
+  workspace_folder = "/workspaces/$${replace(element(split("/", replace(local.repo_url, ".git", "")), length(split("/", replace(local.repo_url, ".git", ""))) - 1), ".git", "")}"
 
   # Environment variables passed into the envbuilder container.
   envbuilder_env = {
@@ -55,10 +55,10 @@ locals {
     "ENVBUILDER_GIT_URL" : local.repo_url,
     "ENVBUILDER_INIT_SCRIPT" : coder_agent.main.init_script,
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
-    "ENVBUILDER_CACHE_REPO" : "ghcr.io/anthony-spruyt/envbuilder-cache/${data.coder_workspace.me.name}",
+    "ENVBUILDER_CACHE_REPO" : "ghcr.io/anthony-spruyt/envbuilder-cache/$${data.coder_workspace.me.name}",
     "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
     # Expose as shell variable so devcontainer.json lifecycle commands
-    # using ${containerWorkspaceFolder} expand correctly under envbuilder.
+    # using $${containerWorkspaceFolder} expand correctly under envbuilder.
     "containerWorkspaceFolder" : local.workspace_folder,
   }
 }
@@ -130,11 +130,11 @@ data "coder_parameter" "devcontainer_builder" {
 
 resource "kubernetes_persistent_volume_claim_v1" "workspaces" {
   metadata {
-    name      = "${local.workspace_name}-workspaces"
+    name      = "$${local.workspace_name}-workspaces"
     namespace = local.namespace
     labels = {
-      "app.kubernetes.io/name"     = "${local.workspace_name}-workspaces"
-      "app.kubernetes.io/instance" = "${local.workspace_name}-workspaces"
+      "app.kubernetes.io/name"     = "$${local.workspace_name}-workspaces"
+      "app.kubernetes.io/instance" = "$${local.workspace_name}-workspaces"
       "app.kubernetes.io/part-of"  = "coder"
       "com.coder.resource"         = "true"
       "com.coder.workspace.id"     = data.coder_workspace.me.id
@@ -152,7 +152,7 @@ resource "kubernetes_persistent_volume_claim_v1" "workspaces" {
     storage_class_name = "rbd-fast-delete"
     resources {
       requests = {
-        storage = "${data.coder_parameter.workspaces_volume_size.value}Gi"
+        storage = "$${data.coder_parameter.workspaces_volume_size.value}Gi"
       }
     }
   }
@@ -160,11 +160,11 @@ resource "kubernetes_persistent_volume_claim_v1" "workspaces" {
 
 resource "kubernetes_persistent_volume_claim_v1" "home" {
   metadata {
-    name      = "${local.workspace_name}-home"
+    name      = "$${local.workspace_name}-home"
     namespace = local.namespace
     labels = {
-      "app.kubernetes.io/name"     = "${local.workspace_name}-home"
-      "app.kubernetes.io/instance" = "${local.workspace_name}-home"
+      "app.kubernetes.io/name"     = "$${local.workspace_name}-home"
+      "app.kubernetes.io/instance" = "$${local.workspace_name}-home"
       "app.kubernetes.io/part-of"  = "coder"
       "com.coder.resource"         = "true"
       "com.coder.workspace.id"     = data.coder_workspace.me.id
@@ -182,7 +182,7 @@ resource "kubernetes_persistent_volume_claim_v1" "home" {
     storage_class_name = "rbd-fast-delete"
     resources {
       requests = {
-        storage = "${data.coder_parameter.home_volume_size.value}Gi"
+        storage = "$${data.coder_parameter.home_volume_size.value}Gi"
       }
     }
   }
@@ -340,7 +340,7 @@ resource "coder_script" "code_server" {
     if ! command -v code-server &>/dev/null; then
       curl -fsSL https://code-server.dev/install.sh | sh
     fi
-    exec code-server --auth none --port 13337 --host 127.0.0.1 "${local.workspace_folder}"
+    exec code-server --auth none --port 13337 --host 127.0.0.1 "$${local.workspace_folder}"
   EOT
 }
 
@@ -349,7 +349,7 @@ resource "coder_app" "code_server" {
   slug         = "code-server"
   display_name = "VS Code Web"
   icon         = "/icon/code.svg"
-  url          = "http://localhost:13337?folder=${local.workspace_folder}"
+  url          = "http://localhost:13337?folder=$${local.workspace_folder}"
   share        = "owner"
   subdomain    = false
   open_in      = "slim-window"
