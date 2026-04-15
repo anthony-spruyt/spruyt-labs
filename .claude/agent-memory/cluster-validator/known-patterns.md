@@ -7,7 +7,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Pattern | Context | Count | Last Seen | Added |
 |---------|---------|-------|-----------|-------|
 | firemerge dependency chain (firefly-iii → firemerge → traefik-ingress) takes 3-5 min to fully reconcile | Full cluster reconciliation wait | 11 | 2026-03-29 | 2026-02-24 |
-| flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 5 | 2026-03-18 | 2026-02-25 |
+| flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 6 | 2026-04-15 | 2026-02-25 |
 | authentik dependency chain (authentik → many apps → traefik-ingress) settles within ~90s | Full cluster reconciliation wait after flux-system changes | 11 | 2026-04-15 | 2026-02-25 |
 | CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 7 | 2026-04-04 | 2026-02-28 |
 | YAML comment-only changes (e.g., schema directives, resource-sizing comments) reconcile instantly with no resource drift | Kustomize strips comments, producing identical output | 2 | 2026-03-17 | 2026-03-01 |
@@ -54,6 +54,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | victoria-metrics-k8s-stack chart minor bump (0.72.6->0.73.0) with bundled vmsingle/vmagent/vmalert v1.140.0 app images: Helm upgrade takes ~60-120s; operator-managed workloads roll smoothly; no selector-rename issues on this chart bump | Renovate PR #911, issue #922, commit f324ba5b | 1 | 2026-04-15 | 2026-04-15 |
 | falco helm chart patch bump (8.0.1->8.0.2) triggers DaemonSet rolling restart across all nodes; Helm upgrade takes ~2-3 min during the 'Running upgrade action' phase; falcosidekick deployment rolls in parallel; no eBPF disruption | Renovate PR #905, issue #922, commit 2a565e2f | 1 | 2026-04-15 | 2026-04-15 |
 | coder helm chart patch bump (2.30.6->2.30.7) rolls single coder Deployment pod within ~60-120s; Helm release advances to v3; CNPG cluster and workspace/provisioner pods unaffected; no DB migration | Renovate PR #903, issue #922, commit 5a1ad861 | 1 | 2026-04-15 | 2026-04-15 |
+| flux-operator + flux-instance minor bump (0.45.1->0.46.0) reconciles via rolling flux-operator pod (~2 min), FluxInstance re-reconciles in ~8s, no flux-system controller disruption; downstream KS dependency chain settles within one 60s wait cycle | Renovate PRs #892 + #891, issue #922, commits 2137a40c + c4737865 | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Failure Signatures
 
