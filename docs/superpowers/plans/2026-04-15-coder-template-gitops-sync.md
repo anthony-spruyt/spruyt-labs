@@ -26,15 +26,21 @@ New directory `cluster/apps/coder-system/coder-template-sync/`:
 
 | File | Responsibility |
 | ---- | -------------- |
-| `ks.yaml` | Flux Kustomization; `dependsOn: [coder]`; `targetNamespace: coder-system` |
-| `app/kustomization.yaml` | Aggregates app resources + `configMapGenerator` for `../../../../coder/templates` |
-| `app/kustomizeconfig.yaml` | Rewrites Job `volumes[*].configMap.name` to hashed ConfigMap name |
+| `ks.yaml` | Flux Kustomization; `dependsOn: [coder]`; `targetNamespace: coder-system`; `force: true` |
+| `README.md` | Component docs (per `documentation.md` rule) |
+| `app/kustomization.yaml` | Aggregates app resources + `configMapGenerator` reading `./templates/**` (in-tree — no path traversal) |
+| `app/kustomizeconfig.yaml` | Rewrites Job/CronJob `volumes.configMap.name` to hashed ConfigMap name |
 | `app/rbac.yaml` | Two ServiceAccounts + Role + RoleBinding (patch one Secret) |
 | `app/secret-bootstrap.sops.yaml` | SOPS-encrypted initial token; `ssa: IfNotPresent` |
 | `app/job-template-push.yaml` | Hash-triggered Job running `/usr/local/bin/push-templates.sh` |
 | `app/cronjob-token-rotation.yaml` | Weekly CronJob running `/usr/local/bin/rotate-token.sh` |
-| `app/network-policy.yaml` | CiliumNetworkPolicy egress (DNS, kube-apiserver, Coder svc) |
-| `app/vpa.yaml` | VPA recommendations for Job + CronJob |
+| `app/network-policy.yaml` | CiliumNetworkPolicy egress (kube-apiserver, Coder svc); DNS is clusterwide already |
+| `app/vpa.yaml` | VPA recommendations (Off mode) |
+| `app/templates/devcontainer/main.tf` | Terraform template source (moved via `git mv` from `coder/templates/devcontainer/`) |
+| `app/templates/devcontainer/README.md` | Template docs (moved) |
+| `app/templates/devcontainer/.terraform.lock.hcl` | Provider lock (moved) |
+
+Rationale for moving templates: Flux's kustomize-controller uses default `LoadRestrictionsRootOnly`, which forbids `configMapGenerator.files` paths that escape the kustomization root (`..`). Co-locating template sources with their sync manifests keeps paths local and makes the component self-contained.
 
 Existing files modified:
 
@@ -42,6 +48,7 @@ Existing files modified:
 | ---- | ------ |
 | `cluster/apps/coder-system/kustomization.yaml` | Add `./coder-template-sync` |
 | `cluster/apps/coder-system/coder/app/values.yaml` | Add `CODER_MAX_TOKEN_LIFETIME=8760h` env var |
+| `coder/templates/devcontainer/` | **Moved** via `git mv` to `cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/`. The top-level `coder/` directory is removed if empty after the move. |
 
 ---
 
@@ -49,9 +56,9 @@ Existing files modified:
 
 **User-driven; this task is a checklist, not code. Do not proceed past Task 3 without all items done.**
 
-- [ ] **Step 1:** Confirm `ghcr.io/anthony-spruyt/coder-gitops:<v>` has been published via [container-images#458](https://github.com/anthony-spruyt/container-images/issues/458). Record the resolved tag (e.g. `1.0.0@sha256:...`) for use in Task 6.
+- [x] **Step 1:** Image published: `ghcr.io/anthony-spruyt/coder-gitops:1.0.0@sha256:c28f9673fbdfce4755ac3b17033e9aa67b17b9ea78eaf641b4dcb2d7c945b1a1` (container-images#458 released).
 - [ ] **Step 2:** Bump max token lifetime by adding env var to Coder server. Done in Task 1 below (code change, not manual).
-- [ ] **Step 3:** After Task 1 is deployed, create the headless Coder user and initial token. Run from a shell with `coder` CLI logged in as an owner:
+- [ ] **Step 3:** After Task 1 is deployed, create the headless Coder user and initial token. Run from a shell with `coder` CLI logged in as an owner. **SECURITY: do NOT paste the resulting token into chat, logs, issues, or PRs. Move it directly into the SOPS file per Task 4.**
 
   ```bash
   coder users create \
@@ -59,12 +66,14 @@ Existing files modified:
     --email gitops-bot@${EXTERNAL_DOMAIN} \
     --login-type none
 
-  # Assign template-admin role (site-wide)
+  # Assign template-admin role (site-wide). Verify the role name for the running
+  # Coder version first: `coder organizations members roles --help`. Current Coder
+  # OSS uses `template-admin`; older versions may use `template_admin`.
   coder organizations members edit-roles gitops-bot template-admin
 
   # Mint 720h bootstrap token
   coder tokens create --user gitops-bot --name bootstrap --lifetime 720h
-  # Copy the printed token value
+  # Token prints once. Pipe directly into a file with 0600 perms, then sops-encrypt.
   ```
 
 - [ ] **Step 4:** SOPS-seal the token into `app/secret-bootstrap.sops.yaml` (Task 4 creates the plaintext skeleton; user sops-encrypts via `sops -e -i`).
@@ -151,11 +160,13 @@ spec:
   dependsOn:
     - name: coder
   prune: true
+  force: true   # delete+recreate immutable resources (Job spec is immutable; hash change => new Job)
   timeout: 5m
   wait: false
 ```
 
-(`wait: false` — Jobs are one-shot; Flux shouldn't block on completion.)
+- `wait: false` — Jobs are one-shot; Flux shouldn't block on completion.
+- `force: true` — when the `configMapGenerator` hash changes, the referenced Job's `spec.template.spec.volumes[].configMap.name` changes. Job `spec.template` is immutable post-create, so SSA apply would fail. `force: true` instructs kustomize-controller to delete+recreate the Job so the new hash binds to a fresh pod run. Documented pattern: <https://fluxcd.io/flux/components/kustomize/kustomizations/#controlling-the-apply-behavior-of-resources>.
 
 - [ ] **Step 3: Register the Kustomization**
 
@@ -194,7 +205,6 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: coder-template-sync
-  namespace: coder-system
 automountServiceAccountToken: false
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
@@ -202,14 +212,12 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: coder-token-rotation
-  namespace: coder-system
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/role-rbac-v1.json
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: coder-token-rotation
-  namespace: coder-system
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -221,7 +229,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: coder-token-rotation
-  namespace: coder-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -229,8 +236,9 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: coder-token-rotation
-    namespace: coder-system
 ```
+
+(Per-resource `namespace:` omitted; `targetNamespace: coder-system` in `ks.yaml` + `commonMetadata` inject it — matches existing `coder/app/oauth-rotation-rbac.yaml` style.)
 
 Rationale: `coder-template-sync` SA does not need any RBAC (reads only mounted ConfigMap + Secret via pod spec, no API calls). Token is disabled (`automountServiceAccountToken: false`).
 
@@ -341,6 +349,61 @@ Ref #934"
 
 ---
 
+## Task 4b: Move template sources in-tree
+
+**Files:**
+
+- Remove: `coder/templates/devcontainer/` (entire tree)
+- Create: `cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/` (same contents)
+
+Rationale: Kustomize default `LoadRestrictionsRootOnly` (used by flux kustomize-controller) forbids `configMapGenerator.files` paths that escape the kustomization root. Co-locating template sources with the sync manifest removes path traversal and makes the component self-contained.
+
+- [ ] **Step 1: Move the tree with `git mv`**
+
+```bash
+mkdir -p cluster/apps/coder-system/coder-template-sync/app/templates
+git mv coder/templates/devcontainer \
+       cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer
+
+# Remove the terraform cache directory if it was tracked (it shouldn't be, but verify)
+rm -rf cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/.terraform
+
+# Remove now-empty parent if nothing else lives under coder/
+rmdir coder/templates coder 2>/dev/null || true
+```
+
+- [ ] **Step 2: Add `.terraform/` to `.gitignore` if not already present**
+
+Run `Grep(pattern="\.terraform/", path=".gitignore")`. If absent, append:
+
+```gitignore
+cluster/apps/coder-system/coder-template-sync/app/templates/**/.terraform/
+cluster/apps/coder-system/coder-template-sync/app/templates/**/.terraform.tfstate*
+```
+
+- [ ] **Step 3: Update references**
+
+```bash
+Grep(pattern="coder/templates", path=".")
+```
+
+Update any doc/README/task references (README in `coder/`, `docs/**`, `.taskfiles/**`) to point at the new path. Do NOT change references inside `docs/superpowers/specs/` or this plan itself.
+
+- [ ] **Step 4: Validate + commit**
+
+```bash
+git add -u coder/ cluster/apps/coder-system/coder-template-sync/app/templates/ .gitignore
+# .gitignore add may need explicit: git add .gitignore
+git commit -m "refactor(coder): move devcontainer template into coder-template-sync app
+
+Required for GitOps configMapGenerator (kustomize default load
+restrictions forbid path traversal).
+
+Ref #934"
+```
+
+---
+
 ## Task 5: ConfigMap generator + kustomizeconfig
 
 **Files:**
@@ -376,15 +439,25 @@ resources:
   - ./secret-bootstrap.sops.yaml
 configMapGenerator:
   - name: coder-templates
-    namespace: coder-system
     files:
-      - templates/devcontainer/main.tf=../../../../../coder/templates/devcontainer/main.tf
-      - templates/devcontainer/README.md=../../../../../coder/templates/devcontainer/README.md
+      - templates/devcontainer/main.tf=./templates/devcontainer/main.tf
+      - templates/devcontainer/README.md=./templates/devcontainer/README.md
+      - templates/devcontainer/.terraform.lock.hcl=./templates/devcontainer/.terraform.lock.hcl
 configurations:
   - ./kustomizeconfig.yaml
 ```
 
 Rationale: explicit file list (rather than a glob) keeps the hash deterministic and makes adding a new template a visible diff. Each template's files live under `templates/<name>/...` inside the ConfigMap so the Job script can iterate `/templates/*/`.
+
+- [ ] **Step 2a: ConfigMap size guard**
+
+Kubernetes enforces a 1MiB (1,048,576 byte) limit on ConfigMap data. Verify:
+
+```bash
+du -sb cluster/apps/coder-system/coder-template-sync/app/templates | awk '{print $1}'
+```
+
+Expected: well under 900,000 bytes. If ever exceeded (future large template), switch strategy to a Flux `GitRepository` source + volume mount. Note the threshold in README.
 
 - [ ] **Step 3: Dry-run kustomize build**
 
@@ -418,7 +491,7 @@ Ref #934"
 - Create: `cluster/apps/coder-system/coder-template-sync/app/job-template-push.yaml`
 - Modify: `cluster/apps/coder-system/coder-template-sync/app/kustomization.yaml`
 
-Uses image tag resolved in Task 0 Step 1. Substitute `<IMAGE_TAG>` below with the real pinned `tag@sha256:...`.
+Image tag: `ghcr.io/anthony-spruyt/coder-gitops:1.0.0@sha256:c28f9673fbdfce4755ac3b17033e9aa67b17b9ea78eaf641b4dcb2d7c945b1a1` (published via [container-images#458](https://github.com/anthony-spruyt/container-images/issues/458)).
 
 - [ ] **Step 1: Create `job-template-push.yaml`**
 
@@ -429,14 +502,13 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: coder-template-push
-  namespace: coder-system
 spec:
   backoffLimit: 3
   ttlSecondsAfterFinished: 86400
   template:
     metadata:
       labels:
-        app: coder-template-push
+        app.kubernetes.io/name: coder-template-push
     spec:
       securityContext:
         runAsNonRoot: true
@@ -450,7 +522,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: push
-          image: ghcr.io/anthony-spruyt/coder-gitops:<IMAGE_TAG>
+          image: ghcr.io/anthony-spruyt/coder-gitops:1.0.0@sha256:c28f9673fbdfce4755ac3b17033e9aa67b17b9ea78eaf641b4dcb2d7c945b1a1
           command: ["/usr/local/bin/push-templates.sh"]
           env:
             - name: CODER_URL
@@ -461,7 +533,7 @@ spec:
                   name: coder-gitops-bot-token
                   key: token
             - name: HOME
-              value: /tmp
+              value: /home/coder
           resources:
             requests:
               cpu: 50m
@@ -475,6 +547,8 @@ spec:
               readOnly: true
             - name: tmp
               mountPath: /tmp
+            - name: home
+              mountPath: /home/coder
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -494,9 +568,13 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 64Mi
+        - name: home
+          emptyDir:
+            medium: Memory
+            sizeLimit: 32Mi
 ```
 
-Confirm internal service name/port: `kubectl -n coder-system get svc coder -o json | jq '.spec.ports'`. The Coder OSS Helm chart default is a ClusterIP service named `coder` exposing port 80 → container port 7080. If the port differs, adjust `CODER_URL` accordingly.
+Confirmed: `kubectl -n coder-system get svc coder -o jsonpath='{.spec.ports}'` returns `port: 80` (the chart's ClusterIP front door). `CODER_URL=http://coder.coder-system.svc.cluster.local` resolves to that service.
 
 - [ ] **Step 2: Add to `app/kustomization.yaml`**
 
@@ -536,7 +614,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: coder-token-rotation
-  namespace: coder-system
 spec:
   schedule: "0 2 * * 0"
   concurrencyPolicy: Forbid
@@ -549,7 +626,7 @@ spec:
       template:
         metadata:
           labels:
-            app: coder-token-rotation
+            app.kubernetes.io/name: coder-token-rotation
         spec:
           securityContext:
             runAsNonRoot: true
@@ -559,10 +636,11 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: coder-token-rotation
+          automountServiceAccountToken: true   # required for kubectl apply to kube-apiserver
           restartPolicy: Never
           containers:
             - name: rotate
-              image: ghcr.io/anthony-spruyt/coder-gitops:<IMAGE_TAG>
+              image: ghcr.io/anthony-spruyt/coder-gitops:1.0.0@sha256:c28f9673fbdfce4755ac3b17033e9aa67b17b9ea78eaf641b4dcb2d7c945b1a1
               command: ["/usr/local/bin/rotate-token.sh"]
               env:
                 - name: CODER_URL
@@ -584,7 +662,7 @@ spec:
                 - name: NEW_TOKEN_LIFETIME
                   value: "720h"
                 - name: HOME
-                  value: /tmp
+                  value: /home/coder
               resources:
                 requests:
                   cpu: 10m
@@ -595,6 +673,8 @@ spec:
               volumeMounts:
                 - name: tmp
                   mountPath: /tmp
+                - name: home
+                  mountPath: /home/coder
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
@@ -611,15 +691,36 @@ spec:
               emptyDir:
                 medium: Memory
                 sizeLimit: 32Mi
+            - name: home
+              emptyDir:
+                medium: Memory
+                sizeLimit: 32Mi
 ```
 
 Contract with `rotate-token.sh` (from container-images#458):
 
 1. Log in using `$CODER_SESSION_TOKEN`.
-2. Mint a new token with `--lifetime $NEW_TOKEN_LIFETIME --name gitops-bot-$(date -u +%Y%m%dT%H%M%SZ)`.
-3. Capture new token value and new token ID.
-4. `kubectl -n $SECRET_NAMESPACE patch secret $SECRET_NAME --type=merge -p "{\"stringData\":{\"token\":\"$NEW\",\"token-id\":\"$NEW_ID\"}}"`.
-5. Revoke `$CODER_OLD_TOKEN_ID` via `coder tokens remove $CODER_OLD_TOKEN_ID` (continue on failure; log).
+2. Mint a new token: `NEW=$(coder tokens create --lifetime "$NEW_TOKEN_LIFETIME" --name "gitops-bot-$(date -u +%Y%m%dT%H%M%SZ)")`.
+3. Parse new token ID from `coder tokens list --output json | jq -r '.[-1].id'` (or from the create response if the CLI exposes it).
+4. Write a fresh Secret manifest and apply it — **use `kubectl apply`, not `patch --type=merge`**, so `stringData` is handled correctly by the apiserver:
+
+   ```bash
+   cat <<EOF | kubectl -n "$SECRET_NAMESPACE" apply -f -
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: $SECRET_NAME
+     annotations:
+       kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+   type: Opaque
+   stringData:
+     token: $NEW
+     token-id: $NEW_ID
+   EOF
+   ```
+
+   The `IfNotPresent` annotation matches the manifest shipped by Flux so no drift is introduced.
+5. Revoke the old token: `coder tokens remove "$CODER_OLD_TOKEN_ID"` (log failure, do not fail the job — the new token already works).
 6. Exit 0 only if steps 1–4 succeeded.
 
 - [ ] **Step 2: Add to `app/kustomization.yaml`**
@@ -657,47 +758,41 @@ Match style (API version, egress-only, reserved entities).
 
 ```yaml
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# DNS egress already allowed clusterwide via `allow-kube-dns-egress`; only
+# Coder + kube-apiserver are app-specific.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: coder-template-sync-egress
-  namespace: coder-system
 spec:
   endpointSelector:
     matchExpressions:
-      - key: app
+      - key: app.kubernetes.io/name
         operator: In
         values:
           - coder-template-push
           - coder-token-rotation
   egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: kube-system
-            k8s-app: kube-dns
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
-          rules:
-            dns:
-              - matchPattern: "*"
+    # kube-apiserver for kubectl apply (rotation only; push has automount=false)
     - toEntities:
         - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+    # Coder control plane for CLI calls
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: coder-system
-            app.kubernetes.io/name: coder
+            k8s:app.kubernetes.io/name: coder
       toPorts:
         - ports:
             - port: "80"
               protocol: TCP
 ```
 
-Confirm the Coder pod's actual label selector via `kubectl -n coder-system get pods -l app.kubernetes.io/name=coder` (adjust if the chart uses different labels).
+Verified: the Coder pod carries `app.kubernetes.io/name: coder` (see existing `allow-cnpg-egress` and siblings in `coder/app/network-policies.yaml`). Service port 80 confirmed via `kubectl get svc coder -n coder-system -o jsonpath='{.spec.ports}'`.
 
 - [ ] **Step 3: Add to `app/kustomization.yaml`**
 
@@ -801,6 +896,41 @@ Ref #934"
 
 ---
 
+## Task 9b: Component README
+
+**Files:**
+
+- Create: `cluster/apps/coder-system/coder-template-sync/README.md`
+
+Per `.claude/rules/documentation.md`: "New app components require README.md before commit/merge."
+
+- [ ] **Step 1: Read template**
+
+```bash
+Read docs/templates/readme_template.md
+```
+
+- [ ] **Step 2: Author README** covering:
+  - Overview: hash-triggered Job pushes `coder/templates/**` to Coder via `gitops-bot` user; weekly CronJob rotates the session token.
+  - Prerequisites: `coder` Kustomization deployed; `gitops-bot` user + bootstrap token seeded into `coder-gitops-bot-token` Secret.
+  - Operation:
+    - Add a new template: create dir under `app/templates/<name>/`, list files in `configMapGenerator.files`, commit.
+    - Manual push (escape hatch): `coder templates push <name> -y` from a dev shell.
+    - Manual rotation: `kubectl -n coder-system create job --from=cronjob/coder-token-rotation rotate-manual`.
+  - Troubleshooting: rotation failure, token expired (delete Secret → Flux re-seeds from SOPS → re-run), ConfigMap >1MiB.
+  - References: Coder docs on templates and long-lived tokens; Flux Kustomization `force`/`ssa` docs.
+
+- [ ] **Step 3: Validate + commit**
+
+```bash
+git add cluster/apps/coder-system/coder-template-sync/README.md
+git commit -m "docs(coder): README for coder-template-sync
+
+Ref #934"
+```
+
+---
+
 ## Task 10: Renovate tracking for the new image
 
 **Files:**
@@ -838,8 +968,8 @@ Expected: APPROVED. Flux `coder-template-sync` Kustomization reconciles, ConfigM
 - [ ] **Step 3: Verify template-push Job completed successfully**
 
 ```bash
-kubectl -n coder-system get jobs -l app=coder-template-push
-kubectl -n coder-system logs job/coder-template-push-<hash>
+kubectl -n coder-system get jobs -l app.kubernetes.io/name=coder-template-push
+kubectl -n coder-system logs job/coder-template-push
 ```
 
 Expected: job Status `Complete`, logs end with `push OK: devcontainer`.
