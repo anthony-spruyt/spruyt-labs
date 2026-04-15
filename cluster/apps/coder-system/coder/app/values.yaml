@@ -1,4 +1,6 @@
 coder:
+  annotations:
+    reloader.stakater.com/auto: "true"
   env:
     - name: CODER_ACCESS_URL
       value: "https://code.${EXTERNAL_DOMAIN}"
