@@ -257,6 +257,29 @@ misconfigurations:
   - id: AVD-KSV-0113
     paths:
       - cluster/apps/coder-system/coder/app/ssh-key-rotation/role.yaml
+  # TEMP: job runs as root so `apk add openssh-keygen` can install the package
+  # at runtime. Mitigated by drop-ALL caps, allowPrivilegeEscalation: false,
+  # seccomp runtime/default, and narrow ServiceAccount RBAC. Tracked by #921 —
+  # once Kata lands, coder-system drops to PSA restricted and this job moves
+  # to a curated image with ssh-keygen preinstalled (then these ignores go).
+  - id: AVD-KSV-0012  # runAsNonRoot should be true
+    paths:
+      - cluster/apps/coder-system/coder/app/ssh-key-rotation/cronjob.yaml
+  - id: AVD-KSV-0014  # readOnlyRootFilesystem should be true
+    paths:
+      - cluster/apps/coder-system/coder/app/ssh-key-rotation/cronjob.yaml
+  - id: AVD-KSV-0020  # runAsUser should be > 10000
+    paths:
+      - cluster/apps/coder-system/coder/app/ssh-key-rotation/cronjob.yaml
+  - id: AVD-KSV-0021  # runAsGroup should be > 10000
+    paths:
+      - cluster/apps/coder-system/coder/app/ssh-key-rotation/cronjob.yaml
+  - id: AVD-KSV-0105  # runAsUser must not be 0
+    paths:
+      - cluster/apps/coder-system/coder/app/ssh-key-rotation/cronjob.yaml
+  - id: AVD-KSV-0116  # pod-level runAsGroup/fsGroup should be > 0
+    paths:
+      - cluster/apps/coder-system/coder/app/ssh-key-rotation/cronjob.yaml
 
   # ==============================================================================
   # Victoria Metrics etcd secret writer - writes etcd certs for vmagent discovery
