@@ -55,18 +55,13 @@ echo "Setting up devcontainer..."
 echo "Running devcontainer verification tests..."
 echo ""
 
-# 1. Docker-in-Docker (may not be available during postCreateCommand in Coder)
-if docker run --rm hello-world &>/dev/null; then
-  pass "Docker-in-Docker is working"
-else
-  echo "  SKIP: Docker not available yet (starts via agent startup script in Coder)"
-fi
-
-# 1b. Confirm docker CLI is Podman (not a leftover dockerd)
-if docker --version 2>&1 | grep -qi 'podman'; then
-  pass "docker CLI resolves to Podman"
-else
+# 1. Rootless Podman (exposed as `docker` via podman-docker)
+if ! docker --version 2>&1 | grep -qi 'podman'; then
   fail "docker CLI is not Podman (got: $(docker --version 2>&1))"
+elif docker run --rm hello-world &>/dev/null; then
+  pass "Rootless Podman is working (docker → podman)"
+else
+  echo "  SKIP: Podman not runnable yet (may start via agent script in Coder)"
 fi
 
 # 2. Pre-commit hooks installed
