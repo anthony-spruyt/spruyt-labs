@@ -64,8 +64,8 @@ jobs:
     if: "github.event_name == 'pull_request' && needs.changes.outputs.cluster == 'true'"
     uses: "./.github/workflows/_flux-differ.yaml"
     secrets:
-      BOT_APP_ID: "${{ secrets.BOT_APP_ID }}"
-      BOT_APP_PRIVATE_KEY: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
+      FLUX_DIFFER_CLIENT_ID: "${{ secrets.FLUX_DIFFER_CLIENT_ID }}"
+      FLUX_DIFFER_PRIVATE_KEY: "${{ secrets.FLUX_DIFFER_PRIVATE_KEY }}"
   shutdown-orchestrator:
     needs: "changes"
     if: "needs.changes.outputs.shutdown-orchestrator == 'true'"

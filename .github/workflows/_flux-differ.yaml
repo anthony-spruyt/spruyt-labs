@@ -4,9 +4,9 @@ name: Flux differ
 on: # yamllint disable-line rule:truthy
   workflow_call:
     secrets:
-      BOT_APP_ID:
+      FLUX_DIFFER_CLIENT_ID:
         required: true
-      BOT_APP_PRIVATE_KEY:
+      FLUX_DIFFER_PRIVATE_KEY:
         required: true
 
 jobs:
@@ -24,8 +24,8 @@ jobs:
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
         id: generate-token
         with:
-          app-id: "${{ secrets.BOT_APP_ID }}"
-          private-key: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
+          client-id: "${{ secrets.FLUX_DIFFER_CLIENT_ID }}"
+          private-key: "${{ secrets.FLUX_DIFFER_PRIVATE_KEY }}"
 
       - name: Setup Flux CLI
         uses: fluxcd/flux2/action@871be9b40d53627786d3a3835a3ddba1e3234bd2 # v2.8.3
