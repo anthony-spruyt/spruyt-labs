@@ -49,6 +49,7 @@ Discovered mappings from Helm repo URLs or image names to GitHub repos.
 | `headlamp-plugins/headlamp_flux` (ArtifactHub plugin) | `headlamp-k8s/plugins` (monorepo for all official Headlamp plugins; release tags: `flux-X.Y.Z`; no changelog file, use GitHub release notes) | 1 | 2026-03-23 | 2026-03-23 |
 | `headlamp` (Helm chart via HelmRepository) | `kubernetes-sigs/headlamp` (app + chart in same repo; releases tagged `vX.Y.Z`) | 1 | 2026-03-26 | 2026-03-26 |
 | `mcporter` (npm package in init script) | `steipete/mcporter` (releases tagged `vX.Y.Z`; changelog in CHANGELOG.md; npm datasource) | 1 | 2026-03-29 | 2026-03-29 |
+| `docker.io/rohitghumare64/kubectl-mcp-server` (Docker image) | `rohitg00/kubectl-mcp-server` (GitHub username `rohitg00` does not match Docker namespace `rohitghumare64`; releases tagged `vX.Y.Z` but `latest` tag tracks HEAD ahead of last release) | 1 | 2026-04-15 | 2026-04-15 |
 | `felddy/foundryvtt` (Docker image) | `felddy/foundryvtt-docker` (release tags: `vX.Y.Z`; Docker image version tracks Foundry VTT app version; app release notes at `foundryvtt.com/releases/<version>`) | 1 | 2026-04-03 | 2026-04-03 |
 | cloudnative-pg `plugin-barman-cloud` Helm chart | `cloudnative-pg/charts` (monorepo; release tag format: `plugin-barman-cloud-vX.Y.Z`) | 1 | 2026-04-15 | 2026-04-15 |
 
