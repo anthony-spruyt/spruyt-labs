@@ -8,7 +8,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 |---------|---------|-------|-----------|-------|
 | firemerge dependency chain (firefly-iii → firemerge → traefik-ingress) takes 3-5 min to fully reconcile | Full cluster reconciliation wait | 11 | 2026-03-29 | 2026-02-24 |
 | flux-operator upgrade triggers FluxInstance re-reconciliation (~3s) and OutdatedVersion event for flux | Normal behavior after operator upgrade | 5 | 2026-03-18 | 2026-02-25 |
-| authentik dependency chain (authentik → many apps → traefik-ingress) settles within ~90s | Full cluster reconciliation wait after flux-system changes | 10 | 2026-03-29 | 2026-02-25 |
+| authentik dependency chain (authentik → many apps → traefik-ingress) settles within ~90s | Full cluster reconciliation wait after flux-system changes | 11 | 2026-04-15 | 2026-02-25 |
 | CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 7 | 2026-04-04 | 2026-02-28 |
 | YAML comment-only changes (e.g., schema directives, resource-sizing comments) reconcile instantly with no resource drift | Kustomize strips comments, producing identical output | 2 | 2026-03-17 | 2026-03-01 |
 | Dashboard JSON reformatting (whitespace/indentation changes) reconciles as configmap update with no functional impact; Grafana/VictoriaMetrics reloads the dashboard without errors | Prettier/formatter cosmetic changes to JSON dashboard files | 1 | 2026-03-21 | 2026-03-21 |
@@ -90,7 +90,7 @@ Things that look like failures but aren't — avoid flagging these.
 |--------|----------------------|-------|-----------|-------|
 | Kustomization firemerge not ready during reconciliation wave | Dependency chain, resolves within 5 min — wait for full cluster reconciliation | 10 | 2026-04-02 | 2026-02-24 |
 | traefik-ingress shows DependencyNotReady briefly during reconciliation wave | Normal dependency ordering, resolves within seconds; persistent when traefik KS stuck on cert health check; persistent when new upstream dependency (coder) is not ready | 34 | 2026-04-04 | 2026-02-25 |
-| Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 18 | 2026-04-04 | 2026-02-25 |
+| Multiple kustomizations show "dependency authentik is not ready" during reconciliation | authentik dependency chain, resolves within ~90s — not a failure | 19 | 2026-04-15 | 2026-02-25 |
 | mcp-victoriametrics shows "dependency victoria-metrics-k8s-stack is not ready" during reconciliation wave | Dependency chain, resolves within 2 min — parent KS already Ready but child hasn't re-evaluated yet | 2 | 2026-04-02 | 2026-03-19 |
 | authentik 2026.2.0 logs `AttributeError("'Version' object has no attribute '__dict__'")` on startup | Upstream bug, warning-level only, does not affect functionality — API returns 200 | 1 | 2026-02-25 | 2026-02-25 |
 | authentik default OAuth Mapping uses deprecated `ak_groups` — emits deprecation warning on outpost proxy requests | Not a failure — requests succeed with HTTP 200. Migrate to `User.groups` in admin UI | 1 | 2026-02-25 | 2026-02-25 |
