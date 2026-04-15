@@ -30,7 +30,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: rotate
-              image: ghcr.io/anthony-spruyt/coder-gitops:1.0.0@sha256:c28f9673fbdfce4755ac3b17033e9aa67b17b9ea78eaf641b4dcb2d7c945b1a1
+              image: ghcr.io/anthony-spruyt/coder-gitops:1.0.1@sha256:80bc88b3ec0dd449fa1157019f196db41d82b9c517d0f6d20d776085ed60cdc7
               command: ["/usr/local/bin/rotate-token.sh"]
               env:
                 - name: CODER_URL
