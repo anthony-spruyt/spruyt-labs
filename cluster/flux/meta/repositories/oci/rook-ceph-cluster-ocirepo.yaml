@@ -8,7 +8,7 @@ metadata:
 spec:
   ref:
     # https://rook.github.io/docs/rook/v1.18/Upgrade/rook-upgrade/#supported-versions
-    tag: v1.19.3
+    tag: v1.19.4
   url: oci://ghcr.io/rook/rook-ceph-cluster
   secretRef:
     name: ghcr-docker-config
