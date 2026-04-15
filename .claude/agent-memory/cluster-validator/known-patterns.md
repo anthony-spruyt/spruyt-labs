@@ -53,6 +53,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Crafty-controller image patch bump (arcadiatechnology/crafty-4 4.10.2->4.10.3) via values.yaml: StatefulSet pod rolls ~2-3 min; Helm upgrade completes to v14; no PVC disruption | Renovate PR #913, issue #922, crafty-controller StatefulSet | 1 | 2026-04-15 | 2026-04-15 |
 | victoria-metrics-k8s-stack chart minor bump (0.72.6->0.73.0) with bundled vmsingle/vmagent/vmalert v1.140.0 app images: Helm upgrade takes ~60-120s; operator-managed workloads roll smoothly; no selector-rename issues on this chart bump | Renovate PR #911, issue #922, commit f324ba5b | 1 | 2026-04-15 | 2026-04-15 |
 | falco helm chart patch bump (8.0.1->8.0.2) triggers DaemonSet rolling restart across all nodes; Helm upgrade takes ~2-3 min during the 'Running upgrade action' phase; falcosidekick deployment rolls in parallel; no eBPF disruption | Renovate PR #905, issue #922, commit 2a565e2f | 1 | 2026-04-15 | 2026-04-15 |
+| coder helm chart patch bump (2.30.6->2.30.7) rolls single coder Deployment pod within ~60-120s; Helm release advances to v3; CNPG cluster and workspace/provisioner pods unaffected; no DB migration | Renovate PR #903, issue #922, commit 5a1ad861 | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Failure Signatures
 
