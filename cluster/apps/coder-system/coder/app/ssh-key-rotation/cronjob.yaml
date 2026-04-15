@@ -18,10 +18,15 @@ spec:
           labels:
             app: ssh-key-rotation
         spec:
+          # TEMP: runs as root so `apk add openssh-keygen` can install the
+          # package at runtime (alpine/k8s image lacks it). Tracked by #921
+          # (Kata Containers) — once workspaces no longer need privileged,
+          # coder-system will drop to PSA restricted and this job moves to a
+          # curated image with ssh-keygen preinstalled.
           securityContext:
-            runAsNonRoot: true
-            runAsUser: 10001
-            runAsGroup: 10001
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
           serviceAccountName: ssh-key-rotation
           containers:
             - name: rotate-ssh-key
@@ -33,7 +38,7 @@ spec:
                   set -e
 
                   # alpine/k8s doesn't include ssh-keygen
-                  apk add --no-cache openssh-keygen >/dev/null 2>&1
+                  apk add --no-cache openssh-keygen
 
                   TITLE_PREFIX="coder-workspace"
                   DATE_SUFFIX=$$(date +%Y%m%d)
@@ -145,10 +150,14 @@ spec:
                 capabilities:
                   drop:
                     - ALL
-                readOnlyRootFilesystem: true
-                runAsNonRoot: true
-                runAsUser: 10001
-                runAsGroup: 10001
+                # apk add needs to write to /var/cache/apk, /var/lib/apk,
+                # /etc/apk and needs root — incompatible with RORFS and
+                # non-root. Mitigated by drop-ALL caps, no priv-escalation,
+                # seccomp runtime/default, restricted ServiceAccount RBAC.
+                readOnlyRootFilesystem: false
+                runAsNonRoot: false
+                runAsUser: 0
+                runAsGroup: 0
                 seccompProfile:
                   type: RuntimeDefault
           volumes:
