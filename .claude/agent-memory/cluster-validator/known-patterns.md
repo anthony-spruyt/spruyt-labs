@@ -50,6 +50,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Rook-ceph patch upgrade (v1.19.x) via OCIRepository bump: cluster chart upgrades first and settles fast; operator HR takes ~60s longer (single operator pod rollout); no OSD/mon restart, HEALTH_OK maintained throughout; Ceph daemon versions unchanged (patch = operator/sidecar only) | Renovate rook-ceph group v1.19.3->v1.19.4 PR #917 | 1 | 2026-04-15 | 2026-04-15 |
 | CNPG plugin-barman-cloud chart minor bump (0.5.0->0.6.0) reconciles via single Helm upgrade (~60-120s); single deployment rollout, no CNPG cluster disruption; metadata-only chart changes reconcile cleanly | Renovate plugin-barman-cloud 0.5.0->0.6.0 PR #920 | 1 | 2026-04-15 | 2026-04-15 |
 | victoria-metrics-operator chart minor (0.59.3->0.60.0) with pre-merge orphan-delete workaround: new Deployment created with new selector labels, rolling update proceeds normally, old RSes scale to 0/0 with no cleanup needed; operator reconciles all managed workloads (vmagent/vmalert/vmalertmanager) to new config-reloader image within ~30s of pod ready | Renovate PR #919, issue #922, selector-rename pattern (same as #916 victoria-logs-single) | 1 | 2026-04-15 | 2026-04-15 |
+| Crafty-controller image patch bump (arcadiatechnology/crafty-4 4.10.2->4.10.3) via values.yaml: StatefulSet pod rolls ~2-3 min; Helm upgrade completes to v14; no PVC disruption | Renovate PR #913, issue #922, crafty-controller StatefulSet | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Failure Signatures
 
