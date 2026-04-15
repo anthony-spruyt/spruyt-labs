@@ -62,6 +62,13 @@ else
   echo "  SKIP: Docker not available yet (starts via agent startup script in Coder)"
 fi
 
+# 1b. Confirm docker CLI is Podman (not a leftover dockerd)
+if docker --version 2>&1 | grep -qi 'podman'; then
+  pass "docker CLI resolves to Podman"
+else
+  fail "docker CLI is not Podman (got: $(docker --version 2>&1))"
+fi
+
 # 2. Pre-commit hooks installed
 if pre-commit --version &>/dev/null; then
   pass "Pre-commit is installed"
