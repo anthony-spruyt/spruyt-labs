@@ -47,6 +47,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | Large digest-pin PRs (23+ files, 16+ namespaces) reconcile within minutes with no pod disruption when images are already cached; Flux applies updated manifests but pods only restart if digest actually changed | Renovate bulk pin-dependencies PR #809, 26 container images across 16 namespaces; CNPG image digest pin #813, 3 clusters | 2 | 2026-03-29 | 2026-03-29 |
 | sungather v1.0.4 with HTTP /health probes starts cleanly in ~36s; no AttributeError, SungrowClient import fixed | sungather image upgrade fix verification | 1 | 2026-03-28 | 2026-03-28 |
 | New app deployment with CNPG dependency: initial Helm install times out (~10m) due to CNPG init + app startup race; Flux auto-retries upgrade which succeeds; kustomization health check fails on stale InProgress status, needs manual `flux reconcile` to clear | Coder first deployment PR #873; CNPG cluster init (PVC provisioning, initdb, multi-attach detach cycle) takes ~30s; app CrashLoopBackOff during DB init; upgrade succeeds once DB healthy | 1 | 2026-04-04 | 2026-04-04 |
+| Rook-ceph patch upgrade (v1.19.x) via OCIRepository bump: cluster chart upgrades first and settles fast; operator HR takes ~60s longer (single operator pod rollout); no OSD/mon restart, HEALTH_OK maintained throughout; Ceph daemon versions unchanged (patch = operator/sidecar only) | Renovate rook-ceph group v1.19.3->v1.19.4 PR #917 | 1 | 2026-04-15 | 2026-04-15 |
 
 ## Failure Signatures
 
