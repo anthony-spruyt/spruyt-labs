@@ -6,7 +6,7 @@ MegaLinter or schema check results that are not actual issues.
 
 | Pattern | Tool | Why It's Not a Problem | Count | Last Seen | Added |
 |---------|------|----------------------|-------|-----------|-------|
-| AVD-KSV-0037 on kube-system resources | Trivy | etcd/control-plane components legitimately run in kube-system | 3 | 2026-02-28 | 2026-02-28 |
+| AVD-KSV-0037 on kube-system resources | Trivy | etcd/control-plane components legitimately run in kube-system. When adding new kube-system workloads that need to run there (e.g. DaemonSets targeting node-local resources), must add path to AVD-KSV-0037 entry in .trivyignore.yaml | 4 | 2026-04-16 | 2026-02-28 |
 | AVD-KSV-0125 on ghcr.io images | Trivy | ghcr.io/siderolabs is the official Talos registry | 2 | 2026-02-28 | 2026-02-28 |
 | AVD-KSV-0048 on intentional write RBAC | Trivy | Expected when Role/ClusterRole intentionally grants write verbs (delete, patch, create) for operational use cases | 7 | 2026-04-02 | 2026-03-15 |
 | AVD-KSV-0053 on intentional pods/exec RBAC | Trivy | Expected when Role grants pods/exec create for spawner/orchestrator patterns (e.g., n8n-claude-spawner). Scoped by Role (not ClusterRole) + PSA restricted namespace | 2 | 2026-04-02 | 2026-03-30 |
