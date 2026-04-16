@@ -84,6 +84,19 @@ cat >"$HOME/.config/containers/containers.conf.d/10-userns.conf" <<'CONTAINERS_C
 userns = "keep-id"
 CONTAINERS_CONF
 
+# Explicit storage driver: native kernel overlay (no fuse-overlayfs).
+# Relies on kernel >= 6.18 rootless overlay support (user.max_user_namespaces
+# must be non-zero). mount_program = "" disables fuse-overlayfs fallback.
+mkdir -p "$HOME/.config/containers"
+cat >"$HOME/.config/containers/storage.conf" <<'STORAGE_CONF'
+[storage]
+driver = "overlay"
+runroot = "/run/user/1000/containers"
+graphroot = "/home/vscode/.local/share/containers/storage"
+[storage.options.overlay]
+mount_program = ""
+STORAGE_CONF
+
 # Registry allow-list: fully-qualified images only, short-name lookups fail.
 # Prevents typo-squat pulls from unintended registries.
 mkdir -p "$HOME/.config/containers/registries.conf.d"
@@ -194,6 +207,18 @@ if [[ -x /usr/local/bin/agent-run ]]; then
   fi
 else
   fail "agent-run wrapper not installed"
+fi
+
+# 8. Podman uses native kernel overlay (no fuse-overlayfs)
+if command -v podman &>/dev/null; then
+  graph_driver=$(podman info --format '{{.Store.GraphDriverName}}' 2>/dev/null || echo "unknown")
+  if [[ "$graph_driver" == "overlay" ]]; then
+    pass "Podman storage driver is native overlay"
+  else
+    echo "  SKIP: Podman graph driver is '$graph_driver' (expected 'overlay'; may need kernel >=6.18 + user.max_user_namespaces)"
+  fi
+else
+  fail "Podman not installed, cannot verify storage driver"
 fi
 
 echo ""
