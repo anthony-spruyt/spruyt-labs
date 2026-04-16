@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./rbac.yaml
+  - ./release.yaml
+  - ./servicemonitor.yaml
+  - ./vpa.yaml
+  - ./networkpolicy.yaml
+configMapGenerator:
+  - name: kata-tap-qdisc-fix-values
+    namespace: kube-system
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

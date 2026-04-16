@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kata-tap-qdisc-fix
+  namespace: kube-system
+automountServiceAccountToken: false
