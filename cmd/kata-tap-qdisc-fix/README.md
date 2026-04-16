@@ -37,14 +37,14 @@ Three input sources, serialised through a single worker goroutine:
 
 ## Environment
 
-| Var | Default | Meaning |
-| --- | ------- | ------- |
-| `DRY_RUN` | `false` | If `true`, log intended replacements without executing |
-| `HEALTH_PORT` | `8080` | Port for `/healthz` and `/readyz` |
-| `METRICS_PORT` | `9102` | Port for `/metrics` (Prometheus) |
-| `NETNS_DIR` | `/run/netns` | Directory watched for new pod netns |
-| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
-| `SWEEP_INTERVAL` | `30` | Seconds between periodic full sweeps |
+| Var              | Default      | Meaning                                                |
+| ---------------- | ------------ | ------------------------------------------------------ |
+| `DRY_RUN`        | `false`      | If `true`, log intended replacements without executing |
+| `HEALTH_PORT`    | `8080`       | Port for `/healthz` and `/readyz`                      |
+| `METRICS_PORT`   | `9102`       | Port for `/metrics` (Prometheus)                       |
+| `NETNS_DIR`      | `/run/netns` | Directory watched for new pod netns                    |
+| `LOG_LEVEL`      | `info`       | `debug`, `info`, `warn`, `error`                       |
+| `SWEEP_INTERVAL` | `30`         | Seconds between periodic full sweeps                   |
 
 ## Canary & Rollback
 

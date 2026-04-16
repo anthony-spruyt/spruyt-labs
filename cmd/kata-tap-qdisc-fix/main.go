@@ -50,8 +50,7 @@ func run() int {
 	defer stopMetrics()
 
 	opener := NewNetnsOpener()
-	factory := func() QdiscManager { return NewQdiscManager() }
-	w := NewWatcher(cfg.NetnsDir, opener, factory, cfg.DryRun, cfg.SweepInterval, metrics, logger, realClock{})
+	w := NewWatcher(cfg.NetnsDir, opener, NewQdiscManager, cfg.DryRun, cfg.SweepInterval, metrics, logger, realClock{})
 
 	w.Start(ctx)
 	state.markReady()

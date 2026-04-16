@@ -35,3 +35,12 @@ __pycache__/
 
 # Agent scratch files
 /.work/
+
+# Go binaries under cmd/
+/cmd/*/*
+!/cmd/*/*.go
+!/cmd/*/go.mod
+!/cmd/*/go.sum
+!/cmd/*/Dockerfile
+!/cmd/*/.dockerignore
+!/cmd/*/README.md
