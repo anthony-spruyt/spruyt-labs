@@ -1,0 +1,164 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+
+name: "Release Kata TAP Qdisc Fix"
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: "choice"
+        options:
+          - "patch"
+          - "minor"
+          - "major"
+permissions:
+  contents: "write"
+  packages: "write"
+  id-token: "write"
+  attestations: "write"
+env:
+  IMAGE: "ghcr.io/anthony-spruyt/kata-tap-qdisc-fix"
+  WORKDIR: "cmd/kata-tap-qdisc-fix"
+  TAG_PREFIX: "kata-tap-qdisc-fix/v"
+jobs:
+  resolve-version:
+    name: "Resolve version"
+    runs-on: "ubuntu-latest"
+    outputs:
+      tag: "${{ steps.bump.outputs.tag }}"
+      version: "${{ steps.bump.outputs.version }}"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: "Compute next version"
+        id: "bump"
+        env:
+          BUMP: "${{ inputs.bump }}"
+          PREFIX: "${{ env.TAG_PREFIX }}"
+        run: |
+          # Find latest tag matching prefix
+          LATEST=$(git tag --list "${PREFIX}*" --sort=-v:refname | head -n 1)
+
+          if [ -z "$LATEST" ]; then
+            CURRENT="0.0.0"
+          else
+            CURRENT="${LATEST#"${PREFIX}"}"
+          fi
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "::notice::Bumping $BUMP: $CURRENT -> $VERSION"
+  test:
+    name: "Test"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - name: "Setup Go"
+        uses: "actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c" # v6
+        with:
+          go-version-file: "${{ env.WORKDIR }}/go.mod"
+          cache-dependency-path: "${{ env.WORKDIR }}/go.sum"
+      - name: "Run tests"
+        working-directory: "${{ env.WORKDIR }}"
+        run: go test -race ./...
+  release:
+    name: "Build, push and release"
+    needs:
+      - "resolve-version"
+      - "test"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - name: "Set up Docker Buildx"
+        uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4
+      - name: "Login to GHCR"
+        uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4
+        with:
+          registry: "ghcr.io"
+          username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
+      - name: "Docker metadata"
+        id: "meta"
+        uses: "docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf" # v6
+        with:
+          images: "${{ env.IMAGE }}"
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.resolve-version.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.resolve-version.outputs.tag }}
+            type=raw,value=latest
+      - name: "Extract Go version from go.mod"
+        id: "go-version"
+        run: echo "version=$(grep '^go ' ${{ env.WORKDIR }}/go.mod | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - name: "Build and push"
+        id: "push"
+        uses: "docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f" # v7
+        with:
+          context: "${{ env.WORKDIR }}"
+          push: true
+          tags: "${{ steps.meta.outputs.tags }}"
+          labels: "${{ steps.meta.outputs.labels }}"
+          build-args: |
+            GO_VERSION=${{ steps.go-version.outputs.version }}
+            VERSION=${{ needs.resolve-version.outputs.tag }}
+            COMMIT=${{ github.sha }}
+          cache-from: "type=gha"
+          cache-to: "type=gha,mode=max"
+          sbom: true
+          provenance: "mode=max"
+      - name: "Generate provenance attestation"
+        uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
+        with:
+          subject-name: "${{ env.IMAGE }}"
+          subject-digest: "${{ steps.push.outputs.digest }}"
+          push-to-registry: true
+      - name: "Create git tag"
+        env:
+          TAG: "${{ needs.resolve-version.outputs.tag }}"
+          PREFIX: "${{ env.TAG_PREFIX }}"
+        run: |
+          git tag "${PREFIX}${TAG#v}"
+          git push origin "${PREFIX}${TAG#v}"
+      - name: "Generate release notes"
+        id: "notes"
+        env:
+          TAG: "${{ needs.resolve-version.outputs.tag }}"
+          DIGEST: "${{ steps.push.outputs.digest }}"
+        run: |
+          {
+            echo 'RELEASE_NOTES<<NOTES_EOF'
+            printf '## Container Image\n\n'
+            printf '```\n'
+            printf 'ghcr.io/anthony-spruyt/kata-tap-qdisc-fix:%s\n' "${TAG#v}"
+            printf '```\n\n'
+            # shellcheck disable=SC2016
+            printf '**Digest:** `%s`\n\n' "${DIGEST}"
+            printf '## Verify Provenance\n\n'
+            printf '```bash\n'
+            printf 'gh attestation verify oci://ghcr.io/anthony-spruyt/kata-tap-qdisc-fix:%s --owner anthony-spruyt\n' "${TAG#v}"
+            printf '```\n'
+            echo 'NOTES_EOF'
+          } >> "$GITHUB_ENV"
+      - name: "Create GitHub Release"
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          TAG: "${{ needs.resolve-version.outputs.tag }}"
+          PREFIX: "${{ env.TAG_PREFIX }}"
+        run: |
+          gh release create "${PREFIX}${TAG#v}" \
+            --title "kata-tap-qdisc-fix ${TAG}" \
+            --notes "${RELEASE_NOTES}"
