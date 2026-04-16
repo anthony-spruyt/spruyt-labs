@@ -9,4 +9,5 @@ resources:
   - ./etcd-defrag/ks.yaml
   - ./hubble-sso/ks.yaml
   - ./kata-runtimeclass/ks.yaml
+  - ./kata-tap-qdisc-fix/ks.yaml
   - ./snapshot-controller/ks.yaml
