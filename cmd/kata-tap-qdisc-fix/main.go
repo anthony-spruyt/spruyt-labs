@@ -40,7 +40,9 @@ func run() int {
 		return 3
 	}
 
-	hostInode, err := HostNetnsInode("/proc", 1)
+	// pid=0 → /proc/self/ns/net; avoids OCI spec masking of /proc/<other>/ns
+	// (container runs hostNetwork=true so self-netns = host-netns).
+	hostInode, err := HostNetnsInode("/proc", 0)
 	if err != nil {
 		logger.Error("read host netns inode", "error", err.Error())
 		return 3

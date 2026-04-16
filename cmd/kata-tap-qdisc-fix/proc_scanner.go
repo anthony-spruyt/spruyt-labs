@@ -71,9 +71,18 @@ func NewProcScanner(
 }
 
 // HostNetnsInode reads the inode of the host network namespace from
-// /proc/<pid>/ns/net (typically pid=1). Returns the inode number on success.
+// /proc/<pid>/ns/net. When pid is 0, reads /proc/self/ns/net instead —
+// which is what we use in production because the container's
+// runtime.default OCI spec masks /proc/<other-pid>/ns/* even with
+// hostPID=true + CAP_SYS_ADMIN. /proc/self/ns/* is never masked, and
+// because the pod runs hostNetwork=true, self-netns equals host-netns.
 func HostNetnsInode(procRoot string, pid int) (uint64, error) {
-	path := filepath.Join(procRoot, strconv.Itoa(pid), "ns", "net")
+	var path string
+	if pid == 0 {
+		path = filepath.Join(procRoot, "self", "ns", "net")
+	} else {
+		path = filepath.Join(procRoot, strconv.Itoa(pid), "ns", "net")
+	}
 	var st syscall.Stat_t
 	if err := syscall.Stat(path, &st); err != nil {
 		return 0, fmt.Errorf("stat %s: %w", path, err)
