@@ -51,18 +51,19 @@ controllers:
           limits:
             memory: 32Mi
         securityContext:
-          # allowPrivilegeEscalation must be true alongside procMount=Unmasked;
-          # OCI requires no-new-privileges to be off when /proc is unmasked.
-          allowPrivilegeEscalation: true
+          # privileged:true required to unmask /proc/<pid>/ns/net, which the
+          # daemon must stat for every cloud-hypervisor process. procMount:
+          # Unmasked would be preferred but k8s 1.35 requires hostUsers=false
+          # alongside it, which would scope CAP_SYS_ADMIN to the pod userns
+          # and break setns() into the host-owned kata netns. privileged:true
+          # is the narrowest option that keeps caps effective at the host
+          # userns while unmasking /proc. Defence in depth: deny-all egress
+          # CNP, readOnlyRootFilesystem, regex-gated filenames, single node
+          # via kata.spruyt-labs/ready=true nodeSelector.
+          privileged: true
           readOnlyRootFilesystem: true
           runAsUser: 0
           runAsNonRoot: false
-          # /proc must be unmasked so the daemon can stat /proc/<pid>/ns/net
-          # for cloud-hypervisor processes (OCI default masks these even with
-          # hostPID+CAP_SYS_ADMIN). Observed via proc_scanner_cmd spike —
-          # with privileged:true or procMount:Unmasked the sweep works;
-          # without it stat returns EACCES.
-          procMount: Unmasked
           capabilities:
             drop:
               - ALL
