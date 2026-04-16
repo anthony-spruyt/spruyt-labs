@@ -28,6 +28,7 @@ jobs:
       kyverno: "${{ steps.filter.outputs.kyverno }}"
       terraform: "${{ steps.filter.outputs.terraform }}"
       shutdown-orchestrator: "${{ steps.filter.outputs.shutdown-orchestrator }}"
+      kata-tap-qdisc-fix: "${{ steps.filter.outputs.kata-tap-qdisc-fix }}"
     steps:
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
@@ -44,6 +45,8 @@ jobs:
               - 'infra/terraform/**'
             shutdown-orchestrator:
               - 'cmd/shutdown-orchestrator/**'
+            kata-tap-qdisc-fix:
+              - 'cmd/kata-tap-qdisc-fix/**'
   lint:
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@main"
     secrets: "inherit"
@@ -71,6 +74,11 @@ jobs:
     if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
     uses: "./.github/workflows/_shutdown-orchestrator.yaml"
     secrets: "inherit"
+  kata-tap-qdisc-fix:
+    needs: "changes"
+    if: "needs.changes.outputs.kata-tap-qdisc-fix == 'true'"
+    uses: "./.github/workflows/_kata-tap-qdisc-fix.yaml"
+    secrets: "inherit"
   summary:
     needs:
       - "lint"
@@ -79,5 +87,6 @@ jobs:
       - "terraform-validate"
       - "flux-differ"
       - "shutdown-orchestrator"
+      - "kata-tap-qdisc-fix"
     if: "always()"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_summary.yaml@main"
