@@ -26,6 +26,26 @@ misconfigurations:
     paths:
       - cluster/apps/kube-system/kata-tap-qdisc-fix/app/networkpolicy.yaml
       - cluster/apps/kube-system/kata-tap-qdisc-fix/app/servicemonitor.yaml
+
+  # kata-tap-qdisc-fix - setns() into host-owned netns requires hostNetwork,
+  # hostPID, runAsRoot + NET_ADMIN/SYS_ADMIN. Defence in depth: cap-drop ALL,
+  # readOnlyRootFilesystem, denyall-egress CNP, deterministic regex-gated
+  # inputs, single-node scope via nodeSelector kata.spruyt-labs/ready=true.
+  - id: AVD-KSV-0008
+    paths:
+      - cluster/apps/kube-system/kata-tap-qdisc-fix/app/values.yaml
+  - id: AVD-KSV-0009
+    paths:
+      - cluster/apps/kube-system/kata-tap-qdisc-fix/app/values.yaml
+  - id: AVD-KSV-0010
+    paths:
+      - cluster/apps/kube-system/kata-tap-qdisc-fix/app/values.yaml
+  - id: AVD-KSV-0012
+    paths:
+      - cluster/apps/kube-system/kata-tap-qdisc-fix/app/values.yaml
+  - id: AVD-KSV-0110
+    paths:
+      - cluster/apps/kube-system/kata-tap-qdisc-fix/app/values.yaml
   # Alpine is a trusted base image (Docker Official Image)
   - id: AVD-KSV-0125
     paths:

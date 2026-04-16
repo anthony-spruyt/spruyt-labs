@@ -5,11 +5,15 @@ defaultPodOptions:
   nodeSelector:
     kata.spruyt-labs/ready: "true"
   automountServiceAccountToken: false
+  # hostNetwork + hostPID required: setns() into CNI-created netns under
+  # /run/netns/cni-* requires CAP_SYS_ADMIN in the user namespace that
+  # owns the target netns. A rootless pod in its own user+net ns cannot
+  # do this even with NET_ADMIN+SYS_ADMIN caps (observed 216 consecutive
+  # EPERM after first deploy — cluster-validator 2026-04-16).
+  hostNetwork: true
+  hostPID: true
+  dnsPolicy: ClusterFirstWithHostNet
   securityContext:
-    runAsUser: 65534
-    runAsGroup: 65534
-    fsGroup: 65534
-    runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
 controllers:
@@ -49,8 +53,8 @@ controllers:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 65534
+          runAsUser: 0
+          runAsNonRoot: false
           capabilities:
             drop:
               - ALL
