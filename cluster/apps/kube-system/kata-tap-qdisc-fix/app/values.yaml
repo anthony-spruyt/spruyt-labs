@@ -37,7 +37,7 @@ controllers:
           - name: NETNS_DIR
             value: "/run/netns"
           - name: LOG_LEVEL
-            value: "info"
+            value: "debug"
           - name: SWEEP_INTERVAL
             value: "30"
           - name: NODE_NAME
