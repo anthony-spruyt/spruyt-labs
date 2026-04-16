@@ -6,7 +6,13 @@
   "remoteUser": "vscode",
   "runArgs": [
     "--env-file",
-    "${localEnv:HOME}/.secrets/.env"
+    "${localEnv:HOME}/.secrets/.env",
+    "--security-opt",
+    "seccomp=unconfined",
+    "--security-opt",
+    "no-new-privileges=true",
+    "--device",
+    "/dev/fuse"
   ],
   "mounts": [
     "source=${localEnv:HOME}/.ssh/agent.sock,target=/ssh-agent,type=bind",

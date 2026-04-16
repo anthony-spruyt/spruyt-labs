@@ -76,13 +76,40 @@ sudo touch /etc/containers/nodocker
 # Default userns=keep-id so bind-mounted paths (e.g. MegaLinter's /tmp/lint
 # with `-u $(id -u):$(id -g)`) retain the invoking user's UID inside the
 # container and writes back through the bind mount succeed.
-mkdir -p "$HOME/.config/containers"
-if ! grep -q 'userns = "keep-id"' "$HOME/.config/containers/containers.conf" 2>/dev/null; then
-  cat >>"$HOME/.config/containers/containers.conf" <<'CONTAINERS_CONF'
+# Written as a drop-in so it is idempotent and does not clobber user edits
+# to containers.conf.
+mkdir -p "$HOME/.config/containers/containers.conf.d"
+cat >"$HOME/.config/containers/containers.conf.d/10-userns.conf" <<'CONTAINERS_CONF'
 [containers]
 userns = "keep-id"
 CONTAINERS_CONF
-fi
+
+# Registry allow-list: fully-qualified images only, short-name lookups fail.
+# Prevents typo-squat pulls from unintended registries.
+mkdir -p "$HOME/.config/containers/registries.conf.d"
+cat >"$HOME/.config/containers/registries.conf.d/10-allow-list.conf" <<'REGISTRIES_CONF'
+unqualified-search-registries = []
+short-name-mode = "enforcing"
+
+[[registry]]
+location = "docker.io"
+
+[[registry]]
+location = "ghcr.io"
+
+[[registry]]
+location = "quay.io"
+
+[[registry]]
+location = "registry.k8s.io"
+
+[[registry]]
+location = "mcr.microsoft.com"
+REGISTRIES_CONF
+
+# Install agent-run wrapper (policy-enforcing podman wrapper for AI agents)
+echo "Installing agent-run wrapper..."
+sudo install -m 0755 "$SCRIPT_DIR/agent-run" /usr/local/bin/agent-run
 
 echo ""
 echo "Setting up devcontainer (repo-specific tooling)..."
@@ -94,7 +121,7 @@ echo ""
 # 1. Rootless Podman (exposed as `docker` via podman-docker)
 if ! docker --version 2>&1 | grep -qi 'podman'; then
   fail "docker CLI is not Podman (got: $(docker --version 2>&1))"
-elif docker run --rm hello-world &>/dev/null; then
+elif docker run --rm docker.io/library/hello-world &>/dev/null; then
   pass "Rootless Podman is working (docker → podman)"
 else
   echo "  SKIP: Podman not runnable yet (may start via agent script in Coder)"
@@ -129,8 +156,18 @@ else
   fail "GitHub CLI is not installed"
 fi
 
-# 5. SSH key available (agent mount in Coder, or GIT_SSH_COMMAND set)
-if [[ -f "/etc/coder/ssh-keys/id_ed25519" ]]; then
+# 5. SSH key available (agent socket, Coder mount, or GIT_SSH_COMMAND)
+SSH_AGENT_OK=false
+if [[ -S "${SSH_AUTH_SOCK:-}" ]]; then
+  # ssh-add exit codes: 0 = has keys, 1 = agent has no keys (still reachable),
+  # 2 = cannot connect. Only 2 indicates an unusable agent.
+  ssh_rc=0
+  SSH_ASKPASS='' ssh-add -l &>/dev/null || ssh_rc=$?
+  [[ $ssh_rc -ne 2 ]] && SSH_AGENT_OK=true
+fi
+if $SSH_AGENT_OK; then
+  pass "SSH agent reachable ($SSH_AUTH_SOCK)"
+elif [[ -f "/etc/coder/ssh-keys/id_ed25519" ]]; then
   pass "SSH key mounted (Coder direct mount)"
 elif [[ -n "${GIT_SSH_COMMAND:-}" ]]; then
   pass "GIT_SSH_COMMAND configured"
@@ -143,6 +180,20 @@ if command -v claude &>/dev/null; then
   pass "Claude Code CLI is installed"
 else
   fail "Claude Code CLI is not installed"
+fi
+
+# 7. agent-run wrapper installed and rejects forbidden flags
+if [[ -x /usr/local/bin/agent-run ]]; then
+  # agent-run exits 64 with "forbidden flag" message before invoking podman.
+  # Capture output first to avoid pipefail interaction with non-zero exit.
+  agent_run_out=$(/usr/local/bin/agent-run --privileged alpine true 2>&1 || true)
+  if echo "$agent_run_out" | grep -q 'forbidden flag'; then
+    pass "agent-run wrapper installed and enforcing policy"
+  else
+    fail "agent-run wrapper installed but not enforcing --privileged rejection"
+  fi
+else
+  fail "agent-run wrapper not installed"
 fi
 
 echo ""
