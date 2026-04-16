@@ -54,7 +54,7 @@ repos:
         args:
           - "--whitespaces-count"
           - "2"
-        exclude: "(go\\.mod|go\\.sum)$"
+        exclude: "(\\.go|go\\.mod|go\\.sum)$"
   - repo: "https://github.com/antonbabenko/pre-commit-terraform"
     rev: "v1.105.0"
     hooks:
