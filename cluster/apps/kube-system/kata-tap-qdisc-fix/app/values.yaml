@@ -37,7 +37,7 @@ controllers:
           - name: NETNS_DIR
             value: "/run/netns"
           - name: LOG_LEVEL
-            value: "debug"
+            value: "info"
           - name: SWEEP_INTERVAL
             value: "30"
           - name: NODE_NAME
@@ -51,10 +51,18 @@ controllers:
           limits:
             memory: 32Mi
         securityContext:
-          allowPrivilegeEscalation: false
+          # allowPrivilegeEscalation must be true alongside procMount=Unmasked;
+          # OCI requires no-new-privileges to be off when /proc is unmasked.
+          allowPrivilegeEscalation: true
           readOnlyRootFilesystem: true
           runAsUser: 0
           runAsNonRoot: false
+          # /proc must be unmasked so the daemon can stat /proc/<pid>/ns/net
+          # for cloud-hypervisor processes (OCI default masks these even with
+          # hostPID+CAP_SYS_ADMIN). Observed via proc_scanner_cmd spike —
+          # with privileged:true or procMount:Unmasked the sweep works;
+          # without it stat returns EACCES.
+          procMount: Unmasked
           capabilities:
             drop:
               - ALL
