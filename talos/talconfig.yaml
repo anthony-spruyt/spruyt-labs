@@ -525,7 +525,7 @@ controlPlane:
     - "@patches/control-plane/extra-manifests.yaml"
     - "@patches/control-plane/enable-talos-api-access.yaml"
     - "@patches/control-plane/tune-disk-writeback.yaml"
-    # - "@patches/control-plane/resources.yaml"
+    - "@patches/control-plane/resources.yaml"
 
 worker:
   disableSearchDomain: *disableSearchDomain
