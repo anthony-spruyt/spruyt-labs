@@ -51,10 +51,13 @@ vmsingle:
     resources:
       limits:
         cpu: 4650m
-        memory: 2048Mi
+        memory: 4Gi
       requests:
         cpu: 930m
-        memory: 1664Mi
+        memory: 2Gi
+    extraArgs:
+      # Bound per-query memory so one heavy sum() fails instead of OOMing the pod (#958)
+      search.maxMemoryPerQuery: 1GB
     # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
     retentionPeriod: 7d
     replicaCount: 1
