@@ -1,0 +1,99 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: critical-infrastructure
+  nodeSelector:
+    kata.spruyt-labs/ready: "true"
+  automountServiceAccountToken: false
+  securityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  kata-tap-qdisc-fix:
+    type: daemonset
+    serviceAccount:
+      name: kata-tap-qdisc-fix
+    containers:
+      app:
+        image:
+          repository: ghcr.io/anthony-spruyt/kata-tap-qdisc-fix
+          tag: 0.1.0@sha256:57a0e67dc4d6ca18daff70a3149857982e7b9f627329e4b4ad97b8bf9e93dac0
+          pullPolicy: IfNotPresent
+        env:
+          - name: DRY_RUN
+            value: "false"
+          - name: HEALTH_PORT
+            value: "8080"
+          - name: METRICS_PORT
+            value: "9102"
+          - name: NETNS_DIR
+            value: "/run/netns"
+          - name: LOG_LEVEL
+            value: "info"
+          - name: SWEEP_INTERVAL
+            value: "30"
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_ADMIN
+              - SYS_ADMIN
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /readyz
+                port: 8080
+              initialDelaySeconds: 2
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+persistence:
+  run-netns:
+    type: hostPath
+    hostPath: /run/netns
+    hostPathType: Directory
+    globalMounts:
+      - path: /run/netns
+        readOnly: true
+service:
+  metrics:
+    controller: kata-tap-qdisc-fix
+    type: ClusterIP
+    ports:
+      http-metrics:
+        port: 9102
+        protocol: TCP
+        targetPort: 9102
