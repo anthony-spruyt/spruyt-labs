@@ -38,12 +38,12 @@ type ScanResult struct {
 // same opener/factory pattern as Watcher. It is intentionally additive — the
 // existing Watcher is not modified.
 type ProcScanner struct {
-	opener      NetnsOpener
-	factory     QdiscManagerFactory
-	dryRun      bool
-	logger      *slog.Logger
-	hostInode   uint64
-	procRoot    string // injectable for tests; defaults to "/proc"
+	opener    NetnsOpener
+	factory   QdiscManagerFactory
+	dryRun    bool
+	logger    *slog.Logger
+	hostInode uint64
+	procRoot  string // injectable for tests; defaults to "/proc"
 }
 
 // NewProcScanner creates a ProcScanner. hostInode is the inode of the host

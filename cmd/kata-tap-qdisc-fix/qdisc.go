@@ -19,6 +19,9 @@ type QdiscManager interface {
 	ReplaceRootWithPfifoFast(dev string) error
 }
 
+// QdiscManagerFactory constructs a QdiscManager for a single netns visit.
+type QdiscManagerFactory func() QdiscManager
+
 // ReplacementResult reports what ApplyReplacement did (or would have done).
 type ReplacementResult struct {
 	Replaced     int

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -28,7 +29,6 @@ func run() int {
 		"version", version,
 		"commit", commit,
 		"dry_run", cfg.DryRun,
-		"netns_dir", cfg.NetnsDir,
 		"sweep_interval", cfg.SweepInterval.String())
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -37,6 +37,12 @@ func run() int {
 	// Capture host netns from the main goroutine BEFORE any worker starts.
 	if err := InitHostNetns(); err != nil {
 		logger.Error("init host netns", "error", err.Error())
+		return 3
+	}
+
+	hostInode, err := HostNetnsInode("/proc", 1)
+	if err != nil {
+		logger.Error("read host netns inode", "error", err.Error())
 		return 3
 	}
 
@@ -50,16 +56,44 @@ func run() int {
 	defer stopMetrics()
 
 	opener := NewNetnsOpener()
-	w := NewWatcher(cfg.NetnsDir, opener, NewQdiscManager, cfg.DryRun, cfg.SweepInterval, metrics, logger, realClock{})
+	scanner := NewProcScanner(opener, NewQdiscManager, cfg.DryRun, logger, hostInode, "/proc")
 
-	w.Start(ctx)
 	state.markReady()
 
-	<-ctx.Done()
-	logger.Info("shutdown signal received")
-	w.Stop()
-	logger.Info("kata-tap-qdisc-fix stopped")
-	return 0
+	ticker := time.NewTicker(cfg.SweepInterval)
+	defer ticker.Stop()
+
+	runSweep := func() {
+		res, err := scanner.Sweep(ctx)
+		if err != nil {
+			metrics.ReplaceFailuresTotal.Inc()
+			logger.Error("sweep failed", "error", err.Error())
+			return
+		}
+		metrics.SweepsTotal.Inc()
+		if res.Replaced > 0 {
+			metrics.ReplacementsTotal.Add(float64(res.Replaced))
+		}
+		logger.Debug("sweep ok",
+			"elapsed", res.Elapsed,
+			"total_inodes", res.TotalInodes,
+			"unique_netns", res.UniqueNetns,
+			"replaced", res.Replaced,
+			"taps_found", res.TapsFound)
+	}
+
+	runSweep() // initial sweep
+
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Info("shutdown signal received")
+			logger.Info("kata-tap-qdisc-fix stopped")
+			return 0
+		case <-ticker.C:
+			runSweep()
+		}
+	}
 }
 
 func parseLevel(s string) slog.Level {

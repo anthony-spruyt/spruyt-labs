@@ -9,10 +9,7 @@ import (
 func TestNewMetricsRegistersWithoutPanic(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	m := NewMetrics(reg)
-	if m.ReplacementsTotal == nil || m.ReplaceFailuresTotal == nil ||
-		m.SweepsTotal == nil || m.CircuitBreakerOpens == nil ||
-		m.EnqueueBackpressureTotal == nil || m.EnqueueDropsTotal == nil ||
-		m.ThreadRetiredTotal == nil || m.WorkerRespawnsTotal == nil {
+	if m.ReplacementsTotal == nil || m.ReplaceFailuresTotal == nil || m.SweepsTotal == nil {
 		t.Fatal("one or more metrics are nil")
 	}
 	m.ReplacementsTotal.Inc()
@@ -30,7 +27,7 @@ func newTestMetrics() *Metrics {
 	return NewMetrics(prometheus.NewRegistry())
 }
 
-// testCounterValue is the assertion helper used from watcher_test.go.
+// testCounterValue is an assertion helper used from tests.
 func testCounterValue(t *testing.T, c prometheus.Counter) int {
 	t.Helper()
 	return int(counterValue(c))

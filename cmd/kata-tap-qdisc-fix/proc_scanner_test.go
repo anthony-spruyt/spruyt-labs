@@ -300,7 +300,10 @@ func (c *countingOpener) DoInNetns(path string, fn func() error) error {
 type resolveOpener struct {
 	managerByFile map[string]*fakeQdiscManager
 	current       string
-	mu            interface{ Lock(); Unlock() }
+	mu            interface {
+		Lock()
+		Unlock()
+	}
 }
 
 func (r *resolveOpener) DoInNetns(path string, fn func() error) error {
