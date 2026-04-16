@@ -20,6 +20,12 @@ misconfigurations:
     paths:
       - cluster/apps/kube-system/etcd-defrag/app/cronjob.yaml
       - cluster/apps/kube-system/etcd-defrag/app/serviceaccount.yaml
+
+  # kata-tap-qdisc-fix - DaemonSet fixes Cilium <-> Kata netns qdiscs, must run in kube-system
+  - id: AVD-KSV-0037
+    paths:
+      - cluster/apps/kube-system/kata-tap-qdisc-fix/app/networkpolicy.yaml
+      - cluster/apps/kube-system/kata-tap-qdisc-fix/app/servicemonitor.yaml
   # Alpine is a trusted base image (Docker Official Image)
   - id: AVD-KSV-0125
     paths:
