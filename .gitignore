@@ -32,3 +32,6 @@ __pycache__/
 
 # Git worktrees
 .worktrees/
+
+# Agent scratch files
+/.work/
