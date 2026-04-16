@@ -8,4 +8,5 @@ resources:
   - ./descheduler/ks.yaml
   - ./etcd-defrag/ks.yaml
   - ./hubble-sso/ks.yaml
+  - ./kata-runtimeclass/ks.yaml
   - ./snapshot-controller/ks.yaml
