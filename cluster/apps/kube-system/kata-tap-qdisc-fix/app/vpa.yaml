@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: kata-tap-qdisc-fix
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: DaemonSet
+    name: kata-tap-qdisc-fix
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: app
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 32Mi
