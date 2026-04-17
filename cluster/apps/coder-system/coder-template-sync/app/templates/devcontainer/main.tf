@@ -385,12 +385,6 @@ resource "kubernetes_pod_v1" "main" {
     }
     annotations = {
       "com.coder.user.email" = data.coder_workspace_owner.me.email
-      # Kata VM initial memory — default (~2GiB) is too small for image builds
-      # that compile from source (e.g. Python feature). Memory still hot-plugs
-      # up to the container memory limit, but the initial allocation governs
-      # what fits before the guest OS has to request hotplug. 8GiB avoids OOM
-      # inside the guest VM during heavy compile/link phases.
-      "io.katacontainers.config.hypervisor.default_memory" = "8192"
     }
   }
 
@@ -472,9 +466,16 @@ resource "kubernetes_pod_v1" "main" {
       }
 
       resources {
+        # Kata sizes the guest VM at pod start based on the container memory
+        # request (QEMU boots with that much RAM, hot-plugs up to the limit
+        # later). Bumped from 4Gi because source-compile/link steps (Python
+        # feature builds gcc → link libpython ≈ 2-3GiB each ×8 -j procs)
+        # OOM inside the guest before hot-plug catches up. The
+        # io.katacontainers.config.hypervisor.default_memory annotation is
+        # not in the kata enable_annotations allowlist on this cluster.
         requests = {
           cpu    = "2000m"
-          memory = "4Gi"
+          memory = "8Gi"
         }
         limits = {
           cpu    = "8000m"
