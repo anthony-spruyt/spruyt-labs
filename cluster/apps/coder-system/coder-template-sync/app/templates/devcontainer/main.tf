@@ -385,6 +385,12 @@ resource "kubernetes_pod_v1" "main" {
     }
     annotations = {
       "com.coder.user.email" = data.coder_workspace_owner.me.email
+      # Kata VM initial memory — default (~2GiB) is too small for image builds
+      # that compile from source (e.g. Python feature). Memory still hot-plugs
+      # up to the container memory limit, but the initial allocation governs
+      # what fits before the guest OS has to request hotplug. 8GiB avoids OOM
+      # inside the guest VM during heavy compile/link phases.
+      "io.katacontainers.config.hypervisor.default_memory" = "8192"
     }
   }
 
