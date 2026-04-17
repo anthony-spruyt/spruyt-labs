@@ -280,6 +280,16 @@ misconfigurations:
       - cluster/apps/github-system/github-token-rotation/app/role.yaml
 
   # ==============================================================================
+  # Nexus OSS - provisioning Job
+  # ==============================================================================
+  # alpine/curl is a trusted Docker Hub image (used here to ship curl to the
+  # provisioner without pulling in a full shell distro). jq is downloaded
+  # separately as a sha256-verified static binary into /tmp.
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/nexus-system/nexus/app/provision-repos-job.yaml
+
+  # ==============================================================================
   # Coder SSH Key Rotation - CronJob and RBAC
   # ==============================================================================
   # alpine/k8s is a trusted Docker Hub image for kubectl operations

@@ -34,7 +34,7 @@ spec:
             readOnlyRootFilesystem: true
           resources:
             requests: {cpu: 10m, memory: 32Mi}
-            limits: {memory: 128Mi}
+            limits: {cpu: 100m, memory: 128Mi}
           env:
             - name: NEXUS_URL
               value: "http://nexus.nexus-system.svc.cluster.local:8081"
