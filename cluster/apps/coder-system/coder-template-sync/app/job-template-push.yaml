@@ -71,8 +71,6 @@ spec:
                 path: devcontainer/main.tf
               - key: devcontainer__README.md
                 path: devcontainer/README.md
-              - key: devcontainer__.terraform.lock.hcl
-                path: devcontainer/.terraform.lock.hcl
         - name: tmp
           emptyDir:
             medium: Memory

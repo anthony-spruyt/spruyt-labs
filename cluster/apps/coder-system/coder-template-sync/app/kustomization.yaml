@@ -17,6 +17,5 @@ configMapGenerator:
     files:
       - devcontainer__main.tf=./templates/devcontainer/main.tf
       - devcontainer__README.md=./templates/devcontainer/README.md
-      - devcontainer__.terraform.lock.hcl=./templates/devcontainer/.terraform.lock.hcl
 configurations:
   - ./kustomizeconfig.yaml
