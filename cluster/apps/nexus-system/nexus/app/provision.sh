@@ -120,10 +120,13 @@ upsert docker/proxy mcr-proxy '{
 # Gets its own connector on 8083 so envbuilder can push/pull via
 # /v2/<image> directly (clients expect OCI v2 at host root, not under
 # /repository/<name>/).
+# forceBasicAuth=true: kaniko's token-auth flow against Nexus 401-loops
+# (Bearer issued but not honored on next request). Basic auth via the
+# ENVBUILDER_DOCKER_CONFIG_BASE64 credentials works reliably.
 upsert docker/hosted envbuilder-cache '{
   "name":"envbuilder-cache","online":true,
   "storage":{"blobStoreName":"default","strictContentTypeValidation":true,"writePolicy":"ALLOW"},
-  "docker":{"v1Enabled":false,"forceBasicAuth":false,"httpPort":8083}}'
+  "docker":{"v1Enabled":false,"forceBasicAuth":true,"httpPort":8083}}'
 
 # docker-group with dedicated connector on 8082 (serves OCI v2 at host root)
 upsert docker/group docker-group '{
