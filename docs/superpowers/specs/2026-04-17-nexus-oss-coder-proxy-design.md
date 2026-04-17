@@ -21,14 +21,14 @@ Nexus OSS solves both in one deployment via native HTTPS-upstream support (`Pass
 
 ## Architecture
 
-Single-replica StatefulSet running `sonatype/nexus-repository-manager` (official Helm chart) in a new `nexus-system` namespace. Jetty configured for native TLS on internal listeners (`:8443` apt/REST/UI, `:5443` docker) using a cert-manager-issued Let's Encrypt certificate. 100Gi Ceph RBD PVC for blob store (expandable via `allowVolumeExpansion`). Nexus's internal database lives on the same PVC.
+Single-replica StatefulSet running `sonatype/nexus-repository-manager` (official Helm chart) in a new `nexus-system` namespace. Jetty configured for native TLS on internal listeners (`:8443` apt/REST/UI, `:5443` docker) using a cert-manager-issued ZeroSSL certificate. 100Gi Ceph RBD PVC for blob store (expandable via `allowVolumeExpansion`). Nexus's internal database lives on the same PVC.
 
 Consumer traffic uses a **single FQDN per service** (`nexus.${EXTERNAL_DOMAIN}`, `nexus-docker.${EXTERNAL_DOMAIN}`) via split-horizon DNS:
 
 - **In-cluster pods** resolve via CoreDNS rewrite directly to the Nexus ClusterIP — single pod-hop, TLS terminated at Nexus.
 - **External clients** (dev PCs on LAN) resolve via Technitium to the Traefik LoadBalancer IP, go through Traefik to Nexus.
 
-Both paths use the same public LE cert, so the trust story is identical on both sides. Not routed through Cloudflare tunnel — LAN-only.
+Both paths use the same public ZeroSSL cert, so the trust story is identical on both sides. Not routed through Cloudflare tunnel — LAN-only.
 
 ## Components
 
@@ -42,7 +42,7 @@ Both paths use the same public LE cert, so the trust story is identical on both 
 
 ### TLS
 
-- `cluster/apps/nexus-system/nexus/app/certificate.yaml` — cert-manager `Certificate` resource issued by `letsencrypt-production` ClusterIssuer with SANs:
+- `cluster/apps/nexus-system/nexus/app/certificate.yaml` — cert-manager `Certificate` resource issued by `zerossl-production` ClusterIssuer with SANs:
   - `nexus.${EXTERNAL_DOMAIN}`
   - `nexus-docker.${EXTERNAL_DOMAIN}`
 - Secret rendered as TLS + PKCS12 keystore (cert-manager keystore feature) for Jetty consumption
@@ -97,7 +97,7 @@ Default-deny baseline for all other traffic.
 
 `cluster/apps/traefik/traefik/ingress/nexus-system/`:
 - `kustomization.yaml`
-- `ingress-routes.yaml` — two IngressRoutes (UI+apt+REST on `nexus.${EXTERNAL_DOMAIN}`, docker on `nexus-docker.${EXTERNAL_DOMAIN}`). TLS **passthrough** to Nexus (Nexus is already serving TLS with the LE cert; no re-termination).
+- `ingress-routes.yaml` — two IngressRoutes (UI+apt+REST on `nexus.${EXTERNAL_DOMAIN}`, docker on `nexus-docker.${EXTERNAL_DOMAIN}`). TLS **passthrough** to Nexus (Nexus is already serving TLS with the ZeroSSL cert; no re-termination).
 - `certificates.yaml` — references the cert-manager Certificate resource (or a separate cert in Traefik namespace, depending on how TLS passthrough works with the existing Traefik config)
 
 Note: TLS passthrough requires `IngressRouteTCP` with SNI matching in Traefik. Alternative is Traefik-terminated TLS + re-encrypt to Nexus. Final choice deferred to plan phase.
