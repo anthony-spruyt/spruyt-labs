@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/namespace-v1.json
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: coder-workspaces
+  labels:
+    # privileged because workspace containers run with privileged: true.
+    # Kata runtime provides the real isolation boundary; PSA at K8s layer
+    # is guardrail, not the security primitive. Kyverno ClusterPolicy in
+    # kyverno-policy/ restricts privileged pod creation here to the
+    # coder-workspace ServiceAccount.
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+    descheduler.kubernetes.io/exclude: "true"

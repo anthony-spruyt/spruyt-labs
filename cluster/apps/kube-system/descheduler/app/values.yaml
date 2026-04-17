@@ -38,6 +38,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - coder-system
+                - coder-workspaces
                 - vpa-system
                 - claude-agents-write
                 - claude-agents-read
@@ -54,6 +55,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - coder-system
+                - coder-workspaces
                 - vpa-system
                 - claude-agents-write
                 - claude-agents-read
@@ -69,6 +71,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - coder-system
+                - coder-workspaces
                 - vpa-system
                 - claude-agents-write
                 - claude-agents-read
@@ -85,6 +88,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - coder-system
+                - coder-workspaces
                 - vpa-system
                 - claude-agents-write
                 - claude-agents-read
@@ -105,6 +109,7 @@ deschedulerPolicy:
                 - rook-ceph
                 - cloudflare-system
                 - coder-system
+                - coder-workspaces
                 - vpa-system
                 - claude-agents-write
                 - claude-agents-read

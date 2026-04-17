@@ -21,6 +21,7 @@ resources:
   - ./external-dns
   - ./cloudflare-system
   - ./coder-system
+  - ./coder-workspaces
   - ./vaultwarden
   - ./irq-balance
   - ./chrony

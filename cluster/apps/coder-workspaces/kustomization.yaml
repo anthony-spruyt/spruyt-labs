@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./namespace.yaml
+  - ./workspace-rbac/ks.yaml
+  - ./network-policies/ks.yaml
+  - ./secrets/ks.yaml
+  - ./kyverno-policy/ks.yaml
+  - ./ssh-key-rotation/ks.yaml
