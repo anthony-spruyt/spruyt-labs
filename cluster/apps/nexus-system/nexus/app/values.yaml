@@ -82,15 +82,6 @@ persistence:
     storageClass: ceph-block
     globalMounts:
       - path: /nexus-data
-  nexus-properties:
-    type: configMap
-    name: nexus-properties
-    advancedMounts:
-      main:
-        main:
-          - path: /nexus-data/etc/nexus.properties
-            subPath: nexus.properties
-            readOnly: true
   tmp:
     type: emptyDir
     globalMounts:

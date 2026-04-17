@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ./nexus-admin.sops.yaml
   - ./nexus-upstream-creds.sops.yaml
-  - ./nexus-properties-configmap.yaml
   - ./release.yaml
   - ./provision-repos-rbac.yaml
   - ./provision-repos-job.yaml
