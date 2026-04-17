@@ -8,9 +8,8 @@ resources:
   # - ./nexus-upstream-creds.sops.yaml
   - ./nexus-properties-configmap.yaml
   - ./release.yaml
-  # Task 4 adds:
-  # - ./provision-repos-rbac.yaml
-  # - ./provision-repos-job.yaml
+  - ./provision-repos-rbac.yaml
+  - ./provision-repos-job.yaml
   # Task 5 adds:
   # - ./network-policies.yaml
   # - ./vpa.yaml
@@ -20,10 +19,9 @@ configMapGenerator:
     namespace: nexus-system
     files:
       - values.yaml
-  # Task 4 adds provision.sh via this generator entry:
-  # - name: nexus-provisioner-script
-  #   namespace: nexus-system
-  #   files:
-  #     - provision.sh
+  - name: nexus-provisioner-script
+    namespace: nexus-system
+    files:
+      - provision.sh
 configurations:
   - ./kustomizeconfig.yaml

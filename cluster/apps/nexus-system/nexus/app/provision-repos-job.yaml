@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/batch/job_v1.json
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nexus-provision-repos
+  namespace: nexus-system
+  annotations:
+    # Flux deletes+recreates on spec change (Job fields are immutable).
+    # Value MUST be "Enabled" per Flux docs — "true" is ignored.
+    kustomize.toolkit.fluxcd.io/force: "Enabled"
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nexus-provisioner
+    spec:
+      serviceAccountName: nexus-provisioner
+      restartPolicy: OnFailure
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: provisioner
+          # renovate: datasource=docker depName=alpine
+          image: alpine:3.20.3@sha256:beefdbd8a1da6d2915566fde36db9db0b524443ee54b23de71fd5d9fe4f4b43d
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            readOnlyRootFilesystem: false  # apk needs /var/cache
+          env:
+            - name: NEXUS_URL
+              value: "http://nexus.nexus-system.svc.cluster.local:8081"
+            - name: NEXUS_USER
+              valueFrom: {secretKeyRef: {name: nexus-admin, key: admin-username}}
+            - name: NEXUS_PASSWORD
+              valueFrom: {secretKeyRef: {name: nexus-admin, key: admin-password}}
+            - name: DOCKERHUB_USER
+              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: dockerhub-username}}
+            - name: DOCKERHUB_TOKEN
+              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: dockerhub-token}}
+            - name: GHCR_USER
+              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: ghcr-username}}
+            - name: GHCR_TOKEN
+              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: ghcr-token}}
+          command: ["/bin/sh", "/scripts/provision.sh"]
+          volumeMounts:
+            - {name: script, mountPath: /scripts, readOnly: true}
+      volumes:
+        - name: script
+          configMap:
+            name: nexus-provisioner-script
+            defaultMode: 0755

@@ -1,0 +1,8 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/core/serviceaccount_v1.json
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nexus-provisioner
+  namespace: nexus-system
+automountServiceAccountToken: false
