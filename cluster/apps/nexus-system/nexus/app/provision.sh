@@ -8,19 +8,6 @@
 # shellcheck disable=SC2193
 set -eu
 
-if ! command -v jq >/dev/null; then
-  # Image ships curl; jq fetched as static binary into writable /tmp
-  # (container rootfs is read-only per KSV-0014).
-  JQ_VERSION="1.7.1"
-  JQ_SHA256="5942c9b0934e510ee61eb3e30273f1b3fe2590df93933a93d7c58b81d19c8ff5"
-  echo "Downloading jq $${JQ_VERSION}..."
-  curl -fsSLo /tmp/jq \
-    "https://github.com/jqlang/jq/releases/download/jq-$${JQ_VERSION}/jq-linux-amd64"
-  echo "$${JQ_SHA256}  /tmp/jq" | sha256sum -c -
-  chmod +x /tmp/jq
-  export PATH="/tmp:$${PATH}"
-fi
-
 echo "Waiting for Nexus writable..."
 for i in $(seq 1 60); do
   status=$(curl -sf -o /dev/null -w '%{http_code}' "$${NEXUS_URL}/service/rest/v1/status/writable" || true)
@@ -145,19 +132,28 @@ upsert docker/group docker-group '{
   "group":{"memberNames":["docker-hub-proxy","ghcr-proxy","mcr-proxy"]},
   "docker":{"v1Enabled":false,"forceBasicAuth":false,"httpPort":8082}}'
 
-# --- grant privileges to anonymous role (GET-merge-PUT to preserve defaults) ---
-echo "Merging privileges into anonymous role..."
-existing=$(curl -sf -u "$${AUTH}" "$${API}/security/roles/anonymous")
-merged=$(echo "$${existing}" | jq -c '
-  .privileges |= (. + [
-    "nx-repository-view-*-*-read",
-    "nx-repository-view-*-*-browse",
-    "nx-metrics-all",
-    "nx-healthcheck-read"
-  ] | unique)
-')
-curl -sf -X PUT -H "Content-Type: application/json" -u "$${AUTH}" \
-  -d "$${merged}" "$${API}/security/roles/anonymous"
+# --- anonymous-extras role + assignment ---
+# nx-anonymous is a built-in read-only role already granting repo view/read/
+# browse. We only need to add nx-metrics-all (for VMPodScrape). Create a
+# separate custom role and assign it to the anonymous user alongside
+# nx-anonymous so both survive Nexus upgrades.
+echo "Upserting anonymous-extras role..."
+ROLE_BODY='{"id":"anonymous-extras","name":"Anonymous Extras","description":"Extra privileges for the built-in anonymous user","privileges":["nx-metrics-all","nx-healthcheck-read"],"roles":[]}'
+code=$(curl -sS -o /dev/null -w '%{http_code}' -u "$${AUTH}" "$${API}/security/roles/anonymous-extras" || echo 000)
+if [ "$${code}" = "200" ]; then
+  curl -sfS -X PUT -H "Content-Type: application/json" -u "$${AUTH}" \
+    -d "$${ROLE_BODY}" "$${API}/security/roles/anonymous-extras"
+else
+  curl -sfS -X POST -H "Content-Type: application/json" -u "$${AUTH}" \
+    -d "$${ROLE_BODY}" "$${API}/security/roles"
+fi
+
+echo "Assigning anonymous-extras to anonymous user..."
+curl -sfS -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d '{
+  "userId":"anonymous","firstName":"Anonymous","lastName":"User",
+  "emailAddress":"anonymous@example.org","source":"default",
+  "status":"active","roles":["nx-anonymous","anonymous-extras"]
+}' "$${API}/security/users/anonymous"
 
 # Ensure anonymous access is globally enabled
 curl -sf -X PUT -H "Content-Type: application/json" -u "$${AUTH}" \
