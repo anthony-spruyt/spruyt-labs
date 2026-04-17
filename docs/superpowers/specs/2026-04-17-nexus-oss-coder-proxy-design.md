@@ -151,14 +151,16 @@ to
 
 ### Coder devcontainer template (envbuilder)
 
-Add apt proxy config baked into base layer of the template Dockerfile. Uses in-cluster service DNS — no FQDN env substitution required, no TLS inside cluster:
+Add apt proxy config baked into base layer of the template Dockerfile. Uses external FQDN (TLS via Nexus native Jetty); Terraform substitutes `${var.external_domain}` at template render time, so the rendered Dockerfile seen by envbuilder has the literal domain baked in (no runtime env substitution needed):
 
 ```dockerfile
-RUN echo 'Acquire::http::Proxy "http://nexus.nexus-system.svc.cluster.local:8081/repository/apt-ubuntu-proxy/";' \
+RUN echo 'Acquire::https::Proxy "https://nexus.${external_domain}/repository/apt-ubuntu-proxy/";' \
     > /etc/apt/apt.conf.d/01proxy
 ```
 
-HTTPS pass-through repos (`cli.github.com`, `deb.nodesource.com`, etc.) reached via Nexus URL rewrite pattern — added as separate `sources.list.d/*.list` entries pointing at `http://nexus.nexus-system.svc.cluster.local:8081/repository/apt-passthrough-proxy/HTTPS///...`. Exact URL rewrite syntax validated during plan phase.
+In-cluster DNS resolution of `nexus.${EXTERNAL_DOMAIN}` is handled by the CoreDNS rewrite → Nexus ClusterIP. TLS handshake against the ZeroSSL cert succeeds because the FQDN is in the cert SAN list.
+
+HTTPS pass-through repos (`cli.github.com`, `deb.nodesource.com`, etc.) reached via Nexus URL rewrite pattern — added as separate `sources.list.d/*.list` entries pointing at `https://nexus.${external_domain}/repository/apt-passthrough-proxy/HTTPS///...`. Exact URL rewrite syntax validated during plan phase.
 
 ### Local `.devcontainer/Dockerfile` (this repo)
 
