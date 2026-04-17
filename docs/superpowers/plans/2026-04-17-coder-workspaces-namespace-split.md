@@ -898,6 +898,15 @@ Scope: all files modified in Tasks 2-10 (plus the Task 1 hack/ additions).
 
 Apply fixes inline; re-run qa-validator.
 
+- [ ] **Step 2b: Record pre-push SHA for rollback**
+
+```bash
+git rev-parse origin/main > /tmp/coder-b-pre-push-sha
+cat /tmp/coder-b-pre-push-sha
+```
+
+Save the output. Rollback procedure at end of plan uses this SHA.
+
 - [ ] **Step 3: Push all commits**
 
 ```bash
@@ -930,7 +939,7 @@ kubectl -n coder-workspaces get secret | grep -E \
   'coder-workspace-env|coder-talosconfig|coder-ssh-signing-key|coder-terraform-credentials|coder-ssh-rotation-token'
 ```
 
-Expect 5 rows, all with non-zero DATA count. If any missing → Flux SOPS decryption failed. Most likely cause: `spec.decryption` block missing on `secrets/ks.yaml` or `ssh-key-rotation/ks.yaml` (Task 6 Step 3 / Task 6b Step 3). Fix, push, reconcile before proceeding.
+Expect 5 rows; each with DATA column > 0 (number of secret keys). If any missing → Flux SOPS decryption failed. Most likely cause: `spec.decryption` block missing on `secrets/ks.yaml` or `ssh-key-rotation/ks.yaml` (Task 6 Step 3 / Task 6b Step 3). Fix, push, reconcile before proceeding.
 
 - [ ] **Step 7: Invoke cluster-validator agent.**
 
@@ -1085,37 +1094,6 @@ Expected: runtimeClassName=kata, privileged=true.
 
 ---
 
-## Rollback procedure (if any push causes unrecoverable state)
-
-The plan pushes once at Task 11. Rollback paths:
-
-**Option R1 — revert commit range (preferred)**
-
-```bash
-# Identify the range pushed in Task 11 (first commit = Task 1 probe, last = Task 10 scripts,
-# Task 11 only pushes — use the pre-push SHA as base):
-BASE=$(git rev-parse HEAD@{push.upstream})  # or the last known good SHA before the push
-git revert --no-commit ${BASE}..HEAD
-git commit -m "revert: undo #977 Option B namespace split"
-git push
-```
-
-Caveat: `git mv` commits are inverted cleanly; plaintext edits invert cleanly; SOPS file edits invert cleanly since `git revert` restores the pre-edit encrypted blob. Flux reconciles back to baseline.
-
-**Option R2 — restore from pre-push SHA (if revert fails mid-range)**
-
-If a revert conflict is messy (e.g., overlapping edits to `main.tf`), cherry-pick-in-reverse the problem commit, or hard-reset a local branch to the pre-push SHA and force-push (risky — requires explicit user authorisation per `.claude/rules/01-constraints.md`; DO NOT proceed without confirmation).
-
-**After rollback**
-
-```bash
-flux reconcile kustomization cluster-apps -n flux-system --with-source  # top-level
-kubectl get ns coder-workspaces  # should be absent or Terminating
-kubectl -n coder-system get secret | grep -E 'coder-workspace-env|coder-talosconfig|coder-ssh-signing-key|coder-terraform-credentials'  # should all be present again
-```
-
----
-
 ## Task 15: Success criteria inside the workspace
 
 - [ ] **Step 1: `podman run hello-world`**
@@ -1209,6 +1187,37 @@ git push
 
 ---
 
+## Rollback Appendix (if any stage causes unrecoverable state)
+
+The plan pushes once at Task 11 Step 3. Before that push, Task 11 Step 2b records the pre-push SHA to `/tmp/coder-b-pre-push-sha`.
+
+**Option R1 — revert commit range (preferred)**
+
+```bash
+PRE_PUSH_SHA=$(cat /tmp/coder-b-pre-push-sha)
+git revert --no-commit "${PRE_PUSH_SHA}..HEAD"
+git commit -m "revert: undo #977 Option B namespace split"
+git push
+```
+
+`git revert` inverts each commit cleanly: `git mv` pairs re-introduce the old paths, plaintext edits invert, SOPS file edits invert by restoring the pre-edit encrypted blob. Flux reconciles back to baseline.
+
+**Option R2 — restore from pre-push SHA (if revert conflicts)**
+
+If a revert range produces conflicts, hard-reset a local branch to `${PRE_PUSH_SHA}` and force-push. **Requires explicit user authorisation per `.claude/rules/01-constraints.md` — force push to `main` is destructive.** DO NOT proceed without the user confirming.
+
+**After rollback**
+
+```bash
+flux reconcile kustomization cluster-apps -n flux-system --with-source
+kubectl get ns coder-workspaces  # absent or Terminating
+kubectl -n coder-system get secret | grep -E \
+  'coder-workspace-env|coder-talosconfig|coder-ssh-signing-key|coder-terraform-credentials|coder-ssh-rotation-token'
+# all 5 secrets present again
+```
+
+---
+
 ## Self-Review
 
 **Spec coverage:**
@@ -1221,7 +1230,7 @@ git push
 - §7 Kyverno → Task 7.
 - §8 Trivy → Task 8.
 - §9 Validation → Tasks 11 (qa/cluster validator), 12 (Kyverno neg-test), 13 (CNP test), 15 (E2E).
-- §10 Rollback → implicit (git revert); no dedicated task because no irreversible steps.
+- §10 Rollback → dedicated Rollback Appendix between Tasks 16 and Self-Review; pre-push SHA captured in Task 11 Step 2b.
 - §11 Artefacts → all paths covered in Tasks 2-10.
 - §12 Open items → Task 1 covers `/dev/fuse` verification; Kyverno syntax verify in Task 7 Step 2 note; Flux dependsOn in Task 3 Step 4 note.
 
