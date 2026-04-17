@@ -200,19 +200,6 @@ resource "coder_agent" "main" {
   startup_script = <<-EOT
     set -e
 
-    # Start Docker daemon (envbuilder doesn't run DinD feature entrypoint)
-    if command -v dockerd &>/dev/null && ! docker info &>/dev/null 2>&1; then
-      echo "Starting Docker daemon..."
-      sudo dockerd --iptables=false --storage-driver=vfs &>/tmp/dockerd.log &
-      # Wait for Docker to be ready
-      for i in $(seq 1 30); do
-        sudo docker info &>/dev/null 2>&1 && break
-        sleep 1
-      done
-      # Allow vscode user to use Docker
-      sudo chmod 666 /var/run/docker.sock
-    fi
-
     # SA token is mounted read-only as root. Copy to readable location for vscode.
     if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
       sudo cp /var/run/secrets/kubernetes.io/serviceaccount/token /tmp/sa-token
@@ -394,6 +381,14 @@ resource "kubernetes_pod_v1" "main" {
   spec {
     service_account_name = "coder-workspace"
     restart_policy       = "Never"
+    # Kata Containers: each workspace pod runs in its own lightweight VM
+    # (QEMU/Cloud Hypervisor + KVM). Hypervisor boundary around arbitrary
+    # AI-agent-generated code inside the workspace. Ref #933.
+    runtime_class_name = "kata"
+
+    node_selector = {
+      "kata.spruyt-labs/ready" = "true"
+    }
 
     # Non-root (UID 1000, vscode) under PSA restricted. The workspace
     # uses rootless Podman instead of dockerd, so no root is needed.
