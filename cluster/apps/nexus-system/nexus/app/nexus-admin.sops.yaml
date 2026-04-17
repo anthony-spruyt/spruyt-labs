@@ -1,0 +1,25 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: nexus-admin
+    namespace: nexus-system
+type: Opaque
+stringData:
+    admin-username: ENC[AES256_GCM,data:ieYO3jdMSg==,iv:mdQrlzdeBALQZF2RZ0Kj3w5ZYJT7z91M3IAscChJK6k=,tag:SLS3Cfb4cEPVRHGeeROGCA==,type:str]
+    admin-password: ENC[AES256_GCM,data:TFrdFpQuESOmnug619z+nsAjwUIspgAIvg6ZDP7ZpaghUxjC542h9lNgFoQ9Jm/i0fw8Uak/3act1Yh3k7RBXg==,iv:NFrpaMaQRbiG77QGTeg1aJB76iHgOcgipxCqGfr1ijk=,tag:Y1ZwF1WTSOS2P0K+OOumgw==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBVb1E2MGt2cHpDektmdE5l
+            U3REU2NJajhNMFAzcXM1enhzYXBVWjEySlU4CnJYME5SbWs5emRnSjVWNVRCbWoy
+            VkpXdnZtM0lXR1ZKVkpQaitpT3hITEEKLS0tIG90UFdtQTAvWnJKMzNlOXdOWTVO
+            c3ladE9vNXh2Q29BYW9zQVhMdnRNOXMK5AyBV3wQLFvGkvfDPkM4LOxrM8b+zwA2
+            TP9RmxTM1u9npKzmMGYaippik3iDLBe48NQWTibiSHEu8Te/6q82Bg==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-17T10:54:49Z"
+    mac: ENC[AES256_GCM,data:KXg+hbcafumgQ+4Hx/G8N5yMdV/MtKJi2XihgGKMTggQlUrT1G63jPRtkBWr/shQIpgrmvSTIRIw74QVDujRWUN51kjToxl1johqMI94VQlEAKe0ki8VbMVvUCBQc+X1EU9bQGaM02/QOd85AAAMISRAqgc+o4lnYPgASpg4rns=,iv:fs3eUJBAmJ7fTEgkolEPUYcDN7xGfCpRY5hgf6jXr74=,tag:mu9BfHIVO9QL3VkvqImXkA==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2
