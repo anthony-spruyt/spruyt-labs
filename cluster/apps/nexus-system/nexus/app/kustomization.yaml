@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # TODO Task 2: uncomment once SOPS secret files are created by user
+  # - ./nexus-admin.sops.yaml
+  # - ./nexus-upstream-creds.sops.yaml
+  - ./nexus-properties-configmap.yaml
+  - ./release.yaml
+  # Task 4 adds:
+  # - ./provision-repos-rbac.yaml
+  # - ./provision-repos-job.yaml
+  # Task 5 adds:
+  # - ./network-policies.yaml
+  # - ./vpa.yaml
+  # - ./pod-monitor.yaml
+configMapGenerator:
+  - name: nexus-values
+    namespace: nexus-system
+    files:
+      - values.yaml
+  # Task 4 adds provision.sh via this generator entry:
+  # - name: nexus-provisioner-script
+  #   namespace: nexus-system
+  #   files:
+  #     - provision.sh
+configurations:
+  - ./kustomizeconfig.yaml

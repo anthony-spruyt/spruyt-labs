@@ -1,0 +1,97 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.6.2/charts/library/common/values.schema.json
+
+defaultPodOptions:
+  priorityClassName: standard-priority
+
+controllers:
+  main:
+    type: statefulset
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsUser: 200
+        runAsGroup: 200
+        fsGroup: 200
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+    containers:
+      main:
+        securityContext:
+          runAsUser: 200
+          runAsGroup: 200
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        image:
+          # renovate: datasource=docker depName=sonatype/nexus3
+          repository: sonatype/nexus3
+          tag: "3.91.0@sha256:5788b8873cdcda22835e30293a85545e109430dab94aa3e5717bb978e2883003"
+        env:
+          TZ:
+            value: "${TIMEZONE}"
+          INSTALL4J_ADD_VM_PARAMS:
+            value: "-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Dkaraf.startLocalConsole=false"
+          NEXUS_SECURITY_INITIAL_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: nexus-admin
+                key: admin-password
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet: {path: /service/rest/v1/status, port: 8081}
+              initialDelaySeconds: 60
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 5
+          readiness: *probes
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet: {path: /service/rest/v1/status, port: 8081}
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 60
+        resources:
+          requests: {cpu: 250m, memory: 2Gi}
+          limits: {memory: 4Gi}
+
+service:
+  nexus:
+    controller: main
+    ports:
+      http:
+        port: 8081
+      docker-group:
+        port: 8082
+      docker-cache:
+        port: 8083
+
+persistence:
+  data:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 100Gi
+    storageClass: rook-ceph-block
+    globalMounts:
+      - path: /nexus-data
+  nexus-properties:
+    type: configMap
+    name: nexus-properties
+    advancedMounts:
+      main:
+        main:
+          - path: /nexus-data/etc/nexus.properties
+            subPath: nexus.properties
+            readOnly: true
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
