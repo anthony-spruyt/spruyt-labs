@@ -14,7 +14,6 @@ resources:
   - ./authentik-secret-store.yaml
   - ./coder-oauth-external-secret.yaml
   - ./oauth-rotation-rbac.yaml
-  - ./workspace-rbac.yaml
   - ./network-policies.yaml
   - ./release.yaml
   - ./vpa.yaml
