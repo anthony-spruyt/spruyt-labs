@@ -6,13 +6,15 @@ Diagnoses why rootless podman fails inside Kata-runtime pods.
 ## Quickstart
 
 ```bash
-./hack/kata-podman-probes/probe.sh --probe 1
+./hack/kata-podman-probes/probe.sh 1
 ```
 
 Each probe spawns an ephemeral pod on a kata-ready worker, runs the userns reproducer,
 prints pass/fail, deletes the pod.
 
 ## Reproducer
+
+The probe runs as root inside the container — the reproducer tests multi-line `uid_map` writes, which fail even for root with CAP_SETUID per issue #977 diagnosis.
 
 Inside the pod:
 
