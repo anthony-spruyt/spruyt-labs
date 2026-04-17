@@ -19,6 +19,7 @@ MegaLinter or schema check results that are not actual issues.
 | markdownlint MD040/MD060 in design spec docs | markdownlint | Pre-existing formatting issues in docs/superpowers/specs/. Not introduced by feature branches | 6 | 2026-04-04 | 2026-03-18 |
 | AVD-DS-0026 Dockerfile HEALTHCHECK in .trivyignore.yaml | Trivy | .trivyignore.yaml used `DS-0026` without `AVD-` prefix. All other entries use `AVD-` prefix (e.g. AVD-KSV-0037). Must use `AVD-DS-0026` to match Trivy-reported ID format. Fixed and confirmed working | 3 | 2026-04-01 | 2026-03-22 |
 | AVD-DS-0026 on new Dockerfiles not added to .trivyignore.yaml paths | Trivy | When adding new Dockerfiles that use Kubernetes liveness/readiness probes, must add path to existing AVD-DS-0026 entry in .trivyignore.yaml | 1 | 2026-04-01 | 2026-04-01 |
+| AVD-DS-0002 (non-root USER) on devcontainer Dockerfile | Trivy | Add explicit `USER vscode` (matching remoteUser/containerUser) as final directive. Devcontainer features issue their own `USER root` during install, so this only sets the default runtime user and doesn't block envbuilder/kaniko build | 1 | 2026-04-17 | 2026-04-17 |
 
 ## Schema Quirks
 
