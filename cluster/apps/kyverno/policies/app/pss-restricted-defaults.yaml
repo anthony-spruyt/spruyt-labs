@@ -45,6 +45,10 @@ spec:
                 - observability
                 - nut-system
                 - dev-debug
+                # Coder workspaces: Kata VM boundary provides isolation;
+                # envbuilder/kaniko needs default caps (CHOWN, DAC_OVERRIDE,
+                # SETUID, SETGID, etc) to extract image layers during build.
+                - coder-system
       mutate:
         patchStrategicMerge:
           spec:
