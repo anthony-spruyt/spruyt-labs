@@ -2,7 +2,18 @@
 # cluster/apps/nexus-system/nexus/app/provision.sh
 set -eu
 
-command -v jq >/dev/null || apk add --no-cache jq curl
+if ! command -v jq >/dev/null; then
+  # Image ships curl; jq fetched as static binary into writable /tmp
+  # (container rootfs is read-only per KSV-0014).
+  JQ_VERSION="1.7.1"
+  JQ_SHA256="5942c9b0934e510ee61eb3e30273f1b3fe2590df93933a93d7c58b81d19c8ff5"
+  echo "Downloading jq ${JQ_VERSION}..."
+  curl -fsSLo /tmp/jq \
+    "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-amd64"
+  echo "${JQ_SHA256}  /tmp/jq" | sha256sum -c -
+  chmod +x /tmp/jq
+  export PATH="/tmp:${PATH}"
+fi
 
 echo "Waiting for Nexus writable..."
 for i in $(seq 1 60); do

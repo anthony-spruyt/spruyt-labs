@@ -26,12 +26,15 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: provisioner
-          # renovate: datasource=docker depName=alpine
-          image: alpine:3.20.3@sha256:beefdbd8a1da6d2915566fde36db9db0b524443ee54b23de71fd5d9fe4f4b43d
+          # renovate: datasource=docker depName=alpine/curl
+          image: alpine/curl:8.14.1@sha256:9cb587777e2693ca3817d3086ce22bde3fda1990d03cf9dc716eaf844f9f8fc6
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: {drop: [ALL]}
-            readOnlyRootFilesystem: false  # apk needs /var/cache
+            readOnlyRootFilesystem: true
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {memory: 128Mi}
           env:
             - name: NEXUS_URL
               value: "http://nexus.nexus-system.svc.cluster.local:8081"
@@ -50,8 +53,11 @@ spec:
           command: ["/bin/sh", "/scripts/provision.sh"]
           volumeMounts:
             - {name: script, mountPath: /scripts, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
       volumes:
         - name: script
           configMap:
             name: nexus-provisioner-script
             defaultMode: 0755
+        - name: tmp
+          emptyDir: {}
