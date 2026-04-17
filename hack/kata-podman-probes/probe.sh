@@ -26,8 +26,20 @@ kubectl -n "${NS}" wait --for=condition=Ready "pod/${POD}" --timeout=120s
 
 echo "--- probe ${PROBE} repro ---"
 kubectl -n "${NS}" exec "${POD}" -- sh -c '
-  dnf -qy install shadow-utils util-linux > /dev/null 2>&1 || true
-  unshare -U sh -c "newuidmap \$\$ 0 1000 1 1 100000 65536; echo rc=\$?"
+  dnf -qy install util-linux > /dev/null 2>&1 || true
+  # Test: multi-line write to /proc/PID/uid_map with CAP_SETUID in parent userns.
+  # Fork a child into a NEW userns that waits; parent writes multi-line uid_map.
+  unshare -Ur --kill-child sh -c '"'"'
+    sleep 9999 &
+    CHILD=$!
+    sleep 0.2
+    printf "0 0 1\n1 100000 65536\n" > /proc/$CHILD/uid_map 2>&1
+    rc=$?
+    echo "multi-line uid_map write rc=$rc"
+    [ $rc -ne 0 ] && echo "--- uid_map content ---" && cat /proc/$CHILD/uid_map
+    kill $CHILD 2>/dev/null
+    exit $rc
+  '"'"'
 '
 echo "--- probe ${PROBE} dmesg tail ---"
 kubectl -n "${NS}" exec "${POD}" -- sh -c 'dmesg 2>/dev/null | tail -20 || echo "(dmesg unavailable)"'
