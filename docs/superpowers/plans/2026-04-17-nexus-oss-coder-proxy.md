@@ -488,9 +488,9 @@ Job consumes creds via `secretKeyRef` env (kubelet-injected) — no K8s API acce
 
 - [ ] **Step 2: provision.sh**
 
-Uses GET-merge-PUT on the anonymous role (preserves existing privileges). Uses `jq` — note `curlimages/curl:8.10.1` does NOT include jq, so the script also runs a `jq` sidecar via a combined image... Simpler: use `sed`/awk pure-shell merge. BUT safer: switch image to one that has both `curl` and `jq`.
-
-Use `ghcr.io/qmcgaw/binpot/jq` pattern — or simpler: pre-verified image `badouralix/curl-jq`. Avoid fragile-registry deps; `alpine/curl` includes curl and we can `apk add jq` at Job startup. Cleanest: use busybox for everything and install both via apk in an initContainer... no, keep it simple with `alpine:3` + `apk add --no-cache curl jq` at runtime:
+GET-merge-PUT preserves existing privileges on the anonymous role.
+Script runs on `alpine:3` and installs `curl` + `jq` at startup — avoids
+depending on a prebuilt combined image.
 
 ```bash
 #!/bin/sh
@@ -1164,10 +1164,25 @@ Ref #968"
 - [ ] **Step 1: Push + merge PR 2**
 
 ```bash
-gh pr create --repo anthony-spruyt/spruyt-labs --title "feat(coder): route envbuilder through Nexus"
-```
+gh pr create --repo anthony-spruyt/spruyt-labs \
+  --title "feat(coder): route envbuilder through Nexus" \
+  --body "$(cat <<'EOF'
+## Summary
+Point envbuilder at the in-cluster Nexus for image mirrors + kaniko layer cache.
 
-Body: refs #968.
+## Linked Issue
+Ref #968
+
+## Changes
+- coder-workspace-env.sops.yaml: add KANIKO_REGISTRY_MIRROR, ENVBUILDER_INSECURE, rewrite ENVBUILDER_DOCKER_CONFIG_BASE64 (svc DNS auth for :8082 + :8083)
+- main.tf devcontainer template: update ENVBUILDER_CACHE_REPO to Nexus :8083, add mirror + insecure envs, bake apt proxy into base Dockerfile
+
+## Testing
+- [ ] 3+ workspace rebuilds succeed end-to-end
+- [ ] envbuilder logs show Nexus endpoints for both pulls and cache push
+EOF
+)"
+```
 
 - [ ] **Step 2: cluster-validator**
 
