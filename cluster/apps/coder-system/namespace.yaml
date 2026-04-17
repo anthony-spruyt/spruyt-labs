@@ -4,7 +4,12 @@ kind: Namespace
 metadata:
   name: coder-system
   labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/warn: restricted
+    # baseline (not restricted) because envbuilder requires root during
+    # build (kaniko needs root per https://github.com/coder/envbuilder/issues/181).
+    # Safe because workspace pods run under runtimeClass=kata — VM boundary
+    # provides the isolation PSA restricted would have. baseline still blocks
+    # hostNetwork/hostPath/privileged.
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: baseline
+    pod-security.kubernetes.io/warn: baseline
     descheduler.kubernetes.io/exclude: "true"

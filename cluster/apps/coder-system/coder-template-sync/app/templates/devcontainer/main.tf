@@ -390,13 +390,12 @@ resource "kubernetes_pod_v1" "main" {
       "kata.spruyt-labs/ready" = "true"
     }
 
-    # Non-root (UID 1000, vscode) under PSA restricted. The workspace
-    # uses rootless Podman instead of dockerd, so no root is needed.
+    # Envbuilder requires root during image build (kaniko). It drops to
+    # the devcontainer.json remoteUser (vscode, UID 1000) before exec'ing
+    # the init command. PSA=baseline on coder-system permits this.
+    # fs_group kept so PVC mounts are group-writable by vscode after drop.
     security_context {
-      run_as_user     = 1000
-      run_as_group    = 1000
-      fs_group        = 1000
-      run_as_non_root = true
+      fs_group = 1000
     }
 
     # Resolve access URL to Traefik LB internally (avoids Cloudflare hairpin)
@@ -428,12 +427,12 @@ resource "kubernetes_pod_v1" "main" {
       image             = local.devcontainer_builder_image
       image_pull_policy = "Always"
 
+      # No runAsUser / runAsNonRoot — envbuilder runs as root for kaniko
+      # build, then Setuid's to the devcontainer remoteUser internally.
+      # allowPrivilegeEscalation must be true for kaniko's extract step.
       security_context {
-        run_as_user                = 1000
-        run_as_group               = 1000
-        run_as_non_root            = true
         privileged                 = false
-        allow_privilege_escalation = false
+        allow_privilege_escalation = true
         read_only_root_filesystem  = false
         capabilities {
           drop = ["ALL"]
