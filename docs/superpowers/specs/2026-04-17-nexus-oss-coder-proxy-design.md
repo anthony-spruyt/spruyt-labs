@@ -149,17 +149,20 @@ to
 "nexus-docker.${EXTERNAL_DOMAIN}/envbuilder-cache/${data.coder_workspace.me.name}"
 ```
 
-### `.devcontainer/Dockerfile` (this repo) and Coder devcontainer template equivalent
+### Coder devcontainer template (envbuilder)
 
-Add apt proxy config baked into base layer:
+Add apt proxy config baked into base layer of the template Dockerfile. Uses in-cluster service DNS — no FQDN env substitution required, no TLS inside cluster:
 
 ```dockerfile
-RUN echo 'Acquire::https::Proxy "https://nexus.${EXTERNAL_DOMAIN}/";' \
- && echo 'Acquire::http::Proxy "http://nexus.nexus-system.svc.cluster.local:8081/repository/apt-ubuntu-proxy/";' \
+RUN echo 'Acquire::http::Proxy "http://nexus.nexus-system.svc.cluster.local:8081/repository/apt-ubuntu-proxy/";' \
     > /etc/apt/apt.conf.d/01proxy
 ```
 
-(Exact syntax to be validated during plan phase — apt proxy config for HTTPS upstream via Nexus `PassThroughPattern` has specific URL-rewrite requirements.)
+HTTPS pass-through repos (`cli.github.com`, `deb.nodesource.com`, etc.) reached via Nexus URL rewrite pattern — added as separate `sources.list.d/*.list` entries pointing at `http://nexus.nexus-system.svc.cluster.local:8081/repository/apt-passthrough-proxy/HTTPS///...`. Exact URL rewrite syntax validated during plan phase.
+
+### Local `.devcontainer/Dockerfile` (this repo)
+
+**Out of scope for this spec.** Dev PC workflow continues as-is initially. Once the cluster path is stable, a follow-up change will add apt proxy config via a Dockerfile `ARG` + `devcontainer.json` build-args sourcing `EXTERNAL_DOMAIN` from `${localEnv:EXTERNAL_DOMAIN}`. Tracked separately.
 
 ### `cluster/flux/meta/repositories/oci/ghcr-docker-config-secrets.sops.yaml`
 
@@ -170,9 +173,9 @@ RUN echo 'Acquire::https::Proxy "https://nexus.${EXTERNAL_DOMAIN}/";' \
 Each step a separate PR to limit blast radius:
 
 1. **PR 1 — Deploy Nexus stack.** Helm + PVC + cert + Jetty TLS config + CoreDNS rewrite + provisioning Job + NetworkPolicy + Traefik ingress + VMPodScrape. No consumer changes yet. Verify: repos provisioned, UI reachable from dev PC, apt/docker proxy endpoints serve content via `curl`.
-2. **PR 2 — Coder template + workspace env.** Update `main.tf` `ENVBUILDER_CACHE_REPO`; rewrite `coder-workspace-env.sops.yaml` docker config. Rebuild one test workspace end-to-end.
-3. **PR 3 — Local devcontainer.** Add apt proxy config to `.devcontainer/Dockerfile`. Validate rebuild of own devcontainer.
-4. **Cleanup PR** — Remove upstream PATs from `coder-workspace-env.sops.yaml` once Nexus stability confirmed (~1 week observation).
+2. **PR 2 — Coder template + workspace env.** Update `main.tf` `ENVBUILDER_CACHE_REPO`; rewrite `coder-workspace-env.sops.yaml` docker config; add apt proxy to the template Dockerfile. Rebuild one test workspace end-to-end.
+3. **Cleanup PR** — Remove upstream PATs from `coder-workspace-env.sops.yaml` once Nexus stability confirmed (~1 week observation).
+4. **Follow-up (out of scope, separate issue)** — Local `.devcontainer/Dockerfile` apt proxy via build ARG.
 
 ## Rollback
 
