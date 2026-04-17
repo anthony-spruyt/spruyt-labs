@@ -466,16 +466,9 @@ resource "kubernetes_pod_v1" "main" {
       }
 
       resources {
-        # Kata sizes the guest VM at pod start based on the container memory
-        # request (QEMU boots with that much RAM, hot-plugs up to the limit
-        # later). Bumped from 4Gi because source-compile/link steps (Python
-        # feature builds gcc → link libpython ≈ 2-3GiB each ×8 -j procs)
-        # OOM inside the guest before hot-plug catches up. The
-        # io.katacontainers.config.hypervisor.default_memory annotation is
-        # not in the kata enable_annotations allowlist on this cluster.
         requests = {
           cpu    = "2000m"
-          memory = "8Gi"
+          memory = "4Gi"
         }
         limits = {
           cpu    = "8000m"
