@@ -79,7 +79,7 @@ persistence:
     type: persistentVolumeClaim
     accessMode: ReadWriteOnce
     size: 100Gi
-    storageClass: rook-ceph-block
+    storageClass: ceph-block
     globalMounts:
       - path: /nexus-data
   nexus-properties:
