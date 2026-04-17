@@ -39,7 +39,7 @@ controllers:
           - name: LOG_LEVEL
             value: "info"
           - name: SWEEP_INTERVAL
-            value: "30"
+            value: "10"
           - name: NODE_NAME
             valueFrom:
               fieldRef:
