@@ -229,7 +229,7 @@ nodes:
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
     nodeLabels:
       ups.spruyt-labs.io/connected: "true"
-      kata.spruyt-labs/ready: "true" # Kata promotion (#933) - target for RuntimeClass kata nodeSelector
+      kata.spruyt-labs/ready: "true"
     patches:
       # ===== MS-01 shared patches (anchors defined here, referenced by ms-01-2/3) =====
       - &patchThunderbolt |-
@@ -386,7 +386,7 @@ nodes:
             metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
     nodeLabels:
-      kata.spruyt-labs/ready: "true" # Kata promotion (#933) - target for RuntimeClass kata nodeSelector
+      kata.spruyt-labs/ready: "true"
     patches:
       - *patchThunderbolt
       - *patchNetworking
@@ -453,7 +453,7 @@ nodes:
             metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
     nodeLabels:
-      kata.spruyt-labs/ready: "true" # Kata promotion (#933) - target for RuntimeClass kata nodeSelector
+      kata.spruyt-labs/ready: "true"
     patches:
       - *patchThunderbolt
       - *patchNetworking
