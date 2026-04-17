@@ -34,11 +34,23 @@ controllers:
             value: "${TIMEZONE}"
           INSTALL4J_ADD_VM_PARAMS:
             value: "-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Dkaraf.startLocalConsole=false"
+          NEXUS_SECURITY_RANDOMPASSWORD:
+            value: "false"
           NEXUS_SECURITY_INITIAL_PASSWORD:
             valueFrom:
               secretKeyRef:
                 name: nexus-admin
                 key: admin-password
+        ports:
+          - name: http
+            containerPort: 8081
+            protocol: TCP
+          - name: docker-group
+            containerPort: 8082
+            protocol: TCP
+          - name: docker-cache
+            containerPort: 8083
+            protocol: TCP
         probes:
           liveness: &probes
             enabled: true
