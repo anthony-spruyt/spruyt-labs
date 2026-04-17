@@ -223,7 +223,7 @@ Edit `cluster/apps/kube-system/descheduler/app/values.yaml`: add `coder-workspac
 grep -n 'coder-system' cluster/apps/kube-system/descheduler/app/values.yaml
 ```
 
-Add `coder-workspaces` as a sibling entry on each match.
+Add `coder-workspaces` as a sibling entry on each match. Expected: 6 insertions (one per plugin with a `namespaces.exclude` list).
 
 - [ ] **Step 5: Commit (do not push)**
 
@@ -326,14 +326,21 @@ spec:
   wait: true
 ```
 
-> **Cross-check pattern first:** before writing Step 4, open any
-> existing `ks.yaml` under `cluster/apps/coder-system/` (e.g.,
-> `coder/ks.yaml`) and copy its Flux Kustomization conventions
-> (naming, `dependsOn`, `postBuild.substituteFrom`, etc.). Update the
-> template above to match. The `dependsOn` name above
-> (`cluster-apps-coder-workspaces`) may not be correct for this
-> repo's naming — adjust to match the one that installs the namespace
-> kustomization from `cluster/apps/coder-workspaces/namespace.yaml`.
+> **Cross-check pattern first — `dependsOn` is fabricated:**
+> `cluster-apps-coder-workspaces` in the template above is a
+> placeholder; no such Flux Kustomization exists. Before writing
+> Step 4 (and reusing this pattern in Tasks 4, 6, 6b, 7):
+>
+> 1. Read `cluster/apps/coder-system/coder/ks.yaml` to see how the
+>    existing apps handle `dependsOn` (likely none, relying on
+>    parent-ks resource ordering).
+> 2. Read `cluster/flux/` (look for the top-level Flux Kustomization
+>    that applies `cluster/apps/`) to confirm how the namespace + its
+>    children get ordered.
+> 3. If the pattern is "no `dependsOn` at ks.yaml level, rely on
+>    parent kustomization ordering" — drop the `dependsOn` block
+>    entirely from all ks.yaml templates in this plan. Otherwise,
+>    substitute the correct dependency name(s) once, and propagate.
 
 - [ ] **Step 5: Delete source file**
 
@@ -390,9 +397,9 @@ Plus two CNPs on the control-plane side that reference workspace pods (these STA
 
 - [ ] **Step 2: Write new `cluster/apps/coder-workspaces/network-policies/app/network-policies.yaml`**
 
-Copy the 12 workspace CNPs verbatim from the source. For `allow-workspace-wireguard-tunnel`, update both its `egress.toEndpoints` and `ingress.fromEndpoints` `k8s:io.kubernetes.pod.namespace` from `coder-system` (current) to `coder-system` (unchanged — the peer is still `coder`).
+Copy the 12 workspace CNPs verbatim from the source. For `allow-workspace-wireguard-tunnel`, keep its peer ns (`k8s:io.kubernetes.pod.namespace: coder-system`) unchanged — the peer `coder` server stays in `coder-system`.
 
-Also add a header comment explaining the namespace:
+Add a header comment:
 
 ```yaml
 # Workspace pod CNPs for coder-workspaces namespace.
@@ -400,8 +407,6 @@ Also add a header comment explaining the namespace:
 # Pods in this ns carry label app.kubernetes.io/name: coder-workspace.
 # DNS egress handled by CiliumClusterwideNetworkPolicy/allow-kube-dns-egress.
 ```
-
-(Full content: copy each CNP definition block as-is; adjust the wireguard policy's peer ns if that value was `coder-system` — the peer `coder` pod still lives there so it stays `coder-system`.)
 
 - [ ] **Step 3: Write `network-policies/app/kustomization.yaml`**
 
@@ -420,7 +425,11 @@ Mirror the workspace-rbac/ks.yaml pattern from Task 3. Same `dependsOn`, differe
 
 - [ ] **Step 5: Remove workspace CNPs from `coder-system/coder/app/network-policies.yaml`**
 
-Delete the 12 CNPs whose `endpointSelector` is `coder-workspace`. KEEP `allow-wireguard-tunnel` (coder server side) but edit its `fromEndpoints.k8s:io.kubernetes.pod.namespace` + `toEndpoints.k8s:io.kubernetes.pod.namespace` from `coder-system` to `coder-workspaces`.
+Delete the 12 CNPs whose `endpointSelector.matchLabels` is `app.kubernetes.io/name: coder-workspace` (the ones that moved in Step 2).
+
+Then edit `allow-wireguard-tunnel` (which STAYS — its `endpointSelector` is `coder`, not `coder-workspace`): update both `egress.toEndpoints` and `ingress.fromEndpoints` `k8s:io.kubernetes.pod.namespace` from `coder-system` to `coder-workspaces`. This is the coder-server-side policy allowing tunnel traffic to/from workspace pods now living in the new namespace.
+
+> **Transposition risk:** do NOT touch `allow-workspace-wireguard-tunnel` (different name, already moved in Step 2). Only `allow-wireguard-tunnel` (coder-server side) gets the peer-ns edit here.
 
 - [ ] **Step 6: Commit**
 
@@ -445,18 +454,20 @@ Ref #977"
 - `cluster/apps/github-mcp/github-mcp-server/app/network-policies.yaml`
 - `cluster/apps/discord-mcp/discord-mcp/app/network-policies.yaml`
 - `cluster/apps/brave-search-mcp/brave-search-mcp/app/network-policies.yaml`
+- `cluster/apps/n8n-system/n8n/app/network-policies.yaml`
 
 Each file has an `allow-coder-workspace-ingress` CNP with hardcoded `k8s:io.kubernetes.pod.namespace: coder-system`. Retarget to `coder-workspaces`.
 
 - [ ] **Step 1: Audit for any other CNPs referencing coder-workspace**
 
 ```bash
-grep -rln 'coder-workspace' cluster/apps/ | grep network-polic
+grep -rln 'app.kubernetes.io/name: coder-workspace' cluster/apps/ \
+  | grep network-polic
 ```
 
-Expected: the 5 files above plus the coder-system files already modified in Task 4. If more appear, add them here.
+Expected: the 6 files above plus the coder-system file already modified in Task 4. If more appear, add them here.
 
-- [ ] **Step 2: For each of the 5 files, edit the `allow-coder-workspace-ingress` CNP**
+- [ ] **Step 2: For each of the 6 files, edit the `allow-coder-workspace-ingress` CNP**
 
 Change `k8s:io.kubernetes.pod.namespace: coder-system` → `k8s:io.kubernetes.pod.namespace: coder-workspaces` on the `fromEndpoints.matchLabels` line.
 
@@ -469,7 +480,8 @@ git add cluster/apps/kubectl-mcp/kubectl-mcp-server/app/network-policies.yaml \
         cluster/apps/observability/mcp-victoriametrics/app/network-policies.yaml \
         cluster/apps/github-mcp/github-mcp-server/app/network-policies.yaml \
         cluster/apps/discord-mcp/discord-mcp/app/network-policies.yaml \
-        cluster/apps/brave-search-mcp/brave-search-mcp/app/network-policies.yaml
+        cluster/apps/brave-search-mcp/brave-search-mcp/app/network-policies.yaml \
+        cluster/apps/n8n-system/n8n/app/network-policies.yaml
 git commit -m "refactor(mcp): retarget coder-workspace ingress to coder-workspaces ns
 
 Ref #977"
@@ -532,15 +544,10 @@ Mirror pattern from Task 3's ks.yaml. Name: `coder-workspaces-secrets`. Critical
 
 Delete the four `- ./coder-*.sops.yaml` lines that correspond to moved files. Leave `coder-oauth-external-secret.yaml`, `coder-cnpg-credentials.sops.yaml`, etc. — those stay.
 
-- [ ] **Step 5: Update parent `coder-workspaces/kustomization.yaml`**
-
-Replace the `- ./external-secrets/ks.yaml` resource (from Task 2 scaffold) with `- ./secrets/ks.yaml` to match the actual directory name used here.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add cluster/apps/coder-workspaces/secrets/ \
-        cluster/apps/coder-workspaces/kustomization.yaml \
         cluster/apps/coder-system/coder/app/kustomization.yaml
 git commit -m "refactor(coder): move workspace SOPS Secrets to coder-workspaces ns
 
@@ -630,7 +637,7 @@ grep -rln 'kind: ClusterPolicy' cluster/apps/kyverno/policies/app/ | head
 
 Copy any established style (validationFailureAction, background, admission).
 
-- [ ] **Step 2: Write the policy**
+- [ ] **Step 2: Write the policy (pattern-style, pinned)**
 
 `cluster/apps/coder-workspaces/kyverno-policy/app/restrict-privileged-to-coder-workspace-sa.yaml`:
 
@@ -660,20 +667,17 @@ spec:
               namespaces: [coder-workspaces]
       preconditions:
         any:
-          - key: "{{ request.object.spec.containers[].securityContext.privileged || `[]` }}"
-            operator: AnyIn
-            value: [true]
+          - key: "{{ request.object.spec.containers[?securityContext.privileged == `true`] | length(@) }}"
+            operator: GreaterThan
+            value: 0
       validate:
-        message: "Privileged pods in coder-workspaces require ServiceAccount 'coder-workspace' (got {{ request.object.spec.serviceAccountName || 'default' }})"
-        deny:
-          conditions:
-            all:
-              - key: "{{ request.object.spec.serviceAccountName || 'default' }}"
-                operator: NotEquals
-                value: coder-workspace
+        message: "Privileged pods in coder-workspaces require ServiceAccount 'coder-workspace'"
+        pattern:
+          spec:
+            serviceAccountName: coder-workspace
 ```
 
-> **Verify CEL/JMESPath syntax** against installed Kyverno version — `kubectl get deploy -n kyverno kyverno-admission-controller -o jsonpath='{.spec.template.spec.containers[0].image}'`. Kyverno ≥1.10 supports the above; older versions may need pattern-style rather than deny-conditions.
+> **Verify against installed Kyverno version** before commit: `mcp__kubernetes__get_deployments` (ns=kyverno) → note image tag. Kyverno ≥1.10 supports the pattern form above. If version is older, consult upstream docs for the correct precondition shape, adjust, re-validate via `kubectl apply --dry-run=server -f <file>`.
 
 - [ ] **Step 3: Write `kyverno-policy/app/kustomization.yaml`**
 
@@ -760,20 +764,19 @@ Targeted edits only. Preserve everything else.
 
 Line 42: `namespace = "coder-system"` → `namespace = "coder-workspaces"`.
 
-- [ ] **Step 2: Flip privileged**
+- [ ] **Step 2: Flip privileged + drop seccomp_profile block**
 
-Line ~449 in the `dev` container `security_context`:
+At `main.tf:449`, the current value is `privileged = false`. Flip to `true`. Also remove the `seccomp_profile { type = "RuntimeDefault" }` block at lines 452-454 — privileged pods bypass it and keeping the block adds noise.
+
+Target:
 
 ```terraform
 security_context {
   privileged                 = true
   allow_privilege_escalation = true
   read_only_root_filesystem  = false
-  # No seccomp_profile here — privileged pods bypass; omit to avoid conflict.
 }
 ```
-
-Remove the `seccomp_profile { type = "RuntimeDefault" }` block if privileged=true rejects it (Kubernetes accepts the combo but some operators warn). Verify by running `terraform plan` locally if possible.
 
 - [ ] **Step 3: Add XDG_RUNTIME_DIR setup to startup_script**
 
@@ -920,7 +923,16 @@ kubectl get ns coder-system -o jsonpath='{.metadata.labels}' | jq
 
 Confirm: coder-workspaces PSA=privileged; coder-system still PSA=baseline.
 
-- [ ] **Step 6: Invoke cluster-validator agent.**
+- [ ] **Step 6: Verify SOPS decryption materialised the 5 secrets**
+
+```bash
+kubectl -n coder-workspaces get secret | grep -E \
+  'coder-workspace-env|coder-talosconfig|coder-ssh-signing-key|coder-terraform-credentials|coder-ssh-rotation-token'
+```
+
+Expect 5 rows, all with non-zero DATA count. If any missing → Flux SOPS decryption failed. Most likely cause: `spec.decryption` block missing on `secrets/ks.yaml` or `ssh-key-rotation/ks.yaml` (Task 6 Step 3 / Task 6b Step 3). Fix, push, reconcile before proceeding.
+
+- [ ] **Step 7: Invoke cluster-validator agent.**
 
 ---
 
@@ -1073,6 +1085,37 @@ Expected: runtimeClassName=kata, privileged=true.
 
 ---
 
+## Rollback procedure (if any push causes unrecoverable state)
+
+The plan pushes once at Task 11. Rollback paths:
+
+**Option R1 — revert commit range (preferred)**
+
+```bash
+# Identify the range pushed in Task 11 (first commit = Task 1 probe, last = Task 10 scripts,
+# Task 11 only pushes — use the pre-push SHA as base):
+BASE=$(git rev-parse HEAD@{push.upstream})  # or the last known good SHA before the push
+git revert --no-commit ${BASE}..HEAD
+git commit -m "revert: undo #977 Option B namespace split"
+git push
+```
+
+Caveat: `git mv` commits are inverted cleanly; plaintext edits invert cleanly; SOPS file edits invert cleanly since `git revert` restores the pre-edit encrypted blob. Flux reconciles back to baseline.
+
+**Option R2 — restore from pre-push SHA (if revert fails mid-range)**
+
+If a revert conflict is messy (e.g., overlapping edits to `main.tf`), cherry-pick-in-reverse the problem commit, or hard-reset a local branch to the pre-push SHA and force-push (risky — requires explicit user authorisation per `.claude/rules/01-constraints.md`; DO NOT proceed without confirmation).
+
+**After rollback**
+
+```bash
+flux reconcile kustomization cluster-apps -n flux-system --with-source  # top-level
+kubectl get ns coder-workspaces  # should be absent or Terminating
+kubectl -n coder-system get secret | grep -E 'coder-workspace-env|coder-talosconfig|coder-ssh-signing-key|coder-terraform-credentials'  # should all be present again
+```
+
+---
+
 ## Task 15: Success criteria inside the workspace
 
 - [ ] **Step 1: `podman run hello-world`**
@@ -1101,7 +1144,7 @@ Trigger a template push or envbuilder rebuild via the existing Coder workflow (o
 
 - [ ] **Step 4: If any step fails**
 
-Collect logs (`journalctl -u podman` inside the workspace, pod events, CNP deny audits via `hubble observe --verdict DROPPED --to-pod coder-workspaces/...`). Open a follow-up issue if the failure is orthogonal to the namespace split.
+Collect logs (`podman logs --latest` inside the workspace, pod events, CNP deny audits via `hubble observe --verdict DROPPED --to-pod coder-workspaces/...`). Open a follow-up issue if the failure is orthogonal to the namespace split.
 
 ---
 
@@ -1131,7 +1174,7 @@ gh issue close 977 --repo anthony-spruyt/spruyt-labs
 - Remove stale probe-1 / kata-qemu references from memory if any.
 - Add `feedback_kata_vm_boundary.md` capturing the decision rationale: PSA=privileged inside Kata VM is how the industry sandboxes run.
 
-- [ ] **Step 3: Delete old workspace PVCs in `coder-system` (optional, after grace period)**
+- [ ] **Step 3: Delete old workspace PVCs in `coder-system` (after grace period)**
 
 ```bash
 kubectl -n coder-system get pvc | grep -E 'workspaces|home'
@@ -1139,13 +1182,28 @@ kubectl -n coder-system get pvc | grep -E 'workspaces|home'
 kubectl -n coder-system delete pvc <name>
 ```
 
-Frees Ceph storage. Grace period is user's call; leave for a few days in case someone needs to extract data.
+Frees Ceph storage. Grace period is user's call; leave for a few days if anyone needs to extract data.
 
-- [ ] **Step 4: Final commit**
+- [ ] **Step 4: Delete probe `hack/` folders**
+
+The Option C probe harness and the Task 1 `/dev/fuse` probe served their research purpose. Commits `4f7ad816`, `6108e579`, `f4d9ae43`, `c4e5e048`, `322ff1de`, and the Task 1 commit preserve the evidence for future reference.
 
 ```bash
-git add docs/ .claude/ 2>/dev/null || true
-git commit -m "docs(coder): close #977 with Option B landed" --allow-empty
+git rm -r hack/kata-podman-probes hack/kata-fuse-probe
+git commit -m "chore(coder): remove #977 spike probe harnesses
+
+Evidence retained in git history (commits f4d9ae43, c4e5e048,
+322ff1de, plus Task 1 fuse probe). Closing #977.
+
+Ref #977"
+git push
+```
+
+- [ ] **Step 5: Final push if any docs/ or memory edits are still local**
+
+```bash
+git status
+# If anything under docs/ or .claude/ needs committing, add explicitly (no -A) and commit with a scoped message.
 git push
 ```
 
