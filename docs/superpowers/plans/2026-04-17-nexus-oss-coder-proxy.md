@@ -2,41 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deploy Sonatype Nexus Repository OSS in-cluster as an apt + docker artifact proxy scoped to Coder workspace builds and developer workstations.
+**Goal:** Deploy Sonatype Nexus Repository 3 OSS in-cluster via `bjw-s-labs/app-template` chart, scoped to Coder workspace builds and developer workstations, as an apt + docker artifact proxy + envbuilder kaniko layer cache.
 
-**Architecture:** Single-replica StatefulSet, 100Gi Ceph RBD PVC, Jetty native TLS with ZeroSSL cert, CoreDNS split-horizon (`nexus.${EXTERNAL_DOMAIN}` resolves to ClusterIP in-cluster, Traefik LB externally), REST API provisioning Job, scoped to Coder only (not Flux, not kubelet).
+**Architecture:** StatefulSet on `app-template` chart, 100Gi Ceph RBD PVC, plain HTTP `:8081` inside cluster (no Jetty TLS), Traefik terminates TLS externally, CoreDNS split-horizon via Talos `extraManifests`, configMapGenerator-hashed provisioning Job creates 10 repos + grants `nx-metrics-all` to anonymous.
 
-**Tech Stack:** Helm (sonatype/nexus-repository-manager official chart), Flux HelmRelease, cert-manager ZeroSSL, CoreDNS, Cilium CNP, Traefik IngressRoute, VictoriaMetrics VMPodScrape, VPA, SOPS for secrets.
+**Tech Stack:** app-template 4.6.2 (already present as OCIRepository), Flux HelmRelease, cert-manager ZeroSSL, CoreDNS via Talos, Cilium CNP, standard Traefik IngressRoute, VictoriaMetrics VMPodScrape, VPA, SOPS for secrets.
 
 **Reference:** `docs/superpowers/specs/2026-04-17-nexus-oss-coder-proxy-design.md`, issue [#968](https://github.com/anthony-spruyt/spruyt-labs/issues/968)
 
-**Rollout:** 3 PRs. PR 1 = stack deployment (Tasks 1-10). PR 2 = Coder integration (Tasks 11-13). PR 3 = PAT cleanup (Task 14).
-
----
-
-## Pre-flight checks
-
-Before starting, verify the following in the repo:
-
-- [ ] **Locate CoreDNS Corefile ConfigMap.** Likely at `cluster/apps/kube-system/coredns/` or managed by Talos. Run:
-
-```bash
-mcp__kubernetes__get_configmaps namespace=kube-system
-```
-
-Identify which ConfigMap holds the Corefile. If CoreDNS is Talos-managed (via `extraManifests`), the rewrite must be added to Talos config, not a Flux-managed ConfigMap. Record the location and whether it's Flux- or Talos-managed.
-
-- [ ] **Locate existing HelmRepository for Sonatype.** Search:
-
-```bash
-Grep pattern="sonatype" path="cluster/flux/meta/repositories/helm"
-```
-
-If not present, a new `HelmRepository` must be added in Task 2.
-
-- [ ] **Confirm ExternalDomain substitution key.** Already known: `${EXTERNAL_DOMAIN}` per `.claude/rules/patterns.md`.
-
-- [ ] **Confirm ClusterIssuer name.** Already confirmed in spec: `zerossl-production`.
+**Rollout:** 3 PRs. PR 1 = Tasks 1-9 (stack deployment). PR 2 = Tasks 10-12 (Coder integration). PR 3 = Task 13 (PAT cleanup).
 
 ---
 
@@ -47,9 +21,9 @@ If not present, a new `HelmRepository` must be added in Task 2.
 **Files:**
 - Create: `cluster/apps/nexus-system/namespace.yaml`
 - Create: `cluster/apps/nexus-system/kustomization.yaml`
-- Modify: `cluster/apps/kustomization.yaml` (register new namespace)
+- Modify: `cluster/apps/kustomization.yaml`
 
-- [ ] **Step 1: Create namespace manifest**
+- [ ] **Step 1: Create namespace manifest** (follow `cluster/apps/qdrant-system/namespace.yaml` pattern)
 
 ```yaml
 # cluster/apps/nexus-system/namespace.yaml
@@ -60,7 +34,6 @@ kind: Namespace
 metadata:
   name: nexus-system
   labels:
-    kustomize.toolkit.fluxcd.io/prune: disabled
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
@@ -81,17 +54,9 @@ resources:
 
 - [ ] **Step 3: Register in top-level kustomization**
 
-Read `cluster/apps/kustomization.yaml`. Insert `- ./nexus-system` alphabetically (between `nut-system` and `observability` or similar). Use Edit tool.
+Append `- ./nexus-system` to `cluster/apps/kustomization.yaml` (ordering is not strictly alphabetical; append at end is fine).
 
-- [ ] **Step 4: Validate syntax**
-
-```bash
-kubectl kustomize cluster/apps/nexus-system/ --enable-helm 2>&1 | head -40
-```
-
-Expected: namespace manifest renders without error. `./nexus/ks.yaml` will error (not created yet) — expected at this stage.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add cluster/apps/nexus-system/namespace.yaml cluster/apps/nexus-system/kustomization.yaml cluster/apps/kustomization.yaml
@@ -102,84 +67,30 @@ Ref #968"
 
 ---
 
-### Task 2: Add Sonatype HelmRepository (if missing)
-
-**Files:**
-- Possibly create: `cluster/flux/meta/repositories/helm/sonatype.yaml`
-- Possibly modify: `cluster/flux/meta/repositories/helm/kustomization.yaml`
-
-- [ ] **Step 1: Check if already present**
-
-```bash
-Grep pattern="sonatype" path="cluster/flux/meta/repositories/helm"
-```
-
-If found, skip to Task 3.
-
-- [ ] **Step 2: Create HelmRepository**
-
-```yaml
-# cluster/flux/meta/repositories/helm/sonatype.yaml
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/helmrepository_v1.json
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: sonatype
-  namespace: flux-system
-spec:
-  interval: 2h
-  url: https://sonatype.github.io/helm3-charts/
-```
-
-- [ ] **Step 3: Register in kustomization**
-
-Add `- ./sonatype.yaml` alphabetically to `cluster/flux/meta/repositories/helm/kustomization.yaml`.
-
-- [ ] **Step 4: Verify chart available**
-
-```bash
-helm search repo sonatype/nexus-repository-manager --versions | head -10
-```
-
-(May require `helm repo add sonatype https://sonatype.github.io/helm3-charts/ && helm repo update` locally first.)
-
-Record latest stable version for Task 4. Avoid `0.x` alphas.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add cluster/flux/meta/repositories/helm/sonatype.yaml cluster/flux/meta/repositories/helm/kustomization.yaml
-git commit -m "feat(flux): add sonatype helm repository
-
-Ref #968"
-```
-
----
-
-### Task 3: Create SOPS secrets (admin password + upstream PATs)
+### Task 2: Create SOPS secrets
 
 **Files:**
 - Create: `cluster/apps/nexus-system/nexus/app/nexus-admin.sops.yaml`
 - Create: `cluster/apps/nexus-system/nexus/app/nexus-upstream-creds.sops.yaml`
+- Create: `cluster/apps/nexus-system/nexus/app/nexus-envbuilder-credentials.sops.yaml`
 
-- [ ] **Step 1: Generate admin password template (unencrypted)**
-
-Admin password must be at least 8 chars, include upper/lower/digit/special. Generate locally:
+- [ ] **Step 1: Generate admin password**
 
 ```bash
 openssl rand -base64 24 | tr -d '/+=' | head -c 24
 ```
 
-- [ ] **Step 2: Create SOPS-encrypted admin secret**
+Nexus password must satisfy default policy (≥8 chars, mixed case, digit, special). If generated value fails, prepend e.g. `N3x!` manually.
 
-User runs manually (Claude does not decrypt/encrypt SOPS):
+- [ ] **Step 2: User creates admin secret via sops**
+
+User runs:
 
 ```bash
 sops cluster/apps/nexus-system/nexus/app/nexus-admin.sops.yaml
 ```
 
-Content (unencrypted form):
+Unencrypted content:
 
 ```yaml
 ---
@@ -190,18 +101,19 @@ metadata:
   namespace: nexus-system
 type: Opaque
 stringData:
-  admin-password: "<generated-password-from-step-1>"
+  admin-username: "admin"
+  admin-password: "<password-from-step-1>"
 ```
 
-- [ ] **Step 3: Create SOPS-encrypted upstream creds**
+- [ ] **Step 3: User creates upstream creds secret**
 
-User runs:
+Source values: extract dockerhub + ghcr credentials from the existing `ENVBUILDER_DOCKER_CONFIG_BASE64` entry in `cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml`. User handles extraction manually.
 
 ```bash
 sops cluster/apps/nexus-system/nexus/app/nexus-upstream-creds.sops.yaml
 ```
 
-Content:
+Unencrypted content:
 
 ```yaml
 ---
@@ -218,124 +130,69 @@ stringData:
   ghcr-token: "<existing-ghcr-pat>"
 ```
 
-**Source of values:** reuse the PATs already stored in `cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml` (decoded from `ENVBUILDER_DOCKER_CONFIG_BASE64`). User handles extraction manually.
+- [ ] **Step 4: User creates envbuilder docker config secret**
 
-- [ ] **Step 4: Verify encrypted**
+Used by Coder to authenticate to Nexus for cache pushes. Draft the `config.json` first:
+
+```json
+{
+  "auths": {
+    "nexus-docker.lan.${EXTERNAL_DOMAIN}": {
+      "auth": "<base64 of admin:admin-password>"
+    }
+  }
+}
+```
+
+> Note: for production, replace admin creds with a dedicated Nexus user scoped to `envbuilder-cache` push. Defer to a follow-up issue — admin is acceptable for initial rollout.
+
+User creates a different SOPS file exposing the docker config as a raw value.
+Envbuilder reads it from `ENVBUILDER_DOCKER_CONFIG_BASE64` env — the secret at
+this step is not consumed by the cluster directly; it exists so the base64
+value is stored once alongside the Nexus app. If preferred, skip this file and
+store the dockerconfig inline in `coder-workspace-env.sops.yaml` (Task 10) —
+either location works.
+
+Recommend skipping the dedicated file; edit `coder-workspace-env.sops.yaml` directly in Task 10. Therefore this step is a no-op placeholder.
+
+- [ ] **Step 5: Verify files are SOPS-encrypted**
 
 ```bash
 head -20 cluster/apps/nexus-system/nexus/app/nexus-admin.sops.yaml
 ```
 
-Expected: `sops:` block at bottom, `data:` fields are `ENC[AES256_GCM,...]` strings.
+Expected: `sops:` block at bottom; data fields are `ENC[AES256_GCM,...]` strings.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add cluster/apps/nexus-system/nexus/app/nexus-admin.sops.yaml cluster/apps/nexus-system/nexus/app/nexus-upstream-creds.sops.yaml
-git commit -m "feat(nexus): add admin + upstream registry SOPS secrets
+git commit -m "feat(nexus): add SOPS secrets for admin + upstream creds
 
 Ref #968"
 ```
 
 ---
 
-### Task 4: Create cert-manager Certificate
-
-**Files:**
-- Create: `cluster/apps/nexus-system/nexus/app/certificate.yaml`
-
-- [ ] **Step 1: Create Certificate manifest**
-
-```yaml
-# cluster/apps/nexus-system/nexus/app/certificate.yaml
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cert-manager.io/certificate_v1.json
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: nexus-tls
-  namespace: nexus-system
-spec:
-  secretName: nexus-tls
-  issuerRef:
-    name: zerossl-production
-    kind: ClusterIssuer
-  commonName: nexus.${EXTERNAL_DOMAIN}
-  dnsNames:
-    - nexus.${EXTERNAL_DOMAIN}
-    - nexus-docker.${EXTERNAL_DOMAIN}
-  keystores:
-    pkcs12:
-      create: true
-      passwordSecretRef:
-        name: nexus-keystore-password
-        key: password
-  privateKey:
-    algorithm: RSA
-    size: 2048
-    rotationPolicy: Always
-  usages:
-    - server auth
-    - digital signature
-    - key encipherment
-```
-
-- [ ] **Step 2: Create keystore password SOPS secret**
-
-Jetty needs a password for the PKCS12 keystore. User runs:
-
-```bash
-sops cluster/apps/nexus-system/nexus/app/nexus-keystore-password.sops.yaml
-```
-
-Content:
-
-```yaml
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: nexus-keystore-password
-  namespace: nexus-system
-type: Opaque
-stringData:
-  password: "<random-password>"
-```
-
-- [ ] **Step 3: Validate schema**
-
-```bash
-kubectl kustomize cluster/apps/nexus-system/ --enable-helm 2>&1 | head
-```
-
-(`./nexus/ks.yaml` still errors — expected.)
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add cluster/apps/nexus-system/nexus/app/certificate.yaml cluster/apps/nexus-system/nexus/app/nexus-keystore-password.sops.yaml
-git commit -m "feat(nexus): add TLS certificate via zerossl
-
-Ref #968"
-```
-
----
-
-### Task 5: Create HelmRelease + values
+### Task 3: Create HelmRelease + app-template values
 
 **Files:**
 - Create: `cluster/apps/nexus-system/nexus/app/release.yaml`
 - Create: `cluster/apps/nexus-system/nexus/app/values.yaml`
+- Create: `cluster/apps/nexus-system/nexus/app/nexus-properties-configmap.yaml`
 - Create: `cluster/apps/nexus-system/nexus/app/kustomization.yaml`
 - Create: `cluster/apps/nexus-system/nexus/app/kustomizeconfig.yaml`
+- Create: `cluster/apps/nexus-system/nexus/ks.yaml`
 
-- [ ] **Step 1: Fetch chart values.yaml for exact key paths**
+Pattern reference: `cluster/apps/vaultwarden/vaultwarden/app/` (same stateful app-template layout with PVC + reloader).
+
+- [ ] **Step 1: Find latest Nexus 3 image digest**
 
 ```bash
-helm show values sonatype/nexus-repository-manager --version <version-from-task-2> > /tmp/nexus-chart-values.yaml
+Agent(description="Resolve Nexus 3 image", prompt="Find the latest stable sonatype/nexus3 image tag on Docker Hub (not -java8, not -java11-alpine — the default tag like '3.75.1'). Return tag + sha256 digest for linux/amd64.")
 ```
 
-Review for: storage size key, image tag key, persistence, service ports, extraEnv, extraVolumes, extraVolumeMounts, securityContext. Record findings inline below.
+Record `sonatype/nexus3:<tag>@sha256:<digest>`.
 
 - [ ] **Step 2: Create HelmRelease**
 
@@ -348,124 +205,164 @@ kind: HelmRelease
 metadata:
   name: nexus
 spec:
-  chart:
-    spec:
-      chart: nexus-repository-manager
-      version: "<exact-version>"
-      sourceRef:
-        kind: HelmRepository
-        name: sonatype
-        namespace: flux-system
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
   interval: 4h
   valuesFrom:
     - kind: ConfigMap
       name: nexus-values
 ```
 
-- [ ] **Step 3: Create values.yaml**
+- [ ] **Step 3: Create nexus.properties ConfigMap**
+
+```yaml
+# cluster/apps/nexus-system/nexus/app/nexus-properties-configmap.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexus-properties
+  namespace: nexus-system
+data:
+  nexus.properties: |
+    # Full replacement of default nexus.properties when mounted via subPath.
+    # Keep HTTP-only — Traefik handles TLS externally.
+    application-port=8081
+    nexus.scripts.allowCreation=false
+```
+
+- [ ] **Step 4: Create values.yaml**
+
+Schema: `https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.6.2/charts/library/common/values.schema.json`
 
 ```yaml
 # cluster/apps/nexus-system/nexus/app/values.yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/sonatype/nxrm-helm-repository/main/nexus-repository-manager/values.schema.json
 ---
-statefulset:
-  enabled: true
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.6.2/charts/library/common/values.schema.json
 
-image:
-  # Pin to the exact image tag matching chart appVersion
-  # renovate: depName=sonatype/nexus3 datasource=docker
-  tag: "<exact-tag>"
+defaultPodOptions:
+  priorityClassName: standard-priority
 
-nexus:
-  # Disable the random initial password generation; we inject our own
-  # via the NEXUS_SECURITY_INITIAL_PASSWORD env var below
-  properties:
-    override: true
-    data:
-      # Jetty TLS configuration — enable native HTTPS on 8443
-      application-port-ssl: "8443"
-      # Enable docker registry on its own TLS port
-      nexus.scripts.allowCreation: "false"
-  env:
-    - name: INSTALL4J_ADD_VM_PARAMS
-      value: >-
-        -Xms1200m -Xmx1200m
-        -XX:MaxDirectMemorySize=2g
-        -XX:+UnlockExperimentalVMOptions
-        -XX:+UseCGroupMemoryLimitForHeap
-        -Dkaraf.startLocalConsole=false
-    - name: NEXUS_SECURITY_INITIAL_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: nexus-admin
-          key: admin-password
-
-persistence:
-  enabled: true
-  storageClass: ceph-block
-  accessMode: ReadWriteOnce
-  storageSize: 100Gi
+controllers:
+  main:
+    type: statefulset
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsUser: 200
+        runAsGroup: 200
+        fsGroup: 200
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+    initContainers:
+      permissions:
+        image:
+          repository: busybox
+          tag: "1.37.0@sha256:1487d0af5f52b4ba31c7e465126ee2123fe3f2305d638e7827681e7cf6c83d5e"
+        command:
+          - sh
+          - -c
+          - |
+            find /nexus-data -mindepth 1 -maxdepth 1 ! -name 'lost+found' -exec chown -R 200:200 {} \; || true
+            if [ -d /nexus-data/lost+found ]; then
+              chown 200:200 /nexus-data/lost+found 2>/dev/null || true
+            fi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+            add: [CHOWN]
+          runAsUser: 0
+          runAsGroup: 0
+          runAsNonRoot: false
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {memory: 16Mi}
+    containers:
+      main:
+        securityContext:
+          runAsUser: 200
+          runAsGroup: 200
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        image:
+          # renovate: datasource=docker depName=sonatype/nexus3
+          repository: sonatype/nexus3
+          tag: "<tag-from-step-1>@sha256:<digest>"
+        env:
+          TZ: ${TIMEZONE}
+          # Java heap + direct memory tuned for 4Gi limit
+          INSTALL4J_ADD_VM_PARAMS: >-
+            -Xms1200m -Xmx1200m
+            -XX:MaxDirectMemorySize=2g
+            -Dkaraf.startLocalConsole=false
+          NEXUS_SECURITY_INITIAL_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: nexus-admin
+                key: admin-password
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet: {path: /service/rest/v1/status, port: 8081}
+              initialDelaySeconds: 60
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 5
+          readiness: *probes
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet: {path: /service/rest/v1/status, port: 8081}
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 60   # allow up to 10 minutes for cold boot
+        resources:
+          requests: {cpu: 250m, memory: 2Gi}
+          limits: {memory: 4Gi}
 
 service:
-  type: ClusterIP
-  # 8081 = HTTP for provisioning Job (internal, never exposed)
-  # 8443 = HTTPS for UI/apt/REST
-  # 5443 = HTTPS for docker registry
-  port: 8081
-  additionalPorts:
-    - name: https
-      port: 8443
-      targetPort: 8443
-    - name: docker-https
-      port: 5443
-      targetPort: 5443
+  nexus:
+    controller: main
+    ports:
+      http:
+        port: 8081
 
-# Extra volume mounts for Jetty TLS config + PKCS12 keystore
-deployment:
-  additionalVolumes:
-    - name: nexus-tls
-      secret:
-        secretName: nexus-tls
-        items:
-          - key: keystore.p12
-            path: keystore.p12
-    - name: nexus-jetty-config
-      configMap:
-        name: nexus-jetty-config
-  additionalVolumeMounts:
-    - name: nexus-tls
-      mountPath: /nexus-data/etc/ssl/keystore.p12
-      subPath: keystore.p12
-      readOnly: true
-    - name: nexus-jetty-config
-      mountPath: /nexus-data/etc/jetty/jetty-https.xml
-      subPath: jetty-https.xml
-      readOnly: true
-
-resources:
-  requests:
-    cpu: 250m
-    memory: 2Gi
-  limits:
-    memory: 4Gi
-
-securityContext:
-  runAsUser: 200
-  runAsGroup: 200
-  fsGroup: 200
-  runAsNonRoot: true
-
-podSecurityContext:
-  seccompProfile:
-    type: RuntimeDefault
-
-ingress:
-  enabled: false  # we use Traefik IngressRoute separately
+persistence:
+  data:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 100Gi
+    storageClass: rook-ceph-block
+    globalMounts:
+      - path: /nexus-data
+  nexus-properties:
+    type: configMap
+    name: nexus-properties
+    advancedMounts:
+      main:
+        main:
+          - path: /nexus-data/etc/nexus.properties
+            subPath: nexus.properties
+            readOnly: true
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
 ```
 
-> **Note:** Exact chart value keys MUST be verified from `/tmp/nexus-chart-values.yaml` in Step 1. The above uses common Sonatype chart conventions but may need adaptation. If any key doesn't exist in the chart, fall back to the chart's `extraEnvs` / `extraVolumes` / `extraContainer` equivalents or consider raw-manifests approach.
+> **Note:** If the initContainer `permissions` is redundant (app-template + fsGroup may handle it), remove it. Mirrors vaultwarden pattern for safety on RBD-formatted volumes.
 
-- [ ] **Step 4: Create kustomizeconfig.yaml**
+- [ ] **Step 5: Create kustomizeconfig.yaml**
 
 ```yaml
 # cluster/apps/nexus-system/nexus/app/kustomizeconfig.yaml
@@ -478,7 +375,7 @@ nameReference:
         kind: HelmRelease
 ```
 
-- [ ] **Step 5: Create app kustomization**
+- [ ] **Step 6: Create app kustomization**
 
 ```yaml
 # cluster/apps/nexus-system/nexus/app/kustomization.yaml
@@ -489,10 +386,8 @@ kind: Kustomization
 resources:
   - ./nexus-admin.sops.yaml
   - ./nexus-upstream-creds.sops.yaml
-  - ./nexus-keystore-password.sops.yaml
-  - ./certificate.yaml
+  - ./nexus-properties-configmap.yaml
   - ./release.yaml
-  - ./jetty-config.yaml
   - ./provision-repos-rbac.yaml
   - ./provision-repos-job.yaml
   - ./network-policies.yaml
@@ -503,11 +398,15 @@ configMapGenerator:
     namespace: nexus-system
     files:
       - values.yaml
+  - name: nexus-provisioner-script
+    namespace: nexus-system
+    files:
+      - provision.sh
 configurations:
   - ./kustomizeconfig.yaml
 ```
 
-- [ ] **Step 6: Create ks.yaml**
+- [ ] **Step 7: Create ks.yaml**
 
 ```yaml
 # cluster/apps/nexus-system/nexus/ks.yaml
@@ -527,142 +426,64 @@ spec:
   dependsOn:
     - name: cert-manager
     - name: kyverno
-    - name: rook-ceph-cluster
+    - name: rook-ceph-cluster-storage
   prune: true
-  timeout: 10m
+  timeout: 15m
+  wait: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: nexus-ingress
+  namespace: flux-system
+spec:
+  targetNamespace: nexus-system
+  path: ./cluster/apps/traefik/traefik/ingress/nexus-system
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: nexus-ingress
+  dependsOn:
+    - name: nexus
+    - name: traefik
+  prune: true
+  timeout: 5m
   wait: true
 ```
 
-- [ ] **Step 7: Validate kustomize build**
+- [ ] **Step 8: Validate build**
 
 ```bash
-kubectl kustomize cluster/apps/nexus-system/ --enable-helm 2>&1 | head -100
+kubectl kustomize cluster/apps/nexus-system/nexus/app/ 2>&1 | head -60
 ```
 
-Expected: renders without schema errors. Some referenced files (jetty-config.yaml, provision-repos-*.yaml, network-policies.yaml, vpa.yaml, pod-monitor.yaml) don't exist yet — errors for those are expected at this stage. If blocking, comment them out in app/kustomization.yaml and add back as each task creates them.
+Expected: renders without errors (some referenced resources — Job, RBAC, CNP, VPA, pod-monitor, provision.sh — don't exist yet; comment them out temporarily in app/kustomization.yaml if blocking, add back at each later task).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add cluster/apps/nexus-system/nexus/
-git commit -m "feat(nexus): add HelmRelease + values
+git add cluster/apps/nexus-system/nexus/app/release.yaml \
+        cluster/apps/nexus-system/nexus/app/values.yaml \
+        cluster/apps/nexus-system/nexus/app/nexus-properties-configmap.yaml \
+        cluster/apps/nexus-system/nexus/app/kustomization.yaml \
+        cluster/apps/nexus-system/nexus/app/kustomizeconfig.yaml \
+        cluster/apps/nexus-system/nexus/ks.yaml
+git commit -m "feat(nexus): add HelmRelease using app-template
 
 Ref #968"
 ```
 
 ---
 
-### Task 6: Configure Jetty native TLS
-
-**Files:**
-- Create: `cluster/apps/nexus-system/nexus/app/jetty-config.yaml`
-
-Nexus's embedded Jetty must be told to listen TLS on 8443 (HTTP UI/apt/REST) and 5443 (docker). Achieved via a custom `jetty-https.xml` referenced from `nexus.properties` + a keystore path.
-
-- [ ] **Step 1: Create ConfigMap with Jetty HTTPS config**
-
-```yaml
-# cluster/apps/nexus-system/nexus/app/jetty-config.yaml
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nexus-jetty-config
-  namespace: nexus-system
-data:
-  jetty-https.xml: |
-    <?xml version="1.0"?>
-    <!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "https://www.eclipse.org/jetty/configure_9_3.dtd">
-    <Configure id="Server" class="org.eclipse.jetty.server.Server">
-      <New id="sslContextFactory" class="org.eclipse.jetty.util.ssl.SslContextFactory$Server">
-        <Set name="KeyStorePath">/nexus-data/etc/ssl/keystore.p12</Set>
-        <Set name="KeyStoreType">PKCS12</Set>
-        <Set name="KeyStorePassword">
-          <SystemProperty name="nexus.ssl.keystore.password" default="changeit"/>
-        </Set>
-      </New>
-      <Call name="addConnector">
-        <Arg>
-          <New class="org.eclipse.jetty.server.ServerConnector">
-            <Arg name="server"><Ref refid="Server"/></Arg>
-            <Arg name="factories">
-              <Array type="org.eclipse.jetty.server.ConnectionFactory">
-                <Item>
-                  <New class="org.eclipse.jetty.server.SslConnectionFactory">
-                    <Arg><Ref refid="sslContextFactory"/></Arg>
-                    <Arg>http/1.1</Arg>
-                  </New>
-                </Item>
-                <Item>
-                  <New class="org.eclipse.jetty.server.HttpConnectionFactory">
-                    <Arg>
-                      <New class="org.eclipse.jetty.server.HttpConfiguration"/>
-                    </Arg>
-                  </New>
-                </Item>
-              </Array>
-            </Arg>
-            <Set name="host"><SystemProperty name="jetty.host"/></Set>
-            <Set name="port">8443</Set>
-          </New>
-        </Arg>
-      </Call>
-    </Configure>
-```
-
-> **Note:** This is a reference structure for Jetty 9.x SSL configuration as used by Nexus 3. Exact content may need adjustment based on the chart's default `jetty.xml` handling. Verify against `/opt/sonatype/nexus/etc/jetty/jetty-https.xml` in a running Nexus pod if possible.
-
-- [ ] **Step 2: Pass keystore password + enable SSL via env**
-
-Verify `values.yaml` from Task 5 passes keystore password as Java system property. Update if needed:
-
-```yaml
-nexus:
-  env:
-    # ... existing env ...
-    - name: INSTALL4J_ADD_VM_PARAMS
-      value: >-
-        -Xms1200m -Xmx1200m
-        -XX:MaxDirectMemorySize=2g
-        -Dkaraf.startLocalConsole=false
-        -Dnexus.ssl.keystore.password=$(NEXUS_KEYSTORE_PASSWORD)
-    - name: NEXUS_KEYSTORE_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: nexus-keystore-password
-          key: password
-```
-
-- [ ] **Step 3: Enable docker HTTPS connector in nexus.properties**
-
-Docker registry gets its own port (5443). Configured inside Nexus UI when the docker repo is created (Task 8) — the repo declares its HTTP/HTTPS port. No additional Jetty config needed for this.
-
-- [ ] **Step 4: Validate**
-
-```bash
-kubectl kustomize cluster/apps/nexus-system/ --enable-helm 2>&1 | grep -A 5 "jetty-https.xml"
-```
-
-Expected: ConfigMap with key `jetty-https.xml` renders.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add cluster/apps/nexus-system/nexus/app/jetty-config.yaml cluster/apps/nexus-system/nexus/app/values.yaml
-git commit -m "feat(nexus): configure Jetty native TLS
-
-Ref #968"
-```
-
----
-
-### Task 7: Create repository-provisioning Job + RBAC
+### Task 4: Create provisioning Job + RBAC + script ConfigMap
 
 **Files:**
 - Create: `cluster/apps/nexus-system/nexus/app/provision-repos-rbac.yaml`
 - Create: `cluster/apps/nexus-system/nexus/app/provision-repos-job.yaml`
+- Create: `cluster/apps/nexus-system/nexus/app/provision.sh`
 
-- [ ] **Step 1: Create ServiceAccount + Role**
+The Job name is hash-suffixed via `configMapGenerator` referencing `provision.sh` — whenever script content changes, the ConfigMap hash changes, triggering Flux to re-create the Job (satisfies spec's "re-run on change" requirement).
+
+- [ ] **Step 1: Create RBAC**
 
 ```yaml
 # cluster/apps/nexus-system/nexus/app/provision-repos-rbac.yaml
@@ -672,36 +493,133 @@ kind: ServiceAccount
 metadata:
   name: nexus-provisioner
   namespace: nexus-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: nexus-provisioner
-  namespace: nexus-system
-rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    resourceNames: ["nexus-admin", "nexus-upstream-creds"]
-    verbs: ["get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: nexus-provisioner
-  namespace: nexus-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: nexus-provisioner
-subjects:
-  - kind: ServiceAccount
-    name: nexus-provisioner
-    namespace: nexus-system
+automountServiceAccountToken: false
 ```
 
-- [ ] **Step 2: Create provisioning Job**
+No Role needed — Job receives all creds via `secretKeyRef` env injection (no API access required).
 
-The Job waits for Nexus writability, then POSTs REST calls to create 7 repositories. Idempotent via "create or update" logic.
+- [ ] **Step 2: Create provision.sh**
+
+```bash
+#!/bin/sh
+# cluster/apps/nexus-system/nexus/app/provision.sh
+set -eu
+
+echo "Waiting for Nexus writable..."
+for i in $(seq 1 60); do
+  status=$(curl -sf -o /dev/null -w '%{http_code}' "${NEXUS_URL}/service/rest/v1/status/writable" || true)
+  if [ "${status}" = "200" ]; then
+    echo "Nexus writable"
+    break
+  fi
+  echo "  attempt ${i}: HTTP ${status}, retrying in 10s..."
+  sleep 10
+done
+test "${status}" = "200" || { echo "Nexus never became writable"; exit 1; }
+
+AUTH="-u ${NEXUS_USER}:${NEXUS_PASSWORD}"
+API="${NEXUS_URL}/service/rest/v1"
+
+upsert() {
+  local kind="$1" name="$2" body="$3"
+  code=$(curl -sf -o /dev/null -w '%{http_code}' ${AUTH} "${API}/repositories/${name}" || echo 000)
+  if [ "${code}" = "200" ]; then
+    echo "  [${name}] exists, updating"
+    curl -sf -X PUT -H "Content-Type: application/json" ${AUTH} \
+      -d "${body}" "${API}/repositories/${kind}/${name}"
+  else
+    echo "  [${name}] creating"
+    curl -sf -X POST -H "Content-Type: application/json" ${AUTH} \
+      -d "${body}" "${API}/repositories/${kind}"
+  fi
+}
+
+# --- apt proxies ---
+upsert apt/proxy apt-ubuntu-proxy '{
+  "name":"apt-ubuntu-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"http://archive.ubuntu.com/ubuntu/","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true},
+  "apt":{"distribution":"jammy","flat":false}}'
+
+for item in \
+  "apt-cli-github https://cli.github.com/packages/ stable true" \
+  "apt-nodesource https://deb.nodesource.com/ stable true" \
+  "apt-hashicorp https://apt.releases.hashicorp.com/ jammy false" \
+  "apt-launchpad https://ppa.launchpadcontent.net/ stable true" ; do
+  set -- ${item}
+  upsert apt/proxy "$1" '{
+    "name":"'"$1"'","online":true,
+    "storage":{"blobStoreName":"default","strictContentTypeValidation":false},
+    "proxy":{"remoteUrl":"'"$2"'","contentMaxAge":1440,"metadataMaxAge":1440},
+    "negativeCache":{"enabled":true,"timeToLive":1440},
+    "httpClient":{"blocked":false,"autoBlock":true},
+    "apt":{"distribution":"'"$3"'","flat":'"$4"'}}'
+done
+
+# --- docker proxies ---
+upsert docker/proxy docker-hub-proxy '{
+  "name":"docker-hub-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"https://registry-1.docker.io","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true,"authentication":{"type":"username","username":"'"${DOCKERHUB_USER}"'","password":"'"${DOCKERHUB_TOKEN}"'"}},
+  "docker":{"v1Enabled":false,"forceBasicAuth":false},
+  "dockerProxy":{"indexType":"HUB","cacheForeignLayers":false}}'
+
+upsert docker/proxy ghcr-proxy '{
+  "name":"ghcr-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"https://ghcr.io","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true,"authentication":{"type":"username","username":"'"${GHCR_USER}"'","password":"'"${GHCR_TOKEN}"'"}},
+  "docker":{"v1Enabled":false,"forceBasicAuth":false},
+  "dockerProxy":{"indexType":"REGISTRY","cacheForeignLayers":false}}'
+
+upsert docker/proxy mcr-proxy '{
+  "name":"mcr-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"https://mcr.microsoft.com","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true},
+  "docker":{"v1Enabled":false,"forceBasicAuth":false},
+  "dockerProxy":{"indexType":"REGISTRY","cacheForeignLayers":false}}'
+
+upsert docker/hosted envbuilder-cache '{
+  "name":"envbuilder-cache","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true,"writePolicy":"ALLOW"},
+  "docker":{"v1Enabled":false,"forceBasicAuth":false}}'
+
+upsert docker/group docker-group '{
+  "name":"docker-group","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "group":{"memberNames":["docker-hub-proxy","ghcr-proxy","mcr-proxy","envbuilder-cache"]},
+  "docker":{"v1Enabled":false,"forceBasicAuth":false}}'
+
+# --- grant nx-metrics-all + nx-repository-view-*-*-read to anonymous role ---
+echo "Configuring anonymous role..."
+ANON_ROLE_JSON=$(curl -sf ${AUTH} "${API}/security/roles/anonymous")
+echo "${ANON_ROLE_JSON}" | grep -q '"nx-metrics-all"' || {
+  echo "  adding nx-metrics-all + repo-read privileges to anonymous"
+  curl -sf -X PUT -H "Content-Type: application/json" ${AUTH} \
+    -d '{
+      "id":"anonymous","name":"Anonymous","description":"Anonymous user role",
+      "privileges":["nx-repository-view-*-*-read","nx-repository-view-*-*-browse","nx-metrics-all","nx-healthcheck-read"],
+      "roles":[]
+    }' \
+    "${API}/security/roles/anonymous"
+}
+
+# Ensure anonymous access is enabled globally
+curl -sf -X PUT -H "Content-Type: application/json" ${AUTH} \
+  -d '{"enabled":true,"userId":"anonymous","realmName":"NexusAuthorizingRealm"}' \
+  "${API}/security/anonymous"
+
+echo "Provisioning complete."
+```
+
+- [ ] **Step 3: Create Job manifest**
 
 ```yaml
 # cluster/apps/nexus-system/nexus/app/provision-repos-job.yaml
@@ -727,183 +645,63 @@ spec:
         runAsUser: 65534
         runAsGroup: 65534
         runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
+        seccompProfile: {type: RuntimeDefault}
       containers:
         - name: provisioner
+          # renovate: datasource=docker depName=curlimages/curl
           image: curlimages/curl:8.10.1
           securityContext:
             allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
+            capabilities: {drop: [ALL]}
             readOnlyRootFilesystem: true
           env:
             - name: NEXUS_URL
               value: "http://nexus.nexus-system.svc.cluster.local:8081"
             - name: NEXUS_USER
-              value: "admin"
+              valueFrom: {secretKeyRef: {name: nexus-admin, key: admin-username}}
             - name: NEXUS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: nexus-admin
-                  key: admin-password
+              valueFrom: {secretKeyRef: {name: nexus-admin, key: admin-password}}
             - name: DOCKERHUB_USER
-              valueFrom:
-                secretKeyRef: {name: nexus-upstream-creds, key: dockerhub-username}
+              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: dockerhub-username}}
             - name: DOCKERHUB_TOKEN
-              valueFrom:
-                secretKeyRef: {name: nexus-upstream-creds, key: dockerhub-token}
+              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: dockerhub-token}}
             - name: GHCR_USER
-              valueFrom:
-                secretKeyRef: {name: nexus-upstream-creds, key: ghcr-username}
+              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: ghcr-username}}
             - name: GHCR_TOKEN
-              valueFrom:
-                secretKeyRef: {name: nexus-upstream-creds, key: ghcr-token}
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              set -eu
-              echo "Waiting for Nexus writable..."
-              for i in $(seq 1 60); do
-                status=$(curl -sf -o /dev/null -w '%{http_code}' "${NEXUS_URL}/service/rest/v1/status/writable" || true)
-                if [ "${status}" = "200" ]; then
-                  echo "Nexus writable"
-                  break
-                fi
-                echo "  attempt ${i}: HTTP ${status}, retrying in 10s..."
-                sleep 10
-              done
-              test "${status}" = "200" || { echo "Nexus never became writable"; exit 1; }
-
-              AUTH="-u ${NEXUS_USER}:${NEXUS_PASSWORD}"
-              API="${NEXUS_URL}/service/rest/v1"
-
-              upsert() {
-                local kind="$1" name="$2" body="$3"
-                # Check existence
-                code=$(curl -sf -o /dev/null -w '%{http_code}' ${AUTH} "${API}/repositories/${name}" || echo 000)
-                if [ "${code}" = "200" ]; then
-                  echo "  [${name}] exists, updating"
-                  curl -sf -X PUT -H "Content-Type: application/json" ${AUTH} \
-                    -d "${body}" "${API}/repositories/${kind}/${name}"
-                else
-                  echo "  [${name}] creating"
-                  curl -sf -X POST -H "Content-Type: application/json" ${AUTH} \
-                    -d "${body}" "${API}/repositories/${kind}"
-                fi
-              }
-
-              echo "Provisioning apt-ubuntu-proxy..."
-              upsert apt/proxy apt-ubuntu-proxy '{
-                "name": "apt-ubuntu-proxy",
-                "online": true,
-                "storage": {"blobStoreName": "default", "strictContentTypeValidation": true},
-                "proxy": {"remoteUrl": "http://archive.ubuntu.com/ubuntu/", "contentMaxAge": 1440, "metadataMaxAge": 1440},
-                "negativeCache": {"enabled": true, "timeToLive": 1440},
-                "httpClient": {"blocked": false, "autoBlock": true},
-                "apt": {"distribution": "jammy", "flat": false}
-              }'
-
-              echo "Provisioning apt-passthrough-proxy..."
-              upsert apt/proxy apt-passthrough-proxy '{
-                "name": "apt-passthrough-proxy",
-                "online": true,
-                "storage": {"blobStoreName": "default", "strictContentTypeValidation": true},
-                "proxy": {"remoteUrl": "https://cli.github.com/packages/", "contentMaxAge": 1440, "metadataMaxAge": 1440},
-                "negativeCache": {"enabled": true, "timeToLive": 1440},
-                "httpClient": {"blocked": false, "autoBlock": true},
-                "apt": {"distribution": "stable", "flat": true}
-              }'
-
-              echo "Provisioning docker-hub-proxy..."
-              upsert docker/proxy docker-hub-proxy '{
-                "name": "docker-hub-proxy",
-                "online": true,
-                "storage": {"blobStoreName": "default", "strictContentTypeValidation": true},
-                "proxy": {"remoteUrl": "https://registry-1.docker.io", "contentMaxAge": 1440, "metadataMaxAge": 1440},
-                "negativeCache": {"enabled": true, "timeToLive": 1440},
-                "httpClient": {
-                  "blocked": false, "autoBlock": true,
-                  "authentication": {"type": "username", "username": "'"${DOCKERHUB_USER}"'", "password": "'"${DOCKERHUB_TOKEN}"'"}
-                },
-                "docker": {"v1Enabled": false, "forceBasicAuth": false, "httpsPort": 5443},
-                "dockerProxy": {"indexType": "HUB", "cacheForeignLayers": false}
-              }'
-
-              echo "Provisioning ghcr-proxy..."
-              upsert docker/proxy ghcr-proxy '{
-                "name": "ghcr-proxy",
-                "online": true,
-                "storage": {"blobStoreName": "default", "strictContentTypeValidation": true},
-                "proxy": {"remoteUrl": "https://ghcr.io", "contentMaxAge": 1440, "metadataMaxAge": 1440},
-                "negativeCache": {"enabled": true, "timeToLive": 1440},
-                "httpClient": {
-                  "blocked": false, "autoBlock": true,
-                  "authentication": {"type": "username", "username": "'"${GHCR_USER}"'", "password": "'"${GHCR_TOKEN}"'"}
-                },
-                "docker": {"v1Enabled": false, "forceBasicAuth": false},
-                "dockerProxy": {"indexType": "REGISTRY", "cacheForeignLayers": false}
-              }'
-
-              echo "Provisioning mcr-proxy..."
-              upsert docker/proxy mcr-proxy '{
-                "name": "mcr-proxy",
-                "online": true,
-                "storage": {"blobStoreName": "default", "strictContentTypeValidation": true},
-                "proxy": {"remoteUrl": "https://mcr.microsoft.com", "contentMaxAge": 1440, "metadataMaxAge": 1440},
-                "negativeCache": {"enabled": true, "timeToLive": 1440},
-                "httpClient": {"blocked": false, "autoBlock": true},
-                "docker": {"v1Enabled": false, "forceBasicAuth": false},
-                "dockerProxy": {"indexType": "REGISTRY", "cacheForeignLayers": false}
-              }'
-
-              echo "Provisioning envbuilder-cache..."
-              upsert docker/hosted envbuilder-cache '{
-                "name": "envbuilder-cache",
-                "online": true,
-                "storage": {"blobStoreName": "default", "strictContentTypeValidation": true, "writePolicy": "ALLOW"},
-                "docker": {"v1Enabled": false, "forceBasicAuth": false}
-              }'
-
-              echo "Provisioning docker-group..."
-              upsert docker/group docker-group '{
-                "name": "docker-group",
-                "online": true,
-                "storage": {"blobStoreName": "default", "strictContentTypeValidation": true},
-                "group": {"memberNames": ["docker-hub-proxy", "ghcr-proxy", "mcr-proxy", "envbuilder-cache"]},
-                "docker": {"v1Enabled": false, "forceBasicAuth": false, "httpsPort": 5443}
-              }'
-
-              echo "All repositories provisioned successfully."
+              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: ghcr-token}}
+          command: ["/bin/sh", "/scripts/provision.sh"]
+          volumeMounts:
+            - {name: script, mountPath: /scripts, readOnly: true}
+      volumes:
+        - name: script
+          configMap:
+            name: nexus-provisioner-script
+            defaultMode: 0755
 ```
 
-- [ ] **Step 3: Validate kustomize build**
-
-```bash
-kubectl kustomize cluster/apps/nexus-system/ --enable-helm 2>&1 | grep -E "kind: (Job|ServiceAccount|Role)"
-```
-
-Expected: 4 lines (Job, ServiceAccount, Role, RoleBinding).
+The ConfigMap name `nexus-provisioner-script` is hash-suffixed by `configMapGenerator` (Task 3 Step 6) — Kustomize name-reference rewrites the volume's `configMap.name` to the hashed version automatically. When `provision.sh` changes, the new hash triggers Flux to re-apply, and the `force: "true"` annotation causes the Job to be recreated.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add cluster/apps/nexus-system/nexus/app/provision-repos-rbac.yaml cluster/apps/nexus-system/nexus/app/provision-repos-job.yaml
-git commit -m "feat(nexus): add REST-API repository provisioning Job
+git add cluster/apps/nexus-system/nexus/app/provision-repos-rbac.yaml \
+        cluster/apps/nexus-system/nexus/app/provision-repos-job.yaml \
+        cluster/apps/nexus-system/nexus/app/provision.sh
+git commit -m "feat(nexus): add REST-API provisioning Job with hashed script
 
 Ref #968"
 ```
 
 ---
 
-### Task 8: Create NetworkPolicy, VPA, VMPodScrape
+### Task 5: Create NetworkPolicy, VPA, VMPodScrape
 
 **Files:**
 - Create: `cluster/apps/nexus-system/nexus/app/network-policies.yaml`
 - Create: `cluster/apps/nexus-system/nexus/app/vpa.yaml`
 - Create: `cluster/apps/nexus-system/nexus/app/pod-monitor.yaml`
 
-- [ ] **Step 1: Create CiliumNetworkPolicy**
+- [ ] **Step 1: CiliumNetworkPolicy**
 
 ```yaml
 # cluster/apps/nexus-system/nexus/app/network-policies.yaml
@@ -919,32 +717,25 @@ spec:
       app.kubernetes.io/name: nexus
   ingress:
     - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: coder-system
+        - matchLabels: {k8s:io.kubernetes.pod.namespace: coder-system}
       toPorts:
-        - ports:
-            - {port: "8443", protocol: TCP}
-            - {port: "5443", protocol: TCP}
+        - ports: [{port: "8081", protocol: TCP}]
     - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: traefik
+        - matchLabels: {k8s:io.kubernetes.pod.namespace: traefik}
       toPorts:
-        - ports:
-            - {port: "8443", protocol: TCP}
-            - {port: "5443", protocol: TCP}
+        - ports: [{port: "8081", protocol: TCP}]
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
       toPorts:
-        - ports:
-            - {port: "8081", protocol: TCP}
+        - ports: [{port: "8081", protocol: TCP}]
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: nexus-system
-            app.kubernetes.io/name: nexus-provisioner
+            k8s:app.kubernetes.io/name: nexus-provisioner
       toPorts:
-        - ports:
-            - {port: "8081", protocol: TCP}
+        - ports: [{port: "8081", protocol: TCP}]
   egress:
     - toEndpoints:
         - matchLabels:
@@ -964,7 +755,7 @@ spec:
             - {port: "80", protocol: TCP}
 ```
 
-- [ ] **Step 2: Create VPA (recommendation-only)**
+- [ ] **Step 2: VPA**
 
 ```yaml
 # cluster/apps/nexus-system/nexus/app/vpa.yaml
@@ -984,14 +775,14 @@ spec:
     updateMode: "Off"
   resourcePolicy:
     containerPolicies:
-      - containerName: nexus-repository-manager
+      - containerName: main
         minAllowed: {cpu: 1m, memory: 1Mi}
         maxAllowed: {memory: 4Gi}
 ```
 
-> **Note:** Container name must match the Sonatype chart's container name. Verify via `kubectl get sts -n nexus-system nexus -o jsonpath='{.spec.template.spec.containers[*].name}'` after first rollout; adjust if different.
+app-template names the container `main` (per `containers.main` in values.yaml Task 3 Step 4).
 
-- [ ] **Step 3: Create VMPodScrape**
+- [ ] **Step 3: VMPodScrape**
 
 ```yaml
 # cluster/apps/nexus-system/nexus/app/pod-monitor.yaml
@@ -1010,29 +801,16 @@ spec:
       path: /service/metrics/prometheus
       interval: 60s
       scrapeTimeout: 30s
-      basicAuth:
-        username:
-          name: nexus-admin
-          key: admin-username
-        password:
-          name: nexus-admin
-          key: admin-password
 ```
 
-> **Note:** Metrics endpoint requires admin auth on Nexus 3. Add `admin-username: admin` to the `nexus-admin` SOPS secret if not already present.
+No basic auth — provisioning Job grants `nx-metrics-all` to anonymous.
 
-- [ ] **Step 4: Validate**
-
-```bash
-kubectl kustomize cluster/apps/nexus-system/ --enable-helm 2>&1 | grep -E "kind:"
-```
-
-Expected kinds: Namespace, Secret (×3), Certificate, ConfigMap (×2), HelmRelease, ServiceAccount, Role, RoleBinding, Job, CiliumNetworkPolicy, VerticalPodAutoscaler, VMPodScrape.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add cluster/apps/nexus-system/nexus/app/network-policies.yaml cluster/apps/nexus-system/nexus/app/vpa.yaml cluster/apps/nexus-system/nexus/app/pod-monitor.yaml
+git add cluster/apps/nexus-system/nexus/app/network-policies.yaml \
+        cluster/apps/nexus-system/nexus/app/vpa.yaml \
+        cluster/apps/nexus-system/nexus/app/pod-monitor.yaml
 git commit -m "feat(nexus): add CNP, VPA, and metrics scrape
 
 Ref #968"
@@ -1040,125 +818,219 @@ Ref #968"
 
 ---
 
-### Task 9: Add CoreDNS rewrite for split-horizon
+### Task 6: Add CoreDNS rewrite via Talos extraManifests
 
 **Files:**
-- Modify: CoreDNS Corefile (exact location from pre-flight check)
+- Modify: `talos/talconfig.yaml` (or create new manifest under `talos/`)
 
-> **Note:** This task depends on the pre-flight finding. If CoreDNS is Flux-managed, edit its values/ConfigMap. If Talos-managed (in `talos/talconfig.yaml` `extraManifests`), add rewrite there. The two options diverge significantly; the engineer must use the pre-flight finding to pick the correct path.
-
-**Flux-managed path:**
-
-- [ ] **Step 1: Locate CoreDNS values**
+- [ ] **Step 1: Locate Talos CoreDNS handling**
 
 ```bash
-Glob pattern="cluster/apps/kube-system/coredns/**/*.yaml"
+Grep pattern="coreDNS|coredns|extraManifests" path="talos/talconfig.yaml" output_mode="content" -n=true
 ```
 
-- [ ] **Step 2: Add rewrite plugin**
+Expected finding: either (a) `extraManifests:` key with a list of URLs or local paths, or (b) no explicit CoreDNS override (Talos default).
 
-Edit the CoreDNS Corefile (typically in `values.yaml` under `servers:` or a dedicated `Corefile` key):
+- [ ] **Step 2: Create CoreDNS Corefile override manifest**
 
-```text
-rewrite name exact nexus.${EXTERNAL_DOMAIN} nexus.nexus-system.svc.cluster.local
-rewrite name exact nexus-docker.${EXTERNAL_DOMAIN} nexus.nexus-system.svc.cluster.local
+```yaml
+# talos/manifests/coredns-rewrite.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns
+  namespace: kube-system
+data:
+  Corefile: |
+    .:53 {
+      errors
+      health {
+        lameduck 5s
+      }
+      ready
+      rewrite name exact nexus.lan.${EXTERNAL_DOMAIN} nexus.nexus-system.svc.cluster.local
+      rewrite name exact nexus-docker.lan.${EXTERNAL_DOMAIN} nexus.nexus-system.svc.cluster.local
+      kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+        ttl 30
+      }
+      prometheus :9153
+      forward . /etc/resolv.conf {
+        max_concurrent 1000
+      }
+      cache 30
+      loop
+      reload
+      loadbalance
+    }
 ```
 
-Insert before the `kubernetes` plugin directive.
+> **CRITICAL:** `${EXTERNAL_DOMAIN}` in Talos manifests is NOT substituted by Flux (Talos applies the manifest directly). Either:
+> - **a)** Hardcode the literal domain value in this Corefile (violates "no hardcoded domains" rule — but the rule scope is `cluster/`, not `talos/`)
+> - **b)** Use Talos machine config patches that allow env var substitution at config generation time
+> - **c)** Use Talos's `cluster.coreDNS.extraDomains` or similar option if available
+>
+> **Recommended:** Pre-flight decision — check `talos/talenv.sops.yaml` / `talos/talconfig.yaml` for an existing pattern of domain substitution, or hardcode in `talos/` since that's outside the `cluster/` scope.
+> Also: the exact default Corefile (rest of the plugins) must match what Talos currently ships to avoid accidentally dropping required plugins. Diff against the running Corefile:
+>
+> ```bash
+> mcp__kubernetes__get_configmaps namespace=kube-system
+> # Then get the specific one's Corefile
+> ```
+> Adjust the manifest to preserve all existing plugin blocks.
 
-**Talos-managed path:**
+- [ ] **Step 3: Reference manifest in talconfig.yaml**
 
-- [ ] **Step 1 (alt): Edit Talos extraManifests**
+Add under the relevant `node` or global `extraManifests` section:
 
-Find Talos CoreDNS ConfigMap override. Add same rewrite lines. Regenerate and apply Talos configs per `.claude/memory/feedback_talos_genconfig.md`.
+```yaml
+extraManifests:
+  - "./manifests/coredns-rewrite.yaml"
+```
 
-- [ ] **Step 3: Validate**
+- [ ] **Step 4: Regenerate + apply Talos configs**
+
+Per `.claude/memory/feedback_talos_genconfig.md`:
 
 ```bash
-mcp__kubernetes__exec_in_pod namespace=kube-system pod=<coredns-pod> command=["sh","-c","cat /etc/coredns/Corefile"]
+cd talos
+task talos:genconfig   # or equivalent task exposed in .taskfiles/
+# Then per-node: talosctl apply-config -n <node> -f clusterconfig/<node>.yaml
+```
+
+- [ ] **Step 5: Verify**
+
+```bash
+mcp__kubernetes__exec_in_pod namespace=kube-system pod=<coredns-pod> command=["cat","/etc/coredns/Corefile"]
 ```
 
 Expected: rewrite lines present.
 
-- [ ] **Step 4: Commit**
+Test from a scratch pod:
 
 ```bash
-git add <file-modified>
-git commit -m "feat(coredns): add rewrite for nexus FQDNs
+mcp__kubernetes__run_pod namespace=default image=busybox command=["nslookup","nexus.lan.<literal-domain>"]
+```
+
+Expected: resolves to Nexus ClusterIP (once Task 3 HelmRelease is deployed; otherwise NXDOMAIN-but-rewrite-visible).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add talos/manifests/coredns-rewrite.yaml talos/talconfig.yaml
+git commit -m "feat(talos): add CoreDNS rewrite for nexus FQDNs
 
 Ref #968"
 ```
 
 ---
 
-### Task 10: Add Traefik IngressRoute (external access)
+### Task 7: Add Traefik IngressRoute
 
 **Files:**
 - Create: `cluster/apps/traefik/traefik/ingress/nexus-system/kustomization.yaml`
 - Create: `cluster/apps/traefik/traefik/ingress/nexus-system/certificates.yaml`
 - Create: `cluster/apps/traefik/traefik/ingress/nexus-system/ingress-routes.yaml`
-- Modify: `cluster/apps/nexus-system/nexus/ks.yaml` (add second Kustomization for ingress)
 
-> **Note:** Existing Traefik ingress patterns split cert creation under the Traefik namespace (Traefik-scoped TLSStore) or reference the cert from the app namespace. Examine `cluster/apps/traefik/traefik/ingress/vaultwarden/` for the exact pattern used here and mirror it.
+Pattern: mirror `cluster/apps/traefik/traefik/ingress/vaultwarden/`. LAN-only apps use `.lan.${EXTERNAL_DOMAIN}` + `lan-ip-whitelist` middleware per `.claude/rules/06-ingress-and-certificates.md`.
 
-- [ ] **Step 1: Study existing pattern**
-
-```bash
-Read file_path="/workspaces/spruyt-labs/cluster/apps/traefik/traefik/ingress/vaultwarden/ingress-routes.yaml"
-Read file_path="/workspaces/spruyt-labs/cluster/apps/traefik/traefik/ingress/vaultwarden/certificates.yaml"
-Read file_path="/workspaces/spruyt-labs/cluster/apps/traefik/traefik/ingress/vaultwarden/kustomization.yaml"
-```
-
-- [ ] **Step 2: Create certificates.yaml mirroring pattern**
-
-For TLS passthrough (recommended, since Nexus already serves TLS), the ingress route uses `IngressRouteTCP` with SNI. Alternative: re-encrypt via `IngressRoute` + `serversTransport` trusting the ZeroSSL cert.
-
-Go with **passthrough** for simplicity:
+- [ ] **Step 1: Create certificate**
 
 ```yaml
 # cluster/apps/traefik/traefik/ingress/nexus-system/certificates.yaml
 ---
-# No cert needed — passthrough mode; Nexus serves its own TLS from nexus-tls secret in nexus-system namespace
-# Empty file kept for pattern consistency; can be removed from kustomization if unused.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: nexus
+  namespace: nexus-system
+spec:
+  secretName: "nexus-${EXTERNAL_DOMAIN/./-}-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  dnsNames:
+    - nexus.lan.${EXTERNAL_DOMAIN}
+    - nexus-docker.lan.${EXTERNAL_DOMAIN}
 ```
 
-- [ ] **Step 3: Create ingress-routes.yaml**
+> **Note:** `${CLUSTER_ISSUER}` resolves to `zerossl-production` via substitution from `cluster-settings` ConfigMap.
+
+- [ ] **Step 2: Create IngressRoute**
 
 ```yaml
 # cluster/apps/traefik/traefik/ingress/nexus-system/ingress-routes.yaml
 ---
 apiVersion: traefik.io/v1alpha1
-kind: IngressRouteTCP
+kind: IngressRoute
 metadata:
   name: nexus-ui
   namespace: nexus-system
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: nexus.lan.${EXTERNAL_DOMAIN}
 spec:
   entryPoints: [websecure]
   routes:
-    - match: HostSNI(`nexus.${EXTERNAL_DOMAIN}`)
+    - match: Host(`nexus.lan.${EXTERNAL_DOMAIN}`)
+      kind: Rule
+      middlewares:
+        - {name: lan-ip-whitelist, namespace: traefik}
+        - {name: compress, namespace: traefik}
       services:
         - name: nexus
-          port: 8443
+          namespace: nexus-system
+          passHostHeader: true
+          port: 8081
   tls:
-    passthrough: true
+    secretName: "nexus-${EXTERNAL_DOMAIN/./-}-tls"
 ---
 apiVersion: traefik.io/v1alpha1
-kind: IngressRouteTCP
+kind: IngressRoute
 metadata:
   name: nexus-docker
   namespace: nexus-system
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: nexus-docker.lan.${EXTERNAL_DOMAIN}
 spec:
   entryPoints: [websecure]
   routes:
-    - match: HostSNI(`nexus-docker.${EXTERNAL_DOMAIN}`)
+    # docker client path: /v2/* → rewrite to /repository/docker-group/v2/*
+    - match: Host(`nexus-docker.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/v2`)
+      kind: Rule
+      middlewares:
+        - {name: lan-ip-whitelist, namespace: traefik}
+        - {name: nexus-docker-prefix, namespace: nexus-system}
       services:
         - name: nexus
-          port: 5443
+          namespace: nexus-system
+          passHostHeader: true
+          port: 8081
   tls:
-    passthrough: true
+    secretName: "nexus-${EXTERNAL_DOMAIN/./-}-tls"
+---
+# Path-prefix middleware so docker client's `/v2/...` hits `/repository/docker-group/v2/...`
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: nexus-docker-prefix
+  namespace: nexus-system
+spec:
+  addPrefix:
+    prefix: /repository/docker-group
 ```
 
-- [ ] **Step 4: Create kustomization.yaml**
+> **Verification needed during rollout:** Sonatype's reverse-proxy docker
+> strategy may prefer a different prefix mapping (e.g. a dedicated docker
+> connector port). The middleware approach above works for most clients but
+> test with `docker pull nexus-docker.lan.<domain>/alpine:3` after deployment.
+> If broken, fall back to configuring a docker connector on the `docker-group`
+> repository itself (`docker.httpPort` field) and route by host+subdomain to
+> that port.
+
+- [ ] **Step 3: Create kustomization**
 
 ```yaml
 # cluster/apps/traefik/traefik/ingress/nexus-system/kustomization.yaml
@@ -1166,139 +1038,163 @@ spec:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - ./certificates.yaml
   - ./ingress-routes.yaml
 ```
 
-- [ ] **Step 5: Add ingress Kustomization to nexus ks.yaml**
-
-Append to `cluster/apps/nexus-system/nexus/ks.yaml`:
-
-```yaml
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: nexus-ingress
-  namespace: flux-system
-spec:
-  targetNamespace: nexus-system
-  path: ./cluster/apps/traefik/traefik/ingress/nexus-system
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: nexus-ingress
-  dependsOn:
-    - name: nexus
-    - name: traefik
-  prune: true
-  timeout: 5m
-  wait: true
-  postBuild:
-    substitute: {}
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-      - kind: Secret
-        name: cluster-settings
-```
-
-(Verify `postBuild.substituteFrom` matches existing ingress Kustomizations in repo — pattern may differ.)
-
-- [ ] **Step 6: Validate**
+- [ ] **Step 4: Commit**
 
 ```bash
-kubectl kustomize cluster/apps/traefik/traefik/ingress/nexus-system/ 2>&1 | head -40
-```
-
-Expected: two IngressRouteTCP renders.
-
-- [ ] **Step 7: Commit + push for PR 1 milestone**
-
-```bash
-git add cluster/apps/traefik/traefik/ingress/nexus-system/ cluster/apps/nexus-system/nexus/ks.yaml
-git commit -m "feat(nexus): add Traefik TLS-passthrough ingress
+git add cluster/apps/traefik/traefik/ingress/nexus-system/
+git commit -m "feat(nexus): add Traefik ingress + TLS cert
 
 Ref #968"
 ```
 
-- [ ] **Step 8: Run qa-validator (MANDATORY before PR)**
+---
 
-Dispatch qa-validator per `.claude/rules/02-validation.md`.
+### Task 8: Add README.md
 
-- [ ] **Step 9: Push PR 1**
+**Files:**
+- Create: `cluster/apps/nexus-system/nexus/README.md`
 
-Create PR with title `feat(nexus): deploy Sonatype Nexus OSS (stack only, no consumers)`. Body references #968. User pushes / merges.
+Per `.claude/rules/documentation.md`, new app components require README.md before merge. Use `docs/templates/readme_template.md` as base.
 
-- [ ] **Step 10: Run cluster-validator after push**
+- [ ] **Step 1: Read template**
 
-Dispatch cluster-validator. Verify:
-- `nexus-system` namespace exists
-- StatefulSet `nexus` is Ready
-- PVC bound
-- Certificate `nexus-tls` is Ready
-- Provisioning Job completed (check `kubectl get jobs -n nexus-system`)
-- UI reachable from dev PC: `curl -v https://nexus.${EXTERNAL_DOMAIN}` returns 200
-- Smoke test apt: `curl -v https://nexus.${EXTERNAL_DOMAIN}/repository/apt-ubuntu-proxy/dists/jammy/Release` returns 200
-- Smoke test docker: `docker pull nexus-docker.${EXTERNAL_DOMAIN}/library/alpine:3` succeeds
+```bash
+Read file_path="/workspaces/spruyt-labs/docs/templates/readme_template.md"
+```
 
-If any fails, fix forward or rollback per cluster-validator verdict.
+(If template missing, mirror an existing README: `cluster/apps/qdrant-system/qdrant/README.md`.)
+
+- [ ] **Step 2: Write README covering:**
+
+- Overview (Nexus 3 OSS for Coder envbuilder apt + docker cache)
+- Prerequisites (`dependsOn` from ks.yaml: cert-manager, kyverno, rook-ceph-cluster-storage)
+- Operation (common kubectl commands, how to log into UI, how to rotate admin password)
+- Troubleshooting (provisioning Job stuck, blob store full, cert renewal, apt proxy upstream down)
+- References (spec link, issue link, Sonatype docs)
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add cluster/apps/nexus-system/nexus/README.md
+git commit -m "docs(nexus): add README
+
+Ref #968"
+```
+
+---
+
+### Task 9: Validate + push PR 1
+
+- [ ] **Step 1: Run qa-validator**
+
+Dispatch qa-validator agent per `.claude/rules/02-validation.md`. Fix anything BLOCKING. Per `feedback_run_megalinter_local.md`, also run locally before push:
+
+```bash
+task dev-env:lint
+```
+
+- [ ] **Step 2: Push branch + open PR**
+
+```bash
+git push -u origin <branch>
+gh pr create --repo anthony-spruyt/spruyt-labs \
+  --title "feat(nexus): deploy Sonatype Nexus OSS (stack only, no consumers)" \
+  --body "$(cat <<'EOF'
+## Summary
+Deploy in-cluster Nexus 3 OSS as apt + docker proxy cache for Coder workspace builds.
+Stack-only — no consumer changes yet. Next PR wires envbuilder.
+
+## Linked Issue
+Ref #968
+
+## Changes
+- Namespace `nexus-system`, app-template HelmRelease, 100Gi ceph-block PVC
+- 10 repos provisioned via hashed Job: apt (5), docker proxy (3), hosted cache (1), group (1)
+- Anonymous access for reads + metrics
+- Traefik ingress with ZeroSSL cert at `nexus.lan.$DOMAIN` + `nexus-docker.lan.$DOMAIN`
+- CoreDNS rewrite via Talos `extraManifests` for in-cluster split-horizon
+- CNP, VPA (rec-only), VMPodScrape
+
+## Testing
+- [ ] qa-validator pass
+- [ ] After merge: cluster-validator verdict
+- [ ] Manual UI login from dev PC
+- [ ] Smoke apt pull through `nexus.lan`
+- [ ] Smoke docker pull through `nexus-docker.lan`
+EOF
+)"
+```
+
+- [ ] **Step 3: User merges PR**
+
+- [ ] **Step 4: Run cluster-validator**
+
+Verify:
+- `nexus-system` namespace exists, PSA `restricted`
+- StatefulSet `nexus` Ready (1/1)
+- PVC bound at 100Gi
+- Certificate `nexus` Ready, cert mounted on Traefik
+- Provisioning Job completed
+- UI reachable: `curl -v https://nexus.lan.<domain>` returns 200 with valid cert
+- Smoke apt: `curl -v https://nexus.lan.<domain>/repository/apt-ubuntu-proxy/dists/jammy/Release` returns 200
+- Smoke docker: `docker pull nexus-docker.lan.<domain>/alpine:3` succeeds
+
+If any fails, triage per cluster-validator output.
 
 ---
 
 ## PR 2 — Coder integration
 
-### Task 11: Rewrite ENVBUILDER_DOCKER_CONFIG_BASE64
+### Task 10: Update coder-workspace-env.sops.yaml
 
 **Files:**
 - Modify: `cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml`
 
-- [ ] **Step 1: Draft new docker config (unencrypted)**
+- [ ] **Step 1: Draft new docker config.json**
 
 ```json
 {
   "auths": {
-    "nexus-docker.${EXTERNAL_DOMAIN}": {}
-  },
-  "registry-mirrors": [
-    "https://nexus-docker.${EXTERNAL_DOMAIN}"
-  ]
+    "nexus-docker.lan.${EXTERNAL_DOMAIN}": {
+      "auth": "<base64 of admin:admin-password>"
+    }
+  }
 }
 ```
 
-Note: `registry-mirrors` in docker daemon config is docker.io-specific. For envbuilder/kaniko multi-registry mirroring, instead remap upstreams via kaniko flags. Actual config should be kaniko's `--registry-mirror` or rewrite via `--registry-map` — verify envbuilder docs.
+(Replace admin creds with a dedicated Nexus user in a follow-up issue.)
 
-**Envbuilder-native config:** envbuilder supports registry remapping via env `ENVBUILDER_IGNORE_PATHS`, `ENVBUILDER_BUILD_CONTEXT_PATH`, and kaniko passthrough. The simplest approach: set `ENVBUILDER_DOCKER_CONFIG_BASE64` to a standard dockerconfigjson with auth entries AND configure kaniko registry mirrors via kaniko flags.
-
-- [ ] **Step 2: Update sops file**
-
-User runs:
+- [ ] **Step 2: User edits sops file**
 
 ```bash
 sops cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml
 ```
 
-Update `ENVBUILDER_DOCKER_CONFIG_BASE64` to:
-
-```yaml
-ENVBUILDER_DOCKER_CONFIG_BASE64: "<base64 of the new dockerconfigjson above>"
-```
-
-Leave old upstream PATs in file for now — remove in Task 14 after stability confirmed.
+Changes:
+- `ENVBUILDER_DOCKER_CONFIG_BASE64` → base64 of the new config.json from Step 1
+- Add `KANIKO_REGISTRY_MIRROR: "nexus-docker.lan.<literal-domain>/repository/docker-group"` (Coder's env rendering substitutes `${EXTERNAL_DOMAIN}` if supported; otherwise hardcode the literal domain here since it's in SOPS encrypted at rest)
+- **Leave** the old upstream dockerhub/ghcr PATs in place — Task 13 removes them after stability confirmed.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml
-git commit -m "feat(coder): point envbuilder docker config at Nexus
+git commit -m "feat(coder): route envbuilder pulls through Nexus via KANIKO_REGISTRY_MIRROR
 
 Ref #968"
 ```
 
 ---
 
-### Task 12: Update envbuilder cache repo + apt proxy in template
+### Task 11: Update Coder devcontainer template
 
 **Files:**
 - Modify: `cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/main.tf`
+- Create/Modify: devcontainer Dockerfile in the same directory (if template bakes one)
 
 - [ ] **Step 1: Locate current cache repo line**
 
@@ -1306,144 +1202,158 @@ Ref #968"
 Grep pattern="ENVBUILDER_CACHE_REPO" path="cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/main.tf" -n=true output_mode="content"
 ```
 
-Record line number.
-
-- [ ] **Step 2: Replace with Nexus endpoint**
+- [ ] **Step 2: Replace ENVBUILDER_CACHE_REPO**
 
 ```hcl
 # main.tf, around line 58
-"ENVBUILDER_CACHE_REPO" : "nexus-docker.${var.external_domain}/envbuilder-cache/${data.coder_workspace.me.name}",
+"ENVBUILDER_CACHE_REPO" : "nexus-docker.lan.${var.external_domain}/repository/envbuilder-cache/${data.coder_workspace.me.name}",
 ```
 
-Ensure `var.external_domain` is declared. If not, add:
+Add in same env map:
+
+```hcl
+"KANIKO_REGISTRY_MIRROR" : "nexus-docker.lan.${var.external_domain}/repository/docker-group",
+```
+
+Verify `var.external_domain` exists. If not, declare:
 
 ```hcl
 variable "external_domain" {
   type        = string
-  description = "Cluster external domain, sourced from Coder template parameters or module config"
+  description = "Cluster external domain for in-cluster FQDNs"
 }
 ```
 
-Check how existing templates resolve `${EXTERNAL_DOMAIN}` — likely already wired via Coder's template param injection.
+and wire into the module call upstream.
 
-- [ ] **Step 3: Add kaniko mirror flags**
+- [ ] **Step 3: Check for template Dockerfile**
 
-```hcl
-# In the envbuilder env map, add:
-"ENVBUILDER_DOCKER_CONFIG_BASE64" : data.coder_parameter.docker_config.value,
-"KANIKO_ARGS" : "--registry-mirror=nexus-docker.${var.external_domain}",
+```bash
+Glob pattern="cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/**/Dockerfile"
 ```
 
-Verify envbuilder version supports `KANIKO_ARGS` env passthrough; otherwise bake equivalent into a custom envbuilder wrapper or set directly via envbuilder-supported vars.
-
-- [ ] **Step 4: Update devcontainer template Dockerfile (baked apt proxy)**
-
-Find the devcontainer Dockerfile template in `cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/`. If absent, the template may not bake a Dockerfile — envbuilder uses the repo's own `.devcontainer/Dockerfile`. In that case, defer apt proxy injection to a later, per-repo change (not this plan) and rely on docker pull-through only for PR 2.
-
-If the template does include a base Dockerfile:
+- [ ] **Step 4: If Dockerfile exists, add apt proxy**
 
 ```dockerfile
-RUN echo 'Acquire::https::Proxy "https://nexus.${external_domain}/repository/apt-ubuntu-proxy/";' \
+# Added to Coder devcontainer template Dockerfile
+RUN echo 'Acquire::https::Proxy "https://nexus.lan.${external_domain}/repository/apt-ubuntu-proxy/";' \
     > /etc/apt/apt.conf.d/01proxy
 ```
 
-Where `${external_domain}` is substituted by Terraform at template render.
+Where `${external_domain}` is substituted by Terraform at template render time.
 
-- [ ] **Step 5: Commit**
+For HTTPS-upstream apt features (nodesource, hashicorp, cli.github, launchpad), add per-feature `sources.list.d/*.list` pointing at the corresponding passthrough proxy. This is a larger change — capture in the README for the template and implement per need.
+
+- [ ] **Step 5: If no template Dockerfile, defer to per-repo**
+
+Document in template README that consumer repos (this one included) should add their own `.devcontainer/Dockerfile` apt proxy via build ARG (out of scope for #968).
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/main.tf
-git commit -m "feat(coder): move envbuilder cache + apt proxy to Nexus
+git commit -m "feat(coder): point envbuilder cache + mirror at Nexus
 
 Ref #968"
 ```
 
 ---
 
-### Task 13: Validate end-to-end Coder workspace rebuild
+### Task 12: Validate Coder rebuild end-to-end
 
-- [ ] **Step 1: Push PR 2**
+- [ ] **Step 1: Push + merge PR 2**
 
-Create PR `feat(coder): route envbuilder through Nexus`. User merges.
+```bash
+gh pr create --repo anthony-spruyt/spruyt-labs --title "feat(coder): route envbuilder through Nexus"
+```
+
+Body references #968.
 
 - [ ] **Step 2: Run cluster-validator**
 
-- [ ] **Step 3: Trigger a test workspace rebuild**
+- [ ] **Step 3: Rebuild one test Coder workspace manually**
 
-Manually recreate one Coder workspace. Monitor envbuilder logs:
+- [ ] **Step 4: Inspect envbuilder logs**
 
 ```bash
 mcp__kubernetes__get_logs namespace=coder-system pod=<envbuilder-pod>
 ```
 
-Expected evidence of Nexus use:
-- apt output shows `https://nexus.${EXTERNAL_DOMAIN}/...` URLs
-- docker pulls show `nexus-docker.${EXTERNAL_DOMAIN}/...` image refs
-- Kaniko logs show layer push to `nexus-docker.${EXTERNAL_DOMAIN}/envbuilder-cache/...`
+Expected evidence:
+- Kaniko shows `Using registry mirror: nexus-docker.lan.<domain>/repository/docker-group`
+- Base image pulls show the Nexus hostname
+- Cache push to `nexus-docker.lan.<domain>/repository/envbuilder-cache/<workspace>`
 
-- [ ] **Step 4: Verify Nexus blob store growth**
+- [ ] **Step 5: Verify Nexus blob store growth**
 
 ```bash
-curl -u admin:<password> https://nexus.${EXTERNAL_DOMAIN}/service/rest/v1/blobstores/default/quota-status
+curl -u admin:<password> https://nexus.lan.<domain>/service/rest/v1/blobstores/default/quota-status
 ```
 
-Blob count should increase; size should grow.
+Blob count + size should increase.
 
-- [ ] **Step 5: If issues, document + rollback or roll-forward**
+- [ ] **Step 6: Rebuild 2 more workspaces for stability signal**
+
+Goal: 3+ successful rebuilds per `feedback_no_observation_windows.md` (replace time-based observation with concrete success count).
 
 ---
 
 ## PR 3 — Cleanup
 
-### Task 14: Remove upstream PATs from coder-workspace-env
-
-Wait ~1 week after PR 2 to confirm stability.
+### Task 13: Remove upstream PATs from coder-workspace-env
 
 **Files:**
 - Modify: `cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml`
 
-- [ ] **Step 1: Verify Nexus has been serving consistently**
+- [ ] **Step 1: Confirm 3+ rebuild signal**
 
-Check VM metrics for Nexus uptime over past 7 days. Check Coder workspace build success rate (no upstream rate-limit errors).
+Check VM dashboard for Nexus uptime + no workspace build failures attributed to upstream rate-limit in the past 3 rebuilds.
 
 - [ ] **Step 2: Edit SOPS file**
-
-User runs:
 
 ```bash
 sops cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml
 ```
 
-Remove all upstream PAT env vars now migrated to `nexus-upstream-creds`.
+Remove dockerhub + ghcr PAT env vars now relocated to `nexus-upstream-creds` in Nexus.
 
-- [ ] **Step 3: Commit + push**
+- [ ] **Step 3: Commit + PR**
 
 ```bash
 git add cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml
 git commit -m "chore(coder): remove upstream PATs migrated to Nexus
 
-Ref #968"
+Closes #968"
+
+gh pr create --repo anthony-spruyt/spruyt-labs --title "chore(coder): remove legacy upstream PATs (Closes #968)"
 ```
 
-- [ ] **Step 4: Cluster-validator + one more workspace rebuild to confirm nothing regressed**
+- [ ] **Step 4: Cluster-validator after merge + one more rebuild to confirm**
 
-- [ ] **Step 5: Close issue #968**
+- [ ] **Step 5: Close issue**
 
 ```bash
-gh issue close 968 --repo anthony-spruyt/spruyt-labs --comment "Completed via PRs <N>, <N+1>, <N+2>. Nexus deployed, Coder workspaces routed through it, legacy PATs removed."
+gh issue close 968 --repo anthony-spruyt/spruyt-labs \
+  --comment "Completed via PRs <N>, <N+1>, <N+2>. Nexus deployed, Coder workspaces routed through it, legacy PATs removed."
 ```
 
 ---
 
-## Open items to resolve during execution
+## Runbook notes (captured during plan authoring)
 
-The following require in-flight investigation and decision; they are **not blockers** for starting Task 1 but must be closed before the corresponding task:
+1. **Admin password rotation.** `NEXUS_SECURITY_INITIAL_PASSWORD` applies only on first-boot with empty PVC. After initial setup, rotate via Nexus REST API (`PUT /service/rest/v1/security/users/admin/change-password`) AND update `nexus-admin` SOPS secret. The provisioning Job reads `admin-password` env each run — if stale, it will 401; address by manually running the rotation before a Job re-run.
 
-1. **CoreDNS management model** (blocks Task 9) — Flux-managed or Talos-managed.
-2. **Exact Sonatype chart value key paths** (blocks Task 5 Step 2) — verified via `helm show values`.
-3. **Jetty TLS wiring specifics** (blocks Task 6) — exact env var / ConfigMap mount path Nexus expects for custom `jetty-https.xml`. May require inspecting a live Nexus pod filesystem or consulting Nexus docs via Context7.
-4. **Metrics auth** (blocks Task 8 Step 3) — confirm whether Nexus 3 Prometheus metrics endpoint needs admin auth or can be anonymous.
-5. **Kaniko registry mirror mechanism** (blocks Task 12 Step 3) — exact envbuilder passthrough variable for kaniko mirror flags.
-6. **Traefik TLS-passthrough pattern** (blocks Task 10) — whether repo uses `IngressRouteTCP` elsewhere; if not, fall back to terminate-and-reencrypt with `serversTransport`.
+2. **Blob store full.** Online PVC expansion: `kubectl patch pvc data-nexus-0 -n nexus-system -p '{"spec":{"resources":{"requests":{"storage":"200Gi"}}}}'`. Ceph RBD resizes live; Nexus picks up the new size without restart.
 
-Resolve each by reading chart values, upstream docs, or existing similar resources in the repo before writing the final manifest.
+3. **Docker path-prefix middleware verification.** Task 7 Step 2 introduces
+   `nexus-docker-prefix` middleware rewriting `/v2/*` → `/repository/docker-group/v2/*`.
+   If docker clients 404, fall back to configuring `docker-group.docker.httpPort`
+   in the provisioning Job JSON and exposing a second service port — reverts to
+   the multi-port complexity. Validate early in PR 1 post-deploy smoke tests.
+
+4. **CoreDNS bootstrap risk.** Task 6 modifies the CoreDNS ConfigMap via Talos.
+   A mistake here (invalid Corefile, missing `kubernetes` plugin) could break
+   cluster DNS entirely. Mitigation: keep a backup of the current Corefile
+   (`kubectl get cm -n kube-system coredns -o yaml > /tmp/corefile-backup.yaml`)
+   before applying, and test the new Corefile with `coredns -conf` locally first
+   if possible.
