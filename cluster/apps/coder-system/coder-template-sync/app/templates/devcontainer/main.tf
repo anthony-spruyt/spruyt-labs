@@ -60,7 +60,7 @@ locals {
     # Skip kaniko remount of secret volumes during build — mount(2) EPERMs
     # inside Kata+PSA=baseline (no CAP_SYS_ADMIN). Secrets are still
     # accessible at runtime via the k8s volume mounts themselves.
-    "ENVBUILDER_IGNORE_PATHS" : "/etc/coder",
+    "ENVBUILDER_IGNORE_PATHS" : "/etc/coder,/var/run/secrets/kubernetes.io/serviceaccount",
     # Expose as shell variable so devcontainer.json lifecycle commands
     # using ${containerWorkspaceFolder} expand correctly under envbuilder.
     "containerWorkspaceFolder" : local.workspace_folder,
