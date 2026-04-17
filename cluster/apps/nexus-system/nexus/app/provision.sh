@@ -41,14 +41,23 @@ API="$${NEXUS_URL}/service/rest/v1"
 
 upsert() {
   kind="$1" name="$2" body="$3"
-  code=$(curl -sf -o /dev/null -w '%{http_code}' -u "$${AUTH}" "$${API}/repositories/$${name}" || echo 000)
+  code=$(curl -sS -o /dev/null -w '%{http_code}' -u "$${AUTH}" "$${API}/repositories/$${name}" || echo 000)
   if [ "$${code}" = "200" ]; then
     echo "  [$${name}] exists, updating"
-    curl -sf -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d "$${body}" "$${API}/repositories/$${kind}/$${name}"
+    resp=$(curl -sS -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d "$${body}" "$${API}/repositories/$${kind}/$${name}")
   else
-    echo "  [$${name}] creating"
-    curl -sf -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d "$${body}" "$${API}/repositories/$${kind}"
+    echo "  [$${name}] creating (GET returned $${code})"
+    resp=$(curl -sS -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d "$${body}" "$${API}/repositories/$${kind}")
   fi
+  http=$(printf '%s' "$${resp}" | tail -n1)
+  bod=$(printf '%s' "$${resp}" | sed '$d')
+  case "$${http}" in
+  2*) : ;;
+  *)
+    echo "    FAILED HTTP $${http}: $${bod}"
+    exit 1
+    ;;
+  esac
 }
 
 # --- apt proxies ---
