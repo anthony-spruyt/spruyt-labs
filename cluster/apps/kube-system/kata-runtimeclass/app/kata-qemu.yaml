@@ -1,0 +1,14 @@
+---
+# RuntimeClass for Kata Containers with QEMU hypervisor handler.
+# Used by the #977 probe harness (Task 3 — hypervisor swap probe) to test
+# whether swapping the default cloud-hypervisor (CLH) for QEMU changes the
+# guest kernel userns behavior. Scheduled only to kata-ready nodes.
+# Ref: issue #977.
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: kata-qemu
+handler: kata-qemu
+scheduling:
+  nodeSelector:
+    kata.spruyt-labs/ready: "true"
