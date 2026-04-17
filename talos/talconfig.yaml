@@ -94,12 +94,6 @@ nodes:
           - nvme_core.default_ps_maxlatency_us=0 # Prevent entering low PS
           - iommu=pt # PCI Passthrough
           - idle=nomwait # Prevent deep CPU idle states
-          - mitigations=off # Less security, faster computer
-          - security=none # Less security, faster computer
-          - init_on_alloc=0 # Less security, faster computer
-          - init_on_free=0 # Less security, faster computer
-          - talos.auditd.disabled=1 # Less security, faster computer
-          - apparmor=0 # Less security, faster computer
         systemExtensions:
           officialExtensions:
             - siderolabs/amd-ucode
@@ -235,6 +229,7 @@ nodes:
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
     nodeLabels:
       ups.spruyt-labs.io/connected: "true"
+      kata.spruyt-labs/ready: "true" # Kata promotion (#933) - target for RuntimeClass kata nodeSelector
     patches:
       # ===== MS-01 shared patches (anchors defined here, referenced by ms-01-2/3) =====
       - &patchThunderbolt |-
@@ -319,17 +314,12 @@ nodes:
           - loglevel=3 # Reduce noise
           - intel_iommu=on # PCI Passthrough
           - iommu=pt # PCI Passthrough
-          - talos.auditd.disabled=1 # Less security, faster computer
-          - mitigations=off # Less security, faster computer - Thunderbolt ring https://gist.github.com/gavinmcfall/ea6cb1233d3a300e9f44caf65a32d519
           - net.ifnames=0 # Thunderbolt ring https://gist.github.com/gavinmcfall/ea6cb1233d3a300e9f44caf65a32d519
-          - apparmor=0 # Less security, faster computer
-          - security=none # Less security, faster computer
-          - init_on_alloc=0 # Less security, faster computer
-          - init_on_free=0 # Less security, faster computer
         systemExtensions:
           officialExtensions:
             - siderolabs/i915
             - siderolabs/intel-ucode
+            - siderolabs/kata-containers
             - siderolabs/lldpd
             - siderolabs/thunderbolt
             - siderolabs/iscsi-tools
@@ -395,6 +385,8 @@ nodes:
           - network: 169.254.255.103/32
             metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
+    nodeLabels:
+      kata.spruyt-labs/ready: "true" # Kata promotion (#933) - target for RuntimeClass kata nodeSelector
     patches:
       - *patchThunderbolt
       - *patchNetworking
@@ -461,7 +453,7 @@ nodes:
             metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
     nodeLabels:
-      kata.spruyt-labs/ready: "true" # Kata pilot (#933) - makes node target for RuntimeClass kata nodeSelector
+      kata.spruyt-labs/ready: "true" # Kata promotion (#933) - target for RuntimeClass kata nodeSelector
     patches:
       - *patchThunderbolt
       - *patchNetworking
@@ -470,33 +462,7 @@ nodes:
       - *patchThunderboltAuth
       - *patchTxQueue
       - *patchDiskScheduler
-    # Kata pilot (#933) - ms-01-3 only. Adds siderolabs/kata-containers.
-    # Full kernel hardening vs &ms01Scehmatic: agent workloads under Kata
-    # share physical CPU with Ceph OSD + kubelet on this node. Kata isolates
-    # architecturally but NOT microarchitecturally - Downfall/Spectre cross
-    # the VM boundary. Cost: ~5% perf regression. Promote to all nodes after
-    # pilot validates perf + stability.
-    schematic:
-      customization:
-        secureboot:
-          includeWellKnownCertificates: true
-        extraKernelArgs:
-          - -lockdown # Secure boot lockdown needs updating
-          - lockdown=integrity # to integrity for Cilium
-          - quiet # Reduce noise
-          - loglevel=3 # Reduce noise
-          - intel_iommu=on # PCI Passthrough
-          - iommu=pt # PCI Passthrough
-          - net.ifnames=0 # Thunderbolt ring https://gist.github.com/gavinmcfall/ea6cb1233d3a300e9f44caf65a32d519
-        systemExtensions:
-          officialExtensions:
-            - siderolabs/i915
-            - siderolabs/intel-ucode
-            - siderolabs/kata-containers
-            - siderolabs/lldpd
-            - siderolabs/thunderbolt
-            - siderolabs/iscsi-tools
-            - siderolabs/util-linux-tools
+    schematic: *ms01Scehmatic
     volumes: *ms01TpmEncryptedVolumes
 
 controlPlane:
