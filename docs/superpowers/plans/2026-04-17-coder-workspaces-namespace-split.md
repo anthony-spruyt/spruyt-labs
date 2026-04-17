@@ -28,13 +28,13 @@
 | `cluster/apps/coder-workspaces/network-policies/ks.yaml` | Flux Kustomization for CNPs. |
 | `cluster/apps/coder-workspaces/network-policies/app/kustomization.yaml` | |
 | `cluster/apps/coder-workspaces/network-policies/app/network-policies.yaml` | Workspace CNPs relocated from `coder-system/coder/app/network-policies.yaml`. |
-| `cluster/apps/coder-workspaces/external-secrets/ks.yaml` | Flux Kustomization. |
-| `cluster/apps/coder-workspaces/external-secrets/app/kustomization.yaml` | |
-| `cluster/apps/coder-workspaces/external-secrets/app/coder-workspace-env.sops.yaml` | Moved from `coder-system/coder/app/`. |
-| `cluster/apps/coder-workspaces/external-secrets/app/coder-talosconfig.sops.yaml` | Moved. |
-| `cluster/apps/coder-workspaces/external-secrets/app/coder-ssh-signing-key.sops.yaml` | Moved. |
-| `cluster/apps/coder-workspaces/external-secrets/app/coder-terraform-credentials.sops.yaml` | Moved. |
-| `cluster/apps/coder-workspaces/external-secrets/app/authentik-secret-store.yaml` | New mirror of the secret store (ExternalSecret references ClusterSecretStore or namespace SecretStore). |
+| `cluster/apps/coder-workspaces/secrets/ks.yaml` | Flux Kustomization (with SOPS decryption block). |
+| `cluster/apps/coder-workspaces/secrets/app/kustomization.yaml` | |
+| `cluster/apps/coder-workspaces/secrets/app/coder-workspace-env.sops.yaml` | Moved plain SOPS Secret. |
+| `cluster/apps/coder-workspaces/secrets/app/coder-talosconfig.sops.yaml` | Moved. |
+| `cluster/apps/coder-workspaces/secrets/app/coder-ssh-signing-key.sops.yaml` | Moved. |
+| `cluster/apps/coder-workspaces/secrets/app/coder-terraform-credentials.sops.yaml` | Moved. |
+| `cluster/apps/coder-workspaces/ssh-key-rotation/**` | Full subtree relocated from coder-system (Task 6b). |
 | `cluster/apps/coder-workspaces/kyverno-policy/ks.yaml` | Flux Kustomization. |
 | `cluster/apps/coder-workspaces/kyverno-policy/app/kustomization.yaml` | |
 | `cluster/apps/coder-workspaces/kyverno-policy/app/restrict-privileged-to-coder-workspace-sa.yaml` | Kyverno ClusterPolicy. |
@@ -201,8 +201,9 @@ resources:
   - ./namespace.yaml
   - ./workspace-rbac/ks.yaml
   - ./network-policies/ks.yaml
-  - ./external-secrets/ks.yaml
+  - ./secrets/ks.yaml
   - ./kyverno-policy/ks.yaml
+  - ./ssh-key-rotation/ks.yaml
 ```
 
 - [ ] **Step 3: Register in root apps kustomization**
@@ -476,62 +477,40 @@ Ref #977"
 
 ---
 
-## Task 6: Move workspace-scoped ExternalSecrets
+## Task 6: Move workspace-scoped SOPS Secrets
+
+**Note:** These are plain SOPS-encrypted `kind: Secret` resources (Flux decrypts at apply time), NOT ExternalSecrets. No SecretStore mirroring required. User has already performed the `metadata.namespace: coder-system` → `coder-workspaces` edit in the encrypted files before this task runs — do not re-edit.
 
 **Files:**
-- Create: `cluster/apps/coder-workspaces/external-secrets/ks.yaml`
-- Create: `cluster/apps/coder-workspaces/external-secrets/app/kustomization.yaml`
+- Create: `cluster/apps/coder-workspaces/secrets/ks.yaml`
+- Create: `cluster/apps/coder-workspaces/secrets/app/kustomization.yaml`
 - Move: `coder-system/coder/app/coder-workspace-env.sops.yaml` → new path
 - Move: `coder-system/coder/app/coder-talosconfig.sops.yaml` → new path
 - Move: `coder-system/coder/app/coder-ssh-signing-key.sops.yaml` → new path
 - Move: `coder-system/coder/app/coder-terraform-credentials.sops.yaml` → new path
-- Create: `cluster/apps/coder-workspaces/external-secrets/app/authentik-secret-store.yaml` (if the existing secret store in `coder-system/coder/app/authentik-secret-store.yaml` is a `SecretStore` not a `ClusterSecretStore` — verify first)
 - Modify: `coder-system/coder/app/kustomization.yaml`
 
-- [ ] **Step 1: Inspect the source secret store**
+- [ ] **Step 1: Git-move each SOPS file (content preserved, no decrypt)**
 
 ```bash
-cat cluster/apps/coder-system/coder/app/authentik-secret-store.yaml
-```
-
-If it's `kind: SecretStore` (namespace-scoped), we need a sibling `SecretStore` in `coder-workspaces` for ExternalSecrets to resolve. If it's `kind: ClusterSecretStore`, reuse from new ns without mirroring.
-
-- [ ] **Step 2a (if SecretStore): Create mirror**
-
-Copy the file content to `cluster/apps/coder-workspaces/external-secrets/app/authentik-secret-store.yaml` with the metadata.namespace field removed (kustomization will apply `targetNamespace`) OR set to `coder-workspaces`. Keep the backend config identical.
-
-- [ ] **Step 2b (if ClusterSecretStore): Skip mirror**
-
-Move files in Steps 3-6 but no secret-store creation needed in new ns.
-
-- [ ] **Step 3-6: Git move each SOPS file**
-
-```bash
+mkdir -p cluster/apps/coder-workspaces/secrets/app
 git mv cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml \
-       cluster/apps/coder-workspaces/external-secrets/app/coder-workspace-env.sops.yaml
+       cluster/apps/coder-workspaces/secrets/app/coder-workspace-env.sops.yaml
 git mv cluster/apps/coder-system/coder/app/coder-talosconfig.sops.yaml \
-       cluster/apps/coder-workspaces/external-secrets/app/coder-talosconfig.sops.yaml
+       cluster/apps/coder-workspaces/secrets/app/coder-talosconfig.sops.yaml
 git mv cluster/apps/coder-system/coder/app/coder-ssh-signing-key.sops.yaml \
-       cluster/apps/coder-workspaces/external-secrets/app/coder-ssh-signing-key.sops.yaml
+       cluster/apps/coder-workspaces/secrets/app/coder-ssh-signing-key.sops.yaml
 git mv cluster/apps/coder-system/coder/app/coder-terraform-credentials.sops.yaml \
-       cluster/apps/coder-workspaces/external-secrets/app/coder-terraform-credentials.sops.yaml
+       cluster/apps/coder-workspaces/secrets/app/coder-terraform-credentials.sops.yaml
 ```
 
 > **Do NOT edit the SOPS ciphertext or decrypt.** The files stay
 > encrypted. SOPS rules in `.sops.yaml` already match
 > `cluster/apps/**` — the new path remains encrypted without further
-> config.
->
-> **Verify namespace inside the encrypted files:** ExternalSecrets
-> have a `metadata.namespace` field that is NOT encrypted (SOPS
-> encrypts values, not structural keys). Open each SOPS file with
-> `sops <path>` — user must do this manually per
-> `.claude/rules/01-constraints.md`. Claude: prepare an editing note
-> for the user listing each file and the change
-> (`metadata.namespace: coder-system` → `coder-workspaces`) but do
-> NOT attempt to edit encrypted files yourself.
+> config. User-driven `metadata.namespace` edits were completed
+> before this task.
 
-- [ ] **Step 7: Write `external-secrets/app/kustomization.yaml`**
+- [ ] **Step 2: Write `secrets/app/kustomization.yaml`**
 
 ```yaml
 ---
@@ -543,44 +522,92 @@ resources:
   - ./coder-talosconfig.sops.yaml
   - ./coder-ssh-signing-key.sops.yaml
   - ./coder-terraform-credentials.sops.yaml
-  # Uncomment next line if Step 2a created a SecretStore mirror:
-  # - ./authentik-secret-store.yaml
 ```
 
-- [ ] **Step 8: Write `external-secrets/ks.yaml`**
+- [ ] **Step 3: Write `secrets/ks.yaml`**
 
-Mirror pattern from Task 3's ks.yaml. Name: `coder-workspaces-external-secrets`. Critically — ensure SOPS decryption is configured on this Flux Kustomization (the existing coder-system Flux ks uses `spec.decryption.provider: sops` + `secretRef.name`). Copy that block verbatim from `cluster/apps/coder-system/coder/ks.yaml`.
+Mirror pattern from Task 3's ks.yaml. Name: `coder-workspaces-secrets`. Critically — ensure SOPS decryption is configured on this Flux Kustomization (the existing coder-system Flux ks uses `spec.decryption.provider: sops` + `secretRef.name`). Copy that block verbatim from `cluster/apps/coder-system/coder/ks.yaml`.
 
-- [ ] **Step 9: Remove moved files from `coder-system/coder/app/kustomization.yaml`**
+- [ ] **Step 4: Remove moved files from `coder-system/coder/app/kustomization.yaml`**
 
 Delete the four `- ./coder-*.sops.yaml` lines that correspond to moved files. Leave `coder-oauth-external-secret.yaml`, `coder-cnpg-credentials.sops.yaml`, etc. — those stay.
 
-- [ ] **Step 10: Prepare user SOPS-edit instruction**
+- [ ] **Step 5: Update parent `coder-workspaces/kustomization.yaml`**
 
-Write the editing note to `/tmp/coder-sops-edit-notes.md` (local, not committed):
+Replace the `- ./external-secrets/ks.yaml` resource (from Task 2 scaffold) with `- ./secrets/ks.yaml` to match the actual directory name used here.
 
-```markdown
-# Manual SOPS edits required
-
-For each of these 4 files, run `sops <path>` and change `metadata.namespace`:
-  old: coder-system
-  new: coder-workspaces
-
-Files:
-1. cluster/apps/coder-workspaces/external-secrets/app/coder-workspace-env.sops.yaml
-2. cluster/apps/coder-workspaces/external-secrets/app/coder-talosconfig.sops.yaml
-3. cluster/apps/coder-workspaces/external-secrets/app/coder-ssh-signing-key.sops.yaml
-4. cluster/apps/coder-workspaces/external-secrets/app/coder-terraform-credentials.sops.yaml
-```
-
-Report DONE_WITH_CONCERNS and surface this note to the user. They will open each file, edit, save. Then the implementer (next dispatch) commits.
-
-- [ ] **Step 11 (after user completes SOPS edits): Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add cluster/apps/coder-workspaces/external-secrets/ \
+git add cluster/apps/coder-workspaces/secrets/ \
+        cluster/apps/coder-workspaces/kustomization.yaml \
         cluster/apps/coder-system/coder/app/kustomization.yaml
-git commit -m "refactor(coder): move workspace ExternalSecrets to coder-workspaces ns
+git commit -m "refactor(coder): move workspace SOPS Secrets to coder-workspaces ns
+
+Ref #977"
+```
+
+---
+
+## Task 6b: Relocate ssh-key-rotation app
+
+The `ssh-key-rotation` CronJob patches the `coder-ssh-signing-key` Secret (moved in Task 6). Colocate the rotator with its target secret.
+
+**Files (move entire subtree):**
+
+- Move: `cluster/apps/coder-system/ssh-key-rotation/` → `cluster/apps/coder-workspaces/ssh-key-rotation/`
+  - `ks.yaml`
+  - `app/cronjob.yaml`
+  - `app/role.yaml`
+  - `app/role-binding.yaml`
+  - `app/service-account.yaml`
+  - `app/network-policy.yaml`
+  - `app/kustomization.yaml`
+  - `app/coder-ssh-rotation-token.sops.yaml` — user has already edited `metadata.namespace` to `coder-workspaces`.
+- Modify: `cluster/apps/coder-system/kustomization.yaml` (drop `./ssh-key-rotation/ks.yaml`).
+- Modify: `cluster/apps/coder-workspaces/kustomization.yaml` (add `./ssh-key-rotation/ks.yaml`).
+- Modify: `cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml` — update `metadata.namespace: coder-system` → `coder-workspaces`.
+- Modify: `cluster/apps/coder-workspaces/ssh-key-rotation/app/role.yaml` + `role-binding.yaml` + `service-account.yaml` + `network-policy.yaml` — update `metadata.namespace` (or `subjects[].namespace` in role-binding) to `coder-workspaces`.
+- Modify: `cluster/apps/coder-workspaces/ssh-key-rotation/ks.yaml` — update `spec.targetNamespace: coder-system` → `coder-workspaces`. Verify `dependsOn` still resolves (may need to swap dependency from coder's Flux ks to `coder-workspaces-secrets` since the patched Secret is now there).
+
+- [ ] **Step 1: `git mv` the entire subtree**
+
+```bash
+git mv cluster/apps/coder-system/ssh-key-rotation \
+       cluster/apps/coder-workspaces/ssh-key-rotation
+```
+
+- [ ] **Step 2: Update hardcoded namespace in plaintext manifests**
+
+```bash
+grep -rln 'namespace: coder-system' cluster/apps/coder-workspaces/ssh-key-rotation/
+```
+
+For each hit, change to `coder-workspaces`. Expected files: `cronjob.yaml`, `role.yaml`, `role-binding.yaml` (both Role metadata.namespace AND `subjects[].namespace` if present), `service-account.yaml`, `network-policy.yaml`.
+
+Leave the ClusterRoleBinding-style references alone (there aren't any in this app — only namespace-scoped Role+RoleBinding).
+
+- [ ] **Step 3: Update `ks.yaml`**
+
+`spec.targetNamespace: coder-system` → `coder-workspaces`. Update `dependsOn` to reference `coder-workspaces-secrets` instead of the coder Flux ks (the CronJob's dependency is the Secret it patches, which is now in `coder-workspaces`).
+
+- [ ] **Step 4: Update parent kustomizations**
+
+- Remove `./ssh-key-rotation/ks.yaml` from `cluster/apps/coder-system/kustomization.yaml`.
+- Add `./ssh-key-rotation/ks.yaml` to `cluster/apps/coder-workspaces/kustomization.yaml`.
+
+- [ ] **Step 5: Update README header**
+
+`cluster/apps/coder-workspaces/ssh-key-rotation/README.md`: update namespace references in the "Operation" commands section (all `kubectl -n coder-system` → `kubectl -n coder-workspaces`; `flux reconcile kustomization` name may also change per Step 3).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add cluster/apps/coder-system/kustomization.yaml \
+        cluster/apps/coder-workspaces/
+git commit -m "refactor(coder): relocate ssh-key-rotation to coder-workspaces
+
+Rotator colocated with the coder-ssh-signing-key Secret it patches.
 
 Ref #977"
 ```
@@ -1131,7 +1158,7 @@ git push
 - §2 Security model → Tasks 2 (PSA), 7 (Kyverno), 8 (Trivy).
 - §3 Architecture (new cluster/apps/coder-workspaces tree) → Tasks 2, 3, 4, 6, 7.
 - §4 NetworkPolicy design → Tasks 4 (split + relocate), 5 (MCP retarget), 13 (validation).
-- §5 ExternalSecret retargets → Task 6.
+- §5 Secret retargets → Task 6 (plain SOPS Secrets) + Task 6b (ssh-key-rotation relocation).
 - §6 Template + consumer changes → Tasks 9, 10.
 - §7 Kyverno → Task 7.
 - §8 Trivy → Task 8.

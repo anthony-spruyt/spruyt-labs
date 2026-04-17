@@ -129,19 +129,26 @@ Audit during planning: any other CNP in the repo with a `coder-workspace` label 
 
 Workspace pods emitted by the Coder template must carry `app.kubernetes.io/name: coder-workspace` for the MCP ingress rules to match. Verify in `main.tf` during planning; add the label there if missing.
 
-## 5. ExternalSecret Retargets
+## 5. Secret Retargets
 
-Audit and split — do not mirror.
+The workspace-consumed secrets are plain SOPS-encrypted `kind: Secret` resources (Flux decrypts at apply time), not ExternalSecrets. Move each by `git mv` + edit `metadata.namespace` inside the encrypted file via `sops <path>` (user-driven; ciphertext values stay intact).
 
-| ExternalSecret | Consumer | New target namespace |
-| -------------- | -------- | -------------------- |
-| `coder-oauth-external-secret` | Coder server | `coder-system` (unchanged) |
+| Secret | Consumer | New namespace |
+| ------ | -------- | ------------- |
+| `coder-oauth-external-secret` | Coder server (real ExternalSecret) | `coder-system` (unchanged) |
 | `coder-workspace-env` | Workspace pods | **`coder-workspaces`** |
 | `coder-talosconfig` | Workspace pods (Talos CLI access) | **`coder-workspaces`** |
 | `coder-ssh-signing-key` | Workspace pods (SSH signing) | **`coder-workspaces`** |
 | `coder-terraform-credentials` | Workspace pods (Terraform state) | **`coder-workspaces`** |
+| `coder-ssh-rotation-token` | `ssh-key-rotation` CronJob (patches the signing key) | **`coder-workspaces`** (with the CronJob, see below) |
 
-Retarget the `target.name` + implicit namespace (ExternalSecret lives in the target ns). No mirror-secret chains.
+### ssh-key-rotation relocation
+
+The `ssh-key-rotation` CronJob patches `coder-ssh-signing-key`. Colocate rotator with target:
+
+- `cluster/apps/coder-system/ssh-key-rotation/` → `cluster/apps/coder-workspaces/ssh-key-rotation/`
+- CronJob, Role, RoleBinding, ServiceAccount, NetworkPolicy, SOPS token all move and have `metadata.namespace` updated to `coder-workspaces`.
+- Simpler RBAC — stays namespace-scoped.
 
 ## 6. Template & Workspace Consumer Changes
 
