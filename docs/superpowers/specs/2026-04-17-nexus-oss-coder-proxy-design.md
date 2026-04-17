@@ -23,7 +23,7 @@ Nexus OSS 3 solves both via apt proxy (native HTTPS pass-through) and docker pro
 
 **Chart:** `bjw-s-labs/app-template` (repo convention — 30+ apps use it, including vaultwarden which is the closest structural match: StatefulSet + PVC + reloader). Sonatype's own chart is deprecated and hobbled (no multi-port Service, StatefulSet mode unsupported).
 
-**Workload:** StatefulSet with one replica, image `sonatype/nexus3` pinned by digest, Renovate-tracked. 100Gi Ceph RBD PVC for `/nexus-data` (blob store + DB). Expandable via `allowVolumeExpansion`.
+**Workload:** StatefulSet with one replica, image `sonatype/nexus3` pinned by digest, Renovate-tracked. 100Gi Ceph RBD PVC for `/nexus-data` (blob store + DB). Expandable via `allowVolumeExpansion`. Service exposes three ports: 8081 (UI/apt/REST), 8082 (docker-group connector), 8083 (envbuilder-cache connector).
 
 **TLS strategy:** Nexus listens **plain HTTP only** — no Jetty TLS, no PKCS12 keystore, no internal CA. Rationale: inside-cluster pod-to-pod traffic is already Cilium eBPF-routed with CNP isolation; TLS inside a CNP-locked homelab cluster adds plumbing for zero real-world risk reduction. Standard K8s pattern — virtually every other app in the repo talks plain HTTP service-to-service.
 
@@ -83,7 +83,7 @@ When `provision.sh` changes, the ConfigMap hash changes → Job spec changes →
 | `docker-hub-proxy` | docker proxy | `https://registry-1.docker.io` (Nexus holds dockerhub PAT) |
 | `ghcr-proxy` | docker proxy | `https://ghcr.io` (Nexus holds ghcr PAT) |
 | `mcr-proxy` | docker proxy | `https://mcr.microsoft.com` (anonymous) |
-| `envbuilder-cache` | docker hosted | kaniko layer cache; **not** a group member (workspace-private, must not leak via group) |
+| `envbuilder-cache` | docker hosted | kaniko layer cache; **not** a group member. Connector: `httpPort: 8083`. |
 | `docker-group` | docker group | Members: `docker-hub-proxy`, `ghcr-proxy`, `mcr-proxy`. Connector: `httpPort: 8082`. |
 
 **Anonymous access** granted on proxy/group repos + metrics. The
@@ -136,7 +136,7 @@ envbuilder pod (in-cluster)
   ├── pulls feature images → same path → cached (ghcr via ghcr-proxy, dockerhub via docker-hub-proxy)
   ├── apt update → http://nexus...svc:8081/repository/apt-ubuntu-proxy/... → cached
   ├── apt install (HTTPS upstream feature) → http://nexus...svc:8081/repository/apt-nodesource/... → cached
-  └── pushes layer cache → ENVBUILDER_CACHE_REPO=nexus...svc:8082/v2/envbuilder-cache/<workspace>
+  └── pushes layer cache → ENVBUILDER_CACHE_REPO=nexus...svc:8083/envbuilder-cache/<workspace>
 ```
 
 **Workspace build, warm cache:** all hits served from Nexus blob store on Ceph.
@@ -156,7 +156,7 @@ envbuilder pod (in-cluster)
 
 Line 58 change:
 ```hcl
-"ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8082/envbuilder-cache/${data.coder_workspace.me.name}",
+"ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/${data.coder_workspace.me.name}",
 ```
 
 Add in same env map: `"KANIKO_REGISTRY_MIRROR" : "nexus.nexus-system.svc.cluster.local:8082"` and `"ENVBUILDER_INSECURE" : "true"`.

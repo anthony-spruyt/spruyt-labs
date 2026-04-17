@@ -268,11 +268,9 @@ controllers:
           repository: sonatype/nexus3
           tag: "<tag-from-step-1>@sha256:<digest>"
         env:
-          - name: TZ
-            value: "${TIMEZONE}"
-          - name: INSTALL4J_ADD_VM_PARAMS
-            value: "-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Dkaraf.startLocalConsole=false"
-          - name: NEXUS_SECURITY_INITIAL_PASSWORD
+          TZ: "${TIMEZONE}"
+          INSTALL4J_ADD_VM_PARAMS: "-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Dkaraf.startLocalConsole=false"
+          NEXUS_SECURITY_INITIAL_PASSWORD:
             valueFrom:
               secretKeyRef:
                 name: nexus-admin
@@ -307,8 +305,10 @@ service:
     ports:
       http:
         port: 8081
-      docker:
+      docker-group:
         port: 8082
+      docker-cache:
+        port: 8083
 
 persistence:
   data:
@@ -333,7 +333,10 @@ persistence:
       - path: /tmp
 ```
 
-> **env shape note:** Uses the list form `env: [{name, value}, ...]` because `valueFrom: secretKeyRef` requires a per-entry object. This is the standard K8s PodSpec `env` shape — app-template passes it through verbatim.
+> **env shape note:** Map form — bjw-s app-template convention. Scalar
+> values use bare strings, `valueFrom: secretKeyRef` goes under a nested
+> key. See `cluster/apps/n8n-system/n8n/app/values.yaml` lines 20-80 for
+> reference.
 >
 > **initContainer omitted:** `fsGroup: 200` + `fsGroupChangePolicy: OnRootMismatch` on the pod's security context handles `/nexus-data` ownership on first mount. vaultwarden includes an extra chown initContainer for historical reasons; Nexus with fresh RBD PVC doesn't need it.
 
@@ -588,11 +591,14 @@ upsert docker/proxy mcr-proxy '{
   "docker":{"v1Enabled":false,"forceBasicAuth":false},
   "dockerProxy":{"indexType":"REGISTRY","cacheForeignLayers":false}}'
 
-# hosted cache — NOT a member of docker-group (workspace-private)
+# hosted cache — NOT a member of docker-group (workspace-private).
+# Gets its own connector on 8083 so envbuilder can push/pull via
+# /v2/<image> directly (clients expect OCI v2 at host root, not under
+# /repository/<name>/).
 upsert docker/hosted envbuilder-cache '{
   "name":"envbuilder-cache","online":true,
   "storage":{"blobStoreName":"default","strictContentTypeValidation":true,"writePolicy":"ALLOW"},
-  "docker":{"v1Enabled":false,"forceBasicAuth":false}}'
+  "docker":{"v1Enabled":false,"forceBasicAuth":false,"httpPort":8083}}'
 
 # docker-group with dedicated connector on 8082 (serves OCI v2 at host root)
 upsert docker/group docker-group '{
@@ -640,7 +646,9 @@ metadata:
   name: nexus-provision-repos
   namespace: nexus-system
   annotations:
-    kustomize.toolkit.fluxcd.io/force: "true"
+    # Flux deletes+recreates on spec change (Job fields are immutable).
+    # Value MUST be "Enabled" per Flux docs — "true" is ignored.
+    kustomize.toolkit.fluxcd.io/force: "Enabled"
 spec:
   ttlSecondsAfterFinished: 3600
   backoffLimit: 10
@@ -736,6 +744,7 @@ spec:
         - ports:
             - {port: "8081", protocol: TCP}
             - {port: "8082", protocol: TCP}
+            - {port: "8083", protocol: TCP}
     # Traefik pods (for external ingress)
     - fromEndpoints:
         - matchLabels:
@@ -745,6 +754,7 @@ spec:
         - ports:
             - {port: "8081", protocol: TCP}
             - {port: "8082", protocol: TCP}
+            - {port: "8083", protocol: TCP}
     # vmagent metrics scrape
     - fromEndpoints:
         - matchLabels:
@@ -1045,6 +1055,9 @@ Triage failures per cluster-validator output.
   "auths": {
     "nexus.nexus-system.svc.cluster.local:8082": {
       "auth": "<base64 of admin:admin-password>"
+    },
+    "nexus.nexus-system.svc.cluster.local:8083": {
+      "auth": "<base64 of admin:admin-password>"
     }
   }
 }
@@ -1065,6 +1078,13 @@ KANIKO_REGISTRY_MIRROR: "nexus.nexus-system.svc.cluster.local:8082"
 ENVBUILDER_INSECURE: "true"
 ENVBUILDER_DOCKER_CONFIG_BASE64: "<base64 of config.json above>"
 ```
+
+> Note: `ENVBUILDER_CACHE_REPO` ends up on `:8083` (envbuilder-cache
+> connector) — set via Terraform in Task 10, not here. The base64 config.json
+> auth entry must cover the cache repo host:port: include entries for BOTH
+> `nexus.nexus-system.svc.cluster.local:8082` (mirror pulls, optional since
+> anonymous read) and `nexus.nexus-system.svc.cluster.local:8083` (cache
+> pushes, required).
 
 Leave existing upstream dockerhub/ghcr PAT env vars in place — Task 12 removes them.
 
@@ -1095,7 +1115,11 @@ Grep pattern="ENVBUILDER_CACHE_REPO" path="cluster/apps/coder-system/coder-templ
 Edit around line 58:
 
 ```hcl
-"ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8082/envbuilder-cache/${data.coder_workspace.me.name}",
+# Cache pushes hit the envbuilder-cache hosted repo on its own connector (8083).
+# Pulls/mirror go through the docker-group connector (8082).
+# URL has NO /repository/ segment — Nexus docker connectors serve OCI v2
+# at host-root per the Distribution spec.
+"ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/${data.coder_workspace.me.name}",
 "KANIKO_REGISTRY_MIRROR" : "nexus.nexus-system.svc.cluster.local:8082",
 "ENVBUILDER_INSECURE" : "true",
 ```
@@ -1220,15 +1244,11 @@ gh issue close 968 --repo anthony-spruyt/spruyt-labs \
    `kubectl patch pvc data-nexus-0 -n nexus-system -p '{"spec":{"resources":{"requests":{"storage":"200Gi"}}}}'`
    Ceph RBD resizes live.
 
-3. **Docker connector port / cache repo access.** Only `docker-group`
-   claims `httpPort: 8082` — that connector serves all group members at
-   `/v2/`. Envbuilder push target is the **hosted** `envbuilder-cache` repo,
-   which is deliberately NOT in the group. Cache clients must reach it via
-   its own connector. Verify during PR 1 post-deploy: if
-   `docker push nexus.nexus-system.svc.cluster.local:8082/envbuilder-cache/<ws>`
-   returns 404, configure `docker.httpPort: 8083` on `envbuilder-cache`,
-   expose a third Service port, and update `ENVBUILDER_CACHE_REPO` to `:8083`
-   in Task 9/10. If Nexus logs show a `BindException`, two repos are
-   claiming the same port — check the provisioning JSON.
+3. **Docker connector ports.** Two connectors are opened inside Nexus:
+   `docker-group` on `:8082` (serves proxy pulls for docker-hub/ghcr/mcr at
+   host-root `/v2/`) and `envbuilder-cache` on `:8083` (serves hosted
+   push/pull for the kaniko layer cache). Both exposed as Service ports.
+   If Nexus logs show `BindException`, two repos claim the same port —
+   check the provisioning JSON.
 
 4. **Anonymous role clobbered.** Provisioning Job re-runs replace the anonymous role privileges with the merged list. If you manually add a privilege via UI, next Job run will preserve it only if the GET-merge-PUT reads it back first (which it does — that's the whole point). Don't disable anonymous-role management outside the Job.
