@@ -13,8 +13,8 @@ spec:
     - match: Host(`nexus.lan.${EXTERNAL_DOMAIN}`)
       kind: Rule
       middlewares:
-        - {name: lan-ip-whitelist, namespace: traefik}
-        - {name: compress, namespace: traefik}
+        - {name: lan-ip-whitelist, namespace: nexus-system}
+        - {name: compress, namespace: nexus-system}
       services:
         - name: nexus
           namespace: nexus-system
@@ -36,7 +36,7 @@ spec:
     - match: Host(`nexus-docker.lan.${EXTERNAL_DOMAIN}`)
       kind: Rule
       middlewares:
-        - {name: lan-ip-whitelist, namespace: traefik}
+        - {name: lan-ip-whitelist, namespace: nexus-system}
       services:
         - name: nexus
           namespace: nexus-system
