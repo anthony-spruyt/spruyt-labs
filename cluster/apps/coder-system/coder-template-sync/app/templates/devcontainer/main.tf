@@ -57,6 +57,10 @@ locals {
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
     "ENVBUILDER_CACHE_REPO" : "ghcr.io/anthony-spruyt/envbuilder-cache/${data.coder_workspace.me.name}",
     "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
+    # Skip kaniko remount of secret volumes during build — mount(2) EPERMs
+    # inside Kata+PSA=baseline (no CAP_SYS_ADMIN). Secrets are still
+    # accessible at runtime via the k8s volume mounts themselves.
+    "ENVBUILDER_IGNORE_PATHS" : "/etc/coder",
     # Expose as shell variable so devcontainer.json lifecycle commands
     # using ${containerWorkspaceFolder} expand correctly under envbuilder.
     "containerWorkspaceFolder" : local.workspace_folder,
