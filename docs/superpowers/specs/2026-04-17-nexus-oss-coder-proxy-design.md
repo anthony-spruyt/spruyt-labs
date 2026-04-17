@@ -1,7 +1,7 @@
 # Nexus OSS for Coder Workspace Builds — Design
 
 **Issue:** [#968](https://github.com/anthony-spruyt/spruyt-labs/issues/968)
-**Status:** Approved (brainstorm complete, revised after research)
+**Status:** Approved (brainstorm complete, revised twice after research + review)
 **Date:** 2026-04-17
 
 ## Summary
@@ -17,186 +17,183 @@ Envbuilder builds are I/O-bound on two independent issues:
 1. **apt downloads** from `archive.ubuntu.com` — ~100-300 kB/s per-IP rate limit; kaniko wipes `/var/lib/apt/lists/` per layer, re-fetching 40MB+ indices for every feature install. Mirror sync races (see #967) intermittently fail builds.
 2. **Container image pulls** — anonymous Docker Hub rate limits; base image `mcr.microsoft.com/devcontainers/base:jammy` + nine `ghcr.io/devcontainers/*` features pulled fresh per rebuild.
 
-Nexus OSS 3 solves both via apt proxy (native HTTPS pass-through) and docker proxy repos. The same deployment hosts the kaniko layer cache on LAN-local Ceph storage, replacing ghcr.
+Nexus OSS 3 solves both via apt proxy (native HTTPS pass-through) and docker proxy repos. Same deployment hosts the kaniko layer cache on LAN-local Ceph storage, replacing ghcr.
 
 ## Architecture
 
-**Chart:** `bjw-s-labs/app-template` (repo convention — used by 30+ apps). Sonatype's own chart is deprecated and shipped without support for our requirements (multi-port service, StatefulSet mode); app-template is a declarative wrapper that gives full control over StatefulSet, Service, ConfigMaps, initContainers, probes, and securityContext while staying Helm-managed.
+**Chart:** `bjw-s-labs/app-template` (repo convention — 30+ apps use it, including vaultwarden which is the closest structural match: StatefulSet + PVC + reloader). Sonatype's own chart is deprecated and hobbled (no multi-port Service, StatefulSet mode unsupported).
 
 **Workload:** StatefulSet with one replica, image `sonatype/nexus3` pinned by digest, Renovate-tracked. 100Gi Ceph RBD PVC for `/nexus-data` (blob store + DB). Expandable via `allowVolumeExpansion`.
 
-**TLS strategy:** Nexus listens **plain HTTP only** on `:8081` inside the cluster. **Traefik terminates TLS externally** using a cert-manager-issued ZeroSSL cert, matching repo convention for every other LAN-only app. No Jetty native TLS, no PKCS12 keystore, no in-pod cert distribution.
+**TLS strategy:** Nexus listens **plain HTTP only** — no Jetty TLS, no PKCS12 keystore, no internal CA. Rationale: inside-cluster pod-to-pod traffic is already Cilium eBPF-routed with CNP isolation; TLS inside a CNP-locked homelab cluster adds plumbing for zero real-world risk reduction. Standard K8s pattern — virtually every other app in the repo talks plain HTTP service-to-service.
 
-**Docker routing strategy:** Sonatype's documented ["subdomain + path-prefix reverse-proxy strategy"][docker-rp]. All docker repos served from the single Nexus HTTP port under `/repository/<name>/`. Traefik routes `nexus-docker.lan.${EXTERNAL_DOMAIN}` → Nexus. Avoids the multi-port Jetty complexity Sonatype explicitly warns against.
+- **Workspace pods** (in-cluster) → plain HTTP to `nexus.nexus-system.svc.cluster.local` on ports 8081 (apt/REST/UI) and 8082 (docker). `ENVBUILDER_INSECURE=true` tells kaniko to accept plain-HTTP registries.
+- **Dev PC** → `https://nexus.lan.${EXTERNAL_DOMAIN}` via Technitium LAN DNS → Traefik LB → TLS terminated at Traefik with ZeroSSL cert → plain HTTP to Nexus svc.
+
+No CoreDNS rewrite. No Talos machine-config edit. No internal CA. Simpler by deletion.
+
+**Docker routing:** Sonatype's documented
+["subdomain + dedicated connector"][docker-rp] strategy. The `docker-group`
+repo is configured with its own `docker.httpPort: 8082` — Nexus spins up a
+second Jetty connector serving OCI registry v2 protocol at `/v2/` (host-root).
+Exposed as a second Service port. No Traefik path-rewrite needed; docker
+clients pull `nexus-docker.lan.${EXTERNAL_DOMAIN}/alpine:3` and that lands
+on `/v2/alpine/manifests/...` at Nexus port 8082, which serves the group's
+contents.
 
 [docker-rp]: https://help.sonatype.com/en/docker-repository-reverse-proxy-strategies.html
-
-**DNS split-horizon:** CoreDNS rewrite via Talos `extraManifests` — in-cluster pods resolve `nexus.lan.${EXTERNAL_DOMAIN}` directly to Nexus ClusterIP (single pod hop, plain HTTP). External clients (dev PC) resolve via Technitium LAN DNS → Traefik LoadBalancer IP → TLS terminated at Traefik → plain HTTP to Nexus. Both paths in-cluster only; not routed through Cloudflare Tunnel.
-
-**CoreDNS lives in Talos, not Flux**, to avoid bootstrap chicken-egg (Flux needs DNS to start).
 
 ## Components
 
 ### Namespace and workload
 
-- `cluster/apps/nexus-system/namespace.yaml` — namespace with repo-standard labels (PSA `restricted` — app-template defaults align, see existing vaultwarden pattern)
-- `cluster/apps/nexus-system/nexus/app/release.yaml` — HelmRelease referencing `app-template` OCIRepository
-- `cluster/apps/nexus-system/nexus/app/values.yaml` — StatefulSet + PVC + Service + probes + initContainer (chown /nexus-data to UID 200), all expressed via app-template schema
-- `cluster/apps/nexus-system/nexus/app/vpa.yaml` — recommendation-only VPA
-- `cluster/apps/nexus-system/nexus/app/pod-monitor.yaml` — VMPodScrape for `/service/metrics/prometheus` (anonymous after provisioning grants `nx-metrics-all` to the anonymous role)
+- `cluster/apps/nexus-system/namespace.yaml` — PSA `restricted`
+- `cluster/apps/nexus-system/nexus/app/release.yaml` — HelmRelease referencing `app-template` OCIRepository (mirror vaultwarden's shape: `install`, `upgrade`, `driftDetection`, `releaseName` all set)
+- `cluster/apps/nexus-system/nexus/app/values.yaml` — StatefulSet on app-template, multi-port Service (8081 + 8082), PVC, probes, reloader annotation. `fsGroup: 200` with `fsGroupChangePolicy: OnRootMismatch` handles `/nexus-data` ownership (no initContainer needed).
+- `cluster/apps/nexus-system/nexus/app/vpa.yaml` — recommendation-only
+- `cluster/apps/nexus-system/nexus/app/pod-monitor.yaml` — VMPodScrape, anonymous
 
-### nexus.properties (mounted config)
+### nexus.properties
 
-Minimal override, single purpose: enable the `anonymous` user and set the base URL. TLS settings omitted (plain HTTP). Delivered via app-template `persistence.configmap` mount at `/nexus-data/etc/nexus.properties`.
+Mounted via ConfigMap with `subPath` at `/nexus-data/etc/nexus.properties` (reloader-watched since name is stable, not hashed). Keys set:
+
+```properties
+application-port=8081
+nexus.base.url=https://nexus.lan.${EXTERNAL_DOMAIN}
+nexus.scripts.allowCreation=false
+```
+
+`nexus.base.url` makes Nexus emit `https://` absolute URLs in docker Www-Authenticate realms and API responses, matching the externally-visible scheme (which is what docker clients and apt actually see via Traefik).
 
 ### Repository provisioning
 
-A Kubernetes Job created after Nexus is writable, running a `curlimages/curl` container. The Job name is hash-suffixed via `configMapGenerator` so it re-runs whenever the provisioning script changes. RBAC kept minimal (no cluster API access needed — secrets injected via `valueFrom.secretKeyRef`).
+Kubernetes Job created post-deploy, running `curlimages/curl`. Script stored as a `configMapGenerator`-hashed ConfigMap; Job volume references it — Kustomize name-reference rewrites both the HelmRelease's valuesFrom AND the Job's volume configMap name to the hashed form via explicit `kustomizeconfig.yaml` entries.
+
+When `provision.sh` changes, the ConfigMap hash changes → Job spec changes → Flux re-applies → `kustomize.toolkit.fluxcd.io/force: "true"` annotation triggers delete+recreate of the immutable Job.
 
 **Repositories created:**
 
 | Name | Type | Upstream / Purpose |
 | --- | --- | --- |
-| `apt-ubuntu-proxy` | apt proxy | `http://archive.ubuntu.com/ubuntu/` (jammy + noble) |
+| `apt-ubuntu-proxy` | apt proxy | `http://archive.ubuntu.com/ubuntu/` (jammy; noble added later if needed via separate repo) |
 | `apt-cli-github` | apt proxy | `https://cli.github.com/packages/` |
 | `apt-nodesource` | apt proxy | `https://deb.nodesource.com/` |
 | `apt-hashicorp` | apt proxy | `https://apt.releases.hashicorp.com/` |
 | `apt-launchpad` | apt proxy | `https://ppa.launchpadcontent.net/` |
 | `docker-hub-proxy` | docker proxy | `https://registry-1.docker.io` (Nexus holds dockerhub PAT) |
 | `ghcr-proxy` | docker proxy | `https://ghcr.io` (Nexus holds ghcr PAT) |
-| `mcr-proxy` | docker proxy | `https://mcr.microsoft.com` (anonymous upstream) |
-| `envbuilder-cache` | docker hosted | kaniko layer cache (replaces current `ghcr.io/anthony-spruyt/envbuilder-cache/*` path) |
-| `docker-group` | docker group | Unions the 4 docker repos above; served at `/repository/docker-group/` |
+| `mcr-proxy` | docker proxy | `https://mcr.microsoft.com` (anonymous) |
+| `envbuilder-cache` | docker hosted | kaniko layer cache; **not** a group member (workspace-private, must not leak via group) |
+| `docker-group` | docker group | Members: `docker-hub-proxy`, `ghcr-proxy`, `mcr-proxy`. Connector: `httpPort: 8082`. |
 
-**Anonymous access** granted on all proxy/group repos and the metrics endpoint. Write access (to `envbuilder-cache`) requires the authenticated user whose credentials ship with envbuilder via `ENVBUILDER_DOCKER_CONFIG_BASE64`.
+**Anonymous access** granted on proxy/group repos + metrics. The
+provisioning Job grants privileges via **GET → merge → PUT** on the
+`anonymous` role to avoid clobbering upstream defaults: existing privileges
+are read, the 4 new privileges are added (deduped), and the full role is
+PUT back. The four added: `nx-repository-view-*-*-read`,
+`nx-repository-view-*-*-browse`, `nx-metrics-all`, `nx-healthcheck-read`.
+Write access to `envbuilder-cache` uses admin credentials (follow-up issue:
+replace with dedicated scoped user).
 
 ### Secrets
 
-- `cluster/apps/nexus-system/nexus/app/nexus-admin.sops.yaml` — admin password (consumed by Nexus first boot via `NEXUS_SECURITY_INITIAL_PASSWORD` env, and by provisioning Job) + `admin-username: admin`
-- `cluster/apps/nexus-system/nexus/app/nexus-upstream-creds.sops.yaml` — dockerhub PAT, ghcr PAT (consumed by provisioning Job when creating proxy repos)
-- `cluster/apps/nexus-system/nexus/app/nexus-envbuilder-credentials.sops.yaml` — dockerconfigjson for envbuilder: auth entry for `nexus-docker.lan.${EXTERNAL_DOMAIN}` (cache push target)
+- `nexus-admin.sops.yaml` — `admin-username: admin` + `admin-password: <random>`
+- `nexus-upstream-creds.sops.yaml` — dockerhub PAT, ghcr PAT
+
+Envbuilder docker config is rewritten inline in `cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml` (Task 10) — no dedicated new SOPS file.
 
 ### Network policy
 
-Single `CiliumNetworkPolicy`:
+`CiliumNetworkPolicy` with tighter selectors than namespace-wide:
 
-**Ingress allowed to Nexus pod (endpointSelector `app.kubernetes.io/name: nexus`):**
-- `coder-system` namespace pods → `:8081`
-- `traefik` namespace pods → `:8081`
-- `observability` namespace, `app.kubernetes.io/name: vmagent` → `:8081`
-- `nexus-system` namespace, `app.kubernetes.io/name: nexus-provisioner` → `:8081`
+**Ingress to Nexus pod (endpointSelector `app.kubernetes.io/name: nexus`):**
+- `coder-system`, pods with label `com.coder.resource: "true"` → `:8081`, `:8082`
+- `traefik` namespace, `k8s:app.kubernetes.io/name: traefik` → `:8081`, `:8082`
+- `observability`, `k8s:app.kubernetes.io/name: vmagent` → `:8081`
+- `nexus-system`, `k8s:app.kubernetes.io/name: nexus-provisioner` → `:8081`
 
-**Egress from Nexus pod:**
-- `kube-dns` (standard)
-- `world:443` (upstream registries + HTTPS apt hosts)
-- `world:80` (archive.ubuntu.com, security.ubuntu.com)
+**Egress from Nexus pod:** kube-dns, `world:443` (HTTPS upstreams), `world:80` (ubuntu mirror).
 
 ### Traefik ingress (external access)
 
 `cluster/apps/traefik/traefik/ingress/nexus-system/`:
 
+- `certificates.yaml` — cert-manager Certificate, issuer `${CLUSTER_ISSUER}` (resolves to `zerossl-production` per `cluster-settings` ConfigMap), SANs `nexus.lan.${EXTERNAL_DOMAIN}` + `nexus-docker.lan.${EXTERNAL_DOMAIN}`, secretName `nexus-${EXTERNAL_DOMAIN/./-}-tls`
+- `ingress-routes.yaml` — two `IngressRoute` entries, both TLS-terminated by Traefik with the above cert:
+  - `nexus.lan.${EXTERNAL_DOMAIN}` → `nexus.nexus-system.svc:8081` (UI + apt + REST). Middlewares: `lan-ip-whitelist`, `compress`.
+  - `nexus-docker.lan.${EXTERNAL_DOMAIN}` → `nexus.nexus-system.svc:8082` (docker connector, serves OCI v2 at host-root). Middleware: `lan-ip-whitelist`. **No path rewrite** — Nexus's dedicated docker connector serves `/v2/*` directly.
 - `kustomization.yaml`
-- `ingress-routes.yaml` — two standard `IngressRoute` entries, both TLS-terminated at Traefik, plain HTTP to Nexus svc:
-  - `nexus.lan.${EXTERNAL_DOMAIN}` → `nexus.nexus-system.svc:8081` (UI + apt + REST)
-  - `nexus-docker.lan.${EXTERNAL_DOMAIN}` → `nexus.nexus-system.svc:8081` (docker clients; path rewrite if needed so `docker pull nexus-docker.lan.xyz/alpine` resolves to `/repository/docker-group/alpine`)
-- `certificates.yaml` — cert-manager Certificate at `nexus-lan-${EXTERNAL_DOMAIN/./-}-tls`, issuer `zerossl-production`, SANs `nexus.lan.${EXTERNAL_DOMAIN}` + `nexus-docker.lan.${EXTERNAL_DOMAIN}`
-- `lan-ip-whitelist` middleware applied per repo convention
-
-### CoreDNS split-horizon (in-cluster)
-
-Talos `extraManifests` ConfigMap override for CoreDNS adds rewrite rules before the `kubernetes` plugin:
-
-```text
-rewrite name exact nexus.lan.${EXTERNAL_DOMAIN} nexus.nexus-system.svc.cluster.local
-rewrite name exact nexus-docker.lan.${EXTERNAL_DOMAIN} nexus.nexus-system.svc.cluster.local
-```
-
-In-cluster pods resolve the FQDN directly to Nexus ClusterIP and hit Nexus on plain HTTP `:8081`, skipping Traefik. Traefik ingress remains for external (dev PC LAN) access.
-
-**Per Talos-managed model:** regenerate + apply Talos configs after editing `talos/talconfig.yaml` (see `.claude/memory/feedback_talos_genconfig.md`).
 
 ## Data flow
 
 **Workspace build, cold cache:**
 
 ```text
-envbuilder pod
-  ├── resolves nexus-docker.lan.${EXTERNAL_DOMAIN} via CoreDNS → Nexus ClusterIP
-  ├── kaniko mirror: KANIKO_REGISTRY_MIRROR=nexus-docker.lan.${EXTERNAL_DOMAIN}/repository/docker-group
-  ├── pulls base image → Nexus:8081/repository/docker-group/... → (miss) → upstream → cached
-  ├── pulls feature images → same path → cached
-  ├── apt update → nexus.lan.${EXTERNAL_DOMAIN}/repository/apt-ubuntu-proxy/... → cached
-  ├── apt install (feature HTTPS repo) → nexus.lan.${EXTERNAL_DOMAIN}/repository/apt-nodesource/... → cached
-  └── pushes layer cache → ENVBUILDER_CACHE_REPO=nexus-docker.lan.${EXTERNAL_DOMAIN}/repository/envbuilder-cache/<workspace>
+envbuilder pod (in-cluster)
+  ├── ENVBUILDER_INSECURE=true
+  ├── KANIKO_REGISTRY_MIRROR=nexus.nexus-system.svc.cluster.local:8082
+  ├── pulls base image → http://nexus...svc:8082/v2/... → (miss) → mcr.microsoft.com → cached
+  ├── pulls feature images → same path → cached (ghcr via ghcr-proxy, dockerhub via docker-hub-proxy)
+  ├── apt update → http://nexus...svc:8081/repository/apt-ubuntu-proxy/... → cached
+  ├── apt install (HTTPS upstream feature) → http://nexus...svc:8081/repository/apt-nodesource/... → cached
+  └── pushes layer cache → ENVBUILDER_CACHE_REPO=nexus...svc:8082/v2/envbuilder-cache/<workspace>
 ```
 
 **Workspace build, warm cache:** all hits served from Nexus blob store on Ceph.
 
-**Dev PC apt/docker:** same endpoints via Technitium → Traefik LB → Nexus. Traefik terminates TLS; rest identical.
+**Dev PC apt/docker:** `https://nexus.lan.${EXTERNAL_DOMAIN}/repository/<name>/...` via Technitium → Traefik TLS termination → plain HTTP to Nexus. Apt sees valid TLS, docker client talks to `nexus-docker.lan.${EXTERNAL_DOMAIN}` and Traefik routes to `:8082`.
 
 ## Consumer config changes
 
 ### `cluster/apps/coder-system/coder/app/coder-workspace-env.sops.yaml`
 
-- Add `KANIKO_REGISTRY_MIRROR=nexus-docker.lan.${EXTERNAL_DOMAIN}/repository/docker-group`
-- Rewrite `ENVBUILDER_DOCKER_CONFIG_BASE64` — standard docker `config.json` auth entries for `nexus-docker.lan.${EXTERNAL_DOMAIN}` (anonymous read + authenticated push credentials for cache hosted repo). No `registry-mirrors` key (daemon-only).
-- Remove existing upstream dockerhub/ghcr PATs after cutover (PR 3).
+- Add `KANIKO_REGISTRY_MIRROR=nexus.nexus-system.svc.cluster.local:8082`
+- Add `ENVBUILDER_INSECURE=true` (allows plain-HTTP mirror + cache repo)
+- Rewrite `ENVBUILDER_DOCKER_CONFIG_BASE64` — `auths` entry for `nexus.nexus-system.svc.cluster.local:8082` with admin creds (for cache push). No `registry-mirrors` key — that's a daemon config key, not used by kaniko.
+- Leave existing dockerhub/ghcr PATs in place until Task 13 cleanup (PR 3).
 
 ### `cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/main.tf`
 
-Line 58: change `ENVBUILDER_CACHE_REPO` from
+Line 58 change:
 ```hcl
-"ghcr.io/anthony-spruyt/envbuilder-cache/${data.coder_workspace.me.name}"
-```
-to
-```hcl
-"nexus-docker.lan.${var.external_domain}/repository/envbuilder-cache/${data.coder_workspace.me.name}"
+"ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8082/envbuilder-cache/${data.coder_workspace.me.name}",
 ```
 
-Add `KANIKO_REGISTRY_MIRROR` env var alongside.
+Add in same env map: `"KANIKO_REGISTRY_MIRROR" : "nexus.nexus-system.svc.cluster.local:8082"` and `"ENVBUILDER_INSECURE" : "true"`.
 
-### Envbuilder apt proxy
+### Envbuilder apt proxy (runtime apt inside devcontainer)
 
-envbuilder's `KANIKO_REGISTRY_MIRROR` does NOT cover runtime apt (run inside the built devcontainer). Apt proxy must be baked into the devcontainer Dockerfile.
-
-**Cluster path:** the Coder devcontainer template (`coder-template-sync/app/templates/devcontainer/`) is Terraform-rendered — `${var.external_domain}` interpolates at template-render time, producing a concrete Dockerfile the envbuilder sees. Add to that Dockerfile:
+Envbuilder's `KANIKO_REGISTRY_MIRROR` only covers image pulls during build. Runtime apt inside the workspace is separate. Inject apt proxy via the Coder devcontainer template Dockerfile (Terraform-rendered; `${external_domain}` substitutes at template render time if needed, though for the plain-HTTP svc path no substitution is required):
 
 ```dockerfile
-RUN echo 'Acquire::https::Proxy "https://nexus.lan.${external_domain}/repository/apt-ubuntu-proxy/";' \
+RUN echo 'Acquire::http::Proxy "http://nexus.nexus-system.svc.cluster.local:8081/repository/apt-ubuntu-proxy/";' \
     > /etc/apt/apt.conf.d/01proxy
 ```
 
-Plus `/etc/apt/sources.list.d/*.list` entries pointing at the four passthrough apt repos for HTTPS upstreams used by devcontainer features.
+Plus four additional `/etc/apt/sources.list.d/*.list` entries pointing at the HTTPS-upstream passthrough apt repos (cli.github, nodesource, hashicorp, launchpad) as features install them.
 
 ### Local `.devcontainer/Dockerfile` (this repo)
 
-**Out of scope for PR 1-3.** Deferred to a follow-up: the local Dockerfile needs a build `ARG EXTERNAL_DOMAIN` + `devcontainer.json` build-args referencing `${localEnv:EXTERNAL_DOMAIN}` so the proxy URL substitutes at `docker build` time on the dev PC.
+**Out of scope.** Handled by dev PC directly resolving `nexus.lan.${EXTERNAL_DOMAIN}` via Technitium in a follow-up.
 
 ### `cluster/flux/meta/repositories/oci/ghcr-docker-config-secrets.sops.yaml`
 
-**No change.** Flux OCIRepository auth stays on direct ghcr.io — not routed through Nexus (chicken-egg avoidance).
+**No change.** Flux OCIRepository auth stays direct.
 
 ## Rollout order
 
-1. **PR 1 — Nexus stack.** Namespace + app-template HelmRelease + PVC + CoreDNS rewrite via Talos + provisioning Job + CNP + Traefik ingress + VMPodScrape + VPA. No consumer changes. Verify: namespace PSA-restricted compliant, Nexus up on 8081, UI reachable from dev PC, all 10 repos provisioned, anonymous access works for reads + metrics.
-2. **PR 2 — Coder integration.** Update `main.tf` `ENVBUILDER_CACHE_REPO` + `KANIKO_REGISTRY_MIRROR`. Rewrite `coder-workspace-env.sops.yaml` docker config. Add apt proxy to the Coder template Dockerfile. Rebuild one test workspace end-to-end, verify logs show Nexus endpoints.
-3. **PR 3 — Cleanup.** After 3+ successful workspace rebuilds, remove legacy upstream PATs from `coder-workspace-env.sops.yaml`. Close #968.
-4. **Follow-up (separate issue):** Local `.devcontainer/Dockerfile` apt proxy via build ARG.
+1. **PR 1 — Nexus stack.** Namespace + HelmRelease + PVC + provisioning Job + CNP + VPA + VMPodScrape + Traefik ingress. No consumer changes. Verify: StatefulSet Ready, 10 repos provisioned, anonymous access for reads + metrics works, UI loads from dev PC over TLS, `curl` smoke tests against apt and docker endpoints succeed.
+2. **PR 2 — Coder integration.** Update `main.tf` env. Rewrite `coder-workspace-env.sops.yaml`. Add apt proxy to Coder template Dockerfile. Rebuild 3 workspaces end-to-end; confirm logs show Nexus endpoints.
+3. **PR 3 — Cleanup.** Remove legacy upstream PATs from `coder-workspace-env.sops.yaml`. Close #968.
 
 ## Rollback
 
-Per-PR revert. No data migration. Nexus blob store is regeneratable (cache). Dropping Nexus from envbuilder via revert returns envbuilder to direct upstream paths.
+Per-PR revert. Stateless cache (regenerable). Dropping Nexus from envbuilder via revert → envbuilder returns to direct upstream paths.
 
 ## Observability
 
-Nexus exposes Prometheus metrics at `/service/metrics/prometheus`. Provisioning Job grants `nx-metrics-all` to the `anonymous` role so VMPodScrape can fetch without basic auth. VMPodScrape selects on `app.kubernetes.io/name: nexus` with port name `http`.
+Nexus exposes `/service/metrics/prometheus`. Provisioning Job grants `nx-metrics-all` to anonymous. VMPodScrape selects on `app.kubernetes.io/name: nexus` + port name `http` (8081).
 
 ## Risk assessment
 
-**Low.** Stateless cache (blob store regeneratable), no cluster-critical dependency, PVC-backed, no auth model changes to existing workloads, no cloudflared exposure. Explicitly kept off the bootstrap / Flux / kubelet critical path. CoreDNS rewrite edit is the only Talos-config change — it adds two rewrite entries and does not remove or alter existing CoreDNS behavior.
-
-## Open items (all resolvable during plan; carried forward for explicit call-out)
-
-- **Docker path-rewrite via Traefik middleware** — whether `docker pull nexus-docker.lan.xyz/alpine:3` needs a Traefik StripPrefix/ReplacePath middleware to hit `/repository/docker-group/alpine:3`, or whether Nexus's docker connector handles the mapping natively when served on a subdomain. Validate during PR 1.
-- **app-template schema specifics** — exact key paths for StatefulSet + multi-port service + config-map-mounted nexus.properties. Refer to `bjw-s` common chart values schema.
-- **nx-metrics-all grant mechanism** — REST API call shape for granting a privilege to the anonymous role. Validate against Nexus 3 Security API docs during provisioning Job authoring.
+**Low.** Stateless cache, no cluster-critical dependency, PVC-backed, no auth model changes, no cloudflared exposure, explicitly kept off bootstrap / Flux / kubelet critical path. No Talos machine-config changes. No CoreDNS changes.
