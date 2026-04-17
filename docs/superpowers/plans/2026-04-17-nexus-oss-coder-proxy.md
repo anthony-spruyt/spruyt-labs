@@ -5,12 +5,12 @@
 **Goal:** Deploy Sonatype Nexus Repository 3 OSS in-cluster via `bjw-s-labs/app-template`, scoped to Coder workspace builds + developer workstations, as apt + docker artifact proxy + envbuilder kaniko layer cache.
 
 **Architecture:** StatefulSet on app-template, 100Gi Ceph RBD PVC,
-multi-port Service (8081 apt/UI/REST + 8082 docker connector). Plain HTTP
-inside cluster — workspace pods hit `nexus.nexus-system.svc.cluster.local`
-directly with `ENVBUILDER_INSECURE=true`. Traefik terminates TLS with
-ZeroSSL cert for dev PC access only. configMapGenerator-hashed
-provisioning Job creates 10 repos + grants `nx-metrics-all` to anonymous
-via GET-merge-PUT.
+multi-port Service (8081 apt/UI/REST, 8082 docker-group connector, 8083
+envbuilder-cache connector). Plain HTTP inside cluster — workspace pods
+hit `nexus.nexus-system.svc.cluster.local` directly with
+`ENVBUILDER_INSECURE=true`. Traefik terminates TLS with ZeroSSL cert for
+dev PC access only. configMapGenerator-hashed provisioning Job creates
+10 repos + grants `nx-metrics-all` to anonymous via GET-merge-PUT.
 
 **Tech Stack:** app-template 4.6.2 OCIRepository (existing), Flux HelmRelease, cert-manager ZeroSSL, Cilium CNP, Traefik IngressRoute, VMPodScrape, VPA, SOPS.
 
@@ -268,8 +268,10 @@ controllers:
           repository: sonatype/nexus3
           tag: "<tag-from-step-1>@sha256:<digest>"
         env:
-          TZ: "${TIMEZONE}"
-          INSTALL4J_ADD_VM_PARAMS: "-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Dkaraf.startLocalConsole=false"
+          TZ:
+            value: "${TIMEZONE}"
+          INSTALL4J_ADD_VM_PARAMS:
+            value: "-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Dkaraf.startLocalConsole=false"
           NEXUS_SECURITY_INITIAL_PASSWORD:
             valueFrom:
               secretKeyRef:
@@ -333,10 +335,9 @@ persistence:
       - path: /tmp
 ```
 
-> **env shape note:** Map form — bjw-s app-template convention. Scalar
-> values use bare strings, `valueFrom: secretKeyRef` goes under a nested
-> key. See `cluster/apps/n8n-system/n8n/app/values.yaml` lines 20-80 for
-> reference.
+> **env shape note:** Map form with wrapped `value:` / `valueFrom:` —
+> bjw-s app-template convention. See
+> `cluster/apps/n8n-system/n8n/app/values.yaml` lines 20-80 for reference.
 >
 > **initContainer omitted:** `fsGroup: 200` + `fsGroupChangePolicy: OnRootMismatch` on the pod's security context handles `/nexus-data` ownership on first mount. vaultwarden includes an extra chown initContainer for historical reasons; Nexus with fresh RBD PVC doesn't need it.
 
@@ -1009,7 +1010,7 @@ Ref #968
 
 ## Changes
 - Namespace nexus-system (PSA restricted), app-template StatefulSet, 100Gi ceph-block PVC
-- Multi-port Service: 8081 (UI/apt/REST) + 8082 (docker connector)
+- Multi-port Service: 8081 (UI/apt/REST) + 8082 (docker-group) + 8083 (envbuilder-cache)
 - 10 repos provisioned via hashed Job; anonymous privileges merged into existing role
 - Traefik ingress + ZeroSSL cert at nexus.lan.$DOMAIN and nexus-docker.lan.$DOMAIN
 - CNP tight selectors (com.coder.resource, app.kubernetes.io/name), VPA rec-only, VMPodScrape
@@ -1035,7 +1036,9 @@ Verify:
 - Provisioning Job completed; 10 repos visible via `curl https://nexus.lan.<domain>/service/rest/v1/repositories`
 - Anonymous metrics: `curl https://nexus.lan.<domain>/service/metrics/prometheus` returns metrics
 - apt smoke: `curl https://nexus.lan.<domain>/repository/apt-ubuntu-proxy/dists/jammy/Release` returns 200
-- docker smoke: `docker pull nexus-docker.lan.<domain>/alpine:3` succeeds
+- docker smoke (group): `docker pull nexus-docker.lan.<domain>/alpine:3` succeeds
+- docker cache connector reachable in-cluster (from a scratch debug pod in nexus-system):
+  `curl -s http://nexus.nexus-system.svc.cluster.local:8083/v2/` returns 200 or the OCI unauthenticated challenge (not connection refused)
 
 Triage failures per cluster-validator output.
 
@@ -1179,7 +1182,7 @@ mcp__kubernetes__get_logs namespace=coder-system pod=<envbuilder-pod>
 Expected:
 - Kaniko log line referencing registry mirror `nexus.nexus-system.svc.cluster.local:8082`
 - Base image pull resolved via Nexus path
-- Layer cache push to `nexus.nexus-system.svc.cluster.local:8082/envbuilder-cache/<workspace>`
+- Layer cache push to `nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/<workspace>`
 
 - [ ] **Step 5: Verify Nexus blob growth**
 
