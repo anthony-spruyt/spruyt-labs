@@ -116,6 +116,24 @@ upsert docker/proxy mcr-proxy '{
   "docker":{"v1Enabled":false,"forceBasicAuth":false},
   "dockerProxy":{"indexType":"REGISTRY","cacheForeignLayers":false}}'
 
+upsert docker/proxy quay-proxy '{
+  "name":"quay-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"https://quay.io","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true},
+  "docker":{"v1Enabled":false,"forceBasicAuth":false},
+  "dockerProxy":{"indexType":"REGISTRY","cacheForeignLayers":false}}'
+
+upsert docker/proxy k8s-registry-proxy '{
+  "name":"k8s-registry-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"https://registry.k8s.io","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true},
+  "docker":{"v1Enabled":false,"forceBasicAuth":false},
+  "dockerProxy":{"indexType":"REGISTRY","cacheForeignLayers":false}}'
+
 # hosted cache — NOT a member of docker-group (workspace-private).
 # Gets its own connector on 8083 so envbuilder can push/pull via
 # /v2/<image> directly (clients expect OCI v2 at host root, not under
@@ -132,7 +150,7 @@ upsert docker/hosted envbuilder-cache '{
 upsert docker/group docker-group '{
   "name":"docker-group","online":true,
   "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
-  "group":{"memberNames":["docker-hub-proxy","ghcr-proxy","mcr-proxy"]},
+  "group":{"memberNames":["docker-hub-proxy","ghcr-proxy","mcr-proxy","quay-proxy","k8s-registry-proxy"]},
   "docker":{"v1Enabled":false,"forceBasicAuth":false,"httpPort":8082}}'
 
 # --- anonymous-extras role + assignment ---
