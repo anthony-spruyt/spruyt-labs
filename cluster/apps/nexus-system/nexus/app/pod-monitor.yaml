@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmpodscrape_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: nexus
+  namespace: nexus-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nexus
+  podMetricsEndpoints:
+    - port: http
+      path: /service/metrics/prometheus
+      interval: 60s
+      scrapeTimeout: 30s

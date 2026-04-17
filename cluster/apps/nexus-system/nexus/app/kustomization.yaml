@@ -10,10 +10,9 @@ resources:
   - ./release.yaml
   - ./provision-repos-rbac.yaml
   - ./provision-repos-job.yaml
-  # Task 5 adds:
-  # - ./network-policies.yaml
-  # - ./vpa.yaml
-  # - ./pod-monitor.yaml
+  - ./network-policies.yaml
+  - ./vpa.yaml
+  - ./pod-monitor.yaml
 configMapGenerator:
   - name: nexus-values
     namespace: nexus-system
