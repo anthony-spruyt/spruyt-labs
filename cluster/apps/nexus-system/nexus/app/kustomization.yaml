@@ -4,6 +4,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./nexus-admin.sops.yaml
+  - ./nexus-secrets-key.sops.yaml
   - ./nexus-upstream-creds.sops.yaml
   - ./release.yaml
   - ./provision-repos-rbac.yaml

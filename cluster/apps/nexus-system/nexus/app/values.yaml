@@ -37,6 +37,8 @@ controllers:
               -Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g
               -Dkaraf.startLocalConsole=false
               -Djava.util.prefs.userRoot=/nexus-data/javaprefs
+          NEXUS_SECRETS_KEY_FILE:
+            value: /etc/nexus-keys/secrets.json
         ports:
           - name: http
             containerPort: 8081
@@ -140,4 +142,13 @@ persistence:
       main:
         bootstrap:
           - path: /scripts
+            readOnly: true
+  secrets-key:
+    type: secret
+    name: nexus-secrets-key
+    defaultMode: 0400
+    advancedMounts:
+      main:
+        main:
+          - path: /etc/nexus-keys
             readOnly: true
