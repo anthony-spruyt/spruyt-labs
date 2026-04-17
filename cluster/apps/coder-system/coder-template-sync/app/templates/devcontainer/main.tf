@@ -432,16 +432,14 @@ resource "kubernetes_pod_v1" "main" {
       image             = local.devcontainer_builder_image
       image_pull_policy = "Always"
 
-      # No runAsUser / runAsNonRoot — envbuilder runs as root for kaniko
-      # build, then Setuid's to the devcontainer remoteUser internally.
-      # allowPrivilegeEscalation must be true for kaniko's extract step.
+      # Envbuilder/kaniko need default container caps (CHOWN, FOWNER,
+      # DAC_OVERRIDE, SETUID, SETGID, etc) to extract image layers —
+      # empirically fails with drop=[ALL] on chown /etc/gshadow.
+      # Kata runtime provides the real isolation boundary.
       security_context {
         privileged                 = false
         allow_privilege_escalation = true
         read_only_root_filesystem  = false
-        capabilities {
-          drop = ["ALL"]
-        }
         seccomp_profile {
           type = "RuntimeDefault"
         }
