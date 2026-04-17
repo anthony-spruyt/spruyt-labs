@@ -32,16 +32,36 @@ spec:
                 - |
                   set -e
 
+                  # Retry helper — transient DNS/egress blips from the Alpine
+                  # CDN caused repeated CronJob failures (#952, #964) during
+                  # cluster reconcile storms. 3 attempts, 5s backoff.
+                  retry() {
+                    for i in 1 2 3; do
+                      "$$@" && return 0
+                      echo "retry $$i/3 failed for: $$*" >&2
+                      sleep 5
+                    done
+                    echo "ERROR: all retries exhausted for: $$*" >&2
+                    return 1
+                  }
+
                   # Install openssl CLI to /tmp (shared libs already in image via curl)
                   _ARCH=$$(uname -m)
-                  _VER=$$(curl -sL "https://dl-cdn.alpinelinux.org/alpine/edge/main/$${_ARCH}/APKINDEX.tar.gz" | \
-                    tar -Oxz APKINDEX 2>/dev/null | awk '/^P:openssl$$/,/^$$/' | grep '^V:' | head -1 | cut -d: -f2)
+                  fetch_apkindex() {
+                    curl -sfL --max-time 30 "https://dl-cdn.alpinelinux.org/alpine/edge/main/$${_ARCH}/APKINDEX.tar.gz" -o /tmp/APKINDEX.tar.gz
+                  }
+                  retry fetch_apkindex
+                  _VER=$$(tar -Oxzf /tmp/APKINDEX.tar.gz APKINDEX 2>/dev/null | \
+                    awk '/^P:openssl$$/,/^$$/' | grep '^V:' | head -1 | cut -d: -f2)
                   if [ -z "$${_VER}" ]; then
                     echo "ERROR: Failed to resolve openssl package version"
                     exit 1
                   fi
-                  curl -sL "https://dl-cdn.alpinelinux.org/alpine/edge/main/$${_ARCH}/openssl-$${_VER}.apk" | \
-                    tar -xz -C /tmp usr/bin/openssl 2>/dev/null
+                  fetch_openssl() {
+                    curl -sfL --max-time 30 "https://dl-cdn.alpinelinux.org/alpine/edge/main/$${_ARCH}/openssl-$${_VER}.apk" -o /tmp/openssl.apk
+                  }
+                  retry fetch_openssl
+                  tar -xzf /tmp/openssl.apk -C /tmp usr/bin/openssl 2>/dev/null
                   chmod +x /tmp/usr/bin/openssl
                   export PATH="/tmp/usr/bin:$$PATH"
                   echo "Installed openssl $${_VER}"
