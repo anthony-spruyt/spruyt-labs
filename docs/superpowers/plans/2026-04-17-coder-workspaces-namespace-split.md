@@ -144,10 +144,26 @@ Expected (all three):
 2. `/dev/net/tun` present.
 3. `fuse-overlayfs` mount rc=0, `mountpoint` reports yes.
 
-- [ ] **Step 4: Decision gate**
+- [x] **Step 4: Decision gate (RESOLVED 2026-04-17)**
 
-- All green → proceed to Task 2. Storage driver = `fuse-overlayfs`.
-- Any red → stop, surface to user. Likely remediation: add `io.katacontainers.config.hypervisor.virtio_fs_extra_args` or a device-cgroup annotation to the workspace pod, OR fall back to `vfs` storage (slow but works). Adjust spec §6 before resuming.
+Probe results on Kata guest kernel 6.18.5:
+
+- `/dev/fuse` — **absent** (mknod works in privileged container, but not provisioned by Kata devtmpfs).
+- `/dev/net/tun` — absent.
+- `fuse-overlayfs` — fails (`fuse: device not found`).
+- `/proc/filesystems` — lists both `fuse` and `overlay` (modules available).
+- Native overlay on container rootfs (virtiofs) — fails (upper fs missing `RENAME_WHITEOUT`/xattr/tmpfile).
+- Native overlay on ext4 PVC — **viable** (Ceph RBD ext4 supports all required features).
+
+**Decision: Option D' — native kernel overlay with podman storage root on workspace PVC (`$HOME`).**
+
+Rationale: most secure (no fuse stack, no userspace FS daemon, kernel overlayfs is upstream/audited), fastest (kernel-path vs userspace), and aligns with existing workspace PVC at `$HOME`. Kata VM remains the isolation boundary. Rootful podman inside the VM is acceptable — VM, not container, is the perimeter.
+
+Downstream adjustments (Task 10 Step 2):
+
+- `storage.conf` `driver = "overlay"` unconditionally when in Coder workspace.
+- Drop the `/dev/fuse` probe branch in `post-create.sh`.
+- `graphroot` stays on `${HOME}/.local/share/containers/storage` (PVC-backed ext4 → overlay upper fs supports required features).
 
 - [ ] **Step 5: Commit the probe scripts (keep in tree as regression reproducer)**
 
@@ -827,33 +843,25 @@ cat .devcontainer/post-create.sh
 cat lint.sh
 ```
 
-- [ ] **Step 2: post-create.sh — podman storage detection**
+- [ ] **Step 2: post-create.sh — podman storage config**
 
-Add near the top (after initial setup, before any podman calls):
+Per Task 1 Step 4 decision (Option D'): native kernel overlay on PVC-backed `$HOME`. No fuse, no `/dev/fuse`, no userspace FS daemon.
 
-```bash
-# Configure podman storage driver based on /dev/fuse availability (Kata guest).
-if [ -c /dev/fuse ]; then
-  STORAGE_DRIVER="fuse-overlayfs"
-else
-  STORAGE_DRIVER="vfs"
-fi
-mkdir -p ~/.config/containers
-cat > ~/.config/containers/storage.conf <<EOF
-[storage]
-driver = "${STORAGE_DRIVER}"
-runroot = "/run/user/$(id -u)/containers"
-graphroot = "${HOME}/.local/share/containers/storage"
-EOF
-```
-
-Wrap in a Coder-workspace detection guard if the script runs outside Coder too:
+Add near the top (after initial setup, before any podman calls), guarded by Coder detection:
 
 ```bash
 if [ -n "${CODER_WORKSPACE_ID:-}" ]; then
-  # ... the storage.conf block above ...
+  mkdir -p ~/.config/containers
+  cat > ~/.config/containers/storage.conf <<EOF
+[storage]
+driver = "overlay"
+runroot = "/run/user/$(id -u)/containers"
+graphroot = "${HOME}/.local/share/containers/storage"
+EOF
 fi
 ```
+
+`graphroot` on workspace PVC (ext4, Ceph RBD) supports `RENAME_WHITEOUT`/xattr/tmpfile — kernel overlayfs upper-fs requirements met. Container rootfs (virtiofs) does not, so graphroot MUST stay under `$HOME`.
 
 - [ ] **Step 3: lint.sh — docker-shim/podman detection**
 
@@ -1232,7 +1240,7 @@ kubectl -n coder-system get secret | grep -E \
 - §9 Validation → Tasks 11 (qa/cluster validator), 12 (Kyverno neg-test), 13 (CNP test), 15 (E2E).
 - §10 Rollback → dedicated Rollback Appendix between Tasks 16 and Self-Review; pre-push SHA captured in Task 11 Step 2b.
 - §11 Artefacts → all paths covered in Tasks 2-10.
-- §12 Open items → Task 1 covers `/dev/fuse` verification; Kyverno syntax verify in Task 7 Step 2 note; Flux dependsOn in Task 3 Step 4 note.
+- §12 Open items → Task 1 `/dev/fuse` verification RESOLVED (Option D' native overlay on PVC, see Task 1 Step 4); Kyverno syntax verify in Task 7 Step 2 note; Flux dependsOn in Task 3 Step 4 note.
 
 **Placeholder scan:** No "TBD"/"TODO" outside explicit user-action gates (SOPS edits in Task 6 Step 10 — user-driven by design per constraints).
 

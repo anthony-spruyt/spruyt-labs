@@ -13,7 +13,7 @@ Split Coder workspace pods into a new `coder-workspaces` namespace with PSA=priv
 
 ### Success criteria
 
-1. `podman run hello-world` succeeds inside a Coder workspace pod on overlay or fuse-overlayfs storage.
+1. `podman run hello-world` succeeds inside a Coder workspace pod on native kernel overlay storage rooted at workspace PVC (`$HOME/.local/share/containers/storage`).
 2. `./lint.sh` (MegaLinter) runs to completion.
 3. Envbuilder kaniko build path unaffected (template rebuild works).
 4. `coder-system` namespace PSA stays at `baseline`. No relaxation.
@@ -74,10 +74,12 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         # capabilities: privileged implies all; PSA=privileged allows
-      # /dev/fuse, /dev/net/tun exposed via privileged; verify in Kata guest
+      # Kata guest (kernel 6.18.5) does NOT expose /dev/fuse or /dev/net/tun
+      # under privileged:true (verified 2026-04-17 via hack/kata-fuse-probe).
+      # Overlay module IS loaded; native overlay works on ext4 PVC upper-fs.
 ```
 
-`startup_script` creates `/run/user/1000`, exports `XDG_RUNTIME_DIR`. Storage driver: fuse-overlayfs if `/dev/fuse` wires through; else vfs. Overlay (in-kernel) remains blocked by Kata guest whiteout restriction.
+`startup_script` creates `/run/user/1000`, exports `XDG_RUNTIME_DIR`. Storage driver: **native kernel `overlay`** with podman `graphroot` on workspace PVC (`$HOME/.local/share/containers/storage`, Ceph RBD ext4). No fuse stack, no userspace FS daemon. Container rootfs (virtiofs) lacks `RENAME_WHITEOUT`/xattr/tmpfile required for overlay upper-fs, so graphroot MUST stay under `$HOME`.
 
 ## 4. NetworkPolicy Design
 
@@ -168,7 +170,7 @@ The `ssh-key-rotation` CronJob patches `coder-ssh-signing-key`. Colocate rotator
 ### `.devcontainer/post-create.sh`
 
 - Detect Coder workspace (env var or hostname check).
-- Configure podman storage (`~/.config/containers/storage.conf`): `driver = "fuse-overlayfs"` if `/dev/fuse` present, else `vfs`.
+- Configure podman storage (`~/.config/containers/storage.conf`): `driver = "overlay"`, `graphroot = "${HOME}/.local/share/containers/storage"` (PVC-backed ext4).
 - No-op outside Coder workspace.
 
 ### `lint.sh`
@@ -268,7 +270,7 @@ Verify exact Kyverno syntax against current Kyverno version during planning.
 ## 12. Open Items
 
 - Exact Kyverno CEL/JMESPath syntax against installed Kyverno version (verify during planning).
-- Whether `/dev/fuse` wires through Kata guest under `privileged: true` without explicit `io.katacontainers.config.runtime.enable_fuse` or device annotation. **Verify in a throwaway test pod before full template commit.** If not, add the annotation path or fall back to vfs storage.
+- ~~Whether `/dev/fuse` wires through Kata guest under `privileged: true`~~ — RESOLVED 2026-04-17 via `hack/kata-fuse-probe`. `/dev/fuse` absent (mknod works but Kata devtmpfs skips it). Native overlay on ext4 PVC selected instead; no fuse dependency.
 - Whether existing workspace PVCs in `coder-system` should be deleted after fresh volumes prove out, or retained for a grace period.
 - Flux Kustomization dependsOn chain between `coder-system` and `coder-workspaces` — both must be installed; template-sync depends on both to resolve cross-ns references during template rendering.
 
