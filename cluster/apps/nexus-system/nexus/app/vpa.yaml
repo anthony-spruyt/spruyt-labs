@@ -17,3 +17,6 @@ spec:
       - containerName: main
         minAllowed: {cpu: 1m, memory: 1Mi}
         maxAllowed: {memory: 4Gi}
+      - containerName: bootstrap
+        minAllowed: {cpu: 1m, memory: 1Mi}
+        maxAllowed: {cpu: 100m, memory: 64Mi}

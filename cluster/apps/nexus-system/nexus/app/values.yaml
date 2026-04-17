@@ -34,13 +34,6 @@ controllers:
             value: "${TIMEZONE}"
           INSTALL4J_ADD_VM_PARAMS:
             value: "-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Dkaraf.startLocalConsole=false"
-          NEXUS_SECURITY_RANDOMPASSWORD:
-            value: "false"
-          NEXUS_SECURITY_INITIAL_PASSWORD:
-            valueFrom:
-              secretKeyRef:
-                name: nexus-admin
-                key: admin-password
         ports:
           - name: http
             containerPort: 8081
@@ -74,6 +67,44 @@ controllers:
         resources:
           requests: {cpu: 250m, memory: 2Gi}
           limits: {memory: 4Gi}
+      # Bootstrap sidecar: the official sonatype/nexus3 image does NOT honor
+      # NEXUS_SECURITY_INITIAL_PASSWORD. On a fresh PVC Nexus writes a random
+      # password to /nexus-data/admin.password. This sidecar waits for it,
+      # promotes the desired admin user (from the nexus-admin secret) to
+      # nx-admin, disables the built-in "admin" user, writes a marker, and
+      # idles. Subsequent restarts no-op via the marker.
+      bootstrap:
+        securityContext:
+          runAsUser: 200
+          runAsGroup: 200
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        image:
+          # renovate: datasource=docker depName=alpine/curl
+          repository: alpine/curl
+          tag: "8.14.1@sha256:9cb587777e2693ca3817d3086ce22bde3fda1990d03cf9dc716eaf844f9f8fc6"
+        command: ["/bin/sh", "/scripts/bootstrap.sh"]
+        env:
+          NEXUS_USER:
+            valueFrom:
+              secretKeyRef:
+                name: nexus-admin
+                key: admin-username
+          NEXUS_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: nexus-admin
+                key: admin-password
+        probes:
+          liveness: {enabled: false}
+          readiness: {enabled: false}
+          startup: {enabled: false}
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 64Mi}
 
 service:
   nexus:
@@ -98,3 +129,12 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /tmp
+  bootstrap-script:
+    type: configMap
+    name: nexus-bootstrap-script
+    defaultMode: 0755
+    advancedMounts:
+      main:
+        bootstrap:
+          - path: /scripts
+            readOnly: true

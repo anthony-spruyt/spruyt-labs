@@ -20,5 +20,15 @@ configMapGenerator:
     namespace: nexus-system
     files:
       - provision.sh
+  # Bootstrap script is referenced from inside the app-template values file,
+  # which kustomize cannot rewrite — so disable the hash suffix and rely on
+  # stakater/reloader (already annotated on the statefulset) to restart the
+  # pod when content changes.
+  - name: nexus-bootstrap-script
+    namespace: nexus-system
+    files:
+      - bootstrap.sh
+    options:
+      disableNameSuffixHash: true
 configurations:
   - ./kustomizeconfig.yaml
