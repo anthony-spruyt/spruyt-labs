@@ -25,18 +25,32 @@
     "SSH_AUTH_SOCK": "/ssh-agent"
   },
   "features": {
-    "ghcr.io/devcontainers-extra/features/pre-commit": {},
-    "ghcr.io/devcontainers/features/github-cli": {},
-    "ghcr.io/devcontainers/features/node": {},
-    "ghcr.io/devcontainers/features/python": {
-      "version": "latest"
+    "ghcr.io/devcontainers-extra/features/pre-commit": {
+      "version": "4.5.1"
     },
-    "ghcr.io/devcontainers/features/go": {},
-    "ghcr.io/devcontainers-extra/features/renovate-cli": {},
-    "ghcr.io/devcontainers/features/terraform": {},
-    "ghcr.io/devcontainers-extra/features/sops": {},
+    "ghcr.io/devcontainers/features/github-cli": {
+      "version": "2.89.0"
+    },
+    "ghcr.io/devcontainers/features/node": {
+      "version": "24.14.1"
+    },
+    "ghcr.io/devcontainers/features/python": {
+      "version": "3.14.4"
+    },
+    "ghcr.io/devcontainers/features/go": {
+      "version": "1.26.2"
+    },
+    "ghcr.io/devcontainers-extra/features/renovate-cli": {
+      "version": "43.122.0"
+    },
+    "ghcr.io/devcontainers/features/terraform": {
+      "version": "1.14.8"
+    },
+    "ghcr.io/devcontainers-extra/features/sops": {
+      "version": "3.12.2"
+    },
     "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
-      "yqVersion": "latest"
+      "yqVersion": "4.52.5"
     }
   },
   "initializeCommand": "bash ${localWorkspaceFolder}/.devcontainer/initialize.sh",

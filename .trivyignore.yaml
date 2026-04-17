@@ -9,6 +9,12 @@ misconfigurations:
       - cmd/shutdown-orchestrator/Dockerfile
       - cmd/kata-tap-qdisc-fix/Dockerfile
 
+  # Devcontainer image is driven by VS Code / envbuilder lifecycle,
+  # not a long-running service — HEALTHCHECK is not applicable
+  - id: AVD-DS-0026
+    paths:
+      - .devcontainer/Dockerfile
+
   # Hubble SSO ingress needs to be in kube-system (where Cilium runs)
   - id: AVD-KSV-0037
     paths:
