@@ -146,22 +146,43 @@ spec:
                     echo "=== $${PREFIX} installation token minted ==="
                   }
 
-                  # Force-sync ExternalSecrets in consumer namespaces
+                  # Force-sync ExternalSecrets in consumer namespaces.
+                  # Best-effort: source secret already updated above; ExternalSecrets
+                  # will refresh on their own refreshInterval if force-sync fails
+                  # (e.g. external-secrets-webhook rolling restart = no endpoints).
                   force_sync_consumers() {
                     echo "=== Force-syncing ExternalSecrets in consumer namespaces ==="
 
+                    FAILURES=0
                     for NS in claude-agents-write claude-agents-read github-mcp; do
                       for ES_NAME in github-bot-credentials github-bot-ssh-key; do
-                        if kubectl get externalsecret "$${ES_NAME}" -n "$${NS}" >/dev/null 2>&1; then
-                          echo "Force-syncing $${ES_NAME} in $${NS}..."
-                          kubectl patch externalsecret "$${ES_NAME}" -n "$${NS}" \
-                            --type='merge' \
-                            -p="{\"metadata\":{\"annotations\":{\"force-sync\":\"$$(date +%s)\"}}}"
+                        if ! kubectl get externalsecret "$${ES_NAME}" -n "$${NS}" >/dev/null 2>&1; then
+                          continue
                         fi
+                        echo "Force-syncing $${ES_NAME} in $${NS}..."
+                        ATTEMPT=0
+                        while [ $$ATTEMPT -lt $$MAX_RETRIES ]; do
+                          ATTEMPT=$$((ATTEMPT + 1))
+                          if kubectl patch externalsecret "$${ES_NAME}" -n "$${NS}" \
+                            --type='merge' \
+                            -p="{\"metadata\":{\"annotations\":{\"force-sync\":\"$$(date +%s)\"}}}"; then
+                            break
+                          fi
+                          if [ $$ATTEMPT -eq $$MAX_RETRIES ]; then
+                            echo "WARNING: force-sync of $${ES_NAME} in $${NS} failed after $${MAX_RETRIES} attempts (non-fatal; ES refreshInterval will recover)"
+                            FAILURES=$$((FAILURES + 1))
+                            break
+                          fi
+                          sleep 2
+                        done
                       done
                     done
 
-                    echo "=== Force-sync complete ==="
+                    if [ $$FAILURES -gt 0 ]; then
+                      echo "=== Force-sync completed with $${FAILURES} non-fatal failure(s) ==="
+                    else
+                      echo "=== Force-sync complete ==="
+                    fi
                   }
 
                   # Write private keys from env vars to temp files for openssl

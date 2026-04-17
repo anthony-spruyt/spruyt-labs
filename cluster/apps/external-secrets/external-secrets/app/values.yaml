@@ -9,6 +9,10 @@ resources:
     cpu: 10m
     memory: 64Mi
 webhook:
+  replicaCount: 2
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
   resources:
     limits:
       memory: 192Mi
