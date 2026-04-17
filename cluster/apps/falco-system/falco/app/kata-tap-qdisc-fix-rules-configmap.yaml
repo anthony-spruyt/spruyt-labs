@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/configmap.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-kata-tap-qdisc-fix-rules
+  namespace: falco-system
+data:
+  kata-tap-qdisc-fix.yaml: |-
+    - rule: Unexpected setns caller on Kata-ready node
+      desc: >-
+        Alert when any process other than kata-tap-qdisc-fix invokes setns
+        on a Kata-ready node's /run/netns/cni-* file.
+      condition: >
+        evt.type = setns and
+        container.image.repository != "ghcr.io/anthony-spruyt/kata-tap-qdisc-fix" and
+        fd.name startswith "/run/netns/cni-"
+      output: >-
+        Unauthorized setns into pod netns
+        (proc=%proc.name image=%container.image.repository netns=%fd.name)
+      priority: WARNING
+      tags: [kata, network, audit]

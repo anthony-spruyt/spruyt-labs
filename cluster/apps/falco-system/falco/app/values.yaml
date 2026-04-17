@@ -51,8 +51,15 @@ mounts:
     - name: falco-exceptions
       configMap:
         name: falco-exceptions
+    - name: falco-kata-tap-qdisc-fix-rules
+      configMap:
+        name: falco-kata-tap-qdisc-fix-rules
   volumeMounts:
     - name: falco-exceptions
       mountPath: /etc/falco/rules.d/exceptions.yaml
       subPath: exceptions.yaml
+      readOnly: true
+    - name: falco-kata-tap-qdisc-fix-rules
+      mountPath: /etc/falco/rules.d/kata-tap-qdisc-fix.yaml
+      subPath: kata-tap-qdisc-fix.yaml
       readOnly: true
