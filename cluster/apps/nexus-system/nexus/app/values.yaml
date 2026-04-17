@@ -33,7 +33,10 @@ controllers:
           TZ:
             value: "${TIMEZONE}"
           INSTALL4J_ADD_VM_PARAMS:
-            value: "-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Dkaraf.startLocalConsole=false"
+            value: >-
+              -Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g
+              -Dkaraf.startLocalConsole=false
+              -Djava.util.prefs.userRoot=/nexus-data/javaprefs
         ports:
           - name: http
             containerPort: 8081
