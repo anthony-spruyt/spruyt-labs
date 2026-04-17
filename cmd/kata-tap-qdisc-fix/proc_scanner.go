@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -199,18 +198,4 @@ func inodeOf(path string) (uint64, error) {
 		return 0, err
 	}
 	return st.Ino, nil
-}
-
-// formatScanResult formats a ScanResult as a human-readable multiline string
-// suitable for printing to stdout.
-func formatScanResult(r ScanResult) string {
-	var sb strings.Builder
-	fmt.Fprintf(&sb, "elapsed:        %v\n", r.Elapsed)
-	fmt.Fprintf(&sb, "total_inodes:   %d\n", r.TotalInodes)
-	fmt.Fprintf(&sb, "host_skipped:   %d\n", r.HostSkipped)
-	fmt.Fprintf(&sb, "unique_netns:   %d\n", r.UniqueNetns)
-	fmt.Fprintf(&sb, "taps_found:     %d\n", r.TapsFound)
-	fmt.Fprintf(&sb, "replaced:       %d\n", r.Replaced)
-	fmt.Fprintf(&sb, "would_replace:  %d\n", r.WouldReplace)
-	return sb.String()
 }

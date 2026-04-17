@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	dto "github.com/prometheus/client_model/go"
 )
 
 type Metrics struct {
@@ -32,17 +31,4 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 		m.SweepsTotal,
 	)
 	return m
-}
-
-// counterValue reads a Counter's current value via the prometheus client's
-// Collect interface. Used by tests and any in-process health probe.
-func counterValue(c prometheus.Counter) float64 {
-	var m dto.Metric
-	if err := c.Write(&m); err != nil {
-		return 0
-	}
-	if m.Counter == nil || m.Counter.Value == nil {
-		return 0
-	}
-	return *m.Counter.Value
 }

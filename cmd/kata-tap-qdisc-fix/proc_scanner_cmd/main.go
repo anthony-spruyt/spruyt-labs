@@ -23,7 +23,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -233,8 +232,6 @@ func initHostNetns() error {
 	hostNs, hostNsErr = vnetns.Get()
 	return hostNsErr
 }
-
-var errRestoreFailed = errors.New("netns restore failed: thread is poisoned")
 
 // doInNetns enters the netns described by path (a /proc/<pid>/ns/net symlink),
 // calls fn, then restores the host netns. Thread-safe via LockOSThread.

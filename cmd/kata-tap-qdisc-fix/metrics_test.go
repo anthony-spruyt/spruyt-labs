@@ -22,13 +22,3 @@ func TestNewMetricsRegistersWithoutPanic(t *testing.T) {
 		t.Errorf("expected ≥2 metric families, got %d", len(mf))
 	}
 }
-
-func newTestMetrics() *Metrics {
-	return NewMetrics(prometheus.NewRegistry())
-}
-
-// testCounterValue is an assertion helper used from tests.
-func testCounterValue(t *testing.T, c prometheus.Counter) int {
-	t.Helper()
-	return int(counterValue(c))
-}
