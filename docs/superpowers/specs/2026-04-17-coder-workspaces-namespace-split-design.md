@@ -81,27 +81,53 @@ spec:
 
 ## 4. NetworkPolicy Design
 
-Default-deny ingress + egress in `coder-workspaces`, then explicit allows.
+Workspaces are developer + agent environments. They legitimately need:
 
-### Egress allows
+- Broad Internet access (git clone arbitrary repos, LLM APIs, package managers, container registries, WebFetch targets).
+- Broad intra-cluster access to consume in-cluster MCPs (kubectl-mcp, mcp-victoriametrics, github-mcp, discord-mcp, brave-search-mcp) and any future services.
 
-| To | Purpose |
-| -- | ------- |
-| `coder-system` namespace → `coder` workload, port (Coder agent registration, websocket) | Agent → server |
-| `kube-system` → CoreDNS, port 53 TCP/UDP | DNS |
-| `nexus-system` → `nexus` workload on HTTPS/registry ports | Docker/OCI pull-through (docker.io, quay.io, registry.k8s.io) |
-| Egress gateway (existing Cilium config) → Internet | git clone, curl, package registries not behind Nexus |
+**Model:** permissive egress on the workspace side; each destination service enforces its own ingress. DNS is already allowed cluster-wide via existing `CiliumClusterwideNetworkPolicy/allow-kube-dns-egress` — no per-namespace DNS rule needed.
 
-### Ingress allows
+### Egress (coder-workspaces)
 
-| From | Purpose |
-| ---- | ------- |
-| `coder-system` → `coder` workload → coder-workspaces pods on agent port | Coder server → agent (SSH/port-forward/terminal) |
-| (none else) | |
+```yaml
+egress:
+  - toEntities: [world]     # all Internet
+  - toEntities: [cluster]   # all intra-cluster; services self-gate ingress
+```
 
-### Also update `coder-system` policies
+No per-service egress rules. Services decide who they accept.
 
-Allow ingress on coder server agent ports from `coder-workspaces` namespace (ServiceAccount `coder-workspace`), reciprocal to the egress allow above.
+### Ingress (coder-workspaces)
+
+```yaml
+ingress:
+  - fromEndpoints:
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: coder-system
+          k8s:app.kubernetes.io/name: coder
+    # ports: Coder agent ports (SSH/port-forward/terminal); pin during planning
+```
+
+Default-deny activates on everything else once any ingress rule is declared (Cilium semantics).
+
+### Cross-cutting MCP policy updates
+
+Every in-cluster MCP currently allows ingress from `namespace: coder-system` + `app.kubernetes.io/name: coder-workspace`. Retarget each to the new namespace:
+
+- `cluster/apps/kubectl-mcp/kubectl-mcp-server/app/network-policies.yaml`
+- `cluster/apps/observability/mcp-victoriametrics/app/network-policies.yaml`
+- `cluster/apps/github-mcp/github-mcp-server/app/network-policies.yaml`
+- `cluster/apps/discord-mcp/discord-mcp/app/network-policies.yaml`
+- `cluster/apps/brave-search-mcp/brave-search-mcp/app/network-policies.yaml`
+
+In each: change `k8s:io.kubernetes.pod.namespace: coder-system` → `coder-workspaces` on the rule that carries the `app.kubernetes.io/name: coder-workspace` label selector.
+
+Audit during planning: any other CNP in the repo with a `coder-workspace` label selector referencing `coder-system` — grep and retarget.
+
+### Pod label requirement
+
+Workspace pods emitted by the Coder template must carry `app.kubernetes.io/name: coder-workspace` for the MCP ingress rules to match. Verify in `main.tf` during planning; add the label there if missing.
 
 ## 5. ExternalSecret Retargets
 
