@@ -55,7 +55,12 @@ locals {
     "ENVBUILDER_GIT_URL" : local.repo_url,
     "ENVBUILDER_INIT_SCRIPT" : coder_agent.main.init_script,
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
-    "ENVBUILDER_CACHE_REPO" : "ghcr.io/anthony-spruyt/envbuilder-cache/${data.coder_workspace.me.name}",
+    # Cache pushes hit the envbuilder-cache hosted repo on its own connector (8083).
+    # Pulls/mirror go through the docker-group connector (8082).
+    # URL has NO /repository/ segment — Nexus docker connectors serve OCI v2 at host-root.
+    "ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/${data.coder_workspace.me.name}",
+    "KANIKO_REGISTRY_MIRROR" : "nexus.nexus-system.svc.cluster.local:8082",
+    "ENVBUILDER_INSECURE" : "true",
     "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
     # Skip kaniko remount of secret volumes during build — mount(2) EPERMs
     # inside Kata+PSA=baseline (no CAP_SYS_ADMIN). Secrets are still
