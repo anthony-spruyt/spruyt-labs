@@ -4,6 +4,14 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: coder-template-push
+  annotations:
+    # Flux deletes+recreates on spec change (Job fields are immutable).
+    # Paired with the kustomizeconfig nameReference that rewrites the
+    # Job's volume configMap name to the hashed template ConfigMap,
+    # any main.tf change flips the name, triggers a spec diff, and
+    # force-recreates the Job. Fixes #966.
+    # Value MUST be "Enabled" per Flux docs — "true" is ignored.
+    kustomize.toolkit.fluxcd.io/force: "Enabled"
 spec:
   backoffLimit: 3
   ttlSecondsAfterFinished: 86400
