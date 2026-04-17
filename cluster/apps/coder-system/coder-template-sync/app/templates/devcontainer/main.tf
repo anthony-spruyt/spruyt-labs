@@ -429,11 +429,17 @@ resource "kubernetes_pod_v1" "main" {
       image_pull_policy = "Always"
 
       security_context {
+        run_as_user                = 1000
+        run_as_group               = 1000
+        run_as_non_root            = true
         privileged                 = false
         allow_privilege_escalation = false
         read_only_root_filesystem  = false
         capabilities {
           drop = ["ALL"]
+        }
+        seccomp_profile {
+          type = "RuntimeDefault"
         }
       }
 
