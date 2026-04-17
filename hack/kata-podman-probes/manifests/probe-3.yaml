@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: __POD_NAME__
+  labels:
+    app.kubernetes.io/name: kata-podman-probe
+    app.kubernetes.io/component: probe-3-annotations
+  annotations:
+    io.katacontainers.config.hypervisor.kernel_params: "user_namespace.enable=1 userns.max=15000 sysctl.kernel.unprivileged_userns_clone=1"
+spec:
+  runtimeClassName: kata
+  restartPolicy: Never
+  nodeSelector:
+    kata.spruyt-labs/ready: "true"
+  containers:
+    - name: probe
+      image: docker.io/library/fedora:41
+      command: ["sleep", "600"]
+      securityContext:
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+          add: ["SETUID", "SETGID"]
