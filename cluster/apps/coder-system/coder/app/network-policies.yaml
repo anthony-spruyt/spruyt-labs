@@ -490,6 +490,27 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Nexus artifact proxy (apt + docker mirrors, envbuilder cache)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-workspace-nexus-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: coder-workspace
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: nexus-system
+            k8s:app.kubernetes.io/name: nexus
+      toPorts:
+        - ports:
+            - {port: "8081", protocol: TCP}
+            - {port: "8082", protocol: TCP}
+            - {port: "8083", protocol: TCP}
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to n8n SRE MCP endpoint
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
