@@ -168,15 +168,13 @@ kubectl uncordon <hostname>
 ### Talos OS Upgrades
 
 1. **Select the correct installer image**
-
    - Navigate to `https://factory.talos.dev/installer/?options=secureboot:<true|false>`
    - Choose the hardware schematic that matches your platform, then confirm the SecureBoot choice matches your nodes:
      - SecureBoot-enabled nodes require the `secureboot:1` schematic.
      - Traditional BIOS/UEFI nodes without SecureBoot must use the `secureboot:0` schematic.
-   - Copy the fully-qualified installer reference returned by Factory (e.g., `factory.talos.dev/installer/dad61fef6bbdd2ce03248abcdef0123456789abcd8ef0123456789abcdef0123`).
+   - Copy the fully-qualified installer reference returned by Factory (format: `factory.talos.dev/metal-installer-secureboot/<SCHEMATIC_ID>:<TALOS_VERSION>`). Current cluster schematic IDs are tracked in [`talos/README.md`](../README.md#schematics) — avoid hard-coding them here to prevent stale docs.
 
 1. **Run `talosctl upgrade`**
-
    - Always upgrade control plane nodes before workers. Allow each node to rejoin the cluster and reconcile Flux before moving to the next node class.
    - Control plane example (`--endpoints` points at the virtual/control-plane endpoint; `--nodes` is the node being upgraded):
 
@@ -208,7 +206,6 @@ kubectl uncordon <hostname>
    - Repeat for each node, ensuring workers are upgraded after the control plane pool has converged.
 
 1. **Post-upgrade validation**
-
    - Confirm Talos versions align:
 
      ```sh
@@ -323,17 +320,14 @@ ceph osd unset norecover
 ## Rollback and Disaster Recovery
 
 1. **Configuration Regression**
-
    - Revert the offending Git commit and trigger Flux reconciliation.
    - Reapply the last-known-good config from `talos/clusterconfig/`.
 
 1. **Node Rebuild**
-
    - Wipe disks with the Talos installer, re-run provisioning, and reapply machine configs.
    - Restore labels and taints to align with node pool expectations.
 
 1. **Control Plane Failure**
-
    - Restore etcd from the latest snapshot:
 
      ```bash
@@ -343,7 +337,6 @@ ceph osd unset norecover
    - Update VIP or DNS entries if API endpoints move.
 
 1. **Secrets Recovery**
-
    - Decrypt backups of `talos/talenv.sops.yaml` and `talos/talsecret.sops.yaml`.
    - Rotate Age identities if compromise is suspected; re-run `task talos:gen`.
 
