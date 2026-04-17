@@ -7,7 +7,11 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 3.0"
+      # Pinned below 3.x — the new identity tracking on kubernetes_pod_v1
+      # trips "Unexpected Identity Change" on refresh for pods created by
+      # previous plan iterations, blocking destroy/recreate. See
+      # hashicorp/terraform-provider-kubernetes issues around v3.0.
+      version = "~> 2.38"
     }
     envbuilder = {
       source  = "coder/envbuilder"
