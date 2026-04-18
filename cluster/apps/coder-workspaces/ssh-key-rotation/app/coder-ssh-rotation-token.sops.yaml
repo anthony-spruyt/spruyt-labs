@@ -1,0 +1,23 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: coder-ssh-rotation-token
+    namespace: coder-workspaces
+stringData:
+    GITHUB_PAT: ENC[AES256_GCM,data:wGG16JLnJKUAKqbryDyZQMw90WZff9fWy31OEe6yYhHkX4sNj5Fa4w==,iv:kyPUeKvMVkXAwm8xFrXGD+JA+ikdu4vPVENEgbMJcB0=,tag:AcGZWluyRreCn3qkOeW6yw==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB0ejNiYW16dWRsaDFlbmFy
+            ZzlrNUtYbi9EWUw5dVd5THA0RFBHUU5WSEd3ClE3YXRVM0pCRU0xdFBxSkhWRnlU
+            UlBKRnZkeDkraW9UVnpPVmcwd2J1RXcKLS0tIGh0R2lSczFDVS9ESkFTYmZXUU9k
+            dUNTeEdXYVFiZU9jd0lvK3JGVkxMSEUKDlv3wB5HmF6UvLwU1DOeRDK5Ia+VpgCK
+            m4PJRYPuumWx4e7Oe8KZTk58yyY2IhqJGYyy7cvPCWHI7ump4ZjiMw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-17T23:12:13Z"
+    mac: ENC[AES256_GCM,data:19bpT/TE8fTAsjHxlBU6MrEgSYLGV6bANKwuk75Z8fDaz5CVmD+5Xp/ZO7KxUZE79u23ovLMAh0c4spolUw/jXR944nsuqNlj31/IxvPRP5D5BCg3rl8QUMoufn583Ye9Xq/EMWiGjz0+ajObr/10ViQOs891+hzfrbMstPkpBI=,iv:Qqrlp1P3UMZofDp9XqOWRiwsCcbYPtrMn5Xax2pzkgo=,tag:zt6glx62a/I+oZ6r0zMQfw==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

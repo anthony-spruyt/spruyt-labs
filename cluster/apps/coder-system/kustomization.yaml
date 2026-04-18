@@ -6,4 +6,3 @@ resources:
   - ./namespace.yaml
   - ./coder/ks.yaml
   - ./coder-template-sync/ks.yaml
-  - ./ssh-key-rotation/ks.yaml

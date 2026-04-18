@@ -4,7 +4,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: ssh-key-rotation
-  namespace: coder-system
+  namespace: coder-workspaces
 spec:
   schedule: "0 3 * * 1"
   concurrencyPolicy: Forbid

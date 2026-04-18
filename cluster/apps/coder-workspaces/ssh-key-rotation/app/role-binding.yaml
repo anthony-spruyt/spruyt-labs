@@ -4,7 +4,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: ssh-key-rotation
-  namespace: coder-system
+  namespace: coder-workspaces
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -12,4 +12,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: ssh-key-rotation
-    namespace: coder-system
+    namespace: coder-workspaces

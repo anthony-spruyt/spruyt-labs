@@ -6,13 +6,13 @@ metadata:
   name: &app ssh-key-rotation
   namespace: flux-system
 spec:
-  targetNamespace: coder-system
-  path: ./cluster/apps/coder-system/ssh-key-rotation/app
+  targetNamespace: coder-workspaces
+  path: ./cluster/apps/coder-workspaces/ssh-key-rotation/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: coder
+    - name: coder-workspaces-secrets
   prune: true
   timeout: 5m
   wait: false
