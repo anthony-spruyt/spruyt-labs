@@ -278,7 +278,7 @@ misconfigurations:
     paths:
       - cluster/apps/github-system/github-token-rotation/app/reader-role.yaml
       - cluster/apps/github-system/github-token-rotation/app/role.yaml
-      - cluster/apps/traefik/traefik/app/mcp-auth-reader-rbac.yaml
+      - cluster/apps/traefik/traefik/app/mcp-api-keys-reader-rbac.yaml
 
   # ==============================================================================
   # Nexus OSS - provisioning Job

@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
   - ./fallback-certificate.yaml
   - ./mcp-api-keys-secrets.sops.yaml
-  - ./mcp-auth-reader-rbac.yaml
+  - ./mcp-api-keys-reader-rbac.yaml
   - ./release.yaml
   - ./vpa.yaml
   - ./coder-service-reader-rbac.yaml
