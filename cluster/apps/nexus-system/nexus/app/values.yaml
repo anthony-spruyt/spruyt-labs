@@ -90,7 +90,7 @@ controllers:
         image:
           # renovate: datasource=docker depName=alpine/curl
           repository: alpine/curl
-          tag: "8.14.1@sha256:9cb587777e2693ca3817d3086ce22bde3fda1990d03cf9dc716eaf844f9f8fc6"
+          tag: "8.17.0@sha256:dc61c4dbdf3ba6d83094fdb12e7e4757c684413a2f7a1162e43d2af00a6222c7"
         command: ["/bin/sh", "/scripts/bootstrap.sh"]
         env:
           NEXUS_USER:
