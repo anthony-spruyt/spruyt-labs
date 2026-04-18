@@ -38,7 +38,7 @@ passthrough repo under `/repository/apt-<name>/`.
 
 ## Secrets Required
 
-The following Kubernetes Secrets must exist in `coder-system`:
+The following Kubernetes Secrets must exist in `coder-workspaces`:
 
 - `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
 - `coder-talosconfig` — Talos client config mounted at `~/.talos/config`

@@ -33,7 +33,7 @@ kubectl logs -n coder-system -l app.kubernetes.io/name=coder
 kubectl get cluster -n coder-system coder-cnpg-cluster
 
 # Check workspace pods
-kubectl get pods -n coder-system -l app.kubernetes.io/name=coder-workspace
+kubectl get pods -n coder-workspaces -l app.kubernetes.io/name=coder-workspace
 ```
 
 ## Configuration
@@ -63,7 +63,7 @@ kubectl get pods -n coder-system -l app.kubernetes.io/name=coder-workspace
 
 3. **Workspace pod stuck pending**
    - **Symptom**: Workspace created in Coder UI but pod never starts
-   - **Resolution**: Check workspace RBAC and PVC provisioning: `kubectl get pvc -n coder-system`, `kubectl describe pod -n coder-system -l app.kubernetes.io/name=coder-workspace`
+   - **Resolution**: Check workspace RBAC and PVC provisioning: `kubectl get pvc -n coder-workspaces`, `kubectl describe pod -n coder-workspaces -l app.kubernetes.io/name=coder-workspace`
 
 4. **Metrics not scraped**
    - **Symptom**: No Coder metrics in VictoriaMetrics

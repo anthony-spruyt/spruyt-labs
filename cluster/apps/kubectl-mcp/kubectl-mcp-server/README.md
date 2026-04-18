@@ -30,7 +30,7 @@ kubectl logs -n kubectl-mcp -l app.kubernetes.io/name=kubectl-mcp-server
 ## Access
 
 - **Traefik ingress**: LAN-only via `kubectl-mcp.lan.${EXTERNAL_DOMAIN}`, requires `X-API-KEY` header
-- **Network policies**: Ingress allowed from Traefik, claude-agents-write, claude-agents-read, and coder-system namespaces; egress allowed to kube-apiserver only
+- **Network policies**: Ingress allowed from Traefik, claude-agents-write, claude-agents-read, and coder-workspaces namespaces; egress allowed to kube-apiserver only
 - **RBAC scope**: Read-only access to most resources (including pod logs). Limited writes: pods (delete, eviction), deployments/statefulsets scale subresource only. Cordon/drain/taint/restart/job-creation fall back to local kubectl.
 
 ## Troubleshooting
