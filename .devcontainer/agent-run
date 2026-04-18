@@ -114,12 +114,22 @@ AGENT_MEM="${AGENT_RUN_MEM:-2g}"
 AGENT_PIDS="${AGENT_RUN_PIDS:-512}"
 AGENT_CPUS="${AGENT_RUN_CPUS:-2}"
 
-exec podman run --rm \
+# Rootless podman is preferred. In WSL2 nested userns, newuidmap fails because
+# the outer namespace did not delegate subuid ranges; fall back to `sudo podman`
+# with --userns=auto still providing a dedicated user namespace.
+runner=(podman)
+if ! podman info >/dev/null 2>&1; then
+  if [[ "$(id -u)" != "0" ]] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+    runner=(sudo -n podman)
+  fi
+fi
+
+exec "${runner[@]}" run --rm \
   --userns=auto \
   --read-only \
   --tmpfs /tmp:rw,exec,nosuid,nodev,size=256m \
   --tmpfs /var/tmp:rw,exec,nosuid,nodev,size=64m \
-  --security-opt no-new-privileges=true \
+  --security-opt no-new-privileges \
   --cap-drop=ALL \
   --pids-limit="$AGENT_PIDS" \
   --memory="$AGENT_MEM" \
