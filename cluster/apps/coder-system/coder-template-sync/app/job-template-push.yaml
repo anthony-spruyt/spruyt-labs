@@ -79,6 +79,10 @@ spec:
                 path: devcontainer/main.tf
               - key: devcontainer__README.md
                 path: devcontainer/README.md
+              - key: spruyt-labs__main.tf
+                path: spruyt-labs/main.tf
+              - key: spruyt-labs__README.md
+                path: spruyt-labs/README.md
         - name: tmp
           emptyDir:
             medium: Memory

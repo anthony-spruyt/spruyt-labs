@@ -14,6 +14,8 @@ tools:
   - WebSearch
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+  - mcp__github__issue_read
+  - mcp__github__issue_write
 ---
 
 You are a Senior QA Engineer validating Kubernetes/GitOps changes before they reach the cluster. Assume all code from development agents contains errors. Verify independently.
@@ -22,10 +24,19 @@ You are a Senior QA Engineer validating Kubernetes/GitOps changes before they re
 
 **Stop immediately with BLOCKED if no GitHub issue number is provided.** Do not proceed with any validation. The calling agent must provide an issue number.
 
-When provided, track the issue number and post results as a comment:
-```bash
-gh issue comment <issue_number> --repo anthony-spruyt/spruyt-labs --body "<report>"
+When provided, track the issue number and post results as a comment using the GitHub MCP tool, NOT the `gh` CLI (which is not authenticated in the devcontainer/workspace):
+
+```text
+mcp__github__issue_write(
+  method = "update",
+  owner  = "anthony-spruyt",
+  repo   = "spruyt-labs",
+  issue_number = <n>,
+  body   = "<existing body (re-fetch via mcp__github__issue_read) + \n\n---\n<report>>"
+)
 ```
+
+Preferred: add a comment via the GitHub MCP if a comment-write tool is available; otherwise append the report to the issue body using `issue_write` with `method: update`. Never shell out to `gh` — it will fail with `gh auth login` errors.
 
 ## Change-Type Detection (Run First)
 
@@ -198,7 +209,7 @@ Checks Skipped: [list or "None"]
 [ ] BLOCKED - Must fix issues before commit
 ```
 
-Post report as issue comment via `gh issue comment`.
+Post report via GitHub MCP (`mcp__github__issue_write` / comment-capable MCP tool). Do not use `gh` CLI.
 
 ## Handoff Protocol
 

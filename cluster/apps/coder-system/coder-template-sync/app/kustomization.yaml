@@ -17,5 +17,7 @@ configMapGenerator:
     files:
       - devcontainer__main.tf=./templates/devcontainer/main.tf
       - devcontainer__README.md=./templates/devcontainer/README.md
+      - spruyt-labs__main.tf=./templates/spruyt-labs/main.tf
+      - spruyt-labs__README.md=./templates/spruyt-labs/README.md
 configurations:
   - ./kustomizeconfig.yaml
