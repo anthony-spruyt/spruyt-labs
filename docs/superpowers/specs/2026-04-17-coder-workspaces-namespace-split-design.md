@@ -234,7 +234,7 @@ Verify exact Kyverno syntax against current Kyverno version during planning.
 
 - cluster-validator agent on each push.
 - Create one workspace via Coder UI → restart → run success criteria 1-3 inside the workspace.
-- `mcp__kubernetes__get_namespaces` → confirm `coder-system` PSA unchanged, `coder-workspaces` PSA=privileged.
+- `mcp__kubectl__get_namespaces` → confirm `coder-system` PSA unchanged, `coder-workspaces` PSA=privileged.
 - Kyverno: apply a test pod with `privileged: true` and a different SA in `coder-workspaces` → must be denied.
 - NetworkPolicy: from a workspace pod, `curl` an unallowed internal IP → must fail; allowed IP → must succeed.
 

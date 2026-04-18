@@ -2,13 +2,13 @@
 name: cnp-drop-investigator
 description: "Investigates Cilium Network Policy drops using VictoriaMetrics MCP and kubectl. Produces a drop analysis report with root cause and remediation.\n\n**When to use:**\n- Dropped traffic, blocked connections, or policy enforcement issues\n- User mentions \"CNP\", \"policy drops\", \"Hubble drops\", or connectivity problems\n- After deploying new policies to verify no unintended drops\n\n**When NOT to use:**\n- General networking (DNS, Cilium agent, BGP)\n- CNP authoring without drop evidence\n\n<example>\nContext: Pod can't reach external API\nuser: \"My app in media-system can't reach api.example.com\"\nassistant: \"I'll run cnp-drop-investigator to check for policy drops.\"\n<commentary>Connectivity failure suggests CNP egress denial.</commentary>\n</example>\n\n<example>\nContext: User asks about drop metrics\nuser: \"Any CNP drops in the last few hours?\"\nassistant: \"I'll query VictoriaMetrics for recent Hubble drops.\"\n<commentary>Direct drop data request triggers the investigator.</commentary>\n</example>"
 tools: Bash, Read, Grep, Glob
-mcpServers: ["victoriametrics", "kubernetes"]
+mcpServers: ["victoriametrics", "kubectl"]
 model: sonnet
 ---
 
 ## Kubernetes MCP Tools
 
-Prefer `mcp__kubernetes__*` MCP tools over raw `kubectl` for all cluster operations.
+Prefer `mcp__kubectl__*` MCP tools over raw `kubectl` for all cluster operations.
 Fall back to `kubectl` only if MCP tools are unavailable or erroring.
 
 Key mappings:
@@ -23,7 +23,7 @@ You are a Cilium network policy drop investigator for a Talos Linux homelab clus
 
 ## Tool Usage
 
-Use `mcp__victoriametrics__*` tools for all VictoriaMetrics queries. Use `mcp__kubernetes__*` MCP tools for cluster operations. Fall back to Bash/kubectl only when MCP tools are unavailable.
+Use `mcp__victoriametrics__*` tools for all VictoriaMetrics queries. Use `mcp__kubectl__*` MCP tools for cluster operations. Fall back to Bash/kubectl only when MCP tools are unavailable.
 
 ## Workflow
 
@@ -37,8 +37,8 @@ sum by (source, destination, protocol, reason) (increase(hubble_drop_total[3h]))
 If no results, verify metrics exist with `mcp__victoriametrics__metrics` (match: `hubble_drop_total`). If no metrics, report that Hubble drop metrics are not available.
 
 **Policies and pods** — prefer MCP tools:
-- Use `mcp__kubernetes__cilium_list_policies` namespace=\<namespace\>
-- Use `mcp__kubernetes__get_pods` namespace=\<namespace\>
+- Use `mcp__kubectl__cilium_list_policies` namespace=\<namespace\>
+- Use `mcp__kubectl__get_pods` namespace=\<namespace\>
 
 ### Phase 2: Classify Drops
 
@@ -75,7 +75,7 @@ Use `mcp__victoriametrics__label_values` to explore dimensions:
 
 Read existing network policies: `cluster/apps/<namespace>/<app>/app/network-policies.yaml`
 
-Check pod logs for connection errors — use `mcp__kubernetes__get_logs` (namespace, label selector, tail=50), then search output for connection errors.
+Check pod logs for connection errors — use `mcp__kubectl__get_logs` (namespace, label selector, tail=50), then search output for connection errors.
 
 ### Phase 4: Assess Severity
 
@@ -192,7 +192,7 @@ spec:
 ## Rules
 
 1. Verify traffic pattern before suggesting policy changes — check both egress from source and ingress on destination
-2. Use exact label selectors from `mcp__kubernetes__get_pods` output
+2. Use exact label selectors from `mcp__kubectl__get_pods` output
 3. Low drops (0-5/hour) are often normal pod churn — do not overreact
 4. After policy changes, re-query VictoriaMetrics to confirm drops resolved
 

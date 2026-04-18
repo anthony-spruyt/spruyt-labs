@@ -48,4 +48,4 @@ Use Claude's native tools instead of shell commands:
 | Find files     | `Glob` tool                | `find`, `ls -R`                |
 | Edit files     | `Edit` tool                | `sed -i`, `awk -i`             |
 | List env keys  | `env \| cut -d= -f1`       | `env`, `printenv`, `echo $VAR` |
-| Kubernetes ops | `mcp__kubernetes__*` tools | `kubectl` (fallback only)      |
+| Kubernetes ops | `mcp__kubectl__*` tools    | `kubectl` (fallback only)      |

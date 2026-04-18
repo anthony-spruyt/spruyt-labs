@@ -13,12 +13,12 @@ tools:
   - WebSearch
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
-mcpServers: ["kubernetes"]
+mcpServers: ["kubectl"]
 ---
 
 ## Kubernetes MCP Tools
 
-Prefer `mcp__kubernetes__*` MCP tools over raw `kubectl` for all cluster operations.
+Prefer `mcp__kubectl__*` MCP tools over raw `kubectl` for all cluster operations.
 Fall back to `kubectl` only if MCP tools are unavailable or erroring.
 
 Key mappings:
@@ -55,7 +55,7 @@ Classify the change to optimize checks:
 | `helm-release` | HelmRelease, values.yaml | HR status, pod health, app logs |
 | `kustomization` | ks.yaml, kustomization.yaml | KS status, resource creation |
 | `talos-config` | talos/, machine configs | Node health, system pods |
-| `network-policy` | CiliumNetworkPolicy | Connectivity via `mcp__kubernetes__get_hubble_flows` |
+| `network-policy` | CiliumNetworkPolicy | Connectivity via `mcp__kubectl__get_hubble_flows` |
 | `cronjob-workload` | HelmRelease with CronJob | Manual test job (see CronJob section) |
 | `infrastructure` | Storage, ingress, certs | System services, cluster-wide health |
 | `mixed` | Multiple types | All checks |
@@ -72,12 +72,12 @@ Run independent checks simultaneously using multiple tool calls per message.
 **Group 1** (initial state):
 - `flux get kustomizations -A`
 - `flux get helmreleases -A`
-- Use `mcp__kubernetes__get_nodes`
+- Use `mcp__kubectl__get_nodes`
 
 **Group 2** (after identifying affected resources):
-- Use `mcp__kubernetes__get_pods` namespace=\<namespace\>
-- Use `mcp__kubernetes__get_events` namespace=\<namespace\>
-- Use `mcp__kubernetes__get_endpoints` namespace=\<namespace\>
+- Use `mcp__kubectl__get_pods` namespace=\<namespace\>
+- Use `mcp__kubectl__get_events` namespace=\<namespace\>
+- Use `mcp__kubectl__get_endpoints` namespace=\<namespace\>
 
 **Group 3** (if issues detected):
 - App logs, Flux controller logs, Context7 lookup
@@ -99,7 +99,7 @@ Run independent checks simultaneously using multiple tool calls per message.
 
 ### Step 1: Wait for directly affected resource
 
-Use `mcp__kubernetes__wait_for_condition` for kustomization/\<name\> in flux-system (condition=Ready, timeout=180s).
+Use `mcp__kubectl__wait_for_condition` for kustomization/\<name\> in flux-system (condition=Ready, timeout=180s).
 
 Fallback:
 ```bash
@@ -171,7 +171,7 @@ Check pods, deployments/statefulsets, and events in affected namespaces.
 
 ### Step 3: Logs
 
-Use `mcp__kubernetes__get_logs` for app logs (namespace, label selector, tail=50).
+Use `mcp__kubectl__get_logs` for app logs (namespace, label selector, tail=50).
 
 ```bash
 # Flux controller logs (not available via MCP)
@@ -188,19 +188,19 @@ Check endpoints, ingress routes, certificates, and network policies as relevant.
 CronJobs don't trigger new pods on reconciliation — only the template updates. You must manually test.
 
 ```bash
-# 1. Detect CronJob workloads — use mcp__kubernetes__get_jobs namespace=<namespace>
+# 1. Detect CronJob workloads — use mcp__kubectl__get_jobs namespace=<namespace>
 
 # 2. Trigger test job (do NOT rely on last completed job — it ran the previous version)
 # Keep as kubectl — no MCP equivalent for job creation from cronjob template
 kubectl create job <app>-validate-$(date +%s) --from=cronjob/<app> -n <namespace>
 
-# 3. Wait for completion — use mcp__kubernetes__wait_for_condition
+# 3. Wait for completion — use mcp__kubectl__wait_for_condition
 #    resource=job/<job-name>, namespace=<namespace>, condition=complete, timeout=120s
 
-# 4. Check logs — use mcp__kubernetes__get_logs
+# 4. Check logs — use mcp__kubectl__get_logs
 #    resource=job/<job-name>, namespace=<namespace>, tail=50
 
-# 5. Clean up — use mcp__kubernetes__delete_resource
+# 5. Clean up — use mcp__kubectl__delete_resource
 #    resource=job/<job-name>, namespace=<namespace>
 ```
 

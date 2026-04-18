@@ -231,7 +231,7 @@ Ref #977"
 
 - [ ] **Step 1: Inspect existing kata RuntimeClass**
 
-Run: `mcp__kubernetes__get_custom_resource` with `kind=RuntimeClass name=kata` (or `kubectl get runtimeclass kata -o yaml` as fallback).
+Run: `mcp__kubectl__get_custom_resource` with `kind=RuntimeClass name=kata` (or `kubectl get runtimeclass kata -o yaml` as fallback).
 Record the `handler:` value. Confirm `kata-qemu` handler is available on the node: `talosctl -n <ms01-ip> read /etc/kata-containers/` (if permitted) OR inspect Talos extension docs.
 
 - [ ] **Step 2: Create `cluster/apps/kube-system/kata-runtimeclass/kata-qemu.yaml`**
@@ -586,7 +586,7 @@ kubectl label --overwrite ns default \
   pod-security.kubernetes.io/warn=baseline
 ```
 
-Verify: `mcp__kubernetes__get_namespaces` — `default` labels show `baseline`.
+Verify: `mcp__kubectl__get_namespaces` — `default` labels show `baseline`.
 
 - [ ] **Step 6: Log, decide, commit**
 

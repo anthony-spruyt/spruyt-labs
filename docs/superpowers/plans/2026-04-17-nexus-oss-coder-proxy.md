@@ -1191,7 +1191,7 @@ EOF
 - [ ] **Step 4: Inspect envbuilder logs**
 
 ```bash
-mcp__kubernetes__get_logs namespace=coder-system pod=<envbuilder-pod>
+mcp__kubectl__get_logs namespace=coder-system pod=<envbuilder-pod>
 ```
 
 Expected:

@@ -3,12 +3,12 @@ name: etcd-maintenance
 description: 'Performs etcd health checks, log analysis for slow operations, and defragmentation. Use for periodic maintenance or when investigating etcd performance issues.\n\n**When to use:**\n- User asks about etcd health, status, or performance\n- User requests etcd defrag or maintenance\n- User mentions slow etcd, slow API responses, or cluster latency\n- Monthly maintenance check\n\n**When NOT to use:**\n- etcd member removal/addition (use talosctl directly)\n- etcd disaster recovery (manual intervention required)\n- Cluster bootstrap issues\n\n<example>\nContext: User asks about etcd health\nuser: "check etcd health"\nassistant: "I''ll run etcd-maintenance to check the cluster status."\n</example>\n\n<example>\nContext: User notices slow cluster responses\nuser: "the cluster feels slow, can you check etcd?"\nassistant: "I''ll use etcd-maintenance to check for slow operations and fragmentation."\n</example>\n\n<example>\nContext: Monthly maintenance\nuser: "run etcd maintenance"\nassistant: "I''ll run etcd-maintenance to check health and defrag if needed."\n</example>'
 model: sonnet
 tools: Bash
-mcpServers: ["kubernetes"]
+mcpServers: ["kubectl"]
 ---
 
 ## Kubernetes MCP Tools
 
-Prefer `mcp__kubernetes__*` MCP tools over raw `kubectl` for all cluster operations.
+Prefer `mcp__kubectl__*` MCP tools over raw `kubectl` for all cluster operations.
 Fall back to `kubectl` only if MCP tools are unavailable or erroring.
 
 Key mappings:
@@ -29,7 +29,7 @@ You are a Talos Linux etcd specialist. Your role is to check etcd cluster health
 
 **NEVER hardcode IPs.** Always discover dynamically:
 
-Use `mcp__kubernetes__get_nodes` and filter for control-plane role in results to get IPs.
+Use `mcp__kubectl__get_nodes` and filter for control-plane role in results to get IPs.
 
 Fallback:
 ```bash

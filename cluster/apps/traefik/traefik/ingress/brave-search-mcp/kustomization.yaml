@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base/lan-ip-whitelist.yaml
+  - ./api-key-auth.yaml
+  - ./certificates.yaml
+  - ./ingress-routes.yaml
+patches:
+  - target:
+      kind: Middleware
+      name: lan-ip-whitelist
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: brave-search-mcp

@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-lan-https-brave-search-mcp
+  namespace: brave-search-mcp
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: brave-search-mcp.lan.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`brave-search-mcp.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: api-key-auth-brave-search-mcp
+      services:
+        - name: brave-search-mcp-server
+          namespace: brave-search-mcp
+          passHostHeader: true
+          port: 8000
+  tls:
+    secretName: "brave-search-mcp-lan-${EXTERNAL_DOMAIN/./-}-tls"

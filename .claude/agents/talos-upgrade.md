@@ -3,12 +3,12 @@ name: talos-upgrade
 description: Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification. Use when Renovate creates a PR updating talosVersion in talconfig.yaml, when user requests "upgrade Talos", or during planned OS maintenance.\n\n**When to use:**\n- Renovate PR updates talosVersion in talconfig.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use talosctl upgrade-k8s instead)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n**Critical safety:**\n- NEVER upgrade more than one control plane node at a time\n- ALWAYS wait for etcd quorum after each control plane upgrade\n- ALWAYS wait for Ceph HEALTH_OK between worker upgrades\n- Sequential order: Control Plane first, then Workers\n\n**Handoff flow:** On completion → returns SUCCESS (ready to commit) or ROLLBACK (with recovery steps) or PARTIAL (intervention needed)\n\n<example>\nContext: Renovate PR updates talosVersion in talconfig.yaml\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I'll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nContext: User requests Talos upgrade\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I'll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>\n\n<example>\nContext: Planned maintenance window\nuser: "We have a maintenance window, let's upgrade Talos"\nassistant: "I'll run talos-upgrade to handle the upgrade with quorum safety checks."\n<commentary>\nScheduled maintenance involving Talos upgrade triggers the agent.\n</commentary>\n</example>
 model: opus
 tools: Bash, Read, Grep, Glob, Edit
-mcpServers: ["kubernetes"]
+mcpServers: ["kubectl"]
 ---
 
 ## Kubernetes MCP Tools
 
-Prefer `mcp__kubernetes__*` MCP tools over raw `kubectl` for all cluster operations.
+Prefer `mcp__kubectl__*` MCP tools over raw `kubectl` for all cluster operations.
 Fall back to `kubectl` only if MCP tools are unavailable or erroring.
 
 Key mappings:
@@ -98,7 +98,7 @@ gh issue comment <issue-number> --repo anthony-spruyt/spruyt-labs \
 
 **NEVER hardcode IPs.** Always query dynamically:
 
-Use `mcp__kubernetes__get_nodes_summary` for all nodes with roles, then filter for control-plane/worker IPs.
+Use `mcp__kubectl__get_nodes_summary` for all nodes with roles, then filter for control-plane/worker IPs.
 
 Fallback:
 ```bash
@@ -170,7 +170,7 @@ gh pr diff <pr-number> --repo anthony-spruyt/spruyt-labs | grep talosVersion
 # Parallel Group 1 - Cluster health
 # IMPORTANT: talosctl health requires single-node targeting (it discovers the cluster from that node)
 talosctl health -n <any-cp-node-ip>
-# Use mcp__kubernetes__get_nodes_summary instead of kubectl get nodes -o wide
+# Use mcp__kubectl__get_nodes_summary instead of kubectl get nodes -o wide
 
 # Parallel Group 2 - etcd and storage
 # IMPORTANT: Target only CP nodes to avoid "Unimplemented" warnings from workers
@@ -209,7 +209,7 @@ flux get helmreleases -A
 **MANDATORY before any control plane upgrade:**
 
 ```bash
-# Get first control plane node IP — prefer mcp__kubernetes__get_nodes, filter for control-plane
+# Get first control plane node IP — prefer mcp__kubectl__get_nodes, filter for control-plane
 CP_NODE=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
 
 # Create etcd snapshot
@@ -229,7 +229,7 @@ For EACH control plane node:
 
 #### Step 3.1: Get node info
 
-Use `mcp__kubernetes__get_nodes` and filter for control-plane role to get CP IPs.
+Use `mcp__kubectl__get_nodes` and filter for control-plane role to get CP IPs.
 
 ```bash
 # Fallback: Get control plane node IPs
@@ -271,8 +271,8 @@ talosctl upgrade \
 
 #### Step 3.4: Wait for node recovery (CRITICAL)
 
-Use `mcp__kubernetes__wait_for_condition` for node/\<name\> (condition=Ready, timeout=300s).
-Use `mcp__kubernetes__get_nodes` to find node name by IP.
+Use `mcp__kubectl__wait_for_condition` for node/\<name\> (condition=Ready, timeout=300s).
+Use `mcp__kubectl__get_nodes` to find node name by IP.
 
 ```bash
 # Fallback: Wait for node to become Ready (timeout: 5 minutes)
@@ -336,7 +336,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
 #### Step 4.2: Get worker info
 
-Use `mcp__kubernetes__get_nodes` and filter for non-control-plane nodes to get worker IPs.
+Use `mcp__kubectl__get_nodes` and filter for non-control-plane nodes to get worker IPs.
 
 ```bash
 # Fallback: Get worker node IPs
@@ -357,7 +357,7 @@ talosctl upgrade \
 
 #### Step 4.4: Wait for node recovery
 
-Use `mcp__kubernetes__wait_for_condition` for node/\<hostname\> (condition=Ready, timeout=300s).
+Use `mcp__kubectl__wait_for_condition` for node/\<hostname\> (condition=Ready, timeout=300s).
 
 ```bash
 # Fallback: Wait for node to become Ready (timeout: 5 minutes)
@@ -396,7 +396,7 @@ If tracking with an issue, post progress after each worker including Ceph recove
 ```bash
 # Parallel Group 1 - Version verification
 talosctl version --short
-# Use mcp__kubernetes__get_nodes_summary instead of kubectl get nodes -o wide
+# Use mcp__kubectl__get_nodes_summary instead of kubectl get nodes -o wide
 
 # Parallel Group 2 - Cluster health
 talosctl health -n <any-cp-node-ip>
@@ -412,7 +412,7 @@ flux get helmreleases -A
 
 After all nodes are upgraded and Ceph is healthy, trigger the descheduler to rebalance workloads across nodes. This ensures pods are evenly distributed after the rolling node reboots.
 
-Check if descheduler is deployed — use `mcp__kubernetes__get_deployments` namespace=kube-system and `mcp__kubernetes__get_jobs` namespace=kube-system.
+Check if descheduler is deployed — use `mcp__kubectl__get_deployments` namespace=kube-system and `mcp__kubectl__get_jobs` namespace=kube-system.
 
 ```bash
 # If descheduler exists as a CronJob, trigger it manually (keep as kubectl — no MCP equivalent)
@@ -427,7 +427,7 @@ kubectl get pods -A -o wide --watch
 - If workload distribution looks balanced already
 - If the upgrade was performed during low-traffic hours
 
-**Verification:** Use `mcp__kubernetes__get_pods` (all namespaces) and count pod distribution per node from results.
+**Verification:** Use `mcp__kubectl__get_pods` (all namespaces) and count pod distribution per node from results.
 
 ### Phase 7: Update Version References
 

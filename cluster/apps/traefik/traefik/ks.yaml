@@ -26,11 +26,13 @@ spec:
   dependsOn:
     - name: traefik
     - name: authentik
+    - name: brave-search-mcp
     - name: coder
     - name: crafty-controller
     - name: firefly-iii
     - name: firemerge
     - name: foundryvtt
+    - name: github-mcp
     - name: headlamp
     - name: n8n
     - name: nexus-system

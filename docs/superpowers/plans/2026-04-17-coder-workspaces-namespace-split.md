@@ -693,7 +693,7 @@ spec:
             serviceAccountName: coder-workspace
 ```
 
-> **Verify against installed Kyverno version** before commit: `mcp__kubernetes__get_deployments` (ns=kyverno) → note image tag. Kyverno ≥1.10 supports the pattern form above. If version is older, consult upstream docs for the correct precondition shape, adjust, re-validate via `kubectl apply --dry-run=server -f <file>`.
+> **Verify against installed Kyverno version** before commit: `mcp__kubectl__get_deployments` (ns=kyverno) → note image tag. Kyverno ≥1.10 supports the pattern form above. If version is older, consult upstream docs for the correct precondition shape, adjust, re-validate via `kubectl apply --dry-run=server -f <file>`.
 
 - [ ] **Step 3: Write `kyverno-policy/app/kustomization.yaml`**
 

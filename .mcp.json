@@ -1,17 +1,10 @@
 {
   "mcpServers": {
-    "victoriametrics": {
+    "bravesearch": {
       "type": "http",
-      "url": "https://mcp-vm.lan.${EXTERNAL_DOMAIN}/mcp",
+      "url": "https://brave-search-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
       "headers": {
-        "X-API-KEY": "${VM_MCP_API_KEY}"
-      }
-    },
-    "kubernetes": {
-      "type": "http",
-      "url": "https://kubectl-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
-      "headers": {
-        "X-API-KEY": "${KUBECTL_MCP_API_KEY}"
+        "X-API-KEY": "${BRAVE_SEARCH_MCP_API_KEY}"
       }
     },
     "cclsp": {
@@ -19,6 +12,27 @@
       "command": "cclsp",
       "env": {
         "CCLSP_CONFIG_PATH": "/workspaces/spruyt-labs/.claude/cclsp.json"
+      }
+    },
+    "github": {
+      "type": "http",
+      "url": "https://github-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
+      "headers": {
+        "X-API-KEY": "${GITHUB_MCP_API_KEY}"
+      }
+    },
+    "kubectl": {
+      "type": "http",
+      "url": "https://kubectl-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
+      "headers": {
+        "X-API-KEY": "${KUBECTL_MCP_API_KEY}"
+      }
+    },
+    "victoriametrics": {
+      "type": "http",
+      "url": "https://mcp-vm.lan.${EXTERNAL_DOMAIN}/mcp",
+      "headers": {
+        "X-API-KEY": "${VM_MCP_API_KEY}"
       }
     }
   }

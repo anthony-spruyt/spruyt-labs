@@ -1,6 +1,6 @@
 # Kubernetes MCP Tools
 
-> **Always prefer `mcp__kubernetes__*` MCP tools over raw `kubectl` for cluster operations.**
+> **Always prefer `mcp__kubectl__*` MCP tools over raw `kubectl` for cluster operations.**
 > Fall back to `kubectl` only when MCP tools are unavailable or erroring.
 
 ## Tool Mapping
