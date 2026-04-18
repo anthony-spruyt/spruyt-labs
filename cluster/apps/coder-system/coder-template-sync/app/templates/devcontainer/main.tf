@@ -39,7 +39,7 @@ data "kubernetes_service_v1" "traefik" {
 }
 
 locals {
-  namespace      = "coder-system"
+  namespace      = "coder-workspaces"
   workspace_name = "coder-${lower(data.coder_workspace.me.id)}"
   # Traefik LB IP for hostAliases (avoids Cloudflare hairpin for agent downloads)
   traefik_lb_ip = data.kubernetes_service_v1.traefik.status[0].load_balancer[0].ingress[0].ip
@@ -214,6 +214,11 @@ resource "coder_agent" "main" {
   startup_script = <<-EOT
     set -e
 
+    # Rootful podman runtime dir (required by podman inside Kata VM).
+    sudo mkdir -p /run/user/1000
+    sudo chown 1000:1000 /run/user/1000
+    export XDG_RUNTIME_DIR=/run/user/1000
+
     # SA token is mounted read-only as root. Copy to readable location for vscode.
     if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
       sudo cp /var/run/secrets/kubernetes.io/serviceaccount/token /tmp/sa-token
@@ -230,7 +235,7 @@ resource "coder_agent" "main" {
     contexts:
     - context:
         cluster: default
-        namespace: coder-system
+        namespace: coder-workspaces
         user: default
       name: default
     current-context: default
@@ -406,7 +411,7 @@ resource "kubernetes_pod_v1" "main" {
 
     # Envbuilder requires root during image build (kaniko). It drops to
     # the devcontainer.json remoteUser (vscode, UID 1000) before exec'ing
-    # the init command. PSA=baseline on coder-system permits this.
+    # the init command. PSA=privileged on coder-workspaces permits this.
     # fs_group kept so PVC mounts are group-writable by vscode after drop.
     security_context {
       fs_group = 1000
@@ -446,12 +451,9 @@ resource "kubernetes_pod_v1" "main" {
       # empirically fails with drop=[ALL] on chown /etc/gshadow.
       # Kata runtime provides the real isolation boundary.
       security_context {
-        privileged                 = false
+        privileged                 = true
         allow_privilege_escalation = true
         read_only_root_filesystem  = false
-        seccomp_profile {
-          type = "RuntimeDefault"
-        }
       }
 
       dynamic "env" {
