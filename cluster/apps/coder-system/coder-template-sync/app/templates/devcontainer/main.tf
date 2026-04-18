@@ -193,7 +193,7 @@ resource "kubernetes_persistent_volume_claim_v1" "containers" {
   wait_until_bound = false
   spec {
     access_modes       = ["ReadWriteOnce"]
-    storage_class_name = "rbd-fast-delete-encrypted"
+    storage_class_name = "rbd-fast-delete"
     volume_mode        = "Block"
     resources {
       requests = {
