@@ -44,8 +44,12 @@ locals {
   # Traefik LB IP for hostAliases (avoids Cloudflare hairpin for agent downloads)
   traefik_lb_ip = data.kubernetes_service_v1.traefik.status[0].load_balancer[0].ingress[0].ip
 
-  git_author_name  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
-  git_author_email = data.coder_workspace_owner.me.email
+  git_author_name = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
+  # Prefer the GitHub noreply address (see `git_email` parameter) so commits
+  # verify without leaking the SSO email and without relying on the SSO email
+  # being added to the GitHub account. Falls back to the Coder profile email
+  # when the parameter is blank (e.g. forks of this template).
+  git_author_email = coalesce(data.coder_parameter.git_email.value, data.coder_workspace_owner.me.email)
   repo_url         = data.coder_parameter.repo.value
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
@@ -80,6 +84,16 @@ locals {
 # ---------------------------------------------------------------------------
 # Parameters
 # ---------------------------------------------------------------------------
+
+data "coder_parameter" "git_email" {
+  name         = "git_email"
+  display_name = "Git commit email"
+  description  = "Email used for git author/committer and SSH signature verification. Must be a GitHub-verified email on anthony-spruyt's account. Defaults to the GitHub noreply address so commits verify without leaking personal email."
+  type         = "string"
+  mutable      = true
+  order        = 2
+  default      = "99536297+anthony-spruyt@users.noreply.github.com"
+}
 
 data "coder_parameter" "repo" {
   name         = "repo"
