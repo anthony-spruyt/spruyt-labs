@@ -17,6 +17,9 @@ fail() {
   FAILED=$((FAILED + 1))
 }
 
+# Mark repo as safe — envbuilder clones as root, postCreate runs as vscode user
+git config --global --add safe.directory '*'
+
 # Make all shell scripts executable (runs from repo root via postCreateCommand)
 # Uses git ls-files to only touch tracked files, avoiding permission denied errors
 # on directories we don't own (e.g. mounted volumes, .git objects)
