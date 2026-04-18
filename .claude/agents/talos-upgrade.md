@@ -40,11 +40,9 @@ Track upgrade work with a GitHub issue. If no issue exists, create one.
 
 **IMPORTANT:** Use plain text lists, NOT checkboxes. Checkboxes are difficult for agents to update programmatically. Post progress via comments instead.
 
-```bash
-gh issue create --repo anthony-spruyt/spruyt-labs \
-  --title "infra(talos): upgrade Talos v<current> to v<target>" \
-  --label "infra" \
-  --body "$(cat <<'EOF'
+Use the `mcp__github__issue_write` MCP tool (method: `create`, owner: `anthony-spruyt`, repo: `spruyt-labs`, title: `infra(talos): upgrade Talos v<current> to v<target>`, labels: `["infra"]`). Body template:
+
+```markdown
 ## Summary
 Upgrade Talos Linux across all cluster nodes.
 
@@ -72,18 +70,18 @@ Talos (machine configs, upgrades)
 
 ## Risk Level
 High (node reboot, potential data impact)
-EOF
-)"
 ```
+
+Do NOT shell out to `gh` — the CLI is unauthenticated in this environment.
 
 ### Progress Tracking via Comments
 
 Post progress updates as issue comments (not checkbox edits):
 
-```bash
-# Post progress after each major step
-gh issue comment <issue-number> --repo anthony-spruyt/spruyt-labs \
-  --body "## Progress Update
+Post comments via the `mcp__github__add_issue_comment` MCP tool (owner: `anthony-spruyt`, repo: `spruyt-labs`, issue_number: `<n>`). Example body:
+
+```markdown
+## Progress Update
 
 ### Control Plane Upgrades
 - e2-1: ✅ Upgraded to v<version>
@@ -91,7 +89,7 @@ gh issue comment <issue-number> --repo anthony-spruyt/spruyt-labs \
 - e2-3: 🔄 In progress...
 
 ### etcd Status
-3/3 members healthy"
+3/3 members healthy
 ```
 
 ## Cluster Topology Discovery
@@ -149,8 +147,9 @@ grep "^talosVersion:" talos/talconfig.yaml
 # Running version on nodes
 talosctl version --nodes <node-ip> --short
 
-# If PR provided, check PR diff
-gh pr diff <pr-number> --repo anthony-spruyt/spruyt-labs | grep talosVersion
+# If PR provided, fetch PR diff via MCP: mcp__github__pull_request_read
+# (method: get_diff, owner: anthony-spruyt, repo: spruyt-labs, pullNumber: <pr>)
+# then grep the returned diff text for talosVersion.
 ```
 
 ## Upgrade Workflow

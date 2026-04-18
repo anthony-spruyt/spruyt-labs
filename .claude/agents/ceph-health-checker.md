@@ -147,11 +147,7 @@ Other States: [list states and counts, or "None"]
 
 ## Handoff Protocol
 
-Post the report as a GitHub issue comment:
-
-```bash
-gh issue comment <issue_number> --repo anthony-spruyt/spruyt-labs --body "<report>"
-```
+Post the report as a GitHub issue comment via the `mcp__github__add_issue_comment` MCP tool (owner: `anthony-spruyt`, repo: `spruyt-labs`, issue_number: `<n>`, body: `<report>`). Do NOT shell out to `gh` — the CLI is unauthenticated in this environment.
 
 If CRITICAL: recommend immediate investigation and list specific next steps.
 If DEGRADED: list monitoring suggestions and non-urgent remediation.

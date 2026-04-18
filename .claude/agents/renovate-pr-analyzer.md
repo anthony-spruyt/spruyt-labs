@@ -31,10 +31,11 @@ If either file is missing, proceed with best judgment and note it in output.
 
 ### 1. Read PR Details
 
-```bash
-gh pr view <number> --repo <repo> --json title,labels,body,files,headRefName
-gh pr diff <number> --repo <repo>
-```
+Use the `mcp__github__pull_request_read` MCP tool:
+- `method: get` for title, labels, body, files, headRefName
+- `method: get_diff` for the unified diff
+
+Do NOT shell out to `gh` — the CLI is unauthenticated in this environment.
 
 ### 2. Classify & Extract
 
