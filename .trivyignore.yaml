@@ -224,7 +224,7 @@ misconfigurations:
   # ==============================================================================
   - id: AVD-KSV-0111
     paths:
-      - cluster/apps/coder-system/coder/app/workspace-rbac.yaml
+      - cluster/apps/coder-workspaces/workspace-rbac/app/workspace-rbac.yaml
 
   # ==============================================================================
   # Minecraft maintenance CronJob - uses bitnami/kubectl to restart servers daily
@@ -295,11 +295,11 @@ misconfigurations:
   # alpine/k8s is a trusted Docker Hub image for kubectl operations
   - id: AVD-KSV-0125
     paths:
-      - cluster/apps/coder-system/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
   # SSH key rotation role needs resourceName-scoped secret access (least-privilege)
   - id: AVD-KSV-0113
     paths:
-      - cluster/apps/coder-system/ssh-key-rotation/app/role.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/role.yaml
   # TEMP: job runs as root so `apk add openssh-keygen` can install the package
   # at runtime. Mitigated by drop-ALL caps, allowPrivilegeEscalation: false,
   # seccomp runtime/default, and narrow ServiceAccount RBAC. Tracked by #921 —
@@ -307,22 +307,22 @@ misconfigurations:
   # to a curated image with ssh-keygen preinstalled (then these ignores go).
   - id: AVD-KSV-0012  # runAsNonRoot should be true
     paths:
-      - cluster/apps/coder-system/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
   - id: AVD-KSV-0014  # readOnlyRootFilesystem should be true
     paths:
-      - cluster/apps/coder-system/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
   - id: AVD-KSV-0020  # runAsUser should be > 10000
     paths:
-      - cluster/apps/coder-system/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
   - id: AVD-KSV-0021  # runAsGroup should be > 10000
     paths:
-      - cluster/apps/coder-system/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
   - id: AVD-KSV-0105  # runAsUser must not be 0
     paths:
-      - cluster/apps/coder-system/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
   - id: AVD-KSV-0116  # pod-level runAsGroup/fsGroup should be > 0
     paths:
-      - cluster/apps/coder-system/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
 
   # ==============================================================================
   # Coder GitOps Template Sync - Job + CronJob + RBAC
@@ -337,7 +337,7 @@ misconfigurations:
     paths:
       - cluster/apps/coder-system/coder-template-sync/app/job-template-push.yaml
       - cluster/apps/coder-system/coder-template-sync/app/cronjob-token-rotation.yaml
-      - cluster/apps/coder-system/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
   # Token-rotation Role is resourceName-scoped to a single Secret (least-privilege)
   - id: AVD-KSV-0113
     paths:
@@ -463,3 +463,17 @@ misconfigurations:
   - id: AVD-KSV-0125
     paths:
       - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+
+  # ==============================================================================
+  # Coder Workspaces - privileged pods for rootful podman inside Kata VM.
+  # Kata VM is the isolation boundary; Kyverno ClusterPolicy restricts who can
+  # create privileged pods in coder-workspaces ns to the coder-workspace SA.
+  # ==============================================================================
+  - id: AVD-KSV-0017  # Privileged container
+    paths:
+      - cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/main.tf
+      - cluster/apps/coder-workspaces/**
+  - id: AVD-KSV-0014  # Root filesystem is writable
+    paths:
+      - cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/main.tf
+      - cluster/apps/coder-workspaces/**
