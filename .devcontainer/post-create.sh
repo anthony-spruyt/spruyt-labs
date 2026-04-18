@@ -84,39 +84,37 @@ cat >"$HOME/.config/containers/containers.conf.d/10-userns.conf" <<'CONTAINERS_C
 userns = "keep-id"
 CONTAINERS_CONF
 
-# Rootless podman on $HOME (PVC-backed virtiofs) — fuse-overlayfs needed
-# because virtiofs does not advertise xattr support for kernel overlay.
-[ -c /dev/fuse ] || sudo mknod /dev/fuse c 10 229
-sudo chmod 666 /dev/fuse
-
-mkdir -p "$HOME/.config/containers"
-cat >"$HOME/.config/containers/storage.conf" <<'STORAGE_CONF'
-[storage]
-driver = "overlay"
-runroot = "/run/user/1000/containers"
-graphroot = "/home/vscode/.local/share/containers/storage"
-[storage.options.overlay]
-mount_program = "/usr/bin/fuse-overlayfs"
-STORAGE_CONF
-
-# Rootful podman uses /var/lib/containers which the Coder template mounts
-# as a direct-assigned block device formatted ext4 (real FS in Kata guest).
-# Native kernel overlay works on ext4, no fuse needed.
-sudo mkdir -p /etc/containers
-sudo tee /etc/containers/storage.conf >/dev/null <<'ROOTFUL_STORAGE_CONF'
+if [ -n "${CODER_WORKSPACE_ID:-}" ]; then
+  # Kata micro-VM is the isolation boundary; rootful podman inside the guest
+  # is fine. Block PVC at /var/lib/containers provides real ext4 for kernel
+  # overlay.
+  rm -rf "$HOME/.local/share/containers/storage" "$HOME/.config/containers/storage.conf"
+  sudo mkdir -p /etc/containers
+  sudo tee /etc/containers/storage.conf >/dev/null <<'ROOTFUL_STORAGE_CONF'
 [storage]
 driver = "overlay"
 runroot = "/run/containers/storage"
 graphroot = "/var/lib/containers/storage"
 ROOTFUL_STORAGE_CONF
-
-sudo tee /etc/containers/containers.conf >/dev/null <<'CONTAINERS_CONF'
+  sudo tee /etc/containers/containers.conf >/dev/null <<'CONTAINERS_CONF'
 [containers]
 cgroups = "disabled"
 
 [engine]
 cgroup_manager = "cgroupfs"
 CONTAINERS_CONF
+  grep -q 'alias podman=' "$HOME/.bashrc" 2>/dev/null || echo 'alias podman="sudo podman"' >>"$HOME/.bashrc"
+else
+  mkdir -p "$HOME/.config/containers"
+  cat >"$HOME/.config/containers/storage.conf" <<'STORAGE_CONF'
+[storage]
+driver = "overlay"
+runroot = "/run/user/1000/containers"
+graphroot = "/home/vscode/.local/share/containers/storage"
+[storage.options.overlay]
+mount_program = ""
+STORAGE_CONF
+fi
 
 # Registry allow-list: fully-qualified images only, short-name lookups fail.
 # Prevents typo-squat pulls from unintended registries.
