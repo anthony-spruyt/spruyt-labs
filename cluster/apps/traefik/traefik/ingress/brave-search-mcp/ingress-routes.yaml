@@ -19,7 +19,7 @@ spec:
         - name: lan-ip-whitelist
         - name: api-key-auth-brave-search-mcp
       services:
-        - name: brave-search-mcp-server
+        - name: brave-search-mcp
           namespace: brave-search-mcp
           passHostHeader: true
           port: 8000
