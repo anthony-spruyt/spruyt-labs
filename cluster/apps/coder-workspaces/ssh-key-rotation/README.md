@@ -18,12 +18,12 @@ independent Flux Kustomization and lifecycle.
 
 ```bash
 # Trigger manual rotation
-kubectl -n coder-system create job \
+kubectl -n coder-workspaces create job \
   --from=cronjob/ssh-key-rotation ssh-rotation-smoke-test
 
 # Inspect status
-kubectl -n coder-system get cronjob ssh-key-rotation
-kubectl -n coder-system logs -l app=ssh-key-rotation
+kubectl -n coder-workspaces get cronjob ssh-key-rotation
+kubectl -n coder-workspaces logs -l app=ssh-key-rotation
 
 # Reconcile
 flux reconcile kustomization ssh-key-rotation --with-source
