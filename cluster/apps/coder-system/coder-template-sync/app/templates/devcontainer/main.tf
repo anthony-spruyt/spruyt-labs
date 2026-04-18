@@ -562,6 +562,16 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
+      # Podman registries.conf drop-in: route container pulls through Nexus
+      # pull-through proxies (docker.io, ghcr.io, quay.io, mcr.microsoft.com,
+      # registry.k8s.io). Ref #976.
+      volume_mount {
+        name       = "registries-conf"
+        mount_path = "/etc/containers/registries.conf.d/99-nexus-mirror.conf"
+        sub_path   = "99-nexus-mirror.conf"
+        read_only  = true
+      }
+
       # Direct-assigned block device for podman storage. Kata passes the
       # RBD volume into the guest as virtio-blk so the guest kernel sees
       # real ext4 (formatted in startup) and kernel overlay works without
@@ -625,6 +635,14 @@ resource "kubernetes_pod_v1" "main" {
           key  = "credentials.tfrc.json"
           path = "credentials.tfrc.json"
         }
+      }
+    }
+
+    volume {
+      name = "registries-conf"
+      config_map {
+        name         = "coder-workspace-registries-conf"
+        default_mode = "0444"
       }
     }
 

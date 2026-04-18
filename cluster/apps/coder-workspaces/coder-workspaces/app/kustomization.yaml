@@ -10,5 +10,6 @@ resources:
   - ./coder-ssh-signing-key.sops.yaml
   - ./coder-terraform-credentials.sops.yaml
   - ./rbac.yaml
+  - ./registries-conf-configmap.yaml
   - ./network-policies.yaml
   - ./restrict-privileged-to-coder-workspace-sa.yaml

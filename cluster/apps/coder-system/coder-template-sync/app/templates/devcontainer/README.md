@@ -25,6 +25,11 @@ layer cache to the Nexus envbuilder-cache hosted repo (`:8083`). Driven by
 envs set here and the `ENVBUILDER_DOCKER_CONFIG_BASE64` auth entry in the
 `coder-workspace-env` Secret.
 
+Runtime container pulls (podman, skopeo, buildah) inside the workspace are
+also routed through Nexus via a `registries.conf` drop-in mounted from the
+`coder-workspace-registries-conf` ConfigMap (docker.io, ghcr.io, quay.io,
+mcr.microsoft.com, registry.k8s.io → `nexus:8082`).
+
 Runtime apt inside the workspace is NOT routed through Nexus by this template.
 Consumer repos wanting apt caching should add the following to their
 `.devcontainer/Dockerfile`:
