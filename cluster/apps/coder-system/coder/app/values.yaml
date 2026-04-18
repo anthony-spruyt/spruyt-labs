@@ -38,9 +38,6 @@ coder:
   service:
     type: ClusterIP
   serviceAccount:
-    # Grant the coder SA (in coder-system) RBAC in coder-workspaces so
-    # provisioner can create pods/PVCs for workspaces living in the new ns.
-    # See docs/superpowers/plans/2026-04-17-coder-workspaces-namespace-split.md
     workspaceNamespaces:
       - name: coder-workspaces
         workspacePerms: true
