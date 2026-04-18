@@ -124,7 +124,6 @@ kubectl get helmreleases -n nexus-system
 
 ## References
 
-- [Spec: 2026-04-17-nexus-oss-coder-proxy-design.md](../../../../docs/superpowers/specs/2026-04-17-nexus-oss-coder-proxy-design.md)
 - [Issue #968](https://github.com/anthony-spruyt/spruyt-labs/issues/968)
 - [Sonatype Nexus Repository 3 documentation](https://help.sonatype.com/en/sonatype-nexus-repository.html)
 - [Docker reverse-proxy strategies](https://help.sonatype.com/en/docker-repository-reverse-proxy-strategies.html)
