@@ -6,6 +6,7 @@ resources:
   - ./nexus-admin.sops.yaml
   - ./nexus-secrets-key.sops.yaml
   - ./nexus-upstream-creds.sops.yaml
+  - ./pvc.yaml
   - ./release.yaml
   - ./provision-repos-rbac.yaml
   - ./provision-repos-job.yaml

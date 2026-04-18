@@ -125,9 +125,7 @@ service:
 persistence:
   data:
     type: persistentVolumeClaim
-    accessMode: ReadWriteOnce
-    size: 100Gi
-    storageClass: ceph-block
+    existingClaim: nexus-data
     globalMounts:
       - path: /nexus-data
   tmp:
