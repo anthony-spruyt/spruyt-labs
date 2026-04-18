@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# Pulls MCP API keys from traefik ns (source of truth) into coder-workspaces.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: coder-workspace-mcp-api-keys
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: traefik-mcp-api-keys-store
+  target:
+    name: coder-workspace-mcp-api-keys
+    creationPolicy: Owner
+  data:
+    - secretKey: BRAVE_SEARCH_MCP_API_KEY
+      remoteRef:
+        key: traefik-mcp-api-keys
+        property: BRAVE_SEARCH_MCP_API_KEY
+    - secretKey: GITHUB_MCP_API_KEY
+      remoteRef:
+        key: traefik-mcp-api-keys
+        property: GITHUB_MCP_API_KEY
+    - secretKey: KUBECTL_MCP_API_KEY
+      remoteRef:
+        key: traefik-mcp-api-keys
+        property: KUBECTL_MCP_API_KEY
+    - secretKey: VM_MCP_API_KEY
+      remoteRef:
+        key: traefik-mcp-api-keys
+        property: VM_MCP_API_KEY
