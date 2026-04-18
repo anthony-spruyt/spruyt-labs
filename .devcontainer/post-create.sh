@@ -109,24 +109,42 @@ cgroup_manager = "cgroupfs"
 CONTAINERS_CONF
   grep -q 'alias podman=' "$HOME/.bashrc" 2>/dev/null || echo 'alias podman="sudo podman"' >>"$HOME/.bashrc"
 else
-  mkdir -p "$HOME/.config/containers"
-  cat >"$HOME/.config/containers/storage.conf" <<'STORAGE_CONF'
-[storage]
-driver = "overlay"
-runroot = "/run/user/1000/containers"
-graphroot = "/home/vscode/.local/share/containers/storage"
-[storage.options.overlay]
-mount_program = ""
-STORAGE_CONF
+  # WSL2 devcontainer: rootful podman via sudo. Rootless is structurally blocked
+  # by Docker Desktop's userns-remap + missing /dev/net/tun + no delegated cgroup
+  # subtree - see .devcontainer/README.md. /var/lib/containers is a named volume
+  # mounted on Docker Desktop's ext4, which avoids overlay-on-overlay so native
+  # kernel overlay works (fast, no fuse hop).
   sudo mkdir -p /etc/containers
   sudo tee /etc/containers/storage.conf >/dev/null <<'ROOTFUL_STORAGE_CONF'
 [storage]
 driver = "overlay"
 runroot = "/run/containers/storage"
 graphroot = "/var/lib/containers/storage"
+ROOTFUL_STORAGE_CONF
+  sudo tee /etc/containers/containers.conf >/dev/null <<'CONTAINERS_CONF'
+[containers]
+cgroups = "disabled"
+
+[engine]
+cgroup_manager = "cgroupfs"
+CONTAINERS_CONF
+  # Named volume comes up owned by root; chown so rootful podman can populate it.
+  sudo chown root:root /var/lib/containers
+  # $HOME rootless storage config kept for tooling that invokes podman without
+  # sudo (podman-docker compatibility); backed by fuse-overlayfs since rootless
+  # cannot use kernel overlay.
+  mkdir -p "$HOME/.config/containers"
+  cat >"$HOME/.config/containers/storage.conf" <<STORAGE_CONF
+[storage]
+driver = "overlay"
+runroot = "/run/user/$(id -u)/containers"
+graphroot = "$HOME/.local/share/containers/storage"
 [storage.options.overlay]
 mount_program = "/usr/bin/fuse-overlayfs"
-ROOTFUL_STORAGE_CONF
+STORAGE_CONF
+  # Alias docker/podman -> sudo podman so lint.sh and agent-run hit the fast
+  # rootful path by default.
+  grep -q 'alias podman=' "$HOME/.bashrc" 2>/dev/null || echo 'alias podman="sudo podman"' >>"$HOME/.bashrc"
 fi
 
 # Registry allow-list: fully-qualified images only, short-name lookups fail.
