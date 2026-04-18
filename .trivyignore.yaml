@@ -224,7 +224,7 @@ misconfigurations:
   # ==============================================================================
   - id: AVD-KSV-0111
     paths:
-      - cluster/apps/coder-workspaces/workspace-rbac/app/workspace-rbac.yaml
+      - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
 
   # ==============================================================================
   # Minecraft maintenance CronJob - uses bitnami/kubectl to restart servers daily
