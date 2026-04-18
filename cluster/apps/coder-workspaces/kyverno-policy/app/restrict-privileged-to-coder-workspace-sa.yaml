@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-privileged-to-coder-workspace-sa
+  annotations:
+    policies.kyverno.io/title: Restrict privileged pods in coder-workspaces
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      In the coder-workspaces namespace, privileged pods may only be created
+      by the coder-workspace ServiceAccount. Defense in depth beyond PSA
+      and the Kata VM boundary.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: only-coder-workspace-sa-privileged
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [coder-workspaces]
+              operations: [CREATE]
+      preconditions:
+        any:
+          - key: "{{ request.object.spec.containers[?securityContext.privileged == `true`] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+      validate:
+        message: "Privileged pods in coder-workspaces require ServiceAccount 'coder-workspace'"
+        pattern:
+          spec:
+            serviceAccountName: coder-workspace
