@@ -118,6 +118,15 @@ graphroot = "/home/vscode/.local/share/containers/storage"
 [storage.options.overlay]
 mount_program = ""
 STORAGE_CONF
+  sudo mkdir -p /etc/containers
+  sudo tee /etc/containers/storage.conf >/dev/null <<'ROOTFUL_STORAGE_CONF'
+[storage]
+driver = "overlay"
+runroot = "/run/containers/storage"
+graphroot = "/var/lib/containers/storage"
+[storage.options.overlay]
+mount_program = "/usr/bin/fuse-overlayfs"
+ROOTFUL_STORAGE_CONF
 fi
 
 # Registry allow-list: fully-qualified images only, short-name lookups fail.
