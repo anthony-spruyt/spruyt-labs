@@ -1,0 +1,46 @@
+---
+# CoreDNS Corefile - Flux-managed post-bootstrap.
+# Talos ManifestApplyController is apply-once (create-only); it will not
+# re-apply the default Corefile once this ConfigMap exists.
+# Reconciliation drift: kubectl.kubernetes.io/last-applied-configuration
+# annotation managed by kustomize-controller SSA.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns
+  namespace: kube-system
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+            lameduck 5s
+        }
+        ready
+        log . {
+            class error
+        }
+        prometheus :9153
+
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+            pods insecure
+            fallthrough in-addr.arpa ip6.arpa
+            ttl 30
+        }
+        forward . /etc/resolv.conf {
+           max_concurrent 1000
+        }
+        cache 30 {
+           disable success cluster.local
+           disable denial cluster.local
+        }
+        loop
+        reload
+        loadbalance
+    }
+
+    lan.${EXTERNAL_DOMAIN}:53 {
+        errors
+        forward . 192.168.50.11 192.168.50.12
+        cache 30
+    }
