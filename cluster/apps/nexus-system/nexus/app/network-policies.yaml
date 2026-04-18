@@ -13,7 +13,7 @@ spec:
     # Coder workspace envbuilder pods (labeled com.coder.resource: "true" by the template)
     - fromEndpoints:
         - matchLabels:
-            k8s:io.kubernetes.pod.namespace: coder-system
+            k8s:io.kubernetes.pod.namespace: coder-workspaces
             k8s:com.coder.resource: "true"
       toPorts:
         - ports:
