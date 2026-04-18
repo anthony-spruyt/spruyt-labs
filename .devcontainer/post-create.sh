@@ -84,9 +84,12 @@ cat >"$HOME/.config/containers/containers.conf.d/10-userns.conf" <<'CONTAINERS_C
 userns = "keep-id"
 CONTAINERS_CONF
 
-# Explicit storage driver: native kernel overlay (no fuse-overlayfs).
-# Relies on kernel >= 6.18 rootless overlay support (user.max_user_namespaces
-# must be non-zero). mount_program = "" disables fuse-overlayfs fallback.
+# Kata guest devtmpfs does not provision /dev/fuse; mknod it (privileged ok).
+[ -c /dev/fuse ] || sudo mknod /dev/fuse c 10 229
+sudo chmod 666 /dev/fuse
+
+# Workspace PVC is virtiofs-backed, so kernel overlay cannot whiteout.
+# Use fuse-overlayfs (userspace overlay) for both rootless and rootful.
 mkdir -p "$HOME/.config/containers"
 cat >"$HOME/.config/containers/storage.conf" <<'STORAGE_CONF'
 [storage]
@@ -94,8 +97,18 @@ driver = "overlay"
 runroot = "/run/user/1000/containers"
 graphroot = "/home/vscode/.local/share/containers/storage"
 [storage.options.overlay]
-mount_program = ""
+mount_program = "/usr/bin/fuse-overlayfs"
 STORAGE_CONF
+
+sudo mkdir -p /etc/containers /var/lib/containers
+sudo tee /etc/containers/storage.conf >/dev/null <<'ROOTFUL_STORAGE_CONF'
+[storage]
+driver = "overlay"
+runroot = "/run/containers/storage"
+graphroot = "/var/lib/containers/storage"
+[storage.options.overlay]
+mount_program = "/usr/bin/fuse-overlayfs"
+ROOTFUL_STORAGE_CONF
 
 # Registry allow-list: fully-qualified images only, short-name lookups fail.
 # Prevents typo-squat pulls from unintended registries.
@@ -213,9 +226,9 @@ fi
 if command -v podman &>/dev/null; then
   graph_driver=$(podman info --format '{{.Store.GraphDriverName}}' 2>/dev/null || echo "unknown")
   if [[ "$graph_driver" == "overlay" ]]; then
-    pass "Podman storage driver is native overlay"
+    pass "Podman storage driver is overlay (fuse-overlayfs on Kata, native elsewhere)"
   else
-    echo "  SKIP: Podman graph driver is '$graph_driver' (expected 'overlay'; may need kernel >=6.18 + user.max_user_namespaces)"
+    echo "  SKIP: Podman graph driver is '$graph_driver' (expected 'overlay')"
   fi
 else
   fail "Podman not installed, cannot verify storage driver"
