@@ -513,6 +513,13 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
+      # MCP API keys synced from traefik ns via ExternalSecret
+      env_from {
+        secret_ref {
+          name = "coder-workspace-mcp-api-keys"
+        }
+      }
+
       resources {
         requests = {
           cpu    = "2000m"

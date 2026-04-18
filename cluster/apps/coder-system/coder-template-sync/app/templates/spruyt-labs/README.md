@@ -49,3 +49,4 @@ The following Kubernetes Secrets must exist in `coder-workspaces`:
 - `coder-talosconfig` — Talos client config mounted at `~/.talos/config`
 - `coder-terraform-credentials` — Terraform credentials at `~/.terraform.d/credentials.tfrc.json`
 - `coder-workspace-env` — Env vars injected into pods
+- `coder-workspace-mcp-api-keys` — MCP API keys synced from `traefik/traefik-mcp-api-keys` via ExternalSecret

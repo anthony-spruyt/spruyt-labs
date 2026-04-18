@@ -12,6 +12,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
+    - name: external-secrets
     - name: kyverno-policies
   prune: true
   timeout: 5m
