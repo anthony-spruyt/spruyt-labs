@@ -84,10 +84,14 @@ cat >"$HOME/.config/containers/containers.conf.d/10-userns.conf" <<'CONTAINERS_C
 userns = "keep-id"
 CONTAINERS_CONF
 
-if [ -n "${CODER_WORKSPACE_ID:-}" ]; then
-  # Kata micro-VM is the isolation boundary; rootful podman inside the guest
-  # is fine. Block PVC at /var/lib/containers provides real ext4 for kernel
-  # overlay.
+if [ -b /dev/containers-disk ]; then
+  # Coder + Kata micro-VM: block PVC at /var/lib/containers provides real
+  # ext4 for kernel overlay. VM boundary = isolation; rootful podman inside.
+  if ! sudo blkid /dev/containers-disk >/dev/null 2>&1; then
+    sudo mkfs.ext4 -q -L containers /dev/containers-disk
+  fi
+  sudo mkdir -p /var/lib/containers
+  sudo mountpoint -q /var/lib/containers || sudo mount -o noatime /dev/containers-disk /var/lib/containers
   rm -rf "$HOME/.local/share/containers/storage" "$HOME/.config/containers/storage.conf"
   sudo mkdir -p /etc/containers
   sudo tee /etc/containers/storage.conf >/dev/null <<'ROOTFUL_STORAGE_CONF'
