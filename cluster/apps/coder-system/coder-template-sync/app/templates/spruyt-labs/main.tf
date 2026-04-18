@@ -6,7 +6,7 @@ terraform {
       version = "~> 2.0"
     }
     kubernetes = {
-      source  = "hashicorp/kubernetes"
+      source = "hashicorp/kubernetes"
       # Pinned below 3.x — the new identity tracking on kubernetes_pod_v1
       # trips "Unexpected Identity Change" on refresh for pods created by
       # previous plan iterations, blocking destroy/recreate. See
@@ -466,7 +466,7 @@ resource "kubernetes_pod_v1" "main" {
   }
 
   spec {
-    service_account_name = "coder-workspace"
+    service_account_name = "coder-workspace-admin"
     restart_policy       = "Never"
     # Kata Containers: each workspace pod runs in its own lightweight VM
     # (QEMU/Cloud Hypervisor + KVM). Hypervisor boundary around arbitrary

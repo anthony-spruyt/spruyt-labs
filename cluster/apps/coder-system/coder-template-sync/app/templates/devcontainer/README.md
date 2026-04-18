@@ -1,6 +1,9 @@
 # Coder Devcontainer Template
 
-Kubernetes workspace template for Coder that builds from `devcontainer.json`.
+Generic Kubernetes workspace template for Coder that builds from
+`devcontainer.json`. No cluster-admin, no Talos/Terraform credentials —
+intended for arbitrary repos. The `spruyt-labs` template is the
+homelab-privileged sibling.
 
 ## Usage
 
@@ -11,10 +14,10 @@ Push to Coder:
 ## Features
 
 - Builds from any repo's `.devcontainer/devcontainer.json`
-- Docker-in-Docker for MegaLinter and container builds
-- cluster-admin ServiceAccount for kubectl/helm/flux
+- Podman-in-Kata for container builds (rootful, virtio-blk storage)
+- `coder-workspace` ServiceAccount (no cluster role binding) with token automount disabled — no cluster API access
 - SSH key for git auth and verified commit signing
-- Talosconfig and Terraform credentials mounted
+- Nexus registries.conf drop-in for container pull mirroring
 
 ## Nexus artifact proxy
 
@@ -46,7 +49,5 @@ passthrough repo under `/repository/apt-<name>/`.
 The following Kubernetes Secrets must exist in `coder-workspaces`:
 
 - `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
-- `coder-talosconfig` — Talos client config mounted at `~/.talos/config`
-- `coder-terraform-credentials` — Terraform credentials at `~/.terraform.d/credentials.tfrc.json`
-- `coder-workspace-env` — Env vars injected into pods
+- `coder-workspace-env` — Env vars injected into pods (envbuilder mirror auth, etc.)
 - `coder-workspace-mcp-api-keys` — MCP API keys synced from `traefik/traefik-mcp-api-keys` via ExternalSecret

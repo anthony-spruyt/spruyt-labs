@@ -16,10 +16,11 @@ Push to Coder:
 - Defaults `repo` to `git@github.com:anthony-spruyt/spruyt-labs.git`
 - Validation regex `^(git@|ssh://)` rejects HTTPS at create
 - Builds from the repo's `.devcontainer/devcontainer.json`
-- Docker-in-Docker for MegaLinter and container builds
-- cluster-admin ServiceAccount for kubectl/helm/flux
+- Podman-in-Kata for container builds (rootful, virtio-blk storage)
+- `coder-workspace-admin` ServiceAccount bound to cluster-admin for kubectl/helm/flux
 - SSH key for git auth and verified commit signing
 - Talosconfig and Terraform credentials mounted
+- Nexus registries.conf drop-in for container pull mirroring
 
 ## Nexus artifact proxy
 

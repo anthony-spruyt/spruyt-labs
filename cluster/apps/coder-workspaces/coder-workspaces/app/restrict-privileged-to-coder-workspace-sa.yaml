@@ -11,8 +11,9 @@ metadata:
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
       In the coder-workspaces namespace, privileged pods may only be created
-      by the coder-workspace ServiceAccount. Defense in depth beyond PSA
-      and the Kata VM boundary.
+      by a coder-workspace* ServiceAccount (coder-workspace or
+      coder-workspace-admin). Defense in depth beyond PSA and the Kata VM
+      boundary.
 spec:
   validationFailureAction: Enforce
   background: false
@@ -30,7 +31,7 @@ spec:
             operator: GreaterThan
             value: 0
       validate:
-        message: "Privileged pods in coder-workspaces require ServiceAccount 'coder-workspace'"
+        message: "Privileged pods in coder-workspaces require a 'coder-workspace*' ServiceAccount (coder-workspace or coder-workspace-admin)"
         pattern:
           spec:
-            serviceAccountName: coder-workspace
+            serviceAccountName: "coder-workspace*"

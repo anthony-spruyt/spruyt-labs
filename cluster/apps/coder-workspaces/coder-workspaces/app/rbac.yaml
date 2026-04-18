@@ -1,21 +1,32 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
+# Generic workspace SA — no cluster-wide permissions. Used by devcontainer
+# template for arbitrary repos.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: coder-workspace
   namespace: coder-workspaces
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
+# Privileged workspace SA — bound to cluster-admin. Used by spruyt-labs
+# homelab template only.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coder-workspace-admin
+  namespace: coder-workspaces
+---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/clusterrolebinding-rbac-v1.json
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: coder-workspace-cluster-admin
+  name: coder-workspace-admin-cluster-admin
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-admin
 subjects:
   - kind: ServiceAccount
-    name: coder-workspace
+    name: coder-workspace-admin
     namespace: coder-workspaces

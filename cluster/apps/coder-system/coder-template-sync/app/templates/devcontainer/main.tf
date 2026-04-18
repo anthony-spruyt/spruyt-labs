@@ -6,7 +6,7 @@ terraform {
       version = "~> 2.0"
     }
     kubernetes = {
-      source  = "hashicorp/kubernetes"
+      source = "hashicorp/kubernetes"
       # Pinned below 3.x — the new identity tracking on kubernetes_pod_v1
       # trips "Unexpected Identity Change" on refresh for pods created by
       # previous plan iterations, blocking destroy/recreate. See
@@ -267,41 +267,6 @@ resource "coder_agent" "main" {
     fi
     export XDG_RUNTIME_DIR=/run/user/1000
 
-    # SA token is mounted read-only as root. Copy to readable location for vscode.
-    if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
-      sudo cp /var/run/secrets/kubernetes.io/serviceaccount/token /tmp/sa-token
-      sudo chmod 644 /tmp/sa-token
-      mkdir -p /home/vscode/.kube
-      cat > /home/vscode/.kube/config <<KUBEEOF
-    apiVersion: v1
-    kind: Config
-    clusters:
-    - cluster:
-        certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        server: https://kubernetes.default.svc
-      name: default
-    contexts:
-    - context:
-        cluster: default
-        namespace: coder-workspaces
-        user: default
-      name: default
-    current-context: default
-    users:
-    - name: default
-      user:
-        tokenFile: /tmp/sa-token
-    KUBEEOF
-    fi
-
-    # Symlink read-only secret mounts into home directory
-    ln -sfn /etc/coder/talos /home/vscode/.talos
-
-    # Terraform credentials are root-only on projected volume, copy to readable location
-    mkdir -p /home/vscode/.terraform.d
-    sudo cp /etc/coder/terraform.d/credentials.tfrc.json /home/vscode/.terraform.d/credentials.tfrc.json
-    sudo chown vscode:vscode /home/vscode/.terraform.d/credentials.tfrc.json
-
     # Configure git commit signing using the read-only SSH key mount.
     # Points directly at the secret volume so key rotation takes effect
     # without a workspace restart (~1 min propagation delay).
@@ -447,8 +412,9 @@ resource "kubernetes_pod_v1" "main" {
   }
 
   spec {
-    service_account_name = "coder-workspace"
-    restart_policy       = "Never"
+    service_account_name            = "coder-workspace"
+    automount_service_account_token = false
+    restart_policy                  = "Never"
     # Kata Containers: each workspace pod runs in its own lightweight VM
     # (QEMU/Cloud Hypervisor + KVM). Hypervisor boundary around arbitrary
     # AI-agent-generated code inside the workspace. Ref #933.
@@ -555,20 +521,6 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
-      # Talosconfig (symlinked to ~/.talos in startup script)
-      volume_mount {
-        name       = "talosconfig"
-        mount_path = "/etc/coder/talos"
-        read_only  = true
-      }
-
-      # Terraform credentials (symlinked to ~/.terraform.d in startup script)
-      volume_mount {
-        name       = "terraform-credentials"
-        mount_path = "/etc/coder/terraform.d"
-        read_only  = true
-      }
-
       # Podman registries.conf drop-in: route container pulls through Nexus
       # pull-through proxies (docker.io, ghcr.io, quay.io, mcr.microsoft.com,
       # registry.k8s.io). Ref #976.
@@ -616,32 +568,6 @@ resource "kubernetes_pod_v1" "main" {
       secret {
         secret_name  = "coder-ssh-signing-key"
         default_mode = "0400"
-      }
-    }
-
-    # Mount only the talosconfig key as "config" file
-    volume {
-      name = "talosconfig"
-      secret {
-        secret_name  = "coder-talosconfig"
-        default_mode = "0400"
-        items {
-          key  = "config"
-          path = "config"
-        }
-      }
-    }
-
-    # Mount only the terraform credentials key as "credentials.tfrc.json"
-    volume {
-      name = "terraform-credentials"
-      secret {
-        secret_name  = "coder-terraform-credentials"
-        default_mode = "0400"
-        items {
-          key  = "credentials.tfrc.json"
-          path = "credentials.tfrc.json"
-        }
       }
     }
 
