@@ -49,6 +49,9 @@ spec:
                 # envbuilder/kaniko needs default caps (CHOWN, DAC_OVERRIDE,
                 # SETUID, SETGID, etc) to extract image layers during build.
                 - coder-system
+                # coder-workspaces runs privileged pods inside Kata VM;
+                # restrict-privileged-to-coder-workspace-sa enforces SA.
+                - coder-workspaces
       mutate:
         patchStrategicMerge:
           spec:
