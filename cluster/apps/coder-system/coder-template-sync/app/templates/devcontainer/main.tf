@@ -172,6 +172,37 @@ resource "kubernetes_persistent_volume_claim_v1" "workspaces" {
   }
 }
 
+resource "kubernetes_persistent_volume_claim_v1" "containers" {
+  metadata {
+    name      = "${local.workspace_name}-containers"
+    namespace = local.namespace
+    labels = {
+      "app.kubernetes.io/name"     = "${local.workspace_name}-containers"
+      "app.kubernetes.io/instance" = "${local.workspace_name}-containers"
+      "app.kubernetes.io/part-of"  = "coder"
+      "com.coder.resource"         = "true"
+      "com.coder.workspace.id"     = data.coder_workspace.me.id
+      "com.coder.workspace.name"   = data.coder_workspace.me.name
+      "com.coder.user.id"          = data.coder_workspace_owner.me.id
+      "com.coder.user.username"    = data.coder_workspace_owner.me.name
+    }
+    annotations = {
+      "com.coder.user.email" = data.coder_workspace_owner.me.email
+    }
+  }
+  wait_until_bound = false
+  spec {
+    access_modes       = ["ReadWriteOnce"]
+    storage_class_name = "rbd-fast-delete-encrypted"
+    volume_mode        = "Block"
+    resources {
+      requests = {
+        storage = "40Gi"
+      }
+    }
+  }
+}
+
 resource "kubernetes_persistent_volume_claim_v1" "home" {
   metadata {
     name      = "${local.workspace_name}-home"
@@ -217,6 +248,16 @@ resource "coder_agent" "main" {
     # Rootful podman runtime dir (required by podman inside Kata VM).
     sudo mkdir -p /run/user/1000
     sudo chown 1000:1000 /run/user/1000
+
+    # Direct-assigned block device for podman storage. First boot: mkfs.
+    # Subsequent boots: detect existing ext4 and mount.
+    if [ -b /dev/containers-disk ]; then
+      if ! sudo blkid /dev/containers-disk >/dev/null 2>&1; then
+        sudo mkfs.ext4 -q -L containers /dev/containers-disk
+      fi
+      sudo mkdir -p /var/lib/containers
+      sudo mount -o noatime /dev/containers-disk /var/lib/containers || true
+    fi
     export XDG_RUNTIME_DIR=/run/user/1000
 
     # SA token is mounted read-only as root. Copy to readable location for vscode.
@@ -377,6 +418,7 @@ resource "kubernetes_pod_v1" "main" {
   depends_on = [
     kubernetes_persistent_volume_claim_v1.workspaces,
     kubernetes_persistent_volume_claim_v1.home,
+    kubernetes_persistent_volume_claim_v1.containers,
   ]
 
   metadata {
@@ -513,6 +555,15 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
+      # Direct-assigned block device for podman storage. Kata passes the
+      # RBD volume into the guest as virtio-blk so the guest kernel sees
+      # real ext4 (formatted in startup) and kernel overlay works without
+      # virtiofs xattr limitations.
+      volume_device {
+        name        = "containers"
+        device_path = "/dev/containers-disk"
+      }
+
     }
 
     volume {
@@ -526,6 +577,13 @@ resource "kubernetes_pod_v1" "main" {
       name = "home"
       persistent_volume_claim {
         claim_name = kubernetes_persistent_volume_claim_v1.home.metadata[0].name
+      }
+    }
+
+    volume {
+      name = "containers"
+      persistent_volume_claim {
+        claim_name = kubernetes_persistent_volume_claim_v1.containers.metadata[0].name
       }
     }
 

@@ -84,12 +84,11 @@ cat >"$HOME/.config/containers/containers.conf.d/10-userns.conf" <<'CONTAINERS_C
 userns = "keep-id"
 CONTAINERS_CONF
 
-# Kata guest devtmpfs does not provision /dev/fuse; mknod it (privileged ok).
+# Rootless podman on $HOME (PVC-backed virtiofs) — fuse-overlayfs needed
+# because virtiofs does not advertise xattr support for kernel overlay.
 [ -c /dev/fuse ] || sudo mknod /dev/fuse c 10 229
 sudo chmod 666 /dev/fuse
 
-# Workspace PVC is virtiofs-backed, so kernel overlay cannot whiteout.
-# Use fuse-overlayfs (userspace overlay) for both rootless and rootful.
 mkdir -p "$HOME/.config/containers"
 cat >"$HOME/.config/containers/storage.conf" <<'STORAGE_CONF'
 [storage]
@@ -100,15 +99,24 @@ graphroot = "/home/vscode/.local/share/containers/storage"
 mount_program = "/usr/bin/fuse-overlayfs"
 STORAGE_CONF
 
-sudo mkdir -p /etc/containers /var/lib/containers
+# Rootful podman uses /var/lib/containers which the Coder template mounts
+# as a direct-assigned block device formatted ext4 (real FS in Kata guest).
+# Native kernel overlay works on ext4, no fuse needed.
+sudo mkdir -p /etc/containers
 sudo tee /etc/containers/storage.conf >/dev/null <<'ROOTFUL_STORAGE_CONF'
 [storage]
 driver = "overlay"
 runroot = "/run/containers/storage"
 graphroot = "/var/lib/containers/storage"
-[storage.options.overlay]
-mount_program = "/usr/bin/fuse-overlayfs"
 ROOTFUL_STORAGE_CONF
+
+sudo tee /etc/containers/containers.conf >/dev/null <<'CONTAINERS_CONF'
+[containers]
+cgroups = "disabled"
+
+[engine]
+cgroup_manager = "cgroupfs"
+CONTAINERS_CONF
 
 # Registry allow-list: fully-qualified images only, short-name lookups fail.
 # Prevents typo-squat pulls from unintended registries.
