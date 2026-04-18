@@ -31,7 +31,10 @@ spec:
           containers:
             - name: rotate-ssh-key
               image: ghcr.io/anthony-spruyt/ssh-key-rotation:1.0.0@sha256:1c4166aeca89b2c04bcc6abbfa5493c9f7e8d64c1d6ef48ba448ea5bee0fdefc
-              command: ["/usr/local/bin/rotate-ssh-key.sh"]
+              command:
+                - /bin/sh
+                - -c
+                - sed 's/-n coder-system/-n coder-workspaces/' /usr/local/bin/rotate-ssh-key.sh | /bin/sh -e
               env:
                 - name: GITHUB_PAT
                   valueFrom:
