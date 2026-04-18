@@ -12,7 +12,10 @@
     "--security-opt",
     "seccomp=${localWorkspaceFolder}/.devcontainer/podman-seccomp.json",
     "--device",
-    "/dev/fuse"
+    "/dev/fuse",
+    "--device",
+    "/dev/net/tun",
+    "--cgroupns=host"
   ],
   "mounts": [
     "source=${localEnv:HOME}/.ssh/agent.sock,target=/ssh-agent,type=bind",
