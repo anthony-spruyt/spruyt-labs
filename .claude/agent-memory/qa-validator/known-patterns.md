@@ -10,7 +10,7 @@ MegaLinter or schema check results that are not actual issues.
 | AVD-KSV-0125 on ghcr.io images | Trivy | ghcr.io/siderolabs is the official Talos registry | 2 | 2026-02-28 | 2026-02-28 |
 | AVD-KSV-0048 on intentional write RBAC | Trivy | Expected when Role/ClusterRole intentionally grants write verbs (delete, patch, create) for operational use cases | 7 | 2026-04-02 | 2026-03-15 |
 | AVD-KSV-0053 on intentional pods/exec RBAC | Trivy | Expected when Role grants pods/exec create for spawner/orchestrator patterns (e.g., n8n-claude-spawner). Scoped by Role (not ClusterRole) + PSA restricted namespace | 2 | 2026-04-02 | 2026-03-30 |
-| AVD-KSV-0113 on resourceName-scoped secret access | Trivy | Expected when Role grants secret get scoped to specific resourceNames (e.g., claude-credentials). Not broad secret access | 7 | 2026-04-04 | 2026-03-30 |
+| AVD-KSV-0113 on resourceName-scoped secret access | Trivy | Expected when Role grants secret get scoped to specific resourceNames (e.g., claude-credentials). Not broad secret access | 8 | 2026-04-18 | 2026-03-30 |
 | AVD-KSV-01010 on gitconfig ConfigMaps with email/signingkey | Trivy | Git config contains public bot email and signingkey path, not sensitive data. False positive on keyword match | 3 | 2026-04-02 | 2026-03-31 |
 | AVD-KSV-0125 on alpine/k8s CronJob images | Trivy | alpine/k8s is a trusted community image for kubectl operations. Trivy flags non-standard registries | 3 | 2026-04-04 | 2026-03-31 |
 | tflint terraform_required_version/terraform_required_providers on Coder templates | tflint | Coder provisioner manages Terraform and provider versions. Version constraints in coder/templates/ are optional best-practice, not blocking | 2 | 2026-04-04 | 2026-04-04 |
