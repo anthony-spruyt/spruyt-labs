@@ -13,3 +13,4 @@ spec:
       - ${TELEPORT_CIDR_IP4}
       - ${VPN_CIDR_IP4}
       - ${DEVCONTAINER_CIDR_IP4}
+      - ${CLUSTER_POD_CIDR_IP4}
