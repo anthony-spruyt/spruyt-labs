@@ -10,7 +10,7 @@
     "--env-file",
     "${localEnv:HOME}/.secrets/.env",
     "--security-opt",
-    "seccomp=unconfined",
+    "seccomp=${localWorkspaceFolder}/.devcontainer/podman-seccomp.json",
     "--device",
     "/dev/fuse"
   ],
