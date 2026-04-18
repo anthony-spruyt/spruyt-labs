@@ -46,8 +46,10 @@ if [[ "${1:-}" == "--ci" ]]; then
 
   docker run "${docker_args[@]}" "$MEGALINTER_IMAGE"
 else
-  # Local mode - with fixes and user permissions
-  rm -rf "$REPO_ROOT/.output"
+  # Local mode - with fixes and user permissions.
+  # .output may be root-owned from an earlier rootful-podman run, so fall
+  # back to sudo if a plain rm is rejected.
+  rm -rf "$REPO_ROOT/.output" 2>/dev/null || sudo -n rm -rf "$REPO_ROOT/.output"
   mkdir "$REPO_ROOT/.output"
 
   LINT_EXIT_CODE=0
