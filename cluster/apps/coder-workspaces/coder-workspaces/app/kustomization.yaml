@@ -7,3 +7,6 @@ resources:
   - ./coder-talosconfig.sops.yaml
   - ./coder-ssh-signing-key.sops.yaml
   - ./coder-terraform-credentials.sops.yaml
+  - ./rbac.yaml
+  - ./network-policies.yaml
+  - ./restrict-privileged-to-coder-workspace-sa.yaml
