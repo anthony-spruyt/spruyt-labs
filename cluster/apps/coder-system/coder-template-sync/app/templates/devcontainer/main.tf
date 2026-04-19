@@ -103,6 +103,7 @@ data "coder_parameter" "repo" {
   type         = "string"
   mutable      = true
   order        = 2
+  default      = "git@github.com:anthony-spruyt/nameofrepo.git"
   validation {
     regex = "^(git@|ssh://)"
     error = "Repository URL must be an SSH URL (git@host:owner/repo.git or ssh://). HTTPS URLs break git push because the SSH signing key is not used for HTTPS auth."
