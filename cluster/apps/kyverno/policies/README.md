@@ -74,7 +74,11 @@ Current overrides: cilium (`timeout: 2m`), n8n/rook-ceph-cluster (`timeout: 15m`
 
 ### inject-claude-agent-config
 
-Injects configuration into Claude agent pods spawned by n8n, including GitHub bot credentials (gh CLI config, SSH key, gitconfig), MCP server config, and environment variables. Applies to pods with the `managed-by: n8n-claude-code` label in `claude-agents-write` and `claude-agents-read` namespaces. Write and read namespaces receive the same volume mounts and environment variables, with OAuth scopes differentiated via ESO key mapping.
+Injects configuration into Claude agent pods spawned by n8n, including GitHub bot credentials
+(gh CLI config, SSH key, gitconfig), MCP server config, and environment variables. Applies to pods with
+the `managed-by: n8n-claude-code` label in `claude-agents-write` and `claude-agents-read` namespaces.
+Write and read namespaces receive the same volume mounts and environment variables,
+with OAuth scopes differentiated via ESO key mapping.
 
 **Injected Resources:**
 
