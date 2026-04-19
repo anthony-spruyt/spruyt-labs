@@ -15,7 +15,7 @@ spec:
         - host
       toPorts:
         - ports:
-            - port: "8080"
+            - port: "9808"
               protocol: TCP
     # Prometheus scrape (ServiceMonitor in observability ns)
     - fromEndpoints:
