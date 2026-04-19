@@ -9,6 +9,7 @@ resources:
   - ./coder-talosconfig.sops.yaml
   - ./coder-ssh-signing-key.sops.yaml
   - ./coder-terraform-credentials.sops.yaml
+  - ./coder-workspace-nexus-clients.sops.yaml
   - ./rbac.yaml
   - ./registries-conf-configmap.yaml
   - ./network-policies.yaml
