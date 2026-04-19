@@ -318,8 +318,6 @@ resource "coder_agent" "main" {
     KUBEEOF
     fi
 
-    # Symlink read-only secret mounts into home directory
-    ln -sfn /etc/coder/talos /home/vscode/.talos
 
     # Terraform credentials are root-only on projected volume, copy to readable location
     mkdir -p /home/vscode/.terraform.d
@@ -343,6 +341,7 @@ resource "coder_agent" "main" {
     # SSH auth uses the read-only key mount directly — no copy needed.
     # Key rotation propagates automatically via Kubernetes secret volume refresh.
     GIT_SSH_COMMAND = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+    TALOSCONFIG     = "/etc/coder/talos/config"
   }
 
   metadata {
