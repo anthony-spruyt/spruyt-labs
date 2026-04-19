@@ -1,0 +1,24 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: coder-workspace-nexus-clients
+    namespace: coder-workspaces
+type: Opaque
+stringData:
+    auth.json: ENC[AES256_GCM,data:l3LwZE63WNsmMVwg0Ej7oD9Swz47p52G8bI0OXvVgIT8q9LlfTbagEP73/W8E6piZM+H2aZjYofldXsKQGuPHt8l0LjKl2zH8LY03Y7LLMSxUvgCezQwafOAcRO0kRq4BCan5iMqif4tFfpOHCbhLxUUaE/kOaMimZxqpV3t2Tkk4Oj0gPW/Ctg3vXhJxEF06xKsn9WllTvExnD4ZAVPQiA7/OlIPhB4JlzrjzgzLfLk+j7ygK7lZRDMx70HcblbVUJrnCY9wnjveKw8Q3JdZN2WU0O5uNVUH8LUEwxAMU+ZAHXN6bliTL6hv6uXaZI20l8mXpAAhqsCpz1jDdrqzT4shD86d9S8aEq5KApdACbvtA1g+zzosxfJGNbrBpHb6XnRZGUnpVA9h4rjCng4idr6v7rdE17Yate5wN6jM2pIWxG0XWHz1iLXgTZxREtqyrdKACvYSGrCUaDVo1CeMr7isszf/jpQXX4RB3ywBmj2rvnuypzRsEPiH6oVdHrrikBezWydfSofM1G6xmWAHIflDt0z8z0aQuP4zsam/MLMrvL1m12xOjtE2KPMsK/hP/agK0uXN86SxEx2CmT3n72RolSJNyneB3QWKA==,iv:eK90+tuH1GuxaZemW/EPl4cATp1tY5xayPUInuGCCbQ=,tag:rzr8uwMAAsMLk2cSkEPD4w==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBXRlM5aldxQlhMNnJuNEhl
+            eHZHT01VQ05NRG1NZ1h3M25xRWwxMitkOXhNCjF0bzVEcnZZazVLWXpFY2xJanJO
+            QXd0ZkpKRDZUMUNIaWdaclUvRFdJcFUKLS0tIFhtSldyVnNhNjBzajd2a3J5N3R6
+            VjcxRS9tc3krbnhGcnFHSkFpOVVBeUUKQAQKaXgP40CqU4K0FjZ+8EOVKbQYlzCn
+            Yy4ESfzq08uJZGZjs7zlO3sSuBQ4LJy+i9XuAhI53IPONnw9/SCi+Q==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-19T00:48:15Z"
+    mac: ENC[AES256_GCM,data:VnOk6BiLcBcXw3YOO827QY6eTcs12H/4jFqpLo+o7UwAkZTi9bPRaZo5CFvWZnWGNH9Dkf4CTqDvt5bDsShxdKzliIHRxqcKpWyW550c2j5g3V+xOyK5+09kIw3dFQHgQmM8+WBTMy8cnP84TaY1M9UUueHIp0ztjiL1hw0LE7E=,iv:CoyB0zyLUmoUt4NoWwHNP1EHLRixjFhTcujnagNvlIs=,tag:QoV0IHKZnQ4suoplKPRiWQ==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2
