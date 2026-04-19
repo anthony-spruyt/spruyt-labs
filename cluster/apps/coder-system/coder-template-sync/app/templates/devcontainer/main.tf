@@ -93,7 +93,7 @@ data "coder_parameter" "git_email" {
   type         = "string"
   mutable      = true
   order        = 1
-  default      = ""
+  default      = "99536297+anthony-spruyt@users.noreply.github.com"
 }
 
 data "coder_parameter" "repo" {
