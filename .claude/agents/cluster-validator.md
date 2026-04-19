@@ -1,6 +1,6 @@
 ---
 name: cluster-validator
-description: 'Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\n\n**When to use:**\n- After user pushes to main branch\n- When user says "pushed", "merged", or "deployed"\n- After Claude merges a PR via `gh pr merge` affecting `cluster/`\n\n**When NOT to use:**\n- Before git commit (use qa-validator)\n- For feature branches (Flux only watches main)\n\n<example>\nuser: "Just pushed the redis deployment"\nassistant: "I''ll validate the deployment with cluster-validator."\n<commentary>User pushed to main, triggering Flux reconciliation that needs validation.</commentary>\n</example>\n\n<example>\nuser: "ok merge the PR"\nassistant: [merges PR] "PR merged. Running cluster-validator to verify deployment."\n<commentary>Claude merged a PR affecting cluster resources, needs post-deploy validation.</commentary>\n</example>'
+description: 'Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\n\n**When to use:**\n- After user pushes to main branch\n- When user says "pushed", "merged", or "deployed"\n- After Claude merges a PR affecting `cluster/`\n\n**When NOT to use:**\n- Before git commit (use qa-validator)\n- For feature branches (Flux only watches main)\n\n<example>\nuser: "Just pushed the redis deployment"\nassistant: "I''ll validate the deployment with cluster-validator."\n<commentary>User pushed to main, triggering Flux reconciliation that needs validation.</commentary>\n</example>\n\n<example>\nuser: "ok merge the PR"\nassistant: [merges PR] "PR merged. Running cluster-validator to verify deployment."\n<commentary>Claude merged a PR affecting cluster resources, needs post-deploy validation.</commentary>\n</example>'
 model: opus
 memory: project
 tools:
@@ -13,7 +13,7 @@ tools:
   - WebSearch
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
-mcpServers: ["kubectl"]
+mcpServers: ["kubectl", "github"]
 ---
 
 ## Kubernetes MCP Tools

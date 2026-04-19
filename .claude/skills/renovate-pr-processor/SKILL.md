@@ -11,7 +11,7 @@ description: Use when reviewing, merging, or batch-processing open Renovate depe
 |------|-------|
 | Analysis agent | `renovate-pr-analyzer` (per PR, parallel) |
 | Validation agent | `cluster-validator` (after each merge) |
-| Merge strategy | `gh pr merge --squash` |
+| Merge strategy | `mcp__github__merge_pull_request` (squash) |
 | Merge order | patch → minor → major → unlabeled |
 | Failure handling | Auto-revert → user pushes → continue |
 
@@ -19,22 +19,22 @@ description: Use when reviewing, merging, or batch-processing open Renovate depe
 
 ### Phase 1: DISCOVER
 
-```bash
-gh pr list --repo anthony-spruyt/spruyt-labs --author "renovate[bot]" \
-  --json number,title,labels,headRefName --limit 50
-```
+Use `mcp__github__search_pull_requests`:
+- Query: `author:renovate[bot] state:open`
+- Owner: `anthony-spruyt`, repo: `spruyt-labs`, perPage: 50
 
 Sort by risk: `dep/patch` → `dep/minor` → `dep/major` → no label. If none found, report and exit.
 
 ### Phase 2: ANALYZE (parallel)
 
-Create tracking issue:
+Create tracking issue using `mcp__github__issue_write`:
+- Method: `create`
+- Owner: `anthony-spruyt`, repo: `spruyt-labs`
+- Title: `chore(deps): batch renovate PR processing <YYYY-MM-DD>`
+- Labels: `["chore"]`
+- Body:
 
-```bash
-gh issue create --repo anthony-spruyt/spruyt-labs \
-  --title "chore(deps): batch renovate PR processing $(date +%Y-%m-%d)" \
-  --label "chore" \
-  --body "$(cat <<'EOF'
+```markdown
 ## Summary
 Batch processing of open Renovate dependency update PRs.
 
@@ -48,8 +48,6 @@ Dependency management
 
 ## Affected Area
 - Apps (cluster/apps/)
-EOF
-)"
 ```
 
 Dispatch `renovate-pr-analyzer` per PR in parallel:
@@ -69,13 +67,14 @@ Wait for all agents. Each agent output begins with `## VERDICT: [SAFE|RISKY|UNKN
 
 After all analyzers complete, collect `### Feature Opportunities` sections from their outputs.
 
-If any HIGH/MEDIUM relevance features found:
+If any HIGH/MEDIUM relevance features found, create issue using `mcp__github__issue_write`:
+- Method: `create`
+- Owner: `anthony-spruyt`, repo: `spruyt-labs`
+- Title: `feat(deps): feature opportunities from renovate batch <YYYY-MM-DD>`
+- Labels: `["enhancement"]`
+- Body:
 
-```bash
-gh issue create --repo anthony-spruyt/spruyt-labs \
-  --title "feat(deps): feature opportunities from renovate batch $(date +%Y-%m-%d)" \
-  --label "enhancement" \
-  --body "$(cat <<'EOF'
+```markdown
 ## Summary
 Notable new features from dependency updates that may be relevant to the homelab.
 
@@ -93,8 +92,6 @@ These features were identified during automated Renovate PR analysis. Review at 
 
 ## Affected Area
 - Apps (cluster/apps/)
-EOF
-)"
 ```
 
 If no HIGH/MEDIUM features found across any PR, skip issue creation entirely.
@@ -139,16 +136,15 @@ digraph merge_loop {
 For each confirmed PR (one at a time):
 
 **4.1 Merge:**
-```bash
-gh pr view <number> --repo anthony-spruyt/spruyt-labs --json mergeable,mergeStateStatus
-gh pr merge <number> --squash --repo anthony-spruyt/spruyt-labs
-```
+
+1. Check merge status: `mcp__github__pull_request_read` (method: `get`, owner: `anthony-spruyt`, repo: `spruyt-labs`, pullNumber: `<number>`) — check `mergeable` field
+2. Merge: `mcp__github__merge_pull_request` (owner: `anthony-spruyt`, repo: `spruyt-labs`, pullNumber: `<number>`, merge_method: `squash`)
+
 If not mergeable (conflicts), skip with comment, continue to next PR.
 
 **4.2 Check if cluster validation needed:**
-```bash
-gh pr view <number> --repo anthony-spruyt/spruyt-labs --json files --jq '.files[].path'
-```
+
+`mcp__github__pull_request_read` (method: `get_files`, owner: `anthony-spruyt`, repo: `spruyt-labs`, pullNumber: `<number>`)
 Files under `cluster/` → run cluster-validator. Only `.taskfiles/`, `docs/`, `.github/` → skip validation, continue to next PR.
 
 **4.3 Validate** (blocking — do NOT merge next PR until this completes): `git pull --ff-only origin main`, then dispatch `cluster-validator` in **foreground** (not background) with tracking issue number, PR details, dep version change, and affected namespace/app.

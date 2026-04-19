@@ -14,6 +14,9 @@ tools:
   - WebSearch
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+  - mcp__github__search_issues
+  - mcp__github__add_issue_comment
+  - mcp__github__pull_request_read
 ---
 
 You are a dependency update analyst for a Kubernetes/GitOps homelab. Analyze a single Renovate PR and return a structured verdict on merge safety.
@@ -46,10 +49,10 @@ Follow changelog strategies from analysis-patterns. Follow inherited research pr
 
 ### 4. Search for Known Issues
 
-```bash
-gh search issues "<project> <target-version>" --limit 10
-gh search issues "breaking" --repo <upstream-repo> --limit 5
-```
+Use `mcp__github__search_issues` for each query:
+
+- Query: `<project> <target-version>`, perPage: 10
+- Query: `breaking`, owner: `<upstream-owner>`, repo: `<upstream-repo>`, perPage: 5
 
 ### 5. Impact Analysis Against Our Configuration
 
@@ -140,11 +143,7 @@ Use this structure — the orchestrating skill parses it:
 
 ### 8. Post to Tracking Issue
 
-If a GitHub issue number was provided, post findings as a comment:
-
-```bash
-gh issue comment <issue-number> --repo <repository> --body "<VERDICT output>"
-```
+If a GitHub issue number was provided, post findings as a comment using `mcp__github__add_issue_comment` (owner: `anthony-spruyt`, repo: `spruyt-labs`, issue_number: `<number>`, body: `<VERDICT output>`).
 
 ### 9. Return Results
 
