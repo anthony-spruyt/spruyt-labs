@@ -149,8 +149,12 @@ upsert docker/hosted envbuilder-cache '{
 # docker-group with dedicated connector on 8082 (serves OCI v2 at host root).
 # forceBasicAuth=true: same Nexus 3 bug as envbuilder-cache above — Bearer
 # realm is advertised but anonymous bearer tokens get 401'd on the next
-# request. Basic auth via the workspace-puller credentials (mounted as
-# /etc/containers/auth.json in coder workspaces) works reliably. Ref #976.
+# request. Sonatype's documented workaround is forceBasicAuth; the Bearer
+# flow on group/proxy repos has regressed repeatedly (see
+# https://github.com/sonatype/nexus-public/issues/410 and
+# https://github.com/sonatype/nexus-public/issues/435). Basic auth via
+# the workspace-puller credentials (mounted as /etc/containers/auth.json
+# in coder workspaces) works reliably. Ref #976.
 upsert docker/group docker-group '{
   "name":"docker-group","online":true,
   "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
