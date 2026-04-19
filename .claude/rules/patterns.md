@@ -55,7 +55,49 @@ spec:
 
 ## Variable Substitution
 
-Available variables: `${EXTERNAL_DOMAIN}`, `${CLUSTER_ISSUER}`, `${TIMEZONE}`
+Flux `postBuild.substituteFrom` injects variables into all Kustomizations via patches in `cluster/flux/cluster/ks.yaml`. Two sources:
+
+### Source: `cluster-settings` ConfigMap (`cluster/flux/meta/cluster-settings.yaml`)
+
+| Variable | Description |
+|----------|-------------|
+| `TIMEZONE` | Cluster timezone |
+| `CLUSTER_ISSUER` | Active cert-manager ClusterIssuer |
+
+### Source: `cluster-secrets` Secret (`cluster/flux/meta/cluster-secrets.sops.yaml`)
+
+| Variable | Description |
+|----------|-------------|
+| `CLUSTER_NAME` | Cluster name |
+| `CLUSTER_DOMAIN` | Internal cluster domain |
+| `EXTERNAL_DOMAIN` | Public-facing domain |
+| `KUBEAPI_VIP` | Kubernetes API VIP |
+| `ACME_EMAIL` | ACME certificate email |
+| `ZEROSSL_EAB_KID` | ZeroSSL EAB key ID |
+| `MY_AUTHENTIK_USER_EMAIL` | Admin user email |
+| `E2_1_IP4`, `E2_2_IP4`, `E2_3_IP4` | Control plane node IPs |
+| `MS_01_1_IP4`, `MS_01_2_IP4`, `MS_01_3_IP4` | Worker node IPs |
+| `GATEWAY_IP4` | Network gateway |
+| `CLUSTER_NODE_CIDR_IP4` | Node CIDR |
+| `CLUSTER_POD_CIDR_IP4` | Pod CIDR |
+| `CLUSTER_SVC_CIDR_IP4` | Service CIDR |
+| `CLUSTER_LB_CIDR_START_IP4`, `CLUSTER_LB_CIDR_STOP_IP4` | LoadBalancer IP range |
+| `LAN_CIDR_IP4`, `VPN_CIDR_IP4`, `TELEPORT_CIDR_IP4`, `DEVCONTAINER_CIDR_IP4` | Network CIDRs |
+| `KUBELET_CSR_APPROVER_REGEX` | CSR approver pattern |
+| `DNS_SERVER_DOMAIN`, `DNS_SERVER_SECONDARY_DOMAIN` | Technitium DNS domains |
+| `TRAEFIK_IP4` | Traefik LoadBalancer IP |
+| `TECHNITIUM_IP4`, `TECHNITIUM_SECONDARY_IP4` | DNS server IPs |
+| `NTP_IP4` | NTP server IP |
+| `NUT_IP4` | UPS NUT server IP |
+| `MOSQUITTO_IP4` | MQTT broker IP |
+| `HOME_ASSISTANT_IP4` | Home Assistant IP |
+| `BEDROCK_CONNECT_IP4` | Bedrock Connect IP |
+| `CRAFTY_CONTROLLER_IP4` | Crafty Controller IP |
+| `MINECRAFT_BEDROCK_1_IP4`, `MINECRAFT_BEDROCK_2_IP4`, `MINECRAFT_BEDROCK_3_IP4` | Minecraft server IPs |
+
+### Opt-out
+
+To disable substitution on a Kustomization, add label: `substitution.flux.home.arpa/disabled: "true"`
 
 ## SOPS Naming
 

@@ -76,8 +76,11 @@ kubectl top pods -n observability
 ### Validation Commands
 
 ```bash
-# Verify deployment status
-kubectl get deployment -n observability victoria-metrics-k8s-stack -o json | jq '.status.availableReplicas'
+# Verify VMSingle status (CRD-managed, not a vanilla Deployment)
+kubectl get vmsingle -n observability victoria-metrics-k8s-stack -o jsonpath='{.status.updateStatus}'
+
+# Verify all pods running
+kubectl get pods -n observability --selector=app.kubernetes.io/name=vmsingle
 
 # Test metrics endpoint
 kubectl exec -n observability <victoria-metrics-pod> -- curl -s "http://localhost:8428/api/v1/query?query=up"
