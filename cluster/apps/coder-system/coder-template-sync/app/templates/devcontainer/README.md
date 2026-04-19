@@ -33,16 +33,18 @@ also routed through Nexus via a `registries.conf` drop-in mounted from the
 `coder-workspace-registries-conf` ConfigMap (docker.io, ghcr.io, quay.io,
 mcr.microsoft.com, registry.k8s.io → `nexus:8082`).
 
-Runtime apt inside the workspace is NOT routed through Nexus by this template.
-Consumer repos wanting apt caching should add the following to their
-`.devcontainer/Dockerfile`:
+Base-layer Ubuntu archive apt is routed through Nexus `apt-ubuntu-proxy`:
+envbuilder injects `NEXUS_URL=http://nexus.nexus-system.svc.cluster.local:8081`
+into the devcontainer build (via `envbuilder_env` + the consumer repo's
+`devcontainer.json` `build.args.NEXUS_URL`), and the consumer Dockerfile
+rewrites `/etc/apt/sources.list` to point at the proxy. Consumer repos
+must add an `ARG NEXUS_URL` + sources.list rewrite to their Dockerfile —
+see `spruyt-labs` repo `.devcontainer/Dockerfile` for the reference
+pattern (Ref #988).
 
-    RUN echo 'Acquire::http::Proxy "http://nexus.nexus-system.svc.cluster.local:8081/repository/apt-ubuntu-proxy/";' \
-        > /etc/apt/apt.conf.d/01proxy
-
-For HTTPS-upstream apt features (cli.github, nodesource, hashicorp, launchpad),
-point the relevant `sources.list.d/*.list` entry at the matching Nexus
-passthrough repo under `/repository/apt-<name>/`.
+Devcontainer features that manage their own apt source lists (github-cli,
+nodesource, hashicorp, launchpad PPAs) still fetch upstream direct — per-
+feature apt source overrides are out of scope.
 
 ## Secrets Required
 
