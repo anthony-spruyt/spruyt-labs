@@ -45,7 +45,7 @@ locals {
   traefik_lb_ip = data.kubernetes_service_v1.traefik.status[0].load_balancer[0].ingress[0].ip
 
   git_author_name  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
-  git_author_email = data.coder_workspace_owner.me.email
+  git_author_email = coalesce(data.coder_parameter.git_email.value, data.coder_workspace_owner.me.email)
   repo_url         = data.coder_parameter.repo.value
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
@@ -86,13 +86,27 @@ locals {
 # Parameters
 # ---------------------------------------------------------------------------
 
-data "coder_parameter" "repo" {
-  name         = "repo"
-  display_name = "Repository URL"
-  description  = "Git repository to clone and build from its devcontainer.json."
+data "coder_parameter" "git_email" {
+  name         = "git_email"
+  display_name = "Git commit email"
+  description  = "Email used for git author/committer and SSH signature verification. Use a GitHub noreply address to avoid leaking personal email. Leave blank to use the Coder profile email."
   type         = "string"
   mutable      = true
   order        = 1
+  default      = ""
+}
+
+data "coder_parameter" "repo" {
+  name         = "repo"
+  display_name = "Repository URL"
+  description  = "Git repository to clone and build from its devcontainer.json. SSH URL required so workspace push uses the mounted signing key at /etc/coder/ssh-keys/id_ed25519. HTTPS URLs are rejected."
+  type         = "string"
+  mutable      = true
+  order        = 2
+  validation {
+    regex = "^(git@|ssh://)"
+    error = "Repository URL must be an SSH URL (git@host:owner/repo.git or ssh://). HTTPS URLs break git push because the SSH signing key is not used for HTTPS auth."
+  }
 }
 
 data "coder_parameter" "workspaces_volume_size" {
@@ -107,7 +121,7 @@ data "coder_parameter" "workspaces_volume_size" {
     min = 5
     max = 200
   }
-  order = 2
+  order = 3
 }
 
 data "coder_parameter" "home_volume_size" {
@@ -122,7 +136,7 @@ data "coder_parameter" "home_volume_size" {
     min = 1
     max = 50
   }
-  order = 3
+  order = 4
 }
 
 data "coder_parameter" "fallback_image" {
@@ -131,7 +145,7 @@ data "coder_parameter" "fallback_image" {
   description  = "Image used if the devcontainer build fails."
   default      = "codercom/enterprise-base:ubuntu"
   mutable      = true
-  order        = 4
+  order        = 5
 }
 
 data "coder_parameter" "devcontainer_builder" {
@@ -140,7 +154,7 @@ data "coder_parameter" "devcontainer_builder" {
   description  = "Envbuilder image used to build the devcontainer. Pin to a specific release in production."
   default      = "ghcr.io/coder/envbuilder:latest"
   mutable      = true
-  order        = 5
+  order        = 6
 }
 
 # ---------------------------------------------------------------------------
