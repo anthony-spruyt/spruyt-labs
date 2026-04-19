@@ -146,12 +146,16 @@ upsert docker/hosted envbuilder-cache '{
   "storage":{"blobStoreName":"default","strictContentTypeValidation":true,"writePolicy":"ALLOW"},
   "docker":{"v1Enabled":false,"forceBasicAuth":true,"httpPort":8083}}'
 
-# docker-group with dedicated connector on 8082 (serves OCI v2 at host root)
+# docker-group with dedicated connector on 8082 (serves OCI v2 at host root).
+# forceBasicAuth=true: same Nexus 3 bug as envbuilder-cache above — Bearer
+# realm is advertised but anonymous bearer tokens get 401'd on the next
+# request. Basic auth via the workspace-puller credentials (mounted as
+# /etc/containers/auth.json in coder workspaces) works reliably. Ref #976.
 upsert docker/group docker-group '{
   "name":"docker-group","online":true,
   "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
   "group":{"memberNames":["docker-hub-proxy","ghcr-proxy","mcr-proxy","quay-proxy","k8s-registry-proxy"]},
-  "docker":{"v1Enabled":false,"forceBasicAuth":false,"httpPort":8082}}'
+  "docker":{"v1Enabled":false,"forceBasicAuth":true,"httpPort":8082}}'
 
 # --- anonymous-extras role + assignment ---
 # nx-anonymous is a built-in read-only role already granting repo view/read/
@@ -183,5 +187,42 @@ curl -sf -X PUT -H "Content-Type: application/json" -u "$${AUTH}" \
 
 # --- envbuilder-cache push: allow admin pushes (follow-up: dedicated user) ---
 # No extra privilege work needed — admin role already has full write access.
+
+# --- workspace-puller user: read-only creds for coder workspace podman pulls ---
+# docker-group forceBasicAuth=true rejects anonymous access, so workspaces
+# need a real user. nx-anonymous is the built-in read-only role (repo view/
+# read/browse) — sufficient for pulling from docker-group. Password comes
+# from a SOPS secret, plumbed through the Job via WORKSPACE_PULLER_PASSWORD.
+# Ref #976.
+echo "Upserting workspace-puller user..."
+# Users API: GET /security/users?userId=<id> returns a list (200 even if empty).
+# Use the body to detect existence.
+existing=$(curl -sS -u "$${AUTH}" "$${API}/security/users?userId=workspace-puller" || echo '[]')
+if printf '%s' "$${existing}" | grep -q '"userId"[[:space:]]*:[[:space:]]*"workspace-puller"'; then
+  echo "  workspace-puller exists, updating + rotating password"
+  # PUT body matches ApiUser (no password field — rotation uses change-password).
+  curl -sfS -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d '{
+    "userId":"workspace-puller","firstName":"Workspace","lastName":"Puller",
+    "emailAddress":"workspace-puller@example.org","source":"default",
+    "status":"active","roles":["nx-anonymous"]
+  }' "$${API}/security/users/workspace-puller"
+  curl -sfS -X PUT -H "Content-Type: text/plain" -u "$${AUTH}" \
+    --data-binary "$${WORKSPACE_PULLER_PASSWORD}" \
+    "$${API}/security/users/workspace-puller/change-password"
+else
+  echo "  creating workspace-puller"
+  # POST body matches ApiCreateUser (requires password). Use a placeholder
+  # here and set the real password via /change-password below — avoids
+  # breaking the JSON when the password contains quotes or backslashes.
+  curl -sfS -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d '{
+    "userId":"workspace-puller","firstName":"Workspace","lastName":"Puller",
+    "emailAddress":"workspace-puller@example.org","source":"default",
+    "status":"active","password":"placeholder-will-be-rotated",
+    "roles":["nx-anonymous"]
+  }' "$${API}/security/users"
+  curl -sfS -X PUT -H "Content-Type: text/plain" -u "$${AUTH}" \
+    --data-binary "$${WORKSPACE_PULLER_PASSWORD}" \
+    "$${API}/security/users/workspace-puller/change-password"
+fi
 
 echo "Provisioning complete."

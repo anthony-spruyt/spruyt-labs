@@ -531,6 +531,17 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
+      # Basic-auth credentials for docker-group (8082) + envbuilder-cache
+      # (8083). Nexus 3 rejects anonymous bearer tokens on docker-group
+      # (forceBasicAuth=true), so workspaces authenticate as the read-only
+      # `workspace-puller` user. Ref #976.
+      volume_mount {
+        name       = "nexus-auth"
+        mount_path = "/etc/containers/auth.json"
+        sub_path   = "auth.json"
+        read_only  = true
+      }
+
       # Direct-assigned block device for podman storage. Kata passes the
       # RBD volume into the guest as virtio-blk so the guest kernel sees
       # real ext4 (formatted in startup) and kernel overlay works without
@@ -575,6 +586,14 @@ resource "kubernetes_pod_v1" "main" {
       name = "registries-conf"
       config_map {
         name         = "coder-workspace-registries-conf"
+        default_mode = "0444"
+      }
+    }
+
+    volume {
+      name = "nexus-auth"
+      secret {
+        secret_name  = "coder-workspace-nexus-auth"
         default_mode = "0444"
       }
     }
