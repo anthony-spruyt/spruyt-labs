@@ -11,7 +11,7 @@ terraform {
       # trips "Unexpected Identity Change" on refresh for pods created by
       # previous plan iterations, blocking destroy/recreate. See
       # hashicorp/terraform-provider-kubernetes issues around v3.0.
-      version = "~> 2.38"
+      version = "~> 3.0"
     }
     envbuilder = {
       source  = "coder/envbuilder"
