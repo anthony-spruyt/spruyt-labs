@@ -10,7 +10,7 @@ Run this prompt when adding any new HelmRelease-based workload to the cluster.
 
 > **All work requires a linked GitHub issue. No exceptions.**
 
-1. Check if issue exists: `gh issue list --search "<workload-name>"`
+1. Search for existing issue for `<workload-name>`
 2. If not, create using `feature_request.yml` template (see @.claude/rules/github-workflow.md)
 3. Track the issue number for all subsequent steps
 
@@ -52,13 +52,8 @@ Before writing any files, understand the chart:
    - **Check for values.schema.json**: Many charts provide JSON schemas for validation
      - Look for `values.schema.json` in the chart directory
      - Check ArtifactHub page for schema availability
-     - GitHub search: `gh api repos/<org>/<repo>/contents/charts/<chart>` to list files
-     - **Search other repos for existing schema usage**:
-       ```bash
-       # Pattern: /yaml-language-server:\s*[^\n]*<name>[^\n]*\.json/
-       # Replace <name> with chart name or CR type (e.g., falco, kustomization, helmrelease)
-       gh search code 'yaml-language-server' '<name>' '.json' --limit 10
-       ```
+     - Search GitHub for chart contents to list files
+     - **Search other repos for existing schema usage**: Search GitHub code for `yaml-language-server <name> .json` to find schema URLs used by others
    - If schema exists, **validate the URL returns HTTP 200** before using:
      ```bash
      curl -sL -o /dev/null -w "%{http_code}" "<schema-url>"

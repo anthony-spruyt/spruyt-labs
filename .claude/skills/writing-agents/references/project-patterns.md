@@ -76,7 +76,7 @@ Agents feeding orchestrators use rigid parseable formats. Standalone agents use 
 
 | Pattern | Description |
 |---------|-------------|
-| GitHub issue comment | Post results via `gh issue comment` |
+| GitHub issue comment | Post results as GitHub issue comment |
 | Structured return to caller | Return verdict + evidence for calling skill to parse |
 | Terminal states | Named end states (SUCCESS/ROLLBACK/PARTIAL) with different templates |
 | Fix-and-retry loop | Return BLOCKED with exact fixes; caller applies and re-invokes |

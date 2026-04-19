@@ -34,9 +34,7 @@ If either file is missing, proceed with best judgment and note it in output.
 
 ### 1. Read PR Details
 
-Use the `mcp__github__pull_request_read` MCP tool:
-- `method: get` for title, labels, body, files, headRefName
-- `method: get_diff` for the unified diff
+Read PR metadata (title, labels, body, files, branch) and unified diff.
 
 ### 2. Classify & Extract
 
@@ -49,10 +47,10 @@ Follow changelog strategies from analysis-patterns. Follow inherited research pr
 
 ### 4. Search for Known Issues
 
-Use `mcp__github__search_issues` for each query:
+Search upstream GitHub for:
 
-- Query: `<project> <target-version>`, perPage: 10
-- Query: `breaking`, owner: `<upstream-owner>`, repo: `<upstream-repo>`, perPage: 5
+- `<project> <target-version>` — version-specific issues
+- `breaking` in upstream repo — breaking change reports
 
 ### 5. Impact Analysis Against Our Configuration
 
@@ -143,7 +141,7 @@ Use this structure — the orchestrating skill parses it:
 
 ### 8. Post to Tracking Issue
 
-If a GitHub issue number was provided, post findings as a comment using `mcp__github__add_issue_comment` (owner: `anthony-spruyt`, repo: `spruyt-labs`, issue_number: `<number>`, body: `<VERDICT output>`).
+If a GitHub issue number was provided, post findings as a comment on the tracking issue.
 
 ### 9. Return Results
 

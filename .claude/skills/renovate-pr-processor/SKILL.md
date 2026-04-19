@@ -11,7 +11,7 @@ description: Use when reviewing, merging, or batch-processing open Renovate depe
 |------|-------|
 | Analysis agent | `renovate-pr-analyzer` (per PR, parallel) |
 | Validation agent | `cluster-validator` (after each merge) |
-| Merge strategy | `mcp__github__merge_pull_request` (squash) |
+| Merge strategy | Squash merge |
 | Merge order | patch → minor → major → unlabeled |
 | Failure handling | Auto-revert → user pushes → continue |
 
@@ -19,20 +19,13 @@ description: Use when reviewing, merging, or batch-processing open Renovate depe
 
 ### Phase 1: DISCOVER
 
-Use `mcp__github__search_pull_requests`:
-- Query: `author:renovate[bot] state:open`
-- Owner: `anthony-spruyt`, repo: `spruyt-labs`, perPage: 50
+Search for open PRs by `renovate[bot]`.
 
 Sort by risk: `dep/patch` → `dep/minor` → `dep/major` → no label. If none found, report and exit.
 
 ### Phase 2: ANALYZE (parallel)
 
-Create tracking issue using `mcp__github__issue_write`:
-- Method: `create`
-- Owner: `anthony-spruyt`, repo: `spruyt-labs`
-- Title: `chore(deps): batch renovate PR processing <YYYY-MM-DD>`
-- Labels: `["chore"]`
-- Body:
+Create tracking issue titled `chore(deps): batch renovate PR processing <YYYY-MM-DD>` with label `chore`. Body:
 
 ```markdown
 ## Summary
@@ -67,12 +60,7 @@ Wait for all agents. Each agent output begins with `## VERDICT: [SAFE|RISKY|UNKN
 
 After all analyzers complete, collect `### Feature Opportunities` sections from their outputs.
 
-If any HIGH/MEDIUM relevance features found, create issue using `mcp__github__issue_write`:
-- Method: `create`
-- Owner: `anthony-spruyt`, repo: `spruyt-labs`
-- Title: `feat(deps): feature opportunities from renovate batch <YYYY-MM-DD>`
-- Labels: `["enhancement"]`
-- Body:
+If any HIGH/MEDIUM relevance features found, create issue titled `feat(deps): feature opportunities from renovate batch <YYYY-MM-DD>` with label `enhancement`. Body:
 
 ```markdown
 ## Summary
@@ -137,14 +125,14 @@ For each confirmed PR (one at a time):
 
 **4.1 Merge:**
 
-1. Check merge status: `mcp__github__pull_request_read` (method: `get`, owner: `anthony-spruyt`, repo: `spruyt-labs`, pullNumber: `<number>`) — check `mergeable` field
-2. Merge: `mcp__github__merge_pull_request` (owner: `anthony-spruyt`, repo: `spruyt-labs`, pullNumber: `<number>`, merge_method: `squash`)
+1. Check PR merge status (mergeable field)
+2. Squash merge the PR
 
 If not mergeable (conflicts), skip with comment, continue to next PR.
 
 **4.2 Check if cluster validation needed:**
 
-`mcp__github__pull_request_read` (method: `get_files`, owner: `anthony-spruyt`, repo: `spruyt-labs`, pullNumber: `<number>`)
+Read PR changed files list.
 Files under `cluster/` → run cluster-validator. Only `.taskfiles/`, `docs/`, `.github/` → skip validation, continue to next PR.
 
 **4.3 Validate** (blocking — do NOT merge next PR until this completes): `git pull --ff-only origin main`, then dispatch `cluster-validator` in **foreground** (not background) with tracking issue number, PR details, dep version change, and affected namespace/app.

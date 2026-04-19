@@ -40,7 +40,7 @@ Track upgrade work with a GitHub issue. If no issue exists, create one.
 
 **IMPORTANT:** Use plain text lists, NOT checkboxes. Checkboxes are difficult for agents to update programmatically. Post progress via comments instead.
 
-Use the `mcp__github__issue_write` MCP tool (method: `create`, owner: `anthony-spruyt`, repo: `spruyt-labs`, title: `infra(talos): upgrade Talos v<current> to v<target>`, labels: `["infra"]`). Body template:
+Create a GitHub issue with title `infra(talos): upgrade Talos v<current> to v<target>` and label `infra`. Body template:
 
 ```markdown
 ## Summary
@@ -76,7 +76,7 @@ High (node reboot, potential data impact)
 
 Post progress updates as issue comments (not checkbox edits):
 
-Post comments via the `mcp__github__add_issue_comment` MCP tool (owner: `anthony-spruyt`, repo: `spruyt-labs`, issue_number: `<n>`). Example body:
+Post progress updates as issue comments. Example body:
 
 ```markdown
 ## Progress Update
@@ -145,9 +145,7 @@ grep "^talosVersion:" talos/talconfig.yaml
 # Running version on nodes
 talosctl version --nodes <node-ip> --short
 
-# If PR provided, fetch PR diff via MCP: mcp__github__pull_request_read
-# (method: get_diff, owner: anthony-spruyt, repo: spruyt-labs, pullNumber: <pr>)
-# then grep the returned diff text for talosVersion.
+# If PR provided, read PR diff and grep for talosVersion
 ```
 
 ## Upgrade Workflow

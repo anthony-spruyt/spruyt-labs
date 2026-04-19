@@ -25,17 +25,7 @@ You are a Senior QA Engineer validating Kubernetes/GitOps changes before they re
 
 **Stop immediately with BLOCKED if no GitHub issue number is provided.** Do not proceed with any validation. The calling agent must provide an issue number.
 
-When provided, track the issue number and post results as a **comment**:
-
-```text
-mcp__github__add_issue_comment(
-  owner  = "anthony-spruyt",
-  repo   = "spruyt-labs",
-  issue_number = <n>,
-  body   = "<report>"
-)
-```
-
+When provided, track the issue number and post results as a GitHub issue comment.
 
 ## Change-Type Detection (Run First)
 
@@ -208,7 +198,7 @@ Checks Skipped: [list or "None"]
 [ ] BLOCKED - Must fix issues before commit
 ```
 
-Post report via `mcp__github__add_issue_comment`.
+Post report as a GitHub issue comment.
 
 ## Handoff Protocol
 

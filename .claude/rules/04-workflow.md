@@ -4,12 +4,12 @@
 
 ### Lifecycle
 
-1. Check if issue exists: `gh issue list --repo anthony-spruyt/spruyt-labs --search "keywords"`
+1. Search for existing issue by keywords
 2. Create issue if needed using template fields
 3. Track issue number throughout work
 4. Reference in commits: `Ref #123`
 5. Validators post results as issue comments
-6. Close after user confirms: `gh issue close <number> --repo anthony-spruyt/spruyt-labs`
+6. Close after user confirms
 
 ### Issue Types
 
@@ -32,22 +32,6 @@ Read templates from `.github/ISSUE_TEMPLATE/` to get title prefix, labels, and r
 | Chore | Summary, Motivation, Chore Type, Affected Area |
 | Docs | Summary, Motivation, Documentation Type, Affected Area |
 | Infra | Summary, Motivation, Infrastructure Type, Affected Area, Planned Changes, Rollback Plan, Risk Level |
-
-### CLI Pattern
-
-```bash
-gh issue create --repo anthony-spruyt/spruyt-labs \
-  --title "<prefix from template> description" \
-  --label "<labels from template>" \
-  --body "$(cat <<'EOF'
-## <label from first required field>
-<content>
-
-## <label from second required field>
-<content>
-EOF
-)"
-```
 
 ### Affected Area Options
 
@@ -76,8 +60,9 @@ Skip qa-validator for trivial changes (typos, single-line fixes, SOPS-only). Pre
 
 Template: `.github/pull_request_template.md`
 
-```bash
-gh pr create --title "<type>(scope): description" --body "$(cat <<'EOF'
+PR body structure:
+
+```markdown
 ## Summary
 <Brief description>
 
@@ -90,8 +75,6 @@ Closes #<number>
 
 ## Testing
 <How was this tested?>
-EOF
-)"
 ```
 
 ## Linting Layers

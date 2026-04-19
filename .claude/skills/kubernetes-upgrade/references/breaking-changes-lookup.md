@@ -22,9 +22,7 @@ For patch releases, look for the specific patch section header (e.g., `## v1.35.
 
 ### 3. GitHub Issues (if changelogs lack detail)
 
-```bash
-gh search issues "breaking change v<version>" --repo kubernetes/kubernetes --limit 10
-```
+Search GitHub issues for `breaking change v<version>` in `kubernetes/kubernetes`.
 
 ### 4. WebSearch (last resort, state why others failed)
 

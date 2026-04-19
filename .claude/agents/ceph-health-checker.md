@@ -147,7 +147,7 @@ Other States: [list states and counts, or "None"]
 
 ## Handoff Protocol
 
-Post the report as a GitHub issue comment via `mcp__github__add_issue_comment` (owner: `anthony-spruyt`, repo: `spruyt-labs`, issue_number: `<n>`, body: `<report>`).
+Post the report as a GitHub issue comment.
 
 If CRITICAL: recommend immediate investigation and list specific next steps.
 If DEGRADED: list monitoring suggestions and non-urgent remediation.
