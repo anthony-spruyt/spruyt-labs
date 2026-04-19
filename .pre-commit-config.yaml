@@ -66,7 +66,3 @@ repos:
     rev: "v2.1.1"
     hooks:
       - id: "forbid-secrets"
-        # *.template.yaml files are plaintext scaffolds with placeholders
-        # that the operator fills in, encrypts via sops, and renames to
-        # the final *.sops.yaml path. They are not deployed directly.
-        exclude: "\\.template\\.yaml$"

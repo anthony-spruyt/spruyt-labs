@@ -17,10 +17,10 @@
   "mounts": [
     "source=${localEnv:HOME}/.ssh/agent.sock,target=/ssh-agent,type=bind",
     "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
+    "source=${localWorkspaceFolderBasename}-containers,target=/var/lib/containers,type=volume",
     "source=${localEnv:HOME}/.secrets/.terraform.d,target=/home/vscode/.terraform.d,type=bind,readonly",
     "source=${localEnv:HOME}/.secrets,target=/home/vscode/.secrets,type=bind,readonly",
-    "source=${localEnv:HOME}/.secrets/talosconfig,target=/home/vscode/.secrets/talosconfig,type=bind",
-    "source=spruyt-labs-containers,target=/var/lib/containers,type=volume"
+    "source=${localEnv:HOME}/.secrets/talosconfig,target=/home/vscode/.secrets/talosconfig,type=bind"
   ],
   "containerEnv": {
     "SSH_AUTH_SOCK": "/ssh-agent"
