@@ -28,7 +28,7 @@ controllers:
         image:
           # renovate: datasource=docker depName=sonatype/nexus3
           repository: sonatype/nexus3
-          tag: "3.91.0@sha256:5788b8873cdcda22835e30293a85545e109430dab94aa3e5717bb978e2883003"
+          tag: "3.91.1@sha256:5b18c40967ea7056a60571ec1a683f92d6618101fdd1ed17b042a29e8c9e685b"
         env:
           TZ:
             value: "${TIMEZONE}"
