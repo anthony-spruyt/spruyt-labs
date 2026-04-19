@@ -15,4 +15,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 FROM gcr.io/distroless/static:nonroot@sha256:e3f945647ffb95b5839c07038d64f9811adf17308b9121d8a2b87b6a22a80a39
 COPY --from=builder /shutdown-orchestrator /shutdown-orchestrator
 USER 65534:65534
+# Health monitored via Kubernetes liveness/readiness probes, not docker healthcheck.
+HEALTHCHECK NONE
 ENTRYPOINT ["/shutdown-orchestrator"]
