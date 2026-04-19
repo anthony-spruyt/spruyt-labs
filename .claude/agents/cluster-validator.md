@@ -221,7 +221,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 
 ## Output Templates
 
-Always post results to the GitHub issue via the `mcp__github__add_issue_comment` MCP tool (owner: `anthony-spruyt`, repo: `spruyt-labs`, issue_number: `<number>`, body: `<report>`). Do NOT shell out to `gh` — the CLI is unauthenticated in this environment and will fail.
+Always post results to the GitHub issue via `mcp__github__add_issue_comment` (owner: `anthony-spruyt`, repo: `spruyt-labs`, issue_number: `<number>`, body: `<report>`).
 
 ### ROLLBACK
 ```

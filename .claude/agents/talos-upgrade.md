@@ -72,8 +72,6 @@ Talos (machine configs, upgrades)
 High (node reboot, potential data impact)
 ```
 
-Do NOT shell out to `gh` — the CLI is unauthenticated in this environment.
-
 ### Progress Tracking via Comments
 
 Post progress updates as issue comments (not checkbox edits):
