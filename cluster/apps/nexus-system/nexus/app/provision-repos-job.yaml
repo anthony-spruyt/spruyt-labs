@@ -51,7 +51,7 @@ spec:
             - name: GHCR_TOKEN
               valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: ghcr-token}}
             - name: WORKSPACE_PULLER_PASSWORD
-              valueFrom: {secretKeyRef: {name: nexus-upstream-creds, key: workspace-puller-password}}
+              valueFrom: {secretKeyRef: {name: nexus-workspace-clients, key: puller-password}}
           command: ["/bin/sh", "/scripts/provision.sh"]
           volumeMounts:
             - {name: script, mountPath: /scripts, readOnly: true}

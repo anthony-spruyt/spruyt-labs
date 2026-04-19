@@ -593,7 +593,7 @@ resource "kubernetes_pod_v1" "main" {
     volume {
       name = "nexus-auth"
       secret {
-        secret_name  = "coder-workspace-nexus-auth"
+        secret_name  = "coder-workspace-nexus-clients"
         default_mode = "0444"
       }
     }
