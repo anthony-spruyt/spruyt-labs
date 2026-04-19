@@ -137,6 +137,35 @@ spec:
             k8s:app.kubernetes.io/name: coder-workspace
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow Coder DERP replica sync between Coder control plane pods (HA/replicasync)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-coder-replica-sync
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: coder
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: coder-system
+            k8s:app.kubernetes.io/name: coder
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: coder-system
+            k8s:app.kubernetes.io/name: coder
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
