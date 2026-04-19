@@ -60,6 +60,7 @@ spec:
     - toEntities:
         - world
         - host
+        - remote-node
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow workspace pods to reach Traefik LB for access URL (hostAliases resolves here)
