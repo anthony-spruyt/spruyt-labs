@@ -340,9 +340,9 @@ resource "coder_agent" "main" {
     GIT_COMMITTER_EMAIL = local.git_author_email
     # SSH auth uses the read-only key mount directly — no copy needed.
     # Key rotation propagates automatically via Kubernetes secret volume refresh.
-    GIT_SSH_COMMAND    = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-    TALOSCONFIG        = "/etc/coder/talos/config"
-    SOPS_AGE_KEY_FILE  = "/etc/coder/sops/age.key"
+    GIT_SSH_COMMAND   = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+    TALOSCONFIG       = "/etc/coder/talos/config"
+    SOPS_AGE_KEY_FILE = "/etc/coder/sops/age.key"
   }
 
   metadata {
@@ -580,7 +580,7 @@ resource "kubernetes_pod_v1" "main" {
           memory = "2Gi"
         }
         limits = {
-          cpu    = "8000m"
+          cpu    = "4000m"
           memory = "16Gi"
         }
       }
