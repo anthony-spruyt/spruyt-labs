@@ -1,6 +1,6 @@
 ---
 name: block-git-push
-enabled: true
+enabled: false
 event: bash
 pattern: git push
 action: block

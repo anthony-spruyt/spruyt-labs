@@ -141,5 +141,16 @@
     "github",
     "kubectl",
     "victoriametrics"
-  ]
+  ],
+  "enabledPlugins": {
+    "n8n-skills@n8n-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "n8n-skills": {
+      "source": {
+        "source": "github",
+        "repo": "czlonkowski/n8n-skills"
+      }
+    }
+  }
 }
