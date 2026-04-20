@@ -44,3 +44,6 @@ __pycache__/
 !/cmd/*/Dockerfile
 !/cmd/*/.dockerignore
 !/cmd/*/README.md
+
+# Local claude files
+.claude/settings.local.json
