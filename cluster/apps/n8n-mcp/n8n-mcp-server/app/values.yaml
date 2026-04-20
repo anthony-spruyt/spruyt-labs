@@ -87,6 +87,10 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /home/nodejs
+  data:
+    type: emptyDir
+    globalMounts:
+      - path: /app/data
 service:
   app:
     controller: n8n-mcp-server
