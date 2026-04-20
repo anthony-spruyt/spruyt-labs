@@ -17,7 +17,7 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: coder-values
-  # Inject hostAliases so Coder resolves code.spruyt.xyz to Traefik LB internally
+  # Inject hostAliases so Coder resolves code.$EXTERNAL_DOMAIN to Traefik LB internally
   # (avoids Cloudflare hairpin for health checks and DERP)
   postRenderers:
     - kustomize:
