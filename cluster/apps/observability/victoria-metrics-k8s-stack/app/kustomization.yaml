@@ -183,6 +183,14 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  # n8n workflow automation dashboard
+  - name: grafana-dashboard-n8n
+    namespace: observability
+    files:
+      - dashboards/n8n.json
+    options:
+      labels:
+        grafana_dashboard: "1"
   # Cilium network policy drops dashboard
   - name: grafana-dashboard-cilium-policy-drops
     namespace: observability
