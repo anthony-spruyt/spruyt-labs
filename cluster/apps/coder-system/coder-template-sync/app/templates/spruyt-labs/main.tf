@@ -394,11 +394,23 @@ resource "coder_agent" "main" {
   }
 
   display_apps {
-    vscode          = true
+    vscode          = false
     vscode_insiders = false
     web_terminal    = true
     ssh_helper      = true
   }
+}
+
+# ---------------------------------------------------------------------------
+# VS Code Desktop (explicit folder bypass for recent-folder cache bug)
+# ---------------------------------------------------------------------------
+
+module "vscode" {
+  count    = data.coder_workspace.me.start_count
+  source   = "registry.coder.com/coder/vscode-desktop/coder"
+  version  = "1.2.1"
+  agent_id = coder_agent.main.id
+  folder   = local.workspace_folder
 }
 
 # ---------------------------------------------------------------------------
