@@ -134,5 +134,12 @@
     "deny": [
       "Read(./talos/clusterconfig/**)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "bravesearch",
+    "cclsp",
+    "github",
+    "kubectl",
+    "victoriametrics"
+  ]
 }
