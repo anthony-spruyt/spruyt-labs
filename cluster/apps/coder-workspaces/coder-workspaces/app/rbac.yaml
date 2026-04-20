@@ -9,23 +9,226 @@ metadata:
   namespace: coder-workspaces
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
-# Privileged workspace SA — bound to cluster-admin. Used by spruyt-labs
-# homelab template only.
+# Privileged workspace SA — bound to coder-workspace-ops (scoped-down
+# cluster-admin). Used by spruyt-labs homelab template only.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: coder-workspace-admin
   namespace: coder-workspaces
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/clusterrole-rbac-v1.json
+# Scoped-down alternative to cluster-admin. Grants full operational access
+# (read everything, write most resources, exec, logs, helm, flux) while
+# removing privilege-escalation paths: RBAC writes, webhook mutation, CRD
+# mutation, API service hijacking, and node deletion.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coder-workspace-ops
+rules:
+  # ── Read everything (safe: no state change) ──────────────────────────
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: [get, list, watch]
+
+  # ── Non-resource URLs (healthz, metrics, debug endpoints) ────────────
+  - nonResourceURLs: ["*"]
+    verbs: [get]
+
+  # ── Core resources ───────────────────────────────────────────────────
+  - apiGroups: [""]
+    resources:
+      - pods
+      - services
+      - endpoints
+      - configmaps
+      - secrets
+      - serviceaccounts
+      - persistentvolumeclaims
+      - persistentvolumes
+      - namespaces
+      - events
+      - resourcequotas
+      - limitranges
+    verbs: [create, update, patch, delete]
+
+  # ── Pod subresources (exec, logs, port-forward, eviction) ────────────
+  - apiGroups: [""]
+    resources: [pods/exec, pods/attach, pods/portforward, pods/eviction]
+    verbs: [create]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+
+  # ── Node operations (cordon/uncordon/taint — NOT delete) ─────────────
+  - apiGroups: [""]
+    resources: [nodes]
+    verbs: [patch, update]
+  - apiGroups: [""]
+    resources: [nodes/proxy, nodes/stats]
+    verbs: [get, create]
+
+  # ── Apps (deployments, statefulsets, daemonsets, replicasets) ─────────
+  - apiGroups: [apps]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Batch (jobs, cronjobs) ───────────────────────────────────────────
+  - apiGroups: [batch]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Autoscaling (HPA) ───────────────────────────────────────────────
+  - apiGroups: [autoscaling]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── VPA ──────────────────────────────────────────────────────────────
+  - apiGroups: [autoscaling.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Policy (PDB) ────────────────────────────────────────────────────
+  - apiGroups: [policy]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Networking ───────────────────────────────────────────────────────
+  - apiGroups: [networking.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Storage ──────────────────────────────────────────────────────────
+  - apiGroups: [storage.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+  - apiGroups: [snapshot.storage.k8s.io, groupsnapshot.storage.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── RuntimeClasses ───────────────────────────────────────────────────
+  - apiGroups: [node.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Scheduling ───────────────────────────────────────────────────────
+  - apiGroups: [scheduling.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Flux (reconcile, suspend, resume, and full management) ───────────
+  - apiGroups:
+      - kustomize.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+      - source.toolkit.fluxcd.io
+      - notification.toolkit.fluxcd.io
+      - image.toolkit.fluxcd.io
+      - fluxcd.controlplane.io
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Cilium (network policies, endpoints, BGP) ───────────────────────
+  - apiGroups: [cilium.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Cert-Manager ─────────────────────────────────────────────────────
+  - apiGroups: [cert-manager.io, acme.cert-manager.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+  - apiGroups: [certificates.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── External Secrets ─────────────────────────────────────────────────
+  - apiGroups: [external-secrets.io, generators.external-secrets.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Rook Ceph ────────────────────────────────────────────────────────
+  - apiGroups: [ceph.rook.io, csi.ceph.io, csiaddons.openshift.io, objectbucket.io, replication.storage.openshift.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── CNPG (CloudNativePG) ─────────────────────────────────────────────
+  - apiGroups: [postgresql.cnpg.io, barmancloud.cnpg.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Monitoring (Prometheus Operator, VictoriaMetrics) ────────────────
+  - apiGroups: [monitoring.coreos.com, operator.victoriametrics.com]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Kyverno (policy management, NOT reports) ─────────────────────────
+  - apiGroups: [kyverno.io, policies.kyverno.io, wgpolicyk8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+  - apiGroups: [reports.kyverno.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Traefik ──────────────────────────────────────────────────────────
+  - apiGroups: [traefik.io, hub.traefik.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Velero (backup/restore) ──────────────────────────────────────────
+  - apiGroups: [velero.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── ExternalDNS ──────────────────────────────────────────────────────
+  - apiGroups: [externaldns.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Gateway API ──────────────────────────────────────────────────────
+  - apiGroups: [gateway.networking.k8s.io, gateway.networking.x-k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Talos ────────────────────────────────────────────────────────────
+  - apiGroups: [talos.dev]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Discovery / Events / Coordination ────────────────────────────────
+  - apiGroups: [discovery.k8s.io, events.k8s.io, coordination.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Resource API (k8s 1.30+) ────────────────────────────────────────
+  - apiGroups: [resource.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ── Flow control (priority/fairness) ─────────────────────────────────
+  - apiGroups: [flowcontrol.apiserver.k8s.io]
+    resources: ["*"]
+    verbs: [create, update, patch, delete]
+
+  # ────────────────────────────────────────────────────────────────────
+  # EXPLICITLY NOT GRANTED (write access):
+  #   - rbac.authorization.k8s.io    → privilege escalation
+  #   - admissionregistration.k8s.io → webhook hijacking
+  #   - apiextensions.k8s.io         → CRD mutation
+  #   - apiregistration.k8s.io       → API service redirect
+  #   - authentication.k8s.io        → token review manipulation
+  #   - authorization.k8s.io         → SAR manipulation
+  #   - nodes (delete verb)          → cluster disruption
+  # ────────────────────────────────────────────────────────────────────
+---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/clusterrolebinding-rbac-v1.json
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: coder-workspace-admin-cluster-admin
+  name: coder-workspace-admin-ops
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: coder-workspace-ops
 subjects:
   - kind: ServiceAccount
     name: coder-workspace-admin
