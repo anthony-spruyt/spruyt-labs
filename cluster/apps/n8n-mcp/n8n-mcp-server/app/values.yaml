@@ -29,6 +29,8 @@ controllers:
             value: "http://n8n.n8n-system.svc:5678"
           - name: N8N_MCP_TELEMETRY_DISABLED
             value: "true"
+          - name: NODE_DB_PATH
+            value: "/data/nodes.db"
           - name: N8N_API_KEY
             valueFrom:
               secretKeyRef:
@@ -87,6 +89,10 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /home/node
+  data:
+    type: emptyDir
+    globalMounts:
+      - path: /data
 service:
   app:
     controller: n8n-mcp-server
