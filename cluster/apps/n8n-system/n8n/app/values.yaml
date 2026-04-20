@@ -67,6 +67,8 @@ main:
       value: "true"
     N8N_METRICS_INCLUDE_WORKFLOW_ID_LABEL:
       value: "true"
+    N8N_METRICS_INCLUDE_WORKFLOW_STATISTICS:
+      value: "true"
     N8N_METRICS_INCLUDE_CACHE_METRICS:
       value: "true"
     N8N_METRICS_INCLUDE_API_ENDPOINTS:

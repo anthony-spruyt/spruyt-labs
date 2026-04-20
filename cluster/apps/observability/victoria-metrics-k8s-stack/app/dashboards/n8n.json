@@ -1025,13 +1025,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nodejs_heap_size_used_bytes{instance=~\"$instance\"}",
+          "expr": "n8n_nodejs_heap_size_used_bytes{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }} used",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nodejs_heap_size_total_bytes{instance=~\"$instance\"}",
+          "expr": "n8n_nodejs_heap_size_total_bytes{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }} total",
           "refId": "B"
         }
@@ -1088,7 +1088,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "process_resident_memory_bytes{instance=~\"$instance\"}",
+          "expr": "n8n_process_resident_memory_bytes{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }} RSS",
           "refId": "A"
         },
@@ -1151,7 +1151,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "rate(process_cpu_seconds_total{instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "rate(n8n_process_cpu_seconds_total{instance=~\"$instance\"}[$__rate_interval])",
           "legendFormat": "{{ instance }}",
           "refId": "A"
         }
@@ -1208,7 +1208,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nodejs_eventloop_lag_seconds{instance=~\"$instance\"}",
+          "expr": "n8n_nodejs_eventloop_lag_seconds{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }}",
           "refId": "A"
         }
