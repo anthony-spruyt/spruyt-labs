@@ -35,7 +35,7 @@ controllers:
             valueFrom:
               secretKeyRef:
                 name: n8n-mcp-secrets
-                key: N8N_API_KEY
+                key: AUTH_TOKEN
           - name: N8N_API_KEY
             valueFrom:
               secretKeyRef:

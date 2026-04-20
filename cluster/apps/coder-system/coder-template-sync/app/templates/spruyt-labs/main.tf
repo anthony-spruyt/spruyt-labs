@@ -574,6 +574,13 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
+      # n8n-mcp Bearer token synced from n8n-mcp ns via ExternalSecret
+      env_from {
+        secret_ref {
+          name = "coder-workspace-n8n-mcp-key"
+        }
+      }
+
       resources {
         requests = {
           cpu    = "500m"

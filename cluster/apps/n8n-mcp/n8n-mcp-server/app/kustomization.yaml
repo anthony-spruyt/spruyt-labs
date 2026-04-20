@@ -7,6 +7,7 @@ resources:
   - ./release.yaml
   - ./network-policies.yaml
   - ./vpa.yaml
+  - ./mcp-api-keys-reader-rbac.yaml
 configMapGenerator:
   - name: n8n-mcp-server-values
     namespace: n8n-mcp

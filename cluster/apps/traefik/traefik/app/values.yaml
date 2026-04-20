@@ -69,8 +69,3 @@ env:
       secretKeyRef:
         name: traefik-mcp-api-keys
         key: GITHUB_MCP_API_KEY
-  - name: N8N_MCP_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: traefik-mcp-api-keys
-        key: N8N_MCP_API_KEY

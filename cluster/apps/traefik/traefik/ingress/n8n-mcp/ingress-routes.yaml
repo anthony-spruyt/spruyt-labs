@@ -17,7 +17,6 @@ spec:
       match: Host(`n8n-mcp.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: lan-ip-whitelist
-        - name: api-key-auth-n8n-mcp
       services:
         - name: n8n-mcp-server
           namespace: n8n-mcp

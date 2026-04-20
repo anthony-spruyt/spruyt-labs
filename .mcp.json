@@ -39,7 +39,7 @@
       "type": "http",
       "url": "https://n8n-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
       "headers": {
-        "X-API-KEY": "${N8N_MCP_API_KEY}"
+        "Authorization": "Bearer ${N8N_MCP_API_KEY}"
       }
     }
   }
