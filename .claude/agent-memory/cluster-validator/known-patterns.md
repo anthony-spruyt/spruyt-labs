@@ -80,6 +80,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 Error patterns and their known resolutions.
 
 | Error Pattern | Root Cause | Resolution | Count | Last Seen | Added |
+| n8n-mcp container ENOENT `mkdir '/home/node/.n8n-mcp'` — zero logs, never binds port, startup probe times out silently | `readOnlyRootFilesystem: true` with no writable emptyDir at container home `/home/node`; telemetry config manager crashes before app init despite `N8N_MCP_TELEMETRY_DISABLED=true` | Add emptyDir at `/home/node` (not `/home/nodejs` — verify actual container user homedir with image inspect or runtime error) | 1 | 2026-04-20 | 2026-04-20 |
 | falcosidekick liveness probe `context deadline exceeded` on `/ping` endpoint causing CrashLoopBackOff | CPU limit too low (75m) causes throttling; probe times out waiting for HTTP response | Increase CPU limit (75m -> 250m); update VPA maxAllowed to match | 1 | 2026-04-04 | 2026-04-04 |
 |---------------|------------|------------|-------|-----------|-------|
 | `exec: "/bin/sh": stat /bin/sh: no such file or directory` in CronJob pod | Scratch-based container image (e.g., `ghcr.io/siderolabs/talosctl`) has no shell | Use an image with a shell or restructure command to avoid shell | 1 | 2026-02-28 | 2026-02-28 |
