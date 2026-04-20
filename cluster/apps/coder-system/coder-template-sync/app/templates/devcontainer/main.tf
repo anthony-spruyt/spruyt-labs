@@ -379,6 +379,15 @@ resource "coder_script" "code_server" {
     if ! command -v code-server &>/dev/null; then
       curl -fsSL https://code-server.dev/install.sh | sh
     fi
+
+    # Install extensions from devcontainer.json (best effort, silent fail)
+    dc="${local.workspace_folder}/.devcontainer/devcontainer.json"
+    if [ -f "$dc" ] && command -v jq &>/dev/null; then
+      for ext in $(jq -r '.customizations.vscode.extensions[]? // empty' "$dc" 2>/dev/null); do
+        code-server --install-extension "$ext" &>/dev/null || true
+      done
+    fi
+
     exec code-server --auth none --port 13337 --host 127.0.0.1 "${local.workspace_folder}"
   EOT
 }
