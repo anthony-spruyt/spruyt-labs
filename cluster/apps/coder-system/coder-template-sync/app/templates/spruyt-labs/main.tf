@@ -340,8 +340,9 @@ resource "coder_agent" "main" {
     GIT_COMMITTER_EMAIL = local.git_author_email
     # SSH auth uses the read-only key mount directly — no copy needed.
     # Key rotation propagates automatically via Kubernetes secret volume refresh.
-    GIT_SSH_COMMAND = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-    TALOSCONFIG     = "/etc/coder/talos/config"
+    GIT_SSH_COMMAND    = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+    TALOSCONFIG        = "/etc/coder/talos/config"
+    SOPS_AGE_KEY_FILE  = "/etc/coder/sops/age.key"
   }
 
   metadata {
@@ -601,6 +602,13 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
+      # SOPS Age identity key (read-only, spruyt-labs template only)
+      volume_mount {
+        name       = "sops-age-key"
+        mount_path = "/etc/coder/sops"
+        read_only  = true
+      }
+
       # Podman registries.conf drop-in: route container pulls through Nexus
       # pull-through proxies (docker.io, ghcr.io, quay.io, mcr.microsoft.com,
       # registry.k8s.io). Ref #976.
@@ -684,6 +692,19 @@ resource "kubernetes_pod_v1" "main" {
         items {
           key  = "credentials.tfrc.json"
           path = "credentials.tfrc.json"
+        }
+      }
+    }
+
+    # SOPS Age identity key (synced from flux-system via ExternalSecret)
+    volume {
+      name = "sops-age-key"
+      secret {
+        secret_name  = "coder-age-key"
+        default_mode = "0400"
+        items {
+          key  = "age.key"
+          path = "age.key"
         }
       }
     }

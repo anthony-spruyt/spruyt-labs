@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./release.yaml
   - ./vpa.yaml
+  - ./sops-age-reader-rbac.yaml
 configMapGenerator:
   - name: flux-instance-values
     namespace: flux-system

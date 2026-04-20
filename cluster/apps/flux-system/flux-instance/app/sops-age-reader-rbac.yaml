@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/role-rbac-v1.json
+# Allows the sops-age-reader SA in coder-workspaces to read only the sops-age
+# secret for ESO sync into workspace pods (spruyt-labs template only).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sops-age-reader
+  namespace: flux-system
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["sops-age"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["selfsubjectrulesreviews"]
+    verbs: ["create"]
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/rolebinding-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sops-age-reader-coder-workspaces
+  namespace: flux-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sops-age-reader
+subjects:
+  - kind: ServiceAccount
+    name: sops-age-reader
+    namespace: coder-workspaces
