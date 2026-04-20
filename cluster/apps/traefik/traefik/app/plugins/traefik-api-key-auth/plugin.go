@@ -181,7 +181,6 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
     _, _ = os.Stdout.WriteString("traefik_api_key_auth: creating plugin " + name + "\n")
 
     // Passthrough mode: forwardBearerHeader + no keys = header translation only, no validation.
-    _, _ = os.Stdout.WriteString(fmt.Sprintf("traefik_api_key_auth: forwardBearerHeader=%v keys=%d\n", config.ForwardBearerHeader, len(config.Keys)))
     passthroughMode := config.ForwardBearerHeader && len(config.Keys) == 0
 
     var keyIndex map[int][]keyMaterial
