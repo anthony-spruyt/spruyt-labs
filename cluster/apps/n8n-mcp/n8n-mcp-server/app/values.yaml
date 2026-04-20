@@ -14,6 +14,19 @@ defaultPodOptions:
 controllers:
   n8n-mcp-server:
     strategy: Recreate
+    initContainers:
+      fix-schema:
+        image:
+          repository: ghcr.io/czlonkowski/n8n-mcp
+          tag: "2.47.12"
+          pullPolicy: IfNotPresent
+        command: ["sh", "-c", "cp /app/src/database/schema-optimized.sql /schema/schema.sql && cp /app/src/database/schema-optimized.sql /schema/schema-optimized.sql"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
     containers:
       app:
         image:
@@ -100,6 +113,14 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /app/data
+  schema:
+    type: emptyDir
+    advancedMounts:
+      n8n-mcp-server:
+        fix-schema:
+          - path: /schema
+        app:
+          - path: /app/src/database
 service:
   app:
     controller: n8n-mcp-server
