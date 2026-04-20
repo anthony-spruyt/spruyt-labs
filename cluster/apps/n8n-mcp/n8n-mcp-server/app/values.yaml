@@ -21,6 +21,8 @@ controllers:
           tag: full@sha256:22d74a21eafd972ad06d5b1a017b58b4646e705c3a07b3bfc8e80fcb09e02a77
           pullPolicy: IfNotPresent
         env:
+          - name: MCP_MODE
+            value: "http"
           - name: PORT
             value: "3000"
           - name: LOG_LEVEL
@@ -29,8 +31,11 @@ controllers:
             value: "http://n8n.n8n-system.svc:5678"
           - name: N8N_MCP_TELEMETRY_DISABLED
             value: "true"
-          - name: NODE_DB_PATH
-            value: "/data/nodes.db"
+          - name: AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: n8n-mcp-secrets
+                key: N8N_API_KEY
           - name: N8N_API_KEY
             valueFrom:
               secretKeyRef:
@@ -89,10 +94,6 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /home/node
-  data:
-    type: emptyDir
-    globalMounts:
-      - path: /data
 service:
   app:
     controller: n8n-mcp-server
