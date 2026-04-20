@@ -25,8 +25,8 @@ type Config struct {
     Keys                      []string `json:"keys,omitempty"`
     RemoveHeadersOnSuccess    bool     `json:"removeHeadersOnSuccess,omitempty"`
     InternalForwardHeaderName string   `json:"internalForwardHeaderName,omitempty"`
-    ForwardBearerHeader       bool     `json:"forwardBearerHeader,omitempty"`
-    ForwardBearerHeaderName   string   `json:"forwardBearerHeaderName,omitempty"`
+    ForwardBearerHeader       bool     `json:"forwardBearerHeader"`
+    ForwardBearerHeaderName   string   `json:"forwardBearerHeaderName"`
     InternalErrorRoute        string   `json:"internalErrorRoute,omitempty"`
     ExemptPaths               []string `json:"exemptPaths,omitempty"`
 }
