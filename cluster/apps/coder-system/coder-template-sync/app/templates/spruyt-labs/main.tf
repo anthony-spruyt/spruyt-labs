@@ -562,12 +562,12 @@ resource "kubernetes_pod_v1" "main" {
 
       resources {
         requests = {
-          cpu    = "2000m"
-          memory = "4Gi"
+          cpu    = "500m"
+          memory = "2Gi"
         }
         limits = {
           cpu    = "8000m"
-          memory = "16Gi"
+          memory = "8Gi"
         }
       }
 
