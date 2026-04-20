@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/middleware_v1alpha1.json
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-key-auth-n8n-mcp
+  namespace: n8n-mcp
+spec:
+  plugin:
+    traefik-api-key-auth:
+      authenticationHeader: true
+      authenticationHeaderName: X-API-KEY
+      bearerHeader: false
+      removeHeadersOnSuccess: true
+      keys:
+        - "env:N8N_MCP_API_KEY"

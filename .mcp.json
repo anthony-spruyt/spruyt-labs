@@ -34,6 +34,13 @@
       "headers": {
         "X-API-KEY": "${VM_MCP_API_KEY}"
       }
+    },
+    "n8n": {
+      "type": "http",
+      "url": "https://n8n-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
+      "headers": {
+        "X-API-KEY": "${N8N_MCP_API_KEY}"
+      }
     }
   }
 }

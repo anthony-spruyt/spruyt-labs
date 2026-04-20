@@ -1,0 +1,89 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  n8n-mcp-server:
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: ghcr.io/czlonkowski/n8n-mcp
+          tag: latest@sha256:6b7303feeb7b1fac11e1184cd397f3c3a7e36281927d9ac7ce5de28ee942ae4a
+          pullPolicy: IfNotPresent
+        env:
+          - name: PORT
+            value: "3000"
+          - name: LOG_LEVEL
+            value: "warn"
+          - name: N8N_API_URL
+            value: "http://n8n.n8n-system.svc:5678"
+          - name: N8N_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: n8n-mcp-secrets
+                key: N8N_API_KEY
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              failureThreshold: 30
+              periodSeconds: 5
+persistence:
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+service:
+  app:
+    controller: n8n-mcp-server
+    ports:
+      http:
+        port: 3000

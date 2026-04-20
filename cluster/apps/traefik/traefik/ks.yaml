@@ -35,6 +35,7 @@ spec:
     - name: github-mcp-server
     - name: headlamp
     - name: n8n
+    - name: n8n-mcp-server
     - name: nexus
     - name: kubectl-mcp-server
     - name: qdrant

@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "n8n-mcp-lan-${EXTERNAL_DOMAIN/./-}"
+  namespace: n8n-mcp
+spec:
+  secretName: "n8n-mcp-lan-${EXTERNAL_DOMAIN/./-}-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  dnsNames:
+    - "n8n-mcp.lan.${EXTERNAL_DOMAIN}"

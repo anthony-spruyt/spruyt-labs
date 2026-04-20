@@ -506,3 +506,24 @@ spec:
         - ports:
             - port: "5678"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from n8n-mcp-server (MCP API access)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-n8n-mcp-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-mcp
+            k8s:app.kubernetes.io/name: n8n-mcp-server
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP

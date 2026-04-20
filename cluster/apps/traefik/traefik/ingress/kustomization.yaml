@@ -20,4 +20,5 @@ resources:
   - ./rook-ceph
   - ./vaultwarden
   - ./kubectl-mcp
+  - ./n8n-mcp
   - ./whoami

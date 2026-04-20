@@ -48,6 +48,10 @@ data:
           "headers": {
             "Authorization": "Bearer $${SRE_MCP_AUTH_TOKEN}"
           }
+        },
+        "n8n": {
+          "type": "http",
+          "url": "http://n8n-mcp-server.n8n-mcp.svc:3000/mcp"
         }
       }
     }

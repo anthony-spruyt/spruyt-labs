@@ -50,6 +50,7 @@ resources:
   - ./github-mcp
   - ./discord-mcp
   - ./brave-search-mcp
+  - ./n8n-mcp
   - ./vpa-system
   # - ./snmp
   # - ./smtp

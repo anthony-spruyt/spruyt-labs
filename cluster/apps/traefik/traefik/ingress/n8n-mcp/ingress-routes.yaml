@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-lan-https-n8n-mcp
+  namespace: n8n-mcp
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: n8n-mcp.lan.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`n8n-mcp.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: api-key-auth-n8n-mcp
+      services:
+        - name: n8n-mcp-server
+          namespace: n8n-mcp
+          passHostHeader: true
+          port: 3000
+  tls:
+    secretName: "n8n-mcp-lan-${EXTERNAL_DOMAIN/./-}-tls"
