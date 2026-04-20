@@ -42,8 +42,8 @@ controllers:
               - ALL
         resources:
           requests:
-            cpu: 10m
-            memory: 128Mi
+            cpu: 100m
+            memory: 256Mi
           limits:
             memory: 512Mi
         probes:
@@ -83,6 +83,10 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /tmp
+  home:
+    type: emptyDir
+    globalMounts:
+      - path: /home/nodejs
 service:
   app:
     controller: n8n-mcp-server
