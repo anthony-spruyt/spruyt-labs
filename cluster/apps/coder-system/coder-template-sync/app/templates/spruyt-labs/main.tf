@@ -419,11 +419,13 @@ resource "coder_script" "code_server" {
       curl -fsSL https://code-server.dev/install.sh | sh
     fi
 
-    # Install extensions from devcontainer.json (best effort, silent fail)
+    # Install extensions from devcontainer.json for both VS Code Web and Desktop
     dc="${local.workspace_folder}/.devcontainer/devcontainer.json"
     if [ -f "$dc" ] && command -v jq &>/dev/null; then
+      mkdir -p ~/.vscode-server/extensions
       for ext in $(jq -r '.customizations.vscode.extensions[]? // empty' "$dc" 2>/dev/null); do
         code-server --install-extension "$ext" &>/dev/null || true
+        code-server --extensions-dir ~/.vscode-server/extensions --install-extension "$ext" &>/dev/null || true
       done
     fi
 
