@@ -27,6 +27,8 @@ controllers:
             value: "3000"
           - name: LOG_LEVEL
             value: "warn"
+          - name: TRUST_PROXY
+            value: "1"
           - name: N8N_API_URL
             value: "http://n8n.n8n-system.svc:5678"
           - name: N8N_MCP_TELEMETRY_DISABLED
