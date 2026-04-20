@@ -6,6 +6,7 @@ resources:
   - ./coder-workspace-env.sops.yaml
   - ./mcp-api-keys-secret-store.yaml
   - ./mcp-api-keys-externalsecret.yaml
+  - ./mcp-api-keys-admin-externalsecret.yaml
   - ./n8n-mcp-secret-store.yaml
   - ./n8n-mcp-externalsecret.yaml
   - ./coder-talosconfig.sops.yaml

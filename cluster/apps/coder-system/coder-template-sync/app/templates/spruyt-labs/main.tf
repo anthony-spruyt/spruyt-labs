@@ -567,10 +567,17 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
-      # MCP API keys synced from traefik ns via ExternalSecret
+      # MCP API keys synced from traefik ns via ExternalSecret (generic)
       env_from {
         secret_ref {
           name = "coder-workspace-mcp-api-keys"
+        }
+      }
+
+      # Admin MCP API keys (kubectl, victoriametrics) — spruyt-labs only
+      env_from {
+        secret_ref {
+          name = "coder-workspace-mcp-api-keys-admin"
         }
       }
 
