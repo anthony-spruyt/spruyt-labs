@@ -25,6 +25,8 @@ type Config struct {
     Keys                      []string `json:"keys,omitempty"`
     RemoveHeadersOnSuccess    bool     `json:"removeHeadersOnSuccess,omitempty"`
     InternalForwardHeaderName string   `json:"internalForwardHeaderName,omitempty"`
+    ForwardBearerHeader       bool     `json:"forwardBearerHeader,omitempty"`
+    ForwardBearerHeaderName   string   `json:"forwardBearerHeaderName,omitempty"`
     InternalErrorRoute        string   `json:"internalErrorRoute,omitempty"`
     ExemptPaths               []string `json:"exemptPaths,omitempty"`
 }
@@ -52,6 +54,8 @@ func CreateConfig() *Config {
         Keys:                      make([]string, 0),
         RemoveHeadersOnSuccess:    true,
         InternalForwardHeaderName: "",
+        ForwardBearerHeader:       false,
+        ForwardBearerHeaderName:   "Authorization",
         InternalErrorRoute:        "",
         ExemptPaths:               nil,
     }
@@ -59,6 +63,8 @@ func CreateConfig() *Config {
 
 type KeyAuth struct {
     next                      http.Handler
+    passthroughMode           bool
+    passthroughSourceHeader   string
     authenticationHeader      bool
     authenticationHeaderName  string
     bearerHeader              bool
@@ -70,6 +76,8 @@ type KeyAuth struct {
     keysByLength              map[int][]keyMaterial
     removeHeadersOnSuccess    bool
     internalForwardHeaderName string
+    forwardBearerHeader       bool
+    forwardBearerHeaderName   string
     internalErrorRoute        string
     exemptPaths               []string
 }
@@ -170,16 +178,22 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
         return nil, fmt.Errorf("config cannot be nil")
     }
 
-    // Do not log config to avoid leaking keys
     _, _ = os.Stdout.WriteString("traefik_api_key_auth: creating plugin " + name + "\n")
 
-    resolvedKeys, err := resolveKeys(config.Keys)
-    if err != nil {
-        return nil, err
-    }
+    // Passthrough mode: forwardBearerHeader + no keys = header translation only, no validation.
+    passthroughMode := config.ForwardBearerHeader && len(config.Keys) == 0
 
-    if !config.AuthenticationHeader && !config.BearerHeader && !config.QueryParam && !config.PathSegment {
-        return nil, fmt.Errorf("at least one method must be true")
+    var keyIndex map[int][]keyMaterial
+    if !passthroughMode {
+        resolvedKeys, err := resolveKeys(config.Keys)
+        if err != nil {
+            return nil, err
+        }
+        keyIndex = buildKeyIndex(resolvedKeys)
+
+        if !config.AuthenticationHeader && !config.BearerHeader && !config.QueryParam && !config.PathSegment {
+            return nil, fmt.Errorf("at least one method must be true")
+        }
     }
 
     authHeaderName := strings.TrimSpace(config.AuthenticationHeaderName)
@@ -199,8 +213,24 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
     internalErrorRoute := normalizeRoutePrefix(config.InternalErrorRoute)
 
+    forwardBearerHeaderName := strings.TrimSpace(config.ForwardBearerHeaderName)
+    if config.ForwardBearerHeader && forwardBearerHeaderName == "" {
+        forwardBearerHeaderName = "Authorization"
+    }
+
+    // In passthrough mode, source header defaults to AuthenticationHeaderName.
+    passthroughSourceHeader := authHeaderName
+    if passthroughMode {
+        if passthroughSourceHeader == "" {
+            return nil, fmt.Errorf("authenticationHeaderName required in passthrough mode (forwardBearerHeader without keys)")
+        }
+        _, _ = os.Stdout.WriteString("traefik_api_key_auth: passthrough mode — translating " + passthroughSourceHeader + " → " + forwardBearerHeaderName + " Bearer\n")
+    }
+
     return &KeyAuth{
         next:                      next,
+        passthroughMode:           passthroughMode,
+        passthroughSourceHeader:   passthroughSourceHeader,
         authenticationHeader:      config.AuthenticationHeader,
         authenticationHeaderName:  authHeaderName,
         bearerHeader:              config.BearerHeader,
@@ -209,9 +239,11 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
         queryParamName:            queryParamName,
         pathSegment:               config.PathSegment,
         permissiveMode:            config.PermissiveMode,
-        keysByLength:              buildKeyIndex(resolvedKeys),
+        keysByLength:              keyIndex,
         removeHeadersOnSuccess:    config.RemoveHeadersOnSuccess,
         internalForwardHeaderName: strings.TrimSpace(config.InternalForwardHeaderName),
+        forwardBearerHeader:       config.ForwardBearerHeader,
+        forwardBearerHeaderName:   forwardBearerHeaderName,
         internalErrorRoute:        internalErrorRoute,
         exemptPaths:               normalizeExemptPaths(config.ExemptPaths),
     }, nil
@@ -299,6 +331,9 @@ func (ka *KeyAuth) ok(rw http.ResponseWriter, req *http.Request, matchedKey stri
         req.Header.Del(ka.internalForwardHeaderName)
         req.Header.Set(ka.internalForwardHeaderName, matchedKey)
     }
+    if ka.forwardBearerHeader {
+        req.Header.Set(ka.forwardBearerHeaderName, "Bearer "+matchedKey)
+    }
     req.RequestURI = req.URL.RequestURI()
     ka.next.ServeHTTP(rw, req)
 }
@@ -321,9 +356,48 @@ func (ka *KeyAuth) isExempt(pathValue string) bool {
     return false
 }
 
+func (ka *KeyAuth) deny(rw http.ResponseWriter, req *http.Request) {
+    if ka.permissiveMode {
+        ka.permissiveOk(rw, req)
+        return
+    }
+
+    if ka.internalErrorRoute != "" {
+        req.URL.Path = ka.internalErrorRoute
+        req.URL.RawQuery = ""
+        req.RequestURI = req.URL.RequestURI()
+        ka.next.ServeHTTP(rw, req)
+        return
+    }
+
+    rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+    rw.WriteHeader(http.StatusForbidden)
+    response := Response{Message: "Invalid or missing API Key", StatusCode: http.StatusForbidden}
+    if err := json.NewEncoder(rw).Encode(response); err != nil {
+        _, _ = os.Stderr.WriteString("traefik_api_key_auth: failed to write response: " + err.Error() + "\n")
+    }
+}
+
 func (ka *KeyAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
     pathValue := req.URL.Path
     if ka.isExempt(pathValue) {
+        req.RequestURI = req.URL.RequestURI()
+        ka.next.ServeHTTP(rw, req)
+        return
+    }
+
+    // Passthrough mode: read source header, set as Bearer, forward without validation.
+    if ka.passthroughMode {
+        provided := strings.TrimSpace(req.Header.Get(ka.passthroughSourceHeader))
+        if provided == "" || len(provided) > maxCredentialLength {
+            ka.deny(rw, req)
+            return
+        }
+        if ka.removeHeadersOnSuccess {
+            req.Header.Del(ka.passthroughSourceHeader)
+        }
+        req.Header.Set(ka.forwardBearerHeaderName, "Bearer "+provided)
+        _, _ = os.Stdout.WriteString("traefik_api_key_auth: passthrough for path " + requestPathForLog(req) + "\n")
         req.RequestURI = req.URL.RequestURI()
         ka.next.ServeHTTP(rw, req)
         return
@@ -369,23 +443,5 @@ func (ka *KeyAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
         }
     }
 
-    if ka.permissiveMode {
-        ka.permissiveOk(rw, req)
-        return
-    }
-
-    if ka.internalErrorRoute != "" {
-        req.URL.Path = ka.internalErrorRoute
-        req.URL.RawQuery = ""
-        req.RequestURI = req.URL.RequestURI()
-        ka.next.ServeHTTP(rw, req)
-        return
-    }
-
-    rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-    rw.WriteHeader(http.StatusForbidden)
-    response := Response{Message: "Invalid or missing API Key", StatusCode: http.StatusForbidden}
-    if err := json.NewEncoder(rw).Encode(response); err != nil {
-        _, _ = os.Stderr.WriteString("traefik_api_key_auth: failed to write response: " + err.Error() + "\n")
-    }
+    ka.deny(rw, req)
 }

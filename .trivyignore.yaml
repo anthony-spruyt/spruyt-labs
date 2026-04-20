@@ -50,6 +50,7 @@ misconfigurations:
     paths:
       - cluster/apps/authentik-system/authentik/app/external-secrets-rbac.yaml
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/role.yaml
+      - cluster/apps/n8n-mcp/n8n-mcp-server/app/mcp-api-keys-reader-rbac.yaml
 
   # kubectl-mcp-server needs pod delete for cleanup and pods/eviction for drain
   # Scale subresources (deployments/scale, statefulsets/scale) are also granted but
@@ -208,8 +209,31 @@ misconfigurations:
       - cluster/apps/headlamp-system/headlamp/app/user-rbac.yaml
 
   # ==============================================================================
-  # Coder workspace RBAC - intentional cluster-admin binding for workspace service account
+  # Coder workspace RBAC - coder-workspace-ops is an intentionally broad admin
+  # ClusterRole scoped down from cluster-admin to least-privilege for homelab ops.
+  # All flagged permissions are required for workspace agents to manage cluster resources.
   # ==============================================================================
+  - id: AVD-KSV-0041
+    paths:
+      - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
+  - id: AVD-KSV-0046
+    paths:
+      - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
+  - id: AVD-KSV-0047
+    paths:
+      - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
+  - id: AVD-KSV-0049
+    paths:
+      - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
+  - id: AVD-KSV-0053
+    paths:
+      - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
+  - id: AVD-KSV-0056
+    paths:
+      - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
   - id: AVD-KSV-0111
     paths:
       - cluster/apps/coder-workspaces/coder-workspaces/app/rbac.yaml
