@@ -27,6 +27,8 @@ controllers:
             value: "warn"
           - name: N8N_API_URL
             value: "http://n8n.n8n-system.svc:5678"
+          - name: N8N_MCP_TELEMETRY_DISABLED
+            value: "true"
           - name: N8N_API_KEY
             valueFrom:
               secretKeyRef:
@@ -74,7 +76,7 @@ controllers:
               httpGet:
                 path: /health
                 port: 3000
-              failureThreshold: 30
+              failureThreshold: 60
               periodSeconds: 5
 persistence:
   tmp:
