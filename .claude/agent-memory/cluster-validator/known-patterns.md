@@ -12,7 +12,7 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | CronJob validation requires manual test job -- last completed job ran previous version | CronJob workload type detection | 7 | 2026-04-04 | 2026-02-28 |
 | YAML comment-only changes (e.g., schema directives, resource-sizing comments) reconcile instantly with no resource drift | Kustomize strips comments, producing identical output | 2 | 2026-03-17 | 2026-03-01 |
 | Dashboard JSON reformatting (whitespace/indentation changes) reconciles as configmap update with no functional impact; Grafana/VictoriaMetrics reloads the dashboard without errors | Prettier/formatter cosmetic changes to JSON dashboard files | 1 | 2026-03-21 | 2026-03-21 |
-| n8n queue-mode deployment (main + worker + webhook) all roll simultaneously on values change | HelmRelease values.yaml change (image tag, env vars, volumes) triggers rolling update of all 3 deployments | 7 | 2026-03-30 | 2026-03-03 |
+| n8n queue-mode deployment (main + worker + webhook) all roll simultaneously on values change | HelmRelease values.yaml change (image tag, env vars, volumes) triggers rolling update of all 3 deployments | 8 | 2026-04-20 | 2026-03-03 |
 | Large image first-pull (~1GB) can exceed 10m HelmRelease timeout; Flux auto-rollback then retries successfully with cached image | openclaw image update, image pulled in 10m1s exceeding timeout, auto-retry succeeded | 3 | 2026-03-16 | 2026-03-09 |
 | Revert of failed kyverno policy change recovers full cluster within ~90s; Flux cleans up removed ClusterPolicy resources automatically | Revert commit after kyverno-policies reconciliation failure | 1 | 2026-03-09 | 2026-03-09 |
 | Kyverno policy matching CRDs (e.g., HelmRelease) requires full GVK path `group/version/Kind` in `kinds` field; bare Kind name only works for core/built-in resources | Kyverno webhook registration, CRD matching | 1 | 2026-03-10 | 2026-03-10 |
@@ -73,6 +73,8 @@ Timing, behavioral, and environmental knowledge learned from validation runs.
 | CNP-only change (no pod rollout) reconciles within one Flux wave (~60s); new CiliumNetworkPolicy status Valid immediately; POLICY_DENIED drops for the newly allowed traffic path drop to 0/s; verify via VictoriaMetrics `hubble_drop_total` with `source` label (not `source_namespace` or `k8s_namespace_name`) and `reason="POLICY_DENIED"` | coder-system allow-coder-replica-sync issue #1002, commit 51cdb422 — TCP 8080 inter-pod DERP sync; CNP Valid, POLICY_DENIED=0/s, remaining drops are UDP TTL_EXCEEDED (unrelated) | 1 | 2026-04-19 | 2026-04-19 |
 | VictoriaMetrics `hubble_drop_total` labels: `source` and `destination` (namespace-level), `reason`, `protocol`; NOT `source_namespace`, `k8s_namespace_name`, or `destination_namespace` — these return empty result sets | Hubble drop metric label discovery, VictoriaMetrics query | 1 | 2026-04-19 | 2026-04-19 |
 
+| VMServiceScrape with broad label selector (e.g., `app.kubernetes.io/instance` + `app.kubernetes.io/name`) matches multiple services in namespace; webhook/auxiliary services that don't expose `/metrics` generate persistent vmagent 404 scrape warnings; only the main service pod serves metrics | n8n VMServiceScrape matched both `n8n` (main, 200) and `n8n-webhook` (404) services — both share identical labels and port name `http`; worker pod serves `/metrics` but has no matched service | 1 | 2026-04-20 | 2026-04-20 |
+
 ## Failure Signatures
 
 Error patterns and their known resolutions.
@@ -118,7 +120,7 @@ Things that look like failures but aren't — avoid flagging these.
 | openclaw startup probe fails with "connection refused" for ~20s after pod start | App takes ~20s to bind port 18789 — startup probe catches this normally, pod becomes ready within 30s | 27 | 2026-03-30 | 2026-02-25 |
 | openclaw gateway token auth: `token_missing` and `pairing required` WS rejections after switching to token mode | Expected behavior — clients must complete token pairing via Control UI; not a failure | 1 | 2026-03-14 | 2026-03-14 |
 | openclaw `Proxy headers detected from untrusted address` when trustedProxies doesn't include Traefik pod CIDR | Gateway ignores X-Forwarded-For from non-trusted IPs; functional but loses real client IP detection | 1 | 2026-03-14 | 2026-03-14 |
-| n8n readiness probe "connection refused" for ~20s after pod start during rolling update | n8n takes ~20s to bind port 5678 after container start — transient, resolves once app initializes | 7 | 2026-03-30 | 2026-03-03 |
+| n8n readiness probe "connection refused" for ~20s after pod start during rolling update | n8n takes ~20s to bind port 5678 after container start — transient, resolves once app initializes | 8 | 2026-04-20 | 2026-03-03 |
 | n8n `DB_POSTGRESDB_SSL_CA_FILE` whitespace warning on startup | Pre-existing config issue, does not affect DB connectivity | 6 | 2026-03-30 | 2026-03-03 |
 | n8n `N8N_RUNNERS_ENABLED` deprecation warning | Env var no longer needed in newer versions — cosmetic, not functional | 6 | 2026-03-30 | 2026-03-03 |
 | n8n worker runs DB migrations on image upgrade before starting task broker; migrations complete within seconds and don't block other pods | n8n v2.13.4 ran 2 migrations (ChangeWorkflowPublishedVersionFKsToRestrict, AddTypeToChatHubSessions) | 1 | 2026-03-29 | 2026-03-29 |
