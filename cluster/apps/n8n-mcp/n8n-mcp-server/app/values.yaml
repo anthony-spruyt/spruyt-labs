@@ -18,7 +18,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/czlonkowski/n8n-mcp
-          tag: latest@sha256:6b7303feeb7b1fac11e1184cd397f3c3a7e36281927d9ac7ce5de28ee942ae4a
+          tag: full@sha256:22d74a21eafd972ad06d5b1a017b58b4646e705c3a07b3bfc8e80fcb09e02a77
           pullPolicy: IfNotPresent
         env:
           - name: PORT
