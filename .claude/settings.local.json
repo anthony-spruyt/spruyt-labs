@@ -143,10 +143,10 @@
     "victoriametrics"
   ],
   "enabledPlugins": {
-    "n8n-skills@n8n-skills": true
+    "n8n-mcp-skills@n8n-mcp-skills": true
   },
   "extraKnownMarketplaces": {
-    "n8n-skills": {
+    "n8n-mcp-skills": {
       "source": {
         "source": "github",
         "repo": "czlonkowski/n8n-skills"

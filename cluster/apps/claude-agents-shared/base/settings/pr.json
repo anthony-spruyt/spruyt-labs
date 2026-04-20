@@ -5,7 +5,6 @@
     { "serverName": "victoriametrics" },
     { "serverName": "sre" },
     { "serverName": "discord" },
-    { "serverName": "homeassistant" },
-    { "serverName": "bravesearch" }
+    { "serverName": "homeassistant" }
   ]
 }

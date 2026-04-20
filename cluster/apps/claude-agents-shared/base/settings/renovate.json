@@ -3,6 +3,8 @@
   "deniedMcpServers": [
     { "serverName": "kubectl" },
     { "serverName": "victoriametrics" },
+    { "serverName": "sre" },
+    { "serverName": "discord" },
     { "serverName": "homeassistant" }
   ]
 }
