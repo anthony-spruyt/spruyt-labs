@@ -40,6 +40,8 @@ controllers:
             value: "3000"
           - name: LOG_LEVEL
             value: "warn"
+          - name: NODE_ENV
+            value: "production"
           - name: TRUST_PROXY
             value: "1"
           - name: N8N_API_URL
@@ -73,8 +75,7 @@ controllers:
             enabled: true
             custom: true
             spec:
-              httpGet:
-                path: /health
+              tcpSocket:
                 port: 3000
               initialDelaySeconds: 30
               periodSeconds: 30
@@ -84,8 +85,7 @@ controllers:
             enabled: true
             custom: true
             spec:
-              httpGet:
-                path: /health
+              tcpSocket:
                 port: 3000
               initialDelaySeconds: 15
               periodSeconds: 10
@@ -95,8 +95,7 @@ controllers:
             enabled: true
             custom: true
             spec:
-              httpGet:
-                path: /health
+              tcpSocket:
                 port: 3000
               failureThreshold: 60
               periodSeconds: 5
