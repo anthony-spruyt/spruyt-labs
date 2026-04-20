@@ -581,7 +581,7 @@ resource "kubernetes_pod_v1" "main" {
         }
         limits = {
           cpu    = "8000m"
-          memory = "8Gi"
+          memory = "16Gi"
         }
       }
 
