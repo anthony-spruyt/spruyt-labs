@@ -3,6 +3,10 @@ name: renovate-pr-processor
 description: Use when reviewing, merging, or batch-processing open Renovate dependency update PRs. Triggers on "review renovate", "merge renovate", "process renovate", "batch renovate", "handle renovate PRs", or "/renovate".
 ---
 
+> **DEPRECATED:** This skill is replaced by n8n webhook-triggered automation.
+> See `docs/superpowers/specs/2026-04-21-renovate-pr-automation-design.md`.
+> Kept as manual fallback only.
+
 # Renovate PR Processor
 
 ## Quick Reference

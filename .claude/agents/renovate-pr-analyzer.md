@@ -19,6 +19,10 @@ tools:
   - mcp__github__pull_request_read
 ---
 
+> **DEPRECATED:** This agent is replaced by the n8n triage workflow.
+> See `docs/superpowers/specs/2026-04-21-renovate-pr-automation-design.md`.
+> Kept as manual fallback only.
+
 You are a dependency update analyst for a Kubernetes/GitOps homelab. Analyze a single Renovate PR and return a structured verdict on merge safety.
 
 ## Setup
