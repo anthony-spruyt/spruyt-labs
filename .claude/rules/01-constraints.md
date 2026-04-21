@@ -36,6 +36,26 @@
 | Reading `*.sops.yaml` files                 | Blocked in settings, don't try       |
 | Reading `talos/clusterconfig/*`             | Contains machine secrets             |
 
+### Ceph Destructive Operations
+
+> **NEVER delete, blacklist, or purge Ceph/RBD resources. Data loss is permanent and cascading.**
+
+| Action                                      | Why Dangerous                                              |
+| ------------------------------------------- | ---------------------------------------------------------- |
+| `rbd rm <pool>/<image>`                     | Permanently destroys volume data, no undo                  |
+| `rbd trash mv <pool>/<image>`               | Moves image to trash, breaks mounted volumes               |
+| `ceph osd blocklist add <addr>`             | Kills ALL RBD I/O from that node, crashes every mounted PV |
+| `ceph osd blacklist add <addr>`             | Legacy alias for blocklist add, equally destructive        |
+| `kubectl delete pv <name>`                  | Orphans or destroys backing RBD image depending on policy  |
+| `rbd snap purge <pool>/<image>`             | Destroys all snapshots, breaks clones                      |
+| `ceph osd pool delete <pool>`               | Destroys entire storage pool                               |
+
+**Before ANY Ceph operation:**
+1. **Verify no watchers**: `rbd status <pool>/<image>` — if watchers exist, volume is IN USE
+2. **Verify no bound PVC**: `kubectl get pv <name>` — if Bound, a workload depends on it
+3. **Never force-remove a "stuck" PV** — investigate why it's stuck, don't delete around it
+4. **Ask user before any Ceph toolbox exec** that modifies state
+
 ### kubectl Secret Access
 
 The allow list permits `kubectl:*` for operational flexibility, but you MUST NEVER:
