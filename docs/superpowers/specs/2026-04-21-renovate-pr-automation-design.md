@@ -20,38 +20,38 @@ Replace the human-in-the-loop `renovate-pr-processor` skill and `renovate-pr-ana
 | Workflow 1: Triage          | Analyze PR, comment verdict, route by verdict (SAFE/BREAKING/BLOCKED/UNKNOWN) |
 | Workflow 2: Queue Processor | Valkey-locked sequential merge, validate, revert PR on failure                |
 | Workflow 3: Fix Breaking    | Write-tier agent addresses breaking changes, pushes fix to PR branch          |
-| Merge Queue (data table)    | Generic PR queue, source-agnostic, priority-ordered                           |
+| Merge Queue (Valkey queue)  | Generic PR queue, source-agnostic, priority-ordered                           |
 
 ## Architecture Overview
 
 ```text
 GitHub Webhook
-||
+|  |
      v
 [Existing Webhook Workflow] ── routes pull_request events
-||
+|  |
      v
 [Workflow 1: Triage] ── read-tier agent analyzes PR
      |                    posts comment with verdict
-||
-     +── [SAFE] ────────> [Merge Queue] (n8n data table)
+|  |
+     +── [SAFE] ────────> [Merge Queue] (Valkey sorted set)
 |  |
      |                         v
      |                    [Workflow 2: Queue Processor] ── Valkey lock
      |                         dequeues one at a time
      |                         write-tier agent: merge -> validate -> revert PR if fail
      |                         loops until queue empty
-||
+|  |
      +── [BREAKING] ──> [Workflow 3: Fix Breaking Changes]
      |                    write-tier agent fixes config
      |                    pushes to PR branch
      |                    → re-triggers triage via synchronize event
      |                    max 2 retries → escalate to BLOCKED
-||
+|  |
      +── [BLOCKED] ───> Label PR, Discord notify, wait for upstream
-||
+|  |
      +── [UNKNOWN] ───> Discord notify, human review
-||
+|  |
      v
 [Discord #skynet] ── notifications for all outcomes
 ```
@@ -148,26 +148,40 @@ Inject a git-clone init container into agent pods when `CLONE_URL` env var is pr
 ```
 Optionally with branch: `{"CLONE_URL": "...", "CLONE_BRANCH": "main"}`
 
-### 2. Merge Queue (n8n Data Table)
+### 2. Merge Queue (Valkey Sorted Set + Hashes)
 
-Generic queue for PRs approved for merge. Not Renovate-specific.
+Generic queue for PRs approved for merge. Not Renovate-specific. Stored in Valkey (not n8n Valkey queues) for atomic operations and direct access from n8n Redis nodes.
 
-**Table name:** `merge-queue`
+**Key prefix:** All keys use `n8n:` prefix per Valkey ACL (`~n8n:*`).
 
-| Column         | Type   | Purpose                                                      |
-| -------------- | ------ | ------------------------------------------------------------ |
-| `pr_number`    | number | PR number                                                    |
-| `repo`         | string | `owner/repo` format                                          |
-| `source`       | string | Origin: `renovate`, `human`, `dependabot`, etc.              |
-| `priority`     | number | 0=critical, 1=digest/date/patch, 2=minor, 3=major, 4=other   |
-| `status`       | string | `pending` / `processing` / `done` / `failed` / `reverted`    |
-| `enqueued_at`  | date   | For FIFO ordering within same priority                       |
-| `verdict_json` | string | Triage output (structured analysis summary)                  |
-| `session_id`   | string | Claude session ID for resume if needed                       |
-| `pr_url`       | string | Full PR URL for reference                                    |
-| `head_branch`  | string | PR source branch                                             |
+**Queue structure:**
 
-**Ordering:** Sort by `priority` ASC, then `enqueued_at` ASC. Patches merge before minors before majors.
+- **Sorted set** `n8n:merge-queue` — ordered queue. Score = `priority * 1e12 + unix_ms`. Member = item key (e.g., `pr:anthony-spruyt/spruyt-labs:123`).
+- **Hash per item** `n8n:merge-queue:<member>` — metadata for each queued PR.
+
+**Hash fields:**
+
+| Field          | Purpose                                                      |
+| -------------- | ------------------------------------------------------------ |
+| `pr_number`    | PR number                                                    |
+| `repo`         | `owner/repo` format                                          |
+| `source`       | Origin: `renovate`, `human`, `dependabot`, etc.              |
+| `priority`     | 0=critical, 1=digest/date/patch, 2=minor, 3=major, 4=other   |
+| `status`       | `pending` / `processing` / `done` / `failed` / `reverted`    |
+| `enqueued_at`  | ISO timestamp                                                |
+| `verdict_json` | Triage output (structured analysis summary)                  |
+| `session_id`   | Claude session ID for resume if needed                       |
+| `pr_url`       | Full PR URL for reference                                    |
+| `head_branch`  | PR source branch                                             |
+
+**Operations:**
+
+- **Enqueue:** `ZADD n8n:merge-queue <score> <member>` + `HSET n8n:merge-queue:<member> ...fields`
+- **Dequeue:** `ZPOPMIN n8n:merge-queue 1` (atomic — no race condition)
+- **Update status:** `HSET n8n:merge-queue:<member> status <new_status>`
+- **Check queue size:** `ZCARD n8n:merge-queue`
+
+**Ordering:** Lower score = higher priority = dequeued first. Within same priority, earlier `enqueued_at` wins (lower unix_ms).
 
 ### 3. Workflow 1: Triage Renovate PR
 
@@ -183,21 +197,21 @@ Generic queue for PRs approved for merge. Not Renovate-specific.
 
 ```text
 Receive PR data + patch from webhook workflow
-||
+|  |
      v
 Claude Code (read-tier ephemeral pod)
   - Settings: renovate.json via --settings flag in additionalArgs (GitHub MCP + context7 + bravesearch)
   - Model: sonnet (cost-effective for analysis)
   - Prompt: analyze changelog, breaking changes, config impact
   - Output: structured JSON via jsonSchema option
-||
+|  |
      v
 Post comment on PR with triage summary
-||
+|  |
      v
-[If SAFE] ── Insert row into merge-queue data table
+[If SAFE] ── Insert row into merge-queue Valkey queue
           |   (status=pending, priority based on semver level)
-||
+|  |
           v
           Trigger Queue Processor workflow
 
@@ -303,17 +317,17 @@ Agent tasks:
 
 ```text
 Receive PR data + breaking changes from triage
-||
+|  |
      v
 Claude Code (write-tier ephemeral pod)
   - Settings: merge-agent.json via --settings flag in additionalArgs (needs GitHub MCP + kubectl)
   - Model: opus (complex refactoring)
   - Prompt: checkout PR branch, address breaking changes, commit + push fix
   - Receives: breaking change descriptions + impact + affected config files
-||
+|  |
      v
 [Agent pushes fix commit to PR branch]
-||
+|  |
      v
 GitHub fires `synchronize` event → webhook workflow → triage re-runs automatically
 ```
@@ -341,43 +355,41 @@ GitHub fires `synchronize` event → webhook workflow → triage re-runs automat
 Start
 ||
   v
-GET n8n:lock:merge-queue from Valkey
+SET n8n:lock:merge-queue processing NX EX 1800   (atomic: only sets if not exists)
 ||
   v
-[Lock exists?]
+[Lock acquired?]
 |  |
-  YES       NO
+  NO        YES
 |  |
-  Exit      SET n8n:lock:merge-queue (TTL=1800s)
-||
-            v
+  Exit      v
          Process Loop:
 ||
             v
-         Query data table: status=pending, ORDER BY priority ASC, enqueued_at ASC, LIMIT 1
+         ZPOPMIN n8n:merge-queue 1   (atomic dequeue, lowest score first)
 ||
             v
-         [Items found?]
+         [Item popped?]
 |  |
             NO        YES
 |  |
             v         v
-         DELETE    Update row status=processing
+         DELETE    HSET n8n:merge-queue:<key> status processing
          lock     |
          Exit     v
                Spawn write-tier agent (persistent pod)
-||
+|  |
                   v
                Merge + Validate + Revert-if-needed
 ||
                   v
-               Update row status (done/failed/reverted)
-||
+               HSET n8n:merge-queue:<key> status (done/failed/reverted)
+|  |
                   v
                Discord notification
-||
+|  |
                   v
-               Loop back to "Query data table"
+               Loop back to "Query Valkey queue"
 ```
 
 **TTL (1800s / 30min):** Dead-man's switch. If processor crashes, lock auto-expires. Cron picks up remaining items on next tick.
@@ -392,7 +404,7 @@ The write-tier agent handles the full lifecycle for one PR:
 2. **Check** if merged files include anything under `cluster/`
 3. **If cluster changed:** Run validation (agent reads CLAUDE.md, uses appropriate validation strategy — for this repo, cluster-validator subagent)
 4. **If validation passes:** Update queue status=done. If linked GitHub issue exists, close it.
-5. **If validation fails:** Create a revert PR via GitHub API (branch protection prevents direct push to main). Squash merge the revert PR via API (write-tier GitHub token has merge permissions). Update queue status=reverted. Reopen original PR.
+5. **If validation fails:** `git revert <merge-commit> && git push origin main` (no branch protection — trunk-based dev). Update queue status=reverted. Reopen original PR.
 
 **Agent configuration:**
 - Connection mode: `k8sPersistent` (stays alive for multi-step work)
@@ -402,7 +414,15 @@ The write-tier agent handles the full lifecycle for one PR:
 
 ### 6. Settings Profiles
 
-Settings profiles are mounted into agent pods at `/etc/claude/settings/` by the existing Kyverno `inject-claude-agent-config` policy. The n8n Claude Code node does not have a `settingsProfile` parameter — profiles are passed via the `additionalArgs` option: `--settings /etc/claude/settings/<profile>.json`.
+Settings profiles are mounted into agent pods at `/etc/claude/settings/` by the existing Kyverno
+`inject-claude-agent-config` policy.
+
+**Prerequisite:** Most profiles are currently commented out in
+`cluster/apps/claude-agents-shared/base/kustomization.yaml` and must be uncommented.
+`merge-agent.json` must be created.
+
+**Usage:** The n8n Claude Code node does not have a `settingsProfile` parameter.
+Profiles are passed via the `additionalArgs` option: `--settings /etc/claude/settings/<profile>.json`.
 
 #### renovate.json (Triage — read-only analysis)
 
@@ -488,8 +508,8 @@ The existing skill and agent remain functional as a fallback during rollout but 
 | Risk                                | Mitigation                                                                                    |
 | ----------------------------------- | --------------------------------------------------------------------------------------------- |
 | Triage misclassifies RISKY as SAFE  | Post-merge validation catches it; auto-revert PR created                                      |
-| Revert PR blocked by branch protect | Revert PR goes through normal PR flow; Discord alert for human follow-up                      |
-| Queue processor crashes mid-merge   | Valkey TTL expires lock; cron restarts processing; partial state visible in data table        |
+| Git revert push fails               | Discord alert for human follow-up; lock TTL expires allowing retry                            |
+| Queue processor crashes mid-merge   | Valkey TTL expires lock; cron restarts processing; partial state visible in Valkey queue      |
 | n8n downtime misses webhook         | GitHub webhook retry (redelivery); cron catches queued items on recovery                      |
 | Agent cost runaway                  | `maxBudgetUsd` per execution; sonnet for triage (cheap), opus only for merge                  |
 | Concurrent queue access             | Valkey lock prevents double processing; GET→SET race window negligible at trigger frequency   |
@@ -497,7 +517,7 @@ The existing skill and agent remain functional as a fallback during rollout but 
 ## Implementation Order
 
 1. Add Kyverno init container rule for repo clone (inject-claude-agent-config policy)
-2. Create n8n data table for merge queue
+2. Create n8n Valkey queue for merge queue
 3. Create `merge-agent.json` settings profile
 4. Build Workflow 2 (queue processor) with Valkey lock
 5. Build Workflow 3 (fix breaking changes)

@@ -24,7 +24,7 @@
 | Create (n8n) | New workflow "Merge Queue Processor" | Queue processor with Valkey lock |
 | Create (n8n) | New workflow "Fix Breaking Changes" | Write-tier breaking change fixer |
 | Modify (n8n) | Workflow `e9nTmnZGu8Li29iW` "GitHub webhooks" | Remove WIP gate connection |
-| Create (n8n) | Data table `merge-queue` | PR merge queue |
+| Create (Valkey) | Sorted set `n8n:merge-queue` + hashes | PR merge queue (no n8n data table) |
 | Create (n8n) | n8n credential "Claude write-tier spruyt-labs" | Write-tier cred with CLONE_URL |
 | Create (n8n) | n8n credential "Claude read-tier spruyt-labs" | Read-tier cred with CLONE_URL |
 
@@ -179,40 +179,30 @@ git commit -m "feat(kyverno): add init container rule for repo clone in agent po
 
 ---
 
-## Task 3: Create n8n Data Table for Merge Queue
+## Task 3: Verify Valkey Connectivity for Merge Queue
+
+The merge queue uses Valkey sorted sets and hashes instead of n8n data tables. No table creation needed -- keys are created on first write.
 
 This task and all remaining n8n tasks use MCP tools. Consult the `n8n-mcp-tools-expert` skill before each MCP call.
 
-- [ ] **Step 1: Create the merge-queue data table**
+- [ ] **Step 1: Verify n8n has a Redis/Valkey credential configured**
 
-Use `n8n_manage_datatable` with action `createTable`:
-
-```javascript
-n8n_manage_datatable({
-  action: "createTable",
-  name: "merge-queue",
-  columns: [
-    { name: "pr_number", type: "number" },
-    { name: "repo", type: "string" },
-    { name: "source", type: "string" },
-    { name: "priority", type: "number" },
-    { name: "status", type: "string" },
-    { name: "enqueued_at", type: "date" },
-    { name: "verdict_json", type: "string" },
-    { name: "session_id", type: "string" },
-    { name: "pr_url", type: "string" },
-    { name: "head_branch", type: "string" }
-  ]
-})
-```
-
-- [ ] **Step 2: Verify table was created**
+Check existing n8n credentials for a Redis type:
 
 ```javascript
-n8n_manage_datatable({ action: "listTables" })
+n8n_manage_credentials({ action: "list" })
 ```
 
-Expected: `merge-queue` appears in the list.
+Look for a credential of type `redis`. If none exists, create one pointing to `valkey-master.valkey-system.svc:6379` with the n8n user password.
+
+- [ ] **Step 2: Verify Valkey ACL allows n8n: prefix keys**
+
+The n8n Valkey user is restricted to `~n8n:*` keys. All queue keys use this prefix:
+- `n8n:merge-queue` (sorted set)
+- `n8n:merge-queue:<member>` (hashes)
+- `n8n:lock:merge-queue` (lock key)
+
+No action needed -- just document for awareness.
 
 ---
 
@@ -300,7 +290,7 @@ n8n_create_workflow({
 })
 ```
 
-Record the returned workflow ID.
+Record the returned workflow ID. **All subsequent `<workflow-id>` placeholders in this task must be replaced with this ID.**
 
 - [ ] **Step 2: Add Valkey lock acquisition nodes**
 
@@ -324,50 +314,34 @@ n8n_update_partial_workflow({
     {
       type: "addNode",
       node: {
-        name: "GET Lock",
-        type: "n8n-nodes-base.redis",
-        typeVersion: 1,
+        name: "Acquire Lock",
+        type: "n8n-nodes-base.code",
+        typeVersion: 2,
         position: [400, 100],
         parameters: {
-          operation: "get",
-          key: "n8n:lock:merge-queue"
+          mode: "runOnceForAllItems",
+          jsCode: "// Atomic SET NX EX via n8n Redis credential\n// Uses $helpers to execute raw Redis command\n// SET n8n:lock:merge-queue processing NX EX 1800\n// Returns 'OK' if acquired, null if already locked\nconst redis = $getWorkflowStaticData('global');\n// The executing agent should implement this using the Redis node\n// with operation 'set', key 'n8n:lock:merge-queue', and NX+EX flags\n// If Redis node doesn't support NX, use a Code node with HTTP request\n// to Valkey's REST API or accept the GET+SET race.\nreturn [{ json: { lockAcquired: true } }];"
         }
       }
     },
     {
       type: "addNode",
       node: {
-        name: "Lock Exists?",
+        name: "Lock Acquired?",
         type: "n8n-nodes-base.if",
         typeVersion: 2.3,
         position: [600, 100],
         parameters: {
           conditions: {
-            options: { caseSensitive: true, typeValidation: "strict", version: 3 },
+            options: { typeValidation: "strict", version: 3 },
             conditions: [{
               id: "lock-check",
-              leftValue: "={{ $json.value }}",
-              rightValue: "",
-              operator: { type: "string", operation: "notEquals" }
+              leftValue: "={{ $json.lockAcquired }}",
+              rightValue: true,
+              operator: { type: "boolean", operation: "true" }
             }],
             combinator: "and"
           }
-        }
-      }
-    },
-    {
-      type: "addNode",
-      node: {
-        name: "SET Lock",
-        type: "n8n-nodes-base.redis",
-        typeVersion: 1,
-        position: [800, 200],
-        parameters: {
-          operation: "set",
-          key: "n8n:lock:merge-queue",
-          value: "processing",
-          expire: true,
-          ttl: 1800
         }
       }
     },
@@ -384,18 +358,12 @@ n8n_update_partial_workflow({
     {
       type: "addConnection",
       source: "Merge Triggers",
-      target: "GET Lock"
+      target: "Acquire Lock"
     },
     {
       type: "addConnection",
-      source: "GET Lock",
-      target: "Lock Exists?"
-    },
-    {
-      type: "addConnection",
-      source: "Lock Exists?",
-      target: "SET Lock",
-      branch: "false"
+      source: "Acquire Lock",
+      target: "Lock Acquired?"
     }
   ]
 })
@@ -426,44 +394,59 @@ n8n_update_partial_workflow({
 })
 ```
 
-**Note:** The data table query node type may vary. Use `n8n_manage_datatable` in a Code node:
+Use Redis nodes for ZPOPMIN (dequeue) and DELETE (release lock):
 
 ```javascript
 n8n_update_partial_workflow({
   id: "<workflow-id>",
-  intent: "Add Code node to query merge queue",
+  intent: "Add ZPOPMIN dequeue and lock release nodes",
   operations: [
     {
       type: "addNode",
       node: {
-        name: "Query Pending Items",
-        type: "n8n-nodes-base.code",
-        typeVersion: 2,
+        name: "Dequeue Item (ZPOPMIN)",
+        type: "n8n-nodes-base.redis",
+        typeVersion: 1,
         position: [1000, 200],
         parameters: {
-          mode: "runOnceForAllItems",
-          jsCode: "// Query pending items from merge-queue, sorted by priority then enqueued_at\n// This is a placeholder - actual implementation uses n8n internal API\n// to query the data table. The agent executing this plan should use\n// the n8n_manage_datatable MCP tool to implement the query.\nreturn [{ json: { placeholder: true } }];"
+          operation: "get",
+          key: "n8n:merge-queue",
+          options: { dotNotation: false }
         }
       }
     },
     {
       type: "addNode",
       node: {
-        name: "Items Found?",
+        name: "Item Found?",
         type: "n8n-nodes-base.if",
         typeVersion: 2.3,
         position: [1200, 200],
         parameters: {
           conditions: {
-            options: { caseSensitive: true, typeValidation: "strict", version: 3 },
+            options: { typeValidation: "strict", version: 3 },
             conditions: [{
-              id: "items-check",
-              leftValue: "={{ $json.items.length }}",
-              rightValue: "0",
-              operator: { type: "number", operation: "gt" }
+              id: "item-check",
+              leftValue: "={{ $json.member }}",
+              rightValue: "",
+              operator: { type: "string", operation: "notEquals" }
             }],
             combinator: "and"
           }
+        }
+      }
+    },
+    {
+      type: "addNode",
+      node: {
+        name: "Get Item Metadata (HGETALL)",
+        type: "n8n-nodes-base.redis",
+        typeVersion: 1,
+        position: [1400, 300],
+        parameters: {
+          operation: "get",
+          key: "={{ 'n8n:merge-queue:' + $json.member }}",
+          options: { dotNotation: false }
         }
       }
     },
@@ -482,23 +465,32 @@ n8n_update_partial_workflow({
     },
     {
       type: "addConnection",
-      source: "SET Lock",
-      target: "Query Pending Items"
+      source: "Lock Acquired?",
+      target: "Dequeue Item (ZPOPMIN)",
+      branch: "true"
     },
     {
       type: "addConnection",
-      source: "Query Pending Items",
-      target: "Items Found?"
+      source: "Dequeue Item (ZPOPMIN)",
+      target: "Item Found?"
     },
     {
       type: "addConnection",
-      source: "Items Found?",
+      source: "Item Found?",
+      target: "GET Item Metadata (HGETALL)",
+      branch: "true"
+    },
+    {
+      type: "addConnection",
+      source: "Item Found?",
       target: "DELETE Lock",
       branch: "false"
     }
   ]
 })
 ```
+
+**Note:** The n8n Redis node may not support ZPOPMIN directly. If not, use a Code node with `$helpers.httpRequest` to call the Valkey REST API, or use a raw Redis command approach. The executing agent should verify which Redis operations the n8n node supports and adapt accordingly.
 
 - [ ] **Step 4: Add Claude Code merge agent node**
 
@@ -548,33 +540,33 @@ n8n_update_partial_workflow({
     },
     {
       type: "addConnection",
-      source: "Items Found?",
-      target: "Claude Code (Merge + Validate)",
-      branch: "true"
+      source: "Get Item Metadata (HGETALL)",
+      target: "Claude Code (Merge + Validate)"
     }
   ]
 })
 ```
 
-- [ ] **Step 5: Add post-processing nodes (status update, Discord, loop-back)**
+- [ ] **Step 5: Add result routing and post-processing nodes**
 
-Add nodes to update data table row status, send Discord notification, and loop back to query:
+Add a Switch node to handle different outcomes (merged, merge_failed, reverted), then status update, Discord, and loop-back:
 
 ```javascript
 n8n_update_partial_workflow({
   id: "<workflow-id>",
-  intent: "Add post-processing: status update, Discord, loop",
+  intent: "Add result routing, status update, Discord, loop-back",
   operations: [
     {
       type: "addNode",
       node: {
-        name: "Update Queue Status",
-        type: "n8n-nodes-base.code",
-        typeVersion: 2,
+        name: "Update Status (HSET)",
+        type: "n8n-nodes-base.redis",
+        typeVersion: 1,
         position: [1600, 300],
         parameters: {
-          mode: "runOnceForAllItems",
-          jsCode: "// Update the data table row status based on Claude agent result\n// Uses n8n internal API to update the row\nconst status = $input.first().json.status;\nconst rowId = $input.first().json.rowId;\n// Implementation via n8n_manage_datatable MCP tool\nreturn [{ json: { status, rowId } }];"
+          operation: "set",
+          key: "={{ 'n8n:merge-queue:' + $json.member }}",
+          value: "={{ $json.status }}"
         }
       }
     },
@@ -587,7 +579,7 @@ n8n_update_partial_workflow({
         position: [1800, 300],
         parameters: {
           mode: "runOnceForAllItems",
-          jsCode: "const result = $input.first().json;\nlet emoji, msg;\nswitch(result.status) {\n  case 'merged':\n    emoji = ':rocket:';\n    msg = `PR #${result.prNumber} merged and validated successfully`;\n    break;\n  case 'reverted':\n    emoji = ':rotating_light:';\n    msg = `PR #${result.prNumber} merged but validation failed - revert PR created: #${result.revertPrNumber}`;\n    break;\n  default:\n    emoji = ':x:';\n    msg = `PR #${result.prNumber}: ${result.message}`;\n}\nreturn [{ json: { content: `${emoji} ${msg}` } }];"
+          jsCode: "See jsCode below"
         }
       }
     },
@@ -614,11 +606,11 @@ n8n_update_partial_workflow({
     {
       type: "addConnection",
       source: "Claude Code (Merge + Validate)",
-      target: "Update Queue Status"
+      target: "Update Status (HSET)"
     },
     {
       type: "addConnection",
-      source: "Update Queue Status",
+      source: "Update Status (HSET)",
       target: "Format Discord Message"
     },
     {
@@ -629,13 +621,40 @@ n8n_update_partial_workflow({
     {
       type: "addConnection",
       source: "Discord Notify",
-      target: "Query Pending Items"
+      target: "Dequeue Item (ZPOPMIN)"
     }
   ]
 })
 ```
 
-The connection from "Discord Notify" back to "Query Pending Items" creates the re-check loop.
+**jsCode for "Format Discord Message"** (use `patchNodeField` to set after creation):
+
+```javascript
+const result = $input.first().json;
+let emoji, msg;
+
+switch (result.status) {
+  case "merged":
+    emoji = ":rocket:";
+    msg = `PR #${result.prNumber} merged and validated successfully`;
+    break;
+  case "reverted":
+    emoji = ":rotating_light:";
+    msg = `PR #${result.prNumber} merged but validation failed - reverted`;
+    break;
+  case "merge_failed":
+    emoji = ":x:";
+    msg = `PR #${result.prNumber} merge failed: ${result.message}`;
+    break;
+  default:
+    emoji = ":x:";
+    msg = `PR #${result.prNumber}: ${result.message}`;
+}
+
+return [{ json: { content: `${emoji} ${msg}` } }];
+```
+
+The connection from "Discord Notify" back to "Dequeue Item (ZPOPMIN)" creates the re-check loop. When ZPOPMIN returns empty, it exits via "DELETE Lock".
 
 - [ ] **Step 6: Validate workflow**
 
@@ -688,7 +707,7 @@ n8n_create_workflow({
 })
 ```
 
-Record the returned workflow ID.
+Record the returned workflow ID. **All subsequent `<workflow-id>` placeholders in this task must be replaced with this ID.** Also note this ID for Task 7 Step 6 (`<fix-breaking-workflow-id>`).
 
 - [ ] **Step 2: Add the Claude Code fix agent node**
 
@@ -1088,13 +1107,13 @@ n8n_update_partial_workflow({
     {
       type: "addNode",
       node: {
-        name: "Enqueue to Merge Queue",
+        name: "Enqueue (ZADD + HSET)",
         type: "n8n-nodes-base.code",
         typeVersion: 2,
         position: [1400, -200],
         parameters: {
           mode: "runOnceForAllItems",
-          jsCode: "// Insert row into merge-queue data table\n// The executing agent should use n8n_manage_datatable MCP tool\nconst d = $input.first().json;\nreturn [{ json: { enqueued: true, pr_number: d.pull_request.number } }];"
+          jsCode: "See jsCode below"
         }
       }
     },
@@ -1120,16 +1139,24 @@ n8n_update_partial_workflow({
     {
       type: "addConnection",
       source: "Map Priority",
-      target: "Enqueue to Merge Queue"
+      target: "Enqueue (ZADD + HSET)"
     },
     {
       type: "addConnection",
-      source: "Enqueue to Merge Queue",
+      source: "Enqueue (ZADD + HSET)",
       target: "Trigger Queue Processor"
     }
   ]
 })
 ```
+
+**jsCode for "Enqueue (ZADD + HSET)":** The executing agent should implement this using two Redis nodes in sequence:
+1. `ZADD n8n:merge-queue <score> pr:<repo>:<pr_number>` where score = `priority * 1e12 + Date.now()`
+2. `HSET n8n:merge-queue:pr:<repo>:<pr_number>` with all metadata fields (pr_number, repo, source, priority, status=pending, enqueued_at, verdict_json, pr_url, head_branch)
+
+If the n8n Redis node doesn't support ZADD, use a Code node with `$helpers.httpRequest` to call Valkey's API.
+
+**Important:** Replace `<queue-processor-workflow-id>` with the actual workflow ID from Task 5 Step 1.
 
 - [ ] **Step 6: Add BREAKING branch (retry check + call fix workflow)**
 
