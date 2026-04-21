@@ -21,12 +21,7 @@ claude-agents-shared/
     github-ssh-external-secret.yaml # ESO ExternalSecret for SSH key
     github-bot-gitconfig.yaml       # Git config (signing, user identity)
     github-rotation-rbac.yaml       # RBAC for token rotation CronJob
-    settings/                       # Claude Code settings profiles (deniedMcpServers)
-      sre.json                      # SRE agents: kubectl, victoriametrics, sre, discord
-      dev.json                      # Dev agents: github, context7, bravesearch
-      minimal.json                  # Minimal: github + context7 only
-      full.json                     # Full: all MCP servers enabled
-      generic.json                  # Generic: no-repo work (github, context7, sre, discord, bravesearch)
+    settings/                       # Claude Code settings profiles (deniedMcpServers per role)
 ```
 
 ## Settings Profiles

@@ -80,18 +80,7 @@ the `managed-by: n8n-claude-code` label in `claude-agents-write` and `claude-age
 Write and read namespaces receive the same volume mounts and environment variables,
 with OAuth scopes differentiated via ESO key mapping.
 
-**Injected Resources:**
-
-| Type | Name | Purpose |
-| ---- | ---- | ------- |
-| Secret volume | `github-bot-credentials` | gh CLI hosts.yml |
-| Secret volume | `github-bot-ssh-key` | Git SSH key |
-| ConfigMap volume | `github-bot-gitconfig` | Global gitconfig |
-| ConfigMap volume | `claude-mcp-config` | MCP server configuration |
-| ConfigMap volume | `claude-settings-profiles` | Claude settings profiles |
-| Env (secret) | `CONTEXT7_API_KEY` | Context7 MCP API key |
-| Env (secret) | `HA_API_KEY` | Home Assistant MCP API key |
-| Env (secret) | `SRE_MCP_AUTH_TOKEN` | SRE MCP auth token |
+**Injected resources:** See [`inject-claude-agent-config.yaml`](app/inject-claude-agent-config.yaml) for the full list of volumes, volume mounts, and environment variables.
 
 ### add-pss-restricted-defaults
 

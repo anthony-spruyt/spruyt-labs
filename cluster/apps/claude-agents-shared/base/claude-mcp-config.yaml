@@ -48,6 +48,13 @@ data:
           "headers": {
             "Authorization": "Bearer $${SRE_MCP_AUTH_TOKEN}"
           }
+        },
+        "renovate": {
+          "type": "http",
+          "url": "http://n8n-webhook.n8n-system.svc/mcp/renovate",
+          "headers": {
+            "Authorization": "Bearer $${RENOVATE_MCP_AUTH_TOKEN}"
+          }
         }
       }
     }

@@ -18,8 +18,8 @@ configMapGenerator:
       - settings/admin.json
       - settings/dev.json
       - settings/pr.json
-      - settings/renovate.json
+      - settings/renovate-triage.json
+      - settings/renovate-write.json
       - settings/sre.json
-      - settings/merge-agent.json
 generatorOptions:
   disableNameSuffixHash: true
