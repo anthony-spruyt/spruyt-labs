@@ -15,10 +15,11 @@ resources:
 configMapGenerator:
   - name: claude-settings-profiles
     files:
-      # - settings/admin.json
-      # - settings/dev.json
-      # - settings/pr.json
-      # - settings/renovate.json
+      - settings/admin.json
+      - settings/dev.json
+      - settings/pr.json
+      - settings/renovate.json
       - settings/sre.json
+      - settings/merge-agent.json
 generatorOptions:
   disableNameSuffixHash: true

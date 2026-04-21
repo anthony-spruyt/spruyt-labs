@@ -165,3 +165,56 @@ spec:
                   - name: claude-settings-profiles
                     mountPath: /etc/claude/settings
                     readOnly: true
+    - name: inject-repo-clone
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-write
+                - claude-agents-read
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
+            operator: NotEquals
+            value: ""
+      mutate:
+        patchStrategicMerge:
+          spec:
+            volumes:
+              - name: workspace
+                emptyDir: {}
+            initContainers:
+              - name: git-clone
+                image: alpine/git:2.47.2
+                command: ["sh", "-c"]
+                args:
+                  - |
+                    git clone --depth 1 ${CLONE_BRANCH:+-b "$CLONE_BRANCH"} "$CLONE_URL" /workspace
+                env:
+                  - name: CLONE_URL
+                    value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
+                  - name: CLONE_BRANCH
+                    value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
+                  - name: GIT_SSH_COMMAND
+                    value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no"
+                  - name: GIT_CONFIG_GLOBAL
+                    value: /etc/gitconfig/gitconfig
+                volumeMounts:
+                  - name: workspace
+                    mountPath: /workspace
+                  - name: github-ssh-key
+                    mountPath: /etc/git-ssh
+                    readOnly: true
+                  - name: github-gitconfig
+                    mountPath: /etc/gitconfig
+                    readOnly: true
+            containers:
+              - (name): "?*"
+                volumeMounts:
+                  - name: workspace
+                    mountPath: /workspace
