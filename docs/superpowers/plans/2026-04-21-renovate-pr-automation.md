@@ -4,7 +4,7 @@
 
 **Goal:** Replace manual Renovate PR processing with webhook-triggered n8n workflows that triage, merge, validate, and revert PRs automatically.
 
-**Architecture:** GitHub webhooks trigger n8n triage workflow (read-tier Claude agent analyzes PR). SAFE PRs enqueue to a data table. Queue processor workflow (Valkey-locked) dequeues and merges sequentially with post-merge validation. BREAKING PRs get a write-tier fix agent. All notifications go to Discord #skynet.
+**Architecture:** GitHub webhooks trigger n8n triage workflow (read-tier Claude agent analyzes PR). SAFE PRs enqueue to a Valkey sorted set. Queue processor workflow (Valkey-locked) dequeues and merges sequentially with post-merge validation. BREAKING PRs get a write-tier fix agent. All notifications go to Discord #skynet.
 
 **Tech Stack:** n8n workflows, n8n-nodes-claude-code-cli custom node, Kyverno ClusterPolicy, Valkey/Redis, n8n data tables, GitHub API.
 
@@ -376,25 +376,6 @@ The "true" branch of "Lock Exists?" exits (locked by another execution).
 
 Add data table query, empty check, and loop structure:
 
-```javascript
-n8n_update_partial_workflow({
-  id: "<workflow-id>",
-  intent: "Add queue query and processing loop",
-  operations: [
-    {
-      type: "addNode",
-      node: {
-        name: "Query Pending Items",
-        type: "n8n-nodes-base.n8nTool",
-        typeVersion: 1,
-        position: [1000, 200],
-        parameters: {}
-      }
-    }
-  ]
-})
-```
-
 Use Redis nodes for ZPOPMIN (dequeue) and DELETE (release lock):
 
 ```javascript
@@ -478,7 +459,7 @@ n8n_update_partial_workflow({
     {
       type: "addConnection",
       source: "Item Found?",
-      target: "GET Item Metadata (HGETALL)",
+      target: "Get Item Metadata (HGETALL)",
       branch: "true"
     },
     {
@@ -1425,7 +1406,7 @@ Monitor:
 1. Webhook workflow receives the event
 2. Triage workflow spawns read-tier agent
 3. PR gets a comment with verdict
-4. If SAFE: item appears in merge-queue data table
+4. If SAFE: item appears in Valkey sorted set `n8n:merge-queue`
 5. Queue processor picks it up, merges, validates
 6. Discord notification appears in #skynet
 
@@ -1435,7 +1416,7 @@ Watch n8n execution logs for errors. Common issues:
 - Credential not found: verify credential IDs in workflow nodes
 - Init container fails: check Kyverno policy, SSH key access
 - Claude agent timeout: increase `timeout` option or `maxBudgetUsd`
-- Data table query fails: verify table ID and column names
+- Valkey query fails: verify key prefix `n8n:` and Redis credential connectivity
 
 ---
 

@@ -355,10 +355,10 @@ GitHub fires `synchronize` event → webhook workflow → triage re-runs automat
 
 ```text
 Start
-||
+|  |
   v
 SET n8n:lock:merge-queue processing NX EX 1800   (atomic: only sets if not exists)
-||
+|  |
   v
 [Lock acquired?]
 |  |
@@ -366,10 +366,10 @@ SET n8n:lock:merge-queue processing NX EX 1800   (atomic: only sets if not exist
 |  |
   Exit      v
          Process Loop:
-||
+|  |
             v
          ZPOPMIN n8n:merge-queue 1   (atomic dequeue, lowest score first)
-||
+|  |
             v
          [Item popped?]
 |  |
@@ -383,7 +383,7 @@ SET n8n:lock:merge-queue processing NX EX 1800   (atomic: only sets if not exist
 |  |
                   v
                Merge + Validate + Revert-if-needed
-||
+|  |
                   v
                HSET n8n:merge-queue:<key> status (done/failed/reverted)
 |  |
@@ -468,7 +468,7 @@ All outcomes post to Discord #skynet channel (ID: `1473506635656990862`, server:
 | PR triaged UNKNOWN                | `:question: PR #X (dep vOLD -> vNEW) triaged UNKNOWN — insufficient evidence`     |
 | Breaking fix failed (max retries) | `:no_entry: PR #X escalated to BLOCKED after 2 fix attempts`                      |
 | Merge + validation success        | `:rocket: PR #X merged and validated successfully`                                |
-| Validation failed + reverted      | `:rotating_light: PR #X merged but validation failed ��� revert PR created: #Y`   |
+| Validation failed + reverted      | `:rotating_light: PR #X merged but validation failed -- revert PR created: #Y`    |
 | Queue processor error             | `:x: Queue processor error: <error summary>`                                      |
 
 ### 8. Existing Webhook Workflow Changes
