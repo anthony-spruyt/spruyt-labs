@@ -127,7 +127,7 @@ Add a third rule to the existing ClusterPolicy in `cluster/apps/kyverno/policies
                   - name: CLONE_BRANCH
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
                   - name: GIT_SSH_COMMAND
-                    value: "ssh -i /etc/git-ssh/ssh-privatekey -o StrictHostKeyChecking=no"
+                    value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no"
                   - name: GIT_CONFIG_GLOBAL
                     value: /etc/gitconfig/gitconfig
                 volumeMounts:
@@ -285,7 +285,8 @@ n8n_create_workflow({
   settings: {
     executionOrder: "v1",
     timezone: "Australia/Sydney",
-    errorWorkflow: "rFJsABwp1kcCfcnq"
+    errorWorkflow: "rFJsABwp1kcCfcnq",
+    callerPolicy: "workflowsFromSameOwner"
   }
 })
 ```
@@ -831,17 +832,17 @@ n8n_update_partial_workflow({
     {
       type: "addConnection",
       source: "When Called by Triage",
+      target: "Discord Notify Fix"
+    },
+    {
+      type: "addConnection",
+      source: "Discord Notify Fix",
       target: "Build Fix Prompt"
     },
     {
       type: "addConnection",
       source: "Build Fix Prompt",
       target: "Claude Code (Fix)"
-    },
-    {
-      type: "addConnection",
-      source: "Claude Code (Fix)",
-      target: "Discord Notify Fix"
     }
   ]
 })
@@ -1062,13 +1063,13 @@ n8n_update_partial_workflow({
       type: "addConnection",
       source: "Claude Code (Triage)",
       target: "Merge Triage + Context",
-      sourceIndex: 0
+      targetIndex: 0
     },
     {
       type: "addConnection",
       source: "Build Triage Prompt",
       target: "Merge Triage + Context",
-      sourceIndex: 1
+      targetIndex: 1
     },
     {
       type: "addConnection",
@@ -1120,10 +1121,31 @@ n8n_update_partial_workflow({
     {
       type: "addNode",
       node: {
+        name: "Discord SAFE",
+        type: "n8n-nodes-base.discord",
+        typeVersion: 2,
+        position: [1600, -200],
+        parameters: {
+          resource: "message",
+          guildId: { __rl: true, value: "257529418187145216", mode: "list" },
+          channelId: { __rl: true, value: "1473506635656990862", mode: "list" },
+          content: "={{ ':white_check_mark: PR #' + $json.pull_request.number + ' (' + $json.dependency.name + ' ' + $json.dependency.oldVersion + ' → ' + $json.dependency.newVersion + ') triaged SAFE — enqueued for merge' }}"
+        },
+        credentials: {
+          discordBotApi: {
+            id: "ZhJu5IvTw0s7pSo8",
+            name: "Discord Bot for Skynet"
+          }
+        }
+      }
+    },
+    {
+      type: "addNode",
+      node: {
         name: "Trigger Queue Processor",
         type: "n8n-nodes-base.executeWorkflow",
         typeVersion: 1.2,
-        position: [1600, -200],
+        position: [1800, -200],
         parameters: {
           workflowId: { __rl: true, value: "<queue-processor-workflow-id>", mode: "id" },
           mode: "each"
@@ -1144,6 +1166,11 @@ n8n_update_partial_workflow({
     {
       type: "addConnection",
       source: "Enqueue (ZADD + HSET)",
+      target: "Discord SAFE"
+    },
+    {
+      type: "addConnection",
+      source: "Discord SAFE",
       target: "Trigger Queue Processor"
     }
   ]

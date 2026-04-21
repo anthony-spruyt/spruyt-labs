@@ -112,7 +112,7 @@ Inject a git-clone init container into agent pods when `CLONE_URL` env var is pr
               - name: CLONE_BRANCH
                 value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
               - name: GIT_SSH_COMMAND
-                value: "ssh -i /etc/git-ssh/ssh-privatekey -o StrictHostKeyChecking=no"
+                value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no"
               - name: GIT_CONFIG_GLOBAL
                 value: /etc/gitconfig/gitconfig
             volumeMounts:
@@ -152,7 +152,9 @@ Optionally with branch: `{"CLONE_URL": "...", "CLONE_BRANCH": "main"}`
 
 Generic queue for PRs approved for merge. Not Renovate-specific. Stored in Valkey (not n8n Valkey queues) for atomic operations and direct access from n8n Redis nodes.
 
-**Key prefix:** All keys use `n8n:` prefix per Valkey ACL (`~n8n:*`).
+**Key prefix convention:** All n8n-to-Valkey keys MUST use `n8n:` prefix. The Valkey ACL for the
+n8n user is `~n8n:*`, blocking access to any key without this prefix. Future Valkey-based features
+must follow this convention.
 
 **Queue structure:**
 
