@@ -1,9 +1,7 @@
 # Coder Devcontainer Template
 
 Generic Kubernetes workspace template for Coder that builds from
-`devcontainer.json`. No cluster-admin, no Talos/Terraform credentials —
-intended for arbitrary repos. The `spruyt-labs` template is the
-homelab-privileged sibling.
+`devcontainer.json`.
 
 ## Usage
 
