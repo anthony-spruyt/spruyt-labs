@@ -33,7 +33,7 @@ kubectl logs -n n8n-mcp -l app.kubernetes.io/name=n8n-mcp-server
 - **In-cluster**: `http://n8n-mcp-server.n8n-mcp.svc:3000/mcp`
 - **LAN**: `https://n8n-mcp.lan.${EXTERNAL_DOMAIN}/mcp` (API key required)
 - **Health**: `GET /health`
-- **Network policies**: Ingress from claude-agents-read, claude-agents-write, coder-workspaces, and traefik namespaces; egress to n8n.n8n-system.svc:5678 only
+- **Network policies**: Ingress from claude-agents-read, claude-agents-write, coder-workspaces, and traefik namespaces; egress to n8n.n8n-system.svc (port 80 → pod 5678)
 
 ## Troubleshooting
 
