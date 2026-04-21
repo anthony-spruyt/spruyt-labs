@@ -82,6 +82,9 @@ Inject a git-clone init container into agent pods when `CLONE_URL` env var is pr
     any:
       - resources:
           kinds: ["Pod"]
+          namespaces:
+            - claude-agents-write
+            - claude-agents-read
           selector:
             matchLabels:
               managed-by: n8n-claude-code
@@ -98,7 +101,7 @@ Inject a git-clone init container into agent pods when `CLONE_URL` env var is pr
             emptyDir: {}
         initContainers:
           - name: git-clone
-            image: alpine/git:latest
+            image: alpine/git:2.47.2
             command: ["sh", "-c"]
             args:
               - |
@@ -108,18 +111,21 @@ Inject a git-clone init container into agent pods when `CLONE_URL` env var is pr
                 value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
               - name: CLONE_BRANCH
                 value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
+              - name: GIT_SSH_COMMAND
+                value: "ssh -i /etc/git-ssh/ssh-privatekey -o StrictHostKeyChecking=no"
+              - name: GIT_CONFIG_GLOBAL
+                value: /etc/gitconfig/gitconfig
             volumeMounts:
               - name: workspace
                 mountPath: /workspace
-              - name: ssh-key
-                mountPath: /root/.ssh
+              - name: github-ssh-key
+                mountPath: /etc/git-ssh
                 readOnly: true
-              - name: gitconfig
-                mountPath: /root/.gitconfig
-                subPath: .gitconfig
+              - name: github-gitconfig
+                mountPath: /etc/gitconfig
                 readOnly: true
         containers:
-          - name: claude-code
+          - (name): "?*"
             volumeMounts:
               - name: workspace
                 mountPath: /workspace
@@ -180,7 +186,7 @@ Receive PR data + patch from webhook workflow
 ||
      v
 Claude Code (read-tier ephemeral pod)
-  - Settings profile: renovate.json (GitHub MCP + context7 + bravesearch)
+  - Settings: renovate.json via --settings flag in additionalArgs (GitHub MCP + context7 + bravesearch)
   - Model: sonnet (cost-effective for analysis)
   - Prompt: analyze changelog, breaking changes, config impact
   - Output: structured JSON via jsonSchema option
@@ -300,7 +306,7 @@ Receive PR data + breaking changes from triage
 ||
      v
 Claude Code (write-tier ephemeral pod)
-  - Settings profile: merge-agent.json (needs GitHub MCP + kubectl for config reading)
+  - Settings: merge-agent.json via --settings flag in additionalArgs (needs GitHub MCP + kubectl)
   - Model: opus (complex refactoring)
   - Prompt: checkout PR branch, address breaking changes, commit + push fix
   - Receives: breaking change descriptions + impact + affected config files
@@ -335,14 +341,14 @@ GitHub fires `synchronize` event → webhook workflow → triage re-runs automat
 Start
 ||
   v
-GET lock:merge-queue from Valkey
+GET n8n:lock:merge-queue from Valkey
 ||
   v
 [Lock exists?]
 |  |
   YES       NO
 |  |
-  Exit      SET lock:merge-queue (TTL=1800s)
+  Exit      SET n8n:lock:merge-queue (TTL=1800s)
 ||
             v
          Process Loop:
@@ -390,11 +396,13 @@ The write-tier agent handles the full lifecycle for one PR:
 
 **Agent configuration:**
 - Connection mode: `k8sPersistent` (stays alive for multi-step work)
-- Settings profile: `admin.json` or new `merge-agent.json` (needs GitHub MCP + kubectl + victoriametrics)
+- Settings: `merge-agent.json` via `--settings` flag in `additionalArgs` (needs GitHub MCP + kubectl + victoriametrics)
 - Model: `opus` (complex multi-step reasoning: merge decisions, validation interpretation, revert logic)
 - Max budget: configurable per execution to prevent runaway costs
 
 ### 6. Settings Profiles
+
+Settings profiles are mounted into agent pods at `/etc/claude/settings/` by the existing Kyverno `inject-claude-agent-config` policy. The n8n Claude Code node does not have a `settingsProfile` parameter — profiles are passed via the `additionalArgs` option: `--settings /etc/claude/settings/<profile>.json`.
 
 #### renovate.json (Triage — read-only analysis)
 

@@ -330,7 +330,7 @@ n8n_update_partial_workflow({
         position: [400, 100],
         parameters: {
           operation: "get",
-          key: "lock:merge-queue"
+          key: "n8n:lock:merge-queue"
         }
       }
     },
@@ -364,7 +364,7 @@ n8n_update_partial_workflow({
         position: [800, 200],
         parameters: {
           operation: "set",
-          key: "lock:merge-queue",
+          key: "n8n:lock:merge-queue",
           value: "processing",
           expire: true,
           ttl: 1800
@@ -476,7 +476,7 @@ n8n_update_partial_workflow({
         position: [1400, 100],
         parameters: {
           operation: "delete",
-          key: "lock:merge-queue"
+          key: "n8n:lock:merge-queue"
         }
       }
     },
@@ -765,10 +765,10 @@ n8n_update_partial_workflow({
           permissionMode: "bypassPermissions",
           model: "opus",
           mcpConfigFilePaths: "/etc/mcp/mcp.json",
-          settingsProfile: "/etc/claude/settings/merge-agent.json",
           options: {
             systemPromptMode: "append",
             maxBudgetUsd: 5,
+            additionalArgs: "--settings /etc/claude/settings/merge-agent.json",
             jsonSchema: JSON.stringify({
               type: "object",
               required: ["success", "message"],
@@ -956,10 +956,10 @@ n8n_update_partial_workflow({
           permissionMode: "bypassPermissions",
           model: "sonnet",
           mcpConfigFilePaths: "/etc/mcp/mcp.json",
-          settingsProfile: "/etc/claude/settings/renovate.json",
           options: {
             systemPromptMode: "append",
             maxBudgetUsd: 2,
+            additionalArgs: "--settings /etc/claude/settings/renovate.json",
             jsonSchema: "{\"type\":\"object\",\"required\":[\"verdict\",\"summary\",\"dependency\",\"semverLevel\",\"breakingChanges\",\"features\"],\"properties\":{\"verdict\":{\"type\":\"string\",\"enum\":[\"SAFE\",\"BREAKING\",\"BLOCKED\",\"UNKNOWN\"]},\"summary\":{\"type\":\"string\"},\"dependency\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"oldVersion\":{\"type\":\"string\"},\"newVersion\":{\"type\":\"string\"},\"type\":{\"type\":\"string\",\"enum\":[\"helm\",\"image\",\"taskfile\",\"other\"]}}},\"semverLevel\":{\"type\":\"string\",\"enum\":[\"patch\",\"minor\",\"major\",\"digest\",\"date\",\"other\"]},\"breakingChanges\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"description\":{\"type\":\"string\"},\"impact\":{\"type\":\"string\",\"enum\":[\"NO_IMPACT\",\"LOW_IMPACT\",\"HIGH_IMPACT\",\"UNKNOWN_IMPACT\"]},\"reason\":{\"type\":\"string\"}}}},\"features\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"description\":{\"type\":\"string\"},\"relevance\":{\"type\":\"string\",\"enum\":[\"HIGH\",\"MEDIUM\",\"LOW\"]}}}}}}"
           }
         },
