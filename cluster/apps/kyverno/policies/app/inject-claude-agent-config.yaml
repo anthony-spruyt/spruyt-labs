@@ -204,6 +204,8 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - |
+                    cp /etc/git-ssh/id_ed25519 /tmp/id_ed25519
+                    chmod 600 /tmp/id_ed25519
                     if [ -n "$CLONE_BRANCH" ]; then
                       git clone --depth 1 -b "$CLONE_BRANCH" "$CLONE_URL" /workspace
                     else
@@ -215,7 +217,7 @@ spec:
                   - name: CLONE_BRANCH
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
                   - name: GIT_SSH_COMMAND
-                    value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+                    value: "ssh -i /tmp/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
                   - name: GIT_CONFIG_NOSYSTEM
                     value: "1"
                   - name: GIT_CONFIG_GLOBAL
