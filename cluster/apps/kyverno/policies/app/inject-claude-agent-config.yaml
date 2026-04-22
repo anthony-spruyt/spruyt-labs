@@ -41,7 +41,7 @@ spec:
               - name: github-ssh-key
                 secret:
                   secretName: github-bot-ssh-key
-                  defaultMode: 0400
+                  defaultMode: 0444
               - name: github-gitconfig
                 configMap:
                   name: github-bot-gitconfig
@@ -120,7 +120,7 @@ spec:
               - name: github-ssh-key
                 secret:
                   secretName: github-bot-ssh-key
-                  defaultMode: 0400
+                  defaultMode: 0444
               - name: github-gitconfig
                 configMap:
                   name: github-bot-gitconfig
