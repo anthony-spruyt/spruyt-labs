@@ -127,11 +127,6 @@ main:
         secretKeyRef:
           name: n8n-secrets
           key: QUEUE_BULL_REDIS_PASSWORD
-    GITHUB_WEBHOOK_SECRET:
-      valueFrom:
-        secretKeyRef:
-          name: n8n-secrets
-          key: GITHUB_WEBHOOK_SECRET
     WEBHOOK_URL:
       value: https://n8n.${EXTERNAL_DOMAIN}
     N8N_REINSTALL_MISSING_PACKAGES:
