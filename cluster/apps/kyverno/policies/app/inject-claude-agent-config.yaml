@@ -212,8 +212,10 @@ spec:
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
                   - name: GIT_SSH_COMMAND
                     value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+                  - name: GIT_CONFIG_NOSYSTEM
+                    value: "1"
                   - name: GIT_CONFIG_GLOBAL
-                    value: /etc/gitconfig/gitconfig
+                    value: /etc/git-config/gitconfig
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
@@ -221,7 +223,7 @@ spec:
                     mountPath: /etc/git-ssh
                     readOnly: true
                   - name: github-gitconfig
-                    mountPath: /etc/gitconfig
+                    mountPath: /etc/git-config
                     readOnly: true
             containers:
               - (name): "?*"
