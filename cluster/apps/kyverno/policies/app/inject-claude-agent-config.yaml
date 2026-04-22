@@ -204,7 +204,11 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - |
-                    git clone --depth 1 ${CLONE_BRANCH:+-b "$CLONE_BRANCH"} "$CLONE_URL" /workspace
+                    if [ -n "$CLONE_BRANCH" ]; then
+                      git clone --depth 1 -b "$CLONE_BRANCH" "$CLONE_URL" /workspace
+                    else
+                      git clone --depth 1 "$CLONE_URL" /workspace
+                    fi
                 env:
                   - name: CLONE_URL
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
