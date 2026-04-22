@@ -213,6 +213,7 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - |
+                    echo "node:x:1000:1000::/tmp:/bin/sh" >> /etc/passwd
                     git clone --depth 1 ${CLONE_BRANCH:+-b "$CLONE_BRANCH"} "$CLONE_URL" /workspace
                 env:
                   - name: CLONE_URL
