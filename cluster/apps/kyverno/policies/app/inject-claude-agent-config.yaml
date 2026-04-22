@@ -201,6 +201,15 @@ spec:
             initContainers:
               - name: git-clone
                 image: alpine/git:2.47.2
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop: ["ALL"]
+                  seccompProfile:
+                    type: RuntimeDefault
                 command: ["sh", "-c"]
                 args:
                   - |
@@ -210,6 +219,8 @@ spec:
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
                   - name: CLONE_BRANCH
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
+                  - name: HOME
+                    value: /tmp
                   - name: GIT_SSH_COMMAND
                     value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no"
                   - name: GIT_CONFIG_GLOBAL
