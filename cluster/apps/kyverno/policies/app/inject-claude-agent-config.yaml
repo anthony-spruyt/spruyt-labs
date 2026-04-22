@@ -200,32 +200,20 @@ spec:
                 emptyDir: {}
             initContainers:
               - name: git-clone
-                image: alpine/git:2.47.2
-                securityContext:
-                  runAsNonRoot: true
-                  runAsUser: 65534
-                  runAsGroup: 65534
-                  allowPrivilegeEscalation: false
-                  capabilities:
-                    drop: ["ALL"]
-                  seccompProfile:
-                    type: RuntimeDefault
+                image: "{{ request.object.spec.containers[0].image }}"
                 command: ["sh", "-c"]
                 args:
                   - |
                     git clone --depth 1 ${CLONE_BRANCH:+-b "$CLONE_BRANCH"} "$CLONE_URL" /workspace
-                    chmod -R a+rwX /workspace
                 env:
                   - name: CLONE_URL
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
                   - name: CLONE_BRANCH
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
-                  - name: HOME
-                    value: /tmp
                   - name: GIT_SSH_COMMAND
                     value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
                   - name: GIT_CONFIG_GLOBAL
-                    value: /etc/gitconfig
+                    value: /etc/gitconfig/gitconfig
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
@@ -234,7 +222,6 @@ spec:
                     readOnly: true
                   - name: github-gitconfig
                     mountPath: /etc/gitconfig
-                    subPath: gitconfig
                     readOnly: true
             containers:
               - (name): "?*"
