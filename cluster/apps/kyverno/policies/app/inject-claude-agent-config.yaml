@@ -223,7 +223,7 @@ spec:
                   - name: HOME
                     value: /tmp
                   - name: GIT_SSH_COMMAND
-                    value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no"
+                    value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
                   - name: GIT_CONFIG_GLOBAL
                     value: /etc/gitconfig
                 volumeMounts:
