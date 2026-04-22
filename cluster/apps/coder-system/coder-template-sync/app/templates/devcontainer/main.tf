@@ -129,7 +129,7 @@ data "coder_parameter" "home_volume_size" {
   name         = "home_volume_size"
   display_name = "Home volume size (GiB)"
   description  = "Size of the /home/vscode persistent volume."
-  default      = "5"
+  default      = "20"
   type         = "number"
   icon         = "/emojis/1f4be.png"
   mutable      = false
