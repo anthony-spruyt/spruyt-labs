@@ -224,7 +224,7 @@ spec:
                   - name: GIT_SSH_COMMAND
                     value: "ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=no"
                   - name: GIT_CONFIG_GLOBAL
-                    value: /etc/gitconfig/gitconfig
+                    value: /etc/git-config/gitconfig
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
@@ -232,7 +232,7 @@ spec:
                     mountPath: /etc/git-ssh
                     readOnly: true
                   - name: github-gitconfig
-                    mountPath: /etc/gitconfig
+                    mountPath: /etc/git-config
                     readOnly: true
             containers:
               - (name): "?*"
