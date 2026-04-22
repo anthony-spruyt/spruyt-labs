@@ -203,8 +203,8 @@ spec:
                 image: alpine/git:2.47.2
                 securityContext:
                   runAsNonRoot: true
-                  runAsUser: 1000
-                  runAsGroup: 1000
+                  runAsUser: 65534
+                  runAsGroup: 65534
                   allowPrivilegeEscalation: false
                   capabilities:
                     drop: ["ALL"]
@@ -213,8 +213,8 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - |
-                    echo "node:x:1000:1000::/tmp:/bin/sh" >> /etc/passwd
                     git clone --depth 1 ${CLONE_BRANCH:+-b "$CLONE_BRANCH"} "$CLONE_URL" /workspace
+                    chmod -R a+rwX /workspace
                 env:
                   - name: CLONE_URL
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
