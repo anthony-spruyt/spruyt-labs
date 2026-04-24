@@ -16,6 +16,7 @@ spec:
     - name: cnpg-operator
     - name: plugin-barman-cloud
     - name: valkey
+    - name: claude-agents-read
     - name: claude-agents-write
   prune: true
   timeout: 5m
