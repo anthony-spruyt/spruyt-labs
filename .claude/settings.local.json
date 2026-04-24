@@ -140,7 +140,8 @@
     "cclsp",
     "github",
     "kubectl",
-    "victoriametrics"
+    "victoriametrics",
+    "n8n"
   ],
   "enabledPlugins": {
     "n8n-mcp-skills@n8n-mcp-skills": true
@@ -152,5 +153,6 @@
         "repo": "czlonkowski/n8n-skills"
       }
     }
-  }
+  },
+  "enableAllProjectMcpServers": true
 }
