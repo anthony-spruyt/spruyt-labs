@@ -22,8 +22,8 @@ initContainers:
 
 kubectl:
   image:
-    repository: registry.k8s.io/kubectl
-    tag: v1.35.4
+    repository: public.ecr.aws/bitnami/kubectl
+    tag: "1.35"
 
 # This job upgrades the CRDs.
 # upgradeCRDs: false
