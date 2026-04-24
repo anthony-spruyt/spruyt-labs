@@ -20,6 +20,11 @@ initContainers:
       - mountPath: /target
         name: plugins
 
+kubectl:
+  image:
+    repository: registry.k8s.io/kubectl
+    tag: v1.35.4
+
 # This job upgrades the CRDs.
 # upgradeCRDs: false
 
