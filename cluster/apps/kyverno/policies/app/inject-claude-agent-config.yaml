@@ -211,9 +211,9 @@ spec:
                     cp /etc/git-ssh/id_ed25519 /tmp/id_ed25519
                     chmod 600 /tmp/id_ed25519
                     if [ -n "$CLONE_BRANCH" ]; then
-                      git clone --depth 1 -b "$CLONE_BRANCH" "$CLONE_URL" /workspace
+                      git clone --depth 1 -b "$CLONE_BRANCH" "$CLONE_URL" /workspace/repo
                     else
-                      git clone --depth 1 "$CLONE_URL" /workspace
+                      git clone --depth 1 "$CLONE_URL" /workspace/repo
                     fi
                 env:
                   - name: CLONE_URL
