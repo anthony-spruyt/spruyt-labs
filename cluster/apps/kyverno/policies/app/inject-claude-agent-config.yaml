@@ -215,7 +215,6 @@ spec:
                       git clone --depth 1 "$CLONE_URL" /workspace/repo
                     fi
                     cd /workspace/repo
-                    pip install --quiet --break-system-packages pre-commit
                     pre-commit install
                 env:
                   - name: CLONE_URL
