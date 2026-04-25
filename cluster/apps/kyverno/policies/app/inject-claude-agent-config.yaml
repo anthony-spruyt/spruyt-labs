@@ -57,7 +57,7 @@ spec:
                   - name: GH_CONFIG_DIR
                     value: /etc/gh
                   - name: GIT_CONFIG_GLOBAL
-                    value: /etc/gitconfig/gitconfig
+                    value: /etc/git-config/gitconfig
                   - name: MCP_TIMEOUT
                     value: "30000"
                   - name: CONTEXT7_API_KEY
@@ -88,7 +88,7 @@ spec:
                     mountPath: /etc/git-ssh
                     readOnly: true
                   - name: github-gitconfig
-                    mountPath: /etc/gitconfig
+                    mountPath: /etc/git-config
                     readOnly: true
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
@@ -136,7 +136,7 @@ spec:
                   - name: GH_CONFIG_DIR
                     value: /etc/gh
                   - name: GIT_CONFIG_GLOBAL
-                    value: /etc/gitconfig/gitconfig
+                    value: /etc/git-config/gitconfig
                   - name: MCP_TIMEOUT
                     value: "30000"
                   - name: CONTEXT7_API_KEY
@@ -167,7 +167,7 @@ spec:
                     mountPath: /etc/git-ssh
                     readOnly: true
                   - name: github-gitconfig
-                    mountPath: /etc/gitconfig
+                    mountPath: /etc/git-config
                     readOnly: true
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
