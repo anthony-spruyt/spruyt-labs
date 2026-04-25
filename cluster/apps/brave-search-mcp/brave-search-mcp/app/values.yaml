@@ -18,7 +18,7 @@ controllers:
       app:
         image:
           repository: docker.io/mcp/brave-search
-          tag: latest@sha256:ca96b8acb27d8cf601a8faef86a084602cffa41d8cb18caa1e29ba4d16989d22
+          tag: latest@sha256:1a8dde377f929a2cd6de99c49847b1e03b3feaa7c0ae47b8373aa59e9694b93b
           pullPolicy: IfNotPresent
         env:
           - name: BRAVE_API_KEY
