@@ -73,12 +73,15 @@ deschedulerPolicy:
                 - cloudflare-system
         - name: LowNodeUtilization
           args:
+            useDeviationThresholds: true
             thresholds:
-              cpu: 20
-              memory: 20
+              cpu: 10
+              memory: 10
             targetThresholds:
-              cpu: 50
-              memory: 70
+              cpu: 10
+              memory: 10
+            evictionLimits:
+              node: 5
             evictableNamespaces:
               exclude:
                 - kube-system
