@@ -175,7 +175,7 @@ spec:
                   - name: claude-settings-profiles
                     mountPath: /etc/claude/settings
                     readOnly: true
-    - name: inject-repo-clone
+    - name: inject-repo-clone-write
       match:
         any:
           - resources:
@@ -183,6 +183,72 @@ spec:
                 - Pod
               namespaces:
                 - claude-agents-write
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
+            operator: NotEquals
+            value: ""
+          - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] | starts_with(@, 'git@github.com:anthony-spruyt/') }}"
+            operator: Equals
+            value: true
+      mutate:
+        patchStrategicMerge:
+          spec:
+            volumes:
+              - name: workspace
+                emptyDir:
+                  sizeLimit: 1Gi
+            initContainers:
+              - name: git-clone
+                image: "{{ request.object.spec.containers[0].image }}"
+                command: ["sh", "-c"]
+                args:
+                  - |
+                    cp /etc/git-ssh/id_ed25519 /tmp/id_ed25519
+                    chmod 600 /tmp/id_ed25519
+                    if [ -n "$CLONE_BRANCH" ]; then
+                      git clone --depth 1 -b "$CLONE_BRANCH" "$CLONE_URL" /workspace/repo
+                    else
+                      git clone --depth 1 "$CLONE_URL" /workspace/repo
+                    fi
+                    cd /workspace/repo
+                    pip install --quiet pre-commit
+                    pre-commit install
+                env:
+                  - name: CLONE_URL
+                    value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
+                  - name: CLONE_BRANCH
+                    value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
+                  - name: GIT_SSH_COMMAND
+                    value: "ssh -i /tmp/id_ed25519 -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/tmp/known_hosts"
+                  - name: GIT_CONFIG_NOSYSTEM
+                    value: "1"
+                  - name: GIT_CONFIG_GLOBAL
+                    value: /etc/git-config/gitconfig
+                volumeMounts:
+                  - name: workspace
+                    mountPath: /workspace
+                  - name: github-ssh-key
+                    mountPath: /etc/git-ssh
+                    readOnly: true
+                  - name: github-gitconfig
+                    mountPath: /etc/git-config
+                    readOnly: true
+            containers:
+              - (name): "?*"
+                volumeMounts:
+                  - name: workspace
+                    mountPath: /workspace
+    - name: inject-repo-clone-read
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
                 - claude-agents-read
               selector:
                 matchLabels:
