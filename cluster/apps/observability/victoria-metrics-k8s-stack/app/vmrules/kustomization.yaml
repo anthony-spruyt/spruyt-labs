@@ -10,3 +10,4 @@ resources:
   - ./nut-ups.yaml
   - ./cilium-policy-drops.yaml
   - ./cert-manager-certificates.yaml
+  - ./node-memory-saturation.yaml

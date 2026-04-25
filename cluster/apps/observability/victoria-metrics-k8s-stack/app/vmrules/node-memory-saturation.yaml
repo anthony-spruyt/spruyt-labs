@@ -1,0 +1,67 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: node-memory-saturation
+  namespace: observability
+spec:
+  groups:
+    - name: node-memory-saturation-thresholds
+      interval: 1m
+      rules:
+        - record: node:memory_requests:threshold_warning_percent
+          expr: vector(85)
+
+        - record: node:memory_requests:threshold_critical_percent
+          expr: vector(95)
+
+    - name: node-memory-saturation-alerts
+      rules:
+        - alert: NodeMemoryRequestSaturationWarning
+          expr: |
+            (
+              sum by (node) (
+                kube_pod_resource_request{resource="memory", node!=""}
+              )
+              /
+              sum by (node) (
+                kube_node_status_allocatable{resource="memory"}
+              )
+              * 100
+            )
+              > on() group_left() node:memory_requests:threshold_warning_percent
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.node }} memory requests at {{ printf \"%.0f\" $value }}% of allocatable"
+            description: >-
+              Node {{ $labels.node }} has memory requests consuming
+              {{ printf "%.0f" $value }}% of allocatable memory.
+              New pods may fail to schedule, and OOM pressure increases.
+              Consider rebalancing workloads or reducing memory requests.
+
+        - alert: NodeMemoryRequestSaturationCritical
+          expr: |
+            (
+              sum by (node) (
+                kube_pod_resource_request{resource="memory", node!=""}
+              )
+              /
+              sum by (node) (
+                kube_node_status_allocatable{resource="memory"}
+              )
+              * 100
+            )
+              > on() group_left() node:memory_requests:threshold_critical_percent
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} memory requests at {{ printf \"%.0f\" $value }}% of allocatable"
+            description: >-
+              Node {{ $labels.node }} has memory requests consuming
+              {{ printf "%.0f" $value }}% of allocatable memory.
+              OOM kills of infrastructure pods (CNI, CSI) are likely.
+              Immediate rebalancing required.

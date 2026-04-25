@@ -128,16 +128,8 @@ If a recommendation hits a boundary, adjust `minAllowed`/`maxAllowed` and rechec
 
 ## Descheduler Namespace Exclusion
 
-To exclude a namespace from descheduler eviction:
+To exclude a namespace from descheduler eviction, add it to the per-plugin `namespaces.exclude` lists in `cluster/apps/kube-system/descheduler/app/values.yaml`.
 
-1. Add the label to its `namespace.yaml`:
+Only core infrastructure namespaces should be excluded — workload namespaces rely on priority classes to control eviction order.
 
-```yaml
-metadata:
-  labels:
-    descheduler.kubernetes.io/exclude: "true"
-```
-
-2. Add the namespace to the per-plugin `namespaces.exclude` lists in `cluster/apps/kube-system/descheduler/app/values.yaml`.
-
-> **Note:** Per-plugin exclusion lists are required due to an upstream bug in descheduler v0.35.1 where `namespaceLabelSelector` ignores `matchExpressions` when `matchLabels` is empty. The labels are maintained for future migration to `DefaultEvictor.namespaceLabelSelector` once the bug is fixed.
+> **Upstream bug (descheduler v0.35.1):** `DefaultEvictor.namespaceLabelSelector` ignores `matchExpressions` when `matchLabels` is empty (`defaultevictor.go` guards with `len(MatchLabels) > 0`). The `descheduler.kubernetes.io/exclude` label is therefore inert. When upgrading descheduler, check if this is fixed — if so, switch from per-plugin `namespaces.exclude` lists to `DefaultEvictor.namespaceLabelSelector` with the label.

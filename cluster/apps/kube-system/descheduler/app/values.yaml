@@ -10,12 +10,10 @@ resources:
     cpu: 10m
     memory: 64Mi
 
-# Namespace exclusion: namespaces are labeled with descheduler.kubernetes.io/exclude: "true"
-# for documentation purposes, but due to an upstream bug in descheduler v0.35.1
-# (namespaceLabelSelector ignores matchExpressions when matchLabels is empty),
-# we must keep per-plugin exclusion lists until the fix lands.
-# Upstream bug: defaultevictor.go guards with len(MatchLabels) > 0, ignoring MatchExpressions.
-# TODO: Switch to DefaultEvictor namespaceLabelSelector once upstream is fixed.
+# Upstream bug (descheduler v0.35.1): DefaultEvictor.namespaceLabelSelector
+# ignores matchExpressions when matchLabels is empty.
+# Per-plugin namespaces.exclude lists are the only working mechanism.
+# TODO: Switch to namespaceLabelSelector once upstream is fixed.
 
 deschedulerPolicy:
   profiles:
@@ -37,15 +35,11 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
-                - coder-system
-                - coder-workspaces
-                - vpa-system
-                - claude-agents-write
-                - claude-agents-read
         - name: RemovePodsViolatingTopologySpreadConstraint
           args:
             constraints:
               - DoNotSchedule
+              - ScheduleAnyway
             namespaces:
               exclude:
                 - kube-system
@@ -54,11 +48,6 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
-                - coder-system
-                - coder-workspaces
-                - vpa-system
-                - claude-agents-write
-                - claude-agents-read
         - name: RemoveFailedPods
           args:
             minPodLifetimeSeconds: 3600
@@ -70,11 +59,6 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
-                - coder-system
-                - coder-workspaces
-                - vpa-system
-                - claude-agents-write
-                - claude-agents-read
         - name: RemovePodsHavingTooManyRestarts
           args:
             podRestartThreshold: 10
@@ -87,19 +71,14 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
-                - coder-system
-                - coder-workspaces
-                - vpa-system
-                - claude-agents-write
-                - claude-agents-read
         - name: LowNodeUtilization
           args:
             thresholds:
               cpu: 20
               memory: 20
             targetThresholds:
-              cpu: 40
-              memory: 40
+              cpu: 50
+              memory: 70
             evictableNamespaces:
               exclude:
                 - kube-system
@@ -108,11 +87,6 @@ deschedulerPolicy:
                 - flux-system
                 - rook-ceph
                 - cloudflare-system
-                - coder-system
-                - coder-workspaces
-                - vpa-system
-                - claude-agents-write
-                - claude-agents-read
       plugins:
         balance:
           enabled:
