@@ -3,7 +3,7 @@
 # Cilium Helm Reference -> https://docs.cilium.io/en/stable/helm-reference/
 # Default values for cilium: https://raw.githubusercontent.com/giantswarm/cilium-app/main/helm/cilium/values.yaml
 upgradeCompatibility: "1.18"
-priorityClassName: critical-infrastructure
+priorityClassName: system-node-critical
 debug:
   enabled: false
 rollOutCiliumPods: true # Roll out cilium agent pods automatically when configmap is updated.
@@ -76,7 +76,7 @@ ipam:
   mode: kubernetes # Configure IP Address Management mode. ref: https://docs.cilium.io/en/stable/network/concepts/ipam/
 operator:
   rollOutPods: true # Roll out cilium-operator pods automatically when configmap is updated.
-  priorityClassName: critical-infrastructure
+  priorityClassName: system-node-critical
   resources:
     limits:
       memory: 512Mi
@@ -84,8 +84,6 @@ operator:
       cpu: 50m
       memory: 128Mi
 resources:
-  limits:
-    memory: 1Gi
   requests:
     cpu: 1250m
     memory: 512Mi
