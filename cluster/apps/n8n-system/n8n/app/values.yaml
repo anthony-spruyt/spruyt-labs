@@ -129,6 +129,12 @@ main:
           key: QUEUE_BULL_REDIS_PASSWORD
     WEBHOOK_URL:
       value: https://n8n.${EXTERNAL_DOMAIN}
+    N8N_OTEL_ENABLED:
+      value: "true"
+    N8N_OTEL_EXPORTER_OTLP_ENDPOINT:
+      value: http://victoria-traces-single-vt-single-server.observability.svc:10428
+    N8N_OTEL_EXPORTER_OTLP_TRACING_PATH:
+      value: /insert/opentelemetry/v1/traces
     N8N_REINSTALL_MISSING_PACKAGES:
       value: "true"
   extraVolumeMounts: &extraVolumeMounts
