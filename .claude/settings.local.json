@@ -1,9 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "mcp__plugin_context7_context7__get-library-docs",
-      "mcp__plugin_context7_context7__resolve-library-id",
-      "mcp__plugin_context7_context7__query-docs",
       "Bash(kubectl:*)",
       "Bash(helm:*)",
       "Bash(flux:*)",
@@ -135,14 +132,6 @@
       "Read(./talos/clusterconfig/**)"
     ]
   },
-  "enabledMcpjsonServers": [
-    "bravesearch",
-    "cclsp",
-    "github",
-    "kubectl",
-    "victoriametrics",
-    "n8n"
-  ],
   "enabledPlugins": {
     "n8n-mcp-skills@n8n-mcp-skills": true
   },
@@ -153,6 +142,5 @@
         "repo": "czlonkowski/n8n-skills"
       }
     }
-  },
-  "enableAllProjectMcpServers": true
+  }
 }
