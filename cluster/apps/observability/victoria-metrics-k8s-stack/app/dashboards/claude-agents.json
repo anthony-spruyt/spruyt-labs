@@ -448,6 +448,19 @@
       },
       "title": "Tool Failures",
       "type": "table",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": { "source": "Line", "format": "json", "keepTime": true, "replace": true }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": { "_time": 0, "agent.namespace": 1, "tool_name": 2, "error": 3 },
+            "excludeByName": { "Time": true }
+          }
+        }
+      ],
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
@@ -484,6 +497,19 @@
       },
       "title": "API Errors",
       "type": "table",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": { "source": "Line", "format": "json", "keepTime": true, "replace": true }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": { "_time": 0, "agent.namespace": 1, "model": 2, "error": 3 },
+            "excludeByName": { "Time": true }
+          }
+        }
+      ],
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
@@ -601,5 +627,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 13
+  "version": 14
 }
