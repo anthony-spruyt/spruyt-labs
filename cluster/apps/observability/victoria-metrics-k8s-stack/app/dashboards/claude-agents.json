@@ -334,7 +334,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_token_usage_tokens_total{agent_namespace=~\"$namespace\"}[$__range])) by (type)",
+          "expr": "sum(claude_code_token_usage_tokens_total{agent_namespace=~\"$namespace\"}) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
         }
@@ -391,19 +391,23 @@
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "title": "Tool Duration (p50/p95)",
-      "type": "timeseries",
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":tool_result AND \"agent.namespace\":$namespace | stats by (_time:5m) quantile(0.5, duration_ms) as p50",
-          "legendFormat": "p50",
+          "expr": "\"event.name\":tool_result AND \"agent.namespace\":$namespace | stats quantile(0.5, duration_ms) as p50, quantile(0.95, duration_ms) as p95",
           "refId": "A"
-        },
-        {
-          "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":tool_result AND \"agent.namespace\":$namespace | stats by (_time:5m) quantile(0.95, duration_ms) as p95",
-          "legendFormat": "p95",
-          "refId": "B"
         }
       ]
     },
@@ -494,18 +498,35 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
-      "description": "Recent Claude agent traces from VictoriaTraces (Jaeger API)",
+      "datasource": { "type": "tempo", "uid": "${ds_traces}" },
+      "description": "Recent Claude agent traces from VictoriaTraces (Tempo TraceQL API)",
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 44 },
       "id": 11,
       "options": {},
       "title": "Recent Traces",
-      "type": "traces",
+      "type": "traceqlSearch",
       "targets": [
         {
-          "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
-          "queryType": "search",
-          "service": "claude-code",
+          "datasource": { "type": "tempo", "uid": "${ds_traces}" },
+          "queryType": "traceqlSearch",
+          "filters": [
+            {
+              "id": "service-name",
+              "tag": "service.name",
+              "operator": "=",
+              "scope": "resource",
+              "value": ["claude-code"],
+              "valueType": "string"
+            },
+            {
+              "id": "namespace",
+              "tag": "agent.namespace",
+              "operator": "=",
+              "scope": "resource",
+              "value": ["$namespace"],
+              "valueType": "string"
+            }
+          ],
           "limit": 20,
           "refId": "A"
         }
@@ -558,7 +579,7 @@
         "multi": false,
         "name": "ds_traces",
         "options": [],
-        "query": "jaeger",
+        "query": "tempo",
         "queryValue": "",
         "refresh": 1,
         "regex": "",
@@ -595,5 +616,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 7
+  "version": 8
 }

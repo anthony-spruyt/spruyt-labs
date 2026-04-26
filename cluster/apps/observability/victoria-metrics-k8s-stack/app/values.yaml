@@ -18,11 +18,11 @@ defaultDatasources:
       isDefault: false
       jsonData:
         manageAlerts: false
-    # VictoriaTraces (Jaeger Query Service JSON API at /select/jaeger) — see #1043
+    # VictoriaTraces (Tempo HTTP API at /select/tempo, supports TraceQL) — see #1043
     - name: VictoriaTraces
-      type: jaeger
+      type: tempo
       uid: victoriatraces
-      url: http://victoria-traces-single-vt-single-server.observability.svc.cluster.local.:10428/select/jaeger
+      url: http://victoria-traces-single-vt-single-server.observability.svc.cluster.local.:10428/select/tempo
       access: proxy
       isDefault: false
 
