@@ -46,6 +46,8 @@ spec:
                   items:
                     - key: hosts.yml
                       path: hosts.yml
+              - name: gh-config-writable
+                emptyDir: {}
               - name: github-ssh-key
                 secret:
                   secretName: github-bot-ssh-key
