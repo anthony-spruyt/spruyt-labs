@@ -51,6 +51,7 @@ misconfigurations:
       - cluster/apps/authentik-system/authentik/app/external-secrets-rbac.yaml
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/role.yaml
       - cluster/apps/n8n-mcp/n8n-mcp-server/app/mcp-api-keys-reader-rbac.yaml
+      - cluster/apps/agent-worker-system/agent-queue-worker/app/secret-reader-rbac.yaml
 
   # kubectl-mcp-server needs pod delete for cleanup and pods/eviction for drain
   # Scale subresources (deployments/scale, statefulsets/scale) are also granted but

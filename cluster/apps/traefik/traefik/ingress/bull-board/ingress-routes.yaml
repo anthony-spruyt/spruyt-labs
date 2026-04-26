@@ -1,0 +1,34 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: bull-board-ingress-routes-wan-https
+  namespace: agent-worker-system
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: bull-board.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`bull-board.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      middlewares:
+        - name: compress
+      services:
+        - name: ak-outpost-bull-board-outpost
+          passHostHeader: true
+          port: 9000
+    - kind: Rule
+      match: Host(`bull-board.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: authentik-forward-auth-bull-board
+        - name: compress
+      services:
+        - name: agent-queue-worker-bull-board
+          namespace: agent-worker-system
+          passHostHeader: true
+          port: 3001
+  tls:
+    secretName: "bull-board-${EXTERNAL_DOMAIN/./-}-tls"

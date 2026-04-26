@@ -1,0 +1,136 @@
+---
+defaultPodOptions:
+  automountServiceAccountToken: false
+  priorityClassName: standard
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  worker:
+    replicas: 1
+    strategy: RollingUpdate
+    rollingUpdate:
+      unavailable: 0
+    pod:
+      terminationGracePeriodSeconds: 30
+    containers:
+      app:
+        image:
+          repository: ghcr.io/anthony-spruyt/agent-queue-worker
+          tag: v1.0.0
+        env:
+          VALKEY_HOST: agent-valkey.agent-worker-system.svc
+          VALKEY_PORT: "6379"
+          N8N_DISPATCH_WEBHOOK: http://n8n-webhook.n8n-system.svc/webhook/agent-dispatch
+          GITHUB_OWNER: anthony-spruyt
+        envFrom:
+          - secretRef:
+              name: agent-queue-worker-secrets
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /livez
+                port: &port 3000
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /readyz
+                port: *port
+  bull-board:
+    replicas: 1
+    strategy: RollingUpdate
+    containers:
+      app:
+        image:
+          repository: ghcr.io/anthony-spruyt/bull-board
+          tag: v1.0.0
+        env:
+          VALKEY_HOST: agent-valkey.agent-worker-system.svc
+          VALKEY_PORT: "6379"
+          BULL_BOARD_PORT: "3001"
+          QUEUE_PREFIX: agent:queue
+          READ_ONLY: "true"
+          VALKEY_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: agent-queue-worker-secrets
+                key: VALKEY_PASSWORD
+        resources:
+          requests:
+            cpu: 5m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: &bbport 3001
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: *bbport
+service:
+  worker:
+    controller: worker
+    ports:
+      http:
+        port: *port
+  bull-board:
+    controller: bull-board
+    ports:
+      http:
+        port: *bbport
+persistence:
+  tmp:
+    type: emptyDir
+    advancedMounts:
+      worker:
+        app:
+          - path: /tmp
+      bull-board:
+        app:
+          - path: /tmp
+  npm-cache:
+    type: emptyDir
+    advancedMounts:
+      worker:
+        app:
+          - path: /home/node/.npm
+      bull-board:
+        app:
+          - path: /home/node/.npm

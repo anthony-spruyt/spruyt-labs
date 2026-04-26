@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/servicemonitor_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: agent-queue-worker
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
+  namespaceSelector:
+    matchNames:
+      - agent-worker-system
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
