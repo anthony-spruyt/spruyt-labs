@@ -16,9 +16,10 @@ resources:
 configMapGenerator:
   - name: claude-settings-profiles
     files:
-      - settings/admin.json
-      - settings/dev.json
-      - settings/pr.json
       - settings/sre.json
+      - settings/triage.json
+      - settings/fix.json
+      - settings/validate.json
+      - settings/execute.json
 generatorOptions:
   disableNameSuffixHash: true
