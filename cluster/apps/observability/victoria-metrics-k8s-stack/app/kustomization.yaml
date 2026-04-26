@@ -10,6 +10,7 @@ resources:
   - ./victoria-metrics-k8s-stack-secrets.sops.yaml
   - ./vm-service-scrapes.yaml
   - ./vmrules
+  - ./network-policies.yaml
   - ./release.yaml
   - ./vpa.yaml
 configMapGenerator:
