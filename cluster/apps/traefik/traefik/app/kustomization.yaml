@@ -6,7 +6,6 @@ resources:
   - ./fallback-certificate.yaml
   - ./mcp-api-keys-secrets.sops.yaml
   - ./mcp-api-keys-reader-rbac.yaml
-  - ./network-policies.yaml
   - ./release.yaml
   - ./vpa.yaml
   - ./coder-service-reader-rbac.yaml
