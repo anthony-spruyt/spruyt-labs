@@ -23,6 +23,11 @@ recommender:
     prometheus-address: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428
     prometheus-cadvisor-job-name: kubelet
     history-length: 14d
+    container-pod-name-label: pod
+    container-name-label: container
+    pod-namespace-label: namespace
+    pod-name-label: pod
+    metric-for-pod-labels: "kube_pod_labels{job=\"kube-state-metrics\"}[8d]"
   resources:
     requests:
       cpu: 50m
