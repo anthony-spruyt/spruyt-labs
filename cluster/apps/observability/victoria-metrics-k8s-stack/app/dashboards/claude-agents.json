@@ -406,7 +406,7 @@
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":tool_result AND \"agent.namespace\":$namespace | stats quantile(0.5, duration_ms) as p50, quantile(0.95, duration_ms) as p95",
+          "expr": "\"event.name\":tool_result | stats quantile(0.5, duration_ms) as p50, quantile(0.95, duration_ms) as p95",
           "refId": "A"
         }
       ]
@@ -449,7 +449,7 @@
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":tool_result AND success:false AND \"agent.namespace\":$namespace | fields _time, \"agent.namespace\", tool_name, error",
+          "expr": "\"event.name\":tool_result AND success:false | fields _time, \"agent.namespace\", tool_name, error",
           "refId": "A"
         }
       ]
@@ -485,7 +485,7 @@
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":api_error AND \"agent.namespace\":$namespace | fields _time, \"agent.namespace\", error, model",
+          "expr": "\"event.name\":api_error | fields _time, \"agent.namespace\", error, model",
           "refId": "A"
         }
       ]
@@ -504,7 +504,7 @@
       "id": 11,
       "options": {},
       "title": "Recent Traces",
-      "type": "traceqlSearch",
+      "type": "traces",
       "targets": [
         {
           "datasource": { "type": "tempo", "uid": "${ds_traces}" },
@@ -616,5 +616,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 8
+  "version": 9
 }
