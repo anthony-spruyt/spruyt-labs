@@ -527,12 +527,29 @@
     },
     {
       "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
-      "description": "Recent Claude agent traces from VictoriaTraces (Jaeger Query API)",
+      "description": "Recent Claude agent traces from VictoriaTraces (Jaeger Query API). Click traceID for waterfall in Explore.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "duration" },
+            "properties": [{ "id": "unit", "value": "ms" }]
+          }
+        ]
+      },
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 44 },
       "id": 11,
-      "options": {},
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true
+      },
       "title": "Recent Traces",
-      "type": "traces",
+      "type": "table",
       "targets": [
         {
           "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
@@ -627,5 +644,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 14
+  "version": 15
 }
