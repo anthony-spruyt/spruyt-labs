@@ -485,6 +485,39 @@
           "refId": "A"
         }
       ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "id": 105,
+      "title": "Traces",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "tempo", "uid": "${ds_traces}" },
+      "description": "Recent Claude agent traces — search by service / span name / trace_id from log events",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 44 },
+      "id": 11,
+      "options": {},
+      "title": "Recent Traces",
+      "type": "traceqlSearch",
+      "targets": [
+        {
+          "datasource": { "type": "tempo", "uid": "${ds_traces}" },
+          "queryType": "traceqlSearch",
+          "filters": [
+            {
+              "id": "namespace",
+              "tag": "agent.namespace",
+              "operator": "=",
+              "scope": "resource",
+              "value": ["$namespace"],
+              "valueType": "string"
+            }
+          ],
+          "refId": "A"
+        }
+      ]
     }
   ],
   "schemaVersion": 39,
@@ -527,6 +560,21 @@
       },
       {
         "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Traces Datasource",
+        "multi": false,
+        "name": "ds_traces",
+        "options": [],
+        "query": "tempo",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {},
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
@@ -555,5 +603,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 1
+  "version": 2
 }
