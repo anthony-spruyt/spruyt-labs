@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./authentik-system
   - ./brave-search-mcp
+  - ./bull-board
   - ./coder-system
   - ./firefly-iii
   - ./flux-system
