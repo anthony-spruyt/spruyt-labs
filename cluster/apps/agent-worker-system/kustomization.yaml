@@ -5,3 +5,4 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./agent-valkey/ks.yaml
+  - ./agent-queue-worker/ks.yaml
