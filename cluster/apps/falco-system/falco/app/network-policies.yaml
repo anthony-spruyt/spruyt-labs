@@ -100,6 +100,26 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Falcosidekick: forward traces to VictoriaTraces via OTLP
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: falcosidekick-allow-victoriatraces-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: falcosidekick
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vt-single
+      toPorts:
+        - ports:
+            - port: "10428"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Falco DaemonSet: egress to K8s API server for metadata enrichment
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
