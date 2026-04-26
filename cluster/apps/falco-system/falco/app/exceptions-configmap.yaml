@@ -87,6 +87,61 @@ data:
       override:
         exceptions: append
 
+    # Exception: Headlamp K8s dashboard needs API access
+    - rule: Contact K8S API Server From Container
+      exceptions:
+        - name: headlamp
+          fields: [container.image.repository, k8s.ns.name]
+          comps: [=, =]
+          values:
+            - [ghcr.io/headlamp-k8s/headlamp, headlamp-system]
+      override:
+        exceptions: append
+
+    # Exception: Traefik ingress controller watches Services/Endpoints
+    - rule: Contact K8S API Server From Container
+      exceptions:
+        - name: traefik
+          fields: [container.image.repository, k8s.ns.name]
+          comps: [=, =]
+          values:
+            - [docker.io/library/traefik, traefik]
+      override:
+        exceptions: append
+
+    # Exception: CloudNativePG operator manages PostgreSQL clusters
+    - rule: Contact K8S API Server From Container
+      exceptions:
+        - name: cloudnative_pg
+          fields: [container.image.repository, k8s.ns.name]
+          comps: [=, =]
+          values:
+            - [ghcr.io/cloudnative-pg/cloudnative-pg, cnpg-system]
+      override:
+        exceptions: append
+
+    # Exception: Vector log collector watches pods for log discovery
+    - rule: Contact K8S API Server From Container
+      exceptions:
+        - name: vector
+          fields: [container.image.repository, k8s.ns.name]
+          comps: [=, =]
+          values:
+            - [docker.io/timberio/vector, observability]
+      override:
+        exceptions: append
+
+    # Exception: Ceph CSI driver needs API access for volume operations
+    - rule: Contact K8S API Server From Container
+      exceptions:
+        - name: ceph_csi
+          fields: [container.image.repository, k8s.ns.name]
+          comps: [=, =]
+          values:
+            - [quay.io/cephcsi/cephcsi, rook-ceph]
+      override:
+        exceptions: append
+
     # Exception: Cilium CNI binary execution on host is expected
     - rule: Drop and execute new binary in container
       exceptions:
@@ -95,6 +150,29 @@ data:
           comps: [=, =]
           values:
             - [cilium-cni, /opt/cni/bin/cilium-cni]
+            - [cilium-sysctlfi, /opt/cni/bin/cilium-sysctlfix]
+      override:
+        exceptions: append
+
+    # Exception: Coder downloads and executes Terraform providers
+    - rule: Drop and execute new binary in container
+      exceptions:
+        - name: coder_terraform
+          fields: [container.image.repository, k8s.ns.name]
+          comps: [=, =]
+          values:
+            - [ghcr.io/coder/coder, coder-system]
+      override:
+        exceptions: append
+
+    # Exception: Kata Containers virtiofsd uses syslog which triggers clear log
+    - rule: Clear Log Activities
+      exceptions:
+        - name: kata_virtiofsd
+          fields: [proc.name]
+          comps: [=]
+          values:
+            - [virtiofsd]
       override:
         exceptions: append
 
