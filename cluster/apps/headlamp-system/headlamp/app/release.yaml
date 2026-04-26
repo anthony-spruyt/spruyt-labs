@@ -14,6 +14,31 @@ spec:
         name: headlamp-charts
         namespace: flux-system
   interval: 4h
+  # Strip OIDC CLI args — secrets in /proc/cmdline are visible to Falco/ps/etc.
+  # Headlamp reads HEADLAMP_CONFIG_* env vars via koanf instead.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: headlamp
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: headlamp
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: headlamp
+                        args:
+                          - "-in-cluster"
+                          - "-in-cluster-context-name=main"
+                          - "-watch-plugins-changes"
+                          - "-plugins-dir=/headlamp/plugins"
+                          - "-session-ttl=86400"
+                          - "-oidc-ca-file=/etc/ssl/certs/ca-certificates.crt"
   valuesFrom:
     - kind: ConfigMap
       name: headlamp-values
