@@ -11,15 +11,14 @@ metadata:
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
       Injects configuration into Claude agent pods spawned by n8n.
-      A shared rule injects GitHub bot credentials (gh CLI config, SSH key,
-      gitconfig), settings profiles, Context7 API key, and OpenTelemetry
-      env vars (metrics + logs to VictoriaMetrics/VictoriaLogs) into all
-      agent namespaces. Per-namespace rules inject namespace-scoped MCP
-      configmaps (read/write/sre), priority classes (low/standard/high),
-      and namespace-specific credentials (SRE auth token only in sre).
-      Repo clone init container is injected for write (with pre-commit)
-      and read+sre (without pre-commit) when CLONE_URL targets the
-      anthony-spruyt/ org.
+      A shared rule injects GitHub bot credentials (gh CLI config,
+      read-only gitconfig), settings profiles, Context7 API key, and
+      OpenTelemetry env vars into all agent namespaces. The write rule
+      additionally injects SSH key and full gitconfig (with commit
+      signing). Per-namespace rules inject MCP configmaps, priority
+      classes, and namespace-specific credentials. Repo clone: write
+      uses SSH (with pre-commit), read+sre use HTTPS with read-scoped
+      GitHub App token (no SSH key = no push capability).
 spec:
   background: false
   rules:
@@ -48,13 +47,9 @@ spec:
                       path: hosts.yml
               - name: gh-config-writable
                 emptyDir: {}
-              - name: github-ssh-key
-                secret:
-                  secretName: github-bot-ssh-key
-                  defaultMode: 0444
               - name: github-gitconfig
                 configMap:
-                  name: github-bot-gitconfig
+                  name: github-bot-gitconfig-read
               - name: claude-settings-profiles
                 configMap:
                   name: claude-settings-profiles
@@ -133,9 +128,6 @@ spec:
                     readOnly: true
                   - name: gh-config-writable
                     mountPath: /tmp/gh-config
-                  - name: github-ssh-key
-                    mountPath: /etc/git-ssh
-                    readOnly: true
                   - name: github-gitconfig
                     mountPath: /etc/git-config
                     readOnly: true
@@ -184,11 +176,21 @@ spec:
               - name: claude-mcp-config
                 configMap:
                   name: claude-mcp-config-write
+              - name: github-ssh-key
+                secret:
+                  secretName: github-bot-ssh-key
+                  defaultMode: 0444
+              - name: github-gitconfig
+                configMap:
+                  name: github-bot-gitconfig
             containers:
               - (name): "?*"
                 volumeMounts:
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
+                    readOnly: true
+                  - name: github-ssh-key
+                    mountPath: /etc/git-ssh
                     readOnly: true
     - name: inject-sre-mcp
       match:
@@ -339,7 +341,7 @@ spec:
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
-    - name: inject-repo-clone-read-sre
+    - name: inject-repo-clone-read
       match:
         any:
           - resources:
@@ -356,7 +358,7 @@ spec:
           - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
             operator: NotEquals
             value: ""
-          - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] | starts_with(@, 'git@github.com:anthony-spruyt/') }}"
+          - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] | starts_with(@, 'https://github.com/anthony-spruyt/') }}"
             operator: Equals
             value: true
       mutate:
@@ -372,20 +374,24 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - |
-                    cp /etc/git-ssh/id_ed25519 /tmp/id_ed25519
-                    chmod 600 /tmp/id_ed25519
+                    AUTH_URL=$(echo "$CLONE_URL" | sed "s|https://|https://x-access-token:${GH_ACCESS_TOKEN}@|")
                     if [ -n "$CLONE_BRANCH" ]; then
-                      git clone --depth 1 -b "$CLONE_BRANCH" "$CLONE_URL" /workspace/repo
+                      git clone --depth 1 -b "$CLONE_BRANCH" "$AUTH_URL" /workspace/repo
                     else
-                      git clone --depth 1 "$CLONE_URL" /workspace/repo
+                      git clone --depth 1 "$AUTH_URL" /workspace/repo
                     fi
                 env:
                   - name: CLONE_URL
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
                   - name: CLONE_BRANCH
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
-                  - name: GIT_SSH_COMMAND
-                    value: "ssh -i /tmp/id_ed25519 -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/tmp/known_hosts"
+                  - name: GH_ACCESS_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: github-bot-credentials
+                        key: access-token
+                  - name: GIT_TERMINAL_PROMPT
+                    value: "0"
                   - name: GIT_CONFIG_NOSYSTEM
                     value: "1"
                   - name: GIT_CONFIG_GLOBAL
@@ -393,9 +399,6 @@ spec:
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
-                  - name: github-ssh-key
-                    mountPath: /etc/git-ssh
-                    readOnly: true
                   - name: github-gitconfig
                     mountPath: /etc/git-config
                     readOnly: true

@@ -18,8 +18,7 @@ claude-agents-shared/
     rbac-spawner.yaml               # Role/RoleBinding for n8n pod management
     network-policies.yaml           # CiliumNetworkPolicies for agent egress
     github-secret-store.yaml        # ESO SecretStore pointing to github-system
-    github-ssh-external-secret.yaml # ESO ExternalSecret for SSH key
-    github-bot-gitconfig.yaml       # Git config (signing, user identity)
+    github-bot-gitconfig-read.yaml  # Read-only git config (user identity only, no signing)
     github-rotation-rbac.yaml       # RBAC for token rotation CronJob
     settings/                       # Claude Code settings profiles (deniedMcpServers per role)
 ```
@@ -52,7 +51,7 @@ Set **Additional Arguments** on the Claude Code CLI node:
 ```
 
 2. Add the file to `configMapGenerator.files` in `base/kustomization.yaml`
-3. Commit and push — new pods will pick up the profile automatically
+1. Commit and push — new pods will pick up the profile automatically
 
 ## Adding a New MCP Server
 
@@ -149,19 +148,19 @@ patches:
 
 ## Credential Rotation
 
-| Secret | Rotation Method |
-| ------ | --------------- |
-| GitHub OAuth tokens | Automated via `github-token-rotation` CronJob |
-| GitHub SSH key | Automated via `github-token-rotation` CronJob |
-| MCP API keys | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
+| Secret                 | Rotation Method                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| GitHub OAuth tokens    | Automated via `github-token-rotation` CronJob                                   |
+| GitHub SSH key         | Automated via `github-token-rotation` CronJob (write namespace only)            |
+| MCP API keys           | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
 | n8n SRE MCP auth token | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
 
 ## Related Resources
 
-| Resource | Location |
-| -------- | -------- |
+| Resource                 | Location                                                            |
+| ------------------------ | ------------------------------------------------------------------- |
 | Kyverno injection policy | `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` |
-| Read overlay | `cluster/apps/claude-agents-read/claude-agents/app/` |
-| Write overlay | `cluster/apps/claude-agents-write/claude-agents/app/` |
-| Read namespace | `cluster/apps/claude-agents-read/namespace.yaml` |
-| Write namespace | `cluster/apps/claude-agents-write/namespace.yaml` |
+| Read overlay             | `cluster/apps/claude-agents-read/claude-agents/app/`                |
+| Write overlay            | `cluster/apps/claude-agents-write/claude-agents/app/`               |
+| Read namespace           | `cluster/apps/claude-agents-read/namespace.yaml`                    |
+| Write namespace          | `cluster/apps/claude-agents-write/namespace.yaml`                   |

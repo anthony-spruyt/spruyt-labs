@@ -74,11 +74,8 @@ Current overrides: cilium (`timeout: 2m`), n8n/rook-ceph-cluster (`timeout: 15m`
 
 ### inject-claude-agent-config
 
-Injects configuration into Claude agent pods spawned by n8n, including GitHub bot credentials
-(gh CLI config, SSH key, gitconfig), MCP server config, and environment variables. Applies to pods with
-the `managed-by: n8n-claude-code` label in `claude-agents-write` and `claude-agents-read` namespaces.
-Write and read namespaces receive the same volume mounts and environment variables,
-with OAuth scopes differentiated via ESO key mapping.
+Injects configuration into Claude agent pods spawned by n8n. A shared rule injects GitHub bot credentials (gh CLI config, read-only gitconfig), MCP server config, and environment variables into all agent namespaces. The write namespace additionally receives SSH key and full gitconfig (with commit signing) via strategic merge override. Read and SRE namespaces clone repos via HTTPS using a
+read-scoped GitHub App token instead of SSH (no SSH key = no push capability).
 
 **Injected resources:** See [`inject-claude-agent-config.yaml`](app/inject-claude-agent-config.yaml) for the full list of volumes, volume mounts, and environment variables.
 
@@ -115,9 +112,12 @@ flux reconcile kustomization kyverno-policies --with-source
 ### Adding Namespace Exclusions
 
 1. Edit `cluster/apps/kyverno/policies/app/default-limitrange.yaml`
-2. Add namespace to the `exclude.any.resources.names` list
-3. Commit and push
-4. If policy update is rejected (immutable field error):
+
+1. Add namespace to the `exclude.any.resources.names` list
+
+1. Commit and push
+
+1. If policy update is rejected (immutable field error):
 
    ```bash
    kubectl delete clusterpolicy add-default-limitrange
@@ -133,9 +133,10 @@ flux reconcile kustomization kyverno-policies --with-source
    - **Cause**: App requests more memory than LimitRange default limit
    - **Resolution**: Either add explicit limits to the app, or exclude the namespace from the policy
 
-2. **LimitRange not created in new namespace**
+1. **LimitRange not created in new namespace**
 
    - **Diagnosis**: Check if namespace is in exclude list or policy is ready
+
    - **Resolution**:
 
      ```bash
@@ -143,7 +144,7 @@ flux reconcile kustomization kyverno-policies --with-source
      kubectl logs -n kyverno -l app.kubernetes.io/component=background-controller --tail=20
      ```
 
-3. **Orphaned LimitRanges after policy changes**
+1. **Orphaned LimitRanges after policy changes**
 
    - **Cause**: Policy deleted without `synchronize: true`
    - **Resolution**: With `synchronize: true`, Kyverno auto-cleans generated resources
