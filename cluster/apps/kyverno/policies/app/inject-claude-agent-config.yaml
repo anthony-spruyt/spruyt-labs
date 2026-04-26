@@ -219,9 +219,9 @@ spec:
                   managed-by: n8n-claude-code
       preconditions:
         all:
-          - key: "{{ request.object.spec.priority || '' }}"
+          - key: "{{ request.object.spec.priority || `0` }}"
             operator: NotEquals
-            value: ""
+            value: 0
       mutate:
         patchesJson6902: |-
           - op: remove
