@@ -12,6 +12,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY --from=builder /app/dist/ dist/
+HEALTHCHECK NONE
 USER 1000:1000
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/index.js"]
