@@ -9,6 +9,9 @@ on:
 permissions:
   contents: "read"
   issues: "write"
+  packages: "read"
 jobs:
-  scan:
-    uses: "anthony-spruyt/repo-operator/.github/workflows/_trivy-scan.yaml@main"
+  fs-scan:
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_trivy-fs.yaml@main"
+  image-scan:
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_trivy-img.yaml@main"
