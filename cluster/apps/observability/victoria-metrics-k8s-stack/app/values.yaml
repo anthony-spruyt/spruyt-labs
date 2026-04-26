@@ -18,16 +18,13 @@ defaultDatasources:
       isDefault: false
       jsonData:
         manageAlerts: false
-    # VictoriaTraces (Tempo-compatible HTTP API at /select/tempo) — see #1043
+    # VictoriaTraces (Jaeger Query Service JSON API at /select/jaeger) — see #1043
     - name: VictoriaTraces
-      type: tempo
+      type: jaeger
       uid: victoriatraces
-      url: http://victoria-traces-single-vt-single-server.observability.svc.cluster.local.:10428/select/tempo
+      url: http://victoria-traces-single-vt-single-server.observability.svc.cluster.local.:10428/select/jaeger
       access: proxy
       isDefault: false
-      jsonData:
-        nodeGraph:
-          enabled: true
 
 # Disable default NodeFilesystemSpaceFillingUp alerts - replaced with Talos-safe version in vmrules/
 defaultRules:

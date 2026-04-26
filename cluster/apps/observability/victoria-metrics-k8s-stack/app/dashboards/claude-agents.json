@@ -494,27 +494,20 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "tempo", "uid": "${ds_traces}" },
-      "description": "Recent Claude agent traces — search by service / span name / trace_id from log events",
+      "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
+      "description": "Recent Claude agent traces from VictoriaTraces (Jaeger API)",
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 44 },
       "id": 11,
       "options": {},
       "title": "Recent Traces",
-      "type": "traceqlSearch",
+      "type": "traces",
       "targets": [
         {
-          "datasource": { "type": "tempo", "uid": "${ds_traces}" },
-          "queryType": "traceqlSearch",
-          "filters": [
-            {
-              "id": "namespace",
-              "tag": "agent.namespace",
-              "operator": "=",
-              "scope": "resource",
-              "value": ["$namespace"],
-              "valueType": "string"
-            }
-          ],
+          "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
+          "queryType": "search",
+          "service": "claude-code",
+          "tags": "agent.namespace=\"$namespace\"",
+          "limit": 20,
           "refId": "A"
         }
       ]
@@ -566,7 +559,7 @@
         "multi": false,
         "name": "ds_traces",
         "options": [],
-        "query": "tempo",
+        "query": "jaeger",
         "queryValue": "",
         "refresh": 1,
         "regex": "",
@@ -603,5 +596,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 2
+  "version": 3
 }
