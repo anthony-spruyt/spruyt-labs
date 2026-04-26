@@ -395,13 +395,13 @@
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":tool_result AND \"agent.namespace\":$namespace | stats by (_time:5m) quantile(0.5, duration_ms) as p50",
+          "expr": "\"event.name\":tool_result AND \"agent.namespace\":$namespace | stats quantile(0.5, duration_ms) as p50",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":tool_result AND \"agent.namespace\":$namespace | stats by (_time:5m) quantile(0.95, duration_ms) as p95",
+          "expr": "\"event.name\":tool_result AND \"agent.namespace\":$namespace | stats quantile(0.95, duration_ms) as p95",
           "legendFormat": "p95",
           "refId": "B"
         }
@@ -506,7 +506,6 @@
           "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
           "queryType": "search",
           "service": "claude-code",
-          "tags": "agent.namespace=\"$namespace\"",
           "limit": 20,
           "refId": "A"
         }
@@ -596,5 +595,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 5
+  "version": 6
 }
