@@ -14,5 +14,6 @@ resources:
   - ./reader-role.yaml
   - ./reader-role-binding-claude-agents-write.yaml
   - ./reader-role-binding-claude-agents-read.yaml
+  - ./reader-role-binding-claude-agents-sre.yaml
   - ./reader-role-binding-github-mcp.yaml
   - ./vmrule.yaml
