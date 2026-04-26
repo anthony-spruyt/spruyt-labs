@@ -38,6 +38,27 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Recommender queries VictoriaMetrics for historical container metrics
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-recommender-prometheus-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/component: recommender
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmsingle
+      toPorts:
+        - ports:
+            - port: "8428"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Metrics ingress from vmagent for all components
 # Ports: recommender=8942, updater=8943, admission-controller=8944
 apiVersion: cilium.io/v2
