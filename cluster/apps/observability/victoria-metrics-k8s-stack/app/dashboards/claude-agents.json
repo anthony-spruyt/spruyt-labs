@@ -382,8 +382,34 @@
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
           "expr": "\"event.name\":tool_result | stats by (tool_name) count() as calls, quantile(0.5, duration_ms) as p50, quantile(0.95, duration_ms) as p95 | sort by (calls) desc",
-          "queryType": "instant",
           "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "Line",
+            "format": "json",
+            "keepTime": false,
+            "replace": true
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              { "targetField": "calls", "destinationType": "number" },
+              { "targetField": "p50", "destinationType": "number" },
+              { "targetField": "p95", "destinationType": "number" }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": { "tool_name": 0, "calls": 1, "p50": 2, "p95": 3 }
+          }
         }
       ]
     },
@@ -575,5 +601,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 12
+  "version": 13
 }
