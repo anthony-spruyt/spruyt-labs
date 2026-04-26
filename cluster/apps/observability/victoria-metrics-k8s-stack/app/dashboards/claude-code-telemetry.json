@@ -48,7 +48,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 1 },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
       "id": 1,
       "options": {
         "colorMode": "value",
@@ -87,7 +87,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 1 },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
       "id": 5,
       "options": {
         "colorMode": "value",
@@ -132,7 +132,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 1 },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
       "id": 4,
       "options": {
         "orientation": "auto",
@@ -152,6 +152,60 @@
           "expr": "sum(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}) / (sum(claude_code_token_usage_tokens_total{type=\"input\",agent_namespace=~\"$namespace\"}) + sum(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}))",
           "legendFormat": "Hit Rate",
           "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "Total lines of code added and removed over the dashboard time range",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "short",
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Added" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Removed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
+      "title": "Lines of Code",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum(increase(claude_code_lines_of_code_count_total{type=\"added\",agent_namespace=~\"$namespace\"}[$__range]))",
+          "legendFormat": "Added",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum(increase(claude_code_lines_of_code_count_total{type=\"removed\",agent_namespace=~\"$namespace\"}[$__range]))",
+          "legendFormat": "Removed",
+          "refId": "B"
         }
       ]
     },
