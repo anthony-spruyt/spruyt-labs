@@ -8,3 +8,5 @@ resources:
   - ./inject-claude-agent-config.yaml
   - ./pss-restricted-defaults.yaml
   - ./topology-spread-policy.yaml
+  - ./set-agent-deadline.yaml
+  - ./validate-agent-deadline.yaml

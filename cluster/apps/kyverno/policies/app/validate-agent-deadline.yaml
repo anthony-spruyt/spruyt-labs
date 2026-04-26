@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-agent-deadline
+  annotations:
+    policies.kyverno.io/title: Validate Agent Pod Deadline
+    policies.kyverno.io/description: >-
+      Rejects agent pods that do not have activeDeadlineSeconds set.
+      Safety net for mutation policy failure.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: require-active-deadline
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      validate:
+        message: "Agent pods must have activeDeadlineSeconds set. Check set-agent-deadline mutation policy."
+        pattern:
+          spec:
+            activeDeadlineSeconds: ">=1"

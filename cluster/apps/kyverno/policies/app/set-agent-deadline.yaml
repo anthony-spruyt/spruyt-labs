@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: set-agent-deadline
+  annotations:
+    policies.kyverno.io/title: Set Agent Pod Deadline
+    policies.kyverno.io/description: >-
+      Sets activeDeadlineSeconds on agent pods based on the agent-timeout
+      annotation. Prevents orphaned agent pods from running indefinitely.
+spec:
+  background: false
+  webhookConfiguration:
+    timeoutSeconds: 10
+  rules:
+    - name: set-agent-deadline
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      mutate:
+        patchStrategicMerge:
+          spec:
+            activeDeadlineSeconds: "{{ to_number(request.object.metadata.annotations.\"agent-timeout\" || `1740`) }}"
