@@ -32,31 +32,11 @@ spec:
         - world
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to kubectl MCP server
+# Allow egress to VMSingle for OTLP metrics
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-kubectl-mcp-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      managed-by: n8n-claude-code
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: kubectl-mcp
-            k8s:app.kubernetes.io/name: kubectl-mcp-server
-      toPorts:
-        - ports:
-            - port: "8000"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to VictoriaMetrics MCP server
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-victoriametrics-mcp-egress
+  name: allow-vmsingle-otlp-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -65,10 +45,30 @@ spec:
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: observability
-            k8s:app.kubernetes.io/name: mcp-victoriametrics
+            k8s:app.kubernetes.io/name: vmsingle
       toPorts:
         - ports:
-            - port: "8080"
+            - port: "8428"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to VictoriaLogs for OTLP logs/events
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-vlogs-otlp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      managed-by: n8n-claude-code
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: victoria-logs-single
+      toPorts:
+        - ports:
+            - port: "9428"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
@@ -92,26 +92,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to Discord MCP server
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-discord-mcp-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      managed-by: n8n-claude-code
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: discord-mcp
-            k8s:app.kubernetes.io/name: discord-mcp
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to Brave Search MCP server
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -129,25 +109,4 @@ spec:
       toPorts:
         - ports:
             - port: "8000"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to n8n SRE MCP endpoint
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-n8n-mcp-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      managed-by: n8n-claude-code
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: n8n-system
-            k8s:app.kubernetes.io/name: n8n
-            k8s:app.kubernetes.io/type: webhook
-      toPorts:
-        - ports:
-            - port: "5678"
               protocol: TCP

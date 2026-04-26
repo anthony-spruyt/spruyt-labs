@@ -10,21 +10,29 @@ metadata:
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Injects configuration into Claude agent pods spawned by n8n,
-      including GitHub bot credentials (gh CLI config, SSH key, gitconfig),
-      MCP server config, and environment variables. Write and read
-      namespaces get different OAuth scopes via ESO key mapping.
+      Injects configuration into Claude agent pods spawned by n8n.
+      A shared rule injects GitHub bot credentials (gh CLI config, SSH key,
+      gitconfig), settings profiles, Context7 API key, and OpenTelemetry
+      env vars (metrics + logs to VictoriaMetrics/VictoriaLogs) into all
+      agent namespaces. Per-namespace rules inject namespace-scoped MCP
+      configmaps (read/write/sre), priority classes (low/standard/high),
+      and namespace-specific credentials (SRE auth token only in sre).
+      Repo clone init container is injected for write (with pre-commit)
+      and read+sre (without pre-commit) when CLONE_URL targets the
+      anthony-spruyt/ org.
 spec:
   background: false
   rules:
-    - name: inject-write-config
+    - name: inject-shared-config
       match:
         any:
           - resources:
               kinds:
                 - Pod
               namespaces:
+                - claude-agents-read
                 - claude-agents-write
+                - claude-agents-sre
               selector:
                 matchLabels:
                   managed-by: n8n-claude-code
@@ -45,9 +53,6 @@ spec:
               - name: github-gitconfig
                 configMap:
                   name: github-bot-gitconfig
-              - name: claude-mcp-config
-                configMap:
-                  name: claude-mcp-config
               - name: claude-settings-profiles
                 configMap:
                   name: claude-settings-profiles
@@ -65,21 +70,20 @@ spec:
                       secretKeyRef:
                         name: mcp-credentials
                         key: context7-api-key
-                  - name: HA_API_KEY
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: ha-api-key
-                  - name: SRE_MCP_AUTH_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: sre-mcp-auth-token
-                  - name: RENOVATE_MCP_AUTH_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: renovate-mcp-auth-token
+                  - name: CLAUDE_CODE_ENABLE_TELEMETRY
+                    value: "1"
+                  - name: OTEL_METRICS_EXPORTER
+                    value: otlp
+                  - name: OTEL_LOGS_EXPORTER
+                    value: otlp
+                  - name: OTEL_EXPORTER_OTLP_PROTOCOL
+                    value: http/protobuf
+                  - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+                    value: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
+                  - name: OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+                    value: http://victoria-logs-single-server.observability.svc:9428/insert/opentelemetry/v1/logs
+                  - name: OTEL_RESOURCE_ATTRIBUTES
+                    value: "agent.namespace={{request.object.metadata.namespace}}"
                 volumeMounts:
                   - name: github-gh-config
                     mountPath: /etc/gh
@@ -90,13 +94,10 @@ spec:
                   - name: github-gitconfig
                     mountPath: /etc/git-config
                     readOnly: true
-                  - name: claude-mcp-config
-                    mountPath: /etc/mcp
-                    readOnly: true
                   - name: claude-settings-profiles
                     mountPath: /etc/claude/settings
                     readOnly: true
-    - name: inject-read-config
+    - name: inject-read-mcp
       match:
         any:
           - resources:
@@ -111,70 +112,100 @@ spec:
         patchStrategicMerge:
           spec:
             volumes:
-              - name: github-gh-config
-                secret:
-                  secretName: github-bot-credentials
-                  items:
-                    - key: hosts.yml
-                      path: hosts.yml
-              - name: github-ssh-key
-                secret:
-                  secretName: github-bot-ssh-key
-                  defaultMode: 0444
-              - name: github-gitconfig
-                configMap:
-                  name: github-bot-gitconfig
               - name: claude-mcp-config
                 configMap:
-                  name: claude-mcp-config
-              - name: claude-settings-profiles
-                configMap:
-                  name: claude-settings-profiles
+                  name: claude-mcp-config-read
             containers:
               - (name): "?*"
-                env:
-                  - name: GH_CONFIG_DIR
-                    value: /etc/gh
-                  - name: GIT_CONFIG_GLOBAL
-                    value: /etc/git-config/gitconfig
-                  - name: MCP_TIMEOUT
-                    value: "30000"
-                  - name: CONTEXT7_API_KEY
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: context7-api-key
-                  - name: HA_API_KEY
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: ha-api-key
-                  - name: SRE_MCP_AUTH_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: sre-mcp-auth-token
-                  - name: RENOVATE_MCP_AUTH_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: renovate-mcp-auth-token
                 volumeMounts:
-                  - name: github-gh-config
-                    mountPath: /etc/gh
-                    readOnly: true
-                  - name: github-ssh-key
-                    mountPath: /etc/git-ssh
-                    readOnly: true
-                  - name: github-gitconfig
-                    mountPath: /etc/git-config
-                    readOnly: true
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
                     readOnly: true
-                  - name: claude-settings-profiles
-                    mountPath: /etc/claude/settings
+    - name: inject-write-mcp
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-write
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      mutate:
+        patchStrategicMerge:
+          spec:
+            volumes:
+              - name: claude-mcp-config
+                configMap:
+                  name: claude-mcp-config-write
+            containers:
+              - (name): "?*"
+                volumeMounts:
+                  - name: claude-mcp-config
+                    mountPath: /etc/mcp
                     readOnly: true
+    - name: inject-sre-mcp
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-sre
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      mutate:
+        patchStrategicMerge:
+          spec:
+            priorityClassName: high-priority
+            volumes:
+              - name: claude-mcp-config
+                configMap:
+                  name: claude-mcp-config-sre
+            containers:
+              - (name): "?*"
+                env:
+                  - name: SRE_MCP_AUTH_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: sre-credentials
+                        key: sre-mcp-auth-token
+                volumeMounts:
+                  - name: claude-mcp-config
+                    mountPath: /etc/mcp
+                    readOnly: true
+    - name: inject-read-priority
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-read
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      mutate:
+        patchStrategicMerge:
+          spec:
+            priorityClassName: low-priority
+    - name: inject-write-priority
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-write
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      mutate:
+        patchStrategicMerge:
+          spec:
+            priorityClassName: standard
     - name: inject-repo-clone-write
       match:
         any:
@@ -241,7 +272,7 @@ spec:
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
-    - name: inject-repo-clone-read
+    - name: inject-repo-clone-read-sre
       match:
         any:
           - resources:
@@ -249,6 +280,7 @@ spec:
                 - Pod
               namespaces:
                 - claude-agents-read
+                - claude-agents-sre
               selector:
                 matchLabels:
                   managed-by: n8n-claude-code

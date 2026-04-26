@@ -6,3 +6,4 @@ resources:
   - ../../../claude-agents-shared/base
   - ./github-external-secret.yaml
   - ./network-policies.yaml
+  - ./sre-credentials.sops.yaml

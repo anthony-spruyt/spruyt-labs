@@ -10,7 +10,9 @@ resources:
   - ./github-ssh-external-secret.yaml
   - ./github-bot-gitconfig.yaml
   - ./github-rotation-rbac.yaml
-  - ./claude-mcp-config.yaml
+  - ./claude-mcp-config-read.yaml
+  - ./claude-mcp-config-write.yaml
+  - ./claude-mcp-config-sre.yaml
   - ./mcp-credentials.sops.yaml
 configMapGenerator:
   - name: claude-settings-profiles
@@ -18,8 +20,6 @@ configMapGenerator:
       - settings/admin.json
       - settings/dev.json
       - settings/pr.json
-      - settings/renovate-triage.json
-      - settings/renovate-write.json
       - settings/sre.json
 generatorOptions:
   disableNameSuffixHash: true

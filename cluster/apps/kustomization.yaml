@@ -47,6 +47,7 @@ resources:
   - ./github-system
   - ./claude-agents-write
   - ./claude-agents-read
+  - ./claude-agents-sre
   - ./github-mcp
   - ./discord-mcp
   - ./brave-search-mcp

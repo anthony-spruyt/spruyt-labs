@@ -480,6 +480,9 @@ spec:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: claude-agents-read
             managed-by: n8n-claude-code
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-sre
+            managed-by: n8n-claude-code
       toPorts:
         - ports:
             - port: "5678"
