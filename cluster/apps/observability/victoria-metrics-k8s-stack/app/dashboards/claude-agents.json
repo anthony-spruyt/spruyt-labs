@@ -537,7 +537,7 @@
         "overrides": [
           {
             "matcher": { "id": "byName", "options": "duration" },
-            "properties": [{ "id": "unit", "value": "ms" }]
+            "properties": [{ "id": "unit", "value": "µs" }]
           }
         ]
       },
@@ -644,5 +644,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 15
+  "version": 16
 }
