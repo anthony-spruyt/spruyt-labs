@@ -66,9 +66,11 @@ spec:
                 args:
                   - |
                     cp /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
+                    chmod 666 /tmp/gh-config/hosts.yml
                     while true; do
                       sleep 30
                       cp /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
+                      chmod 666 /tmp/gh-config/hosts.yml
                     done
                 securityContext:
                   runAsUser: 65534
