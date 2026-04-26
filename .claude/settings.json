@@ -7,7 +7,6 @@
   },
   "alwaysThinkingEnabled": true,
   "fastMode": false,
-  "prefersReducedMotion": true,
   "model": "claude-opus-4-6[1m]",
   "autoUpdatesChannel": "latest",
   "effortLevel": "xhigh",
