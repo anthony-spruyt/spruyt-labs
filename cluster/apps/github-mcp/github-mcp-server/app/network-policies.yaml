@@ -90,6 +90,26 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Claude agent SRE pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-claude-agents-sre-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: github-mcp-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-sre
+            k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports:
+            - port: "8082"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress from Traefik (LAN clients reach MCP via Traefik ingress)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
