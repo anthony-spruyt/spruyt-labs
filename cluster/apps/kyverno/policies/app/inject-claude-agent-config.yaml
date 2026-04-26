@@ -59,11 +59,17 @@ spec:
                 configMap:
                   name: claude-settings-profiles
             initContainers:
-              - name: gh-config-init
+              - name: gh-config-sync
                 image: "busybox:1.37.0@sha256:1487d0af5f52b4ba31c7e465126ee2123fe3f2305d638e7827681e7cf6c83d5e"
+                restartPolicy: Always
                 command: ["sh", "-c"]
                 args:
-                  - ln -s /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
+                  - |
+                    cp /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
+                    while true; do
+                      sleep 30
+                      cp /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
+                    done
                 securityContext:
                   runAsUser: 65534
                   runAsGroup: 65534
