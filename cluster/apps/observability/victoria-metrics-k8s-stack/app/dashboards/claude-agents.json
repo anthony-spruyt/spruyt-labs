@@ -66,7 +66,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_cost_usage{agent_namespace=~\"$namespace\"}[$__range]))",
+          "expr": "sum(increase(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[$__range]))",
           "legendFormat": "Total Cost",
           "refId": "A"
         }
@@ -105,7 +105,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_session_count{agent_namespace=~\"$namespace\"}[$__range])) by (agent_namespace)",
+          "expr": "sum(increase(claude_code_session_count_total{agent_namespace=~\"$namespace\"}[$__range])) by (agent_namespace)",
           "legendFormat": "{{agent_namespace}}",
           "refId": "A"
         }
@@ -149,7 +149,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_token_usage{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])) / (sum(increase(claude_code_token_usage{type=\"input\",agent_namespace=~\"$namespace\"}[$__range])) + sum(increase(claude_code_token_usage{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])))",
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])) / (sum(increase(claude_code_token_usage_tokens_total{type=\"input\",agent_namespace=~\"$namespace\"}[$__range])) + sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])))",
           "legendFormat": "Hit Rate",
           "refId": "A"
         }
@@ -210,7 +210,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(claude_code_cost_usage{agent_namespace=~\"$namespace\"}[5m])) by (agent_namespace)",
+          "expr": "sum(rate(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[5m])) by (agent_namespace)",
           "legendFormat": "{{agent_namespace}}",
           "refId": "A"
         }
@@ -273,7 +273,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(claude_code_lines_of_code_count{agent_namespace=~\"$namespace\"}[5m])) by (type)",
+          "expr": "sum(rate(claude_code_lines_of_code_count_total{agent_namespace=~\"$namespace\"}[5m])) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
         }
@@ -334,7 +334,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_token_usage{agent_namespace=~\"$namespace\"}[$__range])) by (type)",
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{agent_namespace=~\"$namespace\"}[$__range])) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
         }
@@ -572,14 +572,14 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(claude_code_session_count, agent_namespace)",
+        "definition": "label_values(claude_code_session_count_total, agent_namespace)",
         "hide": 0,
         "includeAll": true,
         "label": "Namespace",
         "multi": true,
         "name": "namespace",
         "options": [],
-        "query": "label_values(claude_code_session_count, agent_namespace)",
+        "query": "label_values(claude_code_session_count_total, agent_namespace)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -596,5 +596,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 3
+  "version": 4
 }
