@@ -176,6 +176,28 @@ spec:
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
                     readOnly: true
+    - name: strip-explicit-priority
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-read
+                - claude-agents-write
+                - claude-agents-sre
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.priority || '' }}"
+            operator: NotEquals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: remove
+            path: /spec/priority
     - name: inject-read-priority
       match:
         any:
