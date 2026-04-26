@@ -381,7 +381,7 @@
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":tool_result | stats by (tool_name) count() as calls, quantile(0.5, duration_ms) as p50, quantile(0.95, duration_ms) as p95 | sort by (calls) desc",
+          "expr": "\"agent.namespace\":~\"${namespace:regex}\" AND \"event.name\":tool_result | stats by (tool_name) count() as calls, quantile(0.5, duration_ms) as p50, quantile(0.95, duration_ms) as p95 | sort by (calls) desc",
           "refId": "A"
         }
       ],
@@ -464,7 +464,7 @@
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":tool_result AND success:false | fields _time, \"agent.namespace\", tool_name, error",
+          "expr": "\"agent.namespace\":~\"${namespace:regex}\" AND \"event.name\":tool_result AND success:false | fields _time, \"agent.namespace\", tool_name, error",
           "refId": "A"
         }
       ]
@@ -513,7 +513,7 @@
       "targets": [
         {
           "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"event.name\":api_error | fields _time, \"agent.namespace\", error, model",
+          "expr": "\"agent.namespace\":~\"${namespace:regex}\" AND \"event.name\":api_error | fields _time, \"agent.namespace\", error, model",
           "refId": "A"
         }
       ]
