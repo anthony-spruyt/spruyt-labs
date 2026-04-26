@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./release.yaml
+  - ./valkey-secrets.sops.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: agent-valkey-values
+    namespace: agent-worker-system
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

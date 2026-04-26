@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/valkey-io/valkey-helm/refs/heads/main/valkey/values.schema.json
+priorityClassName: high-priority
+auth:
+  enabled: true
+  usersExistingSecret: agent-valkey-secrets
+  aclUsers:
+    default:
+      permissions: "~* &* +@all"
+valkeyConfig: |
+  appendonly yes
+  appendfsync everysec
+  no-appendfsync-on-rewrite yes
+  maxmemory 50mb
+  maxmemory-policy noeviction
+dataStorage:
+  enabled: true
+  requestedSize: 1Gi
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+  exporter:
+    extraEnvs:
+      REDIS_PASSWORD_FILE: /secrets/valkey/default-password
+    extraExporterSecrets:
+      - name: agent-valkey-secrets
+    extraVolumeMounts:
+      - name: agent-valkey-secrets-exporter
+        mountPath: /secrets/valkey
+        readOnly: true
+resources:
+  limits:
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi

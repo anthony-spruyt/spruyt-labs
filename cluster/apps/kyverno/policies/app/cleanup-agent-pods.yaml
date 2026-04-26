@@ -1,0 +1,28 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clustercleanuppolicy_v2.json
+apiVersion: kyverno.io/v2
+kind: ClusterCleanupPolicy
+metadata:
+  name: cleanup-agent-pods
+  annotations:
+    policies.kyverno.io/title: Cleanup Completed Agent Pods
+    policies.kyverno.io/description: >-
+      Removes completed/failed agent pods that n8n failed to clean up.
+      Defense-in-depth — normal path deletes pods immediately.
+spec:
+  schedule: "0 * * * *"
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          selector:
+            matchLabels:
+              managed-by: n8n-claude-code
+  conditions:
+    any:
+      - key: "{{ request.object.status.phase }}"
+        operator: AnyIn
+        value:
+          - Succeeded
+          - Failed

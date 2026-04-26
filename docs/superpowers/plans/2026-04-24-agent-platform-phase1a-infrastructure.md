@@ -1580,7 +1580,7 @@ sops cluster/apps/agent-worker-system/agent-queue-worker/app/agent-queue-worker-
 Required keys:
 
 - `VALKEY_PASSWORD` — same password value as agent-valkey-secrets.sops.yaml `default-password` key, but stored under `VALKEY_PASSWORD` for env var injection via `envFrom: secretRef`
-- `GITHUB_TOKEN` — fine-grained PAT with `pull_requests:read` + `checks:read` scope (public repos only)
+- `GITHUB_TOKEN` — fine-grained PAT with `pull_requests:read` scope (public repos only). If CI status is needed later, add `actions:read` (fine-grained PATs expose workflow runs under Actions, not Checks)
 - `WORKER_TO_N8N_SECRET` — generate: `openssl rand -hex 32`
 - `N8N_TO_WORKER_SECRET` — generate: `openssl rand -hex 32`
 
