@@ -36,6 +36,10 @@ falcosidekick:
     loki:
       # VictoriaLogs Loki-compatible endpoint (uses /insert prefix)
       hostport: http://victoria-logs-single-server.observability.svc:9428/insert
+    otlp:
+      traces:
+        endpoint: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
+        protocol: http/protobuf
 
 # Disable Falco-talon (alerts only, no automated response)
 falco-talon:
