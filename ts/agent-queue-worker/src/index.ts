@@ -132,7 +132,7 @@ async function startupReconciliation(): Promise<void> {
 
 async function shutdown(): Promise<void> {
   logger.info("Shutting down");
-  metrics.workerRestarts.inc();
+  metrics.workerShutdowns.inc();
 
   clearInterval(depthInterval);
   await new Promise<void>((resolve) => server.close(() => resolve()));

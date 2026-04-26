@@ -31,6 +31,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: agent-queue-worker
       app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
   egress:
     - toEndpoints:
         - matchLabels:
@@ -43,24 +44,17 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to GitHub API (stale SHA checks, startup reconciliation)
-# Requires companion DNS L7 rule below for Cilium FQDN cache population
+# Allow DNS egress for all controllers (required for Valkey and GitHub FQDN resolution)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-github-api-egress
+  name: allow-dns-egress
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/instance: agent-queue-worker
       app.kubernetes.io/name: agent-queue-worker
   egress:
-    - toFQDNs:
-        - matchName: api.github.com
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: kube-system
@@ -76,6 +70,26 @@ spec:
               - matchPattern: "*"
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to GitHub API (stale SHA checks, startup reconciliation)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-github-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
+  egress:
+    - toFQDNs:
+        - matchName: api.github.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress from n8n (job submission, callbacks)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -86,6 +100,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: agent-queue-worker
       app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -108,6 +123,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: agent-queue-worker
       app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -129,6 +145,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: agent-queue-worker
       app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: bull-board
   ingress:
     - fromEndpoints:
         - matchLabels:

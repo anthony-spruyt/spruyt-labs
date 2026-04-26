@@ -79,7 +79,14 @@ export class Router {
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
-    const body = await this.readBody(req);
+    let body: unknown;
+    try {
+      body = await this.readBody(req);
+    } catch (err) {
+      if (err instanceof SyntaxError)
+        return this.json(res, 400, { added: false, reason: "malformed_json" });
+      throw err;
+    }
     const parsed = AgentJobSchema.safeParse(body);
     if (!parsed.success) {
       return this.json(res, 400, {
@@ -91,8 +98,14 @@ export class Router {
 
     const data = parsed.data;
 
+    const circuitKey = `agent:circuit:${data.repo}`;
+    await this.redis.zremrangebyscore(
+      circuitKey,
+      "-inf",
+      Date.now() - 3_600_000
+    );
     const recentFailures = await this.redis.zcount(
-      `agent:circuit:${data.repo}`,
+      circuitKey,
       Date.now() - 3_600_000,
       "+inf"
     );
@@ -167,7 +180,17 @@ export class Router {
     res: ServerResponse,
     jobId: string
   ): Promise<void> {
-    const body = await this.readBody(req);
+    let body: unknown;
+    try {
+      body = await this.readBody(req);
+    } catch (err) {
+      if (err instanceof SyntaxError)
+        return this.json(res, 400, {
+          accepted: false,
+          reason: "malformed_json",
+        });
+      throw err;
+    }
     const parsed = DoneRequestSchema.safeParse(body);
     if (!parsed.success) {
       return this.json(res, 400, {
@@ -200,20 +223,18 @@ export class Router {
       });
     }
 
-    if (parsed.data.dispatched_at) {
-      const job = await this.queue.getJob(jobId);
-      if (
-        job &&
-        job.data.dispatched_at &&
-        job.data.dispatched_at !== parsed.data.dispatched_at
-      ) {
-        await this.processor.cacheResult(jobId, attempt, {
-          status: "completed",
-          ...result,
-        });
-        logger.info("Cached stale dispatch result", { jobId, attempt });
-        return this.json(res, 200, { accepted: true, stale_dispatch: true });
-      }
+    const job = await this.queue.getJob(jobId);
+    if (
+      job &&
+      job.data.dispatched_at &&
+      job.data.dispatched_at !== parsed.data.dispatched_at
+    ) {
+      await this.processor.cacheResult(jobId, attempt, {
+        status: "completed",
+        ...result,
+      });
+      logger.info("Cached stale dispatch result", { jobId, attempt });
+      return this.json(res, 200, { accepted: true, stale_dispatch: true });
     }
 
     const resolved = await this.processor.resolveCallback(jobId, {
@@ -237,7 +258,17 @@ export class Router {
     res: ServerResponse,
     jobId: string
   ): Promise<void> {
-    const body = await this.readBody(req);
+    let body: unknown;
+    try {
+      body = await this.readBody(req);
+    } catch (err) {
+      if (err instanceof SyntaxError)
+        return this.json(res, 400, {
+          accepted: false,
+          reason: "malformed_json",
+        });
+      throw err;
+    }
     const parsed = FailRequestSchema.safeParse(body);
     if (!parsed.success) {
       return this.json(res, 400, {
@@ -296,11 +327,15 @@ export class Router {
         job.data.role === role &&
         job.data.head_sha !== currentSha
       ) {
-        await job.remove();
-        logger.info("Superseded older job", {
-          oldJobId: job.id,
-          newSha: currentSha,
-        });
+        try {
+          await job.remove();
+          logger.info("Superseded older job", {
+            oldJobId: job.id,
+            newSha: currentSha,
+          });
+        } catch {
+          // Job may have transitioned to active between scan and remove
+        }
       }
     }
   }
@@ -331,7 +366,7 @@ export class Router {
         try {
           resolve(JSON.parse(Buffer.concat(chunks).toString()));
         } catch {
-          resolve(undefined);
+          reject(new SyntaxError("Malformed JSON body"));
         }
       });
       req.on("error", reject);

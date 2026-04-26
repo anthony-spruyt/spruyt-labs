@@ -47,6 +47,8 @@ export async function fetchReposWithRevertLabels(
   return revertDepths;
 }
 
+const MAX_PAGES = 10;
+
 async function fetchPublicRepos(
   owner: string,
   token?: string
@@ -54,7 +56,7 @@ async function fetchPublicRepos(
   const repos: string[] = [];
   let page = 1;
 
-  while (true) {
+  while (page <= MAX_PAGES) {
     const url = `https://api.github.com/users/${owner}/repos?type=public&per_page=100&page=${page}`;
     const headers: Record<string, string> = {
       Accept: "application/vnd.github.v3+json",

@@ -61,10 +61,24 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
           echo "::notice::Bumping $BUMP: $CURRENT -> $VERSION"
+  test:
+    name: "Test"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - name: "Setup Node.js"
+        uses: "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020" # v4
+        with:
+          node-version: "22"
+      - name: "Type check"
+        working-directory: "${{ env.WORKDIR }}"
+        run: npm ci --ignore-scripts && npx tsc --noEmit
   release:
     name: "Build, push and release"
     needs:
       - "resolve-version"
+      - "test"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout"

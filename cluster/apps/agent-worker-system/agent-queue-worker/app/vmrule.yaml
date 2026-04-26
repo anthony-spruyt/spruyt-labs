@@ -18,8 +18,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: "Agent queue worker is crash-looping"
-            description: "Worker pod has restarted {{ $value }} times in 15 minutes."
+            summary: "Agent worker pod is crash-looping ({{ $labels.pod }})"
+            description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in 15 minutes."
         - alert: AgentQueueStuck
           expr: |
             agent_queue_depth{queue="agent"} > 0

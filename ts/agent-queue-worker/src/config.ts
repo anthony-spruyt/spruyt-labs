@@ -16,7 +16,7 @@ const ConfigSchema = z.object({
   WORKER_TO_N8N_SECRET: z.string().min(1),
   N8N_TO_WORKER_SECRET: z.string().min(1),
   GITHUB_TOKEN: z.string().optional(),
-  GITHUB_OWNER: z.string().min(1).default("anthony-spruyt"),
+  GITHUB_OWNER: z.string().min(1),
   PORT: z.coerce.number().int().default(3000),
 });
 

@@ -10,8 +10,6 @@ resources:
   - ./secret-reader-rbac.yaml
   - ./servicemonitor.yaml
   - ./agent-queue-worker-secrets.sops.yaml
-  - ./agent-worker-secret-store.yaml
-  - ./agent-worker-external-secret.yaml
 configMapGenerator:
   - name: agent-queue-worker-values
     namespace: agent-worker-system

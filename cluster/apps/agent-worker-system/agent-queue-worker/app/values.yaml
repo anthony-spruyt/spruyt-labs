@@ -95,14 +95,14 @@ controllers:
             custom: true
             spec:
               httpGet:
-                path: /
+                path: /healthz
                 port: &bbport 3001
           readiness:
             enabled: true
             custom: true
             spec:
               httpGet:
-                path: /
+                path: /healthz
                 port: *bbport
 service:
   worker:

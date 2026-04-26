@@ -46,8 +46,8 @@ export const jobExhausted = new Counter({
   registers: [registry],
 });
 
-export const workerRestarts = new Counter({
-  name: "agent_worker_restart_total",
+export const workerShutdowns = new Counter({
+  name: "agent_worker_shutdown_total",
   help: "Graceful shutdown counter",
   registers: [registry],
 });
