@@ -112,8 +112,10 @@ spec:
                     value: "agent.namespace={{request.object.metadata.namespace}}"
                 volumeMounts:
                   - name: github-gh-config
-                    mountPath: /etc/gh
+                    mountPath: /etc/gh-secret
                     readOnly: true
+                  - name: gh-config-writable
+                    mountPath: /tmp/gh-config
                   - name: github-ssh-key
                     mountPath: /etc/git-ssh
                     readOnly: true
