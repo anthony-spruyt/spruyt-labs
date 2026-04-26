@@ -34,10 +34,26 @@ jobs:
     steps:
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+      - name: "Find last successful CI commit"
+        if: "github.event_name == 'push'"
+        id: "last-success"
+        env:
+          GH_TOKEN: "${{ github.token }}"
+          WORKFLOW: "CI"
+        run: |
+          SHA=$(gh run list --workflow "$WORKFLOW" --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // empty')
+          if [ -n "$SHA" ] && git cat-file -e "$SHA" 2>/dev/null; then
+            echo "base=$SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          fi
       - name: "Path filter"
         uses: "dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d" # v4
         id: "filter"
         with:
+          base: "${{ steps.last-success.outputs.base }}"
           filters: |
             cluster:
               - 'cluster/**/*.yaml'
