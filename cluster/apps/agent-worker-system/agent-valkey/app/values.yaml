@@ -1,6 +1,20 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/valkey-io/valkey-helm/refs/heads/main/valkey/values.schema.json
 priorityClassName: high-priority
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
 auth:
   enabled: true
   usersExistingSecret: agent-valkey-secrets
@@ -29,6 +43,14 @@ metrics:
       - name: agent-valkey-secrets-exporter
         mountPath: /secrets/valkey
         readOnly: true
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
 resources:
   limits:
     memory: 128Mi

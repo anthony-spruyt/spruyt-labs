@@ -37,6 +37,17 @@ backgroundController:
 cleanupController:
   priorityClassName: critical-infrastructure
   replicas: 1
+  rbac:
+    clusterRole:
+      extraResources:
+        - apiGroups:
+            - ""
+          resources:
+            - pods
+          verbs:
+            - delete
+            - list
+            - watch
   resources:
     requests:
       cpu: 50m
