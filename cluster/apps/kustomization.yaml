@@ -48,6 +48,7 @@ resources:
   - ./claude-agents-write
   - ./claude-agents-read
   - ./claude-agents-sre
+  - ./agent-worker-system
   - ./github-mcp
   - ./discord-mcp
   - ./brave-search-mcp
