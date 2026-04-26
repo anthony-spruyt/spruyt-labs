@@ -56,7 +56,7 @@ Run with a simple prompt ("echo hello"). Verify the agent boots with the correct
 
 - [ ] **Step 3: Verify `envVars` per-invocation injection**
 
-Configure `envVars` JSON field: `{"CLONE_URL": "git@github.com:anthony-spruyt/spruyt-labs.git", "TEST_VAR": "test123"}`
+Configure `envVars` JSON field: `{"CLONE_URL": "https://github.com/anthony-spruyt/spruyt-labs.git", "TEST_VAR": "test123"}`
 
 Run and verify env vars are available inside the agent.
 
@@ -141,11 +141,11 @@ After "Respond 200 OK" and before "Event Type" router, add a Code node:
 
 For `check_suite.completed` events, the actor is the app that triggered the check suite. The PR author is what matters — check `$json.body.check_suite.head_branch` against Renovate branch pattern, or check PR author after PR fetch.
 
-Alternative approach: add the filter after the "Is Renovate Branch" node, where we have the full PR data. The allowlist check goes on the PR author against three trusted actors (Renovate, human admin, GitHub App bot), loaded from a ConfigMap env var for easy updates without code changes:
+Alternative approach: add the filter after the "Is Renovate Branch" node, where we have the full PR data. The allowlist check goes on the PR author against three trusted actors (Renovate, human admin, GitHub App bot):
 
 ```javascript
-// Actor allowlist — only process PRs from trusted actors
-const allowlist = ($env.ACTOR_ALLOWLIST || 'renovate[bot],anthony-spruyt,spruyt-labs-bot[bot]').split(',');
+// Actor allowlist — update this list to add/remove trusted actors
+const allowlist = ['renovate[bot]', 'anthony-spruyt', 'spruyt-labs-bot[bot]'];
 const author = $json.user?.login || $json.sender?.login || '';
 if (!allowlist.includes(author)) {
   return []; // drop — not in allowlist
@@ -201,14 +201,14 @@ After revert filter, add an HTTP Request node that fetches check run details. `f
 
 **Name:** `Fetch Check Runs` **Type:** `n8n-nodes-base.httpRequest`
 
-| Config         | Value                                                                                                               |
-| -------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Method         | GET                                                                                                                 |
-| URL            | `https://api.github.com/repos/{{ $json.repo_owner }}/{{ $json.repo_name }}/commits/{{ $json.head_sha }}/check-runs` |
-| Authentication | Use existing GitHub App credential (not raw env var)                                                                |
-| Send Headers   | true                                                                                                                |
-| Header 1 Name  | `Accept`                                                                                                            |
-| Header 1 Value | `application/vnd.github.v3+json`                                                                                    |
+| Config         | Value                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| Method         | GET                                                                                               |
+| URL            | `https://api.github.com/repos/{{ $json.repo_full_name }}/commits/{{ $json.head_sha }}/check-runs` |
+| Authentication | Use existing GitHub App credential (not raw env var)                                              |
+| Send Headers   | true                                                                                              |
+| Header 1 Name  | `Accept`                                                                                          |
+| Header 1 Value | `application/vnd.github.v3+json`                                                                  |
 
 Follow with a Code node to map the response:
 
@@ -276,24 +276,22 @@ return [{
 
 **Name:** `POST to BullMQ Worker` **Type:** `n8n-nodes-base.httpRequest`
 
-| Config            | Value                                                                |
-| ----------------- | -------------------------------------------------------------------- |
-| Method            | POST                                                                 |
-| URL               | `http://agent-queue-worker-worker.agent-worker-system.svc:3000/jobs` |
-| Authentication    | None                                                                 |
-| Send Headers      | true                                                                 |
-| Header 1 Name     | `Authorization`                                                      |
-| Header 1 Value    | `=Bearer {{ $env.N8N_TO_WORKER_SECRET }}`                            |
-| Send Body         | true                                                                 |
-| Body Content Type | JSON                                                                 |
-| Body              | `={{ $json }}`                                                       |
-| Response Format   | JSON                                                                 |
+| Config            | Value                                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| Method            | POST                                                                                                         |
+| URL               | `http://agent-queue-worker-worker.agent-worker-system.svc:3000/jobs`                                         |
+| Authentication    | Header Auth                                                                                                  |
+| Credential        | `worker-api-auth` (httpHeaderAuth: header name `Authorization`, value `Bearer <N8N_TO_WORKER_SECRET value>`) |
+| Send Body         | true                                                                                                         |
+| Body Content Type | JSON                                                                                                         |
+| Body              | `={{ $json }}`                                                                                               |
+| Response Format   | JSON                                                                                                         |
 
-Note: Alternatively, create an `httpHeaderAuth` credential with the secret value instead of using `$env` in a header expression.
-
-Note: `N8N_TO_WORKER_SECRET` env var must be configured in n8n from the `agent-worker-auth` ExternalSecret (deployed in Phase 1A Task 19).
+Note: `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` is set in the n8n deployment, so `$env.*` expressions do not work in n8n nodes. All outbound calls to the worker API must use the `worker-api-auth` httpHeaderAuth credential instead of `$env` header expressions. Create this credential in n8n UI with the `N8N_TO_WORKER_SECRET` value from the `agent-worker-auth` ExternalSecret (deployed in Phase 1A Task 19).
 
 - [ ] **Step 3: Add Error Handling for POST**
+
+**Important:** Set "Options > Always Output Data" or enable "Continue On Fail" on the HTTP Request node. Without this, n8n throws errors on non-2xx responses (409, 429, 503) instead of routing through the BullMQ Response Check node.
 
 After HTTP Request node, add an IF node:
 
@@ -332,16 +330,24 @@ In the "Event Type" Switch node, add a case for `push` events. Add a branch:
 
 `push` → Filter (only `ref === "refs/heads/main"`) → Normalize for BullMQ (role: `validate`) → POST to BullMQ Worker
 
-Normalize fields for validate:
+Normalize for validate using a Code node (`n8n-nodes-base.code`):
 
-| Field        | Value                                                                |
-| ------------ | -------------------------------------------------------------------- |
-| `role`       | `"validate"`                                                         |
-| `priority`   | `10`                                                                 |
-| `repo`       | `{{ $json.body.repository.full_name }}`                              |
-| `event_type` | `"push"`                                                             |
-| `head_sha`   | `{{ $json.body.after }}`                                             |
-| `payload`    | `{{ { ref: $json.body.ref, commits: $json.body.commits?.length } }}` |
+```javascript
+const body = $json.body;
+return [{
+  json: {
+    role: 'validate',
+    priority: 10,
+    repo: body.repository.full_name,
+    event_type: 'push',
+    head_sha: body.after,
+    payload: {
+      ref: body.ref,
+      commits: body.commits?.length
+    }
+  }
+}];
+```
 
 Note: Push events use raw webhook body fields directly (no reshape step like check_suite). The payload is simpler — only needs ref, after (SHA), and repo info.
 
@@ -384,11 +390,11 @@ n8n_create_workflow(name="Agent Dispatch + Results", active=false)
 | Credential     | Create `httpHeaderAuth` credential named `worker-dispatch-auth` with header name `Authorization` and value `Bearer <WORKER_TO_N8N_SECRET value>` |
 | Response Mode  | Immediately (200 OK)                                                                                                                             |
 
-Note: Webhook Header Auth uses n8n credentials (static values), not `$env` expressions. The secret must be configured at credential creation time in n8n UI.
+Note: Webhook Header Auth uses n8n credentials (static values), not `$env` expressions. The secret must be configured at credential creation time in n8n UI. This is the correct pattern for all auth in this plan — `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` blocks `$env` access in nodes, so credential-based auth is required.
 
-This is the URL the BullMQ worker POSTs to: `http://n8n-webhook.n8n-system.svc:5678/webhook/agent-dispatch`
+This is the URL the BullMQ worker POSTs to: `http://n8n-webhook.n8n-system.svc/webhook/agent-dispatch`
 
-Note: The `n8n-webhook` Service maps port 80→5678. Either `svc/webhook/...` (port 80) or `svc:5678/webhook/...` works. Using explicit port for consistency with CNP rules (Cilium matches on backend port 5678 after DNAT).
+Note: The `n8n-webhook` Service maps port 80→5678. Either `svc/webhook/...` (port 80) or `svc:5678/webhook/...` works. Using port 80 (default HTTP, omitting the port) for consistency with existing SRE MCP URL pattern (`http://n8n-webhook.n8n-system.svc/mcp/sre`).
 
 Note: Unlike the intake webhook, the dispatch webhook responds immediately — the worker is waiting for a callback, not a synchronous response.
 
@@ -422,15 +428,17 @@ Follow with Redis nodes for idempotency check and set:
 
 → IF `idempotencyResult` exists → skip (already dispatched) / continue.
 
+If duplicate detected: POST to `http://agent-queue-worker-worker.agent-worker-system.svc:3000/jobs/{jobId}/done` with body `{ "result": { "status": "deduplicated" }, "session_token": "<from dispatch payload>", "attempt": <from dispatch payload> }` using `worker-api-auth` credential. This prevents the worker from hanging until timeout.
+
 **Redis SET node:**
 
-| Config    | Value                                                                |
-| --------- | -------------------------------------------------------------------- |
-| Operation | Set                                                                  |
-| Key       | `={{ 'n8n:agent:dispatched:' + $json.jobId + ':' + $json.attempt }}` |
-| Value     | `1`                                                                  |
-| Expire    | true                                                                 |
-| TTL       | Role timeout: triage=600, fix=1800, validate=1800, execute=3600      |
+| Config    | Value                                                                                   |
+| --------- | --------------------------------------------------------------------------------------- |
+| Operation | Set                                                                                     |
+| Key       | `={{ 'n8n:agent:dispatched:' + $json.jobId + ':' + $json.attempt }}`                    |
+| Value     | `1`                                                                                     |
+| Expire    | true                                                                                    |
+| TTL       | `={{ {"triage":600,"fix":1800,"validate":1800,"execute":3600}[$json.role] \|\| 1800 }}` |
 
 - [ ] **Step 4: Add Role Router**
 
@@ -497,6 +505,8 @@ const prompt = `You are a triage orchestrator for the agent platform. Your job i
 - Repository: ${data.repo}
 - PR #${data.pr_number}
 - HEAD SHA: ${data.head_sha}
+- Attempt: ${data.attempt}
+- Dispatched At: ${data.dispatched_at}
 
 ## CI Status
 Overall: ${data.payload?.ci_context?.overall || 'unknown'}
@@ -511,6 +521,8 @@ ${ciChecks.length > 0 ? 'Check runs:\n' + ciSummary : 'No check run data availab
    - job_id: "${data.jobId}"
    - session_token: "${data.session_token}"
    - head_sha: "${data.head_sha}"
+   - attempt: ${data.attempt}
+   - dispatched_at: "${data.dispatched_at}"
    - role: "triage"
    - verdict: SAFE | FIXABLE | RISKY | BREAKING
    - complexity: simple | complex (required if FIXABLE)
@@ -529,14 +541,17 @@ return [{ json: { ...data, triage_prompt: prompt } }];
 
 **Name:** `Claude Code (Triage)` **Type:** `n8n-nodes-claude-code-cli-aspruyt.claudeCode`
 
-| Config          | Value                                                                                                            |
-| --------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Credential      | `claude-agent-read`                                                                                              |
-| Model           | `sonnet`                                                                                                         |
-| Prompt          | `{{ $json.triage_prompt }}`                                                                                      |
-| Additional Args | `--settings /etc/claude/settings/triage.json --max-turns 25`                                                     |
-| Env Vars        | `{"CLONE_URL": "git@github.com:{{ $json.repo }}.git", "CLONE_BRANCH": "{{ $json.payload?.pr_branch \|\| '' }}"}` |
-| Connection Mode | `k8sEphemeral`                                                                                                   |
+| Config          | Value                                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Credential      | `claude-agent-read`                                                                                                  |
+| Model           | `sonnet`                                                                                                             |
+| Prompt          | `{{ $json.triage_prompt }}`                                                                                          |
+| Additional Args | `--settings /etc/claude/settings/triage.json --max-turns 25`                                                         |
+| Env Vars        | `{"CLONE_URL": "https://github.com/{{ $json.repo }}.git", "CLONE_BRANCH": "{{ $json.payload?.pr_branch \|\| '' }}"}` |
+| Connection Mode | `k8sEphemeral`                                                                                                       |
+
+**CLONE_URL transport format:** Read/SRE agents use HTTPS (`https://github.com/{owner}/{repo}.git`), write agents use SSH (`git@github.com:{owner}/{repo}.git`). Triage uses `claude-agent-read` → HTTPS. Fix/execute use `claude-agent-write` → SSH. The format must match the credential tier's git transport and token rotation mechanism (read/SRE get `read-access-token` for HTTPS auth, write gets
+`write-access-token` with SSH deploy key).
 
 The `agent-timeout` annotation should be set to `540` (9 min, triage role). Check if the Claude Code node supports pod annotations — if not, the Kyverno default of 1740s applies (acceptable, not optimal).
 
@@ -547,6 +562,9 @@ After Claude Code node, add an IF node checking if the agent succeeded. On failu
 ______________________________________________________________________
 
 ### Task 9: Dispatch Workflow — MCP Server for Triage Verdict
+
+**Architecture note:** This workflow has TWO independent triggers: (1) the Dispatch Webhook (Task 7) receives dispatch calls from the BullMQ worker; (2) the MCP Server Trigger (this task) receives MCP tool calls from running agents. These are **separate n8n executions** — the MCP callback execution has NO access to variables from the dispatch execution. All context needed by the verdict processor
+comes from the MCP tool call payload (`job_id`, `head_sha`, `session_token`, etc.), not from dispatch state.
 
 - [ ] **Step 1: Add MCP Server Trigger**
 
@@ -571,6 +589,8 @@ The Tool Workflow references a sub-workflow via `workflowId`. In v2.1, set the `
 - `job_id`: `={{ $fromAI('job_id', 'BullMQ job correlation key', 'string') }}`
 - `session_token`: `={{ $fromAI('session_token', 'Per-dispatch session token', 'string') }}`
 - `head_sha`: `={{ $fromAI('head_sha', 'PR HEAD SHA for stale detection', 'string') }}`
+- `attempt`: `={{ $fromAI('attempt', 'Dispatch attempt number', 'number') }}`
+- `dispatched_at`: `={{ $fromAI('dispatched_at', 'Dispatch timestamp ISO string', 'string') }}`
 - `role`: `={{ $fromAI('role', 'Agent role (triage)', 'string') }}`
 - `verdict`: `={{ $fromAI('verdict', 'Verdict: SAFE, FIXABLE, RISKY, or BREAKING', 'string') }}`
 - `complexity`: `={{ $fromAI('complexity', 'Required if FIXABLE: simple or complex', 'string') }}`
@@ -602,8 +622,9 @@ const repo = jobParts[0];
 const prNumber = jobParts[1];
 
 let stale = false;
+const isRevertFix = $json.job_id.includes(':revert:');
 
-if (prNumber && ['triage', 'fix'].includes(role)) {
+if (prNumber && !isRevertFix && ['triage', 'fix'].includes(role)) {
   try {
     const prData = await $helpers.httpRequest({
       method: 'GET',
@@ -637,6 +658,17 @@ ______________________________________________________________________
 
 ### Task 10: Dispatch Workflow — Verdict Processing (SAFE/FIXABLE/RISKY/BREAKING)
 
+> **Credential requirement:** All "Complete BullMQ Job" HTTP Request nodes in this task that POST to the worker API (`/jobs/:id/done`) must use the `worker-api-auth` httpHeaderAuth credential (header name `Authorization`, value `Bearer <N8N_TO_WORKER_SECRET value>`) for authentication. Do NOT use `$env.N8N_TO_WORKER_SECRET` — `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` is set in the n8n deployment and
+> `$env` access is blocked in nodes.
+
+**Check run lookup:** All verdict paths need the `check_run_id` to update the pending check run. Since the MCP callback is a separate n8n execution from the dispatch (no shared state), add a shared HTTP Request node as the FIRST step after the Stale Check IF node (before the Verdict Switch). This node runs once for all verdict paths:
+
+**Name:** `Lookup Check Run` **Type:** `n8n-nodes-base.httpRequest`
+
+GET `https://api.github.com/repos/{owner}/{repo}/commits/{head_sha}/check-runs?check_name=agent/triage`
+
+Use GitHub App authentication. Extract `check_runs[0].id` from the response and merge it into the payload as `check_run_id`. The Verdict Switch and all downstream verdict paths then reference `$json.check_run_id`.
+
 - [ ] **Step 1: Add Verdict Switch**
 
 **Name:** `Verdict Switch` **Type:** `n8n-nodes-base.switch`
@@ -667,9 +699,7 @@ Sequence of HTTP Request nodes to GitHub API:
    }
    ```
 
-   Note: Need to find the check_run_id. Either pass it from the pending check run creation, or search by name+SHA.
-
-   **Recommended approach:** Store `check_run_id` from Task 8 Step 1's pending check run response. Pass it through the agent prompt context alongside `job_id` and `session_token`. Agent includes it in MCP tool call. n8n uses it to update the check run in verdict processing. Alternative: search by check run name + SHA via `GET /repos/{owner}/{repo}/commits/{sha}/check-runs?check_name=agent/triage`.
+   Uses `check_run_id` from the shared Lookup Check Run node (above the Verdict Switch).
 
 1. **Add label `agent/safe`**
 
@@ -682,6 +712,8 @@ Sequence of HTTP Request nodes to GitHub API:
    ```
 
 1. **Complete BullMQ job** POST `http://agent-queue-worker-worker.agent-worker-system.svc:3000/jobs/{jobId}/done`
+
+   Authentication: Header Auth using `worker-api-auth` credential.
 
    ```json
    {
@@ -706,6 +738,8 @@ Sequence of HTTP Request nodes to GitHub API:
 
 1. **Complete BullMQ job** POST `http://agent-queue-worker-worker.agent-worker-system.svc:3000/jobs/{jobId}/done`
 
+   Authentication: Header Auth using `worker-api-auth` credential.
+
    ```json
    {
      "result": { "verdict": "FIXABLE", "complexity": "{{ $json.complexity }}", "summary": "{{ $json.summary }}" },
@@ -726,7 +760,7 @@ Sequence of HTTP Request nodes to GitHub API:
 
    For Phase 2, use the simpler approach: n8n trusts the worker and just enqueues the fix job. The worker's rate limit (10/repo/hr) catches runaway loops. Fix-count enforcement can be added to the worker `/jobs` endpoint in Phase 4.
 
-1. **POST fix job to BullMQ** (if not max attempts): Auth header: `Authorization: Bearer {{ $env.N8N_TO_WORKER_SECRET }}` (same as intake POST in Task 6 Step 2).
+1. **POST fix job to BullMQ** (if not max attempts): Authentication: Header Auth using `worker-api-auth` credential (same as intake POST in Task 6 Step 2).
 
    ```json
    {
@@ -751,10 +785,17 @@ Sequence of HTTP Request nodes to GitHub API:
 **Write ordering:** Check run first, then label, then other writes (same Mergify requirement as SAFE path).
 
 1. **Update Check Run → neutral**
+
 1. **Add label `agent/needs-review`**
+
 1. **Post PR comment** with analysis
+
 1. **Discord notification** — "RISKY verdict for {repo} PR #{pr}: {summary}"
+
 1. **Complete BullMQ job** POST `http://agent-queue-worker-worker.agent-worker-system.svc:3000/jobs/{jobId}/done`
+
+   Authentication: Header Auth using `worker-api-auth` credential.
+
    ```json
    {
      "result": { "verdict": "RISKY", "summary": "{{ $json.summary }}" },
@@ -763,6 +804,7 @@ Sequence of HTTP Request nodes to GitHub API:
      "dispatched_at": "{{ $json.dispatched_at }}"
    }
    ```
+
    With retry: 3 attempts, 2s/4s/8s backoff.
 
 - [ ] **Step 5: BREAKING path**
@@ -770,11 +812,19 @@ Sequence of HTTP Request nodes to GitHub API:
 **Write ordering:** Check run first, then label, then other writes (same Mergify requirement as SAFE path).
 
 1. **Update Check Run → failure**
+
 1. **Add label `blocked`**
+
 1. **Post PR comment** with breaking change details
+
 1. **Close PR** — PATCH `https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}` with `{"state": "closed"}`
+
 1. **Discord notification** — "BREAKING: {repo} PR #{pr} closed. {summary}"
+
 1. **Complete BullMQ job** POST `http://agent-queue-worker-worker.agent-worker-system.svc:3000/jobs/{jobId}/done`
+
+   Authentication: Header Auth using `worker-api-auth` credential.
+
    ```json
    {
      "result": { "verdict": "BREAKING", "summary": "{{ $json.summary }}" },
@@ -783,6 +833,7 @@ Sequence of HTTP Request nodes to GitHub API:
      "dispatched_at": "{{ $json.dispatched_at }}"
    }
    ```
+
    With retry: 3 attempts, 2s/4s/8s backoff.
 
 ______________________________________________________________________
@@ -813,6 +864,8 @@ The Tool Workflow references a sub-workflow named "submit_validate_result" via `
 - `job_id`: `={{ $fromAI('job_id', 'BullMQ job correlation key', 'string') }}`
 - `session_token`: `={{ $fromAI('session_token', 'Per-dispatch session token', 'string') }}`
 - `head_sha`: `={{ $fromAI('head_sha', 'Commit SHA for stale detection', 'string') }}`
+- `attempt`: `={{ $fromAI('attempt', 'Dispatch attempt number', 'number') }}`
+- `dispatched_at`: `={{ $fromAI('dispatched_at', 'Dispatch timestamp ISO string', 'string') }}`
 - `role`: `={{ $fromAI('role', 'Agent role (validate)', 'string') }}`
 - `status`: `={{ $fromAI('status', 'Validation status: PASS or FAIL', 'string') }}`
 - `details`: `={{ $fromAI('details', 'Validation details', 'string') }}`
@@ -850,6 +903,8 @@ Add to MCP Server Trigger. Both use `@n8n/n8n-nodes-langchain.toolWorkflow` v2.2
 - `job_id`: `={{ $fromAI('job_id', 'BullMQ job correlation key', 'string') }}`
 - `session_token`: `={{ $fromAI('session_token', 'Per-dispatch session token', 'string') }}`
 - `head_sha`: `={{ $fromAI('head_sha', 'PR HEAD SHA for stale detection', 'string') }}`
+- `attempt`: `={{ $fromAI('attempt', 'Dispatch attempt number', 'number') }}`
+- `dispatched_at`: `={{ $fromAI('dispatched_at', 'Dispatch timestamp ISO string', 'string') }}`
 - `role`: `={{ $fromAI('role', 'Agent role (fix)', 'string') }}`
 - `status`: `={{ $fromAI('status', 'Fix status: pushed or failed', 'string') }}`
 - `branch`: `={{ $fromAI('branch', 'Branch name with fix commits', 'string') }}`
@@ -861,6 +916,8 @@ Add to MCP Server Trigger. Both use `@n8n/n8n-nodes-langchain.toolWorkflow` v2.2
 - `job_id`: `={{ $fromAI('job_id', 'BullMQ job correlation key', 'string') }}`
 - `session_token`: `={{ $fromAI('session_token', 'Per-dispatch session token', 'string') }}`
 - `head_sha`: `={{ $fromAI('head_sha', 'Commit SHA for stale detection', 'string') }}`
+- `attempt`: `={{ $fromAI('attempt', 'Dispatch attempt number', 'number') }}`
+- `dispatched_at`: `={{ $fromAI('dispatched_at', 'Dispatch timestamp ISO string', 'string') }}`
 - `role`: `={{ $fromAI('role', 'Agent role (execute)', 'string') }}`
 - `status`: `={{ $fromAI('status', 'Execution status: completed or failed', 'string') }}`
 - `branch`: `={{ $fromAI('branch', 'Branch name with changes', 'string') }}`
@@ -875,11 +932,9 @@ ______________________________________________________________________
 
 - [ ] **Step 1: Add Discord notification helper**
 
-**Prerequisite:** Create Discord channels `agent-alerts` and `agent-activity` and configure webhook URLs as n8n environment variables (`DISCORD_AGENT_ALERTS_WEBHOOK`, `DISCORD_AGENT_ACTIVITY_WEBHOOK`).
+**Prerequisite:** Create Discord channels `agent-alerts` and `agent-activity`. Use the `n8n-nodes-base.discord` node type with Discord credentials (matching the SRE Agent workflow pattern). Do NOT use environment variables — `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` blocks `$env` access.
 
 Create a sub-workflow or reusable Code node that formats and sends Discord messages.
-
-The SRE Agent workflow uses `n8n-nodes-base.discord` node type with a Discord credential. Use the same pattern for consistency. Alternatively, HTTP Request nodes to Discord webhook URLs also work.
 
 | Event                          | Discord Channel | Content                                                   |
 | ------------------------------ | --------------- | --------------------------------------------------------- |
@@ -918,24 +973,43 @@ If all retries fail, post Discord alert: "Failed to complete BullMQ job {jobId} 
 
 ______________________________________________________________________
 
-### Task 15: n8n Environment Variables
+### Task 15: n8n Credentials for Worker Auth
 
-- [ ] **Step 1: Configure required env vars in n8n**
+> **IMPORTANT:** `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` is set in the n8n deployment (`cluster/apps/n8n-system/n8n/app/values.yaml`). This means `$env.*` expressions do NOT work in n8n nodes. All secrets used by workflow nodes must be configured as n8n credentials, not env vars.
 
-The following env vars must be available in n8n for the dispatch workflow. They come from the `agent-worker-auth` ExternalSecret (Phase 1A Task 19):
+- [ ] **Step 1: Create `worker-api-auth` httpHeaderAuth credential**
 
-| Env Var                | Source                     | Used By                                   |
-| ---------------------- | -------------------------- | ----------------------------------------- |
-| `WORKER_TO_N8N_SECRET` | `agent-worker-auth` secret | Dispatch webhook auth validation          |
-| `N8N_TO_WORKER_SECRET` | `agent-worker-auth` secret | POST to worker `/jobs` + `/jobs/:id/done` |
+In n8n UI, create an `httpHeaderAuth` credential:
 
-Configure in n8n HelmRelease values as `envFrom` referencing the synced secret, or as individual env vars.
+| Field        | Value                                 |
+| ------------ | ------------------------------------- |
+| Name         | `worker-api-auth`                     |
+| Header Name  | `Authorization`                       |
+| Header Value | `Bearer <N8N_TO_WORKER_SECRET value>` |
 
-- [ ] **Step 2: Verify env vars accessible in workflows**
+The `N8N_TO_WORKER_SECRET` value comes from the `agent-worker-auth` ExternalSecret (deployed in Phase 1A Task 19). This credential is used by all HTTP Request nodes that POST to the worker API (`/jobs` and `/jobs/:id/done`).
 
-**Prerequisite check:** Verify `N8N_BLOCK_ENV_ACCESS_IN_NODE` is NOT set in the n8n deployment. Test: create a Code node with `return [{ json: { test: $env.NODE_ENV } }]`. If blocked, secrets must use n8n credentials instead of `$env`.
+- [ ] **Step 2: Verify `worker-dispatch-auth` httpHeaderAuth credential**
 
-Test that `{{ $env.N8N_TO_WORKER_SECRET }}` resolves in a Code node.
+Verify the `worker-dispatch-auth` credential (created in Task 7 Step 2) exists:
+
+| Field        | Value                                 |
+| ------------ | ------------------------------------- |
+| Name         | `worker-dispatch-auth`                |
+| Header Name  | `Authorization`                       |
+| Header Value | `Bearer <WORKER_TO_N8N_SECRET value>` |
+
+The `WORKER_TO_N8N_SECRET` value comes from the same `agent-worker-auth` ExternalSecret. This credential is used by the dispatch webhook for inbound auth validation.
+
+- [ ] **Step 3: Verify credentials work in test workflow**
+
+Test that an HTTP Request node using `worker-api-auth` credential can reach the worker API:
+
+```text
+POST http://agent-queue-worker-worker.agent-worker-system.svc:3000/livez
+```
+
+Expected: 200 response (auth not required for health endpoints, but verifies connectivity).
 
 ______________________________________________________________________
 
@@ -946,7 +1020,7 @@ ______________________________________________________________________
 Set workflow active. Verify webhook endpoint is accessible:
 
 ```bash
-kubectl exec -n agent-worker-system deploy/agent-queue-worker-worker -- wget -qO- --timeout=5 http://n8n-webhook.n8n-system.svc:5678/webhook/agent-dispatch 2>&1
+kubectl exec -n agent-worker-system deploy/agent-queue-worker-worker -- wget -qO- --timeout=5 http://n8n-webhook.n8n-system.svc/webhook/agent-dispatch 2>&1
 ```
 
 Expected: 401 or 405 (webhook exists, auth required)

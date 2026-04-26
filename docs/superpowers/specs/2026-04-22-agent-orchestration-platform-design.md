@@ -7,14 +7,14 @@ cost for public repos. Paid tiers add team size, support level, and enterprise f
 
 ## Architecture Overview
 
-| Layer         | Role                                                                                                                                                                                                                                                                                           |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub        | Source of truth for PR/issue state. Labels for human/Mergify visibility. Check runs for CI gate. Reviews for approval gate.                                                                                                                                                                    |
-| n8n           | Integrations layer: webhook intake, HMAC validation, GitHub API writes (labels, checks, approvals, comments), Discord notifications, agent dispatch via Claude Code node, MCP tool endpoints for agent callbacks.                                                                              |
-| BullMQ Worker | Job coordination: dedup (Valkey lock guards active + waiting), FIFO queue, job supersede, timeout, retry. Single worker, concurrency 1. Small TypeScript service on Kubernetes. Uses fine-grained PAT for stale SHA checks on public repos (unauthenticated fallback).                         |
-| Valkey        | Two instances: existing shared Valkey (`valkey-system`) for n8n/Authentik (ephemeral, unchanged), dedicated agent Valkey (`agent-worker-system`) for BullMQ worker (AOF persistence, Ceph-backed).                                                                                             |
-| Mergify       | Merge serialization. Auto-merges when conditions met (label + check-success + approval). Free for public repos.                                                                                                                                                                                |
-| Claude Agents | Two credential tiers (read/write) with per-role model and MCP configuration. Existing infra: `claude-agents-read`/`claude-agents-write` namespaces with CNPs, RBAC, Kyverno config injection (`inject-claude-agent-config`), and settings profiles (`/etc/claude/settings/`) already deployed. |
+| Layer         | Role                                                                                                                                                                                                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub        | Source of truth for PR/issue state. Labels for human/Mergify visibility. Check runs for CI gate. Reviews for approval gate.                                                                                                                                            |
+| n8n           | Integrations layer: webhook intake, HMAC validation, GitHub API writes (labels, checks, approvals, comments), Discord notifications, agent dispatch via Claude Code node, MCP tool endpoints for agent callbacks.                                                      |
+| BullMQ Worker | Job coordination: dedup (Valkey lock guards active + waiting), FIFO queue, job supersede, timeout, retry. Single worker, concurrency 1. Small TypeScript service on Kubernetes. Uses fine-grained PAT for stale SHA checks on public repos (unauthenticated fallback). |
+| Valkey        | Two instances: existing shared Valkey (`valkey-system`) for n8n/Authentik (ephemeral, unchanged), dedicated agent Valkey (`agent-worker-system`) for BullMQ worker (AOF persistence, Ceph-backed).                                                                     |
+| Mergify       | Merge serialization. Auto-merges when conditions met (label + check-success + approval). Free for public repos.                                                                                                                                                        |
+| Claude Agents | Three namespaces (`claude-agents-read`/`write`/`sre`) with per-namespace MCP config isolation. Kyverno `inject-claude-agent-config` (9 rules: MCP mount, priority class, transport-specific clone). Settings profiles, OTel instrumentation.                           |
 
 ```text
 GitHub webhook
@@ -96,16 +96,11 @@ valkeyConfig: |
 
 **`appendfsync everysec`** — 1-second data loss window on crash under normal operation — acceptable for coordination state.
 
-**`no-appendfsync-on-rewrite yes`** — Prevents AOF fsync from blocking event loop during `BGREWRITEAOF`.
-**Tradeoff:** during AOF rewrite, fsync is suspended entirely — a crash during rewrite could lose ALL writes since rewrite started.
-At estimated ~5MB data size (single consumer), AOF rewrite completes in sub-milliseconds — making a crash during this window extremely unlikely.
-**Ceph performance context:** the cluster uses a 20Gbps Thunderbolt ring with industrial NVMe drives and 3x RBD replication,
-meaning each worker node holds a local replica. Ceph I/O latency for small writes is comparable to local NVMe in this topology —
-the sub-millisecond estimate holds. Startup reconciliation covers `revert-depth`;
-`circuit` breaker has no recovery path but re-accumulates naturally from new failures.
+**`no-appendfsync-on-rewrite yes`** — Prevents AOF fsync from blocking event loop during `BGREWRITEAOF`. **Tradeoff:** during AOF rewrite, fsync is suspended entirely — a crash during rewrite could lose ALL writes since rewrite started. At estimated ~5MB data size (single consumer), AOF rewrite completes in sub-milliseconds — making a crash during this window extremely unlikely. **Ceph performance
+context:** the cluster uses a 20Gbps Thunderbolt ring with industrial NVMe drives and 3x RBD replication, meaning each worker node holds a local replica. Ceph I/O latency for small writes is comparable to local NVMe in this topology — the sub-millisecond estimate holds. Startup reconciliation covers `revert-depth`; `circuit` breaker has no recovery path but re-accumulates naturally from new
+failures.
 
-**`maxmemory 50mb`** — Explicit cap below container limit (128Mi = 134MB), leaves ~84MB headroom for AOF rewrite fork
-(CoW pages + rewrite buffers). At ~5MB estimated usage, fork CoW is negligible.
+**`maxmemory 50mb`** — Explicit cap below container limit (128Mi = 134MB), leaves ~84MB headroom for AOF rewrite fork (CoW pages + rewrite buffers). At ~5MB estimated usage, fork CoW is negligible.
 
 **`maxmemory-policy noeviction`** — Safety-critical keys must never be silently evicted — errors on write when full.
 
@@ -143,32 +138,25 @@ Each role has a specific trigger, scope, and purpose. Roles are the unit of work
 
 - **Trigger:** Renovate PR check suite completed (any conclusion — pass or fail)
 - **Scope:** Read-only on PR
-- **Description:** Analyze dependency version bump for breaking changes, deprecations, upstream issues.
-  CI result available as input signal. Produces verdict: SAFE/FIXABLE/RISKY/BREAKING.
+- **Description:** Analyze dependency version bump for breaking changes, deprecations, upstream issues. CI result available as input signal. Produces verdict: SAFE/FIXABLE/RISKY/BREAKING.
 
 ### fix
 
-- **Trigger:** Triage verdict=FIXABLE, triage verdict=BREAKING with CI fail,
-  review=request-changes, or validate=fail
+- **Trigger:** Triage verdict=FIXABLE, triage verdict=BREAKING with CI fail, review=request-changes, or validate=fail
 - **Scope:** Write on branch
-- **Description:** Fix issues identified by other roles. Breaking change fix, code review fix,
-  or revert on validation failure.
+- **Description:** Fix issues identified by other roles. Breaking change fix, code review fix, or revert on validation failure.
 
 ### validate
 
 - **Trigger:** PR merged to main
 - **Scope:** Read + cluster query
-- **Description:** Post-merge validation. Checks repo-specific success criteria
-  (loaded from repo's CLAUDE.md/rules at runtime). Produces pass/fail.
-  Generic — repo context defines what "valid" means. No git writes but needs
-  kubectl/metrics for cluster-aware repos. Uses Opus for complex multi-tool validation chains.
+- **Description:** Post-merge validation. Checks repo-specific success criteria (loaded from repo's CLAUDE.md/rules at runtime). Produces pass/fail. Generic — repo context defines what "valid" means. No git writes but needs kubectl/metrics for cluster-aware repos. Uses Opus for complex multi-tool validation chains.
 
 ### execute
 
 - **Trigger:** Issue labeled `agent/execute`
 - **Scope:** Write on new branch
-- **Description:** Implement issue from scratch. Creates branch, pushes commits.
-  n8n creates PR and links issue.
+- **Description:** Implement issue from scratch. Creates branch, pushes commits. n8n creates PR and links issue.
 
 ### review
 
@@ -244,6 +232,9 @@ Two credentials control capability boundaries. Model, MCP access, and resource l
 | `claude-agent-write` | Ephemeral | All read capabilities + git push, create branches, create PRs, post line-level review comments. No merges, no labels, no approvals (n8n owns routing-state writes). MCP tool calls for routing decisions.                     | fix, execute     |
 
 Model selection (Sonnet vs Opus), MCP server access, and resource limits are set per-role via the role registry and settings profiles — not by the credential. Validate uses the read credential but runs Opus with kubectl/metrics access.
+
+**Note:** A third namespace `claude-agents-sre` exists for SRE agents with its own credential tier, MCP config (`claude-mcp-config-sre.yaml`), network policies, and dedicated `sre-credentials.sops.yaml`. SRE agents are not part of this platform's role registry — they are an existing operational concern. The platform uses only the read and write tiers. Token rotation (CronJob every 30 minutes)
+force-syncs ExternalSecrets to all three namespaces plus `github-mcp`.
 
 ## Responsibility Split
 
@@ -953,8 +944,8 @@ Every MCP handoff tool follows the same pattern:
 
 Two-layer authentication: static MCP transport auth + per-dispatch session token validated by the worker.
 
-**Layer 1 — Static MCP auth:** Agent pods authenticate MCP tool calls to n8n via a shared secret (`AGENT_PLATFORM_MCP_AUTH_TOKEN`) in the `Authorization: Bearer` header. Injected by Kyverno `inject-claude-agent-config` as an env var, resolved at runtime by Claude Code (same pattern as `SRE_MCP_AUTH_TOKEN`). Stored in `mcp-credentials.sops.yaml`. This authenticates the transport — only agent pods
-with the secret can reach MCP endpoints.
+**Layer 1 — Static MCP auth:** Agent pods authenticate MCP tool calls to n8n via a shared secret (`AGENT_PLATFORM_MCP_AUTH_TOKEN`) in the `Authorization: Bearer` header. Injected by Kyverno `inject-read-mcp` and `inject-write-mcp` rules as an env var (same scoped-injection pattern as `SRE_MCP_AUTH_TOKEN` in `inject-sre-mcp`), resolved at runtime by Claude Code. Stored in
+`mcp-credentials.sops.yaml`. This authenticates the transport — only agent pods with the secret can reach MCP endpoints.
 
 **Layer 2 — Session token (worker-managed):** The worker generates a UUID (`session_token`) at dispatch time in the processor (not at enqueue time — avoids orphaned tokens for superseded/deduplicated jobs). The token is stored on the dedicated agent Valkey (`agent:session:{jobId}:{attempt}` → token, TTL = role timeout) and sent to n8n in the dispatch webhook payload. n8n passes it to the agent's
 prompt context alongside `job_id`. The agent includes `session_token` in its MCP tool call payload. On MCP callback, n8n forwards `session_token` and `attempt` number to the worker via `POST /jobs/:id/done`. The worker validates the token atomically with job completion — a Lua script checks the token, deletes it, and accepts the result in a single operation. This prevents replay (consumed token
@@ -1001,7 +992,7 @@ Defense layers:
 
 1. **Static MCP auth** — shared secret in `Authorization` header, Kyverno-injected, authenticates transport
 1. **Session token** — per-dispatch UUID in payload, validated atomically by worker against agent Valkey (AOF persistent). Passed via prompt (not env var). Consumed on use — replay-proof
-1. **CNP** — n8n MCP webhook endpoints only accept traffic from agent pod namespaces (`claude-agents-read`, `claude-agents-write`) via Cilium network policy
+1. **CNP** — n8n MCP webhook endpoints only accept traffic from agent pod namespaces (`claude-agents-read`, `claude-agents-write`, `claude-agents-sre`) via Cilium network policy
 1. **Job ID correlation** — MCP callback must include valid `job_id` that matches an active BullMQ job
 1. **Job-scoped session binding** — session token maps to exactly one `{jobId}:{attempt}`. The job ID encodes the role (e.g., `repo:42:abc:triage`). A triage agent's session token can only complete the triage job — it cannot complete a fix job or any other job. Separate role-to-tool validation is unnecessary because the session token already constrains the agent to its assigned job and role.
 
@@ -1416,11 +1407,12 @@ n8n workflows handle integrations (GitHub API, Discord, agent dispatch) and resu
 
 ## Agent Settings Profiles
 
-Mounted at `/etc/claude/settings/` by existing Kyverno `inject-claude-agent-config` policy. Profiles use `deniedMcpServers` to restrict MCP access per role. All MCP servers remain configured globally — profiles only deny what's not needed.
+Mounted at `/etc/claude/settings/` by existing Kyverno `inject-claude-agent-config` policy. MCP access is primarily isolated at the namespace level via per-namespace MCP config files (`claude-mcp-config-read.yaml`, `claude-mcp-config-write.yaml`, `claude-mcp-config-sre.yaml`). Each namespace's ConfigMap is mounted at `/etc/mcp` by the corresponding Kyverno rule (`inject-read-mcp`,
+`inject-write-mcp`, `inject-sre-mcp`). Settings profiles use `deniedMcpServers` as a complementary restriction — only needed to deny servers that ARE in the namespace config but shouldn't be available for a specific role.
 
 ### Platform MCP Server
 
-Platform agents report results via a dedicated MCP server entry in `claude-mcp-config.yaml`.
+Platform agents report results via a dedicated MCP server entry. Since MCP config is now per-namespace, the `agent-platform` entry must be added to both `claude-mcp-config-read.yaml` AND `claude-mcp-config-write.yaml` (not SRE — SRE agents don't use platform handoff).
 
 ```json
 "agent-platform": {
@@ -1432,20 +1424,37 @@ Platform agents report results via a dedicated MCP server entry in `claude-mcp-c
 }
 ```
 
-Note: double-dollar `$${}` prevents Flux variable substitution — env var is resolved at runtime by Claude Code, not at reconciliation time. URL uses short DNS (`n8n-webhook.n8n-system.svc`) to match existing MCP server entries in `claude-mcp-config.yaml`.
+Note: double-dollar `$${}` prevents Flux variable substitution — env var is resolved at runtime by Claude Code, not at reconciliation time. URL uses short DNS (`n8n-webhook.n8n-system.svc`) to match existing MCP server entries (confirmed by SRE config which uses `http://n8n-webhook.n8n-system.svc/mcp/sre`).
 
-`AGENT_PLATFORM_MCP_AUTH_TOKEN` is a static shared secret injected by Kyverno `inject-claude-agent-config` (same pattern as `SRE_MCP_AUTH_TOKEN`). Authenticates transport only. Per-dispatch session tokens are passed in the MCP tool call payload for job-level binding. See MCP Endpoint Authentication for full validation flow.
+`AGENT_PLATFORM_MCP_AUTH_TOKEN` is a static shared secret injected by Kyverno `inject-read-mcp` and `inject-write-mcp` rules (same scoped-injection pattern as `SRE_MCP_AUTH_TOKEN` in `inject-sre-mcp`). Authenticates transport only. Per-dispatch session tokens are passed in the MCP tool call payload for job-level binding. See MCP Endpoint Authentication for full validation flow.
+
+**CNP requirement:** Both read and write namespaces currently lack n8n MCP egress. Only SRE has `allow-n8n-mcp-egress`. A new CNP allowing egress to n8n webhook pods on port 5678 must be added to the shared base network policies (covering all three namespaces) OR added individually to read and write namespace network policies before platform deployment.
 
 ### Profiles
 
 One profile per role. Named after the role. Some may have identical contents today — that's fine, they can diverge independently as roles evolve.
 
-| Profile         | Allows                                                                  | Denies                                                |
-| --------------- | ----------------------------------------------------------------------- | ----------------------------------------------------- |
-| `triage.json`   | GitHub, context7, bravesearch, agent-platform                           | kubectl, victoriametrics, sre, discord, homeassistant |
-| `fix.json`      | GitHub, context7, bravesearch, agent-platform, kubectl                  | victoriametrics, sre, discord, homeassistant          |
-| `validate.json` | GitHub, context7, bravesearch, agent-platform, kubectl, victoriametrics | sre, discord, homeassistant                           |
-| `execute.json`  | GitHub, context7, bravesearch, agent-platform                           | kubectl, victoriametrics, sre, discord, homeassistant |
+MCP isolation is now primarily at the namespace config level. Each namespace only has its specific MCP servers configured. `deniedMcpServers` in profiles only needs to deny servers that ARE in the namespace config but shouldn't be available for that role.
+
+**Per-namespace MCP servers available:**
+
+- **Read namespace** (`claude-mcp-config-read.yaml`): bravesearch, context7, github + agent-platform (after Phase 1)
+- **Write namespace** (`claude-mcp-config-write.yaml`): bravesearch, context7, discord, github, kubectl, victoriametrics + agent-platform (after Phase 1)
+
+| Profile         | Runs in         | Available MCP servers                                                            | Denies (via profile)              |
+| --------------- | --------------- | -------------------------------------------------------------------------------- | --------------------------------- |
+| `triage.json`   | read namespace  | bravesearch, context7, github, agent-platform                                    | (none needed — all are used)      |
+| `fix.json`      | write namespace | bravesearch, context7, discord, github, kubectl, victoriametrics, agent-platform | discord, victoriametrics          |
+| `validate.json` | **SEE NOTE**    | Needs kubectl + victoriametrics, but runs with read credential                   | **SEE NOTE**                      |
+| `execute.json`  | write namespace | bravesearch, context7, discord, github, kubectl, victoriametrics, agent-platform | discord, kubectl, victoriametrics |
+
+**Validate namespace mismatch (decision needed):** Validate uses the read credential (`claude-agent-read`) but needs kubectl and victoriametrics MCP access for cluster-aware validation. The read namespace config (`claude-mcp-config-read.yaml`) only has bravesearch, context7, and github — kubectl and victoriametrics are not available. Options:
+
+1. **Run validate in write namespace** — gives kubectl + victoriametrics access but uses a write credential (stronger than needed). Profile would deny: discord. This is the simplest option.
+1. **Add kubectl + victoriametrics to read namespace config** — preserves read credential isolation but widens read namespace MCP surface. Would require adding kubectl-mcp and victoriametrics-mcp egress CNPs to the read namespace.
+1. **Create a dedicated validate namespace** — maximum isolation but adds operational overhead (fourth namespace, fourth MCP config).
+
+Until decided, the validate profile deny list depends on which namespace it runs in.
 
 ### Role Registry (complete)
 
@@ -1495,54 +1504,41 @@ n8n sets turn limits per role via `additionalArgs`:
 ### Profile Naming and Coexistence
 
 **Remove:** `renovate-triage.json`, `renovate-write.json`, `pr.json`, `dev.json`, `admin.json` — dead. Zero active consumers: no n8n workflows, no Coder templates, no interactive agents, no scheduled jobs reference any of these profiles. The old Renovate triage system is disabled and broken — these profiles are orphaned artifacts with no path to reactivation. Remove files from
-`cluster/apps/claude-agents-shared/base/settings/` and remove from `configMapGenerator` in `kustomization.yaml`. No ordering concern — safe to remove before or after creating new ones. Also remove `{ "serverName": "renovate" }` from `sre.json` deny list and add `{ "serverName": "agent-platform" }` to `sre.json` deny list (SRE agents don't use platform handoff). See Dead Renovate MCP cleanup in
-Migration section.
+`cluster/apps/claude-agents-shared/base/settings/` and remove from `configMapGenerator` in `kustomization.yaml`. No ordering concern — safe to remove before or after creating new ones. Also add a `deniedMcpServers` array to `sre.json` (currently empty) with `{ "serverName": "agent-platform" }` (SRE agents don't use platform handoff). See Dead Renovate MCP cleanup in Migration section.
 
-**Create:** Four new platform profiles:
+**Create:** Four new platform profiles. Deny lists are now minimal because MCP isolation is primarily at the namespace config level — profiles only deny servers that ARE in the namespace config but shouldn't be available for the role:
 
 ```json
-// triage.json
+// triage.json (runs in read namespace — only has bravesearch, context7, github, agent-platform)
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json"
+}
+
+// fix.json (runs in write namespace — has discord, kubectl, victoriametrics that fix doesn't need all of)
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "deniedMcpServers": [
+    { "serverName": "discord" },
+    { "serverName": "victoriametrics" }
+  ]
+}
+
+// validate.json (namespace TBD — see validate namespace mismatch note above)
+// If running in write namespace:
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "deniedMcpServers": [
+    { "serverName": "discord" }
+  ]
+}
+
+// execute.json (runs in write namespace — needs only bravesearch, context7, github, agent-platform)
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "deniedMcpServers": [
+    { "serverName": "discord" },
     { "serverName": "kubectl" },
-    { "serverName": "victoriametrics" },
-    { "serverName": "sre" },
-    { "serverName": "discord" },
-    { "serverName": "homeassistant" }
-  ]
-}
-
-// fix.json
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "victoriametrics" },
-    { "serverName": "sre" },
-    { "serverName": "discord" },
-    { "serverName": "homeassistant" }
-  ]
-}
-
-// validate.json
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "sre" },
-    { "serverName": "discord" },
-    { "serverName": "homeassistant" }
-  ]
-}
-
-// execute.json
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "kubectl" },
-    { "serverName": "victoriametrics" },
-    { "serverName": "sre" },
-    { "serverName": "discord" },
-    { "serverName": "homeassistant" }
+    { "serverName": "victoriametrics" }
   ]
 }
 ```
@@ -1581,8 +1577,14 @@ Adding a new repo requires adding `.mergify.yml` and configuring the repo's CLON
 
 ### Git Authentication
 
-Agent pods authenticate to GitHub via the existing Kyverno `inject-claude-agent-config` policy, which configures SSH keys and OAuth token credential helpers. The `github-token-rotation` CronJob in `github-system` namespace rotates these credentials (shared infrastructure — force-syncs ExternalSecrets in `claude-agents-write`, `claude-agents-read`, and `github-mcp` namespaces). The existing
-infrastructure handles git clone, push, and gh CLI authentication for all agent pods — no additional auth setup needed for this platform.
+Agent pods authenticate to GitHub via the existing Kyverno `inject-claude-agent-config` policy, with two transport modes:
+
+- **Write namespace (SSH):** The `inject-repo-clone-write` rule injects an init container that copies the SSH key from `/etc/git-ssh/id_ed25519`, uses `GIT_SSH_COMMAND` with strict host key checking, and runs `pre-commit install` after clone. CLONE_URL must start with `git@github.com:anthony-spruyt/`.
+- **Read + SRE namespaces (HTTPS):** The `inject-repo-clone-read` rule injects an init container that reads the access token from the mounted file `/etc/gh-credentials/access-token` and injects it into the URL as `https://x-access-token:${TOKEN}@github.com/...`. CLONE_URL must start with `https://github.com/anthony-spruyt/`.
+- **Both:** `--depth 1` shallow clone, support for `CLONE_BRANCH` env var.
+
+The `github-token-rotation` CronJob in `github-system` namespace rotates credentials every 30 minutes (two GitHub Apps: read + write), force-syncing ExternalSecrets to `claude-agents-write`, `claude-agents-read`, `claude-agents-sre`, and `github-mcp` namespaces. The `gh-config-sync` native sidecar (injected by `inject-shared-config`) copies `hosts.yml` from the secret mount to a writable emptyDir
+every 30 seconds, ensuring token rotation propagates to running agent pods.
 
 **Worker uses PAT, not App token:** The worker namespace (`agent-worker-system`) is intentionally NOT in the CronJob's `force_sync_consumers` list. The worker uses a fine-grained PAT for GitHub API access (stale SHA checks, startup reconciliation), not the rotated GitHub App token.
 
@@ -1709,37 +1711,54 @@ Deployed via bjw-s app-template HelmRelease in `agent-worker-system` namespace, 
 
 Agent pods run in dedicated namespaces with full infrastructure already deployed:
 
-| Namespace             | Credential tier      | Used by          |
-| --------------------- | -------------------- | ---------------- |
-| `claude-agents-read`  | `claude-agent-read`  | triage, validate |
-| `claude-agents-write` | `claude-agent-write` | fix, execute     |
+| Namespace             | Credential tier      | Kyverno priority class | Used by                   |
+| --------------------- | -------------------- | ---------------------- | ------------------------- |
+| `claude-agents-read`  | `claude-agent-read`  | `low-priority`         | triage, validate          |
+| `claude-agents-write` | `claude-agent-write` | `standard`             | fix, execute              |
+| `claude-agents-sre`   | SRE-specific         | `high-priority`        | SRE agents (not platform) |
+
+**Priority classes:** Kyverno injects priority classes per namespace via `strip-explicit-priority` (removes any explicit `spec.priority`), `inject-read-priority`, and `inject-write-priority` rules. SRE priority is injected by `inject-sre-mcp`. Agent pods rely on these priority classes for descheduler eviction ordering — agent pod namespaces are intentionally NOT excluded from descheduler.
+
+**OpenTelemetry:** All agent pods receive OTel instrumentation via the `inject-shared-config` Kyverno rule: `CLAUDE_CODE_ENABLE_TELEMETRY=1`, `CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1`, plus per-signal exporters (metrics to VMSingle, logs to VictoriaLogs, traces to VictoriaTraces). `OTEL_RESOURCE_ATTRIBUTES` includes per-pod namespace tags.
 
 Existing infrastructure per namespace (via `claude-agents-shared` base + Kyverno):
 
-- **CNP:** Egress to kube-api, world, all MCP servers (kubectl, victoriametrics, github, discord, brave-search), n8n webhook (agent-platform MCP endpoint)
+- **CNP (shared base):** Egress to kube-api, world, github-mcp, brave-search-mcp, and OTLP endpoints (vmsingle, vlogs, vtraces)
+- **CNP (write namespace):** Additional egress to kubectl-mcp, victoriametrics-mcp, discord-mcp
+- **CNP (SRE namespace):** Additional egress to kubectl-mcp, victoriametrics-mcp, discord-mcp, n8n-mcp
+- **CNP (agent-platform MCP):** Read and write namespaces currently lack n8n MCP egress. A new CNP is required before platform deployment — see Phase 1
 - **RBAC:** `claude-agent` ServiceAccount, `claude-pod-manager` Role bound to n8n SA for pod lifecycle management
-- **Kyverno `inject-claude-agent-config`:** Mutates agent pods to inject GitHub credentials, MCP config, settings profiles, and environment variables. The `inject-repo-clone` rule additionally injects a git-clone init container (`git clone --depth 1`), but only when the pod's first container has a `CLONE_URL` env var set AND the URL starts with `git@github.com:anthony-spruyt/` — platform agent
-  pods MUST set `CLONE_URL` for repo cloning to work. Multi-org support would require updating this prefix precondition. **Shallow clone caveat:** `--depth 1` is sufficient for triage (read-only), fix (pushes new commits), execute (new branch), and validate (reads HEAD). For revert-fix, the commit to revert is typically HEAD of main (validation just failed on it), so `--depth 1` works. If main
-  moves between validation failure and revert dispatch, the revert agent prompt should include `git fetch --deepen=10` as a fallback if the target commit is not in the shallow history
+- **Kyverno `inject-claude-agent-config`:** Nine rules mutate agent pods:
+  - `inject-shared-config` — shared volumes/env/mounts for all namespaces (read, write, sre): GitHub credentials, settings profiles, `gh-config-sync` native sidecar (restartPolicy: Always, copies `hosts.yml` from secret to writable emptyDir every 30s for token rotation propagation), and environment variables (`GH_CONFIG_DIR`, `GIT_CONFIG_GLOBAL`, `MCP_TIMEOUT`, `CONTEXT7_API_KEY`, full OTel stack)
+  - `inject-read-mcp` — mounts `claude-mcp-config-read` ConfigMap at `/etc/mcp` (servers: bravesearch, context7, github)
+  - `inject-write-mcp` — mounts `claude-mcp-config-write` ConfigMap at `/etc/mcp`, injects SSH key volume, and full gitconfig (servers: bravesearch, context7, discord, github, kubectl, victoriametrics)
+  - `inject-sre-mcp` — mounts `claude-mcp-config-sre` ConfigMap at `/etc/mcp`, injects `SRE_MCP_AUTH_TOKEN`, sets high-priority (servers: bravesearch, context7, discord, github, kubectl, sre, victoriametrics)
+  - `strip-explicit-priority` — removes any explicit `spec.priority` from agent pods
+  - `inject-read-priority` — sets `low-priority` on read namespace pods
+  - `inject-write-priority` — sets `standard` on write namespace pods
+  - `inject-repo-clone-write` — SSH clone init container for write namespace: copies SSH key from `/etc/git-ssh/id_ed25519`, uses `GIT_SSH_COMMAND`, runs `pre-commit install`. CLONE_URL must start with `git@github.com:anthony-spruyt/`
+  - `inject-repo-clone-read` — HTTPS clone init container for read + sre namespaces: reads access token from `/etc/gh-credentials/access-token`, injects into URL as `https://x-access-token:${TOKEN}@github.com/...`. CLONE_URL must start with `https://github.com/anthony-spruyt/`
+  - Both clone rules support `CLONE_BRANCH` env var and use `--depth 1` shallow clone
+- **Shallow clone caveat:** `--depth 1` is sufficient for triage (read-only), fix (pushes new commits), execute (new branch), and validate (reads HEAD). For revert-fix, the commit to revert is typically HEAD of main (validation just failed on it), so `--depth 1` works. If main moves between validation failure and revert dispatch, the revert agent prompt should include `git fetch --deepen=10` as a
+  fallback if the target commit is not in the shallow history
 - **Settings profiles:** Mounted at `/etc/claude/settings/` from `claude-settings-profiles` ConfigMap
-- **PSA:** `restricted` enforcement on both namespaces
-- **Descheduler:** Excluded via label
+- **PSA:** `restricted` enforcement on all namespaces
 
-This infrastructure is proven in production — SRE agents already clone repos, run analysis, and interact with MCP servers in these namespaces daily. The platform reuses the identical pod lifecycle (Kyverno mutation, init container clone, settings mount, credential injection) with no changes to namespace-level infrastructure.
+This infrastructure is proven in production — SRE agents already clone repos, run analysis, and interact with MCP servers in these namespaces daily. The platform reuses the identical pod lifecycle (Kyverno mutation, init container clone, settings mount, credential injection) with minimal changes to namespace-level infrastructure (new CNP for agent-platform MCP endpoint, new settings profiles).
 
-n8n selects namespace at dispatch time based on credential tier. No new namespace infrastructure needed for this platform — only new settings profiles (`triage.json`, `fix.json`, `validate.json`, `execute.json`) added to existing ConfigMap.
+n8n selects namespace at dispatch time based on credential tier. New settings profiles (`triage.json`, `fix.json`, `validate.json`, `execute.json`) are added to the existing ConfigMap. A new CNP for agent-platform MCP egress is required in both read and write namespaces (see Phase 1).
 
 ### Worker Namespace and Network Policy
 
 Worker lives in its own namespace for isolation. Tight CNP:
 
-| Direction | Target                       | Port | Purpose                                                                                            |
-| --------- | ---------------------------- | ---- | -------------------------------------------------------------------------------------------------- |
-| Egress    | Agent Valkey (same ns)       | 6379 | BullMQ queue ops (namespace-local, no cross-namespace CNP needed)                                  |
-| Egress    | n8n (n8n-system)             | 5678 | Dispatch webhook. CNP targets pod port (5678) not Service port (80) — Cilium L4 matches after DNAT |
-| Egress    | kube-dns (L7 DNS)            | 53   | Companion rule for toFQDNs — populates FQDN cache. Requires dns matchPattern rule                  |
-| Egress    | api.github.com (HTTPS)       | 443  | Stale SHA check. Uses toFQDNs — tighter than toEntities world. Requires companion DNS L7 rule      |
-| Ingress   | From n8n (n8n-system) only   | 3000 | Job submission /jobs, callbacks /jobs/:id/done, /jobs/:id/fail                                     |
+| Direction | Target                     | Port | Purpose                                                                                            |
+| --------- | -------------------------- | ---- | -------------------------------------------------------------------------------------------------- |
+| Egress    | Agent Valkey (same ns)     | 6379 | BullMQ queue ops (namespace-local, no cross-namespace CNP needed)                                  |
+| Egress    | n8n (n8n-system)           | 5678 | Dispatch webhook. CNP targets pod port (5678) not Service port (80) — Cilium L4 matches after DNAT |
+| Egress    | kube-dns (L7 DNS)          | 53   | Companion rule for toFQDNs — populates FQDN cache. Requires dns matchPattern rule                  |
+| Egress    | api.github.com (HTTPS)     | 443  | Stale SHA check. Uses toFQDNs — tighter than toEntities world. Requires companion DNS L7 rule      |
+| Ingress   | From n8n (n8n-system) only | 3000 | Job submission /jobs, callbacks /jobs/:id/done, /jobs/:id/fail                                     |
 
 No kube API access. n8n dispatches agent pods, not the worker. No egress to `valkey-system` — agent Valkey is namespace-local.
 
@@ -1978,7 +1997,7 @@ Readiness probe uses `/readyz` — if Valkey is down, the worker cannot process 
 Both use Kubernetes Service DNS. Internal cluster traffic only — no ingress exposure for the worker API.
 
 **n8n webhook architecture (important context):** n8n's Helm chart deploys three pod types: `master` (UI + API), `webhook` (webhook intake), and `worker` (execution). Each has a dedicated Service with selector `app.kubernetes.io/type: {master|webhook|worker}`. The `n8n-webhook` Service (port 80 → targetPort 5678) routes to the webhook pod. MCP endpoints and webhook paths are defined by n8n
-workflows — they exist when the workflow is active, not as static infrastructure. The SRE MCP endpoint in `claude-mcp-config.yaml` already uses `n8n-webhook.n8n-system.svc` and works in production. The `agent-platform` MCP endpoint will use the same Service once the dispatch workflow is created in Phase 2.
+workflows — they exist when the workflow is active, not as static infrastructure. The SRE MCP endpoint in `claude-mcp-config-sre.yaml` already uses `n8n-webhook.n8n-system.svc` and works in production. The `agent-platform` MCP endpoint will use the same Service once the dispatch workflow is created in Phase 2.
 
 ## Observability
 
@@ -2087,9 +2106,10 @@ Service for Bull Board ingress. Resource limits: 128Mi memory (Node.js Express a
    cost is minimal. On GitHub API failure, log warning and proceed with empty list — reconciliation is defense-in-depth
 1. Queue staleness alert: Prometheus alert on `agent_queue_depth > 0` sustained for longer than 75 minutes (max role timeout + buffer). Catches stuck queue regardless of cause (Kyverno mutation failure, orphaned job, Valkey lock leak)
 1. Worker crash-loop alert: `kube_pod_container_status_restarts_total` alert — 3+ restarts in 15 minutes → Discord critical alert
-1. Add `agent-platform` MCP server entry to `claude-agents-shared/base/claude-mcp-config.yaml` with `AGENT_PLATFORM_MCP_AUTH_TOKEN` header variable (see Platform MCP Server section). Without this, agents cannot call handoff tools
-1. Settings profile cleanup: remove `renovate-triage.json`, `renovate-write.json`, `pr.json`, `dev.json`, `admin.json` from `cluster/apps/claude-agents-shared/base/settings/` and `configMapGenerator`. Remove `{ "serverName": "renovate" }` from `sre.json` and add `{ "serverName": "agent-platform" }` to `sre.json`. Create `triage.json`, `fix.json`, `validate.json`, `execute.json` (exact content in
-   Profile Naming and Coexistence section). Add to `configMapGenerator`. Zero `renovate` references must remain in any settings profile after this step. Phase 2 depends on these
+1. Add `agent-platform` MCP server entry to `claude-agents-shared/base/claude-mcp-config-read.yaml` AND `claude-mcp-config-write.yaml` with `AGENT_PLATFORM_MCP_AUTH_TOKEN` header variable (see Platform MCP Server section). Do NOT add to `claude-mcp-config-sre.yaml` — SRE agents don't use platform handoff. Without this, agents cannot call handoff tools. Also add n8n MCP egress CNP to shared base
+   network policies (or individually to read and write namespaces) to allow agent pods to reach the n8n webhook endpoint
+1. Settings profile cleanup: `renovate-triage.json` and `renovate-write.json` already removed. Remove remaining dead profiles: `pr.json`, `dev.json`, `admin.json` from `cluster/apps/claude-agents-shared/base/settings/` and `configMapGenerator`. Add `{ "serverName": "agent-platform" }` to `sre.json` `deniedMcpServers` (SRE agents don't use platform handoff — `sre.json` is currently empty, just
+   `$schema`). Create `triage.json`, `fix.json`, `validate.json`, `execute.json` (exact content in Profile Naming and Coexistence section). Add to `configMapGenerator`. Phase 2 depends on these
 1. Add explicit `securityContext` to git-clone init container in `inject-claude-agent-config` Kyverno policy as defense-in-depth: `allowPrivilegeEscalation: false`, `readOnlyRootFilesystem: false` (needs to write /tmp for SSH key), `capabilities.drop: ["ALL"]`, `runAsNonRoot: true`. Currently relies on `pss-restricted-defaults` reinvocation (`reinvocationPolicy: IfNeeded`) which works today but is
    fragile — Kyverno upgrade could change reinvocation ordering silently. Explicit securityContext makes the init container self-sufficient for PSS compliance
 1. Add `agent-worker-system` namespace to all 5 descheduler per-plugin exclusion lists in `cluster/apps/kube-system/descheduler/app/values.yaml`: `RemoveDuplicates`, `RemovePodsViolatingTopologySpreadConstraint`, `RemoveFailedPods`, `RemovePodsHavingTooManyRestarts`, `LowNodeUtilization`. Single-replica worker — eviction causes unnecessary downtime
@@ -2164,129 +2184,54 @@ When adding a future role:
 
 ## Risks and Mitigations
 
-**Risk: Prompt injection via PR content**
-Mitigation: Defense in depth: MCP schema validation, n8n sanity checks, system prompt hardening,
-Mergify requires multiple signals.
+**Risk: Prompt injection via PR content** Mitigation: Defense in depth: MCP schema validation, n8n sanity checks, system prompt hardening, Mergify requires multiple signals.
 
-**Risk: Agent crashes mid-work**
-Mitigation: Processor timeout fires via Promise.race, auto-retries.
-Orphaned agent callbacks discarded via stale detection.
+**Risk: Agent crashes mid-work** Mitigation: Processor timeout fires via Promise.race, auto-retries. Orphaned agent callbacks discarded via stale detection.
 
-**Risk: Mergify rebase invalidates verdict**
-Mitigation: BullMQ worker stale SHA check before dispatch.
+**Risk: Mergify rebase invalidates verdict** Mitigation: BullMQ worker stale SHA check before dispatch.
 
-**Risk: GitHub API rate limits**
-Mitigation: PAT rate limit 5000/hr (worker), App rate limit 5000/hr (n8n),
-BullMQ concurrency limits, delay between writes.
+**Risk: GitHub API rate limits** Mitigation: PAT rate limit 5000/hr (worker), App rate limit 5000/hr (n8n), BullMQ concurrency limits, delay between writes.
 
-**Risk: BullMQ worker crash**
-Mitigation: Kubernetes restarts pod. Valkey persists queue state (AOF enabled).
-Active jobs stall after 2min (lockDuration), re-queue automatically.
-Three-state `dispatch_state` field (`pending`/`dispatched`/`failed`) prevents duplicate agent spawns.
-Late callbacks cache result in Valkey; re-queued processor picks up cached result. No job loss.
+**Risk: BullMQ worker crash** Mitigation: Kubernetes restarts pod. Valkey persists queue state (AOF enabled). Active jobs stall after 2min (lockDuration), re-queue automatically. Three-state `dispatch_state` field (`pending`/`dispatched`/`failed`) prevents duplicate agent spawns. Late callbacks cache result in Valkey; re-queued processor picks up cached result. No job loss.
 
-**Risk: Worker HTTP API abuse**
-Mitigation: Separate per-direction auth secrets on all mutating endpoints.
-CNP restricts ingress to n8n only. Per-repo rate limit (10/hr) catches integration bugs.
+**Risk: Worker HTTP API abuse** Mitigation: Separate per-direction auth secrets on all mutating endpoints. CNP restricts ingress to n8n only. Per-repo rate limit (10/hr) catches integration bugs.
 
-**Risk: Orphaned agents on retry**
-Mitigation: Stale detection at MCP callback (SHA-based for PR roles).
-Execute uses `dispatched_at` discriminator to reject late callbacks from previous attempts.
+**Risk: Orphaned agents on retry** Mitigation: Stale detection at MCP callback (SHA-based for PR roles). Execute uses `dispatched_at` discriminator to reject late callbacks from previous attempts.
 
-**Risk: Validate re-check loop**
-Mitigation: Bounded to 3 re-validates max.
+**Risk: Validate re-check loop** Mitigation: Bounded to 3 re-validates max.
 
-**Risk: MCP handoff failure**
-Mitigation: Both tiers: agent posts PR comment as fallback.
-Read: n8n calls /jobs/:id/fail, BullMQ retries.
-Write: same + PR comment with details. Processor timeout catches total agent crash.
+**Risk: MCP handoff failure** Mitigation: Both tiers: agent posts PR comment as fallback. Read: n8n calls /jobs/:id/fail, BullMQ retries. Write: same + PR comment with details. Processor timeout catches total agent crash.
 
-**Risk: Discord unavailable**
-Mitigation: "blocked" signals durably in GitHub label + PR comment.
+**Risk: Discord unavailable** Mitigation: "blocked" signals durably in GitHub label + PR comment.
 
-**Risk: Agent Valkey downtime**
-Mitigation: Worker depends on dedicated agent Valkey (same namespace).
-Agent Valkey outage halts job processing but does not affect n8n or Authentik (separate instance).
-GitHub retries webhooks for up to 3 days — system self-heals when Valkey returns.
-BullMQ uses ioredis with automatic reconnection (`maxRetriesPerRequest: null`,
-`retryStrategy` with exponential backoff).
-Worker readiness probe (`/readyz`) returns 503 during Valkey outage, stopping traffic.
-Liveness probe (`/livez`) stays healthy — pod is NOT restarted,
-preserving in-memory callbacks for active jobs.
-ioredis reconnects automatically when Valkey returns.
-AOF persistence (`appendfsync everysec`) with Ceph-backed PVC survives pod restarts.
-Data loss window: up to 1 second of writes on crash.
-On total Valkey data loss, worker startup reconciliation seeds revert-depth
-from GitHub labels (see Valkey Architecture section).
+**Risk: Agent Valkey downtime** Mitigation: Worker depends on dedicated agent Valkey (same namespace). Agent Valkey outage halts job processing but does not affect n8n or Authentik (separate instance). GitHub retries webhooks for up to 3 days — system self-heals when Valkey returns. BullMQ uses ioredis with automatic reconnection (`maxRetriesPerRequest: null`, `retryStrategy` with exponential
+backoff). Worker readiness probe (`/readyz`) returns 503 during Valkey outage, stopping traffic. Liveness probe (`/livez`) stays healthy — pod is NOT restarted, preserving in-memory callbacks for active jobs. ioredis reconnects automatically when Valkey returns. AOF persistence (`appendfsync everysec`) with Ceph-backed PVC survives pod restarts. Data loss window: up to 1 second of writes on crash.
+On total Valkey data loss, worker startup reconciliation seeds revert-depth from GitHub labels (see Valkey Architecture section).
 
-**Risk: n8n restart mid-agent**
-Mitigation: MCP endpoints are stateless webhooks — no dispatch-to-callback execution state needed.
-Agent pod lifecycle independent of n8n. Agent retries MCP calls on transient failure.
-If n8n stays down past agent lifetime, both tiers post PR comment as fallback,
-BullMQ processor timeout fires, job retried. See MCP Handoff section.
+**Risk: n8n restart mid-agent** Mitigation: MCP endpoints are stateless webhooks — no dispatch-to-callback execution state needed. Agent pod lifecycle independent of n8n. Agent retries MCP calls on transient failure. If n8n stays down past agent lifetime, both tiers post PR comment as fallback, BullMQ processor timeout fires, job retried. See MCP Handoff section.
 
-**Risk: Triage-fix-triage loop (all succeed)**
-Mitigation: Per-repo rate limit (Phase 1): 10 jobs/repo/hour max.
-Fix-count cap of 2 catches fix-specific loops.
-Per-PR dispatch cap (Phase 5) catches per-PR loops.
-Multiple layers prevent both broad integration bugs and narrow convergence failures.
+**Risk: Triage-fix-triage loop (all succeed)** Mitigation: Per-repo rate limit (Phase 1): 10 jobs/repo/hour max. Fix-count cap of 2 catches fix-specific loops. Per-PR dispatch cap (Phase 5) catches per-PR loops. Multiple layers prevent both broad integration bugs and narrow convergence failures.
 
-**Risk: Duplicate webhook events**
-Mitigation: Three-layer dedup:
-(1) Valkey completion lock blocks recently completed jobs (1h),
-(2) Valkey active lock blocks active duplicates,
-(3) BullMQ v5 simple-mode dedup blocks while job is in queue/active state.
-Phase 5 adds webhook GUID dedup for late redeliveries beyond 1h window.
-n8n responds 503 to GitHub on 429/503 from worker — preserves at-least-once delivery semantics.
-**Known gap:** between completion lock expiry (~1h) and Phase 5 GUID dedup,
-redelivered webhooks create duplicate jobs — cost impact only,
-stale detection prevents incorrect outcomes.
+**Risk: Duplicate webhook events** Mitigation: Three-layer dedup: (1) Valkey completion lock blocks recently completed jobs (1h), (2) Valkey active lock blocks active duplicates, (3) BullMQ v5 simple-mode dedup blocks while job is in queue/active state. Phase 5 adds webhook GUID dedup for late redeliveries beyond 1h window. n8n responds 503 to GitHub on 429/503 from worker — preserves
+at-least-once delivery semantics. **Known gap:** between completion lock expiry (~1h) and Phase 5 GUID dedup, redelivered webhooks create duplicate jobs — cost impact only, stale detection prevents incorrect outcomes.
 
-**Risk: Stale results from write agents**
-Mitigation: Accept work (already pushed), re-enqueue triage/validate to verify. No work lost.
+**Risk: Stale results from write agents** Mitigation: Accept work (already pushed), re-enqueue triage/validate to verify. No work lost.
 
-**Risk: Unbounded fix loop**
-Mitigation: Fix attempt counter per PR in Valkey
-(key: `agent:fix-count:{repo}:{pr}`, TTL: 2h).
-After 2 fix attempts, label `blocked` + Discord.
-Counter is keyed on `{repo}:{pr}` not per-SHA — a new push does NOT reset the counter.
-The 2h TTL is the only reset mechanism.
-2h is short enough to unblock legitimate retries after upstream fixes
-(Renovate rebase with new version) while still catching tight fix loops.
-Most Renovate PRs resolve within hours.
-Additionally, per-PR dispatch cap (Phase 5) catches triage-fix-triage loops
-where all jobs succeed but PR never converges.
+**Risk: Unbounded fix loop** Mitigation: Fix attempt counter per PR in Valkey (key: `agent:fix-count:{repo}:{pr}`, TTL: 2h). After 2 fix attempts, label `blocked` + Discord. Counter is keyed on `{repo}:{pr}` not per-SHA — a new push does NOT reset the counter. The 2h TTL is the only reset mechanism. 2h is short enough to unblock legitimate retries after upstream fixes (Renovate rebase with new
+version) while still catching tight fix loops. Most Renovate PRs resolve within hours. Additionally, per-PR dispatch cap (Phase 5) catches triage-fix-triage loops where all jobs succeed but PR never converges.
 
-**Risk: Persistently failing repo**
-Mitigation: Circuit breaker: 5 failures in sliding 1h window per repo — stop enqueuing, Discord alert.
-Auto-reset when failures age out of 1h window, or manual reset via `POST /circuit/:repo/reset`.
-Note: if failures trickle in (e.g., 5 in 55min), the circuit auto-closes shortly after opening
-when the oldest failure ages out — one wasted agent run before re-opening.
-Even at concurrency 1, a wasted Opus run is $2-5.
-Phase 5 adds minimum circuit-open duration
-(10min floor via separate Valkey key `agent:circuit-opened:{repo}` with EX 600) to prevent this.
+**Risk: Persistently failing repo** Mitigation: Circuit breaker: 5 failures in sliding 1h window per repo — stop enqueuing, Discord alert. Auto-reset when failures age out of 1h window, or manual reset via `POST /circuit/:repo/reset`. Note: if failures trickle in (e.g., 5 in 55min), the circuit auto-closes shortly after opening when the oldest failure ages out — one wasted agent run before
+re-opening. Even at concurrency 1, a wasted Opus run is $2-5. Phase 5 adds minimum circuit-open duration (10min floor via separate Valkey key `agent:circuit-opened:{repo}` with EX 600) to prevent this.
 
-**Risk: Write agent push conflict**
-Mitigation: Fix agent retry gets fresh clone with current HEAD.
-Non-fast-forward = job fail — BullMQ retry. Max attempts — `blocked`.
+**Risk: Write agent push conflict** Mitigation: Fix agent retry gets fresh clone with current HEAD. Non-fast-forward = job fail — BullMQ retry. Max attempts — `blocked`.
 
-**Risk: Revert-of-revert loop**
-Mitigation: Revert depth counter in Valkey (`agent:revert-depth:{repo}`, TTL: 1h).
-Max depth 1 — second validation failure requires human intervention.
+**Risk: Revert-of-revert loop** Mitigation: Revert depth counter in Valkey (`agent:revert-depth:{repo}`, TTL: 1h). Max depth 1 — second validation failure requires human intervention.
 
-**Risk: Agent Valkey data loss**
-Mitigation: Dedicated instance with AOF persistence + Ceph-backed PVC.
-Startup reconciliation seeds `revert-depth` from GitHub labels.
-`noeviction` makes OOM visible as job failures + Discord alerts.
-Isolated from n8n/Authentik — their Valkey instance is unchanged and unaffected.
+**Risk: Agent Valkey data loss** Mitigation: Dedicated instance with AOF persistence + Ceph-backed PVC. Startup reconciliation seeds `revert-depth` from GitHub labels. `noeviction` makes OOM visible as job failures + Discord alerts. Isolated from n8n/Authentik — their Valkey instance is unchanged and unaffected.
 
-**Risk: Platform down blocks emergency reverts**
-Mitigation: Mergify `emergency/merge` escape hatch: repo admin applies label,
-bypasses `agent/triage` requirement. Documented as "break glass" procedure.
+**Risk: Platform down blocks emergency reverts** Mitigation: Mergify `emergency/merge` escape hatch: repo admin applies label, bypasses `agent/triage` requirement. Documented as "break glass" procedure.
 
-**Risk: Exhausted jobs with no re-entry path**
-Mitigation: `POST /jobs/:id/retry` endpoint for manual recovery.
-Operator sees Discord alert — checks Bull Board — retries or waits for next webhook.
+**Risk: Exhausted jobs with no re-entry path** Mitigation: `POST /jobs/:id/retry` endpoint for manual recovery. Operator sees Discord alert — checks Bull Board — retries or waits for next webhook.
 
 ## Migration from Current System
 
@@ -2311,23 +2256,22 @@ Operator sees Discord alert — checks Bull Board — retries or waits for next 
 
 The old n8n Renovate triage system is dead (workflows disabled/broken). Config artifacts still exist in cluster manifests — remove in Phase 1:
 
-| Component                                   | Location                                               | Action                                                                                  |
-| ------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `renovate` MCP server entry                 | `claude-agents-shared/base/claude-mcp-config.yaml`     | Remove `"renovate": { ... }` block                                                      |
-| `RENOVATE_MCP_AUTH_TOKEN` env var injection | `kyverno/policies/app/inject-claude-agent-config.yaml` | Remove from both `inject-write-config` and `inject-read-config` rules                   |
-| `renovate-mcp-auth-token` secret key        | `claude-agents-shared/base/mcp-credentials.sops.yaml`  | Remove key from SOPS secret                                                             |
-| `renovate-triage.json` settings profile     | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator`                                           |
-| `renovate-write.json` settings profile      | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator`                                           |
-| `pr.json` settings profile                  | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator` (dead, no active consumers)               |
-| `dev.json` settings profile                 | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator` (dead, no active consumers)               |
-| `admin.json` settings profile               | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator` (dead, no active consumers)               |
-| `renovate` deny in `sre.json`               | `claude-agents-shared/base/settings/sre.json`          | Remove `{ "serverName": "renovate" }` from `deniedMcpServers` (server no longer exists) |
+| Component                                   | Location                                               | Action                                                                                                 | Status                           |
+| ------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| `renovate` MCP server entry                 | `claude-agents-shared/base/claude-mcp-config-*.yaml`   | Remove `"renovate": { ... }` block                                                                     | DONE                             |
+| `RENOVATE_MCP_AUTH_TOKEN` env var injection | `kyverno/policies/app/inject-claude-agent-config.yaml` | Remove from Kyverno rules                                                                              | DONE                             |
+| `renovate-mcp-auth-token` secret key        | `claude-agents-shared/base/mcp-credentials.sops.yaml`  | Remove key from SOPS secret                                                                            | Likely done (SOPS, can't verify) |
+| `renovate-triage.json` settings profile     | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator`                                                          | DONE                             |
+| `renovate-write.json` settings profile      | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator`                                                          | DONE                             |
+| `pr.json` settings profile                  | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator` (dead, no active consumers)                              | Still needs doing                |
+| `dev.json` settings profile                 | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator` (dead, no active consumers)                              | Still needs doing                |
+| `admin.json` settings profile               | `claude-agents-shared/base/settings/`                  | Remove file, remove from `configMapGenerator` (dead, no active consumers)                              | Still needs doing                |
+| `renovate` deny in `sre.json`               | `claude-agents-shared/base/settings/sre.json`          | N/A — `sre.json` is empty (just `$schema`), no deny list to clean up                                   | N/A                              |
+| `agent-platform` deny in `sre.json`         | `claude-agents-shared/base/settings/sre.json`          | Add `{ "serverName": "agent-platform" }` to `deniedMcpServers` (SRE agents don't use platform handoff) | Still needs doing                |
 
-**Ordering constraint (Kyverno→SOPS):** The `RENOVATE_MCP_AUTH_TOKEN` env var injection in Kyverno references `renovate-mcp-auth-token` via `secretKeyRef`. If the SOPS secret key is removed before the Kyverno policy change reconciles, all agent pods fail to start with `CreateContainerConfigError`. **Use two commits:** first commit removes the Kyverno env var injection references, second commit
-removes the SOPS secret key. This eliminates the race — Flux reconciles the Kyverno policy change (removing the `secretKeyRef`) before the secret key disappears. Same-commit removal relies on Kyverno reconciling faster than SOPS, which is not guaranteed by Flux dependency ordering.
+**Ordering constraint (Kyverno→SOPS):** ~~The `RENOVATE_MCP_AUTH_TOKEN` env var injection in Kyverno references `renovate-mcp-auth-token` via `secretKeyRef`.~~ DONE — `RENOVATE_MCP_AUTH_TOKEN` injection has been removed from Kyverno. If the SOPS secret key has not yet been removed, do so in a follow-up commit (no ordering concern since the Kyverno reference is gone).
 
-**Ordering constraint (MCP config→profiles):** Remove the `renovate` MCP server entry from `claude-mcp-config.yaml` in the same commit as new profile creation (`triage.json`, `fix.json`, `validate.json`, `execute.json`). New profiles do not deny the `renovate` server — if the entry persists after profile deployment, agents could reach the dead endpoint with no backing workflow. Remove before or
-simultaneously with profile creation, never after.
+**Ordering constraint (MCP config→profiles):** ~~Remove the `renovate` MCP server entry from `claude-mcp-config.yaml`~~ DONE — the `renovate` MCP server entry no longer exists in any per-namespace config. New profiles (`triage.json`, `fix.json`, `validate.json`, `execute.json`) can be created independently.
 
 **No prerequisite needed** beyond the ordering above. The `renovate` MCP server was only accessible from in-cluster agent pods via n8n workflows that are already disabled and broken. Local CLI (dev container) never had access to this MCP server — removing it has zero impact on manual `renovate-pr-analyzer` or `cluster-validator` usage. The subagent update to remove `submit_triage_verdict` MCP
 references is still needed for the platform orchestrator pattern but is not a blocker for this cleanup.

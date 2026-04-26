@@ -100,6 +100,7 @@ Write to `ts/agent-queue-worker/tsconfig.json`.
 ```text
 node_modules
 dist
+bull-board
 *.md
 .git
 ```
@@ -202,8 +203,12 @@ export interface JobResult {
 export function buildJobId(data: AgentJob): string {
   const { role, repo, pr_number, issue_number, head_sha } = data;
   if (role === 'validate') return `${repo}:main:validate:${head_sha}`;
-  if (role === 'execute') return `${repo}:${issue_number}:execute`;
+  if (role === 'execute') {
+    if (!issue_number) throw new Error('issue_number required for execute jobs');
+    return `${repo}:${issue_number}:execute`;
+  }
   if (data.payload?.revert) return `${repo}:${head_sha}:revert:fix`;
+  if (!pr_number) throw new Error(`pr_number required for ${role} jobs`);
   return `${repo}:${pr_number}:${head_sha}:${role}`;
 }
 
@@ -617,6 +622,7 @@ export class Processor {
     }
 
     const timer = metrics.jobDuration.startTimer({ queue: 'agent', role });
+    const deadline = this.rejectAfter(timeout, `Job ${job.id} timed out after ${timeout}ms`);
 
     try {
       const cached = await this.redis.get(`agent:result:${job.id}:${job.attemptsMade}`);
@@ -646,7 +652,7 @@ export class Processor {
         dispatchState === 'dispatched'
           ? this.awaitCallbackWithCachePoll(job.id!, job.attemptsMade)
           : this.dispatchAndAwaitCallback(job.id!, job.data, job),
-        this.rejectAfter(timeout, `Job ${job.id} timed out after ${timeout}ms`),
+        deadline.promise,
       ]);
 
       logger.info('Job completed', { ...fields, status: result.status });
@@ -661,6 +667,7 @@ export class Processor {
       logger.error('Job failed', { ...fields, error: String(err) });
       throw err;
     } finally {
+      deadline.clear();
       timer();
       const resolver = this.callbacks.get(job.id!);
       if (resolver) resolver({ status: 'cancelled' });
@@ -758,10 +765,12 @@ export class Processor {
     });
   }
 
-  private rejectAfter(ms: number, message: string): Promise<never> {
-    return new Promise((_, reject) => {
-      setTimeout(() => reject(new Error(message)), ms);
+  private rejectAfter(ms: number, message: string): { promise: Promise<never>; clear: () => void } {
+    let timer: NodeJS.Timeout;
+    const promise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
     });
+    return { promise, clear: () => clearTimeout(timer!) };
   }
 }
 ```
@@ -914,7 +923,7 @@ export class Router {
     if (entity && data.role !== 'execute') await this.supersedeOlderJobs(data.repo, entity, data.head_sha, data.role);
 
     try {
-      const job = await this.queue.add(data.role, data, {
+      await this.queue.add(data.role, data, {
         jobId,
         deduplication: { id: jobId },
         attempts: 2,
@@ -923,11 +932,6 @@ export class Router {
         removeOnFail: { age: 604_800, count: 500 },
         priority: data.priority,
       });
-
-      if (!job) {
-        metrics.dedupCounter.inc({ queue: 'agent', role: data.role });
-        return this.json(res, 409, { added: false, reason: 'waiting' });
-      }
 
       await this.redis.zadd(rateKey, Date.now(), jobId);
       await this.redis.expire(rateKey, 3600);
@@ -1234,7 +1238,7 @@ async function shutdown(): Promise<void> {
   // Best-effort — don't block shutdown if Discord/n8n is unreachable
 
   clearInterval(depthInterval);
-  server.close();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
 
   await worker.close();
   await queueEvents.close();
@@ -1596,11 +1600,13 @@ Write to `cluster/apps/agent-worker-system/agent-queue-worker/app/release.yaml`.
 ---
 defaultPodOptions:
   automountServiceAccountToken: false
+  priorityClassName: standard
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000
     runAsGroup: 1000
     fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
     seccompProfile:
       type: RuntimeDefault
 controllers:
@@ -1938,6 +1944,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: agent-queue-worker
       app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
   namespaceSelector:
     matchNames:
       - agent-worker-system
@@ -2001,17 +2008,28 @@ Write to `cluster/apps/agent-worker-system/agent-queue-worker/app/vpa.yaml`.
 
 - [ ] **Step 3: Update kustomization.yaml**
 
-Add `./servicemonitor.yaml` to the resources list in the existing `cluster/apps/agent-worker-system/agent-queue-worker/app/kustomization.yaml` (created in Phase 1A Task 18). The final resources list should be:
+Complete kustomization.yaml including `configMapGenerator` from Phase 1A Task 18. Add `./servicemonitor.yaml` and `./vpa.yaml` to the resources list in the existing `cluster/apps/agent-worker-system/agent-queue-worker/app/kustomization.yaml`:
 
 ```yaml
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
   - ./release.yaml
   - ./network-policies.yaml
-  - ./prometheusrule.yaml
+  - ./vmrule.yaml
   - ./vpa.yaml
   - ./secret-reader-rbac.yaml
   - ./servicemonitor.yaml
   - ./agent-queue-worker-secrets.sops.yaml
+configMapGenerator:
+  - name: agent-queue-worker-values
+    namespace: agent-worker-system
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
 ```
 
 Note: `agent-queue-worker-secrets.sops.yaml` is added after user creates the SOPS secret (Phase 1A Task 20).
@@ -2095,7 +2113,7 @@ Expected: connections succeed (HTTP response received, content may vary)
 - [ ] **Step 7: Verify observability resources**
 
 ```bash
-kubectl get vpa,servicemonitor,prometheusrule -n agent-worker-system
+kubectl get vpa,servicemonitor,vmrule -n agent-worker-system
 ```
 
-Expected: 2 VPAs, 1 ServiceMonitor, 1 PrometheusRule
+Expected: 2 VPAs, 1 ServiceMonitor, 1 VMRule

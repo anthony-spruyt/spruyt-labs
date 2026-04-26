@@ -6,7 +6,7 @@
 
 **Architecture:** GitOps-first. All changes are Flux-reconciled YAML manifests in `cluster/`. Two-commit ordering for Kyverno→SOPS dependency. Settings profile cleanup removes dead artifacts, creates new role-based profiles. Dedicated agent Valkey instance with AOF persistence isolated from shared Valkey.
 
-**Tech Stack:** Flux, Kustomize, Helm (Valkey chart, app-template), Cilium CNP, Kyverno, SOPS/Age, ExternalSecrets, VPA, PrometheusRule
+**Tech Stack:** Flux, Kustomize, Helm (Valkey chart, app-template), Cilium CNP, Kyverno, SOPS/Age, ExternalSecrets, VPA, VMRule
 
 **Spec reference:** `docs/superpowers/specs/2026-04-22-agent-orchestration-platform-design.md`
 
@@ -16,7 +16,7 @@ ______________________________________________________________________
 
 ### Task 1: Settings Profile Cleanup — Remove Dead Profiles
 
-Remove dead settings profiles that have zero active consumers.
+Remove dead settings profiles that have zero active consumers. Note: `renovate-triage.json` and `renovate-write.json` have already been removed from the codebase -- only three stubs remain.
 
 **Files:**
 
@@ -26,10 +26,6 @@ Remove dead settings profiles that have zero active consumers.
 
 - Delete: `cluster/apps/claude-agents-shared/base/settings/pr.json`
 
-- Delete: `cluster/apps/claude-agents-shared/base/settings/renovate-triage.json`
-
-- Delete: `cluster/apps/claude-agents-shared/base/settings/renovate-write.json`
-
 - Modify: `cluster/apps/claude-agents-shared/base/kustomization.yaml`
 
 - [ ] **Step 1: Delete dead profile files**
@@ -38,8 +34,6 @@ Remove dead settings profiles that have zero active consumers.
 git rm cluster/apps/claude-agents-shared/base/settings/admin.json
 git rm cluster/apps/claude-agents-shared/base/settings/dev.json
 git rm cluster/apps/claude-agents-shared/base/settings/pr.json
-git rm cluster/apps/claude-agents-shared/base/settings/renovate-triage.json
-git rm cluster/apps/claude-agents-shared/base/settings/renovate-write.json
 ```
 
 - [ ] **Step 2: Remove dead profiles from configMapGenerator**
@@ -51,8 +45,6 @@ In `cluster/apps/claude-agents-shared/base/kustomization.yaml`, remove these lin
       - settings/admin.json
       - settings/dev.json
       - settings/pr.json
-      - settings/renovate-triage.json
-      - settings/renovate-write.json
 ```
 
 After removal, the `files` list should contain only:
@@ -95,18 +87,22 @@ Create four role-based settings profiles for the platform.
 
 - Modify: `cluster/apps/claude-agents-shared/base/kustomization.yaml`
 
+MCP configs are now per-namespace. Each profile only needs to deny servers that ARE in its namespace's config but should not be available for that role:
+
+- **Read namespace** has: bravesearch, context7, github (+ agent-platform after Task 6)
+
+- **Write namespace** has: bravesearch, context7, discord, github, kubectl, victoriametrics (+ agent-platform after Task 6)
+
+- **SRE namespace** has: bravesearch, context7, discord, github, kubectl, sre, victoriametrics
+
 - [ ] **Step 1: Create triage.json**
+
+Triage runs in read namespace. All read-namespace servers are needed -- deny nothing.
 
 ```json
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "kubectl" },
-    { "serverName": "victoriametrics" },
-    { "serverName": "sre" },
-    { "serverName": "discord" },
-    { "serverName": "homeassistant" }
-  ]
+  "deniedMcpServers": []
 }
 ```
 
@@ -114,14 +110,14 @@ Write to `cluster/apps/claude-agents-shared/base/settings/triage.json`.
 
 - [ ] **Step 2: Create fix.json**
 
+Fix runs in write namespace. Discord and victoriametrics are not needed for code-fix agents.
+
 ```json
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "deniedMcpServers": [
-    { "serverName": "victoriametrics" },
-    { "serverName": "sre" },
     { "serverName": "discord" },
-    { "serverName": "homeassistant" }
+    { "serverName": "victoriametrics" }
   ]
 }
 ```
@@ -130,14 +126,13 @@ Write to `cluster/apps/claude-agents-shared/base/settings/fix.json`.
 
 - [ ] **Step 3: Create validate.json**
 
+Validate runs in read namespace. All read-namespace servers are needed. **Known gap:** validate agents need kubectl + victoriametrics access for cluster validation, but the read namespace MCP config does not include these servers. This requires either: (a) running validate in the write namespace, or (b) adding kubectl + victoriametrics to `claude-mcp-config-read.yaml`. This is a separate task --
+for now the profile denies nothing since read namespace has no servers that need restricting.
+
 ```json
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "sre" },
-    { "serverName": "discord" },
-    { "serverName": "homeassistant" }
-  ]
+  "deniedMcpServers": []
 }
 ```
 
@@ -145,15 +140,15 @@ Write to `cluster/apps/claude-agents-shared/base/settings/validate.json`.
 
 - [ ] **Step 4: Create execute.json**
 
+Execute runs in write namespace. Discord, kubectl, and victoriametrics are not needed for code execution agents.
+
 ```json
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "deniedMcpServers": [
-    { "serverName": "kubectl" },
-    { "serverName": "victoriametrics" },
-    { "serverName": "sre" },
     { "serverName": "discord" },
-    { "serverName": "homeassistant" }
+    { "serverName": "kubectl" },
+    { "serverName": "victoriametrics" }
   ]
 }
 ```
@@ -202,9 +197,9 @@ git add cluster/apps/claude-agents-shared/base/settings/triage.json \
        cluster/apps/claude-agents-shared/base/kustomization.yaml
 git commit -m "feat(agents): replace dead settings profiles with platform role profiles
 
-Remove admin.json, dev.json, pr.json, renovate-triage.json, renovate-write.json
-(zero active consumers). Create triage.json, fix.json, validate.json, execute.json
-for agent orchestration platform roles.
+Remove admin.json, dev.json, pr.json (zero active consumers). Create
+triage.json, fix.json, validate.json, execute.json for agent orchestration
+platform roles with per-namespace deny lists.
 
 Ref #<issue>"
 ```
@@ -213,7 +208,9 @@ Note: Tasks 1 and 2 are combined into a single commit since removing and creatin
 
 ______________________________________________________________________
 
-### Task 3: Update sre.json — Remove Dead renovate Deny, Add agent-platform Deny
+### Task 3: Update sre.json — Add agent-platform Deny
+
+`sre.json` is currently an empty stub (just `$schema`). No `renovate` deny exists to remove -- that was already cleaned up. The only change is adding the `agent-platform` deny.
 
 **Files:**
 
@@ -221,114 +218,80 @@ ______________________________________________________________________
 
 - [ ] **Step 1: Read current sre.json**
 
-```bash
-cat cluster/apps/claude-agents-shared/base/settings/sre.json
+Verify it is an empty stub with only `$schema`.
+
+- [ ] **Step 2: Add `deniedMcpServers` with `agent-platform` deny**
+
+SRE agents don't use platform handoff tools. Update `sre.json` to:
+
+```json
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "deniedMcpServers": [
+    { "serverName": "agent-platform" }
+  ]
+}
 ```
 
-- [ ] **Step 2: Remove `{ "serverName": "renovate" }` from deniedMcpServers**
-
-The `renovate` MCP server is being removed — denying a nonexistent server is harmless but confusing.
-
-- [ ] **Step 3: Add `{ "serverName": "agent-platform" }` to deniedMcpServers**
-
-SRE agents don't use platform handoff tools.
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 git add cluster/apps/claude-agents-shared/base/settings/sre.json
-git commit -m "chore(agents): update sre.json deny list for platform migration
+git commit -m "chore(agents): add agent-platform deny to sre.json
 
-Remove dead renovate server deny, add agent-platform deny (SRE agents
-don't use platform handoff).
+SRE agents don't use platform handoff. Add agent-platform to
+deniedMcpServers.
 
 Ref #<issue>"
 ```
 
 ______________________________________________________________________
 
-### Task 4: Remove Dead Renovate MCP Server Entry
+### Task 4: ~~Remove Dead Renovate MCP Server Entry~~ ✅ DONE
 
-**Files:**
+**Status:** Already completed. The monolithic `claude-mcp-config.yaml` no longer exists -- it was split into three per-namespace ConfigMaps:
 
-- Modify: `cluster/apps/claude-agents-shared/base/claude-mcp-config.yaml`
+- `cluster/apps/claude-agents-shared/base/claude-mcp-config-read.yaml` (bravesearch, context7, github)
+- `cluster/apps/claude-agents-shared/base/claude-mcp-config-write.yaml` (bravesearch, context7, discord, github, kubectl, victoriametrics)
+- `cluster/apps/claude-agents-shared/base/claude-mcp-config-sre.yaml` (bravesearch, context7, discord, github, kubectl, sre, victoriametrics)
 
-- [ ] **Step 1: Read current MCP config**
-
-Read `cluster/apps/claude-agents-shared/base/claude-mcp-config.yaml` and locate the `"renovate"` server block.
-
-- [ ] **Step 2: Remove the entire `"renovate": { ... }` block from `mcpServers`**
-
-Remove the renovate MCP server entry. No backing workflow exists.
-
-- [ ] **Step 3: Verify JSON is valid**
-
-```bash
-kubectl kustomize cluster/apps/claude-agents-shared/base/ > /dev/null
-```
-
-- [ ] **Step 4: Do NOT commit yet**
-
-This must be committed together with the Kyverno env var removal (Task 5, Commit 1). The MCP server entry and Kyverno env var injection reference the same infrastructure — removing them together avoids stale references.
+None of these configs contain a `renovate` MCP server entry. No action required.
 
 ______________________________________________________________________
 
-### Task 5: Remove RENOVATE_MCP_AUTH_TOKEN from Kyverno — Two-Commit Ordering
+### Task 5: ~~Remove RENOVATE_MCP_AUTH_TOKEN from Kyverno~~ ✅ Kyverno Side DONE
 
-**Ordering constraint:** The Kyverno policy references the SOPS secret key via `secretKeyRef`. If the SOPS key is removed before Kyverno reconciles the policy change, agent pods fail with `CreateContainerConfigError`. Two commits: first removes Kyverno references, second removes SOPS key.
+**Status:** The Kyverno policy has been completely restructured. The old `inject-write-config` and `inject-read-config` rules no longer exist. The current Kyverno policy (`inject-claude-agent-config.yaml`) has 9 rules:
 
-**Files:**
+- `inject-shared-config` (read, write, sre) -- shared volumes, env vars, OTel
+- `inject-read-mcp` (read) -- mounts claude-mcp-config-read
+- `inject-write-mcp` (write) -- mounts claude-mcp-config-write + SSH + gitconfig
+- `inject-sre-mcp` (sre) -- mounts claude-mcp-config-sre + SRE_MCP_AUTH_TOKEN + high-priority
+- `strip-explicit-priority` (all) -- removes explicit spec.priority
+- `inject-read-priority` (read) -- sets low-priority
+- `inject-write-priority` (write) -- sets standard
+- `inject-repo-clone-write` (write) -- SSH clone init container
+- `inject-repo-clone-read` (read, sre) -- HTTPS clone init container
 
-- Modify: `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml`
+`RENOVATE_MCP_AUTH_TOKEN` is not present in any rule. The Kyverno side is complete. No action required.
 
-- Modify: `cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` (user operation)
-
-- [ ] **Step 1: Read inject-claude-agent-config.yaml**
-
-Read `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` and find all `RENOVATE_MCP_AUTH_TOKEN` env var injection blocks. There should be entries in both `inject-write-config` and `inject-read-config` rules.
-
-- [ ] **Step 2: Remove RENOVATE_MCP_AUTH_TOKEN env var blocks from both rules**
-
-Remove the env var entry from both `inject-write-config` and `inject-read-config` rules:
-
-```yaml
-# REMOVE this block from both rules:
-                  - name: RENOVATE_MCP_AUTH_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: renovate-mcp-auth-token
-```
-
-- [ ] **Step 3: Commit 1 — Kyverno + MCP config changes together**
-
-```bash
-git add cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml \
-       cluster/apps/claude-agents-shared/base/claude-mcp-config.yaml
-git commit -m "chore(agents): remove dead renovate MCP server and env injection
-
-Remove renovate MCP server entry from claude-mcp-config.yaml (no backing
-workflow). Remove RENOVATE_MCP_AUTH_TOKEN env injection from both Kyverno
-rules. SOPS key removal follows in separate commit after Flux reconciles.
-
-Ref #<issue>"
-```
-
-- [ ] **Step 4: Flag SOPS key removal for user**
-
-Tell the user: "After this commit is pushed and Flux reconciles the Kyverno policy change, manually remove the `renovate-mcp-auth-token` key from `cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` using `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml`. This is a manual user operation — agents cannot decrypt SOPS files."
+**Remaining:** Verify whether `renovate-mcp-auth-token` key still exists in `mcp-credentials.sops.yaml`. If so, the user should remove it manually: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml`. Status of this SOPS key removal is unknown -- flag to user for verification.
 
 ______________________________________________________________________
 
 ### Task 6: Add agent-platform MCP Server Entry
 
+MCP configs are now split per-namespace. The `agent-platform` server must be added to the read and write namespace configs. SRE agents do not use platform handoff, so `claude-mcp-config-sre.yaml` is NOT modified.
+
 **Files:**
 
-- Modify: `cluster/apps/claude-agents-shared/base/claude-mcp-config.yaml`
+- Modify: `cluster/apps/claude-agents-shared/base/claude-mcp-config-read.yaml`
 
-- [ ] **Step 1: Add agent-platform entry to mcpServers**
+- Modify: `cluster/apps/claude-agents-shared/base/claude-mcp-config-write.yaml`
 
-Add to the `mcpServers` object in the `mcp.json` data field:
+- [ ] **Step 1: Add agent-platform entry to read namespace MCP config**
+
+Add to the `mcpServers` object in the `mcp.json` data field of `claude-mcp-config-read.yaml`:
 
 ```json
         "agent-platform": {
@@ -340,22 +303,28 @@ Add to the `mcpServers` object in the `mcp.json` data field:
         }
 ```
 
-Note: `$${}` prevents Flux variable substitution — env var resolved at runtime by Claude Code.
+Note: `$${}` prevents Flux variable substitution -- env var resolved at runtime by Claude Code.
 
-- [ ] **Step 2: Verify kustomization builds**
+- [ ] **Step 2: Add agent-platform entry to write namespace MCP config**
+
+Add the same `agent-platform` block to `claude-mcp-config-write.yaml`.
+
+- [ ] **Step 3: Verify kustomization builds**
 
 ```bash
 kubectl kustomize cluster/apps/claude-agents-shared/base/ > /dev/null
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add cluster/apps/claude-agents-shared/base/claude-mcp-config.yaml
-git commit -m "feat(agents): add agent-platform MCP server entry
+git add cluster/apps/claude-agents-shared/base/claude-mcp-config-read.yaml \
+       cluster/apps/claude-agents-shared/base/claude-mcp-config-write.yaml
+git commit -m "feat(agents): add agent-platform MCP server to read and write configs
 
-Platform agents report results via n8n MCP endpoint. Auth via
-AGENT_PLATFORM_MCP_AUTH_TOKEN env var (Kyverno-injected, SOPS-stored).
+Platform agents report results via n8n MCP endpoint. Added to read and
+write namespace configs (not SRE -- SRE agents don't use platform handoff).
+Auth via AGENT_PLATFORM_MCP_AUTH_TOKEN env var (Kyverno-injected, SOPS-stored).
 
 Ref #<issue>"
 ```
@@ -363,6 +332,8 @@ Ref #<issue>"
 ______________________________________________________________________
 
 ### Task 7: Add AGENT_PLATFORM_MCP_AUTH_TOKEN to Kyverno Injection
+
+The old `inject-write-config` and `inject-read-config` rules no longer exist. The env var must be injected via the current per-namespace rules.
 
 **Files:**
 
@@ -374,11 +345,11 @@ ______________________________________________________________________
 
 Tell the user: "Before this change can be deployed, add a new key `agent-platform-mcp-auth-token` to `cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` with a generated secret value. Run: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` and add the key."
 
-**⚠ CRITICAL ORDERING:** This commit MUST NOT be pushed until the user confirms `agent-platform-mcp-auth-token` exists in `mcp-credentials.sops.yaml`. Pushing this Kyverno change without the SOPS key causes ALL agent pods to fail with `CreateContainerConfigError`. Same failure mode as Task 5's two-commit ordering.
+**CRITICAL ORDERING:** This commit MUST NOT be pushed until the user confirms `agent-platform-mcp-auth-token` exists in `mcp-credentials.sops.yaml`. Pushing this Kyverno change without the SOPS key causes ALL agent pods to fail with `CreateContainerConfigError`. Same failure mode as Task 5's two-commit ordering.
 
-- [ ] **Step 2: Add env var injection to both Kyverno rules**
+- [ ] **Step 2: Add env var injection to read and write Kyverno rules**
 
-Add to both `inject-write-config` and `inject-read-config` rules, in the `containers[*].env` list (same pattern as `SRE_MCP_AUTH_TOKEN`):
+Add to the `inject-read-mcp` and `inject-write-mcp` rules, in the `containers[*].env` list (same pattern as `SRE_MCP_AUTH_TOKEN` in `inject-sre-mcp`):
 
 ```yaml
                   - name: AGENT_PLATFORM_MCP_AUTH_TOKEN
@@ -388,15 +359,18 @@ Add to both `inject-write-config` and `inject-read-config` rules, in the `contai
                         key: agent-platform-mcp-auth-token
 ```
 
+Do NOT add to `inject-sre-mcp` (SRE agents don't use agent-platform). Do NOT add to `inject-shared-config` (not all namespaces need it).
+
 - [ ] **Step 3: Commit**
 
 ```bash
 git add cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml
 git commit -m "feat(agents): inject AGENT_PLATFORM_MCP_AUTH_TOKEN via Kyverno
 
-Add env var injection for agent-platform MCP auth token to both write and
-read Kyverno rules. Same pattern as SRE_MCP_AUTH_TOKEN. Requires
-agent-platform-mcp-auth-token key in mcp-credentials SOPS secret.
+Add env var injection for agent-platform MCP auth token to inject-read-mcp
+and inject-write-mcp rules. Not added to inject-sre-mcp (SRE agents don't
+use platform handoff). Requires agent-platform-mcp-auth-token key in
+mcp-credentials SOPS secret.
 
 Ref #<issue>"
 ```
@@ -405,19 +379,26 @@ ______________________________________________________________________
 
 ### Task 8: Add Init Container SecurityContext to Kyverno Policy
 
-Defense-in-depth: explicit securityContext on git-clone init container.
+Defense-in-depth: explicit securityContext on git-clone init containers.
+
+The old `inject-repo-clone` rule has been split into two rules:
+
+- `inject-repo-clone-write` -- SSH clone (write namespace)
+- `inject-repo-clone-read` -- HTTPS clone (read and sre namespaces)
+
+Both need securityContext added.
 
 **Files:**
 
 - Modify: `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml`
 
-- [ ] **Step 1: Read the inject-repo-clone rule**
+- [ ] **Step 1: Read both inject-repo-clone rules**
 
-Find the `inject-repo-clone` rule in the Kyverno policy. Locate the init container definition for the git-clone container.
+Find the `inject-repo-clone-write` and `inject-repo-clone-read` rules in the Kyverno policy. Locate the init container definition in each.
 
-- [ ] **Step 2: Add securityContext to the init container**
+- [ ] **Step 2: Add securityContext to both init containers**
 
-Add `securityContext` to the init container spec:
+Add `securityContext` to the init container spec in both `inject-repo-clone-write` and `inject-repo-clone-read`:
 
 ```yaml
                 securityContext:
@@ -429,15 +410,16 @@ Add `securityContext` to the init container spec:
                   runAsNonRoot: true
 ```
 
-`readOnlyRootFilesystem: false` because the init container needs to write to `/tmp` for SSH key operations.
+`readOnlyRootFilesystem: false` because both init containers write to `/tmp` (SSH key operations for write, HTTPS clone for read).
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml
-git commit -m "fix(agents): add explicit securityContext to git-clone init container
+git commit -m "fix(agents): add explicit securityContext to git-clone init containers
 
-Defense-in-depth for PSS compliance. Eliminates dependency on Kyverno
+Defense-in-depth for PSS compliance on both inject-repo-clone-write (SSH)
+and inject-repo-clone-read (HTTPS) rules. Eliminates dependency on Kyverno
 pss-restricted-defaults reinvocation ordering.
 
 Ref #<issue>"
@@ -452,6 +434,8 @@ ______________________________________________________________________
 - Create: `cluster/apps/agent-worker-system/namespace.yaml`
 
 - Create: `cluster/apps/agent-worker-system/kustomization.yaml`
+
+- Modify: `cluster/apps/kustomization.yaml`
 
 - [ ] **Step 1: Create namespace.yaml**
 
@@ -484,20 +468,33 @@ resources:
 
 Write to `cluster/apps/agent-worker-system/kustomization.yaml`. App ks.yaml references will be added as apps are created.
 
-- [ ] **Step 3: Verify kustomization builds**
+- [ ] **Step 3: Register in top-level kustomization**
+
+Add `- ./agent-worker-system` to the `resources` list in `cluster/apps/kustomization.yaml` (after `- ./claude-agents-sre`):
+
+```yaml
+  - ./claude-agents-sre
+  - ./agent-worker-system
+```
+
+Without this entry, Flux will never discover or reconcile the namespace.
+
+- [ ] **Step 4: Verify kustomization builds**
 
 ```bash
 kubectl kustomize cluster/apps/agent-worker-system/ > /dev/null
 ```
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add cluster/apps/agent-worker-system/namespace.yaml \
-       cluster/apps/agent-worker-system/kustomization.yaml
+       cluster/apps/agent-worker-system/kustomization.yaml \
+       cluster/apps/kustomization.yaml
 git commit -m "feat(agent-worker): create agent-worker-system namespace
 
 Restricted PSA, descheduler excluded (single-replica worker).
+Register in top-level kustomization so Flux discovers the namespace.
 
 Ref #<issue>"
 ```
@@ -581,6 +578,9 @@ priorityClassName: high-priority
 auth:
   enabled: true
   usersExistingSecret: agent-valkey-secrets
+  aclUsers:
+    default:
+      permissions: "~* &* +@all"
 valkeyConfig: |
   appendonly yes
   appendfsync everysec
@@ -595,14 +595,14 @@ metrics:
   serviceMonitor:
     enabled: true
   exporter:
-    args:
-      - --redis.addr=localhost:6379
     extraEnvs:
-      REDIS_PASSWORD:
-        valueFrom:
-          secretKeyRef:
-            name: agent-valkey-secrets
-            key: default-password
+      REDIS_PASSWORD_FILE: /secrets/valkey/default-password
+    extraExporterSecrets:
+      - name: agent-valkey-secrets
+    extraVolumeMounts:
+      - name: agent-valkey-secrets-exporter
+        mountPath: /secrets/valkey
+        readOnly: true
 resources:
   limits:
     memory: 128Mi
@@ -613,7 +613,7 @@ resources:
 
 Write to `cluster/apps/agent-worker-system/agent-valkey/app/values.yaml`.
 
-Note: No CPU limit per cluster patterns. ACL users not needed — single consumer, default user with password auth.
+Note: No CPU limit per cluster patterns. Single consumer — default user with full permissions. Exporter reads password from file-mounted secret (no dedicated metrics ACL user).
 
 - [ ] **Step 4: Create app/kustomization.yaml**
 
@@ -663,7 +663,7 @@ metadata:
 spec:
   targetRef:
     apiVersion: apps/v1
-    kind: StatefulSet
+    kind: Deployment
     name: agent-valkey
   updatePolicy:
     updateMode: "Off"
@@ -970,24 +970,64 @@ ______________________________________________________________________
 
 ### Task 13: Add Agent-Platform MCP Egress to Agent CNPs
 
-Agent pods need to reach the agent-platform MCP endpoint on n8n.
+Agent pods need to reach the agent-platform MCP endpoint on n8n (`http://n8n-webhook.n8n-system.svc:5678/mcp/agent-platform`).
+
+**Current state:** The `allow-n8n-mcp-egress` CNP exists only in the SRE namespace -- it is NOT in the shared base network policies. Read and write namespaces do NOT have egress to `n8n-webhook.n8n-system.svc:5678`. A new CNP must be added to the shared base.
 
 **Files:**
 
 - Modify: `cluster/apps/claude-agents-shared/base/network-policies.yaml`
 
-- [ ] **Step 1: Check existing n8n MCP egress rule**
+- [ ] **Step 1: Add n8n webhook egress to shared base CNPs**
 
-Read `cluster/apps/claude-agents-shared/base/network-policies.yaml`. The `allow-n8n-mcp-egress` rule already allows agent pods to reach `n8n-system` webhook pods on port 5678. This covers the agent-platform MCP endpoint — same service, same port. No change needed.
+Append to `cluster/apps/claude-agents-shared/base/network-policies.yaml`:
 
-- [ ] **Step 2: Verify — no commit needed**
+```yaml
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to n8n webhook for agent-platform MCP
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-agent-platform-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      managed-by: n8n-claude-code
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-system
+            k8s:app.kubernetes.io/name: n8n
+            k8s:app.kubernetes.io/type: webhook
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP
+```
 
-The existing `allow-n8n-mcp-egress` CNP already covers the agent-platform endpoint because:
+This covers all agent namespaces (read, write) via the shared base overlay. The name `allow-agent-platform-mcp-egress` avoids collision with SRE's existing `allow-n8n-mcp-egress` CNP (at `cluster/apps/claude-agents-sre/claude-agents/app/network-policies.yaml`), which provides equivalent coverage for SRE agents -- both target n8n webhook pods on port 5678. The duplicate egress is harmless but could
+be consolidated in a future cleanup by removing SRE's local CNP once the shared base policy is deployed.
 
-- It targets the same `n8n-webhook` Service (n8n-system namespace, webhook pod type)
-- The agent-platform MCP URL is `http://n8n-webhook.n8n-system.svc/mcp/agent-platform` — same host:port as the existing SRE MCP endpoint
+> **Note:** SRE's existing `allow-n8n-mcp-egress` is NOT removed here. It predates this shared base policy and the overlap is benign. A future chore task can consolidate it.
 
-No changes required.
+- [ ] **Step 2: Verify kustomization builds**
+
+```bash
+kubectl kustomize cluster/apps/claude-agents-shared/base/ > /dev/null
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add cluster/apps/claude-agents-shared/base/network-policies.yaml
+git commit -m "feat(agents): add agent-platform MCP egress CNP to shared base
+
+Read and write agent namespaces need egress to n8n-webhook.n8n-system.svc:5678
+for the agent-platform MCP endpoint. SRE already has its own n8n MCP egress.
+
+Ref #<issue>"
+```
 
 ______________________________________________________________________
 
@@ -1183,7 +1223,7 @@ Read `cluster/apps/kube-system/descheduler/app/values.yaml`. Add `- agent-worker
 1. `RemovePodsHavingTooManyRestarts`
 1. `LowNodeUtilization` (under `evictableNamespaces.exclude`)
 
-Add after the existing `- claude-agents-read` entry in each list for consistent alphabetical ordering.
+No `claude-agents-read` entry exists in the exclude lists -- agent namespaces are intentionally NOT excluded (only core infra namespaces are: kube-system, kube-public, kube-node-lease, flux-system, rook-ceph, cloudflare-system). Add `- agent-worker-system` after the last existing entry (`cloudflare-system`) in each list.
 
 - [ ] **Step 2: Commit**
 
@@ -1198,21 +1238,21 @@ Ref #<issue>"
 
 ______________________________________________________________________
 
-### Task 17: PrometheusRule Alerts
+### Task 17: VMRule Alerts
 
 **Files:**
 
-- Create: `cluster/apps/agent-worker-system/agent-queue-worker/app/prometheusrule.yaml`
+- Create: `cluster/apps/agent-worker-system/agent-queue-worker/app/vmrule.yaml`
 
 Note: Deployed as part of worker app kustomization in Phase 1B.
 
-- [ ] **Step 1: Create prometheusrule.yaml**
+- [ ] **Step 1: Create vmrule.yaml**
 
 ```yaml
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/prometheusrule_v1.json
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
 metadata:
   name: agent-queue-worker
 spec:
@@ -1270,7 +1310,7 @@ spec:
             description: "Job in repo={{ $labels.repo }} role={{ $labels.role }} failed after all retries."
 ```
 
-Write to `cluster/apps/agent-worker-system/agent-queue-worker/app/prometheusrule.yaml`.
+Write to `cluster/apps/agent-worker-system/agent-queue-worker/app/vmrule.yaml`.
 
 Note: The spec uses `redis_aof_last_write_status != 0` but redis_exporter returns 1 for success, so `!= 1` is correct. Spec will be updated.
 
@@ -1329,7 +1369,7 @@ kind: Kustomization
 resources:
   - ./release.yaml
   - ./network-policies.yaml
-  - ./prometheusrule.yaml
+  - ./vmrule.yaml
   - ./vpa.yaml
   - ./secret-reader-rbac.yaml
 configMapGenerator:
@@ -1453,6 +1493,9 @@ rules:
     resources: ["secrets"]
     verbs: ["get", "list", "watch"]
     resourceNames: ["agent-queue-worker-secrets"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["selfsubjectrulesreviews"]
+    verbs: ["create"]
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/rolebinding-v1.json
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1536,7 +1579,7 @@ sops cluster/apps/agent-worker-system/agent-queue-worker/app/agent-queue-worker-
 
 Required keys:
 
-- `VALKEY_PASSWORD` — same password used in agent-valkey-secrets.sops.yaml `default` user
+- `VALKEY_PASSWORD` — same password value as agent-valkey-secrets.sops.yaml `default-password` key, but stored under `VALKEY_PASSWORD` for env var injection via `envFrom: secretRef`
 - `GITHUB_TOKEN` — fine-grained PAT with `pull_requests:read` + `checks:read` scope (public repos only)
 - `WORKER_TO_N8N_SECRET` — generate: `openssl rand -hex 32`
 - `N8N_TO_WORKER_SECRET` — generate: `openssl rand -hex 32`
@@ -1638,15 +1681,33 @@ After all Phase 1A changes are pushed and reconciled:
 kubectl get configmap claude-settings-profiles -n claude-agents-read -o jsonpath='{.data}' | jq 'keys'
 ```
 
-Expected: `["execute.json", "fix.json", "sre.json", "triage.json", "validate.json"]` — no admin, dev, pr, renovate-triage, renovate-write.
+Expected: `["execute.json", "fix.json", "sre.json", "triage.json", "validate.json"]` -- no admin, dev, or pr.
 
-- [ ] **Step 2: Verify MCP config**
+- [ ] **Step 2: Verify MCP configs (per-namespace)**
+
+Check the read namespace config includes `agent-platform`:
 
 ```bash
-kubectl get configmap claude-mcp-config -n claude-agents-read -o jsonpath='{.data.mcp\.json}' | jq '.mcpServers | keys'
+kubectl get configmap claude-mcp-config-read -n claude-agents-read -o jsonpath='{.data.mcp\.json}' | jq '.mcpServers | keys'
 ```
 
-Expected: includes `agent-platform`, does NOT include `renovate`.
+Expected: includes `agent-platform`, `bravesearch`, `context7`, `github`.
+
+Check the write namespace config includes `agent-platform`:
+
+```bash
+kubectl get configmap claude-mcp-config-write -n claude-agents-write -o jsonpath='{.data.mcp\.json}' | jq '.mcpServers | keys'
+```
+
+Expected: includes `agent-platform`, `bravesearch`, `context7`, `discord`, `github`, `kubectl`, `victoriametrics`.
+
+Check the SRE namespace config does NOT include `agent-platform`:
+
+```bash
+kubectl get configmap claude-mcp-config-sre -n claude-agents-sre -o jsonpath='{.data.mcp\.json}' | jq '.mcpServers | keys'
+```
+
+Expected: includes `bravesearch`, `context7`, `discord`, `github`, `kubectl`, `sre`, `victoriametrics` -- does NOT include `agent-platform`.
 
 - [ ] **Step 3: Verify agent Valkey**
 
@@ -1660,7 +1721,7 @@ Expected: Valkey pod Running, PVC Bound with 1Gi.
 - [ ] **Step 4: Verify AOF persistence**
 
 ```bash
-kubectl exec -n agent-worker-system sts/agent-valkey-0 -- valkey-cli CONFIG GET appendonly
+kubectl exec -n agent-worker-system deploy/agent-valkey -- valkey-cli CONFIG GET appendonly
 ```
 
 Expected: `appendonly yes`.
@@ -1698,7 +1759,7 @@ Expected: `allow-agent-worker-ingress` and `allow-agent-worker-egress`.
 - [ ] **Step 9: Verify Valkey alerts**
 
 ```bash
-kubectl get prometheusrule -n agent-worker-system
+kubectl get vmrule -n agent-worker-system
 ```
 
 Expected: `agent-queue-worker` rule listed (deployed with Phase 1B).
