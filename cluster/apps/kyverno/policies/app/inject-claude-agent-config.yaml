@@ -64,6 +64,15 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - ln -s /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
+                securityContext:
+                  runAsUser: 65534
+                  runAsGroup: 65534
+                  runAsNonRoot: true
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: true
+                  capabilities:
+                    drop:
+                      - ALL
                 volumeMounts:
                   - name: github-gh-config
                     mountPath: /etc/gh-secret
