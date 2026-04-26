@@ -16,6 +16,12 @@ resources:
     memory: 256Mi
   limits:
     memory: 1Gi
+tracing:
+  otlp:
+    enabled: true
+    http:
+      enabled: true
+      endpoint: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
 ports:
   web:
     http:
