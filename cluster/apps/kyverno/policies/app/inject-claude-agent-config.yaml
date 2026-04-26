@@ -82,6 +82,10 @@ spec:
                     value: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
                   - name: OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
                     value: http://victoria-logs-single-server.observability.svc:9428/insert/opentelemetry/v1/logs
+                  - name: OTEL_TRACES_EXPORTER
+                    value: otlp
+                  - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+                    value: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
                   - name: OTEL_RESOURCE_ATTRIBUTES
                     value: "agent.namespace={{request.object.metadata.namespace}}"
                 volumeMounts:

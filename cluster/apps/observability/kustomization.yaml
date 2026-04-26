@@ -8,4 +8,5 @@ resources:
   - ./victoria-metrics-operator/ks.yaml
   - ./victoria-metrics-k8s-stack/ks.yaml
   - ./victoria-logs-single/ks.yaml
+  - ./victoria-traces-single/ks.yaml
   - ./mcp-victoriametrics/ks.yaml

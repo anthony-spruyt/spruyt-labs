@@ -110,3 +110,23 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to VictoriaTraces for OTLP traces
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-vtraces-otlp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      managed-by: n8n-claude-code
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vt-single
+      toPorts:
+        - ports:
+            - port: "10428"
+              protocol: TCP

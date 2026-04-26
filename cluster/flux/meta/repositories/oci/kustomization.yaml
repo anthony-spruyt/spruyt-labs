@@ -7,6 +7,7 @@ resources:
   - ./app-template.yaml
   - ./flux-instance-ocirepo.yaml
   - ./flux-operator-ocirepo.yaml
+  - ./kyverno-ocirepo.yaml
   - ./n8n-ocirepo.yaml
   - ./rook-ceph-cluster-ocirepo.yaml
   - ./rook-ceph-ocirepo.yaml
@@ -14,4 +15,4 @@ resources:
   - ./victoria-logs-single-ocirepo.yaml
   - ./victoria-metrics-k8s-stack-ocirepo.yaml
   - ./victoria-metrics-operator-ocirepo.yaml
-  - ./kyverno-ocirepo.yaml
+  - ./victoria-traces-single-ocirepo.yaml

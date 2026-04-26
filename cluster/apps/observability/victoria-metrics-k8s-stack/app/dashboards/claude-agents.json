@@ -485,6 +485,32 @@
           "refId": "A"
         }
       ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "id": 105,
+      "title": "Traces",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
+      "description": "Recent Claude agent traces from VictoriaTraces (Jaeger API)",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 44 },
+      "id": 11,
+      "options": {},
+      "title": "Recent Traces",
+      "type": "traces",
+      "targets": [
+        {
+          "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
+          "queryType": "search",
+          "service": "claude-code",
+          "tags": "agent.namespace=\"$namespace\"",
+          "limit": 20,
+          "refId": "A"
+        }
+      ]
     }
   ],
   "schemaVersion": 39,
@@ -527,6 +553,21 @@
       },
       {
         "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Traces Datasource",
+        "multi": false,
+        "name": "ds_traces",
+        "options": [],
+        "query": "jaeger",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {},
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
@@ -555,5 +596,5 @@
   "timezone": "",
   "title": "Claude Agents",
   "uid": "claude-agents",
-  "version": 1
+  "version": 3
 }

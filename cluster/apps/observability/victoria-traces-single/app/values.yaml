@@ -1,0 +1,57 @@
+# Victoria Traces Single Reference -> https://docs.victoriametrics.com/helm/victoria-traces-single/
+# Default values: https://github.com/VictoriaMetrics/helm-charts/blob/master/charts/victoria-traces-single/values.yaml
+#
+# Pod selector label produced by chart: app.kubernetes.io/name=vt-single
+# StatefulSet name: victoria-traces-single-vt-single-server
+# Container name: vtraces
+# Service port: 10428 (HTTP, OTLP ingest at /insert/opentelemetry/v1/traces)
+
+server:
+  podAnnotations:
+    reloader.stakater.com/auto: "true"
+
+  # -- Data retention period. Traces are sampled and short-lived compared to logs.
+  retentionPeriod: "7d"
+
+  # -- Spread replicas across nodes
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: vt-single
+
+  # -- Prefer different nodes from vmsingle and victoria-logs to reduce CPU/disk contention
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: vmsingle
+            topologyKey: kubernetes.io/hostname
+        - weight: 50
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: victoria-logs-single
+            topologyKey: kubernetes.io/hostname
+
+  persistentVolume:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    annotations:
+      reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
+    storageClassName: "rbd-fast-delete"
+    # -- Smaller than logs since traces are sampled and retention is short
+    size: 20Gi
+
+  resources:
+    limits:
+      memory: 896Mi
+    requests:
+      cpu: 80m
+      memory: 256Mi
