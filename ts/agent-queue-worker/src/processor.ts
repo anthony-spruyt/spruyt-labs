@@ -1,0 +1,273 @@
+import { Job } from "bullmq";
+import { randomUUID } from "node:crypto";
+import type { Redis } from "ioredis";
+import type { AgentJob, JobResult } from "./types.js";
+import { ROLE_TIMEOUTS } from "./types.js";
+import { getCurrentPrHead } from "./github.js";
+import { logger } from "./logger.js";
+import * as metrics from "./metrics.js";
+import type { Config } from "./config.js";
+
+// Lua script for atomic session token validation (check -> delete -> accept).
+// Eliminates TOCTOU gap. Token consumed on first valid use — replay-proof.
+// Uses Redis EVAL command (server-side Lua execution), not JavaScript eval().
+const VALIDATE_SESSION_LUA = `
+local stored = redis.call('GET', KEYS[1])
+if stored == false then
+  return 'expired_or_missing'
+elseif stored ~= ARGV[1] then
+  return 'mismatch'
+else
+  redis.call('DEL', KEYS[1])
+  return 'valid'
+end
+`;
+
+type CallbackResolver = (result: JobResult) => void;
+
+export class Processor {
+  private callbacks = new Map<string, CallbackResolver>();
+  private redis: Redis;
+  private config: Config;
+
+  constructor(redis: Redis, config: Config) {
+    this.redis = redis;
+    this.config = config;
+  }
+
+  async process(job: Job<AgentJob>): Promise<JobResult> {
+    const { role, repo, pr_number, head_sha } = job.data;
+    const timeout = ROLE_TIMEOUTS[role] ?? 1_800_000;
+    const timeoutSec = Math.ceil(timeout / 1000);
+    const fields = { jobId: job.id!, role, repo, pr: pr_number, sha: head_sha };
+
+    const locked = await this.redis.set(
+      `agent:active:${job.id}`,
+      "1",
+      "EX",
+      timeoutSec,
+      "NX"
+    );
+    if (!locked) {
+      logger.warn("Duplicate processing detected", fields);
+      return { status: "duplicate" };
+    }
+
+    const timer = metrics.jobDuration.startTimer({ queue: "agent", role });
+    const deadline = this.rejectAfter(
+      timeout,
+      `Job ${job.id} timed out after ${timeout}ms`
+    );
+
+    try {
+      const cached = await this.redis.get(
+        `agent:result:${job.id}:${job.attemptsMade}`
+      );
+      if (cached) {
+        logger.info("Returning cached result", fields);
+        await this.redis.del(`agent:result:${job.id}:${job.attemptsMade}`);
+        return JSON.parse(cached) as JobResult;
+      }
+
+      if (pr_number) {
+        try {
+          const currentHead = await getCurrentPrHead(
+            repo,
+            pr_number,
+            this.config.GITHUB_TOKEN
+          );
+          if (currentHead !== head_sha) {
+            logger.info("Job stale — SHA changed", fields);
+            metrics.staleDiscards.inc({ queue: "agent", role });
+            return { status: "stale" };
+          }
+        } catch {
+          logger.warn("Stale check failed — proceeding optimistically", fields);
+        }
+      }
+
+      const dispatchState = job.data.dispatch_state ?? "pending";
+      logger.info("Processing job", {
+        ...fields,
+        dispatchState,
+        attempt: job.attemptsMade,
+      });
+
+      const result = await Promise.race([
+        dispatchState === "dispatched"
+          ? this.awaitCallbackWithCachePoll(job.id!, job.attemptsMade)
+          : this.dispatchAndAwaitCallback(job.id!, job.data, job),
+        deadline.promise,
+      ]);
+
+      logger.info("Job completed", { ...fields, status: result.status });
+      return result;
+    } catch (err) {
+      const reason =
+        err instanceof Error && err.message.includes("timed out")
+          ? "timeout"
+          : "error";
+      if (reason === "timeout") {
+        metrics.jobTimeouts.inc({ queue: "agent", role });
+      } else {
+        metrics.jobFailures.inc({
+          queue: "agent",
+          role,
+          reason: "processor_error",
+        });
+      }
+      logger.error("Job failed", { ...fields, error: String(err) });
+      throw err;
+    } finally {
+      deadline.clear();
+      timer();
+      const resolver = this.callbacks.get(job.id!);
+      if (resolver) resolver({ status: "cancelled" });
+      this.callbacks.delete(job.id!);
+      await this.redis.del(`agent:active:${job.id}`);
+    }
+  }
+
+  async resolveCallback(jobId: string, result: JobResult): Promise<boolean> {
+    const resolver = this.callbacks.get(jobId);
+    if (resolver) {
+      resolver(result);
+      this.callbacks.delete(jobId);
+      return true;
+    }
+    return false;
+  }
+
+  async cacheResult(
+    jobId: string,
+    attempt: number,
+    result: JobResult
+  ): Promise<void> {
+    await this.redis.set(
+      `agent:result:${jobId}:${attempt}`,
+      JSON.stringify(result),
+      "EX",
+      3600
+    );
+  }
+
+  async validateSession(
+    jobId: string,
+    attempt: number,
+    token: string
+  ): Promise<string> {
+    const key = `agent:session:${jobId}:${attempt}`;
+    // Redis EVAL runs Lua server-side for atomic check-delete-accept
+    return (await this.redis.eval(
+      VALIDATE_SESSION_LUA,
+      1,
+      key,
+      token
+    )) as string;
+  }
+
+  private async dispatchAndAwaitCallback(
+    jobId: string,
+    data: AgentJob,
+    job: Job<AgentJob>
+  ): Promise<JobResult> {
+    const dispatched_at = new Date().toISOString();
+    const session_token = randomUUID();
+    const timeoutSec = Math.ceil(
+      (ROLE_TIMEOUTS[data.role] ?? 1_800_000) / 1000
+    );
+
+    await this.redis.set(
+      `agent:session:${jobId}:${job.attemptsMade}`,
+      session_token,
+      "EX",
+      timeoutSec
+    );
+
+    const resp = await fetch(this.config.N8N_DISPATCH_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.config.WORKER_TO_N8N_SECRET}`,
+        "Idempotency-Key": `${jobId}:${job.attemptsMade}`,
+      },
+      body: JSON.stringify({
+        ...data,
+        jobId,
+        session_token,
+        attempt: job.attemptsMade,
+        dispatched_at,
+      }),
+    });
+
+    if (!resp.ok) {
+      await job.updateData({
+        ...data,
+        dispatch_state: "failed",
+        dispatched_at,
+      });
+      throw new Error(`Dispatch failed: ${resp.status} ${resp.statusText}`);
+    }
+
+    await job.updateData({
+      ...data,
+      dispatch_state: "dispatched",
+      dispatched_at,
+    });
+    logger.info("Dispatched to n8n", {
+      jobId,
+      role: data.role,
+      repo: data.repo,
+    });
+
+    return this.awaitCallback(jobId);
+  }
+
+  private awaitCallback(jobId: string): Promise<JobResult> {
+    return new Promise((resolve) => {
+      this.callbacks.set(jobId, resolve);
+    });
+  }
+
+  private awaitCallbackWithCachePoll(
+    jobId: string,
+    attemptsMade: number
+  ): Promise<JobResult> {
+    return new Promise((resolve) => {
+      let resolved = false;
+      let poll: NodeJS.Timeout | undefined;
+
+      const settle = (result: JobResult) => {
+        if (resolved) return;
+        resolved = true;
+        if (poll) clearInterval(poll);
+        this.callbacks.delete(jobId);
+        resolve(result);
+      };
+
+      this.callbacks.set(jobId, settle);
+
+      poll = setInterval(async () => {
+        try {
+          const cached = await this.redis.get(
+            `agent:result:${jobId}:${attemptsMade}`
+          );
+          if (cached) settle(JSON.parse(cached) as JobResult);
+        } catch {
+          // Valkey blip during poll — retry on next interval
+        }
+      }, 15_000);
+    });
+  }
+
+  private rejectAfter(
+    ms: number,
+    message: string
+  ): { promise: Promise<never>; clear: () => void } {
+    let timer: NodeJS.Timeout;
+    const promise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    });
+    return { promise, clear: () => clearTimeout(timer!) };
+  }
+}

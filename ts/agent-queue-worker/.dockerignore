@@ -1,0 +1,5 @@
+node_modules
+dist
+bull-board
+*.md
+.git
