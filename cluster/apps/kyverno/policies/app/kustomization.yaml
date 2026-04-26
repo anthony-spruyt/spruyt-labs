@@ -10,3 +10,4 @@ resources:
   - ./topology-spread-policy.yaml
   - ./set-agent-deadline.yaml
   - ./validate-agent-deadline.yaml
+  - ./cleanup-agent-pods.yaml
