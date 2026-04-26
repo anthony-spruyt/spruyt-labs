@@ -348,6 +348,13 @@ spec:
                   - name: github-gitconfig
                     mountPath: /etc/git-config
                     readOnly: true
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  runAsNonRoot: true
             containers:
               - (name): "?*"
                 volumeMounts:
@@ -419,6 +426,13 @@ spec:
                   - name: github-gitconfig
                     mountPath: /etc/git-config
                     readOnly: true
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  runAsNonRoot: true
             containers:
               - (name): "?*"
                 volumeMounts:
