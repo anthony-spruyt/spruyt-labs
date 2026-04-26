@@ -74,6 +74,8 @@ spec:
                     value: "1"
                   - name: CLAUDE_CODE_ENHANCED_TELEMETRY_BETA
                     value: "1"
+                  - name: OTEL_LOG_TOOL_DETAILS
+                    value: "1"
                   - name: OTEL_METRICS_EXPORTER
                     value: otlp
                   - name: OTEL_LOGS_EXPORTER
