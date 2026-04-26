@@ -58,6 +58,18 @@ spec:
               - name: claude-settings-profiles
                 configMap:
                   name: claude-settings-profiles
+            initContainers:
+              - name: gh-config-init
+                image: "busybox:1.37.0@sha256:1487d0af5f52b4ba31c7e465126ee2123fe3f2305d638e7827681e7cf6c83d5e"
+                command: ["sh", "-c"]
+                args:
+                  - ln -s /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
+                volumeMounts:
+                  - name: github-gh-config
+                    mountPath: /etc/gh-secret
+                    readOnly: true
+                  - name: gh-config-writable
+                    mountPath: /tmp/gh-config
             containers:
               - (name): "?*"
                 env:
