@@ -1,0 +1,140 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to agent Valkey (namespace-local)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-valkey-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-worker-system
+            k8s:app.kubernetes.io/name: agent-valkey
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to n8n webhook for dispatch
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-n8n-dispatch-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-system
+            k8s:app.kubernetes.io/name: n8n
+            k8s:app.kubernetes.io/type: webhook
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to GitHub API (stale SHA checks, startup reconciliation)
+# Requires companion DNS L7 rule below for Cilium FQDN cache population
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-github-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+  egress:
+    - toFQDNs:
+        - matchName: api.github.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+          rules:
+            dns:
+              - matchPattern: "*"
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from n8n (job submission, callbacks)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-n8n-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-system
+            k8s:app.kubernetes.io/instance: n8n
+            k8s:app.kubernetes.io/name: n8n
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow metrics scraping from vmagent
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from Traefik (Bull Board UI)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "3001"
+              protocol: TCP

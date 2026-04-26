@@ -1,0 +1,59 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: agent-queue-worker
+spec:
+  groups:
+    - name: agent-queue-worker
+      rules:
+        - alert: AgentWorkerCrashLooping
+          expr: |
+            increase(kube_pod_container_status_restarts_total{
+              namespace="agent-worker-system",
+              container="app"
+            }[15m]) >= 3
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Agent queue worker is crash-looping"
+            description: "Worker pod has restarted {{ $value }} times in 15 minutes."
+        - alert: AgentQueueStuck
+          expr: |
+            agent_queue_depth{queue="agent"} > 0
+          for: 75m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Agent queue has jobs stuck for >75 minutes"
+            description: "Queue depth {{ $value }} sustained for 75+ minutes (max role timeout + buffer)."
+        - alert: AgentValkeyMemoryHigh
+          expr: |
+            redis_memory_used_bytes{namespace="agent-worker-system"} /
+            redis_memory_max_bytes{namespace="agent-worker-system"} > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Agent Valkey memory usage >80%"
+            description: "Usage at {{ $value | humanizePercentage }}. noeviction will fail writes at 100%."
+        - alert: AgentValkeyAOFError
+          expr: |
+            redis_aof_last_write_status{namespace="agent-worker-system"} != 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Agent Valkey AOF write errors"
+            description: "AOF persistence is failing — coordination state may not survive restart."
+        - alert: AgentJobExhausted
+          expr: |
+            increase(agent_job_exhausted_total[1h]) > 0
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Agent job exhausted all retry attempts"
+            description: "Job in repo={{ $labels.repo }} role={{ $labels.role }} failed after all retries."
