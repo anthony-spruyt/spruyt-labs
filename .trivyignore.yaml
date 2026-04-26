@@ -276,7 +276,8 @@ misconfigurations:
   # Git config contains public bot email and signingkey path - not sensitive data
   - id: AVD-KSV-01010
     paths:
-      - cluster/apps/claude-agents-shared/base/github-bot-gitconfig.yaml
+      - cluster/apps/claude-agents-shared/base/github-bot-gitconfig-read.yaml
+      - cluster/apps/claude-agents-write/claude-agents/app/github-bot-gitconfig.yaml
 
   # ==============================================================================
   # GitHub Token Rotation - CronJob and RBAC
