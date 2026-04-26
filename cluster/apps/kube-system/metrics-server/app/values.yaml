@@ -1,0 +1,27 @@
+# Default values for metrics-server
+# Chart: https://github.com/kubernetes-sigs/metrics-server/tree/master/charts/metrics-server
+
+replicas: 2
+
+args:
+  - --kubelet-insecure-tls
+
+priorityClassName: system-cluster-critical
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+serviceMonitor:
+  enabled: true
+  interval: 1m
+
+metrics:
+  enabled: true

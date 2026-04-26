@@ -14,6 +14,7 @@ resources:
   - ./goauthentik-charts.yaml
   - ./headlamp-charts.yaml
   - ./jetstack-charts.yaml
+  - ./metrics-server-charts.yaml
   - ./minecraft-server-charts.yaml
   - ./postfinance-charts.yaml
   - ./qdrant-charts.yaml
