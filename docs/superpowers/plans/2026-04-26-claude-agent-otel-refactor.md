@@ -30,6 +30,8 @@ ______________________________________________________________________
 
 - Modify: `cluster/apps/claude-agents-shared/base/kustomization.yaml`
 
+- No change: `cluster/apps/claude-agents-shared/base/settings/admin.json` (already schema-only)
+
 - [ ] **Step 1: Delete legacy renovate settings files**
 
 ```bash
@@ -253,9 +255,13 @@ data:
 
 - [ ] **Step 4: Update shared base kustomization.yaml**
 
-In `cluster/apps/claude-agents-shared/base/kustomization.yaml`, replace the `claude-mcp-config.yaml` resource with the three new files:
+In `cluster/apps/claude-agents-shared/base/kustomization.yaml`, replace ONLY the `resources:` list — keep `configMapGenerator` and `generatorOptions` sections intact (Task 1 already pruned renovate entries from `configMapGenerator`). Final file should be exactly:
 
 ```yaml
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
   - ./rbac.yaml
   - ./rbac-spawner.yaml
@@ -268,6 +274,15 @@ resources:
   - ./claude-mcp-config-write.yaml
   - ./claude-mcp-config-sre.yaml
   - ./mcp-credentials.sops.yaml
+configMapGenerator:
+  - name: claude-settings-profiles
+    files:
+      - settings/admin.json
+      - settings/dev.json
+      - settings/pr.json
+      - settings/sre.json
+generatorOptions:
+  disableNameSuffixHash: true
 ```
 
 - [ ] **Step 5: Delete old configmap**
@@ -395,7 +410,10 @@ resources:
   - ../../../claude-agents-shared/base
   - ./github-external-secret.yaml
   - ./network-policies.yaml
+  - ./sre-credentials.sops.yaml
 ```
+
+Note: `sre-credentials.sops.yaml` is created manually by user in Task 9. Resource entry MUST be present — without it, kustomize won't include the secret and Kyverno `inject-sre-mcp` rule will fail to inject `SRE_MCP_AUTH_TOKEN`.
 
 - [ ] **Step 5: Create github-external-secret.yaml (read-tier — SRE doesn't commit)**
 
@@ -970,13 +988,60 @@ Ref #1043"
 
 ______________________________________________________________________
 
+### Task 6.5: Enable VMSingle OTel Prometheus Naming
+
+**Why:** Claude Code emits OTel metrics with dot notation (`claude_code.cost.usage`). Without conversion, PromQL queries in the dashboard (Task 8) cannot reference dotted names without escaping. Enabling `opentelemetry.usePrometheusNaming` on VMSingle converts dots to underscores at ingestion time, matching the dashboard query format (`claude_code_cost_usage`).
+
+**Must deploy before Task 7** — Kyverno rewrite enables OTel emission. If flag missing when first agent runs, metrics ingest with dotted names and dashboard returns no data.
+
+**Files:**
+
+- Modify: `cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml`
+
+- [ ] **Step 1: Add flag to VMSingle extraArgs**
+
+In `cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml`, find the `vmsingle.spec.extraArgs` block and add the OTel flag:
+
+```yaml
+vmsingle:
+  spec:
+    extraArgs:
+      search.maxMemoryPerQuery: 1GB
+      opentelemetry.usePrometheusNaming: "true"
+```
+
+Note: keep existing `search.maxMemoryPerQuery: 1GB` entry. Add new key only.
+
+- [ ] **Step 2: Validate kustomize build**
+
+```bash
+kubectl kustomize cluster/apps/observability/victoria-metrics-k8s-stack/app/ > /dev/null
+```
+
+Expected: exits 0.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml
+git commit -m "feat(observability): enable OTel Prometheus naming on VMSingle
+
+Convert OTel metric names with dot notation (claude_code.cost.usage)
+to Prometheus underscore format (claude_code_cost_usage) at ingestion.
+Required before Claude agents start emitting OTel metrics.
+
+Ref #1043"
+```
+
+______________________________________________________________________
+
 ### Task 7: Rewrite Kyverno ClusterPolicy
 
 **Files:**
 
 - Modify: `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml`
 
-This is the largest task. The complete policy rewrite with 7 rules.
+This is the largest task. The complete policy rewrite with 8 rules.
 
 - [ ] **Step 1: Rewrite the ClusterPolicy**
 
@@ -987,6 +1052,7 @@ Replace the entire contents of `cluster/apps/kyverno/policies/app/inject-claude-
 1. **`inject-write-mcp`** — write namespace only, mounts `claude-mcp-config-write`
 1. **`inject-sre-mcp`** — sre namespace only, mounts `claude-mcp-config-sre`, injects `SRE_MCP_AUTH_TOKEN` from `sre-credentials` secret, sets `priorityClassName: high-priority`
 1. **`inject-read-priority`** — read namespace only, sets `priorityClassName: low-priority`
+1. **`inject-write-priority`** — write namespace only, sets `priorityClassName: standard` (explicit even though `standard` is `globalDefault: true` — explicit assignment prevents drift if cluster default ever changes and makes intent visible at the pod spec level)
 1. **`inject-repo-clone-write`** — write namespace only, clone init container with `pre-commit install`
 1. **`inject-repo-clone-read-sre`** — read + sre namespaces, clone init container without pre-commit
 
@@ -1000,7 +1066,7 @@ Key details for the implementer:
 
 - Clone rules have preconditions checking `CLONE_URL` env var exists and starts with `git@github.com:anthony-spruyt/`
 
-- OTel env vars from spec lines 37-54
+- OTel env vars from spec section "OTel Environment Variables (Phase 1)"
 
 - `OTEL_RESOURCE_ATTRIBUTES` uses Kyverno variable: `agent.namespace={{request.object.metadata.namespace}}`
 
@@ -1064,15 +1130,17 @@ Create `cluster/apps/observability/victoria-metrics-k8s-stack/app/dashboards/cla
 
 Panels (use existing dashboards like `n8n.json` for Grafana JSON structure reference):
 
-1. **Total Cost** — stat panel, query: `sum(increase(claude_code_cost_usage{agent_namespace=~"$namespace"}[$__range]))`
-1. **Cost Over Time** — timeseries, query: `sum(rate(claude_code_cost_usage{agent_namespace=~"$namespace"}[5m])) by (agent_namespace)`
-1. **Token Usage by Type** — stacked bar, query: `sum(increase(claude_code_token_usage{agent_namespace=~"$namespace"}[$__range])) by (type)`
-1. **Cache Hit Rate** — gauge, query: `sum(increase(claude_code_token_usage{type="cacheRead",agent_namespace=~"$namespace"}[$__range])) / (sum(increase(claude_code_token_usage{type="input",agent_namespace=~"$namespace"}[$__range])) + sum(increase(claude_code_token_usage{type="cacheRead",agent_namespace=~"$namespace"}[$__range])))`
-1. **Active Sessions** — stat, query: `sum(increase(claude_code_session_count{agent_namespace=~"$namespace"}[$__range])) by (agent_namespace)`
-1. **Lines of Code** — timeseries, query: `sum(rate(claude_code_lines_of_code_count{agent_namespace=~"$namespace"}[5m])) by (type)`
-1. **API Errors** — stat, query based on VictoriaLogs `claude_code.api_error` events (placeholder — needs real data to validate exact log query syntax)
+1. **Total Cost** — stat panel, datasource: VictoriaMetrics, query: `sum(increase(claude_code_cost_usage{agent_namespace=~"$namespace"}[$__range]))`
+1. **Cost Over Time** — timeseries, datasource: VictoriaMetrics, query: `sum(rate(claude_code_cost_usage{agent_namespace=~"$namespace"}[5m])) by (agent_namespace)`
+1. **Token Usage by Type** — stacked bar, datasource: VictoriaMetrics, query: `sum(increase(claude_code_token_usage{agent_namespace=~"$namespace"}[$__range])) by (type)`
+1. **Cache Hit Rate** — gauge, datasource: VictoriaMetrics, query: `sum(increase(claude_code_token_usage{type="cacheRead",agent_namespace=~"$namespace"}[$__range])) / (sum(increase(claude_code_token_usage{type="input",agent_namespace=~"$namespace"}[$__range])) + sum(increase(claude_code_token_usage{type="cacheRead",agent_namespace=~"$namespace"}[$__range])))`
+1. **Active Sessions** — stat, datasource: VictoriaMetrics, query: `sum(increase(claude_code_session_count{agent_namespace=~"$namespace"}[$__range])) by (agent_namespace)`
+1. **Lines of Code** — timeseries, datasource: VictoriaMetrics, query: `sum(rate(claude_code_lines_of_code_count{agent_namespace=~"$namespace"}[5m])) by (type)`
+1. **Tool Failures** — table, datasource: VictoriaLogs, query: `event.name:"claude_code.tool_result" AND success:false AND agent_namespace:$namespace` — show columns: `_time`, `agent_namespace`, `tool_name`, `error`
+1. **Tool Duration (p50/p95)** — timeseries, datasource: VictoriaLogs, two series using stats over `event.name:"claude_code.tool_result" AND agent_namespace:$namespace` — p50 and p95 of `duration_ms`
+1. **API Errors** — table, datasource: VictoriaLogs, query: `event.name:"claude_code.api_error" AND agent_namespace:$namespace` — show columns: `_time`, `agent_namespace`, `error`, `model`
 
-Note: VictoriaLogs panels (tool failures, tool duration, API errors) require the VictoriaLogs datasource plugin. Metric names may use underscores instead of dots — verify after first agent run with OTel enabled.
+Note: Tool failures, Tool duration, and API errors panels require the VictoriaLogs datasource plugin. Metric names use underscores (dots converted by VMSingle's `opentelemetry.usePrometheusNaming` flag enabled in Task 6.5). VictoriaLogs event/field names may need adjustment after first agent run — verify exact field structure in vlogs UI before finalizing queries.
 
 - [ ] **Step 2: Validate JSON syntax**
 
@@ -1089,8 +1157,9 @@ git add cluster/apps/observability/victoria-metrics-k8s-stack/app/dashboards/cla
 git commit -m "feat(observability): add Claude agents Grafana dashboard
 
 Dashboard for agent cost, token usage, cache hit rate, session
-count, and lines of code. Namespace variable for filtering
-by read/write/sre.
+count, and lines of code from VMSingle metrics. Tool failures,
+tool duration p50/p95, and API errors panels from VictoriaLogs
+events. Namespace variable for filtering by read/write/sre.
 
 Ref #1043"
 ```

@@ -20,15 +20,32 @@ Add OpenTelemetry instrumentation to Claude agent pods, sending metrics to VMSin
 
 **ClusterPolicy `inject-claude-agent-config`:**
 
-| Rule                         | Namespaces       | Injects                                                                                                                                          |
-| ---------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `inject-shared-config`       | read, write, sre | Git creds, git config volumes/mounts, `CONTEXT7_API_KEY`, `GH_CONFIG_DIR`, `GIT_CONFIG_GLOBAL`, `MCP_TIMEOUT`, OTel env vars, settings profiles  |
-| `inject-read-mcp`            | read             | `claude-mcp-config-read` configmap volume/mount                                                                                                  |
-| `inject-write-mcp`           | write            | `claude-mcp-config-write` configmap volume/mount                                                                                                 |
-| `inject-sre-mcp`             | sre              | `claude-mcp-config-sre` configmap volume/mount, `SRE_MCP_AUTH_TOKEN` env var (from `sre-credentials` secret), `priorityClassName: high-priority` |
-| `inject-read-priority`       | read             | `priorityClassName: low-priority`                                                                                                                |
-| `inject-repo-clone-write`    | write            | Clone init container with pre-commit install                                                                                                     |
-| `inject-repo-clone-read-sre` | read, sre        | Clone init container without pre-commit (merged — identical logic)                                                                               |
+| Rule                         | Namespaces       | Injects                                                                                                                                                                |
+| ---------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `inject-shared-config`       | read, write, sre | Git creds, git config volumes/mounts, `CONTEXT7_API_KEY`, `GH_CONFIG_DIR`, `GIT_CONFIG_GLOBAL`, `MCP_TIMEOUT`, OTel env vars, settings profiles                        |
+| `inject-read-mcp`            | read             | `claude-mcp-config-read` configmap volume/mount                                                                                                                        |
+| `inject-write-mcp`           | write            | `claude-mcp-config-write` configmap volume/mount                                                                                                                       |
+| `inject-sre-mcp`             | sre              | `claude-mcp-config-sre` configmap volume/mount, `SRE_MCP_AUTH_TOKEN` env var (from `sre-credentials` secret), `priorityClassName: high-priority`                       |
+| `inject-read-priority`       | read             | `priorityClassName: low-priority`                                                                                                                                      |
+| `inject-write-priority`      | write            | `priorityClassName: standard` (explicit even though `standard` is `globalDefault: true` — prevents drift if cluster default changes, makes intent visible at pod spec) |
+| `inject-repo-clone-write`    | write            | Clone init container with pre-commit install                                                                                                                           |
+| `inject-repo-clone-read-sre` | read, sre        | Clone init container without pre-commit (merged — identical logic)                                                                                                     |
+
+### VMSingle Configuration
+
+Claude Code emits OTel metrics with dot-notation names (`claude_code.cost.usage`, `agent.namespace`). PromQL cannot reference dotted metric/label names without escaping. VMSingle converts OTel dot notation to Prometheus underscore format at ingestion when started with `-opentelemetry.usePrometheusNaming=true`.
+
+**Required change to `cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml`:**
+
+```yaml
+vmsingle:
+  spec:
+    extraArgs:
+      search.maxMemoryPerQuery: 1GB
+      opentelemetry.usePrometheusNaming: "true"
+```
+
+**Deployment ordering:** Must be reconciled before agents begin emitting OTel data (i.e., before the Kyverno rewrite that adds OTel env vars to all agent pods). If flag missing when first agent runs, metrics ingest with dotted names and dashboard queries return no data.
 
 ### OTel Environment Variables (Phase 1)
 
@@ -164,18 +181,21 @@ cluster/apps/claude-agents-sre/
 
 New `claude-agents.json` in `victoria-metrics-k8s-stack/app/dashboards/`:
 
-| Panel                   | Source                                                | Type              |
-| ----------------------- | ----------------------------------------------------- | ----------------- |
-| Cost per invocation     | `claude_code_cost_usage` by `agent.namespace`         | Stat + timeseries |
-| Token usage             | `claude_code_token_usage` by type                     | Stacked bar       |
-| Cache hit rate          | `cacheRead / (input + cacheRead)`                     | Gauge             |
-| Active sessions         | `claude_code_session_count` by namespace              | Stat              |
-| Tool failures           | VictoriaLogs: `claude_code.tool_result` success=false | Table             |
-| Tool duration (p50/p95) | VictoriaLogs: `claude_code.tool_result` duration      | Timeseries        |
-| Lines of code           | `claude_code_lines_of_code_count` add/remove          | Timeseries        |
-| API errors              | VictoriaLogs: `claude_code.api_error`                 | Table             |
+| #   | Panel                   | Source                                                | Type        |
+| --- | ----------------------- | ----------------------------------------------------- | ----------- |
+| 1   | Total Cost              | `claude_code_cost_usage` by `agent_namespace`         | Stat        |
+| 2   | Cost Over Time          | `claude_code_cost_usage` by `agent_namespace`         | Timeseries  |
+| 3   | Token Usage by Type     | `claude_code_token_usage` by type                     | Stacked bar |
+| 4   | Cache Hit Rate          | `cacheRead / (input + cacheRead)`                     | Gauge       |
+| 5   | Active Sessions         | `claude_code_session_count` by `agent_namespace`      | Stat        |
+| 6   | Lines of Code           | `claude_code_lines_of_code_count` add/remove          | Timeseries  |
+| 7   | Tool Failures           | VictoriaLogs: `claude_code.tool_result` success=false | Table       |
+| 8   | Tool Duration (p50/p95) | VictoriaLogs: `claude_code.tool_result` duration      | Timeseries  |
+| 9   | API Errors              | VictoriaLogs: `claude_code.api_error`                 | Table       |
 
 Variables: namespace selector (all/read/write/sre), time range. Datasources: VictoriaMetrics (metrics), VictoriaLogs (events/logs).
+
+Metric names use underscore notation (`claude_code_cost_usage`, `agent_namespace`) — VMSingle `-opentelemetry.usePrometheusNaming=true` flag converts OTel dot notation at ingestion. See "VMSingle Configuration" section above.
 
 ## Phase 2: VictoriaTraces
 
@@ -235,6 +255,7 @@ cluster/apps/observability/victoria-traces/
 | `cluster/apps/claude-agents-shared/base/settings/pr.json`                  | Strip `deniedMcpServers`                                      |
 | `cluster/apps/claude-agents-shared/base/settings/sre.json`                 | Strip `deniedMcpServers`                                      |
 | `cluster/apps/observability/kustomization.yaml`                            | Add victoria-traces reference (Phase 2)                       |
+| `cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml`    | Enable `opentelemetry.usePrometheusNaming` flag on VMSingle   |
 | `cluster/apps/kubectl-mcp/kubectl-mcp-server/app/network-policies.yaml`    | Add sre namespace ingress                                     |
 | `cluster/apps/discord-mcp/discord-mcp/app/network-policies.yaml`           | Add sre namespace ingress                                     |
 | `cluster/apps/brave-search-mcp/brave-search-mcp/app/network-policies.yaml` | Add sre namespace ingress                                     |
