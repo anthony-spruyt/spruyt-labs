@@ -76,6 +76,8 @@ spec:
                     value: "1"
                   - name: OTEL_LOG_TOOL_DETAILS
                     value: "1"
+                  - name: OTEL_LOG_TOOL_CONTENT
+                    value: "1"
                   - name: OTEL_METRICS_EXPORTER
                     value: otlp
                   - name: OTEL_LOGS_EXPORTER
