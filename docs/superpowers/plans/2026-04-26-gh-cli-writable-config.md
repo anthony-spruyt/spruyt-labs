@@ -4,9 +4,11 @@
 
 **Goal:** Fix `gh` CLI in Claude agent pods by making `GH_CONFIG_DIR` writable while preserving live token rotation from the secret volume.
 
-**Architecture:** Add an `emptyDir` volume for writable gh config state, move the secret mount to a new path, and use an init container to symlink `hosts.yml` from the secret into the emptyDir. `gh` reads auth via symlink (follows through to live secret), writes state files to writable emptyDir.
+**Architecture:** Add an `emptyDir` volume for writable gh config state, move the secret mount to a new path, and use a native sidecar that copies `hosts.yml` from the secret into the emptyDir every 30s with `chmod 666`. Initial symlink approach failed because `gh` rewrites `hosts.yml` during config migration.
 
-**Tech Stack:** Kyverno ClusterPolicy (patchStrategicMerge), Kubernetes volumes (secret + emptyDir), busybox init container.
+**Tech Stack:** Kyverno ClusterPolicy (patchStrategicMerge), Kubernetes volumes (secret + emptyDir), busybox native sidecar (restartPolicy: Always).
+
+**Status:** Complete — verified working 2026-04-26. See spec for final solution details and rejected approaches.
 
 **Spec:** `docs/superpowers/specs/2026-04-26-gh-cli-writable-config-design.md` **Issue:** [#1048](https://github.com/anthony-spruyt/spruyt-labs/issues/1048)
 
