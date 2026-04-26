@@ -368,13 +368,20 @@ spec:
               - name: workspace
                 emptyDir:
                   sizeLimit: 1Gi
+              - name: github-access-token
+                secret:
+                  secretName: github-bot-credentials
+                  items:
+                    - key: access-token
+                      path: access-token
             initContainers:
               - name: git-clone
                 image: "{{ request.object.spec.containers[0].image }}"
                 command: ["sh", "-c"]
                 args:
                   - |
-                    AUTH_URL=$(echo "$CLONE_URL" | sed "s|https://|https://x-access-token:${GH_ACCESS_TOKEN}@|")
+                    TOKEN=$(cat /etc/gh-credentials/access-token)
+                    AUTH_URL=$(echo "$CLONE_URL" | sed "s|https://|https://x-access-token:${TOKEN}@|")
                     if [ -n "$CLONE_BRANCH" ]; then
                       git clone --depth 1 -b "$CLONE_BRANCH" "$AUTH_URL" /workspace/repo
                     else
@@ -385,11 +392,6 @@ spec:
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
                   - name: CLONE_BRANCH
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_BRANCH'].value | [0] }}"
-                  - name: GH_ACCESS_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: github-bot-credentials
-                        key: access-token
                   - name: GIT_TERMINAL_PROMPT
                     value: "0"
                   - name: GIT_CONFIG_NOSYSTEM
@@ -399,6 +401,9 @@ spec:
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
+                  - name: github-access-token
+                    mountPath: /etc/gh-credentials
+                    readOnly: true
                   - name: github-gitconfig
                     mountPath: /etc/git-config
                     readOnly: true
