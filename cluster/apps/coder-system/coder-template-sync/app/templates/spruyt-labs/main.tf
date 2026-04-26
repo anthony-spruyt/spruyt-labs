@@ -83,6 +83,23 @@ locals {
     # Expose as shell variable so devcontainer.json lifecycle commands
     # using ${containerWorkspaceFolder} expand correctly under envbuilder.
     "containerWorkspaceFolder" : local.workspace_folder,
+    # Claude Code CLI OpenTelemetry — full audit visibility (#1043).
+    # Kata isolates workspace from cluster Kyverno mutating webhooks, so OTel
+    # env must be set on the pod template directly. Endpoints resolve to the
+    # observability-namespace VictoriaMetrics/Logs/Traces backends.
+    "CLAUDE_CODE_ENABLE_TELEMETRY" : "1",
+    "CLAUDE_CODE_ENHANCED_TELEMETRY_BETA" : "1",
+    "OTEL_LOG_TOOL_DETAILS" : "1",
+    "OTEL_LOG_TOOL_CONTENT" : "1",
+    "OTEL_LOG_USER_PROMPTS" : "1",
+    "OTEL_METRICS_EXPORTER" : "otlp",
+    "OTEL_LOGS_EXPORTER" : "otlp",
+    "OTEL_TRACES_EXPORTER" : "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL" : "http/protobuf",
+    "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT" : "http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics",
+    "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT" : "http://victoria-logs-single-server.observability.svc:9428/insert/opentelemetry/v1/logs",
+    "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" : "http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces",
+    "OTEL_RESOURCE_ATTRIBUTES" : "agent.namespace=coder-workspaces,workspace.name=${data.coder_workspace.me.name},workspace.owner=${data.coder_workspace_owner.me.name}",
   }
 }
 

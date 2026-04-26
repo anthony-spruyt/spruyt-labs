@@ -199,11 +199,11 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
-  # Claude Code agent telemetry dashboard
-  - name: grafana-dashboard-claude-agents
+  # Claude Code telemetry dashboard
+  - name: grafana-dashboard-claude-code-telemetry
     namespace: observability
     files:
-      - dashboards/claude-agents.json
+      - dashboards/claude-code-telemetry.json
     options:
       labels:
         grafana_dashboard: "1"
