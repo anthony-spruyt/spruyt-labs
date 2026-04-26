@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: victoria-traces-single-server
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: victoria-traces-single-vt-single-server
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: vtraces
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 512Mi

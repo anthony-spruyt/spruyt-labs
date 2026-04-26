@@ -12,6 +12,7 @@ resources:
   - ./rook-ceph-ocirepo.yaml
   - ./spegel-ocirepo.yaml
   - ./victoria-logs-single-ocirepo.yaml
+  - ./victoria-traces-single-ocirepo.yaml
   - ./victoria-metrics-k8s-stack-ocirepo.yaml
   - ./victoria-metrics-operator-ocirepo.yaml
   - ./kyverno-ocirepo.yaml
