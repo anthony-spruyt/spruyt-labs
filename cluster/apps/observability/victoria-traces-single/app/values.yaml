@@ -10,8 +10,9 @@ server:
   podAnnotations:
     reloader.stakater.com/auto: "true"
 
-  # -- Data retention period. Traces are sampled and short-lived compared to logs.
-  retentionPeriod: "7d"
+  # -- Data retention period. Match VictoriaLogs (14d) — spans are correlated with
+  # tool_result/api_request events; aging the two together preserves audit trail.
+  retentionPeriod: "14d"
 
   # -- Spread replicas across nodes
   topologySpreadConstraints:
