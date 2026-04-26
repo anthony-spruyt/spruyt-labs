@@ -76,6 +76,17 @@ data:
       override:
         exceptions: append
 
+    # Exception: kubectl-mcp-server needs K8s API access for MCP tool operations
+    - rule: Contact K8S API Server From Container
+      exceptions:
+        - name: kubectl_mcp_server
+          fields: [container.image.repository, k8s.ns.name]
+          comps: [=, =]
+          values:
+            - [docker.io/rohitghumare64/kubectl-mcp-server, kubectl-mcp]
+      override:
+        exceptions: append
+
     # Exception: Cilium CNI binary execution on host is expected
     - rule: Drop and execute new binary in container
       exceptions:
