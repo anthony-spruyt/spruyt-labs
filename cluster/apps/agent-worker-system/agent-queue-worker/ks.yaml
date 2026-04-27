@@ -14,6 +14,7 @@ spec:
   dependsOn:
     - name: agent-valkey
     - name: n8n
+    - name: authentik
   prune: true
   timeout: 5m
 ---

@@ -9,6 +9,7 @@ resources:
   - ./vpa.yaml
   - ./secret-reader-rbac.yaml
   - ./servicemonitor.yaml
+  - ./authentik-outpost-rbac.yaml
   - ./agent-queue-worker-secrets.sops.yaml
 configMapGenerator:
   - name: agent-queue-worker-values
