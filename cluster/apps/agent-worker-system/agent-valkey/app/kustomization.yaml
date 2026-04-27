@@ -6,6 +6,7 @@ resources:
   - ./release.yaml
   - ./valkey-secrets.sops.yaml
   - ./vpa.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: agent-valkey-values
     namespace: agent-worker-system
