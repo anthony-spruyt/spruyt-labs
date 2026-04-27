@@ -25,7 +25,7 @@ of that.
 - Phase 1A infrastructure deployed (namespace, Valkey, CNPs, secrets, Kyverno, MCP config)
 - Phase 1B worker + Bull Board deployed and healthy
 - SOPS secrets created (worker secrets, MCP auth token)
-- n8n Claude Code credentials configured (`claude-agent-read`, `claude-agent-write`)
+- n8n Claude Code credentials configured (`claude-agent-read`, `claude-agent-write`, `claude-agent-sre`)
 
 **Existing n8n state:**
 
@@ -50,7 +50,7 @@ Use workflow `rkvOrMAcfUurkAgU` ("Test a claude code agent") for testing. If it 
 
 - [ ] **Step 2: Verify `additionalArgs` support**
 
-Configure Claude Code node with `additionalArgs`: `--settings /etc/claude/settings/sre.json --max-turns 5`
+Configure Claude Code node with `additionalArgs`: `--settings /etc/claude/settings/triage.json --max-turns 5`
 
 Run with a simple prompt ("echo hello"). Verify the agent boots with the correct settings profile.
 
@@ -87,7 +87,7 @@ ______________________________________________________________________
 
 ### Task 2: Configure n8n Claude Code Credentials
 
-Create or verify two n8n credentials for agent dispatch.
+Create or verify three n8n credentials for agent dispatch.
 
 - [ ] **Step 1: Verify or create `claude-agent-read` credential**
 
@@ -115,7 +115,17 @@ Same as read but:
 
 - Resource limits: CPU request 200m, memory request 512Mi, memory limit 1Gi (write agents do more work)
 
-- [ ] **Step 3: Test both credentials with test workflow**
+- [ ] **Step 3: Verify or create `claude-agent-sre` credential**
+
+Same as read but:
+
+- Namespace: `claude-agents-sre`
+
+- Service Account: `claude-agent`
+
+- Resource limits: CPU request 200m, memory request 512Mi, memory limit 1Gi (validate agents check cluster state extensively)
+
+- [ ] **Step 4: Test all three credentials with test workflow**
 
 Run test workflow with each credential. Verify pods land in correct namespace with correct ServiceAccount.
 

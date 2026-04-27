@@ -231,6 +231,11 @@ spec:
                       secretKeyRef:
                         name: sre-credentials
                         key: sre-mcp-auth-token
+                  - name: AGENT_PLATFORM_MCP_AUTH_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: mcp-credentials
+                        key: agent-platform-mcp-auth-token
                 volumeMounts:
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
