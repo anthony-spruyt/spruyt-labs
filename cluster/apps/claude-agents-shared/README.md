@@ -32,7 +32,7 @@ claude-agents-sre/claude-agents/app/claude-mcp-config-sre.yaml
 
 ## Settings Profiles
 
-Each profile is a Claude Code `settings.json` that uses `deniedMcpServers` to control which MCP servers are available per agent role.
+Each profile is a Claude Code `settings.json` for per-role configuration. MCP server access is controlled by per-namespace MCP configs (allowlist pattern), not by settings profiles.
 
 Profiles are bundled into a `claude-settings-profiles` ConfigMap via `configMapGenerator` and mounted at `/etc/claude/settings/` in all agent pods by the Kyverno injection policy.
 
@@ -50,10 +50,7 @@ Set **Additional Arguments** on the Claude Code CLI node:
 
 ```json
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "server-to-deny" }
-  ]
+  "$schema": "https://json.schemastore.org/claude-code-settings.json"
 }
 ```
 
