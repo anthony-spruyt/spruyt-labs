@@ -846,7 +846,7 @@ After Role Router → validate:
 
 1. **Post Pending Check Run on commit** (not PR — validate runs on main)
 1. **Build Validate Prompt** (orchestrator prompt for validation)
-1. **Spawn Claude Agent** (Opus model, validate.json settings, max-turns 50, read credential)
+1. **Spawn Claude Agent** (Opus model, validate.json settings, max-turns 50, sre credential)
 1. **MCP callback via `submit_validate_result` tool** (add to MCP Server)
 
 Implement as a stub with the prompt and agent spawn. The `submit_validate_result` MCP tool and result processing are Phase 3 tasks.

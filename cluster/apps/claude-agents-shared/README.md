@@ -26,12 +26,12 @@ MCP server configs and settings profiles are per-namespace (not in this base):
 ```text
 claude-agents-read/claude-agents/app/claude-mcp-config-read.yaml
 claude-agents-read/claude-agents/app/settings/read.json
+claude-agents-read/claude-agents/app/settings/triage.json
 claude-agents-write/claude-agents/app/claude-mcp-config-write.yaml
 claude-agents-write/claude-agents/app/settings/execute.json
 claude-agents-write/claude-agents/app/settings/fix.json
 claude-agents-sre/claude-agents/app/claude-mcp-config-sre.yaml
 claude-agents-sre/claude-agents/app/settings/sre.json
-claude-agents-sre/claude-agents/app/settings/triage.json
 claude-agents-sre/claude-agents/app/settings/validate.json
 ```
 
