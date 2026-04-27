@@ -14,7 +14,7 @@ spec:
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: agent-worker-system
-            k8s:app.kubernetes.io/name: agent-valkey
+            k8s:app.kubernetes.io/name: valkey
       toPorts:
         - ports:
             - port: "6379"
