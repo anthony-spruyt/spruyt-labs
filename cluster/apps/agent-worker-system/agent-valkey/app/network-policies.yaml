@@ -25,7 +25,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-metrics-ingress
+  name: allow-valkey-metrics-ingress
 spec:
   endpointSelector:
     matchLabels:
