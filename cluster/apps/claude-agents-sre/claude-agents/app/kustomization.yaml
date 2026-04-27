@@ -8,3 +8,11 @@ resources:
   - ./github-external-secret.yaml
   - ./network-policies.yaml
   - ./sre-credentials.sops.yaml
+configMapGenerator:
+  - name: claude-settings-profiles
+    files:
+      - settings/sre.json
+      - settings/triage.json
+      - settings/validate.json
+generatorOptions:
+  disableNameSuffixHash: true

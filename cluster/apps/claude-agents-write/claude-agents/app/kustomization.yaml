@@ -9,3 +9,10 @@ resources:
   - ./github-ssh-external-secret.yaml
   - ./github-bot-gitconfig.yaml
   - ./network-policies.yaml
+configMapGenerator:
+  - name: claude-settings-profiles
+    files:
+      - settings/execute.json
+      - settings/fix.json
+generatorOptions:
+  disableNameSuffixHash: true

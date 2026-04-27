@@ -6,3 +6,9 @@ resources:
   - ../../../claude-agents-shared/base
   - ./claude-mcp-config-read.yaml
   - ./github-external-secret.yaml
+configMapGenerator:
+  - name: claude-settings-profiles
+    files:
+      - settings/read.json
+generatorOptions:
+  disableNameSuffixHash: true

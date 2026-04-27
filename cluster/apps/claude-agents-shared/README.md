@@ -2,7 +2,7 @@
 
 ## Overview
 
-Shared Kustomize base for `claude-agents-read`, `claude-agents-write`, and `claude-agents-sre` namespaces. Contains resources that are identical across all tiers: RBAC, network policies, GitHub bot credentials, settings profiles, and MCP API keys.
+Shared Kustomize base for `claude-agents-read`, `claude-agents-write`, and `claude-agents-sre` namespaces. Contains resources that are identical across all tiers: RBAC, network policies, GitHub bot credentials, and MCP API keys.
 
 Each agent namespace references this base via its `kustomization.yaml` and maintains tier-specific resources locally (e.g. MCP config, network policies, external secrets).
 
@@ -11,7 +11,7 @@ Each agent namespace references this base via its `kustomization.yaml` and maint
 ```text
 claude-agents-shared/
   base/
-    kustomization.yaml              # Resource list + configMapGenerator for settings
+    kustomization.yaml              # Resource list
     mcp-credentials.sops.yaml       # SOPS-encrypted API keys for MCP servers
     rbac.yaml                       # ServiceAccount for agent pods
     rbac-spawner.yaml               # Role/RoleBinding for n8n pod management
@@ -19,22 +19,27 @@ claude-agents-shared/
     github-secret-store.yaml        # ESO SecretStore pointing to github-system
     github-bot-gitconfig-read.yaml  # Read-only git config (user identity only, no signing)
     github-rotation-rbac.yaml       # RBAC for token rotation CronJob
-    settings/                       # Claude Code settings profiles (deniedMcpServers per role)
 ```
 
-MCP server configs are per-namespace (not in this base):
+MCP server configs and settings profiles are per-namespace (not in this base):
 
 ```text
 claude-agents-read/claude-agents/app/claude-mcp-config-read.yaml
+claude-agents-read/claude-agents/app/settings/read.json
 claude-agents-write/claude-agents/app/claude-mcp-config-write.yaml
+claude-agents-write/claude-agents/app/settings/execute.json
+claude-agents-write/claude-agents/app/settings/fix.json
 claude-agents-sre/claude-agents/app/claude-mcp-config-sre.yaml
+claude-agents-sre/claude-agents/app/settings/sre.json
+claude-agents-sre/claude-agents/app/settings/triage.json
+claude-agents-sre/claude-agents/app/settings/validate.json
 ```
 
 ## Settings Profiles
 
 Each profile is a Claude Code `settings.json` for per-role configuration. MCP server access is controlled by per-namespace MCP configs (allowlist pattern), not by settings profiles.
 
-Profiles are bundled into a `claude-settings-profiles` ConfigMap via `configMapGenerator` and mounted at `/etc/claude/settings/` in all agent pods by the Kyverno injection policy.
+Profiles are bundled into a per-namespace `claude-settings-profiles` ConfigMap via `configMapGenerator` and mounted at `/etc/claude/settings/` in all agent pods by the Kyverno injection policy.
 
 ### Usage in n8n
 
@@ -46,7 +51,7 @@ Set **Additional Arguments** on the Claude Code CLI node:
 
 ### Adding a New Profile
 
-1. Create a new JSON file in `base/settings/`:
+1. Create a new JSON file in the target namespace's `settings/` directory:
 
 ```json
 {
@@ -54,7 +59,7 @@ Set **Additional Arguments** on the Claude Code CLI node:
 }
 ```
 
-2. Add the file to `configMapGenerator.files` in `base/kustomization.yaml`
+2. Add the file to `configMapGenerator.files` in the namespace's `kustomization.yaml`
 1. Commit and push — new pods will pick up the profile automatically
 
 ## Adding a New MCP Server
