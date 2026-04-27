@@ -8,8 +8,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/instance: agent-queue-worker
-      app.kubernetes.io/name: agent-queue-worker
-      app.kubernetes.io/controller: worker
+      app.kubernetes.io/service: agent-queue-worker
   namespaceSelector:
     matchNames:
       - agent-worker-system
