@@ -23,6 +23,12 @@ spec:
               selector:
                 matchLabels:
                   managed-by: n8n-claude-code
+      exclude:
+        any:
+          - resources:
+              selector:
+                matchLabels:
+                  app: claude-code-persistent
       mutate:
         patchStrategicMerge:
           spec:

@@ -22,6 +22,12 @@ spec:
               selector:
                 matchLabels:
                   managed-by: n8n-claude-code
+      exclude:
+        any:
+          - resources:
+              selector:
+                matchLabels:
+                  app: claude-code-persistent
       validate:
         message: "Agent pods must have activeDeadlineSeconds set. Check set-agent-deadline mutation policy."
         pattern:
