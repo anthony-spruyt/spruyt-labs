@@ -67,7 +67,6 @@ jobs:
               - 'cmd/kata-tap-qdisc-fix/**'
             agent-queue-worker:
               - 'ts/agent-queue-worker/**'
-              - '!ts/agent-queue-worker/bull-board/**'
             bull-board:
               - 'ts/agent-queue-worker/bull-board/**'
   lint:
