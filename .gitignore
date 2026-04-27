@@ -44,3 +44,6 @@ __pycache__/
 !/cmd/*/Dockerfile
 !/cmd/*/.dockerignore
 !/cmd/*/README.md
+
+# Claude schedules
+.claude/scheduled_tasks.lock
