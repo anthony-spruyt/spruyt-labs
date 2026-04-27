@@ -45,8 +45,9 @@ n8n (dispatch + results)
      |
      v
 Claude Agents
-  - read credential: analysis + cluster queries -> MCP handoff
+  - read credential: analysis + reporting -> MCP handoff
   - write credential: code + GitHub content writes + MCP handoff
+  - sre credential: cluster validation + observability queries -> MCP handoff
      |
      v
 Mergify
@@ -224,17 +225,17 @@ Triage agent assesses fixability AND complexity: "can I fix this?" and "how hard
 
 ## Agent Credentials
 
-Two credentials control capability boundaries. Model, MCP access, and resource limits are configured per-role (not per-credential).
+Three credentials control capability boundaries. Model, MCP access, and resource limits are configured per-role (not per-credential).
 
-| Credential           | Runtime   | Capabilities                                                                                                                                                                                                                  | Used by          |
-| -------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `claude-agent-read`  | Ephemeral | Analyze and report via MCP tool calls. Can post PR/issue comments and create issues (informational writes). No git push, no PR state changes (labels, approvals, merges). Read-only Kubernetes RBAC (no create/delete/patch). | triage, validate |
-| `claude-agent-write` | Ephemeral | All read capabilities + git push, create branches, create PRs, post line-level review comments. No merges, no labels, no approvals (n8n owns routing-state writes). MCP tool calls for routing decisions.                     | fix, execute     |
+| Credential           | Runtime   | Capabilities                                                                                                                                                                                                                  | Used by      |
+| -------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `claude-agent-read`  | Ephemeral | Analyze and report via MCP tool calls. Can post PR/issue comments and create issues (informational writes). No git push, no PR state changes (labels, approvals, merges). Read-only Kubernetes RBAC (no create/delete/patch). | triage       |
+| `claude-agent-write` | Ephemeral | All read capabilities + git push, create branches, create PRs, post line-level review comments. No merges, no labels, no approvals (n8n owns routing-state writes). MCP tool calls for routing decisions.                     | fix, execute |
+| `claude-agent-sre`   | Ephemeral | Read capabilities + kubectl, victoriametrics, discord MCP access. No git push. Used for cluster-aware validation requiring observability tooling.                                                                             | validate     |
 
-Model selection (Sonnet vs Opus), MCP server access, and resource limits are set per-role via the role registry and settings profiles — not by the credential. Validate uses the read credential but runs Opus with kubectl/metrics access.
+Model selection (Sonnet vs Opus), MCP server access, and resource limits are set per-role via the role registry and settings profiles — not by the credential.
 
-**Note:** A third namespace `claude-agents-sre` exists for SRE agents with its own credential tier, MCP config (`claude-mcp-config-sre.yaml`), network policies, and dedicated `sre-credentials.sops.yaml`. SRE agents are not part of this platform's role registry — they are an existing operational concern. The platform uses only the read and write tiers. Token rotation (CronJob every 30 minutes)
-force-syncs ExternalSecrets to all three namespaces plus `github-mcp`.
+**Note:** The `claude-agents-sre` namespace is shared between existing SRE agents and the platform's validate role. SRE agents use `sre.json` (denies `agent-platform`), validate uses `validate.json` (no denies). `sre-credentials.sops.yaml` provides SRE-specific secrets. Token rotation (CronJob every 30 minutes) force-syncs ExternalSecrets to all three namespaces plus `github-mcp`.
 
 ## Responsibility Split
 
@@ -1206,7 +1207,7 @@ push to main
   -> BullMQ supersedes older waiting validate jobs, dedup
   -> BullMQ calls n8n dispatch webhook
   -> n8n: pending check run on commit
-  -> spawn ephemeral read agent (opus, validate.json settings, claude-agent-read credential)
+  -> spawn ephemeral SRE agent (opus, validate.json settings, claude-agent-sre credential)
   -> orchestrator boots, reads CLAUDE.md, discovers .claude/agents/ for matching validator
   -> if repo has validator subagent (e.g., cluster-validator): invoke as subagent
      else: perform generic validation using CLAUDE.md criteria
@@ -1412,7 +1413,7 @@ Mounted at `/etc/claude/settings/` by existing Kyverno `inject-claude-agent-conf
 
 ### Platform MCP Server
 
-Platform agents report results via a dedicated MCP server entry. Since MCP config is now per-namespace, the `agent-platform` entry must be added to both `claude-mcp-config-read.yaml` AND `claude-mcp-config-write.yaml` (not SRE — SRE agents don't use platform handoff).
+Platform agents report results via a dedicated MCP server entry. The `agent-platform` entry is in all three per-namespace MCP configs (read, write, SRE). SRE agents that don't use platform handoff deny it via `sre.json` `deniedMcpServers`.
 
 ```json
 "agent-platform": {
@@ -1426,7 +1427,7 @@ Platform agents report results via a dedicated MCP server entry. Since MCP confi
 
 Note: double-dollar `$${}` prevents Flux variable substitution — env var is resolved at runtime by Claude Code, not at reconciliation time. URL uses short DNS (`n8n-webhook.n8n-system.svc`) to match existing MCP server entries (confirmed by SRE config which uses `http://n8n-webhook.n8n-system.svc/mcp/sre`).
 
-`AGENT_PLATFORM_MCP_AUTH_TOKEN` is a static shared secret injected by Kyverno `inject-read-mcp` and `inject-write-mcp` rules (same scoped-injection pattern as `SRE_MCP_AUTH_TOKEN` in `inject-sre-mcp`). Authenticates transport only. Per-dispatch session tokens are passed in the MCP tool call payload for job-level binding. See MCP Endpoint Authentication for full validation flow.
+`AGENT_PLATFORM_MCP_AUTH_TOKEN` is a static shared secret injected by Kyverno `inject-read-mcp`, `inject-write-mcp`, and `inject-sre-mcp` rules. Authenticates transport only. Per-dispatch session tokens are passed in the MCP tool call payload for job-level binding. See MCP Endpoint Authentication for full validation flow.
 
 **CNP requirement:** Both read and write namespaces currently lack n8n MCP egress. Only SRE has `allow-n8n-mcp-egress`. A new CNP allowing egress to n8n webhook pods on port 5678 must be added to the shared base network policies (covering all three namespaces) OR added individually to read and write namespace network policies before platform deployment.
 
@@ -1438,23 +1439,19 @@ MCP isolation is now primarily at the namespace config level. Each namespace onl
 
 **Per-namespace MCP servers available:**
 
-- **Read namespace** (`claude-mcp-config-read.yaml`): bravesearch, context7, github + agent-platform (after Phase 1)
-- **Write namespace** (`claude-mcp-config-write.yaml`): bravesearch, context7, discord, github, kubectl, victoriametrics + agent-platform (after Phase 1)
+- **Read namespace** (`claude-mcp-config-read.yaml`): bravesearch, context7, github, agent-platform
+- **Write namespace** (`claude-mcp-config-write.yaml`): bravesearch, context7, discord, github, kubectl, victoriametrics, agent-platform
+- **SRE namespace** (`claude-mcp-config-sre.yaml`): bravesearch, context7, discord, github, kubectl, sre, victoriametrics, agent-platform
 
-| Profile         | Runs in         | Available MCP servers                                                            | Denies (via profile)              |
-| --------------- | --------------- | -------------------------------------------------------------------------------- | --------------------------------- |
-| `triage.json`   | read namespace  | bravesearch, context7, github, agent-platform                                    | (none needed — all are used)      |
-| `fix.json`      | write namespace | bravesearch, context7, discord, github, kubectl, victoriametrics, agent-platform | discord, victoriametrics          |
-| `validate.json` | **SEE NOTE**    | Needs kubectl + victoriametrics, but runs with read credential                   | **SEE NOTE**                      |
-| `execute.json`  | write namespace | bravesearch, context7, discord, github, kubectl, victoriametrics, agent-platform | discord, kubectl, victoriametrics |
+| Profile         | Runs in         | Available MCP servers                                                                 | Denies (via profile)  |
+| --------------- | --------------- | ------------------------------------------------------------------------------------- | --------------------- |
+| `triage.json`   | read namespace  | bravesearch, context7, github, agent-platform                                         | (none — all are used) |
+| `fix.json`      | write namespace | bravesearch, context7, discord, github, kubectl, victoriametrics, agent-platform      | (none currently)      |
+| `validate.json` | SRE namespace   | bravesearch, context7, discord, github, kubectl, sre, victoriametrics, agent-platform | (none currently)      |
+| `execute.json`  | write namespace | bravesearch, context7, discord, github, kubectl, victoriametrics, agent-platform      | (none currently)      |
+| `sre.json`      | SRE namespace   | bravesearch, context7, discord, github, kubectl, sre, victoriametrics, agent-platform | agent-platform        |
 
-**Validate namespace mismatch (decision needed):** Validate uses the read credential (`claude-agent-read`) but needs kubectl and victoriametrics MCP access for cluster-aware validation. The read namespace config (`claude-mcp-config-read.yaml`) only has bravesearch, context7, and github — kubectl and victoriametrics are not available. Options:
-
-1. **Run validate in write namespace** — gives kubectl + victoriametrics access but uses a write credential (stronger than needed). Profile would deny: discord. This is the simplest option.
-1. **Add kubectl + victoriametrics to read namespace config** — preserves read credential isolation but widens read namespace MCP surface. Would require adding kubectl-mcp and victoriametrics-mcp egress CNPs to the read namespace.
-1. **Create a dedicated validate namespace** — maximum isolation but adds operational overhead (fourth namespace, fourth MCP config).
-
-Until decided, the validate profile deny list depends on which namespace it runs in.
+**Validate namespace decision (resolved):** Validate runs in `claude-agents-sre` with `claude-agent-sre` credential. SRE namespace already has kubectl, victoriametrics, and discord MCP access. The `sre.json` profile denies `agent-platform` so existing SRE agents aren't affected; `validate.json` leaves it available for platform handoff.
 
 ### Role Registry (complete)
 
@@ -1503,54 +1500,20 @@ n8n sets turn limits per role via `additionalArgs`:
 
 ### Profile Naming and Coexistence
 
-**Remove:** `renovate-triage.json`, `renovate-write.json`, `pr.json`, `dev.json`, `admin.json` — dead. Zero active consumers: no n8n workflows, no Coder templates, no interactive agents, no scheduled jobs reference any of these profiles. The old Renovate triage system is disabled and broken — these profiles are orphaned artifacts with no path to reactivation. Remove files from
-`cluster/apps/claude-agents-shared/base/settings/` and remove from `configMapGenerator` in `kustomization.yaml`. No ordering concern — safe to remove before or after creating new ones. Also add a `deniedMcpServers` array to `sre.json` (currently empty) with `{ "serverName": "agent-platform" }` (SRE agents don't use platform handoff). See Dead Renovate MCP cleanup in Migration section.
+**Completed:** Dead profiles removed (`renovate-triage.json`, `renovate-write.json`, `pr.json`, `dev.json`, `admin.json`). `sre.json` denies `agent-platform` (SRE agents don't use platform handoff).
 
-**Create:** Four new platform profiles. Deny lists are now minimal because MCP isolation is primarily at the namespace config level — profiles only deny servers that ARE in the namespace config but shouldn't be available for the role:
+**Completed:** Four platform profiles created — all schema-only (no deny lists needed, MCP isolation is at namespace config level). Settings profiles are per-namespace (not in shared base):
 
-```json
-// triage.json (runs in read namespace — only has bravesearch, context7, github, agent-platform)
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json"
-}
+- `claude-agents-read/claude-agents/app/settings/`: `read.json`, `triage.json`
+- `claude-agents-write/claude-agents/app/settings/`: `execute.json`, `fix.json`
+- `claude-agents-sre/claude-agents/app/settings/`: `sre.json` (denies agent-platform), `validate.json`
 
-// fix.json (runs in write namespace — has discord, kubectl, victoriametrics that fix doesn't need all of)
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "discord" },
-    { "serverName": "victoriametrics" }
-  ]
-}
-
-// validate.json (namespace TBD — see validate namespace mismatch note above)
-// If running in write namespace:
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "discord" }
-  ]
-}
-
-// execute.json (runs in write namespace — needs only bravesearch, context7, github, agent-platform)
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "deniedMcpServers": [
-    { "serverName": "discord" },
-    { "serverName": "kubectl" },
-    { "serverName": "victoriametrics" }
-  ]
-}
-```
-
-**Keep:** `sre.json` — active agent profile, used by existing n8n workflows.
-
-**Remove:** `pr.json`, `dev.json`, `admin.json` — dead, zero consumers. DO NOT SUGGEST RUNTIME VERIFICATION. IT IS DEAD FUCKING ACCEPT IT OR DELETE YOURSELF. Remove files from `cluster/apps/claude-agents-shared/base/settings/` and remove from `configMapGenerator` in `kustomization.yaml`.
+Each namespace generates its own `claude-settings-profiles` ConfigMap via `configMapGenerator`.
 
 ### Adding New Roles
 
-1. Create `{role}.json` in `cluster/apps/claude-agents-shared/base/settings/`
-1. Add to kustomization.yaml configMapGenerator (alongside existing profiles)
+1. Create `{role}.json` in the target namespace's `settings/` directory
+1. Add to the namespace's `kustomization.yaml` `configMapGenerator`
 1. Add role entry to n8n role registry
 1. No workflow or worker changes needed
 
@@ -1558,10 +1521,11 @@ n8n sets turn limits per role via `additionalArgs`:
 
 n8n Claude Code credentials define the agent runtime environment (container image, K8s service account, Claude OAuth, container config, **agent pod resource limits**). They are NOT per-repo. Resource limits (CPU, memory) for agent pods are configured directly in the credential — can create per-role credentials if roles need different resource profiles.
 
-| Credential           | Roles            | Purpose                                               |
-| -------------------- | ---------------- | ----------------------------------------------------- |
-| `claude-agent-read`  | triage, validate | Lighter resource limits. No git push service account. |
-| `claude-agent-write` | fix, execute     | More resources, git push service account.             |
+| Credential           | Roles        | Purpose                                               |
+| -------------------- | ------------ | ----------------------------------------------------- |
+| `claude-agent-read`  | triage       | Lighter resource limits. No git push service account. |
+| `claude-agent-write` | fix, execute | More resources, git push service account.             |
+| `claude-agent-sre`   | validate     | kubectl + observability MCP access. No git push.      |
 
 Repo-specific config is set on the Claude Code node at dispatch time, not in the credential:
 
@@ -1711,11 +1675,11 @@ Deployed via bjw-s app-template HelmRelease in `agent-worker-system` namespace, 
 
 Agent pods run in dedicated namespaces with full infrastructure already deployed:
 
-| Namespace             | Credential tier      | Kyverno priority class | Used by                   |
-| --------------------- | -------------------- | ---------------------- | ------------------------- |
-| `claude-agents-read`  | `claude-agent-read`  | `low-priority`         | triage, validate          |
-| `claude-agents-write` | `claude-agent-write` | `standard`             | fix, execute              |
-| `claude-agents-sre`   | SRE-specific         | `high-priority`        | SRE agents (not platform) |
+| Namespace             | Credential tier      | Kyverno priority class | Used by              |
+| --------------------- | -------------------- | ---------------------- | -------------------- |
+| `claude-agents-read`  | `claude-agent-read`  | `low-priority`         | triage               |
+| `claude-agents-write` | `claude-agent-write` | `standard`             | fix, execute         |
+| `claude-agents-sre`   | `claude-agent-sre`   | `high-priority`        | validate, SRE agents |
 
 **Priority classes:** Kyverno injects priority classes per namespace via `strip-explicit-priority` (removes any explicit `spec.priority`), `inject-read-priority`, and `inject-write-priority` rules. SRE priority is injected by `inject-sre-mcp`. Agent pods rely on these priority classes for descheduler eviction ordering — agent pod namespaces are intentionally NOT excluded from descheduler.
 
@@ -1730,9 +1694,9 @@ Existing infrastructure per namespace (via `claude-agents-shared` base + Kyverno
 - **RBAC:** `claude-agent` ServiceAccount, `claude-pod-manager` Role bound to n8n SA for pod lifecycle management
 - **Kyverno `inject-claude-agent-config`:** Nine rules mutate agent pods:
   - `inject-shared-config` — shared volumes/env/mounts for all namespaces (read, write, sre): GitHub credentials, settings profiles, `gh-config-sync` native sidecar (restartPolicy: Always, copies `hosts.yml` from secret to writable emptyDir every 30s for token rotation propagation), and environment variables (`GH_CONFIG_DIR`, `GIT_CONFIG_GLOBAL`, `MCP_TIMEOUT`, `CONTEXT7_API_KEY`, full OTel stack)
-  - `inject-read-mcp` — mounts `claude-mcp-config-read` ConfigMap at `/etc/mcp` (servers: bravesearch, context7, github)
-  - `inject-write-mcp` — mounts `claude-mcp-config-write` ConfigMap at `/etc/mcp`, injects SSH key volume, and full gitconfig (servers: bravesearch, context7, discord, github, kubectl, victoriametrics)
-  - `inject-sre-mcp` — mounts `claude-mcp-config-sre` ConfigMap at `/etc/mcp`, injects `SRE_MCP_AUTH_TOKEN`, sets high-priority (servers: bravesearch, context7, discord, github, kubectl, sre, victoriametrics)
+  - `inject-read-mcp` — mounts `claude-mcp-config-read` ConfigMap at `/etc/mcp`, injects `AGENT_PLATFORM_MCP_AUTH_TOKEN` (servers: bravesearch, context7, github, agent-platform)
+  - `inject-write-mcp` — mounts `claude-mcp-config-write` ConfigMap at `/etc/mcp`, injects SSH key volume, full gitconfig, and `AGENT_PLATFORM_MCP_AUTH_TOKEN` (servers: bravesearch, context7, discord, github, kubectl, victoriametrics, agent-platform)
+  - `inject-sre-mcp` — mounts `claude-mcp-config-sre` ConfigMap at `/etc/mcp`, injects `SRE_MCP_AUTH_TOKEN` and `AGENT_PLATFORM_MCP_AUTH_TOKEN`, sets high-priority (servers: bravesearch, context7, discord, github, kubectl, sre, victoriametrics, agent-platform)
   - `strip-explicit-priority` — removes any explicit `spec.priority` from agent pods
   - `inject-read-priority` — sets `low-priority` on read namespace pods
   - `inject-write-priority` — sets `standard` on write namespace pods
@@ -2106,10 +2070,8 @@ Service for Bull Board ingress. Resource limits: 128Mi memory (Node.js Express a
    cost is minimal. On GitHub API failure, log warning and proceed with empty list — reconciliation is defense-in-depth
 1. Queue staleness alert: Prometheus alert on `agent_queue_depth > 0` sustained for longer than 75 minutes (max role timeout + buffer). Catches stuck queue regardless of cause (Kyverno mutation failure, orphaned job, Valkey lock leak)
 1. Worker crash-loop alert: `kube_pod_container_status_restarts_total` alert — 3+ restarts in 15 minutes → Discord critical alert
-1. Add `agent-platform` MCP server entry to `claude-agents-shared/base/claude-mcp-config-read.yaml` AND `claude-mcp-config-write.yaml` with `AGENT_PLATFORM_MCP_AUTH_TOKEN` header variable (see Platform MCP Server section). Do NOT add to `claude-mcp-config-sre.yaml` — SRE agents don't use platform handoff. Without this, agents cannot call handoff tools. Also add n8n MCP egress CNP to shared base
-   network policies (or individually to read and write namespaces) to allow agent pods to reach the n8n webhook endpoint
-1. Settings profile cleanup: `renovate-triage.json` and `renovate-write.json` already removed. Remove remaining dead profiles: `pr.json`, `dev.json`, `admin.json` from `cluster/apps/claude-agents-shared/base/settings/` and `configMapGenerator`. Add `{ "serverName": "agent-platform" }` to `sre.json` `deniedMcpServers` (SRE agents don't use platform handoff — `sre.json` is currently empty, just
-   `$schema`). Create `triage.json`, `fix.json`, `validate.json`, `execute.json` (exact content in Profile Naming and Coexistence section). Add to `configMapGenerator`. Phase 2 depends on these
+1. ~~Add `agent-platform` MCP server entry~~ **DONE:** `agent-platform` added to all three per-namespace MCP configs (`claude-mcp-config-read.yaml`, `claude-mcp-config-write.yaml`, `claude-mcp-config-sre.yaml`). `AGENT_PLATFORM_MCP_AUTH_TOKEN` injected by Kyverno in all three inject rules. `sre.json` denies `agent-platform` for SRE agents. n8n MCP egress CNP added to shared base
+1. ~~Settings profile cleanup~~ **DONE:** Dead profiles removed. Platform profiles created per-namespace. `sre.json` denies `agent-platform`. See Profile Naming and Coexistence section for current state
 1. Add explicit `securityContext` to git-clone init container in `inject-claude-agent-config` Kyverno policy as defense-in-depth: `allowPrivilegeEscalation: false`, `readOnlyRootFilesystem: false` (needs to write /tmp for SSH key), `capabilities.drop: ["ALL"]`, `runAsNonRoot: true`. Currently relies on `pss-restricted-defaults` reinvocation (`reinvocationPolicy: IfNeeded`) which works today but is
    fragile — Kyverno upgrade could change reinvocation ordering silently. Explicit securityContext makes the init container self-sufficient for PSS compliance
 1. Add `agent-worker-system` namespace to all 5 descheduler per-plugin exclusion lists in `cluster/apps/kube-system/descheduler/app/values.yaml`: `RemoveDuplicates`, `RemovePodsViolatingTopologySpreadConstraint`, `RemoveFailedPods`, `RemovePodsHavingTooManyRestarts`, `LowNodeUtilization`. Single-replica worker — eviction causes unnecessary downtime
