@@ -169,8 +169,7 @@ export class Router {
       logger.error("Failed to add job", { jobId, error: String(err) });
       this.json(res, 503, {
         added: false,
-        reason: "error",
-        message: String(err),
+        reason: "internal_error",
       });
     }
   }
