@@ -3,14 +3,15 @@
   "env": {
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50",
     "BASH_DEFAULT_TIMEOUT_MS": "420000",
-    "BASH_MAX_TIMEOUT_MS": "420000"
+    "BASH_MAX_TIMEOUT_MS": "420000",
+    "CLAUDE_CODE_EFFORT_LEVEL": "medium"
   },
   "alwaysThinkingEnabled": true,
   "fastMode": false,
+  "prefersReducedMotion": true,
   "model": "claude-opus-4-6[1m]",
   "autoUpdatesChannel": "latest",
-  "effortLevel": "xhigh",
-  "enableAllProjectMcpServers": true,
+  "defaultMode": "acceptEdits",
   "permissions": {
     "defaultMode": "bypassPermissions",
     "allow": [
