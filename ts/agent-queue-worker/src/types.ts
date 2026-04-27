@@ -47,18 +47,18 @@ export interface JobResult {
 
 export function buildJobId(data: AgentJob): string {
   const { role, repo, pr_number, issue_number, head_sha } = data;
-  if (role === "validate") return `${repo}:main:validate:${head_sha}`;
+  if (role === "validate") return `${repo}--main--validate--${head_sha}`;
   if (role === "execute") {
     if (!issue_number)
       throw new Error("issue_number required for execute jobs");
-    return `${repo}:${issue_number}:execute`;
+    return `${repo}--${issue_number}--execute`;
   }
-  if (data.payload?.revert) return `${repo}:${head_sha}:revert:fix`;
+  if (data.payload?.revert) return `${repo}--${head_sha}--revert--fix`;
   if (!pr_number) throw new Error(`pr_number required for ${role} jobs`);
-  return `${repo}:${pr_number}:${head_sha}:${role}`;
+  return `${repo}--${pr_number}--${head_sha}--${role}`;
 }
 
 export function extractRole(jobId: string): string {
-  const parts = jobId.split(":");
+  const parts = jobId.split("--");
   return parts[parts.length - 1] ?? "unknown";
 }
