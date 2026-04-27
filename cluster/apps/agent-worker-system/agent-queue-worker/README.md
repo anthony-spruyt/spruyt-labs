@@ -32,6 +32,36 @@ kubectl exec -n agent-worker-system deploy/agent-queue-worker-worker -- wget -qO
 kubectl exec -n agent-worker-system deploy/agent-queue-worker-worker -- wget -qO- http://localhost:3000/readyz
 ```
 
+## Timeouts
+
+### Per-Role Job Timeouts
+
+Used for `Promise.race` deadline in processor, Valkey active lock TTL, and session token TTL.
+
+| Role       | Timeout             | Use Case                    |
+| ---------- | ------------------- | --------------------------- |
+| `triage`   | 10min (600,000ms)   | Read-only PR/issue analysis |
+| `fix`      | 30min (1,800,000ms) | Code changes                |
+| `validate` | 30min (1,800,000ms) | Post-push validation        |
+| `execute`  | 60min (3,600,000ms) | Full execution workflows    |
+| fallback   | 30min (1,800,000ms) | Unknown roles               |
+
+### BullMQ Worker Settings
+
+| Setting            | Value                 | Purpose                                |
+| ------------------ | --------------------- | -------------------------------------- |
+| `stalledInterval`  | 60s                   | How often to check for stalled jobs    |
+| `lockDuration`     | 120s                  | Job lock lifetime (2x stalledInterval) |
+| `maxStalledCount`  | 1                     | Stall recoveries before failing        |
+| `removeOnComplete` | 1h                    | Completed job retention                |
+| `removeOnFail`     | 7d / 500 count        | Failed job retention                   |
+| `attempts`         | 2                     | Max attempts per job                   |
+| `backoff`          | exponential, 30s base | Retry delay strategy                   |
+
+### Pod Deadline Enforcement
+
+Kyverno enforces `activeDeadlineSeconds` on agent pods based on the `agent-timeout` annotation set at pod creation. See [Kyverno policies README](../../kyverno/policies/README.md#set-agent-deadline) for policy details.
+
 ## Troubleshooting
 
 ### Common Issues

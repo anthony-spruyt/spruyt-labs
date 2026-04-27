@@ -79,6 +79,23 @@ read-scoped GitHub App token instead of SSH (no SSH key = no push capability).
 
 **Injected resources:** See [`inject-claude-agent-config.yaml`](app/inject-claude-agent-config.yaml) for the full list of volumes, volume mounts, and environment variables.
 
+### set-agent-deadline
+
+Mutates agent pods (labeled `managed-by: n8n-claude-code`) to set `activeDeadlineSeconds` from the `agent-timeout` annotation. Prevents orphaned agent pods from running indefinitely. Excludes persistent agent pods (`app: claude-code-persistent`).
+
+- **Default deadline**: 1740s (29min) if annotation missing
+- **Annotation**: `agent-timeout` (seconds)
+
+The timeout annotation is set by the BullMQ worker at pod creation based on per-role job timeouts. See [agent-queue-worker README](../../agent-worker-system/agent-queue-worker/README.md#timeouts) for role timeout values.
+
+### validate-agent-deadline
+
+Safety net for `set-agent-deadline`. Rejects agent pods missing `activeDeadlineSeconds` (Enforce mode). Catches mutation policy failures.
+
+### cleanup-agent-pods
+
+Hourly cleanup policy (`ClusterCleanupPolicy`). Removes completed/failed agent pods that n8n failed to delete. Defense-in-depth — normal path deletes pods immediately after job completion.
+
 ### add-pss-restricted-defaults
 
 Mutates incoming Pods to add security context fields required for Pod Security Standards (PSS) Restricted profile compliance. Only sets fields that are not already defined, preserving app-specific configurations. Adds `seccompProfile: RuntimeDefault`, `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, and drops all capabilities on containers and init containers.
