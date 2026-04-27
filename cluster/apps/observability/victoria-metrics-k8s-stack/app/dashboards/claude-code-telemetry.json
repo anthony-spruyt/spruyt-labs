@@ -149,7 +149,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}) / (sum(claude_code_token_usage_tokens_total{type=\"input\",agent_namespace=~\"$namespace\"}) + sum(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}))",
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])) / (sum(increase(claude_code_token_usage_tokens_total{type=\"input\",agent_namespace=~\"$namespace\"}[$__range])) + sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])))",
           "legendFormat": "Hit Rate",
           "refId": "A"
         }
@@ -264,7 +264,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}) by (agent_namespace)",
+          "expr": "sum(increase(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[$__rate_interval])) by (agent_namespace)",
           "legendFormat": "{{agent_namespace}}",
           "refId": "A"
         }
@@ -327,7 +327,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(claude_code_lines_of_code_count_total{agent_namespace=~\"$namespace\"}) by (type)",
+          "expr": "sum(increase(claude_code_lines_of_code_count_total{agent_namespace=~\"$namespace\"}[$__rate_interval])) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
         }
@@ -388,7 +388,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(claude_code_token_usage_tokens_total{agent_namespace=~\"$namespace\"}) by (type)",
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{agent_namespace=~\"$namespace\"}[$__rate_interval])) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
         }
