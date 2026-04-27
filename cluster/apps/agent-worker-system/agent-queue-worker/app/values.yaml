@@ -71,7 +71,7 @@ controllers:
           VALKEY_PORT: "6379"
           BULL_BOARD_PORT: "3001"
           QUEUE_PREFIX: agent:queue
-          READ_ONLY: "true"
+          READ_ONLY: "false"
           VALKEY_PASSWORD:
             valueFrom:
               secretKeyRef:
