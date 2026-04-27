@@ -4,6 +4,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../../claude-agents-shared/base
+  - ./claude-mcp-config-sre.yaml
   - ./github-external-secret.yaml
   - ./network-policies.yaml
   - ./sre-credentials.sops.yaml

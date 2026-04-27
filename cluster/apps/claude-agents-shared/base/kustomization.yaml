@@ -9,9 +9,6 @@ resources:
   - ./github-secret-store.yaml
   - ./github-bot-gitconfig-read.yaml
   - ./github-rotation-rbac.yaml
-  - ./claude-mcp-config-read.yaml
-  - ./claude-mcp-config-write.yaml
-  - ./claude-mcp-config-sre.yaml
   - ./mcp-credentials.sops.yaml
 configMapGenerator:
   - name: claude-settings-profiles

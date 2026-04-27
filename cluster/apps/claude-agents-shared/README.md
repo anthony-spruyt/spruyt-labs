@@ -2,9 +2,9 @@
 
 ## Overview
 
-Shared Kustomize base for `claude-agents-read` and `claude-agents-write` namespaces. Contains resources that are identical across both tiers: RBAC, network policies, MCP server config, GitHub bot credentials, and MCP API keys.
+Shared Kustomize base for `claude-agents-read`, `claude-agents-write`, and `claude-agents-sre` namespaces. Contains resources that are identical across all tiers: RBAC, network policies, GitHub bot credentials, settings profiles, and MCP API keys.
 
-Each agent namespace references this base via its `kustomization.yaml` and only maintains tier-specific resources locally (e.g. `github-external-secret.yaml` for read vs write OAuth scopes).
+Each agent namespace references this base via its `kustomization.yaml` and maintains tier-specific resources locally (e.g. MCP config, network policies, external secrets).
 
 ## Structure
 
@@ -12,7 +12,6 @@ Each agent namespace references this base via its `kustomization.yaml` and only 
 claude-agents-shared/
   base/
     kustomization.yaml              # Resource list + configMapGenerator for settings
-    claude-mcp-config.yaml          # MCP server endpoints and auth headers
     mcp-credentials.sops.yaml       # SOPS-encrypted API keys for MCP servers
     rbac.yaml                       # ServiceAccount for agent pods
     rbac-spawner.yaml               # Role/RoleBinding for n8n pod management
@@ -23,9 +22,17 @@ claude-agents-shared/
     settings/                       # Claude Code settings profiles (deniedMcpServers per role)
 ```
 
+MCP server configs are per-namespace (not in this base):
+
+```text
+claude-agents-read/claude-agents/app/claude-mcp-config-read.yaml
+claude-agents-write/claude-agents/app/claude-mcp-config-write.yaml
+claude-agents-sre/claude-agents/app/claude-mcp-config-sre.yaml
+```
+
 ## Settings Profiles
 
-Each profile is a Claude Code `settings.json` that uses `deniedMcpServers` to blacklist MCP servers not needed for that agent role. All MCP servers remain configured in `claude-mcp-config.yaml` — profiles only control which are denied at runtime.
+Each profile is a Claude Code `settings.json` that uses `deniedMcpServers` to control which MCP servers are available per agent role.
 
 Profiles are bundled into a `claude-settings-profiles` ConfigMap via `configMapGenerator` and mounted at `/etc/claude/settings/` in all agent pods by the Kyverno injection policy.
 
@@ -55,7 +62,9 @@ Set **Additional Arguments** on the Claude Code CLI node:
 
 ## Adding a New MCP Server
 
-### 1. Add the server entry to `base/claude-mcp-config.yaml`
+### 1. Add the server entry to the relevant tier's MCP config
+
+Edit the appropriate `claude-mcp-config-{read,write,sre}.yaml` in its namespace's `app/` directory.
 
 For servers that don't need authentication:
 
@@ -70,7 +79,8 @@ For servers that need an API key:
 
 ```json
 "my-server": {
-  "baseUrl": "https://api.example.com/mcp",
+  "type": "http",
+  "url": "https://api.example.com/mcp",
   "headers": {
     "Authorization": "Bearer $${MY_SERVER_API_KEY}"
   }
@@ -90,13 +100,12 @@ Add a new key:
 ```yaml
 stringData:
   context7-api-key: "existing-key"
-  ha-api-key: "existing-key"
   my-server-api-key: "new-key-here"  # add this
 ```
 
 ### 3. Add env var injection to Kyverno policy (if needed)
 
-Edit `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` and add the env var to **both** rules (`inject-write-config` and `inject-read-config`):
+Edit `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` and add the env var to the appropriate tier rule(s):
 
 ```yaml
 - name: MY_SERVER_API_KEY
@@ -108,7 +117,7 @@ Edit `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` and add
 
 ### 4. Add network policy (if cluster-internal)
 
-If the MCP server runs in-cluster, add a `CiliumNetworkPolicy` to `base/network-policies.yaml`:
+If the MCP server runs in-cluster, add a `CiliumNetworkPolicy` to `base/network-policies.yaml` (shared) or the tier's own `network-policies.yaml`:
 
 ```yaml
 ---
@@ -133,27 +142,13 @@ spec:
 
 External MCP servers (e.g. context7) are covered by the existing `allow-world-egress` policy.
 
-## Per-Tier Overrides
-
-Both tiers share the same base by default. To override a resource for one tier only (e.g. give write agents a different MCP config), add a patch in the tier's `kustomization.yaml`:
-
-```yaml
-# cluster/apps/claude-agents-write/claude-agents/app/kustomization.yaml
-resources:
-  - ../../../claude-agents-shared/base
-  - ./github-external-secret.yaml
-patches:
-  - path: ./claude-mcp-config-patch.yaml
-```
-
 ## Credential Rotation
 
-| Secret                 | Rotation Method                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------- |
-| GitHub OAuth tokens    | Automated via `github-token-rotation` CronJob                                   |
-| GitHub SSH key         | Automated via `github-token-rotation` CronJob (write namespace only)            |
-| MCP API keys           | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
-| n8n SRE MCP auth token | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
+| Secret              | Rotation Method                                                                 |
+| ------------------- | ------------------------------------------------------------------------------- |
+| GitHub OAuth tokens | Automated via `github-token-rotation` CronJob                                   |
+| GitHub SSH key      | Automated via `github-token-rotation` CronJob (write namespace only)            |
+| MCP API keys        | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
 
 ## Related Resources
 
@@ -162,5 +157,7 @@ patches:
 | Kyverno injection policy | `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` |
 | Read overlay             | `cluster/apps/claude-agents-read/claude-agents/app/`                |
 | Write overlay            | `cluster/apps/claude-agents-write/claude-agents/app/`               |
+| SRE overlay              | `cluster/apps/claude-agents-sre/claude-agents/app/`                 |
 | Read namespace           | `cluster/apps/claude-agents-read/namespace.yaml`                    |
 | Write namespace          | `cluster/apps/claude-agents-write/namespace.yaml`                   |
+| SRE namespace            | `cluster/apps/claude-agents-sre/namespace.yaml`                     |
