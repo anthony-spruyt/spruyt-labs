@@ -51,6 +51,7 @@ misconfigurations:
       - cluster/apps/authentik-system/authentik/app/external-secrets-rbac.yaml
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/role.yaml
       - cluster/apps/n8n-mcp/n8n-mcp-server/app/mcp-api-keys-reader-rbac.yaml
+      - cluster/apps/n8n-system/n8n/app/github-rotation-rbac.yaml
       - cluster/apps/agent-worker-system/agent-queue-worker/app/secret-reader-rbac.yaml
 
   # kubectl-mcp-server needs pod delete for cleanup and pods/eviction for drain
@@ -291,6 +292,7 @@ misconfigurations:
   - id: AVD-KSV-0113
     paths:
       - cluster/apps/github-system/github-token-rotation/app/reader-role.yaml
+      - cluster/apps/github-system/github-token-rotation/app/reader-role-binding-n8n.yaml
       - cluster/apps/github-system/github-token-rotation/app/role.yaml
       - cluster/apps/traefik/traefik/app/mcp-api-keys-reader-rbac.yaml
       - cluster/apps/flux-system/flux-instance/app/sops-age-reader-rbac.yaml

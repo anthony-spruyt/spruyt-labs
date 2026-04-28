@@ -149,6 +149,9 @@ main:
       mountPath: /home/node/.n8n/hooks.js
       subPath: hooks.js
       readOnly: true
+    - name: github-credentials
+      mountPath: /home/node/.n8n-files/secrets
+      readOnly: true
   extraVolumes: &extraVolumes
     - name: db-ca-cert
       secret:
@@ -163,6 +166,9 @@ main:
     - name: n8n-hooks
       configMap:
         name: n8n-hooks
+    - name: github-credentials
+      secret:
+        secretName: n8n-github-credentials
   deploymentAnnotations: &deploymentAnnotations
     reloader.stakater.com/auto: "true"
   securityContext:
