@@ -18,7 +18,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/czlonkowski/n8n-mcp
-          tag: "2.47.12@sha256:62c0333573d71edb0568a308834cc5674e400141d125c5c302715ee684f3e1ad"
+          tag: "2.47.14@sha256:99a0b1dd4e866bcc4f3f78e7424221680164a96b0ec1c5796461c5ab9fb19a6e"
           pullPolicy: IfNotPresent
         env:
           - name: MCP_MODE
