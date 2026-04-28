@@ -308,7 +308,7 @@ misconfigurations:
   # ==============================================================================
   # Coder SSH Key Rotation - CronJob and RBAC
   # ==============================================================================
-  # alpine/k8s is a trusted Docker Hub image for kubectl operations
+  # Own ghcr.io image (trivy flags non-standard registries)
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
@@ -316,29 +316,32 @@ misconfigurations:
   - id: AVD-KSV-0113
     paths:
       - cluster/apps/coder-workspaces/ssh-key-rotation/app/role.yaml
-  # TEMP: job runs as root so `apk add openssh-keygen` can install the package
-  # at runtime. Mitigated by drop-ALL caps, allowPrivilegeEscalation: false,
-  # seccomp runtime/default, and narrow ServiceAccount RBAC. Tracked by #921 —
-  # once Kata lands, coder-system drops to PSA restricted and this job moves
-  # to a curated image with ssh-keygen preinstalled (then these ignores go).
-  - id: AVD-KSV-0012  # runAsNonRoot should be true
+  # UID/GID 1000 matches the ssh-key-rotation image baked-in user
+  - id: AVD-KSV-0020
     paths:
       - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
-  - id: AVD-KSV-0014  # readOnlyRootFilesystem should be true
+  - id: AVD-KSV-0021
     paths:
       - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
-  - id: AVD-KSV-0020  # runAsUser should be > 10000
+
+  # ==============================================================================
+  # Bot SSH Key Rotation - CronJob and RBAC
+  # ==============================================================================
+  # Own ghcr.io image (trivy flags non-standard registries)
+  - id: AVD-KSV-0125
     paths:
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
-  - id: AVD-KSV-0021  # runAsGroup should be > 10000
+      - cluster/apps/github-system/bot-ssh-key-rotation/app/cronjob.yaml
+  # SSH key rotation role needs resourceName-scoped secret access (least-privilege)
+  - id: AVD-KSV-0113
     paths:
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
-  - id: AVD-KSV-0105  # runAsUser must not be 0
+      - cluster/apps/github-system/bot-ssh-key-rotation/app/role.yaml
+  # UID/GID 1000 matches the ssh-key-rotation image baked-in user
+  - id: AVD-KSV-0020
     paths:
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
-  - id: AVD-KSV-0116  # pod-level runAsGroup/fsGroup should be > 0
+      - cluster/apps/github-system/bot-ssh-key-rotation/app/cronjob.yaml
+  - id: AVD-KSV-0021
     paths:
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/github-system/bot-ssh-key-rotation/app/cronjob.yaml
 
   # ==============================================================================
   # Coder GitOps Template Sync - Job + CronJob + RBAC

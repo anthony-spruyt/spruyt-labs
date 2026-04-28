@@ -1,0 +1,25 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: bot-ssh-rotation-token
+    namespace: github-system
+    annotations:
+        kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+stringData:
+    GITHUB_PAT: ENC[AES256_GCM,data:adI42RAkzWW9SHpUzoj1qfhKvOVpCfwfz1gmC3AuPa/Wwmdo3Uy9Tw==,iv:jxBsx2iA+h7qwq/+1DutIfyQc9FdHXfs44xbszmELrY=,tag:S05uE4XOaIIzrR7DL0UJgA==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBiclMzbnVka3FVYTd5UE44
+            Z0txNkZBbmVFZk5hcUJDN3ZvK1RTbE9waENvCm1hOG81OEd2SUFuOThFc2hodUpu
+            VmpNUFRhcmszUnZNUU9xR1VGV1pYc3cKLS0tIDVKNlNwTXA2d01FQlJsVmpEc3kw
+            NWhkVGF0RmJxV2MyZEFISGxhR1QzMFEKD2cBEZBgJESneVbL98TQgMMIIzBmPlL4
+            Hsi+JlT+FR9bCqNtmlosvStQQHqMouGRA4ikvdGJyWPdQxFzSAL2zA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-28T09:33:20Z"
+    mac: ENC[AES256_GCM,data:+DrJWI8TYoFsDajq4szP33uGGam3Y7CyyaUvE6r4xQh6QCcjtHKqE0Grb2HkZ9sLIstT2VCKqRT0QFmp5exp7uMXY9lpieNQUiD10Iu2n9cNyDLYY1c/hDcozOayBaL5Rxfvat/PGzrIMGdvfCY/ORjcFuSLC0SlUe2+b5hYF58=,iv:oO0zxPblXujhBNY7WpqrXLI+Q2sEH3R2VGoCFq2xIKA=,tag:53OO/rYfqQ0XBxSc3STlhQ==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

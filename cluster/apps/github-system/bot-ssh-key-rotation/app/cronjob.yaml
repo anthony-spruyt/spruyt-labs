@@ -3,8 +3,8 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: ssh-key-rotation
-  namespace: coder-workspaces
+  name: bot-ssh-key-rotation
+  namespace: github-system
 spec:
   schedule: "0 3 * * 1"
   concurrencyPolicy: Forbid
@@ -17,7 +17,7 @@ spec:
       template:
         metadata:
           labels:
-            app: ssh-key-rotation
+            app: bot-ssh-key-rotation
         spec:
           securityContext:
             runAsNonRoot: true
@@ -26,7 +26,7 @@ spec:
             fsGroup: 1000
             seccompProfile:
               type: RuntimeDefault
-          serviceAccountName: ssh-key-rotation
+          serviceAccountName: bot-ssh-key-rotation
           restartPolicy: Never
           containers:
             - name: rotate-ssh-key
@@ -35,14 +35,18 @@ spec:
                 - name: GITHUB_PAT
                   valueFrom:
                     secretKeyRef:
-                      name: coder-ssh-rotation-token
+                      name: bot-ssh-rotation-token
                       key: GITHUB_PAT
                 - name: TITLE_PREFIX
-                  value: coder-workspace
+                  value: spruyt-labs-bot
                 - name: SECRET_NAME
-                  value: coder-ssh-signing-key
+                  value: github-bot-ssh-key
                 - name: SECRET_NAMESPACE
-                  value: coder-workspaces
+                  value: github-system
+                - name: FORCE_SYNC_NAMESPACES
+                  value: claude-agents-write
+                - name: FORCE_SYNC_ES_NAME
+                  value: github-bot-ssh-key
               resources:
                 requests:
                   cpu: 10m

@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas-cjso.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app bot-ssh-key-rotation
+  namespace: flux-system
+spec:
+  targetNamespace: github-system
+  path: ./cluster/apps/github-system/bot-ssh-key-rotation/app
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: github-token-rotation
+  prune: true
+  timeout: 5m
+  wait: true
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age

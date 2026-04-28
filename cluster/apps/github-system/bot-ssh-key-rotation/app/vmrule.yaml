@@ -1,0 +1,28 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: bot-ssh-key-rotation
+spec:
+  groups:
+    - name: bot-ssh-key-rotation
+      rules:
+        - alert: BotSSHKeyRotationFailed
+          expr: |
+            kube_job_status_failed{namespace="github-system", job_name=~"bot-ssh-key-rotation.*"} > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Bot SSH key rotation CronJob failed"
+            description: "CronJob {{ $labels.job_name }} failed. Bot SSH key was not rotated."
+        - alert: BotSSHKeyRotationConsecutiveFailures
+          expr: |
+            time() - kube_cronjob_status_last_successful_time{namespace="github-system", cronjob="bot-ssh-key-rotation"} > 1209600
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Bot SSH key rotation has not succeeded in 14+ days"
+            description: "The spruyt-labs-bot SSH key has not been rotated in over 2 weeks."

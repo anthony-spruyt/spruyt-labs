@@ -24,3 +24,6 @@ subjects:
   - kind: ServiceAccount
     name: github-token-rotation
     namespace: github-system
+  - kind: ServiceAccount
+    name: bot-ssh-key-rotation
+    namespace: github-system
