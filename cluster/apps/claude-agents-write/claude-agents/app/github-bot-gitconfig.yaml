@@ -16,4 +16,4 @@ data:
     [user]
         signingkey = /etc/git-ssh/id_ed25519
     [core]
-        sshCommand = ssh -i /etc/git-ssh/id_ed25519 -o StrictHostKeyChecking=accept-new
+        sshCommand = sh -c 'cp /etc/git-ssh/id_ed25519 /tmp/id_ed25519 && chmod 600 /tmp/id_ed25519 && exec ssh -i /tmp/id_ed25519 -o StrictHostKeyChecking=accept-new \"$@\"' --
