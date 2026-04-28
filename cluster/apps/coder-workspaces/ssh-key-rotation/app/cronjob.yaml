@@ -30,7 +30,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: rotate-ssh-key
-              image: ghcr.io/anthony-spruyt/ssh-key-rotation:1.0.0@sha256:1c4166aeca89b2c04bcc6abbfa5493c9f7e8d64c1d6ef48ba448ea5bee0fdefc
+              image: ghcr.io/anthony-spruyt/ssh-key-rotation:1.0.3@sha256:af70c6771c5356e92d74f18c4d4d8ffe3d551917b8d8dac0a48f177b9dbee0b0
               command:
                 - /bin/sh
                 - -c
