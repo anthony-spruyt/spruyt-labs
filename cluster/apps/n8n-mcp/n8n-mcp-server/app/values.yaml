@@ -14,6 +14,19 @@ defaultPodOptions:
 controllers:
   n8n-mcp-server:
     strategy: Recreate
+    initContainers:
+      copy-db:
+        image:
+          repository: ghcr.io/czlonkowski/n8n-mcp
+          tag: "2.47.14@sha256:99a0b1dd4e866bcc4f3f78e7424221680164a96b0ec1c5796461c5ab9fb19a6e"
+          pullPolicy: IfNotPresent
+        command: ["cp", "/app/data/nodes.db", "/mnt/data/nodes.db"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
     containers:
       app:
         image:
@@ -95,6 +108,14 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /home/node
+  data:
+    type: emptyDir
+    advancedMounts:
+      n8n-mcp-server:
+        copy-db:
+          - path: /mnt/data
+        app:
+          - path: /app/data
 service:
   app:
     controller: n8n-mcp-server

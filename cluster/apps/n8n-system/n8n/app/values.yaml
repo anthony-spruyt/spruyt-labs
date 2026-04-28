@@ -178,6 +178,20 @@ main:
     readOnlyRootFilesystem: true
     runAsNonRoot: true
     runAsUser: 1000
+  readinessProbe: &readinessProbe
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 3
+  livenessProbe: &livenessProbe
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 5
   resources:
     limits:
       cpu: 2000m
@@ -191,6 +205,8 @@ worker:
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
   deploymentAnnotations: *deploymentAnnotations
+  readinessProbe: *readinessProbe
+  livenessProbe: *livenessProbe
   resources:
     requests:
       cpu: 15m
@@ -201,3 +217,5 @@ webhook:
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
   deploymentAnnotations: *deploymentAnnotations
+  readinessProbe: *readinessProbe
+  livenessProbe: *livenessProbe
