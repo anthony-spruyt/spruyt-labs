@@ -3,17 +3,18 @@ set -euo pipefail
 
 # Runs Renovate in dry-run mode against local files.
 #
-# Problem: renovate.json5 uses github> self-referencing presets that resolve
-# from the default branch via API, not local files. This script merges all
-# local preset files into a temporary config so local changes can be tested.
+# Problem: renovate.json5 uses github> presets from repo-operator that resolve
+# from the default branch via API, not local files. This script fetches those
+# remote presets and merges them with local overrides into a temporary config.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-RENOVATE_DIR="$REPO_ROOT/.github/renovate"
 MAIN_CONFIG="$REPO_ROOT/.github/renovate.json5"
+RENOVATE_DIR="$REPO_ROOT/.github/renovate"
 MERGED_CONFIG="$(mktemp)"
+PRESET_TMPDIR="$(mktemp -d)"
 
-trap 'rm -f "$MERGED_CONFIG"' EXIT
+trap 'rm -f "$MERGED_CONFIG"; rm -rf "$PRESET_TMPDIR"' EXIT
 
 # Resolve GitHub token
 TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
@@ -37,22 +38,44 @@ if ! python3 -c "import json5" 2>/dev/null; then
   pip install -q json5
 fi
 
-# Merge all preset files into one config
-python3 - "$MAIN_CONFIG" "$RENOVATE_DIR" "$MERGED_CONFIG" <<'PYEOF'
-import json, json5, glob, sys, os
+# Fetch remote github> presets and merge everything into one config
+python3 - "$MAIN_CONFIG" "$RENOVATE_DIR" "$MERGED_CONFIG" "$PRESET_TMPDIR" "$TOKEN" <<'PYEOF'
+import json, json5, glob, sys, os, urllib.request, base64
 
-main_config, preset_dir, output = sys.argv[1], sys.argv[2], sys.argv[3]
+main_config, local_preset_dir, output, tmpdir, token = sys.argv[1:6]
 
 with open(main_config) as f:
     config = json5.loads(f.read())
 
-# Strip github> self-referencing presets, keep built-in presets
+# Separate github> presets from built-in presets
+github_presets = [e for e in config.get('extends', []) if e.startswith('github>')]
 config['extends'] = [e for e in config.get('extends', []) if not e.startswith('github>')]
 
-# Merge each preset file
-for path in sorted(glob.glob(os.path.join(preset_dir, '*.json5'))):
-    with open(path) as f:
-        preset = json5.loads(f.read())
+def fetch_github_preset(preset_ref, token):
+    """Fetch a github>owner/repo//.path preset file via GitHub API."""
+    # Parse: github>owner/repo//.path
+    ref = preset_ref.removeprefix('github>')
+    if '//' in ref:
+        repo_part, path_part = ref.split('//', 1)
+    else:
+        return None
+    # GitHub API: repos/{owner}/{repo}/contents/{path}
+    url = f"https://api.github.com/repos/{repo_part}/contents/{path_part}"
+    req = urllib.request.Request(url, headers={
+        'Authorization': f'token {token}',
+        'Accept': 'application/vnd.github.v3+json',
+    })
+    try:
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read())
+            content = base64.b64decode(data['content']).decode('utf-8')
+            return json5.loads(content)
+    except Exception as e:
+        print(f"  WARNING: Failed to fetch {preset_ref}: {e}", file=sys.stderr)
+        return None
+
+def merge_preset(config, preset):
+    """Merge a preset dict into the config, extending lists and updating dicts."""
     for key, val in preset.items():
         if key in ('$schema', 'description'):
             continue
@@ -63,10 +86,30 @@ for path in sorted(glob.glob(os.path.join(preset_dir, '*.json5'))):
         else:
             config[key] = val
 
+# Fetch and merge remote github> presets
+fetched = 0
+for preset_ref in github_presets:
+    print(f"  Fetching {preset_ref}...", file=sys.stderr)
+    preset = fetch_github_preset(preset_ref, token)
+    if preset:
+        # Recursively strip any nested github> extends (don't follow chains)
+        preset.pop('extends', None)
+        merge_preset(config, preset)
+        fetched += 1
+
+# Merge local preset overrides (if any exist)
+local_count = 0
+if os.path.isdir(local_preset_dir):
+    for path in sorted(glob.glob(os.path.join(local_preset_dir, '**', '*.json5'), recursive=True)):
+        with open(path) as f:
+            preset = json5.loads(f.read())
+        merge_preset(config, preset)
+        local_count += 1
+
 with open(output, 'w') as f:
     json.dump(config, f, indent=2)
 
-print(f"Merged {len(glob.glob(os.path.join(preset_dir, '*.json5')))} preset files", file=sys.stderr)
+print(f"Fetched {fetched} remote presets, merged {local_count} local overrides", file=sys.stderr)
 PYEOF
 
 echo "Running Renovate dry-run with merged local config..."
@@ -80,6 +123,7 @@ cp "$MERGED_CONFIG" "$MAIN_CONFIG"
 restore_config() {
   mv "$BACKUP" "$MAIN_CONFIG"
   rm -f "$MERGED_CONFIG"
+  rm -rf "$PRESET_TMPDIR"
 }
 trap restore_config EXIT
 
