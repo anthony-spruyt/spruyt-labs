@@ -26,12 +26,22 @@ Overall: <<CI_OVERALL>>
 ## Phase 2: Triage
 Choose strategy based on discovery:
 
+### Always: Gather Full PR Context
+Before analyzing, build awareness of the PR beyond just its body:
+1. Read ALL PR comments — the platform posts previous triage verdicts and fix summaries there. If a prior triage flagged issues and a fix agent pushed commits, that context is in the comments.
+2. Review ALL commits on the PR branch — not just the original dependency bump. A fix agent may have pushed additional commits to address earlier issues.
+3. If prior triage comments exist:
+   - Check whether fix commits actually address the flagged issues
+   - Don't just rubber-stamp — re-run full analysis with fixes applied
+   - If fixes resolved issues, upgrade your verdict accordingly (e.g. FIXABLE → SAFE)
+   - If fixes are incomplete or introduced new issues, reflect that in your verdict and summary
+
 ### If custom triage/analyzer agent found in .claude/agents/:
 - Invoke it as a subagent — it has repo-specific analysis logic
 - Pass PR number, HEAD SHA, and CI context
 
 ### If no custom agent:
-- Read the PR diff and identify what dependency changed and to what version
+- Read the full PR diff (all commits, including any fix commits) and identify what changed
 - Fetch changelog/release notes for the updated dependency
 - Check for breaking changes, deprecations, required migrations
 - Cross-reference CI status — are tests passing with the update?
