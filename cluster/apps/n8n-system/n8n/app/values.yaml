@@ -152,6 +152,9 @@ main:
     - name: github-credentials
       mountPath: /home/node/.n8n-files/secrets
       readOnly: true
+    - name: n8n-prompts
+      mountPath: /home/node/.n8n-files/prompts
+      readOnly: true
   extraVolumes: &extraVolumes
     - name: db-ca-cert
       secret:
@@ -169,6 +172,9 @@ main:
     - name: github-credentials
       secret:
         secretName: n8n-github-credentials
+    - name: n8n-prompts
+      configMap:
+        name: n8n-prompts
   deploymentAnnotations: &deploymentAnnotations
     reloader.stakater.com/auto: "true"
   securityContext:

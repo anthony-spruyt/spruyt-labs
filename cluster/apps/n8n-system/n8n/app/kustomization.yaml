@@ -22,5 +22,13 @@ configMapGenerator:
     namespace: n8n-system
     files:
       - values.yaml
+  - name: n8n-prompts
+    namespace: n8n-system
+    options:
+      disableNameSuffixHash: true
+    files:
+      - prompts/dispatcher-triage-prompt.md
+      - prompts/dispatcher-validate-prompt.md
+      - prompts/dispatcher-fix-prompt.md
 configurations:
   - ./kustomizeconfig.yaml
