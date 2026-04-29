@@ -46,6 +46,7 @@ You MUST call the `submit_fix_result` tool on the `agent-platform` MCP server wi
 - head_sha: "<<HEAD_SHA>>"
 - attempt: <<ATTEMPT>>
 - dispatched_at: "<<DISPATCHED_AT>>"
+- pr_number: <<PR_NUMBER>>
 - role: "fix"
 - status: "pushed" or "failed"
 - branch: the current branch name (the PR branch you are already on)
