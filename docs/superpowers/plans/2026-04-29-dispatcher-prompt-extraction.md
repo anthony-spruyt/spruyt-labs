@@ -4,7 +4,7 @@
 
 **Goal:** Extract embedded prompts from the Dispatcher n8n workflow into version-controlled markdown files with a reusable sub-workflow for template loading and interpolation.
 
-**Architecture:** Prompt templates stored as markdown files in `cluster/apps/n8n-system/n8n/assets/`, mounted to n8n pods via ConfigMap at `/home/node/.n8n-files/prompts/`. A generic "Load & Interpolate Prompt" sub-workflow reads files and performs single-pass `<<KEY>>` variable replacement. The Dispatcher workflow calls this sub-workflow instead of building prompts inline.
+**Architecture:** Prompt templates stored as markdown files in `cluster/apps/n8n-system/n8n/app/prompts/`, mounted to n8n pods via ConfigMap at `/home/node/.n8n-files/prompts/`. A generic "Load & Interpolate Prompt" sub-workflow reads files and performs single-pass `<<KEY>>` variable replacement. The Dispatcher workflow calls this sub-workflow instead of building prompts inline.
 
 **Tech Stack:** n8n workflows (MCP tools), Kubernetes ConfigMap via Kustomize `configMapGenerator`, Helm values for volume mounts.
 
@@ -12,15 +12,15 @@ ______________________________________________________________________
 
 ## File Map
 
-| Action | Path                                                               | Purpose                                                |
-| ------ | ------------------------------------------------------------------ | ------------------------------------------------------ |
-| Create | `cluster/apps/n8n-system/n8n/assets/dispatcher-triage-prompt.md`   | Triage role prompt template                            |
-| Create | `cluster/apps/n8n-system/n8n/assets/dispatcher-validate-prompt.md` | Validate role prompt template                          |
-| Create | `cluster/apps/n8n-system/n8n/assets/dispatcher-fix-prompt.md`      | Fix role prompt template                               |
-| Modify | `cluster/apps/n8n-system/n8n/app/kustomization.yaml`               | Add `n8n-prompts` configMapGenerator                   |
-| Modify | `cluster/apps/n8n-system/n8n/app/values.yaml`                      | Add volume + mount for prompts ConfigMap               |
-| Create | n8n sub-workflow "Load & Interpolate Prompt"                       | Reusable prompt loader (via MCP tools)                 |
-| Modify | n8n workflow `OSijNQIHmleG7qXZ` "Agent Platform — Dispatcher"      | Replace Build Prompt nodes with Prepare + Load pattern |
+| Action | Path                                                                    | Purpose                                                |
+| ------ | ----------------------------------------------------------------------- | ------------------------------------------------------ |
+| Create | `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-triage-prompt.md`   | Triage role prompt template                            |
+| Create | `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-validate-prompt.md` | Validate role prompt template                          |
+| Create | `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-fix-prompt.md`      | Fix role prompt template                               |
+| Modify | `cluster/apps/n8n-system/n8n/app/kustomization.yaml`                    | Add `n8n-prompts` configMapGenerator                   |
+| Modify | `cluster/apps/n8n-system/n8n/app/values.yaml`                           | Add volume + mount for prompts ConfigMap               |
+| Create | n8n sub-workflow "Load & Interpolate Prompt"                            | Reusable prompt loader (via MCP tools)                 |
+| Modify | n8n workflow `OSijNQIHmleG7qXZ` "Agent Platform — Dispatcher"           | Replace Build Prompt nodes with Prepare + Load pattern |
 
 ______________________________________________________________________
 
@@ -28,15 +28,15 @@ ______________________________________________________________________
 
 **Files:**
 
-- Create: `cluster/apps/n8n-system/n8n/assets/dispatcher-triage-prompt.md`
-- Create: `cluster/apps/n8n-system/n8n/assets/dispatcher-validate-prompt.md`
-- Create: `cluster/apps/n8n-system/n8n/assets/dispatcher-fix-prompt.md`
+- Create: `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-triage-prompt.md`
+- Create: `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-validate-prompt.md`
+- Create: `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-fix-prompt.md`
 
 Extract the static prompt text from each "Build X Prompt" Code node in the Dispatcher workflow. Convert JavaScript string interpolation (`${data.jobId}`) to `<<KEY>>` markers. Preserve all markdown formatting exactly.
 
 - [ ] **Step 1: Create triage prompt template**
 
-Create `cluster/apps/n8n-system/n8n/assets/dispatcher-triage-prompt.md` with the full triage prompt. Source: `Build Triage Prompt` node (id `f9b3d446-24c9-4fc7-8ffe-33f3c1e0a0d0`) in workflow `OSijNQIHmleG7qXZ`.
+Create `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-triage-prompt.md` with the full triage prompt. Source: `Build Triage Prompt` node (id `f9b3d446-24c9-4fc7-8ffe-33f3c1e0a0d0`) in workflow `OSijNQIHmleG7qXZ`.
 
 ```markdown
 ## CRITICAL RULES — VIOLATIONS CAUSE PLATFORM FAILURE
@@ -99,7 +99,7 @@ Variables: `JOB_ID`, `SESSION_TOKEN`, `REPO`, `PR_NUMBER`, `HEAD_SHA`, `ATTEMPT`
 
 - [ ] **Step 2: Create validate prompt template**
 
-Create `cluster/apps/n8n-system/n8n/assets/dispatcher-validate-prompt.md`. Source: `Build Validate Prompt` node (id `65ac5923-aaab-4ca6-a6a2-da68ffa43f46`).
+Create `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-validate-prompt.md`. Source: `Build Validate Prompt` node (id `65ac5923-aaab-4ca6-a6a2-da68ffa43f46`).
 
 ```markdown
 You are a post-push validation agent. Verify that the commit just pushed to main is safe and working.
@@ -147,7 +147,7 @@ Variables: `JOB_ID`, `SESSION_TOKEN`, `REPO`, `HEAD_SHA`, `ATTEMPT`, `DISPATCHED
 
 - [ ] **Step 3: Create fix prompt template**
 
-Create `cluster/apps/n8n-system/n8n/assets/dispatcher-fix-prompt.md`. Source: `Build Fix Prompt` node (id `79206863-cb80-4ac5-ae10-f736e8516d2b`).
+Create `cluster/apps/n8n-system/n8n/app/prompts/dispatcher-fix-prompt.md`. Source: `Build Fix Prompt` node (id `79206863-cb80-4ac5-ae10-f736e8516d2b`).
 
 ```markdown
 You are a fix agent. Apply fixes for issues identified during PR triage.
@@ -158,6 +158,8 @@ You are a fix agent. Apply fixes for issues identified during PR triage.
 - Repository: <<REPO>>
 - PR #<<PR_NUMBER>>
 - HEAD SHA: <<HEAD_SHA>>
+- Attempt: <<ATTEMPT>>
+- Dispatched At: <<DISPATCHED_AT>>
 - Complexity: <<COMPLEXITY>>
 
 ## Triage Summary
@@ -188,12 +190,12 @@ Call submit_fix_result MCP tool with: job_id, session_token, head_sha, attempt, 
 Never include session_token or job_id in public output.
 ```
 
-Variables: `JOB_ID`, `SESSION_TOKEN`, `REPO`, `PR_NUMBER`, `HEAD_SHA`, `COMPLEXITY`, `TRIAGE_SUMMARY`
+Variables: `JOB_ID`, `SESSION_TOKEN`, `REPO`, `PR_NUMBER`, `HEAD_SHA`, `ATTEMPT`, `DISPATCHED_AT`, `COMPLEXITY`, `TRIAGE_SUMMARY`
 
 - [ ] **Step 4: Commit prompt template files**
 
 ```bash
-git add cluster/apps/n8n-system/n8n/assets/dispatcher-triage-prompt.md cluster/apps/n8n-system/n8n/assets/dispatcher-validate-prompt.md cluster/apps/n8n-system/n8n/assets/dispatcher-fix-prompt.md
+git add cluster/apps/n8n-system/n8n/app/prompts/dispatcher-triage-prompt.md cluster/apps/n8n-system/n8n/app/prompts/dispatcher-validate-prompt.md cluster/apps/n8n-system/n8n/app/prompts/dispatcher-fix-prompt.md
 git commit -m "feat(n8n): add dispatcher prompt templates with <<KEY>> markers
 
 Extract triage, validate, and fix prompts from Dispatcher workflow Code
@@ -224,11 +226,15 @@ configMapGenerator:
       - values.yaml
   - name: n8n-prompts
     namespace: n8n-system
+    options:
+      disableNameSuffixHash: true
     files:
-      - ../assets/dispatcher-triage-prompt.md
-      - ../assets/dispatcher-validate-prompt.md
-      - ../assets/dispatcher-fix-prompt.md
+      - prompts/dispatcher-triage-prompt.md
+      - prompts/dispatcher-validate-prompt.md
+      - prompts/dispatcher-fix-prompt.md
 ```
+
+`disableNameSuffixHash` prevents kustomize from appending a hash to the ConfigMap name. Without it, the volume mount in `values.yaml` (which references `n8n-prompts` by static name) would not match. The existing `reloader.stakater.com/auto: "true"` annotation handles pod restarts on content changes.
 
 - [ ] **Step 2: Add volume mount to values.yaml**
 
@@ -310,7 +316,7 @@ Use `mcp__n8n__n8n_create_workflow` with these nodes:
     },
     {
       "parameters": {
-        "jsCode": "const binaryData = $input.first().binary;\nif (!binaryData) {\n  throw new Error('No binary data — prompt file may not exist at the specified path');\n}\nconst key = Object.keys(binaryData)[0];\nconst buffer = await this.helpers.getBinaryDataBuffer(0, key);\nconst fileContent = buffer.toString('utf8');\n\nconst variables = $('When Called By Another Workflow').first().json.variables || {};\n\nconst prompt = fileContent.replace(/<<([A-Z_]+)>>/g, (match, varKey) => {\n  return varKey in variables ? String(variables[varKey]) : match;\n});\n\nreturn [{ json: { prompt } }];"
+        "jsCode": "const binaryData = $input.first().binary;\nif (!binaryData) {\n  throw new Error('No binary data — prompt file may not exist at the specified path');\n}\nconst key = Object.keys(binaryData)[0];\nconst buffer = await this.helpers.getBinaryDataBuffer(0, key);\nconst fileContent = buffer.toString('utf8');\n\nlet inputData;\ntry {\n  inputData = $('When Called By Another Workflow').first().json;\n} catch {\n  inputData = $('Test Data').first().json;\n}\nconst variables = inputData.variables || {};\n\nconst prompt = fileContent.replace(/<<([A-Z0-9_]+)>>/g, (match, varKey) => {\n  return varKey in variables ? String(variables[varKey]) : match;\n});\n\nreturn [{ json: { ...inputData, prompt } }];"
       },
       "id": "b1000001-0003-4000-8000-000000000003",
       "name": "Interpolate Variables",
@@ -365,7 +371,7 @@ Use `mcp__n8n__n8n_update_partial_workflow` to add the `agent-platform` tag (id 
 ```json
 {
   "id": "<new-workflow-id>",
-  "operations": [{"type": "addTags", "tagIds": ["9QNTbsLifoSaD60P"]}]
+  "operations": [{"type": "addTag", "tagId": "9QNTbsLifoSaD60P"}]
 }
 ```
 
@@ -437,15 +443,15 @@ Use `mcp__n8n__n8n_update_partial_workflow`:
       "type": "addNode",
       "node": {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
           "workflowId": "<load-interpolate-workflow-id>",
-          "mode": "each"
+          "mode": "once"
         },
         "id": "c2000001-0002-4000-8000-000000000002",
         "name": "Load Triage Prompt",
         "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.2,
-        "position": [2944, -608]
+        "typeVersion": 1.1,
+        "position": [2832, -608]
       }
     }
   ]
@@ -564,15 +570,15 @@ Connection chain: `Validate: Pending Check Run` → `Prepare Validate Variables`
       "type": "addNode",
       "node": {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
           "workflowId": "<load-interpolate-workflow-id>",
-          "mode": "each"
+          "mode": "once"
         },
         "id": "c2000002-0002-4000-8000-000000000002",
         "name": "Load Validate Prompt",
         "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.2,
-        "position": [2720, -224]
+        "typeVersion": 1.1,
+        "position": [2608, -224]
       }
     }
   ]
@@ -666,7 +672,7 @@ Note: `fix_model` is computed here and passed through alongside the sub-workflow
       "type": "addNode",
       "node": {
         "parameters": {
-          "jsCode": "const data = $('Restore Dispatch Data').first().json;\nconst complexity = data.payload?.complexity || 'simple';\n\nreturn [{ json: {\n  ...data,\n  fix_model: complexity === 'complex' ? 'opus' : 'sonnet',\n  filePath: '/home/node/.n8n-files/prompts/dispatcher-fix-prompt.md',\n  variables: {\n    JOB_ID: data.jobId,\n    SESSION_TOKEN: data.session_token,\n    REPO: data.repo,\n    PR_NUMBER: String(data.pr_number),\n    HEAD_SHA: data.head_sha,\n    COMPLEXITY: complexity,\n    TRIAGE_SUMMARY: data.payload?.triage_summary || 'No summary provided.'\n  }\n}}];"
+          "jsCode": "const data = $('Restore Dispatch Data').first().json;\nconst complexity = data.payload?.complexity || 'simple';\n\nreturn [{ json: {\n  ...data,\n  fix_model: complexity === 'complex' ? 'opus' : 'sonnet',\n  filePath: '/home/node/.n8n-files/prompts/dispatcher-fix-prompt.md',\n  variables: {\n    JOB_ID: data.jobId,\n    SESSION_TOKEN: data.session_token,\n    REPO: data.repo,\n    PR_NUMBER: String(data.pr_number),\n    HEAD_SHA: data.head_sha,\n    ATTEMPT: String(data.attempt),\n    DISPATCHED_AT: data.dispatched_at,\n    COMPLEXITY: complexity,\n    TRIAGE_SUMMARY: data.payload?.triage_summary || 'No summary provided.'\n  }\n}}];"
         },
         "id": "c2000003-0001-4000-8000-000000000001",
         "name": "Prepare Fix Variables",
@@ -689,15 +695,15 @@ Note: `fix_model` is computed here and passed through alongside the sub-workflow
       "type": "addNode",
       "node": {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
           "workflowId": "<load-interpolate-workflow-id>",
-          "mode": "each"
+          "mode": "once"
         },
         "id": "c2000003-0002-4000-8000-000000000002",
         "name": "Load Fix Prompt",
         "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.2,
-        "position": [2944, -416]
+        "typeVersion": 1.1,
+        "position": [2832, -416]
       }
     }
   ]
