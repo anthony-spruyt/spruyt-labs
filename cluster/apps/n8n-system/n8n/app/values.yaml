@@ -176,7 +176,7 @@ main:
       configMap:
         name: n8n-prompts
   deploymentAnnotations: &deploymentAnnotations
-    reloader.stakater.com/auto: "true"
+    secret.reloader.stakater.com/reload: "n8n-cnpg-cluster-app,n8n-secrets"
   securityContext:
     capabilities:
       drop:
