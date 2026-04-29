@@ -218,7 +218,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "Cost per second by agent namespace",
+      "description": "Cost over time by agent namespace",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -256,10 +256,10 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
       "id": 2,
       "options": {
-        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" },
+        "legend": { "calcs": ["sum", "mean", "max"], "displayMode": "table", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "title": "Cost Over Time",
+      "title": "Cost Over Time ($__interval)",
       "type": "timeseries",
       "targets": [
         {
@@ -272,7 +272,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "Lines of code added/removed per second by type",
+      "description": "Lines of code added/removed over time by type",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -319,10 +319,10 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
       "id": 6,
       "options": {
-        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" },
+        "legend": { "calcs": ["sum", "mean", "max"], "displayMode": "table", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "title": "Lines of Code",
+      "title": "Lines of Code ($__interval)",
       "type": "timeseries",
       "targets": [
         {
@@ -380,10 +380,10 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
       "id": 3,
       "options": {
-        "legend": { "calcs": ["sum", "mean"], "displayMode": "table", "placement": "bottom" },
+        "legend": { "calcs": ["sum", "mean", "max"], "displayMode": "table", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "title": "Token Usage by Type",
+      "title": "Token Usage by Type ($__interval)",
       "type": "timeseries",
       "targets": [
         {

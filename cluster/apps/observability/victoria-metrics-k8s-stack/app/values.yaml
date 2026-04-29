@@ -176,7 +176,7 @@ grafana:
   deploymentStrategy:
     type: Recreate
   podAnnotations:
-    reloader.stakater.com/auto: "true"
+    secret.reloader.stakater.com/reload: "grafana-secrets,grafana-oauth-credentials"
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
