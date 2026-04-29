@@ -48,6 +48,7 @@ You MUST call the `submit_fix_result` tool on the `agent-platform` MCP server wi
 - dispatched_at: "<<DISPATCHED_AT>>"
 - role: "fix"
 - status: one of PUSHED, FAILED
+- branch: the current branch name (the PR branch you are already on)
 - commit_sha: the SHA of your fix commit (if pushed)
 - changes_summary: what was changed and why
 
