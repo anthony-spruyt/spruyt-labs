@@ -179,7 +179,7 @@ main:
       emptyDir: {}
   deploymentAnnotations: &deploymentAnnotations
     secret.reloader.stakater.com/reload: "n8n-cnpg-cluster-app,n8n-secrets"
-  securityContext:
+  securityContext: &securityContext
     capabilities:
       drop:
         - ALL
@@ -213,6 +213,7 @@ worker:
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
   deploymentAnnotations: *deploymentAnnotations
+  securityContext: *securityContext
   readinessProbe: *readinessProbe
   livenessProbe: *livenessProbe
   concurrency: 10
@@ -229,6 +230,7 @@ webhook:
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
   deploymentAnnotations: *deploymentAnnotations
+  securityContext: *securityContext
   readinessProbe: *readinessProbe
   livenessProbe: *livenessProbe
   resources:
