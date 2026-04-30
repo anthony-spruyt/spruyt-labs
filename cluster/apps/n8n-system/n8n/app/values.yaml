@@ -45,9 +45,7 @@ main:
     DB_POSTGRESDB_POOL_SIZE:
       value: "5"
     DB_POSTGRESDB_SSL_ENABLED:
-      value: "true"
-    DB_POSTGRESDB_SSL_CA_FILE:
-      value: /home/ssl/certs/postgresql/ca.crt
+      value: "false"
     EXECUTIONS_MODE:
       value: "queue"
     GENERIC_TIMEZONE:
@@ -141,9 +139,6 @@ main:
     N8N_REINSTALL_MISSING_PACKAGES:
       value: "true"
   extraVolumeMounts: &extraVolumeMounts
-    - name: db-ca-cert
-      mountPath: /home/ssl/certs/postgresql
-      readOnly: true
     - name: n8n-cache
       mountPath: /home/node/.cache
     - name: n8n-npm-cache
@@ -161,12 +156,6 @@ main:
     - name: tmp
       mountPath: /tmp
   extraVolumes: &extraVolumes
-    - name: db-ca-cert
-      secret:
-        secretName: n8n-cnpg-cluster-ca
-        items:
-          - key: ca.crt
-            path: ca.crt
     - name: n8n-cache
       emptyDir: {}
     - name: n8n-npm-cache
