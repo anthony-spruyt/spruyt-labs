@@ -8,7 +8,7 @@ resources:
     cpu: 35m
     memory: 216Mi
   limits:
-    memory: 512Mi
+    memory: 1Gi
 
 # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
 # If the value is a string then it is evaluated as a template.
