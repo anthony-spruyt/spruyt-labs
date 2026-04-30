@@ -4,6 +4,12 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
 
+class ForceObliterateAdapter extends BullMQAdapter {
+  obliterate(): Promise<void> {
+    return (this as any).queue.obliterate({ force: true });
+  }
+}
+
 const required = ["VALKEY_HOST", "VALKEY_PASSWORD"] as const;
 for (const key of required) {
   if (!process.env[key]) {
@@ -28,7 +34,7 @@ const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/");
 
 createBullBoard({
-  queues: [new BullMQAdapter(queue, { readOnlyMode: readOnly })],
+  queues: [new ForceObliterateAdapter(queue, { readOnlyMode: readOnly })],
   serverAdapter,
 });
 
