@@ -8,6 +8,7 @@ resources:
   - ./github-external-secret.yaml
   - ./github-rotation-rbac.yaml
   - ./n8n-secrets.sops.yaml
+  - ./n8n-runner-secrets.sops.yaml
   - ./n8n-cnpg-object-stores.yaml
   - ./n8n-cnpg-cluster.yaml
   # Dont need pooling yet, if pooling is needed when load increase can look at enabling.

@@ -102,9 +102,17 @@ main:
     N8N_PROXY_HOPS:
       value: "1"
     # Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
-    # TODO: migrate to external task runner
     N8N_RUNNERS_MODE:
-      value: "internal"
+      value: "external"
+    N8N_RUNNERS_BROKER_LISTEN_ADDRESS:
+      value: "0.0.0.0"
+    N8N_RUNNERS_AUTH_TOKEN:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-runner-secrets
+          key: N8N_RUNNERS_AUTH_TOKEN
+    N8N_NATIVE_PYTHON_RUNNER:
+      value: "true"
     N8N_SKIP_AUTH_ON_OAUTH_CALLBACK:
       value: "false"
     EXTERNAL_HOOK_FILES:
@@ -178,7 +186,7 @@ main:
     - name: tmp
       emptyDir: {}
   deploymentAnnotations: &deploymentAnnotations
-    secret.reloader.stakater.com/reload: "n8n-cnpg-cluster-app,n8n-secrets"
+    secret.reloader.stakater.com/reload: "n8n-cnpg-cluster-app,n8n-secrets,n8n-runner-secrets"
   securityContext: &securityContext
     capabilities:
       drop:

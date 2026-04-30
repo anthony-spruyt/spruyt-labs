@@ -14,3 +14,50 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: n8n-values
+  postRenderers:
+    - kustomize:
+        images:
+          - name: n8nio/runners
+            newTag: "2.16.2"
+        patches:
+          - target:
+              kind: Deployment
+            patch: |-
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: _
+              spec:
+                template:
+                  spec:
+                    volumes:
+                      - name: runner-tmp
+                        emptyDir: {}
+                    containers:
+                      - name: task-runner
+                        image: n8nio/runners
+                        env:
+                          - name: N8N_RUNNERS_TASK_BROKER_URI
+                            value: http://localhost:5679
+                          - name: N8N_RUNNERS_AUTH_TOKEN
+                            valueFrom:
+                              secretKeyRef:
+                                name: n8n-runner-secrets
+                                key: N8N_RUNNERS_AUTH_TOKEN
+                        volumeMounts:
+                          - name: runner-tmp
+                            mountPath: /tmp
+                        securityContext:
+                          capabilities:
+                            drop:
+                              - ALL
+                          readOnlyRootFilesystem: true
+                          runAsNonRoot: true
+                          runAsUser: 1000
+                        resources:
+                          requests:
+                            cpu: 10m
+                            memory: 128Mi
+                          limits:
+                            cpu: 500m
+                            memory: 512Mi
