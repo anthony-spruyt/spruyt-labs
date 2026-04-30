@@ -6,6 +6,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: crafty-controller-data
   namespace: minecraft
+  labels:
+    velero.io/backup-volumes: "true"
 spec:
   storageClassName: rbd-fast-delete
   accessModes:

@@ -5,4 +5,5 @@ kind: Kustomization
 resources:
   - ./backup-storage-location.yaml
   - ./volume-snapshot-location.yaml
+  - ./volume-policy.yaml
   - ./schedules.yaml
