@@ -7,6 +7,7 @@ metadata:
   # replace the namespace with the namespace where the operator is deployed.
   namespace: csi-addons-system
 data:
-  "reclaim-space-timeout": "3m"
-  "max-concurrent-reconciles": "100"
+  "reclaim-space-timeout": "5m"
+  "max-concurrent-reconciles": "10"
   "max-group-pvcs": "100"
+  "cronjob-stagger-window": "2"
