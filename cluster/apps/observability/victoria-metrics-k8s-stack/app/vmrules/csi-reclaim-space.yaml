@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: csi-reclaim-space
+  namespace: observability
+spec:
+  groups:
+    - name: csi-reclaim-space
+      rules:
+        - alert: ReclaimSpaceJobFailed
+          expr: |
+            kube_customresource_reclaimspacejob_info{result="Failed"} == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ReclaimSpaceJob {{ $labels.namespace }}/{{ $labels.name }} failed"
+            description: |
+              CSI ReclaimSpaceJob {{ $labels.namespace }}/{{ $labels.name }} has failed.
+              This means fstrim/discard did not run and Ceph cannot reclaim freed blocks
+              from this volume. Check csi-addons controller and nodeplugin connectivity.

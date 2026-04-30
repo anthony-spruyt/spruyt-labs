@@ -279,6 +279,45 @@ prometheus-node-exporter:
 # -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
 kube-state-metrics:
   enabled: true
+  rbac:
+    extraRules:
+      - apiGroups: ["csiaddons.openshift.io"]
+        resources: ["reclaimspacejobs"]
+        verbs: ["list", "watch"]
+  customResourceState:
+    enabled: true
+    config:
+      spec:
+        resources:
+          - groupVersionKind:
+              group: csiaddons.openshift.io
+              version: v1alpha1
+              kind: ReclaimSpaceJob
+            labelsFromPath:
+              name: [metadata, name]
+              namespace: [metadata, namespace]
+            metrics:
+              - name: reclaimspacejob_info
+                help: "ReclaimSpaceJob result info"
+                each:
+                  type: Info
+                  info:
+                    labelsFromPath:
+                      result: [status, result]
+                      message: [status, message]
+              - name: reclaimspacejob_retries
+                help: "ReclaimSpaceJob retry count"
+                each:
+                  type: Gauge
+                  gauge:
+                    nilIsZero: true
+                    path: [status, retries]
+              - name: reclaimspacejob_completion_time
+                help: "ReclaimSpaceJob completion timestamp"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, completionTime]
   resources:
     limits:
       memory: 256Mi

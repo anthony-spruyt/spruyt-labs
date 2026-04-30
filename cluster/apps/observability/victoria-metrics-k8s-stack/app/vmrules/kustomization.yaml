@@ -10,4 +10,5 @@ resources:
   - ./nut-ups.yaml
   - ./cilium-policy-drops.yaml
   - ./cert-manager-certificates.yaml
+  - ./csi-reclaim-space.yaml
   - ./node-memory-saturation.yaml
