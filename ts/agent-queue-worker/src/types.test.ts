@@ -67,7 +67,7 @@ describe("DoneRequestSchema", () => {
   it("accepts valid request", () => {
     const result = DoneRequestSchema.safeParse({
       result: { status: "ok" },
-      session_token: "550e8400-e29b-41d4-a716-446655440000",
+      session_token: "00000000-0000-0000-0000-000000000000",
       attempt: 0,
       dispatched_at: "2026-01-01T00:00:00Z",
     });
@@ -87,7 +87,7 @@ describe("DoneRequestSchema", () => {
   it("rejects negative attempt", () => {
     const result = DoneRequestSchema.safeParse({
       result: {},
-      session_token: "550e8400-e29b-41d4-a716-446655440000",
+      session_token: "00000000-0000-0000-0000-000000000000",
       attempt: -1,
       dispatched_at: "2026-01-01T00:00:00Z",
     });

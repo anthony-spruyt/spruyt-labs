@@ -3,11 +3,11 @@ import { loadConfig } from "./config.js";
 
 const VALID_ENV = {
   VALKEY_HOST: "valkey.default.svc.cluster.local",
-  VALKEY_PASSWORD: "secret",
+  VALKEY_PASSWORD: "test",
   N8N_DISPATCH_WEBHOOK:
     "http://n8n.n8n-system.svc.cluster.local/webhook/dispatch",
-  WORKER_TO_N8N_SECRET: "w2n-secret",
-  N8N_TO_WORKER_SECRET: "n2w-secret",
+  WORKER_TO_N8N_SECRET: "test",
+  N8N_TO_WORKER_SECRET: "test",
   GITHUB_OWNER: "anthony-spruyt",
 };
 
@@ -75,8 +75,8 @@ describe("loadConfig", () => {
   });
 
   it("accepts optional GITHUB_TOKEN", () => {
-    Object.assign(process.env, VALID_ENV, { GITHUB_TOKEN: "ghp_test" });
+    Object.assign(process.env, VALID_ENV, { GITHUB_TOKEN: "test" });
     const cfg = loadConfig();
-    expect(cfg.GITHUB_TOKEN).toBe("ghp_test");
+    expect(cfg.GITHUB_TOKEN).toBe("test");
   });
 });
