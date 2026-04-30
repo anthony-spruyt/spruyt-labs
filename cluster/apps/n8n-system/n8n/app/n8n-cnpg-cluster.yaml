@@ -25,6 +25,14 @@ spec:
   #       parameters:
   #         barmanObjectName: n8n-cnpg-aws-object-store
   #         serverName: n8n-cnpg-cluster
+  certificates:
+    serverAltDNSNames:
+      - n8n-cnpg-cluster-pooler-rw
+      - n8n-cnpg-cluster-pooler-rw.n8n-system
+      - n8n-cnpg-cluster-pooler-rw.n8n-system.svc
+      - n8n-cnpg-cluster-pooler-ro
+      - n8n-cnpg-cluster-pooler-ro.n8n-system
+      - n8n-cnpg-cluster-pooler-ro.n8n-system.svc
   enableSuperuserAccess: true
   imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:664ebfe87d1cda6f429613d265ae1db758eb19ee050a2752ac38e856b0bd24ad"
   instances: 2
