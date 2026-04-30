@@ -306,10 +306,10 @@ kube-state-metrics:
                       result: [status, result]
   resources:
     limits:
-      memory: 256Mi
+      memory: 512Mi
     requests:
       cpu: 20m
-      memory: 96Mi
+      memory: 128Mi
 
 # Drop high-cardinality apiserver histogram buckets that aren't used by alerts
 # Keeps: apiserver_request_sli_duration_seconds_bucket (used by SLI alerts)
