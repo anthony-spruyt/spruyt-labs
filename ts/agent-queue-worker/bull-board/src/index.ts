@@ -85,6 +85,7 @@ app.post("/admin/api/jobs/:jobId/force-fail", async (req, res) => {
     const token = `admin-force-fail-${Date.now()}`;
     await client.del(lockKey);
     await client.set(lockKey, token, "PX", 30000);
+    job.discard();
     await job.moveToFailed(new Error("Force failed via admin"), token, false);
 
     const appKeys = [`agent:active:${jobId}`];
