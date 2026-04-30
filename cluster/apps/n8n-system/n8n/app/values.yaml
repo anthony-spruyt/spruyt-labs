@@ -101,8 +101,6 @@ main:
       value: "5678"
     N8N_PROXY_HOPS:
       value: "1"
-    N8N_RUNNERS_ENABLED:
-      value: "true"
     # Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
     # TODO: migrate to external task runner
     N8N_RUNNERS_MODE:
@@ -155,6 +153,8 @@ main:
     - name: n8n-prompts
       mountPath: /home/node/.n8n-files/prompts
       readOnly: true
+    - name: tmp
+      mountPath: /tmp
   extraVolumes: &extraVolumes
     - name: db-ca-cert
       secret:
@@ -175,6 +175,8 @@ main:
     - name: n8n-prompts
       configMap:
         name: n8n-prompts
+    - name: tmp
+      emptyDir: {}
   deploymentAnnotations: &deploymentAnnotations
     secret.reloader.stakater.com/reload: "n8n-cnpg-cluster-app,n8n-secrets"
   securityContext:
