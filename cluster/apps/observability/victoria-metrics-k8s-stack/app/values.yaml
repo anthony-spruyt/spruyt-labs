@@ -71,14 +71,14 @@ vmsingle:
     replicaCount: 1
     # PVC managed by Flux (persistent-volume-claim.yaml), not operator — operator doesn't recreate PVCs on delete
     storage: null
-    storageDataPath: /victoria-metrics-data
+    storageDataPath: /vmsingle-storage/data
     volumes:
       - name: vmsingle-data
         persistentVolumeClaim:
           claimName: vmsingle-victoria-metrics-k8s-stack
     volumeMounts:
       - name: vmsingle-data
-        mountPath: /victoria-metrics-data
+        mountPath: /vmsingle-storage
 
 alertmanager:
   enabled: true
