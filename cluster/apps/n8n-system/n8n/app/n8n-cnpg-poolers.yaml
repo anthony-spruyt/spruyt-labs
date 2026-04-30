@@ -16,7 +16,7 @@ spec:
         targetLabel: type
   pgbouncer:
     paused: false
-    poolMode: session
+    poolMode: transaction
   type: rw
   # serviceTemplate:
   #   metadata:
@@ -43,7 +43,7 @@ spec:
         targetLabel: type
   pgbouncer:
     paused: false
-    poolMode: session
+    poolMode: transaction
   type: ro
   # serviceTemplate:
   #   metadata:

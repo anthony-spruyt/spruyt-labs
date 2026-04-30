@@ -482,6 +482,28 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow metrics scraping from vmagent for PgBouncer pooler
+# Data plane (port 5432) already covered by allow-cnpg-n8n-ingress and allow-cnpg-internal-cluster
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-pooler-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: n8n-cnpg-cluster
+      cnpg.io/podRole: pooler
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9127"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress from Claude agent pods (MCP submit_result)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
