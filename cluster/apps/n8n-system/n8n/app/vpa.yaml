@@ -20,6 +20,13 @@ spec:
         maxAllowed:
           cpu: 2000m
           memory: 2048Mi
+      - containerName: task-runner
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          cpu: 500m
+          memory: 512Mi
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
 apiVersion: autoscaling.k8s.io/v1
@@ -39,3 +46,42 @@ spec:
         minAllowed:
           cpu: 1m
           memory: 1Mi
+        maxAllowed:
+          cpu: 500m
+          memory: 1.5Gi
+      - containerName: task-runner
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          cpu: 500m
+          memory: 512Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: n8n-webhook
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: n8n-webhook
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: n8n-webhook
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          cpu: 500m
+          memory: 512Mi
+      - containerName: task-runner
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          cpu: 500m
+          memory: 512Mi
