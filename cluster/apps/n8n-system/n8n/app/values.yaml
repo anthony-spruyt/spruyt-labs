@@ -99,8 +99,6 @@ main:
     N8N_PROXY_HOPS:
       value: "1"
     # Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
-    N8N_RUNNERS_ENABLED:
-      value: "true"
     N8N_RUNNERS_MODE:
       value: "external"
     N8N_RUNNERS_BROKER_LISTEN_ADDRESS:

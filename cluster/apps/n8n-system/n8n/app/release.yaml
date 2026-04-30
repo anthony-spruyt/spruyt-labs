@@ -22,6 +22,7 @@ spec:
         patches:
           - target:
               kind: Deployment
+              name: n8n-worker
             patch: |-
               apiVersion: apps/v1
               kind: Deployment
