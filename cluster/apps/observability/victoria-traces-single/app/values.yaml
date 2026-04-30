@@ -44,6 +44,8 @@ server:
     enabled: true
     accessModes:
       - ReadWriteOnce
+    annotations:
+      reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
     storageClassName: "rbd-fast-delete"
     # -- Smaller than logs since traces are sampled and retention is short
     size: 20Gi
