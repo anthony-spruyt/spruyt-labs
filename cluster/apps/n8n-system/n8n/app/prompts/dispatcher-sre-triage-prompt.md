@@ -205,7 +205,7 @@ Do not create a GitHub issue. Set `create_issue: false` in the output.
 
 **CRITICAL: You MUST call `submit_sre_result` on the `agent-platform` MCP server to submit your triage result. The tool validates your submission and returns success or error details. If validation fails, fix the payload and re-call (max 3 attempts).**
 
-For transient or maintenance-noise alerts that don't warrant a Discord post, you may skip the tool call entirely and just end your response — the platform will complete the job when the CLI process exits.
+For transient or maintenance-noise alerts, still submit via `submit_sre_result` with severity "info" and a brief summary noting the transient nature. The platform will suppress Discord posts for maintenance noise based on the content.
 
 Call `submit_sre_result` with the following parameters:
 

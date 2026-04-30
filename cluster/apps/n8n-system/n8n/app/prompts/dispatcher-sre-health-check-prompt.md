@@ -117,7 +117,7 @@ mcp__kubectl__kubectl_describe(resource="helmrelease", name="<name>", namespace=
 
 ## Step 2 — Investigate Failures
 
-If Step 1 found no issues, you are done. Do NOT call the MCP submission tool — there is nothing to report. Just end your response.
+If Step 1 found no issues, skip to the Output section and submit a healthy result.
 
 For each identified issue:
 
@@ -192,9 +192,7 @@ Do not create a GitHub issue. Set `create_issue: false` in the output.
 
 ## Output — MCP Tool Submission
 
-**Only call `submit_sre_result` when issues are found.** If the cluster is healthy (all GitOps resources reconciled, certs valid), do NOT call the tool — just end your response. The platform will complete the job when the CLI process exits.
-
-For maintenance-noise-only findings that don't warrant a Discord post, also skip the tool call and end your response.
+**ALWAYS call `submit_sre_result`.** Whether the cluster is healthy or has issues, you must submit a result. For a healthy cluster, use severity "info" with summary "Cluster healthy — no issues found". The platform depends on this callback to complete the job and will suppress Discord posts for healthy results.
 
 Call `submit_sre_result` on the `agent-platform` MCP server with the following parameters:
 
