@@ -215,10 +215,14 @@ worker:
   deploymentAnnotations: *deploymentAnnotations
   readinessProbe: *readinessProbe
   livenessProbe: *livenessProbe
+  concurrency: 10
   resources:
+    limits:
+      cpu: 500m
+      memory: 1.5Gi
     requests:
-      cpu: 15m
-      memory: 64Mi
+      cpu: 50m
+      memory: 512Mi
 webhook:
   enabled: true
   extraEnv: *extraEnv
@@ -227,3 +231,10 @@ webhook:
   deploymentAnnotations: *deploymentAnnotations
   readinessProbe: *readinessProbe
   livenessProbe: *livenessProbe
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 25m
+      memory: 256Mi
