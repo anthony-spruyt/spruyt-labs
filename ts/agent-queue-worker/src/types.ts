@@ -27,13 +27,13 @@ export const AgentJobSchema = z.object({
   head_sha: z.string().min(1),
   dispatched_at: z.string().optional(),
   dispatch_state: z.enum(["pending", "dispatched", "failed"]).optional(),
-  payload: z.record(z.unknown()),
+  payload: z.record(z.string(), z.unknown()),
 });
 
 export type AgentJob = z.infer<typeof AgentJobSchema>;
 
 export const DoneRequestSchema = z.object({
-  result: z.record(z.unknown()),
+  result: z.record(z.string(), z.unknown()),
   session_token: z.string().uuid(),
   attempt: z.number().int().min(0),
   dispatched_at: z.string(),
