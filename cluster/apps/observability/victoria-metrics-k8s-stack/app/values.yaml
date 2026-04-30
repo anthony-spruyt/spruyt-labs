@@ -304,20 +304,6 @@ kube-state-metrics:
                   info:
                     labelsFromPath:
                       result: [status, result]
-                      message: [status, message]
-              - name: reclaimspacejob_retries
-                help: "ReclaimSpaceJob retry count"
-                each:
-                  type: Gauge
-                  gauge:
-                    nilIsZero: true
-                    path: [status, retries]
-              - name: reclaimspacejob_completion_time
-                help: "ReclaimSpaceJob completion timestamp"
-                each:
-                  type: Gauge
-                  gauge:
-                    path: [status, completionTime]
   resources:
     limits:
       memory: 256Mi
