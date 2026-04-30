@@ -42,6 +42,7 @@ You deliberately skip node health, pod crashes, OOMKilled, PVC status, and firin
 | Create/update issue | `mcp__github__issue_write` |
 | Comment on issue | `mcp__github__add_issue_comment` |
 | List PRs | `mcp__github__list_pull_requests` |
+| List commits | `mcp__github__list_commits` |
 
 ## Step 0 — Situational Awareness (mandatory, always first)
 
@@ -77,9 +78,25 @@ mcp__github__list_pull_requests(owner="anthony-spruyt", repo="spruyt-labs", stat
 
 Filter results for `renovate[bot]` author and PRs merged in the last 48 hours. A recently merged version bump is a strong signal when correlating with GitOps failures.
 
-### C. Correlate
+### C. Recent Commits on Main
 
-If active maintenance is detected (Talos upgrade, node upgrade, Kubernetes version bump, recent Renovate batch merge), factor this into your diagnosis. Maintenance-related GitOps failures are often expected and self-resolve — keep triage brief and note the correlation. Skip the GitHub issue for expected maintenance noise.
+Check recent commits pushed to main. This is a trunk-based workflow — changes often land as direct pushes without PRs.
+
+```text
+mcp__github__list_commits(owner="anthony-spruyt", repo="spruyt-labs", sha="main", perPage=15)
+```
+
+Look for:
+
+- Commits in the last 24-48 hours that touch the affected namespace, chart, or resource
+- Direct pushes (no associated PR) that may have introduced breaking changes
+- Commit messages referencing the affected component
+
+If a recent commit correlates with a detected failure, reference it in your findings and probable cause. A commit pushed shortly before a GitOps failure is a strong root cause signal — stronger than a merged PR since direct pushes skip review.
+
+### D. Correlate
+
+If active maintenance is detected (Talos upgrade, node upgrade, Kubernetes version bump, recent Renovate batch merge) or a recent commit correlates with a detected failure, factor this into your diagnosis. Maintenance-related GitOps failures are often expected and self-resolve — keep triage brief and note the correlation. Skip the GitHub issue for expected maintenance noise.
 
 ## Step 1 — GitOps State Collection
 
@@ -167,7 +184,7 @@ Filter for PRs merged in the last 48 hours that touch the affected chart/resourc
 
 ### If Existing Issue Found — Update
 
-Comment with a health check triage update via `mcp__github__add_issue_comment`. Include new findings, updated metrics, and any changes in scope. If a recently merged PR correlates with the failure, reference it in the comment.
+Comment with a health check triage update via `mcp__github__add_issue_comment`. Include new findings, updated metrics, and any changes in scope. If a recently merged PR or direct commit correlates with the failure, reference it in the comment.
 
 ### If Not Found and Not Maintenance Noise — Create
 
@@ -252,5 +269,4 @@ If the tool returns `{ "valid": false, "errors": [...] }`, fix the listed errors
 ## Constraints
 
 - **Read-only cluster operations only** — no `kubectl apply`, `delete`, `patch`, `exec`, or `restart`
-- **Max 15 MCP investigation calls** (kubectl + VictoriaMetrics). Discord reads and GitHub calls do **not** count toward this limit.
 - If an MCP server is unavailable, state explicitly as a gap in findings — do not silently omit it

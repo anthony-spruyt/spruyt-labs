@@ -60,6 +60,7 @@ Each alert in the array has:
 | Create/update issue | `mcp__github__issue_write` |
 | Comment on issue | `mcp__github__add_issue_comment` |
 | List PRs | `mcp__github__list_pull_requests` |
+| List commits | `mcp__github__list_commits` |
 
 ## Step 0 — Situational Awareness (mandatory, always first)
 
@@ -95,9 +96,25 @@ mcp__github__list_pull_requests(owner="anthony-spruyt", repo="spruyt-labs", stat
 
 Filter results for `renovate[bot]` author and PRs merged in the last 48 hours. A recently merged version bump is a strong signal when correlating with failures.
 
-### C. Correlate
+### C. Recent Commits on Main
 
-If 3+ alerts fired within 30 minutes AND/OR there is active maintenance (Talos upgrade, node upgrade, Kubernetes version bump), lead triage with a correlation finding and single root cause assessment.
+Check recent commits pushed to main. This is a trunk-based workflow — changes often land as direct pushes without PRs.
+
+```text
+mcp__github__list_commits(owner="anthony-spruyt", repo="spruyt-labs", sha="main", perPage=15)
+```
+
+Look for:
+
+- Commits in the last 24-48 hours that touch the affected namespace, chart, or resource
+- Direct pushes (no associated PR) that may have introduced breaking changes
+- Commit messages referencing the affected component
+
+If a recent commit correlates with the alert timing, reference it in your findings and probable cause. A commit pushed minutes or hours before an alert fires is a strong root cause signal — stronger than a merged PR since direct pushes skip review.
+
+### D. Correlate
+
+If 3+ alerts fired within 30 minutes AND/OR there is active maintenance (Talos upgrade, node upgrade, Kubernetes version bump) AND/OR a recent commit correlates with the failure, lead triage with a correlation finding and single root cause assessment.
 
 Maintenance-related alerts typically cause:
 
@@ -178,7 +195,7 @@ Filter for PRs merged in the last 48 hours that touch the affected chart/resourc
 
 ### If Existing Issue Found — Update
 
-Comment with a triage update via `mcp__github__add_issue_comment`. Include new findings, updated metrics, and any changes in severity or scope. If a recently merged PR correlates with the failure, reference it in the comment.
+Comment with a triage update via `mcp__github__add_issue_comment`. Include new findings, updated metrics, and any changes in severity or scope. If a recently merged PR or direct commit correlates with the failure, reference it in the comment.
 
 ### If Not Found and Not Maintenance Noise — Create
 
@@ -266,6 +283,4 @@ If the tool returns `{ "valid": false, "errors": [...] }`, fix the listed errors
 ## Constraints
 
 - **Read-only cluster operations only** — no `kubectl apply`, `delete`, `patch`, `exec`, or `restart`
-- **Max 12 MCP investigation calls** for single-alert payloads, **18 for multi-alert**
-- Discord reads and GitHub calls do **not** count toward this limit
 - If an MCP server is unavailable, state explicitly as a gap in findings — do not silently omit it
