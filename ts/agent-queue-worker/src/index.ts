@@ -33,9 +33,9 @@ const processor = new Processor(redis, config);
 const worker = new Worker("agent", async (job) => processor.process(job), {
   ...queueOpts,
   concurrency: 1,
-  stalledInterval: 60_000,
+  stalledInterval: 120_000,
   lockDuration: 120_000,
-  maxStalledCount: 1,
+  maxStalledCount: 2,
 });
 
 const queueEvents = new QueueEvents("agent", queueOpts);
@@ -135,6 +135,7 @@ async function shutdown(): Promise<void> {
   metrics.workerShutdowns.inc();
 
   clearInterval(depthInterval);
+  processor.cancelAll();
   await new Promise<void>((resolve) => server.close(() => resolve()));
 
   await worker.close();
