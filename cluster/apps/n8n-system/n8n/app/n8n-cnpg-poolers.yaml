@@ -17,6 +17,8 @@ spec:
   pgbouncer:
     paused: false
     poolMode: transaction
+    parameters:
+      ignore_startup_parameters: extra_float_digits,statement_timeout
   type: rw
   # serviceTemplate:
   #   metadata:
@@ -44,6 +46,8 @@ spec:
   pgbouncer:
     paused: false
     poolMode: transaction
+    parameters:
+      ignore_startup_parameters: extra_float_digits,statement_timeout
   type: ro
   # serviceTemplate:
   #   metadata:
