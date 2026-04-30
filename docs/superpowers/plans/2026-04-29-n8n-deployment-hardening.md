@@ -34,7 +34,7 @@ ______________________________________________________________________
 - Modify: `cluster/apps/n8n-system/n8n/app/values.yaml:104-105` (remove N8N_RUNNERS_ENABLED)
 - Modify: `cluster/apps/n8n-system/n8n/app/values.yaml:140-177` (add tmp volumes)
 
-**Context:** `N8N_RUNNERS_ENABLED` is deprecated in n8n 2.x — task runners are always enabled. `N8N_RUNNERS_MODE=internal` is NOT deprecated but is kept intentionally as a breadcrumb for future migration to external task runners (see TODO comment). The `/tmp` emptyDir is needed because `readOnlyRootFilesystem: true` blocks n8n from creating `/tmp/n8nDataTableUploads`.
+**Context:** `N8N_RUNNERS_ENABLED` is deprecated in n8n 2.x — task runners are always enabled. `N8N_RUNNERS_MODE=internal` is NOT deprecated and is left in place here (Task 4 switches it to `external`). The `/tmp` emptyDir is needed because `readOnlyRootFilesystem: true` blocks n8n from creating `/tmp/n8nDataTableUploads`.
 
 - [ ] **Step 1: Remove N8N_RUNNERS_ENABLED from extraEnv**
 
@@ -46,7 +46,7 @@ In `values.yaml`, delete lines 104-105 (the `N8N_RUNNERS_ENABLED` block only):
       value: "true"
 ```
 
-Keep `N8N_RUNNERS_MODE` and its TODO comment — intentional breadcrumb for external runner migration.
+Keep `N8N_RUNNERS_MODE` — Task 4 changes it to `external`.
 
 - [ ] **Step 2: Add tmp emptyDir to shared volumes**
 
@@ -74,7 +74,7 @@ git commit -m "fix(n8n): remove deprecated N8N_RUNNERS_ENABLED and add /tmp empt
 
 Remove N8N_RUNNERS_ENABLED (always enabled in 2.x) — generates
 deprecation warnings on all pods. Keep N8N_RUNNERS_MODE=internal
-(not deprecated, intentional breadcrumb for external runner migration).
+(not deprecated, switched to external in Task 4).
 
 Add emptyDir at /tmp for readOnlyRootFilesystem compatibility —
 n8n needs /tmp/n8nDataTableUploads for data table uploads.
@@ -98,9 +98,9 @@ ______________________________________________________________________
 
 - Set resources based on VPA recommendations with headroom.
 
-- [ ] **Step 1: Set worker resources**
+- [ ] **Step 1: Set worker resources and concurrency**
 
-In `values.yaml`, replace the worker resources block:
+In `values.yaml`, replace the worker resources block and add explicit concurrency:
 
 ```yaml
 # BEFORE (lines 216-219):
@@ -110,6 +110,7 @@ In `values.yaml`, replace the worker resources block:
       memory: 64Mi
 
 # AFTER:
+  concurrency: 10
   resources:
     limits:
       cpu: 500m
@@ -120,6 +121,8 @@ In `values.yaml`, replace the worker resources block:
 ```
 
 Rationale: VPA target 35m/600Mi, upper 128m/1.1Gi. Requests at ~1.5x target, limits at ~4x target for CPU and ~1.4x VPA upper bound for memory headroom.
+
+`concurrency: 10` sets `--concurrency 10` on the worker process. n8n defaults to 5 and warns when concurrency < 5 ("THIS CAN LEAD TO AN UNSTABLE ENVIRONMENT"). Setting 10 gives headroom above the warning threshold while matching production concurrency needs.
 
 - [ ] **Step 2: Add webhook resources**
 
@@ -153,6 +156,7 @@ git commit -m "fix(n8n): set proper resource specs for worker and webhook
 
 Worker was dangerously underprovisioned (15m/64Mi request vs 17m/227Mi
 actual). Set to 50m/512Mi request, 500m/1.5Gi limit based on VPA recs.
+Set explicit concurrency=10 (default 5 is at n8n warning threshold).
 
 Webhook had zero resource specs. Set to 25m/256Mi request, 500m/512Mi
 limit based on actual usage with headroom.
@@ -441,7 +445,18 @@ SOPS secret for auth token created separately by user.
 Ref #1130"
 ```
 
-Note: User must `git add` the encrypted `n8n-runner-secrets.sops.yaml` separately after encrypting.
+> **⛔ GATE: SOPS secret must exist before first push (Task 6a Step 5).** Kustomization now references `n8n-runner-secrets.sops.yaml`. If this file doesn't exist when pushed, Flux kustomize build fails. **Action:** User must create, encrypt, and commit the SOPS secret before proceeding past Task 5.
+>
+> ```bash
+> cp cluster/apps/n8n-system/n8n/app/n8n-runner-secrets.sops.yaml.tmpl \
+>    cluster/apps/n8n-system/n8n/app/n8n-runner-secrets.sops.yaml
+> # Edit: replace CHANGE_ME_GENERATE_RANDOM_TOKEN with a random token
+> sops -e -i cluster/apps/n8n-system/n8n/app/n8n-runner-secrets.sops.yaml
+> git add cluster/apps/n8n-system/n8n/app/n8n-runner-secrets.sops.yaml
+> git commit -m "chore(n8n): add encrypted runner auth token secret
+>
+> Ref #1130"
+> ```
 
 ______________________________________________________________________
 
@@ -692,7 +707,9 @@ ______________________________________________________________________
 
 **Context:** Pooler pods confirmed Running from Task 6a. Now safe to redirect n8n's DB connections through PgBouncer. CNPG Pooler creates a service matching the Pooler resource name (`n8n-cnpg-cluster-pooler-rw`). SSL still works — PgBouncer uses certs signed by the same cluster CA mounted at `DB_POSTGRESDB_SSL_CA_FILE`.
 
-- [ ] **Step 1: Point DB host at pooler service**
+Also reduce `DB_POSTGRESDB_POOL_SIZE` from 10 to 5 per pod. With PgBouncer in transaction mode handling multiplexing, 5 client-side connections per pod (15 total) is sufficient — PgBouncer's `default_pool_size` (20) handles the actual PostgreSQL connection count.
+
+- [ ] **Step 1: Point DB host at pooler service and reduce pool size**
 
 In `values.yaml`, change `DB_POSTGRESDB_HOST` from secretKeyRef to hardcoded pooler service:
 
@@ -709,6 +726,18 @@ In `values.yaml`, change `DB_POSTGRESDB_HOST` from secretKeyRef to hardcoded poo
       value: n8n-cnpg-cluster-pooler-rw.n8n-system.svc
 ```
 
+Also reduce client-side pool size (PgBouncer handles multiplexing now):
+
+```yaml
+# BEFORE:
+    DB_POSTGRESDB_POOL_SIZE:
+      value: "10"
+
+# AFTER:
+    DB_POSTGRESDB_POOL_SIZE:
+      value: "5"
+```
+
 - [ ] **Step 2: Commit**
 
 ```bash
@@ -716,7 +745,9 @@ git add cluster/apps/n8n-system/n8n/app/values.yaml
 git commit -m "feat(n8n): switch DB connections to PgBouncer pooler
 
 Point DB_POSTGRESDB_HOST at pooler service instead of direct CNPG.
-30 direct DB connections now multiplexed through PgBouncer.
+Reduce DB_POSTGRESDB_POOL_SIZE from 10 to 5 per pod — PgBouncer
+handles connection multiplexing in transaction mode, so client-side
+pool can be smaller.
 
 Pooler pods confirmed Running in previous deploy.
 
