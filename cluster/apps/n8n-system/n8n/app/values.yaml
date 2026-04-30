@@ -26,10 +26,7 @@ main:
           name: n8n-cnpg-cluster-app
           key: dbname
     DB_POSTGRESDB_HOST:
-      valueFrom:
-        secretKeyRef:
-          name: n8n-cnpg-cluster-app
-          key: host
+      value: n8n-cnpg-cluster-pooler-rw.n8n-system.svc
     DB_POSTGRESDB_PORT:
       valueFrom:
         secretKeyRef:
@@ -46,7 +43,7 @@ main:
           name: n8n-cnpg-cluster-app
           key: password
     DB_POSTGRESDB_POOL_SIZE:
-      value: "10"
+      value: "5"
     DB_POSTGRESDB_SSL_ENABLED:
       value: "true"
     DB_POSTGRESDB_SSL_CA_FILE:
