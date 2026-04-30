@@ -64,7 +64,6 @@ You MUST call the `submit_triage_verdict` tool on the `agent-platform` MCP serve
 - head_sha: "<<HEAD_SHA>>"
 - attempt: <<ATTEMPT>>
 - dispatched_at: "<<DISPATCHED_AT>>"
-- role: "triage"
 - verdict: one of SAFE, FIXABLE, RISKY, BREAKING
 - complexity: "simple" or "complex" (required if FIXABLE)
 - summary: your human-readable analysis (this gets posted as PR comment by the platform)

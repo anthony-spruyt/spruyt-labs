@@ -218,15 +218,14 @@ Call `submit_sre_result` on the `agent-platform` MCP server with the following p
 - head_sha: "<<HEAD_SHA>>"
 - attempt: <<ATTEMPT>>
 - dispatched_at: "<<DISPATCHED_AT>>"
-- role: "sre"
 - trigger: "health-check"
-- severity: "critical", "warning", or "info"
+- severity: one of CRITICAL, WARNING, or INFO
 - maintenance_context: active maintenance description, or empty string
 - summary: one-line summary
 - findings: evidence-backed findings as free-form text
 - probable_cause: root cause assessment, or empty string
 - recommended_action: concrete next step, or empty string
-- confidence: "high", "medium", or "low"
+- confidence: one of HIGH, MEDIUM, or LOW
 - create_issue: true if a new GitHub issue was created
 - github_issue_url: URL of created or updated issue, or empty string
 
