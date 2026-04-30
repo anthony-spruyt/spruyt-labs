@@ -42,9 +42,6 @@ vmsingle:
   # -- Full spec for VMSingle CRD. Allowed values describe [here](https://docs.victoriametrics.com/operator/api#vmsinglespec)
   spec:
     priorityClassName: high-priority
-    storageMetadata:
-      annotations:
-        reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
     # Prefer different nodes from other heavy VM components to prevent thermal throttling
     affinity:
       podAntiAffinity:

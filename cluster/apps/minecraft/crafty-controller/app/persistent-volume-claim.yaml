@@ -6,8 +6,6 @@ kind: PersistentVolumeClaim
 metadata:
   name: crafty-controller-data
   namespace: minecraft
-  annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *" # At 05:00 daily Melbourne (UTC+10)
 spec:
   storageClassName: rbd-fast-delete
   accessModes:
