@@ -30,5 +30,7 @@ configMapGenerator:
       - prompts/dispatcher-triage-prompt.md
       - prompts/dispatcher-validate-prompt.md
       - prompts/dispatcher-fix-prompt.md
+      - prompts/dispatcher-sre-triage-prompt.md
+      - prompts/dispatcher-sre-health-check-prompt.md
 configurations:
   - ./kustomizeconfig.yaml

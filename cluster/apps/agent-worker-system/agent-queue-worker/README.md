@@ -44,6 +44,7 @@ Used for `Promise.race` deadline in processor, Valkey active lock TTL, and sessi
 | `fix`      | 30min (1,800,000ms) | Code changes                |
 | `validate` | 30min (1,800,000ms) | Post-push validation        |
 | `execute`  | 60min (3,600,000ms) | Full execution workflows    |
+| `sre`      | 15min (900,000ms)   | Alert triage / health check |
 | fallback   | 30min (1,800,000ms) | Unknown roles               |
 
 ### BullMQ Worker Settings

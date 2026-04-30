@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const VALID_ROLES = ["triage", "fix", "validate", "execute"] as const;
+export const VALID_ROLES = [
+  "triage",
+  "fix",
+  "validate",
+  "execute",
+  "sre",
+] as const;
 export type Role = (typeof VALID_ROLES)[number];
 
 export const ROLE_TIMEOUTS: Record<Role, number> = {
@@ -8,6 +14,7 @@ export const ROLE_TIMEOUTS: Record<Role, number> = {
   fix: 1_800_000,
   validate: 1_800_000,
   execute: 3_600_000,
+  sre: 900_000,
 };
 
 export const AgentJobSchema = z.object({
@@ -52,6 +59,15 @@ export function buildJobId(data: AgentJob): string {
     if (!issue_number)
       throw new Error("issue_number required for execute jobs");
     return `${repo}--${issue_number}--execute`;
+  }
+  if (role === "sre") {
+    const trigger = data.payload?.trigger;
+    if (trigger === "alert") {
+      const alertname = data.payload?.alertname || "unknown";
+      const fingerprint = data.payload?.fingerprint || head_sha;
+      return `sre-triage--${alertname}--${fingerprint}`;
+    }
+    return `sre-health-check--scheduled--${head_sha}`;
   }
   if (data.payload?.revert) return `${repo}--${head_sha}--revert--fix`;
   if (!pr_number) throw new Error(`pr_number required for ${role} jobs`);
