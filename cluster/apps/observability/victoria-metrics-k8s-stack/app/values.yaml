@@ -69,16 +69,14 @@ vmsingle:
     # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
     retentionPeriod: 7d
     replicaCount: 1
-    # PVC managed by Flux (persistent-volume-claim.yaml), not operator — operator doesn't recreate PVCs on delete
-    storage: null
-    storageDataPath: /vmsingle-storage/data
-    volumes:
-      - name: vmsingle-data
-        persistentVolumeClaim:
-          claimName: vmsingle-victoria-metrics-k8s-stack
-    volumeMounts:
-      - name: vmsingle-data
-        mountPath: /vmsingle-storage
+    # PVC managed by operator — operator doesn't support external PVC (reserves volume name + mount path)
+    storage:
+      storageClassName: "rbd-fast-delete"
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 30Gi
 
 alertmanager:
   enabled: true
