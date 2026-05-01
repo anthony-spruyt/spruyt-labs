@@ -179,8 +179,6 @@ server:
     accessModes:
       - ReadWriteOnce
     # -- Persistent volume annotations
-    annotations:
-      reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
     # -- StorageClass to use for persistent volume. Requires server.persistentVolume.enabled: true. If defined, PVC created automatically
     storageClassName: "rbd-fast-delete"
     #
