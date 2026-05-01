@@ -175,12 +175,8 @@ export class Processor {
     );
   }
 
-  async validateSession(
-    jobId: string,
-    attempt: number,
-    token: string
-  ): Promise<string> {
-    const key = `agent:session:${jobId}:${attempt}`;
+  async validateSession(jobId: string, token: string): Promise<string> {
+    const key = `agent:session:${jobId}`;
     // Redis EVAL runs Lua server-side for atomic check-delete-accept
     return (await this.redis.eval(
       VALIDATE_SESSION_LUA,
@@ -209,7 +205,7 @@ export class Processor {
     }
 
     await this.redis.set(
-      `agent:session:${jobId}:${job.attemptsMade}`,
+      `agent:session:${jobId}`,
       session_token,
       "EX",
       timeoutSec

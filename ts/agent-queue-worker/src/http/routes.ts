@@ -163,13 +163,9 @@ export async function handleCompleteJob(
   });
   if (!result.ok) return;
 
-  const { result: jobResult, session_token, attempt } = result.data;
+  const { result: jobResult, session_token } = result.data;
 
-  const validation = await deps.processor.validateSession(
-    jobId,
-    attempt,
-    session_token
-  );
+  const validation = await deps.processor.validateSession(jobId, session_token);
   if (validation === "expired_or_missing") {
     const job = await deps.queue.getJob(jobId);
     if (job && (await job.isCompleted())) {
@@ -182,18 +178,7 @@ export async function handleCompleteJob(
   }
 
   const job = await deps.queue.getJob(jobId);
-  if (
-    job &&
-    job.data.dispatched_at &&
-    job.data.dispatched_at !== result.data.dispatched_at
-  ) {
-    await deps.processor.cacheResult(jobId, attempt, {
-      status: "completed",
-      ...jobResult,
-    });
-    logger.info("Cached stale dispatch result", { jobId, attempt });
-    return json(res, 200, { accepted: true, stale_dispatch: true });
-  }
+  const attempt = job?.attemptsMade ?? 0;
 
   const resolved = await deps.processor.resolveCallback(jobId, {
     status: "completed",

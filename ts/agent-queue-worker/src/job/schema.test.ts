@@ -204,8 +204,6 @@ describe("DoneRequestSchema", () => {
     const result = DoneRequestSchema.safeParse({
       result: { status: "ok" },
       session_token: "00000000-0000-0000-0000-000000000000",
-      attempt: 0,
-      dispatched_at: "2026-01-01T00:00:00Z",
     });
     expect(result.success).toBe(true);
   });
@@ -214,18 +212,13 @@ describe("DoneRequestSchema", () => {
     const result = DoneRequestSchema.safeParse({
       result: {},
       session_token: "not-a-uuid",
-      attempt: 0,
-      dispatched_at: "2026-01-01T00:00:00Z",
     });
     expect(result.success).toBe(false);
   });
 
-  it("rejects negative attempt", () => {
+  it("rejects missing session_token", () => {
     const result = DoneRequestSchema.safeParse({
-      result: {},
-      session_token: "00000000-0000-0000-0000-000000000000",
-      attempt: -1,
-      dispatched_at: "2026-01-01T00:00:00Z",
+      result: { status: "ok" },
     });
     expect(result.success).toBe(false);
   });

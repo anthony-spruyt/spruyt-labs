@@ -59,8 +59,6 @@ export type AgentJob = z.infer<typeof AgentJobSchema>;
 export const DoneRequestSchema = z.object({
   result: z.record(z.string(), z.unknown()),
   session_token: z.string().uuid(),
-  attempt: z.number().int().min(0),
-  dispatched_at: z.string(),
 });
 
 export type DoneRequest = z.infer<typeof DoneRequestSchema>;
