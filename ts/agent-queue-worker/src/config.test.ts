@@ -58,20 +58,17 @@ describe("loadConfig", () => {
   });
 
   it("accepts webhook with .cluster.local suffix", () => {
-    Object.assign(process.env, VALID_ENV, {
-      N8N_DISPATCH_WEBHOOK:
-        "http://n8n.n8n-system.svc.cluster.local/webhook/dispatch",
-    });
+    const url = "http://n8n.n8n-system.svc.cluster.local/webhook/dispatch";
+    Object.assign(process.env, VALID_ENV, { N8N_DISPATCH_WEBHOOK: url });
     const cfg = loadConfig();
-    expect(cfg.N8N_DISPATCH_WEBHOOK).toContain("cluster.local");
+    expect(cfg.N8N_DISPATCH_WEBHOOK).toBe(url);
   });
 
   it("accepts webhook without .cluster.local suffix", () => {
-    Object.assign(process.env, VALID_ENV, {
-      N8N_DISPATCH_WEBHOOK: "http://n8n.n8n-system.svc/webhook/dispatch",
-    });
+    const url = "http://n8n.n8n-system.svc/webhook/dispatch";
+    Object.assign(process.env, VALID_ENV, { N8N_DISPATCH_WEBHOOK: url });
     const cfg = loadConfig();
-    expect(cfg.N8N_DISPATCH_WEBHOOK).toContain(".svc");
+    expect(cfg.N8N_DISPATCH_WEBHOOK).toBe(url);
   });
 
   it("accepts optional GITHUB_TOKEN", () => {

@@ -1,9 +1,8 @@
 import { Job } from "bullmq";
 import { randomUUID } from "node:crypto";
 import type { Redis } from "ioredis";
-import type { AgentJob, JobResult } from "./types.js";
-import { ROLE_TIMEOUTS } from "./types.js";
-import { getCurrentPrHead } from "./github.js";
+import type { AgentJob, JobResult } from "./job/schema.js";
+import type { RoleRegistry } from "./roles/registry.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
 import type { Config } from "./config.js";
@@ -29,15 +28,18 @@ export class Processor {
   private callbacks = new Map<string, CallbackResolver>();
   private redis: Redis;
   private config: Config;
+  private registry: RoleRegistry;
 
-  constructor(redis: Redis, config: Config) {
+  constructor(redis: Redis, config: Config, registry: RoleRegistry) {
     this.redis = redis;
     this.config = config;
+    this.registry = registry;
   }
 
   async process(job: Job<AgentJob>): Promise<JobResult> {
     const { role, repo, pr_number, head_sha } = job.data;
-    const timeout = ROLE_TIMEOUTS[role] ?? 1_800_000;
+    const roleDef = this.registry.get(role);
+    const timeout = roleDef.timeoutMs;
     const timeoutSec = Math.ceil(timeout / 1000);
     const fields = { jobId: job.id!, role, repo, pr: pr_number, sha: head_sha };
 
@@ -88,20 +90,12 @@ export class Processor {
         return JSON.parse(cached) as JobResult;
       }
 
-      if (pr_number) {
-        try {
-          const currentHead = await getCurrentPrHead(
-            repo,
-            pr_number,
-            this.config.GITHUB_TOKEN
-          );
-          if (currentHead !== head_sha) {
-            logger.info("Job stale — SHA changed", fields);
-            metrics.staleDiscards.inc({ queue: "agent", role });
-            return { status: "stale" };
-          }
-        } catch {
-          logger.warn("Stale check failed — proceeding optimistically", fields);
+      if (roleDef.checkStaleness) {
+        const staleness = await roleDef.checkStaleness(job.data, this.config);
+        if (staleness.stale) {
+          logger.info("Job stale", { ...fields, reason: staleness.reason });
+          metrics.staleDiscards.inc({ queue: "agent", role });
+          return { status: "stale" };
         }
       }
 
@@ -203,9 +197,16 @@ export class Processor {
   ): Promise<JobResult> {
     const dispatched_at = new Date().toISOString();
     const session_token = randomUUID();
-    const timeoutSec = Math.ceil(
-      (ROLE_TIMEOUTS[data.role] ?? 1_800_000) / 1000
-    );
+    const roleDef = this.registry.get(data.role);
+    const timeoutSec = Math.ceil(roleDef.timeoutMs / 1000);
+
+    let dispatchData = data;
+    if (roleDef.drainBuffer) {
+      dispatchData = await roleDef.drainBuffer(jobId, data, this.redis);
+      if (dispatchData !== data) {
+        await job.updateData(dispatchData);
+      }
+    }
 
     await this.redis.set(
       `agent:session:${jobId}:${job.attemptsMade}`,
@@ -222,7 +223,7 @@ export class Processor {
         "Idempotency-Key": `${jobId}:${job.attemptsMade}`,
       },
       body: JSON.stringify({
-        ...data,
+        ...dispatchData,
         jobId,
         session_token,
         attempt: job.attemptsMade,
@@ -232,7 +233,7 @@ export class Processor {
 
     if (!resp.ok) {
       await job.updateData({
-        ...data,
+        ...dispatchData,
         dispatch_state: "failed",
         dispatched_at,
       });
@@ -240,14 +241,14 @@ export class Processor {
     }
 
     await job.updateData({
-      ...data,
+      ...dispatchData,
       dispatch_state: "dispatched",
       dispatched_at,
     });
     logger.info("Dispatched to n8n", {
       jobId,
-      role: data.role,
-      repo: data.repo,
+      role: dispatchData.role,
+      repo: dispatchData.repo,
     });
 
     return this.awaitCallback(jobId);

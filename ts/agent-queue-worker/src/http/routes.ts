@@ -1,0 +1,291 @@
+import { type IncomingMessage, type ServerResponse } from "node:http";
+import type { Queue } from "bullmq";
+import type { Redis } from "ioredis";
+import {
+  AgentJobSchema,
+  DoneRequestSchema,
+  FailRequestSchema,
+} from "../job/schema.js";
+import { buildJobIdentity } from "../job/identity.js";
+import type { RoleRegistry } from "../roles/registry.js";
+import { resolveDuplicateAction } from "../roles/types.js";
+import type { JobState } from "../roles/types.js";
+import type { Processor } from "../processor.js";
+import type { CircuitBreaker, RateLimiter } from "../queue/guard.js";
+import { json, parseAndValidate } from "./middleware.js";
+import { DEFAULT_JOB_OPTIONS } from "../queue/options.js";
+import { logger } from "../logger.js";
+import * as metrics from "../metrics.js";
+
+// Atomic state-checked update: only HSET if job is still in wait/prioritized/paused.
+// The non-atomic getJob+getState before this call is acceptable because this Lua
+// re-validates state atomically — the outer check is an optimization to avoid
+// unnecessary EVAL calls, not a correctness dependency.
+// Uses Redis EVAL command (server-side Lua execution), not JavaScript eval().
+const ATOMIC_UPDATE_IF_WAITING_LUA = `
+local inWait   = redis.call('LPOS', KEYS[1], ARGV[2])
+local inPrio   = redis.call('ZSCORE', KEYS[2], ARGV[2])
+local inPaused = redis.call('LPOS', KEYS[3], ARGV[2])
+if inWait ~= false or inPrio ~= false or inPaused ~= false then
+  redis.call('HSET', KEYS[4], 'data', ARGV[1])
+  return 1
+end
+return 0
+`;
+
+export interface RouteDeps {
+  queue: Queue;
+  redis: Redis;
+  processor: Processor;
+  registry: RoleRegistry;
+  circuitBreaker: CircuitBreaker;
+  rateLimiter: RateLimiter;
+}
+
+export async function handleAddJob(
+  req: IncomingMessage,
+  res: ServerResponse,
+  deps: RouteDeps
+): Promise<void> {
+  const result = await parseAndValidate(req, res, AgentJobSchema, {
+    added: false,
+  });
+  if (!result.ok) return;
+  const data = result.data;
+
+  const circuit = await deps.circuitBreaker.check(data.repo);
+  if (circuit.open) {
+    return json(res, 429, { added: false, reason: "circuit_open" });
+  }
+
+  const rate = await deps.rateLimiter.check(data.repo);
+  if (rate.limited) {
+    return json(res, 429, { added: false, reason: "rate_limited" });
+  }
+
+  const identity = buildJobIdentity(data, deps.registry);
+  const jobId = identity.jobId;
+  const roleDef = deps.registry.get(data.role);
+
+  const completed = await deps.redis.exists(`agent:completed:${jobId}`);
+  if (completed) {
+    return json(res, 409, { added: false, reason: "recently_completed" });
+  }
+
+  const existingJob = await deps.queue.getJob(jobId);
+  if (existingJob) {
+    const state = (await existingJob.getState()) as JobState;
+    const decision = resolveDuplicateAction(
+      roleDef,
+      existingJob.data,
+      data,
+      state
+    );
+
+    if (decision.action === "discard") {
+      metrics.dedupActionCounter.inc({
+        queue: "agent",
+        role: data.role,
+        action: "discard",
+      });
+      return json(res, 409, {
+        added: false,
+        reason: state === "active" ? "active" : "deduplicated",
+      });
+    }
+
+    if (decision.action === "buffer") {
+      const bufKey = roleDef.bufferKey!(jobId);
+      await deps.redis.rpush(bufKey, JSON.stringify(data.payload));
+      await deps.redis.ltrim(bufKey, -50, -1);
+      await deps.redis.expire(bufKey, 3600);
+      metrics.dedupActionCounter.inc({
+        queue: "agent",
+        role: data.role,
+        action: "buffer",
+      });
+      return json(res, 202, { added: false, buffered: true, jobId });
+    }
+
+    // "replace" — shallow merge replaces top-level keys (including `payload`)
+    // entirely with incoming values; nested objects are NOT deep-merged.
+    const merged = JSON.stringify({ ...existingJob.data, ...data });
+    const updated = await atomicUpdateIfWaiting(
+      deps.queue,
+      deps.redis,
+      jobId,
+      merged
+    );
+    if (updated) {
+      metrics.dedupActionCounter.inc({
+        queue: "agent",
+        role: data.role,
+        action: "replace",
+      });
+      return json(res, 200, { added: false, replaced: true, jobId });
+    }
+  }
+
+  try {
+    await deps.queue.add(data.role, data, {
+      ...DEFAULT_JOB_OPTIONS,
+      jobId,
+      priority: data.priority,
+    });
+
+    await deps.rateLimiter.record(data.repo, jobId);
+
+    logger.info("Job added", { jobId, role: data.role, repo: data.repo });
+    json(res, 201, { added: true, jobId });
+  } catch (err) {
+    if (isDuplicateJobError(err)) {
+      metrics.dedupActionCounter.inc({
+        queue: "agent",
+        role: data.role,
+        action: "discard",
+      });
+      return json(res, 409, { added: false, reason: "deduplicated" });
+    }
+    logger.error("Failed to add job", { jobId, error: String(err) });
+    json(res, 503, { added: false, reason: "internal_error" });
+  }
+}
+
+export async function handleCompleteJob(
+  req: IncomingMessage,
+  res: ServerResponse,
+  jobId: string,
+  deps: RouteDeps
+): Promise<void> {
+  const result = await parseAndValidate(req, res, DoneRequestSchema, {
+    accepted: false,
+  });
+  if (!result.ok) return;
+
+  const { result: jobResult, session_token, attempt } = result.data;
+
+  const validation = await deps.processor.validateSession(
+    jobId,
+    attempt,
+    session_token
+  );
+  if (validation === "expired_or_missing") {
+    const job = await deps.queue.getJob(jobId);
+    if (job && (await job.isCompleted())) {
+      return json(res, 200, { accepted: true, already_completed: true });
+    }
+    return json(res, 403, { accepted: false, reason: "invalid_session" });
+  }
+  if (validation === "mismatch") {
+    return json(res, 403, { accepted: false, reason: "invalid_session" });
+  }
+
+  const job = await deps.queue.getJob(jobId);
+  if (
+    job &&
+    job.data.dispatched_at &&
+    job.data.dispatched_at !== result.data.dispatched_at
+  ) {
+    await deps.processor.cacheResult(jobId, attempt, {
+      status: "completed",
+      ...jobResult,
+    });
+    logger.info("Cached stale dispatch result", { jobId, attempt });
+    return json(res, 200, { accepted: true, stale_dispatch: true });
+  }
+
+  const resolved = await deps.processor.resolveCallback(jobId, {
+    status: "completed",
+    ...jobResult,
+  });
+  if (!resolved) {
+    await deps.processor.cacheResult(jobId, attempt, {
+      status: "completed",
+      ...jobResult,
+    });
+    logger.info("Cached result for re-processing", { jobId, attempt });
+  }
+
+  logger.info("Job done callback received", { jobId });
+  json(res, 200, { accepted: true });
+}
+
+export async function handleFailJob(
+  req: IncomingMessage,
+  res: ServerResponse,
+  jobId: string,
+  deps: RouteDeps
+): Promise<void> {
+  const result = await parseAndValidate(req, res, FailRequestSchema, {
+    accepted: false,
+  });
+  if (!result.ok) return;
+
+  const resolved = await deps.processor.resolveCallback(jobId, {
+    status: "failed",
+    reason: result.data.reason,
+  });
+  if (!resolved) {
+    logger.warn("No active callback for fail", { jobId });
+  }
+
+  logger.info("Job fail callback received", {
+    jobId,
+    reason: result.data.reason,
+  });
+  json(res, 200, { accepted: true });
+}
+
+export async function handleRetryJob(
+  res: ServerResponse,
+  jobId: string,
+  deps: RouteDeps
+): Promise<void> {
+  const job = await deps.queue.getJob(jobId);
+  if (!job) return json(res, 404, { retried: false, reason: "not_found" });
+  if (!(await job.isFailed()))
+    return json(res, 200, { retried: false, reason: "not_failed" });
+
+  await job.retry();
+  logger.info("Job retried manually", { jobId });
+  json(res, 200, { retried: true });
+}
+
+export async function handleResetCircuit(
+  res: ServerResponse,
+  repo: string,
+  deps: RouteDeps
+): Promise<void> {
+  const wasOpen = await deps.circuitBreaker.reset(repo);
+  json(res, 200, { reset: wasOpen });
+}
+
+async function atomicUpdateIfWaiting(
+  queue: Queue,
+  redis: Redis,
+  jobId: string,
+  mergedData: string
+): Promise<boolean> {
+  const prefix = (queue.opts.prefix ?? "bull") as string;
+  const name = queue.name;
+  // Redis EVAL runs Lua server-side for atomic state check + update
+  const result = await redis.eval(
+    ATOMIC_UPDATE_IF_WAITING_LUA,
+    4,
+    `${prefix}:${name}:wait`,
+    `${prefix}:${name}:prioritized`,
+    `${prefix}:${name}:paused`,
+    `${prefix}:${name}:${jobId}`,
+    mergedData,
+    jobId
+  );
+  return result === 1;
+}
+
+function isDuplicateJobError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message;
+  return (
+    msg.includes("Job already exists with id") || msg.includes("Duplicate")
+  );
+}

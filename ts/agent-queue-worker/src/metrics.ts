@@ -52,9 +52,9 @@ export const workerShutdowns = new Counter({
   registers: [registry],
 });
 
-export const dedupCounter = new Counter({
-  name: "agent_dedup_total",
-  help: "Deduplicated job submissions",
-  labelNames: ["queue", "role"] as const,
+export const dedupActionCounter = new Counter({
+  name: "agent_dedup_action_total",
+  help: "Dedup actions by strategy",
+  labelNames: ["queue", "role", "action"] as const,
   registers: [registry],
 });
