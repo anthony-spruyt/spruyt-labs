@@ -286,8 +286,6 @@ function isDuplicateJobError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const msg = err.message;
   return (
-    msg.includes("Job already exists with id") ||
-    msg.includes("Duplicate") ||
-    msg.includes("exists")
+    msg.includes("Job already exists with id") || msg.includes("Duplicate")
   );
 }
