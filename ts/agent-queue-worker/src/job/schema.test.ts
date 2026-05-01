@@ -11,6 +11,7 @@ const base: AgentJob = {
   role: "triage",
   repo: "org/repo",
   event_type: "pull_request",
+  priority: 5,
   payload: {},
 };
 
@@ -50,6 +51,12 @@ describe("AgentJobInputSchema", () => {
 
   it("rejects non-integer priority", () => {
     const result = AgentJobInputSchema.safeParse({ ...base, priority: 1.5 });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing priority", () => {
+    const { priority: _, ...noPriority } = base;
+    const result = AgentJobInputSchema.safeParse(noPriority);
     expect(result.success).toBe(false);
   });
 

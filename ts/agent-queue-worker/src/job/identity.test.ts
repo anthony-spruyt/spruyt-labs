@@ -9,6 +9,7 @@ const base: AgentJob = {
   role: "triage",
   repo: "org/repo",
   event_type: "pull_request",
+  priority: 5,
   payload: {},
 };
 

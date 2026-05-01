@@ -10,7 +10,7 @@ export const VALID_ROLES = [
 export type Role = (typeof VALID_ROLES)[number];
 
 const commonFields = {
-  priority: z.number().int().min(1).optional(),
+  priority: z.number().int().min(1),
   repo: z
     .string()
     .min(1)
