@@ -200,6 +200,14 @@ export class Processor {
     const roleDef = this.registry.get(data.role);
     const timeoutSec = Math.ceil(roleDef.timeoutMs / 1000);
 
+    let dispatchData = data;
+    if (roleDef.drainBuffer) {
+      dispatchData = await roleDef.drainBuffer(jobId, data, this.redis);
+      if (dispatchData !== data) {
+        await job.updateData(dispatchData);
+      }
+    }
+
     await this.redis.set(
       `agent:session:${jobId}:${job.attemptsMade}`,
       session_token,
@@ -215,7 +223,7 @@ export class Processor {
         "Idempotency-Key": `${jobId}:${job.attemptsMade}`,
       },
       body: JSON.stringify({
-        ...data,
+        ...dispatchData,
         jobId,
         session_token,
         attempt: job.attemptsMade,
@@ -225,7 +233,7 @@ export class Processor {
 
     if (!resp.ok) {
       await job.updateData({
-        ...data,
+        ...dispatchData,
         dispatch_state: "failed",
         dispatched_at,
       });
@@ -233,14 +241,14 @@ export class Processor {
     }
 
     await job.updateData({
-      ...data,
+      ...dispatchData,
       dispatch_state: "dispatched",
       dispatched_at,
     });
     logger.info("Dispatched to n8n", {
       jobId,
-      role: data.role,
-      repo: data.repo,
+      role: dispatchData.role,
+      repo: dispatchData.repo,
     });
 
     return this.awaitCallback(jobId);

@@ -6,12 +6,30 @@ import {
   DoneRequestSchema,
   FailRequestSchema,
 } from "./job/schema.js";
+import type { AgentJob } from "./job/schema.js";
 import { buildJobIdentity } from "./job/identity.js";
 import type { RoleRegistry } from "./roles/registry.js";
+import type { JobState } from "./roles/types.js";
 import type { Processor } from "./processor.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
 import type { Config } from "./config.js";
+
+// Atomic state-checked update: only HSET if job is still in wait/prioritized/paused.
+// The non-atomic getJob+getState before this call is acceptable because this Lua
+// re-validates state atomically — the outer check is an optimization to avoid
+// unnecessary EVAL calls, not a correctness dependency.
+// Uses Redis EVAL command (server-side Lua execution), not JavaScript eval().
+const ATOMIC_UPDATE_IF_WAITING_LUA = `
+local inWait   = redis.call('LPOS', KEYS[1], ARGV[2])
+local inPrio   = redis.call('ZSCORE', KEYS[2], ARGV[2])
+local inPaused = redis.call('LPOS', KEYS[3], ARGV[2])
+if inWait ~= false or inPrio ~= false or inPaused ~= false then
+  redis.call('HSET', KEYS[4], 'data', ARGV[1])
+  return 1
+end
+return 0
+`;
 
 export class Router {
   private queue: Queue;
@@ -131,6 +149,7 @@ export class Router {
 
     const identity = buildJobIdentity(data, this.registry);
     const jobId = identity.jobId;
+    const roleDef = this.registry.get(data.role);
 
     const completed = await this.redis.exists(`agent:completed:${jobId}`);
     if (completed) {
@@ -140,26 +159,66 @@ export class Router {
       });
     }
 
-    const active = await this.redis.exists(`agent:active:${jobId}`);
-    if (active) {
-      return this.json(res, 409, { added: false, reason: "active" });
-    }
+    const existingJob = await this.queue.getJob(jobId);
+    if (existingJob) {
+      const state = (await existingJob.getState()) as JobState;
+      const defaultAction =
+        state === "waiting" || state === "prioritized"
+          ? ({ action: "replace" } as const)
+          : ({ action: "discard" } as const);
+      const decision =
+        roleDef.onDuplicate?.(existingJob.data, data, state) ?? defaultAction;
 
-    // TODO: PR 2 — supersedeOlderJobs is dead code with new ID format
-    // (same PR+role = same jobId, BullMQ dedup handles it)
-    const entity = String(data.pr_number ?? data.issue_number ?? "");
-    if (entity && data.role !== "execute")
-      await this.supersedeOlderJobs(
-        data.repo,
-        entity,
-        data.head_sha ?? "",
-        data.role
-      );
+      if (decision.action === "discard") {
+        metrics.dedupActionCounter.inc({
+          queue: "agent",
+          role: data.role,
+          action: "discard",
+        });
+        return this.json(res, 409, {
+          added: false,
+          reason: state === "active" ? "active" : "deduplicated",
+        });
+      }
+
+      if (decision.action === "buffer") {
+        const bufKey = roleDef.bufferKey!(jobId);
+        await this.redis.rpush(bufKey, JSON.stringify(data.payload));
+        await this.redis.ltrim(bufKey, -50, -1);
+        await this.redis.expire(bufKey, 3600);
+        metrics.dedupActionCounter.inc({
+          queue: "agent",
+          role: data.role,
+          action: "buffer",
+        });
+        return this.json(res, 202, {
+          added: false,
+          buffered: true,
+          jobId,
+        });
+      }
+
+      // "replace" — shallow merge, atomic Lua validates state before HSET
+      const merged = JSON.stringify({ ...existingJob.data, ...data });
+      const updated = await this.atomicUpdateIfWaiting(jobId, merged);
+      if (updated) {
+        metrics.dedupActionCounter.inc({
+          queue: "agent",
+          role: data.role,
+          action: "replace",
+        });
+        return this.json(res, 200, {
+          added: false,
+          replaced: true,
+          jobId,
+        });
+      }
+      // Job transitioned to active between getState and Lua — fall through to create new
+    }
 
     try {
       await this.queue.add(data.role, data, {
         jobId,
-        deduplication: { id: jobId },
         attempts: 2,
         backoff: { type: "exponential", delay: 30_000 },
         removeOnComplete: { age: 3600 },
@@ -173,12 +232,43 @@ export class Router {
       logger.info("Job added", { jobId, role: data.role, repo: data.repo });
       this.json(res, 201, { added: true, jobId });
     } catch (err) {
+      if (isDuplicateJobError(err)) {
+        metrics.dedupActionCounter.inc({
+          queue: "agent",
+          role: data.role,
+          action: "discard",
+        });
+        return this.json(res, 409, {
+          added: false,
+          reason: "deduplicated",
+        });
+      }
       logger.error("Failed to add job", { jobId, error: String(err) });
       this.json(res, 503, {
         added: false,
         reason: "internal_error",
       });
     }
+  }
+
+  private async atomicUpdateIfWaiting(
+    jobId: string,
+    mergedData: string
+  ): Promise<boolean> {
+    const prefix = (this.queue.opts.prefix ?? "bull") as string;
+    const name = this.queue.name;
+    // Redis EVAL runs Lua server-side for atomic state check + update
+    const result = await this.redis.eval(
+      ATOMIC_UPDATE_IF_WAITING_LUA,
+      4,
+      `${prefix}:${name}:wait`,
+      `${prefix}:${name}:prioritized`,
+      `${prefix}:${name}:paused`,
+      `${prefix}:${name}:${jobId}`,
+      mergedData,
+      jobId
+    );
+    return result === 1;
   }
 
   private async completeJob(
@@ -316,37 +406,6 @@ export class Router {
     this.json(res, 200, { reset: deleted > 0 });
   }
 
-  // TODO: PR 2 — remove supersedeOlderJobs (dead code with new job ID format)
-  private async supersedeOlderJobs(
-    repo: string,
-    entity: string,
-    currentSha: string,
-    role: string
-  ): Promise<void> {
-    const candidates = [
-      ...(await this.queue.getJobs(["prioritized"])),
-      ...(await this.queue.getJobs(["waiting"])),
-    ];
-    for (const job of candidates) {
-      if (
-        job.data.repo === repo &&
-        String(job.data.pr_number ?? job.data.issue_number) === entity &&
-        job.data.role === role &&
-        job.data.head_sha !== currentSha
-      ) {
-        try {
-          await job.remove();
-          logger.info("Superseded older job", {
-            oldJobId: job.id,
-            newSha: currentSha,
-          });
-        } catch {
-          // Job may have transitioned to active between scan and remove
-        }
-      }
-    }
-  }
-
   private authenticate(req: IncomingMessage): boolean {
     const auth = req.headers.authorization;
     return auth === `Bearer ${this.config.N8N_TO_WORKER_SECRET}`;
@@ -379,4 +438,11 @@ export class Router {
       req.on("error", reject);
     });
   }
+}
+
+function isDuplicateJobError(err: unknown): boolean {
+  if (err instanceof Error) {
+    return err.message.includes("Duplicate") || err.message.includes("exists");
+  }
+  return false;
 }

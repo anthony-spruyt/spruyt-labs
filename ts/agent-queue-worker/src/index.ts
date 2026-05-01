@@ -1,12 +1,11 @@
 import { createServer, type Server } from "node:http";
-import { Worker, Queue, QueueEvents } from "bullmq";
+import { Worker, Queue } from "bullmq";
 import { Redis } from "ioredis";
 import { loadConfig } from "./config.js";
 import { Processor } from "./processor.js";
 import { Router } from "./routes.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
-import { extractRole } from "./job/identity.js";
 import { createDefaultRegistry } from "./roles/registry.js";
 import { fetchReposWithRevertLabels } from "./github.js";
 
@@ -40,17 +39,60 @@ const worker = new Worker("agent", async (job) => processor.process(job), {
   maxStalledCount: 2,
 });
 
-const queueEvents = new QueueEvents("agent", queueOpts);
-
-queueEvents.on("deduplicated", ({ deduplicatedJobId }) => {
-  metrics.dedupCounter.inc({
-    queue: "agent",
-    role: extractRole(deduplicatedJobId),
-  });
-});
-
 worker.on("completed", async (job) => {
-  if (job) await redis.set(`agent:completed:${job.id}`, "1", "EX", 3600);
+  if (!job) return;
+  await redis.set(`agent:completed:${job.id}`, "1", "EX", 3600);
+
+  const roleDef = registry.get(job.data.role);
+  if (!roleDef.bufferKey || !roleDef.drainBuffer) return;
+
+  try {
+    const drainedData = await roleDef.drainBuffer(job.id!, job.data, redis);
+    const alerts = drainedData.payload?.buffered_alerts as
+      | unknown[]
+      | undefined;
+    if (!alerts || alerts.length === 0) return;
+
+    await redis.del(`agent:completed:${job.id}`);
+    try {
+      await job.remove();
+    } catch {
+      // Already cleaned up by removeOnComplete
+    }
+
+    const { dispatch_state: _, dispatched_at: __, ...baseData } = drainedData;
+    try {
+      await queue.add(job.data.role, baseData, {
+        jobId: job.id!,
+        attempts: 2,
+        backoff: { type: "exponential", delay: 30_000 },
+        removeOnComplete: { age: 3600 },
+        removeOnFail: { age: 604_800, count: 500 },
+        priority: job.data.priority,
+      });
+      logger.info("Auto-queued SRE job from buffer drain", {
+        jobId: job.id,
+        alertCount: alerts.length,
+      });
+    } catch {
+      // Re-push drained alerts so next drainBuffer picks them up
+      const bufKey = roleDef.bufferKey!(job.id!);
+      for (const alert of alerts) {
+        await redis.rpush(bufKey, JSON.stringify(alert));
+      }
+      await redis.ltrim(bufKey, -50, -1);
+      await redis.expire(bufKey, 3600);
+      logger.warn("Re-pushed alerts after failed auto-queue", {
+        jobId: job.id,
+        alertCount: alerts.length,
+      });
+    }
+  } catch (err) {
+    logger.warn("SRE buffer drain failed", {
+      jobId: job.id,
+      error: String(err),
+    });
+  }
 });
 
 worker.on("failed", async (job, err) => {
@@ -141,7 +183,6 @@ async function shutdown(): Promise<void> {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 
   await worker.close();
-  await queueEvents.close();
   await queue.close();
   await redis.quit();
 
