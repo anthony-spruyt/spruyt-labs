@@ -53,6 +53,6 @@ Multiple commits may have landed since last validation. Review all commits betwe
 
 ## Phase 3: Submit Result via MCP (MANDATORY)
 
-You MUST call the `submit_validate_result` tool. Pass `job_id` and `session_token` from job context. The tool's MCP schema describes all parameters.
+You MUST call the `submit_validate_result` tool. Call until success.
 
 Do NOT skip this step. Do NOT post results to GitHub yourself. The platform pipeline depends on this MCP callback.

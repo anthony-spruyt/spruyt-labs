@@ -56,6 +56,6 @@ Before analyzing, build awareness of the PR beyond just its body:
 
 ## Phase 3: Submit Result via MCP (MANDATORY)
 
-You MUST call the `submit_triage_verdict` tool. Pass `job_id` and `session_token` from job context. The tool's MCP schema describes all parameters.
+You MUST call the `submit_triage_verdict` tool. Call until success.
 
 Do NOT skip this step. Do NOT post results to GitHub yourself. The platform pipeline depends on this MCP callback.
