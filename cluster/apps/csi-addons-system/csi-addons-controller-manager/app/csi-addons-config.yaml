@@ -10,4 +10,3 @@ data:
   "reclaim-space-timeout": "5m"
   "max-concurrent-reconciles": "10"
   "max-group-pvcs": "100"
-  "cronjob-stagger-window": "2"
