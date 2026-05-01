@@ -5,8 +5,9 @@ import {
   AgentJobSchema,
   DoneRequestSchema,
   FailRequestSchema,
-  buildJobId,
-} from "./types.js";
+} from "./job/schema.js";
+import { buildJobIdentity } from "./job/identity.js";
+import type { RoleRegistry } from "./roles/registry.js";
 import type { Processor } from "./processor.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
@@ -18,19 +19,22 @@ export class Router {
   private processor: Processor;
   private config: Config;
   private isReady: () => boolean;
+  private registry: RoleRegistry;
 
   constructor(
     queue: Queue,
     redis: Redis,
     processor: Processor,
     config: Config,
-    isReady: () => boolean
+    isReady: () => boolean,
+    registry: RoleRegistry
   ) {
     this.queue = queue;
     this.redis = redis;
     this.processor = processor;
     this.config = config;
     this.isReady = isReady;
+    this.registry = registry;
   }
 
   async handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -125,7 +129,8 @@ export class Router {
       return this.json(res, 429, { added: false, reason: "rate_limited" });
     }
 
-    const jobId = buildJobId(data);
+    const identity = buildJobIdentity(data, this.registry);
+    const jobId = identity.jobId;
 
     const completed = await this.redis.exists(`agent:completed:${jobId}`);
     if (completed) {
@@ -140,12 +145,14 @@ export class Router {
       return this.json(res, 409, { added: false, reason: "active" });
     }
 
+    // TODO: PR 2 — supersedeOlderJobs is dead code with new ID format
+    // (same PR+role = same jobId, BullMQ dedup handles it)
     const entity = String(data.pr_number ?? data.issue_number ?? "");
     if (entity && data.role !== "execute")
       await this.supersedeOlderJobs(
         data.repo,
         entity,
-        data.head_sha,
+        data.head_sha ?? "",
         data.role
       );
 
@@ -309,6 +316,7 @@ export class Router {
     this.json(res, 200, { reset: deleted > 0 });
   }
 
+  // TODO: PR 2 — remove supersedeOlderJobs (dead code with new job ID format)
   private async supersedeOlderJobs(
     repo: string,
     entity: string,

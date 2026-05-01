@@ -6,7 +6,8 @@ import { Processor } from "./processor.js";
 import { Router } from "./routes.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
-import { extractRole } from "./types.js";
+import { extractRole } from "./job/identity.js";
+import { createDefaultRegistry } from "./roles/registry.js";
 import { fetchReposWithRevertLabels } from "./github.js";
 
 const config = loadConfig();
@@ -28,7 +29,8 @@ const connection = {
 const queueOpts = { connection, prefix: "agent:queue" };
 
 const queue = new Queue("agent", queueOpts);
-const processor = new Processor(redis, config);
+const registry = createDefaultRegistry();
+const processor = new Processor(redis, config, registry);
 
 const worker = new Worker("agent", async (job) => processor.process(job), {
   ...queueOpts,
@@ -84,7 +86,7 @@ worker.on("failed", async (job, err) => {
 
 const isReady = () => redis.status === "ready" && !worker.closing;
 
-const router = new Router(queue, redis, processor, config, isReady);
+const router = new Router(queue, redis, processor, config, isReady, registry);
 
 const server: Server = createServer(async (req, res) => {
   try {

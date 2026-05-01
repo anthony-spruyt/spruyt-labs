@@ -58,3 +58,11 @@ export const dedupCounter = new Counter({
   labelNames: ["queue", "role"] as const,
   registers: [registry],
 });
+
+// TODO: PR 2 — replace dedupCounter with this action-aware metric
+export const dedupActionCounter = new Counter({
+  name: "agent_dedup_action_total",
+  help: "Dedup actions by strategy",
+  labelNames: ["queue", "role", "action"] as const,
+  registers: [registry],
+});
