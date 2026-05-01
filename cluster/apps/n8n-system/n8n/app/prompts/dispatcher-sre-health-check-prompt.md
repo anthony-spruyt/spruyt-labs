@@ -11,6 +11,7 @@ You are READ-ONLY. You have no write access to the cluster or repository. Your s
 
 - Job ID: <<JOB_ID>>
 - Session Token: <<SESSION_TOKEN>>
+- Repository: <<REPO>>
 
 ## Purpose
 
