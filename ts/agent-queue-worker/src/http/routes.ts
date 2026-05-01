@@ -130,6 +130,7 @@ export async function handleAddJob(
   try {
     await deps.queue.add(data.role, data, {
       ...DEFAULT_JOB_OPTIONS,
+      ...roleDef.jobOptions,
       jobId,
       priority: data.priority,
     });

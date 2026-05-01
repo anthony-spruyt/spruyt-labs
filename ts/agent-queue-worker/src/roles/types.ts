@@ -1,4 +1,5 @@
 import type { Redis } from "ioredis";
+import type { JobsOptions } from "bullmq";
 import type { AgentJob } from "../job/schema.js";
 import type { Config } from "../config.js";
 
@@ -15,6 +16,7 @@ export type StalenessResult =
 
 export interface RoleDefinition {
   readonly timeoutMs: number;
+  readonly jobOptions?: Partial<Pick<JobsOptions, "attempts" | "backoff">>;
   buildIdentitySegments(job: AgentJob): string[];
   checkStaleness?(job: AgentJob, config: Config): Promise<StalenessResult>;
   onDuplicate?(

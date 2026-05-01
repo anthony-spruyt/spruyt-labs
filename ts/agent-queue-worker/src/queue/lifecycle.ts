@@ -90,6 +90,8 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     await circuitBreaker.trip(job.data.repo, job.id!, job.attemptsMade);
 
     if (job.attemptsMade >= (job.opts.attempts ?? 1)) {
+      // Prevent new jobs with same identity during cooldown
+      await redis.set(`agent:completed:${job.id}`, "1", "EX", 3600);
       metrics.jobExhausted.inc({ queue: "agent", role, repo: job.data.repo });
       logger.error("Job exhausted all attempts", {
         jobId: job.id,

@@ -46,7 +46,9 @@ data:
           "type": "http",
           "url": "http://n8n-webhook.n8n-system.svc/mcp/agent-platform",
           "headers": {
-            "Authorization": "Bearer $${AGENT_PLATFORM_MCP_AUTH_TOKEN}"
+            "Authorization": "Bearer $${AGENT_PLATFORM_MCP_AUTH_TOKEN}",
+            "X-Job-ID": "${JOB_ID}",
+            "X-Session-Token": "${SESSION_TOKEN}"
           }
         }
       }
