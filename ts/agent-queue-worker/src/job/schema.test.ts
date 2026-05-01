@@ -58,22 +58,58 @@ describe("AgentJobInputSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts head_sha as optional", () => {
+  it("accepts head_sha as optional for pr roles", () => {
     const result = AgentJobInputSchema.safeParse(base);
     expect(result.success).toBe(true);
-    if (result.success) {
+    if (result.success && result.data.role === "triage") {
       expect(result.data.head_sha).toBeUndefined();
     }
   });
 
-  it("accepts head_sha when provided", () => {
+  it("accepts head_sha when provided for pr roles", () => {
     const result = AgentJobInputSchema.safeParse({
       ...base,
       head_sha: "abc123",
     });
     expect(result.success).toBe(true);
-    if (result.success) {
+    if (result.success && result.data.role === "triage") {
       expect(result.data.head_sha).toBe("abc123");
+    }
+  });
+
+  it("strips head_sha from non-pr roles", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "sre",
+      head_sha: "abc123",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect("head_sha" in result.data).toBe(false);
+    }
+  });
+
+  it("strips pr_number from non-pr roles", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "execute",
+      pr_number: 42,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect("pr_number" in result.data).toBe(false);
+    }
+  });
+
+  it("strips issue_number from non-execute roles", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "triage",
+      issue_number: 99,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect("issue_number" in result.data).toBe(false);
     }
   });
 
