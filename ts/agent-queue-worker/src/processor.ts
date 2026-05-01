@@ -220,7 +220,7 @@ export class Processor {
       },
       body: JSON.stringify({
         ...dispatchData,
-        jobId,
+        job_id: jobId,
         session_token,
         attempt: job.attemptsMade,
         dispatched_at,

@@ -54,7 +54,7 @@ describe("handleGetJob", () => {
     expect(redisGet).toHaveBeenCalledWith("agent:session:org/repo--triage-42");
     expect(res._status).toBe(200);
     const body = res._body as Record<string, unknown>;
-    expect(body.jobId).toBe("org/repo--triage-42");
+    expect(body.job_id).toBe("org/repo--triage-42");
     expect(body.state).toBe("active");
     expect(body.repo).toBe("org/repo");
     expect(body.role).toBe("triage");

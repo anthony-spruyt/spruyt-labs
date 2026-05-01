@@ -105,7 +105,7 @@ export async function handleAddJob(
         role: data.role,
         action: "buffer",
       });
-      return json(res, 202, { added: false, buffered: true, jobId });
+      return json(res, 202, { added: false, buffered: true, job_id: jobId });
     }
 
     // "replace" — shallow merge replaces top-level keys (including `payload`)
@@ -123,7 +123,7 @@ export async function handleAddJob(
         role: data.role,
         action: "replace",
       });
-      return json(res, 200, { added: false, replaced: true, jobId });
+      return json(res, 200, { added: false, replaced: true, job_id: jobId });
     }
   }
 
@@ -137,7 +137,7 @@ export async function handleAddJob(
     await deps.rateLimiter.record(data.repo, jobId);
 
     logger.info("Job added", { jobId, role: data.role, repo: data.repo });
-    json(res, 201, { added: true, jobId });
+    json(res, 201, { added: true, job_id: jobId });
   } catch (err) {
     if (isDuplicateJobError(err)) {
       metrics.dedupActionCounter.inc({
@@ -252,7 +252,7 @@ export async function handleGetJob(
 
   json(res, 200, {
     ...job.data,
-    jobId: job.id,
+    job_id: job.id,
     state,
     session_token: sessionToken,
     attempt: job.attemptsMade,
