@@ -157,6 +157,54 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow bull-board egress to worker (force-fail notification)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-bull-board-worker-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: bull-board
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-worker-system
+            k8s:app.kubernetes.io/instance: agent-queue-worker
+            k8s:app.kubernetes.io/name: agent-queue-worker
+            k8s:app.kubernetes.io/controller: worker
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow worker ingress from bull-board (force-fail notification)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-bull-board-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-worker-system
+            k8s:app.kubernetes.io/instance: agent-queue-worker
+            k8s:app.kubernetes.io/name: agent-queue-worker
+            k8s:app.kubernetes.io/controller: bull-board
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
 # Authentik Outpost Policies (deployed by Authentik to this namespace)
 # =============================================================================

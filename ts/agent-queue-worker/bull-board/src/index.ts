@@ -20,6 +20,8 @@ for (const key of required) {
 
 const port = parseInt(process.env.BULL_BOARD_PORT ?? "3001", 10);
 const readOnly = process.env.READ_ONLY === "true";
+const workerUrl = process.env.WORKER_URL ?? "";
+const workerSecret = process.env.WORKER_AUTH_SECRET ?? "";
 
 const connection = {
   host: process.env.VALKEY_HOST!,
@@ -80,6 +82,29 @@ app.post("/admin/api/jobs/:jobId/force-fail", async (req, res) => {
     if (!(await job.isActive()))
       return res.status(400).json({ error: "Job is not active" });
 
+    // Notify worker to resolve in-memory callback and free concurrency slot
+    let workerNotified = false;
+    if (workerUrl && workerSecret) {
+      try {
+        const resp = await fetch(
+          `${workerUrl}/jobs/${encodeURIComponent(jobId)}/fail`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${workerSecret}`,
+            },
+            body: JSON.stringify({ reason: "Force failed via admin" }),
+            signal: AbortSignal.timeout(5000),
+          }
+        );
+        workerNotified = resp.ok;
+      } catch (err) {
+        console.warn(`Admin: failed to notify worker for ${jobId}: ${err}`);
+      }
+    }
+
+    // Redis-side cleanup (moves job to failed, cleans app keys)
     const client = await queue.client;
     const lockKey = `${prefix}:agent:${jobId}:lock`;
     const token = `admin-force-fail-${Date.now()}`;
@@ -95,9 +120,14 @@ app.post("/admin/api/jobs/:jobId/force-fail", async (req, res) => {
     if (allKeys.length > 0) await client.del(...allKeys);
 
     console.log(
-      `Admin: force-failed job ${jobId}, cleaned ${allKeys.length} app keys`
+      `Admin: force-failed job ${jobId}, cleaned ${allKeys.length} app keys, worker notified: ${workerNotified}`
     );
-    res.json({ failed: true, jobId, keysDeleted: allKeys.length });
+    res.json({
+      failed: true,
+      jobId,
+      keysDeleted: allKeys.length,
+      workerNotified,
+    });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
