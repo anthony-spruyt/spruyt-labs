@@ -23,6 +23,8 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    configmap.reloader.stakater.com/reload: csi-addons-config
   labels:
     app.kubernetes.io/name: csi-addons
   name: csi-addons-controller-manager
