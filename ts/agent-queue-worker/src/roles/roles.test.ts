@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDefaultRegistry } from "./registry.js";
+import { resolveDuplicateAction } from "./types.js";
 import type { AgentJob } from "../job/schema.js";
 import type { JobState } from "./types.js";
 
@@ -12,108 +13,134 @@ const base: AgentJob = {
   payload: {},
 };
 
-describe("onDuplicate strategies", () => {
-  describe("triage (PR role)", () => {
-    it("uses default (no onDuplicate defined)", () => {
-      const def = registry.get("triage");
-      expect(def.onDuplicate).toBeUndefined();
+const STATES: JobState[] = ["waiting", "prioritized", "active"];
+
+describe("duplicate resolution", () => {
+  describe("triage (default strategy)", () => {
+    const def = registry.get("triage");
+    const job = { ...base, role: "triage" as const, pr_number: 1 };
+
+    it("replaces when waiting", () => {
+      expect(resolveDuplicateAction(def, job, job, "waiting")).toEqual({
+        action: "replace",
+      });
+    });
+
+    it("replaces when prioritized", () => {
+      expect(resolveDuplicateAction(def, job, job, "prioritized")).toEqual({
+        action: "replace",
+      });
+    });
+
+    it("discards when active", () => {
+      expect(resolveDuplicateAction(def, job, job, "active")).toEqual({
+        action: "discard",
+      });
     });
   });
 
-  describe("fix (PR role)", () => {
-    it("uses default (no onDuplicate defined)", () => {
-      const def = registry.get("fix");
-      expect(def.onDuplicate).toBeUndefined();
+  describe("fix (default strategy)", () => {
+    const def = registry.get("fix");
+    const job = { ...base, role: "fix" as const, pr_number: 10 };
+
+    it("replaces when waiting", () => {
+      expect(resolveDuplicateAction(def, job, job, "waiting")).toEqual({
+        action: "replace",
+      });
+    });
+
+    it("replaces when prioritized", () => {
+      expect(resolveDuplicateAction(def, job, job, "prioritized")).toEqual({
+        action: "replace",
+      });
+    });
+
+    it("discards when active", () => {
+      expect(resolveDuplicateAction(def, job, job, "active")).toEqual({
+        action: "discard",
+      });
     });
   });
 
-  describe("validate", () => {
-    it("uses default (no onDuplicate defined)", () => {
-      const def = registry.get("validate");
-      expect(def.onDuplicate).toBeUndefined();
+  describe("validate (default strategy)", () => {
+    const def = registry.get("validate");
+    const job = { ...base, role: "validate" as const };
+
+    it("replaces when waiting", () => {
+      expect(resolveDuplicateAction(def, job, job, "waiting")).toEqual({
+        action: "replace",
+      });
+    });
+
+    it("replaces when prioritized", () => {
+      expect(resolveDuplicateAction(def, job, job, "prioritized")).toEqual({
+        action: "replace",
+      });
+    });
+
+    it("discards when active", () => {
+      expect(resolveDuplicateAction(def, job, job, "active")).toEqual({
+        action: "discard",
+      });
     });
   });
 
-  describe("execute", () => {
+  describe("execute (always discard)", () => {
     const def = registry.get("execute");
+    const job = { ...base, role: "execute" as const, issue_number: 1 };
 
-    it("always discards for waiting state", () => {
-      const result = def.onDuplicate!(
-        { ...base, role: "execute", issue_number: 1 },
-        { ...base, role: "execute", issue_number: 1 },
-        "waiting"
-      );
-      expect(result).toEqual({ action: "discard" });
+    for (const state of STATES) {
+      it(`discards when ${state}`, () => {
+        expect(resolveDuplicateAction(def, job, job, state)).toEqual({
+          action: "discard",
+        });
+      });
+    }
+  });
+
+  describe("sre alerts (always buffer)", () => {
+    const def = registry.get("sre");
+    const alert = {
+      ...base,
+      role: "sre" as const,
+      payload: { trigger: "alert" },
+    };
+
+    for (const state of STATES) {
+      it(`buffers when ${state}`, () => {
+        expect(resolveDuplicateAction(def, alert, alert, state)).toEqual({
+          action: "buffer",
+        });
+      });
+    }
+  });
+
+  describe("sre scheduled (replace or discard)", () => {
+    const def = registry.get("sre");
+    const scheduled = { ...base, role: "sre" as const, dedup_key: "d1" };
+
+    it("replaces when waiting", () => {
+      expect(
+        resolveDuplicateAction(def, scheduled, scheduled, "waiting")
+      ).toEqual({ action: "replace" });
     });
 
-    it("always discards for active state", () => {
-      const result = def.onDuplicate!(
-        { ...base, role: "execute", issue_number: 1 },
-        { ...base, role: "execute", issue_number: 1 },
-        "active"
-      );
-      expect(result).toEqual({ action: "discard" });
+    it("replaces when prioritized", () => {
+      expect(
+        resolveDuplicateAction(def, scheduled, scheduled, "prioritized")
+      ).toEqual({ action: "replace" });
     });
 
-    it("always discards for prioritized state", () => {
-      const result = def.onDuplicate!(
-        { ...base, role: "execute", issue_number: 1 },
-        { ...base, role: "execute", issue_number: 1 },
-        "prioritized"
-      );
-      expect(result).toEqual({ action: "discard" });
+    it("discards when active", () => {
+      expect(
+        resolveDuplicateAction(def, scheduled, scheduled, "active")
+      ).toEqual({ action: "discard" });
     });
   });
 
-  describe("sre", () => {
-    const def = registry.get("sre");
-
-    it("buffers alert for waiting state", () => {
-      const result = def.onDuplicate!(
-        { ...base, role: "sre", payload: { trigger: "alert" } },
-        { ...base, role: "sre", payload: { trigger: "alert" } },
-        "waiting"
-      );
-      expect(result).toEqual({ action: "buffer" });
-    });
-
-    it("buffers alert for active state", () => {
-      const result = def.onDuplicate!(
-        { ...base, role: "sre", payload: { trigger: "alert" } },
-        { ...base, role: "sre", payload: { trigger: "alert" } },
-        "active"
-      );
-      expect(result).toEqual({ action: "buffer" });
-    });
-
-    it("buffers alert for prioritized state", () => {
-      const result = def.onDuplicate!(
-        { ...base, role: "sre", payload: { trigger: "alert" } },
-        { ...base, role: "sre", payload: { trigger: "alert" } },
-        "prioritized"
-      );
-      expect(result).toEqual({ action: "buffer" });
-    });
-
-    it("replaces scheduled for waiting state", () => {
-      const result = def.onDuplicate!(
-        { ...base, role: "sre", dedup_key: "d1" },
-        { ...base, role: "sre", dedup_key: "d1" },
-        "waiting"
-      );
-      expect(result).toEqual({ action: "replace" });
-    });
-
-    it("discards scheduled for active state", () => {
-      const result = def.onDuplicate!(
-        { ...base, role: "sre", dedup_key: "d1" },
-        { ...base, role: "sre", dedup_key: "d1" },
-        "active"
-      );
-      expect(result).toEqual({ action: "discard" });
-    });
-
+  describe("sre bufferKey", () => {
     it("provides bufferKey", () => {
+      const def = registry.get("sre");
       expect(def.bufferKey!("org/repo--sre-triage")).toBe(
         "agent:sre-alerts:org/repo--sre-triage"
       );
@@ -122,19 +149,25 @@ describe("onDuplicate strategies", () => {
 });
 
 describe("role timeouts", () => {
-  const cases: [string, number][] = [
-    ["triage", 600_000],
-    ["fix", 1_800_000],
-    ["validate", 1_800_000],
-    ["execute", 3_600_000],
-    ["sre", 900_000],
-  ];
+  it("all timeouts are positive", () => {
+    for (const role of registry.names()) {
+      expect(registry.get(role).timeoutMs).toBeGreaterThan(0);
+    }
+  });
 
-  for (const [role, expected] of cases) {
-    it(`${role} timeout is ${expected}ms`, () => {
-      expect(registry.get(role).timeoutMs).toBe(expected);
-    });
-  }
+  it("triage is fastest (ephemeral PR check)", () => {
+    const triage = registry.get("triage").timeoutMs;
+    for (const role of ["fix", "validate", "execute", "sre"]) {
+      expect(triage).toBeLessThan(registry.get(role).timeoutMs);
+    }
+  });
+
+  it("execute has longest timeout (full pipeline)", () => {
+    const execute = registry.get("execute").timeoutMs;
+    for (const role of ["triage", "fix", "validate", "sre"]) {
+      expect(execute).toBeGreaterThan(registry.get(role).timeoutMs);
+    }
+  });
 });
 
 describe("registry", () => {

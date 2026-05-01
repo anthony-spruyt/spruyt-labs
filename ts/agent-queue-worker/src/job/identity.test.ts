@@ -128,3 +128,50 @@ describe("extractRole", () => {
     expect(extractRole("nope")).toBe("unknown");
   });
 });
+
+describe("extractRole round-trip with buildJobIdentity", () => {
+  const cases: { desc: string; job: AgentJob; expectedSegment: string }[] = [
+    {
+      desc: "triage",
+      job: { ...base, role: "triage", pr_number: 42 },
+      expectedSegment: "triage",
+    },
+    {
+      desc: "fix",
+      job: { ...base, role: "fix", pr_number: 10 },
+      expectedSegment: "fix",
+    },
+    {
+      desc: "fix revert",
+      job: { ...base, role: "fix", payload: { revert: true } },
+      expectedSegment: "fix",
+    },
+    {
+      desc: "validate",
+      job: { ...base, role: "validate" },
+      expectedSegment: "validate",
+    },
+    {
+      desc: "execute",
+      job: { ...base, role: "execute", issue_number: 99 },
+      expectedSegment: "execute",
+    },
+    {
+      desc: "sre alert",
+      job: { ...base, role: "sre", payload: { trigger: "alert" } },
+      expectedSegment: "sre-triage",
+    },
+    {
+      desc: "sre scheduled",
+      job: { ...base, role: "sre", dedup_key: "2026-05-01" },
+      expectedSegment: "sre-health-check",
+    },
+  ];
+
+  for (const { desc, job, expectedSegment } of cases) {
+    it(`${desc}: extractRole recovers segment from buildJobIdentity output`, () => {
+      const identity = buildJobIdentity(job, registry);
+      expect(extractRole(identity.jobId)).toBe(expectedSegment);
+    });
+  }
+});

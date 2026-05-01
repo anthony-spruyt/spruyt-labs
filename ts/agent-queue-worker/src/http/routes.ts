@@ -8,10 +8,12 @@ import {
 } from "../job/schema.js";
 import { buildJobIdentity } from "../job/identity.js";
 import type { RoleRegistry } from "../roles/registry.js";
+import { resolveDuplicateAction } from "../roles/types.js";
 import type { JobState } from "../roles/types.js";
 import type { Processor } from "../processor.js";
 import type { CircuitBreaker, RateLimiter } from "../queue/guard.js";
 import { json, parseAndValidate } from "./middleware.js";
+import { DEFAULT_JOB_OPTIONS } from "../queue/options.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
 
@@ -73,12 +75,12 @@ export async function handleAddJob(
   const existingJob = await deps.queue.getJob(jobId);
   if (existingJob) {
     const state = (await existingJob.getState()) as JobState;
-    const defaultAction =
-      state === "waiting" || state === "prioritized"
-        ? ({ action: "replace" } as const)
-        : ({ action: "discard" } as const);
-    const decision =
-      roleDef.onDuplicate?.(existingJob.data, data, state) ?? defaultAction;
+    const decision = resolveDuplicateAction(
+      roleDef,
+      existingJob.data,
+      data,
+      state
+    );
 
     if (decision.action === "discard") {
       metrics.dedupActionCounter.inc({
@@ -125,11 +127,8 @@ export async function handleAddJob(
 
   try {
     await deps.queue.add(data.role, data, {
+      ...DEFAULT_JOB_OPTIONS,
       jobId,
-      attempts: 2,
-      backoff: { type: "exponential", delay: 30_000 },
-      removeOnComplete: { age: 3600 },
-      removeOnFail: { age: 604_800, count: 500 },
       priority: data.priority,
     });
 

@@ -6,6 +6,7 @@ import type { RoleRegistry } from "../roles/registry.js";
 import type { CircuitBreaker } from "./guard.js";
 import type { Config } from "../config.js";
 import { fetchReposWithRevertLabels } from "../github.js";
+import { DEFAULT_JOB_OPTIONS } from "./options.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
 
@@ -56,11 +57,8 @@ export function setupLifecycle(deps: LifecycleDeps): void {
       const { dispatch_state: _, dispatched_at: __, ...baseData } = drainedData;
       try {
         await queue.add(job.data.role, baseData, {
+          ...DEFAULT_JOB_OPTIONS,
           jobId: job.id!,
-          attempts: 2,
-          backoff: { type: "exponential", delay: 30_000 },
-          removeOnComplete: { age: 3600 },
-          removeOnFail: { age: 604_800, count: 500 },
           priority: job.data.priority,
         });
         logger.info("Auto-queued SRE job from buffer drain", {

@@ -16,7 +16,8 @@ export function readBody(req: IncomingMessage): Promise<unknown> {
     req.on("data", (chunk: Buffer) => {
       size += chunk.length;
       if (size > 1_048_576) {
-        req.destroy(new Error("Body too large"));
+        reject(new Error("Body too large"));
+        req.destroy();
         return;
       }
       chunks.push(chunk);

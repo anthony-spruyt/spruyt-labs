@@ -25,3 +25,17 @@ export interface RoleDefinition {
   bufferKey?(jobId: string): string;
   drainBuffer?(jobId: string, data: AgentJob, redis: Redis): Promise<AgentJob>;
 }
+
+export function resolveDuplicateAction(
+  roleDef: RoleDefinition,
+  existing: AgentJob,
+  incoming: AgentJob,
+  state: JobState
+): DuplicateAction {
+  if (roleDef.onDuplicate) {
+    return roleDef.onDuplicate(existing, incoming, state);
+  }
+  return state === "waiting" || state === "prioritized"
+    ? { action: "replace" }
+    : { action: "discard" };
+}
