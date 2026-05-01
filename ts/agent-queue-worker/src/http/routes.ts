@@ -107,7 +107,8 @@ export async function handleAddJob(
       return json(res, 202, { added: false, buffered: true, jobId });
     }
 
-    // "replace" — shallow merge, atomic Lua validates state before HSET
+    // "replace" — shallow merge replaces top-level keys (including `payload`)
+    // entirely with incoming values; nested objects are NOT deep-merged.
     const merged = JSON.stringify({ ...existingJob.data, ...data });
     const updated = await atomicUpdateIfWaiting(
       deps.queue,
@@ -282,8 +283,11 @@ async function atomicUpdateIfWaiting(
 }
 
 function isDuplicateJobError(err: unknown): boolean {
-  if (err instanceof Error) {
-    return err.message.includes("Duplicate") || err.message.includes("exists");
-  }
-  return false;
+  if (!(err instanceof Error)) return false;
+  const msg = err.message;
+  return (
+    msg.includes("Job already exists with id") ||
+    msg.includes("Duplicate") ||
+    msg.includes("exists")
+  );
 }

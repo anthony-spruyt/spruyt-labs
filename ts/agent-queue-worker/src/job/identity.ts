@@ -20,7 +20,20 @@ export function buildJobIdentity(
   };
 }
 
-export function extractRole(jobId: string): string {
+// Returns the registry role name, not the raw identity segment.
+// e.g. "org/repo--sre-triage" → "sre", not "sre-triage".
+export function extractRole(jobId: string, registry: RoleRegistry): string {
   const parts = jobId.split("--");
-  return parts[1] ?? "unknown";
+  const segment = parts[1];
+  if (!segment) return "unknown";
+
+  if (registry.has(segment)) return segment;
+
+  // Compound segments like "sre-triage" or "sre-health-check": find the
+  // registry key that is a prefix of the segment.
+  for (const name of registry.names()) {
+    if (segment.startsWith(`${name}-`)) return name;
+  }
+
+  return "unknown";
 }

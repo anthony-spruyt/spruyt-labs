@@ -9,13 +9,15 @@ export function authenticate(req: IncomingMessage, secret: string): boolean {
   return req.headers.authorization === `Bearer ${secret}`;
 }
 
+const MAX_BODY_BYTES = 1_048_576;
+
 export function readBody(req: IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
     req.on("data", (chunk: Buffer) => {
       size += chunk.length;
-      if (size > 1_048_576) {
+      if (size > MAX_BODY_BYTES) {
         reject(new Error("Body too large"));
         req.destroy();
         return;

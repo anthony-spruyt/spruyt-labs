@@ -12,6 +12,10 @@ return items
 
 const SRE_BUFFER_PREFIX = "agent:sre-alerts:";
 
+function sreBufferKey(jobId: string): string {
+  return `${SRE_BUFFER_PREFIX}${jobId}`;
+}
+
 export const sreRole: RoleDefinition = {
   timeoutMs: 900_000,
   buildIdentitySegments(job: AgentJob): string[] {
@@ -34,17 +38,18 @@ export const sreRole: RoleDefinition = {
       ? { action: "replace" }
       : { action: "discard" };
   },
-  bufferKey(jobId: string): string {
-    return `${SRE_BUFFER_PREFIX}${jobId}`;
-  },
+  bufferKey: sreBufferKey,
   async drainBuffer(
     jobId: string,
     data: AgentJob,
     redis: Redis
   ): Promise<AgentJob> {
-    const bufKey = `${SRE_BUFFER_PREFIX}${jobId}`;
     // Redis EVAL runs Lua server-side for atomic drain
-    const items = (await redis.eval(DRAIN_BUFFER_LUA, 1, bufKey)) as string[];
+    const items = (await redis.eval(
+      DRAIN_BUFFER_LUA,
+      1,
+      sreBufferKey(jobId)
+    )) as string[];
     if (!items || items.length === 0) return data;
     const alerts = items.map((i) => JSON.parse(i) as Record<string, unknown>);
     return {

@@ -95,83 +95,83 @@ describe("buildJobIdentity", () => {
 
 describe("extractRole", () => {
   it("extracts role from triage job id", () => {
-    expect(extractRole("org/repo--triage--42")).toBe("triage");
+    expect(extractRole("org/repo--triage--42", registry)).toBe("triage");
   });
 
   it("extracts role from fix job id", () => {
-    expect(extractRole("org/repo--fix--10")).toBe("fix");
+    expect(extractRole("org/repo--fix--10", registry)).toBe("fix");
   });
 
   it("extracts role from fix revert job id", () => {
-    expect(extractRole("org/repo--fix--revert")).toBe("fix");
+    expect(extractRole("org/repo--fix--revert", registry)).toBe("fix");
   });
 
   it("extracts role from validate job id", () => {
-    expect(extractRole("org/repo--validate")).toBe("validate");
+    expect(extractRole("org/repo--validate", registry)).toBe("validate");
   });
 
   it("extracts role from execute job id", () => {
-    expect(extractRole("org/repo--execute--99")).toBe("execute");
+    expect(extractRole("org/repo--execute--99", registry)).toBe("execute");
   });
 
-  it("extracts role from sre alert job id", () => {
-    expect(extractRole("org/repo--sre-triage")).toBe("sre-triage");
+  it("extracts registry key from sre alert job id", () => {
+    expect(extractRole("org/repo--sre-triage", registry)).toBe("sre");
   });
 
-  it("extracts role from sre scheduled job id", () => {
-    expect(extractRole("org/repo--sre-health-check--2026-05-01")).toBe(
-      "sre-health-check"
-    );
+  it("extracts registry key from sre scheduled job id", () => {
+    expect(
+      extractRole("org/repo--sre-health-check--2026-05-01", registry)
+    ).toBe("sre");
   });
 
   it("returns unknown for malformed id", () => {
-    expect(extractRole("nope")).toBe("unknown");
+    expect(extractRole("nope", registry)).toBe("unknown");
   });
 });
 
 describe("extractRole round-trip with buildJobIdentity", () => {
-  const cases: { desc: string; job: AgentJob; expectedSegment: string }[] = [
+  const cases: { desc: string; job: AgentJob; expectedRole: string }[] = [
     {
       desc: "triage",
       job: { ...base, role: "triage", pr_number: 42 },
-      expectedSegment: "triage",
+      expectedRole: "triage",
     },
     {
       desc: "fix",
       job: { ...base, role: "fix", pr_number: 10 },
-      expectedSegment: "fix",
+      expectedRole: "fix",
     },
     {
       desc: "fix revert",
       job: { ...base, role: "fix", payload: { revert: true } },
-      expectedSegment: "fix",
+      expectedRole: "fix",
     },
     {
       desc: "validate",
       job: { ...base, role: "validate" },
-      expectedSegment: "validate",
+      expectedRole: "validate",
     },
     {
       desc: "execute",
       job: { ...base, role: "execute", issue_number: 99 },
-      expectedSegment: "execute",
+      expectedRole: "execute",
     },
     {
       desc: "sre alert",
       job: { ...base, role: "sre", payload: { trigger: "alert" } },
-      expectedSegment: "sre-triage",
+      expectedRole: "sre",
     },
     {
       desc: "sre scheduled",
       job: { ...base, role: "sre", dedup_key: "2026-05-01" },
-      expectedSegment: "sre-health-check",
+      expectedRole: "sre",
     },
   ];
 
-  for (const { desc, job, expectedSegment } of cases) {
-    it(`${desc}: extractRole recovers segment from buildJobIdentity output`, () => {
+  for (const { desc, job, expectedRole } of cases) {
+    it(`${desc}: extractRole recovers registry key from buildJobIdentity output`, () => {
       const identity = buildJobIdentity(job, registry);
-      expect(extractRole(identity.jobId)).toBe(expectedSegment);
+      expect(extractRole(identity.jobId, registry)).toBe(expectedRole);
     });
   }
 });

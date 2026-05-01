@@ -67,9 +67,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
         });
       } catch {
         const bufKey = roleDef.bufferKey!(job.id!);
-        for (const alert of alerts) {
-          await redis.rpush(bufKey, JSON.stringify(alert));
-        }
+        await redis.rpush(bufKey, ...alerts.map((a) => JSON.stringify(a)));
         await redis.ltrim(bufKey, -50, -1);
         await redis.expire(bufKey, 3600);
         logger.warn("Re-pushed alerts after failed auto-queue", {
