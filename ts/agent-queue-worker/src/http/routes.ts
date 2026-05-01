@@ -2,10 +2,11 @@ import { type IncomingMessage, type ServerResponse } from "node:http";
 import type { Queue } from "bullmq";
 import type { Redis } from "ioredis";
 import {
-  AgentJobSchema,
+  AgentJobInputSchema,
   DoneRequestSchema,
   FailRequestSchema,
 } from "../job/schema.js";
+import type { AgentJob } from "../job/schema.js";
 import { buildJobIdentity } from "../job/identity.js";
 import type { RoleRegistry } from "../roles/registry.js";
 import { resolveDuplicateAction } from "../roles/types.js";
@@ -47,11 +48,11 @@ export async function handleAddJob(
   res: ServerResponse,
   deps: RouteDeps
 ): Promise<void> {
-  const result = await parseAndValidate(req, res, AgentJobSchema, {
+  const result = await parseAndValidate(req, res, AgentJobInputSchema, {
     added: false,
   });
   if (!result.ok) return;
-  const data = result.data;
+  const data: AgentJob = result.data;
 
   const circuit = await deps.circuitBreaker.check(data.repo);
   if (circuit.open) {

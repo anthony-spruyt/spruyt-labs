@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   AgentJobSchema,
+  AgentJobInputSchema,
   DoneRequestSchema,
   FailRequestSchema,
 } from "./schema.js";
@@ -13,9 +14,9 @@ const base: AgentJob = {
   payload: {},
 };
 
-describe("AgentJobSchema", () => {
+describe("AgentJobInputSchema", () => {
   it("accepts valid triage job", () => {
-    const result = AgentJobSchema.safeParse({
+    const result = AgentJobInputSchema.safeParse({
       ...base,
       pr_number: 42,
     });
@@ -24,38 +25,41 @@ describe("AgentJobSchema", () => {
 
   it("accepts all valid roles", () => {
     for (const role of ["triage", "fix", "validate", "execute", "sre"]) {
-      const result = AgentJobSchema.safeParse({ ...base, role });
+      const result = AgentJobInputSchema.safeParse({ ...base, role });
       expect(result.success).toBe(true);
     }
   });
 
   it("rejects invalid role", () => {
-    const result = AgentJobSchema.safeParse({ ...base, role: "nope" });
+    const result = AgentJobInputSchema.safeParse({ ...base, role: "nope" });
     expect(result.success).toBe(false);
   });
 
   it("rejects empty repo", () => {
-    const result = AgentJobSchema.safeParse({ ...base, repo: "" });
+    const result = AgentJobInputSchema.safeParse({ ...base, repo: "" });
     expect(result.success).toBe(false);
   });
 
   it("rejects repo containing --", () => {
-    const result = AgentJobSchema.safeParse({ ...base, repo: "org--repo" });
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      repo: "org--repo",
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects non-integer priority", () => {
-    const result = AgentJobSchema.safeParse({ ...base, priority: 1.5 });
+    const result = AgentJobInputSchema.safeParse({ ...base, priority: 1.5 });
     expect(result.success).toBe(false);
   });
 
   it("accepts optional fields missing", () => {
-    const result = AgentJobSchema.safeParse(base);
+    const result = AgentJobInputSchema.safeParse(base);
     expect(result.success).toBe(true);
   });
 
   it("accepts head_sha as optional", () => {
-    const result = AgentJobSchema.safeParse(base);
+    const result = AgentJobInputSchema.safeParse(base);
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.head_sha).toBeUndefined();
@@ -63,14 +67,82 @@ describe("AgentJobSchema", () => {
   });
 
   it("accepts head_sha when provided", () => {
-    const result = AgentJobSchema.safeParse({ ...base, head_sha: "abc123" });
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      head_sha: "abc123",
+    });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.head_sha).toBe("abc123");
     }
   });
 
-  it("accepts dedup_key", () => {
+  it("accepts dedup_key for sre role", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "sre",
+      dedup_key: "2026-05-01",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty dedup_key for sre role", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "sre",
+      dedup_key: "",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("strips dedup_key from non-sre roles", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "triage",
+      dedup_key: "2026-05-01",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect("dedup_key" in result.data).toBe(false);
+    }
+  });
+
+  it("strips dispatched_at from input", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      dispatched_at: "2026-01-01T00:00:00Z",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect("dispatched_at" in result.data).toBe(false);
+    }
+  });
+
+  it("strips dispatch_state from input", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      dispatch_state: "dispatched",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect("dispatch_state" in result.data).toBe(false);
+    }
+  });
+});
+
+describe("AgentJobSchema (internal)", () => {
+  it("accepts dispatch fields", () => {
+    for (const state of ["pending", "dispatched", "failed"]) {
+      const result = AgentJobSchema.safeParse({
+        ...base,
+        dispatch_state: state,
+        dispatched_at: "2026-01-01T00:00:00Z",
+      });
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it("accepts dedup_key for any role", () => {
     const result = AgentJobSchema.safeParse({
       ...base,
       dedup_key: "2026-05-01",
@@ -81,16 +153,6 @@ describe("AgentJobSchema", () => {
   it("rejects empty dedup_key", () => {
     const result = AgentJobSchema.safeParse({ ...base, dedup_key: "" });
     expect(result.success).toBe(false);
-  });
-
-  it("accepts dispatch_state values", () => {
-    for (const state of ["pending", "dispatched", "failed"]) {
-      const result = AgentJobSchema.safeParse({
-        ...base,
-        dispatch_state: state,
-      });
-      expect(result.success).toBe(true);
-    }
   });
 });
 
