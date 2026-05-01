@@ -237,6 +237,31 @@ export async function handleRetryJob(
   json(res, 200, { retried: true });
 }
 
+export async function handleGetJob(
+  res: ServerResponse,
+  jobId: string,
+  deps: RouteDeps
+): Promise<void> {
+  const job = await deps.queue.getJob(jobId);
+  if (!job) return json(res, 404, { error: "not_found" });
+
+  const [state, sessionToken] = await Promise.all([
+    job.getState(),
+    deps.redis.get(`agent:session:${jobId}`),
+  ]);
+
+  json(res, 200, {
+    ...job.data,
+    jobId: job.id,
+    state,
+    session_token: sessionToken,
+    attempt: job.attemptsMade,
+    timestamp: job.timestamp,
+    processedOn: job.processedOn,
+    finishedOn: job.finishedOn,
+  });
+}
+
 export async function handleResetCircuit(
   res: ServerResponse,
   repo: string,

@@ -3,6 +3,7 @@ import type { Config } from "../config.js";
 import { json, authenticate } from "./middleware.js";
 import {
   handleAddJob,
+  handleGetJob,
   handleCompleteJob,
   handleFailJob,
   handleRetryJob,
@@ -42,6 +43,11 @@ export function createHttpServer(deps: ServerDeps): Server {
 
       if (method === "POST" && path === "/jobs")
         return handleAddJob(req, res, deps);
+
+      const jobIdMatch = path.match(/^\/jobs\/([^/]+)$/);
+      if (method === "GET" && jobIdMatch) {
+        return handleGetJob(res, decodeURIComponent(jobIdMatch[1]!), deps);
+      }
 
       const jobMatch = path.match(/^\/jobs\/([^/]+)\/(done|fail|retry)$/);
       if (method === "POST" && jobMatch) {
