@@ -11,8 +11,8 @@ spec:
       rules:
         - alert: ReclaimSpaceJobFailed
           expr: |
-            kube_customresource_reclaimspacejob_info{result="Failed"} == 1
-          for: 5m
+            kube_customresource_reclaimspacejob_info{result="Failed", namespace!="coder-workspaces"} == 1
+          for: 25h
           labels:
             severity: warning
           annotations:
