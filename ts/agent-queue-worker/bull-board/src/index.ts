@@ -74,7 +74,7 @@ app.get("/admin/api/active", async (_req, res) => {
 
 app.post("/admin/api/jobs/:jobId/force-fail", async (req, res) => {
   try {
-    const jobId = decodeURIComponent(req.params.jobId);
+    const jobId = decodeURIComponent(req.params.jobId).replace(/[\n\r\t]/g, "");
     const job = await queue.getJob(jobId);
     if (!job) return res.status(404).json({ error: "Job not found" });
     if (!(await job.isActive()))
