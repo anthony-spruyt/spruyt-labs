@@ -1,9 +1,10 @@
-import { createServer, type Server } from "node:http";
+import { type Server } from "node:http";
 import { Worker, Queue } from "bullmq";
 import { Redis } from "ioredis";
 import { loadConfig } from "./config.js";
 import { Processor } from "./processor.js";
-import { Router } from "./routes.js";
+import { createHttpServer } from "./http/server.js";
+import { CircuitBreaker, RateLimiter } from "./queue/guard.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
 import { createDefaultRegistry } from "./roles/registry.js";
@@ -30,6 +31,8 @@ const queueOpts = { connection, prefix: "agent:queue" };
 const queue = new Queue("agent", queueOpts);
 const registry = createDefaultRegistry();
 const processor = new Processor(redis, config, registry);
+const circuitBreaker = new CircuitBreaker(redis);
+const rateLimiter = new RateLimiter(redis);
 
 const worker = new Worker("agent", async (job) => processor.process(job), {
   ...queueOpts,
@@ -99,12 +102,7 @@ worker.on("failed", async (job, err) => {
   if (!job) return;
   const role = job.data.role ?? "unknown";
 
-  await redis.zadd(
-    `agent:circuit:${job.data.repo}`,
-    Date.now(),
-    `${job.id}:${job.attemptsMade}`
-  );
-  await redis.expire(`agent:circuit:${job.data.repo}`, 3600);
+  await circuitBreaker.trip(job.data.repo, job.id!, job.attemptsMade);
 
   if (job.attemptsMade >= (job.opts.attempts ?? 1)) {
     metrics.jobExhausted.inc({ queue: "agent", role, repo: job.data.repo });
@@ -128,18 +126,15 @@ worker.on("failed", async (job, err) => {
 
 const isReady = () => redis.status === "ready" && !worker.closing;
 
-const router = new Router(queue, redis, processor, config, isReady, registry);
-
-const server: Server = createServer(async (req, res) => {
-  try {
-    await router.handle(req, res);
-  } catch (err) {
-    logger.error("Unhandled route error", { error: String(err) });
-    if (!res.headersSent) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Internal server error" }));
-    }
-  }
+const server: Server = createHttpServer({
+  queue,
+  redis,
+  processor,
+  config,
+  registry,
+  circuitBreaker,
+  rateLimiter,
+  isReady,
 });
 
 async function updateQueueDepth(): Promise<void> {
