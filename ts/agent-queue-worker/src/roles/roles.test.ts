@@ -14,7 +14,7 @@ const base: AgentJob = {
   payload: {},
 };
 
-const STATES: JobState[] = ["waiting", "prioritized", "active"];
+const STATES: JobState[] = ["waiting", "prioritized", "active", "delayed"];
 
 describe("duplicate resolution", () => {
   describe("triage (default strategy)", () => {
@@ -137,6 +137,12 @@ describe("duplicate resolution", () => {
         resolveDuplicateAction(def, scheduled, scheduled, "active")
       ).toEqual({ action: "discard" });
     });
+
+    it("discards when delayed", () => {
+      expect(
+        resolveDuplicateAction(def, scheduled, scheduled, "delayed")
+      ).toEqual({ action: "discard" });
+    });
   });
 
   describe("sre bufferKey", () => {
@@ -145,6 +151,13 @@ describe("duplicate resolution", () => {
       expect(def.bufferKey!("org/repo--sre-triage")).toBe(
         "agent:sre-alerts:org/repo--sre-triage"
       );
+    });
+  });
+
+  describe("sre cooldown", () => {
+    it("has 5-minute cooldown between sessions", () => {
+      const def = registry.get("sre");
+      expect(def.cooldownMs).toBe(300_000);
     });
   });
 });

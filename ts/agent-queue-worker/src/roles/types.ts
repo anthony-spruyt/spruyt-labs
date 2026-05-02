@@ -8,7 +8,7 @@ export type DuplicateAction =
   | { action: "buffer" }
   | { action: "discard" };
 
-export type JobState = "waiting" | "prioritized" | "active";
+export type JobState = "waiting" | "prioritized" | "active" | "delayed";
 
 export type StalenessResult =
   | { stale: false }
@@ -16,6 +16,7 @@ export type StalenessResult =
 
 export interface RoleDefinition {
   readonly timeoutMs: number;
+  readonly cooldownMs?: number;
   readonly jobOptions?: Partial<Pick<JobsOptions, "attempts" | "backoff">>;
   buildIdentitySegments(job: AgentJob): string[];
   checkStaleness?(job: AgentJob, config: Config): Promise<StalenessResult>;

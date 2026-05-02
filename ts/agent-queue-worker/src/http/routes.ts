@@ -68,6 +68,39 @@ export async function handleAddJob(
     const state = await existingJob.getState();
 
     if (state === "completed") {
+      const shouldBuffer =
+        roleDef.bufferKey && data.payload?.trigger === "alert";
+      if (shouldBuffer) {
+        const bufKey = roleDef.bufferKey!(jobId);
+        await deps.redis.rpush(bufKey, JSON.stringify(data.payload));
+        await deps.redis.ltrim(bufKey, -50, -1);
+        await deps.redis.expire(bufKey, 3600);
+
+        try {
+          await existingJob.remove();
+        } catch {
+          // Already cleaned up by removeOnComplete
+        }
+        const { dispatch_state: _, dispatched_at: __, ...baseData } = data;
+        try {
+          await deps.queue.add(data.role, baseData, {
+            ...DEFAULT_JOB_OPTIONS,
+            ...roleDef.jobOptions,
+            jobId,
+            priority: data.priority,
+            delay: roleDef.cooldownMs ?? 300_000,
+          });
+        } catch (err) {
+          if (!isDuplicateJobError(err)) throw err;
+        }
+
+        metrics.dedupActionCounter.inc({
+          queue: "agent",
+          role: data.role,
+          action: "buffer",
+        });
+        return json(res, 202, { added: false, buffered: true, job_id: jobId });
+      }
       try {
         await existingJob.remove();
       } catch {

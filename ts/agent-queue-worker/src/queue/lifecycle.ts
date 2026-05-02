@@ -53,15 +53,19 @@ export function setupLifecycle(deps: LifecycleDeps): void {
       }
 
       const { dispatch_state: _, dispatched_at: __, ...baseData } = drainedData;
+      const cooldown = roleDef.cooldownMs ?? 0;
       try {
         await queue.add(job.data.role, baseData, {
           ...DEFAULT_JOB_OPTIONS,
+          ...roleDef.jobOptions,
           jobId: job.id!,
           priority: job.data.priority,
+          ...(cooldown > 0 && { delay: cooldown }),
         });
         logger.info("Auto-queued SRE job from buffer drain", {
           jobId: job.id,
           alertCount: alerts.length,
+          delayMs: cooldown,
         });
       } catch {
         const bufKey = roleDef.bufferKey!(job.id!);

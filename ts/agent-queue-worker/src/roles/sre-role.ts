@@ -18,6 +18,7 @@ function sreBufferKey(jobId: string): string {
 
 export const sreRole: RoleDefinition = {
   timeoutMs: 900_000,
+  cooldownMs: 300_000,
   jobOptions: { attempts: 1 },
   buildIdentitySegments(job: AgentJob): string[] {
     if (job.payload?.trigger === "alert") {
