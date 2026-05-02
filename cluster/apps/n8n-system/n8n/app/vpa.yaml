@@ -71,3 +71,9 @@ spec:
         maxAllowed:
           cpu: 500m
           memory: 512Mi
+      - containerName: mcp-header-proxy
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 32Mi

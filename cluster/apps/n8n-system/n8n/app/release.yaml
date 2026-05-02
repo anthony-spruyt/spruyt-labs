@@ -62,3 +62,65 @@ spec:
                           limits:
                             cpu: 500m
                             memory: 512Mi
+          - target:
+              kind: Deployment
+              name: n8n-webhook
+            patch: |-
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: _
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: mcp-header-proxy
+                        image: ghcr.io/anthony-spruyt/mcp-header-proxy:latest
+                        env:
+                          - name: UPSTREAM_URL
+                            value: http://localhost:5678
+                          - name: LISTEN_ADDR
+                            value: ":8080"
+                        ports:
+                          - containerPort: 8080
+                            name: mcp-proxy
+                            protocol: TCP
+                        securityContext:
+                          capabilities:
+                            drop:
+                              - ALL
+                          readOnlyRootFilesystem: true
+                          runAsNonRoot: true
+                          runAsUser: 65534
+                        resources:
+                          requests:
+                            cpu: 5m
+                            memory: 16Mi
+                          limits:
+                            memory: 32Mi
+                        livenessProbe:
+                          httpGet:
+                            path: /healthz
+                            port: 8080
+                          initialDelaySeconds: 5
+                          periodSeconds: 30
+                        readinessProbe:
+                          httpGet:
+                            path: /healthz
+                            port: 8080
+                          initialDelaySeconds: 2
+                          periodSeconds: 10
+          - target:
+              kind: Service
+              name: n8n-webhook
+            patch: |-
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: _
+              spec:
+                ports:
+                  - name: mcp-proxy
+                    port: 8080
+                    targetPort: 8080
+                    protocol: TCP

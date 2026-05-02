@@ -530,6 +530,8 @@ spec:
         - ports:
             - port: "5678"
               protocol: TCP
+            - port: "8080"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress from Coder workspace pods (SRE MCP endpoint)

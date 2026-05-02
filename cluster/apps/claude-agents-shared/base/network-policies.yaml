@@ -151,3 +151,5 @@ spec:
         - ports:
             - port: "5678"
               protocol: TCP
+            - port: "8080"
+              protocol: TCP
