@@ -152,7 +152,7 @@ export class Processor {
       const resolver = this.callbacks.get(job.id!);
       if (resolver) resolver({ status: "cancelled" });
       this.callbacks.delete(job.id!);
-      await this.redis.del(`agent:active:${job.id}`);
+      await this.redis.del(`agent:active:${job.id}`, `agent:session:${job.id}`);
     }
   }
 
