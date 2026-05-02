@@ -18,7 +18,8 @@ spec:
     - kustomize:
         images:
           - name: n8nio/runners
-            newTag: "2.16.2"
+            # renovate: datasource=docker depName=n8nio/runners
+            newTag: "2.18.5"
         patches:
           - target:
               kind: Deployment
@@ -36,7 +37,7 @@ spec:
                         emptyDir: {}
                     containers:
                       - name: task-runner
-                        image: n8nio/runners:2.16.2@sha256:d9e65e68c0352c490dc52d8ca2d5849904907308e55d76741c50ae2b5789d101
+                        image: n8nio/runners
                         env:
                           - name: N8N_RUNNERS_TASK_BROKER_URI
                             value: http://localhost:5679
