@@ -1,6 +1,6 @@
 module github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator
 
-go 1.26.1
+go 1.26.2
 
 require (
 	github.com/siderolabs/talos/pkg/machinery v1.12.6
