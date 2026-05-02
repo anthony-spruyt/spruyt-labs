@@ -23,6 +23,8 @@ spec:
               protocol: TCP
             - port: "5001"
               protocol: TCP
+            - port: "5001"
+              protocol: UDP
   egress:
     # Allow P2P to cluster, local host, and remote nodes (handles stale DHT entries and node-level routing)
     - toEntities:
@@ -35,6 +37,8 @@ spec:
               protocol: TCP
             - port: "5001"
               protocol: TCP
+            - port: "5001"
+              protocol: UDP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow kube-apiserver (watches nodes/pods) and world HTTP/HTTPS (registry pulls)
