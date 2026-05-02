@@ -35,7 +35,7 @@ export class RateLimiter {
     const key = `agent:rate:${repo}`;
     await this.redis.zremrangebyscore(key, "-inf", Date.now() - 3_600_000);
     const count = await this.redis.zcard(key);
-    if (count >= 10) {
+    if (count >= 120) {
       logger.warn("Rate limited", { repo, count });
       return { limited: true, count };
     }

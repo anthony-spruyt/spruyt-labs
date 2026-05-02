@@ -59,11 +59,6 @@ export async function handleAddJob(
     return json(res, 429, { added: false, reason: "circuit_open" });
   }
 
-  const rate = await deps.rateLimiter.check(data.repo);
-  if (rate.limited) {
-    return json(res, 429, { added: false, reason: "rate_limited" });
-  }
-
   const identity = buildJobIdentity(data, deps.registry);
   const jobId = identity.jobId;
   const roleDef = deps.registry.get(data.role);
@@ -125,6 +120,11 @@ export async function handleAddJob(
       });
       return json(res, 200, { added: false, replaced: true, job_id: jobId });
     }
+  }
+
+  const rate = await deps.rateLimiter.check(data.repo);
+  if (rate.limited) {
+    return json(res, 429, { added: false, reason: "rate_limited" });
   }
 
   try {
