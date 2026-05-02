@@ -100,16 +100,27 @@ export class Processor {
       }
 
       const dispatchState = job.data.dispatch_state ?? "pending";
+      let needsDispatch = dispatchState !== "dispatched";
+
+      if (!needsDispatch) {
+        const sessionAlive = await this.redis.exists(`agent:session:${job.id}`);
+        if (!sessionAlive) {
+          logger.info("Session expired, re-dispatching", fields);
+          needsDispatch = true;
+        }
+      }
+
       logger.info("Processing job", {
         ...fields,
         dispatchState,
+        needsDispatch,
         attempt: job.attemptsMade,
       });
 
       const result = await Promise.race([
-        dispatchState === "dispatched"
-          ? this.awaitCallbackWithCachePoll(job.id!, job.attemptsMade)
-          : this.dispatchAndAwaitCallback(job.id!, job.data, job),
+        needsDispatch
+          ? this.dispatchAndAwaitCallback(job.id!, job.data, job)
+          : this.awaitCallbackWithCachePoll(job.id!, job.attemptsMade),
         deadline.promise,
       ]);
 
