@@ -19,15 +19,21 @@ const commonFields = {
   payload: z.record(z.string(), z.unknown()),
 };
 
-const prFields = {
+const prFieldsRequired = {
+  ...commonFields,
+  pr_number: z.number().int().positive(),
+  head_sha: z.string().min(1),
+};
+
+const prFieldsOptional = {
   ...commonFields,
   pr_number: z.number().int().positive().optional(),
   head_sha: z.string().min(1).optional(),
 };
 
 export const AgentJobInputSchema = z.discriminatedUnion("role", [
-  z.object({ role: z.literal("triage"), ...prFields }),
-  z.object({ role: z.literal("fix"), ...prFields }),
+  z.object({ role: z.literal("triage"), ...prFieldsRequired }),
+  z.object({ role: z.literal("fix"), ...prFieldsOptional }),
   z.object({ role: z.literal("validate"), ...commonFields }),
   z.object({
     role: z.literal("execute"),

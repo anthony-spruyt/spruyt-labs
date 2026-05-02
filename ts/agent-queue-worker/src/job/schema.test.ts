@@ -13,15 +13,26 @@ const base: AgentJob = {
   event_type: "pull_request",
   priority: 5,
   payload: {},
+  pr_number: 42,
+  head_sha: "abc123",
 };
 
 describe("AgentJobInputSchema", () => {
   it("accepts valid triage job", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      pr_number: 42,
-    });
+    const result = AgentJobInputSchema.safeParse(base);
     expect(result.success).toBe(true);
+  });
+
+  it("rejects triage without pr_number", () => {
+    const { pr_number: _, ...noPr } = base;
+    const result = AgentJobInputSchema.safeParse(noPr);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects triage without head_sha", () => {
+    const { head_sha: _, ...noSha } = base;
+    const result = AgentJobInputSchema.safeParse(noSha);
+    expect(result.success).toBe(false);
   });
 
   it("accepts all valid roles", () => {
@@ -60,26 +71,17 @@ describe("AgentJobInputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts optional fields missing", () => {
-    const result = AgentJobInputSchema.safeParse(base);
+  it("accepts fix with optional pr fields missing", () => {
+    const { pr_number: _, head_sha: __, ...fixBase } = base;
+    const result = AgentJobInputSchema.safeParse({ ...fixBase, role: "fix" });
     expect(result.success).toBe(true);
   });
 
-  it("accepts head_sha as optional for pr roles", () => {
-    const result = AgentJobInputSchema.safeParse(base);
+  it("accepts fix with pr fields provided", () => {
+    const result = AgentJobInputSchema.safeParse({ ...base, role: "fix" });
     expect(result.success).toBe(true);
-    if (result.success && result.data.role === "triage") {
-      expect(result.data.head_sha).toBeUndefined();
-    }
-  });
-
-  it("accepts head_sha when provided for pr roles", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      head_sha: "abc123",
-    });
-    expect(result.success).toBe(true);
-    if (result.success && result.data.role === "triage") {
+    if (result.success && result.data.role === "fix") {
+      expect(result.data.pr_number).toBe(42);
       expect(result.data.head_sha).toBe("abc123");
     }
   });
