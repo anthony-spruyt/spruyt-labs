@@ -12,7 +12,9 @@ spec:
         - alert: ReclaimSpaceJobFailed
           expr: |
             kube_customresource_reclaimspacejob_info{result="Failed", namespace!="coder-workspaces"} == 1
-          for: 25h
+            and on (namespace, name)
+            (time() - kube_customresource_reclaimspacejob_completed_time < 25 * 3600)
+          for: 1h
           labels:
             severity: warning
           annotations:

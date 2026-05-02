@@ -305,6 +305,13 @@ kube-state-metrics:
                   info:
                     labelsFromPath:
                       result: [status, result]
+              - name: reclaimspacejob_completed_time
+                help: "ReclaimSpaceJob completion time as unix timestamp"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, completionTime]
+                    nilIsZero: true
   resources:
     limits:
       memory: 512Mi
