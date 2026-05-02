@@ -63,62 +63,66 @@ export async function handleAddJob(
   const jobId = identity.jobId;
   const roleDef = deps.registry.get(data.role);
 
-  const completed = await deps.redis.exists(`agent:completed:${jobId}`);
-  if (completed) {
-    return json(res, 409, { added: false, reason: "recently_completed" });
-  }
-
   const existingJob = await deps.queue.getJob(jobId);
   if (existingJob) {
-    const state = (await existingJob.getState()) as JobState;
-    const decision = resolveDuplicateAction(
-      roleDef,
-      existingJob.data,
-      data,
-      state
-    );
+    const state = await existingJob.getState();
 
-    if (decision.action === "discard") {
-      metrics.dedupActionCounter.inc({
-        queue: "agent",
-        role: data.role,
-        action: "discard",
-      });
-      return json(res, 409, {
-        added: false,
-        reason: state === "active" ? "active" : "deduplicated",
-      });
-    }
+    if (state === "completed") {
+      try {
+        await existingJob.remove();
+      } catch {
+        // Already cleaned up by removeOnComplete
+      }
+    } else {
+      const decision = resolveDuplicateAction(
+        roleDef,
+        existingJob.data,
+        data,
+        state as JobState
+      );
 
-    if (decision.action === "buffer") {
-      const bufKey = roleDef.bufferKey!(jobId);
-      await deps.redis.rpush(bufKey, JSON.stringify(data.payload));
-      await deps.redis.ltrim(bufKey, -50, -1);
-      await deps.redis.expire(bufKey, 3600);
-      metrics.dedupActionCounter.inc({
-        queue: "agent",
-        role: data.role,
-        action: "buffer",
-      });
-      return json(res, 202, { added: false, buffered: true, job_id: jobId });
-    }
+      if (decision.action === "discard") {
+        metrics.dedupActionCounter.inc({
+          queue: "agent",
+          role: data.role,
+          action: "discard",
+        });
+        return json(res, 409, {
+          added: false,
+          reason: state === "active" ? "active" : "deduplicated",
+        });
+      }
 
-    // "replace" — shallow merge replaces top-level keys (including `payload`)
-    // entirely with incoming values; nested objects are NOT deep-merged.
-    const merged = JSON.stringify({ ...existingJob.data, ...data });
-    const updated = await atomicUpdateIfWaiting(
-      deps.queue,
-      deps.redis,
-      jobId,
-      merged
-    );
-    if (updated) {
-      metrics.dedupActionCounter.inc({
-        queue: "agent",
-        role: data.role,
-        action: "replace",
-      });
-      return json(res, 200, { added: false, replaced: true, job_id: jobId });
+      if (decision.action === "buffer") {
+        const bufKey = roleDef.bufferKey!(jobId);
+        await deps.redis.rpush(bufKey, JSON.stringify(data.payload));
+        await deps.redis.ltrim(bufKey, -50, -1);
+        await deps.redis.expire(bufKey, 3600);
+        metrics.dedupActionCounter.inc({
+          queue: "agent",
+          role: data.role,
+          action: "buffer",
+        });
+        return json(res, 202, { added: false, buffered: true, job_id: jobId });
+      }
+
+      // "replace" — shallow merge replaces top-level keys (including `payload`)
+      // entirely with incoming values; nested objects are NOT deep-merged.
+      const merged = JSON.stringify({ ...existingJob.data, ...data });
+      const updated = await atomicUpdateIfWaiting(
+        deps.queue,
+        deps.redis,
+        jobId,
+        merged
+      );
+      if (updated) {
+        metrics.dedupActionCounter.inc({
+          queue: "agent",
+          role: data.role,
+          action: "replace",
+        });
+        return json(res, 200, { added: false, replaced: true, job_id: jobId });
+      }
     }
   }
 
