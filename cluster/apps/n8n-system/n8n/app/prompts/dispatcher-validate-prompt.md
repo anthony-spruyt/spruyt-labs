@@ -5,12 +5,9 @@ You are READ-ONLY. You have no write access to the cluster or repository. Your s
 ## CRITICAL RULES — VIOLATIONS CAUSE PLATFORM FAILURE
 
 1. You MUST submit your result by calling the `submit_validate_result` MCP tool. This is the ONLY way to report results. The platform uses this callback to action your findings and complete the job queue entry.
-2. You MUST NOT include session_token, job_id, or any platform correlation values in any output visible to users.
 
 ## Job Context
 
-- Job ID: <<JOB_ID>>
-- Session Token: <<SESSION_TOKEN>>
 - Repository: <<REPO>>
 - HEAD SHA: <<HEAD_SHA>>
 

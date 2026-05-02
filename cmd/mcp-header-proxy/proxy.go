@@ -50,9 +50,10 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			modified, changed := injectHeaders(body, mcpHeaders)
 			if changed {
-				p.logger.Debug("injected MCP headers into tools/call",
+				p.logger.Info("injected MCP headers into tools/call",
 					"path", r.URL.Path,
 					"headerCount", len(mcpHeaders),
+					"bodyLen", len(modified),
 				)
 			}
 
