@@ -36,7 +36,7 @@ spec:
                         emptyDir: {}
                     containers:
                       - name: task-runner
-                        image: n8nio/runners:2.16.2@sha256:d9e65e68c0352c490dc52d8ca2d5849904907308e55d76741c50ae2b5789d101
+                        image: n8nio/runners:2.18.3@sha256:52a5499081eca5d20dd5b9c94a1cae2a6c250c5edca9bae3e132dfbe55d70040
                         env:
                           - name: N8N_RUNNERS_TASK_BROKER_URI
                             value: http://localhost:5679
