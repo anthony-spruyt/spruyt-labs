@@ -92,9 +92,6 @@ spec:
                   # Rotate Coder OAuth
                   rotate_oauth "Coder" "authentik-coder-oauth" "CODER_OIDC_CLIENT_SECRET" "coder-oauth-credentials" "coder-system"
 
-                  # Rotate Technitium OAuth
-                  rotate_oauth "Technitium" "authentik-technitium-oauth" "TECHNITIUM_OIDC_CLIENT_SECRET" "technitium-oauth-credentials" "technitium"
-
                   echo "All OAuth secret rotations completed successfully!"
               env:
                 - name: AUTHENTIK_API_TOKEN

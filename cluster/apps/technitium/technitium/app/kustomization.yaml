@@ -6,7 +6,6 @@ resources:
   - ./technitium-secrets.sops.yaml
   - ./authentik-secret-store.yaml
   - ./technitium-oauth-external-secret.yaml
-  - ./oauth-rotation-rbac.yaml
   - ./certificate.yaml
   - ./persistent-volume-claim.yaml
   - ./release.yaml
