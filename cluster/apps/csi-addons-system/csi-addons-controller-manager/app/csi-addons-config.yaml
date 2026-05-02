@@ -8,5 +8,5 @@ metadata:
   namespace: csi-addons-system
 data:
   "reclaim-space-timeout": "5m"
-  "max-concurrent-reconciles": "5"
+  "max-concurrent-reconciles": "1"
   "max-group-pvcs": "100"
