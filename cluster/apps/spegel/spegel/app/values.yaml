@@ -15,12 +15,12 @@ service:
 serviceMonitor:
   enabled: true
 grafanaDashboard:
-  enabled: true
+  enabled: false # Disabled: 0.7.0 dashboard uses ${DS_PROMETHEUS} placeholders incompatible with VictoriaMetrics sidecar mode (spegel-org/spegel#1303)
 spegel:
   # -- Path to Containerd mirror configuration.
   # Talos doesn't use the usual /etc/containerd/certs.d directory for its CRI mirror config.
   # Instead Talos's Containerd integration reads host entries from /etc/cri/conf.d/hosts.
   containerdRegistryConfigPath: "/etc/cri/conf.d/hosts" # Default was "/etc/containerd/certs.d"
-  resolveLatestTag: false # Default was true
+  resolveTags: false # Default was true
   # -- When true enables debug web page.
   debugWebEnabled: false
