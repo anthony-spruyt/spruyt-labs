@@ -12,6 +12,7 @@ Technitium Secondary is a replica DNS server that provides redundant DNS service
 - Network connectivity for DNS traffic (UDP/TCP port 53)
 - Proper RBAC permissions for DNS operations
 - Zone transfer configuration between primary and secondary
+- Authentik OIDC SSO configured (see primary README for details)
 
 ## Operation
 
@@ -26,7 +27,7 @@ Technitium Secondary is a replica DNS server that provides redundant DNS service
    kubectl logs -n technitium <technitium-secondary-pod> | grep "transfer"
    ```
 
-2. **Performance monitoring**:
+1. **Performance monitoring**:
 
    ```bash
    # Check DNS performance
@@ -36,7 +37,7 @@ Technitium Secondary is a replica DNS server that provides redundant DNS service
    kubectl logs -n technitium <technitium-secondary-pod> | grep "response"
    ```
 
-3. **Configuration updates**:
+1. **Configuration updates**:
 
    ```bash
    # Update Technitium Secondary configuration
@@ -65,6 +66,16 @@ kubectl get pods -n technitium --no-headers | grep secondary | grep 'Running'
 # Expected: Secondary pod running after restart
 ```
 
+## Single Sign-On (SSO)
+
+SSO configuration is shared with the primary instance. See the [primary Technitium README](../technitium/README.md#single-sign-on-sso) for full details.
+
+Key differences for secondary:
+
+- Redirect URI: `https://dns-secondary.lan.${EXTERNAL_DOMAIN}:53443/sso/callback`
+- SSO must be configured separately via this instance's admin UI
+- Same client ID and client secret as primary
+
 ## Troubleshooting
 
 ### Common Issues
@@ -75,19 +86,19 @@ kubectl get pods -n technitium --no-headers | grep secondary | grep 'Running'
    - **Diagnosis**: Check zone transfer logs and configuration
    - **Resolution**: Verify zone transfer settings and network connectivity
 
-2. **DNS resolution inconsistencies**:
+1. **DNS resolution inconsistencies**:
 
    - **Symptom**: Different responses from primary and secondary
    - **Diagnosis**: Compare zone data between instances
    - **Resolution**: Force zone transfer and verify consistency
 
-3. **Performance bottlenecks**:
+1. **Performance bottlenecks**:
 
    - **Symptom**: High DNS query latency on secondary
    - **Diagnosis**: Monitor DNS performance metrics
    - **Resolution**: Scale resources or optimize DNS configuration
 
-4. **Network connectivity problems**:
+1. **Network connectivity problems**:
 
    - **Symptom**: Secondary unreachable or intermittent
    - **Diagnosis**: Test network connectivity and DNS
