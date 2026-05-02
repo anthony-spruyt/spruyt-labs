@@ -49,6 +49,22 @@ controllers:
               secretKeyRef:
                 name: technitium-secrets
                 key: DNS_SERVER_ADMIN_PASSWORD
+          - name: DNS_SERVER_SSO_ENABLED
+            value: "true"
+          - name: DNS_SERVER_SSO_AUTHORITY
+            value: "https://auth.${EXTERNAL_DOMAIN}/application/o/technitium/"
+          - name: DNS_SERVER_SSO_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: technitium-oauth-credentials
+                key: TECHNITIUM_OIDC_CLIENT_ID
+          - name: DNS_SERVER_SSO_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: technitium-oauth-credentials
+                key: TECHNITIUM_OIDC_CLIENT_SECRET
+          - name: DNS_SERVER_SSO_ALLOW_SIGNUP
+            value: "true"
         securityContext:
           allowPrivilegeEscalation: false
           #  Error! Read-only file system : '/tmp/'

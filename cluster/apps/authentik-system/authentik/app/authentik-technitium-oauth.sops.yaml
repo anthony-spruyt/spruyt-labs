@@ -1,0 +1,26 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: authentik-technitium-oauth
+    namespace: authentik-system
+    annotations:
+        kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+stringData:
+    TECHNITIUM_OIDC_CLIENT_ID: ENC[AES256_GCM,data:YEHoUs/HpEDbvZ9ZWtk/pRKzKLoRO3tbLd/qDjgEQif0qa8d,iv:Ymu1SHCNPr10Jv5A1CBHhjL7ohaCljlrc5VzY8JM9tg=,tag:O6K/rQmztY+fVzLbATMfCw==,type:str]
+    TECHNITIUM_OIDC_CLIENT_SECRET: ENC[AES256_GCM,data:NrKBEkJgSRqs2sqWyOSZCTX9TyonT3nREnsUyFjxat63cI8BLeVs7d/b+NivMdCoYoU2M0BEHJy5A2jmuvO2/liP47d1aR568Kpwr2PI9tG3JvCj2j4b+iaxB90FldfEcEFSjbYLYLpGRNcpz/HxjlYeZrnzpsHX4ZdF8CkMPMA=,iv:2b4Yi7km0CR3M8anIWs4G077ADDHHKAf+ywh0kEbepk=,tag:Os+XIsnhx2arsY+kyxwjQQ==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBEcjhwQ1FTM0dLcHB3d1lK
+            TGI2ZWFsOENtSGJGeXpkck1SZTlsYU9tYVVRCk8zWUdVc05Cb2NvMmNNdW1TbGIw
+            NFVvOE1NTFZ2MmZsRTc4V21iaXk4QVkKLS0tIGNFT2FycGs2YkRCS2EvaTB1TDRN
+            alRrYzR4LytnTERnSDEwMFZkNi9HdDQKrW9cM87VSOwqN63olQ0L+E5B5JZQPOrw
+            BtadxGs97OeaDJaFvyPP5ItvjwmvQn/6RI+WVq4OxfOaJm4h64kyvw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-02T13:48:12Z"
+    mac: ENC[AES256_GCM,data:h/SdgHLnU8qm6jrdJkvk831FVYvMUfp1hxBR4d4+pdwMdZ3Y4F3TqLSRJB+IXVaTGwxz+nAW6JYxzLaebGy3eag8chPBoFaB/WY0Q2xadM6dyAbCUd5nxTRqkz58SNIRau6CWU02gB9f8TxQ/oz5Jut0DDq7B9x66GNDQd5sbSA=,iv:pbryM5LR62t8djDi86my7ai2fW0GG5/+9GNEOGmHX8w=,tag:/csDWJrs7+SSbPbh+seEQw==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

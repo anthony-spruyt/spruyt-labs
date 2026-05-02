@@ -95,6 +95,16 @@ global:
         secretKeyRef:
           name: authentik-coder-oauth
           key: CODER_OIDC_CLIENT_SECRET
+    - name: TECHNITIUM_OIDC_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: authentik-technitium-oauth
+          key: TECHNITIUM_OIDC_CLIENT_ID
+    - name: TECHNITIUM_OIDC_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: authentik-technitium-oauth
+          key: TECHNITIUM_OIDC_CLIENT_SECRET
     # OAuth rotation service account token (used via !Env tag in blueprint)
     - name: OAUTH_ROTATION_API_TOKEN
       valueFrom:
@@ -177,6 +187,8 @@ global:
             path: bull-board-sso.yaml
           - key: coder-sso.yaml
             path: coder-sso.yaml
+          - key: technitium-sso.yaml
+            path: technitium-sso.yaml
 
 authentik:
   log_level: info

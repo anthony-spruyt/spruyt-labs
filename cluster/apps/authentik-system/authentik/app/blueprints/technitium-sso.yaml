@@ -1,0 +1,75 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Technitium SSO
+entries:
+  - id: technitium_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Technitium Users
+    attrs:
+      name: Technitium Users
+
+  - id: technitium_provider
+    model: authentik_providers_oauth2.oauth2provider
+    identifiers:
+      name: Technitium
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      client_type: confidential
+      redirect_uris:
+        - url: https://dns.lan.${EXTERNAL_DOMAIN}:53443/sso/callback
+          matching_mode: strict
+        - url: https://dns-secondary.lan.${EXTERNAL_DOMAIN}:53443/sso/callback
+          matching_mode: strict
+      client_id: !Env TECHNITIUM_OIDC_CLIENT_ID
+      client_secret: !Env TECHNITIUM_OIDC_CLIENT_SECRET
+      signing_key:
+        !Find [
+          authentik_crypto.certificatekeypair,
+          [name, "authentik Self-signed Certificate"],
+        ]
+      property_mappings:
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'openid'"],
+          ]
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'profile'"],
+          ]
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'email'"],
+          ]
+
+  - id: technitium_application
+    model: authentik_core.application
+    identifiers:
+      slug: technitium
+    attrs:
+      name: Technitium DNS
+      provider: !KeyOf technitium_provider
+      meta_launch_url: https://dns.lan.${EXTERNAL_DOMAIN}:53443
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/technitium.png
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf technitium_application
+      order: 0
+    attrs:
+      group: !KeyOf technitium_users_group
+      negate: false
+      enabled: true
+      timeout: 30

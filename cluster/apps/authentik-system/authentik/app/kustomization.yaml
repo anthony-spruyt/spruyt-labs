@@ -12,6 +12,8 @@ resources:
   - ./authentik-headlamp-oauth.sops.yaml
   # Created once by Flux (ssa: IfNotPresent), then managed by oauth-secret-rotation CronJob
   - ./authentik-coder-oauth.sops.yaml
+  # Created once by Flux (ssa: IfNotPresent), then managed by oauth-secret-rotation CronJob
+  - ./authentik-technitium-oauth.sops.yaml
   - ./authentik-cnpg-object-stores.yaml
   - ./external-secrets-rbac.yaml
   - ./authentik-cnpg-cluster.yaml
@@ -45,5 +47,6 @@ configMapGenerator:
       - blueprints/firefly-iii-sso.yaml
       - blueprints/firemerge-sso.yaml
       - blueprints/bull-board-sso.yaml
+      - blueprints/technitium-sso.yaml
 configurations:
   - ./kustomizeconfig.yaml

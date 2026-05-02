@@ -8,6 +8,9 @@ metadata:
 spec:
   targetNamespace: technitium
   path: ./cluster/apps/technitium/technitium/app
+  dependsOn:
+    - name: external-secrets
+    - name: authentik
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
