@@ -18,7 +18,7 @@ spec:
     - kustomize:
         images:
           - name: n8nio/runners
-            newTag: "2.16.2"
+            newTag: "2.18.5"
         patches:
           - target:
               kind: Deployment
@@ -36,7 +36,7 @@ spec:
                         emptyDir: {}
                     containers:
                       - name: task-runner
-                        image: n8nio/runners:2.18.3@sha256:52a5499081eca5d20dd5b9c94a1cae2a6c250c5edca9bae3e132dfbe55d70040
+                        image: n8nio/runners:2.18.5@sha256:422fb501dc73613d898c89ba6c1f19b2a8ee9f2036c6cfccc235fb27957cbfb0
                         env:
                           - name: N8N_RUNNERS_TASK_BROKER_URI
                             value: http://localhost:5679
