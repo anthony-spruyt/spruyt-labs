@@ -34,5 +34,16 @@ jobs:
         with:
           context: "${{ env.WORKDIR }}"
           push: false
+          load: true
+          tags: "local/agent-queue-worker:ci"
           cache-from: "type=gha"
           cache-to: "type=gha,mode=max"
+      - name: "Trivy vulnerability scan"
+        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1"
+        with:
+          image-ref: "local/agent-queue-worker:ci"
+          scanners: "vuln"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+          exit-code: "1"

@@ -29,6 +29,7 @@ jobs:
       terraform: "${{ steps.filter.outputs.terraform }}"
       shutdown-orchestrator: "${{ steps.filter.outputs.shutdown-orchestrator }}"
       kata-tap-qdisc-fix: "${{ steps.filter.outputs.kata-tap-qdisc-fix }}"
+      mcp-header-proxy: "${{ steps.filter.outputs.mcp-header-proxy }}"
       agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
       bull-board: "${{ steps.filter.outputs.bull-board }}"
     steps:
@@ -65,6 +66,8 @@ jobs:
               - 'cmd/shutdown-orchestrator/**'
             kata-tap-qdisc-fix:
               - 'cmd/kata-tap-qdisc-fix/**'
+            mcp-header-proxy:
+              - 'cmd/mcp-header-proxy/**'
             agent-queue-worker:
               - 'ts/agent-queue-worker/**'
             bull-board:
@@ -101,6 +104,11 @@ jobs:
     if: "needs.changes.outputs.kata-tap-qdisc-fix == 'true'"
     uses: "./.github/workflows/_kata-tap-qdisc-fix.yaml"
     secrets: "inherit"
+  mcp-header-proxy:
+    needs: "changes"
+    if: "needs.changes.outputs.mcp-header-proxy == 'true'"
+    uses: "./.github/workflows/_mcp-header-proxy.yaml"
+    secrets: "inherit"
   agent-queue-worker:
     needs: "changes"
     if: "needs.changes.outputs.agent-queue-worker == 'true'"
@@ -120,6 +128,7 @@ jobs:
       - "flux-differ"
       - "shutdown-orchestrator"
       - "kata-tap-qdisc-fix"
+      - "mcp-header-proxy"
       - "agent-queue-worker"
       - "bull-board"
     if: "always()"
