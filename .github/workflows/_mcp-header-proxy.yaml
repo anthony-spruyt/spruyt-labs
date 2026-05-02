@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
 
-name: "Shutdown Orchestrator"
+name: "MCP Header Proxy"
 on:
   workflow_call: {}
 permissions:
   contents: "read"
 env:
-  WORKDIR: "cmd/shutdown-orchestrator"
+  WORKDIR: "cmd/mcp-header-proxy"
 jobs:
   test:
     name: "Test"
@@ -36,13 +36,13 @@ jobs:
           context: "${{ env.WORKDIR }}"
           push: false
           load: true
-          tags: "local/shutdown-orchestrator:ci"
+          tags: "local/mcp-header-proxy:ci"
           cache-from: "type=gha"
           cache-to: "type=gha,mode=max"
       - name: "Trivy vulnerability scan"
         uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1"
         with:
-          image-ref: "local/shutdown-orchestrator:ci"
+          image-ref: "local/mcp-header-proxy:ci"
           scanners: "vuln"
           format: "table"
           severity: "CRITICAL,HIGH"

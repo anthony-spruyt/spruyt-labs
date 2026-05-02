@@ -35,7 +35,6 @@ export function setupLifecycle(deps: LifecycleDeps): void {
 
   worker.on("completed", async (job) => {
     if (!job) return;
-    await redis.set(`agent:completed:${job.id}`, "1", "EX", 3600);
 
     const roleDef = registry.get(job.data.role);
     if (!roleDef.bufferKey || !roleDef.drainBuffer) return;
@@ -47,7 +46,6 @@ export function setupLifecycle(deps: LifecycleDeps): void {
         | undefined;
       if (!alerts || alerts.length === 0) return;
 
-      await redis.del(`agent:completed:${job.id}`);
       try {
         await job.remove();
       } catch {
@@ -90,8 +88,6 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     await circuitBreaker.trip(job.data.repo, job.id!, job.attemptsMade);
 
     if (job.attemptsMade >= (job.opts.attempts ?? 1)) {
-      // Prevent new jobs with same identity during cooldown
-      await redis.set(`agent:completed:${job.id}`, "1", "EX", 3600);
       metrics.jobExhausted.inc({ queue: "agent", role, repo: job.data.repo });
       logger.error("Job exhausted all attempts", {
         jobId: job.id,

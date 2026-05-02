@@ -39,8 +39,9 @@ configuration:
   repositoryMaintenanceJob:
     repositoryConfigData:
       global:
-        # Keep only latest job per repo to prevent pod accumulation
         keepLatestMaintenanceJobs: 1
+  extraArgs:
+    - --backup-repository-configmap=velero-backup-repo-config
   # Name of the default volume snapshot location.
   defaultVolumeSnapshotLocations: csi:aws-primary
   # Set log-format for Velero pod. Default: text. Other option: json.
@@ -79,3 +80,11 @@ nodeAgent:
       memory: 120Mi
     limits:
       memory: 256Mi
+
+configMaps:
+  backup-repo-config:
+    data:
+      kopia: |
+        {
+          "fullMaintenanceInterval": "eagerGC"
+        }
