@@ -44,8 +44,8 @@ kubectl top pods -n observability --selector=app.kubernetes.io/name=victoria-met
 **Resolution**:
 
 1. Validate service account permissions
-2. Check CRD version compatibility
-3. Review operator configuration in values.yaml
+1. Check CRD version compatibility
+1. Review operator configuration in values.yaml
 
 #### Symptom: Custom resources not being processed
 
@@ -58,17 +58,17 @@ kubectl top pods -n observability --selector=app.kubernetes.io/name=victoria-met
 **Resolution**:
 
 1. Add required annotations to custom resources
-2. Verify operator namespace configuration
-3. Check for resource validation errors
+1. Verify operator namespace configuration
+1. Check for resource validation errors
 
 ## Validation
 
 ### Expected Outcomes
 
 1. **Operator Deployment**: Pod shows `Running` status with no restarts
-2. **CRD Management**: Custom resources are created and managed automatically
-3. **Reconciliation**: Operator logs show successful reconciliation loops
-4. **Resource Efficiency**: Memory usage under 500Mi, CPU under 200m
+1. **CRD Management**: Custom resources are created and managed automatically
+1. **Reconciliation**: Operator logs show successful reconciliation loops
+1. **Resource Efficiency**: Memory usage under 500Mi, CPU under 200m
 
 ### Validation Commands
 
@@ -92,14 +92,14 @@ kubectl get pods -n observability -l app.kubernetes.io/name=victoria-metrics-ope
 ### Updates
 
 1. Review operator release notes before upgrading
-2. Test new versions with sample custom resources
-3. Update values.yaml for breaking changes
+1. Test new versions with sample custom resources
+1. Update values.yaml for breaking changes
 
 ### Backups
 
 1. Operator configuration stored in Git
-2. Custom resources backed up via Velero
-3. Verify backup status: `velero get backups | grep observability`
+1. Custom resources backed up via Velero
+1. Verify backup status: `velero get backups | grep observability`
 
 ## References
 

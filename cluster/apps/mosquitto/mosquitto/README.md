@@ -20,7 +20,7 @@ Mosquitto is an open-source MQTT broker that implements the MQTT protocol for li
    - Monitor MQTT connections and topics
    - Manage authentication and authorization
 
-2. **Persistent volume monitoring**:
+1. **Persistent volume monitoring**:
 
    ```bash
    # Check persistent volume claims
@@ -30,7 +30,7 @@ Mosquitto is an open-source MQTT broker that implements the MQTT protocol for li
    kubectl get pv | grep mosquitto
    ```
 
-3. **Certificate renewal monitoring**:
+1. **Certificate renewal monitoring**:
 
    ```bash
    # Check certificate expiration
@@ -50,19 +50,19 @@ Mosquitto is an open-source MQTT broker that implements the MQTT protocol for li
    - **Diagnosis**: Check PVC status and storage class availability
    - **Resolution**: Verify Rook Ceph storage provisioning and PVC configuration
 
-2. **TLS certificate issues**:
+1. **TLS certificate issues**:
 
    - **Symptom**: MQTT connection failures
    - **Diagnosis**: Check cert-manager certificate status and TLS configuration
    - **Resolution**: Verify certificate DNS names and issuer configuration
 
-3. **Resource constraints**:
+1. **Resource constraints**:
 
    - **Symptom**: Pods in Pending state or frequent restarts
    - **Diagnosis**: Check resource requests vs available cluster resources
    - **Resolution**: Adjust resource limits or scale cluster
 
-4. **Network connectivity issues**:
+1. **Network connectivity issues**:
 
    - **Symptom**: MQTT clients unable to connect
    - **Diagnosis**: Check network policies and ingress configuration

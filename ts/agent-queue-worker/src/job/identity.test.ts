@@ -1,9 +1,20 @@
-import { describe, expect, it } from "vitest";
-import { buildJobIdentity, extractRole } from "./identity.js";
+import type { Histogram } from "prom-client";
+import { describe, expect, it, vi } from "vitest";
+import type { Config } from "../config.js";
 import { createDefaultRegistry } from "../roles/registry.js";
+import { buildJobIdentity, extractRole } from "./identity.js";
 import type { AgentJob } from "./schema.js";
 
-const registry = createDefaultRegistry();
+const mockConfig = {
+  SRE_BATCH_MAX_SIZE: 50,
+  SRE_BATCH_WINDOW_MS: 60_000,
+  SRE_COOLDOWN_MS: 300_000,
+  SRE_TRIAGE_SUPPRESS_S: 3600,
+} as Config;
+
+const mockHistogram = { observe: vi.fn() } as unknown as Histogram;
+
+const registry = createDefaultRegistry(mockConfig, mockHistogram);
 
 const base: AgentJob = {
   role: "triage",

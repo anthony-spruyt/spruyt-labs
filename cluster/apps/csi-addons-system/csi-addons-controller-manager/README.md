@@ -2,9 +2,8 @@
 
 ## Overview
 
-CSI Addons Controller Manager provides extended Container Storage Interface (CSI) capabilities for the spruyt-labs homelab infrastructure, enabling advanced storage operations beyond the standard CSI specification.
-It is a Kubernetes controller that extends CSI drivers with additional capabilities not covered by the core CSI specification.
-It provides APIs and controllers for operations like reclaiming unused space on storage volumes, managing network fences for storage isolation, and handling encryption key lifecycle management.
+CSI Addons Controller Manager provides extended Container Storage Interface (CSI) capabilities for the spruyt-labs homelab infrastructure, enabling advanced storage operations beyond the standard CSI specification. It is a Kubernetes controller that extends CSI drivers with additional capabilities not covered by the core CSI specification. It provides APIs and controllers for operations like
+reclaiming unused space on storage volumes, managing network fences for storage isolation, and handling encryption key lifecycle management.
 
 Objectives:
 
@@ -54,7 +53,7 @@ All CSI Addons operations are managed declaratively through Flux Kustomizations.
    kubectl get reclaimspacejobs -A
    ```
 
-2. **Network fencing management**:
+1. **Network fencing management**:
 
    ```bash
    # List network fence classes
@@ -64,7 +63,7 @@ All CSI Addons operations are managed declaratively through Flux Kustomizations.
    kubectl get networkfences -A
    ```
 
-3. **Encryption key rotation**:
+1. **Encryption key rotation**:
 
    ```bash
    # Monitor key rotation jobs
@@ -100,13 +99,13 @@ kubectl get encryptionkeyrotationjobs -A
    - **Diagnosis**: Check CSI driver support and volume accessibility
    - **Resolution**: Verify volume exists and driver supports reclaimspace, then use `flux reconcile kustomization csi-addons-controller-manager --with-source`
 
-2. **Network fence creation errors**:
+1. **Network fence creation errors**:
 
    - **Symptom**: NetworkFence resources fail to create
    - **Diagnosis**: Check network policy configurations and Cilium setup
    - **Resolution**: Review network fence class configuration and Cilium network policies
 
-3. **Encryption key rotation timeouts**:
+1. **Encryption key rotation timeouts**:
 
    - **Symptom**: Key rotation jobs timeout
    - **Diagnosis**: Check storage system responsiveness and timeout configuration

@@ -1,7 +1,7 @@
-import type { Redis } from "ioredis";
 import type { JobsOptions } from "bullmq";
-import type { AgentJob } from "../job/schema.js";
+import type { Redis } from "ioredis";
 import type { Config } from "../config.js";
+import type { AgentJob } from "../job/schema.js";
 
 export type DuplicateAction =
   | { action: "replace" }
@@ -27,6 +27,7 @@ export interface RoleDefinition {
   ): DuplicateAction;
   bufferKey?(jobId: string): string;
   drainBuffer?(jobId: string, data: AgentJob, redis: Redis): Promise<AgentJob>;
+  getJobDelay?(job: AgentJob): number;
 }
 
 export function resolveDuplicateAction(

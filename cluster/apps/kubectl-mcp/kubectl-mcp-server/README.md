@@ -38,10 +38,12 @@ kubectl logs -n kubectl-mcp -l app.kubernetes.io/name=kubectl-mcp-server
 ### Common Issues
 
 1. **Pod fails to start**
+
    - **Symptom**: CrashLoopBackOff
    - **Resolution**: Check logs; likely ServiceAccount or RBAC issue. Verify ClusterRole and ClusterRoleBinding exist.
 
-2. **MCP tools return 403 errors**
+1. **MCP tools return 403 errors**
+
    - **Symptom**: Tool calls fail with permission denied
    - **Resolution**: Check ClusterRole has the required resource/verb. See Access section for RBAC scope details.
 

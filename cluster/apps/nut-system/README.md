@@ -4,15 +4,14 @@
 
 Network UPS Tools (NUT) integration for UPS monitoring with automated graceful cluster shutdown during power outages. Protects Ceph storage and CNPG databases from data corruption.
 
-**UPS**: CyberPower CP1500 (USB connection, ~2 min runtime)
-**USB Node**: ms-01-1 (worker node with `ups.spruyt-labs.io/connected: "true"` label)
+**UPS**: CyberPower CP1500 (USB connection, ~2 min runtime) **USB Node**: ms-01-1 (worker node with `ups.spruyt-labs.io/connected: "true"` label)
 
 ## Components
 
-| Component             | Purpose                                     | Namespace  | Status   |
-| --------------------- | ------------------------------------------- | ---------- | -------- |
-| nut-server            | USB driver + upsd daemon + metrics exporter | nut-system | Active   |
-| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown    | nut-system | Active   |
+| Component             | Purpose                                     | Namespace  | Status |
+| --------------------- | ------------------------------------------- | ---------- | ------ |
+| nut-server            | USB driver + upsd daemon + metrics exporter | nut-system | Active |
+| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown    | nut-system | Active |
 
 ## Prerequisites
 
@@ -21,12 +20,8 @@ Network UPS Tools (NUT) integration for UPS monitoring with automated graceful c
 - Talos udev rules configured for USB UPS access
 - rook-ceph with rook-ceph-tools deployment
 - CNPG operator installed
-- **Talos API access patch applied**: The `enable-talos-api-access.yaml` patch
-  (`talos/patches/control-plane/`) must include `nut-system` in the allowed
-  namespaces list. This patch must be applied and Talos configs regenerated
-  **before** deploying the shutdown-orchestrator — the Talos ServiceAccount CRD
-  auto-provisions the `shutdown-orchestrator-talos-secrets` Kubernetes Secret via
-  the Talos API, and the pod will fail to start if this secret does not exist.
+- **Talos API access patch applied**: The `enable-talos-api-access.yaml` patch (`talos/patches/control-plane/`) must include `nut-system` in the allowed namespaces list. This patch must be applied and Talos configs regenerated **before** deploying the shutdown-orchestrator — the Talos ServiceAccount CRD auto-provisions the `shutdown-orchestrator-talos-secrets` Kubernetes Secret via the Talos API,
+  and the pod will fail to start if this secret does not exist.
 
 ## Architecture
 
@@ -55,11 +50,9 @@ Hibernate CNPG    Set noout flag    Scale Ceph down
 When power is lost for 30+ seconds:
 
 1. **Hibernate CNPG clusters** - Graceful database shutdown preserving PVCs
-2. **Set Ceph noout flag** - prevents monitors from marking down OSDs as out
-3. **Scale Ceph down** - Operator → OSDs → Monitors → Managers (per Rook
-   [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/))
-4. **Shutdown nodes** - Workers first (concurrent), then control plane (sequential,
-   orchestrator's node last)
+1. **Set Ceph noout flag** - prevents monitors from marking down OSDs as out
+1. **Scale Ceph down** - Operator → OSDs → Monitors → Managers (per Rook [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/))
+1. **Shutdown nodes** - Workers first (concurrent), then control plane (sequential, orchestrator's node last)
 
 **Timeline Budget** (~10-20 min UPS runtime):
 
@@ -99,11 +92,8 @@ flux reconcile kustomization shutdown-orchestrator --with-source
 The orchestrator supports three modes via `MODE` env var:
 
 - **`monitor`** (default) — preflight checks → auto-recover if needed → UPS polling
-- **`test`** — executes real shutdown sequence, skips orchestrator's own CP node,
-  waits for nodes to be powered back on, then auto-recovers and verifies health.
-  Requires `CONFIRM_TEST=yes` to prevent accidental execution.
-- **`preflight`** — validates all prerequisites against live cluster, reports
-  pass/fail, exits
+- **`test`** — executes real shutdown sequence, skips orchestrator's own CP node, waits for nodes to be powered back on, then auto-recovers and verifies health. Requires `CONFIRM_TEST=yes` to prevent accidental execution.
+- **`preflight`** — validates all prerequisites against live cluster, reports pass/fail, exits
 
 ```bash
 # Run preflight checks
@@ -115,16 +105,15 @@ kubectl logs -n nut-system -l app.kubernetes.io/name=shutdown-orchestrator -f
 
 ### Recovery After Power Outage
 
-Recovery is automatic — the shutdown-orchestrator pod detects stale state on startup
-and recovers before entering the UPS monitoring loop.
+Recovery is automatic — the shutdown-orchestrator pod detects stale state on startup and recovers before entering the UPS monitoring loop.
 
 Recovery sequence:
 
 1. Wait for Ceph tools pod to become available
-2. Scale Ceph back up: Monitors → Managers → OSDs → Operator
-3. Unset Ceph noout flag
-4. Wake hibernated CNPG clusters
-5. Verify cluster health
+1. Scale Ceph back up: Monitors → Managers → OSDs → Operator
+1. Unset Ceph noout flag
+1. Wake hibernated CNPG clusters
+1. Verify cluster health
 
 ### Manual Recovery
 
@@ -152,22 +141,27 @@ kubectl annotate cluster <name> -n <namespace> cnpg.io/hibernation-
 ### Common Issues
 
 1. **NUT server can't see UPS**
+
    - **Symptom**: `upsc` returns "Data stale" or connection errors
    - **Resolution**: Verify USB cable connected to labeled node, check udev rules in Talos config
 
-2. **Orchestrator not detecting power loss**
+1. **Orchestrator not detecting power loss**
+
    - **Symptom**: No logs when UPS unplugged
    - **Resolution**: Check NUT server connectivity, verify NUT_SERVER and UPS_NAME env vars, check orchestrator pod logs
 
-3. **CNPG clusters not hibernating**
+1. **CNPG clusters not hibernating**
+
    - **Symptom**: Annotation errors in logs
    - **Resolution**: Verify RBAC permissions, check pod logs for details
 
-4. **Ceph flags not setting**
+1. **Ceph flags not setting**
+
    - **Symptom**: "rook-ceph-tools deployment not found"
    - **Resolution**: Ensure rook-ceph-tools is deployed: `kubectl -n rook-ceph get deploy rook-ceph-tools`
 
-5. **Automatic recovery fails**
+1. **Automatic recovery fails**
+
    - **Symptom**: Orchestrator pod logs show recovery errors
    - **Resolution**: Run manual recovery commands (see Manual Recovery section), check pod logs
 

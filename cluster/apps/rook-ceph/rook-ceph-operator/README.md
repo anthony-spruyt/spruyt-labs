@@ -26,8 +26,11 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
 ### Preconditions
 
 - Confirm the repository working tree is clean and on the intended feature branch.
+
 - Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
+
 - Identify maintenance windows when storage operations could impact availability.
+
 - Capture the current Helm release revision for rollback reference:
 
   ```bash
@@ -39,14 +42,16 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
 #### Phase 1 – Plan and Author Changes
 
 1. Update chart versions or values under `cluster/apps/rook-ceph/rook-ceph-operator/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+
+1. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
+
+1. Execute targeted dry runs when touching Helm values:
 
    ```bash
    flux diff hr rook-ceph-operator --namespace rook-ceph
    ```
 
-4. Commit changes with runbook updates and open a pull request.
+1. Commit changes with runbook updates and open a pull request.
 
 #### Phase 2 – Reconcile with Flux
 
@@ -57,7 +62,7 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
    flux get kustomizations rook-ceph-operator -n flux-system
    ```
 
-2. Confirm the Helm release upgrade succeeded:
+1. Confirm the Helm release upgrade succeeded:
 
    ```bash
    flux get helmrelease rook-ceph-operator -n rook-ceph
@@ -72,14 +77,14 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
    kubectl logs -n rook-ceph deployment/rook-ceph-operator
    ```
 
-2. Check Ceph cluster status:
+1. Check Ceph cluster status:
 
    ```bash
    kubectl get cephcluster -n rook-ceph
    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
-3. Monitor storage classes:
+1. Monitor storage classes:
 
    ```bash
    kubectl get storageclass
@@ -93,13 +98,13 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health
    ```
 
-2. View OSD status:
+1. View OSD status:
 
    ```bash
    kubectl get cephosd -n rook-ceph
    ```
 
-3. Monitor PVCs:
+1. Monitor PVCs:
 
    ```bash
    kubectl get pvc -A
@@ -108,21 +113,22 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
 #### Phase 5 – Rollback or Disable
 
 1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+
+1. Temporarily suspend reconciliation during investigations:
 
    ```bash
    flux suspend kustomization rook-ceph-operator -n flux-system
    flux suspend helmrelease rook-ceph-operator -n rook-ceph
    ```
 
-3. Resume once remediation is complete:
+1. Resume once remediation is complete:
 
    ```bash
    flux resume kustomization rook-ceph-operator -n flux-system
    flux resume helmrelease rook-ceph-operator -n rook-ceph
    ```
 
-4. Scale deployments to zero as a last resort:
+1. Scale deployments to zero as a last resort:
 
    ```bash
    kubectl -n rook-ceph scale deploy/rook-ceph-operator --replicas=0
@@ -138,7 +144,9 @@ Operate the Rook Ceph operator Helm release to manage Ceph storage clusters, pro
 ### Troubleshooting Guidance
 
 - If storage provisioning fails, check Ceph cluster health and OSD status.
+
 - For operator issues, inspect logs and CRD installations.
+
 - When the Helm release fails to deploy, check rendered manifests:
 
   ```bash

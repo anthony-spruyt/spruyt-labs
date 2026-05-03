@@ -22,7 +22,7 @@ Vaultwarden is an unofficial Bitwarden-compatible server implementation that pro
    - Monitor user authentication and data storage
    - Manage backup and restore procedures
 
-2. **Persistent volume monitoring**:
+1. **Persistent volume monitoring**:
 
    ```bash
    # Check persistent volume claims
@@ -32,7 +32,7 @@ Vaultwarden is an unofficial Bitwarden-compatible server implementation that pro
    kubectl get pv | grep vaultwarden
    ```
 
-3. **Certificate renewal monitoring**:
+1. **Certificate renewal monitoring**:
 
    ```bash
    # Check certificate expiration
@@ -52,19 +52,19 @@ Vaultwarden is an unofficial Bitwarden-compatible server implementation that pro
    - **Diagnosis**: Check PVC status and storage class availability
    - **Resolution**: Verify Rook Ceph storage provisioning and PVC configuration
 
-2. **TLS certificate issues**:
+1. **TLS certificate issues**:
 
    - **Symptom**: Web interface connection failures
    - **Diagnosis**: Check cert-manager certificate status and TLS configuration
    - **Resolution**: Verify certificate DNS names and issuer configuration
 
-3. **Resource constraints**:
+1. **Resource constraints**:
 
    - **Symptom**: Pods in Pending state or frequent restarts
    - **Diagnosis**: Check resource requests vs available cluster resources
    - **Resolution**: Adjust resource limits or scale cluster
 
-4. **Network connectivity issues**:
+1. **Network connectivity issues**:
 
    - **Symptom**: Web interface inaccessible
    - **Diagnosis**: Check network policies and ingress configuration

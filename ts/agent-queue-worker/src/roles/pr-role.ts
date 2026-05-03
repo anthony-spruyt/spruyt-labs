@@ -1,7 +1,7 @@
-import type { RoleDefinition, StalenessResult } from "./types.js";
-import type { AgentJob } from "../job/schema.js";
-import { getCurrentPrHead } from "../github.js";
 import type { Config } from "../config.js";
+import { getCurrentPrHead } from "../github.js";
+import type { AgentJob } from "../job/schema.js";
+import type { RoleDefinition, StalenessResult } from "./types.js";
 
 export function createPrRole(
   roleName: string,

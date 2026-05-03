@@ -44,8 +44,7 @@ TALOSCONFIG=/home/vscode/.secrets/talosconfig
 
 ## SSH Agent Setup
 
-The devcontainer uses SSH agent forwarding via socket mount. Your private keys stay on
-the host and are never copied into the container.
+The devcontainer uses SSH agent forwarding via socket mount. Your private keys stay on the host and are never copied into the container.
 
 The devcontainer also mounts your `~/.gitconfig` (read-only) for git identity and commit signing. To enable SSH commit signing on your host:
 
@@ -92,8 +91,7 @@ fi
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 ```
 
-Keys added with `--apple-use-keychain` persist across restarts. The `SSH_AUTH_SOCK` is
-set automatically by macOS.
+Keys added with `--apple-use-keychain` persist across restarts. The `SSH_AUTH_SOCK` is set automatically by macOS.
 
 **Windows (Git Bash):**
 
@@ -102,8 +100,7 @@ eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
 ```
 
-Or enable the OpenSSH Authentication Agent service in Windows Services and ensure
-`SSH_AUTH_SOCK` is set in your environment.
+Or enable the OpenSSH Authentication Agent service in Windows Services and ensure `SSH_AUTH_SOCK` is set in your environment.
 
 ## Troubleshooting
 
@@ -116,10 +113,10 @@ Or enable the OpenSSH Authentication Agent service in Windows Services and ensur
 **Solution**:
 
 1. Verify the fixed symlink is configured in your `~/.bashrc` (see keychain setup above)
-2. Restart your terminal or run: `source ~/.bashrc`
-3. Verify the symlink exists: `ls -la ~/.ssh/agent.sock`
-4. **Rebuild the devcontainer one final time**: Command Palette → "Dev Containers: Rebuild Container"
-5. After this rebuild, reboots will no longer require rebuilds
+1. Restart your terminal or run: `source ~/.bashrc`
+1. Verify the symlink exists: `ls -la ~/.ssh/agent.sock`
+1. **Rebuild the devcontainer one final time**: Command Palette → "Dev Containers: Rebuild Container"
+1. After this rebuild, reboots will no longer require rebuilds
 
 If the symlink is missing or broken after reboot, ensure the keychain configuration is in `~/.bashrc` (not just set in the current terminal session).
 
@@ -139,9 +136,8 @@ Create a token at [GitHub Settings > Developer settings > Personal access tokens
 ## Opening the Devcontainer
 
 1. Ensure SSH agent is running and `SSH_AUTH_SOCK` is set
-2. Clone the repository
-3. Open the folder in VS Code
-4. When prompted, click "Reopen in Container" (or run `Dev Containers: Reopen in Container` from the command palette)
+1. Clone the repository
+1. Open the folder in VS Code
+1. When prompted, click "Reopen in Container" (or run `Dev Containers: Reopen in Container` from the command palette)
 
-The container uses Docker-in-Docker for running containers (MegaLinter, etc.) without
-mounting the host Docker socket.
+The container uses Docker-in-Docker for running containers (MegaLinter, etc.) without mounting the host Docker socket.

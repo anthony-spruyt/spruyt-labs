@@ -49,6 +49,7 @@ kubectl auth can-i create pods -n claude-agents-read \
 ### Common Issues
 
 1. **Agent pod cannot read from GitHub / 401 errors**
+
    - **Symptom**: Agent pod exits with authentication failure when accessing GitHub API or cloning a repo.
    - **Resolution**: Verify the read-tier credentials are injected and current:
      ```bash
@@ -61,7 +62,8 @@ kubectl auth can-i create pods -n claude-agents-read \
        -n github-system github-token-rotation-manual
      ```
 
-2. **ESO sync failing**
+1. **ESO sync failing**
+
    - **Symptom**: ExternalSecret status shows `SecretSyncedError` or `NoSecretError`.
    - **Resolution**: Verify the source secret exists in `github-system` and the SecretStore RBAC is correct:
      ```bash
@@ -69,7 +71,8 @@ kubectl auth can-i create pods -n claude-agents-read \
      kubectl describe secretstore github-secret-store -n claude-agents-read
      ```
 
-3. **Pod creation denied**
+1. **Pod creation denied**
+
    - **Symptom**: n8n cannot spawn agent pods; events show `Forbidden`.
    - **Resolution**: Check RBAC for the spawner role:
      ```bash
@@ -77,7 +80,8 @@ kubectl auth can-i create pods -n claude-agents-read \
      kubectl describe rolebinding -n claude-agents-read
      ```
 
-4. **Network policy blocking egress**
+1. **Network policy blocking egress**
+
    - **Symptom**: Agent pod cannot reach GitHub API or git remotes.
    - **Resolution**: Review the CNPs in the namespace:
      ```bash

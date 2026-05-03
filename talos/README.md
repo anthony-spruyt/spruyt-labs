@@ -2,11 +2,7 @@
 
 ## Overview
 
-The Talos subsystem codifies the lifecycle of spruyt-labs Kubernetes machines,
-from configuration generation with Talhelper through provisioning, maintenance,
-and recovery activities. This document summarizes operator responsibilities, the
-supporting assets stored under `talos/`, and the high-level runbook for managing
-Bossgame E2 control planes, MS-01 workers, and lab VMs. Deep-dive procedures
+The Talos subsystem codifies the lifecycle of spruyt-labs Kubernetes machines, from configuration generation with Talhelper through provisioning, maintenance, and recovery activities. This document summarizes operator responsibilities, the supporting assets stored under `talos/`, and the high-level runbook for managing Bossgame E2 control planes, MS-01 workers, and lab VMs. Deep-dive procedures
 live in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md).
 
 ## Directory Layout
@@ -29,16 +25,16 @@ live in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md).
 
 <!-- markdownlint-enable MD013 -->
 
-> _Generated or virtual directories may be absent in a clean clone. They will
-> appear locally when running documented tasks._
+> _Generated or virtual directories may be absent in a clean clone. They will appear locally when running documented tasks._
 
 ## Optional: Prerequisites
 
-- Use the devcontainer or install the required CLIs (`talhelper`, `talosctl`,
-  `kubectl`, `flux`, `task`, `age`, `sops`).
+- Use the devcontainer or install the required CLIs (`talhelper`, `talosctl`, `kubectl`, `flux`, `task`, `age`, `sops`).
+
 - Possess the Age identity that decrypts Talos secrets.
-- Maintain the shared hardware inventory (serials, VLANs, rack locations)
-  before onboarding nodes.
+
+- Maintain the shared hardware inventory (serials, VLANs, rack locations) before onboarding nodes.
+
 - Confirm Flux controllers are healthy:
 
   ```bash
@@ -49,13 +45,7 @@ live in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md).
 
 ### Summary
 
-Platform engineering owns the Talos lifecycle. Operators provision
-control-plane and worker nodes, drive GitOps workflows for machine
-configuration, and coordinate maintenance or recovery actions. Comprehensive
-procedures are documented in
-[`docs/machine-lifecycle.md`](docs/machine-lifecycle.md) and
-[`MAINTENANCE.md`](MAINTENANCE.md); this readme highlights
-the key phases.
+Platform engineering owns the Talos lifecycle. Operators provision control-plane and worker nodes, drive GitOps workflows for machine configuration, and coordinate maintenance or recovery actions. Comprehensive procedures are documented in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md) and [`MAINTENANCE.md`](MAINTENANCE.md); this readme highlights the key phases.
 
 ### Preconditions
 
@@ -68,9 +58,9 @@ the key phases.
 
 #### Provision new hardware or VMs
 
-1. Update `talconfig.yaml` and overlay snippets under `cluster/machines/` to
-   describe the node.
-2. Generate configs:
+1. Update `talconfig.yaml` and overlay snippets under `cluster/machines/` to describe the node.
+
+1. Generate configs:
 
    ```bash
    talhelper genconfig
@@ -78,25 +68,24 @@ the key phases.
 
    Outputs land in `talos/clusterconfig/`.
 
-3. **Secrets** – Rotate or create Talos secrets when necessary:
+1. **Secrets** – Rotate or create Talos secrets when necessary:
 
    ```bash
    task talos:gen
    ```
 
-4. Boot the host with the appropriate SecureBoot ISO (see
-   [Talos image schematics](#talos-image-schematics)).
-5. Apply configs once the Talos API responds:
+1. Boot the host with the appropriate SecureBoot ISO (see [Talos image schematics](#talos-image-schematics)).
+
+1. Apply configs once the Talos API responds:
 
    ```bash
    talosctl apply-config --insecure --nodes <node-ip> \
      --file talos/clusterconfig/<hostname>.yaml
    ```
 
-6. Bootstrap the first control-plane node with `talosctl bootstrap`.
+1. Bootstrap the first control-plane node with `talosctl bootstrap`.
 
-Detailed provisioning guidance lives in
-[`docs/machine-lifecycle.md`](docs/machine-lifecycle.md#provisioning-new-hardware-or-vms).
+Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md#provisioning-new-hardware-or-vms).
 
 #### GitOps update flow
 
@@ -106,28 +95,30 @@ Detailed provisioning guidance lives in
    git checkout -b feat/talos-<change>
    ```
 
-2. Modify overlays and `talos/patches/*` as required.
-3. Render diffs without secrets:
+1. Modify overlays and `talos/patches/*` as required.
+
+1. Render diffs without secrets:
 
    ```bash
    talhelper genconfig --dry-run --diff
    ```
 
-4. Run validation:
+1. Run validation:
 
    ```bash
    task validate
    task dev-env:lint
    ```
 
-5. Commit with lifecycle context and open a PR.
-6. After merge, expedite rollout:
+1. Commit with lifecycle context and open a PR.
+
+1. After merge, expedite rollout:
 
    ```bash
    flux reconcile kustomization cluster-machines --with-source
    ```
 
-7. Confirm nodes adopted the change:
+1. Confirm nodes adopted the change:
 
    ```bash
    talosctl -n <node-ip> get machineconfig -o yaml
@@ -135,23 +126,21 @@ Detailed provisioning guidance lives in
 
 #### Node pool management
 
-- **Control plane** – Maintain an odd member count for etcd quorum.
-  Taints/labels must remain in place:
+- **Control plane** – Maintain an odd member count for etcd quorum. Taints/labels must remain in place:
 
   ```bash
   kubectl label node <host> node-role.kubernetes.io/control-plane=
   kubectl taint node <host> node-role.kubernetes.io/control-plane=:NoSchedule
   ```
 
-- **Workers** – Group nodes by hardware class using labels such as
-  `node.kubernetes.io/instance-type` or `topology.spruyt-labs.io/rack`. Apply
-  workload taints declaratively in overlays.
-- **Scaling** – Temporary capacity can be provided by VM overlays; remove the
-  overlay and reconcile to decommission.
+- **Workers** – Group nodes by hardware class using labels such as `node.kubernetes.io/instance-type` or `topology.spruyt-labs.io/rack`. Apply workload taints declaratively in overlays.
+
+- **Scaling** – Temporary capacity can be provided by VM overlays; remove the overlay and reconcile to decommission.
 
 #### Maintenance
 
 - **SecureBoot schematic selection**
+
   - Browse `https://factory.talos.dev/installer/?options=secureboot:<true|false>` and choose the schematic matching the node's hardware profile.
   - Confirm SecureBoot alignment (`secureboot:1` for SecureBoot-enabled nodes, `secureboot:0` otherwise). Copy the Factory installer image digest.
 
@@ -168,6 +157,7 @@ Detailed provisioning guidance lives in
   - Proceed with workers after the control plane is stable.
 
 - **Verification checklist**
+
   - `talosctl version --nodes <node-ip> --endpoints <control-plane-endpoint>`
   - `kubectl get nodes` (expect all `Ready`, correct Talos/K8s versions)
   - `flux get kustomizations` (ensure GitOps sync status is `Ready`)
@@ -178,7 +168,8 @@ Detailed provisioning guidance lives in
 > Reference: [Sidero Labs guide](https://docs.siderolabs.com/kubernetes-guides/advanced-guides/upgrading-kubernetes)
 
 1. Confirm cluster prerequisites: Flux controllers report `Ready`, recent etcd snapshots are archived, Talos nodes run a supported release, and the maintenance window is approved.
-2. Perform a dry run to surface API deprecations and preview the upgrade plan:
+
+1. Perform a dry run to surface API deprecations and preview the upgrade plan:
 
    ```bash
    talosctl --nodes {CP_IP} upgrade-k8s --to v1.35.4 --dry-run
@@ -187,7 +178,7 @@ Detailed provisioning guidance lives in
    - Replace `{CP_IP}` with the control-plane node you are validating.
    - Resolve warnings about deprecated resources or missing manifests before continuing.
 
-3. Execute the upgrade after the dry run succeeds:
+1. Execute the upgrade after the dry run succeeds:
 
    ```bash
    talosctl --nodes {CP_IP} upgrade-k8s --to v1.35.4
@@ -196,33 +187,35 @@ Detailed provisioning guidance lives in
    - Talos orchestrates control-plane members sequentially and updates kube-proxy/kubelet while `--upgrade-kubelet` remains enabled (default).
    - Include `--endpoint <control-plane-endpoint>` when invoking the command through the VIP, or disable kubelet upgrades per node with `--upgrade-kubelet=false`.
 
-4. Validate cluster state when the command finishes:
+1. Validate cluster state when the command finishes:
+
    - `kubectl version --short`
    - `kubectl get nodes`
    - `talosctl health --nodes <node-ip>`
    - `flux get kustomizations -n flux-system`
 
-5. Confirm worker nodes report the expected kubelet version (if upgraded) or schedule drains and restarts when kubelet updates were deferred. Archive the dry-run output and validation notes with the change record.
+1. Confirm worker nodes report the expected kubelet version (if upgraded) or schedule drains and restarts when kubelet updates were deferred. Archive the dry-run output and validation notes with the change record.
 
 #### Rollback and disaster recovery
 
 - Revert offending commits and force Flux reconciliation.
 - Reapply last-known-good configs from `talos/clusterconfig/`.
-- Restore etcd snapshots with `talosctl etcd snapshot restore` when quorum is
-  lost.
-- Rehydrate secrets from SOPS backups and rotate Age identities if compromise is
-  suspected.
-- Rebuild nodes (wipe, reinstall, reapply) when disks or hardware fail. Sequence
-  recovery: control plane → storage workers → remaining pools.
+- Restore etcd snapshots with `talosctl etcd snapshot restore` when quorum is lost.
+- Rehydrate secrets from SOPS backups and rotate Age identities if compromise is suspected.
+- Rebuild nodes (wipe, reinstall, reapply) when disks or hardware fail. Sequence recovery: control plane → storage workers → remaining pools.
 
 ### Validation
 
 - `talosctl health` – global Talos API health.
+
 - `talhelper genconfig --diff` – detect config drift.
-- `kubectl get nodes -o wide` and `kubectl describe node <host>` – kubelet
-  state, labels, taints.
+
+- `kubectl get nodes -o wide` and `kubectl describe node <host>` – kubelet state, labels, taints.
+
 - `flux get kustomizations cluster-machines -n flux-system` – GitOps status.
+
 - `talosctl version -n <node-ip>` – OS version confirmation post-upgrade.
+
 - Storage validation:
 
   ```bash
@@ -248,8 +241,7 @@ talosctl health --nodes <node-ip>
 talosctl -n <node-ip> get machineconfig
 ```
 
-Compare active NIC configuration with the overlay. Use the BMC or hypervisor
-console if remediation requires manual intervention.
+Compare active NIC configuration with the overlay. Use the BMC or hypervisor console if remediation requires manual intervention.
 
 #### Storage integration issues
 
@@ -258,8 +250,7 @@ talosctl -n <node-ip> ls /dev/disk/by-id
 kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph status
 ```
 
-Confirm Ceph OSD placement labels and ensure encrypted volumes unlocked
-correctly.
+Confirm Ceph OSD placement labels and ensure encrypted volumes unlocked correctly.
 
 #### Machineconfig drift
 
@@ -283,11 +274,9 @@ Rotate secrets with `task talos:gen` if drift stems from credential mismatch.
 
 ### Escalation
 
-- Post incidents in the platform on-call channel with Talos logs, Flux status,
-  recent commit hashes, and remediation attempts.
+- Post incidents in the platform on-call channel with Talos logs, Flux status, recent commit hashes, and remediation attempts.
 - Engage hardware owners for physical faults or BMC access issues.
-- Coordinate with the storage lead when Ceph flags remain set or OSDs fail to
-  recover.
+- Coordinate with the storage lead when Ceph flags remain set or OSDs fail to recover.
 - Escalate to security for Age identity rotation or secrets compromise.
 
 ## Talos Image Schematics
@@ -349,19 +338,14 @@ customization:
 
 <!-- markdownlint-enable MD013 -->
 
-Additional asset: SecureBoot UKI –
-<https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.12.6/metal-amd64-secureboot-uki.efi>
+Additional asset: SecureBoot UKI – <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.12.6/metal-amd64-secureboot-uki.efi>
 
 ## References
 
-- Repository runbook standards –
-  [`README.md`](../README.md#runbook-standards)
-- Machine lifecycle deep dive –
-  [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md)
-- Flux GitOps workflows –
-  [`cluster/flux/README.md`](../cluster/flux/README.md)
-- Application runbooks –
-  [`cluster/apps/README.md`](../cluster/apps/README.md)
+- Repository runbook standards – [`README.md`](../README.md#runbook-standards)
+- Machine lifecycle deep dive – [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md)
+- Flux GitOps workflows – [`cluster/flux/README.md`](../cluster/flux/README.md)
+- Application runbooks – [`cluster/apps/README.md`](../cluster/apps/README.md)
 - Talos upstream documentation – <https://www.talos.dev/>
 - Talhelper project – <https://github.com/budimanjojo/talhelper>
 - FluxCD documentation – <https://fluxcd.io/>

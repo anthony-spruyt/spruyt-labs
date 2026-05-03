@@ -52,13 +52,14 @@ kubectl get secret <name> -n <namespace>
    - **Diagnosis**: Check secret store configuration and connectivity
    - **Resolution**: Verify external secret store credentials and network access
 
-2. **Permission errors**:
+1. **Permission errors**:
 
    - **Symptom**: Access denied errors in logs
    - **Diagnosis**: Check IAM permissions and RBAC
    - **Resolution**: Verify service account permissions and external store access policies
 
-3. **Secret synchronization delays**:
+1. **Secret synchronization delays**:
+
    - **Symptom**: Secrets not updating in timely manner
    - **Diagnosis**: Check refresh intervals and secret store connectivity
    - **Resolution**: Adjust refresh intervals or improve network connectivity

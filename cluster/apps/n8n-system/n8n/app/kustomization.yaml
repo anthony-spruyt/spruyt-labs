@@ -27,10 +27,10 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     files:
-      - prompts/dispatcher-triage-prompt.md
-      - prompts/dispatcher-validate-prompt.md
-      - prompts/dispatcher-fix-prompt.md
-      - prompts/dispatcher-sre-triage-prompt.md
+      - prompts/dispatcher-renovate-fix-prompt.md
+      - prompts/dispatcher-renovate-triage-prompt.md
       - prompts/dispatcher-sre-health-check-prompt.md
+      - prompts/dispatcher-sre-triage-prompt.md
+      - prompts/dispatcher-validate-prompt.md
 configurations:
   - ./kustomizeconfig.yaml

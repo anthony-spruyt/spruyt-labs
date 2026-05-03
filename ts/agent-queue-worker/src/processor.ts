@@ -1,11 +1,11 @@
-import { Job } from "bullmq";
 import { randomUUID } from "node:crypto";
+import type { Job } from "bullmq";
 import type { Redis } from "ioredis";
+import type { Config } from "./config.js";
 import type { AgentJob, JobResult } from "./job/schema.js";
-import type { RoleRegistry } from "./roles/registry.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
-import type { Config } from "./config.js";
+import type { RoleRegistry } from "./roles/registry.js";
 
 // Lua script for atomic session token validation (check -> delete -> accept).
 // Eliminates TOCTOU gap. Token consumed on first valid use — replay-proof.

@@ -71,13 +71,14 @@ kubectl rollout restart deploy/cloudflared -n cloudflare-system
    - **Diagnosis**: Check tunnel credentials and authentication
    - **Resolution**: Verify Cloudflare credentials and tunnel configuration
 
-2. **Network connectivity problems**:
+1. **Network connectivity problems**:
 
    - **Symptom**: Tunnel connectivity issues
    - **Diagnosis**: Check network connectivity and firewall rules
    - **Resolution**: Verify network configuration and Cloudflare connectivity
 
-3. **Configuration synchronization errors**:
+1. **Configuration synchronization errors**:
+
    - **Symptom**: Tunnel routes not updating
    - **Diagnosis**: Check configuration synchronization
    - **Resolution**: Verify tunnel configuration and restart cloudflared

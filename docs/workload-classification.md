@@ -51,7 +51,7 @@ CPU limits protect hardware from thermal throttling caused by unbounded workload
 | rook-ceph            | rook-ceph-operator, mon, mgr, osd  | Storage - PVCs fail without it                  |
 | technitium           | technitium                         | Primary DNS server                              |
 | traefik              | traefik                            | Ingress - no internal routing without it        |
-| irq-balance          | irq-balance-*                      | Interrupt balancing for performance             |
+| irq-balance          | irq-balance-\*                     | Interrupt balancing for performance             |
 
 ### high-priority
 
@@ -97,19 +97,20 @@ CPU limits protect hardware from thermal throttling caused by unbounded workload
 
 **Criteria**: Internal tools, gaming, hobby projects. Can tolerate preemption.
 
-| Namespace       | Workload                             | Rationale            |
-| --------------- | ------------------------------------ | -------------------- |
-| headlamp-system | headlamp                             | Kubernetes dashboard |
-| minecraft       | crafty-controller, bedrock-connect   | Gaming servers       |
-| foundryvtt      | foundryvtt                           | Gaming (D&D)         |
-| redisinsight    | redisinsight                         | Redis GUI            |
-| whoami          | whoami                               | Test/debug service   |
+| Namespace       | Workload                           | Rationale            |
+| --------------- | ---------------------------------- | -------------------- |
+| headlamp-system | headlamp                           | Kubernetes dashboard |
+| minecraft       | crafty-controller, bedrock-connect | Gaming servers       |
+| foundryvtt      | foundryvtt                         | Gaming (D&D)         |
+| redisinsight    | redisinsight                       | Redis GUI            |
+| whoami          | whoami                             | Test/debug service   |
 
 ### best-effort
 
 **Criteria**: Batch jobs, maintenance tasks. Preemptible, no guaranteed resources.
 
 Currently no persistent workloads. Used by:
+
 - Backup jobs
 - Maintenance CronJobs
 - One-off tasks
@@ -150,6 +151,7 @@ These use Kubernetes built-in priority classes:
 ### Review Process
 
 Run `.claude/prompts/workload-classification-review.md` quarterly or when:
+
 - Adding new workloads
 - Changing dependencies between services
 - After incidents involving resource contention

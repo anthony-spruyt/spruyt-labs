@@ -2,32 +2,34 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add configurable batch cap, batch window (delayed jobs), histogram metric, and field rename to the SRE alert batching system.
+**Goal:** Add configurable batch cap, batch window (delayed jobs), configurable cooldown, histogram metric, fingerprint-based suppression, and field rename to the SRE alert batching system.
 
-**Architecture:** Factory pattern for SRE role (closed-over config + metrics). BullMQ delayed jobs for cold-start batching window. Two config env vars, one new histogram, field rename `buffered_alerts` → `alerts`.
+**Architecture:** Factory pattern for SRE role (closed-over config + metrics). BullMQ delayed jobs for cold-start batching window. Per-job overrides for `batch_window_ms` and `triage_suppress_s`. Fingerprint suppression via Redis TTL keys. Four config env vars, one new histogram, one new counter, field rename `buffered_alerts` -> `alerts`.
 
 **Tech Stack:** TypeScript, BullMQ, ioredis, prom-client, Zod, Vitest
 
 **Issue:** #1184 **Spec:** `docs/superpowers/specs/2026-05-02-sre-batch-observability-design.md`
 
+**Prior art:** Quick fix `2f5b47c` already deployed -- added `cooldownMs` to `RoleDefinition`, `"delayed"` to `JobState`, completed-state buffer path in routes.ts, cooldown delay in lifecycle.ts. This plan builds on top; do NOT revert or duplicate those changes.
+
 ______________________________________________________________________
 
 ## File Map
 
-| File                                                                  | Action | Responsibility                                   |
-| --------------------------------------------------------------------- | ------ | ------------------------------------------------ |
-| `ts/agent-queue-worker/src/config.ts`                                 | Modify | Add `SRE_BATCH_MAX_SIZE`, `SRE_BATCH_WINDOW_MS`  |
-| `ts/agent-queue-worker/src/config.test.ts`                            | Modify | Test new config fields                           |
-| `ts/agent-queue-worker/src/metrics.ts`                                | Modify | Add `sreBatchSize` histogram                     |
-| `ts/agent-queue-worker/src/roles/types.ts`                            | Modify | Add `"delayed"` to `JobState`, add `getJobDelay` |
-| `ts/agent-queue-worker/src/roles/sre-role.ts`                         | Modify | Convert to factory with closed-over deps         |
-| `ts/agent-queue-worker/src/roles/registry.ts`                         | Modify | Thread config + histogram                        |
-| `ts/agent-queue-worker/src/roles/roles.test.ts`                       | Modify | Update setup, add new tests                      |
-| `ts/agent-queue-worker/src/http/routes.ts`                            | Modify | Config LTRIM, delay, Lua comment                 |
-| `ts/agent-queue-worker/src/http/server.ts`                            | Modify | Remove redundant `config` from `ServerDeps`      |
-| `ts/agent-queue-worker/src/queue/lifecycle.ts`                        | Modify | Config LTRIM, field rename                       |
-| `ts/agent-queue-worker/src/index.ts`                                  | Modify | Thread new deps                                  |
-| `cluster/apps/agent-worker-system/agent-queue-worker/app/values.yaml` | Modify | Add env vars                                     |
+| File                                                                  | Action | Responsibility                                                   |
+| --------------------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
+| `ts/agent-queue-worker/src/config.ts`                                 | Modify | Add 4 SRE config fields                                          |
+| `ts/agent-queue-worker/src/config.test.ts`                            | Modify | Test new config fields                                           |
+| `ts/agent-queue-worker/src/metrics.ts`                                | Modify | Add `sreBatchSize` histogram + `sreSuppressed` counter           |
+| `ts/agent-queue-worker/src/roles/types.ts`                            | Modify | Add optional `getJobDelay` method                                |
+| `ts/agent-queue-worker/src/roles/sre-role.ts`                         | Modify | Convert to factory with closed-over deps                         |
+| `ts/agent-queue-worker/src/roles/registry.ts`                         | Modify | Thread config + histogram                                        |
+| `ts/agent-queue-worker/src/roles/roles.test.ts`                       | Modify | Update setup, add new tests                                      |
+| `ts/agent-queue-worker/src/http/routes.ts`                            | Modify | Fingerprint suppression, config LTRIM, batch window, Lua comment |
+| `ts/agent-queue-worker/src/http/server.ts`                            | Modify | Remove redundant `config` from `ServerDeps`                      |
+| `ts/agent-queue-worker/src/queue/lifecycle.ts`                        | Modify | Triaged markers, config LTRIM, field rename                      |
+| `ts/agent-queue-worker/src/index.ts`                                  | Modify | Thread new deps                                                  |
+| `cluster/apps/agent-worker-system/agent-queue-worker/app/values.yaml` | Modify | Add 4 env vars                                                   |
 
 ______________________________________________________________________
 
@@ -72,26 +74,54 @@ it("allows SRE_BATCH_WINDOW_MS of 0 to disable delay", () => {
   const cfg = loadConfig();
   expect(cfg.SRE_BATCH_WINDOW_MS).toBe(0);
 });
+
+it("defaults SRE_COOLDOWN_MS to 300000", () => {
+  Object.assign(process.env, VALID_ENV);
+  const cfg = loadConfig();
+  expect(cfg.SRE_COOLDOWN_MS).toBe(300_000);
+});
+
+it("allows SRE_COOLDOWN_MS of 0 to disable cooldown", () => {
+  Object.assign(process.env, VALID_ENV, { SRE_COOLDOWN_MS: "0" });
+  const cfg = loadConfig();
+  expect(cfg.SRE_COOLDOWN_MS).toBe(0);
+});
+
+it("defaults SRE_TRIAGE_SUPPRESS_S to 3600", () => {
+  Object.assign(process.env, VALID_ENV);
+  const cfg = loadConfig();
+  expect(cfg.SRE_TRIAGE_SUPPRESS_S).toBe(3600);
+});
+
+it("allows SRE_TRIAGE_SUPPRESS_S of 0 to disable suppression", () => {
+  Object.assign(process.env, VALID_ENV, { SRE_TRIAGE_SUPPRESS_S: "0" });
+  const cfg = loadConfig();
+  expect(cfg.SRE_TRIAGE_SUPPRESS_S).toBe(0);
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd ts/agent-queue-worker && npx vitest run src/config.test.ts` Expected: FAIL — `SRE_BATCH_MAX_SIZE` and `SRE_BATCH_WINDOW_MS` not in config type
+Run: `cd ts/agent-queue-worker && npx vitest run src/config.test.ts` Expected: FAIL -- new fields not in config type
 
 - [ ] **Step 3: Add config fields**
 
-In `ts/agent-queue-worker/src/config.ts`, add two fields to the `ConfigSchema` object, before the closing `});` on line 21:
+In `ts/agent-queue-worker/src/config.ts`, add four fields to `ConfigSchema`, before the closing `});`:
 
 ```ts
 SRE_BATCH_MAX_SIZE: z.coerce.number().int().min(1).default(50),
 SRE_BATCH_WINDOW_MS: z.coerce.number().int().min(0).default(60_000),
+SRE_COOLDOWN_MS: z.coerce.number().int().min(0).default(300_000),
+SRE_TRIAGE_SUPPRESS_S: z.coerce.number().int().min(0).default(3600),
 ```
 
-Also add cleanup in `config.test.ts` `beforeEach` — after `delete process.env.GITHUB_TOKEN;` add:
+Also add cleanup in `config.test.ts` `beforeEach` -- after `delete process.env.GITHUB_TOKEN;` add:
 
 ```ts
 delete process.env.SRE_BATCH_MAX_SIZE;
 delete process.env.SRE_BATCH_WINDOW_MS;
+delete process.env.SRE_COOLDOWN_MS;
+delete process.env.SRE_TRIAGE_SUPPRESS_S;
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -102,14 +132,14 @@ Run: `cd ts/agent-queue-worker && npx vitest run src/config.test.ts` Expected: A
 
 ```bash
 git add ts/agent-queue-worker/src/config.ts ts/agent-queue-worker/src/config.test.ts
-git commit -m "feat(agent-worker): add SRE_BATCH_MAX_SIZE and SRE_BATCH_WINDOW_MS config
+git commit -m "feat(agent-worker): add SRE batch, cooldown, and suppression config
 
 Ref #1184"
 ```
 
 ______________________________________________________________________
 
-### Task 2: Histogram Metric + Types
+### Task 2: Histogram Metric + Suppression Counter + Types
 
 **Files:**
 
@@ -117,57 +147,52 @@ ______________________________________________________________________
 
 - Modify: `ts/agent-queue-worker/src/roles/types.ts`
 
-- [ ] **Step 1: Add histogram to metrics.ts**
+- [ ] **Step 1: Add histogram and counter to metrics.ts**
 
 Add at the end of `ts/agent-queue-worker/src/metrics.ts`, after `dedupActionCounter`:
 
 ```ts
 export const sreBatchSize = new Histogram({
   name: "agent_sre_batch_size",
-  help: "Number of alerts drained per SRE batch",
+  help: "Total alerts per SRE batch (trigger + buffered)",
   buckets: [1, 5, 10, 20, 50],
+  registers: [registry],
+});
+
+export const sreSuppressed = new Counter({
+  name: "agent_sre_suppressed_total",
+  help: "Alerts suppressed by fingerprint dedup",
+  labelNames: ["role"] as const,
   registers: [registry],
 });
 ```
 
-- [ ] **Step 2: Update JobState and RoleDefinition in types.ts**
+- [ ] **Step 2: Add getJobDelay to RoleDefinition in types.ts**
 
-In `ts/agent-queue-worker/src/roles/types.ts`:
-
-Change line 11:
-
-```ts
-export type JobState = "waiting" | "prioritized" | "active";
-```
-
-to:
-
-```ts
-export type JobState = "waiting" | "prioritized" | "active" | "delayed";
-```
-
-Add after line 28 (`drainBuffer?` method), before the closing `}`:
+In `ts/agent-queue-worker/src/roles/types.ts`, add after the `drainBuffer?` method (line 29), before the closing `}`:
 
 ```ts
 getJobDelay?(job: AgentJob): number;
 ```
 
+Note: `"delayed"` in `JobState` and `cooldownMs` on `RoleDefinition` already exist from quick fix -- do NOT re-add.
+
 - [ ] **Step 3: Run typecheck**
 
-Run: `cd ts/agent-queue-worker && npx tsc --noEmit` Expected: PASS — new types/metrics are additive, no consumers broken yet
+Run: `cd ts/agent-queue-worker && npx tsc --noEmit` Expected: PASS -- new types/metrics are additive, no consumers broken yet
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add ts/agent-queue-worker/src/metrics.ts ts/agent-queue-worker/src/roles/types.ts
-git commit -m "feat(agent-worker): add batch size histogram and delayed job state
+git commit -m "feat(agent-worker): add batch size histogram, suppression counter, getJobDelay type
 
 Ref #1184"
 ```
 
 ______________________________________________________________________
 
-### Task 3: SRE Role Factory
+### Task 3: SRE Role Factory + Registry + Index
 
 **Files:**
 
@@ -181,10 +206,10 @@ ______________________________________________________________________
 
 - [ ] **Step 1: Write failing tests for factory behavior**
 
-In `ts/agent-queue-worker/src/roles/roles.test.ts`, update imports at the top (lines 1-4) to:
+In `ts/agent-queue-worker/src/roles/roles.test.ts`, update imports at the top (lines 1-5) to:
 
 ```ts
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createDefaultRegistry } from "./registry.js";
 import { resolveDuplicateAction } from "./types.js";
 import type { AgentJob } from "../job/schema.js";
@@ -199,6 +224,8 @@ Replace line 7 (`const registry = createDefaultRegistry();`) with:
 const mockConfig = {
   SRE_BATCH_MAX_SIZE: 50,
   SRE_BATCH_WINDOW_MS: 60_000,
+  SRE_COOLDOWN_MS: 300_000,
+  SRE_TRIAGE_SUPPRESS_S: 3600,
 } as Config;
 
 const mockHistogram = { observe: vi.fn() } as unknown as Histogram;
@@ -206,7 +233,7 @@ const mockHistogram = { observe: vi.fn() } as unknown as Histogram;
 const registry = createDefaultRegistry(mockConfig, mockHistogram);
 ```
 
-Add a new `describe` block at the end of the file, before the closing:
+Add new `describe` blocks at the end of the file, before the closing:
 
 ```ts
 describe("sre getJobDelay", () => {
@@ -215,6 +242,24 @@ describe("sre getJobDelay", () => {
   it("returns batch window for alert trigger", () => {
     const job = { ...base, role: "sre" as const, payload: { trigger: "alert" } };
     expect(def.getJobDelay!(job)).toBe(60_000);
+  });
+
+  it("returns per-job override when present", () => {
+    const job = {
+      ...base,
+      role: "sre" as const,
+      payload: { trigger: "alert", batch_window_ms: 30_000 },
+    };
+    expect(def.getJobDelay!(job)).toBe(30_000);
+  });
+
+  it("caps per-job override at 6 hours", () => {
+    const job = {
+      ...base,
+      role: "sre" as const,
+      payload: { trigger: "alert", batch_window_ms: 999_999_999 },
+    };
+    expect(def.getJobDelay!(job)).toBe(21_600_000);
   });
 
   it("returns 0 for scheduled jobs", () => {
@@ -231,11 +276,25 @@ describe("sre getJobDelay", () => {
     expect(def2.getJobDelay!(job)).toBe(0);
   });
 });
+
+describe("sre cooldownMs from config", () => {
+  it("reads cooldownMs from SRE_COOLDOWN_MS config", () => {
+    const def = registry.get("sre");
+    expect(def.cooldownMs).toBe(300_000);
+  });
+
+  it("respects custom cooldown value", () => {
+    const customConfig = { ...mockConfig, SRE_COOLDOWN_MS: 120_000 } as Config;
+    const customRegistry = createDefaultRegistry(customConfig, mockHistogram);
+    const def = customRegistry.get("sre");
+    expect(def.cooldownMs).toBe(120_000);
+  });
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd ts/agent-queue-worker && npx vitest run src/roles/roles.test.ts` Expected: FAIL — `createDefaultRegistry` doesn't accept arguments yet
+Run: `cd ts/agent-queue-worker && npx vitest run src/roles/roles.test.ts` Expected: FAIL -- `createDefaultRegistry` doesn't accept arguments yet
 
 - [ ] **Step 3: Convert sre-role.ts to factory**
 
@@ -257,9 +316,14 @@ return items
 `;
 
 const SRE_BUFFER_PREFIX = "agent:sre-alerts:";
+const SRE_TRIAGED_PREFIX = "agent:sre-triaged:";
 
 function sreBufferKey(jobId: string): string {
   return `${SRE_BUFFER_PREFIX}${jobId}`;
+}
+
+export function sreTriagedKey(repo: string, fingerprint: string): string {
+  return `${SRE_TRIAGED_PREFIX}${repo}:${fingerprint}`;
 }
 
 export function createSreRole(
@@ -268,6 +332,7 @@ export function createSreRole(
 ): RoleDefinition {
   return {
     timeoutMs: 900_000,
+    cooldownMs: config.SRE_COOLDOWN_MS,
     jobOptions: { attempts: 1 },
     buildIdentitySegments(job: AgentJob): string[] {
       if (job.payload?.trigger === "alert") {
@@ -295,13 +360,14 @@ export function createSreRole(
       data: AgentJob,
       redis: Redis
     ): Promise<AgentJob> {
+      // Redis EVAL runs Lua server-side for atomic drain
       const items = (await redis.eval(
         DRAIN_BUFFER_LUA,
         1,
         sreBufferKey(jobId)
       )) as string[];
       if (!items || items.length === 0) return data;
-      batchSizeHistogram.observe(items.length);
+      batchSizeHistogram.observe(items.length + 1);
       const alerts = items.map(
         (i) => JSON.parse(i) as Record<string, unknown>
       );
@@ -315,14 +381,15 @@ export function createSreRole(
     },
     getJobDelay(job: AgentJob): number {
       if (job.payload?.trigger === "alert") {
-        return config.SRE_BATCH_WINDOW_MS;
+        const raw = Number(job.payload?.batch_window_ms ?? config.SRE_BATCH_WINDOW_MS);
+        return Math.min(raw, 21_600_000);
       }
       return 0;
     },
   };
 }
 
-export { DRAIN_BUFFER_LUA };
+export { DRAIN_BUFFER_LUA, SRE_TRIAGED_PREFIX };
 ```
 
 - [ ] **Step 4: Update registry.ts**
@@ -406,11 +473,11 @@ Run: `cd ts/agent-queue-worker && npx tsc --noEmit` Expected: PASS
 
 ```bash
 git add ts/agent-queue-worker/src/roles/sre-role.ts ts/agent-queue-worker/src/roles/registry.ts ts/agent-queue-worker/src/index.ts ts/agent-queue-worker/src/roles/roles.test.ts
-git commit -m "feat(agent-worker): convert SRE role to factory with histogram + delay
+git commit -m "feat(agent-worker): convert SRE role to factory with config + histogram
 
-Closes over config and batch size histogram for testability.
-getJobDelay returns SRE_BATCH_WINDOW_MS for alert triggers, 0 for scheduled.
-Field rename: buffered_alerts → alerts.
+Closes over config for cooldown, batch window, and batch size histogram.
+getJobDelay supports per-job batch_window_ms override.
+Field rename: buffered_alerts -> alerts.
 
 Ref #1184"
 ```
@@ -425,7 +492,7 @@ ______________________________________________________________________
 
 - [ ] **Step 1: Write drainBuffer tests**
 
-Add to `ts/agent-queue-worker/src/roles/roles.test.ts`. Add `beforeEach` to reset the mock, and a new `describe` block:
+Add to `ts/agent-queue-worker/src/roles/roles.test.ts`. Add a new `describe` block:
 
 ```ts
 describe("sre drainBuffer", () => {
@@ -454,7 +521,7 @@ describe("sre drainBuffer", () => {
 
     const result = await def.drainBuffer!("job1", job, mockRedis);
 
-    expect(mockHistogram.observe).toHaveBeenCalledWith(5);
+    expect(mockHistogram.observe).toHaveBeenCalledWith(6);
     expect(result.payload?.alerts).toHaveLength(5);
   });
 
@@ -509,22 +576,23 @@ Ref #1184"
 
 ______________________________________________________________________
 
-### Task 5: Routes — Config LTRIM + Batch Window + Lua Comment
+### Task 5: Routes -- Fingerprint Suppression + Config LTRIM + Batch Window
 
 **Files:**
 
-- Modify: `ts/agent-queue-worker/src/http/routes.ts:26-35, 93-103, 130-142`
+- Modify: `ts/agent-queue-worker/src/http/routes.ts`
 
-- Modify: `ts/agent-queue-worker/src/http/server.ts:16-19`
+- Modify: `ts/agent-queue-worker/src/http/server.ts`
 
-- [ ] **Step 1: Add config to RouteDeps and update LTRIM**
+- [ ] **Step 1: Add config to RouteDeps**
 
 In `ts/agent-queue-worker/src/http/routes.ts`:
 
-Add import for Config at the top (after existing imports):
+Add imports at the top (after existing imports):
 
 ```ts
 import type { Config } from "../config.js";
+import { sreTriagedKey } from "../roles/sre-role.js";
 ```
 
 Add `config: Config;` to the `RouteDeps` interface (after `rateLimiter: RateLimiter;`):
@@ -541,34 +609,40 @@ export interface RouteDeps {
 }
 ```
 
-- [ ] **Step 2: Add Lua script comment**
+- [ ] **Step 2: Add fingerprint suppression check**
 
-Replace the `ATOMIC_UPDATE_IF_WAITING_LUA` comment block (lines 22-35) with:
+In `handleAddJob`, add after the circuit breaker check (after `if (circuit.open)` block, before `const identity = buildJobIdentity`):
+
+```ts
+if (data.payload?.trigger === "alert" && data.payload?.fingerprint) {
+  const fpKey = sreTriagedKey(data.repo, String(data.payload.fingerprint));
+  const triaged = await deps.redis.exists(fpKey);
+  if (triaged) {
+    metrics.sreSuppressed.inc({ role: data.role });
+    return json(res, 200, { added: false, reason: "already_triaged" });
+  }
+}
+```
+
+- [ ] **Step 3: Extend Lua script comment**
+
+Replace the `ATOMIC_UPDATE_IF_WAITING_LUA` comment block (lines 21-25) with:
 
 ```ts
 // Atomic state-checked update: only HSET if job is still in wait/prioritized/paused.
 // The non-atomic getJob+getState before this call is acceptable because this Lua
-// re-validates state atomically — the outer check is an optimization to avoid
+// re-validates state atomically -- the outer check is an optimization to avoid
 // unnecessary EVAL calls, not a correctness dependency.
 // NOTE: Does not check the BullMQ delayed sorted set. This is safe because no
 // onDuplicate implementation returns "replace" for delayed jobs (SRE alerts always
 // return "buffer"; all other roles discard non-waiting/prioritized states). If a
 // future role needs to replace delayed jobs, extend this script to check the delayed set.
-const ATOMIC_UPDATE_IF_WAITING_LUA = `
-local inWait   = redis.call('LPOS', KEYS[1], ARGV[2])
-local inPrio   = redis.call('ZSCORE', KEYS[2], ARGV[2])
-local inPaused = redis.call('LPOS', KEYS[3], ARGV[2])
-if inWait ~= false or inPrio ~= false or inPaused ~= false then
-  redis.call('HSET', KEYS[4], 'data', ARGV[1])
-  return 1
-end
-return 0
-`;
+// Uses Redis EVAL command (server-side Lua execution), not JavaScript eval().
 ```
 
-- [ ] **Step 3: Config-ify LTRIM in buffer path**
+- [ ] **Step 4: Config-ify LTRIM in completed-state buffer path**
 
-In `handleAddJob`, change line 96:
+In `handleAddJob`, change the completed-state buffer LTRIM (around line 76):
 
 ```ts
 await deps.redis.ltrim(bufKey, -50, -1);
@@ -580,9 +654,23 @@ to:
 await deps.redis.ltrim(bufKey, -deps.config.SRE_BATCH_MAX_SIZE, -1);
 ```
 
-- [ ] **Step 4: Add delay to queue.add**
+- [ ] **Step 5: Config-ify LTRIM in active/waiting buffer path**
 
-In `handleAddJob`, change the `queue.add` call (lines 131-136):
+In `handleAddJob`, change the active/waiting buffer LTRIM (around line 133):
+
+```ts
+await deps.redis.ltrim(bufKey, -50, -1);
+```
+
+to:
+
+```ts
+await deps.redis.ltrim(bufKey, -deps.config.SRE_BATCH_MAX_SIZE, -1);
+```
+
+- [ ] **Step 6: Add batch window delay to new job creation**
+
+In `handleAddJob`, change the final `queue.add` call (around line 168):
 
 ```ts
 await deps.queue.add(data.role, data, {
@@ -606,7 +694,7 @@ await deps.queue.add(data.role, data, {
 });
 ```
 
-- [ ] **Step 5: Remove redundant config from ServerDeps**
+- [ ] **Step 7: Remove redundant config from ServerDeps**
 
 In `ts/agent-queue-worker/src/http/server.ts`, change lines 16-19:
 
@@ -631,20 +719,21 @@ Remove the now-unused `Config` import on line 2:
 import type { Config } from "../config.js";
 ```
 
-- [ ] **Step 6: Run typecheck**
+- [ ] **Step 8: Run typecheck**
 
 Run: `cd ts/agent-queue-worker && npx tsc --noEmit` Expected: PASS
 
-- [ ] **Step 7: Run all tests**
+- [ ] **Step 9: Run all tests**
 
 Run: `cd ts/agent-queue-worker && npx vitest run` Expected: All PASS
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add ts/agent-queue-worker/src/http/routes.ts ts/agent-queue-worker/src/http/server.ts
-git commit -m "feat(agent-worker): config-ify LTRIM cap and add batch window delay
+git commit -m "feat(agent-worker): fingerprint suppression, config LTRIM, batch window delay
 
+Fingerprint check before identity resolution discards already-triaged alerts.
 LTRIM uses SRE_BATCH_MAX_SIZE from config instead of hardcoded -50.
 New jobs use getJobDelay for BullMQ delayed job support.
 Lua script comment documents delayed set constraint.
@@ -654,15 +743,73 @@ Ref #1184"
 
 ______________________________________________________________________
 
-### Task 6: Lifecycle — Config LTRIM + Field Rename
+### Task 6: Lifecycle -- Triaged Markers + Config LTRIM + Field Rename
 
 **Files:**
 
-- Modify: `ts/agent-queue-worker/src/queue/lifecycle.ts:45, 71`
+- Modify: `ts/agent-queue-worker/src/queue/lifecycle.ts`
 
-- [ ] **Step 1: Rename field reference**
+- [ ] **Step 1: Add import for sreTriagedKey**
 
-In `ts/agent-queue-worker/src/queue/lifecycle.ts`, change line 45:
+In `ts/agent-queue-worker/src/queue/lifecycle.ts`, add import at the top (after existing imports):
+
+```ts
+import { sreTriagedKey } from "../roles/sre-role.js";
+```
+
+- [ ] **Step 2: Add triaged marker logic**
+
+In the `worker.on("completed")` handler, add fingerprint suppression marker writing BEFORE the existing drain logic. After `if (!roleDef.bufferKey || !roleDef.drainBuffer) return;` (line 40) and before the `try` block (line 42), add:
+
+```ts
+if (job.data.payload?.trigger === "alert") {
+  const suppressTtl = Number(
+    job.data.payload?.triage_suppress_s ?? config.SRE_TRIAGE_SUPPRESS_S
+  );
+  const fingerprints = new Set<string>();
+
+  if (job.data.payload?.fingerprint) {
+    fingerprints.add(String(job.data.payload.fingerprint));
+  }
+  const processedAlerts = job.data.payload?.alerts as
+    | Array<Record<string, unknown>>
+    | undefined;
+  if (processedAlerts) {
+    for (const a of processedAlerts) {
+      if (a.fingerprint) fingerprints.add(String(a.fingerprint));
+    }
+  }
+
+  if (fingerprints.size > 0 && suppressTtl > 0) {
+    try {
+      const pipeline = redis.pipeline();
+      for (const fp of fingerprints) {
+        pipeline.set(
+          sreTriagedKey(job.data.repo, fp),
+          "1",
+          "EX",
+          suppressTtl
+        );
+      }
+      await pipeline.exec();
+      logger.debug("Wrote triaged markers", {
+        jobId: job.id,
+        count: fingerprints.size,
+        ttlSeconds: suppressTtl,
+      });
+    } catch (err) {
+      logger.warn("Failed to write triaged markers", {
+        jobId: job.id,
+        error: String(err),
+      });
+    }
+  }
+}
+```
+
+- [ ] **Step 3: Rename field reference**
+
+In the same file, change line 44:
 
 ```ts
 const alerts = drainedData.payload?.buffered_alerts as
@@ -674,9 +821,9 @@ to:
 const alerts = drainedData.payload?.alerts as
 ```
 
-- [ ] **Step 2: Config-ify LTRIM in fallback re-push**
+- [ ] **Step 4: Config-ify LTRIM in fallback re-push**
 
-Change line 71:
+Change line 73:
 
 ```ts
 await redis.ltrim(bufKey, -50, -1);
@@ -688,22 +835,23 @@ to:
 await redis.ltrim(bufKey, -config.SRE_BATCH_MAX_SIZE, -1);
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [ ] **Step 5: Run typecheck**
 
 Run: `cd ts/agent-queue-worker && npx tsc --noEmit` Expected: PASS
 
-- [ ] **Step 4: Run all tests**
+- [ ] **Step 6: Run all tests**
 
 Run: `cd ts/agent-queue-worker && npx vitest run` Expected: All PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add ts/agent-queue-worker/src/queue/lifecycle.ts
-git commit -m "feat(agent-worker): config-ify lifecycle LTRIM and rename buffered_alerts
+git commit -m "feat(agent-worker): write triaged markers on completion, config LTRIM, field rename
 
-Uses SRE_BATCH_MAX_SIZE for re-push LTRIM cap.
-Field rename: buffered_alerts → alerts for consistency.
+Extracts fingerprints from job data + drained alerts, writes Redis TTL keys.
+Per-job triage_suppress_s override supported.
+LTRIM uses SRE_BATCH_MAX_SIZE config. Field rename: buffered_alerts -> alerts.
 
 Ref #1184"
 ```
@@ -714,7 +862,7 @@ ______________________________________________________________________
 
 **Files:**
 
-- Modify: `cluster/apps/agent-worker-system/agent-queue-worker/app/values.yaml:27-30`
+- Modify: `cluster/apps/agent-worker-system/agent-queue-worker/app/values.yaml`
 
 - [ ] **Step 1: Add env vars**
 
@@ -723,6 +871,8 @@ In `cluster/apps/agent-worker-system/agent-queue-worker/app/values.yaml`, add af
 ```yaml
           SRE_BATCH_MAX_SIZE: "50"
           SRE_BATCH_WINDOW_MS: "60000"
+          SRE_COOLDOWN_MS: "300000"
+          SRE_TRIAGE_SUPPRESS_S: "3600"
 ```
 
 - [ ] **Step 2: Verify YAML is valid**
@@ -733,16 +883,80 @@ Run: `yamllint cluster/apps/agent-worker-system/agent-queue-worker/app/values.ya
 
 ```bash
 git add cluster/apps/agent-worker-system/agent-queue-worker/app/values.yaml
-git commit -m "feat(agent-worker): add SRE batch config env vars to Helm values
+git commit -m "feat(agent-worker): add SRE batch/cooldown/suppression config env vars
 
-SRE_BATCH_MAX_SIZE=50, SRE_BATCH_WINDOW_MS=60000 (1 minute window).
+SRE_BATCH_MAX_SIZE=50, SRE_BATCH_WINDOW_MS=60000, SRE_COOLDOWN_MS=300000,
+SRE_TRIAGE_SUPPRESS_S=3600.
 
 Ref #1184"
 ```
 
 ______________________________________________________________________
 
-### Task 8: Final Verification
+### Task 8: n8n Workflow Update
+
+**Note:** This task modifies the n8n SRE alert dispatch workflow. Use n8n MCP tools or update manually in the n8n UI.
+
+- [ ] **Step 1: Identify the workflow**
+
+Find the SRE alert dispatch workflow that contains the Code node shown in the issue. The current code extracts only `alerts[0]` and sends a single dispatch.
+
+- [ ] **Step 2: Update Code node**
+
+Replace the Code node contents with:
+
+```js
+const payload = $input.first().json;
+const alerts = payload.alerts || [];
+
+return alerts.map(alert => ({
+  json: {
+    role: 'sre',
+    repo: 'anthony-spruyt/spruyt-labs',
+    event_type: 'alertmanager_webhook',
+    priority: alert.labels?.severity === 'critical' ? 1 : 10,
+    payload: {
+      trigger: 'alert',
+      alertname: alert.labels?.alertname || 'unknown',
+      fingerprint: alert.fingerprint || Date.now().toString(),
+      alert_payload: JSON.stringify(alert, null, 2),
+      batch_window_ms: alert.labels?.severity === 'critical' ? 0 : undefined,
+      metaData: {
+        workflowId: $workflow.id,
+        executionId: $execution.id
+      }
+    }
+  }
+}));
+```
+
+Key changes:
+
+- `.map()` over `payload.alerts` -- one output per alert (worker batches via identity)
+
+- `fingerprint` at top-level of payload (moved from `metaData`)
+
+- Per-alert `priority` based on severity
+
+- `batch_window_ms: 0` for critical alerts (immediate processing)
+
+- `alert_payload` is single alert JSON, not full webhook
+
+- [ ] **Step 3: Verify downstream node handles multiple items**
+
+Ensure the HTTP Request node after the Code node processes all items (default n8n behavior). Each item becomes a separate POST to the worker.
+
+- [ ] **Step 4: Test with a sample alert**
+
+Trigger a test alert through AlertManager and verify:
+
+- Multiple alerts in one webhook produce multiple worker POSTs
+- Each POST has a unique fingerprint
+- Worker buffers them under the same job identity
+
+______________________________________________________________________
+
+### Task 9: Final Verification
 
 - [ ] **Step 1: Run full test suite**
 
@@ -754,12 +968,16 @@ Run: `cd ts/agent-queue-worker && npx tsc --noEmit` Expected: PASS
 
 - [ ] **Step 3: Verify no missed hardcoded -50**
 
-Run: `grep -rn "\-50" ts/agent-queue-worker/src/ --include="*.ts"` Expected: No results (all replaced with config)
+Run: `grep -rn "\-50" ts/agent-queue-worker/src/ --include="*.ts"` Expected: No results in routes.ts or lifecycle.ts (all replaced with config)
 
 - [ ] **Step 4: Verify no missed buffered_alerts**
 
 Run: `grep -rn "buffered_alerts" ts/agent-queue-worker/src/ --include="*.ts"` Expected: No results (all renamed to alerts)
 
-- [ ] **Step 5: Verify metrics endpoint includes histogram**
+- [ ] **Step 5: Verify metrics endpoint includes new metrics**
 
-Run: `grep -n "agent_sre_batch_size" ts/agent-queue-worker/src/metrics.ts` Expected: Line with histogram definition
+Run: `grep -n "agent_sre_batch_size\|agent_sre_suppressed" ts/agent-queue-worker/src/metrics.ts` Expected: Both metrics defined
+
+- [ ] **Step 6: Verify fingerprint suppression key pattern**
+
+Run: `grep -rn "sre-triaged" ts/agent-queue-worker/src/ --include="*.ts"` Expected: Found in routes.ts (check) and lifecycle.ts (write)

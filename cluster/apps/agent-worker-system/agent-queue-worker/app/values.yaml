@@ -22,12 +22,16 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/agent-queue-worker
-          tag: 1.2.10@sha256:815f4470dca1c279248be67760eb59cfc2fe820e4f0aba07478a6e1bc247a748
+          tag: 2.0.0@sha256:67eda83268ab17710c85493da3a20c49ac55583830d1d2467c50644cdc34cc86
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"
           N8N_DISPATCH_WEBHOOK: http://n8n-webhook.n8n-system.svc/webhook/agent-dispatch
           GITHUB_OWNER: anthony-spruyt
+          SRE_BATCH_MAX_SIZE: "50"
+          SRE_BATCH_WINDOW_MS: "60000"
+          SRE_COOLDOWN_MS: "300000"
+          SRE_TRIAGE_SUPPRESS_S: "3600"
         envFrom:
           - secretRef:
               name: agent-queue-worker-secrets
@@ -65,7 +69,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/bull-board
-          tag: 0.2.3@sha256:5d094cad3e7728f14a986adc78261aad2b153b607b20c54d7b7518bae8dff72b
+          tag: 0.2.5@sha256:9fa8a7181bf854507f5b613f2497c618c4d7c95df1f409dfca23d76dc9c36b6b
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"

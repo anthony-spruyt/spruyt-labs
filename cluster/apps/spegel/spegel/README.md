@@ -26,7 +26,7 @@ Spegel is a local container registry mirror that caches and serves container ima
    kubectl logs -n spegel <spegel-pod> | grep "cache"
    ```
 
-2. **Registry operations**:
+1. **Registry operations**:
 
    ```bash
    # Check registry health
@@ -36,7 +36,7 @@ Spegel is a local container registry mirror that caches and serves container ima
    kubectl logs -n spegel <spegel-pod> | grep "pull"
    ```
 
-3. **Configuration updates**:
+1. **Configuration updates**:
 
    ```bash
    # Update Spegel configuration
@@ -56,19 +56,19 @@ Spegel is a local container registry mirror that caches and serves container ima
    - **Diagnosis**: Check cache verification logs
    - **Resolution**: Clear and rebuild cache
 
-2. **Storage capacity issues**:
+1. **Storage capacity issues**:
 
    - **Symptom**: Cache eviction or storage errors
    - **Diagnosis**: Monitor storage usage
    - **Resolution**: Scale storage or clean up unused images
 
-3. **Network connectivity problems**:
+1. **Network connectivity problems**:
 
    - **Symptom**: Image pull failures
    - **Diagnosis**: Test network connectivity
    - **Resolution**: Verify network policies and DNS
 
-4. **Authentication failures**:
+1. **Authentication failures**:
 
    - **Symptom**: Registry authentication errors
    - **Diagnosis**: Check authentication configuration

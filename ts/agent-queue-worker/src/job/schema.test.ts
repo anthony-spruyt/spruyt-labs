@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { AgentJob } from "./schema.js";
 import {
-  AgentJobSchema,
   AgentJobInputSchema,
+  AgentJobSchema,
   DoneRequestSchema,
   FailRequestSchema,
 } from "./schema.js";
-import type { AgentJob } from "./schema.js";
 
 const base: AgentJob = {
   role: "triage",

@@ -32,7 +32,7 @@ kubectl get ingressroutes -A -o wide
    kubectl get events -A | grep certificate
    ```
 
-3. **Traefik dashboard access**:
+1. **Traefik dashboard access**:
 
 ```bash
 # Access Traefik dashboard
@@ -73,13 +73,14 @@ kubectl port-forward svc/traefik -n traefik 9000:9000
    - **Diagnosis**: Check ingress route configuration and service endpoints
    - **Resolution**: Verify route hostnames, service names, and ports
 
-2. **TLS certificate errors**:
+1. **TLS certificate errors**:
 
    - **Symptom**: Browser certificate warnings
    - **Diagnosis**: Check cert-manager certificate status
    - **Resolution**: Verify certificate DNS names and issuer configuration
 
-3. **Load balancer connectivity issues**:
+1. **Load balancer connectivity issues**:
+
    - **Symptom**: External access failures
    - **Diagnosis**: Check load balancer service and Cilium BGP configuration
    - **Resolution**: Verify BGP advertisements and load balancer IP allocation

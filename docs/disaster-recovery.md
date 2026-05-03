@@ -52,13 +52,13 @@ kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd status
    velero get backups
    ```
 
-2. **Describe backup to verify contents**:
+1. **Describe backup to verify contents**:
 
    ```bash
    velero backup describe <backup-name> --details
    ```
 
-3. **Create restore**:
+1. **Create restore**:
 
    ```bash
    # Full restore
@@ -73,7 +73,7 @@ kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd status
      --exclude-resources persistentvolumeclaims
    ```
 
-4. **Monitor restore progress**:
+1. **Monitor restore progress**:
 
    ```bash
    velero restore describe <restore-name>
@@ -88,7 +88,7 @@ kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd status
    kubectl get backups -n <namespace>
    ```
 
-2. **Create recovery cluster from backup**:
+1. **Create recovery cluster from backup**:
 
    ```yaml
    apiVersion: postgresql.cnpg.io/v1
@@ -121,35 +121,35 @@ kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd status
    kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
    ```
 
-2. **Set Ceph noout flag** (if node has OSDs):
+1. **Set Ceph noout flag** (if node has OSDs):
 
    ```bash
    kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd set noout
    ```
 
-3. **Provision replacement node** with Talos ISO
+1. **Provision replacement node** with Talos ISO
 
-4. **Apply Talos configuration**:
+1. **Apply Talos configuration**:
 
    ```bash
    talosctl apply-config --insecure --nodes <new-node-ip> \
      --file talos/clusterconfig/<node-hostname>.yaml
    ```
 
-5. **Verify node joins cluster**:
+1. **Verify node joins cluster**:
 
    ```bash
    kubectl get nodes
    talosctl health
    ```
 
-6. **Unset Ceph noout flag**:
+1. **Unset Ceph noout flag**:
 
    ```bash
    kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd unset noout
    ```
 
-7. **Verify Ceph recovery**:
+1. **Verify Ceph recovery**:
 
    ```bash
    kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph status
@@ -175,9 +175,9 @@ kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd tree
    kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd tree
    ```
 
-2. **If pool is degraded but recoverable**, wait for automatic recovery
+1. **If pool is degraded but recoverable**, wait for automatic recovery
 
-3. **If OSDs are permanently lost**, remove them:
+1. **If OSDs are permanently lost**, remove them:
 
    ```bash
    kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd out <osd-id>
@@ -192,16 +192,16 @@ In case of complete cluster loss:
 
 1. **Follow bootstrap procedure** in [docs/bootstrap.md](bootstrap.md)
 
-2. **Restore from Velero backup**:
+1. **Restore from Velero backup**:
 
    ```bash
    # After Flux is running and Velero is deployed
    velero restore create full-restore --from-backup <latest-backup>
    ```
 
-3. **Restore databases from CNPG backups** as needed
+1. **Restore databases from CNPG backups** as needed
 
-4. **Verify all workloads**:
+1. **Verify all workloads**:
 
    ```bash
    kubectl get pods -A

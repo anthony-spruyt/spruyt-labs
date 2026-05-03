@@ -58,19 +58,19 @@ kubectl exec -n irq-balance <pod-name> -- watch -n 1 cat /proc/interrupts
    - **Diagnosis**: Check node status and access permissions
    - **Resolution**: Verify node labels and taints
 
-2. **IRQ balancing not working**:
+1. **IRQ balancing not working**:
 
    - **Symptom**: Uneven IRQ distribution
    - **Diagnosis**: Check IRQ balance configuration and kernel support
    - **Resolution**: Verify IRQ balance parameters and kernel modules
 
-3. **Resource constraints**:
+1. **Resource constraints**:
 
    - **Symptom**: Pods in Pending state or frequent restarts
    - **Diagnosis**: Check resource requests vs available cluster resources
    - **Resolution**: Adjust resource limits or scale cluster
 
-4. **Configuration errors**:
+1. **Configuration errors**:
 
    - **Symptom**: IRQ balance service not starting
    - **Diagnosis**: Check configuration syntax and parameters

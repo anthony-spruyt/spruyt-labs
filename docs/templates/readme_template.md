@@ -39,7 +39,7 @@ kubectl logs -n [namespace] -l app.kubernetes.io/name=[component]
 
 - [Official Documentation](https://docs.example.com)
 
----
+______________________________________________________________________
 
 <!--
 TEMPLATE USAGE NOTES (delete this section when using):

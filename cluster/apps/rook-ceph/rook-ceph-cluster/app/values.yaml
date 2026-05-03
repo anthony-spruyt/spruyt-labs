@@ -29,9 +29,38 @@ monitoring:
   createPrometheusRules: true
   # -- Edit Prometheus rules for Ceph alerts
   # Disable CephNodeDiskspaceWarning - replaced with Talos-safe version in observability vmrules/
+  # Scope Ceph "nodes" group alerts to worker/Ceph nodes only (Ref #1241)
   prometheusRuleOverrides:
     CephNodeDiskspaceWarning:
       disabled: true
+    CephNodeNetworkPacketDrops:
+      expr: |
+        (
+          rate(node_network_receive_drop_total{device!="lo"}[1m]) +
+          rate(node_network_transmit_drop_total{device!="lo"}[1m])
+        ) / (
+          rate(node_network_receive_packets_total{device!="lo"}[1m]) +
+          rate(node_network_transmit_packets_total{device!="lo"}[1m])
+        ) >= 0.0050000000000000001 and (
+          rate(node_network_receive_drop_total{device!="lo"}[1m]) +
+          rate(node_network_transmit_drop_total{device!="lo"}[1m])
+        ) >= 10
+        and on(instance) node_uname_info{nodename=~"ms-01-.*"}
+    CephNodeNetworkPacketErrors:
+      expr: |
+        (
+          (
+            rate(node_network_receive_errs_total{device!="lo"}[1m]) +
+            rate(node_network_transmit_errs_total{device!="lo"}[1m])
+          ) / (
+            rate(node_network_receive_packets_total{device!="lo"}[1m]) +
+            rate(node_network_transmit_packets_total{device!="lo"}[1m])
+          ) >= 0.0001 or (
+            rate(node_network_receive_errs_total{device!="lo"}[1m]) +
+            rate(node_network_transmit_errs_total{device!="lo"}[1m])
+          ) >= 10
+        )
+        and on(instance) node_uname_info{nodename=~"ms-01-.*"}
   # -- The namespace in which to create the prometheus rules, if different from the rook cluster namespace.
   # If you have multiple rook-ceph clusters in the same k8s cluster, choose the same namespace (ideally, namespace with prometheus
   # deployed) to set rulesNamespaceOverride for all the clusters. Otherwise, you will get duplicate alerts with multiple alert definitions.

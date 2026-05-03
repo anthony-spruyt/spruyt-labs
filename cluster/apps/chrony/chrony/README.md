@@ -28,7 +28,7 @@ Chrony is a versatile implementation of the Network Time Protocol (NTP) that pro
    kubectl exec -n chrony <pod-name> -- chronyc sources
    ```
 
-2. **Configuration management**:
+1. **Configuration management**:
 
    ```bash
    # Check current configuration
@@ -38,7 +38,7 @@ Chrony is a versatile implementation of the Network Time Protocol (NTP) that pro
    kubectl exec -n chrony <pod-name> -- chronyc ntpdata
    ```
 
-3. **Performance monitoring**:
+1. **Performance monitoring**:
 
    ```bash
    # Check time offset and synchronization status
@@ -79,19 +79,19 @@ kubectl exec -n chrony <pod-name> -- chronyc sources
    - **Diagnosis**: Check NTP server connectivity and firewall rules
    - **Resolution**: Verify NTP server addresses and network connectivity
 
-2. **Time drift issues**:
+1. **Time drift issues**:
 
    - **Symptom**: Significant time offset from NTP servers
    - **Diagnosis**: Check chrony tracking and sources
    - **Resolution**: Verify NTP server configuration and network latency
 
-3. **Resource constraints**:
+1. **Resource constraints**:
 
    - **Symptom**: Pods in Pending state or frequent restarts
    - **Diagnosis**: Check resource requests vs available cluster resources
    - **Resolution**: Adjust resource limits or scale cluster
 
-4. **Configuration errors**:
+1. **Configuration errors**:
 
    - **Symptom**: Chrony service not starting
    - **Diagnosis**: Check configuration syntax and NTP server addresses

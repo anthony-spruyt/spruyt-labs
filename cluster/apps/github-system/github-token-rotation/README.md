@@ -46,18 +46,22 @@ kubectl get externalsecret -n github-mcp
 ### Common Issues
 
 1. **JWT signing failure**
+
    - **Symptom**: Job logs show `openssl` errors during JWT generation.
    - **Resolution**: Verify the PEM private key in `github-app-credentials` is valid. Check that the App ID matches the key.
 
-2. **Installation token mint fails with 401**
+1. **Installation token mint fails with 401**
+
    - **Symptom**: `curl` returns 401 when calling the installations endpoint.
    - **Resolution**: JWT may be malformed or the App private key was rotated in GitHub. Regenerate the key in GitHub App settings and update the SOPS secret.
 
-3. **Installation token mint fails with 404**
+1. **Installation token mint fails with 404**
+
    - **Symptom**: `curl` returns 404 for the installations endpoint.
    - **Resolution**: The installation ID is wrong or the App was uninstalled. Verify at `https://github.com/settings/installations`.
 
-4. **ESO sync not propagating after rotation**
+1. **ESO sync not propagating after rotation**
+
    - **Symptom**: Consumer pods still use old tokens after a successful rotation job.
    - **Resolution**: The job force-syncs ExternalSecrets automatically. If it still fails, check SecretStore connectivity:
      ```bash
@@ -65,7 +69,8 @@ kubectl get externalsecret -n github-mcp
      kubectl describe secretstore github-secret-store -n claude-agents-write
      ```
 
-5. **CronJob pod stuck or failing**
+1. **CronJob pod stuck or failing**
+
    - **Symptom**: Job pod in `Error` or `OOMKilled` state.
    - **Resolution**: Check pod logs and events:
      ```bash

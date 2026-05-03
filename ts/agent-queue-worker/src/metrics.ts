@@ -1,4 +1,4 @@
-import { Counter, Histogram, Gauge, Registry } from "prom-client";
+import { Counter, Gauge, Histogram, Registry } from "prom-client";
 
 export const registry = new Registry();
 registry.setDefaultLabels({ service: "agent-queue-worker" });
@@ -56,5 +56,19 @@ export const dedupActionCounter = new Counter({
   name: "agent_dedup_action_total",
   help: "Dedup actions by strategy",
   labelNames: ["queue", "role", "action"] as const,
+  registers: [registry],
+});
+
+export const sreBatchSize = new Histogram({
+  name: "agent_sre_batch_size",
+  help: "Total alerts per SRE batch (trigger + buffered)",
+  buckets: [1, 5, 10, 20, 50],
+  registers: [registry],
+});
+
+export const sreSuppressed = new Counter({
+  name: "agent_sre_suppressed_total",
+  help: "Alerts suppressed by fingerprint dedup",
+  labelNames: ["role"] as const,
   registers: [registry],
 });

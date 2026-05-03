@@ -5,6 +5,7 @@
 VPA automatically recommends resource requests and limits for workloads based on actual usage metrics. Deployed with `updateMode: "Off"` — generates recommendations only, does not modify pods. Priority tier: `high-priority`.
 
 Components:
+
 - **Recommender**: Watches all workloads, generates resource recommendations
 - **Updater**: Evicts pods needing updates (inactive with `updateMode: "Off"`)
 - **Admission Controller**: Mutating webhook that sets resources on pod creation (inactive with `updateMode: "Off"`)
@@ -43,10 +44,12 @@ To enable VPA auto-updates for a specific workload, create a `VerticalPodAutosca
 ### Common Issues
 
 1. **VPA recommendations not appearing**
+
    - **Symptom**: `kubectl describe vpa` shows no recommendations
    - **Resolution**: Recommender needs ~24h of metrics data. Check recommender logs for errors.
 
-2. **Webhook failures after enabling Auto mode**
+1. **Webhook failures after enabling Auto mode**
+
    - **Symptom**: Pods fail to create with admission webhook errors
    - **Resolution**: Check admission-controller pod health and CNP allows webhook ingress from API server on port 8000.
 

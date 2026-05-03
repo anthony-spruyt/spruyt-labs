@@ -1,5 +1,5 @@
-import type { AgentJob } from "./schema.js";
 import type { RoleRegistry } from "../roles/registry.js";
+import type { AgentJob } from "./schema.js";
 
 export interface JobIdentity {
   jobId: string;

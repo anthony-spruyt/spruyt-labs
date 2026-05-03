@@ -34,6 +34,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
 ### Preconditions
 
 - Clean working tree or current feature branch prepared for promotion.
+
 - Flux control plane healthy:
 
   ```bash
@@ -71,15 +72,17 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
 #### Phase 1 – Plan and Author Changes
 
 1. Update chart versions or values under `cluster/apps/rook-ceph/rook-ceph-operator/app/` and `cluster/apps/rook-ceph/rook-ceph-cluster/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+
+1. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
+
+1. Execute targeted dry runs when touching Helm values:
 
    ```bash
    flux diff hr rook-ceph-operator --namespace rook-ceph
    flux diff hr rook-ceph-cluster --namespace rook-ceph
    ```
 
-4. Commit changes with runbook updates and open a pull request.
+1. Commit changes with runbook updates and open a pull request.
 
 #### Phase 2 – Reconcile with Flux
 
@@ -92,7 +95,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    flux get kustomizations rook-ceph-cluster -n flux-system
    ```
 
-2. Confirm the Helm release upgrades succeeded:
+1. Confirm the Helm release upgrades succeeded:
 
    ```bash
    flux get helmrelease rook-ceph-operator -n rook-ceph
@@ -109,14 +112,14 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    kubectl logs -n rook-ceph deployment/rook-ceph-mgr
    ```
 
-2. Check Ceph cluster status:
+1. Check Ceph cluster status:
 
    ```bash
    kubectl -n rook-ceph get cephcluster rook-ceph
    kubectl -n rook-ceph get cephcluster rook-ceph -o yaml | yq '.status.ceph.health'
    ```
 
-3. Enter the toolbox and inspect health:
+1. Enter the toolbox and inspect health:
 
    ```bash
    task rook-ceph:tools
@@ -126,14 +129,14 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    ceph health detail
    ```
 
-4. Confirm CSI registration:
+1. Confirm CSI registration:
 
    ```bash
    kubectl get csidrivers | grep rook
    kubectl get storageclasses | grep -E 'rook-(ceph|rbd)'
    ```
 
-5. Monitor until `ceph status` reports `HEALTH_OK` or expected transient warnings.
+1. Monitor until `ceph status` reports `HEALTH_OK` or expected transient warnings.
 
 #### Phase 4 – Day-2 Operations and Capacity Management
 
@@ -150,7 +153,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    flux reconcile kustomization rook-ceph-cluster --with-source
    ```
 
-2. **Add or replace OSD devices** – Use orchestrator commands in the toolbox:
+1. **Add or replace OSD devices** – Use orchestrator commands in the toolbox:
 
    ```bash
    ceph orch device ls
@@ -158,7 +161,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    ceph osd df
    ```
 
-3. **Remove OSD for maintenance** – Drain and remove the daemon:
+1. **Remove OSD for maintenance** – Drain and remove the daemon:
 
    ```bash
    ceph osd out <id>
@@ -168,14 +171,14 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
 
    Recreate after hardware service using the add flow.
 
-4. **Pool tuning** – Apply changes and persist in Git:
+1. **Pool tuning** – Apply changes and persist in Git:
 
    ```bash
    ceph osd pool set <pool> size 3
    ceph osd pool application enable csi-rbd-nvme rbd
    ```
 
-5. **Routine health checks** – Schedule or run manually:
+1. **Routine health checks** – Schedule or run manually:
 
    ```bash
    kubectl -n rook-ceph get cephcluster rook-ceph
@@ -183,7 +186,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    ceph pg stat
    ```
 
-6. **Block image maintenance** – Flatten cloned RBD images to remove dependency on parent snapshots during maintenance:
+1. **Block image maintenance** – Flatten cloned RBD images to remove dependency on parent snapshots during maintenance:
 
    ```bash
    # List children of a snapshot to see what needs flattening
@@ -207,7 +210,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    talosctl --nodes <control-plane> etcd status
    ```
 
-2. Restore namespace objects with Velero after etcd stability is confirmed:
+1. Restore namespace objects with Velero after etcd stability is confirmed:
 
    ```bash
    velero restore create rook-ceph-restore-$(date +%Y%m%d%H%M) \
@@ -218,21 +221,21 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    velero restore describe rook-ceph-restore-$(date +%Y%m%d%H%M)
    ```
 
-3. Recover Ceph data from snapshots when needed:
+1. Recover Ceph data from snapshots when needed:
 
    ```bash
    rbd snap ls <pool>/<image>
    rbd snap rollback <pool>/<image>@<snapshot>
    ```
 
-4. Re-bootstrap Ceph if the CR was removed:
+1. Re-bootstrap Ceph if the CR was removed:
 
    ```bash
    kubectl delete cephcluster rook-ceph -n rook-ceph --ignore-not-found
    flux reconcile kustomization rook-ceph-cluster --with-source
    ```
 
-5. Validate daemon health post-restore:
+1. Validate daemon health post-restore:
 
    ```bash
    ceph orch ps --daemon-type mon,osd,mgr
@@ -240,7 +243,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    kubectl get pvc -A | grep rook
    ```
 
-6. Coordinate Talos etcd recovery if the control plane was rebuilt.
+1. Coordinate Talos etcd recovery if the control plane was rebuilt.
 
 #### Phase 6 – Velero Backup Integration
 
@@ -252,19 +255,21 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
      --ttl 240h
    ```
 
-2. Monitor backup status:
+1. Monitor backup status:
 
    ```bash
    velero backup get | grep rook-ceph
    ```
 
-3. Ensure Ceph credentials and secrets reside in Velero snapshots for restores.
-4. Align retention and storage targets with the Velero runbook.
+1. Ensure Ceph credentials and secrets reside in Velero snapshots for restores.
+
+1. Align retention and storage targets with the Velero runbook.
 
 #### Phase 7 – Rollback or Disable
 
 1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+
+1. Temporarily suspend reconciliation during investigations:
 
    ```bash
    flux suspend kustomization rook-ceph-operator -n flux-system
@@ -273,7 +278,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    flux suspend helmrelease rook-ceph-cluster -n rook-ceph
    ```
 
-3. Resume once remediation is complete:
+1. Resume once remediation is complete:
 
    ```bash
    flux resume kustomization rook-ceph-operator -n flux-system
@@ -282,7 +287,7 @@ Operate the Rook-Ceph storage fabric to provide resilient block and object stora
    flux resume helmrelease rook-ceph-cluster -n rook-ceph
    ```
 
-4. Scale deployments to zero as a last resort:
+1. Scale deployments to zero as a last resort:
 
    ```bash
    kubectl -n rook-ceph scale deploy/rook-ceph-operator --replicas=0
@@ -338,13 +343,13 @@ Refer to the dedicated [Troubleshooting](#troubleshooting) section after perform
    ceph health detail
    ```
 
-2. Identify failing services:
+1. Identify failing services:
 
    ```bash
    ceph orch ps --daemon-type mon,mgr,osd
    ```
 
-3. Address the root cause (resolve backfill delays, restart pods, fix network partitions) and continue monitoring until `HEALTH_OK` returns.
+1. Address the root cause (resolve backfill delays, restart pods, fix network partitions) and continue monitoring until `HEALTH_OK` returns.
 
 ### OSD down or out unexpectedly
 
@@ -354,20 +359,20 @@ Refer to the dedicated [Troubleshooting](#troubleshooting) section after perform
    ceph osd tree | grep down
    ```
 
-2. Check pod status:
+1. Check pod status:
 
    ```bash
    kubectl -n rook-ceph get pods -l app=rook-ceph-osd
    ```
 
-3. Review crash data:
+1. Review crash data:
 
    ```bash
    ceph crash ls
    ceph crash info <crash-id>
    ```
 
-4. Restart or replace the daemon:
+1. Restart or replace the daemon:
 
    ```bash
    ceph orch daemon restart osd.<id>
@@ -383,20 +388,20 @@ Refer to the dedicated [Troubleshooting](#troubleshooting) section after perform
    kubectl get sc | grep rook
    ```
 
-2. Inspect provisioner logs:
+1. Inspect provisioner logs:
 
    ```bash
    kubectl -n rook-ceph logs deploy/rook-ceph-csi-rbd-provisioner -c csi-provisioner
    ```
 
-3. Confirm pool capacity:
+1. Confirm pool capacity:
 
    ```bash
    ceph df
    ceph osd pool stats <pool>
    ```
 
-4. Ensure node plugins can map RBD devices; restart relevant DaemonSet pods if mount errors persist.
+1. Ensure node plugins can map RBD devices; restart relevant DaemonSet pods if mount errors persist.
 
 ### Velero restore conflicts or failures
 
@@ -407,14 +412,15 @@ Refer to the dedicated [Troubleshooting](#troubleshooting) section after perform
    velero restore logs <restore-name>
    ```
 
-2. Remove stale resources before re-running restore:
+1. Remove stale resources before re-running restore:
 
    ```bash
    kubectl delete cephcluster rook-ceph -n rook-ceph --wait=false
    ```
 
-3. Retry with `--restore-volumes=false` when PVC data remains intact but CRDs need reseeding.
-4. Reconcile operator CRDs to ensure correct versions:
+1. Retry with `--restore-volumes=false` when PVC data remains intact but CRDs need reseeding.
+
+1. Reconcile operator CRDs to ensure correct versions:
 
    ```bash
    flux reconcile kustomization rook-ceph-operator --with-source
@@ -503,7 +509,7 @@ The Ceph Dashboard embeds Grafana panels for metrics visualization. This require
 
 1. **Dashboard1 datasource** – The Ceph Dashboard hardcodes `var-datasource=Dashboard1` in iframe URLs. A Grafana datasource named exactly "Dashboard1" must exist pointing to Prometheus/VictoriaMetrics.
 
-2. **Official ceph-mixin dashboards** – The Ceph Dashboard expects dashboards with specific UIDs from the [ceph-mixin](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out):
+1. **Official ceph-mixin dashboards** – The Ceph Dashboard expects dashboards with specific UIDs from the [ceph-mixin](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out):
 
    | Dashboard                  | UID                 | Used By                 |
    | -------------------------- | ------------------- | ----------------------- |
@@ -520,7 +526,7 @@ The Ceph Dashboard embeds Grafana panels for metrics visualization. This require
    | radosgw-detail.json        | `x5ARzZtmk`         | RGW instance details    |
    | cephfsdashboard.json       | `MUsmxkziz`         | CephFS overview         |
 
-3. **Grafana embedding** – Enable iframe embedding in Grafana config:
+1. **Grafana embedding** – Enable iframe embedding in Grafana config:
 
    ```yaml
    grafana.ini:

@@ -79,13 +79,14 @@ kubectl get pods -A -l cluster-name=<cluster-name>
    - **Diagnosis**: Check storage provisioning and network connectivity
    - **Resolution**: Verify storage class and network policies
 
-2. **Backup configuration errors**:
+1. **Backup configuration errors**:
 
    - **Symptom**: Scheduled backups not running
    - **Diagnosis**: Check backup configuration and storage access
    - **Resolution**: Verify backup storage credentials and schedules
 
-3. **Operator reconciliation loops**:
+1. **Operator reconciliation loops**:
+
    - **Symptom**: Operator pods restarting frequently
    - **Diagnosis**: Check operator logs and resource constraints
    - **Resolution**: Adjust resource limits and check for configuration errors

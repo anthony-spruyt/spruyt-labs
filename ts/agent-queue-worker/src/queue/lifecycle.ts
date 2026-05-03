@@ -1,14 +1,15 @@
 import type { Server } from "node:http";
-import type { Worker, Queue } from "bullmq";
+import type { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
-import type { Processor } from "../processor.js";
-import type { RoleRegistry } from "../roles/registry.js";
-import type { CircuitBreaker } from "./guard.js";
 import type { Config } from "../config.js";
 import { fetchReposWithRevertLabels } from "../github.js";
-import { DEFAULT_JOB_OPTIONS } from "./options.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
+import type { Processor } from "../processor.js";
+import type { RoleRegistry } from "../roles/registry.js";
+import { sreTriagedKey } from "../roles/sre-role.js";
+import type { CircuitBreaker } from "./guard.js";
+import { DEFAULT_JOB_OPTIONS } from "./options.js";
 
 export interface LifecycleDeps {
   worker: Worker;
@@ -39,11 +40,53 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     const roleDef = registry.get(job.data.role);
     if (!roleDef.bufferKey || !roleDef.drainBuffer) return;
 
+    if (job.data.payload?.trigger === "alert") {
+      const suppressTtl = Number(
+        job.data.payload?.triage_suppress_s ?? config.SRE_TRIAGE_SUPPRESS_S
+      );
+      const fingerprints = new Set<string>();
+
+      if (job.data.payload?.fingerprint) {
+        fingerprints.add(String(job.data.payload.fingerprint));
+      }
+      const processedAlerts = job.data.payload?.alerts as
+        | Array<Record<string, unknown>>
+        | undefined;
+      if (processedAlerts) {
+        for (const a of processedAlerts) {
+          if (a.fingerprint) fingerprints.add(String(a.fingerprint));
+        }
+      }
+
+      if (fingerprints.size > 0 && suppressTtl > 0) {
+        try {
+          const pipeline = redis.pipeline();
+          for (const fp of fingerprints) {
+            pipeline.set(
+              sreTriagedKey(job.data.repo, fp),
+              "1",
+              "EX",
+              suppressTtl
+            );
+          }
+          await pipeline.exec();
+          logger.debug("Wrote triaged markers", {
+            jobId: job.id,
+            count: fingerprints.size,
+            ttlSeconds: suppressTtl,
+          });
+        } catch (err) {
+          logger.warn("Failed to write triaged markers", {
+            jobId: job.id,
+            error: String(err),
+          });
+        }
+      }
+    }
+
     try {
       const drainedData = await roleDef.drainBuffer(job.id!, job.data, redis);
-      const alerts = drainedData.payload?.buffered_alerts as
-        | unknown[]
-        | undefined;
+      const alerts = drainedData.payload?.alerts as unknown[] | undefined;
       if (!alerts || alerts.length === 0) return;
 
       try {
@@ -70,7 +113,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
       } catch {
         const bufKey = roleDef.bufferKey!(job.id!);
         await redis.rpush(bufKey, ...alerts.map((a) => JSON.stringify(a)));
-        await redis.ltrim(bufKey, -50, -1);
+        await redis.ltrim(bufKey, -config.SRE_BATCH_MAX_SIZE, -1);
         await redis.expire(bufKey, 3600);
         logger.warn("Re-pushed alerts after failed auto-queue", {
           jobId: job.id,

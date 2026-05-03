@@ -28,7 +28,7 @@ RedisInsight is a powerful visualization and management tool for Redis databases
    kubectl logs -n redisinsight <redisinsight-pod> | grep "performance"
    ```
 
-2. **User access management**:
+1. **User access management**:
 
    ```bash
    # Check authentication logs
@@ -38,7 +38,7 @@ RedisInsight is a powerful visualization and management tool for Redis databases
    kubectl logs -n redisinsight <redisinsight-pod> | grep "session"
    ```
 
-3. **Configuration updates**:
+1. **Configuration updates**:
 
    ```bash
    # Update RedisInsight configuration
@@ -58,19 +58,19 @@ RedisInsight is a powerful visualization and management tool for Redis databases
    - **Diagnosis**: Check network connectivity and credentials
    - **Resolution**: Verify Cilium network policies and authentication
 
-2. **Authentication problems**:
+1. **Authentication problems**:
 
    - **Symptom**: Login failures or permission errors
    - **Diagnosis**: Check authentication configuration
    - **Resolution**: Verify user credentials and RBAC policies
 
-3. **Performance bottlenecks**:
+1. **Performance bottlenecks**:
 
    - **Symptom**: Slow query execution or timeouts
    - **Diagnosis**: Monitor resource usage and query patterns
    - **Resolution**: Scale resources or optimize queries
 
-4. **Web interface issues**:
+1. **Web interface issues**:
 
    - **Symptom**: UI not loading or displaying errors
    - **Diagnosis**: Check browser console and service logs

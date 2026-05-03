@@ -49,6 +49,7 @@ kubectl auth can-i create pods -n claude-agents-write \
 ### Common Issues
 
 1. **Agent pod cannot push to GitHub**
+
    - **Symptom**: Agent pod exits with `Permission denied` or authentication failure when running `git push`.
    - **Resolution**: Verify the write-tier credentials are injected and current:
      ```bash
@@ -61,7 +62,8 @@ kubectl auth can-i create pods -n claude-agents-write \
        -n github-system github-token-rotation-manual
      ```
 
-2. **ESO sync failing**
+1. **ESO sync failing**
+
    - **Symptom**: ExternalSecret status shows `SecretSyncedError` or `NoSecretError`.
    - **Resolution**: Verify the source secret exists in `github-system` and the SecretStore RBAC is correct:
      ```bash
@@ -69,7 +71,8 @@ kubectl auth can-i create pods -n claude-agents-write \
      kubectl describe secretstore github-secret-store -n claude-agents-write
      ```
 
-3. **Pod creation denied**
+1. **Pod creation denied**
+
    - **Symptom**: n8n cannot spawn agent pods; events show `Forbidden`.
    - **Resolution**: Check RBAC for the spawner role:
      ```bash
@@ -77,7 +80,8 @@ kubectl auth can-i create pods -n claude-agents-write \
      kubectl describe rolebinding -n claude-agents-write
      ```
 
-4. **Network policy blocking egress**
+1. **Network policy blocking egress**
+
    - **Symptom**: Agent pod cannot reach GitHub API or git remotes.
    - **Resolution**: Review the CNPs in the namespace:
      ```bash
