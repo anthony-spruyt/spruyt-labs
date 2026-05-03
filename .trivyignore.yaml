@@ -9,6 +9,7 @@ vulnerabilities:
   - id: CVE-2026-33671
     paths:
       - ts/agent-queue-worker/package-lock.json
+      - ts/agent-queue-worker/bull-board/package-lock.json
 
 misconfigurations:
   # Hubble SSO ingress needs to be in kube-system (where Cilium runs)
