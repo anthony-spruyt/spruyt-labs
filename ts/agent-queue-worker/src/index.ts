@@ -6,6 +6,7 @@ import { createHttpServer } from "./http/server.js";
 import { CircuitBreaker, RateLimiter } from "./queue/guard.js";
 import { setupLifecycle } from "./queue/lifecycle.js";
 import { createDefaultRegistry } from "./roles/registry.js";
+import * as metrics from "./metrics.js";
 
 const config = loadConfig();
 
@@ -26,7 +27,7 @@ const connection = {
 const queueOpts = { connection, prefix: "agent:queue" };
 
 const queue = new Queue("agent", queueOpts);
-const registry = createDefaultRegistry();
+const registry = createDefaultRegistry(config, metrics.sreBatchSize);
 const processor = new Processor(redis, config, registry);
 const circuitBreaker = new CircuitBreaker(redis);
 const rateLimiter = new RateLimiter(redis);

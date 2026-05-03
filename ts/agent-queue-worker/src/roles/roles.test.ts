@@ -1,10 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createDefaultRegistry } from "./registry.js";
 import { resolveDuplicateAction } from "./types.js";
 import type { AgentJob } from "../job/schema.js";
 import type { JobState } from "./types.js";
+import { Histogram } from "prom-client";
+import type { Config } from "../config.js";
 
-const registry = createDefaultRegistry();
+const mockConfig = {
+  SRE_BATCH_MAX_SIZE: 50,
+  SRE_BATCH_WINDOW_MS: 60_000,
+  SRE_COOLDOWN_MS: 300_000,
+  SRE_TRIAGE_SUPPRESS_S: 3600,
+} as Config;
+
+const mockHistogram = { observe: vi.fn() } as unknown as Histogram;
+
+const registry = createDefaultRegistry(mockConfig, mockHistogram);
 
 const base: AgentJob = {
   role: "triage",
@@ -197,5 +208,68 @@ describe("registry", () => {
       "triage",
       "validate",
     ]);
+  });
+});
+
+describe("sre getJobDelay", () => {
+  const def = registry.get("sre");
+
+  it("returns batch window for alert trigger", () => {
+    const job = {
+      ...base,
+      role: "sre" as const,
+      payload: { trigger: "alert" },
+    };
+    expect(def.getJobDelay!(job)).toBe(60_000);
+  });
+
+  it("returns per-job override when present", () => {
+    const job = {
+      ...base,
+      role: "sre" as const,
+      payload: { trigger: "alert", batch_window_ms: 30_000 },
+    };
+    expect(def.getJobDelay!(job)).toBe(30_000);
+  });
+
+  it("caps per-job override at 6 hours", () => {
+    const job = {
+      ...base,
+      role: "sre" as const,
+      payload: { trigger: "alert", batch_window_ms: 999_999_999 },
+    };
+    expect(def.getJobDelay!(job)).toBe(21_600_000);
+  });
+
+  it("returns 0 for scheduled jobs", () => {
+    const job = { ...base, role: "sre" as const, dedup_key: "d1" };
+    expect(def.getJobDelay!(job)).toBe(0);
+  });
+
+  it("returns 0 when batch window is 0", () => {
+    const zeroConfig = { ...mockConfig, SRE_BATCH_WINDOW_MS: 0 } as Config;
+    const zeroHistogram = { observe: vi.fn() } as unknown as Histogram;
+    const zeroRegistry = createDefaultRegistry(zeroConfig, zeroHistogram);
+    const def2 = zeroRegistry.get("sre");
+    const job = {
+      ...base,
+      role: "sre" as const,
+      payload: { trigger: "alert" },
+    };
+    expect(def2.getJobDelay!(job)).toBe(0);
+  });
+});
+
+describe("sre cooldownMs from config", () => {
+  it("reads cooldownMs from SRE_COOLDOWN_MS config", () => {
+    const def = registry.get("sre");
+    expect(def.cooldownMs).toBe(300_000);
+  });
+
+  it("respects custom cooldown value", () => {
+    const customConfig = { ...mockConfig, SRE_COOLDOWN_MS: 120_000 } as Config;
+    const customRegistry = createDefaultRegistry(customConfig, mockHistogram);
+    const def = customRegistry.get("sre");
+    expect(def.cooldownMs).toBe(120_000);
   });
 });
