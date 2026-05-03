@@ -273,3 +273,68 @@ describe("sre cooldownMs from config", () => {
     expect(def.cooldownMs).toBe(120_000);
   });
 });
+
+describe("sre drainBuffer", () => {
+  const def = registry.get("sre");
+  const job: AgentJob = {
+    ...base,
+    role: "sre" as const,
+    payload: { trigger: "alert", alertname: "HighCPU" },
+  };
+
+  beforeEach(() => {
+    vi.mocked(mockHistogram.observe).mockClear();
+  });
+
+  it("observes histogram with drained count", async () => {
+    const items = [
+      JSON.stringify({ alertname: "A1" }),
+      JSON.stringify({ alertname: "A2" }),
+      JSON.stringify({ alertname: "A3" }),
+      JSON.stringify({ alertname: "A4" }),
+      JSON.stringify({ alertname: "A5" }),
+    ];
+    const mockRedis = {
+      eval: vi.fn().mockResolvedValue(items),
+    } as any;
+
+    const result = await def.drainBuffer!("job1", job, mockRedis);
+
+    expect(mockHistogram.observe).toHaveBeenCalledWith(6);
+    expect(result.payload?.alerts).toHaveLength(5);
+  });
+
+  it("uses alerts field not buffered_alerts", async () => {
+    const items = [JSON.stringify({ alertname: "A1" })];
+    const mockRedis = {
+      eval: vi.fn().mockResolvedValue(items),
+    } as any;
+
+    const result = await def.drainBuffer!("job1", job, mockRedis);
+
+    expect(result.payload?.alerts).toBeDefined();
+    expect(result.payload?.buffered_alerts).toBeUndefined();
+  });
+
+  it("does not observe histogram when buffer is empty", async () => {
+    const mockRedis = {
+      eval: vi.fn().mockResolvedValue([]),
+    } as any;
+
+    const result = await def.drainBuffer!("job1", job, mockRedis);
+
+    expect(mockHistogram.observe).not.toHaveBeenCalled();
+    expect(result).toBe(job);
+  });
+
+  it("does not observe histogram when buffer is null", async () => {
+    const mockRedis = {
+      eval: vi.fn().mockResolvedValue(null),
+    } as any;
+
+    const result = await def.drainBuffer!("job1", job, mockRedis);
+
+    expect(mockHistogram.observe).not.toHaveBeenCalled();
+    expect(result).toBe(job);
+  });
+});
