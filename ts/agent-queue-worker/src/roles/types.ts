@@ -27,6 +27,7 @@ export interface RoleDefinition {
   ): DuplicateAction;
   bufferKey?(jobId: string): string;
   drainBuffer?(jobId: string, data: AgentJob, redis: Redis): Promise<AgentJob>;
+  getJobDelay?(job: AgentJob): number;
 }
 
 export function resolveDuplicateAction(
