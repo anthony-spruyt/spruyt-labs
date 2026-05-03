@@ -1,15 +1,15 @@
 import type { Server } from "node:http";
-import type { Worker, Queue } from "bullmq";
+import type { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
-import type { Processor } from "../processor.js";
-import type { RoleRegistry } from "../roles/registry.js";
-import type { CircuitBreaker } from "./guard.js";
 import type { Config } from "../config.js";
 import { fetchReposWithRevertLabels } from "../github.js";
-import { DEFAULT_JOB_OPTIONS } from "./options.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
+import type { Processor } from "../processor.js";
+import type { RoleRegistry } from "../roles/registry.js";
 import { sreTriagedKey } from "../roles/sre-role.js";
+import type { CircuitBreaker } from "./guard.js";
+import { DEFAULT_JOB_OPTIONS } from "./options.js";
 
 export interface LifecycleDeps {
   worker: Worker;

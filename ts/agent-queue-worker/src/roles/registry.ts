@@ -1,10 +1,10 @@
 import type { Histogram } from "prom-client";
-import type { RoleDefinition } from "./types.js";
 import type { Config } from "../config.js";
-import { createPrRole } from "./pr-role.js";
-import { validateRole } from "./validate-role.js";
 import { executeRole } from "./execute-role.js";
+import { createPrRole } from "./pr-role.js";
 import { createSreRole } from "./sre-role.js";
+import type { RoleDefinition } from "./types.js";
+import { validateRole } from "./validate-role.js";
 
 export class RoleRegistry {
   private roles = new Map<string, RoleDefinition>();

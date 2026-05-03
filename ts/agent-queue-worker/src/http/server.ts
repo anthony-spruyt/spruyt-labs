@@ -1,16 +1,16 @@
 import { createServer, type Server } from "node:http";
-import { json, authenticate } from "./middleware.js";
-import {
-  handleAddJob,
-  handleGetJob,
-  handleCompleteJob,
-  handleFailJob,
-  handleRetryJob,
-  handleResetCircuit,
-} from "./routes.js";
-import type { RouteDeps } from "./routes.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
+import { authenticate, json } from "./middleware.js";
+import type { RouteDeps } from "./routes.js";
+import {
+  handleAddJob,
+  handleCompleteJob,
+  handleFailJob,
+  handleGetJob,
+  handleResetCircuit,
+  handleRetryJob,
+} from "./routes.js";
 
 export interface ServerDeps extends RouteDeps {
   isReady: () => boolean;

@@ -1,4 +1,4 @@
-import { Counter, Histogram, Gauge, Registry } from "prom-client";
+import { Counter, Gauge, Histogram, Registry } from "prom-client";
 
 export const registry = new Registry();
 registry.setDefaultLabels({ service: "agent-queue-worker" });

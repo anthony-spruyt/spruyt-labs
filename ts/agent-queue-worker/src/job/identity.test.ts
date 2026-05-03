@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
-import { buildJobIdentity, extractRole } from "./identity.js";
-import { createDefaultRegistry } from "../roles/registry.js";
-import type { AgentJob } from "./schema.js";
 import type { Histogram } from "prom-client";
+import { describe, expect, it, vi } from "vitest";
 import type { Config } from "../config.js";
+import { createDefaultRegistry } from "../roles/registry.js";
+import { buildJobIdentity, extractRole } from "./identity.js";
+import type { AgentJob } from "./schema.js";
 
 const mockConfig = {
   SRE_BATCH_MAX_SIZE: 50,
