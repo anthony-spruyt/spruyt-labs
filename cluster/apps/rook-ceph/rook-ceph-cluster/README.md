@@ -26,8 +26,11 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 ### Preconditions
 
 - Confirm the repository working tree is clean and on the intended feature branch.
+
 - Verify Flux controllers are healthy (`flux get kustomizations -n flux-system`, `flux get helmreleases -A`).
+
 - Identify maintenance windows when storage operations could impact availability.
+
 - Capture the current Helm release revision for rollback reference:
 
   ```bash
@@ -39,14 +42,16 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 #### Phase 1 – Plan and Author Changes
 
 1. Update chart versions or values under `cluster/apps/rook-ceph/rook-ceph-cluster/app/` as required.
-2. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
-3. Execute targeted dry runs when touching Helm values:
+
+1. Run `task validate` (invokes `kubeconform`, `yamllint`, and policy checks) to confirm schema compliance.
+
+1. Execute targeted dry runs when touching Helm values:
 
    ```bash
    flux diff hr rook-ceph-cluster --namespace rook-ceph
    ```
 
-4. Commit changes with runbook updates and open a pull request.
+1. Commit changes with runbook updates and open a pull request.
 
 #### Phase 2 – Reconcile with Flux
 
@@ -57,7 +62,7 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
    flux get kustomizations rook-ceph-cluster -n flux-system
    ```
 
-2. Confirm the Helm release upgrade succeeded:
+1. Confirm the Helm release upgrade succeeded:
 
    ```bash
    flux get helmrelease rook-ceph-cluster -n rook-ceph
@@ -72,14 +77,14 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
    kubectl logs -n rook-ceph deployment/rook-ceph-mgr
    ```
 
-2. Check Ceph cluster status:
+1. Check Ceph cluster status:
 
    ```bash
    kubectl get cephcluster -n rook-ceph
    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
-3. Monitor OSD status:
+1. Monitor OSD status:
 
    ```bash
    kubectl get cephosd -n rook-ceph
@@ -93,13 +98,13 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health
    ```
 
-2. View cluster details:
+1. View cluster details:
 
    ```bash
    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
-3. Access toolbox for debugging:
+1. Access toolbox for debugging:
 
    ```bash
    kubectl -n rook-ceph exec -it deployment/rook-ceph-tools -- bash
@@ -108,21 +113,22 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 #### Phase 5 – Rollback or Disable
 
 1. Revert the offending commit and push to `main`; Flux will reconcile the prior state.
-2. Temporarily suspend reconciliation during investigations:
+
+1. Temporarily suspend reconciliation during investigations:
 
    ```bash
    flux suspend kustomization rook-ceph-cluster -n flux-system
    flux suspend helmrelease rook-ceph-cluster -n rook-ceph
    ```
 
-3. Resume once remediation is complete:
+1. Resume once remediation is complete:
 
    ```bash
    flux resume kustomization rook-ceph-cluster -n flux-system
    flux resume helmrelease rook-ceph-cluster -n rook-ceph
    ```
 
-4. Scale deployments to zero as a last resort (not recommended for storage):
+1. Scale deployments to zero as a last resort (not recommended for storage):
 
    ```bash
    kubectl -n rook-ceph scale deploy/rook-ceph-mgr --replicas=0
@@ -138,7 +144,9 @@ Operate the Rook Ceph cluster Helm release to deploy and manage a Ceph storage c
 ### Troubleshooting Guidance
 
 - If cluster health is degraded, check OSD and MON status.
+
 - For storage provisioning issues, verify device availability and configuration.
+
 - When the Helm release fails to deploy, check rendered manifests:
 
   ```bash
@@ -190,7 +198,7 @@ Each node has two Thunderbolt ports connecting to the other two nodes in a full 
 Each node has a link-local IP on the Thunderbolt network:
 
 | Node    | IP Address      |
-|---------|-----------------|
+| ------- | --------------- |
 | ms-01-1 | 169.254.255.101 |
 | ms-01-2 | 169.254.255.102 |
 | ms-01-3 | 169.254.255.103 |
@@ -212,7 +220,7 @@ Thunderbolt interface names (`thunderbolt0`, `thunderbolt1`) are **not stable ac
 The busPath values map to physical Thunderbolt connections:
 
 | Node    | busPath 0-1.0 → | busPath 1-1.0 → |
-|---------|-----------------|-----------------|
+| ------- | --------------- | --------------- |
 | ms-01-1 | ms-01-2         | ms-01-3         |
 | ms-01-2 | ms-01-1         | ms-01-3         |
 | ms-01-3 | ms-01-1         | ms-01-2         |

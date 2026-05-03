@@ -46,13 +46,14 @@ kubectl get pvc -A
    - **Diagnosis**: Check CRD installation and API server
    - **Resolution**: Reinstall CRDs and verify API server connectivity
 
-2. **RBAC permission errors**:
+1. **RBAC permission errors**:
 
    - **Symptom**: Access denied errors in logs
    - **Diagnosis**: Check RBAC roles and bindings
    - **Resolution**: Verify cluster roles and service account permissions
 
-3. **Storage backend connectivity issues**:
+1. **Storage backend connectivity issues**:
+
    - **Symptom**: Snapshot creation failures
    - **Diagnosis**: Check storage backend connectivity
    - **Resolution**: Verify storage provider configuration and network access

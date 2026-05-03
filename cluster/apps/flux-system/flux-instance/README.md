@@ -77,13 +77,14 @@ flux get kustomizations -A
    - **Diagnosis**: Check Git repository access and credentials
    - **Resolution**: Verify SSH keys and repository URLs
 
-2. **Kustomization reconciliation errors**:
+1. **Kustomization reconciliation errors**:
 
    - **Symptom**: Kustomizations stuck in progress
    - **Diagnosis**: Check kustomization configuration and resource validity
    - **Resolution**: Verify YAML syntax and resource definitions
 
-3. **RBAC permission errors**:
+1. **RBAC permission errors**:
+
    - **Symptom**: Access denied errors in logs
    - **Diagnosis**: Check RBAC permissions and service accounts
    - **Resolution**: Verify cluster roles and role bindings

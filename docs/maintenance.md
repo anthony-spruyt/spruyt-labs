@@ -14,20 +14,21 @@ Complete these verification steps before submitting changes to ensure cluster st
    kubectl api-resources
    ```
 
-2. Review fields you intend to modify:
+1. Review fields you intend to modify:
 
    ```bash
    kubectl explain <resource_type>[.<field_path>] --recursive
    ```
 
-3. Archive current manifest:
+1. Archive current manifest:
 
    ```bash
    kubectl get <resource_type> <resource_name> -n <namespace> -o yaml
    ```
 
-4. Validate Helm chart defaults or CRD documentation through upstream references
-5. Capture assumptions, dependencies, and version requirements in change notes
+1. Validate Helm chart defaults or CRD documentation through upstream references
+
+1. Capture assumptions, dependencies, and version requirements in change notes
 
 ### Terraform Infrastructure Changes
 
@@ -38,20 +39,21 @@ Complete these verification steps before submitting changes to ensure cluster st
    terraform validate
    ```
 
-2. Run plan and capture output:
+1. Run plan and capture output:
 
    ```bash
    terraform plan -out plan.tfplan
    ```
 
-3. Request review with plan output attached
-4. Apply with exact plan reviewed:
+1. Request review with plan output attached
+
+1. Apply with exact plan reviewed:
 
    ```bash
    terraform apply plan.tfplan
    ```
 
-5. Confirm state file synchronization and monitor for drift
+1. Confirm state file synchronization and monitor for drift
 
 ### Talos Configuration Changes
 
@@ -62,19 +64,19 @@ Complete these verification steps before submitting changes to ensure cluster st
    talosctl logs -f kubelet
    ```
 
-2. Diff intended vs live config:
+1. Diff intended vs live config:
 
    ```bash
    talosctl config diff
    ```
 
-3. Apply changes:
+1. Apply changes:
 
    ```bash
    talosctl apply-config --insecure --nodes <target> --file <config.yaml>
    ```
 
-4. Verify post-change status:
+1. Verify post-change status:
 
    ```bash
    talosctl health
@@ -93,8 +95,8 @@ Renovate automates dependency updates. See [.claude/rules/renovate.md](../.claud
 ### Quarterly Maintenance
 
 1. Review the Renovate configuration file `.github/renovate.json5`
-2. Monitor update success rates and system stability
-3. Audit manager coverage for all dependency types
+1. Monitor update success rates and system stability
+1. Audit manager coverage for all dependency types
 
 ### Troubleshooting Updates
 

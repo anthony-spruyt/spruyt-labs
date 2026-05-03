@@ -15,10 +15,10 @@ Deployed as a `low-priority` workload using bjw-s app-template.
 
 ## Access
 
-| Consumer                    | URL                                                         | Transport                    |
-| --------------------------- | ----------------------------------------------------------- | ---------------------------- |
-| Claude Code (dev container) | `https://mcp-vm.lan.${EXTERNAL_DOMAIN}/sse`                 | SSE over HTTPS (LAN-only)    |
-| Streamable HTTP             | Same host, `/mcp` endpoint                                  | HTTP (alternative transport) |
+| Consumer                    | URL                                         | Transport                    |
+| --------------------------- | ------------------------------------------- | ---------------------------- |
+| Claude Code (dev container) | `https://mcp-vm.lan.${EXTERNAL_DOMAIN}/sse` | SSE over HTTPS (LAN-only)    |
+| Streamable HTTP             | Same host, `/mcp` endpoint                  | HTTP (alternative transport) |
 
 ## Operation
 
@@ -44,10 +44,12 @@ kubectl exec -it deploy/mcp-victoriametrics -n observability -- wget -qO- http:/
 ### Common Issues
 
 1. **MCP server cannot reach VMSingle**
+
    - **Symptom**: Connection refused or timeout in logs
    - **Resolution**: Verify VMSingle is running: `kubectl get pods -n observability -l app.kubernetes.io/name=vmsingle`
 
-2. **Claude Code cannot connect**
+1. **Claude Code cannot connect**
+
    - **Symptom**: MCP connection error in Claude Code
    - **Resolution**: Verify IngressRoute is active: `kubectl get ingressroute -n observability ingress-routes-lan-https-mcp-vm` and certificate is ready: `kubectl get certificate -n observability -l app.kubernetes.io/name=mcp-victoriametrics`
 

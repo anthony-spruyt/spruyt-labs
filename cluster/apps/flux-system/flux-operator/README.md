@@ -76,19 +76,19 @@ kubectl top pods -n flux-system
    - **Diagnosis**: Check Git repository connectivity and credentials
    - **Resolution**: Verify SSH keys and repository URLs
 
-2. **RBAC permission errors**:
+1. **RBAC permission errors**:
 
    - **Symptom**: Access denied errors in logs
    - **Diagnosis**: Check RBAC permissions and service accounts
    - **Resolution**: Verify cluster roles and role bindings
 
-3. **Reconciliation delays**:
+1. **Reconciliation delays**:
 
    - **Symptom**: Slow operator reconciliation
    - **Diagnosis**: Check operator performance and resource usage
    - **Resolution**: Verify operator resources and network latency
 
-4. **Configuration errors**:
+1. **Configuration errors**:
 
    - **Symptom**: Operator service not starting
    - **Diagnosis**: Check configuration syntax and operator parameters

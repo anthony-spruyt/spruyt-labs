@@ -2,11 +2,8 @@
 
 ## Overview
 
-GitHub MCP (Model Context Protocol) server that provides GitHub API access to Claude agents.
-It uses a read-tier GitHub App installation token for all API operations (issues, PRs, code search, repository contents).
-The server uses a two-container architecture: the `app` container (github-mcp-server) runs on port 8083,
-while a `auth-proxy` container (Caddy) handles API key authentication and exposes port 8082 via the Kubernetes Service.
-Accessible only to permitted workloads via Cilium network policies.
+GitHub MCP (Model Context Protocol) server that provides GitHub API access to Claude agents. It uses a read-tier GitHub App installation token for all API operations (issues, PRs, code search, repository contents). The server uses a two-container architecture: the `app` container (github-mcp-server) runs on port 8083, while a `auth-proxy` container (Caddy) handles API key authentication and
+exposes port 8082 via the Kubernetes Service. Accessible only to permitted workloads via Cilium network policies.
 
 The read-tier token is synced from `github-system` by an ESO ExternalSecret and refreshed whenever `github-token-rotation` runs.
 
@@ -55,6 +52,7 @@ kubectl run -it --rm debug --image=alpine --restart=Never -- \
 ### Common Issues
 
 1. **Pod in CrashLoopBackOff**
+
    - **Symptom**: Pod repeatedly crashes on startup.
    - **Resolution**: Check pod logs and verify the token secret is present:
      ```bash
@@ -62,7 +60,8 @@ kubectl run -it --rm debug --image=alpine --restart=Never -- \
      kubectl get secret github-mcp-credentials -n github-mcp
      ```
 
-2. **Connection refused / service unreachable**
+1. **Connection refused / service unreachable**
+
    - **Symptom**: Clients get connection refused on port 8082.
    - **Resolution**: Verify the pod is Running and the service exists. Check CNPs are not blocking traffic:
      ```bash
@@ -70,7 +69,8 @@ kubectl run -it --rm debug --image=alpine --restart=Never -- \
      kubectl get ciliumnetworkpolicy -n github-mcp
      ```
 
-3. **401 Unauthorized from GitHub API**
+1. **401 Unauthorized from GitHub API**
+
    - **Symptom**: Server logs show 401 errors when calling GitHub API.
    - **Resolution**: The read-tier token has expired. Trigger a manual token rotation:
      ```bash
@@ -83,7 +83,8 @@ kubectl run -it --rm debug --image=alpine --restart=Never -- \
        -n github-mcp force-sync="$(date +%s)" --overwrite
      ```
 
-4. **ESO sync failing**
+1. **ESO sync failing**
+
    - **Symptom**: `kubectl get externalsecret github-bot-credentials -n github-mcp` shows `SecretSyncedError`.
    - **Resolution**: Check SecretStore RBAC and verify the source secret exists in `github-system`:
      ```bash

@@ -26,7 +26,7 @@ Whoami is a simple HTTP service that returns information about the requesting cl
    kubectl exec -it <test-pod> -n whoami -- curl -I http://whoami.whoami.svc.cluster.local
    ```
 
-2. **Performance monitoring**:
+1. **Performance monitoring**:
 
    ```bash
    # Check service performance
@@ -36,7 +36,7 @@ Whoami is a simple HTTP service that returns information about the requesting cl
    kubectl logs -n whoami <whoami-pod> | grep "request"
    ```
 
-3. **Configuration updates**:
+1. **Configuration updates**:
 
    ```bash
    # Update Whoami configuration
@@ -77,19 +77,19 @@ kubectl get pods -n whoami --no-headers | grep 'Running'
    - **Diagnosis**: Check network connectivity and DNS
    - **Resolution**: Verify Cilium network policies and service discovery
 
-2. **Response errors**:
+1. **Response errors**:
 
    - **Symptom**: HTTP error responses
    - **Diagnosis**: Check service logs and configuration
    - **Resolution**: Verify service configuration and resource allocation
 
-3. **Performance bottlenecks**:
+1. **Performance bottlenecks**:
 
    - **Symptom**: High latency or timeouts
    - **Diagnosis**: Monitor resource usage and request patterns
    - **Resolution**: Scale resources or optimize service configuration
 
-4. **Ingress routing problems**:
+1. **Ingress routing problems**:
 
    - **Symptom**: External access failures
    - **Diagnosis**: Check ingress routes and Traefik configuration

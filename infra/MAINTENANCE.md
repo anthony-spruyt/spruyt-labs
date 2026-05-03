@@ -22,13 +22,13 @@ This document outlines maintenance procedures for the spruyt-labs infrastructure
    cd infra/terraform/aws/<workspace-name>
    ```
 
-2. **Initialize Backend**:
+1. **Initialize Backend**:
 
    ```bash
    terraform init
    ```
 
-3. **Verify Workspace**:
+1. **Verify Workspace**:
 
    ```bash
    terraform workspace list
@@ -57,18 +57,18 @@ This document outlines maintenance procedures for the spruyt-labs infrastructure
    terraform plan -out plan.tfplan
    ```
 
-2. **Review Plan Output**:
+1. **Review Plan Output**:
 
    - Check for unexpected changes
    - Verify resource modifications
 
-3. **Apply Changes**:
+1. **Apply Changes**:
 
    ```bash
    terraform apply plan.tfplan
    ```
 
-4. **Verify Application**:
+1. **Verify Application**:
 
    ```bash
    terraform show
@@ -91,7 +91,7 @@ This document outlines maintenance procedures for the spruyt-labs infrastructure
    terraform plan -refresh-only
    ```
 
-2. **Identify Drift**:
+1. **Identify Drift**:
 
    - Review changes from AWS state
    - Document out-of-band modifications
@@ -104,7 +104,7 @@ This document outlines maintenance procedures for the spruyt-labs infrastructure
    terraform import <resource.address> <resource.id>
    ```
 
-2. **Reconcile Configuration**:
+1. **Reconcile Configuration**:
 
    ```bash
    terraform plan
@@ -194,14 +194,14 @@ kubectl -n <namespace> exec -it <cnpg-cluster>-1 -- psql < backup.sql
    - Identify affected AWS resources
    - Check Terraform state integrity
 
-2. **Rebuild Resources**:
+1. **Rebuild Resources**:
 
    ```bash
    terraform plan
    terraform apply
    ```
 
-3. **Verify Recovery**:
+1. **Verify Recovery**:
 
    - AWS resources recreated
    - Applications regain access

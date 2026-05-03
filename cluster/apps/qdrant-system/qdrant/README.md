@@ -40,7 +40,7 @@ kubectl exec -it <test-pod> -n qdrant-system -- curl -v http://qdrant.qdrant-sys
    kubectl logs -n qdrant-system <qdrant-pod> | grep "collection"
    ```
 
-2. **Search operations**:
+1. **Search operations**:
 
    ```bash
    # Check search performance
@@ -50,7 +50,7 @@ kubectl exec -it <test-pod> -n qdrant-system -- curl -v http://qdrant.qdrant-sys
    kubectl logs -n qdrant-system <qdrant-pod> | grep "search"
    ```
 
-3. **Configuration updates**:
+1. **Configuration updates**:
 
    ```bash
    # Update Qdrant configuration
@@ -70,19 +70,19 @@ kubectl exec -it <test-pod> -n qdrant-system -- curl -v http://qdrant.qdrant-sys
    - **Diagnosis**: Check indexing logs and performance
    - **Resolution**: Optimize vector dimensions or scale resources
 
-2. **Search performance issues**:
+1. **Search performance issues**:
 
    - **Symptom**: High latency search queries
    - **Diagnosis**: Monitor search metrics and query patterns
    - **Resolution**: Optimize search parameters or scale cluster
 
-3. **Storage capacity problems**:
+1. **Storage capacity problems**:
 
    - **Symptom**: Storage full or write errors
    - **Diagnosis**: Check storage usage and capacity
    - **Resolution**: Scale storage or clean up old collections
 
-4. **Network connectivity failures**:
+1. **Network connectivity failures**:
 
    - **Symptom**: API connection timeouts
    - **Diagnosis**: Test network connectivity and DNS

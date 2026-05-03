@@ -2,12 +2,8 @@
 
 ## Overview
 
-This runbook governs the FluxCD control plane housed under `cluster/flux/`.
-It defines how platform operators bootstrap Flux onto a Talos-backed cluster,
-maintain reconciliation health, curate Git/OCI/Helm sources, and recover from
-controller or automation failures. The guidance aligns with the
-repository-wide runbook standards declared in the root documentation and
-complements the workload-focused procedures in `cluster/apps/`.
+This runbook governs the FluxCD control plane housed under `cluster/flux/`. It defines how platform operators bootstrap Flux onto a Talos-backed cluster, maintain reconciliation health, curate Git/OCI/Helm sources, and recover from controller or automation failures. The guidance aligns with the repository-wide runbook standards declared in the root documentation and complements the
+workload-focused procedures in `cluster/apps/`.
 
 ## Directory Layout
 
@@ -30,31 +26,24 @@ complements the workload-focused procedures in `cluster/apps/`.
 
 ### Summary
 
-Bootstrap and operate the Flux GitOps control plane, ensuring declarative
-resources under `cluster/` reconcile predictably, sources remain healthy,
-automation jobs execute safely, and failures are remediated with minimal
-downtime.
+Bootstrap and operate the Flux GitOps control plane, ensuring declarative resources under `cluster/` reconcile predictably, sources remain healthy, automation jobs execute safely, and failures are remediated with minimal downtime.
 
 ### Preconditions
 
-- Execute from the repository devcontainer or install `flux`, `kubectl`,
-  `age`, `sops`, and `task` locally.
-- Possess access to the Age identity file that decrypts
-  `cluster/flux/meta/cluster-secrets.sops.yaml` and the `talosconfig` used by
-  bootstrap Talos nodes.
-- Confirm network reachability from the management workstation to the Talos
-  control plane API and to upstream Git/OCI/Helm endpoints.
-- Verify no outstanding Flux suspensions that would block bootstrap or
-  reconciliation (`flux get kustomizations -n flux-system`).
+- Execute from the repository devcontainer or install `flux`, `kubectl`, `age`, `sops`, and `task` locally.
+- Possess access to the Age identity file that decrypts `cluster/flux/meta/cluster-secrets.sops.yaml` and the `talosconfig` used by bootstrap Talos nodes.
+- Confirm network reachability from the management workstation to the Talos control plane API and to upstream Git/OCI/Helm endpoints.
+- Verify no outstanding Flux suspensions that would block bootstrap or reconciliation (`flux get kustomizations -n flux-system`).
 
 ### Procedure
 
 #### Phase 1 – Bootstrap or Rebuild Flux
 
-1. Ensure the target cluster is reachable and Kubernetes credentials are
-   exported (`export KUBECONFIG=...`).
-2. Install Flux CLI parity via the devcontainer or `task dev-env:install-flux`.
-3. Create the `flux-system` namespace and bootstrap manifests with Flux CLI:
+1. Ensure the target cluster is reachable and Kubernetes credentials are exported (`export KUBECONFIG=...`).
+
+1. Install Flux CLI parity via the devcontainer or `task dev-env:install-flux`.
+
+1. Create the `flux-system` namespace and bootstrap manifests with Flux CLI:
 
    ```bash
    flux bootstrap git \
@@ -65,7 +54,7 @@ downtime.
      --token-auth
    ```
 
-4. Import the Age key material so Flux can decrypt SOPS secrets:
+1. Import the Age key material so Flux can decrypt SOPS secrets:
 
    ```bash
    kubectl -n flux-system create secret generic sops-age \
@@ -73,14 +62,14 @@ downtime.
      --dry-run=client -o yaml | kubectl apply -f -
    ```
 
-5. Apply repository metadata if bootstrap used a minimal path:
+1. Apply repository metadata if bootstrap used a minimal path:
 
    ```bash
    kubectl apply -f cluster/flux/meta/cluster-settings.yaml
    kubectl apply -k cluster/flux/meta
    ```
 
-6. Kick off an initial reconciliation to cascade into workloads:
+1. Kick off an initial reconciliation to cascade into workloads:
 
    ```bash
    flux reconcile kustomization cluster-meta --with-source
@@ -97,28 +86,27 @@ downtime.
    flux get helmreleases -A
    ```
 
-2. Force reconciliation after merges or hotfixes:
+1. Force reconciliation after merges or hotfixes:
 
    ```bash
    flux reconcile kustomization <kustomization-name> --with-source
    flux reconcile helmrelease <release-name> -n <namespace> --with-source
    ```
 
-3. Review detailed status and events:
+1. Review detailed status and events:
 
    ```bash
    flux logs --kind Kustomization --name <name> -n flux-system
    flux events
    ```
 
-4. For visual diffs, launch Flux Capacitor (`task flux:cap`) and authenticate
-   via the forwarded GUI session.
+1. For visual diffs, launch Flux Capacitor (`task flux:cap`) and authenticate via the forwarded GUI session.
 
 #### Phase 3 – Source Management (Git, OCI, Helm)
 
-1. Add or update sources inside `cluster/flux/meta/repositories/` and commit
-   the changes.
-2. Validate source connectivity:
+1. Add or update sources inside `cluster/flux/meta/repositories/` and commit the changes.
+
+1. Validate source connectivity:
 
    ```bash
    flux get sources git,helm,oci -A
@@ -126,9 +114,7 @@ downtime.
    flux reconcile source helm <repo-name> -n flux-system
    ```
 
-3. Rotate authentication secrets (SSH deploy keys, registry credentials) by
-   updating the relevant SOPS-encrypted entries and reapplying
-   `cluster/flux/meta`:
+1. Rotate authentication secrets (SSH deploy keys, registry credentials) by updating the relevant SOPS-encrypted entries and reapplying `cluster/flux/meta`:
 
    ```bash
    sops cluster/flux/meta/cluster-secrets.sops.yaml
@@ -145,21 +131,20 @@ downtime.
    flux get image updateautomations -A
    ```
 
-2. Trigger an image automation run or dry-run diff:
+1. Trigger an image automation run or dry-run diff:
 
    ```bash
    flux reconcile image repository <name> -n flux-system
    flux image update --dry-run
    ```
 
-3. Commit Flux-generated automation changes promptly to avoid drift. Review
-   diffs with `flux diff ks <name> --path ./cluster/...` before approval.
+1. Commit Flux-generated automation changes promptly to avoid drift. Review diffs with `flux diff ks <name> --path ./cluster/...` before approval.
 
 #### Phase 5 – Rollback and Recovery
 
-1. Revert problematic commits and push to `main` to restore prior desired
-   state.
-2. Temporarily suspend Flux objects when isolation is required:
+1. Revert problematic commits and push to `main` to restore prior desired state.
+
+1. Temporarily suspend Flux objects when isolation is required:
 
    ```bash
    flux suspend kustomization <name> -n flux-system
@@ -172,7 +157,7 @@ downtime.
    flux resume kustomization <name> -n flux-system
    ```
 
-3. Recreate Flux components if the namespace becomes unhealthy:
+1. Recreate Flux components if the namespace becomes unhealthy:
 
    ```bash
    kubectl delete namespace flux-system --wait=false
@@ -182,32 +167,23 @@ downtime.
      --path=cluster
    ```
 
-4. Validate Talos control plane health (`talosctl health`) before concluding
-   recovery.
+1. Validate Talos control plane health (`talosctl health`) before concluding recovery.
 
 ### Validation
 
-- Confirm `flux get kustomizations -n flux-system` reports `Ready=True` for
-  `cluster-meta` and `cluster-apps`.
-- Ensure `kubectl get pods -n flux-system` shows every controller in `Ready`
-  state.
-- Check `flux reconcile kustomization cluster-apps --with-source` completes
-  without errors after significant changes.
+- Confirm `flux get kustomizations -n flux-system` reports `Ready=True` for `cluster-meta` and `cluster-apps`.
+- Ensure `kubectl get pods -n flux-system` shows every controller in `Ready` state.
+- Check `flux reconcile kustomization cluster-apps --with-source` completes without errors after significant changes.
 
 ### Troubleshooting Guidance
 
-Refer to the dedicated troubleshooting section below for detailed diagnostics
-on reconciliation stalls, failed Kustomizations, source authentication errors,
-and automation issues.
+Refer to the dedicated troubleshooting section below for detailed diagnostics on reconciliation stalls, failed Kustomizations, source authentication errors, and automation issues.
 
 ### Escalation
 
-- Engage the platform on-call channel with recent `flux logs`, commit hashes,
-  and runbook references.
-- Coordinate with secrets owners before rotating credentials impacting shared
-  repositories.
-- Escalate to Talos owners if bootstrap failures trace back to control-plane
-  instability.
+- Engage the platform on-call channel with recent `flux logs`, commit hashes, and runbook references.
+- Coordinate with secrets owners before rotating credentials impacting shared repositories.
+- Escalate to Talos owners if bootstrap failures trace back to control-plane instability.
 
 ## Validation and Testing
 
@@ -236,8 +212,9 @@ and automation issues.
    flux events --for Kustomization/<name> -n flux-system
    ```
 
-2. Detect apply conflicts or drift using Flux Capacitor or `flux diff ks`.
-3. Clear stuck locks by reapplying:
+1. Detect apply conflicts or drift using Flux Capacitor or `flux diff ks`.
+
+1. Clear stuck locks by reapplying:
 
    ```bash
    flux suspend kustomization <name> -n flux-system
@@ -253,10 +230,9 @@ and automation issues.
    flux get helmrelease <release> -n <namespace> -o yaml
    ```
 
-2. Validate rendered manifests locally (`kustomize build`, `helm template`,
-   `kubeconform`).
-3. Ensure dependencies (CRDs, namespaces, secrets) exist prior to
-   reconciliation.
+1. Validate rendered manifests locally (`kustomize build`, `helm template`, `kubeconform`).
+
+1. Ensure dependencies (CRDs, namespaces, secrets) exist prior to reconciliation.
 
 ### Source Authentication Issues
 
@@ -268,11 +244,9 @@ and automation issues.
    flux get sources oci -A
    ```
 
-2. Confirm credentials stored in
-   `cluster/flux/meta/cluster-secrets.sops.yaml` decrypt correctly by running
-   `sops -d`.
-3. Rotate deploy keys or tokens, re-encrypt with Age, and reapply
-   `cluster/flux/meta`.
+1. Confirm credentials stored in `cluster/flux/meta/cluster-secrets.sops.yaml` decrypt correctly by running `sops -d`.
+
+1. Rotate deploy keys or tokens, re-encrypt with Age, and reapply `cluster/flux/meta`.
 
 ### Image Automation Failures
 
@@ -283,10 +257,9 @@ and automation issues.
    flux logs --kind ImageUpdateAutomation --name <name> -n <namespace>
    ```
 
-2. Ensure policies resolve tags (`flux get image policies -A`). Update SemVer
-   filters if no tags match.
-3. Validate commit permissions for automation bots and reconcile the Git
-   source after adjustments.
+1. Ensure policies resolve tags (`flux get image policies -A`). Update SemVer filters if no tags match.
+
+1. Validate commit permissions for automation bots and reconcile the Git source after adjustments.
 
 ## References
 

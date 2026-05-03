@@ -81,7 +81,7 @@ kubectl patch pvc data-nexus-0 -n nexus-system \
 `NEXUS_SECURITY_INITIAL_PASSWORD` applies only on first-boot with an empty PVC. To rotate later:
 
 1. `PUT /service/rest/v1/security/users/admin/change-password` via the API
-2. Update the `nexus-admin` SOPS secret with the new password
+1. Update the `nexus-admin` SOPS secret with the new password
 
 The provisioning Job reads `admin-password` on every run — if it's stale, the Job's curl commands will 401. Always rotate in the API first, then update the secret.
 
@@ -90,21 +90,25 @@ The provisioning Job reads `admin-password` on every run — if it's stale, the 
 ### Common Issues
 
 1. **Provisioning Job stuck or CrashLoopBackOff**
+
    - **Symptom**: Repos never appear in the UI; `kubectl get job` shows 0/1 completions
    - **Diagnosis**: `kubectl logs -n nexus-system -l app.kubernetes.io/name=nexus-provisioner`
    - **Resolution**: Most common cause is Nexus not yet writable. Job retries up to `backoffLimit: 10`. If a specific `upsert` call 400s, check the repo JSON body against the Nexus API version. Privilege ID mismatch (`nx-metrics-all` vs `nx-metrics-read`) on older Nexus versions — grep `/v1/security/privileges?type=application` for the current ID and adjust `provision.sh`.
 
-2. **apt upstream proxy returns 502/504**
+1. **apt upstream proxy returns 502/504**
+
    - **Symptom**: `curl https://nexus.lan.${EXTERNAL_DOMAIN}/repository/apt-ubuntu-proxy/dists/jammy/Release` fails
    - **Diagnosis**: Nexus auto-blocks proxy repos after upstream failures (configurable). Check Nexus UI → Repositories → `apt-ubuntu-proxy` → Status.
    - **Resolution**: Click "Unblock now" in UI, or wait for the auto-unblock window. Verify egress CNP rule permits `world:443/80`.
 
-3. **Metrics endpoint unreachable from vmagent**
+1. **Metrics endpoint unreachable from vmagent**
+
    - **Symptom**: VMPodScrape target shows as down in VictoriaMetrics
    - **Diagnosis**: `kubectl get vmpodscrape -n nexus-system nexus -o yaml`; check vmagent logs
    - **Resolution**: Confirm the CNP allows `k8s:app.kubernetes.io/name: vmagent` from `observability` to port 8081, and that `nx-metrics-all` is on the anonymous role (merged by the provisioning Job).
 
-4. **Docker connector `BindException` in Nexus logs**
+1. **Docker connector `BindException` in Nexus logs**
+
    - **Symptom**: Nexus log reports `java.net.BindException: Address already in use`
    - **Diagnosis**: Two repos claim the same `httpPort` in their JSON
    - **Resolution**: Fix `provision.sh` — `docker-group` owns `8082`, `envbuilder-cache` owns `8083`, no other repo should claim those.

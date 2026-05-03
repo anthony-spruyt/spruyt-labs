@@ -77,13 +77,14 @@ kubectl get ciliumloadbalancerippools -n kube-system
    - **Diagnosis**: Check BGP configuration and peer reachability
    - **Resolution**: Verify BGP peer IP addresses and AS numbers
 
-2. **Network policy enforcement issues**:
+1. **Network policy enforcement issues**:
 
    - **Symptom**: Unexpected network connectivity
    - **Diagnosis**: Review network policy rules and labels
    - **Resolution**: Verify policy selectors and rule definitions
 
-3. **eBPF loading failures**:
+1. **eBPF loading failures**:
+
    - **Symptom**: Cilium pods failing to start
    - **Diagnosis**: Check kernel compatibility and eBPF support
    - **Resolution**: Verify node kernel version and eBPF requirements

@@ -23,7 +23,7 @@ n8n is a workflow automation tool that connects various applications and service
    - Create and manage workflows
    - Monitor workflow execution
 
-2. **Database operations** - See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `n8n-cnpg-cluster`
+1. **Database operations** - See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `n8n-cnpg-cluster`
 
    ```bash
    # Check connection pooler status
@@ -33,7 +33,7 @@ n8n is a workflow automation tool that connects various applications and service
    kubectl get scheduledbackups -n n8n-system
    ```
 
-3. **Performance monitoring**:
+1. **Performance monitoring**:
 
    ```bash
    # Check n8n service status
@@ -74,19 +74,19 @@ kubectl top pods -n n8n-system
    - **Diagnosis**: Check CNPG cluster health and connection details
    - **Resolution**: Verify PostgreSQL credentials and network connectivity
 
-2. **Workflow execution errors**:
+1. **Workflow execution errors**:
 
    - **Symptom**: Workflows failing to execute
    - **Diagnosis**: Check n8n logs and workflow configuration
    - **Resolution**: Verify workflow syntax and API connections
 
-3. **Resource constraints**:
+1. **Resource constraints**:
 
    - **Symptom**: Pods in Pending state or frequent restarts
    - **Diagnosis**: Check resource requests vs available cluster resources
    - **Resolution**: Adjust resource limits or scale cluster
 
-4. **Network connectivity issues**:
+1. **Network connectivity issues**:
 
    - **Symptom**: External API connections failing
    - **Diagnosis**: Check network policies and egress connectivity
@@ -99,10 +99,10 @@ N8N Community Edition doesn't support OAuth2 natively. SSO is implemented via Au
 ### How It Works
 
 1. User navigates to `https://n8n.${EXTERNAL_DOMAIN}`
-2. Traefik's forwardAuth middleware calls Authentik's standalone outpost
-3. Authentik authenticates user and injects `X-authentik-email` header
-4. N8N's external hooks (`hooks.js`) read the header and issue a session cookie
-5. User is logged in with their pre-provisioned N8N account
+1. Traefik's forwardAuth middleware calls Authentik's standalone outpost
+1. Authentik authenticates user and injects `X-authentik-email` header
+1. N8N's external hooks (`hooks.js`) read the header and issue a session cookie
+1. User is logged in with their pre-provisioned N8N account
 
 ### User Provisioning
 
@@ -111,8 +111,8 @@ N8N Community Edition doesn't support OAuth2 natively. SSO is implemented via Au
 To add a user:
 
 1. Log in to N8N as admin
-2. Go to Settings > Users
-3. Invite user with their Authentik email address
+1. Go to Settings > Users
+1. Invite user with their Authentik email address
 
 ### MFA Considerations
 
@@ -138,18 +138,18 @@ n8n hosts a unified SRE workflow that combines alert triage and scheduled health
 
 ### Triggers
 
-| Trigger | Source | Agent |
-| ------- | ------ | ----- |
-| Alertmanager Webhook | Firing alerts (filtered: Watchdog, InfoInhibitor, resolved) | SRE triage |
-| Cron (6h) | Scheduled | Health check |
-| MCP Server Trigger | Agent `submit_alert_triage` / `submit_health_check_triage` call | Result processing |
+| Trigger              | Source                                                          | Agent             |
+| -------------------- | --------------------------------------------------------------- | ----------------- |
+| Alertmanager Webhook | Firing alerts (filtered: Watchdog, InfoInhibitor, resolved)     | SRE triage        |
+| Cron (6h)            | Scheduled                                                       | Health check      |
+| MCP Server Trigger   | Agent `submit_alert_triage` / `submit_health_check_triage` call | Result processing |
 
 ### Authentication
 
-| Endpoint | Credential |
-| -------- | ---------- |
+| Endpoint             | Credential                                        |
+| -------------------- | ------------------------------------------------- |
 | Alertmanager Webhook | `Alertmanager webhook for SRE agent` (headerAuth) |
-| MCP Server Trigger | `SRE Agent MCP auth` (headerAuth) |
+| MCP Server Trigger   | `SRE Agent MCP auth` (headerAuth)                 |
 
 ### Agent Configuration
 

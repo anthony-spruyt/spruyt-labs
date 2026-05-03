@@ -1,15 +1,14 @@
 # Coder spruyt-labs Template
 
-Kubernetes workspace template for Coder, hardcoded to the `spruyt-labs` repo
-(SSH URL enforced). Sibling of the generic `devcontainer` template; this one
-pre-fills `coder_parameter.repo` and rejects HTTPS URLs at create time so
-`git push` via the mounted signing key always works.
+Kubernetes workspace template for Coder, hardcoded to the `spruyt-labs` repo (SSH URL enforced). Sibling of the generic `devcontainer` template; this one pre-fills `coder_parameter.repo` and rejects HTTPS URLs at create time so `git push` via the mounted signing key always works.
 
 ## Usage
 
 Push to Coder:
 
-    coder templates push spruyt-labs --directory .
+```bash
+coder templates push spruyt-labs --directory .
+```
 
 ## Features
 
@@ -24,28 +23,15 @@ Push to Coder:
 
 ## Nexus artifact proxy
 
-Envbuilder pulls base + feature images via the in-cluster Nexus docker-group
-connector (`nexus.nexus-system.svc.cluster.local:8082`) and pushes the kaniko
-layer cache to the Nexus envbuilder-cache hosted repo (`:8083`). Driven by
-`KANIKO_REGISTRY_MIRROR`, `ENVBUILDER_INSECURE`, and `ENVBUILDER_CACHE_REPO`
-envs set here and the `ENVBUILDER_DOCKER_CONFIG_BASE64` auth entry in the
+Envbuilder pulls base + feature images via the in-cluster Nexus docker-group connector (`nexus.nexus-system.svc.cluster.local:8082`) and pushes the kaniko layer cache to the Nexus envbuilder-cache hosted repo (`:8083`). Driven by `KANIKO_REGISTRY_MIRROR`, `ENVBUILDER_INSECURE`, and `ENVBUILDER_CACHE_REPO` envs set here and the `ENVBUILDER_DOCKER_CONFIG_BASE64` auth entry in the
 `coder-workspace-env` Secret.
 
-Runtime container pulls (podman, skopeo, buildah) inside the workspace are
-also routed through Nexus via a `registries.conf` drop-in mounted from the
-`coder-workspace-registries-conf` ConfigMap (docker.io, ghcr.io, quay.io,
-mcr.microsoft.com, registry.k8s.io → `nexus:8082`).
+Runtime container pulls (podman, skopeo, buildah) inside the workspace are also routed through Nexus via a `registries.conf` drop-in mounted from the `coder-workspace-registries-conf` ConfigMap (docker.io, ghcr.io, quay.io, mcr.microsoft.com, registry.k8s.io → `nexus:8082`).
 
-Base-layer Ubuntu archive apt is routed through Nexus `apt-ubuntu-proxy`:
-envbuilder injects `NEXUS_URL=http://nexus.nexus-system.svc.cluster.local:8081`
-into the devcontainer build (via `envbuilder_env` + the consumer repo's
-`devcontainer.json` `build.args.NEXUS_URL`), and the consumer Dockerfile
-rewrites `/etc/apt/sources.list` to point at the proxy. See `spruyt-labs`
-repo `.devcontainer/Dockerfile` for the reference pattern (Ref #988).
+Base-layer Ubuntu archive apt is routed through Nexus `apt-ubuntu-proxy`: envbuilder injects `NEXUS_URL=http://nexus.nexus-system.svc.cluster.local:8081` into the devcontainer build (via `envbuilder_env` + the consumer repo's `devcontainer.json` `build.args.NEXUS_URL`), and the consumer Dockerfile rewrites `/etc/apt/sources.list` to point at the proxy. See `spruyt-labs` repo
+`.devcontainer/Dockerfile` for the reference pattern (Ref #988).
 
-Devcontainer features that manage their own apt source lists (github-cli,
-nodesource, hashicorp, launchpad PPAs) still fetch upstream direct — per-
-feature apt source overrides are out of scope.
+Devcontainer features that manage their own apt source lists (github-cli, nodesource, hashicorp, launchpad PPAs) still fetch upstream direct — per- feature apt source overrides are out of scope.
 
 ## Secrets Required
 

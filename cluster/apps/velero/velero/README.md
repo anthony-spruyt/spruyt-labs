@@ -52,9 +52,9 @@ kubectl top pods -n velero
 **Resolution**:
 
 1. Validate AWS credentials and IAM permissions
-2. Check S3 bucket policy and CORS configuration
-3. Review Velero resource selection and filtering
-4. Verify volume snapshot controller installation
+1. Check S3 bucket policy and CORS configuration
+1. Review Velero resource selection and filtering
+1. Verify volume snapshot controller installation
 
 #### Symptom: Restores not working correctly
 
@@ -68,9 +68,9 @@ kubectl top pods -n velero
 **Resolution**:
 
 1. Validate backup integrity before restore
-2. Check for resource naming conflicts
-3. Review restore hooks and annotations
-4. Verify cluster state matches backup expectations
+1. Check for resource naming conflicts
+1. Review restore hooks and annotations
+1. Verify cluster state matches backup expectations
 
 #### Symptom: High backup storage usage
 
@@ -84,19 +84,19 @@ kubectl top pods -n velero
 **Resolution**:
 
 1. Adjust retention periods in values.yaml
-2. Optimize backup schedules and frequency
-3. Implement backup size monitoring and alerts
-4. Configure automatic cleanup policies
+1. Optimize backup schedules and frequency
+1. Implement backup size monitoring and alerts
+1. Configure automatic cleanup policies
 
 ## Validation
 
 ### Expected Outcomes
 
 1. **Deployment Success**: Velero pod shows `Running` status with no restarts
-2. **Backup Functionality**: Scheduled backups complete successfully
-3. **Restore Capability**: Test restores work as expected
-4. **Storage Management**: Backup storage usage within defined limits
-5. **Resource Efficiency**: Memory usage under 1Gi, CPU under 500m
+1. **Backup Functionality**: Scheduled backups complete successfully
+1. **Restore Capability**: Test restores work as expected
+1. **Storage Management**: Backup storage usage within defined limits
+1. **Resource Efficiency**: Memory usage under 1Gi, CPU under 500m
 
 ### Validation Commands
 
@@ -132,15 +132,15 @@ kubectl get schedules -n velero
 ### Updates
 
 1. Review Velero release notes for breaking changes
-2. Test new versions with sample backups and restores
-3. Update AWS plugin versions and configurations
-4. Adjust retention policies based on storage growth
+1. Test new versions with sample backups and restores
+1. Update AWS plugin versions and configurations
+1. Adjust retention policies based on storage growth
 
 ### Backups
 
 1. Velero configuration stored in Git
-2. Backup metadata preserved in S3
-3. Verify backup system health: `velero get backup locations`
+1. Backup metadata preserved in S3
+1. Verify backup system health: `velero get backup locations`
 
 ## References
 

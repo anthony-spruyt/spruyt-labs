@@ -28,7 +28,7 @@ Reloader is a Kubernetes controller that automatically reloads configurations wh
    kubectl get events -n reloader
    ```
 
-2. **Annotation management**:
+1. **Annotation management**:
 
    ```bash
    # Add new annotation to deployment
@@ -49,19 +49,19 @@ Reloader is a Kubernetes controller that automatically reloads configurations wh
    - **Diagnosis**: Check RBAC permissions and service accounts
    - **Resolution**: Verify cluster roles and role bindings
 
-2. **Configuration reloading failures**:
+1. **Configuration reloading failures**:
 
    - **Symptom**: Pods not restarting after config changes
    - **Diagnosis**: Check reloader logs and annotations
    - **Resolution**: Verify annotation syntax and resource names
 
-3. **Resource constraints**:
+1. **Resource constraints**:
 
    - **Symptom**: Pods in Pending state or frequent restarts
    - **Diagnosis**: Check resource requests vs available cluster resources
    - **Resolution**: Adjust resource limits or scale cluster
 
-4. **Event processing delays**:
+1. **Event processing delays**:
 
    - **Symptom**: Slow configuration reloading
    - **Diagnosis**: Check reloader performance and event queue

@@ -43,7 +43,7 @@ kubectl get certificates -A
    - Create Certificate resources in appropriate namespaces using Flux
    - Verify automatic issuance and renewal through Flux reconciliation
 
-2. **Issuer management**:
+1. **Issuer management**:
 
    ```bash
    # Check issuer status using Flux
@@ -53,7 +53,7 @@ kubectl get certificates -A
    kubectl describe clusterissuer <issuer-name>
    ```
 
-3. **Certificate renewal monitoring**:
+1. **Certificate renewal monitoring**:
 
    ```bash
    # Check certificate expiration
@@ -73,13 +73,14 @@ kubectl get certificates -A
    - **Diagnosis**: Check issuer status and challenge resolution
    - **Resolution**: Verify DNS records and issuer configuration, then use `flux reconcile kustomization cert-manager --with-source`
 
-2. **DNS challenge timeouts**:
+1. **DNS challenge timeouts**:
 
    - **Symptom**: Certificate issuance times out
    - **Diagnosis**: Check DNS propagation and challenge configuration
    - **Resolution**: Verify DNS records and challenge solver configuration, then use `flux reconcile kustomization cert-manager --with-source`
 
-3. **Rate limit errors**:
+1. **Rate limit errors**:
+
    - **Symptom**: Let's Encrypt rate limit errors
    - **Diagnosis**: Check certificate request frequency
    - **Resolution**: Reduce request frequency or use staging environment, then use `flux reconcile kustomization cert-manager --with-source`

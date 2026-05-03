@@ -5,6 +5,7 @@
 IRQ Balance is a Linux daemon that distributes hardware interrupts across multiple CPUs to improve system performance. This deployment includes both IRQ balancing and RSS (Receive Side Scaling) tuning for MS-01 nodes.
 
 **Components:**
+
 - **irqbalance daemon**: Distributes hardware interrupts across available P-cores
 - **RSS tuning (init container)**: Configures network card flow distribution to prevent thermal hotspots
 
@@ -88,25 +89,25 @@ kubectl exec -n irq-balance <pod-name> -- watch -n 1 cat /proc/interrupts
    - **Resolution**: Verify NIC supports RSS, ensure init container has privileged mode
    - **Note**: RSS only affects new network flows; existing connections stay on original queue
 
-2. **Node access problems**:
+1. **Node access problems**:
 
    - **Symptom**: Pod unable to access management server
    - **Diagnosis**: Check node status and access permissions
    - **Resolution**: Verify node labels and taints
 
-3. **IRQ balancing not working**:
+1. **IRQ balancing not working**:
 
    - **Symptom**: Uneven IRQ distribution
    - **Diagnosis**: Check IRQ balance configuration and kernel support
    - **Resolution**: Verify IRQ balance parameters and kernel modules
 
-4. **Resource constraints**:
+1. **Resource constraints**:
 
    - **Symptom**: Pods in Pending state or frequent restarts
    - **Diagnosis**: Check resource requests vs available cluster resources
    - **Resolution**: Adjust resource limits or scale cluster
 
-5. **Configuration errors**:
+1. **Configuration errors**:
 
    - **Symptom**: IRQ balance service not starting
    - **Diagnosis**: Check configuration syntax and parameters

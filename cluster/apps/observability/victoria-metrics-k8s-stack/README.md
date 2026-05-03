@@ -47,8 +47,8 @@ kubectl top pods -n observability
 **Resolution**:
 
 1. Adjust resource requests/limits in values.yaml
-2. Verify storage class and PVC configuration
-3. Check chart version compatibility
+1. Verify storage class and PVC configuration
+1. Check chart version compatibility
 
 #### Symptom: No data appearing in metrics
 
@@ -61,17 +61,17 @@ kubectl top pods -n observability
 **Resolution**:
 
 1. Validate service monitor configurations
-2. Check Cilium network policies for observability namespace
-3. Verify service endpoints are correctly annotated
+1. Check Cilium network policies for observability namespace
+1. Verify service endpoints are correctly annotated
 
 ## Validation
 
 ### Expected Outcomes
 
 1. **Deployment Success**: All VictoriaMetrics pods show `Running` status
-2. **Data Ingestion**: Metrics appear in VictoriaMetrics UI within 5 minutes
-3. **Alerting Functional**: Alertmanager shows ready status and can send test alerts
-4. **Resource Usage**: CPU/Memory within defined limits (check with `kubectl top pods`)
+1. **Data Ingestion**: Metrics appear in VictoriaMetrics UI within 5 minutes
+1. **Alerting Functional**: Alertmanager shows ready status and can send test alerts
+1. **Resource Usage**: CPU/Memory within defined limits (check with `kubectl top pods`)
 
 ### Validation Commands
 
@@ -101,14 +101,14 @@ kubectl get secret -n observability victoria-metrics-k8s-stack-alertmanager
 ### Updates
 
 1. Review upstream chart changes before updating
-2. Test new versions in staging environment first
-3. Update values.yaml to maintain compatibility
+1. Test new versions in staging environment first
+1. Update values.yaml to maintain compatibility
 
 ### Backups
 
 1. VictoriaMetrics data is stored in Rook Ceph PVCs
-2. Regular snapshots are handled by Velero backup system
-3. Verify backup status with `velero get backups`
+1. Regular snapshots are handled by Velero backup system
+1. Verify backup status with `velero get backups`
 
 ## References
 

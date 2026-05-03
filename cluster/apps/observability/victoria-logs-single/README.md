@@ -44,8 +44,8 @@ kubectl top pods -n observability --selector=app.kubernetes.io/name=victoria-log
 **Resolution**:
 
 1. Add required annotations to application deployments
-2. Verify the vector deployment status in the observability namespace
-3. Check Cilium network policies for log collection traffic
+1. Verify the vector deployment status in the observability namespace
+1. Check Cilium network policies for log collection traffic
 
 #### Symptom: High storage usage or retention issues
 
@@ -58,17 +58,17 @@ kubectl top pods -n observability --selector=app.kubernetes.io/name=victoria-log
 **Resolution**:
 
 1. Adjust retention periods in Helm values
-2. Increase PVC size if needed
-3. Configure log rotation and compression settings
+1. Increase PVC size if needed
+1. Configure log rotation and compression settings
 
 ## Validation
 
 ### Expected Outcomes
 
 1. **Deployment Success**: Victoria Logs pod shows `Running` status
-2. **Log Ingestion**: Application logs appear in Victoria Logs UI within 2 minutes
-3. **Storage Management**: Log retention works as configured
-4. **Resource Usage**: CPU under 1000m, Memory under 2Gi for normal operation
+1. **Log Ingestion**: Application logs appear in Victoria Logs UI within 2 minutes
+1. **Storage Management**: Log retention works as configured
+1. **Resource Usage**: CPU under 1000m, Memory under 2Gi for normal operation
 
 ### Validation Commands
 
@@ -95,14 +95,14 @@ kubectl exec -n observability <victoria-logs-pod> -- curl -s "http://localhost:9
 ### Updates
 
 1. Review log schema changes in new versions
-2. Test retention and compression settings
-3. Update sidecar configurations for application changes
+1. Test retention and compression settings
+1. Update sidecar configurations for application changes
 
 ### Backups
 
 1. Log data stored in Rook Ceph PVCs
-2. Configuration backed up via Velero
-3. Verify backup status: `velero get backups | grep observability`
+1. Configuration backed up via Velero
+1. Verify backup status: `velero get backups | grep observability`
 
 ## References
 

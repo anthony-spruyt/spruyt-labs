@@ -35,10 +35,12 @@ kubectl logs -n discord-mcp -l app.kubernetes.io/name=discord-mcp
 ### Common Issues
 
 1. **Pod fails to start / Discord login errors**
+
    - **Symptom**: Pod logs show "Discord login failed" or intent errors
    - **Resolution**: Verify bot token is valid and Message Content Intent is enabled in the Discord Developer Portal
 
-2. **MCP connection timeout from agent pods**
+1. **MCP connection timeout from agent pods**
+
    - **Symptom**: Agent reports discord MCP server unavailable
    - **Resolution**: Check network policies allow ingress from `claude-agents-read`, `claude-agents-write`, and `coder-workspaces` namespaces on port 8080
 

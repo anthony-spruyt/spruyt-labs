@@ -80,19 +80,19 @@ kubectl logs -n external-dns <pod-name> | grep "synchronization"
    - **Diagnosis**: Check Technitium DNS server connectivity and API status
    - **Resolution**: Verify Technitium DNS server configuration and network connectivity
 
-2. **API authentication errors**:
+1. **API authentication errors**:
 
    - **Symptom**: Authentication failures in logs
    - **Diagnosis**: Check API credentials and Technitium DNS server configuration
    - **Resolution**: Verify API credentials and Technitium DNS server access
 
-3. **DNS record synchronization delays**:
+1. **DNS record synchronization delays**:
 
    - **Symptom**: Slow DNS record updates
    - **Diagnosis**: Check Technitium DNS server performance and API response times
    - **Resolution**: Verify Technitium DNS server resources and network latency
 
-4. **Configuration errors**:
+1. **Configuration errors**:
 
    - **Symptom**: ExternalDNS service not starting
    - **Diagnosis**: Check configuration syntax and Technitium DNS server addresses

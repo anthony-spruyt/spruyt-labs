@@ -56,19 +56,19 @@ kubectl logs -n cnpg-system <plugin-pod-name> | grep "backup"
    - **Diagnosis**: Check cloud storage connectivity and credentials
    - **Resolution**: Verify cloud storage configuration and network connectivity
 
-2. **Credential configuration errors**:
+1. **Credential configuration errors**:
 
    - **Symptom**: Authentication failures in logs
    - **Diagnosis**: Check cloud storage credentials and access permissions
    - **Resolution**: Verify cloud storage credentials and access policies
 
-3. **Resource constraints**:
+1. **Resource constraints**:
 
    - **Symptom**: Pods in Pending state or frequent restarts
    - **Diagnosis**: Check resource requests vs available cluster resources
    - **Resolution**: Adjust resource limits or scale cluster
 
-4. **Network connectivity issues**:
+1. **Network connectivity issues**:
 
    - **Symptom**: Backup operations timing out
    - **Diagnosis**: Check network policies and cloud storage connectivity

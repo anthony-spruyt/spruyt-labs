@@ -38,20 +38,21 @@ Access the panel at `https://crafty.lan.${EXTERNAL_DOMAIN}`. Create admin accoun
 ### Creating Bedrock Servers
 
 1. In Crafty UI: Create new server -> Select Bedrock
-2. Configure port (use 19132-19139 range)
-3. Start server
+1. Configure port (use 19132-19139 range)
+1. Start server
 
 ### Installing Addons
 
 1. Select server -> Files
-2. Upload .mcpack/.mcaddon to `behavior_packs/` or `resource_packs/`
-3. Restart server
+1. Upload .mcpack/.mcaddon to `behavior_packs/` or `resource_packs/`
+1. Restart server
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Web UI not accessible**
+
    - **Symptom**: Cannot reach `crafty.lan.${EXTERNAL_DOMAIN}`
    - **Resolution**: Check ingress and certificate status:
      ```bash
@@ -59,14 +60,16 @@ Access the panel at `https://crafty.lan.${EXTERNAL_DOMAIN}`. Create admin accoun
      kubectl get certificate -n minecraft
      ```
 
-2. **Game connection failed**
+1. **Game connection failed**
+
    - **Symptom**: Players cannot connect to server
    - **Resolution**: Verify LoadBalancer and server status:
      ```bash
      kubectl get svc -n minecraft crafty-controller-bedrock
      ```
 
-3. **Storage permission errors**
+1. **Storage permission errors**
+
    - **Symptom**: Crafty cannot write to data directories
    - **Resolution**: Check PVC binding and init container logs:
      ```bash

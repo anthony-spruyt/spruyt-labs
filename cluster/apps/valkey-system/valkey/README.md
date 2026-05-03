@@ -56,19 +56,19 @@ kubectl exec -it valkey-0 -n valkey-system -- valkey-cli lastsave
    - **Diagnosis**: Check memory metrics and eviction statistics
    - **Resolution**: Adjust maxmemory policy or scale cluster
 
-2. **Network connectivity problems**:
+1. **Network connectivity problems**:
 
    - **Symptom**: Connection timeouts or failures
    - **Diagnosis**: Test network connectivity and DNS resolution
    - **Resolution**: Verify Cilium network policies and service discovery
 
-3. **Persistence failures**:
+1. **Persistence failures**:
 
    - **Symptom**: Data loss after pod restarts
    - **Diagnosis**: Check persistent volume claims and storage
    - **Resolution**: Verify Rook Ceph storage provisioning
 
-4. **Replication issues**:
+1. **Replication issues**:
 
    - **Symptom**: Cluster nodes not synchronizing
    - **Diagnosis**: Check cluster status and replication

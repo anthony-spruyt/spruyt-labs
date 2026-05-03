@@ -76,13 +76,14 @@ kubectl logs -n kubelet-csr-approver deploy/kubelet-csr-approver
    - **Diagnosis**: Check RBAC permissions and approver logs
    - **Resolution**: Verify RBAC roles and approver configuration
 
-2. **Certificate authority connectivity issues**:
+1. **Certificate authority connectivity issues**:
 
    - **Symptom**: Certificate signing failures
    - **Diagnosis**: Check CA connectivity and configuration
    - **Resolution**: Verify certificate authority endpoints and credentials
 
-3. **Node certificate rotation problems**:
+1. **Node certificate rotation problems**:
+
    - **Symptom**: Node communication failures
    - **Diagnosis**: Check node certificate validity and rotation
    - **Resolution**: Verify certificate rotation process and node connectivity

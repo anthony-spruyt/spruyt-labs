@@ -2,10 +2,8 @@
 
 ## Overview
 
-Minecraft Bedrock Connect is a DNS redirect and server list tool that allows Minecraft Bedrock Edition players
-on consoles (Xbox, PlayStation, Switch) to connect to third-party servers. It works by redirecting DNS queries
-for featured servers to the Bedrock Connect server, which presents a custom server list UI. In the spruyt-labs homelab,
-this enables console players to join self-hosted Minecraft servers that aren't on the official featured server list.
+Minecraft Bedrock Connect is a DNS redirect and server list tool that allows Minecraft Bedrock Edition players on consoles (Xbox, PlayStation, Switch) to connect to third-party servers. It works by redirecting DNS queries for featured servers to the Bedrock Connect server, which presents a custom server list UI. In the spruyt-labs homelab, this enables console players to join self-hosted Minecraft
+servers that aren't on the official featured server list.
 
 ## Prerequisites
 
@@ -29,7 +27,7 @@ this enables console players to join self-hosted Minecraft servers that aren't o
    kubectl logs -n minecraft <bedrock-connect-pod> | grep "player"
    ```
 
-2. **Performance monitoring**:
+1. **Performance monitoring**:
 
    ```bash
    # Check network throughput
@@ -39,7 +37,7 @@ this enables console players to join self-hosted Minecraft servers that aren't o
    kubectl logs -n minecraft <bedrock-connect-pod> | grep "error"
    ```
 
-3. **Configuration updates**:
+1. **Configuration updates**:
 
    ```bash
    # Update configuration
@@ -59,19 +57,19 @@ this enables console players to join self-hosted Minecraft servers that aren't o
    - **Diagnosis**: Check network connectivity and port forwarding
    - **Resolution**: Verify Cilium network policies and firewall rules
 
-2. **Protocol compatibility issues**:
+1. **Protocol compatibility issues**:
 
    - **Symptom**: Connection drops or protocol errors
    - **Diagnosis**: Check protocol version compatibility
    - **Resolution**: Update Bedrock Connect configuration
 
-3. **Performance bottlenecks**:
+1. **Performance bottlenecks**:
 
    - **Symptom**: High latency or connection timeouts
    - **Diagnosis**: Monitor network throughput and resource usage
    - **Resolution**: Scale resources or optimize network
 
-4. **Authentication problems**:
+1. **Authentication problems**:
 
    - **Symptom**: Authentication failures
    - **Diagnosis**: Check authentication configuration

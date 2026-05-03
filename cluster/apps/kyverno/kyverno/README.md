@@ -61,6 +61,7 @@ kubectl get events -n kyverno --field-selector reason=PolicyViolation
 1. **Policy validation webhook denies changes**
 
    - **Symptom**: `admission webhook "validate-policy.kyverno.svc" denied the request`
+
    - **Resolution**: For generate rule changes to immutable fields, delete the policy first:
 
      ```bash
@@ -68,10 +69,12 @@ kubectl get events -n kyverno --field-selector reason=PolicyViolation
      flux reconcile ks kyverno-policies --with-source
      ```
 
-2. **Webhook not ready**
+1. **Webhook not ready**
 
    - **Symptom**: API requests timeout or fail with webhook errors
+
    - **Diagnosis**: Check admission controller pods and certificates
+
    - **Resolution**:
 
      ```bash
@@ -79,10 +82,12 @@ kubectl get events -n kyverno --field-selector reason=PolicyViolation
      kubectl get validatingwebhookconfiguration kyverno-resource-validating-webhook-cfg
      ```
 
-3. **Generate rules not creating resources**
+1. **Generate rules not creating resources**
 
    - **Symptom**: Expected generated resources missing
+
    - **Diagnosis**: Check background controller logs
+
    - **Resolution**:
 
      ```bash
@@ -90,7 +95,7 @@ kubectl get events -n kyverno --field-selector reason=PolicyViolation
      kubectl get updaterequest -A  # Check pending updates
      ```
 
-4. **High memory usage**
+1. **High memory usage**
 
    - **Symptom**: Controllers OOMKilled
    - **Diagnosis**: Check policy report volume and cleanup settings
