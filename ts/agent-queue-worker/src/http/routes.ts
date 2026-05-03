@@ -1,27 +1,33 @@
-import { type IncomingMessage, type ServerResponse } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Queue } from "bullmq";
 import type { Redis } from "ioredis";
+import type { Config } from "../config.js";
+import { buildJobIdentity } from "../job/identity.js";
+import type { AgentJob } from "../job/schema.js";
 import {
   AgentJobInputSchema,
   DoneRequestSchema,
   FailRequestSchema,
 } from "../job/schema.js";
-import type { AgentJob } from "../job/schema.js";
-import { buildJobIdentity } from "../job/identity.js";
-import type { RoleRegistry } from "../roles/registry.js";
-import { resolveDuplicateAction } from "../roles/types.js";
-import type { JobState } from "../roles/types.js";
-import type { Processor } from "../processor.js";
-import type { CircuitBreaker, RateLimiter } from "../queue/guard.js";
-import { json, parseAndValidate } from "./middleware.js";
-import { DEFAULT_JOB_OPTIONS } from "../queue/options.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
+import type { Processor } from "../processor.js";
+import type { CircuitBreaker, RateLimiter } from "../queue/guard.js";
+import { DEFAULT_JOB_OPTIONS } from "../queue/options.js";
+import type { RoleRegistry } from "../roles/registry.js";
+import { sreTriagedKey } from "../roles/sre-role.js";
+import type { JobState } from "../roles/types.js";
+import { resolveDuplicateAction } from "../roles/types.js";
+import { json, parseAndValidate } from "./middleware.js";
 
 // Atomic state-checked update: only HSET if job is still in wait/prioritized/paused.
 // The non-atomic getJob+getState before this call is acceptable because this Lua
-// re-validates state atomically — the outer check is an optimization to avoid
+// re-validates state atomically -- the outer check is an optimization to avoid
 // unnecessary EVAL calls, not a correctness dependency.
+// NOTE: Does not check the BullMQ delayed sorted set. This is safe because no
+// onDuplicate implementation returns "replace" for delayed jobs (SRE alerts always
+// return "buffer"; all other roles discard non-waiting/prioritized states). If a
+// future role needs to replace delayed jobs, extend this script to check the delayed set.
 // Uses Redis EVAL command (server-side Lua execution), not JavaScript eval().
 const ATOMIC_UPDATE_IF_WAITING_LUA = `
 local inWait   = redis.call('LPOS', KEYS[1], ARGV[2])
@@ -41,6 +47,7 @@ export interface RouteDeps {
   registry: RoleRegistry;
   circuitBreaker: CircuitBreaker;
   rateLimiter: RateLimiter;
+  config: Config;
 }
 
 export async function handleAddJob(
@@ -59,6 +66,19 @@ export async function handleAddJob(
     return json(res, 429, { added: false, reason: "circuit_open" });
   }
 
+  if (
+    data.role === "sre" &&
+    data.payload?.trigger === "alert" &&
+    data.payload?.fingerprint
+  ) {
+    const fpKey = sreTriagedKey(data.repo, String(data.payload.fingerprint));
+    const triaged = await deps.redis.exists(fpKey);
+    if (triaged) {
+      metrics.sreSuppressed.inc({ role: data.role });
+      return json(res, 200, { added: false, reason: "already_triaged" });
+    }
+  }
+
   const identity = buildJobIdentity(data, deps.registry);
   const jobId = identity.jobId;
   const roleDef = deps.registry.get(data.role);
@@ -73,7 +93,7 @@ export async function handleAddJob(
       if (shouldBuffer) {
         const bufKey = roleDef.bufferKey!(jobId);
         await deps.redis.rpush(bufKey, JSON.stringify(data.payload));
-        await deps.redis.ltrim(bufKey, -50, -1);
+        await deps.redis.ltrim(bufKey, -deps.config.SRE_BATCH_MAX_SIZE, -1);
         await deps.redis.expire(bufKey, 3600);
 
         try {
@@ -129,7 +149,7 @@ export async function handleAddJob(
       if (decision.action === "buffer") {
         const bufKey = roleDef.bufferKey!(jobId);
         await deps.redis.rpush(bufKey, JSON.stringify(data.payload));
-        await deps.redis.ltrim(bufKey, -50, -1);
+        await deps.redis.ltrim(bufKey, -deps.config.SRE_BATCH_MAX_SIZE, -1);
         await deps.redis.expire(bufKey, 3600);
         metrics.dedupActionCounter.inc({
           queue: "agent",
@@ -165,11 +185,13 @@ export async function handleAddJob(
   }
 
   try {
+    const delay = roleDef.getJobDelay?.(data) ?? 0;
     await deps.queue.add(data.role, data, {
       ...DEFAULT_JOB_OPTIONS,
       ...roleDef.jobOptions,
       jobId,
       priority: data.priority,
+      ...(delay > 0 && { delay }),
     });
 
     await deps.rateLimiter.record(data.repo, jobId);

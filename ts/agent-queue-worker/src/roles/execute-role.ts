@@ -1,5 +1,5 @@
-import type { RoleDefinition, DuplicateAction, JobState } from "./types.js";
 import type { AgentJob } from "../job/schema.js";
+import type { DuplicateAction, JobState, RoleDefinition } from "./types.js";
 
 export const executeRole: RoleDefinition = {
   timeoutMs: 3_600_000,

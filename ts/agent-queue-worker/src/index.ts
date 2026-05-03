@@ -1,8 +1,9 @@
-import { Worker, Queue } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
 import { loadConfig } from "./config.js";
-import { Processor } from "./processor.js";
 import { createHttpServer } from "./http/server.js";
+import * as metrics from "./metrics.js";
+import { Processor } from "./processor.js";
 import { CircuitBreaker, RateLimiter } from "./queue/guard.js";
 import { setupLifecycle } from "./queue/lifecycle.js";
 import { createDefaultRegistry } from "./roles/registry.js";
@@ -26,7 +27,7 @@ const connection = {
 const queueOpts = { connection, prefix: "agent:queue" };
 
 const queue = new Queue("agent", queueOpts);
-const registry = createDefaultRegistry();
+const registry = createDefaultRegistry(config, metrics.sreBatchSize);
 const processor = new Processor(redis, config, registry);
 const circuitBreaker = new CircuitBreaker(redis);
 const rateLimiter = new RateLimiter(redis);

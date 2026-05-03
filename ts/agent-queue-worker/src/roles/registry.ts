@@ -1,8 +1,10 @@
-import type { RoleDefinition } from "./types.js";
-import { createPrRole } from "./pr-role.js";
-import { validateRole } from "./validate-role.js";
+import type { Histogram } from "prom-client";
+import type { Config } from "../config.js";
 import { executeRole } from "./execute-role.js";
-import { sreRole } from "./sre-role.js";
+import { createPrRole } from "./pr-role.js";
+import { createSreRole } from "./sre-role.js";
+import type { RoleDefinition } from "./types.js";
+import { validateRole } from "./validate-role.js";
 
 export class RoleRegistry {
   private roles = new Map<string, RoleDefinition>();
@@ -26,12 +28,15 @@ export class RoleRegistry {
   }
 }
 
-export function createDefaultRegistry(): RoleRegistry {
+export function createDefaultRegistry(
+  config: Config,
+  batchSizeHistogram: Histogram
+): RoleRegistry {
   const registry = new RoleRegistry();
   registry.register("triage", createPrRole("triage", 600_000));
   registry.register("fix", createPrRole("fix", 1_800_000));
   registry.register("validate", validateRole);
   registry.register("execute", executeRole);
-  registry.register("sre", sreRole);
+  registry.register("sre", createSreRole(config, batchSizeHistogram));
   return registry;
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { loadConfig } from "./config.js";
 
 const VALID_ENV = {
@@ -17,6 +17,10 @@ describe("loadConfig", () => {
     delete process.env.VALKEY_PORT;
     delete process.env.PORT;
     delete process.env.GITHUB_TOKEN;
+    delete process.env.SRE_BATCH_MAX_SIZE;
+    delete process.env.SRE_BATCH_WINDOW_MS;
+    delete process.env.SRE_COOLDOWN_MS;
+    delete process.env.SRE_TRIAGE_SUPPRESS_S;
   });
 
   it("parses valid env with defaults", () => {
@@ -75,5 +79,58 @@ describe("loadConfig", () => {
     Object.assign(process.env, VALID_ENV, { GITHUB_TOKEN: "test" });
     const cfg = loadConfig();
     expect(cfg.GITHUB_TOKEN).toBe("test");
+  });
+
+  it("defaults SRE_BATCH_MAX_SIZE to 50", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.SRE_BATCH_MAX_SIZE).toBe(50);
+  });
+
+  it("coerces SRE_BATCH_MAX_SIZE string to number", () => {
+    Object.assign(process.env, VALID_ENV, { SRE_BATCH_MAX_SIZE: "25" });
+    const cfg = loadConfig();
+    expect(cfg.SRE_BATCH_MAX_SIZE).toBe(25);
+  });
+
+  it("throws when SRE_BATCH_MAX_SIZE is 0", () => {
+    Object.assign(process.env, VALID_ENV, { SRE_BATCH_MAX_SIZE: "0" });
+    expect(() => loadConfig()).toThrow();
+  });
+
+  it("defaults SRE_BATCH_WINDOW_MS to 60000", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.SRE_BATCH_WINDOW_MS).toBe(60_000);
+  });
+
+  it("allows SRE_BATCH_WINDOW_MS of 0 to disable delay", () => {
+    Object.assign(process.env, VALID_ENV, { SRE_BATCH_WINDOW_MS: "0" });
+    const cfg = loadConfig();
+    expect(cfg.SRE_BATCH_WINDOW_MS).toBe(0);
+  });
+
+  it("defaults SRE_COOLDOWN_MS to 300000", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.SRE_COOLDOWN_MS).toBe(300_000);
+  });
+
+  it("allows SRE_COOLDOWN_MS of 0 to disable cooldown", () => {
+    Object.assign(process.env, VALID_ENV, { SRE_COOLDOWN_MS: "0" });
+    const cfg = loadConfig();
+    expect(cfg.SRE_COOLDOWN_MS).toBe(0);
+  });
+
+  it("defaults SRE_TRIAGE_SUPPRESS_S to 3600", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.SRE_TRIAGE_SUPPRESS_S).toBe(3600);
+  });
+
+  it("allows SRE_TRIAGE_SUPPRESS_S of 0 to disable suppression", () => {
+    Object.assign(process.env, VALID_ENV, { SRE_TRIAGE_SUPPRESS_S: "0" });
+    const cfg = loadConfig();
+    expect(cfg.SRE_TRIAGE_SUPPRESS_S).toBe(0);
   });
 });

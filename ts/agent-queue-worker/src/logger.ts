@@ -16,7 +16,7 @@ function log(level: Level, msg: string, fields?: LogFields): void {
   if (LEVELS[level] < minLevel) return;
   const entry = { ts: new Date().toISOString(), level, msg, ...fields };
   const out = level === "error" ? process.stderr : process.stdout;
-  out.write(JSON.stringify(entry) + "\n");
+  out.write(`${JSON.stringify(entry)}\n`);
 }
 
 export const logger = {
