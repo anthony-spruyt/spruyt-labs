@@ -6,6 +6,11 @@ vars:
   devEnvScriptsDir: "{{ .ROOT_DIR }}/.taskfiles/dev-env/scripts"
 
 tasks:
+  cleanup:
+    desc: Reclaim disk space — prune podman cache, tmp repos, and stale files
+    cmds:
+      - bash {{ .devEnvScriptsDir }}/cleanup.sh
+
   lint:
     desc: Runs mega-linter against the repo
     cmds:
