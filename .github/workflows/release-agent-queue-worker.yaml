@@ -139,9 +139,6 @@ jobs:
             printf '```\n\n'
             # shellcheck disable=SC2016
             printf '**Digest:** `%s`\n\n' "${DIGEST}"
-            printf '## Verify Provenance\n\n'
-            printf '```bash\n'
-            printf 'gh attestation verify oci://ghcr.io/anthony-spruyt/agent-queue-worker:%s --owner anthony-spruyt\n' "${TAG#v}"
             printf '```\n'
             echo 'NOTES_EOF'
           } >> "$GITHUB_ENV"
