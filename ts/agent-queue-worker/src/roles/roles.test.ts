@@ -295,7 +295,7 @@ describe("sre drainBuffer", () => {
     vi.mocked(mockHistogram.observe).mockClear();
   });
 
-  it("observes histogram with drained count", async () => {
+  it("includes original + buffered in alerts array", async () => {
     const items = [
       JSON.stringify({ alertname: "A1" }),
       JSON.stringify({ alertname: "A2" }),
@@ -310,7 +310,12 @@ describe("sre drainBuffer", () => {
     const result = await def.drainBuffer!("job1", job, mockRedis);
 
     expect(mockHistogram.observe).toHaveBeenCalledWith(6);
-    expect(result.payload?.alerts).toHaveLength(5);
+    expect(result.payload?.alerts).toHaveLength(6);
+    expect((result.payload?.alerts as any[])[0]).toEqual({
+      trigger: "alert",
+      alertname: "HighCPU",
+    });
+    expect((result.payload?.alerts as any[])[1]).toEqual({ alertname: "A1" });
   });
 
   it("uses alerts field not buffered_alerts", async () => {
@@ -325,25 +330,29 @@ describe("sre drainBuffer", () => {
     expect(result.payload?.buffered_alerts).toBeUndefined();
   });
 
-  it("does not observe histogram when buffer is empty", async () => {
+  it("returns single-element alerts array when buffer empty", async () => {
     const mockRedis = {
       eval: vi.fn().mockResolvedValue([]),
     } as any;
 
     const result = await def.drainBuffer!("job1", job, mockRedis);
 
-    expect(mockHistogram.observe).not.toHaveBeenCalled();
-    expect(result).toBe(job);
+    expect(mockHistogram.observe).toHaveBeenCalledWith(1);
+    expect(result.payload?.alerts).toEqual([
+      { trigger: "alert", alertname: "HighCPU" },
+    ]);
   });
 
-  it("does not observe histogram when buffer is null", async () => {
+  it("returns single-element alerts array when buffer null", async () => {
     const mockRedis = {
       eval: vi.fn().mockResolvedValue(null),
     } as any;
 
     const result = await def.drainBuffer!("job1", job, mockRedis);
 
-    expect(mockHistogram.observe).not.toHaveBeenCalled();
-    expect(result).toBe(job);
+    expect(mockHistogram.observe).toHaveBeenCalledWith(1);
+    expect(result.payload?.alerts).toEqual([
+      { trigger: "alert", alertname: "HighCPU" },
+    ]);
   });
 });

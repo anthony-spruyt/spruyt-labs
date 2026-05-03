@@ -63,9 +63,12 @@ export function createSreRole(
         1,
         sreBufferKey(jobId)
       )) as string[];
-      if (!items || items.length === 0) return data;
-      batchSizeHistogram.observe(items.length + 1);
-      const alerts = items.map((i) => JSON.parse(i) as Record<string, unknown>);
+      const { alerts: _, ...originalPayload } = data.payload ?? {};
+      const buffered = (items ?? []).map(
+        (i) => JSON.parse(i) as Record<string, unknown>
+      );
+      const alerts = [originalPayload, ...buffered];
+      batchSizeHistogram.observe(alerts.length);
       return {
         ...data,
         payload: {
