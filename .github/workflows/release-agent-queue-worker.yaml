@@ -139,7 +139,7 @@ jobs:
             printf '```\n\n'
             # shellcheck disable=SC2016
             printf '**Digest:** `%s`\n\n' "${DIGEST}"
-            printf '```\n'
+            printf '\n'
             echo 'NOTES_EOF'
           } >> "$GITHUB_ENV"
       - name: "Create GitHub Release"
