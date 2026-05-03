@@ -1,5 +1,4 @@
 import { createServer, type Server } from "node:http";
-import type { Config } from "../config.js";
 import { json, authenticate } from "./middleware.js";
 import {
   handleAddJob,
@@ -14,7 +13,6 @@ import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
 
 export interface ServerDeps extends RouteDeps {
-  config: Config;
   isReady: () => boolean;
 }
 
