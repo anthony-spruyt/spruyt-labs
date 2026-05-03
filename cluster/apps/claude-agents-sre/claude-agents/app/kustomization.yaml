@@ -7,7 +7,6 @@ resources:
   - ./claude-mcp-config-sre.yaml
   - ./github-external-secret.yaml
   - ./network-policies.yaml
-  - ./sre-credentials.sops.yaml
 configMapGenerator:
   - name: claude-settings-profiles
     files:

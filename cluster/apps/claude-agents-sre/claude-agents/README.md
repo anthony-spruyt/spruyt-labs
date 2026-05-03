@@ -4,8 +4,7 @@
 
 Namespace for SRE-tier Claude agent pods spawned ephemerally by n8n during incident response. Agents in this namespace triage incidents and investigate cluster state but do not commit code. They run with `priorityClassName: high-priority` (100000) to ensure availability under pressure.
 
-Agents are granted read-tier GitHub credentials via an ESO ExternalSecret that syncs `read-hosts.yml` from `github-system` — SRE agents inspect repos but never push. The SRE-only `sre-credentials` secret holds `sre-mcp-auth-token` for the n8n SRE MCP webhook; injected by Kyverno only into pods in this namespace. Pods are created on demand by n8n using the spawner ServiceAccount and are
-automatically garbage-collected after completion. Credentials are kept current by the `github-token-rotation` CronJob running in `github-system`.
+Agents are granted read-tier GitHub credentials via an ESO ExternalSecret that syncs `read-hosts.yml` from `github-system` — SRE agents inspect repos but never push. Pods are created on demand by n8n using the spawner ServiceAccount and are automatically garbage-collected after completion. Credentials are kept current by the `github-token-rotation` CronJob running in `github-system`.
 
 > **Note**: Agent pods are created dynamically by n8n workflows, not by Flux HelmReleases. The namespace contains only infra (ExternalSecret, CNPs, RBAC from shared base, encrypted SRE credentials).
 
@@ -89,15 +88,6 @@ kubectl auth can-i create pods -n claude-agents-sre \
      ```bash
      kubectl get secret github-bot-credentials -n github-system
      kubectl describe secretstore github-secret-store -n claude-agents-sre
-     ```
-
-1. **`SRE_MCP_AUTH_TOKEN` not injected into pod**
-
-   - **Symptom**: Agent's n8n SRE MCP calls return `401 Unauthorized`.
-   - **Resolution**: Verify the `sre-credentials` secret exists and Kyverno's `inject-sre-mcp` rule mutated the pod:
-     ```bash
-     kubectl get secret sre-credentials -n claude-agents-sre
-     kubectl get policyreport -n claude-agents-sre
      ```
 
 1. **MCP server connection failures**
