@@ -10,7 +10,8 @@ FROM node:24-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40
 RUN apk add --no-cache tini
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --ignore-scripts --no-audit && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts --no-audit && npm cache clean --force \
+    && rm -f package-lock.json
 COPY --from=builder /app/dist/ dist/
 HEALTHCHECK NONE
 USER 1000:1000

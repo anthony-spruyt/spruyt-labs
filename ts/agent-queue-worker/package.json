@@ -21,7 +21,8 @@
     "zod": "^4.0.0"
   },
   "overrides": {
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.0",
+    "picomatch": "^4.0.4"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
