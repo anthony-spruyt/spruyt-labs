@@ -3,13 +3,12 @@
 # https://trivy.dev/latest/docs/configuration/filtering
 
 vulnerabilities:
-  # picomatch is a transitive devDependency (via vitest), not installed in prod images.
-  # Trivy parser bug: reads vitest's dependency spec ^4.0.3 as installed version 4.0.3
-  # when the lockfile actually resolves to 4.0.4 (which includes the fix).
+  # picomatch 4.0.3 ships inside npm bundled in node:24-alpine base image
+  # (usr/local/lib/node_modules/npm/node_modules/tinyglobby/node_modules/picomatch).
+  # Not exploitable: ReDoS requires attacker-controlled extglob patterns passed to
+  # picomatch, but npm's internal glob usage only processes package paths/filenames.
+  # Will resolve when node:24-alpine updates npm to bundle picomatch >=4.0.4.
   - id: CVE-2026-33671
-    paths:
-      - ts/agent-queue-worker/package-lock.json
-      - ts/agent-queue-worker/bull-board/package-lock.json
 
 misconfigurations:
   # Hubble SSO ingress needs to be in kube-system (where Cilium runs)
