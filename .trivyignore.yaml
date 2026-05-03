@@ -2,6 +2,14 @@
 # Path-specific trivy ignores
 # https://trivy.dev/latest/docs/configuration/filtering
 
+vulnerabilities:
+  # picomatch is a transitive devDependency (via vitest), not installed in prod images.
+  # Trivy parser bug: reads vitest's dependency spec ^4.0.3 as installed version 4.0.3
+  # when the lockfile actually resolves to 4.0.4 (which includes the fix).
+  - id: CVE-2026-33671
+    paths:
+      - ts/agent-queue-worker/package-lock.json
+
 misconfigurations:
   # Hubble SSO ingress needs to be in kube-system (where Cilium runs)
   - id: AVD-KSV-0037

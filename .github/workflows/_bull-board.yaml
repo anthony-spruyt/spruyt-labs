@@ -47,3 +47,4 @@ jobs:
           severity: "CRITICAL,HIGH"
           ignore-unfixed: true
           exit-code: "1"
+          trivyignore-filepath: ".trivyignore.yaml"
