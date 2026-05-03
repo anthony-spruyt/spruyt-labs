@@ -501,7 +501,7 @@ resource "kubernetes_pod_v1" "main" {
     affinity {
       pod_anti_affinity {
         preferred_during_scheduling_ignored_during_execution {
-          weight = 1
+          weight = 100
           pod_affinity_term {
             topology_key = "kubernetes.io/hostname"
             label_selector {
