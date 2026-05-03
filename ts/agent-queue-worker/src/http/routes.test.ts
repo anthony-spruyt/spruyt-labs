@@ -1,6 +1,8 @@
+import { EventEmitter } from "node:events";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { describe, expect, it, vi } from "vitest";
-import { type ServerResponse } from "node:http";
-import { handleGetJob, type RouteDeps } from "./routes.js";
+import type { Config } from "../config.js";
+import { handleAddJob, handleGetJob, type RouteDeps } from "./routes.js";
 
 function mockRes(): ServerResponse & { _status: number; _body: unknown } {
   const res = {
@@ -15,6 +17,15 @@ function mockRes(): ServerResponse & { _status: number; _body: unknown } {
     },
   } as unknown as ServerResponse & { _status: number; _body: unknown };
   return res;
+}
+
+function mockReq(body: unknown): IncomingMessage {
+  const emitter = new EventEmitter();
+  process.nextTick(() => {
+    emitter.emit("data", Buffer.from(JSON.stringify(body)));
+    emitter.emit("end");
+  });
+  return emitter as unknown as IncomingMessage;
 }
 
 const jobData = {
@@ -98,5 +109,99 @@ describe("handleGetJob", () => {
     expect(getJob).toHaveBeenCalledWith("nonexistent");
     expect(res._status).toBe(404);
     expect((res._body as Record<string, unknown>).error).toBe("not_found");
+  });
+});
+
+describe("handleAddJob suppression", () => {
+  const sreAlert = {
+    role: "sre" as const,
+    repo: "org/repo",
+    event_type: "alert",
+    priority: 5,
+    payload: { trigger: "alert", fingerprint: "fp-abc123" },
+  };
+
+  function makeDeps(overrides: Record<string, unknown> = {}): RouteDeps {
+    return {
+      queue: { getJob: vi.fn().mockResolvedValue(null), add: vi.fn() },
+      redis: { exists: vi.fn().mockResolvedValue(0) },
+      circuitBreaker: { check: vi.fn().mockResolvedValue({ open: false }) },
+      rateLimiter: {
+        check: vi.fn().mockResolvedValue({ limited: false }),
+        record: vi.fn(),
+      },
+      registry: {
+        get: vi.fn().mockReturnValue({
+          timeoutMs: 900_000,
+          cooldownMs: 300_000,
+          jobOptions: { attempts: 1 },
+          buildIdentitySegments: () => ["org/repo", "sre-triage"],
+          getJobDelay: () => 0,
+        }),
+      },
+      config: {
+        SRE_BATCH_MAX_SIZE: 50,
+        SRE_BATCH_WINDOW_MS: 60_000,
+        SRE_COOLDOWN_MS: 300_000,
+        SRE_TRIAGE_SUPPRESS_S: 3600,
+      } as Config,
+      processor: {},
+      ...overrides,
+    } as unknown as RouteDeps;
+  }
+
+  it("suppresses triaged SRE alert with 200", async () => {
+    const res = mockRes();
+    const req = mockReq(sreAlert);
+    const deps = makeDeps({
+      redis: { exists: vi.fn().mockResolvedValue(1) },
+    });
+
+    await handleAddJob(req, res, deps);
+
+    expect(res._status).toBe(200);
+    expect((res._body as Record<string, unknown>).reason).toBe(
+      "already_triaged"
+    );
+  });
+
+  it("does not suppress non-triaged SRE alert", async () => {
+    const res = mockRes();
+    const req = mockReq(sreAlert);
+    const deps = makeDeps();
+
+    await handleAddJob(req, res, deps);
+
+    expect(res._status).toBe(201);
+    expect((res._body as Record<string, unknown>).added).toBe(true);
+  });
+
+  it("does not suppress non-SRE role with fingerprint", async () => {
+    const res = mockRes();
+    const req = mockReq({
+      role: "triage",
+      repo: "org/repo",
+      event_type: "pull_request",
+      priority: 5,
+      pr_number: 1,
+      head_sha: "abc",
+      payload: { trigger: "alert", fingerprint: "fp-abc123" },
+    });
+    const deps = makeDeps({
+      redis: { exists: vi.fn().mockResolvedValue(1) },
+      registry: {
+        get: vi.fn().mockReturnValue({
+          timeoutMs: 120_000,
+          jobOptions: {},
+          buildIdentitySegments: () => ["org/repo", "triage-1"],
+          getJobDelay: () => 0,
+        }),
+      },
+    });
+
+    await handleAddJob(req, res, deps);
+
+    expect(res._status).toBe(201);
+    expect((res._body as Record<string, unknown>).added).toBe(true);
   });
 });

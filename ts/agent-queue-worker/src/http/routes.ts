@@ -1,24 +1,24 @@
-import { type IncomingMessage, type ServerResponse } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Queue } from "bullmq";
 import type { Redis } from "ioredis";
+import type { Config } from "../config.js";
+import { buildJobIdentity } from "../job/identity.js";
+import type { AgentJob } from "../job/schema.js";
 import {
   AgentJobInputSchema,
   DoneRequestSchema,
   FailRequestSchema,
 } from "../job/schema.js";
-import type { AgentJob } from "../job/schema.js";
-import { buildJobIdentity } from "../job/identity.js";
-import type { RoleRegistry } from "../roles/registry.js";
-import { resolveDuplicateAction } from "../roles/types.js";
-import type { JobState } from "../roles/types.js";
-import type { Processor } from "../processor.js";
-import type { CircuitBreaker, RateLimiter } from "../queue/guard.js";
-import type { Config } from "../config.js";
-import { sreTriagedKey } from "../roles/sre-role.js";
-import { json, parseAndValidate } from "./middleware.js";
-import { DEFAULT_JOB_OPTIONS } from "../queue/options.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
+import type { Processor } from "../processor.js";
+import type { CircuitBreaker, RateLimiter } from "../queue/guard.js";
+import { DEFAULT_JOB_OPTIONS } from "../queue/options.js";
+import type { RoleRegistry } from "../roles/registry.js";
+import { sreTriagedKey } from "../roles/sre-role.js";
+import type { JobState } from "../roles/types.js";
+import { resolveDuplicateAction } from "../roles/types.js";
+import { json, parseAndValidate } from "./middleware.js";
 
 // Atomic state-checked update: only HSET if job is still in wait/prioritized/paused.
 // The non-atomic getJob+getState before this call is acceptable because this Lua
@@ -66,7 +66,11 @@ export async function handleAddJob(
     return json(res, 429, { added: false, reason: "circuit_open" });
   }
 
-  if (data.payload?.trigger === "alert" && data.payload?.fingerprint) {
+  if (
+    data.role === "sre" &&
+    data.payload?.trigger === "alert" &&
+    data.payload?.fingerprint
+  ) {
     const fpKey = sreTriagedKey(data.repo, String(data.payload.fingerprint));
     const triaged = await deps.redis.exists(fpKey);
     if (triaged) {

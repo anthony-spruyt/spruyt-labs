@@ -1,8 +1,8 @@
 import type { Redis } from "ioredis";
 import type { Histogram } from "prom-client";
-import type { RoleDefinition, DuplicateAction, JobState } from "./types.js";
-import type { AgentJob } from "../job/schema.js";
 import type { Config } from "../config.js";
+import type { AgentJob } from "../job/schema.js";
+import type { DuplicateAction, JobState, RoleDefinition } from "./types.js";
 
 // Atomic drain: LRANGE all items then DEL key in one round-trip.
 // Uses Redis EVAL command (server-side Lua execution), not JavaScript eval().
@@ -79,7 +79,7 @@ export function createSreRole(
         const raw = Number(
           job.payload?.batch_window_ms ?? config.SRE_BATCH_WINDOW_MS
         );
-        return Math.min(raw, 21_600_000);
+        return Math.max(0, Math.min(raw, 21_600_000));
       }
       return 0;
     },

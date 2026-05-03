@@ -1,10 +1,10 @@
+import type { Histogram } from "prom-client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createDefaultRegistry } from "./registry.js";
-import { resolveDuplicateAction } from "./types.js";
-import type { AgentJob } from "../job/schema.js";
-import type { JobState } from "./types.js";
-import { Histogram } from "prom-client";
 import type { Config } from "../config.js";
+import type { AgentJob } from "../job/schema.js";
+import { createDefaultRegistry } from "./registry.js";
+import type { JobState } from "./types.js";
+import { resolveDuplicateAction } from "./types.js";
 
 const mockConfig = {
   SRE_BATCH_MAX_SIZE: 50,
@@ -239,6 +239,15 @@ describe("sre getJobDelay", () => {
       payload: { trigger: "alert", batch_window_ms: 999_999_999 },
     };
     expect(def.getJobDelay!(job)).toBe(21_600_000);
+  });
+
+  it("clamps negative per-job override to 0", () => {
+    const job = {
+      ...base,
+      role: "sre" as const,
+      payload: { trigger: "alert", batch_window_ms: -1 },
+    };
+    expect(def.getJobDelay!(job)).toBe(0);
   });
 
   it("returns 0 for scheduled jobs", () => {
