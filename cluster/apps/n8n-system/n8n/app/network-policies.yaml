@@ -628,7 +628,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-n8n-to-brave-search-mcp-egress
+  name: allow-brave-search-mcp-egress
 spec:
   endpointSelector:
     matchLabels:
@@ -642,4 +642,25 @@ spec:
       toPorts:
         - ports:
             - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to GitHub MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-github-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: github-mcp
+            k8s:app.kubernetes.io/name: github-mcp-server
+      toPorts:
+        - ports:
+            - port: "8082"
               protocol: TCP
