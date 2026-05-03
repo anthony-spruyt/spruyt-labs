@@ -226,11 +226,6 @@ spec:
             containers:
               - (name): "?*"
                 env:
-                  - name: SRE_MCP_AUTH_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: sre-credentials
-                        key: sre-mcp-auth-token
                   - name: AGENT_PLATFORM_MCP_AUTH_TOKEN
                     valueFrom:
                       secretKeyRef:

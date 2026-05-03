@@ -14,7 +14,6 @@ Agents are granted read-tier GitHub credentials via an ESO ExternalSecret that s
 - `github-token-rotation` Kustomization (provides the `github-bot-credentials` source secret in `github-system`)
 - External Secrets Operator (`external-secrets` Kustomization)
 - `github-secret-store` SecretStore (created in `claude-agents-shared/base`, mounted via kustomization base reference)
-- `sre-credentials` SOPS secret (encrypted in-tree at `app/sre-credentials.sops.yaml`)
 - PriorityClass `high-priority` (defined in `cluster/flux/meta/priority-classes.yaml`)
 
 ## Operation
@@ -32,9 +31,6 @@ kubectl describe externalsecret github-bot-credentials -n claude-agents-sre
 # Check SecretStore connectivity
 kubectl get secretstore github-secret-store -n claude-agents-sre
 kubectl describe secretstore github-secret-store -n claude-agents-sre
-
-# Verify the SRE MCP auth token secret is decrypted by Flux
-kubectl get secret sre-credentials -n claude-agents-sre
 
 # Force Flux reconcile
 flux reconcile kustomization claude-agents-sre --with-source
