@@ -53,6 +53,9 @@ spec:
               - name: claude-settings-profiles
                 configMap:
                   name: claude-settings-profiles
+              - name: claude-managed-settings
+                configMap:
+                  name: claude-managed-settings
             initContainers:
               - name: gh-config-sync
                 image: docker.io/library/busybox:1.37.0@sha256:1487d0af5f52b4ba31c7e465126ee2123fe3f2305d638e7827681e7cf6c83d5e
@@ -134,6 +137,10 @@ spec:
                   - name: claude-settings-profiles
                     mountPath: /etc/claude/settings
                     readOnly: true
+                  - name: claude-managed-settings
+                    mountPath: /etc/claude-code/managed-settings.json
+                    subPath: managed-settings.json
+                    readOnly: true
     - name: inject-read-mcp
       match:
         any:
@@ -163,6 +170,10 @@ spec:
                 volumeMounts:
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
+                    readOnly: true
+                  - name: claude-mcp-config
+                    mountPath: /etc/claude-code/managed-mcp.json
+                    subPath: mcp.json
                     readOnly: true
     - name: inject-write-mcp
       match:
@@ -201,6 +212,10 @@ spec:
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
                     readOnly: true
+                  - name: claude-mcp-config
+                    mountPath: /etc/claude-code/managed-mcp.json
+                    subPath: mcp.json
+                    readOnly: true
                   - name: github-ssh-key
                     mountPath: /etc/git-ssh
                     readOnly: true
@@ -234,6 +249,10 @@ spec:
                 volumeMounts:
                   - name: claude-mcp-config
                     mountPath: /etc/mcp
+                    readOnly: true
+                  - name: claude-mcp-config
+                    mountPath: /etc/claude-code/managed-mcp.json
+                    subPath: mcp.json
                     readOnly: true
     - name: strip-explicit-priority
       match:

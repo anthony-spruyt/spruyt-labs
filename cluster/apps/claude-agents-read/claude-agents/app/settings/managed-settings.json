@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enableAllProjectMcpServers": false,
+  "allowedMcpServers": [
+    { "serverName": "bravesearch" },
+    { "serverName": "context7" },
+    { "serverName": "github" },
+    { "serverName": "agent-platform" }
+  ],
+  "permissions": {
+    "deny": [
+      "mcp__bravesearch__brave_image_search",
+      "mcp__bravesearch__brave_local_search",
+      "mcp__bravesearch__brave_news_search",
+      "mcp__bravesearch__brave_summarizer",
+      "mcp__bravesearch__brave_video_search"
+    ]
+  }
+}

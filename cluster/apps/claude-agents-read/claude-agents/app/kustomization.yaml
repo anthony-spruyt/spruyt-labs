@@ -11,5 +11,8 @@ configMapGenerator:
     files:
       - settings/read.json
       - settings/triage.json
+  - name: claude-managed-settings
+    files:
+      - settings/managed-settings.json
 generatorOptions:
   disableNameSuffixHash: true
