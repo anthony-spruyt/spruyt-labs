@@ -47,7 +47,6 @@ Workload-specific exceptions are configured in `exceptions-configmap.yaml` to su
 | Contact K8S API Server      | authentik          | authentik-system | Outpost management           |
 | Contact K8S API Server      | velero             | velero           | Backup operations            |
 | Contact K8S API Server      | kube-state-metrics | observability    | Metrics collection           |
-| Contact K8S API Server      | kubectl-mcp-server | kubectl-mcp      | MCP tool operations          |
 | Contact K8S API Server      | headlamp           | headlamp-system  | K8s dashboard                |
 | Contact K8S API Server      | traefik            | traefik          | Ingress controller           |
 | Contact K8S API Server      | cloudnative-pg     | cnpg-system      | Operator manages PG clusters |

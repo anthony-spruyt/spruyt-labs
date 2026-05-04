@@ -19,7 +19,7 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 ## Hard Rules
 
 1. **No secrets output** - Never display credentials or env var values
-1. **Declarative only** - No manual kubectl patches for config changes; use Flux, Terraform, Talos configs. Operational commands (restart, scale, drain) via MCP tools are permitted.
+1. **Declarative only** - No manual kubectl patches for config changes; use Flux, Terraform, Talos configs. Operational commands (restart, scale, drain) via kubectl are permitted.
 1. **Git push allowed** - Push directly after commit; don't ask permission each time
 1. **No git amend** - Always new commits
 1. **No SOPS decrypt** - Never decrypt secrets via CLI
@@ -41,11 +41,11 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 
 Use Claude's native tools instead of shell commands:
 
-| Task           | Use                     | Avoid                          |
-| -------------- | ----------------------- | ------------------------------ |
-| Read files     | `Read` tool             | `cat`, `head`, `tail`          |
-| Search content | `Grep` tool             | `grep`, `rg`                   |
-| Find files     | `Glob` tool             | `find`, `ls -R`                |
-| Edit files     | `Edit` tool             | `sed -i`, `awk -i`             |
-| List env keys  | `env \| cut -d= -f1`    | `env`, `printenv`, `echo $VAR` |
-| Kubernetes ops | `mcp__kubectl__*` tools | `kubectl` (fallback only)      |
+| Task           | Use                  | Avoid                          |
+| -------------- | -------------------- | ------------------------------ |
+| Read files     | `Read` tool          | `cat`, `head`, `tail`          |
+| Search content | `Grep` tool          | `grep`, `rg`                   |
+| Find files     | `Glob` tool          | `find`, `ls -R`                |
+| Edit files     | `Edit` tool          | `sed -i`, `awk -i`             |
+| List env keys  | `env \| cut -d= -f1` | `env`, `printenv`, `echo $VAR` |
+| Kubernetes ops | `kubectl`            | —                              |
