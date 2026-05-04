@@ -10,7 +10,6 @@ resources:
   - ./firefly-iii
   - ./flux-system
   - ./foundryvtt
-  - ./github-mcp
   - ./headlamp-system
   - ./kube-system
   - ./minecraft
@@ -20,6 +19,5 @@ resources:
   - ./redisinsight
   - ./rook-ceph
   - ./vaultwarden
-  - ./kubectl-mcp
   - ./n8n-mcp
   - ./whoami

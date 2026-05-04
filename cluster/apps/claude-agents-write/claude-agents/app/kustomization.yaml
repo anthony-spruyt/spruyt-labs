@@ -4,16 +4,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../../claude-agents-shared/base
-  - ./claude-mcp-config-write.yaml
+  - ./claude-mcp-config.yaml
   - ./github-external-secret.yaml
   - ./github-ssh-external-secret.yaml
   - ./github-bot-gitconfig.yaml
-  - ./network-policies.yaml
 configMapGenerator:
   - name: claude-settings-profiles
     files:
-      - settings/execute.json
-      - settings/fix.json
+      - settings/execute-issue.json
+      - settings/pr-fix.json
+      - settings/renovate-fix.json
   - name: claude-managed-settings
     files:
       - settings/managed-settings.json

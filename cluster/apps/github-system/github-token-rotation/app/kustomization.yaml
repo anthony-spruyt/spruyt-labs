@@ -12,9 +12,10 @@ resources:
   - ./network-policies.yaml
   - ./cronjob.yaml
   - ./reader-role.yaml
-  - ./reader-role-binding-claude-agents-write.yaml
   - ./reader-role-binding-claude-agents-read.yaml
-  - ./reader-role-binding-claude-agents-sre.yaml
-  - ./reader-role-binding-github-mcp.yaml
+  - ./reader-role-binding-claude-agents-spruyt-labs-read.yaml
+  - ./reader-role-binding-claude-agents-spruyt-labs-sre.yaml
+  - ./reader-role-binding-claude-agents-spruyt-labs-write.yaml
+  - ./reader-role-binding-claude-agents-write.yaml
   - ./reader-role-binding-n8n.yaml
   - ./vmrule.yaml

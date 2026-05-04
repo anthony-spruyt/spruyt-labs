@@ -43,13 +43,13 @@ resources:
   - ./falco-system
   - ./firefly-iii
   - ./nut-system
-  - ./kubectl-mcp
   - ./github-system
-  - ./claude-agents-write
   - ./claude-agents-read
-  - ./claude-agents-sre
+  - ./claude-agents-spruyt-labs-read
+  - ./claude-agents-spruyt-labs-sre
+  - ./claude-agents-spruyt-labs-write
+  - ./claude-agents-write
   - ./agent-worker-system
-  - ./github-mcp
   - ./discord-mcp
   - ./brave-search-mcp
   - ./n8n-mcp

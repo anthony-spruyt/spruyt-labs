@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../claude-agents-shared/base
+  - ./claude-mcp-config.yaml
+  - ./github-external-secret.yaml
+  - ./network-policies.yaml
+configMapGenerator:
+  - name: claude-settings-profiles
+    files:
+      - settings/sre-health-check.json
+      - settings/sre-triage.json
+      - settings/sre-validate.json
+  - name: claude-managed-settings
+    files:
+      - settings/managed-settings.json
+generatorOptions:
+  disableNameSuffixHash: true

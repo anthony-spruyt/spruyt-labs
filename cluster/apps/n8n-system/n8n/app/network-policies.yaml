@@ -524,7 +524,13 @@ spec:
             k8s:io.kubernetes.pod.namespace: claude-agents-read
             managed-by: n8n-claude-code
         - matchLabels:
-            k8s:io.kubernetes.pod.namespace: claude-agents-sre
+            k8s:io.kubernetes.pod.namespace: claude-agents-spruyt-labs-read
+            managed-by: n8n-claude-code
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-spruyt-labs-sre
+            managed-by: n8n-claude-code
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-spruyt-labs-write
             managed-by: n8n-claude-code
       toPorts:
         - ports:
@@ -642,25 +648,4 @@ spec:
       toPorts:
         - ports:
             - port: "8000"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to GitHub MCP server
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-github-mcp-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: n8n
-      app.kubernetes.io/name: n8n
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: github-mcp
-            k8s:app.kubernetes.io/name: github-mcp-server
-      toPorts:
-        - ports:
-            - port: "8082"
               protocol: TCP

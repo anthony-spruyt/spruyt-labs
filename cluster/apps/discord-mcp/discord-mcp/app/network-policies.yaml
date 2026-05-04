@@ -23,11 +23,11 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Claude agent read pods
+# Allow ingress from Claude agents spruyt labs sre pods
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-claude-agents-read-ingress
+  name: allow-claude-agents-spruyt-labs-sre-ingress
 spec:
   endpointSelector:
     matchLabels:
@@ -35,47 +35,7 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            k8s:io.kubernetes.pod.namespace: claude-agents-read
-            k8s:managed-by: n8n-claude-code
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Claude agent write pods
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-claude-agents-write-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: discord-mcp
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: claude-agents-write
-            k8s:managed-by: n8n-claude-code
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Claude agent SRE pods
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-claude-agents-sre-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: discord-mcp
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: claude-agents-sre
+            k8s:io.kubernetes.pod.namespace: claude-agents-spruyt-labs-sre
             k8s:managed-by: n8n-claude-code
       toPorts:
         - ports:

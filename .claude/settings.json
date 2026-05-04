@@ -98,6 +98,11 @@
       "WebFetch(domain:trivy.dev)"
     ],
     "deny": [
+      "mcp__bravesearch__brave_local_search",
+      "mcp__bravesearch__brave_video_search",
+      "mcp__bravesearch__brave_image_search",
+      "mcp__bravesearch__brave_news_search",
+      "mcp__bravesearch__brave_summarizer",
       "Read(./**/*id_rsa*)",
       "Read(./**/*id_ed25519*)",
       "Read(./**/*id_ecdsa*)",

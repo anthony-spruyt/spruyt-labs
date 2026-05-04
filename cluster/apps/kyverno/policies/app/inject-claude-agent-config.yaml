@@ -22,6 +22,77 @@ metadata:
 spec:
   background: false
   rules:
+    - name: strip-explicit-priority
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-read
+                - claude-agents-spruyt-labs-read
+                - claude-agents-spruyt-labs-sre
+                - claude-agents-spruyt-labs-write
+                - claude-agents-write
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.priority || `0` }}"
+            operator: NotEquals
+            value: 0
+      mutate:
+        patchesJson6902: |-
+          - op: remove
+            path: /spec/priority
+    - name: inject-priority-low
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-read
+                - claude-agents-spruyt-labs-read
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      mutate:
+        patchStrategicMerge:
+          spec:
+            priorityClassName: low-priority
+    - name: inject-priority-standard
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-spruyt-labs-write
+                - claude-agents-write
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      mutate:
+        patchStrategicMerge:
+          spec:
+            priorityClassName: standard
+    - name: inject-priority-high
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-spruyt-labs-sre
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      mutate:
+        patchStrategicMerge:
+          spec:
+            priorityClassName: high-priority
     - name: inject-shared-config
       match:
         any:
@@ -30,8 +101,10 @@ spec:
                 - Pod
               namespaces:
                 - claude-agents-read
+                - claude-agents-spruyt-labs-read
+                - claude-agents-spruyt-labs-sre
+                - claude-agents-spruyt-labs-write
                 - claude-agents-write
-                - claude-agents-sre
               selector:
                 matchLabels:
                   managed-by: n8n-claude-code
@@ -141,7 +214,7 @@ spec:
                     mountPath: /etc/claude-code/managed-settings.json
                     subPath: managed-settings.json
                     readOnly: true
-    - name: inject-read-mcp
+    - name: inject-managed-mcp
       match:
         any:
           - resources:
@@ -149,6 +222,10 @@ spec:
                 - Pod
               namespaces:
                 - claude-agents-read
+                - claude-agents-spruyt-labs-read
+                - claude-agents-spruyt-labs-sre
+                - claude-agents-spruyt-labs-write
+                - claude-agents-write
               selector:
                 matchLabels:
                   managed-by: n8n-claude-code
@@ -158,7 +235,7 @@ spec:
             volumes:
               - name: claude-mcp-config
                 configMap:
-                  name: claude-mcp-config-read
+                  name: claude-mcp-config
             containers:
               - (name): "?*"
                 env:
@@ -175,13 +252,14 @@ spec:
                     mountPath: /etc/claude-code/managed-mcp.json
                     subPath: mcp.json
                     readOnly: true
-    - name: inject-write-mcp
+    - name: inject-github-ssh
       match:
         any:
           - resources:
               kinds:
                 - Pod
               namespaces:
+                - claude-agents-spruyt-labs-write
                 - claude-agents-write
               selector:
                 matchLabels:
@@ -190,9 +268,6 @@ spec:
         patchStrategicMerge:
           spec:
             volumes:
-              - name: claude-mcp-config
-                configMap:
-                  name: claude-mcp-config-write
               - name: github-ssh-key
                 secret:
                   secretName: github-bot-ssh-key
@@ -202,110 +277,10 @@ spec:
                   name: github-bot-gitconfig
             containers:
               - (name): "?*"
-                env:
-                  - name: AGENT_PLATFORM_MCP_AUTH_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: agent-platform-mcp-auth-token
                 volumeMounts:
-                  - name: claude-mcp-config
-                    mountPath: /etc/mcp
-                    readOnly: true
-                  - name: claude-mcp-config
-                    mountPath: /etc/claude-code/managed-mcp.json
-                    subPath: mcp.json
-                    readOnly: true
                   - name: github-ssh-key
                     mountPath: /etc/git-ssh
                     readOnly: true
-    - name: inject-sre-mcp
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - claude-agents-sre
-              selector:
-                matchLabels:
-                  managed-by: n8n-claude-code
-      mutate:
-        patchStrategicMerge:
-          spec:
-            priorityClassName: high-priority
-            volumes:
-              - name: claude-mcp-config
-                configMap:
-                  name: claude-mcp-config-sre
-            containers:
-              - (name): "?*"
-                env:
-                  - name: AGENT_PLATFORM_MCP_AUTH_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: agent-platform-mcp-auth-token
-                volumeMounts:
-                  - name: claude-mcp-config
-                    mountPath: /etc/mcp
-                    readOnly: true
-                  - name: claude-mcp-config
-                    mountPath: /etc/claude-code/managed-mcp.json
-                    subPath: mcp.json
-                    readOnly: true
-    - name: strip-explicit-priority
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - claude-agents-read
-                - claude-agents-write
-                - claude-agents-sre
-              selector:
-                matchLabels:
-                  managed-by: n8n-claude-code
-      preconditions:
-        all:
-          - key: "{{ request.object.spec.priority || `0` }}"
-            operator: NotEquals
-            value: 0
-      mutate:
-        patchesJson6902: |-
-          - op: remove
-            path: /spec/priority
-    - name: inject-read-priority
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - claude-agents-read
-              selector:
-                matchLabels:
-                  managed-by: n8n-claude-code
-      mutate:
-        patchStrategicMerge:
-          spec:
-            priorityClassName: low-priority
-    - name: inject-write-priority
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - claude-agents-write
-              selector:
-                matchLabels:
-                  managed-by: n8n-claude-code
-      mutate:
-        patchStrategicMerge:
-          spec:
-            priorityClassName: standard
     - name: inject-repo-clone-write
       match:
         any:
@@ -313,6 +288,7 @@ spec:
               kinds:
                 - Pod
               namespaces:
+                - claude-agents-spruyt-labs-write
                 - claude-agents-write
               selector:
                 matchLabels:
@@ -387,7 +363,8 @@ spec:
                 - Pod
               namespaces:
                 - claude-agents-read
-                - claude-agents-sre
+                - claude-agents-spruyt-labs-read
+                - claude-agents-spruyt-labs-sre
               selector:
                 matchLabels:
                   managed-by: n8n-claude-code

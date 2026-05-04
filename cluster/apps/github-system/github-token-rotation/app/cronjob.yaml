@@ -174,7 +174,7 @@ spec:
                     echo "=== Force-syncing ExternalSecrets in consumer namespaces ==="
 
                     FAILURES=0
-                    for NS in claude-agents-write claude-agents-read claude-agents-sre github-mcp n8n-system; do
+                    for NS in claude-agents-write claude-agents-read claude-agents-spruyt-labs-sre claude-agents-spruyt-labs-read claude-agents-spruyt-labs-write n8n-system; do
                       for ES_NAME in github-bot-credentials github-bot-ssh-key; do
                         if ! kubectl get externalsecret "$${ES_NAME}" -n "$${NS}" >/dev/null 2>&1; then
                           continue
