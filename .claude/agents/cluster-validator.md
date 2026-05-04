@@ -2,7 +2,6 @@
 name: cluster-validator
 description: 'Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\n\n**When to use:**\n- After user pushes to main branch\n- When user says "pushed", "merged", or "deployed"\n- After Claude merges a PR affecting `cluster/`\n\n**When NOT to use:**\n- Before git commit (use qa-validator)\n- For feature branches (Flux only watches main)\n- When a cluster-validator is ALREADY RUNNING — wait for it to complete first\n- During rapid fix iterations (push→fix→push) — skip intermediate pushes, validate after final fix\n\n<example>\nuser: "Just pushed the redis deployment"\nassistant: "I''ll validate the deployment with cluster-validator."\n<commentary>User pushed to main, triggering Flux reconciliation that needs validation.</commentary>\n</example>\n\n<example>\nuser: "ok merge the PR"\nassistant: [merges PR] "PR merged. Running cluster-validator to verify deployment."\n<commentary>Claude merged a PR affecting cluster resources, needs post-deploy validation.</commentary>\n</example>\n\n<example>\nuser: "pushed another fix"\nassistant: "Cluster-validator still running from previous push. Will skip this one and validate after things stabilize."\n<commentary>Never stack validators — one at a time, skip intermediate pushes.</commentary>\n</example>'
 model: opus
-memory: project
 tools:
   - Bash
   - Read
@@ -275,23 +274,3 @@ flux resume kustomization <name>
 5. **Wait for full reconciliation wave** — run the wait loop (5 attempts × 60s) before classifying ANY results. Never report a verdict based on a single snapshot
 6. Verify dependency chains end-to-end
 7. Follow inherited research priority (Context7 -> GitHub -> WebFetch -> WebSearch)
-
-## Self-Improvement
-
-After determining your verdict, record learnings before returning.
-
-1. Read `/workspaces/spruyt-labs/.claude/agent-memory/cluster-validator/known-patterns.md`
-2. For each observation (timing, failure signatures, false positives):
-   - Already in table: increment Count, update Last Seen
-   - New: append row with Count=1, Last Seen=today, Added=today
-   - No observations: skip to step 5
-3. Auto-prune when file exceeds 50 entries: remove Count=1 entries older than 30 days. Never remove Count >= 3
-4. Commit if changed. **STRICT: stage ONLY the patterns file — NEVER `git add -A`, `git add .`, or `git add <dir>`. If `git diff --cached` shows anything besides `known-patterns.md`, run `git reset HEAD` first to unstage the caller's in-progress work.**
-
-   ```bash
-   git reset HEAD -- . >/dev/null 2>&1 || true
-   git add /workspaces/spruyt-labs/.claude/agent-memory/cluster-validator/known-patterns.md
-   test "$(git diff --cached --name-only | wc -l)" = "1" || { echo "refusing to commit: unexpected staged files"; exit 1; }
-   git commit -m "fix(agents): update cluster-validator patterns from run YYYY-MM-DD"
-   ```
-5. Return your verdict (SUCCESS/ROLLBACK/ROLL-FORWARD). Self-improvement does not change the verdict.

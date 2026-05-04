@@ -2,7 +2,6 @@
 name: qa-validator
 description: 'Validates local changes before git commit using linting, schema validation, dry-runs, and upstream doc verification.\n\n**When to use:**\n- After modifying files under `cluster/` before git commit\n- When user says "let''s commit" or "check if it looks good"\n- After another agent completes code changes\n\n**When NOT to use:**\n- After git push (use cluster-validator)\n- For research/exploration without modifications\n- Docs-only or SOPS-only changes\n\n<example>\nContext: Agent created HelmRelease files.\nassistant: "I''ll validate with qa-validator before committing."\n<commentary>Files under cluster/ were modified and need pre-commit validation.</commentary>\n</example>\n\n<example>\nuser: "Let''s commit this"\nassistant: "Running qa-validator first."\n<commentary>User wants to commit; qa-validator gates all commits affecting cluster state.</commentary>\n</example>'
 model: opus
-memory: project
 tools:
   - Bash
   - Read
@@ -222,25 +221,3 @@ The calling agent applies fixes and re-invokes qa-validator until APPROVED. Do n
 5. List ALL issues found, categorize by severity (CRITICAL/WARNING/INFO)
 6. If unsure about a pattern, check existing apps in `cluster/apps/`
 7. For ambiguous architectural decisions, ask user for clarification before approving
-
-## Self-Improvement (Run Before Returning Result)
-
-After determining verdict, record learnings:
-
-1. Read `/workspaces/spruyt-labs/.claude/agent-memory/qa-validator/known-patterns.md`
-2. Compare this run against known patterns:
-   - Already in table: increment Count, update Last Seen
-   - New observation: append row (Count=1, Last Seen=today, Added=today)
-   - Observations: linting false positives, schema quirks, doc gaps, failure signatures
-   - No new observations: skip to returning result
-3. Auto-prune when file exceeds 50 entries: remove Count=1 entries older than 30 days. Never remove Count >= 3
-4. Commit if changed. **STRICT: stage ONLY the patterns file — NEVER `git add -A`, `git add .`, or `git add <dir>`. Never include any other user/staged/unstaged file in this commit, even if already staged. If `git diff --cached` shows anything besides `known-patterns.md`, run `git reset HEAD` to unstage everything, then stage only the patterns file. The calling agent owns all other files and may have uncommitted/staged work in progress.**
-
-```bash
-git reset HEAD -- . >/dev/null 2>&1 || true   # drop any pre-staged files
-git add /workspaces/spruyt-labs/.claude/agent-memory/qa-validator/known-patterns.md
-# sanity: the staged set must be exactly one file
-test "$(git diff --cached --name-only | wc -l)" = "1" || { echo "refusing to commit: unexpected staged files"; exit 1; }
-git commit -m "fix(agents): update qa-validator patterns from run YYYY-MM-DD"
-```
-5. Return verdict (APPROVED/BLOCKED). Self-improvement does not change the verdict.

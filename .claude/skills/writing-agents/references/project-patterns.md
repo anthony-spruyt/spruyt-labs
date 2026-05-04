@@ -7,10 +7,9 @@ Portable patterns for creating and optimizing Claude Code agents. Derived from A
 1. [Discover Existing Patterns](#1-discover-existing-patterns)
 2. [Model Selection](#2-model-selection)
 3. [Size Benchmarks](#3-size-benchmarks)
-4. [Memory Patterns](#4-memory-patterns)
-5. [Output Format Patterns](#5-output-format-patterns)
-6. [Handoff Patterns](#6-handoff-patterns)
-7. [Description Field Patterns](#7-description-field-patterns)
+4. [Output Format Patterns](#4-output-format-patterns)
+5. [Handoff Patterns](#5-handoff-patterns)
+6. [Description Field Patterns](#6-description-field-patterns)
 
 ---
 
@@ -42,26 +41,7 @@ This is more reliable than a static inventory that goes stale.
 
 **Targets:** Under 500 lines per Anthropic guidance. Under 300 lines and 2,000 words for focused agents. Cut aggressively when exceeding — remove content Opus already knows, inherited context from CLAUDE.md/rules, and verbose examples. Agents are single `.md` files; do not extract content to separate files.
 
-## 4. Memory Patterns
-
-**When to use `memory: project`:** Agents that run frequently and benefit from learning across invocations.
-
-**Directory:** `.claude/agent-memory/<agent-name>/` (created automatically when `memory: project` is set). This is for runtime learning only — things the agent discovers and writes during execution. Do not pre-author static reference files here.
-
-**`known-patterns.md` table format:**
-
-| Column | Purpose |
-|--------|---------|
-| Pattern | Description of the observation |
-| Count | Times observed |
-| Last Seen | Most recent occurrence date |
-| Added | Date first recorded |
-
-**Auto-prune rules:** Remove Count=1 entries older than 30 days. Never remove Count >= 3. Only prune when file exceeds 50 total entries.
-
-**Commit pattern:** `git add <specific-memory-file>` only. Never stage other files. Message: `fix(agents): update <agent>-patterns from run YYYY-MM-DD`.
-
-## 5. Output Format Patterns
+## 4. Output Format Patterns
 
 All agents use structured output templates. Common structure:
 
