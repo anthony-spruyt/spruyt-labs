@@ -22,7 +22,7 @@ You are reviewing the spec at `$spec`.
    - The spec file path to review
    - Instruction to use Context7 for library/framework validation
    - Instruction to search `cluster/apps/` for deployed manifests to verify spec claims
-   - Instruction to use MCP kubectl tools to check live cluster state where manifests alone are insufficient
+   - Instruction to use `kubectl` CLI to check live cluster state where manifests alone are insufficient
    - Instruction to cross-reference findings against the spec's own risks table, phase checklists, and tradeoff callouts before flagging — do not raise concerns the spec already addresses
 4. After receiving findings, present results organized by severity
 5. Offer to update the spec based on findings

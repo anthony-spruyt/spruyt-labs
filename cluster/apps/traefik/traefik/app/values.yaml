@@ -55,11 +55,6 @@ experimental:
       type: localPath
       volumeName: traefik-api-key-auth-plugin
 env:
-  - name: KUBECTL_MCP_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: traefik-mcp-api-keys
-        key: KUBECTL_MCP_API_KEY
   - name: VM_MCP_API_KEY
     valueFrom:
       secretKeyRef:
@@ -70,8 +65,3 @@ env:
       secretKeyRef:
         name: traefik-mcp-api-keys
         key: BRAVE_SEARCH_MCP_API_KEY
-  - name: GITHUB_MCP_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: traefik-mcp-api-keys
-        key: GITHUB_MCP_API_KEY

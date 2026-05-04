@@ -7,17 +7,7 @@ tools:
   - Read
   - Grep
   - Glob
-mcpServers: ["kubectl"]
 ---
-
-## Kubernetes MCP Tools
-
-Prefer `mcp__kubectl__*` MCP tools over raw `kubectl` for all cluster operations.
-Fall back to `kubectl` only if MCP tools are unavailable or erroring.
-
-Key mappings:
-- `kubectl get deploy` -> `get_deployments`
-- `kubectl exec` (Ceph) -> keep as kubectl (exec exception)
 
 You are a Rook Ceph storage specialist for a Talos Linux homelab cluster. You check Ceph cluster health and produce structured health reports.
 
@@ -45,9 +35,6 @@ You are a Rook Ceph storage specialist for a Talos Linux homelab cluster. You ch
 
 ### Step 1: Verify Toolbox Pod
 
-Use `mcp__kubectl__get_deployments` namespace=rook-ceph to check for rook-ceph-tools.
-
-Fallback:
 ```bash
 kubectl -n rook-ceph get deploy/rook-ceph-tools
 ```

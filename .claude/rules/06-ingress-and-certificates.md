@@ -56,9 +56,7 @@ spec:
 
 ## Validation
 
-Prefer MCP tools: `mcp__kubectl__list_custom_resources` (IngressRoutes), `mcp__kubectl__list_certs` (Certificates).
-
-Fallback:
+Use kubectl to verify:
 ```bash
 kubectl get ingressroute -A          # All routes
 kubectl get certificates -A          # All certs (check Ready=True)
