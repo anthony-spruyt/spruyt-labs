@@ -85,10 +85,13 @@ export async function handleAddJob(
     identity = buildJobIdentity(data, deps.registry);
     roleDef = deps.registry.get(data.role);
   } catch (err) {
+    logger.warn("Job identity/role validation failed", {
+      role: data.role,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return json(res, 400, {
       added: false,
       reason: "invalid_request",
-      error: err instanceof Error ? err.message : String(err),
     });
   }
   const jobId = identity.jobId;

@@ -155,9 +155,7 @@ describe("handleAddJob validation", () => {
     expect((res._body as Record<string, unknown>).reason).toBe(
       "invalid_request"
     );
-    expect((res._body as Record<string, unknown>).error).toBe(
-      "pr_number required for triage jobs"
-    );
+    expect((res._body as Record<string, unknown>).error).toBeUndefined();
   });
 
   it("returns 400 when registry.get throws unknown role", async () => {
@@ -197,9 +195,10 @@ describe("handleAddJob validation", () => {
     await handleAddJob(req, res, deps);
 
     expect(res._status).toBe(400);
-    expect((res._body as Record<string, unknown>).error).toBe(
-      "Unknown role: triage"
+    expect((res._body as Record<string, unknown>).reason).toBe(
+      "invalid_request"
     );
+    expect((res._body as Record<string, unknown>).error).toBeUndefined();
   });
 });
 

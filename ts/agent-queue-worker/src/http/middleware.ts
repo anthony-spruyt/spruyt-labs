@@ -38,7 +38,7 @@ export function readBody(req: IncomingMessage): Promise<unknown> {
 interface SafeParseResult<T> {
   success: boolean;
   data?: T;
-  error?: { issues: unknown[] };
+  error?: { issues: Array<{ path: PropertyKey[] }> };
 }
 
 interface ZodLike<T> {
@@ -68,7 +68,7 @@ export async function parseAndValidate<T>(
     json(res, 400, {
       ...responseBase,
       reason: "invalid_request",
-      errors: parsed.error?.issues,
+      fields: parsed.error?.issues.map((i) => i.path.join(".")),
     });
     return { ok: false };
   }
