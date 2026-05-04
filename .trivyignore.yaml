@@ -288,6 +288,20 @@ misconfigurations:
     paths:
       - cluster/apps/claude-agents-shared/base/github-bot-gitconfig-read.yaml
       - cluster/apps/claude-agents-write/claude-agents/app/github-bot-gitconfig.yaml
+      - cluster/apps/claude-agents-spruyt-labs-write/claude-agents/app/github-bot-gitconfig.yaml
+
+  # ==============================================================================
+  # Claude Agents SRE/Read - operator and reader RBAC
+  # ==============================================================================
+  # Operator role needs pod delete + eviction for operational tasks (drain, restart)
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/claude-agents-spruyt-labs-sre/claude-agents/app/rbac.yaml
+  # Both roles have secrets: ["list"] only (read-only enumeration, not manage)
+  - id: AVD-KSV-0041
+    paths:
+      - cluster/apps/claude-agents-spruyt-labs-sre/claude-agents/app/rbac.yaml
+      - cluster/apps/claude-agents-spruyt-labs-read/claude-agents/app/rbac.yaml
 
   # ==============================================================================
   # GitHub Token Rotation - CronJob and RBAC
