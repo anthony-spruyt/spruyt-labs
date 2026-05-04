@@ -31,14 +31,14 @@ const prFieldsOptional = {
   head_sha: z.string().min(1).optional(),
 };
 
-export const AgentJobInputSchema = z.discriminatedUnion("role", [
+const BaseAgentJobInputSchema = z.discriminatedUnion("role", [
   z.object({ role: z.literal("triage"), ...prFieldsRequired }),
   z.object({ role: z.literal("fix"), ...prFieldsOptional }),
   z.object({ role: z.literal("validate"), ...commonFields }),
   z.object({
     role: z.literal("execute"),
     ...commonFields,
-    issue_number: z.number().int().positive().optional(),
+    issue_number: z.number().int().positive(),
   }),
   z.object({
     role: z.literal("sre"),
@@ -46,6 +46,29 @@ export const AgentJobInputSchema = z.discriminatedUnion("role", [
     dedup_key: z.string().min(1).optional(),
   }),
 ]);
+
+export const AgentJobInputSchema = BaseAgentJobInputSchema.superRefine(
+  (data, ctx) => {
+    if (data.role === "fix" && !data.payload?.revert && !data.pr_number) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "pr_number required for fix jobs unless payload.revert is set",
+        path: ["pr_number"],
+      });
+    }
+    if (
+      data.role === "sre" &&
+      data.payload?.trigger !== "alert" &&
+      !data.dedup_key
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "dedup_key required for sre jobs unless trigger is alert",
+        path: ["dedup_key"],
+      });
+    }
+  }
+);
 
 export type AgentJobInput = z.infer<typeof AgentJobInputSchema>;
 

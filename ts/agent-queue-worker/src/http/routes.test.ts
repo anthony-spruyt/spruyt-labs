@@ -112,6 +112,97 @@ describe("handleGetJob", () => {
   });
 });
 
+describe("handleAddJob validation", () => {
+  function makeDeps(overrides: Record<string, unknown> = {}): RouteDeps {
+    return {
+      queue: { getJob: vi.fn().mockResolvedValue(null), add: vi.fn() },
+      redis: { exists: vi.fn().mockResolvedValue(0) },
+      circuitBreaker: { check: vi.fn().mockResolvedValue({ open: false }) },
+      rateLimiter: {
+        check: vi.fn().mockResolvedValue({ limited: false }),
+        record: vi.fn(),
+      },
+      registry: {
+        get: vi.fn().mockReturnValue({
+          timeoutMs: 900_000,
+          buildIdentitySegments: () => {
+            throw new Error("pr_number required for triage jobs");
+          },
+        }),
+      },
+      config: {} as Config,
+      processor: {},
+      ...overrides,
+    } as unknown as RouteDeps;
+  }
+
+  it("returns 400 when buildIdentitySegments throws", async () => {
+    const res = mockRes();
+    const req = mockReq({
+      role: "triage",
+      repo: "org/repo",
+      event_type: "pull_request",
+      priority: 5,
+      payload: {},
+      pr_number: 1,
+      head_sha: "abc",
+    });
+    const deps = makeDeps();
+
+    await handleAddJob(req, res, deps);
+
+    expect(res._status).toBe(400);
+    expect((res._body as Record<string, unknown>).reason).toBe(
+      "invalid_request"
+    );
+    expect((res._body as Record<string, unknown>).error).toBe(
+      "pr_number required for triage jobs"
+    );
+  });
+
+  it("returns 400 when registry.get throws unknown role", async () => {
+    const res = mockRes();
+    const req = mockReq({
+      role: "triage",
+      repo: "org/repo",
+      event_type: "pull_request",
+      priority: 5,
+      payload: {},
+      pr_number: 1,
+      head_sha: "abc",
+    });
+    const deps = makeDeps({
+      registry: {
+        get: vi.fn().mockImplementation((name: string) => {
+          if (name === "triage")
+            return {
+              timeoutMs: 120_000,
+              buildIdentitySegments: () => ["org/repo", "triage", "1"],
+            };
+          throw new Error(`Unknown role: ${name}`);
+        }),
+      },
+    });
+    // Override registry.get to throw on second call (after buildJobIdentity succeeds)
+    const registryGet = deps.registry.get as ReturnType<typeof vi.fn>;
+    registryGet
+      .mockReturnValueOnce({
+        timeoutMs: 120_000,
+        buildIdentitySegments: () => ["org/repo", "triage", "1"],
+      })
+      .mockImplementationOnce(() => {
+        throw new Error("Unknown role: triage");
+      });
+
+    await handleAddJob(req, res, deps);
+
+    expect(res._status).toBe(400);
+    expect((res._body as Record<string, unknown>).error).toBe(
+      "Unknown role: triage"
+    );
+  });
+});
+
 describe("handleAddJob suppression", () => {
   const sreAlert = {
     role: "sre" as const,

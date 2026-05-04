@@ -34,10 +34,24 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     config,
   } = deps;
 
+  worker.on("error", (err) => {
+    logger.error("BullMQ worker error", { error: String(err) });
+  });
+
   worker.on("completed", async (job) => {
     if (!job) return;
 
-    const roleDef = registry.get(job.data.role);
+    let roleDef;
+    try {
+      roleDef = registry.get(job.data.role);
+    } catch (err) {
+      logger.error("Unknown role in completed job", {
+        jobId: job.id,
+        role: job.data.role,
+        error: String(err),
+      });
+      return;
+    }
     if (!roleDef.bufferKey || !roleDef.drainBuffer) return;
 
     if (job.data.payload?.trigger === "alert") {
@@ -179,6 +193,19 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     logger.info("Shutdown complete");
     process.exit(0);
   }
+
+  process.on("uncaughtException", (err) => {
+    logger.error("Uncaught exception", {
+      error: String(err),
+      stack: err.stack,
+    });
+    metrics.workerShutdowns.inc();
+    process.exit(1);
+  });
+
+  process.on("unhandledRejection", (reason) => {
+    logger.error("Unhandled rejection", { error: String(reason) });
+  });
 
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);

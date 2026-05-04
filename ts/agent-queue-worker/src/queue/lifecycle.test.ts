@@ -99,6 +99,26 @@ function createMockDeps() {
   };
 }
 
+describe("lifecycle error handlers", () => {
+  let mocks: ReturnType<typeof createMockDeps>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks = createMockDeps();
+    setupLifecycle(mocks.deps);
+  });
+
+  it("logs BullMQ worker errors without crashing", async () => {
+    const { logger } = await import("../logger.js");
+
+    mocks.worker.emit("error", new Error("Redis connection lost"));
+
+    expect(logger.error).toHaveBeenCalledWith("BullMQ worker error", {
+      error: "Error: Redis connection lost",
+    });
+  });
+});
+
 describe("lifecycle triaged marker writes", () => {
   let mocks: ReturnType<typeof createMockDeps>;
 
@@ -260,6 +280,39 @@ describe("lifecycle triaged marker writes", () => {
 
     const pipe = mocks.pipeline.mock.results[0]?.value;
     expect(pipe.set).toHaveBeenCalledTimes(2);
+  });
+
+  it("logs error and skips when registry.get throws for unknown role", async () => {
+    mocks.registry.get.mockImplementation(() => {
+      throw new Error("Unknown role: bad");
+    });
+    const { logger } = await import("../logger.js");
+
+    const job = {
+      id: "org/repo--bad-job",
+      data: {
+        role: "bad",
+        repo: "org/repo",
+        event_type: "unknown",
+        priority: 5,
+        payload: {},
+      },
+      opts: {},
+      attemptsMade: 0,
+    };
+
+    await mocks.worker.emit("completed", job);
+    await vi.waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(
+        "Unknown role in completed job",
+        expect.objectContaining({
+          jobId: "org/repo--bad-job",
+          role: "bad",
+        })
+      );
+    });
+
+    expect(mocks.drainBuffer).not.toHaveBeenCalled();
   });
 
   it("swallows pipeline errors with warning", async () => {

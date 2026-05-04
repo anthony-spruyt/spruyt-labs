@@ -79,9 +79,19 @@ export async function handleAddJob(
     }
   }
 
-  const identity = buildJobIdentity(data, deps.registry);
+  let identity: ReturnType<typeof buildJobIdentity>;
+  let roleDef: ReturnType<RouteDeps["registry"]["get"]>;
+  try {
+    identity = buildJobIdentity(data, deps.registry);
+    roleDef = deps.registry.get(data.role);
+  } catch (err) {
+    return json(res, 400, {
+      added: false,
+      reason: "invalid_request",
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
   const jobId = identity.jobId;
-  const roleDef = deps.registry.get(data.role);
 
   const existingJob = await deps.queue.getJob(jobId);
   if (existingJob) {

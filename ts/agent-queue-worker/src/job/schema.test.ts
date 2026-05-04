@@ -35,9 +35,20 @@ describe("AgentJobInputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts all valid roles", () => {
+  it("accepts all valid roles with required fields", () => {
+    const perRole: Record<string, Record<string, unknown>> = {
+      triage: {},
+      fix: {},
+      validate: {},
+      execute: { issue_number: 1 },
+      sre: { payload: { trigger: "alert" } },
+    };
     for (const role of ["triage", "fix", "validate", "execute", "sre"]) {
-      const result = AgentJobInputSchema.safeParse({ ...base, role });
+      const result = AgentJobInputSchema.safeParse({
+        ...base,
+        role,
+        ...perRole[role],
+      });
       expect(result.success).toBe(true);
     }
   });
@@ -71,10 +82,20 @@ describe("AgentJobInputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts fix with optional pr fields missing", () => {
+  it("accepts fix without pr fields when payload.revert is set", () => {
+    const { pr_number: _, head_sha: __, ...fixBase } = base;
+    const result = AgentJobInputSchema.safeParse({
+      ...fixBase,
+      role: "fix",
+      payload: { revert: true },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects fix without pr_number when not a revert", () => {
     const { pr_number: _, head_sha: __, ...fixBase } = base;
     const result = AgentJobInputSchema.safeParse({ ...fixBase, role: "fix" });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
   it("accepts fix with pr fields provided", () => {
@@ -91,6 +112,7 @@ describe("AgentJobInputSchema", () => {
       ...base,
       role: "sre",
       head_sha: "abc123",
+      payload: { trigger: "alert" },
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -103,6 +125,7 @@ describe("AgentJobInputSchema", () => {
       ...base,
       role: "execute",
       pr_number: 42,
+      issue_number: 1,
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -120,6 +143,48 @@ describe("AgentJobInputSchema", () => {
     if (result.success) {
       expect("issue_number" in result.data).toBe(false);
     }
+  });
+
+  it("rejects execute without issue_number", () => {
+    const result = AgentJobInputSchema.safeParse({ ...base, role: "execute" });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts execute with issue_number", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "execute",
+      issue_number: 1,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects sre scheduled job without dedup_key", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "sre",
+      payload: { trigger: "scheduled_health_check" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts sre alert without dedup_key", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "sre",
+      payload: { trigger: "alert" },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts sre scheduled with dedup_key", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...base,
+      role: "sre",
+      dedup_key: "2026-05-01",
+      payload: { trigger: "scheduled_health_check" },
+    });
+    expect(result.success).toBe(true);
   });
 
   it("accepts dedup_key for sre role", () => {
