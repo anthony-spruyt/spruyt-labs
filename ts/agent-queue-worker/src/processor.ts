@@ -235,6 +235,7 @@ export class Processor {
         session_token,
         attempt: job.attemptsMade,
         dispatched_at,
+        timeout_seconds: timeoutSec,
       }),
     });
 
