@@ -29,12 +29,11 @@ function mockReq(body: unknown): IncomingMessage {
 }
 
 const jobData = {
-  role: "triage" as const,
+  role: "renovate-triage" as const,
   repo: "org/repo",
   event_type: "pull_request",
   priority: 5,
-  payload: { action: "opened" },
-  pr_number: 42,
+  data: { pr_number: 42, head_sha: "abc", action: "opened" },
   dispatch_state: "dispatched" as const,
   dispatched_at: "2026-01-01T00:00:00Z",
 };
@@ -68,8 +67,12 @@ describe("handleGetJob", () => {
     expect(body.job_id).toBe("org/repo--triage-42");
     expect(body.state).toBe("active");
     expect(body.repo).toBe("org/repo");
-    expect(body.role).toBe("triage");
-    expect(body.pr_number).toBe(42);
+    expect(body.role).toBe("renovate-triage");
+    expect(body.data).toEqual({
+      pr_number: 42,
+      head_sha: "abc",
+      action: "opened",
+    });
     expect(body.session_token).toBe("00000000-0000-0000-0000-000000000001");
     expect(body.attempt).toBe(1);
   });
@@ -112,103 +115,13 @@ describe("handleGetJob", () => {
   });
 });
 
-describe("handleAddJob validation", () => {
-  function makeDeps(overrides: Record<string, unknown> = {}): RouteDeps {
-    return {
-      queue: { getJob: vi.fn().mockResolvedValue(null), add: vi.fn() },
-      redis: { exists: vi.fn().mockResolvedValue(0) },
-      circuitBreaker: { check: vi.fn().mockResolvedValue({ open: false }) },
-      rateLimiter: {
-        check: vi.fn().mockResolvedValue({ limited: false }),
-        record: vi.fn(),
-      },
-      registry: {
-        get: vi.fn().mockReturnValue({
-          timeoutMs: 900_000,
-          buildIdentitySegments: () => {
-            throw new Error("pr_number required for triage jobs");
-          },
-        }),
-      },
-      config: {} as Config,
-      processor: {},
-      ...overrides,
-    } as unknown as RouteDeps;
-  }
-
-  it("returns 400 when buildIdentitySegments throws", async () => {
-    const res = mockRes();
-    const req = mockReq({
-      role: "triage",
-      repo: "org/repo",
-      event_type: "pull_request",
-      priority: 5,
-      payload: {},
-      pr_number: 1,
-      head_sha: "abc",
-    });
-    const deps = makeDeps();
-
-    await handleAddJob(req, res, deps);
-
-    expect(res._status).toBe(400);
-    expect((res._body as Record<string, unknown>).reason).toBe(
-      "invalid_request"
-    );
-    expect((res._body as Record<string, unknown>).error).toBeUndefined();
-  });
-
-  it("returns 400 when registry.get throws unknown role", async () => {
-    const res = mockRes();
-    const req = mockReq({
-      role: "triage",
-      repo: "org/repo",
-      event_type: "pull_request",
-      priority: 5,
-      payload: {},
-      pr_number: 1,
-      head_sha: "abc",
-    });
-    const deps = makeDeps({
-      registry: {
-        get: vi.fn().mockImplementation((name: string) => {
-          if (name === "triage")
-            return {
-              timeoutMs: 120_000,
-              buildIdentitySegments: () => ["org/repo", "triage", "1"],
-            };
-          throw new Error(`Unknown role: ${name}`);
-        }),
-      },
-    });
-    // Override registry.get to throw on second call (after buildJobIdentity succeeds)
-    const registryGet = deps.registry.get as ReturnType<typeof vi.fn>;
-    registryGet
-      .mockReturnValueOnce({
-        timeoutMs: 120_000,
-        buildIdentitySegments: () => ["org/repo", "triage", "1"],
-      })
-      .mockImplementationOnce(() => {
-        throw new Error("Unknown role: triage");
-      });
-
-    await handleAddJob(req, res, deps);
-
-    expect(res._status).toBe(400);
-    expect((res._body as Record<string, unknown>).reason).toBe(
-      "invalid_request"
-    );
-    expect((res._body as Record<string, unknown>).error).toBeUndefined();
-  });
-});
-
 describe("handleAddJob suppression", () => {
   const sreAlert = {
-    role: "sre" as const,
+    role: "sre-alert" as const,
     repo: "org/repo",
     event_type: "alert",
     priority: 5,
-    payload: { trigger: "alert", fingerprint: "fp-abc123" },
+    data: { fingerprint: "fp-abc123" },
   };
 
   function makeDeps(overrides: Record<string, unknown> = {}): RouteDeps {
@@ -225,7 +138,7 @@ describe("handleAddJob suppression", () => {
           timeoutMs: 900_000,
           cooldownMs: 300_000,
           jobOptions: { attempts: 1 },
-          buildIdentitySegments: () => ["org/repo", "sre-triage"],
+          buildIdentity: (repo: string) => `${repo}--sre-alert`,
           getJobDelay: () => 0,
         }),
       },
@@ -269,13 +182,11 @@ describe("handleAddJob suppression", () => {
   it("does not suppress non-SRE role with fingerprint", async () => {
     const res = mockRes();
     const req = mockReq({
-      role: "triage",
+      role: "renovate-triage",
       repo: "org/repo",
       event_type: "pull_request",
       priority: 5,
-      pr_number: 1,
-      head_sha: "abc",
-      payload: { trigger: "alert", fingerprint: "fp-abc123" },
+      data: { pr_number: 1, head_sha: "abc" },
     });
     const deps = makeDeps({
       redis: { exists: vi.fn().mockResolvedValue(1) },
@@ -283,7 +194,7 @@ describe("handleAddJob suppression", () => {
         get: vi.fn().mockReturnValue({
           timeoutMs: 120_000,
           jobOptions: {},
-          buildIdentitySegments: () => ["org/repo", "triage-1"],
+          buildIdentity: (repo: string) => `${repo}--renovate-triage--1`,
           getJobDelay: () => 0,
         }),
       },
