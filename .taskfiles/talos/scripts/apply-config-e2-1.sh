@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-source "/workspaces/spruyt-labs/.taskfiles/talos/scripts/config.sh"
+source "$(dirname "$0")/resolve.sh"
 
-talosctl apply-config -n "${C1_IP4}" -f "/workspaces/spruyt-labs/talos/clusterconfig/${CLUSTER_NAME}-${C1_HOST}.yaml" -m=auto # reboot | auto
+HOSTNAME="e2-1"
+CLUSTER_NAME=$(resolve_cluster_name)
+IP=$(resolve_node_ip "${HOSTNAME}")
+talosctl apply-config -n "${IP}" -f "/workspaces/spruyt-labs/talos/clusterconfig/${CLUSTER_NAME}-${HOSTNAME}.yaml" -m=auto
