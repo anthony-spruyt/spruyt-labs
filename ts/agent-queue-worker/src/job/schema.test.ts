@@ -1,225 +1,247 @@
 import { describe, expect, it } from "vitest";
-import type { AgentJob } from "./schema.js";
 import {
   AgentJobInputSchema,
   AgentJobSchema,
   DoneRequestSchema,
   FailRequestSchema,
+  VALID_ROLES,
 } from "./schema.js";
 
-const base: AgentJob = {
-  role: "triage",
-  repo: "org/repo",
-  event_type: "pull_request",
-  priority: 5,
-  payload: {},
-  pr_number: 42,
-  head_sha: "abc123",
-};
-
 describe("AgentJobInputSchema", () => {
-  it("accepts valid triage job", () => {
-    const result = AgentJobInputSchema.safeParse(base);
+  const triageBase = {
+    role: "renovate-triage",
+    repo: "org/repo",
+    event_type: "pull_request",
+    priority: 5,
+    data: { pr_number: 42, head_sha: "abc123" },
+  };
+
+  it("accepts valid renovate-triage job", () => {
+    const result = AgentJobInputSchema.safeParse(triageBase);
     expect(result.success).toBe(true);
   });
 
-  it("rejects triage without pr_number", () => {
-    const { pr_number: _, ...noPr } = base;
-    const result = AgentJobInputSchema.safeParse(noPr);
+  it("rejects renovate-triage without data.pr_number", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      data: { head_sha: "abc123" },
+    });
     expect(result.success).toBe(false);
   });
 
-  it("rejects triage without head_sha", () => {
-    const { head_sha: _, ...noSha } = base;
-    const result = AgentJobInputSchema.safeParse(noSha);
+  it("rejects renovate-triage without data.head_sha", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      data: { pr_number: 42 },
+    });
     expect(result.success).toBe(false);
   });
 
-  it("accepts all valid roles with required fields", () => {
-    const perRole: Record<string, Record<string, unknown>> = {
-      triage: {},
-      fix: {},
-      validate: {},
-      execute: { issue_number: 1 },
-      sre: { payload: { trigger: "alert" } },
-    };
-    for (const role of ["triage", "fix", "validate", "execute", "sre"]) {
-      const result = AgentJobInputSchema.safeParse({
-        ...base,
-        role,
-        ...perRole[role],
-      });
-      expect(result.success).toBe(true);
-    }
+  it("rejects renovate-triage with extra keys in data", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      data: { pr_number: 42, head_sha: "abc123", extra: "nope" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid renovate-fix job", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "renovate-fix",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects renovate-fix without data.pr_number", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "renovate-fix",
+      data: { head_sha: "abc123" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid execute-issue job", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "execute-issue",
+      data: { issue_number: 99 },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects execute-issue without data.issue_number", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "execute-issue",
+      data: {},
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects execute-issue with extra keys in data", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "execute-issue",
+      data: { issue_number: 99, extra: "nope" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid sre-alert job", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "sre-alert",
+      data: {
+        fingerprint: "fp-abc",
+        alertname: "HighCPU",
+        severity: "warning",
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects sre-alert without data.fingerprint", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "sre-alert",
+      data: { alertname: "HighCPU" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("allows extra keys in sre-alert data (AlertManager passthrough)", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "sre-alert",
+      data: {
+        fingerprint: "fp-abc",
+        alertname: "HighCPU",
+        labels: { pod: "x" },
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts valid sre-health-check job", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "sre-health-check",
+      data: { dedup_key: "2026-05-01" },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects sre-health-check without data.dedup_key", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "sre-health-check",
+      data: {},
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects sre-health-check with extra keys", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "sre-health-check",
+      data: { dedup_key: "2026-05-01", extra: "nope" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid revert job with any data", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "revert",
+      data: { reason: "ci_failed" },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts revert with empty data", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "revert",
+      data: {},
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts valid validate job with any data", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "validate",
+      data: { commit_sha: "abc" },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts validate with empty data", () => {
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "validate",
+      data: {},
+    });
+    expect(result.success).toBe(true);
   });
 
   it("rejects invalid role", () => {
-    const result = AgentJobInputSchema.safeParse({ ...base, role: "nope" });
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      role: "nope",
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects empty repo", () => {
-    const result = AgentJobInputSchema.safeParse({ ...base, repo: "" });
+    const result = AgentJobInputSchema.safeParse({ ...triageBase, repo: "" });
     expect(result.success).toBe(false);
   });
 
   it("rejects repo containing --", () => {
     const result = AgentJobInputSchema.safeParse({
-      ...base,
+      ...triageBase,
       repo: "org--repo",
     });
     expect(result.success).toBe(false);
   });
 
   it("rejects non-integer priority", () => {
-    const result = AgentJobInputSchema.safeParse({ ...base, priority: 1.5 });
+    const result = AgentJobInputSchema.safeParse({
+      ...triageBase,
+      priority: 1.5,
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects missing priority", () => {
-    const { priority: _, ...noPriority } = base;
+    const { priority: _, ...noPriority } = triageBase;
     const result = AgentJobInputSchema.safeParse(noPriority);
     expect(result.success).toBe(false);
   });
 
-  it("accepts fix without pr fields when payload.revert is set", () => {
-    const { pr_number: _, head_sha: __, ...fixBase } = base;
-    const result = AgentJobInputSchema.safeParse({
-      ...fixBase,
-      role: "fix",
-      payload: { revert: true },
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects fix without pr_number when not a revert", () => {
-    const { pr_number: _, head_sha: __, ...fixBase } = base;
-    const result = AgentJobInputSchema.safeParse({ ...fixBase, role: "fix" });
+  it("rejects missing data", () => {
+    const { data: _, ...noData } = triageBase;
+    const result = AgentJobInputSchema.safeParse(noData);
     expect(result.success).toBe(false);
   });
 
-  it("accepts fix with pr fields provided", () => {
-    const result = AgentJobInputSchema.safeParse({ ...base, role: "fix" });
-    expect(result.success).toBe(true);
-    if (result.success && result.data.role === "fix") {
-      expect(result.data.pr_number).toBe(42);
-      expect(result.data.head_sha).toBe("abc123");
-    }
-  });
-
-  it("strips head_sha from non-pr roles", () => {
+  it("strips dispatch_state from input", () => {
     const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "sre",
-      head_sha: "abc123",
-      payload: { trigger: "alert" },
+      ...triageBase,
+      dispatch_state: "dispatched",
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect("head_sha" in result.data).toBe(false);
-    }
-  });
-
-  it("strips pr_number from non-pr roles", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "execute",
-      pr_number: 42,
-      issue_number: 1,
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect("pr_number" in result.data).toBe(false);
-    }
-  });
-
-  it("strips issue_number from non-execute roles", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "triage",
-      issue_number: 99,
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect("issue_number" in result.data).toBe(false);
-    }
-  });
-
-  it("rejects execute without issue_number", () => {
-    const result = AgentJobInputSchema.safeParse({ ...base, role: "execute" });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts execute with issue_number", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "execute",
-      issue_number: 1,
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects sre scheduled job without dedup_key", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "sre",
-      payload: { trigger: "scheduled_health_check" },
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts sre alert without dedup_key", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "sre",
-      payload: { trigger: "alert" },
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts sre scheduled with dedup_key", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "sre",
-      dedup_key: "2026-05-01",
-      payload: { trigger: "scheduled_health_check" },
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts dedup_key for sre role", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "sre",
-      dedup_key: "2026-05-01",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects empty dedup_key for sre role", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "sre",
-      dedup_key: "",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("strips dedup_key from non-sre roles", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      role: "triage",
-      dedup_key: "2026-05-01",
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect("dedup_key" in result.data).toBe(false);
+      expect("dispatch_state" in result.data).toBe(false);
     }
   });
 
   it("strips dispatched_at from input", () => {
     const result = AgentJobInputSchema.safeParse({
-      ...base,
+      ...triageBase,
       dispatched_at: "2026-01-01T00:00:00Z",
     });
     expect(result.success).toBe(true);
@@ -228,19 +250,28 @@ describe("AgentJobInputSchema", () => {
     }
   });
 
-  it("strips dispatch_state from input", () => {
-    const result = AgentJobInputSchema.safeParse({
-      ...base,
-      dispatch_state: "dispatched",
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect("dispatch_state" in result.data).toBe(false);
-    }
+  it("has correct VALID_ROLES list", () => {
+    expect([...VALID_ROLES].sort()).toEqual([
+      "execute-issue",
+      "renovate-fix",
+      "renovate-triage",
+      "revert",
+      "sre-alert",
+      "sre-health-check",
+      "validate",
+    ]);
   });
 });
 
 describe("AgentJobSchema (internal)", () => {
+  const base = {
+    role: "renovate-triage",
+    repo: "org/repo",
+    event_type: "pull_request",
+    priority: 5,
+    data: { pr_number: 42, head_sha: "abc123" },
+  };
+
   it("accepts dispatch fields", () => {
     for (const state of ["pending", "dispatched", "failed"]) {
       const result = AgentJobSchema.safeParse({
@@ -252,17 +283,12 @@ describe("AgentJobSchema (internal)", () => {
     }
   });
 
-  it("accepts dedup_key for any role", () => {
+  it("accepts any data shape (internal schema is permissive)", () => {
     const result = AgentJobSchema.safeParse({
       ...base,
-      dedup_key: "2026-05-01",
+      data: { pr_number: 42, head_sha: "abc", extra: "ok-internally" },
     });
     expect(result.success).toBe(true);
-  });
-
-  it("rejects empty dedup_key", () => {
-    const result = AgentJobSchema.safeParse({ ...base, dedup_key: "" });
-    expect(result.success).toBe(false);
   });
 });
 
@@ -284,9 +310,7 @@ describe("DoneRequestSchema", () => {
   });
 
   it("rejects missing session_token", () => {
-    const result = DoneRequestSchema.safeParse({
-      result: { status: "ok" },
-    });
+    const result = DoneRequestSchema.safeParse({ result: { status: "ok" } });
     expect(result.success).toBe(false);
   });
 });
