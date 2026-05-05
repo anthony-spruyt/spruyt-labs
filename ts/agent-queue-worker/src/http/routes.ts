@@ -3,11 +3,11 @@ import type { Queue } from "bullmq";
 import type { Redis } from "ioredis";
 import type { Config } from "../config.js";
 import { buildJobIdentity } from "../job/identity.js";
-import type { AgentJob } from "../job/schema.js";
 import {
   AgentJobInputSchema,
   DoneRequestSchema,
   FailRequestSchema,
+  toAgentJob,
 } from "../job/schema.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
@@ -59,7 +59,7 @@ export async function handleAddJob(
     added: false,
   });
   if (!result.ok) return;
-  const data: AgentJob = result.data;
+  const data = toAgentJob(result.data);
 
   const circuit = await deps.circuitBreaker.check(data.repo);
   if (circuit.open) {

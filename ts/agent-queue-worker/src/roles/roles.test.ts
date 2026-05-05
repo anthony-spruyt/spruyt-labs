@@ -199,6 +199,7 @@ describe("role timeouts", () => {
     const triage = registry.get("renovate-triage").timeoutMs;
     for (const role of [
       "renovate-fix",
+      "revert",
       "validate",
       "execute-issue",
       "sre-alert",

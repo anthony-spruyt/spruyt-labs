@@ -75,6 +75,10 @@ export const AgentJobSchema = z.object({
 
 export type AgentJob = z.infer<typeof AgentJobSchema>;
 
+export function toAgentJob(input: AgentJobInput): AgentJob {
+  return input as AgentJob;
+}
+
 export const DoneRequestSchema = z.object({
   result: z.record(z.string(), z.unknown()),
   session_token: z.string().uuid(),
