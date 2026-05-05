@@ -41,7 +41,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
   worker.on("completed", async (job) => {
     if (!job) return;
 
-    let roleDef;
+    let roleDef: ReturnType<typeof registry.get>;
     try {
       roleDef = registry.get(job.data.role);
     } catch (err) {
