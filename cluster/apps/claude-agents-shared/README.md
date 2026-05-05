@@ -76,13 +76,13 @@ Clone preconditions enforce URL prefix: `git@github.com:anthony-spruyt/` (write)
 
 Mounted at `/etc/claude/settings/` via Kyverno. Set in n8n: `--settings /etc/claude/settings/<profile>.json`
 
-| Namespace                         | Profiles                                         |
-| --------------------------------- | ------------------------------------------------ |
-| `claude-agents-read`              | `renovate-triage`, `review-pr`, `validate`       |
-| `claude-agents-write`             | `execute-issue`, `pr-fix`, `renovate-fix`        |
-| `claude-agents-spruyt-labs-read`  | `renovate-triage`, `review-pr`, `validate`       |
-| `claude-agents-spruyt-labs-sre`   | `sre-health-check`, `sre-triage`, `sre-validate` |
-| `claude-agents-spruyt-labs-write` | `execute-issue`, `pr-fix`, `renovate-fix`        |
+| Namespace                         | Profiles                                     |
+| --------------------------------- | -------------------------------------------- |
+| `claude-agents-read`              | `renovate-triage`, `review-pr`, `validate`   |
+| `claude-agents-write`             | `execute-issue`, `pr-fix`, `renovate-fix`    |
+| `claude-agents-spruyt-labs-read`  | `renovate-triage`, `review-pr`, `validate`   |
+| `claude-agents-spruyt-labs-sre`   | `sre-health-check`, `sre-triage`, `validate` |
+| `claude-agents-spruyt-labs-write` | `execute-issue`, `pr-fix`, `renovate-fix`    |
 
 ## Credential Rotation
 

@@ -13,7 +13,7 @@ configMapGenerator:
     files:
       - settings/sre-health-check.json
       - settings/sre-triage.json
-      - settings/sre-validate.json
+      - settings/validate.json
   - name: claude-managed-settings
     files:
       - settings/managed-settings.json
