@@ -7,7 +7,7 @@ import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
 import type { Processor } from "../processor.js";
 import type { RoleRegistry } from "../roles/registry.js";
-import { sreTriagedKey } from "../roles/sre-role.js";
+import { sreTriagedKey } from "../roles/sre-alert-role.js";
 import type { CircuitBreaker } from "./guard.js";
 import { DEFAULT_JOB_OPTIONS } from "./options.js";
 
@@ -54,16 +54,16 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     }
     if (!roleDef.bufferKey || !roleDef.drainBuffer) return;
 
-    if (job.data.payload?.trigger === "alert") {
+    if (job.data.role === "sre-alert") {
       const suppressTtl = Number(
-        job.data.payload?.triage_suppress_s ?? config.SRE_TRIAGE_SUPPRESS_S
+        job.data.data?.triage_suppress_s ?? config.SRE_TRIAGE_SUPPRESS_S
       );
       const fingerprints = new Set<string>();
 
-      if (job.data.payload?.fingerprint) {
-        fingerprints.add(String(job.data.payload.fingerprint));
+      if (job.data.data?.fingerprint) {
+        fingerprints.add(String(job.data.data.fingerprint));
       }
-      const processedAlerts = job.data.payload?.alerts as
+      const processedAlerts = job.data.data?.alerts as
         | Array<Record<string, unknown>>
         | undefined;
       if (processedAlerts) {
@@ -100,7 +100,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
 
     try {
       const drainedData = await roleDef.drainBuffer(job.id!, job.data, redis);
-      const alerts = drainedData.payload?.alerts as unknown[] | undefined;
+      const alerts = drainedData.data?.alerts as unknown[] | undefined;
       if (!alerts || alerts.length === 0) return;
 
       try {
