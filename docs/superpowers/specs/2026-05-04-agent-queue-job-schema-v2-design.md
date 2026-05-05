@@ -50,7 +50,7 @@ interface AgentJobInput {
 Each role definition implements:
 
 ```ts
-buildIdentity(role: string, repo: string, data: RoleData): string
+buildIdentity(repo: string, data: RoleData): string
 ```
 
 Identity is computed from envelope + data fields. No separate `idempotency_key` on the envelope — BullMQ `jobId` is set to the computed identity string. Deduplication handled by BullMQ's existing duplicate detection + the `onDuplicate` strategy per role.

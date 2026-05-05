@@ -154,7 +154,7 @@ export async function handleAddJob(
         return json(res, 202, { added: false, buffered: true, job_id: jobId });
       }
 
-      // "replace" — shallow merge replaces top-level keys (including `payload`)
+      // "replace" — shallow merge replaces top-level keys (including `data`)
       // entirely with incoming values; nested objects are NOT deep-merged.
       const merged = JSON.stringify({ ...existingJob.data, ...data });
       const updated = await atomicUpdateIfWaiting(
