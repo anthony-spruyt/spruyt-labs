@@ -44,7 +44,7 @@ export function createSreAlertRole(
     bufferKey: sreAlertBufferKey,
     async drainBuffer(
       jobId: string,
-      data: AgentJob,
+      job: AgentJob,
       redis: Redis
     ): Promise<AgentJob> {
       const items = (await redis.eval(
@@ -52,16 +52,16 @@ export function createSreAlertRole(
         1,
         sreAlertBufferKey(jobId)
       )) as string[];
-      const { alerts: _, ...originalData } = data.data ?? {};
+      const { alerts: _, ...originalData } = job.data ?? {};
       const buffered = (items ?? []).map(
         (i) => JSON.parse(i) as Record<string, unknown>
       );
       const alerts = [originalData, ...buffered];
       batchSizeHistogram.observe(alerts.length);
       return {
-        ...data,
+        ...job,
         data: {
-          ...data.data,
+          ...job.data,
           alerts,
         },
       };
