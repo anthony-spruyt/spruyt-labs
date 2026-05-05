@@ -315,12 +315,11 @@ WORKER_NODES=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o 
 SCHEMATIC=$(grep -A10 "worker:" talos/talconfig.yaml | grep -i schematic | head -1 | awk -F': ' '{print $2}' | tr -d '"')
 ```
 
-#### Step 4.3: Execute upgrade with --preserve
+#### Step 4.3: Execute upgrade
 ```bash
 talosctl upgrade \
   --nodes <node-ip> \
   --endpoints <cluster-endpoint> \
-  --preserve \
   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<target-version>
 ```
 
@@ -493,7 +492,6 @@ If a worker upgrade fails:
 talosctl upgrade \
   --nodes <failed-node-ip> \
   --endpoints <cluster-endpoint> \
-  --preserve \
   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<previous-version>
 ```
 
@@ -595,10 +593,9 @@ query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
 2. **ALWAYS verify etcd quorum (3 healthy) after each control plane upgrade**
 3. **ALWAYS wait for Ceph HEALTH_OK between worker upgrades**
 4. **ALWAYS create etcd backup before control plane upgrades**
-5. **ALWAYS use --preserve flag for worker upgrades**
-6. **NEVER hardcode IPs** - query dynamically from cluster
-7. **NEVER force upgrades** - if stuck, investigate rather than force
-8. **NEVER skip health checks** - even for "quick" upgrades
+5. **NEVER hardcode IPs** - query dynamically from cluster
+6. **NEVER force upgrades** - if stuck, investigate rather than force
+7. **NEVER skip health checks** - even for "quick" upgrades
 
 ## Timeout Expectations
 

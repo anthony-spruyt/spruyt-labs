@@ -157,7 +157,6 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    talosctl upgrade \
      --nodes <worker-node-ip> \
      --endpoints <cluster-endpoint> \
-     --preserve \
      --image <factory-image-url>
 
    # Wait for Ceph before next worker

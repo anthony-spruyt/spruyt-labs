@@ -195,7 +195,6 @@ kubectl uncordon <hostname>
      talosctl upgrade \
        --nodes 10.10.0.21 \
        --endpoints 10.10.0.10 \
-       --preserve \
        --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
      ```
 
