@@ -1,8 +1,10 @@
 import type { Histogram } from "prom-client";
 import type { Config } from "../config.js";
-import { executeRole } from "./execute-role.js";
-import { createPrRole } from "./pr-role.js";
-import { createSreRole } from "./sre-role.js";
+import { executeIssueRole } from "./execute-issue-role.js";
+import { createRenovateRole } from "./renovate-role.js";
+import { revertRole } from "./revert-role.js";
+import { createSreAlertRole } from "./sre-alert-role.js";
+import { sreHealthCheckRole } from "./sre-health-check-role.js";
 import type { RoleDefinition } from "./types.js";
 import { validateRole } from "./validate-role.js";
 
@@ -33,10 +35,21 @@ export function createDefaultRegistry(
   batchSizeHistogram: Histogram
 ): RoleRegistry {
   const registry = new RoleRegistry();
-  registry.register("triage", createPrRole("triage", 600_000));
-  registry.register("fix", createPrRole("fix", 1_800_000));
+  registry.register(
+    "renovate-triage",
+    createRenovateRole("renovate-triage", 600_000)
+  );
+  registry.register(
+    "renovate-fix",
+    createRenovateRole("renovate-fix", 1_800_000)
+  );
+  registry.register("revert", revertRole);
   registry.register("validate", validateRole);
-  registry.register("execute", executeRole);
-  registry.register("sre", createSreRole(config, batchSizeHistogram));
+  registry.register("execute-issue", executeIssueRole);
+  registry.register(
+    "sre-alert",
+    createSreAlertRole(config, batchSizeHistogram)
+  );
+  registry.register("sre-health-check", sreHealthCheckRole);
   return registry;
 }

@@ -3,32 +3,32 @@ import { getCurrentPrHead } from "../github.js";
 import type { AgentJob } from "../job/schema.js";
 import type { RoleDefinition, StalenessResult } from "./types.js";
 
-export function createPrRole(
+export function createRenovateRole(
   roleName: string,
   timeoutMs: number
 ): RoleDefinition {
   return {
     timeoutMs,
-    buildIdentitySegments(job: AgentJob): string[] {
-      if (roleName === "fix" && job.payload?.revert) {
-        return [job.repo, "fix", "revert"];
-      }
-      if (!job.pr_number)
-        throw new Error(`pr_number required for ${roleName} jobs`);
-      return [job.repo, roleName, String(job.pr_number)];
+    buildIdentity(repo: string, data: Record<string, unknown>): string {
+      const prNumber = data.pr_number;
+      if (!prNumber)
+        throw new Error(`data.pr_number required for ${roleName} jobs`);
+      return `${repo}--${roleName}--${prNumber}`;
     },
     async checkStaleness(
       job: AgentJob,
       config: Config
     ): Promise<StalenessResult> {
-      if (!job.pr_number || !job.head_sha) return { stale: false };
+      const prNumber = job.data.pr_number as number | undefined;
+      const headSha = job.data.head_sha as string | undefined;
+      if (!prNumber || !headSha) return { stale: false };
       try {
         const currentHead = await getCurrentPrHead(
           job.repo,
-          job.pr_number,
+          prNumber,
           config.GITHUB_TOKEN
         );
-        if (currentHead !== job.head_sha) {
+        if (currentHead !== headSha) {
           return { stale: true, reason: "head_sha_changed" };
         }
       } catch {
