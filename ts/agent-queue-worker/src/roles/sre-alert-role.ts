@@ -5,7 +5,7 @@ import type { AgentJob } from "../job/schema.js";
 import type { DuplicateAction, JobState, RoleDefinition } from "./types.js";
 
 // Atomic drain: LRANGE all items then DEL key in one round-trip.
-// Uses Redis EVAL command (server-side Lua execution), not JavaScript eval().
+// Uses Redis server-side Lua execution, not JavaScript eval().
 const DRAIN_BUFFER_LUA = `
 local items = redis.call('LRANGE', KEYS[1], 0, -1)
 redis.call('DEL', KEYS[1])
@@ -15,7 +15,7 @@ return items
 const SRE_BUFFER_PREFIX = "agent:sre-alerts:";
 const SRE_TRIAGED_PREFIX = "agent:sre-triaged:";
 
-function sreBufferKey(jobId: string): string {
+function sreAlertBufferKey(jobId: string): string {
   return `${SRE_BUFFER_PREFIX}${jobId}`;
 }
 
@@ -23,7 +23,7 @@ export function sreTriagedKey(repo: string, fingerprint: string): string {
   return `${SRE_TRIAGED_PREFIX}${repo}:${fingerprint}`;
 }
 
-export function createSreRole(
+export function createSreAlertRole(
   config: Config,
   batchSizeHistogram: Histogram
 ): RoleDefinition {
@@ -31,60 +31,46 @@ export function createSreRole(
     timeoutMs: 900_000,
     cooldownMs: config.SRE_COOLDOWN_MS,
     jobOptions: { attempts: 1 },
-    buildIdentitySegments(job: AgentJob): string[] {
-      if (job.payload?.trigger === "alert") {
-        return [job.repo, "sre-triage"];
-      }
-      if (!job.dedup_key)
-        throw new Error("dedup_key required for sre scheduled jobs");
-      return [job.repo, "sre-health-check", job.dedup_key];
+    buildIdentity(repo: string, _data: Record<string, unknown>): string {
+      return `${repo}--sre-alert`;
     },
     onDuplicate(
       _existing: AgentJob,
-      incoming: AgentJob,
-      state: JobState
+      _incoming: AgentJob,
+      _state: JobState
     ): DuplicateAction {
-      if (incoming.payload?.trigger === "alert") {
-        return { action: "buffer" };
-      }
-      return state === "waiting" || state === "prioritized"
-        ? { action: "replace" }
-        : { action: "discard" };
+      return { action: "buffer" };
     },
-    bufferKey: sreBufferKey,
+    bufferKey: sreAlertBufferKey,
     async drainBuffer(
       jobId: string,
       data: AgentJob,
       redis: Redis
     ): Promise<AgentJob> {
-      // Redis EVAL runs Lua server-side for atomic drain
       const items = (await redis.eval(
         DRAIN_BUFFER_LUA,
         1,
-        sreBufferKey(jobId)
+        sreAlertBufferKey(jobId)
       )) as string[];
-      const { alerts: _, ...originalPayload } = data.payload ?? {};
+      const { alerts: _, ...originalData } = data.data ?? {};
       const buffered = (items ?? []).map(
         (i) => JSON.parse(i) as Record<string, unknown>
       );
-      const alerts = [originalPayload, ...buffered];
+      const alerts = [originalData, ...buffered];
       batchSizeHistogram.observe(alerts.length);
       return {
         ...data,
-        payload: {
-          ...data.payload,
+        data: {
+          ...data.data,
           alerts,
         },
       };
     },
     getJobDelay(job: AgentJob): number {
-      if (job.payload?.trigger === "alert") {
-        const raw = Number(
-          job.payload?.batch_window_ms ?? config.SRE_BATCH_WINDOW_MS
-        );
-        return Math.max(0, Math.min(raw, 21_600_000));
-      }
-      return 0;
+      const raw = Number(
+        job.data.batch_window_ms ?? config.SRE_BATCH_WINDOW_MS
+      );
+      return Math.max(0, Math.min(raw, 21_600_000));
     },
   };
 }
