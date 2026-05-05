@@ -18,7 +18,7 @@ export interface RoleDefinition {
   readonly timeoutMs: number;
   readonly cooldownMs?: number;
   readonly jobOptions?: Partial<Pick<JobsOptions, "attempts" | "backoff">>;
-  buildIdentitySegments(job: AgentJob): string[];
+  buildIdentity(repo: string, data: Record<string, unknown>): string;
   checkStaleness?(job: AgentJob, config: Config): Promise<StalenessResult>;
   onDuplicate?(
     existingData: AgentJob,
