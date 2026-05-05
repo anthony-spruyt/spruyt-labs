@@ -41,6 +41,6 @@ data:
 
     lan.${EXTERNAL_DOMAIN}:53 {
         errors
-        forward . 192.168.50.11 192.168.50.12
+        forward . ${TECHNITIUM_IP4} ${TECHNITIUM_SECONDARY_IP4}
         cache 30
     }
