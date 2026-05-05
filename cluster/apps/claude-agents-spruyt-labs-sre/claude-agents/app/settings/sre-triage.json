@@ -4,7 +4,6 @@
     { "serverName": "agentplatform" },
     { "serverName": "bravesearch" },
     { "serverName": "context7" },
-    { "serverName": "discord" },
     { "serverName": "victoriametrics" }
   ],
   "permissions": {

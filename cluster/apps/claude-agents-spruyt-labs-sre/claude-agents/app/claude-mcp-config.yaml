@@ -28,10 +28,6 @@ data:
             "CONTEXT7_API_KEY": "$${CONTEXT7_API_KEY}"
           }
         },
-        "discord": {
-          "type": "http",
-          "url": "http://discord-mcp.discord-mcp.svc:8080/mcp"
-        },
         "victoriametrics": {
           "type": "http",
           "url": "http://mcp-victoriametrics.observability.svc:8080/mcp"

@@ -134,7 +134,7 @@ Webhooks are excluded from SSO authentication to allow external integrations:
 
 ## Unified SRE Workflow
 
-n8n hosts a unified SRE workflow that combines alert triage and scheduled health checks. Each agent has a dedicated MCP tool (`submit_alert_triage` / `submit_health_check_triage`) which validates the schema and posts to Discord. The health check agent only calls its tool when issues are found.
+n8n hosts a unified SRE workflow that combines alert triage and scheduled health checks. Each agent has a dedicated MCP tool (`submit_alert_triage` / `submit_health_check_triage`) which validates the schema.
 
 ### Triggers
 
