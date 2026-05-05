@@ -12,27 +12,23 @@ export function buildJobIdentity(
   registry: RoleRegistry
 ): JobIdentity {
   const roleDef = registry.get(job.role);
-  const segments = roleDef.buildIdentitySegments(job);
+  const jobId = roleDef.buildIdentity(job.repo, job.data);
   return {
-    jobId: segments.join("--"),
+    jobId,
     role: job.role,
     repo: job.repo,
   };
 }
 
-// Returns the registry role name, not the raw identity segment.
-// e.g. "org/repo--sre-triage" → "sre", not "sre-triage".
 export function extractRole(jobId: string, registry: RoleRegistry): string {
-  const parts = jobId.split("--");
-  const segment = parts[1];
-  if (!segment) return "unknown";
+  const firstSep = jobId.indexOf("--");
+  if (firstSep === -1) return "unknown";
+  const afterRepo = jobId.substring(firstSep + 2);
 
-  if (registry.has(segment)) return segment;
-
-  // Compound segments like "sre-triage" or "sre-health-check": find the
-  // registry key that is a prefix of the segment.
   for (const name of registry.names()) {
-    if (segment.startsWith(`${name}-`)) return name;
+    if (afterRepo === name || afterRepo.startsWith(`${name}--`)) {
+      return name;
+    }
   }
 
   return "unknown";

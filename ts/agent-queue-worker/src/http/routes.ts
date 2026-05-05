@@ -3,11 +3,11 @@ import type { Queue } from "bullmq";
 import type { Redis } from "ioredis";
 import type { Config } from "../config.js";
 import { buildJobIdentity } from "../job/identity.js";
-import type { AgentJob } from "../job/schema.js";
 import {
   AgentJobInputSchema,
   DoneRequestSchema,
   FailRequestSchema,
+  toAgentJob,
 } from "../job/schema.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
@@ -15,7 +15,7 @@ import type { Processor } from "../processor.js";
 import type { CircuitBreaker, RateLimiter } from "../queue/guard.js";
 import { DEFAULT_JOB_OPTIONS } from "../queue/options.js";
 import type { RoleRegistry } from "../roles/registry.js";
-import { sreTriagedKey } from "../roles/sre-role.js";
+import { sreTriagedKey } from "../roles/sre-alert-role.js";
 import type { JobState } from "../roles/types.js";
 import { resolveDuplicateAction } from "../roles/types.js";
 import { json, parseAndValidate } from "./middleware.js";
@@ -59,19 +59,15 @@ export async function handleAddJob(
     added: false,
   });
   if (!result.ok) return;
-  const data: AgentJob = result.data;
+  const data = toAgentJob(result.data);
 
   const circuit = await deps.circuitBreaker.check(data.repo);
   if (circuit.open) {
     return json(res, 429, { added: false, reason: "circuit_open" });
   }
 
-  if (
-    data.role === "sre" &&
-    data.payload?.trigger === "alert" &&
-    data.payload?.fingerprint
-  ) {
-    const fpKey = sreTriagedKey(data.repo, String(data.payload.fingerprint));
+  if (data.role === "sre-alert" && data.data?.fingerprint) {
+    const fpKey = sreTriagedKey(data.repo, String(data.data.fingerprint));
     const triaged = await deps.redis.exists(fpKey);
     if (triaged) {
       metrics.sreSuppressed.inc({ role: data.role });
@@ -79,21 +75,8 @@ export async function handleAddJob(
     }
   }
 
-  let identity: ReturnType<typeof buildJobIdentity>;
-  let roleDef: ReturnType<RouteDeps["registry"]["get"]>;
-  try {
-    identity = buildJobIdentity(data, deps.registry);
-    roleDef = deps.registry.get(data.role);
-  } catch (err) {
-    logger.warn("Job identity/role validation failed", {
-      role: data.role,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return json(res, 400, {
-      added: false,
-      reason: "invalid_request",
-    });
-  }
+  const identity = buildJobIdentity(data, deps.registry);
+  const roleDef = deps.registry.get(data.role);
   const jobId = identity.jobId;
 
   const existingJob = await deps.queue.getJob(jobId);
@@ -101,11 +84,10 @@ export async function handleAddJob(
     const state = await existingJob.getState();
 
     if (state === "completed") {
-      const shouldBuffer =
-        roleDef.bufferKey && data.payload?.trigger === "alert";
+      const shouldBuffer = !!roleDef.bufferKey;
       if (shouldBuffer) {
         const bufKey = roleDef.bufferKey!(jobId);
-        await deps.redis.rpush(bufKey, JSON.stringify(data.payload));
+        await deps.redis.rpush(bufKey, JSON.stringify(data.data));
         await deps.redis.ltrim(bufKey, -deps.config.SRE_BATCH_MAX_SIZE, -1);
         await deps.redis.expire(bufKey, 3600);
 
@@ -161,7 +143,7 @@ export async function handleAddJob(
 
       if (decision.action === "buffer") {
         const bufKey = roleDef.bufferKey!(jobId);
-        await deps.redis.rpush(bufKey, JSON.stringify(data.payload));
+        await deps.redis.rpush(bufKey, JSON.stringify(data.data));
         await deps.redis.ltrim(bufKey, -deps.config.SRE_BATCH_MAX_SIZE, -1);
         await deps.redis.expire(bufKey, 3600);
         metrics.dedupActionCounter.inc({
@@ -172,7 +154,7 @@ export async function handleAddJob(
         return json(res, 202, { added: false, buffered: true, job_id: jobId });
       }
 
-      // "replace" — shallow merge replaces top-level keys (including `payload`)
+      // "replace" — shallow merge replaces top-level keys (including `data`)
       // entirely with incoming values; nested objects are NOT deep-merged.
       const merged = JSON.stringify({ ...existingJob.data, ...data });
       const updated = await atomicUpdateIfWaiting(

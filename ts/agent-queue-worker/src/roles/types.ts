@@ -18,7 +18,7 @@ export interface RoleDefinition {
   readonly timeoutMs: number;
   readonly cooldownMs?: number;
   readonly jobOptions?: Partial<Pick<JobsOptions, "attempts" | "backoff">>;
-  buildIdentitySegments(job: AgentJob): string[];
+  buildIdentity(repo: string, data: Record<string, unknown>): string;
   checkStaleness?(job: AgentJob, config: Config): Promise<StalenessResult>;
   onDuplicate?(
     existingData: AgentJob,
@@ -26,7 +26,7 @@ export interface RoleDefinition {
     state: JobState
   ): DuplicateAction;
   bufferKey?(jobId: string): string;
-  drainBuffer?(jobId: string, data: AgentJob, redis: Redis): Promise<AgentJob>;
+  drainBuffer?(jobId: string, job: AgentJob, redis: Redis): Promise<AgentJob>;
   getJobDelay?(job: AgentJob): number;
 }
 

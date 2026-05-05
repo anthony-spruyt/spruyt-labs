@@ -37,11 +37,11 @@ export class Processor {
   }
 
   async process(job: Job<AgentJob>): Promise<JobResult> {
-    const { role, repo, pr_number, head_sha } = job.data;
+    const { role, repo } = job.data;
     const roleDef = this.registry.get(role);
     const timeout = roleDef.timeoutMs;
     const timeoutSec = Math.ceil(timeout / 1000);
-    const fields = { jobId: job.id!, role, repo, pr: pr_number, sha: head_sha };
+    const fields = { jobId: job.id!, role, repo };
 
     const locked = await this.redis.set(
       `agent:active:${job.id}`,

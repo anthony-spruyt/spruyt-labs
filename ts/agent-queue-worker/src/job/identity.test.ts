@@ -17,85 +17,93 @@ const mockHistogram = { observe: vi.fn() } as unknown as Histogram;
 const registry = createDefaultRegistry(mockConfig, mockHistogram);
 
 const base: AgentJob = {
-  role: "triage",
+  role: "renovate-triage",
   repo: "org/repo",
   event_type: "pull_request",
   priority: 5,
-  payload: {},
+  data: {},
 };
 
 describe("buildJobIdentity", () => {
-  it("builds triage identity", () => {
+  it("builds renovate-triage identity", () => {
     const id = buildJobIdentity(
-      { ...base, role: "triage", pr_number: 42 },
+      { ...base, data: { pr_number: 42, head_sha: "abc" } },
       registry
     );
-    expect(id.jobId).toBe("org/repo--triage--42");
-    expect(id.role).toBe("triage");
+    expect(id.jobId).toBe("org/repo--renovate-triage--42");
+    expect(id.role).toBe("renovate-triage");
     expect(id.repo).toBe("org/repo");
   });
 
-  it("builds fix identity", () => {
+  it("builds renovate-fix identity", () => {
     const id = buildJobIdentity(
-      { ...base, role: "fix", pr_number: 10 },
+      {
+        ...base,
+        role: "renovate-fix",
+        data: { pr_number: 10, head_sha: "def" },
+      },
       registry
     );
-    expect(id.jobId).toBe("org/repo--fix--10");
+    expect(id.jobId).toBe("org/repo--renovate-fix--10");
   });
 
-  it("builds fix revert identity", () => {
+  it("builds revert identity", () => {
     const id = buildJobIdentity(
-      { ...base, role: "fix", payload: { revert: true } },
+      { ...base, role: "revert", data: {} },
       registry
     );
-    expect(id.jobId).toBe("org/repo--fix--revert");
+    expect(id.jobId).toBe("org/repo--revert");
   });
 
   it("builds validate identity", () => {
-    const id = buildJobIdentity({ ...base, role: "validate" }, registry);
+    const id = buildJobIdentity(
+      { ...base, role: "validate", data: {} },
+      registry
+    );
     expect(id.jobId).toBe("org/repo--validate");
   });
 
-  it("builds execute identity", () => {
+  it("builds execute-issue identity", () => {
     const id = buildJobIdentity(
-      { ...base, role: "execute", issue_number: 99 },
+      { ...base, role: "execute-issue", data: { issue_number: 99 } },
       registry
     );
-    expect(id.jobId).toBe("org/repo--execute--99");
+    expect(id.jobId).toBe("org/repo--execute-issue--99");
   });
 
-  it("throws for execute without issue_number", () => {
+  it("throws for execute-issue without data.issue_number", () => {
     expect(() =>
-      buildJobIdentity({ ...base, role: "execute" }, registry)
-    ).toThrow("issue_number required");
+      buildJobIdentity({ ...base, role: "execute-issue", data: {} }, registry)
+    ).toThrow("data.issue_number required");
   });
 
-  it("builds sre alert triage identity", () => {
+  it("builds sre-alert identity", () => {
     const id = buildJobIdentity(
-      { ...base, role: "sre", payload: { trigger: "alert" } },
+      { ...base, role: "sre-alert", data: { fingerprint: "fp-1" } },
       registry
     );
-    expect(id.jobId).toBe("org/repo--sre-triage");
+    expect(id.jobId).toBe("org/repo--sre-alert");
   });
 
-  it("builds sre scheduled identity", () => {
+  it("builds sre-health-check identity", () => {
     const id = buildJobIdentity(
-      { ...base, role: "sre", dedup_key: "2026-05-01" },
+      {
+        ...base,
+        role: "sre-health-check",
+        data: { dedup_key: "2026-05-01" },
+      },
       registry
     );
     expect(id.jobId).toBe("org/repo--sre-health-check--2026-05-01");
   });
 
-  it("throws for sre scheduled without dedup_key", () => {
-    expect(() => buildJobIdentity({ ...base, role: "sre" }, registry)).toThrow(
-      "dedup_key required"
-    );
-  });
-
-  it("throws for triage without pr_number", () => {
+  it("throws for sre-health-check without data.dedup_key", () => {
     expect(() =>
-      buildJobIdentity({ ...base, role: "triage" }, registry)
-    ).toThrow("pr_number required");
+      buildJobIdentity(
+        { ...base, role: "sre-health-check", data: {} },
+        registry
+      )
+    ).toThrow("data.dedup_key required");
   });
 
   it("throws for unknown role", () => {
@@ -106,34 +114,40 @@ describe("buildJobIdentity", () => {
 });
 
 describe("extractRole", () => {
-  it("extracts role from triage job id", () => {
-    expect(extractRole("org/repo--triage--42", registry)).toBe("triage");
+  it("extracts renovate-triage from job id", () => {
+    expect(extractRole("org/repo--renovate-triage--42", registry)).toBe(
+      "renovate-triage"
+    );
   });
 
-  it("extracts role from fix job id", () => {
-    expect(extractRole("org/repo--fix--10", registry)).toBe("fix");
+  it("extracts renovate-fix from job id", () => {
+    expect(extractRole("org/repo--renovate-fix--10", registry)).toBe(
+      "renovate-fix"
+    );
   });
 
-  it("extracts role from fix revert job id", () => {
-    expect(extractRole("org/repo--fix--revert", registry)).toBe("fix");
+  it("extracts revert from job id", () => {
+    expect(extractRole("org/repo--revert", registry)).toBe("revert");
   });
 
-  it("extracts role from validate job id", () => {
+  it("extracts validate from job id", () => {
     expect(extractRole("org/repo--validate", registry)).toBe("validate");
   });
 
-  it("extracts role from execute job id", () => {
-    expect(extractRole("org/repo--execute--99", registry)).toBe("execute");
+  it("extracts execute-issue from job id", () => {
+    expect(extractRole("org/repo--execute-issue--99", registry)).toBe(
+      "execute-issue"
+    );
   });
 
-  it("extracts registry key from sre alert job id", () => {
-    expect(extractRole("org/repo--sre-triage", registry)).toBe("sre");
+  it("extracts sre-alert from job id", () => {
+    expect(extractRole("org/repo--sre-alert", registry)).toBe("sre-alert");
   });
 
-  it("extracts registry key from sre scheduled job id", () => {
+  it("extracts sre-health-check from job id", () => {
     expect(
       extractRole("org/repo--sre-health-check--2026-05-01", registry)
-    ).toBe("sre");
+    ).toBe("sre-health-check");
   });
 
   it("returns unknown for malformed id", () => {
@@ -144,39 +158,47 @@ describe("extractRole", () => {
 describe("extractRole round-trip with buildJobIdentity", () => {
   const cases: { desc: string; job: AgentJob; expectedRole: string }[] = [
     {
-      desc: "triage",
-      job: { ...base, role: "triage", pr_number: 42 },
-      expectedRole: "triage",
+      desc: "renovate-triage",
+      job: { ...base, data: { pr_number: 42, head_sha: "abc" } },
+      expectedRole: "renovate-triage",
     },
     {
-      desc: "fix",
-      job: { ...base, role: "fix", pr_number: 10 },
-      expectedRole: "fix",
+      desc: "renovate-fix",
+      job: {
+        ...base,
+        role: "renovate-fix",
+        data: { pr_number: 10, head_sha: "def" },
+      },
+      expectedRole: "renovate-fix",
     },
     {
-      desc: "fix revert",
-      job: { ...base, role: "fix", payload: { revert: true } },
-      expectedRole: "fix",
+      desc: "revert",
+      job: { ...base, role: "revert", data: {} },
+      expectedRole: "revert",
     },
     {
       desc: "validate",
-      job: { ...base, role: "validate" },
+      job: { ...base, role: "validate", data: {} },
       expectedRole: "validate",
     },
     {
-      desc: "execute",
-      job: { ...base, role: "execute", issue_number: 99 },
-      expectedRole: "execute",
+      desc: "execute-issue",
+      job: { ...base, role: "execute-issue", data: { issue_number: 99 } },
+      expectedRole: "execute-issue",
     },
     {
-      desc: "sre alert",
-      job: { ...base, role: "sre", payload: { trigger: "alert" } },
-      expectedRole: "sre",
+      desc: "sre-alert",
+      job: { ...base, role: "sre-alert", data: { fingerprint: "fp-1" } },
+      expectedRole: "sre-alert",
     },
     {
-      desc: "sre scheduled",
-      job: { ...base, role: "sre", dedup_key: "2026-05-01" },
-      expectedRole: "sre",
+      desc: "sre-health-check",
+      job: {
+        ...base,
+        role: "sre-health-check",
+        data: { dedup_key: "2026-05-01" },
+      },
+      expectedRole: "sre-health-check",
     },
   ];
 

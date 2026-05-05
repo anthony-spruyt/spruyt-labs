@@ -1,8 +1,8 @@
 import type { RoleDefinition } from "./types.js";
 
-export const validateRole: RoleDefinition = {
-  timeoutMs: 1_800_000,
+export const revertRole: RoleDefinition = {
+  timeoutMs: 900_000,
   buildIdentity(repo: string, _data: Record<string, unknown>): string {
-    return `${repo}--validate`;
+    return `${repo}--revert`;
   },
 };

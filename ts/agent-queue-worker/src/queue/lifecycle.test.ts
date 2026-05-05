@@ -61,11 +61,11 @@ function createMockDeps() {
     close: vi.fn((cb: () => void) => cb()),
   };
   const drainBuffer = vi.fn().mockResolvedValue({
-    role: "sre",
+    role: "sre-alert",
     repo: "org/repo",
     event_type: "alert",
     priority: 5,
-    payload: { trigger: "alert" },
+    data: { fingerprint: "fp-1" },
   });
   const registry = {
     get: vi.fn().mockReturnValue({
@@ -130,13 +130,13 @@ describe("lifecycle triaged marker writes", () => {
 
   it("writes triaged marker for job fingerprint", async () => {
     const job = {
-      id: "org/repo--sre-triage",
+      id: "org/repo--sre-alert",
       data: {
-        role: "sre",
+        role: "sre-alert",
         repo: "org/repo",
         event_type: "alert",
         priority: 5,
-        payload: { trigger: "alert", fingerprint: "fp-1" },
+        data: { fingerprint: "fp-1" },
       },
       opts: {},
       attemptsMade: 0,
@@ -159,14 +159,13 @@ describe("lifecycle triaged marker writes", () => {
 
   it("writes markers for fingerprints in alerts array", async () => {
     const job = {
-      id: "org/repo--sre-triage",
+      id: "org/repo--sre-alert",
       data: {
-        role: "sre",
+        role: "sre-alert",
         repo: "org/repo",
         event_type: "alert",
         priority: 5,
-        payload: {
-          trigger: "alert",
+        data: {
           fingerprint: "fp-main",
           alerts: [{ fingerprint: "fp-a1" }, { fingerprint: "fp-a2" }],
         },
@@ -204,14 +203,13 @@ describe("lifecycle triaged marker writes", () => {
 
   it("uses per-job triage_suppress_s override", async () => {
     const job = {
-      id: "org/repo--sre-triage",
+      id: "org/repo--sre-alert",
       data: {
-        role: "sre",
+        role: "sre-alert",
         repo: "org/repo",
         event_type: "alert",
         priority: 5,
-        payload: {
-          trigger: "alert",
+        data: {
           fingerprint: "fp-1",
           triage_suppress_s: 7200,
         },
@@ -236,14 +234,13 @@ describe("lifecycle triaged marker writes", () => {
 
   it("skips marker writes for non-alert jobs", async () => {
     const job = {
-      id: "org/repo--sre-health-check-d1",
+      id: "org/repo--sre-health-check--d1",
       data: {
-        role: "sre",
+        role: "sre-health-check",
         repo: "org/repo",
         event_type: "schedule",
         priority: 5,
-        payload: { trigger: "schedule" },
-        dedup_key: "d1",
+        data: { dedup_key: "d1" },
       },
       opts: {},
       attemptsMade: 0,
@@ -257,14 +254,13 @@ describe("lifecycle triaged marker writes", () => {
 
   it("deduplicates fingerprints across job and alerts", async () => {
     const job = {
-      id: "org/repo--sre-triage",
+      id: "org/repo--sre-alert",
       data: {
-        role: "sre",
+        role: "sre-alert",
         repo: "org/repo",
         event_type: "alert",
         priority: 5,
-        payload: {
-          trigger: "alert",
+        data: {
           fingerprint: "fp-dup",
           alerts: [{ fingerprint: "fp-dup" }, { fingerprint: "fp-unique" }],
         },
@@ -295,7 +291,7 @@ describe("lifecycle triaged marker writes", () => {
         repo: "org/repo",
         event_type: "unknown",
         priority: 5,
-        payload: {},
+        data: {},
       },
       opts: {},
       attemptsMade: 0,
@@ -320,13 +316,13 @@ describe("lifecycle triaged marker writes", () => {
     const { logger } = await import("../logger.js");
 
     const job = {
-      id: "org/repo--sre-triage",
+      id: "org/repo--sre-alert",
       data: {
-        role: "sre",
+        role: "sre-alert",
         repo: "org/repo",
         event_type: "alert",
         priority: 5,
-        payload: { trigger: "alert", fingerprint: "fp-1" },
+        data: { fingerprint: "fp-1" },
       },
       opts: {},
       attemptsMade: 0,
@@ -336,7 +332,7 @@ describe("lifecycle triaged marker writes", () => {
     await vi.waitFor(() => {
       expect(logger.warn).toHaveBeenCalledWith(
         "Failed to write triaged markers",
-        expect.objectContaining({ jobId: "org/repo--sre-triage" })
+        expect.objectContaining({ jobId: "org/repo--sre-alert" })
       );
     });
   });
