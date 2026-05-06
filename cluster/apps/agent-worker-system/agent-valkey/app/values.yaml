@@ -21,6 +21,7 @@ auth:
   aclUsers:
     default:
       permissions: "~* &* +@all"
+deploymentStrategy: Recreate
 valkeyConfig: |
   appendonly yes
   appendfsync everysec
