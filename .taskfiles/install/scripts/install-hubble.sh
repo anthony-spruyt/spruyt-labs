@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=cilium/hubble datasource=github-releases
-VERSION="v1.18.6"
+VERSION="v1.19.3"
 
 ARCH=$(uname -m)
 case "$ARCH" in
