@@ -32,6 +32,11 @@ controllers:
           SRE_BATCH_WINDOW_MS: "60000"
           SRE_COOLDOWN_MS: "300000"
           SRE_TRIAGE_SUPPRESS_S: "3600"
+          VALKEY_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: agent-valkey-secrets
+                key: default-password
         envFrom:
           - secretRef:
               name: agent-queue-worker-secrets
@@ -80,8 +85,8 @@ controllers:
           VALKEY_PASSWORD:
             valueFrom:
               secretKeyRef:
-                name: agent-queue-worker-secrets
-                key: VALKEY_PASSWORD
+                name: agent-valkey-secrets
+                key: default-password
           WORKER_AUTH_SECRET:
             valueFrom:
               secretKeyRef:
