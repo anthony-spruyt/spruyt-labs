@@ -4,12 +4,24 @@
 
 [Brief description of the component, its purpose, and role in the homelab.]
 
-> **Note**: HelmRelease resources are created in the target namespace specified by ks.yaml `targetNamespace`.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - [List actual dependencies from ks.yaml dependsOn field]
+
+<!-- OPTIONAL: Operations section — include when the component has non-obvious
+     operational knowledge that can't be derived from reading manifests alone.
+     Delete this section if not applicable.
+
+     Good candidates:
+     - Integration procedures (e.g., adding SSO, onboarding a new consumer)
+     - Cross-component interaction patterns (e.g., secret sync, RBAC wiring)
+     - Naming conventions or format requirements the component enforces
+     - Workarounds for upstream bugs or limitations
+     - Credential rotation or lifecycle procedures
+     - File reference tables mapping concepts to manifest locations
+
+     See authentik/README.md for a comprehensive example.
+-->
 
 ## Troubleshooting
 
