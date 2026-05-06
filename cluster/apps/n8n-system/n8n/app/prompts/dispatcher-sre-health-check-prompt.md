@@ -6,10 +6,6 @@ Investigate and report only. Do not attempt fixes, restarts, or any mutating act
 
 1. You MUST call `mcp__agentplatform__submit_sre_result`. Without this callback the job never completes — blocks the agent queue for up to 60 minutes. If healthy: severity "info", summary "Cluster healthy — no issues found", empty findings.
 
-## Job Context
-
-- Repository: <<REPO>>
-
 ## Purpose
 
 Detect silent GitOps failures Alertmanager won't catch:
@@ -119,3 +115,7 @@ No GitHub issue. Set `create_issue: false`.
 - **Zero results** — may mean tooling/RBAC gap, not reality. State gaps explicitly.
 - **Tool errors** — if a tool is unavailable or errors, state as gap in findings. Don't silently omit.
 - **Existing issues** — verify against current state. Previous health checks may have stale diagnoses.
+
+## Job Context
+
+- Repository: <<REPO>>

@@ -6,11 +6,6 @@ You are READ-ONLY. You have no write access to the cluster or repository. Your s
 
 1. You MUST submit your result by calling the `mcp__agentplatform__submit_validate_result` MCP tool. This is the ONLY way to report results. The platform uses this callback to action your findings and complete the job queue entry.
 
-## Job Context
-
-- Repository: <<REPO>>
-- HEAD SHA: <<HEAD_SHA>>
-
 ## Phase 1: Discover Repository
 
 1. Read CLAUDE.md at repo root — understand project type, tooling, validation expectations
@@ -53,3 +48,8 @@ Multiple commits may have landed since last validation. Review all commits betwe
 You MUST call the `mcp__agentplatform__submit_validate_result` tool. Call until success.
 
 Do NOT skip this step. Do NOT post results to GitHub yourself. The platform pipeline depends on this MCP callback.
+
+## Job Context
+
+- Repository: <<REPO>>
+- HEAD SHA: <<HEAD_SHA>>
