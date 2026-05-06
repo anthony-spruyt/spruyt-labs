@@ -18,9 +18,14 @@ Use `mcp__victoriametrics__*` tools for all VictoriaMetrics queries. Use `kubect
 
 ### Phase 1: Gather Data (Run in Parallel)
 
-**Metrics** — use `mcp__victoriametrics__query`:
+**Actionable drops** — use `mcp__victoriametrics__query`:
 ```
-sum by (source, destination, protocol, reason) (increase(hubble_drop_total[3h])) > 0
+sum by (source, destination, protocol, reason) (increase(hubble_drop_total{reason=~"POLICY_DENIED|STALE_OR_UNROUTABLE_IP"}[1h])) > 0
+```
+
+**Noise check** (report totals, don't investigate individually):
+```
+sum by (reason) (increase(hubble_drop_total{reason!~"POLICY_DENIED|STALE_OR_UNROUTABLE_IP"}[1h])) > 0
 ```
 
 If no results, verify metrics exist with `mcp__victoriametrics__metrics` (match: `hubble_drop_total`). If no metrics, report that Hubble drop metrics are not available.
@@ -35,15 +40,18 @@ kubectl get pods -n <namespace>
 
 | Destination | Meaning | Action |
 |-------------|---------|--------|
-| `null` or empty | External/world traffic | Check `toEntities: world` rules |
+| `null` or empty | External/world traffic (shown as `external` in recording rules) | Check `toEntities: world` rules |
+| `kube-system` | System namespace traffic — distinguish kube-apiserver (use `kube-apiserver` entity) from other services like metrics-server (need explicit CNP) | Check which kube-system service is targeted |
 | Namespace name | Cross-namespace traffic | Check egress to target namespace |
 | Pod/workload name | Same-namespace traffic | Check internal policies |
 
-| Reason | Meaning | Action |
-|--------|---------|--------|
-| `POLICY_DENIED` | No matching allow rule | Add egress/ingress CNP |
-| `STALE_OR_UNROUTABLE_IP` | Pod IP changed/gone | Usually transient, check pod restarts |
-| `UNSUPPORTED_L3_PROTOCOL` | Protocol not handled | Usually ICMPv6, often ignorable |
+| Reason | Meaning | Severity Guidance | Action |
+|--------|---------|-------------------|--------|
+| `POLICY_DENIED` | No matching allow rule | Always investigate — query VLogs for flow details | Add egress/ingress CNP |
+| `STALE_OR_UNROUTABLE_IP` | Pod IP changed/gone | <10/h normal churn, >50/h check for crash loops | Correlate with pod restart times |
+| `VLAN_FILTERED` | L2 neighbor noise | Report total, don't investigate | Ignore — noisy L2 neighbors on bare metal |
+| `TTL_EXCEEDED` | Hop limit reached | Report total, don't investigate | Ignore — traceroute or mDNS probe noise |
+| `UNSUPPORTED_L3_PROTOCOL` | Protocol not handled | Report total, don't investigate | Ignore — ICMPv6 on IPv4-only cluster |
 
 ### Phase 3: Deep Investigation
 
@@ -64,6 +72,22 @@ Use `mcp__victoriametrics__label_values` to explore dimensions:
 - `label_name: "destination"`, `match: "hubble_drop_total"` — all destinations
 - `label_name: "reason"`, `match: "hubble_drop_total"` — all drop reasons
 
+**Get individual drop flow details from VictoriaLogs** — Hubble exports full drop flows as JSON to cilium-agent stdout. Query VLogs for the exact source pod, destination IP/port, and drop reason:
+
+```bash
+# Recent POLICY_DENIED drops with full flow context (last 1h)
+curl -s 'http://victoria-logs-single-server.observability.svc:9428/select/logsql/query' \
+  --data-urlencode 'query=_namespace:"kube-system" AND _container:"cilium-agent" AND "POLICY_DENIED" | limit 50' \
+  --data-urlencode 'limit=50'
+
+# Filter drops by source namespace
+curl -s 'http://victoria-logs-single-server.observability.svc:9428/select/logsql/query' \
+  --data-urlencode 'query=_namespace:"kube-system" AND _container:"cilium-agent" AND "POLICY_DENIED" AND "<SOURCE_NAMESPACE>" | limit 50' \
+  --data-urlencode 'limit=50'
+```
+
+Each flow log contains: source pod/namespace/labels, destination pod/IP/namespace, L4 port/protocol, drop reason, traffic direction. This is the primary tool for root-causing drops — metrics only show aggregate counts.
+
 Read existing network policies: `cluster/apps/<namespace>/<app>/app/network-policies.yaml`
 
 Check pod logs for connection errors:
@@ -73,11 +97,13 @@ kubectl logs -n <namespace> -l app.kubernetes.io/name=<app> --tail=50
 
 ### Phase 4: Assess Severity
 
-| Drop Count (per hour) | Severity | Recommendation |
-|-----------------------|----------|----------------|
-| 0-5 | Low | Likely transient, monitor |
-| 5-50 | Medium | Investigate, may need policy |
-| 50+ | High | Active issue, fix immediately |
+Severity is based on **per-hour rate**. The Phase 1 query uses `increase([1h])` so counts map directly.
+
+| POLICY_DENIED Count/hour | Severity | Recommendation |
+|--------------------------|----------|----------------|
+| 0-5 | Low | Query VLogs for flow details before dismissing — even low counts may indicate a real policy gap |
+| 5-50 | Medium | Investigate with VLogs flow data, likely needs policy fix |
+| 50+ | High | Active issue, use VLogs to identify exact source/dest/port, fix immediately |
 
 ## Policy Fix Templates
 
@@ -187,7 +213,7 @@ spec:
 
 1. Verify traffic pattern before suggesting policy changes — check both egress from source and ingress on destination
 2. Use exact label selectors from `kubectl get pods --show-labels` output
-3. Low drops (0-5/hour) are often normal pod churn — do not overreact
+3. Always query VLogs for individual flow details before classifying any drops as "transient" — aggregate metrics alone are insufficient for root cause analysis
 4. After policy changes, re-query VictoriaMetrics to confirm drops resolved
 
 ## Files Reference

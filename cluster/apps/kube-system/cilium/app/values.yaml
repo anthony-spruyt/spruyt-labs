@@ -120,6 +120,28 @@ hubble:
       - icmp
     enableOpenMetrics: true
     port: 9966
+  export:
+    dynamic:
+      enabled: true
+      config:
+        createConfigMap: true
+        content:
+          - name: "policy-drops"
+            filePath: "stdout"
+            includeFilters:
+              - verdict: ["DROPPED"]
+                ip_version: ["IPv4"]
+            excludeFilters: []
+            fieldMask:
+              - time
+              - source
+              - destination
+              - IP
+              - l4
+              - verdict
+              - drop_reason
+              - drop_reason_desc
+              - traffic_direction
 socketLB: # Configure socket LB
   enabled: true # Enable socket LB
   hostNamespaceOnly: true # Strangely not mentioned in the helm chart reference but it is in the json schema.
