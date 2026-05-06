@@ -37,7 +37,7 @@ metrics:
     enabled: true
   exporter:
     extraEnvs:
-      REDIS_PASSWORD_FILE: /secrets/valkey/default-password
+      REDIS_PASSWORD_FILE: /secrets/valkey/default
     extraExporterSecrets:
       - name: agent-valkey-secrets
     extraVolumeMounts:
