@@ -39,17 +39,18 @@ if ! python3 -c "import json5" 2>/dev/null; then
 fi
 
 # Fetch remote github> presets and merge everything into one config
-python3 - "$MAIN_CONFIG" "$RENOVATE_DIR" "$MERGED_CONFIG" "$PRESET_TMPDIR" "$TOKEN" <<'PYEOF'
+python3 - "$MAIN_CONFIG" "$RENOVATE_DIR" "$MERGED_CONFIG" "$PRESET_TMPDIR" "$TOKEN" "$REPO_ROOT" <<'PYEOF'
 import json, json5, glob, sys, os, urllib.request, base64
 
-main_config, local_preset_dir, output, tmpdir, token = sys.argv[1:6]
+main_config, local_preset_dir, output, tmpdir, token, repo_root = sys.argv[1:7]
 
 with open(main_config) as f:
     config = json5.loads(f.read())
 
-# Separate github> presets from built-in presets
+# Separate github> and local> presets from built-in presets
 github_presets = [e for e in config.get('extends', []) if e.startswith('github>')]
-config['extends'] = [e for e in config.get('extends', []) if not e.startswith('github>')]
+local_presets = [e for e in config.get('extends', []) if e.startswith('local>')]
+config['extends'] = [e for e in config.get('extends', []) if not e.startswith(('github>', 'local>'))]
 
 def fetch_github_preset(preset_ref, token):
     """Fetch a github>owner/repo//.path preset file via GitHub API."""
@@ -97,7 +98,7 @@ for preset_ref in github_presets:
         merge_preset(config, preset)
         fetched += 1
 
-# Merge local preset overrides (if any exist)
+# Merge local preset overrides from .github/renovate/ dir (if any exist)
 local_count = 0
 if os.path.isdir(local_preset_dir):
     for path in sorted(glob.glob(os.path.join(local_preset_dir, '**', '*.json5'), recursive=True)):
@@ -105,6 +106,19 @@ if os.path.isdir(local_preset_dir):
             preset = json5.loads(f.read())
         merge_preset(config, preset)
         local_count += 1
+
+# Resolve local> extends (e.g., local>.github/renovate-overrides)
+for local_ref in local_presets:
+    rel_path = local_ref.removeprefix('local>')
+    for ext in ['.json5', '.json', '']:
+        candidate = os.path.join(repo_root, rel_path + ext)
+        if os.path.isfile(candidate):
+            print(f"  Merging local preset {candidate}...", file=sys.stderr)
+            with open(candidate) as f:
+                preset = json5.loads(f.read())
+            merge_preset(config, preset)
+            local_count += 1
+            break
 
 with open(output, 'w') as f:
     json.dump(config, f, indent=2)
