@@ -1,5 +1,5 @@
 ---
-paths: [cluster/**]
+paths: [cluster/apps/**/ks.yaml, cluster/apps/**/kustomization.yaml, cluster/apps/**/release.yaml, cluster/apps/**/values.yaml, cluster/apps/**/vpa.yaml, cluster/apps/**/*.sops.yaml, cluster/apps/**/namespace.yaml]
 ---
 
 # Cluster Patterns
@@ -76,3 +76,35 @@ To exclude a namespace from descheduler eviction, add it to the per-plugin `name
 Only core infrastructure namespaces should be excluded — workload namespaces rely on priority classes to control eviction order.
 
 > **Upstream bug (descheduler v0.35.1):** `DefaultEvictor.namespaceLabelSelector` ignores `matchExpressions` when `matchLabels` is empty (`defaultevictor.go` guards with `len(MatchLabels) > 0`). The `descheduler.kubernetes.io/exclude` label is therefore inert. When upgrading descheduler, check if this is fixed — if so, switch from per-plugin `namespaces.exclude` lists to `DefaultEvictor.namespaceLabelSelector` with the label.
+
+## HelmRelease with ConfigMapGenerator
+
+When using `configMapGenerator` for HelmRelease values, add `kustomizeconfig.yaml` to handle the hash suffix:
+
+```yaml
+# kustomizeconfig.yaml
+---
+nameReference:
+  - kind: ConfigMap
+    version: v1
+    fieldSpecs:
+      - path: spec/valuesFrom/name
+        kind: HelmRelease
+```
+
+```yaml
+# kustomization.yaml
+configMapGenerator:
+  - name: <app>-values
+    namespace: <namespace>
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
+```
+
+This transforms `valuesFrom.name: <app>-values` to `valuesFrom.name: <app>-values-<hash>` automatically.
+
+## Renovate Annotations
+
+Inline `# renovate:` comments on non-Helm dependencies (images, GitHub releases). Search `cluster/` for existing examples before writing new ones.

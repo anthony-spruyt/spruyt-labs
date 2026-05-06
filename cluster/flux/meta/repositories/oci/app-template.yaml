@@ -7,7 +7,7 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "4.6.2"
+    tag: "5.0.0"
   url: oci://ghcr.io/bjw-s-labs/helm/app-template
   secretRef:
     name: ghcr-docker-config
