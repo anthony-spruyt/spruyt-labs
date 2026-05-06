@@ -13,6 +13,34 @@ IRQ Balance is a Linux daemon that distributes hardware interrupts across multip
 
 - MS-01 nodes with appropriate CPU configuration
 
+## Operation
+
+### Verify RSS Indirection Table
+
+Talos has no SSH — use a privileged debug pod to inspect NIC RSS tables:
+
+```bash
+kubectl run ethtool-check --image=nicolaka/netshoot:latest --namespace=dev-debug \
+  --restart=Never --rm --overrides='{
+    "spec": {
+      "hostNetwork": true,
+      "nodeName": "ms-01-2",
+      "containers": [{
+        "name": "ethtool",
+        "image": "nicolaka/netshoot:latest",
+        "command": ["ethtool", "-x", "enp89s0"],
+        "securityContext": {"privileged": true}
+      }]
+    }
+  }'
+```
+
+Monitor interrupt distribution (should be balanced across P-cores):
+
+```bash
+talosctl -n ms-01-2 read /proc/interrupts | grep "eth1-TxRx"
+```
+
 ## Troubleshooting
 
 1. **RSS tuning not applied**
