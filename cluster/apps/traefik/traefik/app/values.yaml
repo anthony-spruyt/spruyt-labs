@@ -30,6 +30,10 @@ ports:
           to: websecure
           scheme: https
           permanent: true
+  websecure:
+    forwardedHeaders:
+      trustedIPs:
+        - "${CLUSTER_POD_CIDR_IP4}"
 providers:
   kubernetesCRD:
     allowCrossNamespace: false
