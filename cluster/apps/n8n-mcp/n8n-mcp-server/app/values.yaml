@@ -48,6 +48,8 @@ controllers:
             value: "http://n8n.n8n-system.svc"
           - name: N8N_MCP_TELEMETRY_DISABLED
             value: "true"
+          - name: WEBHOOK_SECURITY_MODE
+            value: "permissive"
           - name: AUTH_TOKEN
             valueFrom:
               secretKeyRef:
