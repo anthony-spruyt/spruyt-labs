@@ -28,14 +28,16 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 
 ## Codebase
 
-| Path                       | Purpose                                     |
-| -------------------------- | ------------------------------------------- |
-| `cluster/apps/<ns>/<app>/` | Application deployments                     |
-| `cluster/flux/meta/`       | Flux config, cluster secrets                |
-| `talos/`                   | Talos machine configs                       |
-| `infra/terraform/`         | Cloud infrastructure (AWS backups, OIDC)    |
-| `.taskfiles/`              | Automation (`task --list`)                  |
-| `docs/`                    | Human runbooks (bootstrap, DR, maintenance) |
+| Path                       | Purpose                                      |
+| -------------------------- | -------------------------------------------- |
+| `cluster/apps/<ns>/<app>/` | Application deployments                      |
+| `cluster/flux/meta/`       | Flux config, cluster secrets                 |
+| `talos/`                   | Talos machine configs                        |
+| `infra/terraform/`         | Cloud infrastructure (AWS backups, OIDC)     |
+| `cmd/`                     | Go services (containers deployed to cluster) |
+| `ts/`                      | TypeScript services (agent-queue-worker)     |
+| `.taskfiles/`              | Automation (`task --list`)                   |
+| `docs/`                    | Human runbooks (bootstrap, DR, maintenance)  |
 
 ## Tool Usage
 
