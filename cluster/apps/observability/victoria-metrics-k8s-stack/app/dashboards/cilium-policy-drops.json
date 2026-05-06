@@ -150,7 +150,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(cilium:policy_drops:by_source:rate5m)",
+          "expr": "sum(cilium:policy_drops:by_source:rate5m{source!=\"\"})",
           "legendFormat": "",
           "refId": "A"
         }
@@ -316,7 +316,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "cilium:policy_drops:rate5m{reason=\"POLICY_DENIED\"} > 0",
+          "expr": "cilium:policy_drops:rate5m{reason=\"POLICY_DENIED\", source!=\"\", destination!=\"\"} > 0",
           "legendFormat": "{{ source }} -> {{ destination }}",
           "refId": "A"
         }
