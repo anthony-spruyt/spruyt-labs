@@ -16,11 +16,18 @@ Use `mcp__victoriametrics__*` tools for all VictoriaMetrics queries. Use `kubect
 
 ## Workflow
 
-### Phase 1: Gather Data (Run in Parallel)
+### Phase 1: Gather Data
+
+Run these three queries in parallel:
 
 **Actionable drops** — use `mcp__victoriametrics__query`:
 ```
 sum by (source, destination, protocol, reason) (increase(hubble_drop_total{reason=~"POLICY_DENIED|STALE_OR_UNROUTABLE_IP"}[1h])) > 0
+```
+
+**Active drop rates** — use `mcp__victoriametrics__query`:
+```
+cilium:policy_drops:rate5m
 ```
 
 **Noise check** (report totals, don't investigate individually):
@@ -30,7 +37,7 @@ sum by (reason) (increase(hubble_drop_total{reason!~"POLICY_DENIED|STALE_OR_UNRO
 
 If no results, verify metrics exist with `mcp__victoriametrics__metrics` (match: `hubble_drop_total`). If no metrics, report that Hubble drop metrics are not available.
 
-**Policies and pods:**
+**After Phase 1 results are back**, fetch policies and pods for affected namespaces only:
 ```bash
 kubectl get ciliumnetworkpolicy -n <namespace>
 kubectl get pods -n <namespace>
@@ -48,7 +55,7 @@ kubectl get pods -n <namespace>
 | Reason | Meaning | Severity Guidance | Action |
 |--------|---------|-------------------|--------|
 | `POLICY_DENIED` | No matching allow rule | Always investigate — query VLogs for flow details | Add egress/ingress CNP |
-| `STALE_OR_UNROUTABLE_IP` | Pod IP changed/gone | <10/h normal churn, >50/h check for crash loops | Correlate with pod restart times |
+| `STALE_OR_UNROUTABLE_IP` | Pod IP changed/gone | <10/h normal churn, >50/h check for crash loops | `kubectl get pods -n <ns> --sort-by='.status.containerStatuses[0].restartCount'` |
 | `VLAN_FILTERED` | L2 neighbor noise | Report total, don't investigate | Ignore — noisy L2 neighbors on bare metal |
 | `TTL_EXCEEDED` | Hop limit reached | Report total, don't investigate | Ignore — traceroute or mDNS probe noise |
 | `UNSUPPORTED_L3_PROTOCOL` | Protocol not handled | Report total, don't investigate | Ignore — ICMPv6 on IPv4-only cluster |
@@ -62,31 +69,66 @@ Use `mcp__victoriametrics__query`:
 hubble_drop_total{reason="POLICY_DENIED", source="<SOURCE_NAMESPACE>"}
 ```
 
-Check recording rule for sustained rate via `mcp__victoriametrics__query`:
-```
-cilium:policy_drops:rate5m
-```
-
 Use `mcp__victoriametrics__label_values` to explore dimensions:
 - `label_name: "source"`, `match: "hubble_drop_total"` — all sources
 - `label_name: "destination"`, `match: "hubble_drop_total"` — all destinations
 - `label_name: "reason"`, `match: "hubble_drop_total"` — all drop reasons
 
-**Get individual drop flow details from VictoriaLogs** — Hubble exports full drop flows as JSON to cilium-agent stdout. Query VLogs for the exact source pod, destination IP/port, and drop reason:
+Use `mcp__victoriametrics__series` to get full label sets (reveals which specific nodes and destination namespaces are involved — the aggregate query sums these away):
+- `match: hubble_drop_total{reason="POLICY_DENIED", source="<SOURCE_NS>"}`
 
+**Get individual drop flow details from VictoriaLogs** — Hubble exports full drop flows as JSON to cilium-agent stdout. VLogs indexes them with nested `log.flow.*` fields. This is the primary tool for root-causing drops — metrics only show aggregate counts, VLogs has source pod, destination IP/port, and drop reason per packet.
+
+VLogs service is headless — use port-forward:
 ```bash
-# Recent POLICY_DENIED drops with full flow context (last 1h)
-curl -s 'http://victoria-logs-single-server.observability.svc:9428/select/logsql/query' \
-  --data-urlencode 'query=_namespace:"kube-system" AND _container:"cilium-agent" AND "POLICY_DENIED" | limit 50' \
-  --data-urlencode 'limit=50'
-
-# Filter drops by source namespace
-curl -s 'http://victoria-logs-single-server.observability.svc:9428/select/logsql/query' \
-  --data-urlencode 'query=_namespace:"kube-system" AND _container:"cilium-agent" AND "POLICY_DENIED" AND "<SOURCE_NAMESPACE>" | limit 50' \
-  --data-urlencode 'limit=50'
+kubectl -n observability port-forward svc/victoria-logs-single-server 9428:9428 &
+sleep 2
+VLOGS="http://localhost:9428"
 ```
 
-Each flow log contains: source pod/namespace/labels, destination pod/IP/namespace, L4 port/protocol, drop reason, traffic direction. This is the primary tool for root-causing drops — metrics only show aggregate counts.
+Query examples:
+```bash
+# All POLICY_DENIED drops (last 1h)
+curl -s "$VLOGS/select/logsql/query" \
+  --data-urlencode 'query=_stream:{kubernetes_container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED' \
+  --data-urlencode 'limit=50'
+
+# Filter by source namespace
+curl -s "$VLOGS/select/logsql/query" \
+  --data-urlencode 'query=_stream:{kubernetes_container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>' \
+  --data-urlencode 'limit=50'
+
+# Check which drop reasons exist in VLogs
+curl -s "$VLOGS/select/logsql/field_values" \
+  --data-urlencode 'query=_stream:{kubernetes_container_name="cilium-agent"}' \
+  --data-urlencode 'field=log.flow.drop_reason_desc' \
+  --data-urlencode 'limit=20'
+
+# Get destination ports for drops from a namespace
+curl -s "$VLOGS/select/logsql/query" \
+  --data-urlencode 'query=_stream:{kubernetes_container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>' \
+  --data-urlencode 'limit=20' | python3 -c "
+import json,sys
+for line in sys.stdin:
+    f = json.loads(line)
+    msg = json.loads(f.get('_msg','{}'))
+    flow = msg.get('flow',{})
+    src = flow.get('source',{})
+    dst_ip = flow.get('IP',{}).get('destination','')
+    l4 = flow.get('l4',{})
+    port = l4.get('TCP',l4.get('UDP',{})).get('destination_port','')
+    print(f\"{src.get('namespace','')}/{src.get('pod_name','')} -> {dst_ip}:{port}\")
+"
+```
+
+Key VLogs flow fields:
+- `log.flow.source.namespace`, `log.flow.source.pod_name`, `log.flow.source.labels` — full source identity
+- `log.flow.IP.destination` — destination IP (resolve to pod via `kubectl get pods -A -o wide`)
+- `log.flow.l4.TCP.destination_port` / `log.flow.l4.UDP.destination_port` — port info (not in metrics)
+- `log.flow.drop_reason_desc` — human-readable drop reason
+- `log.flow.traffic_direction` — INGRESS or EGRESS
+
+**Note:** Metrics have no port label. VLogs is the only source for destination port on drops.
 
 Read existing network policies: `cluster/apps/<namespace>/<app>/app/network-policies.yaml`
 
