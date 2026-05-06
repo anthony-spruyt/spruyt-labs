@@ -19,9 +19,16 @@
 - GitHub config changes (`.github/**`)
 - Any change that doesn't affect Flux-managed resources
 
-**Skip qa-validator for:**
+**Skip qa-validator entirely for:**
 - Docs-only changes (*.md files)
 - SOPS-only changes
+- Agent/tooling config (`.claude/**`, `.taskfiles/**`)
+
+**qa-validator uses fast path (trivial scope) for:**
+- Cosmetic changes with zero semantic risk (typos, comments, formatting)
+- Scope based on semantic risk of diff, not file count
+- No MegaLinter, no dry-run, no Context7 — just diff review + standards + security
+- Everything else gets full validation
 
 ## Concurrency Rules
 
