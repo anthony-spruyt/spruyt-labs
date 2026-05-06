@@ -163,6 +163,14 @@ misconfigurations:
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml
+  # Restart CronJob Role needs deployment patch for rollout restart (scoped to single namespace)
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/restart-cronjob.yaml
+  # alpine/k8s is a trusted Docker Hub image for kubectl operations
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/restart-cronjob.yaml
 
   # ==============================================================================
   # Snapshot Controller - third-party manifest from kubernetes-csi project

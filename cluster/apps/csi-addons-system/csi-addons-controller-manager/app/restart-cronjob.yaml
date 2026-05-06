@@ -1,0 +1,90 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/serviceaccount.json
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-addons-restart
+  namespace: csi-addons-system
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/role-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: csi-addons-restart
+  namespace: csi-addons-system
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - patch
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/rolebinding-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: csi-addons-restart
+  namespace: csi-addons-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: csi-addons-restart
+subjects:
+  - kind: ServiceAccount
+    name: csi-addons-restart
+    namespace: csi-addons-system
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/cronjob-batch-v1.json
+# Workaround: csi-addons controller caches gRPC connections to nodeplugin
+# sidecars that go stale and never auto-recover (v0.14.0 bug). Restart
+# ensures fresh connections before daily ReclaimSpaceCronJobs fire.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: csi-addons-controller-restart
+  namespace: csi-addons-system
+spec:
+  schedule: "0 19 * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: csi-addons-restart
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+          serviceAccountName: csi-addons-restart
+          restartPolicy: OnFailure
+          containers:
+            - name: restart
+              image: alpine/k8s:1.35.4@sha256:d9aeef2665287b9918bc57c539ba95382ba4c8d52c8b1310df5666a89d9a3d04
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  kubectl rollout restart deployment/csi-addons-controller-manager -n csi-addons-system && \
+                  kubectl rollout status deployment/csi-addons-controller-manager -n csi-addons-system --timeout=90s
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
