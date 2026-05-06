@@ -11,25 +11,9 @@
 - Kubernetes cluster with Flux CD
 - [List actual dependencies from ks.yaml dependsOn field]
 
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n [namespace]
-flux get helmrelease -n [namespace] [component]
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization [component] --with-source
-
-# View logs
-kubectl logs -n [namespace] -l app.kubernetes.io/name=[component]
-```
-
 ## Troubleshooting
 
-### Common Issues
+<!-- Only document non-obvious, component-specific issues. Do NOT add generic kubectl/flux commands. -->
 
 1. **[Issue description]**
    - **Symptom**: [What you observe]

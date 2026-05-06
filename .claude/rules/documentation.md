@@ -6,7 +6,7 @@ paths: ["**/*.md"]
 
 ## Code Block Standards
 
-1. **Language identifiers required**: Use triple backticks with identifiers (`yaml`, `bash`, `json`)
+1. **Language identifiers required**: Use triple backticks with identifiers (`yaml`, `bash`, `json`, `text`)
 2. **Consistent indentation**: 2 spaces for YAML, 4 spaces for JSON
 3. **Line length**: Max 120 characters for readability
 4. **No raw code**: All commands and configs must be in code blocks
@@ -14,10 +14,9 @@ paths: ["**/*.md"]
 ## Content Standards
 
 1. **Accuracy**: Documentation must reflect current state
-2. **Completeness**: Cover setup, operation, and basic troubleshooting
+2. **No generic commands**: Do not document standard kubectl/flux commands (get pods, logs, reconcile). Only document component-specific operations that are non-obvious
 3. **Consistency**: Follow the README template for components
-4. **Command examples**: Tested, working commands
-5. **GitOps-first**: Prefer editing manifests and reconciling over manual kubectl apply
+4. **GitOps-first**: Prefer editing manifests and reconciling over manual kubectl apply
 
 ## Accuracy Requirements
 
@@ -32,8 +31,7 @@ Use template from `docs/templates/readme_template.md` for new component docs.
 Required sections:
 - Overview (mention priority tier)
 - Prerequisites (list dependsOn items)
-- Operation (key kubectl/flux commands)
-- Troubleshooting (common issues)
+- Troubleshooting (only non-obvious, component-specific issues)
 - References (official docs links)
 
 ## Maintenance
