@@ -43,6 +43,8 @@ spec:
                   value: coder-ssh-signing-key
                 - name: SECRET_NAMESPACE
                   value: coder-workspaces
+                - name: GRACE_PERIOD_DAYS
+                  value: "8"
               resources:
                 requests:
                   cpu: 10m

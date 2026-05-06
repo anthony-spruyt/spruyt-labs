@@ -342,8 +342,8 @@ resource "coder_agent" "main" {
     sudo chown vscode:vscode /home/vscode/.terraform.d/credentials.tfrc.json
 
     # Configure git commit signing using the read-only SSH key mount.
-    # Points directly at the secret volume so key rotation takes effect
-    # without a workspace restart (~1 min propagation delay).
+    # Kata virtiofs mounts are frozen at pod creation — secret updates
+    # do NOT propagate. Grace period on rotation keeps old key valid.
     git config --global gpg.format ssh
     git config --global user.signingKey /etc/coder/ssh-keys/id_ed25519
     git config --global commit.gpgSign true
@@ -356,7 +356,8 @@ resource "coder_agent" "main" {
     GIT_COMMITTER_NAME  = local.git_author_name
     GIT_COMMITTER_EMAIL = local.git_author_email
     # SSH auth uses the read-only key mount directly — no copy needed.
-    # Key rotation propagates automatically via Kubernetes secret volume refresh.
+    # Kata virtiofs: mount frozen at pod creation; rotation grace period
+    # keeps old key valid on GitHub until next rotation cycle.
     GIT_SSH_COMMAND   = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
     TALOSCONFIG       = "/etc/coder/talos/config"
     SOPS_AGE_KEY_FILE = "/etc/coder/sops/age.key"

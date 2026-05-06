@@ -43,6 +43,8 @@ spec:
                   value: github-bot-ssh-key
                 - name: SECRET_NAMESPACE
                   value: github-system
+                - name: GRACE_PERIOD_DAYS
+                  value: "4"
                 - name: FORCE_SYNC_NAMESPACES
                   value: claude-agents-write
                 - name: FORCE_SYNC_ES_NAME
