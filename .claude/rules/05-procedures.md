@@ -1,3 +1,7 @@
+---
+paths: [cluster/**]
+---
+
 # Procedures
 
 ## HelmRelease with ConfigMapGenerator
