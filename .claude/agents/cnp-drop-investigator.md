@@ -90,23 +90,23 @@ Query examples:
 ```bash
 # All POLICY_DENIED drops (last 1h)
 curl -s "$VLOGS/select/logsql/query" \
-  --data-urlencode 'query=_stream:{kubernetes_container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED' \
+  --data-urlencode 'query=_stream:{kubernetes.container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED' \
   --data-urlencode 'limit=50'
 
 # Filter by source namespace
 curl -s "$VLOGS/select/logsql/query" \
-  --data-urlencode 'query=_stream:{kubernetes_container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>' \
+  --data-urlencode 'query=_stream:{kubernetes.container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>' \
   --data-urlencode 'limit=50'
 
 # Check which drop reasons exist in VLogs
 curl -s "$VLOGS/select/logsql/field_values" \
-  --data-urlencode 'query=_stream:{kubernetes_container_name="cilium-agent"}' \
+  --data-urlencode 'query=_stream:{kubernetes.container_name="cilium-agent"}' \
   --data-urlencode 'field=log.flow.drop_reason_desc' \
   --data-urlencode 'limit=20'
 
 # Get destination ports for drops from a namespace
 curl -s "$VLOGS/select/logsql/query" \
-  --data-urlencode 'query=_stream:{kubernetes_container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>' \
+  --data-urlencode 'query=_stream:{kubernetes.container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>' \
   --data-urlencode 'limit=20' | python3 -c "
 import json,sys
 for line in sys.stdin:
