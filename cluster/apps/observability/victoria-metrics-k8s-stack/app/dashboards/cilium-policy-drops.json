@@ -316,7 +316,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "label_replace(label_replace(cilium:policy_drops:rate5m{reason=\"POLICY_DENIED\"}, \"source\", \"external\", \"source\", \"^$\"), \"destination\", \"external\", \"destination\", \"^$\") > 0",
+          "expr": "cilium:policy_drops:rate5m{reason=\"POLICY_DENIED\"} > 0",
           "legendFormat": "{{ source }} -> {{ destination }}",
           "refId": "A"
         }
@@ -390,10 +390,9 @@
                 "id": "mappings",
                 "value": [
                   {
-                    "type": "special",
+                    "type": "value",
                     "options": {
-                      "match": "empty",
-                      "result": {
+                      "external": {
                         "text": "external",
                         "color": "orange"
                       }
@@ -413,10 +412,9 @@
                 "id": "mappings",
                 "value": [
                   {
-                    "type": "special",
+                    "type": "value",
                     "options": {
-                      "match": "empty",
-                      "result": {
+                      "external": {
                         "text": "external",
                         "color": "orange"
                       }
@@ -460,7 +458,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (source, destination, protocol) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])) >= 1",
+          "expr": "label_replace(label_replace(sum by (source, destination, protocol) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])), \"source\", \"external\", \"source\", \"^$\"), \"destination\", \"external\", \"destination\", \"^$\") >= 1",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -585,7 +583,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "topk(5, sum by (source) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range]))) > 0",
+          "expr": "topk(5, label_replace(sum by (source) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])), \"source\", \"external\", \"source\", \"^$\")) > 0",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -674,7 +672,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "topk(5, sum by (destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range]))) > 0",
+          "expr": "topk(5, label_replace(sum by (destination) (increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__range])), \"destination\", \"external\", \"destination\", \"^$\")) > 0",
           "format": "table",
           "instant": true,
           "refId": "A"
