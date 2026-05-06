@@ -8,39 +8,13 @@ Procedures for recovering the Talos Linux Kubernetes cluster from various failur
 
 Velero backs up Kubernetes resources and persistent volumes to S3.
 
-```bash
-# Check backup status
-velero get backups
-velero backup describe <backup-name>
-
-# Check schedules
-velero get schedules
-
-# Check backup storage locations
-kubectl get backupstoragelocations -n velero
-```
-
 ### CNPG (PostgreSQL Databases)
 
 CloudNativePG handles PostgreSQL backups via Barman to S3.
 
-```bash
-# Check cluster status
-kubectl get clusters -A
-
-# Check backup status
-kubectl get backups -n <namespace>
-```
-
 ### Ceph (Block/File Storage)
 
 Ceph provides redundant storage with automatic replication.
-
-```bash
-# Check Ceph health
-kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph status
-kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd status
-```
 
 ## Recovery Procedures
 
@@ -139,7 +113,6 @@ kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd status
 1. **Verify node joins cluster**:
 
    ```bash
-   kubectl get nodes
    talosctl health
    ```
 
@@ -201,19 +174,14 @@ In case of complete cluster loss:
 
 1. **Restore databases from CNPG backups** as needed
 
-1. **Verify all workloads**:
-
-   ```bash
-   kubectl get pods -A
-   flux get kustomizations -A
-   ```
+1. **Verify all workloads** are running and Flux kustomizations are reconciled
 
 ## Validation
 
 After any recovery:
 
-- [ ] All nodes report Ready status: `kubectl get nodes`
-- [ ] Flux kustomizations reconciled: `flux get ks -A`
+- [ ] All nodes report Ready status
+- [ ] Flux kustomizations reconciled
 - [ ] Core services running: Cilium, cert-manager, Traefik
 - [ ] Ceph healthy: `ceph status` shows HEALTH_OK
 - [ ] Applications accessible via ingress

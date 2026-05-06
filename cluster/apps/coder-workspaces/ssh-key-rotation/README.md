@@ -11,21 +11,6 @@ Weekly CronJob that rotates the `coder-ssh-signing-key` Secret used by Coder wor
 - `coder` Kustomization deployed (dependsOn) — provides the `coder-ssh-signing-key` Secret the CronJob patches.
 - Image `ghcr.io/anthony-spruyt/ssh-key-rotation` published.
 
-## Operation
-
-```bash
-# Trigger manual rotation
-kubectl -n coder-workspaces create job \
-  --from=cronjob/ssh-key-rotation ssh-rotation-smoke-test
-
-# Inspect status
-kubectl -n coder-workspaces get cronjob ssh-key-rotation
-kubectl -n coder-workspaces logs -l app=ssh-key-rotation
-
-# Reconcile
-flux reconcile kustomization ssh-key-rotation --with-source
-```
-
 ## Troubleshooting
 
 1. **Job fails patching Secret**
@@ -37,6 +22,10 @@ flux reconcile kustomization ssh-key-rotation --with-source
 
    - **Symptom**: Job logs `connection refused` to kube-apiserver or GitHub.
    - **Resolution**: Egress CNPs live in `app/network-policy.yaml` (`allow-ssh-rotation-*`). Confirm the pod label `app: ssh-key-rotation` still matches.
+
+## Kata VM grace period
+
+Kata virtiofs mounts are frozen at pod creation — Kubernetes secret volume updates do NOT propagate into the guest. `GRACE_PERIOD_DAYS=8` keeps the previous key valid on GitHub for one full rotation cycle (7 days) plus buffer, so workspaces that span a rotation boundary continue signing/pushing.
 
 ## References
 

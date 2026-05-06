@@ -30,7 +30,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: rotate-ssh-key
-              image: ghcr.io/anthony-spruyt/ssh-key-rotation:2.0.2@sha256:1419826607abcae88c687955649abb7744f1b2fa886cc9ddb0f7e34b6778e9e0
+              image: ghcr.io/anthony-spruyt/ssh-key-rotation:2.0.3@sha256:c1e6db9cfa023d88d8f8bc00348b3fa8ea54e31e58edfd8828648621d2636187
               env:
                 - name: GITHUB_PAT
                   valueFrom:
@@ -43,6 +43,8 @@ spec:
                   value: github-bot-ssh-key
                 - name: SECRET_NAMESPACE
                   value: github-system
+                - name: GRACE_PERIOD_DAYS
+                  value: "4"
                 - name: FORCE_SYNC_NAMESPACES
                   value: claude-agents-write
                 - name: FORCE_SYNC_ES_NAME

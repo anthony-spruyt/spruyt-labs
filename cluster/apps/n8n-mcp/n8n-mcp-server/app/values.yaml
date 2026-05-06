@@ -18,7 +18,7 @@ controllers:
       copy-db:
         image:
           repository: ghcr.io/czlonkowski/n8n-mcp
-          tag: "2.50.0@sha256:05984cdd87ab13c5a37007ca5bc414a943db741be0c17d23b825eccb705dbb6f"
+          tag: "2.50.3@sha256:74835b813c77b057de6f18381f822ca69d64f826fcf7d9c48f327a07e3069014"
           pullPolicy: IfNotPresent
         command: ["cp", "/app/data/nodes.db", "/mnt/data/nodes.db"]
         securityContext:
@@ -31,7 +31,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/czlonkowski/n8n-mcp
-          tag: "2.50.0@sha256:05984cdd87ab13c5a37007ca5bc414a943db741be0c17d23b825eccb705dbb6f"
+          tag: "2.50.3@sha256:74835b813c77b057de6f18381f822ca69d64f826fcf7d9c48f327a07e3069014"
           pullPolicy: IfNotPresent
         env:
           - name: MCP_MODE
@@ -48,6 +48,8 @@ controllers:
             value: "http://n8n.n8n-system.svc"
           - name: N8N_MCP_TELEMETRY_DISABLED
             value: "true"
+          - name: WEBHOOK_SECURITY_MODE
+            value: "permissive"
           - name: AUTH_TOKEN
             valueFrom:
               secretKeyRef:

@@ -37,12 +37,12 @@ describe("AgentJobInputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects renovate-triage with extra keys in data", () => {
+  it("allows extra keys in renovate-triage data (n8n metadata passthrough)", () => {
     const result = AgentJobInputSchema.safeParse({
       ...triageBase,
-      data: { pr_number: 42, head_sha: "abc123", extra: "nope" },
+      data: { pr_number: 42, head_sha: "abc123", extra: "ok" },
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("accepts valid renovate-fix job", () => {
@@ -80,13 +80,13 @@ describe("AgentJobInputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects execute-issue with extra keys in data", () => {
+  it("allows extra keys in execute-issue data (n8n metadata passthrough)", () => {
     const result = AgentJobInputSchema.safeParse({
       ...triageBase,
       role: "execute-issue",
-      data: { issue_number: 99, extra: "nope" },
+      data: { issue_number: 99, extra: "ok" },
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("accepts valid sre-alert job", () => {
@@ -142,13 +142,16 @@ describe("AgentJobInputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects sre-health-check with extra keys", () => {
+  it("allows extra keys in sre-health-check data (n8n metadata passthrough)", () => {
     const result = AgentJobInputSchema.safeParse({
       ...triageBase,
       role: "sre-health-check",
-      data: { dedup_key: "2026-05-01", extra: "nope" },
+      data: {
+        dedup_key: "2026-05-01",
+        metaData: { workflowId: "abc", executionId: "123" },
+      },
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("accepts valid revert job with any data", () => {

@@ -20,18 +20,18 @@ const envelope = {
   event_type: z.string().min(1),
 };
 
-const renovateData = z.strictObject({
+const renovateData = z.looseObject({
   pr_number: z.number().int().positive(),
   head_sha: z.string().min(1),
 });
 
-const executeIssueData = z.strictObject({
+const executeIssueData = z.looseObject({
   issue_number: z.number().int().positive(),
 });
 
-const sreAlertData = z.object({ fingerprint: z.string().min(1) }).passthrough();
+const sreAlertData = z.looseObject({ fingerprint: z.string().min(1) });
 
-const sreHealthCheckData = z.strictObject({
+const sreHealthCheckData = z.looseObject({
   dedup_key: z.string().min(1),
 });
 

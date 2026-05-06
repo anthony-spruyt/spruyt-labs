@@ -6,11 +6,8 @@ MCP (Model Context Protocol) server that provides AI assistants with access to V
 
 Deployed as a `low-priority` workload using bjw-s app-template.
 
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the target namespace specified in ks.yaml.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - victoria-metrics-k8s-stack (metrics backend)
 
 ## Access
@@ -20,28 +17,7 @@ Deployed as a `low-priority` workload using bjw-s app-template.
 | Claude Code (dev container) | `https://mcp-vm.lan.${EXTERNAL_DOMAIN}/sse` | SSE over HTTPS (LAN-only)    |
 | Streamable HTTP             | Same host, `/mcp` endpoint                  | HTTP (alternative transport) |
 
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n observability -l app.kubernetes.io/name=mcp-victoriametrics
-flux get helmrelease -n observability mcp-victoriametrics
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization mcp-victoriametrics --with-source
-
-# View logs
-kubectl logs -n observability -l app.kubernetes.io/name=mcp-victoriametrics
-
-# Test health
-kubectl exec -it deploy/mcp-victoriametrics -n observability -- wget -qO- http://localhost:8080/health/readiness
-```
-
 ## Troubleshooting
-
-### Common Issues
 
 1. **MCP server cannot reach VMSingle**
 

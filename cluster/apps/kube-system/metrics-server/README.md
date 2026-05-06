@@ -6,35 +6,9 @@ Metrics Server provides the `metrics.k8s.io` Kubernetes API, exposing real-time 
 
 Deployed with 2 replicas and `--kubelet-insecure-tls` for Talos Linux compatibility (self-signed kubelet serving certs).
 
-> **Note**: HelmRelease resources are created in the target namespace specified by ks.yaml `targetNamespace`.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - kyverno-policies (from ks.yaml dependsOn)
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n kube-system -l app.kubernetes.io/name=metrics-server
-flux get helmrelease -n kube-system metrics-server
-
-# Verify Metrics API is registered
-kubectl get apiservice v1beta1.metrics.k8s.io
-
-# Test metrics availability
-kubectl top nodes
-kubectl top pods -n kube-system
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization metrics-server --with-source
-
-# View logs
-kubectl logs -n kube-system -l app.kubernetes.io/name=metrics-server
-```
 
 ## Troubleshooting
 

@@ -105,11 +105,10 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
    talosctl bootstrap --nodes <first-control-plane-ip>
    ```
 
-1. **Verify cluster**:
+1. **Verify cluster** health:
 
    ```bash
    talosctl health --nodes <control-plane-ip>
-   kubectl get nodes
    ```
 
 1. **Repeat for remaining nodes** (control plane first, then workers)
@@ -127,17 +126,7 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
      --personal
    ```
 
-1. **Monitor bootstrap**:
-
-   ```bash
-   flux get kustomizations -n flux-system
-   ```
-
-1. **Verify cluster components**:
-
-   ```bash
-   kubectl get pods -A
-   ```
+1. **Verify Flux and cluster components** are reconciling and healthy
 
 ### Phase 6: Post-Bootstrap Configuration
 

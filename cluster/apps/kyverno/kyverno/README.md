@@ -13,46 +13,7 @@ In this homelab, Kyverno is deployed as critical-infrastructure with four contro
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD installed
 - cert-manager (for webhook certificates)
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check Kyverno pod status
-kubectl get pods -n kyverno
-
-# Check HelmRelease status
-flux get helmrelease -n kyverno kyverno
-
-# Force reconcile
-flux reconcile kustomization kyverno --with-source
-
-# View admission controller logs
-kubectl logs -n kyverno -l app.kubernetes.io/component=admission-controller
-
-# View background controller logs
-kubectl logs -n kyverno -l app.kubernetes.io/component=background-controller
-
-# List all policies
-kubectl get clusterpolicy,policy -A
-
-# Check policy status
-kubectl get clusterpolicy <policy-name> -o jsonpath='{.status.conditions}'
-```
-
-### Policy Management
-
-```bash
-# View policy reports
-kubectl get policyreport -A
-kubectl get clusterpolicyreport
-
-# Check admission events
-kubectl get events -n kyverno --field-selector reason=PolicyViolation
-```
 
 ## Troubleshooting
 

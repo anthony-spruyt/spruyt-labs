@@ -1,34 +1,26 @@
 #!/bin/bash
 set -euo pipefail
 
-source "/workspaces/spruyt-labs/.taskfiles/talos/scripts/config.sh"
+TALOS_DIR="/workspaces/spruyt-labs/talos"
+CLUSTERCONFIG_DIR="${TALOS_DIR}/clusterconfig"
 
-# read -rp "Generate secrets? (y/n): " gensecretsanswer
-# if [[ "$gensecretsanswer" =~ ^[Yy]$ ]]; then
-#   talhelper gensecret > /workspaces/spruyt-labs/talos/talsecret.sops.yaml
-#   sops --config "/workspaces/spruyt-labs/.sops.yaml" -e --in-place "/workspaces/spruyt-labs/talos/talsecret.sops.yaml"
-# fi
-
-talhelper validate talconfig /workspaces/spruyt-labs/talos/talconfig.yaml \
-  -e /workspaces/spruyt-labs/talos/talenv.sops.yaml
+talhelper validate talconfig "${TALOS_DIR}/talconfig.yaml" \
+  -e "${TALOS_DIR}/talenv.sops.yaml"
 
 talhelper genconfig \
-  -c /workspaces/spruyt-labs/talos/talconfig.yaml \
-  -e /workspaces/spruyt-labs/talos/talenv.sops.yaml \
-  -s /workspaces/spruyt-labs/talos/talsecret.sops.yaml \
-  -o /workspaces/spruyt-labs/talos/clusterconfig \
+  -c "${TALOS_DIR}/talconfig.yaml" \
+  -e "${TALOS_DIR}/talenv.sops.yaml" \
+  -s "${TALOS_DIR}/talsecret.sops.yaml" \
+  -o "${CLUSTERCONFIG_DIR}" \
   -m metal
 
-talosctl config remove dummy -y || true
-talosctl config add dummy
-talosctl config context dummy
-talosctl config remove "${CLUSTER_NAME}" -y || true
-talosctl config merge /workspaces/spruyt-labs/talos/clusterconfig/talosconfig
-talosctl config context "${CLUSTER_NAME}"
-
-talosctl config endpoint "${C1_IP4}" "${C2_IP4}" "${C3_IP4}"
-talosctl config node "${C1_IP4}" "${C2_IP4}" "${C3_IP4}" "${W1_IP4}" "${W2_IP4}" "${W3_IP4}"
-
-talosctl config remove dummy -y
+TALOSCONFIG="${CLUSTERCONFIG_DIR}/talosconfig"
+if [[ -f "${TALOSCONFIG}" ]]; then
+  if talosctl config merge "${TALOSCONFIG}" 2>/dev/null; then
+    echo "Merged talosconfig into local talosctl config"
+  else
+    echo "Skipped talosctl config merge (config may be read-only)"
+  fi
+fi
 
 talosctl config info

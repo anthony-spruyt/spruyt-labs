@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=falcosecurity/falcoctl datasource=github-releases
-VERSION="v0.12.2"
+VERSION="v0.13.0"
 
 ARCH=$(uname -m)
 case "$ARCH" in

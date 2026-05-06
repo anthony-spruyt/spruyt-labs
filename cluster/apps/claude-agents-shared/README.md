@@ -9,7 +9,7 @@ Ephemeral Claude Code agent pods spawned by n8n. Five namespaces, two tiers.
 | `claude-agents-read`              | read + comment   | none      | agentplatform, bravesearch, context7 | low      | SA only                 |
 | `claude-agents-write`             | write (push, PR) | none      | agentplatform, bravesearch, context7 | standard | SA only                 |
 | `claude-agents-spruyt-labs-read`  | read + comment   | read-only | + victoriametrics                    | low      | `claude-agent-reader`   |
-| `claude-agents-spruyt-labs-sre`   | read + comment   | operator  | + victoriametrics, discord           | high     | `claude-agent-operator` |
+| `claude-agents-spruyt-labs-sre`   | read + comment   | operator  | + victoriametrics                    | high     | `claude-agent-operator` |
 | `claude-agents-spruyt-labs-write` | write (push, PR) | operator  | + victoriametrics                    | standard | `claude-agent-operator` |
 
 **Generic** namespaces have no kube-apiserver access. **Infra** (`spruyt-labs-*`) namespaces get kube-apiserver egress CNPs, RBAC ClusterRoleBindings, and additional MCP servers.
@@ -55,13 +55,12 @@ Clone preconditions enforce URL prefix: `git@github.com:anthony-spruyt/` (write)
 
 ## MCP Servers
 
-| Server          | URL                                          | Auth                                | CNP Location                         |
-| --------------- | -------------------------------------------- | ----------------------------------- | ------------------------------------ |
-| agentplatform   | `n8n-webhook.n8n-system.svc:8080`            | Bearer token from `mcp-credentials` | shared base                          |
-| bravesearch     | `brave-search-mcp.brave-search-mcp.svc:8000` | none                                | shared base                          |
-| context7        | `mcp.context7.com` (external)                | API key from `mcp-credentials`      | world egress (shared base)           |
-| victoriametrics | `mcp-victoriametrics.observability.svc:8080` | none                                | per-namespace (spruyt-labs-\*)       |
-| discord         | `discord-mcp.discord-mcp.svc:8080`           | none                                | per-namespace (spruyt-labs-sre only) |
+| Server          | URL                                          | Auth                                | CNP Location                   |
+| --------------- | -------------------------------------------- | ----------------------------------- | ------------------------------ |
+| agentplatform   | `n8n-webhook.n8n-system.svc:8080`            | Bearer token from `mcp-credentials` | shared base                    |
+| bravesearch     | `brave-search-mcp.brave-search-mcp.svc:8000` | none                                | shared base                    |
+| context7        | `mcp.context7.com` (external)                | API key from `mcp-credentials`      | world egress (shared base)     |
+| victoriametrics | `mcp-victoriametrics.observability.svc:8080` | none                                | per-namespace (spruyt-labs-\*) |
 
 `$${}` syntax in MCP config is replaced at runtime from pod env vars.
 
@@ -76,13 +75,13 @@ Clone preconditions enforce URL prefix: `git@github.com:anthony-spruyt/` (write)
 
 Mounted at `/etc/claude/settings/` via Kyverno. Set in n8n: `--settings /etc/claude/settings/<profile>.json`
 
-| Namespace                         | Profiles                                         |
-| --------------------------------- | ------------------------------------------------ |
-| `claude-agents-read`              | `renovate-triage`, `review-pr`, `validate`       |
-| `claude-agents-write`             | `execute-issue`, `pr-fix`, `renovate-fix`        |
-| `claude-agents-spruyt-labs-read`  | `renovate-triage`, `review-pr`, `validate`       |
-| `claude-agents-spruyt-labs-sre`   | `sre-health-check`, `sre-triage`, `sre-validate` |
-| `claude-agents-spruyt-labs-write` | `execute-issue`, `pr-fix`, `renovate-fix`        |
+| Namespace                         | Profiles                                     |
+| --------------------------------- | -------------------------------------------- |
+| `claude-agents-read`              | `renovate-triage`, `review-pr`, `validate`   |
+| `claude-agents-write`             | `execute-issue`, `pr-fix`, `renovate-fix`    |
+| `claude-agents-spruyt-labs-read`  | `renovate-triage`, `review-pr`, `validate`   |
+| `claude-agents-spruyt-labs-sre`   | `sre-health-check`, `sre-triage`, `validate` |
+| `claude-agents-spruyt-labs-write` | `execute-issue`, `pr-fix`, `renovate-fix`    |
 
 ## Credential Rotation
 

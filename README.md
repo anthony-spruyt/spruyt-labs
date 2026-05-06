@@ -62,23 +62,6 @@ The cluster enforces **baseline** Pod Security Standards by default.
 - Internal services protected by **LAN IP whitelist** middleware
 - TLS certificates via cert-manager with ZeroSSL/Let's Encrypt
 
-## Directory Layout
-
-<!-- markdownlint-disable MD013 -->
-
-| Path               | Description                                                            |
-| ------------------ | ---------------------------------------------------------------------- |
-| `cluster/`         | Flux GitOps definitions for core, apps, CRDs, and machine overlays.    |
-| `cluster/apps/`    | Workload manifests grouped by namespace and Helm release overlays.     |
-| `cluster/flux/`    | Flux bootstrap resources, controllers, and repository definitions.     |
-| `infra/terraform/` | Terraform modules for AWS backups, secrets, and storage integration.   |
-| `talos/`           | Talos schematics, graceful shutdown steps, and upgrade guidance.       |
-| `docs/`            | Runbooks (bootstrap, maintenance, DR) and shared rules.                |
-| `.taskfiles/`      | Taskfile automation for Talos, Flux, Terraform, and developer tooling. |
-| `.devcontainer/`   | Development container bootstrap for a consistent CLI toolchain.        |
-
-<!-- markdownlint-enable MD013 -->
-
 ## Runbooks
 
 | Document                                                               | Purpose                        |
@@ -89,24 +72,6 @@ The cluster enforces **baseline** Pod Security Standards by default.
 | [docs/intel-hybrid-architecture.md](docs/intel-hybrid-architecture.md) | Hardware architecture notes    |
 | [docs/workload-classification.md](docs/workload-classification.md)     | Workload priority tiers        |
 | [.claude/rules/](.claude/rules/)                                       | Claude agent rules             |
-
-## Troubleshooting Matrix
-
-Common failure modes across the cluster. For component-specific issues, reference the app READMEs.
-
-<!-- markdownlint-disable MD013 -->
-
-| Failure Mode                       | Diagnostics                                        | Remediation                                                |
-| ---------------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
-| Flux reconciliation failures       | `kubectl get ks -n flux-system`, `flux logs`       | Fix Git auth, SOPS, or dependency issues; `flux reconcile` |
-| Talos upgrade pitfalls             | `talosctl dmesg`, `talosctl logs -k`               | Reapply prior config, verify SecureBoot schematic          |
-| Rook Ceph storage issues           | `ceph status`, `ceph crash ls` via rook-ceph-tools | Archive crashes, check OSD maintenance modes               |
-| Container runtime crashes          | `talosctl logs containerd`, `talosctl logs cri`    | Investigate kernel/runtime problems                        |
-| Helm chart rendering errors        | `flux logs --kind HelmRelease -n <ns>`             | Correct values syntax, align with upstream docs            |
-| Application unhealthy post-upgrade | `kubectl get events -n <ns>`, workload logs        | Revert commit, suspend HelmRelease, rollback image         |
-| Nodes never join                   | `talosctl logs kubelet`, verify CSR                | Ensure certificate subject matches node name               |
-
-<!-- markdownlint-enable MD013 -->
 
 ## References
 

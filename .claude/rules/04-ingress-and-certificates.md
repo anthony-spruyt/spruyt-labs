@@ -53,11 +53,3 @@ spec:
   dnsNames:
     - <workload>.${EXTERNAL_DOMAIN}
 ```
-
-## Validation
-
-Use kubectl to verify:
-```bash
-kubectl get ingressroute -A          # All routes
-kubectl get certificates -A          # All certs (check Ready=True)
-```

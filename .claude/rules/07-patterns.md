@@ -1,5 +1,5 @@
 ---
-paths: [cluster/**]
+paths: [cluster/apps/**/ks.yaml, cluster/apps/**/kustomization.yaml, cluster/apps/**/release.yaml, cluster/apps/**/values.yaml, cluster/apps/**/vpa.yaml, cluster/apps/**/*.sops.yaml, cluster/apps/**/namespace.yaml]
 ---
 
 # Cluster Patterns
@@ -29,75 +29,18 @@ cluster/apps/<namespace>/
 
 ## Multiple Kustomizations
 
-When an app has optional resources that depend on it (e.g., ingress routes), add multiple Kustomizations in the same `ks.yaml`:
-
-```yaml
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: &app myapp
-spec:
-  path: ./cluster/apps/<namespace>/<app>/app
-  ...
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: myapp-ingress
-spec:
-  path: ./cluster/apps/<namespace>/<app>/ingress
-  dependsOn:
-    - name: myapp
-    - name: other-dependency
-  ...
-```
+When an app has optional dependent resources (e.g., ingress routes), add multiple Kustomizations in the same `ks.yaml` with `dependsOn`. See existing `ks.yaml` files in `cluster/apps/` for examples.
 
 ## Variable Substitution
 
 Flux `postBuild.substituteFrom` injects variables into all Kustomizations via patches in `cluster/flux/cluster/ks.yaml`. Two sources:
 
-### Source: `cluster-settings` ConfigMap (`cluster/flux/meta/cluster-settings.yaml`)
+- **`cluster-settings`** ConfigMap — `cluster/flux/meta/cluster-settings.yaml` (plaintext)
+- **`cluster-secrets`** Secret — `cluster/flux/meta/cluster-secrets.sops.yaml` (SOPS-encrypted values, key names plaintext)
 
-| Variable | Description |
-|----------|-------------|
-| `TIMEZONE` | Cluster timezone |
-| `CLUSTER_ISSUER` | Active cert-manager ClusterIssuer |
+List available variables: `task flux:list-vars`
 
-### Source: `cluster-secrets` Secret (`cluster/flux/meta/cluster-secrets.sops.yaml`)
-
-| Variable | Description |
-|----------|-------------|
-| `CLUSTER_NAME` | Cluster name |
-| `CLUSTER_DOMAIN` | Internal cluster domain |
-| `EXTERNAL_DOMAIN` | Public-facing domain |
-| `KUBEAPI_VIP` | Kubernetes API VIP |
-| `ACME_EMAIL` | ACME certificate email |
-| `ZEROSSL_EAB_KID` | ZeroSSL EAB key ID |
-| `MY_AUTHENTIK_USER_EMAIL` | Admin user email |
-| `E2_1_IP4`, `E2_2_IP4`, `E2_3_IP4` | Control plane node IPs |
-| `MS_01_1_IP4`, `MS_01_2_IP4`, `MS_01_3_IP4` | Worker node IPs |
-| `GATEWAY_IP4` | Network gateway |
-| `CLUSTER_NODE_CIDR_IP4` | Node CIDR |
-| `CLUSTER_POD_CIDR_IP4` | Pod CIDR |
-| `CLUSTER_SVC_CIDR_IP4` | Service CIDR |
-| `CLUSTER_LB_CIDR_START_IP4`, `CLUSTER_LB_CIDR_STOP_IP4` | LoadBalancer IP range |
-| `LAN_CIDR_IP4`, `VPN_CIDR_IP4`, `TELEPORT_CIDR_IP4`, `DEVCONTAINER_CIDR_IP4` | Network CIDRs |
-| `KUBELET_CSR_APPROVER_REGEX` | CSR approver pattern |
-| `DNS_SERVER_DOMAIN`, `DNS_SERVER_SECONDARY_DOMAIN` | Technitium DNS domains |
-| `TRAEFIK_IP4` | Traefik LoadBalancer IP |
-| `TECHNITIUM_IP4`, `TECHNITIUM_SECONDARY_IP4` | DNS server IPs |
-| `NTP_IP4` | NTP server IP |
-| `NUT_IP4` | UPS NUT server IP |
-| `MOSQUITTO_IP4` | MQTT broker IP |
-| `HOME_ASSISTANT_IP4` | Home Assistant IP |
-| `BEDROCK_CONNECT_IP4` | Bedrock Connect IP |
-| `CRAFTY_CONTROLLER_IP4` | Crafty Controller IP |
-| `MINECRAFT_BEDROCK_1_IP4`, `MINECRAFT_BEDROCK_2_IP4`, `MINECRAFT_BEDROCK_3_IP4` | Minecraft server IPs |
-
-### Opt-out
-
-To disable substitution on a Kustomization, add label: `substitution.flux.home.arpa/disabled: "true"`
+**Opt-out:** add label `substitution.flux.home.arpa/disabled: "true"` to a Kustomization.
 
 ## SOPS Naming
 
@@ -133,3 +76,35 @@ To exclude a namespace from descheduler eviction, add it to the per-plugin `name
 Only core infrastructure namespaces should be excluded — workload namespaces rely on priority classes to control eviction order.
 
 > **Upstream bug (descheduler v0.35.1):** `DefaultEvictor.namespaceLabelSelector` ignores `matchExpressions` when `matchLabels` is empty (`defaultevictor.go` guards with `len(MatchLabels) > 0`). The `descheduler.kubernetes.io/exclude` label is therefore inert. When upgrading descheduler, check if this is fixed — if so, switch from per-plugin `namespaces.exclude` lists to `DefaultEvictor.namespaceLabelSelector` with the label.
+
+## HelmRelease with ConfigMapGenerator
+
+When using `configMapGenerator` for HelmRelease values, add `kustomizeconfig.yaml` to handle the hash suffix:
+
+```yaml
+# kustomizeconfig.yaml
+---
+nameReference:
+  - kind: ConfigMap
+    version: v1
+    fieldSpecs:
+      - path: spec/valuesFrom/name
+        kind: HelmRelease
+```
+
+```yaml
+# kustomization.yaml
+configMapGenerator:
+  - name: <app>-values
+    namespace: <namespace>
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
+```
+
+This transforms `valuesFrom.name: <app>-values` to `valuesFrom.name: <app>-values-<hash>` automatically.
+
+## Renovate Annotations
+
+Inline `# renovate:` comments on non-Helm dependencies (images, GitHub releases). Search `cluster/` for existing examples before writing new ones.

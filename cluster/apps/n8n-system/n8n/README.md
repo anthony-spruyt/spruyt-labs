@@ -6,91 +6,15 @@ n8n is a workflow automation tool that connects various applications and service
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD installed
 - CNPG operator deployed (dependency)
 - Barman Cloud plugin deployed (dependency)
 - Authentik deployed (dependency)
 - Valkey deployed (dependency)
 - Claude agents write deployed (dependency)
 
-## Operation
+## Database
 
-### Procedures
-
-1. **Workflow management**:
-
-   - Access n8n web interface at `https://n8n.${EXTERNAL_DOMAIN}`
-   - Create and manage workflows
-   - Monitor workflow execution
-
-1. **Database operations** - See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `n8n-cnpg-cluster`
-
-   ```bash
-   # Check connection pooler status
-   kubectl get poolers -n n8n-system
-
-   # Verify scheduled backups
-   kubectl get scheduledbackups -n n8n-system
-   ```
-
-1. **Performance monitoring**:
-
-   ```bash
-   # Check n8n service status
-   kubectl get pods -n n8n-system
-
-   # Monitor resource usage
-   kubectl top pods -n n8n-system
-   ```
-
-### Validation
-
-Run the following commands to validate the procedures:
-
-```bash
-# Validate workflow management
-kubectl get pods -n n8n-system --no-headers | grep 'Running'
-
-# Expected: n8n pods running
-
-# Validate database monitoring
-kubectl get poolers -n n8n-system
-
-# Expected: Connection poolers listed
-
-# Validate performance monitoring
-kubectl top pods -n n8n-system
-
-# Expected: Resource usage displayed
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database connection failures**:
-
-   - **Symptom**: Pods stuck in CrashLoopBackOff
-   - **Diagnosis**: Check CNPG cluster health and connection details
-   - **Resolution**: Verify PostgreSQL credentials and network connectivity
-
-1. **Workflow execution errors**:
-
-   - **Symptom**: Workflows failing to execute
-   - **Diagnosis**: Check n8n logs and workflow configuration
-   - **Resolution**: Verify workflow syntax and API connections
-
-1. **Resource constraints**:
-
-   - **Symptom**: Pods in Pending state or frequent restarts
-   - **Diagnosis**: Check resource requests vs available cluster resources
-   - **Resolution**: Adjust resource limits or scale cluster
-
-1. **Network connectivity issues**:
-
-   - **Symptom**: External API connections failing
-   - **Diagnosis**: Check network policies and egress connectivity
-   - **Resolution**: Verify network configuration and firewall rules
+See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `n8n-cnpg-cluster`
 
 ## SSO Authentication
 
@@ -134,7 +58,7 @@ Webhooks are excluded from SSO authentication to allow external integrations:
 
 ## Unified SRE Workflow
 
-n8n hosts a unified SRE workflow that combines alert triage and scheduled health checks. Each agent has a dedicated MCP tool (`submit_alert_triage` / `submit_health_check_triage`) which validates the schema and posts to Discord. The health check agent only calls its tool when issues are found.
+n8n hosts a unified SRE workflow that combines alert triage and scheduled health checks. Each agent has a dedicated MCP tool (`submit_alert_triage` / `submit_health_check_triage`) which validates the schema.
 
 ### Triggers
 
@@ -169,28 +93,8 @@ See `docs/sre-automation/sre.md` for the full architecture and investigation flo
 
 See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via-proxy-provider-forward-auth) for the complete SSO integration pattern.
 
-## Maintenance
-
-### Updates
-
-```bash
-# Update n8n using Flux
-flux reconcile kustomization n8n --with-source
-```
-
-### Backup Management
-
-```bash
-# Verify scheduled backups
-kubectl get scheduledbackups -n n8n-system
-
-# Check backup status
-kubectl get backups -n n8n-system
-```
-
 ## References
 
 - [n8n Documentation](https://docs.n8n.io/)
 - [n8n API Documentation](https://docs.n8n.io/api/)
-- [Flux CD Documentation](https://fluxcd.io/flux/)
 - [CloudNative-PG Documentation](https://cloudnative-pg.io/)

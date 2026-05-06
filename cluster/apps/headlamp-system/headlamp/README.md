@@ -16,26 +16,6 @@ CNCF/kubernetes-sigs Kubernetes dashboard with plugins for GitOps and certificat
 - **URL**: `https://headlamp.lan.${EXTERNAL_DOMAIN}`
 - **Auth**: Authentik OIDC (Headlamp Users group)
 
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get hr -n headlamp-system headlamp
-kubectl get pod -n headlamp-system
-
-# View logs
-kubectl logs -n headlamp-system -l app.kubernetes.io/name=headlamp -c headlamp
-kubectl logs -n headlamp-system -l app.kubernetes.io/name=headlamp -c headlamp-plugin
-
-# Check ExternalSecret sync
-kubectl get externalsecret -n headlamp-system
-
-# Verify certificate
-kubectl get certificate -n headlamp-system
-```
-
 ## Plugins
 
 Headlamp supports plugins from ArtifactHub. Plugin installation is managed via the `pluginsManager` sidecar.
@@ -69,12 +49,6 @@ pluginsManager:
 | cert-manager | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager` | Certificate management |
 
 ### Plugin Installation Troubleshooting
-
-Plugin installation logs are in the `headlamp-plugin` container:
-
-```bash
-kubectl logs -n headlamp-system -l app.kubernetes.io/name=headlamp -c headlamp-plugin
-```
 
 Common errors:
 

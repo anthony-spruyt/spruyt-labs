@@ -50,7 +50,26 @@ Search upstream GitHub for:
 - `<project> <target-version>` — version-specific issues
 - `breaking` or `regression` in upstream repo
 
-### 6. Impact Analysis Against Our Configuration
+### 6. Version Coherence Check
+
+CLI tools and images often have a corresponding in-cluster component that should stay version-aligned. Discover if a pairing exists and verify coherence.
+
+**Discovery process:**
+1. Identify the project/org from the dependency name (e.g., `cilium/hubble` → Cilium)
+2. Search for corresponding in-cluster component:
+   - HelmReleases: `kubectl get hr -A` — grep for project name
+   - Deployments/DaemonSets: `kubectl get deploy,ds -A` — grep for project name
+   - Running container images: `kubectl get pods -A -o jsonpath='{range .items[*]}{.spec.containers[*].image}{"\n"}{end}' | grep <project>`
+3. If a matching cluster component exists, compare its version to the PR target version
+4. Also check the reverse: if updating a container image, check if any taskfile/script installs a CLI from the same project that would drift out of sync
+
+**Verdict rules:**
+- Target version **matches** deployed (minor-level) → positive signal
+- Target version **ahead** of deployed (e.g., CLI v1.20 but cluster v1.19) → flag RISKY (CLI may use APIs not yet available)
+- Target version **behind** deployed → note as stale but not blocking
+- No cluster component found → skip, note "no in-cluster pairing detected"
+
+### 7. Impact Analysis Against Our Configuration
 
 A breaking change only matters if it affects what we actually use.
 
@@ -65,7 +84,7 @@ A breaking change only matters if it affects what we actually use.
 | HIGH_IMPACT | We use the affected config/feature — will break |
 | UNKNOWN_IMPACT | Cannot determine if we use the affected feature |
 
-### 7. Determine Verdict
+### 8. Determine Verdict
 
 **SAFE** (ALL must be true):
 - No breaking changes, OR all have NO_IMPACT/LOW_IMPACT
@@ -88,7 +107,7 @@ A breaking change only matters if it affects what we actually use.
 - Dependency dropped support for our platform/architecture
 - CI failing due to this update with no clear fix
 
-### 8. Output Verdict
+### 9. Output Verdict
 
 End your analysis with a clear structured summary:
 
@@ -99,6 +118,8 @@ Complexity: <simple|complex> (only if FIXABLE)
 **Summary:** <one-paragraph analysis>
 
 **Breaking changes:** <list or "None">
+
+**Version coherence:** <match/ahead/behind/N/A> (only for paired dependencies)
 
 **CI status:** <pass/fail/unknown>
 ```

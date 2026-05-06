@@ -1,28 +1,32 @@
 # Development Environment
 
-This repository uses a VS Code devcontainer for a consistent development experience.
+Two paths to a working dev environment — both produce identical toolchains.
 
-## Prerequisites
+| Path                                      | Use when                                                          |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| [Local devcontainer](#local-devcontainer) | You have Docker/Podman on your machine and prefer VS Code locally |
+| [Coder workspace](#coder-workspace)       | Browser-based or remote VS Code Desktop — zero host setup         |
 
-- [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+## Local Devcontainer
+
+### Prerequisites
+
+- [VS Code](https://code.visualstudio.com/) with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine
-- SSH agent running with keys loaded (see [SSH Agent Setup](#ssh-agent-setup))
-- GitHub token in `~/.secrets/.env` (for GitHub CLI operations)
+- SSH agent with keys loaded (see [SSH Agent Setup](#ssh-agent-setup))
+- Host directories (see below)
 
-## Host Directory Structure
-
-The devcontainer expects these directories on your host machine:
+### Host Directory Structure
 
 ```text
 ~/.secrets/
-├── .env                    # Environment variables (loaded via --env-file)
-├── .terraform.d/           # Terraform credentials and plugin cache
-├── age.key                 # SOPS Age private key
-├── kubeconfig              # Kubernetes cluster config
-├── talosconfig             # Talos cluster config
-└── ...                     # Other secrets as needed
+├── .env              # Environment variables (GH_TOKEN, CONTEXT7_API_KEY, etc.)
+├── .terraform.d/     # Terraform credentials and plugin cache
+├── age.key           # SOPS Age private key
+├── kubeconfig        # Kubernetes cluster config
+└── talosconfig       # Talos cluster config
 
-~/.claude/                  # Claude Code settings and memory
+~/.claude/            # Claude Code settings and memory (persists across rebuilds)
 ```
 
 Create the required structure:
@@ -30,9 +34,11 @@ Create the required structure:
 ```bash
 mkdir -p ~/.secrets/.terraform.d ~/.claude
 touch ~/.secrets/.env
+chmod 700 ~/.secrets
+chmod 600 ~/.secrets/.env
 ```
 
-The `.env` file sets environment variables and paths to secrets:
+The `.env` file must contain:
 
 ```bash
 GH_TOKEN=<github-token>
@@ -42,48 +48,21 @@ KUBECONFIG=/home/vscode/.secrets/kubeconfig
 TALOSCONFIG=/home/vscode/.secrets/talosconfig
 ```
 
-## SSH Agent Setup
+### SSH Agent Setup
 
-The devcontainer uses SSH agent forwarding via socket mount. Your private keys stay on the host and are never copied into the container.
+The `initialize.sh` script runs on your host before container creation and creates a stable symlink at `~/.ssh/agent.sock`. This handles SSH agent forwarding automatically — the container mounts that fixed path.
 
-The devcontainer also mounts your `~/.gitconfig` (read-only) for git identity and commit signing. To enable SSH commit signing on your host:
+**Linux/WSL** — requires `keychain`:
 
 ```bash
-git config --global gpg.format ssh
-git config --global user.signingkey "$(cat ~/.ssh/id_ed25519.pub)"
-git config --global commit.gpgsign true
+sudo apt install keychain
 ```
 
-**Linux/WSL:**
+Add to `~/.bashrc` or `~/.zshrc`:
 
 ```bash
-# Start agent and add key
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_ed25519
-
-# Verify SSH_AUTH_SOCK is set
-echo $SSH_AUTH_SOCK
-```
-
-For passphrase-protected keys, use `keychain` to persist across sessions:
-
-```bash
-# Install: sudo apt install keychain
-# Add to ~/.bashrc or ~/.zshrc:
-# SSH agent setup
 eval "$(keychain --eval --agents ssh id_ed25519)"
-
-# Create stable symlink for devcontainer (only if not already correct)
-export SSH_AUTH_SOCK_LINK="$HOME/.ssh/agent.sock"
-if [ -S "$SSH_AUTH_SOCK" ] && [ -n "$SSH_AUTH_SOCK" ]; then
-  # Remove if it exists as directory or wrong symlink
-  [ -e "$SSH_AUTH_SOCK_LINK" ] && rm -f "$SSH_AUTH_SOCK_LINK"
-  ln -sf "$SSH_AUTH_SOCK" "$SSH_AUTH_SOCK_LINK"
-  export SSH_AUTH_SOCK="$SSH_AUTH_SOCK_LINK"
-fi
 ```
-
-`keychain` prompts for your passphrase once per reboot and reuses the agent across terminals. The symlink ensures the devcontainer can mount a consistent SSH agent path across reboots.
 
 **macOS:**
 
@@ -91,53 +70,109 @@ fi
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 ```
 
-Keys added with `--apple-use-keychain` persist across restarts. The `SSH_AUTH_SOCK` is set automatically by macOS.
+Keys persist across restarts via Apple keychain.
 
-**Windows (Git Bash):**
+### Opening the Devcontainer
 
-```bash
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_ed25519
-```
+1. Clone the repository
+1. Open in VS Code
+1. Click "Reopen in Container" (or Command Palette → `Dev Containers: Reopen in Container`)
 
-Or enable the OpenSSH Authentication Agent service in Windows Services and ensure `SSH_AUTH_SOCK` is set in your environment.
+`initialize.sh` sets up the SSH socket, then `devcontainer-post-create` installs tooling inside the container.
+
+## Coder Workspace
+
+Coder provides browser-based (or VS Code Desktop) workspaces running as Kubernetes pods. No host prerequisites beyond a browser.
+
+### Creating a Workspace
+
+1. Navigate to `https://code.${EXTERNAL_DOMAIN}`
+1. Sign in via Authentik SSO
+1. Create workspace from the **spruyt-labs** template
+1. Configure parameters:
+   - **Repository URL** — SSH URL (default: `git@github.com:anthony-spruyt/spruyt-labs.git`)
+   - **Git commit email** — GitHub noreply address for verified commits
+   - **Volume sizes** — `/workspaces` (default 20 GiB), `/home/vscode` (default 20 GiB)
+
+### How It Works
+
+The Coder template uses [envbuilder](https://github.com/coder/envbuilder) to build the same devcontainer image inside a [Kata Containers](https://katacontainers.io/) VM. This provides:
+
+- **Same toolchain** as local devcontainer — identical base image, features, and setup scripts
+- **Secrets via Kubernetes volumes** — SSH signing key, talosconfig, SOPS age key, Terraform credentials (no `~/.secrets/` needed)
+- **Git commit signing** — automatic via mounted SSH key at `/etc/coder/ssh-keys/id_ed25519`
+- **Nexus proxy** — apt and container pulls route through in-cluster Nexus for caching
+- **OTel telemetry** — Claude Code traces/metrics/logs ship to VictoriaMetrics
+
+### Accessing the Workspace
+
+- **Browser**: VS Code Web via the Coder dashboard
+- **VS Code Desktop**: Install Coder extension, connect to workspace
+- **SSH**: `coder ssh <workspace-name>`
+- **Terminal**: Web terminal available in dashboard
+
+### Persistent Storage
+
+| Mount                  | Storage Class             | Purpose                                 |
+| ---------------------- | ------------------------- | --------------------------------------- |
+| `/workspaces`          | `rbd-fast-delete`         | Repository checkout, build artifacts    |
+| `/home/vscode`         | `rbd-fast-delete`         | User config, Claude memory, tool caches |
+| `/dev/containers-disk` | `rbd-fast-delete` (block) | Podman container storage (ext4)         |
+
+Volumes persist across workspace stop/start. Deleting the workspace deletes volumes.
+
+## Common to Both Paths
+
+### Base Image
+
+Both paths use `ghcr.io/anthony-spruyt/devcontainer-common` which includes Python, Node, GitHub CLI, pre-commit, rootless Podman, and the `agent-run` policy wrapper.
+
+### Devcontainer Features
+
+Pinned versions installed as devcontainer features:
+
+- Go
+- Renovate CLI
+- Terraform
+- SOPS
+- yq
+
+### CLI Tools
+
+Installed by `setup-devcontainer.sh` via Taskfile:
+
+kubectl, kustomize, helm, helmfile, helm plugins, cilium, hubble, talosctl, talhelper, flux, flux-capacitor, age, velero, cnpg plugin, falcoctl, gopls, cclsp, coder
+
+### Container Runtime
+
+The devcontainer uses **rootless Podman** (via `podman-docker` shim). The `docker` command maps to `podman`. Container image pulls route through a registry allow-list — short-name pulls from unregistered registries are rejected.
+
+For details on the security posture (seccomp, `agent-run` wrapper, registry enforcement), see [`.devcontainer/README.md`](.devcontainer/README.md).
+
+### VS Code Extensions
+
+Auto-installed in both local and Coder workspaces:
+
+Claude Code, Markdown Mermaid, Better JSON5, Prettier, Git Graph, YAML, GitHub Actions, Go, Terraform, Task Runner, Helm Intellisense
 
 ## Troubleshooting
 
-### Devcontainer fails to start after reboot with mount error
+### SSH agent socket errors (local only)
 
 **Error**: `error mounting "..." to rootfs at "/ssh-agent": not a directory`
 
-**Cause**: The SSH agent socket path changed after reboot, but your devcontainer was created with the old path.
+**Cause**: SSH agent socket path changed (reboot), but container cached old path.
 
-**Solution**:
+**Fix**: Ensure `keychain` is in `~/.bashrc`, run `source ~/.bashrc`, verify `ls -la ~/.ssh/agent.sock`, then rebuild container.
 
-1. Verify the fixed symlink is configured in your `~/.bashrc` (see keychain setup above)
-1. Restart your terminal or run: `source ~/.bashrc`
-1. Verify the symlink exists: `ls -la ~/.ssh/agent.sock`
-1. **Rebuild the devcontainer one final time**: Command Palette → "Dev Containers: Rebuild Container"
-1. After this rebuild, reboots will no longer require rebuilds
+### Podman reports `vfs` storage driver
 
-If the symlink is missing or broken after reboot, ensure the keychain configuration is in `~/.bashrc` (not just set in the current terminal session).
+**Cause**: `/etc/containers/storage.conf` missing or graphroot populated by vfs.
 
-## GitHub CLI Setup
+**Fix**: `sudo rm -rf /var/lib/containers/storage` and rebuild devcontainer.
 
-The devcontainer loads environment variables from `~/.secrets/.env` on your host. Create this file with a GitHub token for CLI operations:
+### Rootless `newuidmap: exit status 1` (WSL2)
 
-```bash
-mkdir -p ~/.secrets
-chmod 700 ~/.secrets
-echo "GH_TOKEN=ghp_your_token_here" > ~/.secrets/.env
-chmod 600 ~/.secrets/.env
-```
+**Cause**: Outer namespace lacks delegated subuid ranges.
 
-Create a token at [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens) with `repo` and `workflow` scopes.
-
-## Opening the Devcontainer
-
-1. Ensure SSH agent is running and `SSH_AUTH_SOCK` is set
-1. Clone the repository
-1. Open the folder in VS Code
-1. When prompted, click "Reopen in Container" (or run `Dev Containers: Reopen in Container` from the command palette)
-
-The container uses Docker-in-Docker for running containers (MegaLinter, etc.) without mounting the host Docker socket.
+**Fix**: Use `sudo podman`. MegaLinter's `lint.sh` handles this automatically.

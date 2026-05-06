@@ -2,104 +2,14 @@
 
 ## Overview
 
-RedisInsight is a powerful visualization and management tool for Redis databases. In the spruyt-labs homelab infrastructure, RedisInsight provides comprehensive monitoring, analysis, and administration capabilities for all Redis-compatible data stores.
+RedisInsight is a visualization and management tool for Redis-compatible databases. Provides monitoring, analysis, and administration capabilities for Valkey data stores.
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD installed
-- Redis or Valkey instances available
-- Network connectivity between RedisInsight and data stores
-- Proper RBAC permissions for monitoring
-- Browser access for web interface
 - Authentik deployed (dependency)
 - Valkey deployed (dependency)
-
-## Operation
-
-### Procedures
-
-1. **Database connection management**:
-
-   ```bash
-   # Check connected databases
-   kubectl logs -n redisinsight <redisinsight-pod> | grep "connected"
-
-   # Monitor query performance
-   kubectl logs -n redisinsight <redisinsight-pod> | grep "performance"
-   ```
-
-1. **User access management**:
-
-   ```bash
-   # Check authentication logs
-   kubectl logs -n redisinsight <redisinsight-pod> | grep "authentication"
-
-   # Monitor active sessions
-   kubectl logs -n redisinsight <redisinsight-pod> | grep "session"
-   ```
-
-1. **Configuration updates**:
-
-   ```bash
-   # Update RedisInsight configuration
-   # Edit values.yaml, commit, then: flux reconcile kustomization redisinsight --with-source
-
-   # Restart pods for configuration changes
-   kubectl rollout restart deployment redisinsight -n redisinsight
-   ```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database connection failures**:
-
-   - **Symptom**: Unable to connect to Redis instances
-   - **Diagnosis**: Check network connectivity and credentials
-   - **Resolution**: Verify Cilium network policies and authentication
-
-1. **Authentication problems**:
-
-   - **Symptom**: Login failures or permission errors
-   - **Diagnosis**: Check authentication configuration
-   - **Resolution**: Verify user credentials and RBAC policies
-
-1. **Performance bottlenecks**:
-
-   - **Symptom**: Slow query execution or timeouts
-   - **Diagnosis**: Monitor resource usage and query patterns
-   - **Resolution**: Scale resources or optimize queries
-
-1. **Web interface issues**:
-
-   - **Symptom**: UI not loading or displaying errors
-   - **Diagnosis**: Check browser console and service logs
-   - **Resolution**: Verify service configuration and browser compatibility
-
-## Maintenance
-
-### Updates
-
-```bash
-# Update RedisInsight using Flux
-flux reconcile kustomization redisinsight --with-source
-
-# Check update status
-kubectl get helmreleases -n redisinsight
-```
-
-### Database Management
-
-Database connections are managed through the RedisInsight web UI or via values.yaml configuration. Edit the values file and reconcile with Flux:
-
-```bash
-# Reconcile after configuration changes
-flux reconcile kustomization redisinsight --with-source
-```
 
 ## References
 
 - [RedisInsight Documentation](https://redis.io/docs/latest/)
 - [RedisInsight GitHub](https://github.com/RedisInsight/RedisInsight)
-- [Redis Commands Reference](https://redis.io/commands)
-- [Kubernetes Monitoring Guide](https://kubernetes.io/docs/tasks/debug/)

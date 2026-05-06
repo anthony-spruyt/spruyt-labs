@@ -4,8 +4,15 @@ version: "3"
 
 vars:
   startCapacitorScript: "{{ .ROOT_DIR }}/.taskfiles/flux/scripts/start-capacitor.sh"
+  listVarsScript: "{{ .ROOT_DIR }}/.taskfiles/flux/scripts/list-vars.sh"
 
 tasks:
+  list-vars:
+    desc: List available Flux substitution variables (from cluster-settings and cluster-secrets)
+    cmds:
+      - bash {{ .listVarsScript }}
+    silent: true
+
   cap:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task flux:cap"'
     cmds:

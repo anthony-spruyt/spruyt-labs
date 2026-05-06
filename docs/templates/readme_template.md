@@ -4,32 +4,28 @@
 
 [Brief description of the component, its purpose, and role in the homelab.]
 
-> **Note**: HelmRelease resources are created in the target namespace specified by ks.yaml `targetNamespace`.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - [List actual dependencies from ks.yaml dependsOn field]
 
-## Operation
+<!-- OPTIONAL: Operations section — include when the component has non-obvious
+     operational knowledge that can't be derived from reading manifests alone.
+     Delete this section if not applicable.
 
-### Key Commands
+     Good candidates:
+     - Integration procedures (e.g., adding SSO, onboarding a new consumer)
+     - Cross-component interaction patterns (e.g., secret sync, RBAC wiring)
+     - Naming conventions or format requirements the component enforces
+     - Workarounds for upstream bugs or limitations
+     - Credential rotation or lifecycle procedures
+     - File reference tables mapping concepts to manifest locations
 
-```bash
-# Check status
-kubectl get pods -n [namespace]
-flux get helmrelease -n [namespace] [component]
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization [component] --with-source
-
-# View logs
-kubectl logs -n [namespace] -l app.kubernetes.io/name=[component]
-```
+     See authentik/README.md for a comprehensive example.
+-->
 
 ## Troubleshooting
 
-### Common Issues
+<!-- Only document non-obvious, component-specific issues. Do NOT add generic kubectl/flux commands. -->
 
 1. **[Issue description]**
    - **Symptom**: [What you observe]

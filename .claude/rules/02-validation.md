@@ -19,9 +19,16 @@
 - GitHub config changes (`.github/**`)
 - Any change that doesn't affect Flux-managed resources
 
-**Skip qa-validator for:**
+**Skip qa-validator entirely for:**
 - Docs-only changes (*.md files)
 - SOPS-only changes
+- Agent/tooling config (`.claude/**`, `.taskfiles/**`)
+
+**qa-validator uses fast path (trivial scope) for:**
+- Cosmetic changes with zero semantic risk (typos, comments, formatting)
+- Scope based on semantic risk of diff, not file count
+- No MegaLinter, no dry-run, no Context7 — just diff review + standards + security
+- Everything else gets full validation
 
 ## Concurrency Rules
 
@@ -38,9 +45,8 @@
 2. ALWAYS run qa-validator (before commit)
 3. If BLOCKED → apply fixes → re-run qa-validator
 4. If APPROVED → commit
-5. User pushes
-6. ALWAYS run cluster-validator (after push) — ONLY if none already running
-7. If ROLLBACK → revert commit → user pushes → re-run cluster-validator
-8. If ROLL-FORWARD → apply fix → commit → user pushes → re-run cluster-validator
+5. ALWAYS run cluster-validator (after push) — ONLY if none already running
+6. If ROLLBACK → revert commit → push → re-run cluster-validator
+7. If ROLL-FORWARD → apply fix → commit → push → re-run cluster-validator
    (skip validator on intermediate pushes, validate after final fix)
 ```

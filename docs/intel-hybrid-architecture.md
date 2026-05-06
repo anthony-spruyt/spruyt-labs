@@ -155,14 +155,6 @@ talosctl -n <node-ip> read /proc/irq/<irq-num>/smp_affinity_list
 
 Should show P-core CPUs (0-7) for network/USB IRQs.
 
-### Verify irqbalance Running
-
-```bash
-kubectl get pods -n irq-balance -o wide
-```
-
-All irq-balance-ms-01 pods should be Running.
-
 ## Related Documentation
 
 - [Workload Classification](workload-classification.md) - Priority classes

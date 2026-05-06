@@ -4,29 +4,9 @@
 
 MCP (Model Context Protocol) server providing AI assistants with web search capabilities via the Brave Search API. Runs in HTTP transport mode as a low-priority workload.
 
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the target namespace specified in ks.yaml.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
-- No dependencies (self-contained)
 - Brave Search API key (stored in SOPS secret)
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n brave-search-mcp
-flux get helmrelease -n flux-system brave-search-mcp
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization brave-search-mcp --with-source
-
-# View logs
-kubectl logs -n brave-search-mcp -l app.kubernetes.io/name=brave-search-mcp
-```
 
 ## Access
 
