@@ -6,11 +6,8 @@ Firefly III is a free and open-source personal finance manager that helps track 
 
 **Priority Tier**: `standard` - Business application with availability expectations (3x CPU limit policy)
 
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the firefly-iii namespace specified in ks.yaml.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - authentik (SSO provider)
 - cnpg-operator (PostgreSQL database operator)
 - plugin-barman-cloud (CNPG backup plugin)
@@ -82,43 +79,6 @@ This allows multiple people to manage household finances without needing Firefly
 
 Users must be added to the "Firefly III Users" group in Authentik to access the application.
 
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n firefly-iii
-flux get helmrelease -n flux-system firefly-iii
-
-# Check CNPG database
-kubectl get cluster -n firefly-iii
-kubectl get pod -n firefly-iii -l cnpg.io/cluster=firefly-iii-cnpg-cluster
-
-# Check Authentik outpost
-kubectl get deploy -n firefly-iii -l app.kubernetes.io/name=ak-outpost-firefly-iii-outpost
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization firefly-iii --with-source
-
-# View logs
-kubectl logs -n firefly-iii -l app.kubernetes.io/name=firefly-iii --tail=50
-```
-
-### Database Operations
-
-```bash
-# Check database cluster health
-kubectl get cluster -n firefly-iii firefly-iii-cnpg-cluster
-
-# View database logs
-kubectl logs -n firefly-iii -l cnpg.io/cluster=firefly-iii-cnpg-cluster --tail=50
-
-# Check backup status
-kubectl get backups -n firefly-iii
-kubectl get scheduledbackups -n firefly-iii
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -160,5 +120,3 @@ kubectl get scheduledbackups -n firefly-iii
 
 - [Firefly III Documentation](https://docs.firefly-iii.org/)
 - [Firefly III Kubernetes Helm Chart](https://github.com/firefly-iii/kubernetes)
-- [CNPG Documentation](https://cloudnative-pg.io/documentation/)
-- [Authentik Forward Auth Documentation](https://goauthentik.io/docs/providers/proxy/)

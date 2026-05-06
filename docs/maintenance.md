@@ -6,30 +6,6 @@ Regular maintenance procedures for the Talos Linux Kubernetes cluster.
 
 Complete these verification steps before submitting changes to ensure cluster stability.
 
-### Kubernetes Manifest Changes
-
-1. Confirm resource type exists:
-
-   ```bash
-   kubectl api-resources
-   ```
-
-1. Review fields you intend to modify:
-
-   ```bash
-   kubectl explain <resource_type>[.<field_path>] --recursive
-   ```
-
-1. Archive current manifest:
-
-   ```bash
-   kubectl get <resource_type> <resource_name> -n <namespace> -o yaml
-   ```
-
-1. Validate Helm chart defaults or CRD documentation through upstream references
-
-1. Capture assumptions, dependencies, and version requirements in change notes
-
 ### Terraform Infrastructure Changes
 
 1. Format and validate:
@@ -109,12 +85,7 @@ Renovate automates dependency updates. See [.claude/rules/renovate.md](../.claud
 
 ## Certificate Renewal
 
-Certificates are managed by cert-manager and auto-renew. To check status:
-
-```bash
-kubectl get certificates -A
-kubectl describe certificate <name> -n <namespace>
-```
+Certificates are managed by cert-manager and auto-renew.
 
 ## Storage Maintenance
 

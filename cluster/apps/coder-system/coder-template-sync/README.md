@@ -38,14 +38,6 @@ kubectl -n coder-system create job \
 kubectl -n coder-system logs job/rotation-smoke-test
 ```
 
-### Reconcile
-
-```bash
-flux reconcile kustomization coder-template-sync --with-source
-kubectl -n coder-system get jobs,cronjobs \
-  -l app.kubernetes.io/name=coder-template-sync
-```
-
 ## Troubleshooting
 
 1. **Rotation CronJob fails, token expires**

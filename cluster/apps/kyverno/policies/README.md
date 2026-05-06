@@ -108,24 +108,6 @@ Automatically injects topology spread constraints on Deployments and StatefulSet
 
 **Excluded Namespaces:** kube-system, kube-public, kube-node-lease, flux-system, kyverno
 
-## Operation
-
-### Key Commands
-
-```bash
-# Check policy status
-kubectl get clusterpolicy add-default-limitrange
-
-# View generated LimitRanges
-kubectl get limitrange -A -l app.kubernetes.io/managed-by=kyverno
-
-# Check a specific namespace's LimitRange
-kubectl get limitrange -n <namespace> default-limits -o yaml
-
-# Force policy reconciliation
-flux reconcile kustomization kyverno-policies --with-source
-```
-
 ### Adding Namespace Exclusions
 
 1. Edit `cluster/apps/kyverno/policies/app/default-limitrange.yaml`

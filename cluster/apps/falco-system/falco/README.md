@@ -9,31 +9,9 @@ Components:
 - **Falco** - DaemonSet monitoring syscalls on all nodes via modern_ebpf driver
 - **Falcosidekick** - Alert forwarder to VictoriaLogs
 
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to falco-system.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - Talos Linux with `lockdown=integrity` kernel arg (required for modern_ebpf driver)
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n falco-system
-flux get helmrelease -n falco-system falco
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization falco --with-source
-
-# View Falco logs (security events)
-kubectl logs -n falco-system -l app.kubernetes.io/name=falco --tail=50
-
-# View Falcosidekick logs (alert forwarding)
-kubectl logs -n falco-system -l app.kubernetes.io/name=falcosidekick --tail=20
-```
 
 ## Exception Rules
 

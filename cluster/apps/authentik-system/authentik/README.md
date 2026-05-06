@@ -6,32 +6,13 @@ Open-source Identity Provider for SSO authentication across the cluster.
 
 ## Prerequisites
 
-- CNPG operator (PostgreSQL)
+- CNPG operator (PostgreSQL) - cluster name: `authentik-cnpg-cluster`
 - Valkey (Redis-compatible)
 - cert-manager for TLS
 
-## Operation
+## Adding SSO Integration (Blueprints)
 
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n authentik-system
-flux get helmrelease -n flux-system authentik
-
-# View logs
-kubectl logs -n authentik-system -l app.kubernetes.io/name=authentik
-```
-
-### CNPG Database Operations
-
-See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage.
-
-Cluster name: `authentik-cnpg-cluster`
-
-### Adding SSO Integration (Blueprints)
-
-#### Step 1: Create Blueprint
+### Step 1: Create Blueprint
 
 Create `app/blueprints/<app>-sso.yaml`:
 
@@ -104,7 +85,7 @@ entries:
       timeout: 30
 ```
 
-#### Step 2: Create Dedicated OAuth Secret
+### Step 2: Create Dedicated OAuth Secret
 
 Create a separate SOPS-encrypted secret for least-privilege cross-namespace access.
 
@@ -134,7 +115,7 @@ Add to `app/kustomization.yaml` resources:
 - ./authentik-<app>-oauth.sops.yaml
 ```
 
-#### Step 3: Mount in Authentik
+### Step 3: Mount in Authentik
 
 Add to `app/values.yaml` under `global.env`:
 
@@ -176,7 +157,7 @@ volumes:
 
 Missing either step will cause the blueprint to not be discovered by Authentik.
 
-#### Step 4: Cross-Namespace Secret Sync (if app is in different namespace)
+### Step 4: Cross-Namespace Secret Sync (if app is in different namespace)
 
 Create in the consumer app's directory:
 
@@ -270,7 +251,7 @@ subjects:
 
 This ensures each app can only read its own OAuth credentials.
 
-#### Step 5: Configure Application
+### Step 5: Configure Application
 
 Use internal K8s URLs for server-to-server calls:
 
@@ -282,7 +263,7 @@ api_url: http://authentik-server.authentik-system/application/o/userinfo/ # Inte
 
 Mount credentials via `envFromSecrets` or similar mechanism.
 
-#### OAuth2Provider Required Attrs
+### OAuth2Provider Required Attrs
 
 - `authorization_flow`, `invalidation_flow` - Required flows
 - `client_type: confidential` - For server-side apps
@@ -356,20 +337,20 @@ else:
 
 Automated weekly rotation of OAuth `client_secret` via CronJob. Only the secret is rotated - `client_id` remains stable (required for integrations like kube-apiserver OIDC).
 
-#### How It Works
+### How It Works
 
 1. CronJob generates new client_secret
 1. Updates Authentik OAuth2 provider via REST API
 1. Patches the app's dedicated OAuth secret (e.g., `authentik-grafana-oauth`)
 1. Forces ExternalSecret sync in consumer namespace
 
-#### Rotation Prerequisites
+### Rotation Prerequisites
 
 - `OAUTH_ROTATION_API_TOKEN` in `authentik-secrets.sops.yaml`
 - OAuth Rotation Service Account blueprint applied (creates limited-permission service account)
 - ExternalSecret configured in consumer namespace (Step 4 above)
 
-#### Service Account Blueprint
+### Service Account Blueprint
 
 The rotation CronJob uses a dedicated service account with minimal permissions, defined in `app/blueprints/oauth-rotation-service-account.yaml`:
 
@@ -384,7 +365,7 @@ Generate the token value and add to `authentik-secrets.sops.yaml`:
 openssl rand -hex 32  # OAUTH_ROTATION_API_TOKEN
 ```
 
-#### Adding a New App to Rotation
+### Adding a New App to Rotation
 
 1. **Update CronJob script** (`app/oauth-secret-rotation/cronjob.yaml`):
 
@@ -427,19 +408,6 @@ subjects:
 3. **Update CronJob Role** (`app/oauth-secret-rotation/role.yaml`):
 
 Ensure secret keys are listed in resourceNames for patching.
-
-#### Testing Rotation
-
-```bash
-# Trigger manual rotation
-kubectl create job --from=cronjob/oauth-secret-rotation oauth-test -n authentik-system
-
-# Watch job progress
-kubectl logs -n authentik-system -l job-name=oauth-test -f
-
-# Verify ExternalSecret synced
-kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
-```
 
 ## File Reference
 
@@ -503,11 +471,11 @@ kubectl get externalsecret -n <consumer-namespace> <app>-oauth-credentials
 - Only `client_secret` rotates - `client_id` must be stable (referenced in kube-apiserver config)
 - Requires custom email mapping for `email_verified: true` (see below)
 
-### Adding SSO via Proxy Provider (Forward-Auth)
+## Adding SSO via Proxy Provider (Forward-Auth)
 
 For applications that don't support OAuth2 natively (e.g., N8N Community Edition), use Authentik's Proxy Provider with Traefik forward-auth and standalone outposts.
 
-#### Architecture
+### Architecture
 
 ```text
 User -> Traefik -> forwardAuth middleware -> Standalone Outpost (same namespace)
@@ -519,7 +487,7 @@ User -> Traefik -> forwardAuth middleware -> Standalone Outpost (same namespace)
                    Application (reads X-authentik-email header)
 ```
 
-#### Step 1: Create RBAC for Outpost Deployment
+### Step 1: Create RBAC for Outpost Deployment
 
 Authentik needs permissions to deploy outposts to the target namespace. Create `<app>/app/authentik-outpost-rbac.yaml`:
 
@@ -558,7 +526,7 @@ subjects:
     namespace: authentik-system
 ```
 
-#### Step 2: Create Proxy Provider Blueprint with Standalone Outpost
+### Step 2: Create Proxy Provider Blueprint with Standalone Outpost
 
 Create `app/blueprints/<app>-sso.yaml`:
 
@@ -632,7 +600,7 @@ entries:
 
 **Note:** No OAuth secrets needed - proxy providers use session-based auth.
 
-#### Step 3: Create Traefik ForwardAuth Middleware
+### Step 3: Create Traefik ForwardAuth Middleware
 
 Create middleware in `traefik/ingress/<app-namespace>/` kustomization. The base template is in `traefik/ingress/base/authentik-forward-auth.yaml`:
 
@@ -658,7 +626,7 @@ spec:
 
 **Outpost service naming:** Authentik creates services named `ak-outpost-<slug>` where slug is the lowercase, hyphenated outpost name. Example: "N8N Outpost" → `ak-outpost-n8n-outpost`.
 
-#### Step 4: Update Application Ingress
+### Step 4: Update Application Ingress
 
 Add outpost route and middleware to application's IngressRoute:
 
@@ -682,7 +650,7 @@ spec:
           port: 80
 ```
 
-#### Step 5: Add Flux Dependency
+### Step 5: Add Flux Dependency
 
 The app's Kustomization must depend on authentik to ensure RBAC exists before outpost deployment:
 
@@ -693,7 +661,7 @@ spec:
     - name: authentik
 ```
 
-#### Step 6: Configure Application
+### Step 6: Configure Application
 
 The application receives trusted headers from Authentik:
 
@@ -714,18 +682,18 @@ Configure the application to trust and use these headers for authentication.
 | Ingress Routes  | `traefik/ingress/n8n-system/ingress-routes.yaml`   |
 | Hooks ConfigMap | `n8n/app/hooks-configmap.yaml`                     |
 
-### Adding SSO via SAML Provider
+## Adding SSO via SAML Provider
 
 For applications with native SAML2 support (e.g., Ceph Dashboard), use Authentik's SAML Provider.
 
-#### SAML Architecture
+### SAML Architecture
 
 ```text
 User -> Traefik (TLS) -> Application -> SAML redirect -> Authentik
                                       <- SAML assertion <-
 ```
 
-#### Step 1: Create SAML Provider Blueprint
+### Step 1: Create SAML Provider Blueprint
 
 Create `app/blueprints/<app>-sso.yaml`:
 
@@ -801,7 +769,7 @@ entries:
       timeout: 30
 ```
 
-#### SAML Provider Key Attributes
+### SAML Provider Key Attributes
 
 | Attribute           | Description                                                       |
 | ------------------- | ----------------------------------------------------------------- |
@@ -812,7 +780,7 @@ entries:
 | `signing_kp`        | Key pair for signing assertions (use self-signed cert)            |
 | `property_mappings` | **Required** - Email, Name, Username mappings for SAML assertions |
 
-#### Step 2: Configure Traefik for HTTPS Protocol Headers
+### Step 2: Configure Traefik for HTTPS Protocol Headers
 
 When the application is behind TLS termination (Traefik terminates HTTPS), the backend sees HTTP traffic. SAML libraries (like python-saml) validate that the SAML response destination matches the request protocol.
 
@@ -847,7 +815,7 @@ middlewares:
 "The response was received at http://... instead of https://..."
 ```
 
-#### Step 3: Configure Application SAML
+### Step 3: Configure Application SAML
 
 Configure the application to use Authentik's SAML metadata endpoint:
 
@@ -857,7 +825,7 @@ Metadata URL: https://auth.${EXTERNAL_DOMAIN}/application/saml/<app-slug>/metada
 
 For applications with CLI-based SAML setup (like Ceph Dashboard), automation via sidecar is recommended. See `rook-ceph/rook-ceph-cluster/app/release.yaml` for an example using Flux postRenderers.
 
-#### SAML vs OAuth2 vs Proxy Provider
+### SAML vs OAuth2 vs Proxy Provider
 
 | Aspect          | OAuth2 Provider      | Proxy Provider          | SAML Provider          |
 | --------------- | -------------------- | ----------------------- | ---------------------- |

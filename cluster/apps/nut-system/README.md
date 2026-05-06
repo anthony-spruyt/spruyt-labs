@@ -15,7 +15,6 @@ Network UPS Tools (NUT) integration for UPS monitoring with automated graceful c
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - Talos node with USB UPS connected and labeled `ups.spruyt-labs.io/connected: "true"`
 - Talos udev rules configured for USB UPS access
 - rook-ceph with rook-ceph-tools deployment
@@ -67,25 +66,6 @@ When power is lost for 30+ seconds:
 | Control plane shutdown | 30s      | 225s       |
 
 ## Operation
-
-### Key Commands
-
-```bash
-# Check NUT server status
-kubectl get pods -n nut-system -l app.kubernetes.io/name=nut-server
-upsc cp1500@<NUT_IP4>:3493
-
-# Check orchestrator status
-kubectl get pods -n nut-system -l app.kubernetes.io/name=shutdown-orchestrator
-kubectl logs -n nut-system -l app.kubernetes.io/name=shutdown-orchestrator -f
-
-# Check UPS metrics
-kubectl exec -n nut-system deploy/nut-server -c upsd -- upsc cp1500
-
-# Force reconcile
-flux reconcile kustomization nut-server --with-source
-flux reconcile kustomization shutdown-orchestrator --with-source
-```
 
 ### Testing
 
@@ -164,19 +144,6 @@ kubectl annotate cluster <name> -n <namespace> cnpg.io/hibernation-
 
    - **Symptom**: Orchestrator pod logs show recovery errors
    - **Resolution**: Run manual recovery commands (see Manual Recovery section), check pod logs
-
-### Validation Commands
-
-```bash
-# Verify NUT exporter metrics (scraped via /ups_metrics?ups=cp1500)
-curl -s 'http://vmsingle.observability.svc:8428/api/v1/query?query=network_ups_tools_battery_charge{ups="cp1500"}'
-
-# Verify RBAC
-kubectl auth can-i create pods/exec -n rook-ceph --as=system:serviceaccount:nut-system:shutdown-orchestrator
-
-# Test Ceph tools access
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
-```
 
 ## Configuration
 

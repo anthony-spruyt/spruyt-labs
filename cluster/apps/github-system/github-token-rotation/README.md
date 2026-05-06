@@ -9,40 +9,11 @@ Installation tokens expire after 1 hour (fixed by GitHub). The 30-minute rotatio
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
-- SOPS/Age decryption secret (`sops-age`) in `flux-system`
 - SOPS-encrypted secrets in `github-system`:
   - `github-app-credentials` — App ID, Installation ID, and PEM private key for both write and read apps
   - `github-bot-credentials` — target secret for rotated tokens (created/maintained by CronJob)
   - `github-bot-ssh-key` — SSH signing key for verified commits
 - External Secrets Operator (`external-secrets` Kustomization)
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check CronJob and recent job history
-kubectl get cronjob github-token-rotation -n github-system
-kubectl get jobs -n github-system
-
-# View logs from the most recent job pod
-kubectl logs -n github-system -l app=github-token-rotation --tail=100
-
-# Trigger manual rotation immediately
-kubectl create job --from=cronjob/github-token-rotation \
-  -n github-system github-token-rotation-manual
-
-# Force Flux reconcile
-flux reconcile kustomization github-token-rotation --with-source
-
-# Verify ESO ExternalSecrets synced in consumer namespaces
-kubectl get externalsecret -n claude-agents-read
-kubectl get externalsecret -n claude-agents-write
-kubectl get externalsecret -n claude-agents-spruyt-labs-read
-kubectl get externalsecret -n claude-agents-spruyt-labs-sre
-kubectl get externalsecret -n claude-agents-spruyt-labs-write
-```
 
 ## Troubleshooting
 
@@ -70,15 +41,6 @@ kubectl get externalsecret -n claude-agents-spruyt-labs-write
      ```bash
      kubectl get secretstore github-secret-store -n claude-agents-write
      kubectl describe secretstore github-secret-store -n claude-agents-write
-     ```
-
-1. **CronJob pod stuck or failing**
-
-   - **Symptom**: Job pod in `Error` or `OOMKilled` state.
-   - **Resolution**: Check pod logs and events:
-     ```bash
-     kubectl describe pod -n github-system -l app=github-token-rotation
-     kubectl get events -n github-system --sort-by='.lastTimestamp'
      ```
 
 ## References
