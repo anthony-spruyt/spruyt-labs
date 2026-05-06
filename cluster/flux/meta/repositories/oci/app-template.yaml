@@ -8,6 +8,7 @@ metadata:
 spec:
   ref:
     tag: "5.0.0"
+    digest: sha256:bcc5b9d00e4bc0ae80fa3a97193f6d4a2d309b51aeb5e868a25c22275e816203
   url: oci://ghcr.io/bjw-s-labs/helm/app-template
   secretRef:
     name: ghcr-docker-config

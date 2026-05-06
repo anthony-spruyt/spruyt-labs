@@ -8,4 +8,5 @@ metadata:
 spec:
   ref:
     tag: "2.0.1"
+    digest: sha256:c863145bcb57e8ff42bff42df1c5b1fb7745bb44fea2bca217268e9b0bab161c
   url: oci://8gears.container-registry.com/library/n8n

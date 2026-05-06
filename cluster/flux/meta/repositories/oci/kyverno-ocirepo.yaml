@@ -8,6 +8,7 @@ metadata:
 spec:
   ref:
     tag: "3.8.0"
+    digest: sha256:ae87475ab2efedc133426c77228362e3d47234e76a3f7cfeced552666e6b3292
   url: oci://ghcr.io/kyverno/charts/kyverno
   secretRef:
     name: ghcr-docker-config
