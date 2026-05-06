@@ -120,3 +120,4 @@ Users must be added to the "Firefly III Users" group in Authentik to access the 
 
 - [Firefly III Documentation](https://docs.firefly-iii.org/)
 - [Firefly III Kubernetes Helm Chart](https://github.com/firefly-iii/kubernetes)
+- [CloudNative-PG Documentation](https://cloudnative-pg.io/documentation/)

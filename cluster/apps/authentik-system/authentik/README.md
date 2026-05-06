@@ -10,6 +10,10 @@ Open-source Identity Provider for SSO authentication across the cluster.
 - Valkey (Redis-compatible)
 - cert-manager for TLS
 
+## Database
+
+See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `authentik-cnpg-cluster`
+
 ## Adding SSO Integration (Blueprints)
 
 ### Step 1: Create Blueprint
