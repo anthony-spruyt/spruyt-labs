@@ -2,35 +2,12 @@
 
 ## Overview
 
-VictoriaTraces single-node deployment provides OpenTelemetry trace ingestion and storage for the spruyt-labs cluster. It backs trace export from Claude agents and other workloads via OTLP HTTP at port 10428. Traces use a 7d retention window (sampled, short-lived compared to logs).
-
-> **Note**: HelmRelease resources are created in the `observability` namespace specified by `ks.yaml` `targetNamespace`.
+VictoriaTraces single-node deployment provides OpenTelemetry trace ingestion and storage for the cluster. It backs trace export from Claude agents and other workloads via OTLP HTTP at port 10428. Traces use a 7d retention window (sampled, short-lived compared to logs).
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD reconciliation active
 - Rook Ceph block storage (`rbd-fast-delete` StorageClass) available
-- `observability` namespace
 - `ghcr-docker-config` secret in `flux-system` for OCI chart pulls
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n observability -l app.kubernetes.io/name=vt-single
-flux get helmrelease -n observability victoria-traces-single
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization victoria-traces-single --with-source
-
-# View logs
-kubectl logs -n observability -l app.kubernetes.io/name=vt-single -c vtraces
-
-# Verify OTLP ingest endpoint (from inside cluster)
-kubectl exec -n observability <pod> -- wget -qO- http://localhost:10428/health
-```
 
 ### OTLP Endpoint
 
@@ -41,8 +18,6 @@ http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/op
 ```
 
 ## Troubleshooting
-
-### Common Issues
 
 1. **Traces not appearing**
 
