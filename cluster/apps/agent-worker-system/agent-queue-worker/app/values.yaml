@@ -36,7 +36,7 @@ controllers:
             valueFrom:
               secretKeyRef:
                 name: agent-valkey-secrets
-                key: default-password
+                key: default
         envFrom:
           - secretRef:
               name: agent-queue-worker-secrets
@@ -86,7 +86,7 @@ controllers:
             valueFrom:
               secretKeyRef:
                 name: agent-valkey-secrets
-                key: default-password
+                key: default
           WORKER_AUTH_SECRET:
             valueFrom:
               secretKeyRef:
