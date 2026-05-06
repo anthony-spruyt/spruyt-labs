@@ -27,7 +27,7 @@ metrics:
       - --redis.addr=localhost:6379
       - --redis.user=metrics
     extraEnvs:
-      REDIS_PASSWORD_FILE: /secrets/valkey/metrics-password-file
+      REDIS_PASSWORD_FILE: /secrets/valkey/metrics
     extraExporterSecrets:
       - name: valkey-secrets
     extraVolumeMounts:
