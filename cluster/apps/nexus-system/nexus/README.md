@@ -13,8 +13,6 @@ Runs as a single-replica StatefulSet with a 100Gi Ceph RBD PVC at `/nexus-data`.
 Nexus listens plain HTTP only. Workspace pods hit `nexus.nexus-system.svc.cluster.local` with `ENVBUILDER_INSECURE=true`. Traefik terminates TLS (ZeroSSL) for dev PC access at `nexus.lan.${EXTERNAL_DOMAIN}` and `nexus-docker.lan.${EXTERNAL_DOMAIN}`.
 
 > **Scope:** Explicitly for Coder workspace builds and developer workstations. Cluster image pulls (kubelet, Spegel, Flux OCIRepositories) remain on direct upstream paths — Nexus being down must never block cluster bootstrap or Flux reconciliation.
->
-> **Note**: HelmRelease resources are created in the target namespace specified by ks.yaml `targetNamespace` (`nexus-system`).
 
 ## Prerequisites
 

@@ -6,8 +6,6 @@ Metrics Server provides the `metrics.k8s.io` Kubernetes API, exposing real-time 
 
 Deployed with 2 replicas and `--kubelet-insecure-tls` for Talos Linux compatibility (self-signed kubelet serving certs).
 
-> **Note**: HelmRelease resources are created in the target namespace specified by ks.yaml `targetNamespace`.
-
 ## Prerequisites
 
 - kyverno-policies (from ks.yaml dependsOn)
