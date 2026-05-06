@@ -19,6 +19,8 @@ rules:
       - deployments
     verbs:
       - get
+      - list
+      - watch
       - patch
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/rolebinding-rbac-v1.json
