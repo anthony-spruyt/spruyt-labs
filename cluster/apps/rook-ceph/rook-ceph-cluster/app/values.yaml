@@ -4,7 +4,6 @@
 # Default values for rook-ceph-cluster: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph-cluster/values.yaml
 
 # Ceph container image - KEEP IN SYNC with toolbox init container in release.yaml
-# Issue #186 blocks v20 upgrade due to readAffinity data loss bug
 cephImage:
   repository: quay.io/ceph/ceph
   tag: v20.2.1@sha256:0bae386bc859cd9a05b804d1ca16cca8853a64f90809044e2bf43095419dc337
