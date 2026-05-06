@@ -19,7 +19,7 @@ spec:
         images:
           - name: n8nio/runners
             # renovate: datasource=docker depName=n8nio/runners
-            newTag: "2.18.7"
+            newTag: "2.19.0"
         patches:
           - target:
               kind: Deployment
@@ -37,7 +37,7 @@ spec:
                         emptyDir: {}
                     containers:
                       - name: task-runner
-                        image: n8nio/runners
+                        image: n8nio/runners@sha256:00daf4315bb239a6c5c1bfb86f653ace14b617867c0d9290eafbeb08b45f376b
                         env:
                           - name: N8N_RUNNERS_TASK_BROKER_URI
                             value: http://localhost:5679
