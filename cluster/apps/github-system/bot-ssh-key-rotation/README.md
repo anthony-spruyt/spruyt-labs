@@ -12,21 +12,6 @@ Weekly CronJob that rotates the `github-bot-ssh-key` Secret used by `claude-agen
 - Image `ghcr.io/anthony-spruyt/ssh-key-rotation:2.0.0` published.
 - Classic PAT for `spruyt-labs-bot` with `admin:public_key` + `admin:ssh_signing_key` scopes stored in `bot-ssh-rotation-token` SOPS secret.
 
-## Operation
-
-```bash
-# Trigger manual rotation
-kubectl -n github-system create job \
-  --from=cronjob/bot-ssh-key-rotation bot-ssh-rotation-smoke-test
-
-# Inspect status
-kubectl -n github-system get cronjob bot-ssh-key-rotation
-kubectl -n github-system logs -l app=bot-ssh-key-rotation
-
-# Reconcile
-flux reconcile kustomization bot-ssh-key-rotation --with-source
-```
-
 ## Troubleshooting
 
 1. **Job fails patching Secret**

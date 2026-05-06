@@ -6,33 +6,8 @@ CronJob that performs weekly etcd defragmentation on all control plane nodes usi
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - Talos machine config with `kubernetesTalosAPIAccess` enabled for `kube-system` (patch: `talos/patches/control-plane/enable-talos-api-access.yaml`)
 - Talos ServiceAccount controller generating credentials
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check CronJob status
-kubectl get cronjob etcd-defrag -n kube-system
-
-# Check recent job runs
-kubectl get jobs -n kube-system -l batch.kubernetes.io/job-name
-
-# View logs from last run
-kubectl logs -n kube-system -l batch.kubernetes.io/controller-uid --tail=100
-
-# Force reconcile
-flux reconcile kustomization etcd-defrag --with-source
-
-# Manually trigger a run
-kubectl create job --from=cronjob/etcd-defrag etcd-defrag-manual -n kube-system
-
-# Clean up manual job
-kubectl delete job etcd-defrag-manual -n kube-system
-```
 
 ### Schedule
 

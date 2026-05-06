@@ -4,37 +4,12 @@
 
 Coder is a self-hosted development environment platform that provides browser-based workspaces (similar to GitHub Codespaces) running as Kubernetes pods. It manages workspace lifecycle, authentication, and resource provisioning via Terraform templates.
 
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the target namespace specified in ks.yaml.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - `cnpg-operator` - CloudNative-PG operator for PostgreSQL
 - `plugin-barman-cloud` - CNPG Barman plugin for S3 backups
 - `external-secrets` - ExternalSecretOperator for secret delivery
 - `authentik` - Identity provider for OIDC authentication
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n coder-system
-flux get helmrelease -n flux-system coder
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization coder --with-source
-
-# View logs
-kubectl logs -n coder-system -l app.kubernetes.io/name=coder
-
-# Check CNPG cluster health
-kubectl get cluster -n coder-system coder-cnpg-cluster
-
-# Check workspace pods
-kubectl get pods -n coder-workspaces -l app.kubernetes.io/name=coder-workspace
-```
 
 ## Configuration
 

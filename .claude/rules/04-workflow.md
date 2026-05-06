@@ -9,7 +9,7 @@
 3. Track issue number throughout work
 4. Reference in commits: `Ref #123`
 5. Validators post results as issue comments
-6. Close after user confirms
+6. Close issue after validated success; if validation isn't possible, get user confirmation first
 
 ### Issue Types
 

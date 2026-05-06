@@ -8,25 +8,8 @@ MCP (Model Context Protocol) server providing AI assistants with access to n8n n
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - n8n instance running in n8n-system namespace
 - n8n API key with appropriate scopes (stored in SOPS secret)
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n n8n-mcp
-flux get helmrelease -n flux-system n8n-mcp-server
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization n8n-mcp-server --with-source
-
-# View logs
-kubectl logs -n n8n-mcp -l app.kubernetes.io/name=n8n-mcp-server
-```
 
 ## Access
 

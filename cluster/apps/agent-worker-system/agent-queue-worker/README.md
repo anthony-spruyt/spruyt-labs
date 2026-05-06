@@ -4,33 +4,10 @@
 
 BullMQ-based job queue worker that coordinates agent job lifecycle. Receives job submissions via HTTP API, dispatches to n8n webhooks, and tracks completion via callbacks. Includes Bull Board dashboard for queue visibility.
 
-> **Note**: HelmRelease resources are created in the target namespace specified by ks.yaml `targetNamespace`.
-
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - agent-valkey (Valkey instance for BullMQ queue storage)
 - n8n (webhook target for job dispatch)
-
-## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n agent-worker-system -l app.kubernetes.io/instance=agent-queue-worker
-flux get helmrelease -n agent-worker-system agent-queue-worker
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization agent-queue-worker --with-source
-
-# View logs
-kubectl logs -n agent-worker-system -l app.kubernetes.io/controller=worker
-
-# Check worker health
-kubectl exec -n agent-worker-system deploy/agent-queue-worker-worker -- wget -qO- http://localhost:3000/livez
-kubectl exec -n agent-worker-system deploy/agent-queue-worker-worker -- wget -qO- http://localhost:3000/readyz
-```
 
 ## Timeouts
 

@@ -2,97 +2,28 @@
 
 ## Overview
 
-Traefik is a modern HTTP reverse proxy and load balancer that serves as the ingress controller for the spruyt-labs Kubernetes cluster. It provides routing, load balancing, TLS termination, and observability for all incoming traffic to the cluster.
+Traefik is a modern HTTP reverse proxy and load balancer that serves as the ingress controller for the cluster. Provides routing, load balancing, TLS termination, and observability for all incoming traffic.
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD installed
 - cert-manager deployed for TLS certificate management
-- DNS properly configured for domains
-- Load balancer IP addresses available
-
-## Operation
-
-### Procedures
-
-1. **Ingress route management**:
-
-```bash
-# Check ingress route status
-kubectl get ingressroutes -A -o wide
-```
-
-2. **TLS certificate monitoring**:
-
-   ```bash
-   # Check certificate status
-   kubectl get certificates -A
-
-   # Check certificate events
-   kubectl get events -A | grep certificate
-   ```
-
-1. **Traefik dashboard access**:
-
-```bash
-# Access Traefik dashboard
-kubectl port-forward svc/traefik -n traefik 9000:9000
-
-# Check Traefik metrics
-kubectl port-forward svc/traefik -n traefik 8082:8082
-```
-
-### Validation
-
-Run the following commands to validate the procedures:
-
-```bash
-# Validate ingress route management
-kubectl get ingressroutes -A -o wide
-
-# Expected: Ingress routes listed with status
-
-# Validate TLS certificate monitoring
-kubectl get certificates -A
-
-# Expected: Certificates listed
-
-# Validate Traefik dashboard access
-kubectl port-forward svc/traefik -n traefik 9000:9000
-
-# Expected: Port forward successful
-```
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **Ingress route not working**:
+1. **Ingress route not working**
 
    - **Symptom**: 404 errors on ingress routes
-   - **Diagnosis**: Check ingress route configuration and service endpoints
-   - **Resolution**: Verify route hostnames, service names, and ports
+   - **Resolution**: Verify route hostnames, service names, and ports in IngressRoute resources
 
-1. **TLS certificate errors**:
+1. **TLS certificate errors**
 
    - **Symptom**: Browser certificate warnings
-   - **Diagnosis**: Check cert-manager certificate status
-   - **Resolution**: Verify certificate DNS names and issuer configuration
+   - **Resolution**: Verify certificate DNS names and issuer configuration via cert-manager
 
-1. **Load balancer connectivity issues**:
+1. **Load balancer connectivity issues**
 
    - **Symptom**: External access failures
-   - **Diagnosis**: Check load balancer service and Cilium BGP configuration
-   - **Resolution**: Verify BGP advertisements and load balancer IP allocation
-
-## Maintenance
-
-### Updates
-
-```bash
-# Update Traefik using Flux
-flux reconcile kustomization traefik --with-source
-```
+   - **Resolution**: Verify Cilium BGP advertisements and load balancer IP allocation
 
 ## References
 

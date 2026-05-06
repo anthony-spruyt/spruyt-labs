@@ -11,21 +11,6 @@ Weekly CronJob that rotates the `coder-ssh-signing-key` Secret used by Coder wor
 - `coder` Kustomization deployed (dependsOn) — provides the `coder-ssh-signing-key` Secret the CronJob patches.
 - Image `ghcr.io/anthony-spruyt/ssh-key-rotation` published.
 
-## Operation
-
-```bash
-# Trigger manual rotation
-kubectl -n coder-workspaces create job \
-  --from=cronjob/ssh-key-rotation ssh-rotation-smoke-test
-
-# Inspect status
-kubectl -n coder-workspaces get cronjob ssh-key-rotation
-kubectl -n coder-workspaces logs -l app=ssh-key-rotation
-
-# Reconcile
-flux reconcile kustomization ssh-key-rotation --with-source
-```
-
 ## Troubleshooting
 
 1. **Job fails patching Secret**

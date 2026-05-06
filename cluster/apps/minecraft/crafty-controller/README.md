@@ -10,26 +10,11 @@ Priority: low-priority (gaming workload)
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - Rook Ceph storage (rbd-fast-delete StorageClass)
 - Traefik ingress controller
 - `CRAFTY_CONTROLLER_IP4` defined in cluster-secrets
 
 ## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n minecraft -l app.kubernetes.io/name=crafty-controller
-flux get helmrelease -n flux-system crafty-controller
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization crafty-controller --with-source
-
-# View logs
-kubectl logs -n minecraft -l app.kubernetes.io/name=crafty-controller
-```
 
 ### Web Access
 

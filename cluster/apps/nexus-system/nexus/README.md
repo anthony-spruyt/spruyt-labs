@@ -18,7 +18,6 @@ Nexus listens plain HTTP only. Workspace pods hit `nexus.nexus-system.svc.cluste
 
 ## Prerequisites
 
-- Kubernetes cluster with Flux CD
 - `cert-manager` (ZeroSSL ClusterIssuer)
 - `kyverno` (admission policies)
 - `rook-ceph-cluster-storage` (provides `rook-ceph-block` StorageClass)
@@ -27,30 +26,6 @@ Nexus listens plain HTTP only. Workspace pods hit `nexus.nexus-system.svc.cluste
   - `nexus-upstream-creds` (dockerhub-username/token, ghcr-username/token)
 
 ## Operation
-
-### Key Commands
-
-```bash
-# Check status
-kubectl get pods -n nexus-system
-flux get helmrelease -n nexus-system nexus
-
-# Force reconcile (GitOps approach)
-flux reconcile kustomization nexus --with-source
-
-# View logs
-kubectl logs -n nexus-system -l app.kubernetes.io/name=nexus
-
-# Provisioning Job status
-kubectl get job -n nexus-system nexus-provision-repos
-kubectl logs -n nexus-system -l app.kubernetes.io/name=nexus-provisioner
-
-# List repositories via API (anonymous read granted)
-curl https://nexus.lan.${EXTERNAL_DOMAIN}/service/rest/v1/repositories
-
-# Anonymous metrics
-curl https://nexus.lan.${EXTERNAL_DOMAIN}/service/metrics/prometheus
-```
 
 ### UI Login
 
@@ -112,19 +87,6 @@ The provisioning Job reads `admin-password` on every run — if it's stale, the 
    - **Symptom**: Nexus log reports `java.net.BindException: Address already in use`
    - **Diagnosis**: Two repos claim the same `httpPort` in their JSON
    - **Resolution**: Fix `provision.sh` — `docker-group` owns `8082`, `envbuilder-cache` owns `8083`, no other repo should claim those.
-
-## Maintenance
-
-### Updates
-
-```bash
-# Update Nexus image via Renovate-managed digest pin in values.yaml,
-# then Flux picks up the change:
-flux reconcile kustomization nexus --with-source
-
-# Check update status
-kubectl get helmreleases -n nexus-system
-```
 
 ## References
 
