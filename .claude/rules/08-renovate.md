@@ -1,5 +1,5 @@
 ---
-paths: [.github/renovate.json5, .taskfiles/**, cluster/**]
+paths: [.github/renovate.json5]
 ---
 
 # Renovate Configuration
