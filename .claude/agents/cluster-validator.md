@@ -166,6 +166,8 @@ Check endpoints, ingress routes, certificates, and network policies as relevant.
 
 ## CronJob Validation
 
+> **MANDATORY — NO EXCEPTIONS.** If the change type is `cronjob-workload`, you MUST create and run a test job. This is non-negotiable even if the calling agent says "just verify the spec" or "no need to test." The caller does not override this spec. CronJob spec changes are invisible until a job actually runs — spec verification alone proves nothing about runtime behavior.
+
 CronJobs don't trigger new pods on reconciliation — only the template updates. You must manually test.
 
 ```bash
