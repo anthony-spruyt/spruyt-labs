@@ -1,0 +1,36 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "Disable kubernetes manager for runner sidecar (version managed via kustomize images transformer)",
+      "matchManagers": [
+        "kubernetes"
+      ],
+      "matchPackageNames": [
+        "n8nio/runners"
+      ],
+      "pinDigests": false,
+      "enabled": false
+    },
+    {
+      "description": "Coder uses two-channel releases (mainline/stable); 30-day delay avoids adopting unproven mainline versions",
+      "matchPackageNames": [
+        "coder"
+      ],
+      "matchDatasources": [
+        "helm"
+      ],
+      "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": "Disable dockerfile manager for golang (ARG interpolation breaks updates; custom.regex manager handles these via annotations)",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "golang"
+      ],
+      "enabled": false
+    }
+  ]
+}
