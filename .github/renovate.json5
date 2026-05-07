@@ -10,7 +10,7 @@
     "github>anthony-spruyt/repo-operator//.github/renovate/automerge.json5",
     "github>anthony-spruyt/repo-operator//.github/renovate/custom-datasources.json5",
     "github>anthony-spruyt/repo-operator//.github/renovate/disabled.json5",
-    "local>.github/renovate-overrides"
+    "local>anthony-spruyt/spruyt-labs//.github/renovate-overrides.json5"
   ],
   "ignorePaths": [
     "talos/helmfile"
