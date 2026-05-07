@@ -136,8 +136,10 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - |
+                    echo "[gh-config-sync] initial copy..."
                     cp /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
                     chmod 666 /tmp/gh-config/hosts.yml
+                    echo "[gh-config-sync] ready, refreshing every 30s"
                     while true; do
                       sleep 30
                       cp /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
@@ -314,15 +316,23 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - |
+                    set -e
+                    trap 'echo "[git-clone] FAILED at line $LINENO (exit $?)" >&2' ERR
+                    echo "[git-clone] starting clone of ${CLONE_URL} ${CLONE_BRANCH:+(branch: $CLONE_BRANCH)}"
+                    echo "[git-clone] preparing SSH key..."
                     cp /etc/git-ssh/id_ed25519 /tmp/id_ed25519
                     chmod 600 /tmp/id_ed25519
+                    echo "[git-clone] cloning..."
                     if [ -n "$CLONE_BRANCH" ]; then
                       git clone --depth 1 -b "$CLONE_BRANCH" "$CLONE_URL" /workspace/repo
                     else
                       git clone --depth 1 "$CLONE_URL" /workspace/repo
                     fi
+                    echo "[git-clone] clone complete ($(du -sh /workspace/repo | cut -f1))"
                     cd /workspace/repo
+                    echo "[git-clone] installing pre-commit hooks..."
                     pre-commit install
+                    echo "[git-clone] done"
                 env:
                   - name: CLONE_URL
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
@@ -395,13 +405,24 @@ spec:
                 command: ["sh", "-c"]
                 args:
                   - |
+                    set -e
+                    trap 'echo "[git-clone] FAILED at line $LINENO (exit $?)" >&2' ERR
+                    echo "[git-clone] starting clone of ${CLONE_URL} ${CLONE_BRANCH:+(branch: $CLONE_BRANCH)}"
+                    echo "[git-clone] reading access token..."
                     TOKEN=$(cat /etc/gh-credentials/access-token)
+                    if [ -z "$TOKEN" ]; then
+                      echo "[git-clone] ERROR: access token is empty" >&2
+                      exit 1
+                    fi
+                    echo "[git-clone] token read OK (${#TOKEN} chars)"
                     AUTH_URL=$(echo "$CLONE_URL" | sed "s|https://|https://x-access-token:${TOKEN}@|")
+                    echo "[git-clone] cloning..."
                     if [ -n "$CLONE_BRANCH" ]; then
                       git clone --depth 1 -b "$CLONE_BRANCH" "$AUTH_URL" /workspace/repo
                     else
                       git clone --depth 1 "$AUTH_URL" /workspace/repo
                     fi
+                    echo "[git-clone] clone complete ($(du -sh /workspace/repo | cut -f1))"
                 env:
                   - name: CLONE_URL
                     value: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
