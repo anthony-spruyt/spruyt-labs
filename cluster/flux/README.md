@@ -195,7 +195,7 @@ Refer to the dedicated troubleshooting section below for detailed diagnostics on
 | `task pre-commit:run`                                     | Runs local hooks mirroring CI enforcement before pushing changes.                                        |
 | `flux diff ks <name> --path=./cluster/...`                | Previews reconciled changes for a given `Kustomization` to surface destructive diffs.                    |
 | `flux diff hr <release> --namespace <ns>`                 | Evaluates Helm release deltas before applying.                                                           |
-| GitHub Actions `lint.yaml` & `flux-differ.yaml`           | CI signal covering linting, schema validation, and Flux drift detection.                                 |
+| GitHub Actions `lint.yaml` & `ci.yaml`                    | CI signal covering linting, schema validation, and policy tests.                                         |
 | `flux reconcile kustomization cluster-meta --with-source` | Verifies meta layer integrity after repository updates.                                                  |
 | `kubectl get kustomizations,helmreleases -A`              | Manual spot-check of reconciliation status across namespaces.                                            |
 

@@ -98,7 +98,6 @@ The cluster enforces **baseline** Pod Security Standards by default.
 ### CI/CD
 
 - **CI** — Kubeconform, Kyverno policy tests, Terraform validate, Trivy scan
-- **Flux differ** — Detects drift on pull requests
 - **Renovate** — Automated dependency updates
 
 ### Tooling

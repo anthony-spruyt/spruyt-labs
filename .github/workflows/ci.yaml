@@ -87,13 +87,6 @@ jobs:
     needs: "changes"
     if: "needs.changes.outputs.terraform == 'true'"
     uses: "./.github/workflows/_terraform-validate.yaml"
-  flux-differ:
-    needs: "changes"
-    if: "github.event_name == 'pull_request' && needs.changes.outputs.cluster == 'true'"
-    uses: "./.github/workflows/_flux-differ.yaml"
-    secrets:
-      FLUX_DIFFER_CLIENT_ID: "${{ secrets.FLUX_DIFFER_CLIENT_ID }}"
-      FLUX_DIFFER_PRIVATE_KEY: "${{ secrets.FLUX_DIFFER_PRIVATE_KEY }}"
   shutdown-orchestrator:
     needs: "changes"
     if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
@@ -125,7 +118,6 @@ jobs:
       - "kubeconform"
       - "kyverno-test"
       - "terraform-validate"
-      - "flux-differ"
       - "shutdown-orchestrator"
       - "kata-tap-qdisc-fix"
       - "mcp-header-proxy"
