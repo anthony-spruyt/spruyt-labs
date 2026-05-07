@@ -107,9 +107,10 @@ if os.path.isdir(local_preset_dir):
         merge_preset(config, preset)
         local_count += 1
 
-# Resolve local> extends (e.g., local>.github/renovate-overrides)
+# Resolve local> extends (e.g., local>owner/repo//.github/renovate-overrides)
 for local_ref in local_presets:
-    rel_path = local_ref.removeprefix('local>')
+    raw_path = local_ref.removeprefix('local>')
+    rel_path = raw_path.split('//', 1)[1] if '//' in raw_path else raw_path
     for ext in ['.json5', '.json', '']:
         candidate = os.path.join(repo_root, rel_path + ext)
         if os.path.isfile(candidate):
