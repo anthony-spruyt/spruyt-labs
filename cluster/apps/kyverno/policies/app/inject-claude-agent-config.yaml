@@ -317,7 +317,6 @@ spec:
                 args:
                   - |
                     set -e
-                    trap 'echo "[git-clone] FAILED at line $LINENO (exit $?)" >&2' ERR
                     echo "[git-clone] starting clone of ${CLONE_URL} ${CLONE_BRANCH:+(branch: $CLONE_BRANCH)}"
                     echo "[git-clone] preparing SSH key..."
                     cp /etc/git-ssh/id_ed25519 /tmp/id_ed25519
@@ -406,7 +405,6 @@ spec:
                 args:
                   - |
                     set -e
-                    trap 'echo "[git-clone] FAILED at line $LINENO (exit $?)" >&2' ERR
                     echo "[git-clone] starting clone of ${CLONE_URL} ${CLONE_BRANCH:+(branch: $CLONE_BRANCH)}"
                     echo "[git-clone] reading access token..."
                     TOKEN=$(cat /etc/gh-credentials/access-token)
