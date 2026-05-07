@@ -1,7 +1,7 @@
 ---
 name: renovate-pr-analyzer
 description: "Analyzes a Renovate PR for breaking changes, deprecations, and upstream issues. Returns a structured verdict (SAFE/FIXABLE/RISKY/BREAKING).\n\n**When to use:**\n- Called as subagent by platform triage orchestrator (n8n dispatch)\n- Called directly for local dependency analysis\n\n**When NOT to use:**\n- For non-Renovate PRs\n- For manual dependency updates (analyze manually instead)\n\n<example>\nContext: Triage orchestrator invokes analyzer as subagent\nuser: \"Analyze this Renovate dependency update PR for breaking changes and risks.\\nRepository: anthony-spruyt/spruyt-labs\\nPR #499: chore(deps): update helm release cilium to v1.17.0\"\nassistant: \"Analyzing PR #499...\"\n<commentary>Returns structured analysis. The orchestrator handles MCP verdict submission.</commentary>\n</example>"
-model: sonnet
+model: opus
 tools:
   - Bash
   - Read
@@ -50,7 +50,31 @@ Search upstream GitHub for:
 - `<project> <target-version>` — version-specific issues
 - `breaking` or `regression` in upstream repo
 
-### 6. Version Coherence Check
+**Critical: closed ≠ shipped.** When you find a relevant upstream issue that is closed with a fix:
+1. Check the fix's target milestone or release label (e.g., `target/1.18.1`)
+2. Determine which app version the PR's chart/image actually ships (check `appVersion` in Chart.yaml or image tag)
+3. If the fix targets a version **newer** than what the PR ships → the fix is NOT included → flag as RISKY
+4. Only consider a fix "shipped" if the target version includes the actual release containing the fix
+
+### 6. Check Local Repo Issues
+
+Search our own repository for open issues related to this dependency. Renovate may recreate PRs on new branches, losing labels and context from previous attempts.
+
+```bash
+gh search issues "<dependency-name>" --repo <owner/repo> --state open --json number,title,labels,body
+```
+
+**Check for:**
+- Issues with `blocked` label mentioning this dependency
+- Issues documenting known bugs, blockers, or "do not merge" guidance for this version
+- Prior upgrade tracking issues with unresolved blockers
+
+**Verdict impact:**
+- If a `blocked` issue exists for this dependency → minimum verdict is **RISKY**, regardless of other analysis
+- Include the issue number and blocker reason in the summary
+- If the blocker references a specific upstream fix version, check whether the PR's target version includes that fix
+
+### 7. Version Coherence Check
 
 CLI tools and images often have a corresponding in-cluster component that should stay version-aligned. Discover if a pairing exists and verify coherence.
 
@@ -69,7 +93,7 @@ CLI tools and images often have a corresponding in-cluster component that should
 - Target version **behind** deployed → note as stale but not blocking
 - No cluster component found → skip, note "no in-cluster pairing detected"
 
-### 7. Impact Analysis Against Our Configuration
+### 8. Impact Analysis Against Our Configuration
 
 A breaking change only matters if it affects what we actually use.
 
@@ -84,11 +108,12 @@ A breaking change only matters if it affects what we actually use.
 | HIGH_IMPACT | We use the affected config/feature — will break |
 | UNKNOWN_IMPACT | Cannot determine if we use the affected feature |
 
-### 8. Determine Verdict
+### 9. Determine Verdict
 
 **SAFE** (ALL must be true):
 - No breaking changes, OR all have NO_IMPACT/LOW_IMPACT
 - No high-engagement bugs for target version
+- No local repo issues with `blocked` label referencing this dependency
 - CI is passing (or CI status is unknown/not provided)
 
 **FIXABLE** (complexity: simple or complex):
@@ -100,6 +125,8 @@ A breaking change only matters if it affects what we actually use.
 - Cannot find upstream repo/changelog
 - Cannot determine impact scope
 - Upstream critical bug or regression that cannot be fixed on our side
+- Upstream fix exists but is NOT included in the PR's target version (closed ≠ shipped)
+- Local repo has `blocked` issue referencing this dependency
 - Default to RISKY when evidence is insufficient — never assume SAFE
 
 **BREAKING** (PR should be closed):
@@ -107,7 +134,7 @@ A breaking change only matters if it affects what we actually use.
 - Dependency dropped support for our platform/architecture
 - CI failing due to this update with no clear fix
 
-### 9. Output Verdict
+### 10. Output Verdict
 
 End your analysis with a clear structured summary:
 
@@ -120,6 +147,8 @@ Complexity: <simple|complex> (only if FIXABLE)
 **Breaking changes:** <list or "None">
 
 **Version coherence:** <match/ahead/behind/N/A> (only for paired dependencies)
+
+**Local blockers:** <issue #N: reason, or "None">
 
 **CI status:** <pass/fail/unknown>
 ```
