@@ -14,7 +14,6 @@ spec:
         name: traefik-charts
         namespace: flux-system
   install:
-    crds: Skip
     strategy:
       name: RetryOnFailure
   rollback:
@@ -22,7 +21,6 @@ spec:
     recreate: true
   upgrade:
     cleanupOnFail: true
-    crds: Skip
     strategy:
       name: RemediateOnFailure
     remediation:
