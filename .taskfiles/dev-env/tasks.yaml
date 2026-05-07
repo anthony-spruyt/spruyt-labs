@@ -10,7 +10,6 @@ tasks:
     desc: Reclaim disk space — prune podman cache, tmp repos, and stale files
     cmds:
       - bash {{ .devEnvScriptsDir }}/cleanup.sh
-
   lint:
     desc: Runs mega-linter against the repo
     cmds:
@@ -19,10 +18,6 @@ tasks:
     desc: Runs Renovate dry-run with local config changes (merges github> presets from disk)
     cmds:
       - bash {{ .devEnvScriptsDir }}/renovate-dry-run.sh {{ .CLI_ARGS }}
-  update-podman-seccomp:
-    desc: Refreshes .devcontainer/podman-seccomp.json from pinned containers/common version
-    cmds:
-      - bash {{ .ROOT_DIR }}/.devcontainer/update-podman-seccomp.sh
   priv-pod:
     desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task dev-enc:priv-pod" to run a privileged pod on a specified node'
     cmd: |
