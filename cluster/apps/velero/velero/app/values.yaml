@@ -23,7 +23,7 @@ initContainers:
 kubectl:
   image:
     repository: public.ecr.aws/bitnami/kubectl
-    tag: "1.36@sha256:794ae29899ec2887462b03af8ddafe8e01292bc3cd7fc17397baf60a1ead121a"
+    tag: "1.36@sha256:e5a1e75a0e7a8521e6e7930adb88efa354ff95443001c110fd76d9b1ad5c4714"
 
 # This job upgrades the CRDs.
 # upgradeCRDs: false
