@@ -18,7 +18,8 @@ metadata:
       signing). Per-namespace rules inject MCP configmaps, priority
       classes, and namespace-specific credentials. Repo clone: write
       uses SSH (with pre-commit), read+sre use HTTPS with read-scoped
-      GitHub App token (no SSH key = no push capability).
+      GitHub App token (no SSH key = no push capability). Validation
+      rules enforce correct CLONE_URL protocol per namespace tier.
 spec:
   background: false
   rules:
@@ -453,3 +454,64 @@ spec:
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
+    - name: validate-clone-url-write
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-spruyt-labs-write
+                - claude-agents-write
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
+            operator: NotEquals
+            value: ""
+      validate:
+        validationFailureAction: Enforce
+        message: >-
+          CLONE_URL in write namespaces must use SSH format
+          (git@github.com:anthony-spruyt/...). Got:
+          {{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}.
+          Use an HTTPS URL for read/SRE namespaces instead.
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] | starts_with(@, 'git@github.com:anthony-spruyt/') }}"
+                operator: NotEquals
+                value: true
+    - name: validate-clone-url-read
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - claude-agents-read
+                - claude-agents-spruyt-labs-read
+                - claude-agents-spruyt-labs-sre
+              selector:
+                matchLabels:
+                  managed-by: n8n-claude-code
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}"
+            operator: NotEquals
+            value: ""
+      validate:
+        validationFailureAction: Enforce
+        message: >-
+          CLONE_URL in read/SRE namespaces must use HTTPS format
+          (https://github.com/anthony-spruyt/...). Got:
+          {{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] }}.
+          Use an SSH URL (git@) for write namespaces instead.
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.containers[0].env[?name=='CLONE_URL'].value | [0] | starts_with(@, 'https://github.com/anthony-spruyt/') }}"
+                operator: NotEquals
+                value: true
