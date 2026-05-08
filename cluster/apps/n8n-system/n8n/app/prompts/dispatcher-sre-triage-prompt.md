@@ -80,7 +80,7 @@ No GitHub issue. Set `create_issue: false`.
 
 ## Output
 
-**Call `mcp__agentplatform__submit_sre_result`.** Retry until success. Transient/maintenance alerts: submit with severity "info".
+**Call `mcp__agentplatform__submit_sre_result`.** Retry until success. Transient/maintenance alerts: submit with severity "INFO".
 
 ## Common Mistakes
 

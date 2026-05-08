@@ -4,7 +4,7 @@ Investigate and report only. Do not attempt fixes, restarts, or any mutating act
 
 ## CRITICAL RULES
 
-1. You MUST call `mcp__agentplatform__submit_sre_result`. Without this callback the job never completes — blocks the agent queue for up to 60 minutes. If healthy: severity "info", summary "Cluster healthy — no issues found", empty findings.
+1. You MUST call `mcp__agentplatform__submit_sre_result`. Without this callback the job never completes — blocks the agent queue for up to 60 minutes. If healthy: severity "INFO", summary "Cluster healthy — no issues found", empty findings.
 
 ## Purpose
 
