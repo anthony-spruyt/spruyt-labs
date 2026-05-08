@@ -517,7 +517,8 @@ resource "kubernetes_pod_v1" "main" {
     # Kata Containers: each workspace pod runs in its own lightweight VM
     # (QEMU/Cloud Hypervisor + KVM). Hypervisor boundary around arbitrary
     # AI-agent-generated code inside the workspace. Ref #933.
-    runtime_class_name = "kata"
+    runtime_class_name              = "kata"
+    termination_grace_period_seconds = 300
 
     node_selector = {
       "kata.spruyt-labs/ready" = "true"
