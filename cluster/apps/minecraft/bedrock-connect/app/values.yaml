@@ -63,6 +63,11 @@ configMaps:
             "name": "Better on Bedrock - Creative Edition",
             "address": "minecraft.${EXTERNAL_DOMAIN}",
             "port": 19133
+          },
+          {
+            "name": "Fambam",
+            "address": "minecraft.${EXTERNAL_DOMAIN}",
+            "port": 19134
           }
         ]
       config.yml: |-
