@@ -472,7 +472,7 @@ spec:
             operator: NotEquals
             value: ""
       validate:
-        validationFailureAction: Enforce
+        failureAction: Enforce
         message: >-
           CLONE_URL in write namespaces must use SSH format
           (git@github.com:anthony-spruyt/...). Got:
@@ -503,7 +503,7 @@ spec:
             operator: NotEquals
             value: ""
       validate:
-        validationFailureAction: Enforce
+        failureAction: Enforce
         message: >-
           CLONE_URL in read/SRE namespaces must use HTTPS format
           (https://github.com/anthony-spruyt/...). Got:
