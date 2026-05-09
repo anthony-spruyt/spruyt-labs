@@ -29,7 +29,15 @@ mcp__victoriametrics__query_range(query="ALERTS{alertstate=\"firing\", alertname
 - **Duplicate** — same alertname firing across window = already known, skip
 - **Resolved** — datapoints stop mid-window = self-resolved, note but don't investigate unless recurring
 
-### B. GitHub — Active Maintenance
+### B. Recent SRE Issues
+
+```bash
+gh search issues "repo:anthony-spruyt/spruyt-labs label:sre" --sort created --order desc --limit 10
+```
+
+Scan for correlations — recurring failures, related components, or recent investigations that overlap with current findings.
+
+### C. GitHub — Active Maintenance
 
 ```bash
 gh search issues "repo:anthony-spruyt/spruyt-labs state:open talos OR upgrade OR renovate batch" --repo anthony-spruyt/spruyt-labs
@@ -38,7 +46,7 @@ gh pr list --repo anthony-spruyt/spruyt-labs --state all
 
 Filter for `renovate[bot]` PRs merged in last 48 hours.
 
-### C. Recent Commits on Main
+### D. Recent Commits on Main
 
 ```bash
 gh api repos/anthony-spruyt/spruyt-labs/commits?sha=main&per_page=15
@@ -46,7 +54,7 @@ gh api repos/anthony-spruyt/spruyt-labs/commits?sha=main&per_page=15
 
 Trunk-based workflow — direct pushes without PRs are common. A commit pushed shortly before a failure is a strong root cause signal.
 
-### D. Correlate
+### E. Correlate
 
 Maintenance detected (Talos/node/K8s upgrade, Renovate batch) or recent commit correlates with failure → keep triage brief, note correlation, skip GitHub issue.
 
@@ -85,14 +93,13 @@ For each issue:
 
 ## Step 3 — GitHub Issue Management
 
-Search for existing issues using the **resource name or error keyword** from findings. Run both searches:
+Search for existing issues using the **resource name or error keyword** from findings:
 
 ```bash
 gh search issues "repo:anthony-spruyt/spruyt-labs <RESOURCE_OR_ERROR>" --sort updated --order desc --limit 10
-gh search issues "repo:anthony-spruyt/spruyt-labs label:health-check label:sre" --sort created --order desc --limit 10
 ```
 
-Replace `<RESOURCE_OR_ERROR>` with the specific resource name or error (e.g., `traefik HelmRelease`, `cert-manager rollback`). Do NOT use `state:open` — must find recently closed issues too.
+Replace `<RESOURCE_OR_ERROR>` with the specific resource name or error (e.g., `traefik HelmRelease`, `cert-manager rollback`). Do NOT use `state:open` — must find recently closed issues too. Also check Step 0B results for related SRE issues.
 
 Verify matches relate to this failure. Check creation date — prioritize issues from last 24h.
 

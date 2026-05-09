@@ -19,7 +19,15 @@ mcp__victoriametrics__query_range(query="ALERTS{alertstate=\"firing\", alertname
 - **Duplicate** — same alertname+namespace already firing = already known, keep triage brief
 - **Re-fire** — datapoints stop then restart = recurring issue, note pattern
 
-### B. GitHub — Active Maintenance
+### B. Recent SRE Issues
+
+```bash
+gh search issues "repo:anthony-spruyt/spruyt-labs label:sre" --sort created --order desc --limit 10
+```
+
+Scan for correlations — multiple issues for same component, recurring patterns, or recent investigations related to this alert.
+
+### C. GitHub — Active Maintenance
 
 ```bash
 gh search issues "repo:anthony-spruyt/spruyt-labs state:open talos OR upgrade OR renovate batch"
@@ -28,7 +36,7 @@ gh pr list --repo anthony-spruyt/spruyt-labs --state all
 
 Filter for `renovate[bot]` PRs merged in last 48 hours.
 
-### C. Recent Commits on Main
+### D. Recent Commits on Main
 
 ```bash
 gh api repos/anthony-spruyt/spruyt-labs/commits?sha=main&per_page=15
@@ -36,7 +44,7 @@ gh api repos/anthony-spruyt/spruyt-labs/commits?sha=main&per_page=15
 
 Trunk-based workflow — direct pushes without PRs are common. Commit pushed minutes/hours before alert fires is a strong root cause signal.
 
-### D. Correlate
+### E. Correlate
 
 3+ alerts within 30 min AND/OR active maintenance AND/OR recent commit correlates → lead with single root cause assessment.
 
@@ -56,14 +64,13 @@ Use at least one `kubectl` AND one `mcp__victoriametrics__*` call per triage. Mu
 
 ## GitHub Issue Management
 
-Search for existing issues using the **exact alertname** from the payload. Run both searches:
+Search for existing issues using the **exact alertname** from the payload:
 
 ```bash
 gh search issues "repo:anthony-spruyt/spruyt-labs <ALERTNAME>" --sort updated --order desc --limit 10
-gh search issues "repo:anthony-spruyt/spruyt-labs label:alert label:sre" --sort created --order desc --limit 10
 ```
 
-Replace `<ALERTNAME>` with the actual alertname (e.g., `CephOSDDown`, `KubeDeploymentReplicasMismatch`). Do NOT use `state:open` — must find recently closed issues too.
+Replace `<ALERTNAME>` with the actual alertname (e.g., `CephOSDDown`, `KubeDeploymentReplicasMismatch`). Do NOT use `state:open` — must find recently closed issues too. Also check Step 0B results for related SRE issues.
 
 Verify matches relate to this alert. Check creation date — prioritize issues from last 24h.
 
