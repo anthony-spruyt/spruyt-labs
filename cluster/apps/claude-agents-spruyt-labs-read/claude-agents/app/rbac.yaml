@@ -23,10 +23,6 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources:
-      - secrets
-    verbs: ["list"]
-  - apiGroups: [""]
-    resources:
       - pods/log
     verbs: ["get"]
   - apiGroups: ["apps"]
