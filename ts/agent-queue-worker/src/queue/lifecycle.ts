@@ -84,7 +84,6 @@ export function setupLifecycle(deps: LifecycleDeps): void {
               suppressTtl
             );
           }
-          // Redis EVAL for server-side Lua execution
           await pipeline.exec();
           logger.debug("Wrote triaged markers", {
             jobId: job.id,

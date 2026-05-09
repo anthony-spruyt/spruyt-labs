@@ -56,19 +56,23 @@ Use at least one `kubectl` AND one `mcp__victoriametrics__*` call per triage. Mu
 
 ## GitHub Issue Management
 
-Search broadly before creating (any label — `alert`, `sre`, `bug`, `chore`, etc.):
+Search for existing issues using the **exact alertname** from the payload. Run both searches:
 
 ```bash
-gh search issues "repo:anthony-spruyt/spruyt-labs state:open <alertname or resource>"
+gh search issues "repo:anthony-spruyt/spruyt-labs <ALERTNAME>" --sort updated --order desc --limit 10
+gh search issues "repo:anthony-spruyt/spruyt-labs label:alert label:sre" --sort created --order desc --limit 10
 ```
 
-GitHub search is fuzzy — verify matches relate to the alert.
+Replace `<ALERTNAME>` with the actual alertname (e.g., `CephOSDDown`, `KubeDeploymentReplicasMismatch`). Do NOT use `state:open` — must find recently closed issues too.
 
-### Existing Issue → Update
+Verify matches relate to this alert. Check creation date — prioritize issues from last 24h.
 
-Comment with new findings, metrics, severity/scope changes.
+### Match Found (open or closed within 24h) → Update
 
-### New Issue → Create
+- **Open:** comment with new findings, metrics, severity/scope changes.
+- **Closed within 24h:** reopen with `gh issue reopen <number>`, then comment with new findings.
+
+### No Match → Create
 
 - **Title:** `<emoji> <alertname> — <brief description>` (🔥 critical, ⚠️ warning, ℹ️ info)
 - **Labels:** `alert`, `sre`

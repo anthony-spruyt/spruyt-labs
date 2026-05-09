@@ -85,19 +85,23 @@ For each issue:
 
 ## Step 3 — GitHub Issue Management
 
-Search existing issues broadly (any label) before creating:
+Search for existing issues using the **resource name or error keyword** from findings. Run both searches:
 
 ```bash
-gh search issues "repo:anthony-spruyt/spruyt-labs state:open <resource or error keyword>" --repo anthony-spruyt/spruyt-labs
+gh search issues "repo:anthony-spruyt/spruyt-labs <RESOURCE_OR_ERROR>" --sort updated --order desc --limit 10
+gh search issues "repo:anthony-spruyt/spruyt-labs label:health-check label:sre" --sort created --order desc --limit 10
 ```
 
-GitHub search is fuzzy — verify matches relate to the failure.
+Replace `<RESOURCE_OR_ERROR>` with the specific resource name or error (e.g., `traefik HelmRelease`, `cert-manager rollback`). Do NOT use `state:open` — must find recently closed issues too.
 
-### Existing Issue → Update
+Verify matches relate to this failure. Check creation date — prioritize issues from last 24h.
 
-Comment with new findings, updated metrics, scope changes.
+### Match Found (open or closed within 24h) → Update
 
-### New Issue → Create
+- **Open:** comment with new findings, updated metrics, scope changes.
+- **Closed within 24h:** reopen with `gh issue reopen <number>`, then comment with new findings.
+
+### No Match → Create
 
 - **Title:** `<emoji> Cluster Health — <brief description>` (🔥 multiple/certs, ⚠️ single, ℹ️ minor)
 - **Labels:** `health-check`, `sre`

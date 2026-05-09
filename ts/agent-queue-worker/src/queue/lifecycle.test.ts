@@ -433,6 +433,49 @@ describe("lifecycle triaged marker writes", () => {
     expect(alerts[0]!.fingerprint).toBe("fp-unseen");
   });
 
+  it("preserves buffered alerts without fingerprint field through filter", async () => {
+    const job = {
+      id: "org/repo--sre-alert",
+      data: {
+        role: "sre-alert",
+        repo: "org/repo",
+        event_type: "alert",
+        priority: 5,
+        data: { fingerprint: "fp-1" },
+      },
+      opts: {},
+      attemptsMade: 0,
+      remove: vi.fn(),
+    };
+
+    mocks.drainBuffer.mockResolvedValueOnce({
+      role: "sre-alert",
+      repo: "org/repo",
+      event_type: "alert",
+      priority: 5,
+      data: {
+        fingerprint: "fp-1",
+        alerts: [
+          { fingerprint: "fp-1" },
+          { labels: { alertname: "NoFingerprint" } },
+        ],
+      },
+    });
+
+    await mocks.worker.emit("completed", job);
+    await vi.waitFor(() => {
+      expect(mocks.queue.add).toHaveBeenCalled();
+    });
+
+    const addCall = mocks.queue.add.mock.calls[0]!;
+    const addedData = addCall[1] as Record<string, unknown>;
+    const alerts = (addedData.data as Record<string, unknown>).alerts as Array<
+      Record<string, unknown>
+    >;
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.labels).toEqual({ alertname: "NoFingerprint" });
+  });
+
   it("swallows pipeline errors with warning", async () => {
     mocks.pipelineExec.mockRejectedValueOnce(new Error("Redis down"));
     const { logger } = await import("../logger.js");
