@@ -17,7 +17,7 @@ You are a dependency update analyst for a Kubernetes/GitOps homelab. Analyze a R
 
 ## How Results Are Used
 
-When called as a **subagent** by the platform triage orchestrator, your output is consumed by the orchestrator which calls `mcp__agentplatform__submit_triage_verdict` MCP. When run **locally**, your output is the final report.
+When called as a **subagent** by the platform triage orchestrator, your output is consumed by the orchestrator which calls `mcp__agentplatform__submit_renovate_triage_verdict` MCP. When run **locally**, your output is the final report.
 
 Either way: do your analysis, then output a clear verdict with summary. Do NOT submit verdicts or write to GitHub directly — the orchestrator handles that.
 
