@@ -311,6 +311,128 @@ describe("lifecycle triaged marker writes", () => {
     expect(mocks.drainBuffer).not.toHaveBeenCalled();
   });
 
+  it("skips re-enqueue when all buffered alerts have suppressed fingerprints", async () => {
+    const job = {
+      id: "org/repo--sre-alert",
+      data: {
+        role: "sre-alert",
+        repo: "org/repo",
+        event_type: "alert",
+        priority: 5,
+        data: { fingerprint: "fp-1" },
+      },
+      opts: {},
+      attemptsMade: 0,
+      remove: vi.fn(),
+    };
+
+    mocks.drainBuffer.mockResolvedValueOnce({
+      role: "sre-alert",
+      repo: "org/repo",
+      event_type: "alert",
+      priority: 5,
+      data: {
+        fingerprint: "fp-1",
+        alerts: [{ fingerprint: "fp-1" }, { fingerprint: "fp-1" }],
+      },
+    });
+
+    await mocks.worker.emit("completed", job);
+    await vi.waitFor(() => {
+      expect(mocks.drainBuffer).toHaveBeenCalled();
+    });
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mocks.queue.add).not.toHaveBeenCalled();
+  });
+
+  it("re-enqueues only unsuppressed alerts from buffer", async () => {
+    const job = {
+      id: "org/repo--sre-alert",
+      data: {
+        role: "sre-alert",
+        repo: "org/repo",
+        event_type: "alert",
+        priority: 5,
+        data: { fingerprint: "fp-1" },
+      },
+      opts: {},
+      attemptsMade: 0,
+      remove: vi.fn(),
+    };
+
+    mocks.drainBuffer.mockResolvedValueOnce({
+      role: "sre-alert",
+      repo: "org/repo",
+      event_type: "alert",
+      priority: 5,
+      data: {
+        fingerprint: "fp-1",
+        alerts: [{ fingerprint: "fp-1" }, { fingerprint: "fp-new" }],
+      },
+    });
+
+    await mocks.worker.emit("completed", job);
+    await vi.waitFor(() => {
+      expect(mocks.queue.add).toHaveBeenCalled();
+    });
+
+    const addCall = mocks.queue.add.mock.calls[0]!;
+    const addedData = addCall[1] as Record<string, unknown>;
+    const alerts = (addedData.data as Record<string, unknown>).alerts as Array<
+      Record<string, unknown>
+    >;
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.fingerprint).toBe("fp-new");
+  });
+
+  it("filters buffered alerts against all suppressed fingerprints including alerts array", async () => {
+    const job = {
+      id: "org/repo--sre-alert",
+      data: {
+        role: "sre-alert",
+        repo: "org/repo",
+        event_type: "alert",
+        priority: 5,
+        data: {
+          fingerprint: "fp-main",
+          alerts: [{ fingerprint: "fp-batch" }],
+        },
+      },
+      opts: {},
+      attemptsMade: 0,
+      remove: vi.fn(),
+    };
+
+    mocks.drainBuffer.mockResolvedValueOnce({
+      role: "sre-alert",
+      repo: "org/repo",
+      event_type: "alert",
+      priority: 5,
+      data: {
+        fingerprint: "fp-main",
+        alerts: [
+          { fingerprint: "fp-main" },
+          { fingerprint: "fp-batch" },
+          { fingerprint: "fp-unseen" },
+        ],
+      },
+    });
+
+    await mocks.worker.emit("completed", job);
+    await vi.waitFor(() => {
+      expect(mocks.queue.add).toHaveBeenCalled();
+    });
+
+    const addCall = mocks.queue.add.mock.calls[0]!;
+    const addedData = addCall[1] as Record<string, unknown>;
+    const alerts = (addedData.data as Record<string, unknown>).alerts as Array<
+      Record<string, unknown>
+    >;
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.fingerprint).toBe("fp-unseen");
+  });
+
   it("swallows pipeline errors with warning", async () => {
     mocks.pipelineExec.mockRejectedValueOnce(new Error("Redis down"));
     const { logger } = await import("../logger.js");

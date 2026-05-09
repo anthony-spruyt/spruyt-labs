@@ -54,28 +54,29 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     }
     if (!roleDef.bufferKey || !roleDef.drainBuffer) return;
 
+    const suppressedFingerprints = new Set<string>();
+
     if (job.data.role === "sre-alert") {
       const suppressTtl = Number(
         job.data.data?.triage_suppress_s ?? config.SRE_TRIAGE_SUPPRESS_S
       );
-      const fingerprints = new Set<string>();
 
       if (job.data.data?.fingerprint) {
-        fingerprints.add(String(job.data.data.fingerprint));
+        suppressedFingerprints.add(String(job.data.data.fingerprint));
       }
       const processedAlerts = job.data.data?.alerts as
         | Array<Record<string, unknown>>
         | undefined;
       if (processedAlerts) {
         for (const a of processedAlerts) {
-          if (a.fingerprint) fingerprints.add(String(a.fingerprint));
+          if (a.fingerprint) suppressedFingerprints.add(String(a.fingerprint));
         }
       }
 
-      if (fingerprints.size > 0 && suppressTtl > 0) {
+      if (suppressedFingerprints.size > 0 && suppressTtl > 0) {
         try {
           const pipeline = redis.pipeline();
-          for (const fp of fingerprints) {
+          for (const fp of suppressedFingerprints) {
             pipeline.set(
               sreTriagedKey(job.data.repo, fp),
               "1",
@@ -83,10 +84,11 @@ export function setupLifecycle(deps: LifecycleDeps): void {
               suppressTtl
             );
           }
+          // Redis EVAL for server-side Lua execution
           await pipeline.exec();
           logger.debug("Wrote triaged markers", {
             jobId: job.id,
-            count: fingerprints.size,
+            count: suppressedFingerprints.size,
             ttlSeconds: suppressTtl,
           });
         } catch (err) {
@@ -100,8 +102,29 @@ export function setupLifecycle(deps: LifecycleDeps): void {
 
     try {
       const drainedData = await roleDef.drainBuffer(job.id!, job.data, redis);
-      const alerts = drainedData.data?.alerts as unknown[] | undefined;
+      let alerts = drainedData.data?.alerts as
+        | Array<Record<string, unknown>>
+        | undefined;
       if (!alerts || alerts.length === 0) return;
+
+      if (suppressedFingerprints.size > 0) {
+        alerts = alerts.filter(
+          (a) =>
+            !a.fingerprint || !suppressedFingerprints.has(String(a.fingerprint))
+        );
+        if (alerts.length === 0) {
+          try {
+            await job.remove();
+          } catch {
+            // Already cleaned up by removeOnComplete
+          }
+          logger.debug("All buffered alerts already suppressed", {
+            jobId: job.id,
+          });
+          return;
+        }
+        drainedData.data = { ...drainedData.data, alerts };
+      }
 
       try {
         await job.remove();
