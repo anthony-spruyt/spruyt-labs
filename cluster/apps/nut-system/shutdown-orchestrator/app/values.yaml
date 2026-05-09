@@ -42,11 +42,11 @@ controllers:
           - name: POLL_INTERVAL
             value: "5"
           - name: UPS_RUNTIME_BUDGET
-            value: "600"
+            value: "480"
           - name: HEALTH_PORT
             value: "8080"
           - name: MODE
-            value: preflight
+            value: monitor
           - name: NODE_NAME
             valueFrom:
               fieldRef:
