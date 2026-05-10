@@ -10,6 +10,7 @@
         ".devcontainer/README.md",
         ".devcontainer/setup-devcontainer.sh",
         ".editorconfig",
+        ".eslintrc.json",
         ".github/actionlint.yaml",
         ".github/renovate-overrides.json5",
         ".github/renovate.json5",
