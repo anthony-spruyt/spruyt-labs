@@ -11,5 +11,5 @@ resources:
   - ./set-agent-deadline.yaml
   - ./validate-agent-deadline.yaml
   - ./cleanup-agent-pods.yaml
-  - ./inject-automount-false-exceptions.yaml
+  - ./inject-automount-defaults.yaml
   - ./require-explicit-automount.yaml

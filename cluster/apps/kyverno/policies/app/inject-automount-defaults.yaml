@@ -1,0 +1,132 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-automount-defaults
+  annotations:
+    policies.kyverno.io/title: Inject automountServiceAccountToken Defaults
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Injects automountServiceAccountToken on pods that don't set it explicitly.
+      Operator-spawned pods that need API access get true. Everything else gets
+      false (least-privilege default).
+spec:
+  background: false
+  rules:
+    - name: inject-false-authentik-outposts
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              operations:
+                - CREATE
+      preconditions:
+        all:
+          - key: "{{request.object.metadata.labels.\"app.kubernetes.io/managed-by\" || ''}}"
+            operator: Equals
+            value: goauthentik.io
+      mutate:
+        patchStrategicMerge:
+          spec:
+            +(automountServiceAccountToken): false
+    - name: inject-true-cnpg-clusters
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              operations:
+                - CREATE
+      preconditions:
+        all:
+          - key: "{{request.object.metadata.labels.\"app.kubernetes.io/managed-by\" || ''}}"
+            operator: Equals
+            value: cloudnative-pg
+      mutate:
+        patchStrategicMerge:
+          spec:
+            +(automountServiceAccountToken): true
+    - name: inject-true-rook-ceph
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - rook-ceph
+              operations:
+                - CREATE
+      mutate:
+        patchStrategicMerge:
+          spec:
+            +(automountServiceAccountToken): true
+    - name: inject-true-velero-jobs
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - velero
+              operations:
+                - CREATE
+      mutate:
+        patchStrategicMerge:
+          spec:
+            +(automountServiceAccountToken): true
+    - name: inject-true-flux-controllers
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              operations:
+                - CREATE
+      preconditions:
+        all:
+          - key: "{{request.object.metadata.labels.\"app.kubernetes.io/part-of\" || ''}}"
+            operator: Equals
+            value: flux
+      mutate:
+        patchStrategicMerge:
+          spec:
+            +(automountServiceAccountToken): true
+    - name: inject-true-vm-operator-pods
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              operations:
+                - CREATE
+      preconditions:
+        all:
+          - key: "{{request.object.metadata.labels.\"managed-by\" || ''}}"
+            operator: Equals
+            value: vm-operator
+      mutate:
+        patchStrategicMerge:
+          spec:
+            +(automountServiceAccountToken): true
+    - name: inject-false-default
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              operations:
+                - CREATE
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+      mutate:
+        patchStrategicMerge:
+          spec:
+            +(automountServiceAccountToken): false
