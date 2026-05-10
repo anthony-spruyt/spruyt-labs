@@ -33,6 +33,8 @@
     "enabled": false
   },
   "files": {
-    "includes": ["ts/**/src/**/*.ts"]
+    "includes": [
+      "ts/**/src/**/*.ts"
+    ]
   }
 }
