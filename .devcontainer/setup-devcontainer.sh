@@ -5,7 +5,7 @@ set -euo pipefail
 # Called by post-create.sh after safe-chain, pre-commit, and claude-cli are installed.
 
 # Install taskfile runner
-curl -sSfL https://taskfile.dev/install.sh | sudo sh -s -- -b /usr/local/bin
+curl -sSfL https://raw.githubusercontent.com/go-task/task/main/install-task.sh | sudo sh -s -- -b /usr/local/bin
 
 echo "Installing repo-specific tools via taskfile..."
 
