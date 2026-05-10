@@ -1,6 +1,9 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/controlplaneio-fluxcd/charts/main/charts/flux-operator/values.schema.json
 # Default values for flux-operator: https://github.com/controlplaneio-fluxcd/charts/blob/main/charts/flux-operator/values.yaml
+serviceAccount:
+  automount: true
+
 priorityClassName: high-priority
 # -- Container resources requests and limits settings.
 resources: # @schema required: true

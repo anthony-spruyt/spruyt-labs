@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/name: nexus-provisioner
     spec:
       serviceAccountName: nexus-provisioner
+      automountServiceAccountToken: false
       restartPolicy: OnFailure
       securityContext:
         runAsUser: 65534

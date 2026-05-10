@@ -13,3 +13,13 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: victoria-metrics-k8s-stack-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: victoria-metrics-k8s-stack-grafana
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true

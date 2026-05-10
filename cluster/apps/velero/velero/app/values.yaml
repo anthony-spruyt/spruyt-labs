@@ -1,6 +1,10 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/heads/main/charts/velero/values.schema.json
 
+serviceAccount:
+  server:
+    automountServiceAccountToken: true
+
 priorityClassName: high-priority
 
 resources:

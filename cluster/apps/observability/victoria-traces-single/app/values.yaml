@@ -6,6 +6,10 @@
 # Container name: vtraces
 # Service port: 10428 (HTTP, OTLP ingest at /insert/opentelemetry/v1/traces)
 
+serviceAccount:
+  create: true
+  automountToken: false
+
 server:
   podAnnotations:
     reloader.stakater.com/auto: "true"

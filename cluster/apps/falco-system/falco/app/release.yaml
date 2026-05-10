@@ -17,3 +17,20 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: falco-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: DaemonSet
+              name: falco
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true
+          - target:
+              kind: Deployment
+              name: falco-falcosidekick
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false

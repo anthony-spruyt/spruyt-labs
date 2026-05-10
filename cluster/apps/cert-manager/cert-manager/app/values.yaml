@@ -8,6 +8,7 @@ securityContext:
   runAsNonRoot: true
   seccompProfile:
     type: RuntimeDefault
+automountServiceAccountToken: true
 crds:
   enabled: true
 enableCertificateOwnerRef: true # When this flag is enabled, secrets will be automatically removed when the certificate resource is deleted.
@@ -26,6 +27,7 @@ resources:
 
 replicaCount: 2
 webhook:
+  automountServiceAccountToken: true
   securityContext:
     runAsNonRoot: true
     seccompProfile:
@@ -42,6 +44,7 @@ webhook:
   podDisruptionBudget:
     enabled: true
 cainjector:
+  automountServiceAccountToken: true
   securityContext:
     runAsNonRoot: true
     seccompProfile:

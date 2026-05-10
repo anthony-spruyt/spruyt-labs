@@ -19,3 +19,13 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: kubelet-csr-approver-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: kubelet-csr-approver
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true

@@ -32,3 +32,10 @@ spec:
                   - ip: "${TRAEFIK_IP4}"
                     hostnames:
                       - "code.${EXTERNAL_DOMAIN}"
+          - target:
+              kind: Deployment
+              name: coder
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true

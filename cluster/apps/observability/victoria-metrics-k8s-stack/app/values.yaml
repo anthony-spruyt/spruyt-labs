@@ -250,6 +250,8 @@ grafana:
 # -- prometheus-node-exporter dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-node-exporter/values.yaml)
 prometheus-node-exporter:
   enabled: true
+  serviceAccount:
+    automountServiceAccountToken: false
   resources:
     limits:
       memory: 128Mi
@@ -280,6 +282,7 @@ prometheus-node-exporter:
 # -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
 kube-state-metrics:
   enabled: true
+  automountServiceAccountToken: true
   rbac:
     extraRules:
       - apiGroups: ["csiaddons.openshift.io"]

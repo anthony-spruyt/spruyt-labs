@@ -25,23 +25,9 @@
 ## -- Print chart notes
 #printNotes: true
 #
-#serviceAccount:
-#  # -- Create service account.
-#  create: false
-#
-#  # -- The name of the service account to use.
-#  # If not set and create is true, a name is generated using the fullname template
-#  name:
-#
-#  # -- ServiceAccount labels
-#  extraLabels: {}
-#
-#  # -- ServiceAccount annotations
-#  annotations: {}
-#
-#  # -- Mount API token to pod directly
-#  automountToken: true
-#
+serviceAccount:
+  create: true
+  automountToken: false
 ## -- See `kubectl explain poddisruptionbudget.spec` for more. Details are [here](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
 #podDisruptionBudget:
 #  enabled: false
@@ -383,6 +369,8 @@ server:
 vector:
   # -- Enable deployment of vector
   enabled: true
+  serviceAccount:
+    automountToken: true
 
   resources:
     requests:

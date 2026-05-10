@@ -17,3 +17,13 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: reloader-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: reloader
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true

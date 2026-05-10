@@ -72,3 +72,17 @@ spec:
                       limits:
                         cpu: 100m
                         memory: 64Mi
+          - target:
+              kind: Deployment
+              name: firefly-iii
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false
+          - target:
+              kind: CronJob
+              name: firefly-iii-cronjob
+            patch: |
+              - op: add
+                path: /spec/jobTemplate/spec/template/spec/automountServiceAccountToken
+                value: false

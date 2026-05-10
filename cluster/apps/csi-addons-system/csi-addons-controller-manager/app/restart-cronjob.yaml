@@ -65,6 +65,7 @@ spec:
             runAsUser: 10001
             runAsGroup: 10001
           serviceAccountName: csi-addons-restart
+          automountServiceAccountToken: true
           restartPolicy: OnFailure
           containers:
             - name: restart

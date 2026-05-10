@@ -17,3 +17,13 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: qdrant-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: StatefulSet
+              name: qdrant
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false

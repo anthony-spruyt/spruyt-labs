@@ -126,3 +126,24 @@ spec:
                     port: 8080
                     targetPort: 8080
                     protocol: TCP
+          - target:
+              kind: Deployment
+              name: n8n
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false
+          - target:
+              kind: Deployment
+              name: n8n-worker
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false
+          - target:
+              kind: Deployment
+              name: n8n-webhook
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false

@@ -17,3 +17,13 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: velero-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: DaemonSet
+              name: node-agent
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true
