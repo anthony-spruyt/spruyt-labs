@@ -22,3 +22,5 @@ action: block
 
 - Kubernetes secrets: Ask user to run `kubectl get secret X -o jsonpath='{.data.Y}' | base64 -d`
 - Config values: Ask user to decode and share non-sensitive portions
+
+**False positive?** Open an issue: `gh issue create --repo anthony-spruyt/claude-config --title "False positive: block-base64-decode" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
