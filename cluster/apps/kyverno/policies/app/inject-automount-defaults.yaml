@@ -9,9 +9,10 @@ metadata:
     policies.kyverno.io/severity: low
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Injects automountServiceAccountToken on pods that don't set it explicitly.
-      Operator-spawned pods that need API access get true. Everything else gets
-      false (least-privilege default).
+      Injects automountServiceAccountToken on pods created by controllers we
+      cannot configure. Operator-spawned pods that need API access get true;
+      Authentik outposts get false. All other pods rely on the
+      require-explicit-automount validate policy for enforcement.
 spec:
   background: false
   rules:
@@ -111,22 +112,3 @@ spec:
         patchStrategicMerge:
           spec:
             +(automountServiceAccountToken): true
-    - name: inject-false-default
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              operations:
-                - CREATE
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-      mutate:
-        patchStrategicMerge:
-          spec:
-            +(automountServiceAccountToken): false
