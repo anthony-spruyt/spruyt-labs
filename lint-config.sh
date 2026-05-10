@@ -3,8 +3,9 @@
 # Lint configuration - customize per repository
 # This file is sourced by lint.sh for both local and CI runs
 
-# MegaLinter Docker image
-MEGALINTER_IMAGE="ghcr.io/anthony-spruyt/megalinter-spruyt-labs:latest"
+# MegaLinter Docker image (use digest for reproducibility)
+# renovate: datasource=docker depName=ghcr.io/anthony-spruyt/megalinter-spruyt-labs
+MEGALINTER_IMAGE="ghcr.io/anthony-spruyt/megalinter-spruyt-labs:v1.0.13@sha256:413000bef82163a05fd23caa8478200b2de2acfd11905fcb580bc24bc18015e7"
 
 # Skip linting for renovate/dependabot commits in CI
 SKIP_BOT_COMMITS=true
