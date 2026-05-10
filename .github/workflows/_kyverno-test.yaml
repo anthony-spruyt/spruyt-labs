@@ -30,6 +30,7 @@ jobs:
             '  name: test-pod' \
             '  namespace: default' \
             'spec:' \
+            '  automountServiceAccountToken: false' \
             '  containers:' \
             '    - name: app' \
             '      image: nginx:latest' \
@@ -52,6 +53,7 @@ jobs:
             '      labels:' \
             '        app: test' \
             '    spec:' \
+            '      automountServiceAccountToken: false' \
             '      containers:' \
             '        - name: app' \
             '          image: nginx:latest' \
@@ -75,6 +77,7 @@ jobs:
             '      labels:' \
             '        app: test-sts' \
             '    spec:' \
+            '      automountServiceAccountToken: false' \
             '      containers:' \
             '        - name: app' \
             '          image: nginx:latest' \
