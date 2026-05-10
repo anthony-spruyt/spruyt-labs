@@ -47,6 +47,8 @@ tlsStore:
     defaultCertificate:
       secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
 deployment:
+  annotations:
+    secret.reloader.stakater.com/reload: traefik-mcp-api-keys
   additionalVolumes:
     - name: traefik-api-key-auth-plugin
       configMap:
