@@ -23,3 +23,10 @@ spec:
               - op: add
                 path: /spec/template/spec/automountServiceAccountToken
                 value: true
+          - target:
+              kind: DaemonSet
+              name: victoria-metrics-k8s-stack-prometheus-node-exporter
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false

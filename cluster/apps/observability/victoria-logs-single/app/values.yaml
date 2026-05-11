@@ -27,7 +27,6 @@
 #
 serviceAccount:
   create: true
-  automountToken: false
 ## -- See `kubectl explain poddisruptionbudget.spec` for more. Details are [here](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
 #podDisruptionBudget:
 #  enabled: false
@@ -369,9 +368,6 @@ server:
 vector:
   # -- Enable deployment of vector
   enabled: true
-  serviceAccount:
-    automountToken: true
-
   resources:
     requests:
       cpu: 200m

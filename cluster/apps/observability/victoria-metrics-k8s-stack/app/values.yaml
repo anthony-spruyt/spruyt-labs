@@ -268,8 +268,6 @@ grafana:
 # -- prometheus-node-exporter dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-node-exporter/values.yaml)
 prometheus-node-exporter:
   enabled: true
-  serviceAccount:
-    automountServiceAccountToken: false
   resources:
     limits:
       memory: 128Mi

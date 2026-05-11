@@ -13,3 +13,13 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: victoria-traces-single-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: StatefulSet
+              name: victoria-traces-single-vt-single-server
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false

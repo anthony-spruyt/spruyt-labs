@@ -13,3 +13,20 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: victoria-logs-single-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: StatefulSet
+              name: victoria-logs-single-server
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: false
+          - target:
+              kind: DaemonSet
+              name: victoria-logs-single-vector
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true
