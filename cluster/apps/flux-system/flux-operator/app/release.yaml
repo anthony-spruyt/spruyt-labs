@@ -12,13 +12,3 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: flux-operator-values
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: Deployment
-              name: flux-operator
-            patch: |
-              - op: add
-                path: /spec/template/spec/automountServiceAccountToken
-                value: true

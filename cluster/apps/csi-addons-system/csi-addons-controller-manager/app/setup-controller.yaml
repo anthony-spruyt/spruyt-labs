@@ -90,6 +90,5 @@ spec:
           terminationMessagePolicy: FallbackToLogsOnError
       securityContext:
         runAsNonRoot: true
-      automountServiceAccountToken: true
       serviceAccountName: csi-addons-controller-manager
       terminationGracePeriodSeconds: 10

@@ -14,23 +14,6 @@ spec:
         name: cloudnative-pg-charts
         namespace: flux-system
   interval: 4h
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: Deployment
-              name: cnpg-operator-cloudnative-pg
-            patch: |
-              - op: add
-                path: /spec/template/spec/automountServiceAccountToken
-                value: true
-          - target:
-              kind: Deployment
-              name: plugin-barman-cloud
-            patch: |
-              - op: add
-                path: /spec/template/spec/automountServiceAccountToken
-                value: true
   valuesFrom:
     - kind: ConfigMap
       name: cnpg-operator-values

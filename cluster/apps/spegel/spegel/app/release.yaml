@@ -10,16 +10,6 @@ spec:
     name: spegel-ocirepo
     namespace: flux-system
   interval: 4h
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: DaemonSet
-              name: spegel
-            patch: |
-              - op: add
-                path: /spec/template/spec/automountServiceAccountToken
-                value: true
   valuesFrom:
     - kind: ConfigMap
       name: spegel-values
