@@ -23,6 +23,7 @@ spec:
             runAsUser: 10001
             runAsGroup: 10001
           serviceAccountName: github-token-rotation
+          automountServiceAccountToken: true
           containers:
             - name: rotate-tokens
               image: alpine/k8s:1.36.0@sha256:c105e4eaa265c617e43be34fffc7d9961de76b65a1e520179ed61e2f3a9fabf7

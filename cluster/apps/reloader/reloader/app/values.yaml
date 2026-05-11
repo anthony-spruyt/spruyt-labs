@@ -6,6 +6,7 @@ nameOverride: reloader
 fullnameOverride: reloader
 reloader:
   deployment:
+    automountServiceAccountToken: true
     # PSS restricted compliance
     securityContext:
       runAsNonRoot: true

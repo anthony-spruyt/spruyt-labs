@@ -71,6 +71,9 @@ spec:
           - key: "{{ starts_with(request.object.metadata.labels.app || '', 'rook-ceph') }}"
             operator: Equals
             value: true
+          - key: "{{request.object.metadata.labels.\"app.kubernetes.io/managed-by\" || ''}}"
+            operator: Equals
+            value: rook-ceph-operator
       mutate:
         patchStrategicMerge:
           spec:

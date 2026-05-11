@@ -23,3 +23,10 @@ spec:
               - op: add
                 path: /spec/template/spec/automountServiceAccountToken
                 value: false
+          - target:
+              kind: DaemonSet
+              name: victoria-logs-single-vector
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true

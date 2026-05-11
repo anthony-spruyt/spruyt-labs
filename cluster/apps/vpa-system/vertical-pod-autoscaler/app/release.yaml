@@ -17,3 +17,27 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: vertical-pod-autoscaler-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: vertical-pod-autoscaler-admission-controller
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true
+          - target:
+              kind: Deployment
+              name: vertical-pod-autoscaler-recommender
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true
+          - target:
+              kind: Deployment
+              name: vertical-pod-autoscaler-updater
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true

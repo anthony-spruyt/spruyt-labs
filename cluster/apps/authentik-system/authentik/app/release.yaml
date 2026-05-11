@@ -27,3 +27,10 @@ spec:
               - op: add
                 path: /spec/template/spec/automountServiceAccountToken
                 value: false
+          - target:
+              kind: Deployment
+              name: authentik-worker
+            patch: |
+              - op: add
+                path: /spec/template/spec/automountServiceAccountToken
+                value: true

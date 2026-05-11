@@ -1,6 +1,7 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/cert-manager/cert-manager/refs/heads/master/deploy/charts/cert-manager/values.schema.json
 # Default values: https://github.com/cert-manager/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml
+automountServiceAccountToken: true
 global:
   priorityClassName: critical-infrastructure
 # PSS restricted compliance - add seccompProfile (container defaults already have capabilities.drop)
@@ -26,6 +27,7 @@ resources:
 
 replicaCount: 2
 webhook:
+  automountServiceAccountToken: true
   securityContext:
     runAsNonRoot: true
     seccompProfile:
@@ -42,6 +44,7 @@ webhook:
   podDisruptionBudget:
     enabled: true
 cainjector:
+  automountServiceAccountToken: true
   securityContext:
     runAsNonRoot: true
     seccompProfile:
