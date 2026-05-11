@@ -80,6 +80,7 @@ vmsingle:
 
 alertmanager:
   enabled: true
+  config: null
   # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
   spec:
     priorityClassName: high-priority
