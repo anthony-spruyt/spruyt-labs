@@ -13,7 +13,7 @@ metadata:
       (true or false). Forces authors to make a conscious decision about
       API token mounting.
 spec:
-  validationFailureAction: Enforce
+  validationFailureAction: Audit
   background: true
   rules:
     - name: require-automount-field

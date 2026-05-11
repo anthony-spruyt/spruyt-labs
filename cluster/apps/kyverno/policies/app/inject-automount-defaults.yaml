@@ -60,11 +60,22 @@ spec:
                 - rook-ceph
               operations:
                 - CREATE
+      preconditions:
+        any:
+          - key: "{{request.object.metadata.labels.rook_cluster || ''}}"
+            operator: NotEquals
+            value: ""
+          - key: "{{request.object.metadata.labels.\"app.kubernetes.io/instance\" || ''}}"
+            operator: Equals
+            value: rook-ceph-operator
+          - key: "{{ starts_with(request.object.metadata.labels.app || '', 'rook-ceph') }}"
+            operator: Equals
+            value: true
       mutate:
         patchStrategicMerge:
           spec:
             +(automountServiceAccountToken): true
-    - name: inject-true-velero-jobs
+    - name: inject-true-velero
       match:
         any:
           - resources:
@@ -74,6 +85,14 @@ spec:
                 - velero
               operations:
                 - CREATE
+      preconditions:
+        any:
+          - key: "{{request.object.metadata.labels.\"app.kubernetes.io/name\" || ''}}"
+            operator: Equals
+            value: velero
+          - key: "{{request.object.metadata.labels.\"velero.io/repo-name\" || ''}}"
+            operator: NotEquals
+            value: ""
       mutate:
         patchStrategicMerge:
           spec:
