@@ -47,3 +47,6 @@ __pycache__/
 
 # Claude schedules
 .claude/scheduled_tasks.lock
+
+# Security audit reports (local only)
+SECURITY-AUDIT-*.md

@@ -83,14 +83,31 @@ alertmanager:
   # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
   spec:
     priorityClassName: high-priority
+    disableNamespaceMatcher: true
     resources:
       limits:
         memory: 64Mi
       requests:
         cpu: 5m
         memory: 32Mi
-    # -- (string) If this one defined, it will be used for alertmanager configuration and config parameter will be ignored
-    configSecret: victoria-metrics-k8s-stack-secrets
+    configRawYaml: |
+      global:
+        resolve_timeout: 5m
+      route:
+        receiver: blackhole
+        group_by: ['alertname']
+        group_wait: 2m
+        group_interval: 10m
+        repeat_interval: 6h
+        routes:
+          - receiver: blackhole
+            matchers:
+              - alertname=~"Watchdog|InfoInhibitor"
+            continue: false
+      receivers:
+        - name: blackhole
+      templates:
+        - "/etc/vm/configs/**/*.tmpl"
 
 vmalert:
   enabled: true

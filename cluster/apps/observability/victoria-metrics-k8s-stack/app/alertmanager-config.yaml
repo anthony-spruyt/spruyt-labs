@@ -1,0 +1,49 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/operator.victoriametrics.com/vmalertmanagerconfig_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAlertmanagerConfig
+metadata:
+  name: alert-routing
+  namespace: observability
+spec:
+  route:
+    receiver: discord
+    routes:
+      - matchers:
+          - severity="critical"
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 3h
+        receiver: discord
+        continue: false
+        routes:
+          - receiver: n8n-sre-triage
+            continue: true
+          - receiver: discord
+            continue: false
+      - receiver: n8n-sre-triage
+        matchers:
+          - alertname!="Watchdog"
+        continue: true
+      - receiver: discord
+        continue: true
+  receivers:
+    - name: discord
+      discord_configs:
+        - webhook_url_secret:
+            name: alertmanager-credentials
+            key: discord-webhook-url
+          send_resolved: true
+    - name: n8n-sre-triage
+      webhook_configs:
+        - url_secret:
+            name: alertmanager-credentials
+            key: n8n-webhook-url
+          http_config:
+            authorization:
+              type: Bearer
+              credentials:
+                name: alertmanager-credentials
+                key: n8n-webhook-bearer-token
+          send_resolved: true
+          max_alerts: 10
