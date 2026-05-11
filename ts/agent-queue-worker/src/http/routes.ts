@@ -135,7 +135,7 @@ export async function handleAddJob(
           role: data.role,
           action: "discard",
         });
-        return json(res, 409, {
+        return json(res, 200, {
           added: false,
           reason: state === "active" ? "active" : "deduplicated",
         });
@@ -200,7 +200,7 @@ export async function handleAddJob(
         role: data.role,
         action: "discard",
       });
-      return json(res, 409, { added: false, reason: "deduplicated" });
+      return json(res, 200, { added: false, reason: "deduplicated" });
     }
     logger.error("Failed to add job", { jobId, error: String(err) });
     json(res, 503, { added: false, reason: "internal_error" });
