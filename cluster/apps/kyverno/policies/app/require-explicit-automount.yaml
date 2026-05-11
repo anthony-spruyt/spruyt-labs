@@ -24,7 +24,6 @@ spec:
                 - Pod
               operations:
                 - CREATE
-                - UPDATE
       exclude:
         any:
           - resources:
