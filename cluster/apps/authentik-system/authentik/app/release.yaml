@@ -33,4 +33,4 @@ spec:
             patch: |
               - op: add
                 path: /spec/template/spec/automountServiceAccountToken
-                value: false
+                value: true
