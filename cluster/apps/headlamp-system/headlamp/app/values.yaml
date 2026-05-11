@@ -39,6 +39,18 @@ pluginsManager:
       parallel: true
       maxConcurrent: 2
 
+securityContext:
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
 resources:
   requests:
     cpu: 35m

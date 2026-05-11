@@ -10,13 +10,16 @@ spec:
       rules:
         - alert: GitHubTokenRotationFailed
           expr: |
-            kube_job_status_failed{namespace="github-system", job_name=~"github-token-rotation.*"} > 0
+            (
+              kube_cronjob_status_last_schedule_time{namespace="github-system", cronjob="github-token-rotation"}
+              - kube_cronjob_status_last_successful_time{namespace="github-system", cronjob="github-token-rotation"}
+            ) > 0
           for: 5m
           labels:
             severity: warning
           annotations:
             summary: "GitHub token rotation CronJob failed"
-            description: "CronJob {{ $labels.job_name }} failed. Installation tokens expire after 1 hour."
+            description: "Most recent scheduled run of github-token-rotation has not succeeded. Auto-resolves on next successful run."
         - alert: GitHubTokenRotationConsecutiveFailures
           expr: |
             time() - kube_cronjob_status_last_successful_time{namespace="github-system", cronjob="github-token-rotation"} > 3600

@@ -179,6 +179,86 @@ describe("handleAddJob suppression", () => {
     expect((res._body as Record<string, unknown>).added).toBe(true);
   });
 
+  it("returns 200 when duplicate job is active (discard)", async () => {
+    const res = mockRes();
+    const req = mockReq(sreAlert);
+    const deps = makeDeps({
+      queue: {
+        getJob: vi.fn().mockResolvedValue({
+          data: sreAlert,
+          getState: vi.fn().mockResolvedValue("active"),
+        }),
+        add: vi.fn(),
+      },
+      registry: {
+        get: vi.fn().mockReturnValue({
+          timeoutMs: 900_000,
+          jobOptions: {},
+          buildIdentity: (repo: string) => `${repo}--sre-alert`,
+          onDuplicate: () => ({ action: "discard" }),
+        }),
+      },
+    });
+
+    await handleAddJob(req, res, deps);
+
+    expect(res._status).toBe(200);
+    const body = res._body as Record<string, unknown>;
+    expect(body.added).toBe(false);
+    expect(body.reason).toBe("active");
+  });
+
+  it("returns 200 when duplicate job is delayed (discard)", async () => {
+    const res = mockRes();
+    const req = mockReq(sreAlert);
+    const deps = makeDeps({
+      queue: {
+        getJob: vi.fn().mockResolvedValue({
+          data: sreAlert,
+          getState: vi.fn().mockResolvedValue("delayed"),
+        }),
+        add: vi.fn(),
+      },
+      registry: {
+        get: vi.fn().mockReturnValue({
+          timeoutMs: 900_000,
+          jobOptions: {},
+          buildIdentity: (repo: string) => `${repo}--sre-alert`,
+          onDuplicate: () => ({ action: "discard" }),
+        }),
+      },
+    });
+
+    await handleAddJob(req, res, deps);
+
+    expect(res._status).toBe(200);
+    const body = res._body as Record<string, unknown>;
+    expect(body.added).toBe(false);
+    expect(body.reason).toBe("deduplicated");
+  });
+
+  it("returns 200 when BullMQ throws duplicate job error", async () => {
+    const res = mockRes();
+    const req = mockReq(sreAlert);
+    const deps = makeDeps({
+      queue: {
+        getJob: vi.fn().mockResolvedValue(null),
+        add: vi
+          .fn()
+          .mockRejectedValue(
+            new Error("Job already exists with id org/repo--sre-alert")
+          ),
+      },
+    });
+
+    await handleAddJob(req, res, deps);
+
+    expect(res._status).toBe(200);
+    const body = res._body as Record<string, unknown>;
+    expect(body.added).toBe(false);
+    expect(body.reason).toBe("deduplicated");
+  });
+
   it("does not suppress non-SRE role with fingerprint", async () => {
     const res = mockRes();
     const req = mockReq({

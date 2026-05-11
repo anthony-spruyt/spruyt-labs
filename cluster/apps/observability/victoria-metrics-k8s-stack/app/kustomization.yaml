@@ -7,7 +7,8 @@ resources:
   - ./authentik-secret-store.yaml
   - ./grafana-oauth-external-secret.yaml
   - ./oauth-rotation-rbac.yaml
-  - ./victoria-metrics-k8s-stack-secrets.sops.yaml
+  - ./alertmanager-credentials.sops.yaml
+  - ./alertmanager-config.yaml
   - ./vm-service-scrapes.yaml
   - ./vmrules
   - ./release.yaml

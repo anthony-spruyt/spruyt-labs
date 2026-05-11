@@ -22,7 +22,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/agent-queue-worker
-          tag: 3.1.2@sha256:8e89202997a45531273e27848278b27aa301df70b40a2d18e73fd7c8535030e2
+          tag: 3.1.3@sha256:4124cd11d636550b69eef779ceadbf6ae2fe631a1d95aedec9980dd8ef316574
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"
@@ -31,7 +31,7 @@ controllers:
           SRE_BATCH_MAX_SIZE: "50"
           SRE_BATCH_WINDOW_MS: "60000"
           SRE_COOLDOWN_MS: "300000"
-          SRE_TRIAGE_SUPPRESS_S: "3600"
+          SRE_TRIAGE_SUPPRESS_S: "21600"
           VALKEY_PASSWORD:
             valueFrom:
               secretKeyRef:
