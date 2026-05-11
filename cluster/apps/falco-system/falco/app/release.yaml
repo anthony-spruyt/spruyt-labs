@@ -21,13 +21,6 @@ spec:
     - kustomize:
         patches:
           - target:
-              kind: DaemonSet
-              name: falco
-            patch: |
-              - op: add
-                path: /spec/template/spec/automountServiceAccountToken
-                value: true
-          - target:
               kind: Deployment
               name: falco-falcosidekick
             patch: |

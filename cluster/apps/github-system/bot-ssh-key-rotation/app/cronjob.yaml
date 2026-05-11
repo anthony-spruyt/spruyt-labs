@@ -27,7 +27,6 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: bot-ssh-key-rotation
-          automountServiceAccountToken: true
           restartPolicy: Never
           containers:
             - name: rotate-ssh-key

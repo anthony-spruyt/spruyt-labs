@@ -13,20 +13,3 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: rook-ceph-operator-values
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: Deployment
-              name: rook-ceph-operator
-            patch: |
-              - op: add
-                path: /spec/template/spec/automountServiceAccountToken
-                value: true
-          - target:
-              kind: DaemonSet
-              name: rook-discover
-            patch: |
-              - op: add
-                path: /spec/template/spec/automountServiceAccountToken
-                value: true

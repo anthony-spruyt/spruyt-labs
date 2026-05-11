@@ -17,13 +17,3 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: plugin-barman-cloud-values
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: Deployment
-              name: plugin-barman-cloud
-            patch: |
-              - op: add
-                path: /spec/template/spec/automountServiceAccountToken
-                value: true

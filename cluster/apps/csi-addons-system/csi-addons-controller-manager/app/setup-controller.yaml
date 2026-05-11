@@ -91,5 +91,4 @@ spec:
       securityContext:
         runAsNonRoot: true
       serviceAccountName: csi-addons-controller-manager
-      automountServiceAccountToken: true
       terminationGracePeriodSeconds: 10

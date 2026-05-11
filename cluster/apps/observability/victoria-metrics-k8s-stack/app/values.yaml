@@ -298,7 +298,6 @@ prometheus-node-exporter:
 # -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
 kube-state-metrics:
   enabled: true
-  automountServiceAccountToken: true
   rbac:
     extraRules:
       - apiGroups: ["csiaddons.openshift.io"]
