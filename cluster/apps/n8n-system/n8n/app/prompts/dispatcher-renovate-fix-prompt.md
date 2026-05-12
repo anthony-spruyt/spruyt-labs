@@ -19,11 +19,20 @@ Before applying any fixes, ensure the PR branch is up to date with main. Other f
 1. `git fetch origin main`
 2. `git merge origin/main` — merge main into the current PR branch
 3. If merge conflicts occur, resolve them before proceeding
-4. If the triage issues are already resolved by merged changes, skip to Phase 4 and submit SUCCESS
+4. If the triage issues are already resolved by merged changes, skip to Phase 5 and submit SUCCESS
 
 Stay on the current branch. Do NOT checkout or switch branches.
 
-## Phase 3: Fix
+## Phase 3: Assess Full Scope
+
+Do not rely solely on the triage summary — scanner databases update continuously and new findings appear between triage and fix.
+
+1. Check GitHub code-scanning alerts on the PR branch for structured findings from security scanners (Trivy CVEs, CodeQL issues, MegaLinter findings)
+2. Review CI logs for any failures not covered by security alerts
+3. Combine with triage summary to build the complete list of what needs fixing
+4. Address ALL open findings, not just those mentioned in the triage summary
+
+## Phase 4: Fix
 
 Choose strategy based on discovery:
 
@@ -34,13 +43,13 @@ Choose strategy based on discovery:
 ### If no custom agent:
 
 - You are already on the PR branch — do NOT checkout, switch, or create any other branch
-- Analyze the issues described in the triage summary
+- Analyze the full scope identified in Phase 3
 - Apply minimal, targeted fixes — do not refactor unrelated code
 - Run available validation (tests, linting, type-checks) before committing
 - Commit with descriptive message referencing the dependency update
 - Push to the current branch (the PR branch you're already on)
 
-## Phase 4: Submit Result via MCP (MANDATORY)
+## Phase 5: Submit Result via MCP (MANDATORY)
 
 You MUST call the `mcp__agentplatform__submit_renovate_fix_result` tool. Call until success.
 
