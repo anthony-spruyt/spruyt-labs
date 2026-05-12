@@ -7,8 +7,8 @@ echo ""
 # --- Podman ---
 if command -v podman &>/dev/null; then
   echo ">> Podman: pruning all images, containers, and build cache..."
-  if podman system prune --all --force 2>&1; then
-    podman system df
+  if sudo podman system prune --all --force 2>&1; then
+    sudo podman system df
   else
     echo "   podman prune failed (namespace/uid issue?) — try running directly: podman system prune --all --force"
   fi
