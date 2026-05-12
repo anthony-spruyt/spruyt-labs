@@ -33,7 +33,7 @@ Before analyzing, build awareness of the PR beyond just its body:
 
 - Invoke it as a subagent — it has repo-specific analysis logic
 - Pass PR number, HEAD SHA, and CI context
-- **After subagent returns:** cross-check its verdict against the CI Decision Matrix below — if the subagent says SAFE but PR CI is failing (and main is passing), override to FIXABLE minimum
+- **After subagent returns:** apply CI Verdict Gate below — override to FIXABLE if CI is red
 
 ### If no custom agent:
 
@@ -41,29 +41,13 @@ Before analyzing, build awareness of the PR beyond just its body:
 - Fetch changelog/release notes for the updated dependency
 - Check for breaking changes, deprecations, required migrations
 - Assess risk: semver jump size, how central the dependency is, CI results
-- **Before finalizing verdict:** apply the CI Decision Matrix below — if PR CI is failing and main CI is passing, your verdict MUST be FIXABLE minimum, never SAFE
+- **Before finalizing verdict:** apply CI Verdict Gate below — if CI is red, verdict MUST be FIXABLE minimum
 
-## CI Decision Matrix (MANDATORY)
+## CI Verdict Gate (MANDATORY)
 
-Always verify CI on both PR and main before determining verdict:
+**If CI is red on the PR, the verdict CANNOT be SAFE. Verdict must be FIXABLE at minimum.**
 
-```bash
-gh pr checks <<PR_NUMBER>> --repo <<REPO>>
-gh run list --branch main --repo <<REPO>> --limit 1 --json conclusion,databaseId
-```
-
-| PR CI | Main CI | Verdict Impact |
-|-------|---------|----------------|
-| pass  | pass    | No CI concern |
-| fail  | pass    | **PR introduced failure — cannot be SAFE** |
-| fail  | fail    | Pre-existing — note in summary, does not block SAFE |
-| pass  | fail    | PR fixed a failure — positive signal |
-
-**Rules:**
-- Never speculate about "pre-existing" failures — VERIFY by checking main branch CI
-- If PR CI fails and main CI passes → minimum verdict is FIXABLE, not SAFE
-- If both fail on the same jobs → genuinely pre-existing, continue analysis
-- "Pre-existing" without evidence = wrong. Check main first.
+No exceptions. No reasoning around it. Not "the CVEs are pre-existing." Not "main would also fail." Not "the failure is unrelated to this update." CI red = not SAFE. The fix pipeline handles FIXABLE verdicts automatically.
 
 ## Phase 3: Submit Result via MCP (MANDATORY)
 
