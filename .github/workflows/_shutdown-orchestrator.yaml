@@ -41,7 +41,7 @@ jobs:
           cache-from: "type=gha"
           cache-to: "type=gha,mode=max"
       - name: "Trivy vulnerability scan"
-        uses: "anthony-spruyt/repo-operator/.github/actions/trivy-scan@8425319a660f72eb27a2cf4b160c8a916d8affe2" # main
+        uses: "anthony-spruyt/repo-operator/.github/actions/trivy-scan@main"
         with:
           image-ref: "local/shutdown-orchestrator:ci"
           trivyignores: ".trivyignore.yaml"
