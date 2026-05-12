@@ -39,9 +39,12 @@ Before analyzing, build awareness of the PR beyond just its body:
 ### If no custom agent:
 
 - Read the full PR diff (all commits, including any fix commits) and identify what changed
-- Fetch changelog/release notes for the updated dependency
-- Check for breaking changes, deprecations, required migrations
-- Assess risk: semver jump size, how central the dependency is, CI results
+- **Investigate upstream changes** — a diff showing only a hash or version bump tells you nothing. You must trace what actually changed:
+  - For org-owned images (`ghcr.io/anthony-spruyt/*`): check the source repo (e.g. `container-images`) for recent PRs, commits, or releases that produced the new version/digest
+  - For digest-only updates: the content changed even though the tag didn't. Investigate what changed between digests — never assume "digest only = safe"
+  - For versioned updates: fetch changelog/release notes for the updated dependency
+- Check for breaking changes, deprecations, required migrations based on what you found upstream
+- Assess risk: magnitude of upstream changes, how central the dependency is, CI results
 - **Before finalizing verdict:** apply CI Verdict Gate below — if CI is red, verdict MUST be FIXABLE minimum
 
 ## CI Verdict Gate (MANDATORY)
