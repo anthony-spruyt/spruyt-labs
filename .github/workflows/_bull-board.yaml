@@ -5,6 +5,7 @@ on:
   workflow_call: {}
 permissions:
   contents: "read"
+  security-events: "write"
 env:
   WORKDIR: "ts/agent-queue-worker/bull-board"
 jobs:
@@ -39,12 +40,8 @@ jobs:
           cache-from: "type=gha"
           cache-to: "type=gha,mode=max"
       - name: "Trivy vulnerability scan"
-        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1"
+        uses: "anthony-spruyt/repo-operator/.github/actions/trivy-scan@main"
         with:
           image-ref: "local/bull-board:ci"
-          scanners: "vuln"
-          format: "table"
-          severity: "CRITICAL,HIGH"
-          ignore-unfixed: true
-          exit-code: "1"
           trivyignores: ".trivyignore.yaml"
+          category: "trivy-bull-board"
