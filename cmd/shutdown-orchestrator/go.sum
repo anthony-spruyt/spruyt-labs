@@ -172,6 +172,8 @@ github.com/siderolabs/talos/pkg/machinery v1.12.6 h1:p8XG6i82Y5MTLeaPDtFv2TnE7UY
 github.com/siderolabs/talos/pkg/machinery v1.12.6/go.mod h1:F0l+dmKA7CA1tZ0KyG2P64ktFz7cHk3kwSam8gObSYU=
 github.com/siderolabs/talos/pkg/machinery v1.13.0 h1:nNfAUqgD/yOb4RZAc3xrQXKYllIK36RPaJacNQQC3TI=
 github.com/siderolabs/talos/pkg/machinery v1.13.0/go.mod h1:70Up2PI+g6wxW4rJ8AIlZO0MfQ8gglyfqsyBv0PdnSo=
+github.com/siderolabs/talos/pkg/machinery v1.13.2 h1:S7WJhBR+M+g6JgX9ht22Mb5cTg1cgWcoqRpr6/YY/fU=
+github.com/siderolabs/talos/pkg/machinery v1.13.2/go.mod h1:70Up2PI+g6wxW4rJ8AIlZO0MfQ8gglyfqsyBv0PdnSo=
 github.com/spf13/pflag v1.0.9 h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stoewer/go-strcase v1.3.0 h1:g0eASXYtp+yvN9fK8sH94oCIk0fau9uV1/ZdJ0AVEzs=
@@ -335,6 +337,7 @@ k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a h1:xCeOEAOoGYl2jnJoHkC3hk
 k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a/go.mod h1:uGBT7iTA6c6MvqUvSXIaYZo9ukscABYi2btjhvgKGZ0=
 k8s.io/streaming v0.36.0 h1:agnTxU+NFulUrtYzXUGKO3ndEa8jKwht1Kwn9nu9x+4=
 k8s.io/streaming v0.36.0/go.mod h1:z6fV3D+NVkoeqRMtWwlUZK6U17SY/LqNzOxWL6GyR/s=
+k8s.io/streaming v0.36.1/go.mod h1:z6fV3D+NVkoeqRMtWwlUZK6U17SY/LqNzOxWL6GyR/s=
 k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 h1:SjGebBtkBqHFOli+05xYbK8YF1Dzkbzn+gDM4X9T4Ck=
 k8s.io/utils v0.0.0-20251002143259-bc988d571ff4/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 h1:AZYQSJemyQB5eRxqcPky+/7EdBj0xi3g0ZcxxJ7vbWU=
