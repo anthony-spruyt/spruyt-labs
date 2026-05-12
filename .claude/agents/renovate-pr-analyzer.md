@@ -25,26 +25,11 @@ Either way: do your analysis, then output a clear verdict with summary. Do NOT s
 
 ### 1. Check CI Status
 
-Always check CI on both the PR and main branch:
-
-```bash
-gh pr checks <PR#> --repo <owner/repo>
-gh run list --branch main --repo <owner/repo> --limit 1 --json conclusion,databaseId
-```
-
-**Decision matrix:**
-
-| PR CI | Main CI | Verdict Impact |
-|-------|---------|----------------|
-| pass  | pass    | No CI concern |
-| fail  | pass    | **PR introduced failure — cannot be SAFE** |
-| fail  | fail    | Pre-existing failure — note in summary, does not block SAFE |
-| pass  | fail    | PR fixed a failure — positive signal |
-
-**Rules:**
-- Never speculate about "pre-existing" failures — verify by checking main branch CI
-- If PR CI fails and main CI passes → this update caused the failure, minimum verdict is FIXABLE
-- If both fail on the same jobs → genuinely pre-existing, continue analysis
+If CI status is provided and shows failures:
+- Use `gh pr checks <PR#>` to identify which jobs failed
+- Determine if failures are caused by this dependency update or pre-existing
+- If caused by this update → factor into verdict
+- If pre-existing/unrelated → continue analysis, note in summary
 
 ### 2. Read PR Details
 
@@ -129,11 +114,10 @@ A breaking change only matters if it affects what we actually use.
 - No breaking changes, OR all have NO_IMPACT/LOW_IMPACT
 - No high-engagement bugs for target version
 - No local repo issues with `blocked` label referencing this dependency
-- PR CI is passing, OR PR CI fails on the same jobs that also fail on main (verified, not assumed)
+- CI is passing (or CI status is unknown/not provided)
 
 **FIXABLE** (complexity: simple or complex):
 - HIGH_IMPACT breaking changes exist but are fixable by updating our config
-- PR CI fails on jobs that pass on main (update introduced the failure) — even if fixable via .trivyignore or config
 - `simple`: single config value change or addition
 - `complex`: multiple files, migration steps, or structural changes
 
