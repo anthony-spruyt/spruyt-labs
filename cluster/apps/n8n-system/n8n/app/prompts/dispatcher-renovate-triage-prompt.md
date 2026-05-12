@@ -41,7 +41,7 @@ Before analyzing, build awareness of the PR beyond just its body:
 - Fetch changelog/release notes for the updated dependency
 - Check for breaking changes, deprecations, required migrations
 - Assess risk: semver jump size, how central the dependency is, CI results
-- **Check CI status using the decision matrix below**
+- **Before finalizing verdict:** apply the CI Decision Matrix below — if PR CI is failing and main CI is passing, your verdict MUST be FIXABLE minimum, never SAFE
 
 ## CI Decision Matrix (MANDATORY)
 
