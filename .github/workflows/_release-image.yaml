@@ -1,0 +1,220 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+
+name: "Release Image"
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Image name (e.g., agent-queue-worker)"
+        required: true
+        type: "string"
+      workdir:
+        description: "Build context path (e.g., ts/agent-queue-worker)"
+        required: true
+        type: "string"
+      tag-prefix:
+        description: "Git tag prefix (e.g., agent-queue-worker/v)"
+        required: true
+        type: "string"
+      push:
+        description: "Push to GHCR and create release"
+        required: false
+        type: "boolean"
+        default: false
+      language:
+        description: "node or go"
+        required: true
+        type: "string"
+      bump:
+        description: "Semver bump type"
+        required: false
+        type: "string"
+        default: "patch"
+    outputs:
+      digest:
+        description: "Image digest"
+        value: "${{ jobs.build.outputs.digest }}"
+      version:
+        description: "Released version"
+        value: "${{ jobs.resolve-version.outputs.version }}"
+concurrency:
+  group: "release-${{ inputs.image }}-${{ github.ref }}"
+  cancel-in-progress: false
+permissions:
+  contents: "write"
+  packages: "write"
+  id-token: "write"
+  attestations: "write"
+  security-events: "write"
+jobs:
+  resolve-version:
+    name: "Resolve version"
+    runs-on: "ubuntu-latest"
+    outputs:
+      tag: "${{ steps.bump.outputs.tag }}"
+      version: "${{ steps.bump.outputs.version }}"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+      - name: "Compute next version"
+        id: "bump"
+        env:
+          BUMP: "${{ inputs.bump }}"
+          PREFIX: "${{ inputs.tag-prefix }}"
+        run: |
+          LATEST=$(git tag --list "${PREFIX}*" --sort=-v:refname | head -n 1)
+
+          if [ -z "$LATEST" ]; then
+            CURRENT="0.0.0"
+          else
+            CURRENT="${LATEST#"${PREFIX}"}"
+          fi
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "::notice::Bumping $BUMP: $CURRENT -> $VERSION"
+  test:
+    name: "Test"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - name: "Setup Node.js"
+        if: "inputs.language == 'node'"
+        uses: "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" # v6
+        with:
+          node-version: "24"
+      - name: "Type check (Node)"
+        if: "inputs.language == 'node'"
+        working-directory: "${{ inputs.workdir }}"
+        run: npm ci --ignore-scripts && npx tsc --noEmit
+      - name: "Setup Go"
+        if: "inputs.language == 'go'"
+        uses: "actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c" # v6
+        with:
+          go-version-file: "${{ inputs.workdir }}/go.mod"
+          cache-dependency-path: "${{ inputs.workdir }}/go.sum"
+      - name: "Run tests (Go)"
+        if: "inputs.language == 'go'"
+        working-directory: "${{ inputs.workdir }}"
+        run: go test -race ./...
+  build:
+    name: "Build, scan and release"
+    needs:
+      - "resolve-version"
+      - "test"
+    runs-on: "ubuntu-latest"
+    outputs:
+      digest: "${{ steps.push.outputs.digest }}"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - name: "Set up Docker Buildx"
+        uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4
+      - name: "Login to GHCR"
+        if: "inputs.push"
+        uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4
+        with:
+          registry: "ghcr.io"
+          username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
+      - name: "Docker metadata"
+        id: "meta"
+        uses: "docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf" # v6
+        with:
+          images: "ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}"
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.resolve-version.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.resolve-version.outputs.tag }}
+            type=raw,value=latest
+      - name: "Extract Go version"
+        if: "inputs.language == 'go'"
+        id: "go-version"
+        run: echo "version=$(grep '^go ' ${{ inputs.workdir }}/go.mod | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - name: "Build image (CI only)"
+        if: "!inputs.push"
+        uses: "docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f" # v7
+        with:
+          context: "${{ inputs.workdir }}"
+          push: false
+          load: true
+          tags: "local/${{ inputs.image }}:ci"
+          build-args: "${{ inputs.language == 'go' && format('GO_VERSION={0}\nVERSION={1}\nCOMMIT={2}', steps.go-version.outputs.version, needs.resolve-version.outputs.tag, github.sha) || '' }}"
+          cache-from: "type=gha"
+          cache-to: "type=gha,mode=max"
+      - name: "Build and push (release)"
+        if: "inputs.push"
+        id: "push"
+        uses: "docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f" # v7
+        with:
+          context: "${{ inputs.workdir }}"
+          push: true
+          tags: "${{ steps.meta.outputs.tags }}"
+          labels: "${{ steps.meta.outputs.labels }}"
+          build-args: "${{ inputs.language == 'go' && format('GO_VERSION={0}\nVERSION={1}\nCOMMIT={2}', steps.go-version.outputs.version, needs.resolve-version.outputs.tag, github.sha) || '' }}"
+          cache-from: "type=gha"
+          cache-to: "type=gha,mode=max"
+          sbom: true
+          provenance: "mode=max"
+      - name: "Trivy vulnerability scan"
+        uses: "anthony-spruyt/repo-operator/.github/actions/trivy-scan@main"
+        with:
+          image-ref: "${{ inputs.push && format('ghcr.io/{0}/{1}:{2}', github.repository_owner, inputs.image, needs.resolve-version.outputs.version) || format('local/{0}:ci', inputs.image) }}"
+          trivyignores: ".trivyignore.yaml"
+          category: "trivy-${{ inputs.image }}"
+      - name: "Generate provenance attestation"
+        if: "inputs.push"
+        uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
+        with:
+          subject-name: "ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}"
+          subject-digest: "${{ steps.push.outputs.digest }}"
+          push-to-registry: true
+      - name: "Create git tag"
+        if: "inputs.push"
+        env:
+          TAG: "${{ needs.resolve-version.outputs.tag }}"
+          PREFIX: "${{ inputs.tag-prefix }}"
+        run: |
+          git tag "${PREFIX}${TAG#v}"
+          git push origin "${PREFIX}${TAG#v}"
+      - name: "Generate release notes"
+        if: "inputs.push"
+        env:
+          IMAGE: "${{ inputs.image }}"
+          TAG: "${{ needs.resolve-version.outputs.tag }}"
+          DIGEST: "${{ steps.push.outputs.digest }}"
+          OWNER: "${{ github.repository_owner }}"
+        run: |
+          {
+            echo 'RELEASE_NOTES<<NOTES_EOF'
+            printf '## Container Image\n\n'
+            printf '```\n'
+            printf 'ghcr.io/%s/%s:%s\n' "${OWNER}" "${IMAGE}" "${TAG#v}"
+            printf '```\n\n'
+            # shellcheck disable=SC2016
+            printf '**Digest:** `%s`\n\n' "${DIGEST}"
+            printf '\n'
+            echo 'NOTES_EOF'
+          } >> "$GITHUB_ENV"
+      - name: "Create GitHub Release"
+        if: "inputs.push"
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          IMAGE: "${{ inputs.image }}"
+          TAG: "${{ needs.resolve-version.outputs.tag }}"
+          PREFIX: "${{ inputs.tag-prefix }}"
+        run: |
+          gh release create "${PREFIX}${TAG#v}" \
+            --title "${IMAGE} ${TAG}" \
+            --notes "${RELEASE_NOTES}"
