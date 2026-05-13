@@ -15,10 +15,12 @@ concurrency:
 permissions:
   actions: "write"
   contents: "write"
-
+  packages: "write"
   pull-requests: "write"
   security-events: "write"
   statuses: "write"
+  id-token: "write"
+  attestations: "write"
 jobs:
   changes:
     name: "Detect changes"
@@ -90,27 +92,57 @@ jobs:
   shutdown-orchestrator:
     needs: "changes"
     if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
-    uses: "./.github/workflows/_shutdown-orchestrator.yaml"
+    uses: "./.github/workflows/_release-image.yaml"
+    with:
+      image: "shutdown-orchestrator"
+      workdir: "cmd/shutdown-orchestrator"
+      tag-prefix: "shutdown-orchestrator/v"
+      language: "go"
+      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   kata-tap-qdisc-fix:
     needs: "changes"
     if: "needs.changes.outputs.kata-tap-qdisc-fix == 'true'"
-    uses: "./.github/workflows/_kata-tap-qdisc-fix.yaml"
+    uses: "./.github/workflows/_release-image.yaml"
+    with:
+      image: "kata-tap-qdisc-fix"
+      workdir: "cmd/kata-tap-qdisc-fix"
+      tag-prefix: "kata-tap-qdisc-fix/v"
+      language: "go"
+      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   mcp-header-proxy:
     needs: "changes"
     if: "needs.changes.outputs.mcp-header-proxy == 'true'"
-    uses: "./.github/workflows/_mcp-header-proxy.yaml"
+    uses: "./.github/workflows/_release-image.yaml"
+    with:
+      image: "mcp-header-proxy"
+      workdir: "cmd/mcp-header-proxy"
+      tag-prefix: "mcp-header-proxy/v"
+      language: "go"
+      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   agent-queue-worker:
     needs: "changes"
     if: "needs.changes.outputs.agent-queue-worker == 'true'"
-    uses: "./.github/workflows/_agent-queue-worker.yaml"
+    uses: "./.github/workflows/_release-image.yaml"
+    with:
+      image: "agent-queue-worker"
+      workdir: "ts/agent-queue-worker"
+      tag-prefix: "agent-queue-worker/v"
+      language: "node"
+      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   bull-board:
     needs: "changes"
     if: "needs.changes.outputs.bull-board == 'true'"
-    uses: "./.github/workflows/_bull-board.yaml"
+    uses: "./.github/workflows/_release-image.yaml"
+    with:
+      image: "bull-board"
+      workdir: "ts/agent-queue-worker/bull-board"
+      tag-prefix: "bull-board/v"
+      language: "node"
+      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   summary:
     needs:
