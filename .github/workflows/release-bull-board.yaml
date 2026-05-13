@@ -17,137 +17,15 @@ permissions:
   packages: "write"
   id-token: "write"
   attestations: "write"
-env:
-  IMAGE: "ghcr.io/anthony-spruyt/bull-board"
-  WORKDIR: "ts/agent-queue-worker/bull-board"
-  TAG_PREFIX: "bull-board/v"
+  security-events: "write"
 jobs:
-  resolve-version:
-    name: "Resolve version"
-    runs-on: "ubuntu-latest"
-    outputs:
-      tag: "${{ steps.bump.outputs.tag }}"
-      version: "${{ steps.bump.outputs.version }}"
-    steps:
-      - name: "Checkout"
-        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-      - name: "Compute next version"
-        id: "bump"
-        env:
-          BUMP: "${{ inputs.bump }}"
-          PREFIX: "${{ env.TAG_PREFIX }}"
-        run: |
-          # Find latest tag matching prefix
-          LATEST=$(git tag --list "${PREFIX}*" --sort=-v:refname | head -n 1)
-
-          if [ -z "$LATEST" ]; then
-            CURRENT="0.0.0"
-          else
-            CURRENT="${LATEST#"${PREFIX}"}"
-          fi
-
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-
-          case "$BUMP" in
-            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
-            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-            patch) PATCH=$((PATCH + 1)) ;;
-          esac
-
-          VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-          echo "::notice::Bumping $BUMP: $CURRENT -> $VERSION"
-  test:
-    name: "Test"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "Checkout"
-        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
-      - name: "Setup Node.js"
-        uses: "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" # v6
-        with:
-          node-version: "24"
-      - name: "Type check"
-        working-directory: "${{ env.WORKDIR }}"
-        run: npm ci --ignore-scripts && npx tsc --noEmit
   release:
-    name: "Build, push and release"
-    needs:
-      - "resolve-version"
-      - "test"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "Checkout"
-        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
-      - name: "Set up Docker Buildx"
-        uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4
-      - name: "Login to GHCR"
-        uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4
-        with:
-          registry: "ghcr.io"
-          username: "${{ github.actor }}"
-          password: "${{ secrets.GITHUB_TOKEN }}"
-      - name: "Docker metadata"
-        id: "meta"
-        uses: "docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf" # v6
-        with:
-          images: "${{ env.IMAGE }}"
-          tags: |
-            type=semver,pattern={{version}},value=${{ needs.resolve-version.outputs.tag }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.resolve-version.outputs.tag }}
-            type=raw,value=latest
-      - name: "Build and push"
-        id: "push"
-        uses: "docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f" # v7
-        with:
-          context: "${{ env.WORKDIR }}"
-          push: true
-          tags: "${{ steps.meta.outputs.tags }}"
-          labels: "${{ steps.meta.outputs.labels }}"
-          cache-from: "type=gha"
-          cache-to: "type=gha,mode=max"
-          sbom: true
-          provenance: "mode=max"
-      - name: "Generate provenance attestation"
-        uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
-        with:
-          subject-name: "${{ env.IMAGE }}"
-          subject-digest: "${{ steps.push.outputs.digest }}"
-          push-to-registry: true
-      - name: "Create git tag"
-        env:
-          TAG: "${{ needs.resolve-version.outputs.tag }}"
-          PREFIX: "${{ env.TAG_PREFIX }}"
-        run: |
-          git tag "${PREFIX}${TAG#v}"
-          git push origin "${PREFIX}${TAG#v}"
-      - name: "Generate release notes"
-        id: "notes"
-        env:
-          TAG: "${{ needs.resolve-version.outputs.tag }}"
-          DIGEST: "${{ steps.push.outputs.digest }}"
-        run: |
-          {
-            echo 'RELEASE_NOTES<<NOTES_EOF'
-            printf '## Container Image\n\n'
-            printf '```\n'
-            printf 'ghcr.io/anthony-spruyt/bull-board:%s\n' "${TAG#v}"
-            printf '```\n\n'
-            # shellcheck disable=SC2016
-            printf '**Digest:** `%s`\n\n' "${DIGEST}"
-            printf '\n'
-            echo 'NOTES_EOF'
-          } >> "$GITHUB_ENV"
-      - name: "Create GitHub Release"
-        env:
-          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          TAG: "${{ needs.resolve-version.outputs.tag }}"
-          PREFIX: "${{ env.TAG_PREFIX }}"
-        run: |
-          gh release create "${PREFIX}${TAG#v}" \
-            --title "bull-board ${TAG}" \
-            --notes "${RELEASE_NOTES}"
+    uses: "./.github/workflows/_release-image.yaml"
+    with:
+      image: "bull-board"
+      workdir: "ts/agent-queue-worker/bull-board"
+      tag-prefix: "bull-board/v"
+      language: "node"
+      push: true
+      bump: "${{ inputs.bump }}"
+    secrets: "inherit"
