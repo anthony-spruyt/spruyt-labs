@@ -55,7 +55,7 @@ export class Processor {
       return { status: "duplicate" };
     }
 
-    const timer = metrics.jobDuration.startTimer({ queue: "agent", role });
+    const timer = metrics.jobDuration.startTimer({ queue: "agent-jobs", role });
     const deadline = this.rejectAfter(
       timeout,
       `Job ${job.id} timed out after ${timeout}ms`
@@ -94,7 +94,7 @@ export class Processor {
         const staleness = await roleDef.checkStaleness(job.data, this.config);
         if (staleness.stale) {
           logger.info("Job stale", { ...fields, reason: staleness.reason });
-          metrics.staleDiscards.inc({ queue: "agent", role });
+          metrics.staleDiscards.inc({ queue: "agent-jobs", role });
           return { status: "stale" };
         }
       }
@@ -135,10 +135,10 @@ export class Processor {
           ? "timeout"
           : "error";
       if (reason === "timeout") {
-        metrics.jobTimeouts.inc({ queue: "agent", role });
+        metrics.jobTimeouts.inc({ queue: "agent-jobs", role });
       } else {
         metrics.jobFailures.inc({
-          queue: "agent",
+          queue: "agent-jobs",
           role,
           reason: "processor_error",
         });

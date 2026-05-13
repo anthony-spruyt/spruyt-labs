@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Request, type Response } from "express";
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
@@ -30,7 +30,7 @@ const connection = {
 };
 
 const prefix = process.env.QUEUE_PREFIX ?? "agent:queue";
-const queue = new Queue("agent", { connection, prefix });
+const queue = new Queue("agent-jobs", { connection, prefix });
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/");
@@ -42,7 +42,7 @@ createBullBoard({
 
 const app = express();
 
-app.get("/healthz", async (_req, res) => {
+app.get("/healthz", async (_req: Request, res: Response) => {
   try {
     const client = await queue.client;
     await client.ping();
@@ -52,7 +52,7 @@ app.get("/healthz", async (_req, res) => {
   }
 });
 
-app.get("/admin/api/active", async (_req, res) => {
+app.get("/admin/api/active", async (_req: Request, res: Response) => {
   try {
     const jobs = await queue.getJobs(["active"]);
     const result = jobs.map((j) => ({
@@ -74,64 +74,72 @@ app.get("/admin/api/active", async (_req, res) => {
   }
 });
 
-app.post("/admin/api/jobs/:jobId/force-fail", async (req, res) => {
-  try {
-    const jobId = decodeURIComponent(req.params.jobId).replace(/[\n\r\t]/g, "");
-    const job = await queue.getJob(jobId);
-    if (!job) return res.status(404).json({ error: "Job not found" });
-    if (!(await job.isActive()))
-      return res.status(400).json({ error: "Job is not active" });
+app.post(
+  "/admin/api/jobs/:jobId/force-fail",
+  async (req: Request<{ jobId: string }>, res: Response) => {
+    try {
+      const jobId = decodeURIComponent(req.params.jobId).replace(
+        /[\n\r\t]/g,
+        ""
+      );
+      const job = await queue.getJob(jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+      if (!(await job.isActive()))
+        return res.status(400).json({ error: "Job is not active" });
 
-    // Notify worker to resolve in-memory callback and free concurrency slot
-    let workerNotified = false;
-    if (workerUrl && workerSecret) {
-      try {
-        const resp = await fetch(
-          `${workerUrl}/jobs/${encodeURIComponent(jobId)}/fail`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${workerSecret}`,
-            },
-            body: JSON.stringify({ reason: "Force failed via admin" }),
-            signal: AbortSignal.timeout(5000),
-          }
-        );
-        workerNotified = resp.ok;
-      } catch (err) {
-        console.warn(`Admin: failed to notify worker for ${jobId}: ${err}`);
+      // Notify worker to resolve in-memory callback and free concurrency slot
+      let workerNotified = false;
+      if (workerUrl && workerSecret) {
+        try {
+          const resp = await fetch(
+            `${workerUrl}/jobs/${encodeURIComponent(jobId)}/fail`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${workerSecret}`,
+              },
+              body: JSON.stringify({ reason: "Force failed via admin" }),
+              signal: AbortSignal.timeout(5000),
+            }
+          );
+          workerNotified = resp.ok;
+        } catch (err) {
+          console.warn(`Admin: failed to notify worker for ${jobId}: ${err}`);
+        }
       }
+
+      // Redis-side cleanup (moves job to failed, cleans app keys)
+      const client = await queue.client;
+      const lockKey = `${prefix}:agent-jobs:${jobId}:lock`;
+      const token = `admin-force-fail-${Date.now()}`;
+      await client.del(lockKey);
+      await client.set(lockKey, token, "PX", 30000);
+      job.discard();
+      await job.moveToFailed(new Error("Force failed via admin"), token, false);
+
+      const appKeys = [`agent:active:${jobId}`];
+      const sessionKeys = await client.keys(`agent:session:${jobId}:*`);
+      const resultKeys = await client.keys(`agent:result:${jobId}:*`);
+      const allKeys = [...appKeys, ...sessionKeys, ...resultKeys].filter(
+        Boolean
+      );
+      if (allKeys.length > 0) await client.del(...allKeys);
+
+      console.log(
+        `Admin: force-failed job ${jobId}, cleaned ${allKeys.length} app keys, worker notified: ${workerNotified}`
+      );
+      res.json({
+        failed: true,
+        jobId,
+        keysDeleted: allKeys.length,
+        workerNotified,
+      });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
     }
-
-    // Redis-side cleanup (moves job to failed, cleans app keys)
-    const client = await queue.client;
-    const lockKey = `${prefix}:agent:${jobId}:lock`;
-    const token = `admin-force-fail-${Date.now()}`;
-    await client.del(lockKey);
-    await client.set(lockKey, token, "PX", 30000);
-    job.discard();
-    await job.moveToFailed(new Error("Force failed via admin"), token, false);
-
-    const appKeys = [`agent:active:${jobId}`];
-    const sessionKeys = await client.keys(`agent:session:${jobId}:*`);
-    const resultKeys = await client.keys(`agent:result:${jobId}:*`);
-    const allKeys = [...appKeys, ...sessionKeys, ...resultKeys].filter(Boolean);
-    if (allKeys.length > 0) await client.del(...allKeys);
-
-    console.log(
-      `Admin: force-failed job ${jobId}, cleaned ${allKeys.length} app keys, worker notified: ${workerNotified}`
-    );
-    res.json({
-      failed: true,
-      jobId,
-      keysDeleted: allKeys.length,
-      workerNotified,
-    });
-  } catch (err) {
-    res.status(500).json({ error: String(err) });
   }
-});
+);
 
 const adminHtml = `<!DOCTYPE html>
 <html><head>
@@ -206,7 +214,7 @@ async function kill(jobId) {
 </script>
 </body></html>`;
 
-app.get("/admin", (_req, res) => {
+app.get("/admin", (_req: Request, res: Response) => {
   res.setHeader("Content-Type", "text/html");
   res.send(adminHtml);
 });

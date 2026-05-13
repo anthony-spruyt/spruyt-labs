@@ -110,7 +110,7 @@ export async function handleAddJob(
         }
 
         metrics.dedupActionCounter.inc({
-          queue: "agent",
+          queue: "agent-jobs",
           role: data.role,
           action: "buffer",
         });
@@ -131,7 +131,7 @@ export async function handleAddJob(
 
       if (decision.action === "discard") {
         metrics.dedupActionCounter.inc({
-          queue: "agent",
+          queue: "agent-jobs",
           role: data.role,
           action: "discard",
         });
@@ -147,7 +147,7 @@ export async function handleAddJob(
         await deps.redis.ltrim(bufKey, -deps.config.SRE_BATCH_MAX_SIZE, -1);
         await deps.redis.expire(bufKey, 3600);
         metrics.dedupActionCounter.inc({
-          queue: "agent",
+          queue: "agent-jobs",
           role: data.role,
           action: "buffer",
         });
@@ -165,7 +165,7 @@ export async function handleAddJob(
       );
       if (updated) {
         metrics.dedupActionCounter.inc({
-          queue: "agent",
+          queue: "agent-jobs",
           role: data.role,
           action: "replace",
         });
@@ -196,7 +196,7 @@ export async function handleAddJob(
   } catch (err) {
     if (isDuplicateJobError(err)) {
       metrics.dedupActionCounter.inc({
-        queue: "agent",
+        queue: "agent-jobs",
         role: data.role,
         action: "discard",
       });

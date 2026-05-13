@@ -171,7 +171,11 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     await circuitBreaker.trip(job.data.repo, job.id!, job.attemptsMade);
 
     if (job.attemptsMade >= (job.opts.attempts ?? 1)) {
-      metrics.jobExhausted.inc({ queue: "agent", role, repo: job.data.repo });
+      metrics.jobExhausted.inc({
+        queue: "agent-jobs",
+        role,
+        repo: job.data.repo,
+      });
       logger.error("Job exhausted all attempts", {
         jobId: job.id,
         role,
@@ -179,7 +183,11 @@ export function setupLifecycle(deps: LifecycleDeps): void {
         error: err.message,
       });
     } else {
-      metrics.jobFailures.inc({ queue: "agent", role, reason: "job_failed" });
+      metrics.jobFailures.inc({
+        queue: "agent-jobs",
+        role,
+        reason: "job_failed",
+      });
       logger.warn("Job failed, will retry", {
         jobId: job.id,
         role,
@@ -194,7 +202,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     try {
       const waiting = await queue.getWaitingCount();
       const prioritized = await queue.getJobCountByTypes("prioritized");
-      metrics.queueDepth.set({ queue: "agent" }, waiting + prioritized);
+      metrics.queueDepth.set({ queue: "agent-jobs" }, waiting + prioritized);
     } catch {
       // Valkey blip — skip this tick
     }

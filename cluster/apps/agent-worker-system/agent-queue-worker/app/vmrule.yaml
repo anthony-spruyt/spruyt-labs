@@ -22,7 +22,7 @@ spec:
             description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in 15 minutes."
         - alert: AgentQueueStuck
           expr: |
-            agent_queue_depth{queue="agent"} > 0
+            agent_queue_depth{queue="agent-jobs"} > 0
           for: 75m
           labels:
             severity: warning

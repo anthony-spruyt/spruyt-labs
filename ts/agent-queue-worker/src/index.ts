@@ -26,13 +26,13 @@ const connection = {
 
 const queueOpts = { connection, prefix: "agent:queue" };
 
-const queue = new Queue("agent", queueOpts);
+const queue = new Queue("agent-jobs", queueOpts);
 const registry = createDefaultRegistry(config, metrics.sreBatchSize);
 const processor = new Processor(redis, config, registry);
 const circuitBreaker = new CircuitBreaker(redis);
 const rateLimiter = new RateLimiter(redis);
 
-const worker = new Worker("agent", async (job) => processor.process(job), {
+const worker = new Worker("agent-jobs", async (job) => processor.process(job), {
   ...queueOpts,
   concurrency: 1,
   stalledInterval: 120_000,
