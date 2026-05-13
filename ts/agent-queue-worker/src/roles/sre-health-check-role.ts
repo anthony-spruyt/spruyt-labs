@@ -2,7 +2,7 @@ import type { AgentJob } from "../job/schema.js";
 import type { DuplicateAction, JobState, RoleDefinition } from "./types.js";
 
 export const sreHealthCheckRole: RoleDefinition = {
-  timeoutMs: 900_000,
+  timeoutMs: 1_800_000,
   buildIdentity(repo: string, data: Record<string, unknown>): string {
     const dedupKey = data.dedup_key;
     if (!dedupKey)

@@ -2,7 +2,7 @@ import type { AgentJob } from "../job/schema.js";
 import type { DuplicateAction, JobState, RoleDefinition } from "./types.js";
 
 export const executeIssueRole: RoleDefinition = {
-  timeoutMs: 3_600_000,
+  timeoutMs: 10_800_000,
   buildIdentity(repo: string, data: Record<string, unknown>): string {
     const issueNumber = data.issue_number;
     if (!issueNumber)

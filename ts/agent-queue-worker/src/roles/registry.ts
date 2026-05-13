@@ -37,11 +37,11 @@ export function createDefaultRegistry(
   const registry = new RoleRegistry();
   registry.register(
     "renovate-triage",
-    createRenovateRole("renovate-triage", 600_000)
+    createRenovateRole("renovate-triage", 1_800_000)
   );
   registry.register(
     "renovate-fix",
-    createRenovateRole("renovate-fix", 1_800_000)
+    createRenovateRole("renovate-fix", 5_400_000)
   );
   registry.register("revert", revertRole);
   registry.register("validate", validateRole);

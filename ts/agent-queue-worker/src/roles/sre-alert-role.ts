@@ -28,7 +28,7 @@ export function createSreAlertRole(
   batchSizeHistogram: Histogram
 ): RoleDefinition {
   return {
-    timeoutMs: 900_000,
+    timeoutMs: 2_700_000,
     cooldownMs: config.SRE_COOLDOWN_MS,
     jobOptions: { attempts: 1 },
     buildIdentity(repo: string, _data: Record<string, unknown>): string {

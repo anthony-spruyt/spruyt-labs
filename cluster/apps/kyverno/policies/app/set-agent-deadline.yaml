@@ -32,4 +32,4 @@ spec:
       mutate:
         patchStrategicMerge:
           spec:
-            activeDeadlineSeconds: "{{ to_number(request.object.metadata.annotations.\"agent-timeout\" || `1740`) }}"
+            activeDeadlineSeconds: "{{ to_number(request.object.metadata.annotations.\"agent-timeout\" || `10800`) }}"
