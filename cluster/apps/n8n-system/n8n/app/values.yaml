@@ -193,17 +193,19 @@ main:
     runAsUser: 1000
   readinessProbe: &readinessProbe
     httpGet:
-      path: /healthz
+      path: /healthz/readiness
       port: http
     initialDelaySeconds: 10
     periodSeconds: 10
+    timeoutSeconds: 3
     failureThreshold: 3
   livenessProbe: &livenessProbe
     httpGet:
-      path: /healthz
+      path: /healthz/readiness
       port: http
     initialDelaySeconds: 30
     periodSeconds: 30
+    timeoutSeconds: 3
     failureThreshold: 5
   resources:
     limits:
