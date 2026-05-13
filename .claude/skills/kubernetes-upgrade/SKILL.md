@@ -25,6 +25,14 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 - Read current version from `talos/talconfig.yaml` (`kubernetesVersion`)
 - Classify: **minor** (1.34→1.35, higher risk) or **patch** (1.35.0→1.35.1)
 
+### Phase 0.5: Create GitHub Issue
+
+Create a GitHub issue using the `infra` template so SRE agents see maintenance context. Include:
+- Title: `infra(k8s): upgrade Kubernetes to v<version>`
+- Label: `infra`
+- Summary, motivation (Renovate PR ref if applicable), planned changes, rollback plan, risk level (patch vs minor)
+- Track issue number for commit references (`Ref #<number>`)
+
 ### Phase 1: Breaking Changes Research
 
 Consult `references/breaking-changes-lookup.md` for procedures.
