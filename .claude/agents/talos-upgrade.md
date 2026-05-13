@@ -348,9 +348,29 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 | 60-120s | HEALTH_WARN (peering, PGs recovering) |
 | 120-180s | All PGs active+clean, but HEALTH_WARN may persist due to NOOUT flag |
 | 180-300s | HEALTH_OK (NOOUT flag auto-clears ~60s after PGs are clean) |
-| 300s+ | HEALTH_OK expected; if still WARN, investigate |
+| 300s+ | HEALTH_OK expected; if still WARN, check for stale heartbeat warnings |
 
 **Note:** Rook-Ceph sets a NOOUT flag on OSDs during planned disruptions to prevent unnecessary rebalancing. This flag auto-clears after the OSD rejoins, but adds ~60 seconds of HEALTH_WARN **after** all PGs are already active+clean. This is normal and does not indicate a problem.
+
+**Stale OSD heartbeat warnings (`OSD_SLOW_PING_TIME_BACK` / `OSD_SLOW_PING_TIME_FRONT`):**
+
+These warnings often persist after node reboots and will NOT self-clear. If Ceph is stuck on slow heartbeat warnings after 300s:
+
+```bash
+# Identify which OSD has stale heartbeats
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
+
+# Restart the offending OSD pod (replace <osd-id> with the OSD number from health detail)
+kubectl -n rook-ceph delete pod -l ceph-osd-id=<osd-id>
+
+# Wait for OSD pod to come back
+kubectl -n rook-ceph wait pod -l ceph-osd-id=<osd-id> --for=condition=Ready --timeout=120s
+
+# Verify HEALTH_OK
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health
+```
+
+Do NOT wait indefinitely for these warnings to clear on their own — they stick after reboots and require an OSD restart.
 
 #### Step 4.6: Post progress to issue
 If tracking with an issue, post progress after each worker including Ceph recovery time.
@@ -373,6 +393,8 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 flux get kustomizations -A
 flux get helmreleases -A
 ```
+
+**Ceph heartbeat cleanup:** If `ceph status` shows `OSD_SLOW_PING_TIME_BACK` or `OSD_SLOW_PING_TIME_FRONT` warnings, restart the offending OSD pods (see Phase 4 stale heartbeat instructions). These are common after rolling reboots and will not self-clear.
 
 ### Phase 6: Workload Rebalancing (Optional)
 
