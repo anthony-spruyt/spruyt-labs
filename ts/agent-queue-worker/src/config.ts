@@ -22,6 +22,7 @@ const ConfigSchema = z.object({
   SRE_BATCH_WINDOW_MS: z.coerce.number().int().min(0).default(60_000),
   SRE_COOLDOWN_MS: z.coerce.number().int().min(0).default(300_000),
   SRE_TRIAGE_SUPPRESS_S: z.coerce.number().int().min(0).default(3600),
+  WORKER_CONCURRENCY: z.coerce.number().int().min(1).default(10),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

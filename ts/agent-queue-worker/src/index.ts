@@ -34,7 +34,7 @@ const rateLimiter = new RateLimiter(redis);
 
 const worker = new Worker("agent-jobs", async (job) => processor.process(job), {
   ...queueOpts,
-  concurrency: 1,
+  concurrency: config.WORKER_CONCURRENCY,
   stalledInterval: 120_000,
   lockDuration: 120_000,
   maxStalledCount: 2,
