@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-# Define architecture (CNPG uses x86_64/arm64 not amd64)
+# renovate: depName=cloudnative-pg/cloudnative-pg datasource=github-releases
+VERSION="v1.29.1"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="x86_64" ;;
@@ -12,29 +14,22 @@ aarch64) ARCH="arm64" ;;
   ;;
 esac
 
-# Fetch latest CNPG release tag from GitHub (e.g., v1.28.0)
-LATEST_TAG=$(curl -s https://api.github.com/repos/cloudnative-pg/cloudnative-pg/releases/latest | grep '"tag_name":' | cut -d '"' -f4)
-# Strip 'v' prefix for filename (v1.28.0 -> 1.28.0)
-VERSION="${LATEST_TAG#v}"
+# Remove existing to ensure version update
+if [[ -f /usr/local/bin/kubectl-cnpg ]]; then
+  sudo rm -f /usr/local/bin/kubectl-cnpg
+fi
 
-# Construct download URL
-TARBALL="kubectl-cnpg_${VERSION}_linux_${ARCH}.tar.gz"
-URL="https://github.com/cloudnative-pg/cloudnative-pg/releases/download/${LATEST_TAG}/${TARBALL}"
-
-# Create temp directory
 TMPDIR=$(mktemp -d)
-cd "$TMPDIR"
+trap 'rm -rf "$TMPDIR"' EXIT
 
-# Download and extract
-curl -sLO "$URL"
-tar -xzf "$TARBALL"
-
-# Move binary to /usr/local/bin
-sudo mv kubectl-cnpg /usr/local/bin/kubectl-cnpg
+# CNPG strips the 'v' prefix in filenames
+FILE_VERSION="${VERSION#v}"
+TARBALL="kubectl-cnpg_${FILE_VERSION}_linux_${ARCH}.tar.gz"
+curl -Lo "$TMPDIR/$TARBALL" "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/${VERSION}/${TARBALL}"
+curl -Lo "$TMPDIR/checksums.txt" "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/${VERSION}/cnpg-${FILE_VERSION}-checksums.txt"
+(cd "$TMPDIR" && grep "${TARBALL}$" checksums.txt | sha256sum --check)
+tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
+sudo mv "$TMPDIR/kubectl-cnpg" /usr/local/bin/kubectl-cnpg
 sudo chmod +x /usr/local/bin/kubectl-cnpg
 
-# Clean up
-cd - >/dev/null
-rm -rf "$TMPDIR"
-
-echo "✅ CNPG kubectl plugin ${LATEST_TAG} installed successfully."
+echo "✅ CNPG kubectl plugin ${VERSION} installed successfully."
