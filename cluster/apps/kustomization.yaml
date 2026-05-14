@@ -50,6 +50,7 @@ resources:
   - ./claude-agents-spruyt-labs-write
   - ./claude-agents-write
   - ./agent-worker-system
+  - ./agentmemory
   - ./brave-search-mcp
   - ./n8n-mcp
   - ./vpa-system

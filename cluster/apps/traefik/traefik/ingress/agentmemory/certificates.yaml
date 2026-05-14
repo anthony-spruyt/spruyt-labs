@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "agentmemory-lan-${EXTERNAL_DOMAIN/./-}"
+  namespace: agentmemory
+spec:
+  secretName: "agentmemory-lan-${EXTERNAL_DOMAIN/./-}-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  dnsNames:
+    - "agentmemory.lan.${EXTERNAL_DOMAIN}"
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "agentmemory-console-lan-${EXTERNAL_DOMAIN/./-}"
+  namespace: agentmemory
+spec:
+  secretName: "agentmemory-console-lan-${EXTERNAL_DOMAIN/./-}-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  dnsNames:
+    - "agentmemory-console.lan.${EXTERNAL_DOMAIN}"
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "agentmemory-mcp-lan-${EXTERNAL_DOMAIN/./-}"
+  namespace: agentmemory
+spec:
+  secretName: "agentmemory-mcp-lan-${EXTERNAL_DOMAIN/./-}-tls"
+  issuerRef:
+    name: ${CLUSTER_ISSUER}
+    kind: ClusterIssuer
+  dnsNames:
+    - "agentmemory-mcp.lan.${EXTERNAL_DOMAIN}"

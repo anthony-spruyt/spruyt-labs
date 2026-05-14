@@ -71,3 +71,8 @@ env:
       secretKeyRef:
         name: traefik-mcp-api-keys
         key: BRAVE_SEARCH_MCP_API_KEY
+  - name: AGENTMEMORY_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: traefik-mcp-api-keys
+        key: AGENTMEMORY_API_KEY

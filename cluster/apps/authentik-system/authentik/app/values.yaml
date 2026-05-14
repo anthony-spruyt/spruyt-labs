@@ -189,6 +189,8 @@ global:
             path: coder-sso.yaml
           - key: technitium-sso.yaml
             path: technitium-sso.yaml
+          - key: agentmemory-sso.yaml
+            path: agentmemory-sso.yaml
 
 authentik:
   log_level: info
