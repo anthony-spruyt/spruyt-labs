@@ -101,6 +101,7 @@ locals {
     "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" : "http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces",
     "OTEL_RESOURCE_ATTRIBUTES" : "agent.namespace=coder-workspaces,workspace.name=${data.coder_workspace.me.name},workspace.owner=${data.coder_workspace_owner.me.name}",
     "AGENTMEMORY_URL" : "http://agentmemory.agentmemory.svc.cluster.local:3111",
+    "AGENTMEMORY_SECRET" : "unused-cluster-internal",
   }
 }
 
