@@ -28,7 +28,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/shutdown-orchestrator
-          tag: 1.1.4@sha256:16a1042f7770edecf676551b66028ec604ca72f2460142bbd87b5b4a354c8591
+          tag: 1.1.5@sha256:74af0bf656c4a6e41aa91b878449b51ae5becaa3ccd4659d0cb80d7d67ff3242
           pullPolicy: IfNotPresent
         env:
           - name: NUT_SERVER
