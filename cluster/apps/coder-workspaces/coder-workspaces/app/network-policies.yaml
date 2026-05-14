@@ -104,6 +104,25 @@ spec:
             - {port: "8083", protocol: TCP}
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-workspace-agentmemory-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: coder-workspace
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agentmemory
+            k8s:app.kubernetes.io/name: agentmemory
+      toPorts:
+        - ports:
+            - {port: "3111", protocol: TCP}
+            - {port: "3112", protocol: TCP}
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow Claude Code CLI OTLP export to observability backends (metrics/logs/traces). Ref #1043.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
