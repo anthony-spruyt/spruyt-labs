@@ -88,9 +88,9 @@ spec:
         - ports:
             - port: "3111"
               protocol: TCP
-            - port: "3113"
-              protocol: TCP
             - port: "3114"
+              protocol: TCP
+            - port: "3116"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json

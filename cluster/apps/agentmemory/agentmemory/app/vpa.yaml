@@ -25,6 +25,12 @@ spec:
           memory: 1Mi
         maxAllowed:
           memory: 256Mi
+      - containerName: viewer-proxy
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 32Mi
       - containerName: worker
         minAllowed:
           cpu: 1m

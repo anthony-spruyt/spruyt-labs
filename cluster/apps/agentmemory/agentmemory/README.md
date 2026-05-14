@@ -12,13 +12,14 @@ Persistent memory system for AI agents using triple-index search (BM25 + vector 
 
 ### Architecture
 
-Three containers share the pod network:
+Four containers share the pod network:
 
-| Container | Image                   | Ports                                  | Purpose                                                 |
-| --------- | ----------------------- | -------------------------------------- | ------------------------------------------------------- |
-| engine    | `iiidev/iii:0.11.2`     | 3111 (HTTP), 3112 (WS), 9464 (metrics) | State store, queue, pub/sub, streaming                  |
-| console   | `iiidev/iii:0.11.2`     | 3114 (HTTP)                            | iii Console — KV browser, OTEL traces, engine dashboard |
-| worker    | `node:20-bookworm-slim` | 3113 (viewer)                          | AgentMemory MCP + viewer via npx                        |
+| Container    | Image                   | Ports                                  | Purpose                                                         |
+| ------------ | ----------------------- | -------------------------------------- | --------------------------------------------------------------- |
+| engine       | `iiidev/iii:0.11.2`     | 3111 (HTTP), 3112 (WS), 9464 (metrics) | State store, queue, pub/sub, streaming                          |
+| console      | `iiidev/iii:0.11.2`     | 3114 (HTTP)                            | iii Console — KV browser, OTEL traces, engine dashboard         |
+| viewer-proxy | `alpine/socat`          | 3116 (viewer)                          | Forwards 0.0.0.0:3116 → 127.0.0.1:3113 (viewer binds localhost) |
+| worker       | `node:20-bookworm-slim` | 3113 (viewer, localhost only)          | AgentMemory MCP + viewer via npx                                |
 
 Worker connects to engine via `ws://localhost:49134`. Engine stores data at `/data` (Ceph block PVC).
 
@@ -26,7 +27,7 @@ Worker connects to engine via `ws://localhost:49134`. Engine stores data at `/da
 
 | Consumer           | Endpoint                                     | Auth            | Ports      |
 | ------------------ | -------------------------------------------- | --------------- | ---------- |
-| Browser (viewer)   | `agentmemory.lan.${EXTERNAL_DOMAIN}`         | Authentik SSO   | 3113       |
+| Browser (viewer)   | `agentmemory.lan.${EXTERNAL_DOMAIN}`         | Authentik SSO   | 3116       |
 | Browser (console)  | `agentmemory-console.lan.${EXTERNAL_DOMAIN}` | Authentik SSO   | 3114       |
 | MCP clients (REST) | `agentmemory-mcp.lan.${EXTERNAL_DOMAIN}`     | Traefik API key | 3111       |
 | Claude agents      | Pod-to-pod                                   | CNP allow-list  | 3111, 3112 |

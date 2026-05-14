@@ -29,7 +29,7 @@ spec:
         - name: agentmemory
           namespace: agentmemory
           passHostHeader: true
-          port: 3113
+          port: 3116
   tls:
     secretName: "agentmemory-lan-${EXTERNAL_DOMAIN/./-}-tls"
 ---

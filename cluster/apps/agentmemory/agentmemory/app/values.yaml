@@ -122,6 +122,56 @@ controllers:
                 port: 3114
               failureThreshold: 30
               periodSeconds: 5
+      viewer-proxy:
+        image:
+          # renovate: datasource=docker depName=docker.io/alpine/socat
+          repository: docker.io/alpine/socat
+          tag: "1.8.0.1"
+          pullPolicy: IfNotPresent
+        args:
+          - TCP-LISTEN:3116,fork,reuseaddr,bind=0.0.0.0
+          - TCP:127.0.0.1:3113
+        securityContext:
+          runAsUser: 65532
+          runAsGroup: 65532
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 1m
+            memory: 16Mi
+          limits:
+            memory: 32Mi
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 3116
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 3116
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 3116
+              failureThreshold: 60
+              periodSeconds: 5
       worker:
         image:
           # renovate: datasource=docker depName=docker.io/library/node
@@ -253,7 +303,7 @@ service:
       ws:
         port: 3112
       viewer:
-        port: 3113
+        port: 3116
       console:
         port: 3114
       metrics:
