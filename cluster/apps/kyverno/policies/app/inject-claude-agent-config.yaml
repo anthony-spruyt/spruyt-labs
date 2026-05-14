@@ -12,8 +12,9 @@ metadata:
     policies.kyverno.io/description: >-
       Injects configuration into Claude agent pods spawned by n8n.
       A shared rule injects GitHub bot credentials (gh CLI config,
-      read-only gitconfig), settings profiles, Context7 API key, and
-      OpenTelemetry env vars into all agent namespaces. The write rule
+      read-only gitconfig), settings profiles, Context7 API key,
+      agentmemory connection, and OpenTelemetry env vars into all
+      agent namespaces. The write rule
       additionally injects SSH key and full gitconfig (with commit
       signing). Per-namespace rules inject MCP configmaps, priority
       classes, and namespace-specific credentials. Repo clone: write
@@ -175,6 +176,10 @@ spec:
                       secretKeyRef:
                         name: mcp-credentials
                         key: context7-api-key
+                  - name: AGENTMEMORY_URL
+                    value: "http://agentmemory.agentmemory.svc.cluster.local:3111"
+                  - name: AGENTMEMORY_SECRET
+                    value: "unused-cluster-internal"
                   - name: CLAUDE_CODE_ENABLE_TELEMETRY
                     value: "1"
                   - name: CLAUDE_CODE_ENHANCED_TELEMETRY_BETA
