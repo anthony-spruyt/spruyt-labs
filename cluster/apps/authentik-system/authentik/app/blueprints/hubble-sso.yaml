@@ -65,5 +65,15 @@ entries:
       config:
         authentik_host: https://auth.${EXTERNAL_DOMAIN}/
         kubernetes_namespace: kube-system
+        kubernetes_json_patches:
+          deployment:
+            - op: add
+              path: "/spec/template/spec/containers/0/resources"
+              value:
+                requests:
+                  cpu: 5m
+                  memory: 32Mi
+                limits:
+                  memory: 64Mi
       providers:
         - !KeyOf hubble_provider
