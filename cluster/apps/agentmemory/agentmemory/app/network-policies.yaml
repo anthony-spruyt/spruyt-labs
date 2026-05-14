@@ -47,6 +47,7 @@ spec:
         - matchName: api.github.com
         - matchName: github.com
         - matchName: objects.githubusercontent.com
+        - matchName: release-assets.githubusercontent.com
       toPorts:
         - ports:
             - port: "443"
