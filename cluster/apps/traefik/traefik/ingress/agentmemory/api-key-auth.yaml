@@ -10,7 +10,7 @@ spec:
     traefik-api-key-auth:
       authenticationHeader: true
       authenticationHeaderName: X-API-KEY
-      bearerHeader: false
+      bearerHeader: true
       removeHeadersOnSuccess: true
       keys:
         - "env:AGENTMEMORY_API_KEY"
