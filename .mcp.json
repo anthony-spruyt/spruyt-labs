@@ -1,5 +1,14 @@
 {
   "mcpServers": {
+    "agentmemory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@agentmemory/mcp"],
+      "env": {
+        "AGENTMEMORY_URL": "${AGENTMEMORY_URL}",
+        "AGENTMEMORY_SECRET": "${AGENTMEMORY_SECRET}"
+      }
+    },
     "bravesearch": {
       "type": "http",
       "url": "https://brave-search-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
@@ -14,18 +23,18 @@
         "CCLSP_CONFIG_PATH": "/workspaces/spruyt-labs/.claude/cclsp.json"
       }
     },
-    "victoriametrics": {
-      "type": "http",
-      "url": "https://mcp-vm.lan.${EXTERNAL_DOMAIN}/mcp",
-      "headers": {
-        "X-API-KEY": "${VM_MCP_API_KEY}"
-      }
-    },
     "n8n": {
       "type": "http",
       "url": "https://n8n-mcp.lan.${EXTERNAL_DOMAIN}/mcp",
       "headers": {
         "X-API-KEY": "${N8N_MCP_API_KEY}"
+      }
+    },
+    "victoriametrics": {
+      "type": "http",
+      "url": "https://mcp-vm.lan.${EXTERNAL_DOMAIN}/mcp",
+      "headers": {
+        "X-API-KEY": "${VM_MCP_API_KEY}"
       }
     }
   }
