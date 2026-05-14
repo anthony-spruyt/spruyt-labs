@@ -175,8 +175,11 @@ controllers:
             enabled: true
             custom: true
             spec:
-              tcpSocket:
-                port: 3113
+              exec:
+                command:
+                  - node
+                  - -e
+                  - "require('net').createConnection(3113,'127.0.0.1').on('connect',function(){process.exit(0)}).on('error',function(){process.exit(1)})"
               periodSeconds: 30
               timeoutSeconds: 5
               failureThreshold: 3
@@ -184,8 +187,11 @@ controllers:
             enabled: true
             custom: true
             spec:
-              tcpSocket:
-                port: 3113
+              exec:
+                command:
+                  - node
+                  - -e
+                  - "require('net').createConnection(3113,'127.0.0.1').on('connect',function(){process.exit(0)}).on('error',function(){process.exit(1)})"
               initialDelaySeconds: 30
               periodSeconds: 10
               timeoutSeconds: 5
@@ -194,8 +200,11 @@ controllers:
             enabled: true
             custom: true
             spec:
-              tcpSocket:
-                port: 3113
+              exec:
+                command:
+                  - node
+                  - -e
+                  - "require('net').createConnection(3113,'127.0.0.1').on('connect',function(){process.exit(0)}).on('error',function(){process.exit(1)})"
               failureThreshold: 60
               periodSeconds: 5
 persistence:
