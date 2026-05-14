@@ -44,6 +44,7 @@ spec:
       app.kubernetes.io/name: agentmemory
   egress:
     - toFQDNs:
+        - matchName: api.github.com
         - matchName: github.com
         - matchName: objects.githubusercontent.com
       toPorts:
