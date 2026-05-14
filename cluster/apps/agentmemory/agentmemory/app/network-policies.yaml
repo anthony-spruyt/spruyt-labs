@@ -37,6 +37,24 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
+  name: allow-github-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: agentmemory
+  egress:
+    - toFQDNs:
+        - matchName: github.com
+        - matchName: objects.githubusercontent.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
   name: allow-npm-registry-egress
 spec:
   endpointSelector:

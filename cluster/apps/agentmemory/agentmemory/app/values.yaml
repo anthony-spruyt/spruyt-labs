@@ -153,6 +153,8 @@ controllers:
             value: "ws://localhost:49134"
           - name: VIEWER_ALLOWED_ORIGINS
             value: "https://agentmemory.lan.${EXTERNAL_DOMAIN},http://localhost:3113"
+          - name: DO_NOT_TRACK
+            value: "1"
           - name: HOME
             value: /home/node
         securityContext:
@@ -221,6 +223,12 @@ persistence:
       agentmemory:
         worker:
           - path: /tmp
+  console-home:
+    type: emptyDir
+    advancedMounts:
+      agentmemory:
+        console:
+          - path: /home/nonroot
   npm-cache:
     type: emptyDir
     advancedMounts:
