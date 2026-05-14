@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: authentik-outpost-resources
+  annotations:
+    policies.kyverno.io/title: Authentik Outpost Default Resources
+    policies.kyverno.io/category: Resource Management
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/description: >-
+      Injects default resource requests and limits into Authentik outpost
+      Deployments that don't already have resources set. Ensures outpost
+      pods have Burstable QoS and VPA can generate recommendations.
+spec:
+  background: false
+  rules:
+    - name: inject-outpost-resources
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              operations:
+                - CREATE
+                - UPDATE
+              selector:
+                matchLabels:
+                  app.kubernetes.io/managed-by: goauthentik.io
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.spec.containers[0].resources || `{}` | length(@) }}"
+            operator: Equals
+            value: 0
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: "{{ request.object.spec.template.spec.containers[0].name }}"
+                    resources:
+                      requests:
+                        cpu: 5m
+                        memory: 32Mi
+                      limits:
+                        memory: 64Mi

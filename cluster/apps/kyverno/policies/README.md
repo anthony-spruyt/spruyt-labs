@@ -108,6 +108,17 @@ Automatically injects topology spread constraints on Deployments and StatefulSet
 
 **Excluded Namespaces:** kube-system, kube-public, kube-node-lease, flux-system, kyverno
 
+### authentik-outpost-resources
+
+Injects default resource requests and limits into Authentik outpost Deployments (matched by label `app.kubernetes.io/managed-by: goauthentik.io`) that don't already have resources set. Ensures outpost pods have Burstable QoS and VPA can generate recommendations.
+
+**Resources Applied:**
+
+| Resource | Request | Limit |
+| -------- | ------- | ----- |
+| CPU      | 5m      | --    |
+| Memory   | 32Mi    | 64Mi  |
+
 ### Adding Namespace Exclusions
 
 1. Edit `cluster/apps/kyverno/policies/app/default-limitrange.yaml`
