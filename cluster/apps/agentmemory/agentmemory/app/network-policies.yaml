@@ -88,6 +88,8 @@ spec:
         - ports:
             - port: "3111"
               protocol: TCP
+            - port: "3112"
+              protocol: TCP
             - port: "3114"
               protocol: TCP
             - port: "3116"

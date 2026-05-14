@@ -21,6 +21,16 @@ spec:
           passHostHeader: true
           port: 9000
     - kind: Rule
+      match: Host(`agentmemory.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/stream/`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: authentik-forward-auth-agentmemory
+      services:
+        - name: agentmemory
+          namespace: agentmemory
+          passHostHeader: true
+          port: 3112
+    - kind: Rule
       match: Host(`agentmemory.lan.${EXTERNAL_DOMAIN}`)
       middlewares:
         - name: lan-ip-whitelist
