@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/middleware_v1alpha1.json
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: stream-replace-path
+  namespace: agentmemory
+spec:
+  replacePath:
+    path: /

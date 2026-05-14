@@ -8,6 +8,7 @@ resources:
   - ./api-key-auth.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
+  - ./stream-replace-path.yaml
 patches:
   - target:
       kind: Middleware

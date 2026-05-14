@@ -25,6 +25,7 @@ spec:
       middlewares:
         - name: lan-ip-whitelist
         - name: authentik-forward-auth-agentmemory
+        - name: stream-replace-path
       services:
         - name: agentmemory
           namespace: agentmemory
