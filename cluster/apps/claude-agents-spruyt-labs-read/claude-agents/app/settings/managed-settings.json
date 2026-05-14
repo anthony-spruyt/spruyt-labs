@@ -9,5 +9,26 @@
       "mcp__bravesearch__brave_summarizer",
       "mcp__bravesearch__brave_video_search"
     ]
+  },
+  "enabledPlugins": {
+    "hookify@claude-plugins-official": false,
+    "hookify-plus@hookify-plus": true,
+    "agentmemory@agentmemory": true
+  },
+  "extraKnownMarketplaces": {
+    "hookify-plus": {
+      "autoUpdate": true,
+      "source": {
+        "source": "github",
+        "repo": "anthony-spruyt/hookify-plus"
+      }
+    },
+    "agentmemory": {
+      "autoUpdate": true,
+      "source": {
+        "source": "github",
+        "repo": "rohitg00/agentmemory"
+      }
+    }
   }
 }
