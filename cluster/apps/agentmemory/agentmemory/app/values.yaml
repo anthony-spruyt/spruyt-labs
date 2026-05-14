@@ -193,6 +193,8 @@ controllers:
               secretKeyRef:
                 name: agentmemory-secrets
                 key: OPENAI_API_KEY
+          - name: GEMINI_MODEL
+            value: "gemini-2.5-flash"
           - name: EMBEDDING_PROVIDER
             value: "openai"
           - name: AGENTMEMORY_TOOLS
