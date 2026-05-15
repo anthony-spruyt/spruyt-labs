@@ -20,6 +20,18 @@ entries:
       name: LiteLLM Admins
       parent: !KeyOf litellm_users_group
 
+  - id: litellm_role_mapping
+    model: authentik_providers_oauth2.scopemapping
+    identifiers:
+      managed: goauthentik.io/providers/litellm/role
+    attrs:
+      name: "LiteLLM Role Mapping"
+      scope_name: litellm_role
+      expression: |
+        if ak_is_group_member(request.user, name="LiteLLM Admins"):
+            return {"litellm_role": "proxy_admin"}
+        return {"litellm_role": "internal_user"}
+
   - id: litellm_provider
     model: authentik_providers_oauth2.oauth2provider
     identifiers:
@@ -54,6 +66,7 @@ entries:
             authentik_core.propertymapping,
             [name, "authentik default OAuth Mapping: OpenID 'email'"],
           ]
+        - !KeyOf litellm_role_mapping
 
   - id: litellm_application
     model: authentik_core.application

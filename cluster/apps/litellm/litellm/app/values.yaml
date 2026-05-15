@@ -80,6 +80,8 @@ controllers:
           GENERIC_TOKEN_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/token/"
           GENERIC_USERINFO_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/"
           PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
+          GENERIC_SCOPE: "openid profile email litellm_role"
+          GENERIC_USER_ROLE_ATTRIBUTE: litellm_role
           # OTEL — LiteLLM uses standard OTEL SDK env vars
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
