@@ -11,9 +11,9 @@ resources:
   - ./litellm-cnpg-scheduled-backups.yaml
   - ./network-policies.yaml
   - ./oauth-rotation-rbac.yaml
-  - ./release.yaml
-  - ./vm-service-scrape.yaml
-  - ./vpa.yaml
+  # - ./release.yaml
+  # - ./vm-service-scrape.yaml
+  # - ./vpa.yaml
 configMapGenerator:
   - name: litellm-values
     namespace: litellm
