@@ -82,10 +82,12 @@ controllers:
           PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
           GENERIC_SCOPE: "openid profile email litellm_role"
           GENERIC_USER_ROLE_ATTRIBUTE: litellm_role
-          # OTEL — LiteLLM uses standard OTEL SDK env vars
+          # OTEL — LiteLLM uses its own OTEL_EXPORTER/OTEL_ENDPOINT for traces callback
+          OTEL_EXPORTER: otlp_http
+          OTEL_ENDPOINT: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
+          # Standard SDK vars for metrics export
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
-          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
           OTEL_RESOURCE_ATTRIBUTES: "service.name=litellm,service.namespace=litellm"
         probes:
           liveness:
@@ -140,47 +142,74 @@ configMaps:
               model: openai/qwen3.6-plus
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000325
+              output_cost_per_token: 0.00000195
           - model_name: deepseek-v3.2
             litellm_params:
               model: openai/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000287
+              output_cost_per_token: 0.000000431
           - model_name: glm-5
             litellm_params:
               model: openai/glm-5
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000573
+              output_cost_per_token: 0.00000258
           - model_name: MiniMax-M2.5
             litellm_params:
               model: openai/MiniMax-M2.5
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000304
+              output_cost_per_token: 0.000001213
           # Anthropic aliases — routed to DashScope Anthropic-compatible endpoint
           - model_name: claude-opus-4-7
             litellm_params:
               model: anthropic/qwen3.6-plus
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000325
+              output_cost_per_token: 0.00000195
           - model_name: claude-opus-4-6
             litellm_params:
               model: anthropic/qwen3.6-plus
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000325
+              output_cost_per_token: 0.00000195
           - model_name: claude-sonnet-4-6
             litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000287
+              output_cost_per_token: 0.000000431
           - model_name: claude-sonnet-4-5
             litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000287
+              output_cost_per_token: 0.000000431
           - model_name: claude-haiku-4-5
             litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000287
+              output_cost_per_token: 0.000000431
           # OpenAI
           - model_name: gpt-5.5
             litellm_params:
