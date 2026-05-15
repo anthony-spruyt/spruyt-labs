@@ -1,17 +1,22 @@
 ---
 # Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-5.0.0/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: standard
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
 controllers:
   litellm:
     type: deployment
     replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"
-    pod:
-      securityContext:
-        runAsNonRoot: false
-        seccompProfile:
-          type: RuntimeDefault
     containers:
       litellm:
         image:
