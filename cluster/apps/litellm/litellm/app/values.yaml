@@ -20,7 +20,7 @@ controllers:
         image:
           # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
           repository: ghcr.io/berriai/litellm-database
-          tag: v1.84.0
+          tag: v1.84.0@sha256:6718e2c57647ecaadfe49bc5a9f770806aca9bc159dfe9a35744afcf1d5983e5
           pullPolicy: IfNotPresent
         args:
           - "--config"
