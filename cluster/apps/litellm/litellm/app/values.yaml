@@ -48,6 +48,18 @@ controllers:
               secretKeyRef:
                 name: litellm-secrets
                 key: DASHSCOPE_API_KEY
+          # Gemini API key
+          GEMINI_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: GEMINI_API_KEY
+          # OpenAI API key
+          OPENAI_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: OPENAI_API_KEY
           # Authentik SSO (OIDC) — credentials from ExternalSecret
           GENERIC_CLIENT_ID:
             valueFrom:
@@ -115,6 +127,7 @@ configMaps:
     data:
       config.yaml: |
         model_list:
+          # Alibaba Cloud Model Studio (DashScope)
           - model_name: qwen3.6-plus
             litellm_params:
               model: openai/qwen3.6-plus
@@ -135,6 +148,48 @@ configMaps:
               model: openai/MiniMax-M2.5
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
               api_key: os.environ/DASHSCOPE_API_KEY
+          # OpenAI
+          - model_name: gpt-5.5
+            litellm_params:
+              model: gpt-5.5
+              api_key: os.environ/OPENAI_API_KEY
+          - model_name: gpt-5.5-pro
+            litellm_params:
+              model: gpt-5.5-pro
+              api_key: os.environ/OPENAI_API_KEY
+          - model_name: o4-mini
+            litellm_params:
+              model: o4-mini
+              api_key: os.environ/OPENAI_API_KEY
+          - model_name: o3-pro
+            litellm_params:
+              model: o3-pro
+              api_key: os.environ/OPENAI_API_KEY
+          - model_name: gpt-4.1
+            litellm_params:
+              model: gpt-4.1
+              api_key: os.environ/OPENAI_API_KEY
+          # Google Gemini
+          - model_name: gemini-3.1-pro-preview
+            litellm_params:
+              model: gemini/gemini-3.1-pro-preview
+              api_key: os.environ/GEMINI_API_KEY
+          - model_name: gemini-3.1-flash-lite-preview
+            litellm_params:
+              model: gemini/gemini-3.1-flash-lite-preview
+              api_key: os.environ/GEMINI_API_KEY
+          - model_name: gemini-2.5-pro
+            litellm_params:
+              model: gemini/gemini-2.5-pro
+              api_key: os.environ/GEMINI_API_KEY
+          - model_name: gemini-2.5-flash
+            litellm_params:
+              model: gemini/gemini-2.5-flash
+              api_key: os.environ/GEMINI_API_KEY
+          - model_name: gemini-2.0-flash
+            litellm_params:
+              model: gemini/gemini-2.0-flash
+              api_key: os.environ/GEMINI_API_KEY
         litellm_settings:
           drop_params: true
           callbacks:
