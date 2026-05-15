@@ -40,6 +40,7 @@ resources:
   - ./authentik-system
   - ./headlamp-system
   - ./kyverno
+  - ./litellm
   - ./falco-system
   - ./firefly-iii
   - ./nut-system
