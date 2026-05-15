@@ -200,11 +200,11 @@ controllers:
           - name: AGENTMEMORY_TOOLS
             value: "core"
           - name: AGENTMEMORY_AUTO_COMPRESS
-            value: "true"
+            value: "false"
           - name: GRAPH_EXTRACTION_ENABLED
-            value: "true"
+            value: "false"
           - name: CONSOLIDATION_ENABLED
-            value: "true"
+            value: "false"
           - name: III_ENGINE_URL
             value: "ws://localhost:49134"
           - name: VIEWER_ALLOWED_ORIGINS
