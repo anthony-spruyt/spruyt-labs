@@ -155,6 +155,32 @@ configMaps:
               model: openai/MiniMax-M2.5
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
               api_key: os.environ/DASHSCOPE_API_KEY
+          # Anthropic aliases — routed to DashScope Anthropic-compatible endpoint
+          - model_name: claude-opus-4-7
+            litellm_params:
+              model: anthropic/qwen3.6-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: claude-opus-4-6
+            litellm_params:
+              model: anthropic/qwen3.6-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: claude-sonnet-4-6
+            litellm_params:
+              model: anthropic/deepseek-v3.2
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: claude-sonnet-4-5
+            litellm_params:
+              model: anthropic/deepseek-v3.2
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: claude-haiku-4-5
+            litellm_params:
+              model: anthropic/deepseek-v3.2
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
           # OpenAI
           - model_name: gpt-5.5
             litellm_params:
