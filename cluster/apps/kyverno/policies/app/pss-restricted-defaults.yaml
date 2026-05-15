@@ -45,8 +45,6 @@ spec:
                 - observability
                 - nut-system
                 - dev-debug
-                # LiteLLM: image runs as root, no numeric USER directive
-                - litellm
                 # Coder workspaces: Kata VM boundary provides isolation;
                 # envbuilder/kaniko needs default caps (CHOWN, DAC_OVERRIDE,
                 # SETUID, SETGID, etc) to extract image layers during build.
