@@ -108,7 +108,7 @@ controllers:
               timeoutSeconds: 10
         resources:
           limits:
-            memory: 2Gi
+            memory: 2560Mi
           requests:
             cpu: 100m
             memory: 1Gi
