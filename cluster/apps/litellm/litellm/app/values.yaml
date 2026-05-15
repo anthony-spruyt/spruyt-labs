@@ -4,9 +4,9 @@
 defaultPodOptions:
   priorityClassName: standard
   securityContext:
-    runAsUser: 1000
-    runAsGroup: 1000
-    fsGroup: 1000
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
     fsGroupChangePolicy: "OnRootMismatch"
     runAsNonRoot: true
     seccompProfile:
@@ -20,9 +20,9 @@ controllers:
     containers:
       litellm:
         image:
-          # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
-          repository: ghcr.io/berriai/litellm-database
-          tag: v1.84.0@sha256:6718e2c57647ecaadfe49bc5a9f770806aca9bc159dfe9a35744afcf1d5983e5
+          # renovate: datasource=docker depName=ghcr.io/berriai/litellm-non_root
+          repository: ghcr.io/berriai/litellm-non_root
+          tag: v1.84.0@sha256:aa665b0cf9cfa247c6e5e9ce63aa19ff33b71860662d08407675dfb6ca32ce6b
           pullPolicy: IfNotPresent
         args:
           - "--config"
@@ -205,14 +205,6 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /tmp
-  cache:
-    type: emptyDir
-    globalMounts:
-      - path: /.cache
-  npm:
-    type: emptyDir
-    globalMounts:
-      - path: /.npm
   config:
     type: configMap
     identifier: litellm-config
