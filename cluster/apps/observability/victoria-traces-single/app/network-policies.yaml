@@ -95,6 +95,26 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from LiteLLM for OTLP trace ingest on port 10428
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-litellm-traces-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vt-single
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
+      toPorts:
+        - ports:
+            - port: "10428"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow Grafana to query traces via Jaeger API on port 10428
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

@@ -16,3 +16,6 @@ spec:
     - port: http
       path: /metrics
       interval: 30s
+      bearerTokenSecret:
+        name: litellm-secrets
+        key: LITELLM_MASTER_KEY
