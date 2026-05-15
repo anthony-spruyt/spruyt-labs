@@ -1,0 +1,148 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-5.0.0/charts/library/common/values.schema.json
+controllers:
+  litellm:
+    type: deployment
+    replicas: 1
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+    containers:
+      litellm:
+        image:
+          # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
+          repository: ghcr.io/berriai/litellm-database
+          tag: v1.84.0
+          pullPolicy: IfNotPresent
+        args:
+          - "--config"
+          - "/app/config.yaml"
+          - "--port"
+          - "4000"
+        env:
+          # Database — CNPG auto-generated secret
+          DATABASE_URL:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-cnpg-cluster-app
+                key: uri
+          # LiteLLM core secrets
+          LITELLM_MASTER_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: LITELLM_MASTER_KEY
+          LITELLM_SALT_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: LITELLM_SALT_KEY
+          # Z.ai API key — referenced in proxy_config.yaml as os.environ/ZAI_API_KEY
+          ZAI_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: ZAI_API_KEY
+          # Authentik SSO (OIDC) — credentials from ExternalSecret
+          GENERIC_CLIENT_ID:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-oauth-credentials
+                key: GENERIC_CLIENT_ID
+          GENERIC_CLIENT_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-oauth-credentials
+                key: GENERIC_CLIENT_SECRET
+          GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/authorize/"
+          GENERIC_TOKEN_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/token/"
+          GENERIC_USERINFO_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/"
+          PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
+          # OTEL — LiteLLM uses standard OTEL SDK env vars
+          OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
+          OTEL_RESOURCE_ATTRIBUTES: "service.name=litellm,service.namespace=litellm"
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health/liveliness
+                port: 4000
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 3
+              timeoutSeconds: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health/readiness
+                port: 4000
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 3
+              timeoutSeconds: 10
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+service:
+  litellm:
+    controller: litellm
+    ports:
+      http:
+        port: 4000
+        protocol: TCP
+configMaps:
+  litellm-config:
+    data:
+      config.yaml: |
+        model_list:
+          - model_name: glm-5.1
+            litellm_params:
+              model: zai/glm-5.1
+              api_key: os.environ/ZAI_API_KEY
+          - model_name: glm-4.7
+            litellm_params:
+              model: zai/glm-4.7
+              api_key: os.environ/ZAI_API_KEY
+          - model_name: glm-4.5-flash
+            litellm_params:
+              model: zai/glm-4.5-flash
+              api_key: os.environ/ZAI_API_KEY
+        litellm_settings:
+          drop_params: true
+          callbacks:
+            - otel
+            - prometheus
+persistence:
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+  config:
+    type: configMap
+    identifier: litellm-config
+    advancedMounts:
+      litellm:
+        litellm:
+          - path: /app/config.yaml
+            subPath: config.yaml
+            readOnly: true
