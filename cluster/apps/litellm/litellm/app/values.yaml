@@ -108,10 +108,10 @@ controllers:
               timeoutSeconds: 10
         resources:
           limits:
-            memory: 512Mi
+            memory: 1Gi
           requests:
             cpu: 100m
-            memory: 256Mi
+            memory: 512Mi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
