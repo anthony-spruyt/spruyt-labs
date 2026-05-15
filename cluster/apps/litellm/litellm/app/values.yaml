@@ -1,0 +1,211 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-5.0.0/charts/library/common/values.schema.json
+controllers:
+  litellm:
+    type: deployment
+    replicas: 1
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+    containers:
+      litellm:
+        image:
+          # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
+          repository: ghcr.io/berriai/litellm-database
+          tag: v1.84.0
+          pullPolicy: IfNotPresent
+        args:
+          - "--config"
+          - "/app/config.yaml"
+          - "--port"
+          - "4000"
+        env:
+          # Database — CNPG auto-generated secret
+          DATABASE_URL:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-cnpg-cluster-app
+                key: uri
+          # LiteLLM core secrets
+          LITELLM_MASTER_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: LITELLM_MASTER_KEY
+          LITELLM_SALT_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: LITELLM_SALT_KEY
+          # Alibaba Cloud Model Studio API key — referenced in proxy_config.yaml as os.environ/DASHSCOPE_API_KEY
+          DASHSCOPE_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: DASHSCOPE_API_KEY
+          # Gemini API key
+          GEMINI_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: GEMINI_API_KEY
+          # OpenAI API key
+          OPENAI_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: OPENAI_API_KEY
+          # Authentik SSO (OIDC) — credentials from ExternalSecret
+          GENERIC_CLIENT_ID:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-oauth-credentials
+                key: GENERIC_CLIENT_ID
+          GENERIC_CLIENT_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-oauth-credentials
+                key: GENERIC_CLIENT_SECRET
+          GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/authorize/"
+          GENERIC_TOKEN_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/token/"
+          GENERIC_USERINFO_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/"
+          PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
+          # OTEL — LiteLLM uses standard OTEL SDK env vars
+          OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
+          OTEL_RESOURCE_ATTRIBUTES: "service.name=litellm,service.namespace=litellm"
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health/liveliness
+                port: 4000
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 3
+              timeoutSeconds: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health/readiness
+                port: 4000
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 3
+              timeoutSeconds: 10
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+service:
+  litellm:
+    controller: litellm
+    ports:
+      http:
+        port: 4000
+        protocol: TCP
+configMaps:
+  litellm-config:
+    data:
+      config.yaml: |
+        model_list:
+          # Alibaba Cloud Model Studio (DashScope)
+          - model_name: qwen3.6-plus
+            litellm_params:
+              model: openai/qwen3.6-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: deepseek-v3.2
+            litellm_params:
+              model: openai/deepseek-v3.2
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: glm-5
+            litellm_params:
+              model: openai/glm-5
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: MiniMax-M2.5
+            litellm_params:
+              model: openai/MiniMax-M2.5
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          # OpenAI
+          - model_name: gpt-5.5
+            litellm_params:
+              model: gpt-5.5
+              api_key: os.environ/OPENAI_API_KEY
+          - model_name: gpt-5.5-pro
+            litellm_params:
+              model: gpt-5.5-pro
+              api_key: os.environ/OPENAI_API_KEY
+          - model_name: o4-mini
+            litellm_params:
+              model: o4-mini
+              api_key: os.environ/OPENAI_API_KEY
+          - model_name: o3-pro
+            litellm_params:
+              model: o3-pro
+              api_key: os.environ/OPENAI_API_KEY
+          - model_name: gpt-4.1
+            litellm_params:
+              model: gpt-4.1
+              api_key: os.environ/OPENAI_API_KEY
+          # Google Gemini
+          - model_name: gemini-3.1-pro-preview
+            litellm_params:
+              model: gemini/gemini-3.1-pro-preview
+              api_key: os.environ/GEMINI_API_KEY
+          - model_name: gemini-3.1-flash-lite-preview
+            litellm_params:
+              model: gemini/gemini-3.1-flash-lite-preview
+              api_key: os.environ/GEMINI_API_KEY
+          - model_name: gemini-2.5-pro
+            litellm_params:
+              model: gemini/gemini-2.5-pro
+              api_key: os.environ/GEMINI_API_KEY
+          - model_name: gemini-2.5-flash
+            litellm_params:
+              model: gemini/gemini-2.5-flash
+              api_key: os.environ/GEMINI_API_KEY
+          - model_name: gemini-2.0-flash
+            litellm_params:
+              model: gemini/gemini-2.0-flash
+              api_key: os.environ/GEMINI_API_KEY
+        litellm_settings:
+          drop_params: true
+          callbacks:
+            - otel
+            - prometheus
+persistence:
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+  config:
+    type: configMap
+    identifier: litellm-config
+    advancedMounts:
+      litellm:
+        litellm:
+          - path: /app/config.yaml
+            subPath: config.yaml
+            readOnly: true

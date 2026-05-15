@@ -200,6 +200,14 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  # LiteLLM proxy dashboard
+  - name: grafana-dashboard-litellm-proxy
+    namespace: observability
+    files:
+      - dashboards/litellm-proxy.json
+    options:
+      labels:
+        grafana_dashboard: "1"
   # Claude Code telemetry dashboard
   - name: grafana-dashboard-claude-code-telemetry
     namespace: observability

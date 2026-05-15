@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./authentik-secret-store.yaml
+  - ./litellm-oauth-external-secret.yaml
+  - ./litellm-secrets.sops.yaml
+  - ./litellm-cnpg-object-stores.yaml
+  - ./litellm-cnpg-cluster.yaml
+  - ./litellm-cnpg-scheduled-backups.yaml
+  - ./network-policies.yaml
+  - ./oauth-rotation-rbac.yaml
+  - ./release.yaml
+  - ./vm-service-scrape.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: litellm-values
+    namespace: litellm
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

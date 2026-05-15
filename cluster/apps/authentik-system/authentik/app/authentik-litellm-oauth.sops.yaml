@@ -1,0 +1,27 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: authentik-litellm-oauth
+    namespace: authentik-system
+    annotations:
+        kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+type: Opaque
+stringData:
+    LITELLM_OAUTH_CLIENT_ID: ENC[AES256_GCM,data:MWd4YtgFCzC6HXNIHwj3PuYYYrjyK7KSOfXIygJZagg=,iv:h53lx5Rgk/lk4MPVzeKDzYyaDP4+WVsFpTBbwmzvN4M=,tag:UMUrfyRtHJnUK7np9sAf+w==,type:str]
+    LITELLM_OAUTH_CLIENT_SECRET: ENC[AES256_GCM,data:BeX6RWa7nJ56hq1mvQKDFeaY0Iy+Fs/LXDzpuKWcCLnKMvo5Cc/YsjJF6nmf3Arjym15OpM+haM62GTMbHIR6g==,iv:nXQgm8KeRuTxzuUf7n/0QNKyb32QSX4fot2i8Hyytps=,tag:DEedRgQ3cTWnYjKDfVsUxg==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBqUU5hTVFzYVF1RmQwSXIy
+            Q0h0eHhPVk5jTTZ3dGNpNjVieDNZSk9CV1FVCm40d0IzdS92ZTlrTXMxbGc3VHZL
+            cWJyYnc2TUtTOWFsS3BHWm5WcUdTV00KLS0tIGtQRlVSc3JueVlyemwzdk90KytL
+            djdBSlQzekE2UGl5MXNmZkZrYkJ4ckkKVkADWueT4D134tQzTRJnUmtndNJaaFkO
+            RndxbIvCSgOSWdwpKjLbWLcWY+RKecOTVFoqlnxdBmAig3GZ1XLq1g==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-15T03:57:18Z"
+    mac: ENC[AES256_GCM,data:OFRhVHIrASItV54e6Y5lwzQWH98nrK0jYf1Mk9b64xFqY848LiOfxtCE3H8UzsUuqolHO49XRK5fWodb/UfXIV8gUDhU85/zwZ7OFW6HtJX9SrIIaG3LrhxrVVeVSc8PQSfp9AaDmtJ3CuDtynIw84CHdJz3K5kptyvgBnsPK5g=,iv:t/PY/buYUpcBn24SoMcXUboVdIFVcCIfSXO74oVDASE=,tag:3NeCjtSkn7lcdwwDbIQWyA==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

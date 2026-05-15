@@ -15,5 +15,6 @@ rules:
         "authentik-vaultwarden-oauth",
         "authentik-headlamp-oauth",
         "authentik-coder-oauth",
+        "authentik-litellm-oauth",
       ]
     verbs: ["get", "patch"]

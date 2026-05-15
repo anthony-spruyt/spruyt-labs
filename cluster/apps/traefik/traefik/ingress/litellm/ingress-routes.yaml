@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: litellm-ingress-routes-wan-https
+  namespace: litellm
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: litellm.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`litellm.${EXTERNAL_DOMAIN}`)
+      services:
+        - name: litellm
+          namespace: litellm
+          passHostHeader: true
+          port: 4000
+  tls:
+    secretName: "litellm-${EXTERNAL_DOMAIN/./-}-tls"
