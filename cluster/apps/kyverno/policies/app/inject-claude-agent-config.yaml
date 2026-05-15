@@ -206,6 +206,21 @@ spec:
                     value: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
                   - name: OTEL_RESOURCE_ATTRIBUTES
                     value: "agent.namespace={{request.object.metadata.namespace}}"
+                  - name: ANTHROPIC_BASE_URL
+                    value: "http://litellm.litellm.svc.cluster.local:4000"
+                  - name: ANTHROPIC_AUTH_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: mcp-credentials
+                        key: litellm-api-key
+                  - name: ANTHROPIC_MODEL
+                    value: "glm-5.1"
+                  - name: CLAUDE_CODE_ATTRIBUTION_HEADER
+                    value: "0"
+                  - name: CLAUDE_CODE_MAX_CONTEXT_TOKENS
+                    value: "200000"
+                  - name: ENABLE_TOOL_SEARCH
+                    value: "true"
                 volumeMounts:
                   - name: github-gh-config
                     mountPath: /etc/gh-secret
