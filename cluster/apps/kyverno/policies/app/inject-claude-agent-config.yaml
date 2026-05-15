@@ -213,8 +213,6 @@ spec:
                       secretKeyRef:
                         name: mcp-credentials
                         key: litellm-api-key
-                  - name: ANTHROPIC_MODEL
-                    value: "glm-5.1"
                   - name: CLAUDE_CODE_ATTRIBUTION_HEADER
                     value: "0"
                   - name: CLAUDE_CODE_MAX_CONTEXT_TOKENS

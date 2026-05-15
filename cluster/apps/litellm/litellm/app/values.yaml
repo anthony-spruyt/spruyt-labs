@@ -42,12 +42,12 @@ controllers:
               secretKeyRef:
                 name: litellm-secrets
                 key: LITELLM_SALT_KEY
-          # Z.ai API key — referenced in proxy_config.yaml as os.environ/ZAI_API_KEY
-          ZAI_API_KEY:
+          # Alibaba Cloud Model Studio API key — referenced in proxy_config.yaml as os.environ/DASHSCOPE_API_KEY
+          DASHSCOPE_API_KEY:
             valueFrom:
               secretKeyRef:
                 name: litellm-secrets
-                key: ZAI_API_KEY
+                key: DASHSCOPE_API_KEY
           # Authentik SSO (OIDC) — credentials from ExternalSecret
           GENERIC_CLIENT_ID:
             valueFrom:
@@ -115,18 +115,53 @@ configMaps:
     data:
       config.yaml: |
         model_list:
-          - model_name: glm-5.1
+          # Recommended models
+          - model_name: qwen3.6-plus
             litellm_params:
-              model: zai/glm-5.1
-              api_key: os.environ/ZAI_API_KEY
+              model: openai/qwen3.6-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: kimi-k2.5
+            litellm_params:
+              model: openai/kimi-k2.5
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: glm-5
+            litellm_params:
+              model: openai/glm-5
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: MiniMax-M2.5
+            litellm_params:
+              model: openai/MiniMax-M2.5
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          # Additional models
+          - model_name: qwen3.5-plus
+            litellm_params:
+              model: openai/qwen3.5-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: qwen3-max-2026-01-23
+            litellm_params:
+              model: openai/qwen3-max-2026-01-23
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: qwen3-coder-next
+            litellm_params:
+              model: openai/qwen3-coder-next
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+          - model_name: qwen3-coder-plus
+            litellm_params:
+              model: openai/qwen3-coder-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
           - model_name: glm-4.7
             litellm_params:
-              model: zai/glm-4.7
-              api_key: os.environ/ZAI_API_KEY
-          - model_name: glm-4.5-flash
-            litellm_params:
-              model: zai/glm-4.5-flash
-              api_key: os.environ/ZAI_API_KEY
+              model: openai/glm-4.7
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
         litellm_settings:
           drop_params: true
           callbacks:

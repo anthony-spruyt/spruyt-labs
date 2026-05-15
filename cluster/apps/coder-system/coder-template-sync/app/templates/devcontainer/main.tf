@@ -98,9 +98,8 @@ locals {
     "OTEL_RESOURCE_ATTRIBUTES" : "agent.namespace=coder-workspaces,workspace.name=${data.coder_workspace.me.name},workspace.owner=${data.coder_workspace_owner.me.name}",
     "AGENTMEMORY_URL" : "http://agentmemory.agentmemory.svc.cluster.local:3111",
     "AGENTMEMORY_SECRET" : "unused-cluster-internal",
-    # LiteLLM proxy — routes Claude Code CLI through Z.ai gateway (#1451)
+    # LiteLLM proxy — routes Claude Code CLI through Alibaba Cloud Model Studio (#1451)
     "ANTHROPIC_BASE_URL"                : "http://litellm.litellm.svc.cluster.local:4000",
-    "ANTHROPIC_MODEL"                   : "glm-5.1",
     "CLAUDE_CODE_ATTRIBUTION_HEADER"    : "0",
     "CLAUDE_CODE_MAX_CONTEXT_TOKENS"    : "200000",
     "ENABLE_TOOL_SEARCH"                : "true",

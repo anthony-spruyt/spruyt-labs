@@ -2,7 +2,7 @@
 
 ## Overview
 
-LiteLLM Proxy provides a centralized, OpenAI-compatible LLM gateway backed by Z.ai (Zhipu AI) GLM models. Replaces direct Anthropic API usage for Claude Code CLI automation, providing flat-rate pricing, virtual key management, spend tracking, and OTEL observability.
+LiteLLM Proxy provides a centralized, OpenAI-compatible LLM gateway backed by Alibaba Cloud Model Studio (DashScope). Routes multiple model providers (Qwen, DeepSeek, Zhipu GLM, MiniMax, Kimi) through a single gateway. Replaces direct Anthropic API usage for Claude Code CLI automation, providing virtual key management, spend tracking, and OTEL observability.
 
 ## Prerequisites
 
@@ -54,7 +54,7 @@ Blueprint creates:
 | BerriAI/litellm#25868 | Tool results silently dropped (list-format content)    | Monitor, wait for upstream fix                  |
 | BerriAI/litellm#27839 | Multi-turn conversations may get stuck                 | Retry logic in consumers                        |
 | Claude Code cost_usd  | Broken — internal price table only knows Claude models | Use LiteLLM Grafana dashboard for cost tracking |
-| Cache tokens          | Zero — GLM has no prompt caching                       | Expected behavior                               |
+| Cache tokens          | Zero — models may lack prompt caching                  | Expected behavior                               |
 
 ### Security: PyPI Supply Chain Advisory
 
@@ -72,14 +72,15 @@ LiteLLM PyPI versions 1.82.7-1.82.8 were compromised. **NEVER install from PyPI.
    - **Symptom**: Login redirects endlessly between LiteLLM and Authentik
    - **Resolution**: Verify `PROXY_BASE_URL` matches the IngressRoute hostname exactly. Check Authentik Application redirect URI includes `/sso/callback`.
 
-1. **Z.ai API errors**
+1. **Alibaba Cloud Model Studio API errors**
 
    - **Symptom**: 401/403 from upstream provider
-   - **Resolution**: Verify `ZAI_API_KEY` in litellm-secrets. Check Z.ai subscription status and quota.
+   - **Resolution**: Verify `DASHSCOPE_API_KEY` in litellm-secrets. Check Alibaba Cloud Model Studio subscription status and quota.
 
 ## References
 
 - [LiteLLM Documentation](https://docs.litellm.ai/)
-- [LiteLLM Z.ai Provider](https://docs.litellm.ai/docs/providers/zhipuai)
+- [LiteLLM DashScope Provider](https://docs.litellm.ai/docs/providers/dashscope)
+- [Alibaba Cloud Model Studio](https://www.alibabacloud.com/en/product/model-studio)
 - [Claude Code LLM Gateway Docs](https://code.claude.com/docs/en/llm-gateway)
 - [PyPI Compromise Advisory](https://github.com/BerriAI/litellm/issues/24524)
