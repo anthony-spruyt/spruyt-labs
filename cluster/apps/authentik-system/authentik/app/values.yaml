@@ -105,6 +105,16 @@ global:
         secretKeyRef:
           name: authentik-technitium-oauth
           key: TECHNITIUM_OIDC_CLIENT_SECRET
+    - name: LITELLM_OAUTH_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: authentik-litellm-oauth
+          key: LITELLM_OAUTH_CLIENT_ID
+    - name: LITELLM_OAUTH_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: authentik-litellm-oauth
+          key: LITELLM_OAUTH_CLIENT_SECRET
     # OAuth rotation service account token (used via !Env tag in blueprint)
     - name: OAUTH_ROTATION_API_TOKEN
       valueFrom:
@@ -191,6 +201,8 @@ global:
             path: technitium-sso.yaml
           - key: agentmemory-sso.yaml
             path: agentmemory-sso.yaml
+          - key: litellm-sso.yaml
+            path: litellm-sso.yaml
 
 authentik:
   log_level: info

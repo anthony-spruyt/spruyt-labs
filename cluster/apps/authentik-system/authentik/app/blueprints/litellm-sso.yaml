@@ -1,0 +1,76 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: LiteLLM SSO
+entries:
+  - id: litellm_users_group
+    model: authentik_core.group
+    identifiers:
+      name: LiteLLM Users
+    attrs:
+      name: LiteLLM Users
+
+  - id: litellm_admins_group
+    model: authentik_core.group
+    identifiers:
+      name: LiteLLM Admins
+    attrs:
+      name: LiteLLM Admins
+      parent: !KeyOf litellm_users_group
+
+  - id: litellm_provider
+    model: authentik_providers_oauth2.oauth2provider
+    identifiers:
+      name: LiteLLM
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      client_type: confidential
+      redirect_uris:
+        - url: https://litellm.${EXTERNAL_DOMAIN}/sso/callback
+          matching_mode: strict
+      client_id: !Env LITELLM_OAUTH_CLIENT_ID
+      client_secret: !Env LITELLM_OAUTH_CLIENT_SECRET
+      property_mappings:
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'openid'"],
+          ]
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'profile'"],
+          ]
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'email'"],
+          ]
+
+  - id: litellm_application
+    model: authentik_core.application
+    identifiers:
+      slug: litellm
+    attrs:
+      name: LiteLLM
+      provider: !KeyOf litellm_provider
+      meta_launch_url: https://litellm.${EXTERNAL_DOMAIN}
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/litellm.png
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf litellm_application
+      order: 0
+    attrs:
+      group: !KeyOf litellm_users_group
+      negate: false
+      enabled: true
+      timeout: 30
