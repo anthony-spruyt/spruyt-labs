@@ -136,7 +136,7 @@ configMaps:
     data:
       config.yaml: |
         model_list:
-          # Alibaba Cloud Model Studio (DashScope)
+          # DashScope — free quota (1M tokens each, expires 2026-08-14)
           - model_name: qwen3.6-plus
             litellm_params:
               model: openai/qwen3.6-plus
@@ -145,6 +145,14 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
+          - model_name: qwen3.6-max-preview
+            litellm_params:
+              model: openai/qwen3.6-max-preview
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.00000078
+              output_cost_per_token: 0.0000039
           - model_name: deepseek-v3.2
             litellm_params:
               model: openai/deepseek-v3.2
@@ -153,6 +161,54 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
+          - model_name: deepseek-v4-pro
+            litellm_params:
+              model: openai/deepseek-v4-pro
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000435
+              output_cost_per_token: 0.00000087
+          - model_name: deepseek-v4-flash
+            litellm_params:
+              model: openai/deepseek-v4-flash
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.00000014
+              output_cost_per_token: 0.00000028
+          - model_name: qwen3-coder-plus
+            litellm_params:
+              model: openai/qwen3-coder-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000001
+              output_cost_per_token: 0.000005
+          - model_name: qwen3-coder-next
+            litellm_params:
+              model: openai/qwen3-coder-next
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.0000003
+              output_cost_per_token: 0.0000015
+          - model_name: qwq-plus
+            litellm_params:
+              model: openai/qwq-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.0000008
+              output_cost_per_token: 0.0000024
+          - model_name: qvq-max
+            litellm_params:
+              model: openai/qvq-max
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.0000012
+              output_cost_per_token: 0.0000048
           - model_name: glm-5
             litellm_params:
               model: openai/glm-5
@@ -169,7 +225,7 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000304
               output_cost_per_token: 0.000001213
-          # Anthropic aliases — routed to DashScope Anthropic-compatible endpoint
+          # DashScope — Anthropic-protocol aliases (free quota, same backend models)
           - model_name: claude-opus-4-7
             litellm_params:
               model: anthropic/qwen3.6-plus
@@ -210,7 +266,7 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
-          # OpenAI
+          # OpenAI — paid, use by exception
           - model_name: gpt-5.5
             litellm_params:
               model: gpt-5.5
@@ -231,7 +287,7 @@ configMaps:
             litellm_params:
               model: gpt-4.1
               api_key: os.environ/OPENAI_API_KEY
-          # Google Gemini
+          # Google Gemini — paid, use by exception
           - model_name: gemini-3.1-pro-preview
             litellm_params:
               model: gemini/gemini-3.1-pro-preview
