@@ -6,6 +6,7 @@ resources:
   - ../../../claude-agents-shared/base
   - ./claude-mcp-config.yaml
   - ./github-external-secret.yaml
+  - ./litellm-credentials.sops.yaml
   - ./github-ssh-external-secret.yaml
   - ./github-bot-gitconfig.yaml
 configMapGenerator:

@@ -211,8 +211,8 @@ spec:
                   - name: ANTHROPIC_AUTH_TOKEN
                     valueFrom:
                       secretKeyRef:
-                        name: mcp-credentials
-                        key: litellm-api-key
+                        name: litellm-credentials
+                        key: virtual-key
                   - name: CLAUDE_CODE_ATTRIBUTION_HEADER
                     value: "0"
                   - name: CLAUDE_CODE_MAX_CONTEXT_TOKENS
