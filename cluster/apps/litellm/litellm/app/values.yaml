@@ -203,6 +203,10 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /tmp
+  cache:
+    type: emptyDir
+    globalMounts:
+      - path: /.cache
   config:
     type: configMap
     identifier: litellm-config
