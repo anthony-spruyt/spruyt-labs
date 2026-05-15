@@ -207,6 +207,10 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /.cache
+  npm:
+    type: emptyDir
+    globalMounts:
+      - path: /.npm
   config:
     type: configMap
     identifier: litellm-config
