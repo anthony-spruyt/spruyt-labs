@@ -232,7 +232,23 @@ configMaps:
             model_info:
               input_cost_per_token: 0.0000012
               output_cost_per_token: 0.0000048
-          # DashScope — Anthropic-protocol aliases (free quota, same backend models)
+          # DashScope — embeddings and rerank (free quota, 1M tokens each)
+          - model_name: text-embedding-v4
+            litellm_params:
+              model: openai/text-embedding-v4
+              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
+          - model_name: text-embedding-v3
+            litellm_params:
+              model: openai/text-embedding-v3
+              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
+          - model_name: qwen3-rerank
+            litellm_params:
+              model: openai/qwen3-rerank
+              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
+          # DashScope — Anthropic-protocol aliases (code plan, same backend models)
           - model_name: claude-opus-4-7
             litellm_params:
               model: anthropic/qwen3.6-plus
