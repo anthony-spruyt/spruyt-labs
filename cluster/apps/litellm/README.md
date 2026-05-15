@@ -47,12 +47,33 @@ Blueprint creates:
 - Application: slug `litellm`, redirect URI `/sso/callback`
 - Policy binding: restricts access to `LiteLLM Users` group members
 
+### Model Protocol Configuration
+
+Claude Code sends requests via the Anthropic Messages API (`/v1/messages`). LiteLLM's Anthropic passthrough (`experimental_pass_through`) cannot properly translate `openai/` prefixed models — requests fail with `Unsupported model` or streaming event order errors.
+
+**Every Claude alias must have both protocol entries:**
+
+| Order | Protocol     | Endpoint                          | Used By                            |
+| ----- | ------------ | --------------------------------- | ---------------------------------- |
+| 1     | `anthropic/` | `/apps/anthropic` (PAYG)          | Claude Code, Anthropic API clients |
+| 2     | `anthropic/` | `/apps/anthropic` (code plan)     | Fallback                           |
+| 3     | `openai/`    | `/compatible-mode/v1` (PAYG)      | LiteLLM UI, OpenAI API clients     |
+| 4     | `openai/`    | `/compatible-mode/v1` (code plan) | Last resort                        |
+
+DashScope provides two endpoints per billing tier:
+
+- **OpenAI-compatible**: `https://<host>/compatible-mode/v1`
+- **Anthropic-compatible**: `https://<host>/apps/anthropic`
+
+Both code plan (`token-plan.ap-southeast-1.maas.aliyuncs.com`) and PAYG (`dashscope-intl.aliyuncs.com`) expose both protocols.
+
 ### Known Issues
 
 | Issue                 | Description                                            | Mitigation                                      |
 | --------------------- | ------------------------------------------------------ | ----------------------------------------------- |
 | BerriAI/litellm#25868 | Tool results silently dropped (list-format content)    | Monitor, wait for upstream fix                  |
 | BerriAI/litellm#27839 | Multi-turn conversations may get stuck                 | Retry logic in consumers                        |
+| Anthropic passthrough | `openai/` models fail on `/v1/messages` endpoint       | Use `anthropic/` entries at higher priority     |
 | Claude Code cost_usd  | Broken — internal price table only knows Claude models | Use LiteLLM Grafana dashboard for cost tracking |
 | Cache tokens          | Zero — models may lack prompt caching                  | Expected behavior                               |
 
