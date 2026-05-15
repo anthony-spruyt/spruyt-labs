@@ -16,6 +16,8 @@ resources:
 # TODO: Switch to namespaceLabelSelector once upstream is fixed.
 
 deschedulerPolicy:
+  metricsProviders:
+    - source: KubernetesMetrics
   profiles:
     - name: default
       pluginConfig:
