@@ -9,6 +9,7 @@ controllers:
       reloader.stakater.com/auto: "true"
     pod:
       securityContext:
+        runAsNonRoot: false
         seccompProfile:
           type: RuntimeDefault
     containers:
