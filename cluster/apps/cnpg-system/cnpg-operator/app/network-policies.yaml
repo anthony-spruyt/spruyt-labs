@@ -84,6 +84,15 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
+    # CNPG clusters in litellm
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:cnpg.io/cluster: litellm-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to barman plugin for plugin registration/health checks
