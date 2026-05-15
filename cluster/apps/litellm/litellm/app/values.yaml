@@ -289,6 +289,47 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
+          # Date-suffixed aliases (Claude Code CLI sends full model IDs)
+          - model_name: claude-opus-4-7-20250515
+            litellm_params:
+              model: anthropic/qwen3.6-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000325
+              output_cost_per_token: 0.00000195
+          - model_name: claude-opus-4-6-20250514
+            litellm_params:
+              model: anthropic/qwen3.6-plus
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000325
+              output_cost_per_token: 0.00000195
+          - model_name: claude-sonnet-4-6-20250514
+            litellm_params:
+              model: anthropic/deepseek-v3.2
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000287
+              output_cost_per_token: 0.000000431
+          - model_name: claude-sonnet-4-5-20250514
+            litellm_params:
+              model: anthropic/deepseek-v3.2
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000287
+              output_cost_per_token: 0.000000431
+          - model_name: claude-haiku-4-5-20251001
+            litellm_params:
+              model: anthropic/deepseek-v3.2
+              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+              api_key: os.environ/DASHSCOPE_API_KEY
+            model_info:
+              input_cost_per_token: 0.000000287
+              output_cost_per_token: 0.000000431
           # OpenAI — paid, use by exception
           - model_name: gpt-5.5
             litellm_params:
