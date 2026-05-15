@@ -77,13 +77,14 @@ deschedulerPolicy:
                 - agent-worker-system
         - name: LowNodeUtilization
           args:
-            useDeviationThresholds: true
+            metricsUtilization:
+              source: KubernetesMetrics
             thresholds:
-              cpu: 10
-              memory: 10
+              cpu: 30
+              memory: 30
             targetThresholds:
-              cpu: 10
-              memory: 10
+              cpu: 70
+              memory: 70
             evictionLimits:
               node: 5
             evictableNamespaces:
