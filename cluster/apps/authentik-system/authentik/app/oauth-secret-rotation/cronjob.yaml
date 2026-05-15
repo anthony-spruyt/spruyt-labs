@@ -92,6 +92,9 @@ spec:
                   # Rotate Coder OAuth
                   rotate_oauth "Coder" "authentik-coder-oauth" "CODER_OIDC_CLIENT_SECRET" "coder-oauth-credentials" "coder-system"
 
+                  # Rotate LiteLLM OAuth
+                  rotate_oauth "LiteLLM" "authentik-litellm-oauth" "LITELLM_OAUTH_CLIENT_SECRET" "litellm-oauth-credentials" "litellm"
+
                   echo "All OAuth secret rotations completed successfully!"
               env:
                 - name: AUTHENTIK_API_TOKEN
