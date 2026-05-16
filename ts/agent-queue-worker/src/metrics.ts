@@ -10,6 +10,13 @@ export const queueDepth = new Gauge({
   registers: [registry],
 });
 
+export const queuePaused = new Gauge({
+  name: "agent_queue_paused",
+  help: "Whether the queue is paused (1=paused, 0=active)",
+  labelNames: ["queue"] as const,
+  registers: [registry],
+});
+
 export const jobDuration = new Histogram({
   name: "agent_job_duration_seconds",
   help: "Job processing time",
@@ -70,5 +77,12 @@ export const sreSuppressed = new Counter({
   name: "agent_sre_suppressed_total",
   help: "Alerts suppressed by fingerprint dedup",
   labelNames: ["role"] as const,
+  registers: [registry],
+});
+
+export const healthPauses = new Counter({
+  name: "agent_health_pause_total",
+  help: "Dependency health gate pauses",
+  labelNames: ["reason"] as const,
   registers: [registry],
 });

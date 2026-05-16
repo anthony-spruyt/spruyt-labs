@@ -81,6 +81,28 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from agent-queue-worker for health checks
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-agent-worker-health-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-worker-system
+            k8s:app.kubernetes.io/instance: agent-queue-worker
+            k8s:app.kubernetes.io/name: agent-queue-worker
+      toPorts:
+        - ports:
+            - port: "4000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to CNPG PostgreSQL
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

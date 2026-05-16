@@ -1,8 +1,9 @@
 import type { Server } from "node:http";
-import type { Queue, Worker } from "bullmq";
+import { DelayedError, type Queue, type Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import type { Config } from "../config.js";
 import { fetchReposWithRevertLabels } from "../github.js";
+import type { HealthGate } from "../health.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
 import type { Processor } from "../processor.js";
@@ -18,6 +19,7 @@ export interface LifecycleDeps {
   processor: Processor;
   registry: RoleRegistry;
   circuitBreaker: CircuitBreaker;
+  healthGate: HealthGate;
   server: Server;
   config: Config;
 }
@@ -30,6 +32,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     processor,
     registry,
     circuitBreaker,
+    healthGate,
     server,
     config,
   } = deps;
@@ -166,6 +169,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
 
   worker.on("failed", async (job, err) => {
     if (!job) return;
+    if (err instanceof DelayedError) return;
     const role = job.data.role ?? "unknown";
 
     await circuitBreaker.trip(job.data.repo, job.id!, job.attemptsMade);
@@ -203,6 +207,8 @@ export function setupLifecycle(deps: LifecycleDeps): void {
       const waiting = await queue.getWaitingCount();
       const prioritized = await queue.getJobCountByTypes("prioritized");
       metrics.queueDepth.set({ queue: "agent-jobs" }, waiting + prioritized);
+      const paused = await queue.isPaused();
+      metrics.queuePaused.set({ queue: "agent-jobs" }, paused ? 1 : 0);
     } catch {
       // Valkey blip — skip this tick
     }
@@ -212,6 +218,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     logger.info("Shutting down");
     metrics.workerShutdowns.inc();
 
+    healthGate.clear();
     clearInterval(depthInterval);
     processor.cancelAll();
     await new Promise<void>((resolve) => server.close(() => resolve()));

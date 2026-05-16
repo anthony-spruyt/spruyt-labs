@@ -53,6 +53,9 @@ jobs:
     outputs:
       tag: "${{ steps.bump.outputs.tag }}"
       version: "${{ steps.bump.outputs.version }}"
+      prev-tag: "${{ steps.bump.outputs.prev-tag }}"
+      has-changes: "${{ steps.diff.outputs.has-changes }}"
+      changelog: "${{ steps.diff.outputs.changelog }}"
     steps:
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
@@ -81,11 +84,50 @@ jobs:
           esac
 
           VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$VERSION"
+            echo "tag=v$VERSION"
+            echo "prev-tag=$LATEST"
+          } >> "$GITHUB_OUTPUT"
           echo "::notice::Bumping $BUMP: $CURRENT -> $VERSION"
+      - name: "Check for changes since last tag"
+        id: "diff"
+        env:
+          PREV_TAG: "${{ steps.bump.outputs.prev-tag }}"
+          WORKDIR: "${{ inputs.workdir }}"
+        run: |
+          if [ -z "$PREV_TAG" ]; then
+            echo "has-changes=true" >> "$GITHUB_OUTPUT"
+            echo "changelog=Initial release" >> "$GITHUB_OUTPUT"
+            echo "::notice::No previous tag, treating as initial release"
+            exit 0
+          fi
+
+          COMMITS=$(git log --oneline "${PREV_TAG}..HEAD" -- "${WORKDIR}/" 2>/dev/null || true)
+
+          if [ -z "$COMMITS" ]; then
+            echo "has-changes=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No changes in ${WORKDIR}/ since ${PREV_TAG}, skipping release"
+            exit 0
+          fi
+
+          echo "has-changes=true" >> "$GITHUB_OUTPUT"
+
+          # Store changelog as multiline output
+          {
+            echo "changelog<<__CHANGELOG_DELIM_9f3a__"
+            echo "$COMMITS" | while read -r line; do
+              echo "- $line"
+            done
+            echo "__CHANGELOG_DELIM_9f3a__"
+          } >> "$GITHUB_OUTPUT"
+
+          COMMIT_COUNT=$(echo "$COMMITS" | wc -l)
+          echo "::notice::Found ${COMMIT_COUNT} commit(s) in ${WORKDIR}/ since ${PREV_TAG}"
   test:
     name: "Test"
+    needs: "resolve-version"
+    if: "needs.resolve-version.outputs.has-changes == 'true'"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout"
@@ -114,6 +156,7 @@ jobs:
     needs:
       - "resolve-version"
       - "test"
+    if: "needs.resolve-version.outputs.has-changes == 'true'"
     runs-on: "ubuntu-latest"
     outputs:
       digest: "${{ steps.push.outputs.digest }}"
@@ -195,17 +238,25 @@ jobs:
           TAG: "${{ needs.resolve-version.outputs.tag }}"
           DIGEST: "${{ steps.push.outputs.digest }}"
           OWNER: "${{ github.repository_owner }}"
+          CHANGELOG: "${{ needs.resolve-version.outputs.changelog }}"
+          SHA: "${{ github.sha }}"
+          RUN_ID: "${{ github.run_id }}"
+          SERVER_URL: "${{ github.server_url }}"
+          REPO: "${{ github.repository }}"
         run: |
           {
-            echo 'RELEASE_NOTES<<NOTES_EOF'
+            echo 'RELEASE_NOTES<<__NOTES_DELIM_7b2e__'
             printf '## Container Image\n\n'
             printf '```\n'
             printf 'ghcr.io/%s/%s:%s\n' "${OWNER}" "${IMAGE}" "${TAG#v}"
             printf '```\n\n'
             # shellcheck disable=SC2016
             printf '**Digest:** `%s`\n\n' "${DIGEST}"
-            printf '\n'
-            echo 'NOTES_EOF'
+            printf '**Commit:** %s | **Run:** [#%s](%s/%s/actions/runs/%s)\n\n' \
+              "${SHA:0:8}" "${RUN_ID}" "${SERVER_URL}" "${REPO}" "${RUN_ID}"
+            printf '### Changes\n\n'
+            printf '%s\n' "${CHANGELOG}"
+            echo '__NOTES_DELIM_7b2e__'
           } >> "$GITHUB_ENV"
       - name: "Create GitHub Release"
         if: "inputs.push"
