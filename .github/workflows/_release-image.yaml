@@ -53,6 +53,7 @@ jobs:
     outputs:
       tag: "${{ steps.bump.outputs.tag }}"
       version: "${{ steps.bump.outputs.version }}"
+      prev-tag: "${{ steps.bump.outputs.prev-tag }}"
     steps:
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
@@ -83,6 +84,7 @@ jobs:
           VERSION="${MAJOR}.${MINOR}.${PATCH}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prev-tag=$LATEST" >> "$GITHUB_OUTPUT"
           echo "::notice::Bumping $BUMP: $CURRENT -> $VERSION"
   test:
     name: "Test"
@@ -214,7 +216,10 @@ jobs:
           IMAGE: "${{ inputs.image }}"
           TAG: "${{ needs.resolve-version.outputs.tag }}"
           PREFIX: "${{ inputs.tag-prefix }}"
+          PREV_TAG: "${{ needs.resolve-version.outputs.prev-tag }}"
         run: |
           gh release create "${PREFIX}${TAG#v}" \
             --title "${IMAGE} ${TAG}" \
-            --notes "${RELEASE_NOTES}"
+            --notes "${RELEASE_NOTES}" \
+            --generate-notes \
+            ${PREV_TAG:+--notes-start-tag "$PREV_TAG"}
