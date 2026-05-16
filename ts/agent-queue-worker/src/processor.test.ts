@@ -249,9 +249,7 @@ describe("Processor.cancelAll", () => {
 
     processor.cancelAll();
 
-    await expect(processPromise).rejects.toThrow(
-      "Job cancelled during shutdown"
-    );
+    await expect(processPromise).rejects.toThrow(DelayedError);
   });
 
   it("no-ops when there are no pending callbacks", () => {
@@ -1107,7 +1105,7 @@ describe("Processor.process — cancelled result path", () => {
     vi.restoreAllMocks();
   });
 
-  it("throws 'Job cancelled during shutdown' when callback delivers status=cancelled", async () => {
+  it("throws DelayedError when callback delivers status=cancelled", async () => {
     const redis = createMockRedis();
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
 
@@ -1124,8 +1122,6 @@ describe("Processor.process — cancelled result path", () => {
       status: "cancelled",
     });
 
-    await expect(resultPromise).rejects.toThrow(
-      "Job cancelled during shutdown"
-    );
+    await expect(resultPromise).rejects.toThrow(DelayedError);
   });
 });

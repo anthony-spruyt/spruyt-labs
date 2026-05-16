@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Job } from "bullmq";
+import { DelayedError, type Job } from "bullmq";
 import type { Redis } from "ioredis";
 import type { Config } from "./config.js";
 import type { HealthGate } from "./health.js";
@@ -142,7 +142,8 @@ export class Processor {
 
         if (result.status === "cancelled") {
           cancelled = true;
-          throw new Error("Job cancelled during shutdown");
+          await job.moveToDelayed(Date.now() + 1000, job.token!);
+          throw new DelayedError();
         }
 
         logger.info("Job completed", { ...fields, status: result.status });
