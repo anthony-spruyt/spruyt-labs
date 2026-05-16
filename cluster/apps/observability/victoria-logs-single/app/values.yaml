@@ -390,7 +390,7 @@ vector:
       cpu: 100m
       memory: 512Mi
     limits:
-      memory: 1Gi
+      memory: 1536Mi
 
   #role: Agent
   #dataDir: /vector-data-dir
