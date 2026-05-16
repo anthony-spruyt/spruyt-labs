@@ -136,6 +136,15 @@ controllers:
   presidio-analyzer:
     type: deployment
     replicas: 1
+    pod:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: "OnRootMismatch"
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
     containers:
       presidio-analyzer:
         image:
@@ -183,9 +192,6 @@ controllers:
           limits:
             memory: 1536Mi
         securityContext:
-          runAsUser: 1001
-          runAsGroup: 1001
-          runAsNonRoot: true
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities:
@@ -195,6 +201,15 @@ controllers:
   presidio-anonymizer:
     type: deployment
     replicas: 1
+    pod:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: "OnRootMismatch"
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
     containers:
       presidio-anonymizer:
         image:
@@ -240,9 +255,6 @@ controllers:
           limits:
             memory: 256Mi
         securityContext:
-          runAsUser: 1001
-          runAsGroup: 1001
-          runAsNonRoot: true
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities:
