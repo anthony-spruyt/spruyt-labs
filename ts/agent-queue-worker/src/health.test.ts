@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DelayedError } from "bullmq";
 import type { Config } from "./config.js";
-import { checkDependencies, clearRecoveryPoll } from "./health.js";
+import { HealthGate } from "./health.js";
 
 const baseConfig = {
   HEALTH_CHECK_TIMEOUT_MS: 2000,
@@ -15,6 +15,7 @@ function createMockWorker() {
   return {
     pause: vi.fn().mockResolvedValue(undefined),
     resume: vi.fn(),
+    closing: false,
   };
 }
 
@@ -26,24 +27,28 @@ function createMockJob(id = "job-1") {
   };
 }
 
-describe("checkDependencies", () => {
+function createGate(worker = createMockWorker()) {
+  const gate = new HealthGate(baseConfig);
+  gate.setWorker(worker as any);
+  return { gate, worker };
+}
+
+describe("HealthGate", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    clearRecoveryPoll();
   });
 
   afterEach(() => {
-    clearRecoveryPoll();
     vi.restoreAllMocks();
     vi.useRealTimers();
   });
 
   it("returns immediately when both endpoints are healthy", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
-    const worker = createMockWorker();
+    const { gate, worker } = createGate();
     const job = createMockJob();
 
-    await checkDependencies(baseConfig, worker as any, job as any);
+    await gate.check(job as any);
 
     expect(worker.pause).not.toHaveBeenCalled();
     expect(job.moveToDelayed).not.toHaveBeenCalled();
@@ -60,12 +65,10 @@ describe("checkDependencies", () => {
             : Promise.resolve({ ok: true })
         )
     );
-    const worker = createMockWorker();
+    const { gate, worker } = createGate();
     const job = createMockJob();
 
-    await expect(
-      checkDependencies(baseConfig, worker as any, job as any)
-    ).rejects.toThrow(DelayedError);
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
 
     expect(job.moveToDelayed).toHaveBeenCalledOnce();
     expect(worker.pause).toHaveBeenCalledOnce();
@@ -82,12 +85,10 @@ describe("checkDependencies", () => {
             : Promise.resolve({ ok: true })
         )
     );
-    const worker = createMockWorker();
+    const { gate, worker } = createGate();
     const job = createMockJob();
 
-    await expect(
-      checkDependencies(baseConfig, worker as any, job as any)
-    ).rejects.toThrow(DelayedError);
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
 
     expect(job.moveToDelayed).toHaveBeenCalledOnce();
     expect(worker.pause).toHaveBeenCalledOnce();
@@ -98,20 +99,14 @@ describe("checkDependencies", () => {
       "fetch",
       vi.fn().mockRejectedValue(new Error("ECONNREFUSED"))
     );
-    const worker = createMockWorker();
+    const { gate, worker } = createGate();
     const job1 = createMockJob("job-1");
     const job2 = createMockJob("job-2");
 
-    await expect(
-      checkDependencies(baseConfig, worker as any, job1 as any)
-    ).rejects.toThrow(DelayedError);
-    await expect(
-      checkDependencies(baseConfig, worker as any, job2 as any)
-    ).rejects.toThrow(DelayedError);
+    await expect(gate.check(job1 as any)).rejects.toThrow(DelayedError);
+    await expect(gate.check(job2 as any)).rejects.toThrow(DelayedError);
 
-    // pause called twice (once per job), but only one recovery poll
     expect(worker.pause).toHaveBeenCalledTimes(2);
-    // Both jobs delayed
     expect(job1.moveToDelayed).toHaveBeenCalledOnce();
     expect(job2.moveToDelayed).toHaveBeenCalledOnce();
   });
@@ -122,19 +117,15 @@ describe("checkDependencies", () => {
       "fetch",
       vi.fn().mockImplementation(() => {
         callCount++;
-        // First 2 calls (initial check): fail. After that: succeed.
         if (callCount <= 2) return Promise.reject(new Error("down"));
         return Promise.resolve({ ok: true });
       })
     );
-    const worker = createMockWorker();
+    const { gate, worker } = createGate();
     const job = createMockJob();
 
-    await expect(
-      checkDependencies(baseConfig, worker as any, job as any)
-    ).rejects.toThrow(DelayedError);
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
 
-    // Advance past one poll interval to trigger recovery
     await vi.advanceTimersByTimeAsync(baseConfig.HEALTH_POLL_INTERVAL_MS + 10);
 
     expect(worker.resume).toHaveBeenCalledOnce();
@@ -145,14 +136,11 @@ describe("checkDependencies", () => {
       "fetch",
       vi.fn().mockRejectedValue(new Error("permanently down"))
     );
-    const worker = createMockWorker();
+    const { gate, worker } = createGate();
     const job = createMockJob();
 
-    await expect(
-      checkDependencies(baseConfig, worker as any, job as any)
-    ).rejects.toThrow(DelayedError);
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
 
-    // Advance past max pause
     await vi.advanceTimersByTimeAsync(
       baseConfig.HEALTH_MAX_PAUSE_MS + baseConfig.HEALTH_POLL_INTERVAL_MS + 10
     );
@@ -160,19 +148,96 @@ describe("checkDependencies", () => {
     expect(worker.resume).toHaveBeenCalledOnce();
   });
 
-  it("clearRecoveryPoll stops the poll", async () => {
+  it("clear() stops the recovery poll", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
-    const worker = createMockWorker();
+    const { gate, worker } = createGate();
     const job = createMockJob();
 
-    await expect(
-      checkDependencies(baseConfig, worker as any, job as any)
-    ).rejects.toThrow(DelayedError);
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
 
-    clearRecoveryPoll();
+    gate.clear();
 
-    // Advance time — resume should NOT be called (poll cleared)
     await vi.advanceTimersByTimeAsync(baseConfig.HEALTH_MAX_PAUSE_MS * 2);
+    expect(worker.resume).not.toHaveBeenCalled();
+  });
+
+  it("paused is false initially", () => {
+    const { gate } = createGate();
+    expect(gate.paused).toBe(false);
+  });
+
+  it("paused is true after unhealthy check", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("ECONNREFUSED"))
+    );
+    const { gate } = createGate();
+    const job = createMockJob();
+
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
+
+    expect(gate.paused).toBe(true);
+  });
+
+  it("paused resets to false after clear()", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("ECONNREFUSED"))
+    );
+    const { gate } = createGate();
+    const job = createMockJob();
+
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
+    gate.clear();
+
+    expect(gate.paused).toBe(false);
+  });
+
+  it("throws if setWorker not called", async () => {
+    const gate = new HealthGate(baseConfig);
+    const job = createMockJob();
+
+    await expect(gate.check(job as any)).rejects.toThrow(
+      "HealthGate.setWorker() must be called before check()"
+    );
+  });
+
+  it("skips resume when worker is closing during recovery", async () => {
+    let callCount = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount <= 2) return Promise.reject(new Error("down"));
+        return Promise.resolve({ ok: true });
+      })
+    );
+    const { gate, worker } = createGate();
+    const job = createMockJob();
+
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
+
+    worker.closing = true;
+    await vi.advanceTimersByTimeAsync(baseConfig.HEALTH_POLL_INTERVAL_MS + 10);
+
+    expect(worker.resume).not.toHaveBeenCalled();
+  });
+
+  it("skips resume when worker is closing on max pause exceeded", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("permanently down"))
+    );
+    const { gate, worker } = createGate();
+    const job = createMockJob();
+
+    await expect(gate.check(job as any)).rejects.toThrow(DelayedError);
+
+    worker.closing = true;
+    await vi.advanceTimersByTimeAsync(
+      baseConfig.HEALTH_MAX_PAUSE_MS + baseConfig.HEALTH_POLL_INTERVAL_MS + 10
+    );
+
     expect(worker.resume).not.toHaveBeenCalled();
   });
 });

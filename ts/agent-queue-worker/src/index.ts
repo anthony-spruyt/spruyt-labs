@@ -1,6 +1,7 @@
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
 import { loadConfig } from "./config.js";
+import { HealthGate } from "./health.js";
 import { createHttpServer } from "./http/server.js";
 import * as metrics from "./metrics.js";
 import { Processor } from "./processor.js";
@@ -28,7 +29,8 @@ const queueOpts = { connection, prefix: "agent:queue" };
 
 const queue = new Queue("agent-jobs", queueOpts);
 const registry = createDefaultRegistry(config, metrics.sreBatchSize);
-const processor = new Processor(redis, config, registry);
+const healthGate = new HealthGate(config);
+const processor = new Processor(redis, config, registry, healthGate);
 const circuitBreaker = new CircuitBreaker(redis);
 const rateLimiter = new RateLimiter(redis);
 
@@ -40,7 +42,9 @@ const worker = new Worker("agent-jobs", async (job) => processor.process(job), {
   maxStalledCount: 2,
 });
 
-processor.setWorker(worker);
+// Worker constructor needs processor callback, processor needs healthGate,
+// healthGate needs worker reference — break the cycle with late-bind.
+healthGate.setWorker(worker);
 
 const isReady = () => redis.status === "ready" && !worker.closing;
 
@@ -62,6 +66,7 @@ setupLifecycle({
   processor,
   registry,
   circuitBreaker,
+  healthGate,
   server,
   config,
 });

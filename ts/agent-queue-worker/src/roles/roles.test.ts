@@ -195,7 +195,7 @@ describe("role timeouts", () => {
     }
   });
 
-  it("renovate-triage is fastest (ephemeral PR check)", () => {
+  it("renovate-triage has shortest or equal timeout (ephemeral PR check)", () => {
     const triage = registry.get("renovate-triage").timeoutMs;
     for (const role of [
       "renovate-fix",

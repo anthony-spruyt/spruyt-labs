@@ -3,7 +3,7 @@ import { DelayedError, type Queue, type Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import type { Config } from "../config.js";
 import { fetchReposWithRevertLabels } from "../github.js";
-import { clearRecoveryPoll } from "../health.js";
+import type { HealthGate } from "../health.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
 import type { Processor } from "../processor.js";
@@ -19,6 +19,7 @@ export interface LifecycleDeps {
   processor: Processor;
   registry: RoleRegistry;
   circuitBreaker: CircuitBreaker;
+  healthGate: HealthGate;
   server: Server;
   config: Config;
 }
@@ -31,6 +32,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     processor,
     registry,
     circuitBreaker,
+    healthGate,
     server,
     config,
   } = deps;
@@ -214,7 +216,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     logger.info("Shutting down");
     metrics.workerShutdowns.inc();
 
-    clearRecoveryPoll();
+    healthGate.clear();
     clearInterval(depthInterval);
     processor.cancelAll();
     await new Promise<void>((resolve) => server.close(() => resolve()));

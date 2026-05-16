@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import type { Job, Worker } from "bullmq";
+import type { Job } from "bullmq";
 import type { Redis } from "ioredis";
 import type { Config } from "./config.js";
-import { checkDependencies } from "./health.js";
+import type { HealthGate } from "./health.js";
 import type { AgentJob, JobResult } from "./job/schema.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
@@ -30,21 +30,21 @@ export class Processor {
   private redis: Redis;
   private config: Config;
   private registry: RoleRegistry;
-  private worker!: Worker;
+  private healthGate: HealthGate;
 
-  constructor(redis: Redis, config: Config, registry: RoleRegistry) {
+  constructor(
+    redis: Redis,
+    config: Config,
+    registry: RoleRegistry,
+    healthGate: HealthGate
+  ) {
     this.redis = redis;
     this.config = config;
     this.registry = registry;
-  }
-
-  setWorker(worker: Worker): void {
-    this.worker = worker;
+    this.healthGate = healthGate;
   }
 
   async process(job: Job<AgentJob>): Promise<JobResult> {
-    if (!this.worker)
-      throw new Error("Processor.setWorker() must be called before process()");
     const { role, repo } = job.data;
     const roleDef = this.registry.get(role);
     const timeout = roleDef.timeoutMs;
@@ -94,7 +94,7 @@ export class Processor {
       }
 
       if (needsDispatch) {
-        await checkDependencies(this.config, this.worker, job);
+        await this.healthGate.check(job);
       }
 
       logger.info("Processing job", {
@@ -324,6 +324,7 @@ export class Processor {
     const promise = new Promise<never>((_, reject) => {
       timer = setTimeout(() => reject(new Error(message)), ms);
     });
+    promise.catch(() => {});
     return { promise, clear: () => clearTimeout(timer!) };
   }
 }

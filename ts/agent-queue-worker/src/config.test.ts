@@ -211,4 +211,23 @@ describe("loadConfig", () => {
     Object.assign(process.env, VALID_ENV, { N8N_HEALTH_URL: "not-a-url" });
     expect(() => loadConfig()).toThrow();
   });
+
+  it("accepts HEALTH_MAX_PAUSE_MS equal to exactly 2x HEALTH_POLL_INTERVAL_MS", () => {
+    Object.assign(process.env, VALID_ENV, {
+      HEALTH_POLL_INTERVAL_MS: "30000",
+      HEALTH_MAX_PAUSE_MS: "60000",
+    });
+    const cfg = loadConfig();
+    expect(cfg.HEALTH_MAX_PAUSE_MS).toBe(60000);
+  });
+
+  it("throws when HEALTH_MAX_PAUSE_MS is less than 2x HEALTH_POLL_INTERVAL_MS", () => {
+    Object.assign(process.env, VALID_ENV, {
+      HEALTH_POLL_INTERVAL_MS: "30000",
+      HEALTH_MAX_PAUSE_MS: "59999",
+    });
+    expect(() => loadConfig()).toThrow(
+      "HEALTH_MAX_PAUSE_MS must be at least 2x HEALTH_POLL_INTERVAL_MS"
+    );
+  });
 });

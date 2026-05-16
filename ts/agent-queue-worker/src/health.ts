@@ -3,9 +3,7 @@ import { DelayedError } from "bullmq";
 import type { Config } from "./config.js";
 import type { AgentJob } from "./job/schema.js";
 import { logger } from "./logger.js";
-
-let recoveryInProgress = false;
-let recoveryInterval: NodeJS.Timeout | undefined;
+import * as metrics from "./metrics.js";
 
 async function isEndpointHealthy(
   url: string,
@@ -27,75 +25,114 @@ interface DepStatus {
   litellm: boolean;
 }
 
-async function areDepsHealthy(config: Config): Promise<DepStatus> {
-  const [n8n, litellm] = await Promise.all([
-    isEndpointHealthy(config.N8N_HEALTH_URL, config.HEALTH_CHECK_TIMEOUT_MS),
-    isEndpointHealthy(
-      config.LITELLM_HEALTH_URL,
-      config.HEALTH_CHECK_TIMEOUT_MS
-    ),
-  ]);
-  return { healthy: n8n && litellm, n8n, litellm };
-}
+export class HealthGate {
+  private worker: Worker | undefined;
+  private recoveryInProgress = false;
+  private recoveryInterval: NodeJS.Timeout | undefined;
+  private pollInFlight = false;
 
-function startRecoveryPoll(config: Config, worker: Worker): void {
-  recoveryInProgress = true;
-  const started = Date.now();
+  constructor(private config: Config) {}
 
-  recoveryInterval = setInterval(async () => {
-    try {
-      if (Date.now() - started > config.HEALTH_MAX_PAUSE_MS) {
-        clearInterval(recoveryInterval);
-        recoveryInterval = undefined;
-        recoveryInProgress = false;
-        worker.resume();
-        logger.warn("Health pause exceeded max duration, resuming worker");
-        return;
-      }
+  setWorker(worker: Worker): void {
+    this.worker = worker;
+  }
 
-      if ((await areDepsHealthy(config)).healthy) {
-        clearInterval(recoveryInterval);
-        recoveryInterval = undefined;
-        recoveryInProgress = false;
-        worker.resume();
-        logger.info("Dependencies recovered, worker resumed");
-      }
-    } catch (err) {
-      logger.error("Recovery poll error", { error: String(err) });
+  async check(job: Job<AgentJob>): Promise<void> {
+    if (!this.worker) {
+      throw new Error("HealthGate.setWorker() must be called before check()");
     }
-  }, config.HEALTH_POLL_INTERVAL_MS);
-}
+    const status = await this.areDepsHealthy();
+    if (status.healthy) return;
 
-export function clearRecoveryPoll(): void {
-  if (recoveryInterval) {
-    clearInterval(recoveryInterval);
-    recoveryInterval = undefined;
+    logger.warn("Dependencies unhealthy, pausing worker", {
+      jobId: job.id,
+      n8n: status.n8n,
+      litellm: status.litellm,
+    });
+    if (!job.token) {
+      throw new Error(`Job ${job.id} missing token during health gate delay`);
+    }
+    await job.moveToDelayed(
+      Date.now() + this.config.HEALTH_POLL_INTERVAL_MS,
+      job.token
+    );
+    await this.worker.pause();
+    metrics.healthPauses.inc({
+      reason:
+        !status.n8n && !status.litellm
+          ? "all"
+          : !status.n8n
+            ? "n8n"
+            : "litellm",
+    });
+
+    if (!this.recoveryInProgress) {
+      this.recoveryInProgress = true;
+      this.startRecoveryPoll();
+    }
+
+    throw new DelayedError();
   }
-  recoveryInProgress = false;
-}
 
-export async function checkDependencies(
-  config: Config,
-  worker: Worker,
-  job: Job<AgentJob>
-): Promise<void> {
-  const status = await areDepsHealthy(config);
-  if (status.healthy) return;
-
-  logger.warn("Dependencies unhealthy, pausing worker", {
-    jobId: job.id,
-    n8n: status.n8n,
-    litellm: status.litellm,
-  });
-  await job.moveToDelayed(
-    Date.now() + config.HEALTH_POLL_INTERVAL_MS,
-    job.token!
-  );
-  await worker.pause();
-
-  if (!recoveryInProgress) {
-    startRecoveryPoll(config, worker);
+  get paused(): boolean {
+    return this.recoveryInProgress;
   }
 
-  throw new DelayedError();
+  clear(): void {
+    if (this.recoveryInterval) {
+      clearInterval(this.recoveryInterval);
+      this.recoveryInterval = undefined;
+    }
+    this.recoveryInProgress = false;
+    this.pollInFlight = false;
+  }
+
+  private async areDepsHealthy(): Promise<DepStatus> {
+    const [n8n, litellm] = await Promise.all([
+      isEndpointHealthy(
+        this.config.N8N_HEALTH_URL,
+        this.config.HEALTH_CHECK_TIMEOUT_MS
+      ),
+      isEndpointHealthy(
+        this.config.LITELLM_HEALTH_URL,
+        this.config.HEALTH_CHECK_TIMEOUT_MS
+      ),
+    ]);
+    return { healthy: n8n && litellm, n8n, litellm };
+  }
+
+  private startRecoveryPoll(): void {
+    const started = Date.now();
+
+    const interval = setInterval(async () => {
+      if (this.pollInFlight) return;
+      this.pollInFlight = true;
+      try {
+        if (!this.recoveryInProgress) return;
+
+        if (Date.now() - started > this.config.HEALTH_MAX_PAUSE_MS) {
+          this.clear();
+          if (this.worker && !this.worker.closing) {
+            this.worker.resume();
+          }
+          logger.warn("Health pause exceeded max duration, resuming worker");
+          return;
+        }
+
+        if ((await this.areDepsHealthy()).healthy) {
+          this.clear();
+          if (this.worker && !this.worker.closing) {
+            this.worker.resume();
+          }
+          logger.info("Dependencies recovered, worker resumed");
+        }
+      } catch (err) {
+        logger.warn("Recovery poll error", { error: String(err) });
+      } finally {
+        this.pollInFlight = false;
+      }
+    }, this.config.HEALTH_POLL_INTERVAL_MS);
+    interval.unref();
+    this.recoveryInterval = interval;
+  }
 }
