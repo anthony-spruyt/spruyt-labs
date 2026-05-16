@@ -7,6 +7,7 @@
 # Service port: 10428 (HTTP, OTLP ingest at /insert/opentelemetry/v1/traces)
 
 server:
+  priorityClassName: high-priority
   podAnnotations:
     reloader.stakater.com/auto: "true"
 
