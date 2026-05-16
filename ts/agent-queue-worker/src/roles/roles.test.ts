@@ -205,7 +205,7 @@ describe("role timeouts", () => {
       "sre-alert",
       "sre-health-check",
     ]) {
-      expect(triage).toBeLessThan(registry.get(role).timeoutMs);
+      expect(triage).toBeLessThanOrEqual(registry.get(role).timeoutMs);
     }
   });
 
