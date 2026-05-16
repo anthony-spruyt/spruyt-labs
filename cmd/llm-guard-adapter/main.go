@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -120,7 +121,9 @@ type adapter struct {
 
 func (a *adapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(litellmResponse{Action: "NONE"})
 		return
 	}
 
@@ -211,14 +214,19 @@ func (a *adapter) scanPrompt(ctx context.Context, prompt string) (*llmGuardRespo
 }
 
 func (a *adapter) buildBlockReason(scanners map[string]float64) string {
-	var reasons []string
+	var names []string
 	for name, score := range scanners {
 		if score >= a.threshold {
-			reasons = append(reasons, fmt.Sprintf("%s (score: %.2f)", name, score))
+			names = append(names, name)
 		}
 	}
-	if len(reasons) == 0 {
+	if len(names) == 0 {
 		return "content flagged by LLM Guard"
+	}
+	sort.Strings(names)
+	var reasons []string
+	for _, name := range names {
+		reasons = append(reasons, fmt.Sprintf("%s (score: %.2f)", name, scanners[name]))
 	}
 	return "blocked by: " + strings.Join(reasons, ", ")
 }
@@ -226,7 +234,9 @@ func (a *adapter) buildBlockReason(scanners map[string]float64) string {
 func (a *adapter) respond(w http.ResponseWriter, action, reason string) {
 	resp := litellmResponse{Action: action, BlockedReason: reason}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		a.logger.Error("encode response failed", "error", err)
+	}
 }
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {

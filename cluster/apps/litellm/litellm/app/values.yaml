@@ -335,6 +335,15 @@ controllers:
   llm-guard-adapter:
     type: deployment
     replicas: 1
+    pod:
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        fsGroupChangePolicy: "OnRootMismatch"
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
     containers:
       llm-guard-adapter:
         image:
