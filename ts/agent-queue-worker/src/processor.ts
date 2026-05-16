@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Job } from "bullmq";
 import type { Redis } from "ioredis";
 import type { Config } from "./config.js";
+import type { HealthGate } from "./health.js";
 import type { AgentJob, JobResult } from "./job/schema.js";
 import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
@@ -29,11 +30,18 @@ export class Processor {
   private redis: Redis;
   private config: Config;
   private registry: RoleRegistry;
+  private healthGate: HealthGate;
 
-  constructor(redis: Redis, config: Config, registry: RoleRegistry) {
+  constructor(
+    redis: Redis,
+    config: Config,
+    registry: RoleRegistry,
+    healthGate: HealthGate
+  ) {
     this.redis = redis;
     this.config = config;
     this.registry = registry;
+    this.healthGate = healthGate;
   }
 
   async process(job: Job<AgentJob>): Promise<JobResult> {
@@ -54,31 +62,6 @@ export class Processor {
       logger.warn("Duplicate processing detected", fields);
       return { status: "duplicate" };
     }
-
-    const timer = metrics.jobDuration.startTimer({ queue: "agent-jobs", role });
-    const deadline = this.rejectAfter(
-      timeout,
-      `Job ${job.id} timed out after ${timeout}ms`
-    );
-
-    // Extend BullMQ lock every 30s to prevent stalled-job false positives
-    // during long async callback waits (lockDuration=120s, jobs run up to 60min)
-    const lockExtender = setInterval(async () => {
-      try {
-        if (!job.token) {
-          logger.warn("Job token missing, skipping lock extension", {
-            jobId: job.id,
-          });
-          return;
-        }
-        await job.extendLock(job.token, 120_000);
-      } catch (err) {
-        logger.warn("Failed to extend job lock", {
-          jobId: job.id,
-          error: String(err),
-        });
-      }
-    }, 30_000);
 
     try {
       const cached = await this.redis.get(
@@ -110,6 +93,10 @@ export class Processor {
         }
       }
 
+      if (needsDispatch) {
+        await this.healthGate.check(job);
+      }
+
       logger.info("Processing job", {
         ...fields,
         dispatchState,
@@ -117,41 +104,71 @@ export class Processor {
         attempt: job.attemptsMade,
       });
 
-      const result = await Promise.race([
-        needsDispatch
-          ? this.dispatchAndAwaitCallback(job.id!, job.data, job)
-          : this.awaitCallbackWithCachePoll(job.id!, job.attemptsMade),
-        deadline.promise,
-      ]);
+      const timer = metrics.jobDuration.startTimer({
+        queue: "agent-jobs",
+        role,
+      });
+      const deadline = this.rejectAfter(
+        timeout,
+        `Job ${job.id} timed out after ${timeout}ms`
+      );
+      // Extend BullMQ lock every 30s to prevent stalled-job false positives
+      // during long async callback waits (lockDuration=120s, jobs run up to 60min)
+      const lockExtender = setInterval(async () => {
+        try {
+          if (!job.token) {
+            logger.warn("Job token missing, skipping lock extension", {
+              jobId: job.id,
+            });
+            return;
+          }
+          await job.extendLock(job.token, 120_000);
+        } catch (err) {
+          logger.warn("Failed to extend job lock", {
+            jobId: job.id,
+            error: String(err),
+          });
+        }
+      }, 30_000);
 
-      if (result.status === "cancelled")
-        throw new Error("Job cancelled during shutdown");
+      try {
+        const result = await Promise.race([
+          needsDispatch
+            ? this.dispatchAndAwaitCallback(job.id!, job.data, job)
+            : this.awaitCallbackWithCachePoll(job.id!, job.attemptsMade),
+          deadline.promise,
+        ]);
 
-      logger.info("Job completed", { ...fields, status: result.status });
-      return result;
-    } catch (err) {
-      const reason =
-        err instanceof Error && err.message.includes("timed out")
-          ? "timeout"
-          : "error";
-      if (reason === "timeout") {
-        metrics.jobTimeouts.inc({ queue: "agent-jobs", role });
-      } else {
-        metrics.jobFailures.inc({
-          queue: "agent-jobs",
-          role,
-          reason: "processor_error",
-        });
+        if (result.status === "cancelled")
+          throw new Error("Job cancelled during shutdown");
+
+        logger.info("Job completed", { ...fields, status: result.status });
+        return result;
+      } catch (err) {
+        const reason =
+          err instanceof Error && err.message.includes("timed out")
+            ? "timeout"
+            : "error";
+        if (reason === "timeout") {
+          metrics.jobTimeouts.inc({ queue: "agent-jobs", role });
+        } else {
+          metrics.jobFailures.inc({
+            queue: "agent-jobs",
+            role,
+            reason: "processor_error",
+          });
+        }
+        logger.error("Job failed", { ...fields, error: String(err) });
+        throw err;
+      } finally {
+        clearInterval(lockExtender);
+        deadline.clear();
+        timer();
+        const resolver = this.callbacks.get(job.id!);
+        if (resolver) resolver({ status: "cancelled" });
+        this.callbacks.delete(job.id!);
       }
-      logger.error("Job failed", { ...fields, error: String(err) });
-      throw err;
     } finally {
-      clearInterval(lockExtender);
-      deadline.clear();
-      timer();
-      const resolver = this.callbacks.get(job.id!);
-      if (resolver) resolver({ status: "cancelled" });
-      this.callbacks.delete(job.id!);
       await this.redis.del(`agent:active:${job.id}`, `agent:session:${job.id}`);
     }
   }
@@ -307,6 +324,7 @@ export class Processor {
     const promise = new Promise<never>((_, reject) => {
       timer = setTimeout(() => reject(new Error(message)), ms);
     });
+    promise.catch(() => {});
     return { promise, clear: () => clearTimeout(timer!) };
   }
 }

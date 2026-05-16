@@ -72,3 +72,10 @@ export const sreSuppressed = new Counter({
   labelNames: ["role"] as const,
   registers: [registry],
 });
+
+export const healthPauses = new Counter({
+  name: "agent_health_pause_total",
+  help: "Dependency health gate pauses",
+  labelNames: ["reason"] as const,
+  registers: [registry],
+});
