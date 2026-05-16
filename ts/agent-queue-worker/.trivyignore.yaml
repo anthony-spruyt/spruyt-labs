@@ -1,0 +1,11 @@
+---
+# Image-specific Trivy ignores for agent-queue-worker
+# Keep image CVEs here (not in global .trivyignore.yaml) for per-image audit/cleanup.
+
+vulnerabilities:
+  # picomatch 4.0.3 ships inside npm bundled in node:24-alpine base image
+  # (usr/local/lib/node_modules/npm/node_modules/tinyglobby/node_modules/picomatch).
+  # Not exploitable: ReDoS requires attacker-controlled extglob patterns passed to
+  # picomatch, but npm's internal glob usage only processes package paths/filenames.
+  # Will resolve when node:24-alpine updates npm to bundle picomatch >=4.0.4.
+  - id: CVE-2026-33671
