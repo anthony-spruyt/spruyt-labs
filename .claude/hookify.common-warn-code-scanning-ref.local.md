@@ -2,7 +2,7 @@
 name: warn-code-scanning-ref
 enabled: true
 event: bash
-pattern: gh\s+api\s+.*code-scanning/alerts(?!.*refs/pull/)
+pattern: (?:^|[;&|]\s*)gh\s+api\s+[^"]*code-scanning/alerts(?!.*refs/pull/)
 action: warn
 warn_once: true
 ---
