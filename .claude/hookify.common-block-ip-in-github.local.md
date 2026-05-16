@@ -26,4 +26,4 @@ action: block
    - ❌ `Traefik LoadBalancer IP: 192.168.20.100`
    - ✅ `Traefik LoadBalancer uses ${TRAEFIK_IP4} substitution`
 
-**False positive?** Open an issue: `gh issue create --repo anthony-spruyt/claude-config --title "False positive: block-ip-in-github" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
+**Ref:** CLAUDE.md § Hard Rules — "No hardcoded domains" and § Secrets — "Never put IPs, CIDRs, or network details in issues, commits, or PRs"
