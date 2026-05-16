@@ -23,6 +23,17 @@ const ConfigSchema = z.object({
   SRE_COOLDOWN_MS: z.coerce.number().int().min(0).default(300_000),
   SRE_TRIAGE_SUPPRESS_S: z.coerce.number().int().min(0).default(3600),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).default(10),
+  HEALTH_CHECK_TIMEOUT_MS: z.coerce.number().int().min(500).default(2000),
+  HEALTH_POLL_INTERVAL_MS: z.coerce.number().int().min(5000).default(30_000),
+  HEALTH_MAX_PAUSE_MS: z.coerce.number().int().min(60_000).default(600_000),
+  N8N_HEALTH_URL: z
+    .string()
+    .url()
+    .default("http://n8n.n8n-system.svc/healthz/readiness"),
+  LITELLM_HEALTH_URL: z
+    .string()
+    .url()
+    .default("http://litellm.litellm.svc:4000/health/readiness"),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

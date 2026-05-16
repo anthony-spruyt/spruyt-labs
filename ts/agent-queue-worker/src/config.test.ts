@@ -21,6 +21,12 @@ describe("loadConfig", () => {
     delete process.env.SRE_BATCH_WINDOW_MS;
     delete process.env.SRE_COOLDOWN_MS;
     delete process.env.SRE_TRIAGE_SUPPRESS_S;
+    delete process.env.WORKER_CONCURRENCY;
+    delete process.env.HEALTH_CHECK_TIMEOUT_MS;
+    delete process.env.HEALTH_POLL_INTERVAL_MS;
+    delete process.env.HEALTH_MAX_PAUSE_MS;
+    delete process.env.N8N_HEALTH_URL;
+    delete process.env.LITELLM_HEALTH_URL;
   });
 
   it("parses valid env with defaults", () => {
@@ -132,5 +138,77 @@ describe("loadConfig", () => {
     Object.assign(process.env, VALID_ENV, { SRE_TRIAGE_SUPPRESS_S: "0" });
     const cfg = loadConfig();
     expect(cfg.SRE_TRIAGE_SUPPRESS_S).toBe(0);
+  });
+
+  it("defaults HEALTH_CHECK_TIMEOUT_MS to 2000", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.HEALTH_CHECK_TIMEOUT_MS).toBe(2000);
+  });
+
+  it("coerces HEALTH_CHECK_TIMEOUT_MS string to number", () => {
+    Object.assign(process.env, VALID_ENV, { HEALTH_CHECK_TIMEOUT_MS: "3000" });
+    const cfg = loadConfig();
+    expect(cfg.HEALTH_CHECK_TIMEOUT_MS).toBe(3000);
+  });
+
+  it("throws when HEALTH_CHECK_TIMEOUT_MS is below 500", () => {
+    Object.assign(process.env, VALID_ENV, { HEALTH_CHECK_TIMEOUT_MS: "100" });
+    expect(() => loadConfig()).toThrow();
+  });
+
+  it("defaults HEALTH_POLL_INTERVAL_MS to 30000", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.HEALTH_POLL_INTERVAL_MS).toBe(30_000);
+  });
+
+  it("throws when HEALTH_POLL_INTERVAL_MS is below 5000", () => {
+    Object.assign(process.env, VALID_ENV, { HEALTH_POLL_INTERVAL_MS: "1000" });
+    expect(() => loadConfig()).toThrow();
+  });
+
+  it("defaults HEALTH_MAX_PAUSE_MS to 600000", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.HEALTH_MAX_PAUSE_MS).toBe(600_000);
+  });
+
+  it("throws when HEALTH_MAX_PAUSE_MS is below 60000", () => {
+    Object.assign(process.env, VALID_ENV, { HEALTH_MAX_PAUSE_MS: "5000" });
+    expect(() => loadConfig()).toThrow();
+  });
+
+  it("defaults N8N_HEALTH_URL to cluster-internal endpoint", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.N8N_HEALTH_URL).toBe(
+      "http://n8n.n8n-system.svc/healthz/readiness"
+    );
+  });
+
+  it("defaults LITELLM_HEALTH_URL to cluster-internal endpoint", () => {
+    Object.assign(process.env, VALID_ENV);
+    const cfg = loadConfig();
+    expect(cfg.LITELLM_HEALTH_URL).toBe(
+      "http://litellm.litellm.svc:4000/health/readiness"
+    );
+  });
+
+  it("accepts custom health URLs", () => {
+    Object.assign(process.env, VALID_ENV, {
+      N8N_HEALTH_URL: "http://n8n.custom.svc:5678/healthz",
+      LITELLM_HEALTH_URL: "http://litellm.custom.svc:4000/health",
+    });
+    const cfg = loadConfig();
+    expect(cfg.N8N_HEALTH_URL).toBe("http://n8n.custom.svc:5678/healthz");
+    expect(cfg.LITELLM_HEALTH_URL).toBe(
+      "http://litellm.custom.svc:4000/health"
+    );
+  });
+
+  it("throws when N8N_HEALTH_URL is not a valid URL", () => {
+    Object.assign(process.env, VALID_ENV, { N8N_HEALTH_URL: "not-a-url" });
+    expect(() => loadConfig()).toThrow();
   });
 });
