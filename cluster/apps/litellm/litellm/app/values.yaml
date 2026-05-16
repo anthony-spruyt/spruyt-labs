@@ -829,10 +829,10 @@ persistence:
     advancedMounts:
       presidio-analyzer:
         presidio-analyzer:
-          - path: /home/appuser/.cache
+          - path: /home/presidio/.cache
   presidio-anonymizer-cache:
     type: emptyDir
     advancedMounts:
       presidio-anonymizer:
         presidio-anonymizer:
-          - path: /home/appuser/.cache
+          - path: /home/presidio/.cache
