@@ -23,6 +23,8 @@ spec:
         - alert: AgentQueueStuck
           expr: |
             agent_queue_depth{queue="agent-jobs"} > 0
+            unless
+            agent_queue_paused{queue="agent-jobs"} == 1
           for: 75m
           labels:
             severity: warning

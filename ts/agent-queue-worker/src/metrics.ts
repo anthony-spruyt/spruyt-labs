@@ -10,6 +10,13 @@ export const queueDepth = new Gauge({
   registers: [registry],
 });
 
+export const queuePaused = new Gauge({
+  name: "agent_queue_paused",
+  help: "Whether the queue is paused (1=paused, 0=active)",
+  labelNames: ["queue"] as const,
+  registers: [registry],
+});
+
 export const jobDuration = new Histogram({
   name: "agent_job_duration_seconds",
   help: "Job processing time",

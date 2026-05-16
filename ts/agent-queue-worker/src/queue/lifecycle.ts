@@ -207,6 +207,8 @@ export function setupLifecycle(deps: LifecycleDeps): void {
       const waiting = await queue.getWaitingCount();
       const prioritized = await queue.getJobCountByTypes("prioritized");
       metrics.queueDepth.set({ queue: "agent-jobs" }, waiting + prioritized);
+      const paused = await queue.isPaused();
+      metrics.queuePaused.set({ queue: "agent-jobs" }, paused ? 1 : 0);
     } catch {
       // Valkey blip — skip this tick
     }
