@@ -83,14 +83,12 @@ describe("Processor.process", () => {
 
   it("does not start timers when checkDependencies throws DelayedError", async () => {
     vi.useFakeTimers();
+    const job = createMockJob();
     vi.mocked(checkDependencies).mockRejectedValueOnce(new DelayedError());
 
-    await expect(processor.process(createMockJob() as any)).rejects.toThrow(
-      DelayedError
-    );
+    await expect(processor.process(job as any)).rejects.toThrow(DelayedError);
 
     // If timers were started, advancing would trigger lock extension
-    const job = createMockJob();
     await vi.advanceTimersByTimeAsync(35_000);
     expect(job.extendLock).not.toHaveBeenCalled();
 

@@ -43,6 +43,8 @@ export class Processor {
   }
 
   async process(job: Job<AgentJob>): Promise<JobResult> {
+    if (!this.worker)
+      throw new Error("Processor.setWorker() must be called before process()");
     const { role, repo } = job.data;
     const roleDef = this.registry.get(role);
     const timeout = roleDef.timeoutMs;

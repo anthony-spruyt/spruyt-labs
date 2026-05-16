@@ -1,14 +1,14 @@
 import type { Server } from "node:http";
-import type { Queue, Worker } from "bullmq";
+import { DelayedError, type Queue, type Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import type { Config } from "../config.js";
 import { fetchReposWithRevertLabels } from "../github.js";
+import { clearRecoveryPoll } from "../health.js";
 import { logger } from "../logger.js";
 import * as metrics from "../metrics.js";
 import type { Processor } from "../processor.js";
 import type { RoleRegistry } from "../roles/registry.js";
 import { sreTriagedKey } from "../roles/sre-alert-role.js";
-import { clearRecoveryPoll } from "../health.js";
 import type { CircuitBreaker } from "./guard.js";
 import { DEFAULT_JOB_OPTIONS } from "./options.js";
 
@@ -167,6 +167,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
 
   worker.on("failed", async (job, err) => {
     if (!job) return;
+    if (err instanceof DelayedError) return;
     const role = job.data.role ?? "unknown";
 
     await circuitBreaker.trip(job.data.repo, job.id!, job.attemptsMade);

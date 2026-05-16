@@ -21,7 +21,13 @@ async function isEndpointHealthy(
   }
 }
 
-async function areDepsHealthy(config: Config): Promise<boolean> {
+interface DepStatus {
+  healthy: boolean;
+  n8n: boolean;
+  litellm: boolean;
+}
+
+async function areDepsHealthy(config: Config): Promise<DepStatus> {
   const [n8n, litellm] = await Promise.all([
     isEndpointHealthy(config.N8N_HEALTH_URL, config.HEALTH_CHECK_TIMEOUT_MS),
     isEndpointHealthy(
@@ -29,7 +35,7 @@ async function areDepsHealthy(config: Config): Promise<boolean> {
       config.HEALTH_CHECK_TIMEOUT_MS
     ),
   ]);
-  return n8n && litellm;
+  return { healthy: n8n && litellm, n8n, litellm };
 }
 
 function startRecoveryPoll(config: Config, worker: Worker): void {
@@ -47,7 +53,7 @@ function startRecoveryPoll(config: Config, worker: Worker): void {
         return;
       }
 
-      if (await areDepsHealthy(config)) {
+      if ((await areDepsHealthy(config)).healthy) {
         clearInterval(recoveryInterval);
         recoveryInterval = undefined;
         recoveryInProgress = false;
@@ -73,9 +79,14 @@ export async function checkDependencies(
   worker: Worker,
   job: Job<AgentJob>
 ): Promise<void> {
-  if (await areDepsHealthy(config)) return;
+  const status = await areDepsHealthy(config);
+  if (status.healthy) return;
 
-  logger.warn("Dependencies unhealthy, pausing worker", { jobId: job.id });
+  logger.warn("Dependencies unhealthy, pausing worker", {
+    jobId: job.id,
+    n8n: status.n8n,
+    litellm: status.litellm,
+  });
   await job.moveToDelayed(
     Date.now() + config.HEALTH_POLL_INTERVAL_MS,
     job.token!
