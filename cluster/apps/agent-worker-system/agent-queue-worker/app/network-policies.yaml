@@ -44,6 +44,52 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to n8n master for health checks
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-n8n-health-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-system
+            k8s:app.kubernetes.io/name: n8n
+            k8s:app.kubernetes.io/type: master
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to litellm for health checks
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-litellm-health-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-queue-worker
+      app.kubernetes.io/name: agent-queue-worker
+      app.kubernetes.io/controller: worker
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/instance: litellm
+            k8s:app.kubernetes.io/name: litellm
+      toPorts:
+        - ports:
+            - port: "4000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to GitHub API (stale SHA checks, startup reconciliation)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
