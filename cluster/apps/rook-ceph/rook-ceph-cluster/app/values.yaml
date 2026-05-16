@@ -132,19 +132,19 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
       limits:
         memory: 2Gi
       requests:
-        cpu: 200m
-        memory: 1Gi
+        cpu: 100m
+        memory: 768Mi
     mon:
       limits:
         memory: 2Gi
       requests:
-        cpu: 225m
-        memory: 640Mi
+        cpu: 100m
+        memory: 512Mi
     osd:
       limits:
         memory: 4Gi
       requests:
-        cpu: 600m
+        cpu: 250m
         memory: 1280Mi
     prepareosd:
       # limits: It is not recommended to set limits on the OSD prepare job

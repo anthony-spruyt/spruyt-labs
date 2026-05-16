@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: n8n
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: n8n
@@ -32,7 +32,7 @@ spec:
     kind: Deployment
     name: n8n-worker
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: n8n-worker
@@ -61,7 +61,7 @@ spec:
     kind: Deployment
     name: n8n-webhook
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: n8n-webhook

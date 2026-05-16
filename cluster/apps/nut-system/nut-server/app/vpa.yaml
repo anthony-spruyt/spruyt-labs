@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: nut-server
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: upsd

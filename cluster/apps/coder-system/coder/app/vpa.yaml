@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: coder
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: coder

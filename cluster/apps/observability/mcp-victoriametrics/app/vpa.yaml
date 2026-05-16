@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: mcp-victoriametrics
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: app

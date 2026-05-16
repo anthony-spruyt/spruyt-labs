@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: agent-queue-worker
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: app
@@ -31,7 +31,7 @@ spec:
     kind: Deployment
     name: agent-queue-worker-bull-board
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: app

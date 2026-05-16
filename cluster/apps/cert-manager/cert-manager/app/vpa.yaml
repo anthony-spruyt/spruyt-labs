@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: cert-manager
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: cert-manager-controller
@@ -31,7 +31,7 @@ spec:
     kind: Deployment
     name: cert-manager-cainjector
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: cert-manager-cainjector
@@ -52,7 +52,7 @@ spec:
     kind: Deployment
     name: cert-manager-webhook
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: cert-manager-webhook

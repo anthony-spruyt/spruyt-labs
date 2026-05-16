@@ -10,7 +10,7 @@ spec:
     kind: DaemonSet
     name: falco
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: falco
@@ -32,7 +32,7 @@ spec:
     kind: Deployment
     name: falco-falcosidekick
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: falcosidekick

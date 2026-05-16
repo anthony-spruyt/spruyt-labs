@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: helm-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: manager
@@ -31,7 +31,7 @@ spec:
     kind: Deployment
     name: kustomize-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: manager
@@ -52,7 +52,7 @@ spec:
     kind: Deployment
     name: notification-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: manager
@@ -73,7 +73,7 @@ spec:
     kind: Deployment
     name: source-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: manager

@@ -10,7 +10,7 @@ spec:
     kind: StatefulSet
     name: mosquitto
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: mosquitto

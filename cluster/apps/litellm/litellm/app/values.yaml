@@ -125,7 +125,7 @@ controllers:
             memory: 2560Mi
           requests:
             cpu: 100m
-            memory: 1Gi
+            memory: 1280Mi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
@@ -189,7 +189,7 @@ controllers:
         resources:
           requests:
             cpu: 50m
-            memory: 768Mi
+            memory: 1Gi
           limits:
             memory: 1536Mi
         securityContext:

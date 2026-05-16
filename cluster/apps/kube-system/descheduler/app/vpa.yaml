@@ -10,7 +10,7 @@ spec:
     kind: CronJob
     name: descheduler
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: descheduler

@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: cnpg-operator-cloudnative-pg
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: manager

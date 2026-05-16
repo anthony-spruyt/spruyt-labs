@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: firefly-iii
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: firefly-iii

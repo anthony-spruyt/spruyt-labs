@@ -10,7 +10,7 @@ spec:
     kind: DaemonSet
     name: kata-tap-qdisc-fix
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: app

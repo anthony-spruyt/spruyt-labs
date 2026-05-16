@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: litellm
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: litellm
@@ -31,7 +31,7 @@ spec:
     kind: Deployment
     name: litellm-presidio-analyzer
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: presidio-analyzer
@@ -52,7 +52,7 @@ spec:
     kind: Deployment
     name: litellm-presidio-anonymizer
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: presidio-anonymizer

@@ -11,7 +11,7 @@ spec:
     kind: Deployment
     name: csi-addons-controller-manager
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: manager

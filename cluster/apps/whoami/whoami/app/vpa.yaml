@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: whoami
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: whoami

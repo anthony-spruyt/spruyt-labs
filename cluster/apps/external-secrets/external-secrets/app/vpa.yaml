@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: external-secrets
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: external-secrets
@@ -31,7 +31,7 @@ spec:
     kind: Deployment
     name: external-secrets-cert-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: cert-controller
@@ -52,7 +52,7 @@ spec:
     kind: Deployment
     name: external-secrets-webhook
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: webhook

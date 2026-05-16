@@ -11,7 +11,7 @@ spec:
     kind: Job
     name: coder-template-push
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: push
@@ -34,7 +34,7 @@ spec:
     kind: CronJob
     name: coder-token-rotation
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: rotate

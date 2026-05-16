@@ -85,8 +85,8 @@ operator:
       memory: 128Mi
 resources:
   requests:
-    cpu: 1250m
-    memory: 512Mi
+    cpu: 500m
+    memory: 1Gi
 prometheus:
   enabled: true
   serviceMonitor:

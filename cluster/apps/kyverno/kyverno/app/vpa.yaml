@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: kyverno-admission-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: kyverno
@@ -31,7 +31,7 @@ spec:
     kind: Deployment
     name: kyverno-background-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: controller
@@ -52,7 +52,7 @@ spec:
     kind: Deployment
     name: kyverno-cleanup-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: controller
@@ -73,7 +73,7 @@ spec:
     kind: Deployment
     name: kyverno-reports-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: controller

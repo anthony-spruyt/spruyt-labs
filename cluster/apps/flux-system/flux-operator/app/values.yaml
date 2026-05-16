@@ -8,7 +8,7 @@ resources: # @schema required: true
     memory: 1Gi
   requests: # @schema default: {"cpu":"100m","memory":"64Mi"}
     cpu: 50m
-    memory: 128Mi
+    memory: 320Mi
 
 # -- Container security context settings.
 # The default is compliant with the pod security restricted profile.

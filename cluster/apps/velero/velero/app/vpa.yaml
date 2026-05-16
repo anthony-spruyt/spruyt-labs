@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: velero
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: velero
@@ -31,7 +31,7 @@ spec:
     kind: DaemonSet
     name: node-agent
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: node-agent

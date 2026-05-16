@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: metrics-server
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: metrics-server

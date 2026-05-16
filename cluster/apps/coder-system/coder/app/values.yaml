@@ -35,6 +35,12 @@ coder:
     # CODER_DERP_SERVER_RELAY_URL is set automatically by the chart using pod IP
     - name: CODER_DERP_SERVER_STUN_ADDRESSES
       value: "disable"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
   service:
     type: ClusterIP
   serviceAccount:

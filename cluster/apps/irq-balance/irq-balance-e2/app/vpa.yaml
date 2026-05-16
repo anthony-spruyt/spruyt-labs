@@ -10,7 +10,7 @@ spec:
     kind: DaemonSet
     name: irq-balance-e2
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: app

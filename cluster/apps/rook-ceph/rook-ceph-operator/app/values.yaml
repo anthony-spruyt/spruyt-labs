@@ -8,8 +8,8 @@ resources:
   limits:
     memory: 1Gi
   requests:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 100m
+    memory: 256Mi
 currentNamespaceOnly: true
 csi:
   # https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-read-affinity-for-rbd-and-cephfs-volumes

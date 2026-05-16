@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: external-dns-technitium
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: external-dns

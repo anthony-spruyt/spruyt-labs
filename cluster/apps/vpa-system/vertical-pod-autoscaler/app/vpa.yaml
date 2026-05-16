@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: vertical-pod-autoscaler-admission-controller
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: admission-controller
@@ -31,7 +31,7 @@ spec:
     kind: Deployment
     name: vertical-pod-autoscaler-recommender
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: recommender
@@ -52,7 +52,7 @@ spec:
     kind: Deployment
     name: vertical-pod-autoscaler-updater
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: updater

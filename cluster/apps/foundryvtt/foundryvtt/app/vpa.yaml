@@ -10,7 +10,7 @@ spec:
     kind: StatefulSet
     name: foundryvtt
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: app
