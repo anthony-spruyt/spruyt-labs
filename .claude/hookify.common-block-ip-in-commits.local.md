@@ -24,4 +24,4 @@ action: block
 
 **Note:** This hook only catches IPs in commit *messages*. The gitleaks pre-commit hook catches IPs in committed *file content*.
 
-**Ref:** CLAUDE.md § Secrets — "Never put IPs, CIDRs, or network details in issues, commits, or PRs"
+**False positive?** Open an issue: `gh issue create --repo anthony-spruyt/claude-config --title "False positive: block-ip-in-commits" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
