@@ -82,9 +82,11 @@ jobs:
           esac
 
           VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-          echo "prev-tag=$LATEST" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$VERSION"
+            echo "tag=v$VERSION"
+            echo "prev-tag=$LATEST"
+          } >> "$GITHUB_OUTPUT"
           echo "::notice::Bumping $BUMP: $CURRENT -> $VERSION"
   test:
     name: "Test"
