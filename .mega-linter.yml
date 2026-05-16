@@ -13,6 +13,8 @@ ENABLE_LINTERS:
   - TERRAFORM_TFLINT
   - TYPESCRIPT_BIOME
 FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|.*sops.*|.*/mcp\.json$|\.taskfiles/talos/scripts/'
+REPOSITORY_GITLEAKS_ARGUMENTS:
+  - "--no-git"
 GO_GOLANGCI_LINT_CLI_LINT_MODE: file
 GO_GOLANGCI_LINT_PRE_COMMANDS:
   - command: |

@@ -20,8 +20,8 @@ func validConfig() Config {
     NodeShutdownPhaseTimeout: 120 * time.Second,
     PerNodeTimeout:           15 * time.Second,
     CephWaitToolsTimeout:     600 * time.Second,
-    WorkerIPs:                []string{"10.0.0.1"},
-    ControlPlaneIPs:          []string{"10.0.1.1"},
+    WorkerIPs:                []string{"198.51.100.1"},
+    ControlPlaneIPs:          []string{"198.51.100.11"},
   }
 }
 
@@ -80,12 +80,12 @@ func TestLoadConfigFromEnv(t *testing.T) {
 }
 
 func TestLoadConfigNodeIPs(t *testing.T) {
-  t.Setenv("MS_01_1_IP4", "10.0.0.1")
-  t.Setenv("MS_01_2_IP4", "10.0.0.2")
-  t.Setenv("MS_01_3_IP4", "10.0.0.3")
-  t.Setenv("E2_1_IP4", "10.0.1.1")
-  t.Setenv("E2_2_IP4", "10.0.1.2")
-  t.Setenv("E2_3_IP4", "10.0.1.3")
+  t.Setenv("MS_01_1_IP4", "198.51.100.1")
+  t.Setenv("MS_01_2_IP4", "198.51.100.2")
+  t.Setenv("MS_01_3_IP4", "198.51.100.3")
+  t.Setenv("E2_1_IP4", "198.51.100.11")
+  t.Setenv("E2_2_IP4", "198.51.100.12")
+  t.Setenv("E2_3_IP4", "198.51.100.13")
 
   cfg := LoadConfig(nil)
 
@@ -95,8 +95,8 @@ func TestLoadConfigNodeIPs(t *testing.T) {
   if len(cfg.ControlPlaneIPs) != 3 {
     t.Fatalf("ControlPlaneIPs len = %d, want 3", len(cfg.ControlPlaneIPs))
   }
-  if cfg.WorkerIPs[0] != "10.0.0.1" {
-    t.Errorf("WorkerIPs[0] = %q, want %q", cfg.WorkerIPs[0], "10.0.0.1")
+  if cfg.WorkerIPs[0] != "198.51.100.1" {
+    t.Errorf("WorkerIPs[0] = %q, want %q", cfg.WorkerIPs[0], "198.51.100.1")
   }
 }
 
