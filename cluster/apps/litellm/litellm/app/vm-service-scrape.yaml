@@ -9,6 +9,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
+      app.kubernetes.io/service: litellm
   namespaceSelector:
     matchNames:
       - litellm
