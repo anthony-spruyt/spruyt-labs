@@ -871,7 +871,6 @@ configMaps:
                 AU_ABN: "MASK"
                 AU_ACN: "MASK"
                 IBAN_CODE: "MASK"
-                IP_ADDRESS: "MASK"
         router_settings:
           allowed_fails: 3
           cooldown_time: 300
