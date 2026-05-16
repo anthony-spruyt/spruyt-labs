@@ -176,7 +176,7 @@ controllers:
         image:
           # renovate: datasource=docker depName=docker.io/library/node
           repository: docker.io/library/node
-          tag: "20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0"
+          tag: "24-bookworm-slim@sha256:24dc26ef1e3c3690f27ebc4136c9c186c3133b25563ae4d7f0692e4d1fe5db0e"
           pullPolicy: IfNotPresent
         command:
           - sh
