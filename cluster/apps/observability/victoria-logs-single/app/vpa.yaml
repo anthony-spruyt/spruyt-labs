@@ -31,7 +31,7 @@ spec:
     kind: DaemonSet
     name: victoria-logs-single-vector
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: vector
@@ -39,4 +39,4 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 512Mi
+          memory: 768Mi
