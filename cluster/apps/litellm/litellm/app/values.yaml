@@ -349,7 +349,7 @@ controllers:
         image:
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/llm-guard-adapter
           repository: ghcr.io/anthony-spruyt/llm-guard-adapter
-          tag: "0.0.1@sha256:a51e80524a03917424214e118c04bc8cf3f761dab079b0e7146e562c3f6b9779"
+          tag: "0.0.1@sha256:bfc25055a821f6836ace8d45b5126d29fcb02689adad3ac7675acfe58a48fe70"
           pullPolicy: IfNotPresent
         env:
           LISTEN_ADDR: ":8080"
