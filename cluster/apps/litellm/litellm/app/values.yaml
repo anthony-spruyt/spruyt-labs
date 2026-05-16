@@ -95,6 +95,8 @@ controllers:
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
           OTEL_RESOURCE_ATTRIBUTES: "service.name=litellm,service.namespace=litellm"
+          PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
+          PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
         probes:
           liveness:
             enabled: true
@@ -130,12 +132,141 @@ controllers:
           capabilities:
             drop:
               - ALL
+
+  presidio-analyzer:
+    type: deployment
+    replicas: 1
+    containers:
+      presidio-analyzer:
+        image:
+          # renovate: datasource=docker depName=mcr.microsoft.com/presidio-analyzer
+          repository: mcr.microsoft.com/presidio-analyzer
+          tag: "2.2.362"
+          pullPolicy: IfNotPresent
+        env:
+          PRESIDIO_DEVICE: cpu
+        probes:
+          startup:    # NLP model loading takes 60-120s
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 18    # 180s window
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 200m
+            memory: 768Mi
+          limits:
+            memory: 1536Mi
+        securityContext:
+          runAsUser: 1001
+          runAsGroup: 1001
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+
+  presidio-anonymizer:
+    type: deployment
+    replicas: 1
+    containers:
+      presidio-anonymizer:
+        image:
+          # renovate: datasource=docker depName=mcr.microsoft.com/presidio-anonymizer
+          repository: mcr.microsoft.com/presidio-anonymizer
+          tag: "2.2.362"
+          pullPolicy: IfNotPresent
+        probes:
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              periodSeconds: 5
+              timeoutSeconds: 5
+              failureThreshold: 6     # 30s window
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 3000
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        securityContext:
+          runAsUser: 1001
+          runAsGroup: 1001
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+
 service:
   litellm:
     controller: litellm
     ports:
       http:
         port: 4000
+        protocol: TCP
+  presidio-analyzer:
+    controller: presidio-analyzer
+    ports:
+      http:
+        port: 3000
+        protocol: TCP
+  presidio-anonymizer:
+    controller: presidio-anonymizer
+    ports:
+      http:
+        port: 3000
         protocol: TCP
 configMaps:
   litellm-config:
@@ -666,6 +797,16 @@ configMaps:
           callbacks:
             - otel
             - prometheus
+            - detect_prompt_injection
+        guardrails:
+          - guardrail_name: "pii-protection"
+            litellm_params:
+              guardrail: presidio
+              mode: "pre_call"
+              default_on: true
+              presidio_filter_scope: "both"
+              pii_entities_config:
+                CREDIT_CARD: "MASK"
         router_settings:
           allowed_fails: 3
           cooldown_time: 300
@@ -683,3 +824,15 @@ persistence:
           - path: /app/config.yaml
             subPath: config.yaml
             readOnly: true
+  presidio-analyzer-cache:
+    type: emptyDir
+    advancedMounts:
+      presidio-analyzer:
+        presidio-analyzer:
+          - path: /home/appuser/.cache
+  presidio-anonymizer-cache:
+    type: emptyDir
+    advancedMounts:
+      presidio-anonymizer:
+        presidio-anonymizer:
+          - path: /home/appuser/.cache

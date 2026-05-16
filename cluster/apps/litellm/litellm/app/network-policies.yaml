@@ -14,6 +14,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -35,6 +36,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -68,6 +70,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -88,6 +91,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
   egress:
     - toEndpoints:
         - matchLabels:
@@ -109,6 +113,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
   egress:
     - toEntities:
         - world
@@ -128,6 +133,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
   egress:
     - toEndpoints:
         - matchLabels:
@@ -152,6 +158,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -160,6 +167,75 @@ spec:
       toPorts:
         - ports:
             - port: "4000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress from LiteLLM proxy to Presidio services
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-litellm-presidio-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/controller: presidio-analyzer
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/controller: presidio-anonymizer
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress to Presidio analyzer from LiteLLM proxy
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-presidio-analyzer-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: presidio-analyzer
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/controller: litellm
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress to Presidio anonymizer from LiteLLM proxy
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-presidio-anonymizer-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: presidio-anonymizer
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/controller: litellm
+      toPorts:
+        - ports:
+            - port: "3000"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
@@ -181,6 +257,7 @@ spec:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: litellm
             k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: litellm
       toPorts:
         - ports:
             - port: "5432"
