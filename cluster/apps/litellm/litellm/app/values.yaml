@@ -270,12 +270,16 @@ service:
         protocol: TCP
   presidio-analyzer:
     controller: presidio-analyzer
+    annotations:
+      prometheus.io/scrape: "false"
     ports:
       http:
         port: 3000
         protocol: TCP
   presidio-anonymizer:
     controller: presidio-anonymizer
+    annotations:
+      prometheus.io/scrape: "false"
     ports:
       http:
         port: 3000
