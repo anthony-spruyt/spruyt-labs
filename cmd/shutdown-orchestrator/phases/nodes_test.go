@@ -81,12 +81,12 @@ func TestNodeShutdownAll(t *testing.T) {
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "worker-1", IP: "10.0.0.1"},
-      {Name: "worker-2", IP: "10.0.0.2"},
+      {Name: "worker-1", IP: "198.51.100.1"},
+      {Name: "worker-2", IP: "198.51.100.2"},
     },
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
-      {Name: "cp-2", IP: "10.1.0.2"},
+      {Name: "cp-1", IP: "198.51.100.101"},
+      {Name: "cp-2", IP: "198.51.100.102"},
     },
     PerNodeTimeout: 5 * time.Second,
   }
@@ -102,8 +102,8 @@ func TestNodeShutdownAll(t *testing.T) {
   }
 
   // Workers must appear before any control plane node.
-  workerIPs := map[string]bool{"10.0.0.1": true, "10.0.0.2": true}
-  cpIPs := map[string]bool{"10.1.0.1": true, "10.1.0.2": true}
+  workerIPs := map[string]bool{"198.51.100.1": true, "198.51.100.2": true}
+  cpIPs := map[string]bool{"198.51.100.101": true, "198.51.100.102": true}
 
   firstCPIndex := -1
   lastWorkerIndex := -1
@@ -124,17 +124,17 @@ func TestNodeShutdownAll(t *testing.T) {
 func TestNodeWorkersConcurrent(t *testing.T) {
   mock := newMockTalosClient()
   // Each worker has a 50ms delay; if sequential this would take 150ms+.
-  mock.delays["10.0.0.1"] = 50 * time.Millisecond
-  mock.delays["10.0.0.2"] = 50 * time.Millisecond
-  mock.delays["10.0.0.3"] = 50 * time.Millisecond
+  mock.delays["198.51.100.1"] = 50 * time.Millisecond
+  mock.delays["198.51.100.2"] = 50 * time.Millisecond
+  mock.delays["198.51.100.3"] = 50 * time.Millisecond
 
   phase := NewNodePhase(mock, newNodeTestLogger())
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "w1", IP: "10.0.0.1"},
-      {Name: "w2", IP: "10.0.0.2"},
-      {Name: "w3", IP: "10.0.0.3"},
+      {Name: "w1", IP: "198.51.100.1"},
+      {Name: "w2", IP: "198.51.100.2"},
+      {Name: "w3", IP: "198.51.100.3"},
     },
     PerNodeTimeout: 5 * time.Second,
   }
@@ -164,9 +164,9 @@ func TestNodeControlPlaneSequential(t *testing.T) {
 
   cfg := NodeConfig{
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
-      {Name: "cp-2", IP: "10.1.0.2"},
-      {Name: "cp-3", IP: "10.1.0.3"},
+      {Name: "cp-1", IP: "198.51.100.101"},
+      {Name: "cp-2", IP: "198.51.100.102"},
+      {Name: "cp-3", IP: "198.51.100.103"},
     },
     PerNodeTimeout: 5 * time.Second,
   }
@@ -182,7 +182,7 @@ func TestNodeControlPlaneSequential(t *testing.T) {
   }
 
   // Verify order matches input order.
-  for i, expected := range []string{"10.1.0.1", "10.1.0.2", "10.1.0.3"} {
+  for i, expected := range []string{"198.51.100.101", "198.51.100.102", "198.51.100.103"} {
     if calls[i].NodeIP != expected {
       t.Errorf("call[%d] = %s, want %s", i, calls[i].NodeIP, expected)
     }
@@ -195,11 +195,11 @@ func TestNodeSelfSkipTestMode(t *testing.T) {
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "worker-1", IP: "10.0.0.1"},
+      {Name: "worker-1", IP: "198.51.100.1"},
     },
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
-      {Name: "cp-2", IP: "10.1.0.2"},
+      {Name: "cp-1", IP: "198.51.100.101"},
+      {Name: "cp-2", IP: "198.51.100.102"},
     },
     NodeName:       "cp-1",
     TestMode:       true,
@@ -217,8 +217,8 @@ func TestNodeSelfSkipTestMode(t *testing.T) {
     t.Fatalf("expected 2 calls (self skipped), got %d: %+v", len(calls), calls)
   }
   for _, c := range calls {
-    if c.NodeIP == "10.1.0.1" {
-      t.Errorf("self node cp-1 (10.1.0.1) should have been skipped in test mode")
+    if c.NodeIP == "198.51.100.101" {
+      t.Errorf("self node cp-1 (198.51.100.101) should have been skipped in test mode")
     }
   }
 }
@@ -229,9 +229,9 @@ func TestNodeSelfLastRealMode(t *testing.T) {
 
   cfg := NodeConfig{
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
-      {Name: "cp-2", IP: "10.1.0.2"},
-      {Name: "cp-3", IP: "10.1.0.3"},
+      {Name: "cp-1", IP: "198.51.100.101"},
+      {Name: "cp-2", IP: "198.51.100.102"},
+      {Name: "cp-3", IP: "198.51.100.103"},
     },
     NodeName:       "cp-1",
     TestMode:       false,
@@ -250,8 +250,8 @@ func TestNodeSelfLastRealMode(t *testing.T) {
 
   // Self (cp-1) must be the last call.
   lastCall := calls[len(calls)-1]
-  if lastCall.NodeIP != "10.1.0.1" {
-    t.Errorf("expected self node cp-1 (10.1.0.1) to be last, got %s", lastCall.NodeIP)
+  if lastCall.NodeIP != "198.51.100.101" {
+    t.Errorf("expected self node cp-1 (198.51.100.101) to be last, got %s", lastCall.NodeIP)
   }
 }
 
@@ -261,10 +261,10 @@ func TestNodeNameNotFound(t *testing.T) {
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "worker-1", IP: "10.0.0.1"},
+      {Name: "worker-1", IP: "198.51.100.1"},
     },
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
+      {Name: "cp-1", IP: "198.51.100.101"},
     },
     NodeName:       "unknown-node",
     PerNodeTimeout: 5 * time.Second,
@@ -283,18 +283,18 @@ func TestNodeNameNotFound(t *testing.T) {
 
 func TestNodeSingleTimeout(t *testing.T) {
   mock := newMockTalosClient()
-  mock.blockNodes["10.0.0.2"] = true // This worker blocks forever.
+  mock.blockNodes["198.51.100.2"] = true // This worker blocks forever.
 
   phase := NewNodePhase(mock, newNodeTestLogger())
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "w1", IP: "10.0.0.1"},
-      {Name: "w2", IP: "10.0.0.2"}, // blocks
-      {Name: "w3", IP: "10.0.0.3"},
+      {Name: "w1", IP: "198.51.100.1"},
+      {Name: "w2", IP: "198.51.100.2"}, // blocks
+      {Name: "w3", IP: "198.51.100.3"},
     },
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
+      {Name: "cp-1", IP: "198.51.100.101"},
     },
     PerNodeTimeout: 100 * time.Millisecond,
   }
@@ -312,7 +312,7 @@ func TestNodeSingleTimeout(t *testing.T) {
     calledIPs[c.NodeIP] = true
   }
 
-  for _, ip := range []string{"10.0.0.1", "10.0.0.3", "10.1.0.1"} {
+  for _, ip := range []string{"198.51.100.1", "198.51.100.3", "198.51.100.101"} {
     if !calledIPs[ip] {
       t.Errorf("expected node %s to be called despite timeout on another node", ip)
     }
@@ -325,11 +325,11 @@ func TestNodeSelfWorkerSkipTestMode(t *testing.T) {
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "worker-1", IP: "10.0.0.1"},
-      {Name: "worker-2", IP: "10.0.0.2"},
+      {Name: "worker-1", IP: "198.51.100.1"},
+      {Name: "worker-2", IP: "198.51.100.2"},
     },
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
+      {Name: "cp-1", IP: "198.51.100.101"},
     },
     NodeName:       "worker-1",
     TestMode:       true,
@@ -347,8 +347,8 @@ func TestNodeSelfWorkerSkipTestMode(t *testing.T) {
     t.Fatalf("expected 2 calls (self skipped), got %d: %+v", len(calls), calls)
   }
   for _, c := range calls {
-    if c.NodeIP == "10.0.0.1" {
-      t.Errorf("self worker node worker-1 (10.0.0.1) should have been skipped in test mode")
+    if c.NodeIP == "198.51.100.1" {
+      t.Errorf("self worker node worker-1 (198.51.100.1) should have been skipped in test mode")
     }
   }
 }
@@ -359,11 +359,11 @@ func TestNodeSelfWorkerLastRealMode(t *testing.T) {
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "worker-1", IP: "10.0.0.1"},
-      {Name: "worker-2", IP: "10.0.0.2"},
+      {Name: "worker-1", IP: "198.51.100.1"},
+      {Name: "worker-2", IP: "198.51.100.2"},
     },
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
+      {Name: "cp-1", IP: "198.51.100.101"},
     },
     NodeName:       "worker-1",
     TestMode:       false,
@@ -382,8 +382,8 @@ func TestNodeSelfWorkerLastRealMode(t *testing.T) {
   }
   // Self (worker-1) must be the last call.
   lastCall := calls[len(calls)-1]
-  if lastCall.NodeIP != "10.0.0.1" {
-    t.Errorf("expected self worker node worker-1 (10.0.0.1) to be last, got %s", lastCall.NodeIP)
+  if lastCall.NodeIP != "198.51.100.1" {
+    t.Errorf("expected self worker node worker-1 (198.51.100.1) to be last, got %s", lastCall.NodeIP)
   }
 }
 
@@ -393,11 +393,11 @@ func TestNodeAllForce(t *testing.T) {
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "w1", IP: "10.0.0.1"},
-      {Name: "w2", IP: "10.0.0.2"},
+      {Name: "w1", IP: "198.51.100.1"},
+      {Name: "w2", IP: "198.51.100.2"},
     },
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
+      {Name: "cp-1", IP: "198.51.100.101"},
     },
     PerNodeTimeout: 5 * time.Second,
   }
@@ -421,17 +421,17 @@ func TestNodeAllForce(t *testing.T) {
 
 func TestNodeShutdownErrorContinues(t *testing.T) {
   mock := newMockTalosClient()
-  mock.errors["10.0.0.1"] = fmt.Errorf("connection refused")
+  mock.errors["198.51.100.1"] = fmt.Errorf("connection refused")
 
   phase := NewNodePhase(mock, newNodeTestLogger())
 
   cfg := NodeConfig{
     Workers: []NodeEntry{
-      {Name: "w1", IP: "10.0.0.1"},
-      {Name: "w2", IP: "10.0.0.2"},
+      {Name: "w1", IP: "198.51.100.1"},
+      {Name: "w2", IP: "198.51.100.2"},
     },
     ControlPlane: []NodeEntry{
-      {Name: "cp-1", IP: "10.1.0.1"},
+      {Name: "cp-1", IP: "198.51.100.101"},
     },
     PerNodeTimeout: 5 * time.Second,
   }
@@ -454,7 +454,7 @@ func TestNodeShutdownErrorContinues(t *testing.T) {
   for _, c := range calls {
     calledIPs[c.NodeIP] = true
   }
-  for _, ip := range []string{"10.0.0.2", "10.1.0.1"} {
+  for _, ip := range []string{"198.51.100.2", "198.51.100.101"} {
     if !calledIPs[ip] {
       t.Errorf("expected node %s to be called despite error on another node", ip)
     }
