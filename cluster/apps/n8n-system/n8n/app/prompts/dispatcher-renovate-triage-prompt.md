@@ -23,7 +23,12 @@ Choose strategy based on discovery:
 Before analyzing, build awareness of the PR beyond just its body:
 1. Read ALL PR comments — the platform posts previous triage verdicts and fix summaries there. If a prior triage flagged issues and a fix agent pushed commits, that context is in the comments.
 2. Review ALL commits on the PR branch — not just the original dependency bump. A fix agent may have pushed additional commits to address earlier issues.
-3. Check GitHub code-scanning alerts on the PR branch — query the code-scanning API for open alerts. These are structured findings from security scanners (Trivy CVEs, CodeQL issues, MegaLinter findings). Include any open alerts in your summary with rule IDs and severities so the fix agent can address all findings in one pass.
+3. Check GitHub code-scanning alerts — SARIF results are indexed under the merge ref, NOT the source branch. Use this exact API call:
+   ```
+   gh api "repos/<<REPO>>/code-scanning/alerts?ref=refs/pull/<<PR_NUMBER>>/merge&per_page=100" \
+     --jq '[.[] | select(.rule.security_severity_level == "critical" or .rule.security_severity_level == "high") | {number, rule: .rule.id, severity: .rule.security_severity_level, state: .state}]'
+   ```
+   Do NOT try to parse CI run logs for CVEs — use this API. If the API returns 404 or empty, it means no SARIF results exist yet (CI may still be running). Include any open alerts in your summary with rule IDs and severities so the fix agent can address all findings in one pass.
 4. If prior triage comments exist:
    - Check whether fix commits actually address the flagged issues
    - Don't just rubber-stamp — re-run full analysis with fixes applied

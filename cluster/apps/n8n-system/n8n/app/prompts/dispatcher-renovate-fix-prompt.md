@@ -27,7 +27,12 @@ Stay on the current branch. Do NOT checkout or switch branches.
 
 Do not rely solely on the triage summary — scanner databases update continuously and new findings appear between triage and fix.
 
-1. Check GitHub code-scanning alerts on the PR branch for structured findings from security scanners (Trivy CVEs, CodeQL issues, MegaLinter findings)
+1. Check GitHub code-scanning alerts — SARIF results are indexed under the merge ref, NOT the source branch. Use this exact API call:
+   ```
+   gh api "repos/<<REPO>>/code-scanning/alerts?ref=refs/pull/<<PR_NUMBER>>/merge&per_page=100" \
+     --jq '[.[] | select(.rule.security_severity_level == "critical" or .rule.security_severity_level == "high") | {number, rule: .rule.id, severity: .rule.security_severity_level, state: .state}]'
+   ```
+   Do NOT parse CI run logs for CVEs — use this API. If the API returns 404 or empty, no SARIF results exist yet.
 2. Review CI logs for any failures not covered by security alerts
 3. Combine with triage summary to build the complete list of what needs fixing
 4. Address ALL open findings, not just those mentioned in the triage summary
