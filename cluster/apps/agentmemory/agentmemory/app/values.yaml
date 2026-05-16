@@ -126,7 +126,7 @@ controllers:
         image:
           # renovate: datasource=docker depName=docker.io/alpine/socat
           repository: docker.io/alpine/socat
-          tag: "1.8.0.3@sha256:a26f4bcee25ad4a4096ce91e596c0a2fffcbb51f7fd198dd87a5c86eae66f0e1"
+          tag: "1.8.0.3@sha256:bfd2550379212e087dc18db2f4611f43477be4b575d660c8f18c5b9a1b2e2757"
           pullPolicy: IfNotPresent
         args:
           - TCP-LISTEN:3116,fork,reuseaddr,bind=0.0.0.0
