@@ -264,6 +264,36 @@ describe("Processor.cancelAll", () => {
     expect(() => processor.cancelAll()).not.toThrow();
   });
 
+  it("preserves session key on cancellation so n8n can still call back", async () => {
+    const redis = createMockRedis();
+    const processor = new Processor(
+      redis,
+      baseConfig,
+      createMockRegistry(),
+      createMockHealthGate()
+    );
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const job = createMockJob("cancel-keys");
+    const processPromise = processor.process(job as any).catch(() => {});
+
+    await vi.waitFor(
+      () => {
+        if (fetchMock.mock.calls.length === 0)
+          throw new Error("fetch not called yet");
+      },
+      { timeout: 3000, interval: 10 }
+    );
+
+    processor.cancelAll();
+    await processPromise;
+
+    const delCalls = vi.mocked(redis.del).mock.calls;
+    expect(delCalls).toHaveLength(1);
+    expect(delCalls[0]).toEqual(["agent:active:cancel-keys"]);
+  });
+
   it("after cancelAll a second resolveCallback returns false for the cancelled job", async () => {
     const redis = createMockRedis();
     const processor = new Processor(

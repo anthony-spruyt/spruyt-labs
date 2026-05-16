@@ -63,6 +63,7 @@ export class Processor {
       return { status: "duplicate" };
     }
 
+    let cancelled = false;
     try {
       const cached = await this.redis.get(
         `agent:result:${job.id}:${job.attemptsMade}`
@@ -139,8 +140,10 @@ export class Processor {
           deadline.promise,
         ]);
 
-        if (result.status === "cancelled")
+        if (result.status === "cancelled") {
+          cancelled = true;
           throw new Error("Job cancelled during shutdown");
+        }
 
         logger.info("Job completed", { ...fields, status: result.status });
         return result;
@@ -169,7 +172,14 @@ export class Processor {
         this.callbacks.delete(job.id!);
       }
     } finally {
-      await this.redis.del(`agent:active:${job.id}`, `agent:session:${job.id}`);
+      if (cancelled) {
+        await this.redis.del(`agent:active:${job.id}`);
+      } else {
+        await this.redis.del(
+          `agent:active:${job.id}`,
+          `agent:session:${job.id}`
+        );
+      }
     }
   }
 
