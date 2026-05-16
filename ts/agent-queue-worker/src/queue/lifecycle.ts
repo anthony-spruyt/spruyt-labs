@@ -8,6 +8,7 @@ import * as metrics from "../metrics.js";
 import type { Processor } from "../processor.js";
 import type { RoleRegistry } from "../roles/registry.js";
 import { sreTriagedKey } from "../roles/sre-alert-role.js";
+import { clearRecoveryPoll } from "../health.js";
 import type { CircuitBreaker } from "./guard.js";
 import { DEFAULT_JOB_OPTIONS } from "./options.js";
 
@@ -212,6 +213,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     logger.info("Shutting down");
     metrics.workerShutdowns.inc();
 
+    clearRecoveryPoll();
     clearInterval(depthInterval);
     processor.cancelAll();
     await new Promise<void>((resolve) => server.close(() => resolve()));

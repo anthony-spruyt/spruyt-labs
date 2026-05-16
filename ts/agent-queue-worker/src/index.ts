@@ -40,6 +40,8 @@ const worker = new Worker("agent-jobs", async (job) => processor.process(job), {
   maxStalledCount: 2,
 });
 
+processor.setWorker(worker);
+
 const isReady = () => redis.status === "ready" && !worker.closing;
 
 const server = createHttpServer({
