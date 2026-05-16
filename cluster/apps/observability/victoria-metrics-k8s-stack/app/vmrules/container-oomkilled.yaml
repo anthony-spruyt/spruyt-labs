@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: container-oomkilled
+  namespace: observability
+spec:
+  groups:
+    - name: container-oomkill-alerts
+      rules:
+        - alert: ContainerOOMKilled
+          expr: |
+            increase(
+              kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[5m]
+            ) > 0
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} OOMKilled"
+            description: >-
+              Container {{ $labels.container }} in pod {{ $labels.pod }}
+              (namespace {{ $labels.namespace }}) was OOMKilled.
+              Current memory limit may be insufficient — check VPA
+              recommendations and consider bumping the limit.
+
+        - alert: ContainerOOMKillRecurring
+          expr: |
+            increase(
+              kube_pod_container_status_restarts_total[1h]
+            ) > 3
+            and on (namespace, pod, container)
+            kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} repeated OOMKills ({{ printf \"%.0f\" $value }}x in 1h)"
+            description: >-
+              Container {{ $labels.container }} in pod {{ $labels.pod }}
+              (namespace {{ $labels.namespace }}) has been OOMKilled
+              {{ printf "%.0f" $value }} times in the last hour.
+              Memory limit must be increased immediately.

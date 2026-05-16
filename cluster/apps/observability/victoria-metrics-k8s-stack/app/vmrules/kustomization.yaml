@@ -12,3 +12,4 @@ resources:
   - ./cert-manager-certificates.yaml
   - ./csi-reclaim-space.yaml
   - ./node-memory-saturation.yaml
+  - ./container-oomkilled.yaml
