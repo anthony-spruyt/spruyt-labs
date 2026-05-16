@@ -849,6 +849,9 @@ configMaps:
             - otel
             - prometheus
             - detect_prompt_injection
+          prompt_injection_params:
+            heuristics_check: true
+            similarity_check: true
         guardrails:
           - guardrail_name: "pii-protection"
             litellm_params:
