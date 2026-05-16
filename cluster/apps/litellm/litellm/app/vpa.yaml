@@ -18,4 +18,46 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 512Mi
+          memory: 2560Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: litellm-presidio-analyzer
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: litellm-presidio-analyzer
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: presidio-analyzer
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 1536Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: litellm-presidio-anonymizer
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: litellm-presidio-anonymizer
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: presidio-anonymizer
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 256Mi
