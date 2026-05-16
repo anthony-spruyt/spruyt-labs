@@ -184,8 +184,8 @@ kubectl uncordon <hostname>
 
      ```sh
      talosctl upgrade \
-       --nodes 10.10.0.11 \
-       --endpoints 10.10.0.10 \
+       --nodes <control-plane-node-ip> \
+       --endpoints <cluster-endpoint-ip> \
        --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
      ```
 
@@ -193,8 +193,8 @@ kubectl uncordon <hostname>
 
      ```sh
      talosctl upgrade \
-       --nodes 10.10.0.21 \
-       --endpoints 10.10.0.10 \
+       --nodes <worker-node-ip> \
+       --endpoints <cluster-endpoint-ip> \
        --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
      ```
 
