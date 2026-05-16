@@ -14,6 +14,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: admission-controller
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -35,6 +36,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: recommender
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -56,6 +58,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: updater
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

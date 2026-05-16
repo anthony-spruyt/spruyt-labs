@@ -14,6 +14,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: litellm
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -35,6 +36,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: presidio-analyzer
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -56,6 +58,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: presidio-anonymizer
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

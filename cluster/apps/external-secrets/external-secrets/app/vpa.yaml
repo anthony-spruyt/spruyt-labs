@@ -14,6 +14,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: external-secrets
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -35,6 +36,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: cert-controller
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -56,6 +58,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: webhook
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

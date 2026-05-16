@@ -14,12 +14,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: upsd
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 64Mi
       - containerName: exporter
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

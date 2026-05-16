@@ -15,6 +15,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: manager
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
