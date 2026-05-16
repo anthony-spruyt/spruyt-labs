@@ -377,7 +377,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"$instance\", chip=~\"pci0000:00_.*|platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$instance\"})",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=~\"$instance\", chip=~\"pci0000:00_.*|platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
@@ -386,7 +386,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"$instance\", chip=~\"pci0000:00_.*|platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$instance\"})",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=~\"$instance\", chip=~\"pci0000:00_.*|platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -522,7 +522,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"$instance\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$instance\"})",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=~\"$instance\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
@@ -531,7 +531,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"$instance\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$instance\"})",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=~\"$instance\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
@@ -667,7 +667,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=\"$instance\", chip=~\"platform_nct6775_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$instance\"})",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=~\"$instance\", chip=~\"platform_nct6775_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
           "refId": "A"
         },
@@ -676,7 +676,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=\"$instance\", chip=~\"platform_nct6775_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$instance\"})",
+          "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=~\"$instance\", chip=~\"platform_nct6775_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
           "refId": "B"
         }
