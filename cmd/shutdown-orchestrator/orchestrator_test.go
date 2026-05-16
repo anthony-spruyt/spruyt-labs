@@ -189,16 +189,16 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
     CephWaitToolsTimeout:     5 * time.Second,
     NodeShutdownPhaseTimeout: 5 * time.Second,
     PerNodeTimeout:           5 * time.Second,
-    WorkerIPs:                []string{"10.0.0.1"},
-    ControlPlaneIPs:          []string{"10.0.0.10", "10.0.0.11"},
+    WorkerIPs:                []string{"198.51.100.1"},
+    ControlPlaneIPs:          []string{"198.51.100.10", "198.51.100.11"},
   }
 
   // Ensure mock nodes include IP-to-name mappings for resolveNodeNames.
   if kube.nodes == nil {
     kube.nodes = []clients.Node{
-      {Name: "ms-01-1", IP: "10.0.0.1", Ready: true},
-      {Name: "e2-1", IP: "10.0.0.10", Ready: true},
-      {Name: "e2-2", IP: "10.0.0.11", Ready: true},
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+      {Name: "e2-2", IP: "198.51.100.11", Ready: true},
     }
   }
 
@@ -212,9 +212,9 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
     },
     toolsExists: true,
     nodes: []clients.Node{
-      {Name: "ms-01-1", IP: "10.0.0.1", Ready: true},
-      {Name: "e2-1", IP: "10.0.0.10", Ready: true},
-      {Name: "e2-2", IP: "10.0.0.11", Ready: true},
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+      {Name: "e2-2", IP: "198.51.100.11", Ready: true},
     },
   }
   talos := &orchestratorMockTalos{}
@@ -343,8 +343,8 @@ func TestOrchestratorPhaseTimeout(t *testing.T) {
     getClustersBlocks: true, // CNPG will block forever
     toolsExists:       true,
     nodes: []clients.Node{
-      {Name: "ms-01-1", IP: "10.0.0.1", Ready: true},
-      {Name: "e2-1", IP: "10.0.0.10", Ready: true},
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
     },
   }
   talos := &orchestratorMockTalos{}
@@ -360,8 +360,8 @@ func TestOrchestratorPhaseTimeout(t *testing.T) {
     CephFlagPhaseTimeout:     5 * time.Second,
     CephScalePhaseTimeout:    5 * time.Second,
     NodeShutdownPhaseTimeout: 5 * time.Second,
-    WorkerIPs:                []string{"10.0.0.1"},
-    ControlPlaneIPs:          []string{"10.0.0.10"},
+    WorkerIPs:                []string{"198.51.100.1"},
+    ControlPlaneIPs:          []string{"198.51.100.10"},
   }
 
   orch := NewOrchestrator(cnpg, ceph, nodes, kube, cfg, logger)
@@ -427,9 +427,9 @@ func TestOrchestratorTestMode(t *testing.T) {
     },
     toolsExists: true,
     nodes: []clients.Node{
-      {Name: "ms-01-1", IP: "10.0.0.1", Ready: true},
-      {Name: "e2-1", IP: "10.0.0.10", Ready: true},
-      {Name: "e2-2", IP: "10.0.0.11", Ready: true},
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+      {Name: "e2-2", IP: "198.51.100.11", Ready: true},
     },
   }
   talos := &orchestratorMockTalos{}
