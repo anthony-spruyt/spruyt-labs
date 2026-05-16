@@ -154,6 +154,7 @@ controllers:
           pullPolicy: IfNotPresent
         env:
           PRESIDIO_DEVICE: cpu
+          RECOGNIZER_REGISTRY_CONF_FILE: /opt/presidio/conf/recognizers.yaml
         probes:
           startup:    # NLP model loading takes 60-120s
             enabled: true
@@ -281,6 +282,44 @@ service:
         port: 3000
         protocol: TCP
 configMaps:
+  presidio-recognizers:
+    data:
+      recognizers.yaml: |
+        supported_languages:
+          - en
+        global_regex_flags: 26
+        recognizers:
+          - name: CreditCardRecognizer
+            supported_languages:
+              - language: en
+                context: [credit, card, visa, mastercard, cc, amex, discover, jcb, diners, maestro, instapayment]
+            type: predefined
+          - name: AuAbnRecognizer
+            supported_languages:
+              - en
+            type: predefined
+          - name: AuAcnRecognizer
+            supported_languages:
+              - en
+            type: predefined
+          - name: AuTfnRecognizer
+            supported_languages:
+              - en
+            type: predefined
+          - name: AuMedicareRecognizer
+            supported_languages:
+              - en
+            type: predefined
+          - name: CryptoRecognizer
+            type: predefined
+          - name: DateRecognizer
+            type: predefined
+          - name: IbanRecognizer
+            type: predefined
+          - name: IpRecognizer
+            type: predefined
+          - name: MedicalLicenseRecognizer
+            type: predefined
   litellm-config:
     data:
       config.yaml: |
@@ -817,8 +856,22 @@ configMaps:
               mode: "pre_call"
               default_on: true
               presidio_filter_scope: "both"
+              presidio_score_thresholds:
+                ALL: 0.7
+                PERSON: 0.85
+                AU_TFN: 0.4
+                AU_MEDICARE: 0.4
+                AU_ABN: 0.4
+                AU_ACN: 0.4
               pii_entities_config:
                 CREDIT_CARD: "MASK"
+                PERSON: "MASK"
+                AU_TFN: "BLOCK"
+                AU_MEDICARE: "MASK"
+                AU_ABN: "MASK"
+                AU_ACN: "MASK"
+                IBAN_CODE: "MASK"
+                IP_ADDRESS: "MASK"
         router_settings:
           allowed_fails: 3
           cooldown_time: 300
@@ -835,6 +888,15 @@ persistence:
         litellm:
           - path: /app/config.yaml
             subPath: config.yaml
+            readOnly: true
+  presidio-recognizers-config:
+    type: configMap
+    identifier: presidio-recognizers
+    advancedMounts:
+      presidio-analyzer:
+        presidio-analyzer:
+          - path: /opt/presidio/conf/recognizers.yaml
+            subPath: recognizers.yaml
             readOnly: true
   presidio-analyzer-cache:
     type: emptyDir
