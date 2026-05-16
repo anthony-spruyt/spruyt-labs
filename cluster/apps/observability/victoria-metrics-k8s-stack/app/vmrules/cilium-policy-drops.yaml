@@ -18,7 +18,7 @@ spec:
             sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED", source!~"agentmemory|csi-addons-system|github-system|spegel"}[5m])
             ) > 0
-          for: 2m
+          for: 10m
           labels:
             severity: warning
           annotations:

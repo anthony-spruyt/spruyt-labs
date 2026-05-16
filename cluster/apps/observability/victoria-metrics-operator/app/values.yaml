@@ -18,6 +18,8 @@ crds:
     # -- Enables CRD upgrade job
     enabled: true
 
+priorityClassName: high-priority
+
 resources:
   limits:
     memory: 256Mi

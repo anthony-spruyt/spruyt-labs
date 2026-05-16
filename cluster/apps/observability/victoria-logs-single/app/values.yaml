@@ -53,6 +53,7 @@
 server:
   # -- Enable deployment of server component. Deployed as StatefulSet
   #enabled: true
+  priorityClassName: high-priority
   podAnnotations:
     reloader.stakater.com/auto: "true"
   #image:
