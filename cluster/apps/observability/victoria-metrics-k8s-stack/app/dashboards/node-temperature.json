@@ -697,7 +697,7 @@
         "current": {
           "selected": false,
           "text": "VictoriaMetrics",
-          "value": "PDEE7B1574C9339CB"
+          "value": "P4169E866C3094E38"
         },
         "hide": 0,
         "includeAll": false,
@@ -713,7 +713,11 @@
         "type": "datasource"
       },
       {
-        "current": {},
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
@@ -725,12 +729,8 @@
         "multi": true,
         "name": "instance",
         "options": [],
-        "query": {
-          "qryType": 1,
-          "query": "label_values(node_hwmon_temp_celsius, instance)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
+        "query": "label_values(node_hwmon_temp_celsius, instance)",
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
