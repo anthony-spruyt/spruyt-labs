@@ -90,14 +90,14 @@ func newDiscardLogger() *slog.Logger {
 
 func goodConfig() Config {
   return Config{
-    WorkerIPs:       []string{"10.0.0.1", "10.0.0.2"},
-    ControlPlaneIPs: []string{"10.0.1.1", "10.0.1.2"},
+    WorkerIPs:       []string{"198.51.100.1", "198.51.100.2"},
+    ControlPlaneIPs: []string{"198.51.100.11", "198.51.100.12"},
   }
 }
 
 func TestPreflightKubeAPIUnreachable(t *testing.T) {
   kube := &mockKube{
-    getNodesErr:      fmt.Errorf("dial tcp 10.0.0.1:6443: connect: connection refused"),
+    getNodesErr:      fmt.Errorf("dial tcp 198.51.100.1:6443: connect: connection refused"),
     cnpgClusters:     []clients.CNPGCluster{},
     deploymentExists: true,
     execOutput:       "HEALTH_OK",
