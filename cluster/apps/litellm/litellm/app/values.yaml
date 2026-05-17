@@ -277,9 +277,9 @@ controllers:
     containers:
       llm-guard:
         image:
-          # renovate: datasource=docker depName=laiyer/llm-guard-api
-          repository: laiyer/llm-guard-api
-          tag: "0.3.16@sha256:bea3efb1220ad18149b73de625c55e6d835bf8b45023a089a3762012a86550ba"
+          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/llm-guard
+          repository: ghcr.io/anthony-spruyt/llm-guard
+          tag: "0.3.1@sha256:0e131ad0ef7488fbd50b7e494d99a67097df9f12dee35689744e6cb492fd91ce"
           pullPolicy: IfNotPresent
         env:
           LOG_LEVEL: INFO

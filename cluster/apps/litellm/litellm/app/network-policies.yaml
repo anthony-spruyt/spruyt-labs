@@ -271,7 +271,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to LLM Guard from adapter only, egress to HuggingFace for model downloads
+# Allow ingress to LLM Guard from adapter only, deny all egress (models baked into image)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -291,13 +291,7 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
-  egress:
-    - toEntities:
-        - world
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
+  egress: []
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress to Presidio analyzer from LiteLLM proxy, deny all egress
