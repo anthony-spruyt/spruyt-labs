@@ -10,6 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Install bats
-        run: sudo apt-get install -y bats
+        run: sudo apt-get update && sudo apt-get install -y bats
       - name: Run bootstrap-plugins tests
         run: bats cluster/apps/claude-agents-shared/base/scripts/bootstrap-plugins.bats
