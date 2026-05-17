@@ -90,8 +90,48 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
   defer talos.Close()
   defer ups.Close()
 
-  // Run preflight checks before starting the monitor loop.
-  // If any check fails, refuse to start monitoring.
+  // Start a simple health server so liveness/startup probes pass during
+  // recovery and preflight. Recovery can take 10+ minutes.
+  earlyMux := http.NewServeMux()
+  earlyMux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    fmt.Fprintln(w, "ok")
+  })
+  earlySrv := &http.Server{Handler: earlyMux}
+  earlyLn, listenErr := net.Listen("tcp", fmt.Sprintf(":%d", cfg.HealthPort))
+  if listenErr != nil {
+    return fmt.Errorf("binding health server port %d: %w", cfg.HealthPort, listenErr)
+  }
+  go func() {
+    if srvErr := earlySrv.Serve(earlyLn); srvErr != nil && srvErr != http.ErrServerClosed {
+      logger.Error("early health server error", "error", srvErr)
+    }
+  }()
+  defer func() {
+    sCtx, sCancel := context.WithTimeout(context.Background(), 2*time.Second)
+    _ = earlySrv.Shutdown(sCtx)
+    sCancel()
+  }()
+  logger.Info("health server started", "port", cfg.HealthPort)
+
+  orch := buildOrchestrator(kube, talos, cfg, logger)
+
+  // Before preflight: detect if Ceph was scaled to 0 by a previous shutdown.
+  // Uses only the Kubernetes API (no Ceph exec) so it works when Ceph is down.
+  cephDown, err := orch.IsCephScaledDown(ctx)
+  if err != nil {
+    logger.Error("failed to check Ceph scaled-down state, proceeding to preflight", "error", err)
+  }
+  if cephDown {
+    logger.Info("ceph is scaled to 0, running recovery before preflight")
+    if err := orch.RecoverFromZero(ctx); err != nil {
+      logger.Error("pre-preflight recovery failed", "error", err)
+      return fmt.Errorf("recovery from Ceph-at-zero failed: %w", err)
+    }
+    logger.Info("pre-preflight recovery complete")
+  }
+
+  // Run preflight checks. If any fail, refuse to start monitoring.
   checker := NewPreflightChecker(kube, talos, ups, cfg, logger)
   results := checker.RunAll(ctx)
   failed := 0
@@ -106,9 +146,7 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
   }
   logger.Info("all preflight checks passed")
 
-  orch := buildOrchestrator(kube, talos, cfg, logger)
-
-  // Check for recovery on startup
+  // Check for additional recovery signals (CNPG hibernation, noout flag).
   needsRecovery, err := orch.NeedsRecovery(ctx)
   if err != nil {
     logger.Warn("failed to check recovery state", "error", err)
@@ -119,6 +157,12 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
       logger.Error("recovery failed", "error", err)
     }
   }
+
+  // Shut down early health server before Monitor.Run() binds the same port
+  // with its own shutdown-aware handler. The defer above handles error paths.
+  sCtx, sCancel := context.WithTimeout(context.Background(), 2*time.Second)
+  _ = earlySrv.Shutdown(sCtx)
+  sCancel()
 
   monitor := NewMonitor(ups, orch.Shutdown, cfg, logger)
   return monitor.Run(ctx)

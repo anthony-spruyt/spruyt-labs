@@ -3,6 +3,7 @@ package phases
 import (
   "context"
   "errors"
+  "fmt"
   "log/slog"
   "strings"
   "time"
@@ -234,6 +235,54 @@ func (p *CephPhase) WaitForCephHealthy(ctx context.Context) error {
 // previous shutdown that needs recovery.
 func (p *CephPhase) NeedsRecovery(ctx context.Context) (bool, error) {
   return p.kube.IsCephNooutSet(ctx)
+}
+
+// IsCephScaledDown checks if Ceph deployments are at 0 replicas, indicating a
+// previous orchestrator shutdown that needs recovery. This uses only the
+// Kubernetes API (no Ceph exec required) so it works even when Ceph is down.
+//
+// Returns true if the operator OR any MON/OSD deployment is at 0 replicas.
+func (p *CephPhase) IsCephScaledDown(ctx context.Context) (bool, error) {
+  operatorReplicas, err := p.kube.GetDeploymentReplicas(ctx, cephNamespace, cephOperatorDeploy)
+  if err != nil {
+    return false, fmt.Errorf("checking operator replicas: %w", err)
+  }
+  if operatorReplicas == 0 {
+    p.logger.Info("ceph operator is at 0 replicas, shutdown recovery needed")
+    return true, nil
+  }
+
+  monNames, err := p.kube.ListDeploymentNames(ctx, cephNamespace, "app=rook-ceph-mon")
+  if err != nil {
+    return false, fmt.Errorf("listing mon deployments: %w", err)
+  }
+  for _, name := range monNames {
+    replicas, err := p.kube.GetDeploymentReplicas(ctx, cephNamespace, name)
+    if err != nil {
+      return false, fmt.Errorf("checking mon %s replicas: %w", name, err)
+    }
+    if replicas == 0 {
+      p.logger.Info("ceph mon at 0 replicas, shutdown recovery needed", "deployment", name)
+      return true, nil
+    }
+  }
+
+  osdNames, err := p.kube.ListDeploymentNames(ctx, cephNamespace, "app=rook-ceph-osd")
+  if err != nil {
+    return false, fmt.Errorf("listing osd deployments: %w", err)
+  }
+  for _, name := range osdNames {
+    replicas, err := p.kube.GetDeploymentReplicas(ctx, cephNamespace, name)
+    if err != nil {
+      return false, fmt.Errorf("checking osd %s replicas: %w", name, err)
+    }
+    if replicas == 0 {
+      p.logger.Info("ceph osd at 0 replicas, shutdown recovery needed", "deployment", name)
+      return true, nil
+    }
+  }
+
+  return false, nil
 }
 
 // scaleComponent scales a single named deployment, logging warnings on failure.
