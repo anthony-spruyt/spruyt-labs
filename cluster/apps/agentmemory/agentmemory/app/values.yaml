@@ -34,9 +34,9 @@ controllers:
         resources:
           requests:
             cpu: 10m
-            memory: 128Mi
+            memory: 256Mi
           limits:
-            memory: 512Mi
+            memory: 1280Mi
         probes:
           liveness:
             enabled: true
@@ -183,18 +183,15 @@ controllers:
           - -c
           - npx --yes @agentmemory/agentmemory@0.9.12 --no-engine
         env:
-          - name: GEMINI_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: agentmemory-secrets
-                key: GEMINI_API_KEY
           - name: OPENAI_API_KEY
             valueFrom:
               secretKeyRef:
                 name: agentmemory-secrets
-                key: OPENAI_API_KEY
-          - name: GEMINI_MODEL
-            value: "gemini-2.5-flash"
+                key: LITELLM_API_KEY
+          - name: OPENAI_BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000"
+          - name: OPENAI_MODEL
+            value: "qwen3.6-plus"
           - name: EMBEDDING_PROVIDER
             value: "openai"
           - name: AGENTMEMORY_TOOLS
@@ -204,7 +201,7 @@ controllers:
           - name: GRAPH_EXTRACTION_ENABLED
             value: "false"
           - name: CONSOLIDATION_ENABLED
-            value: "false"
+            value: "true"
           - name: III_ENGINE_URL
             value: "ws://localhost:49134"
           - name: VIEWER_ALLOWED_ORIGINS
@@ -225,7 +222,7 @@ controllers:
             cpu: 10m
             memory: 128Mi
           limits:
-            memory: 512Mi
+            memory: 768Mi
         probes:
           liveness:
             enabled: true

@@ -18,7 +18,7 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 512Mi
+          memory: 1280Mi
       - containerName: console
         minAllowed:
           cpu: 1m
@@ -36,4 +36,4 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 512Mi
+          memory: 768Mi

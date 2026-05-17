@@ -1,0 +1,90 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/serviceaccount.json
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agentmemory-restart
+  namespace: agentmemory
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/role-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: agentmemory-restart
+  namespace: agentmemory
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/rolebinding-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: agentmemory-restart
+  namespace: agentmemory
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: agentmemory-restart
+subjects:
+  - kind: ServiceAccount
+    name: agentmemory-restart
+    namespace: agentmemory
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/cronjob-batch-v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: agentmemory-restart
+  namespace: agentmemory
+spec:
+  schedule: "0 4 * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: agentmemory-restart
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+          serviceAccountName: agentmemory-restart
+          restartPolicy: OnFailure
+          containers:
+            - name: restart
+              # renovate: datasource=docker depName=alpine/k8s
+              image: alpine/k8s:1.36.0@sha256:c105e4eaa265c617e43be34fffc7d9961de76b65a1e520179ed61e2f3a9fabf7
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  kubectl rollout restart deployment/agentmemory -n agentmemory && \
+                  kubectl rollout status deployment/agentmemory -n agentmemory --timeout=90s
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault

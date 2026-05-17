@@ -1,14 +1,10 @@
 ---
-# Path-specific trivy ignores
+# Global Trivy ignores (filesystem/misconfiguration scans only)
 # https://trivy.dev/latest/docs/configuration/filtering
-
-vulnerabilities:
-  # picomatch 4.0.3 ships inside npm bundled in node:24-alpine base image
-  # (usr/local/lib/node_modules/npm/node_modules/tinyglobby/node_modules/picomatch).
-  # Not exploitable: ReDoS requires attacker-controlled extglob patterns passed to
-  # picomatch, but npm's internal glob usage only processes package paths/filenames.
-  # Will resolve when node:24-alpine updates npm to bundle picomatch >=4.0.4.
-  - id: CVE-2026-33671
+#
+# IMAGE CVEs DO NOT BELONG HERE. Put them in per-image trivyignore files:
+#   <workdir>/.trivyignore.yaml (e.g., ts/agent-queue-worker/.trivyignore.yaml)
+# Per-image files are easier to audit, track ownership, and clean up when fixes land.
 
 misconfigurations:
   # Hubble SSO ingress needs to be in kube-system (where Cilium runs)
@@ -167,10 +163,12 @@ misconfigurations:
   - id: AVD-KSV-0048
     paths:
       - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/restart-cronjob.yaml
+      - cluster/apps/agentmemory/agentmemory/app/restart-cronjob.yaml
   # alpine/k8s is a trusted Docker Hub image for kubectl operations
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/restart-cronjob.yaml
+      - cluster/apps/agentmemory/agentmemory/app/restart-cronjob.yaml
 
   # ==============================================================================
   # Snapshot Controller - third-party manifest from kubernetes-csi project

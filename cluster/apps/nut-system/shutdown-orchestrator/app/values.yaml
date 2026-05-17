@@ -28,7 +28,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/shutdown-orchestrator
-          tag: 1.1.6@sha256:a989e82c991f912beb3f7dd44974366d13e42dad7fc8a916e6f4fae4167ba020
+          tag: 1.1.7@sha256:f6fec43d89be241fb6b0adc97de8ae5d932f8f394c4ca0df586aa6b1709bbbaa
           pullPolicy: IfNotPresent
         env:
           - name: NUT_SERVER
@@ -92,6 +92,17 @@ controllers:
             drop:
               - ALL
         probes:
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 90
           liveness:
             enabled: true
             custom: true
@@ -99,7 +110,7 @@ controllers:
               httpGet:
                 path: /healthz
                 port: 8080
-              initialDelaySeconds: 10
+              initialDelaySeconds: 30
               periodSeconds: 30
               timeoutSeconds: 5
               failureThreshold: 3

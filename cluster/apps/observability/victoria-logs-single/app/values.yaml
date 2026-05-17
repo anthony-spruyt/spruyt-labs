@@ -205,10 +205,10 @@ server:
 
   resources:
     limits:
-      memory: 896Mi
+      memory: 1536Mi
     requests:
       cpu: 80m
-      memory: 448Mi
+      memory: 768Mi
 
   #probe:
   #  # -- Indicates whether the Container is ready to service requests. If the readiness probe fails, the endpoints controller removes the Pod's IP address from the endpoints of all Services that match the Pod. The default state of readiness before the initial delay is Failure. If a Container does not provide a readiness probe, the default state is Success.
@@ -385,12 +385,17 @@ vector:
   # -- Enable deployment of vector
   enabled: true
 
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
   resources:
     requests:
       cpu: 100m
       memory: 512Mi
     limits:
-      memory: 1536Mi
+      memory: 2560Mi
 
   #role: Agent
   #dataDir: /vector-data-dir
