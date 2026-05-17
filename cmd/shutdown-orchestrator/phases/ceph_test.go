@@ -31,6 +31,10 @@ type mockCephKubeClient struct {
   listDeploymentErr      map[string]error
   isCephNooutSetResult   bool
   isCephNooutSetErr      error
+
+  // Deployment replicas config
+  deploymentReplicasResult map[string]int32
+  deploymentReplicasErr    map[string]error
 }
 
 type deploymentExistsCall struct {
@@ -60,6 +64,8 @@ func newMockCephKubeClient() *mockCephKubeClient {
     scaleDeploymentErr:     make(map[string]error),
     listDeploymentResult:   make(map[string][]string),
     listDeploymentErr:      make(map[string]error),
+    deploymentReplicasResult: make(map[string]int32),
+    deploymentReplicasErr:    make(map[string]error),
   }
 }
 
@@ -111,6 +117,17 @@ func (m *mockCephKubeClient) ListDeploymentNames(ctx context.Context, ns, labelS
 func (m *mockCephKubeClient) IsCephNooutSet(ctx context.Context) (bool, error) {
   m.isCephNooutSetCalls++
   return m.isCephNooutSetResult, m.isCephNooutSetErr
+}
+
+func (m *mockCephKubeClient) GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error) {
+  key := ns + "/" + name
+  if err, ok := m.deploymentReplicasErr[key]; ok {
+    return 0, err
+  }
+  if result, ok := m.deploymentReplicasResult[key]; ok {
+    return result, nil
+  }
+  return 1, nil
 }
 
 // Unused interface methods (required to satisfy KubeClient).

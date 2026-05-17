@@ -212,6 +212,17 @@ func (k *RealKubeClient) ListDeploymentNames(ctx context.Context, ns, labelSelec
   return names, nil
 }
 
+// GetDeploymentReplicas returns the spec replica count for a deployment.
+// Returns 0 and no error if the deployment exists with 0 replicas.
+// Returns an error if the deployment does not exist or cannot be read.
+func (k *RealKubeClient) GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error) {
+  scale, err := k.clientset.AppsV1().Deployments(ns).GetScale(ctx, name, metav1.GetOptions{})
+  if err != nil {
+    return 0, fmt.Errorf("getting scale for deployment %s/%s: %w", ns, name, err)
+  }
+  return scale.Spec.Replicas, nil
+}
+
 // GetNodes returns all cluster nodes with their ready status.
 func (k *RealKubeClient) GetNodes(ctx context.Context) ([]Node, error) {
   nodeList, err := k.clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})

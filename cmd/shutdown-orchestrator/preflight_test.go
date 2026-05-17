@@ -56,6 +56,9 @@ func (m *mockKube) ListDeploymentNames(ctx context.Context, ns, labelSelector st
 func (m *mockKube) IsCephNooutSet(ctx context.Context) (bool, error) {
   return false, nil
 }
+func (m *mockKube) GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error) {
+  return 1, nil
+}
 
 // mockTalos implements clients.TalosClient.
 type mockTalos struct {

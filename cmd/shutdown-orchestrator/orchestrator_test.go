@@ -27,9 +27,10 @@ type orchestratorMockKube struct {
   hibernationState map[string]bool
 
   // Ceph config
-  toolsExists       bool
-  isCephNooutResult bool
-  isCephNooutErr    error
+  toolsExists        bool
+  isCephNooutResult  bool
+  isCephNooutErr     error
+  deploymentReplicas map[string]int32
 
   // Node config
   nodes    []clients.Node
@@ -138,6 +139,16 @@ func (m *orchestratorMockKube) GetNodes(ctx context.Context) ([]clients.Node, er
 func (m *orchestratorMockKube) IsCephNooutSet(ctx context.Context) (bool, error) {
   m.record("IsCephNooutSet")
   return m.isCephNooutResult, m.isCephNooutErr
+}
+
+func (m *orchestratorMockKube) GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error) {
+  m.record("GetDeploymentReplicas:" + name)
+  if m.deploymentReplicas != nil {
+    if r, ok := m.deploymentReplicas[ns+"/"+name]; ok {
+      return r, nil
+    }
+  }
+  return 1, nil
 }
 
 // orchestratorMockTalos implements clients.TalosClient.
