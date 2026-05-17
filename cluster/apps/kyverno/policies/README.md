@@ -74,8 +74,8 @@ Current overrides: cilium (`timeout: 2m`), n8n/rook-ceph-cluster (`timeout: 15m`
 
 ### inject-claude-agent-config
 
-Injects configuration into Claude agent pods spawned by n8n. A shared rule injects GitHub bot credentials (gh CLI config, read-only gitconfig), MCP server config, and environment variables into all agent namespaces. The write namespace additionally receives SSH key and full gitconfig (with commit signing) via strategic merge override. Read and SRE namespaces clone repos via HTTPS using a
-read-scoped GitHub App token instead of SSH (no SSH key = no push capability).
+Injects configuration into Claude agent pods spawned by n8n. A shared rule injects GitHub bot credentials (gh CLI config, read-only gitconfig), MCP server config, plugin bootstrap volumes, and environment variables into all agent namespaces. Clone rules inject a `plugin-bootstrap` init container (after `git-clone`) that reads managed-settings.json, project settings.json, and settings.local.json to
+install marketplaces and plugins via `claude plugins` CLI. The write namespace additionally receives SSH key and full gitconfig (with commit signing) via strategic merge override. Read and SRE namespaces clone repos via HTTPS using a read-scoped GitHub App token instead of SSH (no SSH key = no push capability).
 
 **Injected resources:** See [`inject-claude-agent-config.yaml`](app/inject-claude-agent-config.yaml) for the full list of volumes, volume mounts, and environment variables.
 
