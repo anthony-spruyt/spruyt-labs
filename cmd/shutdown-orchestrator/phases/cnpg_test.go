@@ -72,6 +72,9 @@ func (m *mockKubeClient) GetNodes(ctx context.Context) ([]clients.Node, error) {
 func (m *mockKubeClient) IsCephNooutSet(ctx context.Context) (bool, error) {
   return false, nil
 }
+func (m *mockKubeClient) GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error) {
+  return 1, nil
+}
 
 func (m *mockKubeClient) getHibernationCalls() []hibernationCall {
   m.mu.Lock()

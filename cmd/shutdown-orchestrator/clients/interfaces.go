@@ -27,6 +27,7 @@ type KubeClient interface {
   ExecInDeployment(ctx context.Context, ns, deploy string, cmd []string) (string, error)
   ScaleDeployment(ctx context.Context, ns, name string, replicas int32) error
   ListDeploymentNames(ctx context.Context, ns, labelSelector string) ([]string, error)
+  GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error)
 
   // Node operations
   GetNodes(ctx context.Context) ([]Node, error)
