@@ -605,3 +605,50 @@ func TestOrchestratorRecoverFromZeroScaleUpFails(t *testing.T) {
     }
   }
 }
+
+func TestOrchestratorCephAtZeroTriggersRecovery(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters:    []clients.CNPGCluster{},
+    toolsExists: true,
+    deploymentReplicas: map[string]int32{
+      "rook-ceph/rook-ceph-operator": 0,
+    },
+    nodes: []clients.Node{
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+      {Name: "e2-2", IP: "198.51.100.11", Ready: true},
+    },
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  scaled, err := orch.IsCephScaledDown(context.Background())
+  if err != nil {
+    t.Fatalf("IsCephScaledDown() error: %v", err)
+  }
+  if !scaled {
+    t.Error("IsCephScaledDown() = false, want true when operator at 0 replicas")
+  }
+}
+
+func TestOrchestratorCephNotAtZeroSkipsEarlyRecovery(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters:    []clients.CNPGCluster{},
+    toolsExists: true,
+    nodes: []clients.Node{
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+      {Name: "e2-2", IP: "198.51.100.11", Ready: true},
+    },
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  scaled, err := orch.IsCephScaledDown(context.Background())
+  if err != nil {
+    t.Fatalf("IsCephScaledDown() error: %v", err)
+  }
+  if scaled {
+    t.Error("IsCephScaledDown() = true, want false when all Ceph running normally")
+  }
+}
