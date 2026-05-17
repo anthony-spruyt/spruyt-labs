@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-REPO_DIR="/workspace/repo"
-
 bootstrap_from_file() {
   local settings_file="$1"
   [ -f "$settings_file" ] || return 0
@@ -36,14 +34,8 @@ command -v claude >/dev/null || {
   exit 1
 }
 
-# Cluster-managed settings (from ConfigMap)
-bootstrap_from_file "/etc/claude-code/managed-settings.json"
-
-# User-level settings (on claude-home emptyDir — empty in fresh pods)
-bootstrap_from_file "$HOME/.claude/settings.json"
-
-# Project-level settings (from cloned repo)
-bootstrap_from_file "$REPO_DIR/.claude/settings.json"
-bootstrap_from_file "$REPO_DIR/.claude/settings.local.json"
+for settings_file in "$@"; do
+  bootstrap_from_file "$settings_file"
+done
 
 echo "[plugin-bootstrap] done"

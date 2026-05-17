@@ -173,6 +173,44 @@ spec:
                     readOnly: true
                   - name: gh-config-writable
                     mountPath: /tmp/gh-config
+              - name: plugin-bootstrap
+                image: "{{ request.object.spec.containers[0].image }}"
+                command:
+                  - bash
+                  - /scripts/bootstrap-plugins.sh
+                  - /etc/claude-code/managed-settings.json
+                  - /home/node/.claude/settings.json
+                env:
+                  - name: HOME
+                    value: /home/node
+                  - name: GH_CONFIG_DIR
+                    value: /tmp/gh-config
+                volumeMounts:
+                  - name: claude-plugin-bootstrap-script
+                    mountPath: /scripts
+                    readOnly: true
+                  - name: claude-managed-settings
+                    mountPath: /etc/claude-code/managed-settings.json
+                    subPath: managed-settings.json
+                    readOnly: true
+                  - name: gh-config-writable
+                    mountPath: /tmp/gh-config
+                    readOnly: true
+                  - name: claude-home
+                    mountPath: /home/node/.claude
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  runAsNonRoot: true
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 128Mi
+                  limits:
+                    memory: 256Mi
             containers:
               - (name): "?*"
                 env:
@@ -391,9 +429,13 @@ spec:
                     drop:
                       - ALL
                   runAsNonRoot: true
-              - name: plugin-bootstrap
+              - name: plugin-bootstrap-project
                 image: "{{ request.object.spec.containers[0].image }}"
-                command: ["bash", "/scripts/bootstrap-plugins.sh"]
+                command:
+                  - bash
+                  - /scripts/bootstrap-plugins.sh
+                  - /workspace/repo/.claude/settings.json
+                  - /workspace/repo/.claude/settings.local.json
                 env:
                   - name: HOME
                     value: /home/node
@@ -402,10 +444,6 @@ spec:
                 volumeMounts:
                   - name: claude-plugin-bootstrap-script
                     mountPath: /scripts
-                    readOnly: true
-                  - name: claude-managed-settings
-                    mountPath: /etc/claude-code/managed-settings.json
-                    subPath: managed-settings.json
                     readOnly: true
                   - name: gh-config-writable
                     mountPath: /tmp/gh-config
@@ -517,9 +555,13 @@ spec:
                     drop:
                       - ALL
                   runAsNonRoot: true
-              - name: plugin-bootstrap
+              - name: plugin-bootstrap-project
                 image: "{{ request.object.spec.containers[0].image }}"
-                command: ["bash", "/scripts/bootstrap-plugins.sh"]
+                command:
+                  - bash
+                  - /scripts/bootstrap-plugins.sh
+                  - /workspace/repo/.claude/settings.json
+                  - /workspace/repo/.claude/settings.local.json
                 env:
                   - name: HOME
                     value: /home/node
@@ -528,10 +570,6 @@ spec:
                 volumeMounts:
                   - name: claude-plugin-bootstrap-script
                     mountPath: /scripts
-                    readOnly: true
-                  - name: claude-managed-settings
-                    mountPath: /etc/claude-code/managed-settings.json
-                    subPath: managed-settings.json
                     readOnly: true
                   - name: gh-config-writable
                     mountPath: /tmp/gh-config
