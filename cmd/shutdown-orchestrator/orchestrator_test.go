@@ -652,3 +652,142 @@ func TestOrchestratorCephNotAtZeroSkipsEarlyRecovery(t *testing.T) {
     t.Error("IsCephScaledDown() = true, want false when all Ceph running normally")
   }
 }
+
+func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters: []clients.CNPGCluster{
+      {Namespace: "db", Name: "pg-main", Hibernated: true},
+    },
+    toolsExists: true,
+    deploymentReplicas: map[string]int32{
+      "rook-ceph/rook-ceph-operator": 0,
+    },
+    nodes: []clients.Node{
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+      {Name: "e2-2", IP: "198.51.100.11", Ready: true},
+    },
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  // Simulate runMonitor order:
+  // 1. Check if Ceph scaled down
+  cephDown, err := orch.IsCephScaledDown(context.Background())
+  if err != nil {
+    t.Fatalf("IsCephScaledDown error: %v", err)
+  }
+  if !cephDown {
+    t.Fatal("expected Ceph to be detected as scaled down")
+  }
+
+  // 2. RecoverFromZero (not Recover!)
+  err = orch.RecoverFromZero(context.Background())
+  if err != nil {
+    t.Fatalf("RecoverFromZero error: %v", err)
+  }
+
+  // 3. Verify recovery call order: scale-up before exec (tools wait)
+  calls := kube.getCalls()
+  firstScale := -1
+  firstExec := -1
+  for i, c := range calls {
+    if strings.HasPrefix(c, "ScaleDeployment:") && strings.Contains(c, ":1") && firstScale == -1 {
+      firstScale = i
+    }
+    if c == "ExecInDeployment" && firstExec == -1 {
+      firstExec = i
+    }
+  }
+  if firstScale == -1 {
+    t.Fatal("no scale-up calls found in recovery")
+  }
+  if firstExec == -1 {
+    t.Fatal("no exec calls found (WaitForToolsPod)")
+  }
+  if firstScale >= firstExec {
+    t.Errorf("scale-up (idx %d) must precede tools wait (idx %d) in RecoverFromZero", firstScale, firstExec)
+  }
+
+  // 4. Verify CNPG wake was called during RecoverFromZero
+  hasCNPGWake := false
+  for _, c := range calls {
+    if c == "SetCNPGHibernation:false" {
+      hasCNPGWake = true
+    }
+  }
+  if !hasCNPGWake {
+    t.Error("RecoverFromZero should include CNPG wake")
+  }
+}
+
+func TestRunMonitorStartupOrderCephRunning(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters:          []clients.CNPGCluster{},
+    toolsExists:       true,
+    isCephNooutResult: false,
+    nodes: []clients.Node{
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+      {Name: "e2-2", IP: "198.51.100.11", Ready: true},
+    },
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  cephDown, err := orch.IsCephScaledDown(context.Background())
+  if err != nil {
+    t.Fatalf("IsCephScaledDown error: %v", err)
+  }
+  if cephDown {
+    t.Fatal("Ceph should not be detected as scaled down when running normally")
+  }
+
+  // NeedsRecovery also returns false
+  needs, err := orch.NeedsRecovery(context.Background())
+  if err != nil {
+    t.Fatalf("NeedsRecovery error: %v", err)
+  }
+  if needs {
+    t.Error("NeedsRecovery should be false when cluster is healthy")
+  }
+}
+
+func TestOrchestratorNeedsRecoveryCephExecFails(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters:       []clients.CNPGCluster{},
+    isCephNooutErr: fmt.Errorf("no ready pods found for deployment rook-ceph/rook-ceph-tools"),
+    toolsExists:    true,
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  _, err := orch.NeedsRecovery(context.Background())
+  if err == nil {
+    t.Error("NeedsRecovery() should return error when Ceph exec fails")
+  }
+  if !strings.Contains(err.Error(), "checking ceph recovery") {
+    t.Errorf("error should wrap ceph check context, got: %v", err)
+  }
+}
+
+func TestOrchestratorIsCephScaledDownError(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters:    []clients.CNPGCluster{},
+    toolsExists: true,
+    nodes: []clients.Node{
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+    },
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  // Normal case: no error, returns false
+  scaled, err := orch.IsCephScaledDown(context.Background())
+  if err != nil {
+    t.Fatalf("unexpected error: %v", err)
+  }
+  if scaled {
+    t.Error("should return false when all deployments running")
+  }
+}
