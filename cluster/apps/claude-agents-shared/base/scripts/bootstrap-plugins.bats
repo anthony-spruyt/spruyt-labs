@@ -91,7 +91,7 @@ JSON
 @test "missing claude command: exit 1" {
   # Run with a PATH that has jq but no claude
   local restricted_bin bash_path
-  restricted_bin="$(mktemp -d)"
+  restricted_bin="$(mktemp -d "$TEST_DIR/restricted-bin-XXXX")"
   bash_path="$(command -v bash)"
   ln -s "$(command -v jq)" "$restricted_bin/jq"
   run env -i HOME="$HOME" TEST_DIR="$TEST_DIR" PATH="$restricted_bin" "$bash_path" "$SCRIPT"
