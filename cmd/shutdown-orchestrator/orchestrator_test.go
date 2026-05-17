@@ -6,6 +6,7 @@ import (
   "io"
   "log/slog"
   "slices"
+  "strings"
   "sync"
   "testing"
   "time"
@@ -31,6 +32,7 @@ type orchestratorMockKube struct {
   isCephNooutResult  bool
   isCephNooutErr     error
   deploymentReplicas map[string]int32
+  scaleErr           error
 
   // Node config
   nodes    []clients.Node
@@ -111,6 +113,9 @@ func (m *orchestratorMockKube) ExecInDeployment(ctx context.Context, ns, deploy 
 
 func (m *orchestratorMockKube) ScaleDeployment(ctx context.Context, ns, name string, replicas int32) error {
   m.record(fmt.Sprintf("ScaleDeployment:%s:%d", name, replicas))
+  if m.scaleErr != nil {
+    return m.scaleErr
+  }
   return nil
 }
 
@@ -498,5 +503,105 @@ func TestOrchestratorNeedsRecoveryCNPGHibernated(t *testing.T) {
   }
   if !needs {
     t.Error("NeedsRecovery() = false, want true when CNPG cluster is hibernated")
+  }
+}
+
+func TestOrchestratorRecoverFromZero(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters: []clients.CNPGCluster{
+      {Namespace: "db", Name: "pg-main", Hibernated: true},
+    },
+    toolsExists: true,
+    nodes: []clients.Node{
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+      {Name: "e2-2", IP: "198.51.100.11", Ready: true},
+    },
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  err := orch.RecoverFromZero(context.Background())
+  if err != nil {
+    t.Fatalf("RecoverFromZero() error: %v", err)
+  }
+
+  calls := kube.getCalls()
+
+  // Verify order: ScaleUp happens BEFORE WaitForToolsPod (ExecInDeployment)
+  firstScaleIdx := -1
+  firstExecIdx := -1
+  for i, c := range calls {
+    if strings.HasPrefix(c, "ScaleDeployment:") && firstScaleIdx == -1 {
+      firstScaleIdx = i
+    }
+    if c == "ExecInDeployment" && firstExecIdx == -1 {
+      firstExecIdx = i
+    }
+  }
+
+  if firstScaleIdx == -1 {
+    t.Fatal("RecoverFromZero did not call ScaleDeployment")
+  }
+  if firstExecIdx == -1 {
+    t.Fatal("RecoverFromZero did not call WaitForToolsPod (ExecInDeployment)")
+  }
+  if firstScaleIdx >= firstExecIdx {
+    t.Errorf("ScaleUp (idx %d) must happen BEFORE WaitForToolsPod (idx %d)", firstScaleIdx, firstExecIdx)
+  }
+
+  // Verify CNPG wake also runs
+  hasWake := false
+  for _, c := range calls {
+    if c == "SetCNPGHibernation:false" {
+      hasWake = true
+    }
+  }
+  if !hasWake {
+    t.Error("RecoverFromZero should wake CNPG clusters")
+  }
+}
+
+func TestOrchestratorRecoverFromZeroScaleUpFails(t *testing.T) {
+  kube := &orchestratorMockKube{
+    clusters:    []clients.CNPGCluster{},
+    toolsExists: true,
+    nodes: []clients.Node{
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+    },
+    scaleErr: fmt.Errorf("scale failed"),
+  }
+  talos := &orchestratorMockTalos{}
+
+  logger := discardLogger()
+  cnpg := phases.NewCNPGPhase(kube, logger)
+  ceph := phases.NewCephPhase(kube, logger)
+  nodes := phases.NewNodePhase(talos, logger)
+  cfg := Config{
+    Mode:                     "test",
+    NodeName:                 "e2-1",
+    CNPGPhaseTimeout:         5 * time.Second,
+    CephFlagPhaseTimeout:     5 * time.Second,
+    CephScalePhaseTimeout:    5 * time.Second,
+    CephHealthWaitTimeout:    5 * time.Second,
+    CephWaitToolsTimeout:     5 * time.Second,
+    NodeShutdownPhaseTimeout: 5 * time.Second,
+    PerNodeTimeout:           5 * time.Second,
+    WorkerIPs:                []string{"198.51.100.1"},
+    ControlPlaneIPs:          []string{"198.51.100.10"},
+  }
+  orch := NewOrchestrator(cnpg, ceph, nodes, kube, cfg, logger)
+
+  err := orch.RecoverFromZero(context.Background())
+  if err == nil {
+    t.Fatal("RecoverFromZero should return error when ScaleUp fails")
+  }
+
+  // WaitForToolsPod (ExecInDeployment) should NOT be called after ScaleUp fails
+  calls := kube.getCalls()
+  for _, c := range calls {
+    if c == "ExecInDeployment" {
+      t.Error("WaitForToolsPod should not be called when ScaleUp fails")
+    }
   }
 }

@@ -197,6 +197,67 @@ func (o *Orchestrator) NeedsRecovery(ctx context.Context) (bool, error) {
   return false, nil
 }
 
+// IsCephScaledDown checks if Ceph deployments are at 0 replicas. This uses
+// only the Kubernetes API and does not require Ceph connectivity, making it
+// safe to call before preflight checks.
+func (o *Orchestrator) IsCephScaledDown(ctx context.Context) (bool, error) {
+  return o.ceph.IsCephScaledDown(ctx)
+}
+
+// RecoverFromZero runs recovery when Ceph is at 0 replicas. Unlike Recover(),
+// this scales up Ceph FIRST (pure kube API, no exec needed), then waits for
+// the tools pod to become ready. This is necessary because the tools pod
+// depends on running MONs for Ceph connectivity.
+func (o *Orchestrator) RecoverFromZero(ctx context.Context) error {
+  o.logger.Info("starting recovery from Ceph-at-zero")
+
+  var errs []error
+
+  if err := runPhase(ctx, o.logger, "ceph-scale-up", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
+    return o.ceph.ScaleUp(pctx)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("ceph-scale-up: %w", err))
+    o.logger.Error("ceph scale-up failed, cannot proceed with recovery")
+    return errors.Join(errs...)
+  }
+
+  if err := runPhase(ctx, o.logger, "ceph-wait-tools", o.cfg.CephWaitToolsTimeout, func(pctx context.Context) error {
+    return o.ceph.WaitForToolsPod(pctx)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("ceph-wait-tools: %w", err))
+    o.logger.Warn("tools pod unavailable, skipping noout/health phases")
+  } else {
+    if err := runPhase(ctx, o.logger, "ceph-health-wait", o.cfg.CephHealthWaitTimeout, func(pctx context.Context) error {
+      return o.ceph.WaitForCephHealthy(pctx)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("ceph-health-wait: %w", err))
+    }
+
+    if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+      return o.ceph.UnsetNoout(pctx)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("ceph-unset-noout: %w", err))
+    }
+  }
+
+  if err := runPhase(ctx, o.logger, "cnpg-wake", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
+    return o.cnpg.Wake(pctx)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("cnpg-wake: %w", err))
+  }
+
+  if err := o.verifyHealth(ctx); err != nil {
+    o.logger.Warn("post-recovery health check failed", "error", err)
+  }
+
+  if len(errs) > 0 {
+    o.logger.Warn("recovery from zero complete with errors", "count", len(errs))
+  } else {
+    o.logger.Info("recovery from zero complete")
+  }
+  return errors.Join(errs...)
+}
+
 // RunTest runs a full shutdown followed by recovery for test/validation.
 // After shutdown, it waits for nodes to rejoin (user powers them back on)
 // before running recovery.
