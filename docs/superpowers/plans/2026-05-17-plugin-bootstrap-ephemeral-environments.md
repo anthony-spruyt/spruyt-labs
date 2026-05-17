@@ -37,6 +37,8 @@ ______________________________________________________________________
 | Modify | each namespace `kustomization.yaml` (5 namespaces)                      | spruyt-labs      | Add `configMapGenerator` for bootstrap script (or use shared base)            |
 | Modify | `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml`     | spruyt-labs      | Add volumes to `inject-shared-config`, add init container to both clone rules |
 | Create | `cluster/apps/claude-agents-shared/base/scripts/bootstrap-plugins.bats` | spruyt-labs      | bats test suite for bootstrap script                                          |
+| Modify | `.github/workflows/ci.yaml`                                             | spruyt-labs      | Add path filter + bats-test job                                               |
+| Create | `.github/workflows/_bats-test.yaml`                                     | spruyt-labs      | Reusable bats test workflow                                                   |
 | Modify | `devcontainer-common/assets/post-create.sh`                             | container-images | Add `bootstrap_claude_plugins()` function                                     |
 
 ______________________________________________________________________
@@ -477,15 +479,59 @@ bats cluster/apps/claude-agents-shared/base/scripts/bootstrap-plugins.bats
 
 Expected: all tests pass.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Add bats-test job to CI workflow**
+
+In `.github/workflows/ci.yaml`:
+
+1. Add path filter to the `changes` job's `dorny/paths-filter` config:
+
+```yaml
+          filters: |
+            # ... existing filters ...
+            claude-agents:
+              - 'cluster/apps/claude-agents-shared/**'
+```
+
+2. Add `bats-test` job (after `kyverno-test`, same pattern):
+
+```yaml
+  bats-test:
+    needs: changes
+    if: needs.changes.outputs.claude-agents == 'true'
+    uses: ./.github/workflows/_bats-test.yaml
+```
+
+3. Create reusable workflow `.github/workflows/_bats-test.yaml`:
+
+```yaml
+name: Bats Tests
+on:
+  workflow_call:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bats
+        run: sudo apt-get install -y bats
+      - name: Run bootstrap-plugins tests
+        run: bats cluster/apps/claude-agents-shared/base/scripts/bootstrap-plugins.bats
+```
+
+4. Add `bats-test` to the `summary` job's `needs` array.
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add cluster/apps/claude-agents-shared/base/scripts/bootstrap-plugins.bats
-git commit -m "test(claude-agents): add bats tests for plugin bootstrap script
+git add .github/workflows/ci.yaml
+git add .github/workflows/_bats-test.yaml
+git commit -m "test(claude-agents): add bats tests and CI job for plugin bootstrap script
 
 Tests cover: missing settings file, empty JSON, invalid JSON, disabled
 plugins, string 'true' handling, missing jq/claude, marketplace with
-null repo, and full marketplace + plugin install flow.
+null repo, and full marketplace + plugin install flow. CI runs bats
+on changes to cluster/apps/claude-agents-shared/.
 
 Ref #1528"
 ```
