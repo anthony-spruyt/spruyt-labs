@@ -298,7 +298,7 @@ controllers:
                 port: 8000
               periodSeconds: 10
               timeoutSeconds: 5
-              failureThreshold: 30    # 300s window for model loading
+              failureThreshold: 12    # 120s window — model loads in ~24s from baked image
           liveness:
             enabled: true
             custom: true
