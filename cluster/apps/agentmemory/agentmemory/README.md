@@ -44,11 +44,6 @@ Engine pinned to `iiidev/iii:0.11.2` — v0.11.6+ breaks agentmemory. Track upst
 
 ## Troubleshooting
 
-1. **Worker CrashLoopBackOff on first deploy**
-
-   - **Symptom**: npx download times out or OOM during install
-   - **Resolution**: npm-registry-egress CNP must allow `registry.npmjs.org:443`. Check worker memory limit (512Mi) is sufficient for npx install.
-
 1. **Viewer loads but API calls fail**
 
    - **Symptom**: Browser shows viewer UI but searches return errors
