@@ -107,6 +107,11 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
       logger.Error("early health server error", "error", srvErr)
     }
   }()
+  defer func() {
+    sCtx, sCancel := context.WithTimeout(context.Background(), 2*time.Second)
+    _ = earlySrv.Shutdown(sCtx)
+    sCancel()
+  }()
   logger.Info("health server started", "port", cfg.HealthPort)
 
   orch := buildOrchestrator(kube, talos, cfg, logger)
@@ -153,11 +158,11 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
     }
   }
 
-  // Shut down early health server. Monitor.Run() binds the same port with
-  // its own shutdown-aware handler.
-  shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 2*time.Second)
-  _ = earlySrv.Shutdown(shutdownCtx)
-  shutdownCancel()
+  // Shut down early health server before Monitor.Run() binds the same port
+  // with its own shutdown-aware handler. The defer above handles error paths.
+  sCtx, sCancel := context.WithTimeout(context.Background(), 2*time.Second)
+  _ = earlySrv.Shutdown(sCtx)
+  sCancel()
 
   monitor := NewMonitor(ups, orch.Shutdown, cfg, logger)
   return monitor.Run(ctx)
