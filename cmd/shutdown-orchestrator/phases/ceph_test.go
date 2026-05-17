@@ -438,3 +438,130 @@ func indexOf(slice []string, s string) int {
   }
   return -1
 }
+
+func TestCephIsCephScaledDown(t *testing.T) {
+  t.Run("all at zero", func(t *testing.T) {
+    mock := newMockCephKubeClient()
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-operator"] = 0
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{"rook-ceph-osd-0"}
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-mon-a"] = 0
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-osd-0"] = 0
+    phase := NewCephPhase(mock, testLogger())
+
+    scaled, err := phase.IsCephScaledDown(context.Background())
+    if err != nil {
+      t.Fatalf("IsCephScaledDown() error: %v", err)
+    }
+    if !scaled {
+      t.Error("IsCephScaledDown() = false, want true when all Ceph at 0")
+    }
+  })
+
+  t.Run("all running", func(t *testing.T) {
+    mock := newMockCephKubeClient()
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-operator"] = 1
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{"rook-ceph-osd-0"}
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-mon-a"] = 1
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-osd-0"] = 1
+    phase := NewCephPhase(mock, testLogger())
+
+    scaled, err := phase.IsCephScaledDown(context.Background())
+    if err != nil {
+      t.Fatalf("IsCephScaledDown() error: %v", err)
+    }
+    if scaled {
+      t.Error("IsCephScaledDown() = true, want false when Ceph is running")
+    }
+  })
+
+  t.Run("operator at zero but mons running", func(t *testing.T) {
+    mock := newMockCephKubeClient()
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-operator"] = 0
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{"rook-ceph-osd-0"}
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-mon-a"] = 1
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-osd-0"] = 1
+    phase := NewCephPhase(mock, testLogger())
+
+    scaled, err := phase.IsCephScaledDown(context.Background())
+    if err != nil {
+      t.Fatalf("IsCephScaledDown() error: %v", err)
+    }
+    if !scaled {
+      t.Error("IsCephScaledDown() = false, want true when operator at 0 (partial shutdown)")
+    }
+  })
+
+  t.Run("operator error", func(t *testing.T) {
+    mock := newMockCephKubeClient()
+    mock.deploymentReplicasErr["rook-ceph/rook-ceph-operator"] = fmt.Errorf("not found")
+    phase := NewCephPhase(mock, testLogger())
+
+    _, err := phase.IsCephScaledDown(context.Background())
+    if err == nil {
+      t.Error("IsCephScaledDown() should return error when operator not found")
+    }
+  })
+
+  t.Run("empty mon list", func(t *testing.T) {
+    mock := newMockCephKubeClient()
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-operator"] = 1
+    // No mons configured — listDeploymentResult defaults to empty slice
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{"rook-ceph-osd-0"}
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-osd-0"] = 1
+    phase := NewCephPhase(mock, testLogger())
+
+    scaled, err := phase.IsCephScaledDown(context.Background())
+    if err != nil {
+      t.Fatalf("IsCephScaledDown() error: %v", err)
+    }
+    if scaled {
+      t.Error("IsCephScaledDown() = true, want false when operator running and no mons found")
+    }
+  })
+
+  t.Run("mixed osd state", func(t *testing.T) {
+    mock := newMockCephKubeClient()
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-operator"] = 1
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-mon-a"] = 1
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{
+      "rook-ceph-osd-0", "rook-ceph-osd-1", "rook-ceph-osd-2",
+    }
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-osd-0"] = 1
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-osd-1"] = 0
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-osd-2"] = 1
+    phase := NewCephPhase(mock, testLogger())
+
+    scaled, err := phase.IsCephScaledDown(context.Background())
+    if err != nil {
+      t.Fatalf("IsCephScaledDown() error: %v", err)
+    }
+    if !scaled {
+      t.Error("IsCephScaledDown() = false, want true when any OSD at 0")
+    }
+  })
+
+  t.Run("partial osd error", func(t *testing.T) {
+    mock := newMockCephKubeClient()
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-operator"] = 1
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-mon-a"] = 1
+    mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{
+      "rook-ceph-osd-0", "rook-ceph-osd-1",
+    }
+    mock.deploymentReplicasResult["rook-ceph/rook-ceph-osd-0"] = 1
+    mock.deploymentReplicasErr["rook-ceph/rook-ceph-osd-1"] = fmt.Errorf("permission denied")
+    phase := NewCephPhase(mock, testLogger())
+
+    _, err := phase.IsCephScaledDown(context.Background())
+    if err == nil {
+      t.Error("IsCephScaledDown() should return error on partial failure")
+    }
+    if !strings.Contains(err.Error(), "rook-ceph-osd-1") {
+      t.Errorf("error should name failing deployment, got: %v", err)
+    }
+  })
+}
