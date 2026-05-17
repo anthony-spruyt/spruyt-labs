@@ -12,15 +12,19 @@ metadata:
     policies.kyverno.io/description: >-
       Injects configuration into Claude agent pods spawned by n8n.
       A shared rule injects GitHub bot credentials (gh CLI config,
-      read-only gitconfig), settings profiles, Context7 API key,
-      agentmemory connection, and OpenTelemetry env vars into all
-      agent namespaces. The write rule
-      additionally injects SSH key and full gitconfig (with commit
-      signing). Per-namespace rules inject MCP configmaps, priority
-      classes, and namespace-specific credentials. Repo clone: write
-      uses SSH (with pre-commit), read+sre use HTTPS with read-scoped
-      GitHub App token (no SSH key = no push capability). Validation
-      rules enforce correct CLONE_URL protocol per namespace tier.
+      read-only gitconfig), settings profiles, plugin bootstrap volumes,
+      Context7 API key, agentmemory connection, and OpenTelemetry
+      env vars into all agent namespaces. Clone rules inject a
+      plugin-bootstrap init container (after git-clone) that reads
+      managed-settings.json, project settings.json, and
+      settings.local.json to install marketplaces and plugins via
+      claude CLI. The write rule additionally injects SSH key and
+      full gitconfig (with commit signing). Per-namespace rules inject
+      MCP configmaps, priority classes, and namespace-specific
+      credentials. Repo clone: write uses SSH (with pre-commit),
+      read+sre use HTTPS with read-scoped GitHub App token (no SSH
+      key = no push capability). Validation rules enforce correct
+      CLONE_URL protocol per namespace tier.
 spec:
   background: false
   rules:
@@ -131,6 +135,13 @@ spec:
               - name: claude-managed-settings
                 configMap:
                   name: claude-managed-settings
+              - name: claude-home
+                emptyDir:
+                  sizeLimit: 256Mi
+              - name: claude-plugin-bootstrap-script
+                configMap:
+                  name: claude-plugin-bootstrap-script
+                  defaultMode: 0555
             initContainers:
               - name: gh-config-sync
                 image: docker.io/library/busybox:1.37.0@sha256:1487d0af5f52b4ba31c7e465126ee2123fe3f2305d638e7827681e7cf6c83d5e
@@ -235,6 +246,8 @@ spec:
                     mountPath: /etc/claude-code/managed-settings.json
                     subPath: managed-settings.json
                     readOnly: true
+                  - name: claude-home
+                    mountPath: /home/node/.claude
     - name: inject-managed-mcp
       match:
         any:
@@ -378,6 +391,43 @@ spec:
                     drop:
                       - ALL
                   runAsNonRoot: true
+              - name: plugin-bootstrap
+                image: "{{ request.object.spec.containers[0].image }}"
+                command: ["bash", "/scripts/bootstrap-plugins.sh"]
+                env:
+                  - name: HOME
+                    value: /home/node
+                  - name: GH_CONFIG_DIR
+                    value: /tmp/gh-config
+                volumeMounts:
+                  - name: claude-plugin-bootstrap-script
+                    mountPath: /scripts
+                    readOnly: true
+                  - name: claude-managed-settings
+                    mountPath: /etc/claude-code/managed-settings.json
+                    subPath: managed-settings.json
+                    readOnly: true
+                  - name: gh-config-writable
+                    mountPath: /tmp/gh-config
+                    readOnly: true
+                  - name: claude-home
+                    mountPath: /home/node/.claude
+                  - name: workspace
+                    mountPath: /workspace
+                    readOnly: true
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  runAsNonRoot: true
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 128Mi
+                  limits:
+                    memory: 256Mi
             containers:
               - (name): "?*"
                 volumeMounts:
@@ -467,6 +517,43 @@ spec:
                     drop:
                       - ALL
                   runAsNonRoot: true
+              - name: plugin-bootstrap
+                image: "{{ request.object.spec.containers[0].image }}"
+                command: ["bash", "/scripts/bootstrap-plugins.sh"]
+                env:
+                  - name: HOME
+                    value: /home/node
+                  - name: GH_CONFIG_DIR
+                    value: /tmp/gh-config
+                volumeMounts:
+                  - name: claude-plugin-bootstrap-script
+                    mountPath: /scripts
+                    readOnly: true
+                  - name: claude-managed-settings
+                    mountPath: /etc/claude-code/managed-settings.json
+                    subPath: managed-settings.json
+                    readOnly: true
+                  - name: gh-config-writable
+                    mountPath: /tmp/gh-config
+                    readOnly: true
+                  - name: claude-home
+                    mountPath: /home/node/.claude
+                  - name: workspace
+                    mountPath: /workspace
+                    readOnly: true
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  runAsNonRoot: true
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 128Mi
+                  limits:
+                    memory: 256Mi
             containers:
               - (name): "?*"
                 volumeMounts:
