@@ -1026,7 +1026,7 @@ configMaps:
               guardrail: presidio
               mode: "pre_call"
               default_on: true
-              presidio_filter_scope: "both"
+              presidio_filter_scope: "input"
               presidio_score_thresholds:
                 ALL: 0.7
                 PERSON: 0.85
