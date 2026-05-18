@@ -60,6 +60,7 @@
         "github.vscode-github-actions",
         "golang.go",
         "hashicorp.terraform",
+        "jetmartin.bats",
         "task.vscode-task",
         "tim-koehler.helm-intellisense"
       ]
