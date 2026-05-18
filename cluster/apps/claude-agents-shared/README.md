@@ -41,15 +41,15 @@ Per-namespace overlays add: MCP config, settings profiles, GitHub ExternalSecret
 
 `inject-claude-agent-config` ClusterPolicy mutates all pods with `managed-by: n8n-claude-code`:
 
-| Rule                      | Namespaces  | Injects                                                                                    |
-| ------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
-| `strip-explicit-priority` | all 5       | Removes n8n-set priority (Kyverno sets correct one)                                        |
-| `inject-priority-*`       | per-tier    | `low-priority` (read), `standard` (write), `high-priority` (sre)                           |
-| `inject-shared-config`    | all 5       | gh CLI config, gitconfig, settings profiles, managed-settings, Context7 key, OTEL env vars |
-| `inject-managed-mcp`      | all 5       | MCP config volume + agent-platform auth token                                              |
-| `inject-github-ssh`       | write tiers | SSH key + write gitconfig (with commit signing)                                            |
-| `inject-repo-clone-write` | write tiers | SSH clone init container + pre-commit install                                              |
-| `inject-repo-clone-read`  | read + sre  | HTTPS clone init container (token-authenticated)                                           |
+| Rule                      | Namespaces  | Injects                                                                                                                                                                                      |
+| ------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `strip-explicit-priority` | all 5       | Removes n8n-set priority (Kyverno sets correct one)                                                                                                                                          |
+| `inject-priority-*`       | per-tier    | `low-priority` (read), `standard` (write), `high-priority` (sre)                                                                                                                             |
+| `inject-shared-config`    | all 5       | gh CLI config, gitconfig, settings profiles, managed-settings, claude-home emptyDir, bootstrap-script ConfigMap, plugin-bootstrap init container (managed+user), Context7 key, OTEL env vars |
+| `inject-managed-mcp`      | all 5       | MCP config volume + agent-platform auth token                                                                                                                                                |
+| `inject-github-ssh`       | write tiers | SSH key + write gitconfig (with commit signing)                                                                                                                                              |
+| `inject-repo-clone-write` | write tiers | SSH clone init container + pre-commit install + plugin-bootstrap-project init container (project+local)                                                                                      |
+| `inject-repo-clone-read`  | read + sre  | HTTPS clone init container (token-authenticated) + plugin-bootstrap-project init container (project+local)                                                                                   |
 
 Clone preconditions enforce URL prefix: `git@github.com:anthony-spruyt/` (write) or `https://github.com/anthony-spruyt/` (read/sre).
 

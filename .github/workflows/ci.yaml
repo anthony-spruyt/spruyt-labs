@@ -35,6 +35,7 @@ jobs:
       llm-guard-adapter: "${{ steps.filter.outputs.llm-guard-adapter }}"
       agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
       bull-board: "${{ steps.filter.outputs.bull-board }}"
+      claude-agents: "${{ steps.filter.outputs.claude-agents }}"
     steps:
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
@@ -77,6 +78,8 @@ jobs:
               - 'ts/agent-queue-worker/**'
             bull-board:
               - 'ts/agent-queue-worker/bull-board/**'
+            claude-agents:
+              - 'cluster/apps/claude-agents-shared/**'
   lint:
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@main"
     secrets: "inherit"
@@ -88,6 +91,10 @@ jobs:
     needs: "changes"
     if: "needs.changes.outputs.kyverno == 'true'"
     uses: "./.github/workflows/_kyverno-test.yaml"
+  bats-test:
+    needs: "changes"
+    if: "needs.changes.outputs.claude-agents == 'true'"
+    uses: "./.github/workflows/_bats-test.yaml"
   terraform-validate:
     needs: "changes"
     if: "needs.changes.outputs.terraform == 'true'"
@@ -170,5 +177,6 @@ jobs:
       - "llm-guard-adapter"
       - "agent-queue-worker"
       - "bull-board"
+      - "bats-test"
     if: "always()"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_summary.yaml@main"

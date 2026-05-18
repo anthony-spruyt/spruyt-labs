@@ -10,3 +10,9 @@ resources:
   - ./github-bot-gitconfig-read.yaml
   - ./github-rotation-rbac.yaml
   - ./mcp-credentials.sops.yaml
+configMapGenerator:
+  - name: claude-plugin-bootstrap-script
+    files:
+      - scripts/bootstrap-plugins.sh
+generatorOptions:
+  disableNameSuffixHash: true
