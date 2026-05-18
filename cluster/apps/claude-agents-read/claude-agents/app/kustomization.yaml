@@ -16,8 +16,5 @@ configMapGenerator:
   - name: claude-managed-settings
     files:
       - settings/managed-settings.json
-  - name: claude-plugin-bootstrap-script
-    files:
-      - bootstrap-plugins.sh=../../../claude-agents-shared/base/scripts/bootstrap-plugins.sh
 generatorOptions:
   disableNameSuffixHash: true

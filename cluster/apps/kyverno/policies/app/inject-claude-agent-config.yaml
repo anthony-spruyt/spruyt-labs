@@ -158,6 +158,12 @@ spec:
                       cp /etc/gh-secret/hosts.yml /tmp/gh-config/hosts.yml
                       chmod 666 /tmp/gh-config/hosts.yml
                     done
+                startupProbe:
+                  exec:
+                    command: ["test", "-f", "/tmp/gh-config/hosts.yml"]
+                  initialDelaySeconds: 0
+                  periodSeconds: 1
+                  failureThreshold: 30
                 securityContext:
                   runAsUser: 65534
                   runAsGroup: 65534
