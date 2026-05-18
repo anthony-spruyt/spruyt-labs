@@ -471,6 +471,11 @@ configMaps:
           scan_output_timeout: 30
           lazy_load: false
         input_scanners:
+          - type: PromptInjection
+            params:
+              threshold: 0.97
+              match_type: sentence
+              model_max_length: 512
           - type: Regex
             params:
               patterns: ["Bearer [A-Za-z0-9-._~+/]+"]
@@ -681,7 +686,7 @@ configMaps:
             litellm_params:
               guardrail: generic_guardrail_api
               mode: "pre_call"
-              default_on: true
+              default_on: false
               api_base: "http://litellm-llm-guard-adapter.litellm.svc.cluster.local:8080"
         router_settings:
           allowed_fails: 3
