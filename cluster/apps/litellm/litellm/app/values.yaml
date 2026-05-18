@@ -602,12 +602,11 @@ configMaps:
               model: openai/qwen3-rerank
               api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
               api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-          # Claude aliases — dual protocol (anthropic primary, openai fallback)
-          # Each alias has 4 deployments:
-          #   1. anthropic/ on PAYG  (Claude Code / Anthropic API clients)
+          # Claude aliases — anthropic/ provider only
+          # openai/ path removed: LiteLLM #27469 breaks tool_use (see #1549)
+          # Each alias has 2 deployments:
+          #   1. anthropic/ on PAYG  (primary)
           #   2. anthropic/ on code plan  (fallback)
-          #   3. openai/ on PAYG  (OpenAI API clients / LiteLLM UI)
-          #   4. openai/ on code plan  (last resort)
           #
           # Opus → qwen3.6-max-preview (PAYG) / qwen3.6-plus (code plan)
           - model_name: claude-opus-4-7
@@ -628,24 +627,6 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
-          - model_name: claude-opus-4-7
-            litellm_params:
-              model: openai/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
-          - model_name: claude-opus-4-7
-            litellm_params:
-              model: openai/qwen3.6-plus
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
-            model_info:
-              input_cost_per_token: 0.000000325
-              output_cost_per_token: 0.00000195
           - model_name: claude-opus-4-6
             litellm_params:
               model: anthropic/qwen3.6-max-preview
@@ -661,24 +642,6 @@ configMaps:
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
               order: 2
-            model_info:
-              input_cost_per_token: 0.000000325
-              output_cost_per_token: 0.00000195
-          - model_name: claude-opus-4-6
-            litellm_params:
-              model: openai/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
-          - model_name: claude-opus-4-6
-            litellm_params:
-              model: openai/qwen3.6-plus
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
@@ -701,24 +664,6 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
-          - model_name: claude-sonnet-4-6
-            litellm_params:
-              model: openai/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
-          - model_name: claude-sonnet-4-6
-            litellm_params:
-              model: openai/deepseek-v3.2
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
-            model_info:
-              input_cost_per_token: 0.000000287
-              output_cost_per_token: 0.000000431
           - model_name: claude-sonnet-4-5
             litellm_params:
               model: anthropic/deepseek-v4-pro
@@ -734,24 +679,6 @@ configMaps:
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
               order: 2
-            model_info:
-              input_cost_per_token: 0.000000287
-              output_cost_per_token: 0.000000431
-          - model_name: claude-sonnet-4-5
-            litellm_params:
-              model: openai/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
-          - model_name: claude-sonnet-4-5
-            litellm_params:
-              model: openai/deepseek-v3.2
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
@@ -774,24 +701,6 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
-          - model_name: claude-haiku-4-5
-            litellm_params:
-              model: openai/deepseek-v4-flash
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.00000014
-              output_cost_per_token: 0.00000028
-          - model_name: claude-haiku-4-5
-            litellm_params:
-              model: openai/deepseek-v3.2
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
-            model_info:
-              input_cost_per_token: 0.000000287
-              output_cost_per_token: 0.000000431
           # Date-suffixed aliases (Claude Code CLI sends full model IDs)
           - model_name: claude-opus-4-7-20250515
             litellm_params:
@@ -811,24 +720,6 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
-          - model_name: claude-opus-4-7-20250515
-            litellm_params:
-              model: openai/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
-          - model_name: claude-opus-4-7-20250515
-            litellm_params:
-              model: openai/qwen3.6-plus
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
-            model_info:
-              input_cost_per_token: 0.000000325
-              output_cost_per_token: 0.00000195
           - model_name: claude-opus-4-6-20250514
             litellm_params:
               model: anthropic/qwen3.6-max-preview
@@ -847,24 +738,6 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
-          - model_name: claude-opus-4-6-20250514
-            litellm_params:
-              model: openai/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
-          - model_name: claude-opus-4-6-20250514
-            litellm_params:
-              model: openai/qwen3.6-plus
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
-            model_info:
-              input_cost_per_token: 0.000000325
-              output_cost_per_token: 0.00000195
           - model_name: claude-sonnet-4-6-20250514
             litellm_params:
               model: anthropic/deepseek-v4-pro
@@ -883,24 +756,6 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
-          - model_name: claude-sonnet-4-6-20250514
-            litellm_params:
-              model: openai/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
-          - model_name: claude-sonnet-4-6-20250514
-            litellm_params:
-              model: openai/deepseek-v3.2
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
-            model_info:
-              input_cost_per_token: 0.000000287
-              output_cost_per_token: 0.000000431
           - model_name: claude-sonnet-4-5-20250514
             litellm_params:
               model: anthropic/deepseek-v4-pro
@@ -916,24 +771,6 @@ configMaps:
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
               order: 2
-            model_info:
-              input_cost_per_token: 0.000000287
-              output_cost_per_token: 0.000000431
-          - model_name: claude-sonnet-4-5-20250514
-            litellm_params:
-              model: openai/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
-          - model_name: claude-sonnet-4-5-20250514
-            litellm_params:
-              model: openai/deepseek-v3.2
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
@@ -952,24 +789,6 @@ configMaps:
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
               order: 2
-            model_info:
-              input_cost_per_token: 0.000000287
-              output_cost_per_token: 0.000000431
-          - model_name: claude-haiku-4-5-20251001
-            litellm_params:
-              model: openai/deepseek-v4-flash
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 3
-            model_info:
-              input_cost_per_token: 0.00000014
-              output_cost_per_token: 0.00000028
-          - model_name: claude-haiku-4-5-20251001
-            litellm_params:
-              model: openai/deepseek-v3.2
-              api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_API_KEY
-              order: 4
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
