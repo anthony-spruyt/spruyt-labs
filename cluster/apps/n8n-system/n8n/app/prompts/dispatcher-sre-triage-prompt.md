@@ -93,6 +93,16 @@ No GitHub issue. Set `create_issue: false`.
 
 **Call `submit_sre_triage_result`.** Retry until success. Transient/maintenance alerts: submit with severity "INFO".
 
+### `github_issue_url` field
+
+Complete GitHub Issue Management (above) BEFORE calling `submit_sre_triage_result`. Then:
+
+- **Created issue** → pass the URL returned by `gh issue create`
+- **Updated existing issue/PR** → pass its URL from `gh issue view` or search results
+- **Maintenance noise / no issue needed** → pass empty string `""`
+
+**NEVER fabricate a URL.** Only pass URLs you received from a GitHub CLI command in this session. If you did not run `gh issue create` or `gh issue view`, pass empty string.
+
 ## Common Mistakes
 
 ### Cilium

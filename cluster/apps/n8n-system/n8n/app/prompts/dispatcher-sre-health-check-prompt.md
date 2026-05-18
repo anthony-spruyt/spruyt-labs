@@ -118,6 +118,20 @@ Verify matches relate to this failure. Check creation date — prioritize issues
 
 No GitHub issue. Set `create_issue: false`.
 
+## Output
+
+**Call `submit_sre_health_check_result`.** Retry until success. Healthy cluster: severity "INFO", summary "Cluster healthy — no issues found", empty findings.
+
+### `github_issue_url` field
+
+Complete GitHub Issue Management (above) BEFORE calling `submit_sre_health_check_result`. Then:
+
+- **Created issue** → pass the URL returned by `gh issue create`
+- **Updated existing issue/PR** → pass its URL from `gh issue view` or search results
+- **Healthy / maintenance noise / no issue needed** → pass empty string `""`
+
+**NEVER fabricate a URL.** Only pass URLs you received from a GitHub CLI command in this session. If you did not run `gh issue create` or `gh issue view`, pass empty string.
+
 ## Common Mistakes
 
 - **Transient filtering** — don't blanket-skip "Progressing". Check `lastTransitionTime`. Parent failing for days with stuck dependents = real issue.
