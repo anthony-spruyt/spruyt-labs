@@ -13,8 +13,7 @@ metadata:
       Injects configuration into Claude agent pods spawned by n8n.
       A shared rule injects GitHub bot credentials (gh CLI config,
       read-only gitconfig), settings profiles, plugin bootstrap volumes,
-      Context7 API key, agentmemory connection, and OpenTelemetry
-      env vars into all agent namespaces. Clone rules inject a
+      and OpenTelemetry env vars into all agent namespaces. Clone rules inject a
       plugin-bootstrap init container (after git-clone) that reads
       managed-settings.json, project settings.json, and
       settings.local.json to install marketplaces and plugins via
@@ -228,11 +227,6 @@ spec:
                     value: /etc/git-config/gitconfig
                   - name: MCP_TIMEOUT
                     value: "30000"
-                  - name: CONTEXT7_API_KEY
-                    valueFrom:
-                      secretKeyRef:
-                        name: mcp-credentials
-                        key: context7-api-key
                   - name: AGENTMEMORY_URL
                     value: "http://agentmemory.agentmemory.svc.cluster.local:3111"
                   - name: AGENTMEMORY_SECRET

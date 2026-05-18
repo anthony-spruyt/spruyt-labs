@@ -29,18 +29,18 @@ data:
         },
         "bravesearch": {
           "type": "http",
-          "url": "http://brave-search-mcp.brave-search-mcp.svc:8000/mcp"
+          "url": "http://litellm.litellm.svc.cluster.local:4000/bravesearch/mcp",
+          "headers": { "Authorization": "Bearer $${ANTHROPIC_AUTH_TOKEN}" }
         },
         "context7": {
           "type": "http",
-          "url": "https://mcp.context7.com/mcp",
-          "headers": {
-            "CONTEXT7_API_KEY": "$${CONTEXT7_API_KEY}"
-          }
+          "url": "http://litellm.litellm.svc.cluster.local:4000/context7/mcp",
+          "headers": { "Authorization": "Bearer $${ANTHROPIC_AUTH_TOKEN}" }
         },
         "victoriametrics": {
           "type": "http",
-          "url": "http://mcp-victoriametrics.observability.svc:8080/mcp"
+          "url": "http://litellm.litellm.svc.cluster.local:4000/victoriametrics/mcp",
+          "headers": { "Authorization": "Bearer $${ANTHROPIC_AUTH_TOKEN}" }
         }
       }
     }

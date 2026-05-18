@@ -696,10 +696,6 @@ configMaps:
             url: "http://brave-search-mcp.brave-search-mcp.svc:8000/mcp"
             transport: "http"
             access_groups: ["core"]
-          agentmemory:
-            url: "http://agentmemory.agentmemory.svc:3111/mcp"
-            transport: "http"
-            access_groups: ["core"]
           victoriametrics:
             url: "http://mcp-victoriametrics.observability.svc:8080/mcp"
             transport: "http"
