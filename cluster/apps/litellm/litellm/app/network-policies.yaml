@@ -513,3 +513,91 @@ spec:
         - ports:
             - port: "9090"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress from LiteLLM to Brave Search MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-brave-search-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: brave-search-mcp
+            k8s:app.kubernetes.io/name: brave-search-mcp
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress from LiteLLM to Agentmemory MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-agentmemory-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agentmemory
+            k8s:app.kubernetes.io/name: agentmemory
+      toPorts:
+        - ports:
+            - port: "3111"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress from LiteLLM to VictoriaMetrics MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-victoriametrics-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: mcp-victoriametrics
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress from LiteLLM to n8n MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-n8n-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-mcp
+            k8s:app.kubernetes.io/name: n8n-mcp-server
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP

@@ -123,10 +123,10 @@ controllers:
               timeoutSeconds: 10
         resources:
           limits:
-            memory: 2560Mi
+            memory: 3072Mi
           requests:
             cpu: 100m
-            memory: 1280Mi
+            memory: 1536Mi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
@@ -691,6 +691,19 @@ configMaps:
         router_settings:
           allowed_fails: 3
           cooldown_time: 300
+        mcp_servers:
+          bravesearch:
+            url: "http://brave-search-mcp.brave-search-mcp.svc:8000/mcp"
+            transport: "http"
+            access_groups: ["core"]
+          agentmemory:
+            url: "http://agentmemory.agentmemory.svc:3111/mcp"
+            transport: "http"
+            access_groups: ["core"]
+          victoriametrics:
+            url: "http://mcp-victoriametrics.observability.svc:8080/mcp"
+            transport: "http"
+            access_groups: ["observability"]
 persistence:
   tmp:
     type: emptyDir

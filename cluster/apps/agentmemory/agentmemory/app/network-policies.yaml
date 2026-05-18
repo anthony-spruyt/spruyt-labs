@@ -173,6 +173,26 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from LiteLLM MCP gateway
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-litellm-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: agentmemory
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
+      toPorts:
+        - ports:
+            - port: "3111"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Authentik Outpost Policies (deployed by Authentik to this namespace)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
