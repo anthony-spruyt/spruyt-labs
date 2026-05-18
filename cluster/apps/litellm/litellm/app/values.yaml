@@ -691,15 +691,7 @@ configMaps:
         router_settings:
           allowed_fails: 3
           cooldown_time: 300
-        mcp_servers:
-          bravesearch:
-            url: "http://brave-search-mcp.brave-search-mcp.svc:8000/mcp"
-            transport: "http"
-            access_groups: ["core"]
-          victoriametrics:
-            url: "http://mcp-victoriametrics.observability.svc:8080/mcp"
-            transport: "http"
-            access_groups: ["observability"]
+        mcp_servers: []
 persistence:
   tmp:
     type: emptyDir

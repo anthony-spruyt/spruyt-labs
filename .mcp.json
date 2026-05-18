@@ -29,7 +29,7 @@
     },
     "n8n": {
       "type": "http",
-      "url": "https://litellm.${EXTERNAL_DOMAIN}/n8n-mcp/mcp",
+      "url": "https://litellm.${EXTERNAL_DOMAIN}/n8n/mcp",
       "headers": { "Authorization": "Bearer ${ANTHROPIC_AUTH_TOKEN}" }
     },
     "victoriametrics": {
