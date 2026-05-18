@@ -45,7 +45,7 @@ metadata:
   name: agentmemory-restart
   namespace: agentmemory
 spec:
-  schedule: "0 4,16 * * *"
+  schedule: "0 4 * * *"
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
   concurrencyPolicy: Forbid
