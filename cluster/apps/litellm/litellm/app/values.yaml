@@ -53,7 +53,7 @@ controllers:
               secretKeyRef:
                 name: litellm-secrets
                 key: DASHSCOPE_API_KEY
-          # Alibaba Cloud Model Studio — free quota (dashscope-intl endpoint)
+          # Alibaba Cloud Model Studio — PAYG (dashscope-intl endpoint)
           DASHSCOPE_PAYG_API_KEY:
             valueFrom:
               secretKeyRef:
@@ -524,271 +524,94 @@ configMaps:
             model_info:
               input_cost_per_token: 0.000000304
               output_cost_per_token: 0.000001213
-          # DashScope — free quota (1M tokens each, expires 2026-08-14)
-          - model_name: qwen3.6-max-preview
-            litellm_params:
-              model: openai/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
-          - model_name: deepseek-v4-pro
-            litellm_params:
-              model: openai/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
-          - model_name: deepseek-v4-flash
-            litellm_params:
-              model: openai/deepseek-v4-flash
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-            model_info:
-              input_cost_per_token: 0.00000014
-              output_cost_per_token: 0.00000028
-          - model_name: qwen3-coder-plus
-            litellm_params:
-              model: openai/qwen3-coder-plus
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-            model_info:
-              input_cost_per_token: 0.000001
-              output_cost_per_token: 0.000005
-          - model_name: qwen3-coder-next
-            litellm_params:
-              model: openai/qwen3-coder-next
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-            model_info:
-              input_cost_per_token: 0.0000003
-              output_cost_per_token: 0.0000015
-          - model_name: qwq-plus
-            litellm_params:
-              model: openai/qwq-plus
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-            model_info:
-              input_cost_per_token: 0.0000008
-              output_cost_per_token: 0.0000024
-          - model_name: qvq-max
-            litellm_params:
-              model: openai/qvq-max
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-            model_info:
-              input_cost_per_token: 0.0000012
-              output_cost_per_token: 0.0000048
           # OpenAI — embeddings
           - model_name: text-embedding-3-small
             litellm_params:
               model: openai/text-embedding-3-small
               api_key: os.environ/OPENAI_API_KEY
-          # DashScope — embeddings and rerank (free quota, 1M tokens each)
-          - model_name: text-embedding-v4
-            litellm_params:
-              model: openai/text-embedding-v4
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-          - model_name: text-embedding-v3
-            litellm_params:
-              model: openai/text-embedding-v3
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-          - model_name: qwen3-rerank
-            litellm_params:
-              model: openai/qwen3-rerank
-              api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-          # Claude aliases — anthropic/ provider only
+          # Claude aliases — code plan only
           # openai/ path removed: LiteLLM #27469 breaks tool_use (see #1549)
-          # Each alias has 2 deployments:
-          #   1. anthropic/ on PAYG  (primary)
-          #   2. anthropic/ on code plan  (fallback)
-          #
-          # Opus → qwen3.6-max-preview (PAYG) / qwen3.6-plus (code plan)
-          - model_name: claude-opus-4-7
-            litellm_params:
-              model: anthropic/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
+          # Opus → qwen3.6-plus
           - model_name: claude-opus-4-7
             litellm_params:
               model: anthropic/qwen3.6-plus
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
-          - model_name: claude-opus-4-6
-            litellm_params:
-              model: anthropic/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
           - model_name: claude-opus-4-6
             litellm_params:
               model: anthropic/qwen3.6-plus
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
-          # Sonnet → deepseek-v4-pro (PAYG) / deepseek-v3.2 (code plan)
-          - model_name: claude-sonnet-4-6
-            litellm_params:
-              model: anthropic/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
+          # Sonnet → deepseek-v3.2
           - model_name: claude-sonnet-4-6
             litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
           - model_name: claude-sonnet-4-5
             litellm_params:
-              model: anthropic/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
-          - model_name: claude-sonnet-4-5
-            litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
-          # Haiku → deepseek-v4-flash (PAYG) / deepseek-v3.2 (code plan)
-          - model_name: claude-haiku-4-5
-            litellm_params:
-              model: anthropic/deepseek-v4-flash
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.00000014
-              output_cost_per_token: 0.00000028
+          # Haiku → deepseek-v3.2
           - model_name: claude-haiku-4-5
             litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
           # Date-suffixed aliases (Claude Code CLI sends full model IDs)
           - model_name: claude-opus-4-7-20250515
             litellm_params:
-              model: anthropic/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
-          - model_name: claude-opus-4-7-20250515
-            litellm_params:
               model: anthropic/qwen3.6-plus
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
           - model_name: claude-opus-4-6-20250514
             litellm_params:
-              model: anthropic/qwen3.6-max-preview
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.00000078
-              output_cost_per_token: 0.0000039
-          - model_name: claude-opus-4-6-20250514
-            litellm_params:
               model: anthropic/qwen3.6-plus
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000325
               output_cost_per_token: 0.00000195
           - model_name: claude-sonnet-4-6-20250514
             litellm_params:
-              model: anthropic/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
-          - model_name: claude-sonnet-4-6-20250514
-            litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
           - model_name: claude-sonnet-4-5-20250514
             litellm_params:
-              model: anthropic/deepseek-v4-pro
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.000000435
-              output_cost_per_token: 0.00000087
-          - model_name: claude-sonnet-4-5-20250514
-            litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
           - model_name: claude-haiku-4-5-20251001
             litellm_params:
-              model: anthropic/deepseek-v4-flash
-              api_base: https://dashscope-intl.aliyuncs.com/apps/anthropic
-              api_key: os.environ/DASHSCOPE_PAYG_API_KEY
-              order: 1
-            model_info:
-              input_cost_per_token: 0.00000014
-              output_cost_per_token: 0.00000028
-          - model_name: claude-haiku-4-5-20251001
-            litellm_params:
               model: anthropic/deepseek-v3.2
               api_base: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
               api_key: os.environ/DASHSCOPE_API_KEY
-              order: 2
             model_info:
               input_cost_per_token: 0.000000287
               output_cost_per_token: 0.000000431
