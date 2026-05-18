@@ -14,14 +14,14 @@ bootstrap_from_file() {
   }
   echo "[plugin-bootstrap] reading $settings_file"
 
-  jq -j '.extraKnownMarketplaces // {} | to_entries[] | select(.value.source != null and .value.source.repo != null) | .key, "\u0000", .value.source.repo, "\u0000"' \
+  jq -j '.extraKnownMarketplaces // {} | to_entries[] | select(.key != "claude-plugins-official") | select(.value.source != null and .value.source.repo != null) | .key, "\u0000", .value.source.repo, "\u0000"' \
     "$settings_file" | while IFS= read -r -d '' name && IFS= read -r -d '' repo; do
     echo "[plugin-bootstrap] marketplace add: $name ($repo)"
     claude plugins marketplace add "$repo" --scope user ||
       echo "[plugin-bootstrap] WARNING: failed to add marketplace '$name'"
   done
 
-  jq -j '.enabledPlugins // {} | to_entries[] | select(.value == true or .value == "true") | .key, "\u0000"' \
+  jq -j '.enabledPlugins // {} | to_entries[] | select(.value == true or .value == "true") | select(.key | endswith("@claude-plugins-official") | not) | .key, "\u0000"' \
     "$settings_file" | while IFS= read -r -d '' plugin; do
     echo "[plugin-bootstrap] install: $plugin"
     claude plugins install "$plugin" --scope user ||

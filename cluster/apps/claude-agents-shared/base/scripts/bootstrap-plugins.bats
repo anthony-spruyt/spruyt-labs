@@ -161,6 +161,50 @@ JSON
   [ ! -f "$TEST_DIR/claude-calls.log" ]
 }
 
+@test "claude-plugins-official marketplace: skipped" {
+  cat >"$MANAGED" <<'JSON'
+{
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "custom-market": {
+      "source": {
+        "repo": "owner/custom-marketplace"
+      }
+    }
+  }
+}
+JSON
+  run bash "$SCRIPT" "$MANAGED"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"marketplace add: claude-plugins-official"* ]]
+  [[ "$output" == *"marketplace add: custom-market"* ]]
+  grep -q "plugins marketplace add owner/custom-marketplace --scope user" "$TEST_DIR/claude-calls.log"
+  run ! grep -q "claude-plugins-official" "$TEST_DIR/claude-calls.log"
+}
+
+@test "plugins @claude-plugins-official: skipped" {
+  cat >"$MANAGED" <<'JSON'
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "hookify-plus@hookify-plus": true
+  }
+}
+JSON
+  run bash "$SCRIPT" "$MANAGED"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"install: superpowers@claude-plugins-official"* ]]
+  [[ "$output" != *"install: context7@claude-plugins-official"* ]]
+  [[ "$output" == *"install: hookify-plus@hookify-plus"* ]]
+  grep -q "plugins install hookify-plus@hookify-plus --scope user" "$TEST_DIR/claude-calls.log"
+  run ! grep -q "claude-plugins-official" "$TEST_DIR/claude-calls.log"
+}
+
 @test "multiple files: reads all in order" {
   cat >"$MANAGED" <<'JSON'
 {"enabledPlugins": {"managed-plugin": true}}

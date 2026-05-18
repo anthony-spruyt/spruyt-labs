@@ -16,15 +16,15 @@
   },
   "enabledPlugins": {
     "hookify@claude-plugins-official": false,
-    "hookify-plus@hookify-plus": true,
+    "hookify-plus@aspruyt-plugins": true,
     "agentmemory@agentmemory": true
   },
   "extraKnownMarketplaces": {
-    "hookify-plus": {
+    "aspruyt-plugins": {
       "autoUpdate": true,
       "source": {
         "source": "github",
-        "repo": "anthony-spruyt/hookify-plus"
+        "repo": "anthony-spruyt/claude-plugins"
       }
     },
     "agentmemory": {
