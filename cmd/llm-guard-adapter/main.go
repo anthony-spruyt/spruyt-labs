@@ -93,8 +93,41 @@ type litellmRequest struct {
 }
 
 type structuredMsg struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string         `json:"role"`
+	Content messageContent `json:"content"`
+}
+
+type messageContent struct {
+	Text string
+}
+
+func (m *messageContent) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		m.Text = s
+		return nil
+	}
+
+	var parts []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(data, &parts); err != nil {
+		return fmt.Errorf("content must be string or array of parts: %w", err)
+	}
+
+	var texts []string
+	for _, p := range parts {
+		if p.Type == "text" && p.Text != "" {
+			texts = append(texts, p.Text)
+		}
+	}
+	m.Text = strings.Join(texts, "\n")
+	return nil
+}
+
+func (m messageContent) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.Text)
 }
 
 type litellmResponse struct {
@@ -176,7 +209,7 @@ func (a *adapter) extractPrompt(req litellmRequest) string {
 	var parts []string
 	for _, msg := range req.StructuredMessages {
 		if msg.Role == "user" {
-			parts = append(parts, msg.Content)
+			parts = append(parts, msg.Content.Text)
 		}
 	}
 	return strings.Join(parts, "\n")
