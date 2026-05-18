@@ -120,13 +120,82 @@ func TestExtractPromptFromStructuredMessages(t *testing.T) {
 	a := &adapter{logger: slog.New(slog.NewJSONHandler(io.Discard, nil))}
 	req := litellmRequest{
 		StructuredMessages: []structuredMsg{
-			{Role: "system", Content: "You are helpful"},
-			{Role: "user", Content: "Hello there"},
-			{Role: "user", Content: "How are you"},
+			{Role: "system", Content: messageContent{Text: "You are helpful"}},
+			{Role: "user", Content: messageContent{Text: "Hello there"}},
+			{Role: "user", Content: messageContent{Text: "How are you"}},
 		},
 	}
 	got := a.extractPrompt(req)
 	if got != "Hello there\nHow are you" {
 		t.Fatalf("expected user messages joined, got %q", got)
+	}
+}
+
+func TestUnmarshalContentString(t *testing.T) {
+	input := `{"role":"user","content":"hello world"}`
+	var msg structuredMsg
+	if err := json.Unmarshal([]byte(input), &msg); err != nil {
+		t.Fatalf("unmarshal string content: %v", err)
+	}
+	if msg.Content.Text != "hello world" {
+		t.Fatalf("expected 'hello world', got %q", msg.Content.Text)
+	}
+}
+
+func TestUnmarshalContentArray(t *testing.T) {
+	input := `{"role":"user","content":[{"type":"text","text":"describe this image"},{"type":"image_url","image_url":{"url":"https://example.com/img.png"}}]}`
+	var msg structuredMsg
+	if err := json.Unmarshal([]byte(input), &msg); err != nil {
+		t.Fatalf("unmarshal array content: %v", err)
+	}
+	if msg.Content.Text != "describe this image" {
+		t.Fatalf("expected 'describe this image', got %q", msg.Content.Text)
+	}
+}
+
+func TestUnmarshalContentArrayMultipleTexts(t *testing.T) {
+	input := `{"role":"user","content":[{"type":"text","text":"first"},{"type":"text","text":"second"}]}`
+	var msg structuredMsg
+	if err := json.Unmarshal([]byte(input), &msg); err != nil {
+		t.Fatalf("unmarshal multi-text content: %v", err)
+	}
+	if msg.Content.Text != "first\nsecond" {
+		t.Fatalf("expected 'first\\nsecond', got %q", msg.Content.Text)
+	}
+}
+
+func TestAdapterHandlesArrayContent(t *testing.T) {
+	guardServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req llmGuardRequest
+		json.NewDecoder(r.Body).Decode(&req)
+		if req.Prompt != "describe this image" {
+			t.Errorf("expected prompt 'describe this image', got %q", req.Prompt)
+		}
+		json.NewEncoder(w).Encode(llmGuardResponse{
+			SanitizedPrompt: req.Prompt,
+			IsValid:         true,
+			Scanners:        map[string]float64{"PromptInjection": -1},
+		})
+	}))
+	defer guardServer.Close()
+
+	a := &adapter{
+		client:      guardServer.Client(),
+		llmGuardURL: guardServer.URL,
+		threshold:   0.5,
+		logger:      slog.New(slog.NewJSONHandler(io.Discard, nil)),
+	}
+
+	body := `{"structured_messages":[{"role":"user","content":[{"type":"text","text":"describe this image"},{"type":"image_url","image_url":{"url":"https://example.com/img.png"}}]}],"input_type":"request","litellm_call_id":"test-array"}`
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+	w := httptest.NewRecorder()
+	a.ServeHTTP(w, req)
+
+	var resp litellmResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if resp.Action != "NONE" {
+		t.Fatalf("expected NONE, got %q (reason: %s)", resp.Action, resp.BlockedReason)
 	}
 }
