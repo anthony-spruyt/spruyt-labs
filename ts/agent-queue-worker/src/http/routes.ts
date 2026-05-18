@@ -284,11 +284,33 @@ export async function handleRetryJob(
 ): Promise<void> {
   const job = await deps.queue.getJob(jobId);
   if (!job) return json(res, 404, { retried: false, reason: "not_found" });
-  if (!(await job.isFailed()))
-    return json(res, 200, { retried: false, reason: "not_failed" });
 
-  await job.retry();
-  logger.info("Job retried manually", { jobId });
+  const state = await job.getState();
+  if (
+    state === "active" ||
+    state === "waiting" ||
+    state === "prioritized" ||
+    state === "delayed"
+  )
+    return json(res, 200, { retried: false, reason: "already_queued" });
+
+  const roleDef = deps.registry.get(job.data.role);
+  try {
+    await job.remove();
+  } catch {
+    // Already cleaned up by removeOnComplete/removeOnFail
+  }
+  await deps.queue.add(
+    job.data.role,
+    { ...job.data, dispatch_state: "pending" },
+    {
+      ...DEFAULT_JOB_OPTIONS,
+      ...roleDef.jobOptions,
+      jobId,
+      priority: job.data.priority,
+    }
+  );
+  logger.info("Job re-queued for retry", { jobId, previousState: state });
   json(res, 200, { retried: true });
 }
 

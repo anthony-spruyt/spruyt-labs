@@ -974,12 +974,12 @@ describe("handleRetryJob", () => {
     expect(body.reason).toBe("not_found");
   });
 
-  it("returns 200 retried:false when job is not in failed state", async () => {
+  it("returns 200 retried:false when job is active", async () => {
     const res = mockRes();
     const deps = {
       queue: {
         getJob: vi.fn().mockResolvedValue({
-          isFailed: vi.fn().mockResolvedValue(false),
+          getState: vi.fn().mockResolvedValue("active"),
         }),
       },
     } as unknown as RouteDeps;
@@ -989,24 +989,59 @@ describe("handleRetryJob", () => {
     expect(res._status).toBe(200);
     const body = res._body as Record<string, unknown>;
     expect(body.retried).toBe(false);
-    expect(body.reason).toBe("not_failed");
+    expect(body.reason).toBe("already_queued");
   });
 
-  it("returns 200 retried:true when job is failed and retry succeeds", async () => {
+  it("re-queues completed job", async () => {
     const res = mockRes();
-    const retry = vi.fn().mockResolvedValue(undefined);
+    const remove = vi.fn().mockResolvedValue(undefined);
+    const add = vi.fn().mockResolvedValue(undefined);
+    const jobData = { role: "renovate-triage", repo: "org/repo", priority: 1 };
     const deps = {
       queue: {
         getJob: vi.fn().mockResolvedValue({
-          isFailed: vi.fn().mockResolvedValue(true),
-          retry,
+          getState: vi.fn().mockResolvedValue("completed"),
+          data: jobData,
+          remove,
         }),
+        add,
       },
+      registry: { get: vi.fn().mockReturnValue({ timeoutMs: 60_000 }) },
+    } as unknown as RouteDeps;
+
+    await handleRetryJob(res, "completed-job", deps);
+
+    expect(remove).toHaveBeenCalled();
+    expect(add).toHaveBeenCalledWith(
+      "renovate-triage",
+      expect.objectContaining({ dispatch_state: "pending" }),
+      expect.objectContaining({ jobId: "completed-job" })
+    );
+    expect(res._status).toBe(200);
+    expect((res._body as Record<string, unknown>).retried).toBe(true);
+  });
+
+  it("re-queues failed job", async () => {
+    const res = mockRes();
+    const remove = vi.fn().mockResolvedValue(undefined);
+    const add = vi.fn().mockResolvedValue(undefined);
+    const jobData = { role: "renovate-triage", repo: "org/repo", priority: 1 };
+    const deps = {
+      queue: {
+        getJob: vi.fn().mockResolvedValue({
+          getState: vi.fn().mockResolvedValue("failed"),
+          data: jobData,
+          remove,
+        }),
+        add,
+      },
+      registry: { get: vi.fn().mockReturnValue({ timeoutMs: 60_000 }) },
     } as unknown as RouteDeps;
 
     await handleRetryJob(res, "failed-job", deps);
 
-    expect(retry).toHaveBeenCalled();
+    expect(remove).toHaveBeenCalled();
+    expect(add).toHaveBeenCalled();
     expect(res._status).toBe(200);
     expect((res._body as Record<string, unknown>).retried).toBe(true);
   });
