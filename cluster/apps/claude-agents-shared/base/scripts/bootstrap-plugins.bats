@@ -99,6 +99,36 @@ JSON
   [[ "$output" == *"claude CLI not found"* ]]
 }
 
+@test "unreadable settings file: warning and exit 1" {
+  echo '{}' >"$MANAGED"
+  chmod 000 "$MANAGED"
+  run bash "$SCRIPT" "$MANAGED"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"permission denied"* ]]
+}
+
+@test "string false in enabledPlugins: not installed" {
+  cat >"$MANAGED" <<'JSON'
+{"enabledPlugins": {"skip-me": "false", "also-skip": "no"}}
+JSON
+  run bash "$SCRIPT" "$MANAGED"
+  [ "$status" -eq 0 ]
+  [ ! -f "$TEST_DIR/claude-calls.log" ]
+}
+
+@test "idempotent: running twice calls claude twice (claude deduplicates)" {
+  cat >"$MANAGED" <<'JSON'
+{"enabledPlugins": {"my-plugin": true}}
+JSON
+  run bash "$SCRIPT" "$MANAGED"
+  [ "$status" -eq 0 ]
+  run bash "$SCRIPT" "$MANAGED"
+  [ "$status" -eq 0 ]
+  local count
+  count=$(grep -c "plugins install my-plugin --scope user" "$TEST_DIR/claude-calls.log")
+  [ "$count" -eq 2 ]
+}
+
 @test "marketplace + plugin install: both called" {
   cat >"$MANAGED" <<'JSON'
 {

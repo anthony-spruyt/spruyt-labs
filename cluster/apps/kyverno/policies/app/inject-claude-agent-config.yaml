@@ -199,6 +199,8 @@ spec:
                   - name: claude-home
                     mountPath: /home/node/.claude
                 securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
                   allowPrivilegeEscalation: false
                   readOnlyRootFilesystem: false
                   capabilities:
@@ -454,6 +456,8 @@ spec:
                     mountPath: /workspace
                     readOnly: true
                 securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
                   allowPrivilegeEscalation: false
                   readOnlyRootFilesystem: false
                   capabilities:
@@ -520,7 +524,8 @@ spec:
                       exit 1
                     fi
                     echo "[git-clone] token read OK (${#TOKEN} chars)"
-                    AUTH_URL=$(echo "$CLONE_URL" | sed "s|https://|https://x-access-token:${TOKEN}@|")
+                    ESCAPED_TOKEN=$(printf '%s\n' "$TOKEN" | sed 's/[&\\/]/\\&/g')
+                    AUTH_URL=$(printf '%s' "$CLONE_URL" | sed "s|https://|https://x-access-token:${ESCAPED_TOKEN}@|")
                     echo "[git-clone] cloning..."
                     if [ -n "$CLONE_BRANCH" ]; then
                       git clone --depth 1 -b "$CLONE_BRANCH" "$AUTH_URL" /workspace/repo
@@ -580,6 +585,8 @@ spec:
                     mountPath: /workspace
                     readOnly: true
                 securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
                   allowPrivilegeEscalation: false
                   readOnlyRootFilesystem: false
                   capabilities:
