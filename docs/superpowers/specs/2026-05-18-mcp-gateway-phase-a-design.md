@@ -237,7 +237,7 @@ Each MCP server namespace needs a CiliumNetworkPolicy allowing ingress from lite
 | `cluster/apps/brave-search-mcp/brave-search-mcp/app/network-policies.yaml` | brave-search-mcp | litellm | 8000 |
 | `cluster/apps/agentmemory/agentmemory/app/network-policies.yaml`           | agentmemory      | litellm | 3111 |
 | `cluster/apps/observability/mcp-victoriametrics/app/network-policies.yaml` | observability    | litellm | 8080 |
-| `cluster/apps/n8n-mcp/n8n-mcp/app/network-policies.yaml`                   | n8n-mcp          | litellm | 3000 |
+| `cluster/apps/n8n-mcp/n8n-mcp-server/app/network-policies.yaml`            | n8n-mcp          | litellm | 3000 |
 
 ### Remove After Validation
 

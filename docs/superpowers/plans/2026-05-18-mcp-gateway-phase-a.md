@@ -407,6 +407,7 @@ For each team, add the appropriate MCP access groups:
 | claude-agents-spruyt-labs-sre   | `core`, `observability`                |
 | coder-workspaces                | `core`, `observability`, `interactive` |
 | local-dev-containers            | `core`, `observability`, `interactive` |
+| agentmemory                     | (none — LLM API only, no MCP access)   |
 
 If team-level access groups are not supported, set per virtual key instead.
 
