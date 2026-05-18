@@ -231,6 +231,8 @@ spec:
                     value: "http://agentmemory.agentmemory.svc.cluster.local:3111"
                   - name: AGENTMEMORY_SECRET
                     value: "unused-cluster-internal"
+                  - name: SAFE_CHAIN_LOGGING
+                    value: "silent"
                   - name: CLAUDE_CODE_ENABLE_TELEMETRY
                     value: "1"
                   - name: CLAUDE_CODE_ENHANCED_TELEMETRY_BETA
