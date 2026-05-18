@@ -26,15 +26,14 @@ Used for `Promise.race` deadline in processor, Valkey active lock TTL, and sessi
 
 ### BullMQ Worker Settings
 
-| Setting            | Value                 | Purpose                                |
-| ------------------ | --------------------- | -------------------------------------- |
-| `stalledInterval`  | 60s                   | How often to check for stalled jobs    |
-| `lockDuration`     | 120s                  | Job lock lifetime (2x stalledInterval) |
-| `maxStalledCount`  | 1                     | Stall recoveries before failing        |
-| `removeOnComplete` | 1h                    | Completed job retention                |
-| `removeOnFail`     | 7d / 500 count        | Failed job retention                   |
-| `attempts`         | 2                     | Max attempts per job                   |
-| `backoff`          | exponential, 30s base | Retry delay strategy                   |
+| Setting            | Value          | Purpose                                |
+| ------------------ | -------------- | -------------------------------------- |
+| `stalledInterval`  | 60s            | How often to check for stalled jobs    |
+| `lockDuration`     | 120s           | Job lock lifetime (2x stalledInterval) |
+| `maxStalledCount`  | 1              | Stall recoveries before failing        |
+| `removeOnComplete` | 1h             | Completed job retention                |
+| `removeOnFail`     | 7d / 500 count | Failed job retention                   |
+| `attempts`         | 1              | No auto-retry; n8n controls retries    |
 
 ### Pod Deadline Enforcement
 
