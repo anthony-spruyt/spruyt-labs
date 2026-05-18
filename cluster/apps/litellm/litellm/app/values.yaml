@@ -473,12 +473,9 @@ configMaps:
         input_scanners:
           - type: PromptInjection
             params:
-              threshold: 0.92
-              match_type: truncate_head_tail
+              threshold: 0.97
+              match_type: sentence
               model_max_length: 512
-          - type: Secrets
-            params:
-              redact_mode: "all"
           - type: Regex
             params:
               patterns: ["Bearer [A-Za-z0-9-._~+/]+"]
