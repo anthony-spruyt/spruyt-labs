@@ -665,7 +665,8 @@ configMaps:
             litellm_params:
               guardrail: presidio
               mode: "pre_call"
-              default_on: true
+              default_on: false
+              skip_system_message_in_guardrail: true
               presidio_filter_scope: "input"
               presidio_score_thresholds:
                 ALL: 0.7
@@ -687,6 +688,7 @@ configMaps:
               guardrail: generic_guardrail_api
               mode: "pre_call"
               default_on: false
+              skip_system_message_in_guardrail: true
               api_base: "http://litellm-llm-guard-adapter.litellm.svc.cluster.local:8080"
         router_settings:
           allowed_fails: 3
