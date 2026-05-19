@@ -16,9 +16,9 @@ Dev Container (.env mounted)
        └─ Traefik (cert-manager TLS via ${CLUSTER_ISSUER})
             └─ traefik-api-key-auth middleware (Authorization: Bearer <token>)
                  └─ Routes by path prefix:
-                      ├─ /opentelemetry/v1/metrics → vmsingle-victoria-metrics-k8s-stack.observability:8428
-                      ├─ /opentelemetry/v1/logs   → victoria-logs-single-server.observability:9428
-                      └─ /opentelemetry/v1/traces → victoria-traces-single-vt-single-server.observability:10428
+                      ├─ /opentelemetry/v1/metrics  → vmsingle-victoria-metrics-k8s-stack.observability:8428
+                      ├─ /insert/opentelemetry/v1/logs  → victoria-logs-single-server.observability:9428
+                      └─ /insert/opentelemetry/v1/traces → victoria-traces-single-vt-single-server.observability:10428
 
 Coder/Agents (internal, unchanged):
   └─ HTTP → *.svc:port/opentelemetry/v1/{metrics,logs,traces}
@@ -31,7 +31,7 @@ Coder/Agents (internal, unchanged):
 
 **File:** `cluster/apps/traefik/traefik/ingress/observability/api-key-auth-otel.yaml`
 
-Middleware using existing `traefik-api-key-auth` plugin:
+Middleware using existing `traefik-api-key-auth` plugin. Deployed into `observability` namespace via kustomization (same pattern as `lan-ip-whitelist`, `compress`, `rate-limit`).
 
 - Validates `Authorization: Bearer <token>` header
 - Key sourced from `env:OTEL_API_KEY` (set on Traefik deployment)
@@ -63,31 +63,34 @@ spec:
       match: Host(`otlp.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/opentelemetry/v1/metrics`)
       middlewares:
         - name: api-key-auth-otel
-          namespace: traefik
+          namespace: observability
         - name: compress
       services:
         - name: vmsingle-victoria-metrics-k8s-stack
           namespace: observability
+          passHostHeader: true
           port: 8428
     - kind: Rule
-      match: Host(`otlp.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/opentelemetry/v1/logs`)
+      match: Host(`otlp.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/insert/opentelemetry/v1/logs`)
       middlewares:
         - name: api-key-auth-otel
-          namespace: traefik
+          namespace: observability
         - name: compress
       services:
         - name: victoria-logs-single-server
           namespace: observability
+          passHostHeader: true
           port: 9428
     - kind: Rule
-      match: Host(`otlp.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/opentelemetry/v1/traces`)
+      match: Host(`otlp.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/insert/opentelemetry/v1/traces`)
       middlewares:
         - name: api-key-auth-otel
-          namespace: traefik
+          namespace: observability
         - name: compress
       services:
         - name: victoria-traces-single-vt-single-server
           namespace: observability
+          passHostHeader: true
           port: 10428
   tls:
     secretName: "otlp-lan-${EXTERNAL_DOMAIN/./-}-tls"
@@ -124,8 +127,8 @@ OTEL_LOGS_EXPORTER=otlp
 OTEL_TRACES_EXPORTER=otlp
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=https://otlp.lan.${EXTERNAL_DOMAIN}/opentelemetry/v1/metrics
-OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://otlp.lan.${EXTERNAL_DOMAIN}/opentelemetry/v1/logs
-OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://otlp.lan.${EXTERNAL_DOMAIN}/opentelemetry/v1/traces
+OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://otlp.lan.${EXTERNAL_DOMAIN}/insert/opentelemetry/v1/logs
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://otlp.lan.${EXTERNAL_DOMAIN}/insert/opentelemetry/v1/traces
 OTEL_RESOURCE_ATTRIBUTES=agent.namespace=devcontainer
 ```
 
@@ -139,7 +142,22 @@ OTEL_LOG_TOOL_CONTENT=1
 OTEL_LOG_USER_PROMPTS=1
 ```
 
-### 6. Network Policy
+### 6. Kustomization Patch
+
+Add middleware to `observability/kustomization.yaml` with namespace patch:
+
+```yaml
+patches:
+  - target:
+      kind: Middleware
+      name: api-key-auth-otel
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: observability
+```
+
+### 7. Network Policy
 
 No new policy needed. Dev containers connect through Traefik's LAN IP, which already accepts external traffic. API key auth is the access control.
 
@@ -151,7 +169,7 @@ Coder workspaces and Claude agents continue using internal `.svc.cluster.local` 
 
 1. Remove `OTEL_*` from dev container `.env`
 2. Delete `otlp-ingress.yaml`, remove cert entry from `certificates.yaml`
-3. Delete `api-key-auth-otel.yaml`
+3. Delete `api-key-auth-otel.yaml`, remove patch from kustomization
 4. Remove `OTEL_API_KEY` from Traefik SOPS secret
 5. Flux auto-reconciles
 
