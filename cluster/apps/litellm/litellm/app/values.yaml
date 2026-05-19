@@ -82,6 +82,7 @@ controllers:
               secretKeyRef:
                 name: litellm-oauth-credentials
                 key: GENERIC_CLIENT_SECRET
+          AUTO_REDIRECT_UI_LOGIN_TO_SSO: "true"
           GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/authorize/"
           GENERIC_TOKEN_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/token/"
           GENERIC_USERINFO_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/"
