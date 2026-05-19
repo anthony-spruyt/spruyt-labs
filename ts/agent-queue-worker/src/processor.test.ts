@@ -1023,6 +1023,40 @@ describe("Processor.process — lock extension", () => {
     vi.useRealTimers();
     await processPromise;
   });
+
+  it("lock renewal fails 3 times in a row -> throws DelayedError", async () => {
+    vi.useFakeTimers();
+    const redis = createMockRedis();
+    vi.mocked(redis.exists).mockResolvedValue(1); // session alive -> awaitCallbackWithCachePoll path
+
+    const processor = new Processor(
+      redis,
+      baseConfig,
+      createMockRegistry({ timeoutMs: 120_000 }),
+      createMockHealthGate()
+    );
+    const job = createMockJob("lock-fail-job", {
+      dispatch_state: "dispatched",
+    });
+    (job as any).extendLock = vi.fn().mockRejectedValue(new Error("lock lost"));
+
+    const resultPromise = processor.process(job as any);
+    resultPromise.catch(() => {});
+
+    // Fire three lock renewal failures at 30s, 60s, 90s
+    await vi.advanceTimersByTimeAsync(30_001); // failure 1
+    await vi.advanceTimersByTimeAsync(30_001); // failure 2
+    await vi.advanceTimersByTimeAsync(30_001); // failure 3 -> cancelled
+
+    await expect(resultPromise).rejects.toThrow(DelayedError);
+
+    expect(job.extendLock).toHaveBeenCalledTimes(3);
+    expect(job.moveToDelayed).toHaveBeenCalledWith(expect.any(Number), "tok-1");
+
+    expect(redis.del).toHaveBeenCalledWith("agent:active:lock-fail-job");
+
+    vi.useRealTimers();
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

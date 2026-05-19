@@ -115,6 +115,7 @@ export class Processor {
       );
       // Extend BullMQ lock every 30s to prevent stalled-job false positives
       // during long async callback waits (lockDuration=120s, jobs run up to 60min)
+      let lockRenewalFailures = 0;
       const lockExtender = setInterval(async () => {
         try {
           if (!job.token) {
@@ -124,9 +125,25 @@ export class Processor {
             return;
           }
           await job.extendLock(job.token, 120_000);
+          lockRenewalFailures = 0;
         } catch (err) {
+          lockRenewalFailures++;
+          if (lockRenewalFailures >= 3) {
+            logger.error("Lock renewal failed 3 times, cancelling job", {
+              jobId: job.id,
+              failureCount: lockRenewalFailures,
+              error: String(err),
+            });
+            cancelled = true;
+            clearInterval(lockExtender);
+            const resolver = this.callbacks.get(job.id!);
+            if (resolver) resolver({ status: "cancelled" });
+            this.callbacks.delete(job.id!);
+            return;
+          }
           logger.warn("Failed to extend job lock", {
             jobId: job.id,
+            failureCount: lockRenewalFailures,
             error: String(err),
           });
         }
@@ -142,13 +159,22 @@ export class Processor {
 
         if (result.status === "cancelled") {
           cancelled = true;
-          await job.moveToDelayed(Date.now() + 1000, job.token!);
+          if (job.token) {
+            await job.moveToDelayed(Date.now() + 1000, job.token);
+          }
           throw new DelayedError();
         }
 
         logger.info("Job completed", { ...fields, status: result.status });
         return result;
       } catch (err) {
+        if (err instanceof DelayedError) {
+          logger.warn("Job delayed for retry", {
+            ...fields,
+            error: String(err),
+          });
+          throw err;
+        }
         const reason =
           err instanceof Error && err.message.includes("timed out")
             ? "timeout"

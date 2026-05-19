@@ -19,13 +19,7 @@ const redis = new Redis({
   retryStrategy: (times: number) => Math.min(times * 500, 5000),
 });
 
-const connection = {
-  host: config.VALKEY_HOST,
-  port: config.VALKEY_PORT,
-  password: config.VALKEY_PASSWORD,
-};
-
-const queueOpts = { connection, prefix: "agent:queue" };
+const queueOpts = { connection: redis, prefix: "agent:queue" };
 
 const queue = new Queue("agent-jobs", queueOpts);
 const registry = createDefaultRegistry(config, metrics.sreBatchSize);
