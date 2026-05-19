@@ -34,8 +34,8 @@ cluster/apps/
 ### Documentation Standards
 
 1. **Structure**: Follow the established template with required sections
-1. **Code Blocks**: Use proper language identifiers for all code examples
-1. **Accuracy**: Content must match actual ks.yaml, release.yaml, and values.yaml
+2. **Code Blocks**: Use proper language identifiers for all code examples
+3. **Accuracy**: Content must match actual ks.yaml, release.yaml, and values.yaml
 
 ### Procedures
 
@@ -44,13 +44,13 @@ cluster/apps/
    - Populate required sections with accurate information
    - Include key monitoring and troubleshooting commands
 
-1. **Updating Existing Documentation**:
+2. **Updating Existing Documentation**:
 
    - Review for accuracy against actual configuration
    - Update outdated information and versions
    - Verify all cross-references are valid
 
-1. **Validation**:
+3. **Validation**:
 
    - Run `task dev-env:lint` for automated checks
    - Check for broken links and references
@@ -66,13 +66,13 @@ cluster/apps/
    - **Diagnosis**: Compare with actual cluster configuration
    - **Resolution**: Update documentation to reflect current reality
 
-1. **Broken References**:
+2. **Broken References**:
 
    - **Symptom**: Links to non-existent files or resources
    - **Diagnosis**: Run link validation checks
    - **Resolution**: Fix or remove broken references
 
-1. **Missing Sections**:
+3. **Missing Sections**:
 
    - **Symptom**: Required sections not present
    - **Diagnosis**: Review against documentation standards

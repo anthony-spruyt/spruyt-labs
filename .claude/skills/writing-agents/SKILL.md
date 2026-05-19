@@ -11,18 +11,18 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 
 ## Quick Reference
 
-| Task | Reference |
-|------|-----------|
-| Frontmatter fields | `references/agent-frontmatter.md` |
-| Description examples | `references/project-patterns.md` Section 7 |
-| Model selection | `references/project-patterns.md` Section 2 |
-| Size targets | `references/project-patterns.md` Section 3 |
-| Memory patterns | `references/project-patterns.md` Section 4 |
-| Output format patterns | `references/project-patterns.md` Section 5 |
-| Handoff patterns | `references/project-patterns.md` Section 6 |
-| Emphasis calibration | `references/anthropic-best-practices.md` Section 3 |
-| Parallel execution | `references/anthropic-best-practices.md` Section 6 |
-| Common mistakes | `references/common-mistakes.md` |
+| Task                   | Reference                                          |
+| ---------------------- | -------------------------------------------------- |
+| Frontmatter fields     | `references/agent-frontmatter.md`                  |
+| Description examples   | `references/project-patterns.md` Section 7         |
+| Model selection        | `references/project-patterns.md` Section 2         |
+| Size targets           | `references/project-patterns.md` Section 3         |
+| Memory patterns        | `references/project-patterns.md` Section 4         |
+| Output format patterns | `references/project-patterns.md` Section 5         |
+| Handoff patterns       | `references/project-patterns.md` Section 6         |
+| Emphasis calibration   | `references/anthropic-best-practices.md` Section 3 |
+| Parallel execution     | `references/anthropic-best-practices.md` Section 6 |
+| Common mistakes        | `references/common-mistakes.md`                    |
 
 ## Description Field
 
@@ -33,6 +33,7 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 **Content pattern:** Brief capability statement (1 clause), then triggering conditions. Do NOT expand the capability statement into a workflow summary — Claude follows the description shortcut instead of reading the full system prompt body. Keep "what" to a single clause, put process details in the body.
 
 **Include:**
+
 - "Use when..." / "When to use" conditions
 - "When NOT to use" anti-conditions
 - 1-2 `<example>` blocks with `<commentary>` explaining why it triggers
@@ -67,15 +68,15 @@ Use sub-agents for each phase, same as optimization. Fresh context prevents drif
 
 Dispatch a creation sub-agent. Provide it with: the agent requirements, this skill, existing agents (for pattern reference), and all inherited context files (CLAUDE.md, `.claude/rules/*`). The sub-agent follows these steps:
 
-1. **Discover patterns** — Read 2-3 existing agents in `.claude/agents/` for local conventions
-2. **Define persona** — Expert identity with domain expertise, 1-2 sentences
-3. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, 1-2 examples with `<commentary>`, "When to use" and "When NOT to use" sections). Choose model and tools (least privilege — see `references/anthropic-best-practices.md` Section 9)
-4. **Structure system prompt** — Follow section order from System Prompt Structure above. Include output format template and handoff protocol
-5. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
-6. **Scope-limit Opus** — For agents that make modifications, add "Only make changes directly requested." Prefer direct Grep/Read over spawning subagents for simple lookups (see `references/anthropic-best-practices.md` Section 4)
-7. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, use strong language (e.g., "stop immediately with BLOCKED"). Add "stop on error" for sequential workflows
-8. **Calibrate emphasis** — Same rules as Optimization Phase 1 step 4. Safety gates keep strong language; operational preferences use normal language
-9. **Avoid inherited duplication** — Read CLAUDE.md and `.claude/rules/*`. Do not duplicate content. Use single-line references (e.g., "Follow inherited secret handling rules")
+01. **Discover patterns** — Read 2-3 existing agents in `.claude/agents/` for local conventions
+02. **Define persona** — Expert identity with domain expertise, 1-2 sentences
+03. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, 1-2 examples with `<commentary>`, "When to use" and "When NOT to use" sections). Choose model and tools (least privilege — see `references/anthropic-best-practices.md` Section 9)
+04. **Structure system prompt** — Follow section order from System Prompt Structure above. Include output format template and handoff protocol
+05. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
+06. **Scope-limit Opus** — For agents that make modifications, add "Only make changes directly requested." Prefer direct Grep/Read over spawning subagents for simple lookups (see `references/anthropic-best-practices.md` Section 4)
+07. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, use strong language (e.g., "stop immediately with BLOCKED"). Add "stop on error" for sequential workflows
+08. **Calibrate emphasis** — Same rules as Optimization Phase 1 step 4. Safety gates keep strong language; operational preferences use normal language
+09. **Avoid inherited duplication** — Read CLAUDE.md and `.claude/rules/*`. Do not duplicate content. Use single-line references (e.g., "Follow inherited secret handling rules")
 10. **Size check** — Target under 300 lines / 2,000 words. Run `wc -l` and `wc -w` to verify
 
 ### Phase 2: Validate (two parallel sub-agents)
@@ -105,7 +106,8 @@ Dispatch an optimization sub-agent. Provide it with: the agent file path, this s
    - Max 2 `<example>` blocks
    - Must have "When to use" and "When NOT to use" sections
 3. **Remove inherited context** — Read CLAUDE.md and every `.claude/rules/` file. Search the agent for duplicated content. Common: secret handling, git staging, research priority, domain substitution. Replace with single-line references (e.g., "Follow inherited secret handling rules")
-4. **Calibrate emphasis** — Soften CRITICAL/MUST/NEVER/FORBIDDEN/MANDATORY (see `references/anthropic-best-practices.md` Section 3). Remove explanations Opus knows (Section 12). **Safety gates** (hard stops preventing data loss, secret exposure, skipping required inputs) keep strong language. **Operational preferences** (tool choice, workflow ordering, style) use normal language — no bold, no CRITICAL, no blockquote emphasis
+4. **Calibrate emphasis** — Soften CRITICAL/MUST/NEVER/FORBIDDEN/MANDATORY (see `references/anthropic-best-practices.md` Section 3). Remove explanations Opus knows (Section 12). **Safety gates** (hard stops preventing data loss, secret exposure, skipping required inputs) keep strong language. **Operational preferences** (tool choice, workflow ordering, style) use normal language — no bold, no
+   CRITICAL, no blockquote emphasis
 5. **Cut aggressively** — Remove Opus-known content, inherited context, verbose examples. Agents are single files; do not extract. **Keep:** domain-specific commands with non-obvious flags, exact commit/git commands in self-improvement, behavioral anchors preventing shallow execution
 6. **Verify frontmatter** — All original fields must survive (`name`, `description`, `model`, `memory`, `tools`). Missing `tools` silently grants all tools
 
@@ -122,11 +124,11 @@ If either validator returns FAIL/DEGRADED: dispatch a fix sub-agent with the spe
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Workflow summary in description | Brief capability + triggering conditions only. Put workflow in body |
+| Mistake                          | Fix                                                                 |
+| -------------------------------- | ------------------------------------------------------------------- |
+| Workflow summary in description  | Brief capability + triggering conditions only. Put workflow in body |
 | CRITICAL/MANDATORY/NEVER overuse | Normal language. Claude 4.5/4.6 overtriggers on aggressive emphasis |
-| 500+ line system prompt | Cut aggressively — remove what Opus knows. Target < 300 lines |
-| No output format specified | Add structured output template |
-| No examples in description | Add 1-2 `<example>` blocks with context/user/assistant/commentary |
-| See full list | `references/common-mistakes.md` |
+| 500+ line system prompt          | Cut aggressively — remove what Opus knows. Target < 300 lines       |
+| No output format specified       | Add structured output template                                      |
+| No examples in description       | Add 1-2 `<example>` blocks with context/user/assistant/commentary   |
+| See full list                    | `references/common-mistakes.md`                                     |

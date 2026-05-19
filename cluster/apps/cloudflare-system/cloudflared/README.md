@@ -16,7 +16,7 @@ Cloudflared provides secure tunneling to Cloudflare's global network, enabling p
    - **Symptom**: Tunnel not connecting to Cloudflare
    - **Resolution**: Verify Cloudflare credentials and tunnel configuration
 
-1. **Tunnel routes not updating**
+2. **Tunnel routes not updating**
 
    - **Symptom**: Configuration changes not reflected
    - **Resolution**: Verify tunnel configuration and restart cloudflared

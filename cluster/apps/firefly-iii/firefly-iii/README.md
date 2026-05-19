@@ -39,9 +39,9 @@ Internet → Traefik → Authentik Outpost → Firefly III → CNPG PostgreSQL
 **Setup**:
 
 1. Navigate to `https://firefly.${EXTERNAL_DOMAIN}/ofx`
-1. Create PAT in Firefly III: Options → Profile → OAuth → Create Token
-1. Enter PAT in ff3-ofx login prompt
-1. Optionally check "Store token for next time"
+2. Create PAT in Firefly III: Options → Profile → OAuth → Create Token
+3. Enter PAT in ff3-ofx login prompt
+4. Optionally check "Store token for next time"
 
 ## Authentication
 
@@ -50,9 +50,9 @@ Firefly III uses header-based authentication via Authentik forward-auth with a *
 ### How It Works
 
 1. User accesses `https://firefly.${EXTERNAL_DOMAIN}`
-1. Traefik forwards request to Authentik outpost for authentication
-1. Authentik validates session and injects `X-Firefly-Household-Email: household@firefly.local` header
-1. Firefly III reads email from header and logs in as the shared household user
+2. Traefik forwards request to Authentik outpost for authentication
+3. Authentik validates session and injects `X-Firefly-Household-Email: household@firefly.local` header
+4. Firefly III reads email from header and logs in as the shared household user
 
 ### Shared Household Finance
 
@@ -88,7 +88,7 @@ Users must be added to the "Firefly III Users" group in Authentik to access the 
    - **Symptom**: 403 Forbidden or redirect loop
    - **Resolution**: Verify user is in "Firefly III Users" group in Authentik Admin UI
 
-1. **Blueprint not applied**
+2. **Blueprint not applied**
 
    - **Symptom**: Application doesn't appear in Authentik
    - **Resolution**: Check blueprint status:
@@ -98,7 +98,7 @@ Users must be added to the "Firefly III Users" group in Authentik to access the 
         [print(f'{b.name} - {b.status}') for b in BlueprintInstance.objects.filter(name__icontains='firefly')]"
      ```
 
-1. **Database connection failed**
+3. **Database connection failed**
 
    - **Symptom**: Pod crashes with database connection error
    - **Resolution**: Verify CNPG cluster is ready and secrets exist:
@@ -107,7 +107,7 @@ Users must be added to the "Firefly III Users" group in Authentik to access the 
      kubectl get secret -n firefly-iii firefly-iii-cnpg-cluster-app
      ```
 
-1. **Outpost not deployed**
+4. **Outpost not deployed**
 
    - **Symptom**: 503 Service Unavailable on auth path
    - **Resolution**: Check Authentik outpost RBAC and logs:

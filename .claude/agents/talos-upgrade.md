@@ -160,6 +160,7 @@ flux get helmreleases -A
 ```
 
 **Pre-upgrade checklist (all must pass):**
+
 - [ ] All nodes report Ready in kubectl
 - [ ] talosctl health passes
 - [ ] etcd has 3 healthy members with consistent terms
@@ -168,6 +169,7 @@ flux get helmreleases -A
 - [ ] No pending HelmRelease upgrades/failures
 
 **If ANY check fails, STOP and report:**
+
 ```
 ## PRE-UPGRADE BLOCKED
 
@@ -217,6 +219,7 @@ SCHEMATIC=$(grep -A10 "controlPlane:" talos/talconfig.yaml | grep -i schematic |
 ```
 
 #### Step 3.2: Pre-node health check
+
 ```bash
 # Verify etcd quorum before proceeding
 # IMPORTANT: Target only CP nodes to avoid "Unimplemented" warnings from workers
@@ -225,6 +228,7 @@ talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 ```
 
 #### Step 3.3: Execute upgrade
+
 ```bash
 # IMPORTANT: For CP upgrades, use a SURVIVING CP node as endpoint, NOT the cluster VIP.
 # The VIP may route to the node being upgraded, causing the command to lose connection.
@@ -237,11 +241,11 @@ talosctl upgrade \
 
 **Endpoint selection for control plane upgrades:**
 
-| Node Being Upgraded | Use as Endpoint |
-|---------------------|----------------|
-| 1st CP node | 2nd CP node |
-| 2nd CP node | 1st CP node (already upgraded) |
-| 3rd CP node | 1st CP node (already upgraded) |
+| Node Being Upgraded | Use as Endpoint                |
+| ------------------- | ------------------------------ |
+| 1st CP node         | 2nd CP node                    |
+| 2nd CP node         | 1st CP node (already upgraded) |
+| 3rd CP node         | 1st CP node (already upgraded) |
 
 #### Step 3.4: Wait for node recovery (CRITICAL)
 
@@ -259,15 +263,18 @@ talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 ```
 
 #### Step 3.5: Post-node validation
+
 ```bash
 # Verify version upgraded
 talosctl version --nodes <node-ip> --short
 ```
 
 #### Step 3.6: Post progress to issue
+
 If tracking with an issue, post progress after each node.
 
 **WAIT between each control plane node:**
+
 - Minimum 60 seconds after node Ready
 - etcd quorum must show 3 healthy members
 - Node must be fully Ready
@@ -279,6 +286,7 @@ If tracking with an issue, post progress after each node.
 For EACH worker node:
 
 #### Step 4.1: Pre-node Ceph check (BLOCKING)
+
 ```bash
 # MUST be HEALTH_OK before proceeding
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
@@ -288,6 +296,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd tree
 ```
 
 **BLOCK if Ceph is not HEALTH_OK:**
+
 ```
 ## WORKER UPGRADE BLOCKED
 
@@ -316,6 +325,7 @@ SCHEMATIC=$(grep -A10 "worker:" talos/talconfig.yaml | grep -i schematic | head 
 ```
 
 #### Step 4.3: Execute upgrade
+
 ```bash
 talosctl upgrade \
   --nodes <node-ip> \
@@ -334,6 +344,7 @@ talosctl health -n <node-ip>
 ```
 
 #### Step 4.5: Wait for Ceph recovery (CRITICAL)
+
 ```bash
 # Poll Ceph status until HEALTH_OK (timeout: 30 minutes)
 # This is the BLOCKING step - do not proceed until HEALTH_OK
@@ -342,13 +353,14 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 ```
 
 **Ceph recovery timeline expectations:**
-| Time After Reboot | Expected State |
-|-------------------|----------------|
-| 0-60s | HEALTH_WARN (OSDs rejoining) |
-| 60-120s | HEALTH_WARN (peering, PGs recovering) |
-| 120-180s | All PGs active+clean, but HEALTH_WARN may persist due to NOOUT flag |
-| 180-300s | HEALTH_OK (NOOUT flag auto-clears ~60s after PGs are clean) |
-| 300s+ | HEALTH_OK expected; if still WARN, check for stale heartbeat warnings |
+
+| Time After Reboot | Expected State                                                        |
+| ----------------- | --------------------------------------------------------------------- |
+| 0-60s             | HEALTH_WARN (OSDs rejoining)                                          |
+| 60-120s           | HEALTH_WARN (peering, PGs recovering)                                 |
+| 120-180s          | All PGs active+clean, but HEALTH_WARN may persist due to NOOUT flag   |
+| 180-300s          | HEALTH_OK (NOOUT flag auto-clears ~60s after PGs are clean)           |
+| 300s+             | HEALTH_OK expected; if still WARN, check for stale heartbeat warnings |
 
 **Note:** Rook-Ceph sets a NOOUT flag on OSDs during planned disruptions to prevent unnecessary rebalancing. This flag auto-clears after the OSD rejoins, but adds ~60 seconds of HEALTH_WARN **after** all PGs are already active+clean. This is normal and does not indicate a problem.
 
@@ -373,6 +385,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health
 Do NOT wait indefinitely for these warnings to clear on their own — they stick after reboots and require an OSD restart.
 
 #### Step 4.6: Post progress to issue
+
 If tracking with an issue, post progress after each worker including Ceph recovery time.
 
 ### Phase 5: Post-Upgrade Validation
@@ -401,6 +414,7 @@ flux get helmreleases -A
 After all nodes are upgraded and Ceph is healthy, trigger the descheduler to rebalance workloads across nodes. This ensures pods are evenly distributed after the rolling node reboots.
 
 Check if descheduler is deployed:
+
 ```bash
 kubectl get deploy -n kube-system
 kubectl get jobs -n kube-system
@@ -415,14 +429,17 @@ kubectl get pods -A -o wide --watch
 ```
 
 **When to skip descheduler:**
+
 - If the cluster doesn't have a descheduler installed
 - If workload distribution looks balanced already
 - If the upgrade was performed during low-traffic hours
 
 **Verification:**
+
 ```bash
 kubectl get pods -A -o wide
 ```
+
 Count pod distribution per node from results.
 
 ### Phase 7: Update Version References
@@ -430,10 +447,12 @@ Count pod distribution per node from results.
 After all nodes are upgraded, update documentation files that reference the old version.
 
 **Files to update:**
+
 - `talos/README.md` - Schematic table and UKI link
 - `talos/docs/machine-lifecycle.md` - Schematic table and UKI link
 
 **Pattern:** Replace `v<old-version>` with `v<new-version>` in:
+
 - ISO download URLs
 - Upgrade image references
 - SecureBoot UKI links
@@ -446,6 +465,7 @@ grep -n "v<old-version>" talos/README.md talos/docs/machine-lifecycle.md
 ```
 
 **`talos/talconfig.yaml` version update:**
+
 - **If triggered by Renovate PR:** Do NOT update - Renovate already changed the version in the PR.
 - **If triggered by manual user request:** MUST update `talosVersion` in `talos/talconfig.yaml` to match the new version. Otherwise talconfig will be out of sync with the running cluster, causing issues with `talhelper` config generation.
 
@@ -498,6 +518,7 @@ talosctl upgrade \
 ```
 
 **If etcd quorum lost (< 2 healthy members):**
+
 ```bash
 # CRITICAL: Restore from snapshot
 talosctl etcd snapshot restore \
@@ -518,6 +539,7 @@ talosctl upgrade \
 ```
 
 **If Ceph remains degraded after worker recovery:**
+
 ```bash
 # Check OSD status
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd tree
@@ -529,6 +551,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 ## Handoff Protocol
 
 ### For SUCCESS:
+
 ```
 ## UPGRADE COMPLETE - SUCCESS
 
@@ -550,6 +573,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 ```
 
 ### For ROLLBACK:
+
 ```
 ## UPGRADE FAILED - ROLLBACK REQUIRED
 
@@ -571,6 +595,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 ```
 
 ### For PARTIAL:
+
 ```
 ## UPGRADE PARTIAL - INTERVENTION REQUIRED
 
@@ -621,10 +646,10 @@ query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
 
 ## Timeout Expectations
 
-| Operation | Expected Duration | Timeout |
-|-----------|-------------------|---------|
-| Node upgrade command | 2-5 minutes | 10 minutes |
-| Node Ready after reboot | 1-3 minutes | 5 minutes |
-| etcd rejoin | 30-60 seconds | 2 minutes |
-| Ceph HEALTH_OK recovery | 2-10 minutes | 30 minutes |
-| Full cluster upgrade | 45-90 minutes | 3 hours |
+| Operation               | Expected Duration | Timeout    |
+| ----------------------- | ----------------- | ---------- |
+| Node upgrade command    | 2-5 minutes       | 10 minutes |
+| Node Ready after reboot | 1-3 minutes       | 5 minutes  |
+| etcd rejoin             | 30-60 seconds     | 2 minutes  |
+| Ceph HEALTH_OK recovery | 2-10 minutes      | 30 minutes |
+| Full cluster upgrade    | 45-90 minutes     | 3 hours    |

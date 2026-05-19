@@ -4,7 +4,7 @@ Review and maintain workload priority classifications to ensure consistency betw
 
 Run this prompt quarterly or when adding/modifying workloads.
 
----
+______________________________________________________________________
 
 ## Step 1: Gather Live Cluster State
 
@@ -24,7 +24,7 @@ kubectl get daemonsets -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:
 kubectl get priorityclasses -o custom-columns='NAME:.metadata.name,VALUE:.value,DEFAULT:.globalDefault'
 ```
 
----
+______________________________________________________________________
 
 ## Step 2: Gather Code Configuration
 
@@ -43,7 +43,7 @@ done
 grep -r "priorityClassName" cluster/apps --include="*-cnpg-cluster.yaml"
 ```
 
----
+______________________________________________________________________
 
 ## Step 3: Cross-Reference with Documentation
 
@@ -53,23 +53,24 @@ Read `docs/workload-classification.md` and compare:
 2. **Code** priority classes match **documentation** classifications
 3. **All workloads** in cluster are **listed** in documentation
 
----
+______________________________________________________________________
 
 ## Step 4: Identify Mismatches
 
 Create a table of mismatches:
 
-| Workload | Doc Says | Code Has | Live Has | Action |
-|----------|----------|----------|----------|--------|
-| example | high-priority | standard | standard | Update code OR update doc |
+| Workload | Doc Says      | Code Has | Live Has | Action                    |
+| -------- | ------------- | -------- | -------- | ------------------------- |
+| example  | high-priority | standard | standard | Update code OR update doc |
 
 Categories:
+
 - **Doc vs Code**: Documentation says one tier, code has another
 - **Missing in Code**: Workload has no explicit priorityClassName (gets standard default)
 - **Missing in Doc**: Workload exists but not documented
 - **Live Mismatch**: Code and live don't match (Flux sync issue)
 
----
+______________________________________________________________________
 
 ## Step 5: Apply Fixes
 
@@ -78,6 +79,7 @@ Categories:
 For Helm charts, add priorityClassName at the appropriate level. Check upstream chart docs first.
 
 Common patterns:
+
 ```yaml
 # Top-level (some charts)
 priorityClassName: high-priority
@@ -94,6 +96,7 @@ server:
 ### 5b: Documentation Fixes
 
 Update `docs/workload-classification.md`:
+
 - Add new workloads to appropriate tier table
 - Move workloads between tiers if classification changed
 - Remove workloads that no longer exist
@@ -110,7 +113,7 @@ git add docs/workload-classification.md
 git commit -m "docs(classification): update workload tier assignments"
 ```
 
----
+______________________________________________________________________
 
 ## Step 6: Validate After Push
 
@@ -124,17 +127,17 @@ kubectl get deployments -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME
 kubectl get pods -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,PRIORITY:.spec.priorityClassName' | grep "<none>" | grep -vE "^kube-system"
 ```
 
----
+______________________________________________________________________
 
 ## Classification Reference
 
-| Priority Class | Value | Criteria |
-|----------------|-------|----------|
-| critical-infrastructure | 1,000,000 | Cluster won't function without it |
-| high-priority | 100,000 | Essential user-facing, observability, auth |
-| standard | 10,000 | Business apps (default) |
-| low-priority | 1,000 | Internal tools, gaming, hobby |
-| best-effort | 100 | Batch jobs, preemptible |
+| Priority Class          | Value     | Criteria                                   |
+| ----------------------- | --------- | ------------------------------------------ |
+| critical-infrastructure | 1,000,000 | Cluster won't function without it          |
+| high-priority           | 100,000   | Essential user-facing, observability, auth |
+| standard                | 10,000    | Business apps (default)                    |
+| low-priority            | 1,000     | Internal tools, gaming, hobby              |
+| best-effort             | 100       | Batch jobs, preemptible                    |
 
 ### Promotion Triggers
 
@@ -148,7 +151,7 @@ kubectl get pods -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metad
 - Only affects single user/use case
 - Has external fallback
 
----
+______________________________________________________________________
 
 ## Related
 

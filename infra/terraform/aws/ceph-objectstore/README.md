@@ -17,8 +17,8 @@ This Terraform workspace provisions AWS S3 object storage resources and IAM inte
 ### Deployment Procedure
 
 1. Uncomment all code in `main.tf` and `variables.tf`
-1. Configure Terraform Cloud variable set with required variables
-1. Run `terraform init` and `terraform apply`
+2. Configure Terraform Cloud variable set with required variables
+3. Run `terraform init` and `terraform apply`
 
 ### Variables
 

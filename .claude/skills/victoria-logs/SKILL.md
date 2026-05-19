@@ -20,15 +20,15 @@ kubectl exec -n observability victoria-logs-single-server-0 -- \
 
 ### Field Filters
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| `kubernetes.pod_namespace` | Namespace | `kubernetes.pod_namespace:claude-agents-read` |
-| `kubernetes.pod_name` | Pod name | `kubernetes.pod_name:claude-code-1d0f817a` |
-| `kubernetes.container_name` | Container | `kubernetes.container_name:claude-code` |
-| `kubernetes.pod_labels.<label>` | Pod label | `kubernetes.pod_labels.managed-by:n8n-claude-code` |
-| `stream` | stdout or stderr | `stream:stderr` |
-| `_msg` | Log message content | `_msg:error` |
-| `_time` | Time filter | `_time:[2026-04-22T06:50:00Z,2026-04-22T07:00:00Z]` |
+| Field                           | Description         | Example                                             |
+| ------------------------------- | ------------------- | --------------------------------------------------- |
+| `kubernetes.pod_namespace`      | Namespace           | `kubernetes.pod_namespace:claude-agents-read`       |
+| `kubernetes.pod_name`           | Pod name            | `kubernetes.pod_name:claude-code-1d0f817a`          |
+| `kubernetes.container_name`     | Container           | `kubernetes.container_name:claude-code`             |
+| `kubernetes.pod_labels.<label>` | Pod label           | `kubernetes.pod_labels.managed-by:n8n-claude-code`  |
+| `stream`                        | stdout or stderr    | `stream:stderr`                                     |
+| `_msg`                          | Log message content | `_msg:error`                                        |
+| `_time`                         | Time filter         | `_time:[2026-04-22T06:50:00Z,2026-04-22T07:00:00Z]` |
 
 ### Combining Filters
 
@@ -57,21 +57,21 @@ error AND kubernetes.pod_namespace:my-ns          # word + field filter
 
 These characters must be URL-encoded in wget URLs:
 
-| Char | Encoded |
-|------|---------|
-| `:` | `%3A` |
-| `[` | `%5B` |
-| `]` | `%5D` |
-| `,` | `%2C` |
-| Space | `+` |
+| Char  | Encoded |
+| ----- | ------- |
+| `:`   | `%3A`   |
+| `[`   | `%5B`   |
+| `]`   | `%5D`   |
+| `,`   | `%2C`   |
+| Space | `+`     |
 
 ## Query Parameters
 
-| Param | Description | Default |
-|-------|-------------|---------|
-| `query` | LogsQL query (required) | — |
-| `limit` | Max rows returned | 1000 |
-| `_time_offset` | Relative time offset | — |
+| Param          | Description             | Default |
+| -------------- | ----------------------- | ------- |
+| `query`        | LogsQL query (required) | —       |
+| `limit`        | Max rows returned       | 1000    |
+| `_time_offset` | Relative time offset    | —       |
 
 ## Common Queries
 
@@ -130,13 +130,13 @@ for ts, c, p, msg in lines:
 
 ## Other Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/select/logsql/field_names` | List all indexed field names |
-| `/select/logsql/field_values?field=<name>` | List values for a field |
-| `/select/logsql/streams?query=<filter>` | List matching log streams |
-| `/select/logsql/hits?query=<filter>&step=10m` | Histogram of log volume |
-| `/health` | Health check |
+| Endpoint                                      | Purpose                      |
+| --------------------------------------------- | ---------------------------- |
+| `/select/logsql/field_names`                  | List all indexed field names |
+| `/select/logsql/field_values?field=<name>`    | List values for a field      |
+| `/select/logsql/streams?query=<filter>`       | List matching log streams    |
+| `/select/logsql/hits?query=<filter>&step=10m` | Histogram of log volume      |
+| `/health`                                     | Health check                 |
 
 ## Gotchas
 

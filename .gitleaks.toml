@@ -12,8 +12,7 @@ useDefault = true
 paths = [
   # spruyt-labs: ExternalSecret CRDs contain key references, not secret values
   '''external-secret\.yaml$''',
-  # Hookify rules contain example IPs in documentation
-  '''\.claude/hookify\..*\.local\.md$''',
+  '''talos/clusterconfig/''',
 ]
 
 # --- IP/CIDR Leakage Prevention ---

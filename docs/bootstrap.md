@@ -23,7 +23,7 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
    # Open in VS Code with devcontainer
    ```
 
-1. **Install required tooling**:
+2. **Install required tooling**:
 
    ```bash
    task install:age-cli
@@ -31,7 +31,7 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
    task install:talosctl-cli
    ```
 
-1. **Decrypt secrets** (requires Age identity):
+3. **Decrypt secrets** (requires Age identity):
 
    ```bash
    # Ensure AGE_IDENTITY environment variable is set
@@ -49,9 +49,9 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
    terraform apply plan.tfplan
    ```
 
-1. **Configure Terraform variable sets** in Terraform Cloud for each workspace
+2. **Configure Terraform variable sets** in Terraform Cloud for each workspace
 
-1. **Provision AWS infrastructure** (if using cloud backups):
+3. **Provision AWS infrastructure** (if using cloud backups):
 
    ```bash
    cd infra/terraform/aws/velero-backup
@@ -74,13 +74,13 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
        schematic: <schematic-id>
    ```
 
-1. **Generate Talos secrets**:
+2. **Generate Talos secrets**:
 
    ```bash
    task talos:gen
    ```
 
-1. **Generate machine configurations**:
+3. **Generate machine configurations**:
 
    ```bash
    talhelper genconfig
@@ -90,28 +90,28 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
 
 1. **Download Talos installer ISOs** from [Talos Image Factory](https://factory.talos.dev/)
 
-1. **Boot first control plane node** with Talos ISO
+2. **Boot first control plane node** with Talos ISO
 
-1. **Apply configuration**:
+3. **Apply configuration**:
 
    ```bash
    talosctl apply-config --insecure --nodes <node-ip> \
      --file talos/clusterconfig/<node-hostname>.yaml
    ```
 
-1. **Bootstrap Kubernetes**:
+4. **Bootstrap Kubernetes**:
 
    ```bash
    talosctl bootstrap --nodes <first-control-plane-ip>
    ```
 
-1. **Verify cluster** health:
+5. **Verify cluster** health:
 
    ```bash
    talosctl health --nodes <control-plane-ip>
    ```
 
-1. **Repeat for remaining nodes** (control plane first, then workers)
+6. **Repeat for remaining nodes** (control plane first, then workers)
 
 ### Phase 5: Flux Bootstrap
 
@@ -126,15 +126,15 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
      --personal
    ```
 
-1. **Verify Flux and cluster components** are reconciling and healthy
+2. **Verify Flux and cluster components** are reconciling and healthy
 
 ### Phase 6: Post-Bootstrap Configuration
 
 1. **Configure external DNS** for ingress domains
-1. **Set up certificate management** with cert-manager
-1. **Deploy monitoring stack** (VictoriaMetrics, Vector, Grafana)
-1. **Configure backup solutions** (Velero, CNPG backups)
-1. **Test cluster functionality**:
+2. **Set up certificate management** with cert-manager
+3. **Deploy monitoring stack** (VictoriaMetrics, Vector, Grafana)
+4. **Configure backup solutions** (Velero, CNPG backups)
+5. **Test cluster functionality**:
    - Deploy test application
    - Verify ingress and TLS
    - Test storage provisioning

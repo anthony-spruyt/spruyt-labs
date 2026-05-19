@@ -18,7 +18,7 @@ Victoria Metrics k8s stack provides comprehensive monitoring, alerting, and visu
    - **Symptom**: Pods in CrashLoopBackOff or Pending
    - **Resolution**: Check resource constraints and PVC availability. Verify storage class and chart version compatibility.
 
-1. **No data appearing in metrics**
+2. **No data appearing in metrics**
 
    - **Symptom**: Queries return empty results
    - **Resolution**: Validate service monitor configurations. Check Cilium network policies for observability namespace. Verify service endpoints are correctly annotated.

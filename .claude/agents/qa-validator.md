@@ -1,6 +1,6 @@
 ---
 name: qa-validator
-description: 'Validates local changes before git commit using linting, schema validation, dry-runs, and upstream doc verification.\n\n**When to use:**\n- After modifying files under `cluster/` before git commit\n- When user says "let''s commit" or "check if it looks good"\n- After another agent completes code changes\n\n**When NOT to use:**\n- After git push (use cluster-validator)\n- For research/exploration without modifications\n- Docs-only or SOPS-only changes\n\n<example>\nContext: Agent created HelmRelease files.\nassistant: "I''ll validate with qa-validator before committing."\n<commentary>Files under cluster/ were modified and need pre-commit validation.</commentary>\n</example>\n\n<example>\nuser: "Let''s commit this"\nassistant: "Running qa-validator first."\n<commentary>User wants to commit; qa-validator gates all commits affecting cluster state.</commentary>\n</example>'
+description: "Validates local changes before git commit using linting, schema validation, dry-runs, and upstream doc verification.\\n\\n**When to use:**\\n- After modifying files under `cluster/` before git commit\\n- When user says \"let's commit\" or \"check if it looks good\"\\n- After another agent completes code changes\\n\\n**When NOT to use:**\\n- After git push (use cluster-validator)\\n- For research/exploration without modifications\\n- Docs-only or SOPS-only changes\\n\\n<example>\\nContext: Agent created HelmRelease files.\\nassistant: \"I'll validate with qa-validator before committing.\"\\n<commentary>Files under cluster/ were modified and need pre-commit validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"Let's commit this\"\\nassistant: \"Running qa-validator first.\"\\n<commentary>User wants to commit; qa-validator gates all commits affecting cluster state.</commentary>\\n</example>"
 model: opus
 tools:
   - Bash
@@ -29,10 +29,10 @@ Before anything else, classify the **scope** of changes. This determines which c
 
 ### Scope Levels
 
-| Scope | Criteria | What Runs |
-|-------|----------|-----------|
+| Scope     | Criteria                                                            | What Runs      |
+| --------- | ------------------------------------------------------------------- | -------------- |
 | `trivial` | All diffs are cosmetic with zero semantic risk (see examples below) | Fast path only |
-| `full` | Any change that could affect runtime behavior | All checks |
+| `full`    | Any change that could affect runtime behavior                       | All checks     |
 
 ### Trivial Change Examples (zero semantic risk)
 
@@ -55,12 +55,13 @@ Before anything else, classify the **scope** of changes. This determines which c
 - Any change where the semantic effect isn't immediately obvious from the diff
 
 **Trivial fast path runs ONLY:**
+
 1. `git diff` review (verify change matches intent)
 2. Standards spot-check (no hardcoded domains, no plaintext secrets)
 3. Security scan (no leaked credentials)
 4. Verdict
 
-No MegaLinter, no dry-run, no Context7, no cross-reference, no kustomize build. Pre-commit hooks catch syntax. Takes <1 minute.
+No MegaLinter, no dry-run, no Context7, no cross-reference, no kustomize build. Pre-commit hooks catch syntax. Takes \<1 minute.
 
 ### Scope Decision
 
@@ -75,15 +76,15 @@ Classify based on semantic risk of the diff, not file count. When in doubt, it's
 
 After scope, classify the type to skip irrelevant checks within standard/full:
 
-| Change Type | Files Modified | Skip |
-|-------------|----------------|------|
-| `helm-release` | `release.yaml`, `values.yaml` | - |
-| `kustomization` | `ks.yaml`, `kustomization.yaml` | Helm values verification |
-| `secrets-only` | `*.sops.yaml` | Dry-run, schema validation |
-| `docs-only` | `*.md`, `docs/**` | All Kubernetes checks (lint only) |
-| `namespace` | `namespace.yaml` | Helm values verification |
-| `config-only` | `configmap*.yaml`, dashboards, data files | Helm values verification |
-| `mixed` | Multiple types | Run ALL checks |
+| Change Type     | Files Modified                            | Skip                              |
+| --------------- | ----------------------------------------- | --------------------------------- |
+| `helm-release`  | `release.yaml`, `values.yaml`             | -                                 |
+| `kustomization` | `ks.yaml`, `kustomization.yaml`           | Helm values verification          |
+| `secrets-only`  | `*.sops.yaml`                             | Dry-run, schema validation        |
+| `docs-only`     | `*.md`, `docs/**`                         | All Kubernetes checks (lint only) |
+| `namespace`     | `namespace.yaml`                          | Helm values verification          |
+| `config-only`   | `configmap*.yaml`, dashboards, data files | Helm values verification          |
+| `mixed`         | Multiple types                            | Run ALL checks                    |
 
 Any `cluster/` file not listed above: treat as `config-only` or `mixed`.
 
@@ -105,18 +106,21 @@ fi
 Skip this section entirely for `trivial` scope — go straight to standards + security spot-check.
 
 Run in parallel:
+
 - `task dev-env:lint` (MegaLinter)
 - Git status analysis
 - Schema validation (`kubectl --dry-run=client`)
 - Kustomize build verification
 
 Run after above pass:
+
 - Documentation verification (Context7)
 - Dependency, security, cross-reference, standards checks
 
 ## Validation Steps
 
 ### 1. Identify Changed Files
+
 ```bash
 git status
 git diff --name-only HEAD
@@ -124,12 +128,15 @@ git diff --cached --name-only
 ```
 
 ### 2. Schema Validation
+
 YAML/JSON syntax is handled by MegaLinter (step 4). This step focuses on Kubernetes schemas:
+
 - `kubectl --dry-run=client -f <file>` for manifests
 - `kubectl kustomize <path> --enable-helm` for Kustomization builds
 - For HelmRelease: verify schema and that referenced HelmRepository exists
 
 ### 3. Standards Compliance
+
 - App structure: `cluster/apps/<namespace>/<app>/`
 - Namespace files include PSA labels
 - Secrets naming: `<name>-secrets.sops.yaml` or `<name>.sops.yaml`
@@ -144,6 +151,7 @@ Only linting command: `task dev-env:lint`. Read results from `.output/` director
 Stop if linting fails. Report all errors.
 
 ### 5. Dry-Run Validation
+
 ```bash
 kubectl apply --dry-run=client -f <file>
 kubectl kustomize <path> | kubectl apply --dry-run=client -f -
@@ -161,23 +169,28 @@ Check: Are keys valid? Values in acceptable ranges? Deprecated options? Matches 
 If Context7 lacks the library, follow inherited research priority (GitHub, WebFetch, then WebSearch as last resort).
 
 ### 7. Dependency Verification
+
 - All `dependsOn` references in Kustomizations exist
 - HelmRepository references exist
 - Namespace exists before resources needing it
 - No circular dependencies
 
 ### 8. Security Review
+
 - No plaintext secrets (passwords, tokens, keys in values)
 - SOPS files contain `sops:` metadata block
 - No sensitive data in commit messages
 - Follow inherited secret handling rules
 
 ### 9. Semantic Validation
+
 Beyond syntax, verify configs will function:
+
 - Network policies: every flow needs BOTH egress (sender) AND ingress (receiver)
 - Dependencies: if A calls B, both sides need appropriate policies/config
 
 ### 10. Cross-Reference Validation (full scope)
+
 - Compare against existing similar apps in `cluster/apps/` for pattern consistency
 - Verify naming conventions match existing resources
 
@@ -193,13 +206,13 @@ If not followed: BLOCKED with specific README reference (path + line numbers), q
 
 Before approving, evaluate the approach:
 
-| Question | Red Flags |
-|----------|-----------|
-| Simplest solution? | Over-engineered, excessive abstraction |
-| Built-in alternative? | Custom code when Helm value/annotation exists |
-| Matches existing patterns? | Reinventing what other apps already do |
-| Necessary? | Solving non-existent problems |
-| Minimal scope? | Touching files unrelated to stated goal |
+| Question                   | Red Flags                                     |
+| -------------------------- | --------------------------------------------- |
+| Simplest solution?         | Over-engineered, excessive abstraction        |
+| Built-in alternative?      | Custom code when Helm value/annotation exists |
+| Matches existing patterns? | Reinventing what other apps already do        |
+| Necessary?                 | Solving non-existent problems                 |
+| Minimal scope?             | Touching files unrelated to stated goal       |
 
 Flag concerns as WARNING with simpler alternative. Let calling agent/user decide.
 
@@ -272,10 +285,12 @@ The calling agent applies fixes and re-invokes qa-validator until APPROVED. Do n
 ## Blocking Criteria
 
 **Always BLOCKED:**
+
 - No GitHub issue provided
 - Hardcoded domains or unencrypted secrets
 
 **Full scope — also BLOCKED if:**
+
 - Linting or dry-run fails
 - Schema errors
 - Missing required files (namespace.yaml, kustomization.yaml)

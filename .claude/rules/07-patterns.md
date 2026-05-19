@@ -75,7 +75,8 @@ To exclude a namespace from descheduler eviction, add it to the per-plugin `name
 
 Only core infrastructure namespaces should be excluded — workload namespaces rely on priority classes to control eviction order.
 
-> **Upstream bug (descheduler v0.35.1):** `DefaultEvictor.namespaceLabelSelector` ignores `matchExpressions` when `matchLabels` is empty (`defaultevictor.go` guards with `len(MatchLabels) > 0`). The `descheduler.kubernetes.io/exclude` label is therefore inert. When upgrading descheduler, check if this is fixed — if so, switch from per-plugin `namespaces.exclude` lists to `DefaultEvictor.namespaceLabelSelector` with the label.
+> **Upstream bug (descheduler v0.35.1):** `DefaultEvictor.namespaceLabelSelector` ignores `matchExpressions` when `matchLabels` is empty (`defaultevictor.go` guards with `len(MatchLabels) > 0`). The `descheduler.kubernetes.io/exclude` label is therefore inert. When upgrading descheduler, check if this is fixed — if so, switch from per-plugin `namespaces.exclude` lists to
+> `DefaultEvictor.namespaceLabelSelector` with the label.
 
 ## HelmRelease with ConfigMapGenerator
 

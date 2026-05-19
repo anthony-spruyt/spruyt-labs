@@ -37,8 +37,8 @@ kubectl get nodes -l kata.spruyt-labs/ready=true
 ### Promote to more nodes
 
 1. Add `siderolabs/kata-containers` to the target node's schematic in `talconfig.yaml`
-1. Add `kata.spruyt-labs/ready: "true"` to that node's `machine.nodeLabels`
-1. `task talos:gen` → `talosctl upgrade --image=...` (new schematic URL) → `task talos:apply-<node>`
+2. Add `kata.spruyt-labs/ready: "true"` to that node's `machine.nodeLabels`
+3. `task talos:gen` → `talosctl upgrade --image=...` (new schematic URL) → `task talos:apply-<node>`
 
 ## Troubleshooting
 
@@ -47,7 +47,7 @@ kubectl get nodes -l kata.spruyt-labs/ready=true
    - **Symptom**: Pod with `runtimeClassName: kata` stays Pending.
    - **Resolution**: Verify at least one node has the label: `kubectl get nodes -l kata.spruyt-labs/ready=true`. If empty, the node's Talos config hasn't been applied — run the apply-config task.
 
-1. **`RunContainerError: kata: runtime not installed`**
+2. **`RunContainerError: kata: runtime not installed`**
 
    - **Symptom**: Pod schedules but fails to start.
    - **Resolution**: Extension not actually loaded. Check `talosctl -n <node> get extensions` for `kata-containers` and `talosctl -n <node> list /etc/cri/conf.d/` for `10-kata-containers.part`.

@@ -5,7 +5,7 @@
 Jobs stopped being processed due to two compounding issues:
 
 1. BullMQ Worker/Queue use a plain `{ host, port, password }` connection object — no auto-reconnect when Valkey drops
-1. Lock renewal failures in processor.ts are logged but ignored — the worker thread spins forever on a dead job, blocking all other work
+2. Lock renewal failures in processor.ts are logged but ignored — the worker thread spins forever on a dead job, blocking all other work
 
 ## Changes
 

@@ -17,8 +17,8 @@ This Terraform workspace provisions AWS IAM resources for the External Secrets O
 ### Deployment Procedure
 
 1. Uncomment desired resources in `main.tf`
-1. Configure Terraform Cloud variable set with required variables
-1. Run `terraform init` and `terraform apply`
+2. Configure Terraform Cloud variable set with required variables
+3. Run `terraform init` and `terraform apply`
 
 ### Variables
 

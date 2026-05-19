@@ -23,13 +23,13 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    vim talos/talconfig.yaml
    ```
 
-1. **Generate Machine Config**:
+2. **Generate Machine Config**:
 
    ```bash
    talhelper genconfig
    ```
 
-1. **Provision Hardware**:
+3. **Provision Hardware**:
 
    - Boot with appropriate Talos ISO
    - Apply configuration:
@@ -39,14 +39,14 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
      --file talos/clusterconfig/<hostname>.yaml
    ```
 
-1. **Verify Node Join**:
+4. **Verify Node Join**:
 
    ```bash
    kubectl get nodes
    talosctl health --nodes <new-node-ip>
    ```
 
-1. **Update Flux Manifests** if needed for node-specific configurations
+5. **Update Flux Manifests** if needed for node-specific configurations
 
 #### Node Addition Validation
 
@@ -72,7 +72,7 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
    ```
 
-1. **Migrate Storage Data** (for storage nodes):
+2. **Migrate Storage Data** (for storage nodes):
 
    ```bash
    # Set Ceph maintenance flags
@@ -81,7 +81,7 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph status
    ```
 
-1. **Remove from Talos Configuration**:
+3. **Remove from Talos Configuration**:
 
    ```bash
    # Edit talos/talconfig.yaml to remove node
@@ -89,13 +89,13 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    talhelper genconfig
    ```
 
-1. **Shutdown Node**:
+4. **Shutdown Node**:
 
    ```bash
    talosctl shutdown -n <node-ip>
    ```
 
-1. **Clean Up**:
+5. **Clean Up**:
 
    ```bash
    kubectl delete node <node-name>
@@ -129,13 +129,13 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    talosctl version --nodes <all-nodes>
    ```
 
-1. **Select Upgrade Image**:
+2. **Select Upgrade Image**:
 
    - Visit <https://factory.talos.dev/>
    - Choose appropriate schematic for hardware
    - Note the full image URL
 
-1. **Upgrade Control Plane** (one node at a time):
+3. **Upgrade Control Plane** (one node at a time):
 
    ```bash
    talosctl upgrade \
@@ -144,14 +144,14 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
      --image <factory-image-url>
    ```
 
-1. **Verify Control Plane**:
+4. **Verify Control Plane**:
 
    ```bash
    talosctl health --nodes <cp-node-ip>
    kubectl get nodes
    ```
 
-1. **Upgrade Workers** (one at a time, wait for Ceph `HEALTH_OK` between each):
+5. **Upgrade Workers** (one at a time, wait for Ceph `HEALTH_OK` between each):
 
    ```bash
    talosctl upgrade \
@@ -163,7 +163,7 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
-1. **Post-Upgrade Validation**:
+6. **Post-Upgrade Validation**:
 
    ```bash
    talosctl version --nodes <all-nodes>
@@ -193,20 +193,20 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
    talosctl upgrade-k8s -n {NODE_IP} --to <version> --dry-run
    ```
 
-1. **Execute Upgrade**:
+2. **Execute Upgrade**:
 
    ```bash
    talosctl upgrade-k8s -n {NODE_IP} --to <version>
    ```
 
-1. **Monitor Progress**:
+3. **Monitor Progress**:
 
    ```bash
    kubectl get nodes
    talosctl health
    ```
 
-1. **Verify Components**:
+4. **Verify Components**:
 
    ```bash
    kubectl version --short
@@ -245,20 +245,20 @@ talosctl etcd snapshot <snapshot-path>
    - Identify surviving nodes
    - Check data availability
 
-1. **Rebuild Control Plane**:
+2. **Rebuild Control Plane**:
 
    ```bash
    # Bootstrap from surviving node or etcd snapshot
    talosctl bootstrap --nodes <surviving-cp>
    ```
 
-1. **Restore etcd** (if needed):
+3. **Restore etcd** (if needed):
 
    ```bash
    talosctl etcd snapshot restore <snapshot-path>
    ```
 
-1. **Rejoin Nodes**:
+4. **Rejoin Nodes**:
 
    - Reapply configurations
    - Verify cluster reformation
@@ -266,8 +266,8 @@ talosctl etcd snapshot <snapshot-path>
 #### Single Node Failure
 
 1. **Replace Hardware**
-1. **Reprovision Node** (see Adding New Nodes)
-1. **Restore Data** from backups/replicas
+2. **Reprovision Node** (see Adding New Nodes)
+3. **Restore Data** from backups/replicas
 
 ## Monitoring and Alerting
 

@@ -1,6 +1,6 @@
 ---
 name: etcd-maintenance
-description: 'Performs etcd health checks, log analysis for slow operations, and defragmentation. Use for periodic maintenance or when investigating etcd performance issues.\n\n**When to use:**\n- User asks about etcd health, status, or performance\n- User requests etcd defrag or maintenance\n- User mentions slow etcd, slow API responses, or cluster latency\n- Monthly maintenance check\n\n**When NOT to use:**\n- etcd member removal/addition (use talosctl directly)\n- etcd disaster recovery (manual intervention required)\n- Cluster bootstrap issues\n\n<example>\nContext: User asks about etcd health\nuser: "check etcd health"\nassistant: "I''ll run etcd-maintenance to check the cluster status."\n</example>\n\n<example>\nContext: User notices slow cluster responses\nuser: "the cluster feels slow, can you check etcd?"\nassistant: "I''ll use etcd-maintenance to check for slow operations and fragmentation."\n</example>\n\n<example>\nContext: Monthly maintenance\nuser: "run etcd maintenance"\nassistant: "I''ll run etcd-maintenance to check health and defrag if needed."\n</example>'
+description: "Performs etcd health checks, log analysis for slow operations, and defragmentation. Use for periodic maintenance or when investigating etcd performance issues.\\n\\n**When to use:**\\n- User asks about etcd health, status, or performance\\n- User requests etcd defrag or maintenance\\n- User mentions slow etcd, slow API responses, or cluster latency\\n- Monthly maintenance check\\n\\n**When NOT to use:**\\n- etcd member removal/addition (use talosctl directly)\\n- etcd disaster recovery (manual intervention required)\\n- Cluster bootstrap issues\\n\\n<example>\\nContext: User asks about etcd health\\nuser: \"check etcd health\"\\nassistant: \"I'll run etcd-maintenance to check the cluster status.\"\\n</example>\\n\\n<example>\\nContext: User notices slow cluster responses\\nuser: \"the cluster feels slow, can you check etcd?\"\\nassistant: \"I'll use etcd-maintenance to check for slow operations and fragmentation.\"\\n</example>\\n\\n<example>\\nContext: Monthly maintenance\\nuser: \"run etcd maintenance\"\\nassistant: \"I'll run etcd-maintenance to check health and defrag if needed.\"\\n</example>"
 model: sonnet
 tools: Bash
 ---
@@ -38,12 +38,13 @@ talosctl etcd members
 ```
 
 **Key metrics to report:**
-| Metric | Healthy | Warning | Action |
-|--------|---------|---------|--------|
-| In-Use % | >80% | <70% | Recommend defrag |
-| DB Size | <500MB | >1GB | Investigate |
-| Leader | Stable | Flapping | Investigate |
-| Errors | None | Any | Report immediately |
+
+| Metric   | Healthy | Warning  | Action             |
+| -------- | ------- | -------- | ------------------ |
+| In-Use % | >80%    | \<70%    | Recommend defrag   |
+| DB Size  | \<500MB | >1GB     | Investigate        |
+| Leader   | Stable  | Flapping | Investigate        |
+| Errors   | None    | Any      | Report immediately |
 
 ### Step 2: Scan Logs for Slow Operations
 
@@ -53,7 +54,8 @@ talosctl -n <node-ip> logs etcd 2>&1 | grep -iE '"level":"warn"|slow|took too lo
 ```
 
 **Slow operation thresholds:**
-- Expected: <100ms
+
+- Expected: \<100ms
 - Warning: 100-500ms (report count)
 - Critical: >500ms (investigate cause)
 
@@ -114,12 +116,12 @@ Provide a clear summary:
 
 ## Common Issues
 
-| Symptom | Likely Cause | Action |
-|---------|--------------|--------|
-| Low in-use % (<70%) | Fragmentation | Run defrag |
-| Slow operations on one node | Slow disk | Check disk I/O, consider hardware |
-| Leader on slow node | Suboptimal | Cannot force; leader election is automatic |
-| High DB size (>500MB) | Too many resources/revisions | Check compaction settings |
+| Symptom                     | Likely Cause                 | Action                                     |
+| --------------------------- | ---------------------------- | ------------------------------------------ |
+| Low in-use % (\<70%)        | Fragmentation                | Run defrag                                 |
+| Slow operations on one node | Slow disk                    | Check disk I/O, consider hardware          |
+| Leader on slow node         | Suboptimal                   | Cannot force; leader election is automatic |
+| High DB size (>500MB)       | Too many resources/revisions | Check compaction settings                  |
 
 ## Output Format
 

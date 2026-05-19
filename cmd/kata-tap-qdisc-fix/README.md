@@ -9,7 +9,7 @@ The daemon walks `/proc/*/ns/net`, deduplicates by netns inode, and for every `t
 Single proc-sweep loop — no fsnotify, no retry state:
 
 1. **Initial sweep** on startup — walk `/proc/*/ns/net` once.
-1. **Periodic full sweep every `SWEEP_INTERVAL` seconds** — the authoritative correctness path. Transient errors (process exited mid-sweep, netns disappears) are logged at debug level and silently retried on the next sweep.
+2. **Periodic full sweep every `SWEEP_INTERVAL` seconds** — the authoritative correctness path. Transient errors (process exited mid-sweep, netns disappears) are logged at debug level and silently retried on the next sweep.
 
 Deduplication is by netns inode, so shared-netns pods are visited exactly once regardless of how many `/proc/<pid>/ns/net` symlinks point to the same netns. The host netns (inode of `/proc/1/ns/net`) is always excluded.
 
@@ -46,8 +46,8 @@ sudo ./kata-tap-qdisc-fix
 For initial deploy or risky upgrades, flip the DaemonSet to dry-run mode first and watch metrics for at least 1h before enforcing.
 
 1. Patch values: set `env.DRY_RUN` to `"true"` in `cluster/apps/kube-system/kata-tap-qdisc-fix/app/values.yaml`, commit, push. Flux reconciles.
-1. Observe: `kata_tap_qdisc_replacements_total` stays at 0 (enforced side-effect disabled), but logs show `"qdisc would replace (dry-run)"` lines for every Kata pod that would have been patched. Confirm the `path` log fields match real Kata pods.
-1. Flip `DRY_RUN` back to `"false"`, commit, push.
+2. Observe: `kata_tap_qdisc_replacements_total` stays at 0 (enforced side-effect disabled), but logs show `"qdisc would replace (dry-run)"` lines for every Kata pod that would have been patched. Confirm the `path` log fields match real Kata pods.
+3. Flip `DRY_RUN` back to `"false"`, commit, push.
 
 Emergency rollback:
 

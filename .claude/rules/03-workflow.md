@@ -15,23 +15,23 @@
 
 Read templates from `.github/ISSUE_TEMPLATE/` to get title prefix, labels, and required fields.
 
-| Type | Template | Label | Title Prefix |
-|------|----------|-------|--------------|
-| Feature | `feature_request.yml` | `enhancement` | `feat(scope):` |
-| Bug | `bug_report.yml` | `bug` | `fix(scope):` |
-| Chore | `chore.yml` | `chore` | `chore(scope):` |
-| Docs | `docs.yml` | `documentation` | `docs(scope):` |
-| Infra | `infra.yml` | `infra` | `infra(scope):` |
+| Type    | Template              | Label           | Title Prefix    |
+| ------- | --------------------- | --------------- | --------------- |
+| Feature | `feature_request.yml` | `enhancement`   | `feat(scope):`  |
+| Bug     | `bug_report.yml`      | `bug`           | `fix(scope):`   |
+| Chore   | `chore.yml`           | `chore`         | `chore(scope):` |
+| Docs    | `docs.yml`            | `documentation` | `docs(scope):`  |
+| Infra   | `infra.yml`           | `infra`         | `infra(scope):` |
 
 ### Required Fields
 
-| Type | Required Fields |
-|------|-----------------|
-| Feature | Summary, Motivation, Acceptance Criteria, Affected Area |
-| Bug | Description, Expected Behavior, Actual Behavior, Steps to Reproduce, Affected Area |
-| Chore | Summary, Motivation, Chore Type, Affected Area |
-| Docs | Summary, Motivation, Documentation Type, Affected Area |
-| Infra | Summary, Motivation, Infrastructure Type, Affected Area, Planned Changes, Rollback Plan, Risk Level |
+| Type    | Required Fields                                                                                     |
+| ------- | --------------------------------------------------------------------------------------------------- |
+| Feature | Summary, Motivation, Acceptance Criteria, Affected Area                                             |
+| Bug     | Description, Expected Behavior, Actual Behavior, Steps to Reproduce, Affected Area                  |
+| Chore   | Summary, Motivation, Chore Type, Affected Area                                                      |
+| Docs    | Summary, Motivation, Documentation Type, Affected Area                                              |
+| Infra   | Summary, Motivation, Infrastructure Type, Affected Area, Planned Changes, Rollback Plan, Risk Level |
 
 ### Affected Area Options
 
@@ -79,10 +79,10 @@ Closes #<number>
 
 ## Linting Layers
 
-| Layer | When | Speed | Purpose |
-|-------|------|-------|---------|
+| Layer            | When          | Speed   | Purpose                                                          |
+| ---------------- | ------------- | ------- | ---------------------------------------------------------------- |
 | **qa-validator** | Before commit | Minutes | Comprehensive MegaLinter + schema/docs verification (shift-left) |
-| **Pre-commit** | At commit | Seconds | Fast syntax guards (yamllint, gitleaks, prettier) |
-| **CI** | Push/PR | Minutes | Safety net, PR gate |
+| **Pre-commit**   | At commit     | Seconds | Fast syntax guards (yamllint, gitleaks, prettier)                |
+| **CI**           | Push/PR       | Minutes | Safety net, PR gate                                              |
 
 > **Note:** qa-validator runs MegaLinter. No need to run `task dev-env:lint` separately if qa-validator passed.

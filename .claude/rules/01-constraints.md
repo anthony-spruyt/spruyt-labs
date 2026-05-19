@@ -28,17 +28,20 @@ Never put IPs, CIDRs, or network details in issues, commits, or PRs. Use generic
 ### Forbidden commands
 
 **Secret extraction — NEVER run:**
+
 - `kubectl get secret <name> -o yaml|json|jsonpath|--output=<any>`
 - `sops -d <file>`
 - `echo "$SECRET"`, `printenv VAR`, `env | grep`
 - Reading `*.sops.yaml` or `talos/clusterconfig/*`
 
 **kubectl exec — NEVER cat/read:**
+
 - `/var/run/secrets/*`, `/etc/secrets/*`
 - Files matching `*secret*`, `*token*`, `*password*`, `*credential*`, `*key*`, `*.pem`
 - `env` or `printenv` inside pods
 
 **Env vars — NEVER display values:**
+
 - List keys only: `env | cut -d= -f1`
 - Check existence: `test -n "${VAR+x}" && echo "set"`
 - Sensitive key patterns (PASSWORD, SECRET, TOKEN, KEY, CREDENTIAL, API, AUTH): never echo
@@ -48,12 +51,14 @@ Never put IPs, CIDRs, or network details in issues, commits, or PRs. Use generic
 Data loss is permanent and cascading.
 
 **Forbidden:**
+
 - `rbd rm|trash mv|snap purge <pool>/<image>`
 - `ceph osd blocklist|blacklist add <addr>`
 - `ceph osd pool delete <pool>`
 - `kubectl delete pv <name>`
 
 **Before ANY Ceph state change:**
+
 1. Verify no watchers: `rbd status <pool>/<image>`
 2. Verify no bound PVC: `kubectl get pv <name>`
 3. Never force-remove "stuck" PVs — investigate root cause
@@ -61,12 +66,12 @@ Data loss is permanent and cascading.
 
 ### Safe alternatives
 
-| Instead of | Do |
-|---|---|
+| Instead of            | Do                                           |
+| --------------------- | -------------------------------------------- |
 | Reading secret values | `kubectl get secret <name>` (existence only) |
-| Counting secret keys | `-o json \| jq '.data \| keys'` |
-| Verifying secret data | `-o json \| jq '.data \| length'` |
-| Debugging auth | Check pod logs, not secret contents |
+| Counting secret keys  | `-o json \| jq '.data \| keys'`              |
+| Verifying secret data | `-o json \| jq '.data \| length'`            |
+| Debugging auth        | Check pod logs, not secret contents          |
 
 ### SOPS
 

@@ -123,11 +123,11 @@ Injects default resource requests and limits into Authentik outpost Deployments 
 
 1. Edit `cluster/apps/kyverno/policies/app/default-limitrange.yaml`
 
-1. Add namespace to the `exclude.any.resources.names` list
+2. Add namespace to the `exclude.any.resources.names` list
 
-1. Commit and push
+3. Commit and push
 
-1. If policy update is rejected (immutable field error):
+4. If policy update is rejected (immutable field error):
 
    ```bash
    kubectl delete clusterpolicy add-default-limitrange
@@ -143,7 +143,7 @@ Injects default resource requests and limits into Authentik outpost Deployments 
    - **Cause**: App requests more memory than LimitRange default limit
    - **Resolution**: Either add explicit limits to the app, or exclude the namespace from the policy
 
-1. **LimitRange not created in new namespace**
+2. **LimitRange not created in new namespace**
 
    - **Diagnosis**: Check if namespace is in exclude list or policy is ready
 
@@ -154,7 +154,7 @@ Injects default resource requests and limits into Authentik outpost Deployments 
      kubectl logs -n kyverno -l app.kubernetes.io/component=background-controller --tail=20
      ```
 
-1. **Orphaned LimitRanges after policy changes**
+3. **Orphaned LimitRanges after policy changes**
 
    - **Cause**: Policy deleted without `synchronize: true`
    - **Resolution**: With `synchronize: true`, Kyverno auto-cleans generated resources

@@ -18,7 +18,7 @@ Weekly CronJob that rotates the `coder-ssh-signing-key` Secret used by Coder wor
    - **Symptom**: `secrets "coder-ssh-signing-key" forbidden`.
    - **Resolution**: Verify the `ssh-key-rotation` Role grants `get, patch` on that Secret and the RoleBinding targets the ServiceAccount.
 
-1. **NetworkPolicy drops egress**
+2. **NetworkPolicy drops egress**
 
    - **Symptom**: Job logs `connection refused` to kube-apiserver or GitHub.
    - **Resolution**: Egress CNPs live in `app/network-policy.yaml` (`allow-ssh-rotation-*`). Confirm the pod label `app: ssh-key-rotation` still matches.

@@ -37,16 +37,16 @@ Technitium reads environment variables **only on first startup**. After that, co
 Technitium is **excluded** from the weekly `oauth-secret-rotation` CronJob because:
 
 1. Rotation updates Authentik + K8s secrets, then Reloader restarts the pod
-1. Technitium ignores env vars on restart, reads old secret from PVC
-1. Result: Authentik has new secret, Technitium has old -> SSO breaks
+2. Technitium ignores env vars on restart, reads old secret from PVC
+3. Result: Authentik has new secret, Technitium has old -> SSO breaks
 
 **To manually rotate the Technitium OIDC client secret:**
 
 1. Generate a new secret
-1. Update the Authentik provider via API or admin UI
-1. Update the `authentik-technitium-oauth` secret in `authentik-system` namespace
-1. Update SSO settings in **both** Technitium instances via their admin UIs
-1. Verify SSO login works on both instances
+2. Update the Authentik provider via API or admin UI
+3. Update the `authentik-technitium-oauth` secret in `authentik-system` namespace
+4. Update SSO settings in **both** Technitium instances via their admin UIs
+5. Verify SSO login works on both instances
 
 ## Troubleshooting
 
@@ -55,12 +55,12 @@ Technitium is **excluded** from the weekly `oauth-secret-rotation` CronJob becau
    - SSO must be enabled via Technitium admin UI, not just env vars
    - Verify Settings -> SSO -> "Enable Single Sign-On" is checked
 
-1. **SSO login fails with redirect error**
+2. **SSO login fails with redirect error**
 
    - Verify redirect URI in Authentik matches exactly: `https://dns.lan.${EXTERNAL_DOMAIN}:53443/sso/callback`
    - Check Authentik provider has both redirect URIs (primary + secondary)
 
-1. **SSO login fails with invalid client**
+3. **SSO login fails with invalid client**
 
    - Client secret may have been rotated -- check current value in `technitium-oauth-credentials` secret matches what Technitium has in its config
    - Re-enter credentials in Technitium UI if needed

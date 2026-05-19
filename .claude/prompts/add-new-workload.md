@@ -4,7 +4,7 @@ Deploy a new application to the cluster following GitOps patterns and convention
 
 Run this prompt when adding any new HelmRelease-based workload to the cluster.
 
----
+______________________________________________________________________
 
 ## Step 0: Create or Find GitHub Issue
 
@@ -14,7 +14,7 @@ Run this prompt when adding any new HelmRelease-based workload to the cluster.
 2. If not, create using `feature_request.yml` template (see @.claude/rules/github-workflow.md)
 3. Track the issue number for all subsequent steps
 
----
+______________________________________________________________________
 
 ## Step 1: Gather Requirements
 
@@ -32,21 +32,22 @@ Before implementation, ask the user:
 
 Reference: [docs/workload-classification.md](../../docs/workload-classification.md)
 
-| Priority Class          | Criteria                                             | CPU Limit Policy |
-|-------------------------|------------------------------------------------------|------------------|
-| critical-infrastructure | Cluster won't function without it                    | No limit         |
-| high-priority           | Essential services, observability, auth              | 5x request       |
-| standard                | Business applications (default)                      | 3x request       |
-| low-priority            | Internal tools, gaming, hobby projects               | 2x request       |
-| best-effort             | Batch jobs, preemptible workloads                    | 1x (= request)   |
+| Priority Class          | Criteria                                | CPU Limit Policy |
+| ----------------------- | --------------------------------------- | ---------------- |
+| critical-infrastructure | Cluster won't function without it       | No limit         |
+| high-priority           | Essential services, observability, auth | 5x request       |
+| standard                | Business applications (default)         | 3x request       |
+| low-priority            | Internal tools, gaming, hobby projects  | 2x request       |
+| best-effort             | Batch jobs, preemptible workloads       | 1x (= request)   |
 
----
+______________________________________________________________________
 
 ## Step 2: Research the Helm Chart
 
 Before writing any files, understand the chart:
 
 1. **Find the chart values and schema**:
+
    - Use Context7: `resolve-library-id` then `get-library-docs`
    - Or fetch raw values.yaml from GitHub: `raw.githubusercontent.com/<org>/<repo>/...`
    - **Check for values.schema.json**: Many charts provide JSON schemas for validation
@@ -62,22 +63,25 @@ Before writing any files, understand the chart:
    - If no schema found, use `# #yaml-language-server: $schema=TODO` (double comment)
 
 2. **Identify key configuration paths**:
+
    - Where does `priorityClassName` go? (top-level, under `deployment`, under component name?)
    - Where do `resources` go?
    - Where do `tolerations` go?
    - What are the main component names?
 
 3. **Check for dependencies**:
+
    - Does it need a database? (CNPG cluster)
    - Does it need secrets? (ExternalSecret or SOPS)
    - Does it need PVCs? (StorageClass selection)
 
 4. **Check for special requirements**:
+
    - Privileged access? (PSA labels on namespace)
    - Host network?
    - Specific node selectors?
 
----
+______________________________________________________________________
 
 ## Step 3: Create Directory Structure
 
@@ -100,7 +104,7 @@ cluster/apps/<namespace>/
 
 For apps in existing namespaces, add to existing kustomization.yaml.
 
----
+______________________________________________________________________
 
 ## Step 4: Create Files
 
@@ -139,6 +143,7 @@ metadata:
 ```
 
 PSA Label Guide:
+
 - `baseline` - Default for most workloads
 - `privileged` - Required for: eBPF, host networking, privileged containers
 
@@ -279,13 +284,14 @@ nameReference:
 Use template from [docs/templates/readme_template.md](../../docs/templates/readme_template.md).
 
 Required sections:
+
 - Overview (mention priority tier)
 - Prerequisites (list dependsOn items)
 - Operation (key kubectl/flux commands)
 - Troubleshooting (common issues)
 - References (official docs links)
 
----
+______________________________________________________________________
 
 ## Step 5: Wire Up References
 
@@ -305,7 +311,7 @@ Add workload to appropriate tier table:
 | <namespace> | <workload-names> | <rationale> |
 ```
 
----
+______________________________________________________________________
 
 ## Step 6: Validate
 
@@ -345,19 +351,21 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 After user pushes, invoke `cluster-validator` agent with the GitHub issue number to verify deployment.
 
----
+______________________________________________________________________
 
 ## Common Patterns
 
 ### Apps with Databases (CNPG)
 
 Add CNPG cluster dependency and create database resources:
+
 - Add `dependsOn: [{name: cnpg-operator}]` to ks.yaml
 - Create `*-cnpg-cluster.yaml` in app/ directory
 
 ### Apps with Secrets
 
 Options:
+
 1. **ExternalSecret** - For secrets stored in external provider
 2. **SOPS** - For secrets stored in git (`*-secrets.sops.yaml`)
 
@@ -397,7 +405,7 @@ serviceMonitor:
 
 Or create a separate VMServiceScrape resource.
 
----
+______________________________________________________________________
 
 ## Checklist
 
@@ -415,7 +423,7 @@ Before considering the task complete:
 - [ ] Linter passes
 - [ ] Commit with conventional message
 
----
+______________________________________________________________________
 
 ## References
 

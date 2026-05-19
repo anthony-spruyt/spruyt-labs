@@ -15,21 +15,21 @@ Complete these verification steps before submitting changes to ensure cluster st
    terraform validate
    ```
 
-1. Run plan and capture output:
+2. Run plan and capture output:
 
    ```bash
    terraform plan -out plan.tfplan
    ```
 
-1. Request review with plan output attached
+3. Request review with plan output attached
 
-1. Apply with exact plan reviewed:
+4. Apply with exact plan reviewed:
 
    ```bash
    terraform apply plan.tfplan
    ```
 
-1. Confirm state file synchronization and monitor for drift
+5. Confirm state file synchronization and monitor for drift
 
 ### Talos Configuration Changes
 
@@ -40,19 +40,19 @@ Complete these verification steps before submitting changes to ensure cluster st
    talosctl logs -f kubelet
    ```
 
-1. Diff intended vs live config:
+2. Diff intended vs live config:
 
    ```bash
    talosctl config diff
    ```
 
-1. Apply changes:
+3. Apply changes:
 
    ```bash
    talosctl apply-config --insecure --nodes <target> --file <config.yaml>
    ```
 
-1. Verify post-change status:
+4. Verify post-change status:
 
    ```bash
    talosctl health
@@ -71,8 +71,8 @@ Renovate automates dependency updates. See [.claude/rules/renovate.md](../.claud
 ### Quarterly Maintenance
 
 1. Review the Renovate configuration file `.github/renovate.json5`
-1. Monitor update success rates and system stability
-1. Audit manager coverage for all dependency types
+2. Monitor update success rates and system stability
+3. Audit manager coverage for all dependency types
 
 ### Troubleshooting Updates
 

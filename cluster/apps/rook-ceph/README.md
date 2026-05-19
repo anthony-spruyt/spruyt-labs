@@ -37,7 +37,7 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 
    Extend the `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml) and commit.
 
-1. **Add or replace OSD devices** -- Use orchestrator commands in the toolbox:
+2. **Add or replace OSD devices** -- Use orchestrator commands in the toolbox:
 
    ```bash
    ceph orch device ls
@@ -45,7 +45,7 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
    ceph osd df
    ```
 
-1. **Remove OSD for maintenance** -- Drain and remove the daemon:
+3. **Remove OSD for maintenance** -- Drain and remove the daemon:
 
    ```bash
    ceph osd out <id>
@@ -55,14 +55,14 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 
    Recreate after hardware service using the add flow.
 
-1. **Pool tuning** -- Apply changes and persist in Git:
+4. **Pool tuning** -- Apply changes and persist in Git:
 
    ```bash
    ceph osd pool set <pool> size 3
    ceph osd pool application enable csi-rbd-nvme rbd
    ```
 
-1. **Block image maintenance** -- Flatten cloned RBD images to remove dependency on parent snapshots:
+5. **Block image maintenance** -- Flatten cloned RBD images to remove dependency on parent snapshots:
 
    ```bash
    # List children of a snapshot to see what needs flattening
@@ -88,14 +88,14 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
      --wait
    ```
 
-1. Recover Ceph data from snapshots when needed:
+2. Recover Ceph data from snapshots when needed:
 
    ```bash
    rbd snap ls <pool>/<image>
    rbd snap rollback <pool>/<image>@<snapshot>
    ```
 
-1. Validate daemon health post-restore:
+3. Validate daemon health post-restore:
 
    ```bash
    ceph orch ps --daemon-type mon,osd,mgr
@@ -117,7 +117,7 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
    ceph health detail
    ```
 
-1. Identify failing services:
+2. Identify failing services:
 
    ```bash
    ceph orch ps --daemon-type mon,mgr,osd
@@ -131,14 +131,14 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
    ceph osd tree | grep down
    ```
 
-1. Review crash data:
+2. Review crash data:
 
    ```bash
    ceph crash ls
    ceph crash info <crash-id>
    ```
 
-1. Restart or replace the daemon:
+3. Restart or replace the daemon:
 
    ```bash
    ceph orch daemon restart osd.<id>
@@ -154,14 +154,14 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
    kubectl -n rook-ceph logs deploy/rook-ceph-csi-rbd-provisioner -c csi-provisioner
    ```
 
-1. Confirm pool capacity:
+2. Confirm pool capacity:
 
    ```bash
    ceph df
    ceph osd pool stats <pool>
    ```
 
-1. Ensure node plugins can map RBD devices; restart relevant DaemonSet pods if mount errors persist.
+3. Ensure node plugins can map RBD devices; restart relevant DaemonSet pods if mount errors persist.
 
 ### Velero restore conflicts or failures
 
@@ -231,7 +231,7 @@ The Ceph Dashboard embeds Grafana panels for metrics visualization. This require
 
 1. **Dashboard1 datasource** -- The Ceph Dashboard hardcodes `var-datasource=Dashboard1` in iframe URLs. A Grafana datasource named exactly "Dashboard1" must exist pointing to Prometheus/VictoriaMetrics.
 
-1. **Official ceph-mixin dashboards** -- The Ceph Dashboard expects dashboards with specific UIDs from the [ceph-mixin](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out):
+2. **Official ceph-mixin dashboards** -- The Ceph Dashboard expects dashboards with specific UIDs from the [ceph-mixin](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out):
 
    | Dashboard                  | UID                 | Used By                 |
    | -------------------------- | ------------------- | ----------------------- |
@@ -248,7 +248,7 @@ The Ceph Dashboard embeds Grafana panels for metrics visualization. This require
    | radosgw-detail.json        | `x5ARzZtmk`         | RGW instance details    |
    | cephfsdashboard.json       | `MUsmxkziz`         | CephFS overview         |
 
-1. **Grafana embedding** -- Enable iframe embedding in Grafana config:
+3. **Grafana embedding** -- Enable iframe embedding in Grafana config:
 
    ```yaml
    grafana.ini:

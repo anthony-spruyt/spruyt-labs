@@ -15,7 +15,7 @@ Victoria Logs Single provides centralized log collection and storage for the clu
    - **Symptom**: Application logs missing from queries
    - **Resolution**: Verify the separate vector deployment is running and collecting logs. Check log collection annotations on application pods. Review Cilium network policies for observability namespace.
 
-1. **High storage usage or retention issues**
+2. **High storage usage or retention issues**
 
    - **Symptom**: PVC nearing capacity
    - **Resolution**: Adjust retention periods in Helm values. Increase PVC size if needed.

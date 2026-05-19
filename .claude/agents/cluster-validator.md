@@ -1,6 +1,6 @@
 ---
 name: cluster-validator
-description: 'Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\n\n**When to use:**\n- After user pushes to main branch\n- When user says "pushed", "merged", or "deployed"\n- After Claude merges a PR affecting `cluster/`\n\n**When NOT to use:**\n- Before git commit (use qa-validator)\n- For feature branches (Flux only watches main)\n- When a cluster-validator is ALREADY RUNNING — wait for it to complete first\n- During rapid fix iterations (push→fix→push) — skip intermediate pushes, validate after final fix\n\n<example>\nuser: "Just pushed the redis deployment"\nassistant: "I''ll validate the deployment with cluster-validator."\n<commentary>User pushed to main, triggering Flux reconciliation that needs validation.</commentary>\n</example>\n\n<example>\nuser: "ok merge the PR"\nassistant: [merges PR] "PR merged. Running cluster-validator to verify deployment."\n<commentary>Claude merged a PR affecting cluster resources, needs post-deploy validation.</commentary>\n</example>\n\n<example>\nuser: "pushed another fix"\nassistant: "Cluster-validator still running from previous push. Will skip this one and validate after things stabilize."\n<commentary>Never stack validators — one at a time, skip intermediate pushes.</commentary>\n</example>'
+description: "Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\\n\\n**When to use:**\\n- After user pushes to main branch\\n- When user says \"pushed\", \"merged\", or \"deployed\"\\n- After Claude merges a PR affecting `cluster/`\\n\\n**When NOT to use:**\\n- Before git commit (use qa-validator)\\n- For feature branches (Flux only watches main)\\n- When a cluster-validator is ALREADY RUNNING — wait for it to complete first\\n- During rapid fix iterations (push→fix→push) — skip intermediate pushes, validate after final fix\\n\\n<example>\\nuser: \"Just pushed the redis deployment\"\\nassistant: \"I'll validate the deployment with cluster-validator.\"\\n<commentary>User pushed to main, triggering Flux reconciliation that needs validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"ok merge the PR\"\\nassistant: [merges PR] \"PR merged. Running cluster-validator to verify deployment.\"\\n<commentary>Claude merged a PR affecting cluster resources, needs post-deploy validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"pushed another fix\"\\nassistant: \"Cluster-validator still running from previous push. Will skip this one and validate after things stabilize.\"\\n<commentary>Never stack validators — one at a time, skip intermediate pushes.</commentary>\\n</example>"
 model: opus
 tools:
   - Bash
@@ -32,15 +32,15 @@ Always return full validation results to the calling agent. If an issue number i
 
 Classify the change to optimize checks:
 
-| Change Type | Indicators | Focus On |
-|-------------|------------|----------|
-| `helm-release` | HelmRelease, values.yaml | HR status, pod health, app logs |
-| `kustomization` | ks.yaml, kustomization.yaml | KS status, resource creation |
-| `talos-config` | talos/, machine configs | Node health, system pods |
-| `network-policy` | CiliumNetworkPolicy | Connectivity via `hubble observe` |
-| `cronjob-workload` | HelmRelease with CronJob | Manual test job (see CronJob section) |
-| `infrastructure` | Storage, ingress, certs | System services, cluster-wide health |
-| `mixed` | Multiple types | All checks |
+| Change Type        | Indicators                  | Focus On                              |
+| ------------------ | --------------------------- | ------------------------------------- |
+| `helm-release`     | HelmRelease, values.yaml    | HR status, pod health, app logs       |
+| `kustomization`    | ks.yaml, kustomization.yaml | KS status, resource creation          |
+| `talos-config`     | talos/, machine configs     | Node health, system pods              |
+| `network-policy`   | CiliumNetworkPolicy         | Connectivity via `hubble observe`     |
+| `cronjob-workload` | HelmRelease with CronJob    | Manual test job (see CronJob section) |
+| `infrastructure`   | Storage, ingress, certs     | System services, cluster-wide health  |
+| `mixed`            | Multiple types              | All checks                            |
 
 ```bash
 git log --oneline -3
@@ -52,16 +52,19 @@ git diff HEAD~1 --name-only
 Run independent checks simultaneously using multiple tool calls per message.
 
 **Group 1** (initial state):
+
 - `flux get kustomizations -A`
 - `flux get helmreleases -A`
 - `kubectl get nodes -o wide`
 
 **Group 2** (after identifying affected resources):
+
 - `kubectl get pods -n <namespace>`
 - `kubectl get events -n <namespace> --sort-by='.lastTimestamp'`
 - `kubectl get endpoints -n <namespace>`
 
 **Group 3** (if issues detected):
+
 - App logs, Flux controller logs, Context7 lookup
 
 ## Full Cluster Reconciliation Wait
@@ -70,14 +73,14 @@ Run independent checks simultaneously using multiple tool calls per message.
 
 ### Reconciliation Timeline
 
-| Time After Push | Expected State |
-|-----------------|----------------|
-| 0-30s | Source controller fetching |
-| 30-60s | Kustomizations reconciling |
-| 60-120s | Resources applied, pods starting |
-| 120-180s | Health checks passing |
-| 180-300s | Dependency chains settling |
-| 300s+ | If not ready, likely a genuine issue |
+| Time After Push | Expected State                       |
+| --------------- | ------------------------------------ |
+| 0-30s           | Source controller fetching           |
+| 30-60s          | Kustomizations reconciling           |
+| 60-120s         | Resources applied, pods starting     |
+| 120-180s        | Health checks passing                |
+| 180-300s        | Dependency chains settling           |
+| 300s+           | If not ready, likely a genuine issue |
 
 ### Step 1: Wait for directly affected resource
 
@@ -119,12 +122,12 @@ flux get kustomization <name> -n flux-system
 # Compare REVISION column against $CURRENT_REV
 ```
 
-| Condition | Classification | Action |
-|-----------|---------------|--------|
-| Revision matches HEAD, Ready=False/Unknown | Still reconciling | Wait another 60s; if still failing after 5 min total, treat as issue from this change |
-| Revision is OLD, Ready=Unknown | Still fetching new revision | Wait another 60s; kustomizations show old revision + Unknown while actively reconciling the new one |
-| Revision is OLD, Ready=False | Pre-existing issue | Report as pre-existing, not caused by this change |
-| Suspended=True | Intentionally suspended | Ignore |
+| Condition                                  | Classification              | Action                                                                                              |
+| ------------------------------------------ | --------------------------- | --------------------------------------------------------------------------------------------------- |
+| Revision matches HEAD, Ready=False/Unknown | Still reconciling           | Wait another 60s; if still failing after 5 min total, treat as issue from this change               |
+| Revision is OLD, Ready=Unknown             | Still fetching new revision | Wait another 60s; kustomizations show old revision + Unknown while actively reconciling the new one |
+| Revision is OLD, Ready=False               | Pre-existing issue          | Report as pre-existing, not caused by this change                                                   |
+| Suspended=True                             | Intentionally suspended     | Ignore                                                                                              |
 
 **Never label a kustomization as "pre-existing" if it has Ready=Unknown.** Unknown means actively reconciling — wait for it to settle before classifying.
 
@@ -191,20 +194,21 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 
 ## Severity Classification
 
-| Severity | Criteria | Default Action |
-|----------|----------|----------------|
-| CRITICAL | Cluster-wide impact, data loss risk | ROLLBACK |
-| HIGH | Service outage, user-facing impact | ROLLBACK (unless quick fix obvious within 2 min) |
-| MEDIUM | Degraded non-critical service | ROLL-FORWARD |
-| LOW | Cosmetic, warnings | ROLL-FORWARD |
+| Severity | Criteria                            | Default Action                                   |
+| -------- | ----------------------------------- | ------------------------------------------------ |
+| CRITICAL | Cluster-wide impact, data loss risk | ROLLBACK                                         |
+| HIGH     | Service outage, user-facing impact  | ROLLBACK (unless quick fix obvious within 2 min) |
+| MEDIUM   | Degraded non-critical service       | ROLL-FORWARD                                     |
+| LOW      | Cosmetic, warnings                  | ROLL-FORWARD                                     |
 
 **ROLLBACK when:** root cause unclear after 2 min, fix requires >5 lines, multiple services affected, data integrity at risk.
 
-**ROLL-FORWARD when:** single isolated failure, root cause clear, fix is <5 lines, no user-facing impact.
+**ROLL-FORWARD when:** single isolated failure, root cause clear, fix is \<5 lines, no user-facing impact.
 
 ## Output Templates
 
 ### ROLLBACK
+
 ```
 ## VALIDATION FAILED - ROLLBACK REQUIRED
 ### Severity: [CRITICAL/HIGH]
@@ -222,6 +226,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 ```
 
 ### ROLL-FORWARD
+
 ```
 ## VALIDATION FAILED - ROLL-FORWARD FIX REQUIRED
 ### Severity: [MEDIUM/LOW/HIGH with obvious fix]
@@ -238,6 +243,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 ```
 
 ### SUCCESS
+
 ```
 ## VALIDATION PASSED
 ### Resources Verified
@@ -249,6 +255,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 ```
 
 **Output rules:**
+
 - **Omit sections with nothing to report.** Do not write "Pre-existing Issues: None" — just leave the section out entirely.
 - **Never fabricate context.** Only report what you observed in actual command output. Do not speculate about what "might have" happened.
 
@@ -265,8 +272,8 @@ flux resume kustomization <name>
 ## Rules
 
 1. **Never close issues** — only post comments
-3. Follow inherited secret handling rules
-4. Always run actual commands to verify; never assume success
-5. **Wait for full reconciliation wave** — run the wait loop (5 attempts × 60s) before classifying ANY results. Never report a verdict based on a single snapshot
-6. Verify dependency chains end-to-end
-7. Follow inherited research priority (Context7 -> GitHub -> WebFetch -> WebSearch)
+2. Follow inherited secret handling rules
+3. Always run actual commands to verify; never assume success
+4. **Wait for full reconciliation wave** — run the wait loop (5 attempts × 60s) before classifying ANY results. Never report a verdict based on a single snapshot
+5. Verify dependency chains end-to-end
+6. Follow inherited research priority (Context7 -> GitHub -> WebFetch -> WebSearch)

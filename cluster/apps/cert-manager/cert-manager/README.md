@@ -15,12 +15,12 @@ cert-manager is a native Kubernetes certificate management controller that autom
    - **Symptom**: Certificates stuck in "Pending" state
    - **Resolution**: Check issuer status and challenge resolution; verify DNS records and issuer configuration
 
-1. **DNS challenge timeouts**
+2. **DNS challenge timeouts**
 
    - **Symptom**: Certificate issuance times out
    - **Resolution**: Verify DNS records and challenge solver configuration
 
-1. **Rate limit errors**
+3. **Rate limit errors**
 
    - **Symptom**: Let's Encrypt rate limit errors
    - **Resolution**: Reduce request frequency or use staging environment

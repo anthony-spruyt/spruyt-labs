@@ -9,12 +9,12 @@ This Terraform workspace provisions an S3 bucket and IAM user for Cloud Native P
 Before triggering any runs, configure a Variable Set in Terraform Cloud:
 
 1. In the Terraform Cloud UI, navigate to **Organization Settings → Variable Sets**.
-1. Create or select a Variable Set for **cnpg-backup**.
-1. Add the following `terraform`-category variables:
+2. Create or select a Variable Set for **cnpg-backup**.
+3. Add the following `terraform`-category variables:
    - `project` (e.g., `spruyt-labs`)
    - `environment` (e.g., `prod`)
    - `aws_region` (e.g., `ap-southeast-4`)
-1. Attach the Variable Set to the **cnpg-backup** workspace.
+4. Attach the Variable Set to the **cnpg-backup** workspace.
 
 ### Triggering Runs
 

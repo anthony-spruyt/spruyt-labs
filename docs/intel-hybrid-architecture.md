@@ -79,8 +79,8 @@ NVMe "managed interrupts" are pinned by the kernel at boot:
 For throughput workloads like Ceph:
 
 1. Each CPU has its own queue - no contention
-1. Completions on same CPU - cache locality preserved
-1. All 16 CPUs can do parallel I/O - maximum throughput
+2. Completions on same CPU - cache locality preserved
+3. All 16 CPUs can do parallel I/O - maximum throughput
 
 Limiting queues to P-cores only (`nvme.num_queues=8`) would:
 

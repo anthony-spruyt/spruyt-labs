@@ -19,8 +19,8 @@ Image: `ghcr.io/anthony-spruyt/coder-gitops` (see [container-images#458](https:/
 ### Add a new template
 
 1. Create `app/templates/<name>/` and place Terraform sources inside.
-1. Append each file to `configMapGenerator.files` in `app/kustomization.yaml` (explicit list, not a glob, so the hash changes visibly).
-1. Commit + push — Flux re-renders the ConfigMap with a new hash, which triggers a new `coder-template-push` Job.
+2. Append each file to `configMapGenerator.files` in `app/kustomization.yaml` (explicit list, not a glob, so the hash changes visibly).
+3. Commit + push — Flux re-renders the ConfigMap with a new hash, which triggers a new `coder-template-push` Job.
 
 ### Manual push (escape hatch)
 
@@ -45,12 +45,12 @@ kubectl -n coder-system logs job/rotation-smoke-test
    - **Symptom**: Job complains `401 unauthorized`.
    - **Resolution**: Delete the Secret so Flux re-seeds from SOPS, then trigger the CronJob manually: `kubectl -n coder-system delete secret coder-gitops-bot-token && flux reconcile kustomization coder-template-sync`.
 
-1. **Template ConfigMap exceeds 1 MiB**
+2. **Template ConfigMap exceeds 1 MiB**
 
    - **Symptom**: Flux reports `ConfigMap ... is invalid` / `Request entity too large`.
    - **Resolution**: Switch strategy to a Flux `GitRepository` source mounted via `volumes.persistentVolumeClaim` or an init container that clones at runtime. Current size budget: ~900 kB.
 
-1. **Job fails with `cannot connect to coder`**
+3. **Job fails with `cannot connect to coder`**
 
    - **Symptom**: `push-templates.sh` logs `dial tcp: lookup coder...`.
    - **Resolution**: Verify the CiliumNetworkPolicy `coder-template-sync-egress` selector still matches the Coder pod (`app.kubernetes.io/name: coder`) and the Service port is `80`.

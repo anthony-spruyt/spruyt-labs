@@ -4,21 +4,21 @@ Reference material from official Anthropic documentation. Each principle include
 
 ## Contents
 
-1. [Token Efficiency](#1-token-efficiency)
-2. [Right Altitude](#2-right-altitude)
-3. [Opus 4.5/4.6 Calibration](#3-opus-4546-calibration)
-4. [Opus 4.5/4.6 Overengineering Tendency](#4-opus-4546-overengineering-tendency)
-5. [Autonomy and Safety](#5-autonomy-and-safety)
-6. [Parallel Execution](#6-parallel-execution)
-7. [Progressive Disclosure](#7-progressive-disclosure)
-8. [Subagent Design](#8-subagent-design)
-9. [Tool Scoping](#9-tool-scoping)
+01. [Token Efficiency](#1-token-efficiency)
+02. [Right Altitude](#2-right-altitude)
+03. [Opus 4.5/4.6 Calibration](#3-opus-4546-calibration)
+04. [Opus 4.5/4.6 Overengineering Tendency](#4-opus-4546-overengineering-tendency)
+05. [Autonomy and Safety](#5-autonomy-and-safety)
+06. [Parallel Execution](#6-parallel-execution)
+07. [Progressive Disclosure](#7-progressive-disclosure)
+08. [Subagent Design](#8-subagent-design)
+09. [Tool Scoping](#9-tool-scoping)
 10. [Feedback Loops](#10-feedback-loops)
 11. [Stop on Error](#11-stop-on-error)
 12. [Don't Over-Explain to Opus](#12-dont-over-explain-to-opus)
 13. [Don't Duplicate Inherited Context](#13-dont-duplicate-inherited-context)
 
----
+______________________________________________________________________
 
 ## 1. Token Efficiency
 
@@ -34,7 +34,8 @@ Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/b
 
 ## 3. Opus 4.5/4.6 Calibration
 
-Opus 4.5 and 4.6 are more responsive to system prompts than previous models. Instructions designed to reduce undertriggering now cause overtriggering. Replace "CRITICAL: You MUST use this tool when..." with "Use this tool when...". Soften CRITICAL/MANDATORY/NEVER markers to normal language. Sonnet 4.6 defaults to `high` effort and may also overtrigger — dial back aggressive language for all 4.5/4.6 models.
+Opus 4.5 and 4.6 are more responsive to system prompts than previous models. Instructions designed to reduce undertriggering now cause overtriggering. Replace "CRITICAL: You MUST use this tool when..." with "Use this tool when...". Soften CRITICAL/MANDATORY/NEVER markers to normal language. Sonnet 4.6 defaults to `high` effort and may also overtrigger — dial back aggressive language for all
+4.5/4.6 models.
 
 Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 

@@ -24,12 +24,12 @@ http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/op
    - **Symptom**: Producers report 200/202 but query returns empty
    - **Resolution**: Check producer is targeting `/insert/opentelemetry/v1/traces` path; verify CiliumNetworkPolicy allows the source namespace; check container logs for parse errors
 
-1. **Pod evicted or PVC full**
+2. **Pod evicted or PVC full**
 
    - **Symptom**: Pod restarts, `df -h` shows full disk in `/storage`
    - **Resolution**: Increase `server.persistentVolume.size` in `values.yaml`, or shorten `server.retentionPeriod`; reconcile via Flux
 
-1. **Network policy blocks ingest**
+3. **Network policy blocks ingest**
 
    - **Symptom**: Producer logs show connection timeout/refused
    - **Resolution**: Confirm source pod has label `managed-by: n8n-claude-code` and runs in `claude-agents-{read,write,sre}`. To allow new namespaces, add an entry to `network-policies.yaml`

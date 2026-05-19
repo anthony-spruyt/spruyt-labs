@@ -10,12 +10,12 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 
 ## Quick Reference
 
-| Item | Value |
-|------|-------|
+| Item            | Value                                               |
+| --------------- | --------------------------------------------------- |
 | Upgrade command | `talosctl upgrade-k8s -n <cp-node> --to v<version>` |
-| Config file | `talos/talconfig.yaml` (`kubernetesVersion` field) |
-| Node topology | 3 CP (e2-1/2/3), 3 workers (ms-01-1/2/3) |
-| Talos OS agent | `talos-upgrade` (different from this skill) |
+| Config file     | `talos/talconfig.yaml` (`kubernetesVersion` field)  |
+| Node topology   | 3 CP (e2-1/2/3), 3 workers (ms-01-1/2/3)            |
+| Talos OS agent  | `talos-upgrade` (different from this skill)         |
 
 ## Workflow
 
@@ -28,6 +28,7 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 ### Phase 2: Create GitHub Issue
 
 Create a GitHub issue using the `infra` template so SRE agents see maintenance context. Include:
+
 - Title: `infra(k8s): upgrade Kubernetes to v<version>`
 - Label: `infra`
 - Summary, motivation (Renovate PR ref if applicable), planned changes, rollback plan, risk level (patch vs minor)
@@ -55,19 +56,20 @@ Consult `references/api-deprecation-scanning.md` for procedures.
 ### Phase 6: Cluster Health Gate
 
 Discover CP node IPs dynamically:
+
 ```bash
 CP_NODES=$(kubectl get nodes -l node-role.kubernetes.io/control-plane \
   -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
 ```
 
-| Check | Command | Pass Criteria |
-|-------|---------|---------------|
-| Nodes | `kubectl get nodes -o wide` | All Ready |
-| Talos health | `talosctl health -n <first-cp>` | Passes |
-| etcd | `talosctl etcd status -n <cp1>,<cp2>,<cp3>` | 3 healthy members |
-| Ceph | `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status` | HEALTH_OK |
-| Flux ks | `flux get kustomizations -A` | All Ready |
-| Flux hr | `flux get helmreleases -A` | No failures |
+| Check        | Command                                                           | Pass Criteria     |
+| ------------ | ----------------------------------------------------------------- | ----------------- |
+| Nodes        | `kubectl get nodes -o wide`                                       | All Ready         |
+| Talos health | `talosctl health -n <first-cp>`                                   | Passes            |
+| etcd         | `talosctl etcd status -n <cp1>,<cp2>,<cp3>`                       | 3 healthy members |
+| Ceph         | `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status` | HEALTH_OK         |
+| Flux ks      | `flux get kustomizations -A`                                      | All Ready         |
+| Flux hr      | `flux get helmreleases -A`                                        | No failures       |
 
 **HARD GATE:** All checks must pass. Report specific failures.
 
@@ -108,16 +110,19 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 **Roll order (sequential, not parallel):**
 
 1. **Safe tier** — stateless or independently restartable. Roll all at once:
+
    - `kubectl rollout restart` for Deployments
    - `kubectl delete pod` for StatefulSets (one at a time, wait for Ready)
    - Namespaces: observability, authentik, cnpg plugins, firefly-iii, nexus, app workloads
 
 2. **DNS tier** — technitium primary + secondary:
+
    - Roll secondary first, wait for Ready
    - Roll primary, wait for Ready
    - Verify: `dig @<technitium-ip> <any-internal-record>`
 
 3. **Storage tier** — rook-ceph (mons, mgrs, rgws, crashcollectors, exporters, tools):
+
    - **Before each restart:** `ceph status` must show HEALTH_OK (HEALTH_WARN acceptable only for expected warnings)
    - Roll one pod at a time, wait for Ready + Ceph health between each
    - Order: tools → crashcollectors → exporters → rgw → mgr-b → mgr-a → mons (one at a time)

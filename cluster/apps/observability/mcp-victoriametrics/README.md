@@ -24,7 +24,7 @@ Deployed as a `low-priority` workload using bjw-s app-template.
    - **Symptom**: Connection refused or timeout in logs
    - **Resolution**: Verify VMSingle is running: `kubectl get pods -n observability -l app.kubernetes.io/name=vmsingle`
 
-1. **Claude Code cannot connect**
+2. **Claude Code cannot connect**
 
    - **Symptom**: MCP connection error in Claude Code
    - **Resolution**: Verify IngressRoute is active: `kubectl get ingressroute -n observability ingress-routes-lan-https-mcp-vm` and certificate is ready: `kubectl get certificate -n observability -l app.kubernetes.io/name=mcp-victoriametrics`

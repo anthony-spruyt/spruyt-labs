@@ -11,7 +11,7 @@ Portable patterns for creating and optimizing Claude Code agents. Derived from A
 5. [Handoff Patterns](#5-handoff-patterns)
 6. [Description Field Patterns](#6-description-field-patterns)
 
----
+______________________________________________________________________
 
 ## 1. Discover Existing Patterns
 
@@ -25,19 +25,19 @@ This is more reliable than a static inventory that goes stale.
 
 ## 2. Model Selection
 
-| Model | When to Use |
-|-------|-------------|
-| **opus** | Complex multi-step analysis, decision-making under uncertainty, machine-parseable output, orchestration |
-| **sonnet** | Focused single-domain operations, lower token cost, pre-baked queries/templates |
-| **haiku** | Quick lookups, simple classification |
+| Model      | When to Use                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------- |
+| **opus**   | Complex multi-step analysis, decision-making under uncertainty, machine-parseable output, orchestration |
+| **sonnet** | Focused single-domain operations, lower token cost, pre-baked queries/templates                         |
+| **haiku**  | Quick lookups, simple classification                                                                    |
 
 ## 3. Size Benchmarks
 
-| Category | Lines | Words |
-|----------|-------|-------|
-| Small | 100-150 | <800 |
-| Medium | 150-300 | 800-1,500 |
-| Large (overdue for optimization) | 500+ | 2,800+ |
+| Category                         | Lines   | Words     |
+| -------------------------------- | ------- | --------- |
+| Small                            | 100-150 | \<800     |
+| Medium                           | 150-300 | 800-1,500 |
+| Large (overdue for optimization) | 500+    | 2,800+    |
 
 **Targets:** Under 500 lines per Anthropic guidance. Under 300 lines and 2,000 words for focused agents. Cut aggressively when exceeding — remove content Opus already knows, inherited context from CLAUDE.md/rules, and verbose examples. Agents are single `.md` files; do not extract content to separate files.
 
@@ -54,18 +54,19 @@ Agents feeding orchestrators use rigid parseable formats. Standalone agents use 
 
 ## 6. Handoff Patterns
 
-| Pattern | Description |
-|---------|-------------|
-| GitHub issue comment | Post results as GitHub issue comment |
-| Structured return to caller | Return verdict + evidence for calling skill to parse |
-| Terminal states | Named end states (SUCCESS/ROLLBACK/PARTIAL) with different templates |
-| Fix-and-retry loop | Return BLOCKED with exact fixes; caller applies and re-invokes |
+| Pattern                     | Description                                                          |
+| --------------------------- | -------------------------------------------------------------------- |
+| GitHub issue comment        | Post results as GitHub issue comment                                 |
+| Structured return to caller | Return verdict + evidence for calling skill to parse                 |
+| Terminal states             | Named end states (SUCCESS/ROLLBACK/PARTIAL) with different templates |
+| Fix-and-retry loop          | Return BLOCKED with exact fixes; caller applies and re-invokes       |
 
 Agents never chain directly to each other. Results flow through skills or the main conversation.
 
 ## 7. Description Field Patterns
 
 **Structure:** All well-formed descriptions follow this pattern:
+
 1. Brief capability statement (1 sentence)
 2. Triggering conditions ("Use when...")
 3. Anti-conditions ("When NOT to use")

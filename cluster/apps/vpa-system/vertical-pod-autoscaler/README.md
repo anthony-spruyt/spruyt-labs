@@ -23,7 +23,7 @@ To enable VPA auto-updates for a specific workload, create a `VerticalPodAutosca
    - **Symptom**: `kubectl describe vpa` shows no recommendations
    - **Resolution**: Recommender needs ~24h of metrics data. Check recommender logs for errors.
 
-1. **Webhook failures after enabling Auto mode**
+2. **Webhook failures after enabling Auto mode**
 
    - **Symptom**: Pods fail to create with admission webhook errors
    - **Resolution**: Check admission-controller pod health and CNP allows webhook ingress from API server on port 8000.

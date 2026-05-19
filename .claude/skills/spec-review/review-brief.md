@@ -40,6 +40,7 @@ A review that re-raises addressed risks wastes author time and erodes trust in t
 ## Output format
 
 Structure findings as:
+
 1. **Critical** — blocks implementation or risks data loss/cascading failure
 2. **Major** — significant design gap or incorrect assumption about existing infra
 3. **Minor** — improvement opportunities, over-engineering, or unclear spec language

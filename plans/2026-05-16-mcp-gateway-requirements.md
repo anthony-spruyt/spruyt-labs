@@ -244,10 +244,10 @@ Only if repo-level isolation within shared namespaces becomes a real requirement
 
 1. ~~**Single vs per-server vs hybrid?**~~ — **ANSWERED.** Per-server now (Phase A), LazyMCP later (Phase B).
 
-1. ~~**Repo-aware access?**~~ — **ANSWERED.** Team-level access groups for now. Per-repo keys via `/key/generate` + orchestration if needed later (Phase C). No native request-metadata routing.
+2. ~~**Repo-aware access?**~~ — **ANSWERED.** Team-level access groups for now. Per-repo keys via `/key/generate` + orchestration if needed later (Phase C). No native request-metadata routing.
 
-1. **Where does repo → MCP tool set mapping live?** — LiteLLM access groups (team-level). If per-repo keys needed, mapping in n8n or a ConfigMap.
+3. **Where does repo → MCP tool set mapping live?** — LiteLLM access groups (team-level). If per-repo keys needed, mapping in n8n or a ConfigMap.
 
-1. **Does LiteLLM filter tool list per key?** — UNVERIFIED. Needs runtime test in Phase 1. Affects whether single `/mcp` endpoint is context-efficient. Less critical now that strategy uses per-server endpoints for Phase A.
+4. **Does LiteLLM filter tool list per key?** — UNVERIFIED. Needs runtime test in Phase 1. Affects whether single `/mcp` endpoint is context-efficient. Less critical now that strategy uses per-server endpoints for Phase A.
 
-1. ~~**Maintenance budget?**~~ — **ANSWERED.** Phase A: LiteLLM config + consumer configs (better than today). Phase B: LiteLLM config only (zero consumer changes).
+5. ~~**Maintenance budget?**~~ — **ANSWERED.** Phase A: LiteLLM config + consumer configs (better than today). Phase B: LiteLLM config only (zero consumer changes).

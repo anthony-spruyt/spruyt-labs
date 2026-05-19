@@ -88,12 +88,12 @@ LiteLLM PyPI versions 1.82.7-1.82.8 were compromised. **NEVER install from PyPI.
    - **Symptom**: Pod CrashLoopBackOff, logs show "connection refused" to PostgreSQL
    - **Resolution**: Verify CNPG cluster is healthy: `kubectl get cluster -n litellm`. The CNPG cluster must be `Ready` before LiteLLM starts. Check that `litellm-cnpg-cluster-app` secret exists.
 
-1. **SSO redirect loop**
+2. **SSO redirect loop**
 
    - **Symptom**: Login redirects endlessly between LiteLLM and Authentik
    - **Resolution**: Verify `PROXY_BASE_URL` matches the IngressRoute hostname exactly. Check Authentik Application redirect URI includes `/sso/callback`.
 
-1. **Alibaba Cloud Model Studio API errors**
+3. **Alibaba Cloud Model Studio API errors**
 
    - **Symptom**: 401/403 from upstream provider
    - **Resolution**: Verify `DASHSCOPE_API_KEY` in litellm-secrets. Check Alibaba Cloud Model Studio subscription status and quota.

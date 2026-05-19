@@ -23,10 +23,10 @@ N8N Community Edition doesn't support OAuth2 natively. SSO is implemented via Au
 ### How It Works
 
 1. User navigates to `https://n8n.${EXTERNAL_DOMAIN}`
-1. Traefik's forwardAuth middleware calls Authentik's standalone outpost
-1. Authentik authenticates user and injects `X-authentik-email` header
-1. N8N's external hooks (`hooks.js`) read the header and issue a session cookie
-1. User is logged in with their pre-provisioned N8N account
+2. Traefik's forwardAuth middleware calls Authentik's standalone outpost
+3. Authentik authenticates user and injects `X-authentik-email` header
+4. N8N's external hooks (`hooks.js`) read the header and issue a session cookie
+5. User is logged in with their pre-provisioned N8N account
 
 ### User Provisioning
 
@@ -35,8 +35,8 @@ N8N Community Edition doesn't support OAuth2 natively. SSO is implemented via Au
 To add a user:
 
 1. Log in to N8N as admin
-1. Go to Settings > Users
-1. Invite user with their Authentik email address
+2. Go to Settings > Users
+3. Invite user with their Authentik email address
 
 ### MFA Considerations
 

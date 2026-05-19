@@ -25,10 +25,10 @@ After push: trigger via Dependency Dashboard issue, check [Mend logs](https://de
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Dependencies not detected | Check fileMatch in repo-operator managers |
-| Grouping not working | Check matchPackagePatterns in repo-operator |
-| `Failed to look up custom.*` | Check transform template or URL issues |
-| `Response has failed validation` | JSONata output format wrong |
+| Issue                             | Solution                                     |
+| --------------------------------- | -------------------------------------------- |
+| Dependencies not detected         | Check fileMatch in repo-operator managers    |
+| Grouping not working              | Check matchPackagePatterns in repo-operator  |
+| `Failed to look up custom.*`      | Check transform template or URL issues       |
+| `Response has failed validation`  | JSONata output format wrong                  |
 | `Expected array, received object` | Use `$map()` for array outputs in transforms |

@@ -19,12 +19,12 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 ## Hard Rules
 
 1. **No secrets output** - Never display credentials or env var values
-1. **Declarative only** - No manual kubectl patches for config changes; use Flux, Terraform, Talos configs. Operational commands (restart, scale, drain) via kubectl are permitted.
-1. **Git push allowed** - Push directly after commit; don't ask permission each time
-1. **No git amend** - Always new commits
-1. **No SOPS decrypt** - Never decrypt secrets via CLI
-1. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
-1. **Explicit git add** - Only stage files YOU changed; NEVER `git add -A` or `.`
+2. **Declarative only** - No manual kubectl patches for config changes; use Flux, Terraform, Talos configs. Operational commands (restart, scale, drain) via kubectl are permitted.
+3. **Git push allowed** - Push directly after commit; don't ask permission each time
+4. **No git amend** - Always new commits
+5. **No SOPS decrypt** - Never decrypt secrets via CLI
+6. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
+7. **Explicit git add** - Only stage files YOU changed; NEVER `git add -A` or `.`
 
 ## Codebase
 

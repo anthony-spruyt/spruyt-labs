@@ -16,7 +16,7 @@ Velero provides comprehensive backup and disaster recovery capabilities for the 
    - **Symptom**: Backup status shows `PartiallyFailed` or `Failed`
    - **Resolution**: Check Velero logs for AWS permission errors. Verify S3 bucket accessibility and IAM roles. Review resource inclusion/exclusion rules.
 
-1. **Restores not working correctly**
+2. **Restores not working correctly**
 
    - **Symptom**: Restore completes but resources missing or conflicting
    - **Resolution**: Validate backup integrity before restore. Check for resource naming conflicts. Review restore hooks and annotations.

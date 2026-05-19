@@ -26,6 +26,7 @@ Either way: do your analysis, then output a clear verdict with summary. Do NOT s
 ### 1. Check CI Status
 
 If CI status is provided and shows failures:
+
 - Use `gh pr checks <PR#>` to identify which jobs failed
 - Determine if failures are caused by this dependency update or pre-existing
 - If caused by this update → factor into verdict
@@ -47,10 +48,12 @@ Follow research priority: Context7 → GitHub releases/tags → WebFetch raw cha
 ### 5. Search for Known Issues
 
 Search upstream GitHub for:
+
 - `<project> <target-version>` — version-specific issues
 - `breaking` or `regression` in upstream repo
 
 **Critical: closed ≠ shipped.** When you find a relevant upstream issue that is closed with a fix:
+
 1. Check the fix's target milestone or release label (e.g., `target/1.18.1`)
 2. Determine which app version the PR's chart/image actually ships (check `appVersion` in Chart.yaml or image tag)
 3. If the fix targets a version **newer** than what the PR ships → the fix is NOT included → flag as RISKY
@@ -65,11 +68,13 @@ gh search issues "<dependency-name>" --repo <owner/repo> --state open --json num
 ```
 
 **Check for:**
+
 - Issues with `blocked` label mentioning this dependency
 - Issues documenting known bugs, blockers, or "do not merge" guidance for this version
 - Prior upgrade tracking issues with unresolved blockers
 
 **Verdict impact:**
+
 - If a `blocked` issue exists for this dependency → minimum verdict is **RISKY**, regardless of other analysis
 - Include the issue number and blocker reason in the summary
 - If the blocker references a specific upstream fix version, check whether the PR's target version includes that fix
@@ -79,6 +84,7 @@ gh search issues "<dependency-name>" --repo <owner/repo> --state open --json num
 CLI tools and images often have a corresponding in-cluster component that should stay version-aligned. Discover if a pairing exists and verify coherence.
 
 **Discovery process:**
+
 1. Identify the project/org from the dependency name (e.g., `cilium/hubble` → Cilium)
 2. Search for corresponding in-cluster component:
    - HelmReleases: `kubectl get hr -A` — grep for project name
@@ -88,6 +94,7 @@ CLI tools and images often have a corresponding in-cluster component that should
 4. Also check the reverse: if updating a container image, check if any taskfile/script installs a CLI from the same project that would drift out of sync
 
 **Verdict rules:**
+
 - Target version **matches** deployed (minor-level) → positive signal
 - Target version **ahead** of deployed (e.g., CLI v1.20 but cluster v1.19) → flag RISKY (CLI may use APIs not yet available)
 - Target version **behind** deployed → note as stale but not blocking
@@ -101,27 +108,30 @@ A breaking change only matters if it affects what we actually use.
 2. Cross-reference each breaking change against our actual config
 3. Classify impact:
 
-| Level | Meaning |
-|-------|---------|
-| NO_IMPACT | We don't use the affected feature/config |
-| LOW_IMPACT | Default changed but unlikely to cause issues |
-| HIGH_IMPACT | We use the affected config/feature — will break |
+| Level          | Meaning                                         |
+| -------------- | ----------------------------------------------- |
+| NO_IMPACT      | We don't use the affected feature/config        |
+| LOW_IMPACT     | Default changed but unlikely to cause issues    |
+| HIGH_IMPACT    | We use the affected config/feature — will break |
 | UNKNOWN_IMPACT | Cannot determine if we use the affected feature |
 
 ### 9. Determine Verdict
 
 **SAFE** (ALL must be true):
+
 - No breaking changes, OR all have NO_IMPACT/LOW_IMPACT
 - No high-engagement bugs for target version
 - No local repo issues with `blocked` label referencing this dependency
 - CI is passing (or CI status is unknown/not provided)
 
 **FIXABLE** (complexity: simple or complex):
+
 - HIGH_IMPACT breaking changes exist but are fixable by updating our config
 - `simple`: single config value change or addition
 - `complex`: multiple files, migration steps, or structural changes
 
 **RISKY** (needs human review):
+
 - Cannot find upstream repo/changelog
 - Cannot determine impact scope
 - Upstream critical bug or regression that cannot be fixed on our side
@@ -130,6 +140,7 @@ A breaking change only matters if it affects what we actually use.
 - Default to RISKY when evidence is insufficient — never assume SAFE
 
 **BREAKING** (PR should be closed):
+
 - Fundamental incompatibility with no viable fix path
 - Dependency dropped support for our platform/architecture
 - CI failing due to this update with no clear fix

@@ -35,13 +35,13 @@ Multiple commits may have landed since last validation. Review all commits betwe
 
 ### Status decision:
 
-| Condition | Status | commit_shas |
-|-----------|--------|-------------|
-| CI failing on code that previously passed | `REVERT` | SHAs of commits that introduced the failure |
-| Deployment broken or degraded | `REVERT` | SHAs of commits that caused the breakage |
-| CI passing, deployment healthy (or N/A) | `PASS` | Omit |
-| Issue found but does not warrant revert | `ROLL_FORWARD` | Omit |
-| Unclear (CI pending, flaky test) | `UNKNOWN` | Omit — note uncertainty in details |
+| Condition                                 | Status         | commit_shas                                 |
+| ----------------------------------------- | -------------- | ------------------------------------------- |
+| CI failing on code that previously passed | `REVERT`       | SHAs of commits that introduced the failure |
+| Deployment broken or degraded             | `REVERT`       | SHAs of commits that caused the breakage    |
+| CI passing, deployment healthy (or N/A)   | `PASS`         | Omit                                        |
+| Issue found but does not warrant revert   | `ROLL_FORWARD` | Omit                                        |
+| Unclear (CI pending, flaky test)          | `UNKNOWN`      | Omit — note uncertainty in details          |
 
 ## Phase 3: Submit Result via MCP (MANDATORY)
 

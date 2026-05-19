@@ -48,12 +48,12 @@ Kyverno enforces `activeDeadlineSeconds` on agent pods based on the `agent-timeo
    - **Symptom**: Pod CrashLoopBackOff, logs show Redis connection errors
    - **Resolution**: Verify agent-valkey pod is running and CNP allows egress on port 6379
 
-1. **Jobs stuck in queue**
+2. **Jobs stuck in queue**
 
    - **Symptom**: `agent_queue_depth` metric stays elevated, VMRule alert fires after 75m
    - **Resolution**: Check n8n webhook availability, verify CNP allows egress to n8n-system on port 5678
 
-1. **Circuit breaker open**
+3. **Circuit breaker open**
 
    - **Symptom**: POST /jobs returns 429 with `circuit_open`
    - **Resolution**: POST /circuit/{repo}/reset to clear, investigate underlying failures

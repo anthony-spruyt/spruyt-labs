@@ -15,12 +15,12 @@ Traefik is a modern HTTP reverse proxy and load balancer that serves as the ingr
    - **Symptom**: 404 errors on ingress routes
    - **Resolution**: Verify route hostnames, service names, and ports in IngressRoute resources
 
-1. **TLS certificate errors**
+2. **TLS certificate errors**
 
    - **Symptom**: Browser certificate warnings
    - **Resolution**: Verify certificate DNS names and issuer configuration via cert-manager
 
-1. **Load balancer connectivity issues**
+3. **Load balancer connectivity issues**
 
    - **Symptom**: External access failures
    - **Resolution**: Verify Cilium BGP advertisements and load balancer IP allocation

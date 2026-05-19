@@ -57,7 +57,7 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
    terraform login
    ```
 
-1. Navigate to the target workspace directory and initialize the backend.
+2. Navigate to the target workspace directory and initialize the backend.
 
    ```bash
    cd infra/terraform/aws/velero-backup
@@ -70,14 +70,14 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
    task terraform:init
    ```
 
-1. Export or assume AWS credentials that align with the target environment.
+3. Export or assume AWS credentials that align with the target environment.
 
    ```bash
    export AWS_PROFILE=spruyt-labs
    aws sts get-caller-identity
    ```
 
-1. Confirm the linked Terraform Cloud workspace.
+4. Confirm the linked Terraform Cloud workspace.
 
    ```bash
    terraform workspace list
@@ -94,7 +94,7 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
    tflint
    ```
 
-1. Generate a plan locally.
+2. Generate a plan locally.
 
    ```bash
    terraform plan -out plan.tfplan
@@ -102,7 +102,7 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
 
    Use `-var-file` flags to test non-default inputs when necessary.
 
-1. For Terraform Cloud speculative runs, push the branch or trigger a run through the Terraform Cloud UI, capturing the run URL in pull request notes.
+3. For Terraform Cloud speculative runs, push the branch or trigger a run through the Terraform Cloud UI, capturing the run URL in pull request notes.
 
 #### Phase 3 – Apply and Monitor
 
@@ -114,13 +114,13 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
 
    From Terraform Cloud, use the "Confirm & Apply" action after reviewer approval.
 
-1. Observe apply output. Validate AWS resource creation where appropriate.
+2. Observe apply output. Validate AWS resource creation where appropriate.
 
    ```bash
    aws s3 ls s3://<bucket-name>
    ```
 
-1. Update Kubernetes manifests or secrets that rely on changed outputs, such as object storage credentials referenced by Flux managed workloads.
+3. Update Kubernetes manifests or secrets that rely on changed outputs, such as object storage credentials referenced by Flux managed workloads.
 
 #### Phase 4 – Drift Detection and State Maintenance
 
@@ -130,14 +130,14 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
    terraform plan -refresh-only
    ```
 
-1. Inspect state contents when unexpected resources appear.
+2. Inspect state contents when unexpected resources appear.
 
    ```bash
    terraform state list
    terraform state show <resource>
    ```
 
-1. Clear stale locks only after verifying no active runs remain.
+3. Clear stale locks only after verifying no active runs remain.
 
    ```bash
    terraform force-unlock <LOCK_ID>
@@ -154,9 +154,9 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
    terraform apply plan.tfplan
    ```
 
-1. Confirm generated workspaces inherit the correct VCS settings and variable sets before enabling automated runs.
+2. Confirm generated workspaces inherit the correct VCS settings and variable sets before enabling automated runs.
 
-1. Document any temporary bootstrap scripts in this readme and retire them once they are automated.
+3. Document any temporary bootstrap scripts in this readme and retire them once they are automated.
 
 #### Phase 6 – Rollback and Remediation
 
@@ -166,14 +166,14 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
    terraform apply -target=<module.resource>
    ```
 
-1. Revert undesired changes by rolling back the Git commit and applying the rollback plan.
+2. Revert undesired changes by rolling back the Git commit and applying the rollback plan.
 
    ```bash
    terraform plan -out rollback.tfplan
    terraform apply rollback.tfplan
    ```
 
-1. For destructive misconfigurations, re-import affected resources and re-run the apply after fixing configuration drift.
+3. For destructive misconfigurations, re-import affected resources and re-run the apply after fixing configuration drift.
 
    ```bash
    terraform import <module.resource> <identifier>

@@ -25,7 +25,7 @@ For LAN access, use `foundryvtt.lan.${EXTERNAL_DOMAIN}`.
    - **Symptom**: Pod in CrashLoopBackoff or InitContainer failures
    - **Resolution**: Verify `foundryvtt-secrets` contains valid FOUNDRY_LICENSE_KEY; check PVC status and init container logs for permission issues
 
-1. **High resource usage causing OOM restarts**
+2. **High resource usage causing OOM restarts**
 
    - **Symptom**: Pod restarts due to OOM
    - **Resolution**: Increase memory limits in `values.yaml`; adjust UV_THREADPOOL_SIZE and NODE_OPTIONS for performance tuning based on active gaming sessions and module usage

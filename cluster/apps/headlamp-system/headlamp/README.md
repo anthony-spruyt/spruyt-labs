@@ -63,7 +63,7 @@ Common errors:
 Headlamp uses OIDC for two purposes:
 
 1. **UI Authentication**: Users authenticate via Authentik to access Headlamp
-1. **Kubernetes API Impersonation**: The OIDC token is used to authenticate as the user against the Kubernetes API
+2. **Kubernetes API Impersonation**: The OIDC token is used to authenticate as the user against the Kubernetes API
 
 ### Kubernetes API Server OIDC
 
@@ -102,8 +102,8 @@ oidc-groups-claim: "groups"
 This is safe because:
 
 1. Users must be in the "Headlamp Users" group to access the application
-1. Authentik has no built-in email verification - the claim is purely informational
-1. This is a homelab with trusted users
+2. Authentik has no built-in email verification - the claim is purely informational
+3. This is a homelab with trusted users
 
 ### User RBAC
 
@@ -130,11 +130,11 @@ Headlamp pods (envFrom secretRef)
 ### Required Configuration
 
 1. **Blueprint**: `authentik-system/authentik/app/blueprints/headlamp-sso.yaml`
-1. **OAuth Secret**: `authentik-system/authentik/app/authentik-headlamp-oauth.sops.yaml`
-1. **Env Vars**: HEADLAMP_OIDC\_\* in authentik values.yaml
-1. **Volume Mount**: headlamp-sso.yaml in authentik blueprints volume
-1. **API Server OIDC**: `talos/patches/control-plane/configure-api-server.yaml`
-1. **User RBAC**: `app/user-rbac.yaml`
+2. **OAuth Secret**: `authentik-system/authentik/app/authentik-headlamp-oauth.sops.yaml`
+3. **Env Vars**: HEADLAMP_OIDC\_\* in authentik values.yaml
+4. **Volume Mount**: headlamp-sso.yaml in authentik blueprints volume
+5. **API Server OIDC**: `talos/patches/control-plane/configure-api-server.yaml`
+6. **User RBAC**: `app/user-rbac.yaml`
 
 ## OAuth Credential Rotation
 
@@ -151,9 +151,9 @@ Headlamp is integrated with the Authentik OAuth rotation CronJob. Only `client_s
 The rotation job:
 
 1. Generates new client_secret (client_id unchanged)
-1. Updates Authentik OAuth2 provider via API
-1. Patches `authentik-headlamp-oauth` secret
-1. Forces ExternalSecret sync in headlamp-system
+2. Updates Authentik OAuth2 provider via API
+3. Patches `authentik-headlamp-oauth` secret
+4. Forces ExternalSecret sync in headlamp-system
 
 ## File Reference
 
@@ -177,14 +177,14 @@ The rotation job:
 
    Check plugin container logs. Plugin name must be lowercase alphanumeric (no `@` org prefix), source must be ArtifactHub URL.
 
-1. **OIDC login fails / redirect loop**
+2. **OIDC login fails / redirect loop**
 
    - Verify ExternalSecret is synced: `kubectl get es -n headlamp-system`
    - Check Authentik blueprint applied: look for "Headlamp SSO" in Authentik admin
    - Verify certificate is ready: `kubectl get cert -n headlamp-system`
    - Check kube-apiserver logs for `email_verified` errors - if present, ensure custom email mapping is in blueprint
 
-1. **Kubeconfig errors in logs**
+3. **Kubeconfig errors in logs**
 
    Normal - Headlamp attempts to load kubeconfig files that don't exist in-cluster. Uses serviceaccount token instead.
 

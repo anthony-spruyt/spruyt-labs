@@ -22,12 +22,12 @@ MCP (Model Context Protocol) server providing AI assistants with web search capa
    - **Symptom**: CrashLoopBackOff
    - **Resolution**: Check logs; likely missing or invalid BRAVE_API_KEY in brave-search-secrets.
 
-1. **Search requests fail with 401/403**
+2. **Search requests fail with 401/403**
 
    - **Symptom**: MCP tool calls return authentication errors
    - **Resolution**: Verify BRAVE_API_KEY is valid and the Brave Search plan is active.
 
-1. **Search tool not available on plan**
+3. **Search tool not available on plan**
 
    - **Symptom**: Specific tools (e.g., video search) return errors
    - **Resolution**: Check Brave Search plan tier; some tools require higher-tier plans.

@@ -21,6 +21,7 @@ Choose strategy based on discovery:
 ### Always: Gather Full PR Context
 
 Before analyzing, build awareness of the PR beyond just its body:
+
 1. Read ALL PR comments — the platform posts previous triage verdicts and fix summaries there. If a prior triage flagged issues and a fix agent pushed commits, that context is in the comments.
 2. Review ALL commits on the PR branch — not just the original dependency bump. A fix agent may have pushed additional commits to address earlier issues.
 3. Check GitHub code-scanning alerts — SARIF results are indexed under the merge ref, NOT the source branch. Use this exact API call:
@@ -73,4 +74,5 @@ Do NOT skip this step. Do NOT post results to GitHub yourself. The platform pipe
 ## CI Status
 
 Overall: <<CI_OVERALL>>
+
 <<CI_SUMMARY>>

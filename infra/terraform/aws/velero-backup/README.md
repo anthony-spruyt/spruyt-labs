@@ -11,12 +11,12 @@ This Terraform workspace provisions S3 buckets and IAM resources for Velero back
 Before triggering any runs, configure a Variable Set in Terraform Cloud:
 
 1. In the Terraform Cloud UI, navigate to **Organization Settings → Variable Sets**.
-1. Create or select a Variable Set for **velero-backup**.
-1. Add the following `terraform`-category variables:
+2. Create or select a Variable Set for **velero-backup**.
+3. Add the following `terraform`-category variables:
    - `project` (e.g., `spruyt-labs`)
    - `environment` (e.g., `prod`)
    - `aws_region` (e.g., `ap-southeast-4`)
-1. Attach the Variable Set to the **velero-backup** workspace.
+4. Attach the Variable Set to the **velero-backup** workspace.
 
 ### Triggering Runs
 

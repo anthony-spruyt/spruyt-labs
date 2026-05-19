@@ -49,9 +49,9 @@ Hibernate CNPG    Set noout flag    Scale Ceph down
 When power is lost for 30+ seconds:
 
 1. **Hibernate CNPG clusters** - Graceful database shutdown preserving PVCs
-1. **Set Ceph noout flag** - prevents monitors from marking down OSDs as out
-1. **Scale Ceph down** - Operator → OSDs → Monitors → Managers (per Rook [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/))
-1. **Shutdown nodes** - Workers first (concurrent), then control plane (sequential, orchestrator's node last)
+2. **Set Ceph noout flag** - prevents monitors from marking down OSDs as out
+3. **Scale Ceph down** - Operator → OSDs → Monitors → Managers (per Rook [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/))
+4. **Shutdown nodes** - Workers first (concurrent), then control plane (sequential, orchestrator's node last)
 
 **Timeline Budget** (~10-20 min UPS runtime):
 
@@ -90,10 +90,10 @@ Recovery is automatic — the shutdown-orchestrator pod detects stale state on s
 Recovery sequence:
 
 1. Wait for Ceph tools pod to become available
-1. Scale Ceph back up: Monitors → Managers → OSDs → Operator
-1. Unset Ceph noout flag
-1. Wake hibernated CNPG clusters
-1. Verify cluster health
+2. Scale Ceph back up: Monitors → Managers → OSDs → Operator
+3. Unset Ceph noout flag
+4. Wake hibernated CNPG clusters
+5. Verify cluster health
 
 ### Manual Recovery
 
@@ -125,22 +125,22 @@ kubectl annotate cluster <name> -n <namespace> cnpg.io/hibernation-
    - **Symptom**: `upsc` returns "Data stale" or connection errors
    - **Resolution**: Verify USB cable connected to labeled node, check udev rules in Talos config
 
-1. **Orchestrator not detecting power loss**
+2. **Orchestrator not detecting power loss**
 
    - **Symptom**: No logs when UPS unplugged
    - **Resolution**: Check NUT server connectivity, verify NUT_SERVER and UPS_NAME env vars, check orchestrator pod logs
 
-1. **CNPG clusters not hibernating**
+3. **CNPG clusters not hibernating**
 
    - **Symptom**: Annotation errors in logs
    - **Resolution**: Verify RBAC permissions, check pod logs for details
 
-1. **Ceph flags not setting**
+4. **Ceph flags not setting**
 
    - **Symptom**: "rook-ceph-tools deployment not found"
    - **Resolution**: Ensure rook-ceph-tools is deployed: `kubectl -n rook-ceph get deploy rook-ceph-tools`
 
-1. **Automatic recovery fails**
+5. **Automatic recovery fails**
 
    - **Symptom**: Orchestrator pod logs show recovery errors
    - **Resolution**: Run manual recovery commands (see Manual Recovery section), check pod logs

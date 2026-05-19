@@ -67,9 +67,9 @@ Clone preconditions enforce URL prefix: `git@github.com:anthony-spruyt/` (write)
 ### Adding a New MCP Server
 
 1. Add entry to relevant `claude-mcp-config.yaml`
-1. If authenticated: add key to `mcp-credentials.sops.yaml`, add env var injection to Kyverno policy
-1. If in-cluster: add egress CNP (shared base for all namespaces, per-namespace overlay for tier-specific)
-1. If in-cluster: add ingress CNP on destination allowing agent namespace(s)
+2. If authenticated: add key to `mcp-credentials.sops.yaml`, add env var injection to Kyverno policy
+3. If in-cluster: add egress CNP (shared base for all namespaces, per-namespace overlay for tier-specific)
+4. If in-cluster: add ingress CNP on destination allowing agent namespace(s)
 
 ## Settings Profiles
 

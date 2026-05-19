@@ -60,7 +60,7 @@ Platform engineering owns the Talos lifecycle. Operators provision control-plane
 
 1. Update `talconfig.yaml` and overlay snippets under `cluster/machines/` to describe the node.
 
-1. Generate configs:
+2. Generate configs:
 
    ```bash
    talhelper genconfig
@@ -68,22 +68,22 @@ Platform engineering owns the Talos lifecycle. Operators provision control-plane
 
    Outputs land in `talos/clusterconfig/`.
 
-1. **Secrets** – Rotate or create Talos secrets when necessary:
+3. **Secrets** – Rotate or create Talos secrets when necessary:
 
    ```bash
    task talos:gen
    ```
 
-1. Boot the host with the appropriate SecureBoot ISO (see [Talos image schematics](#talos-image-schematics)).
+4. Boot the host with the appropriate SecureBoot ISO (see [Talos image schematics](#talos-image-schematics)).
 
-1. Apply configs once the Talos API responds:
+5. Apply configs once the Talos API responds:
 
    ```bash
    talosctl apply-config --insecure --nodes <node-ip> \
      --file talos/clusterconfig/<hostname>.yaml
    ```
 
-1. Bootstrap the first control-plane node with `talosctl bootstrap`.
+6. Bootstrap the first control-plane node with `talosctl bootstrap`.
 
 Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md#provisioning-new-hardware-or-vms).
 
@@ -95,30 +95,30 @@ Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machi
    git checkout -b feat/talos-<change>
    ```
 
-1. Modify overlays and `talos/patches/*` as required.
+2. Modify overlays and `talos/patches/*` as required.
 
-1. Render diffs without secrets:
+3. Render diffs without secrets:
 
    ```bash
    talhelper genconfig --dry-run --diff
    ```
 
-1. Run validation:
+4. Run validation:
 
    ```bash
    task validate
    task dev-env:lint
    ```
 
-1. Commit with lifecycle context and open a PR.
+5. Commit with lifecycle context and open a PR.
 
-1. After merge, expedite rollout:
+6. After merge, expedite rollout:
 
    ```bash
    flux reconcile kustomization cluster-machines --with-source
    ```
 
-1. Confirm nodes adopted the change:
+7. Confirm nodes adopted the change:
 
    ```bash
    talosctl -n <node-ip> get machineconfig -o yaml
@@ -169,7 +169,7 @@ Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machi
 
 1. Confirm cluster prerequisites: Flux controllers report `Ready`, recent etcd snapshots are archived, Talos nodes run a supported release, and the maintenance window is approved.
 
-1. Perform a dry run to surface API deprecations and preview the upgrade plan:
+2. Perform a dry run to surface API deprecations and preview the upgrade plan:
 
    ```bash
    talosctl --nodes {CP_IP} upgrade-k8s --to v1.36.1 --dry-run
@@ -178,7 +178,7 @@ Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machi
    - Replace `{CP_IP}` with the control-plane node you are validating.
    - Resolve warnings about deprecated resources or missing manifests before continuing.
 
-1. Execute the upgrade after the dry run succeeds:
+3. Execute the upgrade after the dry run succeeds:
 
    ```bash
    talosctl --nodes {CP_IP} upgrade-k8s --to v1.36.1
@@ -187,14 +187,14 @@ Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machi
    - Talos orchestrates control-plane members sequentially and updates kube-proxy/kubelet while `--upgrade-kubelet` remains enabled (default).
    - Include `--endpoint <control-plane-endpoint>` when invoking the command through the VIP, or disable kubelet upgrades per node with `--upgrade-kubelet=false`.
 
-1. Validate cluster state when the command finishes:
+4. Validate cluster state when the command finishes:
 
    - `kubectl version --short`
    - `kubectl get nodes`
    - `talosctl health --nodes <node-ip>`
    - `flux get kustomizations -n flux-system`
 
-1. Confirm worker nodes report the expected kubelet version (if upgraded) or schedule drains and restarts when kubelet updates were deferred. Archive the dry-run output and validation notes with the change record.
+5. Confirm worker nodes report the expected kubelet version (if upgraded) or schedule drains and restarts when kubelet updates were deferred. Archive the dry-run output and validation notes with the change record.
 
 #### Rollback and disaster recovery
 

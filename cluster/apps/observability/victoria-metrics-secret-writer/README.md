@@ -15,9 +15,9 @@ One-shot Kubernetes Job that copies etcd TLS certificates from the host filesyst
 The Job:
 
 1. Schedules on a control plane node (nodeAffinity + toleration)
-1. Mounts `/system/secrets/etcd` via hostPath
-1. Uses `bitnami/kubectl` to create/update the `etcd-secrets` secret from `ca.crt`, `server.crt`, and `server.key`
-1. Runs as the `secrets-writer` ServiceAccount with a Role scoped to secrets CRUD in the `observability` namespace
+2. Mounts `/system/secrets/etcd` via hostPath
+3. Uses `bitnami/kubectl` to create/update the `etcd-secrets` secret from `ca.crt`, `server.crt`, and `server.key`
+4. Runs as the `secrets-writer` ServiceAccount with a Role scoped to secrets CRUD in the `observability` namespace
 
 ## Troubleshooting
 
@@ -26,12 +26,12 @@ The Job:
    - **Symptom**: Pod not scheduled
    - **Resolution**: Verify control plane node has the `node-role.kubernetes.io/control-plane` label and the toleration is correct
 
-1. **Job fails with permission denied**
+2. **Job fails with permission denied**
 
    - **Symptom**: Pod logs show RBAC or filesystem errors
    - **Resolution**: Check `secrets-writer` ServiceAccount, Role, and RoleBinding exist in `observability` namespace. Verify etcd certs are readable at `/system/secrets/etcd/` on control plane nodes.
 
-1. **Secret not updated after cert rotation**
+3. **Secret not updated after cert rotation**
 
    - **Symptom**: `etcd-secrets` contains stale certificates
    - **Resolution**: Delete the completed Job and reconcile to re-run it

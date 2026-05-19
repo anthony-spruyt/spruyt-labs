@@ -47,7 +47,7 @@ To add new exceptions, edit `exceptions-configmap.yaml` in the app directory. Se
    - **Symptom**: Falco pods crash with eBPF errors
    - **Resolution**: Verify Talos has `lockdown=integrity` kernel arg (not `lockdown=confidentiality`)
 
-1. **Alerts not appearing in VictoriaLogs**
+2. **Alerts not appearing in VictoriaLogs**
 
    - **Symptom**: Falco detecting events but not visible in Grafana
    - **Resolution**: VictoriaLogs requires `/insert` prefix for Loki-compatible endpoint. Verify hostport includes `/insert`: `http://victoria-logs-single-server.observability.svc:9428/insert`

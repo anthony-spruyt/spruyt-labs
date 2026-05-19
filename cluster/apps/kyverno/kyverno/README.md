@@ -30,7 +30,7 @@ In this homelab, Kyverno is deployed as critical-infrastructure with four contro
      flux reconcile ks kyverno-policies --with-source
      ```
 
-1. **Webhook not ready**
+2. **Webhook not ready**
 
    - **Symptom**: API requests timeout or fail with webhook errors
 
@@ -43,7 +43,7 @@ In this homelab, Kyverno is deployed as critical-infrastructure with four contro
      kubectl get validatingwebhookconfiguration kyverno-resource-validating-webhook-cfg
      ```
 
-1. **Generate rules not creating resources**
+3. **Generate rules not creating resources**
 
    - **Symptom**: Expected generated resources missing
 
@@ -56,7 +56,7 @@ In this homelab, Kyverno is deployed as critical-infrastructure with four contro
      kubectl get updaterequest -A  # Check pending updates
      ```
 
-1. **High memory usage**
+4. **High memory usage**
 
    - **Symptom**: Controllers OOMKilled
    - **Diagnosis**: Check policy report volume and cleanup settings

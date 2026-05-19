@@ -48,8 +48,8 @@ velero_backup_tfc_trigger_pattern       = "infra/terraform/aws/velero-backup/**"
 Before triggering any runs, configure a Variable Set in Terraform Cloud:
 
 1. In the Terraform Cloud UI, navigate to **Organization Settings → Variable Sets**.
-1. Create or select a Variable Set for this workspace.
-1. Add the following **terraform**-category variables:
+2. Create or select a Variable Set for this workspace.
+3. Add the following **terraform**-category variables:
    - `aws_account_id`
    - `aws_region`
    - `tfc_hostname`
@@ -59,7 +59,7 @@ Before triggering any runs, configure a Variable Set in Terraform Cloud:
    - `tfc_vcs_repo_identifier`
    - `tfc_vcs_repo_branch`
    - `tfc_vcs_repo_github_app_installation_id`
-1. Attach the Variable Set to the **workspace-factory** workspace.
+4. Attach the Variable Set to the **workspace-factory** workspace.
 
 ### Triggering Runs
 

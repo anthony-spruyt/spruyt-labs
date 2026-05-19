@@ -49,7 +49,7 @@ Engine pinned to `iiidev/iii:0.11.2` — v0.11.6+ breaks agentmemory. Track upst
    - **Symptom**: Browser shows viewer UI but searches return errors
    - **Resolution**: Viewer proxies API calls internally. Verify engine container is healthy on port 3111. Check `III_ENGINE_URL=ws://localhost:49134` env var.
 
-1. **Outpost not deploying**
+2. **Outpost not deploying**
 
    - **Symptom**: No `ak-outpost-agentmemory-outpost` pod in namespace
    - **Resolution**: Verify Authentik blueprint applied (`kubectl logs -n authentik-system` for blueprint errors). Check RBAC role in agentmemory namespace grants authentik SA permissions.

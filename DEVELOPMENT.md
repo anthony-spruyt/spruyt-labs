@@ -75,8 +75,8 @@ Keys persist across restarts via Apple keychain.
 ### Opening the Devcontainer
 
 1. Clone the repository
-1. Open in VS Code
-1. Click "Reopen in Container" (or Command Palette → `Dev Containers: Reopen in Container`)
+2. Open in VS Code
+3. Click "Reopen in Container" (or Command Palette → `Dev Containers: Reopen in Container`)
 
 `initialize.sh` sets up the SSH socket, then `devcontainer-post-create` installs tooling inside the container.
 
@@ -87,9 +87,9 @@ Coder provides browser-based (or VS Code Desktop) workspaces running as Kubernet
 ### Creating a Workspace
 
 1. Navigate to `https://code.${EXTERNAL_DOMAIN}`
-1. Sign in via Authentik SSO
-1. Create workspace from the **spruyt-labs** template
-1. Configure parameters:
+2. Sign in via Authentik SSO
+3. Create workspace from the **spruyt-labs** template
+4. Configure parameters:
    - **Repository URL** — SSH URL (default: `git@github.com:anthony-spruyt/spruyt-labs.git`)
    - **Git commit email** — GitHub noreply address for verified commits
    - **Volume sizes** — `/workspaces` (default 20 GiB), `/home/vscode` (default 20 GiB)

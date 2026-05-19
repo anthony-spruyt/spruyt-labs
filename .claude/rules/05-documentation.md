@@ -1,5 +1,5 @@
 ---
-paths: ["**/*.md"]
+paths: ['**/*.md']
 ---
 
 # Documentation Standards
@@ -29,12 +29,14 @@ paths: ["**/*.md"]
 Use template from `docs/templates/readme_template.md` for new component docs.
 
 Required sections:
+
 - Overview (mention priority tier)
 - Prerequisites (list dependsOn items)
 - Troubleshooting (only non-obvious, component-specific issues)
 - References (official docs links)
 
 Optional sections (include when relevant):
+
 - Operations — non-obvious knowledge not derivable from manifests: integration procedures, cross-component wiring, naming conventions, credential lifecycle, upstream workarounds. See `authentik/README.md` for example.
 
 ## Maintenance

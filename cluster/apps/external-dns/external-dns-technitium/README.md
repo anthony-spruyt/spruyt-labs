@@ -16,7 +16,7 @@ ExternalDNS is a Kubernetes controller that automatically manages DNS records ba
    - **Symptom**: Services deployed but no DNS records appear
    - **Resolution**: Check Technitium DNS server connectivity and API credentials
 
-1. **API authentication errors**
+2. **API authentication errors**
 
    - **Symptom**: Authentication failures in logs
    - **Resolution**: Verify API credentials in the Technitium DNS server configuration

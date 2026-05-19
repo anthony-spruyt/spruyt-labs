@@ -19,7 +19,7 @@ Deployed with 2 replicas and `--kubelet-insecure-tls` for Talos Linux compatibil
    - **Symptom**: `kubectl top` returns "Metrics API not available"
    - **Resolution**: Check APIService status: `kubectl get apiservice v1beta1.metrics.k8s.io -o yaml`. Verify pods are Running and endpoints exist.
 
-1. **TLS errors to kubelets**
+2. **TLS errors to kubelets**
 
    - **Symptom**: Logs show `x509: cannot validate certificate` errors
    - **Resolution**: Ensure `--kubelet-insecure-tls` is set in values.yaml `args`. Required for Talos Linux.

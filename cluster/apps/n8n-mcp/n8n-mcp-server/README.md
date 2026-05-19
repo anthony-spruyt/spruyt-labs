@@ -27,12 +27,12 @@ MCP (Model Context Protocol) server providing AI assistants with access to n8n n
    - **Symptom**: CrashLoopBackOff
    - **Resolution**: Check logs; likely missing or invalid N8N_API_KEY in n8n-mcp-secrets.
 
-1. **Workflow management tools unavailable**
+2. **Workflow management tools unavailable**
 
    - **Symptom**: MCP tool calls return errors for create/update/execute operations
    - **Resolution**: Verify N8N_API_KEY has required scopes and n8n API is reachable.
 
-1. **Connection refused to n8n**
+3. **Connection refused to n8n**
 
    - **Symptom**: MCP tools return connection errors
    - **Resolution**: Verify n8n pods are running in n8n-system and CiliumNetworkPolicy `allow-n8n-mcp-ingress` exists.

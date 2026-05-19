@@ -19,12 +19,12 @@ Weekly CronJob that rotates the `github-bot-ssh-key` Secret used by `claude-agen
    - **Symptom**: `secrets "github-bot-ssh-key" forbidden`.
    - **Resolution**: Verify the `bot-ssh-key-rotation` Role grants `get, patch` on that Secret and the RoleBinding targets the ServiceAccount.
 
-1. **NetworkPolicy drops egress**
+2. **NetworkPolicy drops egress**
 
    - **Symptom**: Job logs `connection refused` to kube-apiserver or GitHub.
    - **Resolution**: Egress CNPs live in `app/network-policies.yaml`. Confirm the pod label `app: bot-ssh-key-rotation` still matches.
 
-1. **ExternalSecret force-sync fails**
+3. **ExternalSecret force-sync fails**
 
    - **Symptom**: `externalsecrets "github-bot-ssh-key" forbidden` in logs.
    - **Resolution**: Check `github-rotation-rbac.yaml` in `claude-agents-shared/base/` includes `bot-ssh-key-rotation` SA as subject. Non-fatal — ExternalSecret `refreshInterval` will recover.

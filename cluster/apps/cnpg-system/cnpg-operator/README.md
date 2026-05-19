@@ -35,7 +35,7 @@ kubectl cnpg reload <cluster-name> -n <namespace>
    - **Symptom**: Clusters stuck in initializing state
    - **Resolution**: Verify storage class provisioning and network policies
 
-1. **Scheduled backups not running**
+2. **Scheduled backups not running**
 
    - **Symptom**: Backups not executing on schedule
    - **Resolution**: Verify backup storage credentials and schedules

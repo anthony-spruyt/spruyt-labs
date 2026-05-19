@@ -33,17 +33,17 @@ Coder is a self-hosted development environment platform that provides browser-ba
    - **Symptom**: Pod crashes with PostgreSQL connection refused
    - **Resolution**: Check CNPG cluster is ready: `kubectl get cluster -n coder-system coder-cnpg-cluster`
 
-1. **OIDC login fails**
+2. **OIDC login fails**
 
    - **Symptom**: Login redirect fails or token error
    - **Resolution**: Verify Authentik application is configured and `coder-oauth-credentials` ExternalSecret is synced: `kubectl get externalsecret -n coder-system`
 
-1. **Workspace pod stuck pending**
+3. **Workspace pod stuck pending**
 
    - **Symptom**: Workspace created in Coder UI but pod never starts
    - **Resolution**: Check workspace RBAC and PVC provisioning: `kubectl get pvc -n coder-workspaces`, `kubectl describe pod -n coder-workspaces -l app.kubernetes.io/name=coder-workspace`
 
-1. **Metrics not scraped**
+4. **Metrics not scraped**
 
    - **Symptom**: No Coder metrics in VictoriaMetrics
    - **Resolution**: Verify `CODER_PROMETHEUS_ADDRESS` is set to `0.0.0.0:2112` and the `allow-metrics-ingress` network policy allows vmagent ingress on port 2112

@@ -344,9 +344,9 @@ Automated weekly rotation of OAuth `client_secret` via CronJob. Only the secret 
 ### How It Works
 
 1. CronJob generates new client_secret
-1. Updates Authentik OAuth2 provider via REST API
-1. Patches the app's dedicated OAuth secret (e.g., `authentik-grafana-oauth`)
-1. Forces ExternalSecret sync in consumer namespace
+2. Updates Authentik OAuth2 provider via REST API
+3. Patches the app's dedicated OAuth secret (e.g., `authentik-grafana-oauth`)
+4. Forces ExternalSecret sync in consumer namespace
 
 ### Rotation Prerequisites
 
@@ -1043,19 +1043,19 @@ property_mappings:
 **Security note**: This is safe when:
 
 1. Users must be in an application-specific group (via `policybinding`)
-1. Authentik has no built-in email verification - the claim is purely informational
-1. Environment is a trusted homelab
+2. Authentik has no built-in email verification - the claim is purely informational
+3. Environment is a trusted homelab
 
 **Applications requiring this**: Headlamp (kube-apiserver OIDC rejects `email_verified: false`)
 
 ## Troubleshooting
 
 1. **Blueprint shows error but no logs** - Errors stored in DB, use debug command above
-1. **Database connection failures** - Check CNPG cluster health
-1. **Pods CrashLoopBackOff** - Check secrets and Redis connectivity
-1. **SAML schema validation error** - Check `audience` matches SP entity ID exactly, ensure `property_mappings` are included
-1. **SAML HTTP vs HTTPS mismatch** - Add `https-proto-header` middleware to Traefik ingress
-1. **User can access app without being in group** - Missing `policybinding` in blueprint; add policy binding to application
+2. **Database connection failures** - Check CNPG cluster health
+3. **Pods CrashLoopBackOff** - Check secrets and Redis connectivity
+4. **SAML schema validation error** - Check `audience` matches SP entity ID exactly, ensure `property_mappings` are included
+5. **SAML HTTP vs HTTPS mismatch** - Add `https-proto-header` middleware to Traefik ingress
+6. **User can access app without being in group** - Missing `policybinding` in blueprint; add policy binding to application
 
 ## References
 

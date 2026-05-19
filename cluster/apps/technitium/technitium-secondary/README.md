@@ -27,7 +27,7 @@ Key differences for secondary:
    - **Symptom**: Secondary not receiving zone updates
    - **Resolution**: Check zone transfer settings and network connectivity between primary and secondary
 
-1. **DNS resolution inconsistencies**
+2. **DNS resolution inconsistencies**
 
    - **Symptom**: Different responses from primary and secondary
    - **Resolution**: Force zone transfer via web UI and verify consistency
