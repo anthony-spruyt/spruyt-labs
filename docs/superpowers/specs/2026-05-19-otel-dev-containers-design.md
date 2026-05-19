@@ -165,14 +165,6 @@ No new policy needed. Dev containers connect through Traefik's LAN IP, which alr
 
 Coder workspaces and Claude agents continue using internal `.svc.cluster.local` URLs with no auth changes. They are protected by CiliumNetworkPolicies. Dev containers use the new Traefik path with API key auth.
 
-## Rollback
-
-1. Remove `OTEL_*` from dev container `.env`
-2. Delete `otlp-ingress.yaml`, remove cert entry from `certificates.yaml`
-3. Delete `api-key-auth-otel.yaml`, remove patch from kustomization
-4. Remove `OTEL_API_KEY` from Traefik SOPS secret
-5. Flux auto-reconciles
-
 ## Acceptance Criteria
 
 1. Dev container sends metrics, logs, traces to Victoria\* via HTTPS
