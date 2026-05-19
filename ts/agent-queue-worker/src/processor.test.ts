@@ -1105,6 +1105,30 @@ describe("Processor.process — cancelled result path", () => {
     vi.restoreAllMocks();
   });
 
+  it("skips moveToDelayed when job token is missing on cancelled status", async () => {
+    const redis = createMockRedis();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
+
+    const processor = new Processor(
+      redis,
+      baseConfig,
+      createMockRegistry(),
+      createMockHealthGate()
+    );
+    const job = createMockJob("cancel-no-token");
+    (job as any).token = undefined;
+    const resultPromise = processor.process(job as any);
+
+    await waitForCallbackAndResolve(processor, "cancel-no-token", {
+      status: "cancelled",
+    });
+
+    await expect(resultPromise).rejects.toThrow(DelayedError);
+
+    expect(job.moveToDelayed).not.toHaveBeenCalled();
+    expect(redis.del).toHaveBeenCalledWith("agent:active:cancel-no-token");
+  });
+
   it("throws DelayedError when callback delivers status=cancelled", async () => {
     const redis = createMockRedis();
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));

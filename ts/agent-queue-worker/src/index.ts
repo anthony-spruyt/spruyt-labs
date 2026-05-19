@@ -3,6 +3,7 @@ import { Redis } from "ioredis";
 import { loadConfig } from "./config.js";
 import { HealthGate } from "./health.js";
 import { createHttpServer } from "./http/server.js";
+import { logger } from "./logger.js";
 import * as metrics from "./metrics.js";
 import { Processor } from "./processor.js";
 import { CircuitBreaker, RateLimiter } from "./queue/guard.js";
@@ -17,6 +18,22 @@ const redis = new Redis({
   password: config.VALKEY_PASSWORD,
   maxRetriesPerRequest: null,
   retryStrategy: (times: number) => Math.min(times * 500, 5000),
+});
+
+redis.on("error", (err) => {
+  logger.error("Valkey connection error", { error: String(err) });
+});
+
+redis.on("reconnecting", (attempt: number) => {
+  logger.warn("Valkey reconnecting", { attempt });
+});
+
+redis.on("connect", () => {
+  logger.info("Valkey connected");
+});
+
+redis.on("ready", () => {
+  logger.info("Valkey ready");
 });
 
 const queueOpts = { connection: redis, prefix: "agent:queue" };
