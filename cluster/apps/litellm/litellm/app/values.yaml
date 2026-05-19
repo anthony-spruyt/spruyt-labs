@@ -665,7 +665,7 @@ configMaps:
             litellm_params:
               guardrail: presidio
               mode: "pre_call"
-              default_on: false
+              default_on: true
               skip_system_message_in_guardrail: true
               presidio_filter_scope: "input"
               presidio_score_thresholds:
@@ -677,7 +677,6 @@ configMaps:
                 AU_ACN: 0.4
               pii_entities_config:
                 CREDIT_CARD: "MASK"
-                PERSON: "MASK"
                 AU_TFN: "BLOCK"
                 AU_MEDICARE: "MASK"
                 AU_ABN: "MASK"
