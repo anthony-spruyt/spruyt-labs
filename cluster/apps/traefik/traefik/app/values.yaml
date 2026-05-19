@@ -61,18 +61,13 @@ experimental:
       type: localPath
       volumeName: traefik-api-key-auth-plugin
 env:
-  - name: VM_MCP_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: traefik-mcp-api-keys
-        key: VM_MCP_API_KEY
-  - name: BRAVE_SEARCH_MCP_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: traefik-mcp-api-keys
-        key: BRAVE_SEARCH_MCP_API_KEY
   - name: AGENTMEMORY_API_KEY
     valueFrom:
       secretKeyRef:
-        name: traefik-mcp-api-keys
+        name: traefik-api-keys
         key: AGENTMEMORY_API_KEY
+  - name: OTEL_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: traefik-api-keys
+        key: OTEL_API_KEY

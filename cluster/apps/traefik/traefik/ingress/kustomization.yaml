@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ./agentmemory
   - ./authentik-system
-  - ./brave-search-mcp
   - ./bull-board
   - ./coder-system
   - ./firefly-iii
@@ -21,5 +20,4 @@ resources:
   - ./redisinsight
   - ./rook-ceph
   - ./vaultwarden
-  - ./n8n-mcp
   - ./whoami
