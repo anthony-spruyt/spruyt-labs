@@ -23,14 +23,13 @@
       "versioning": "semver"
     },
     {
-      "description": "Coder uses two-channel releases (mainline/stable); 30-day delay + ignore pre-releases",
+      "description": "Coder: ignore pre-release versions (default versioning delay handles maturity)",
       "matchPackageNames": [
         "coder"
       ],
       "matchDatasources": [
         "helm"
       ],
-      "minimumReleaseAge": "30 days",
       "ignoreUnstable": true
     },
     {
