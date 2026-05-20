@@ -179,9 +179,7 @@ controllers:
           tag: "24-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
           pullPolicy: IfNotPresent
         command:
-          - sh
-          - -c
-          - npx --yes @agentmemory/agentmemory@0.9.12 --no-engine
+          - /usr/local/bin/worker-entrypoint.sh
         env:
           - name: ANTHROPIC_API_KEY
             valueFrom:
@@ -296,6 +294,16 @@ persistence:
       agentmemory:
         worker:
           - path: /tmp
+  worker-script:
+    type: configMap
+    name: agentmemory-scripts
+    defaultMode: 0755
+    advancedMounts:
+      agentmemory:
+        worker:
+          - path: /usr/local/bin/worker-entrypoint.sh
+            subPath: worker-entrypoint.sh
+            readOnly: true
   console-home:
     type: emptyDir
     advancedMounts:
