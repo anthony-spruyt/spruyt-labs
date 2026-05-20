@@ -512,6 +512,9 @@ misconfigurations:
   - id: AVD-KSV-0125
     paths:
       - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/agentmemory/agentmemory/app/evict-cronjob.yaml
 
   # ==============================================================================
   # Coder Workspaces - privileged pods for rootful podman inside Kata VM.
