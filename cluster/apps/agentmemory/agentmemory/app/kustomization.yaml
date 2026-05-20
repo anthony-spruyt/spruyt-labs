@@ -15,9 +15,5 @@ configMapGenerator:
     namespace: agentmemory
     files:
       - values.yaml
-  - name: agentmemory-scripts
-    namespace: agentmemory
-    files:
-      - worker-entrypoint.sh
 configurations:
   - ./kustomizeconfig.yaml
