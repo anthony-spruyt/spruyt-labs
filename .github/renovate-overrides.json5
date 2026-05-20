@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": "Add version to n8n group branch name (missing groupBranchTopic in shared config)",
+      "description": "Add version to n8n group branch name",
       "matchPackageNames": [
         "n8nio/**"
       ],
@@ -10,7 +10,7 @@
         "docker"
       ],
       "groupName": "n8n",
-      "groupBranchTopic": "{{{groupName}}}-{{{newVersion}}}"
+      "branchTopic": "{{{groupName}}}-{{{newVersion}}}"
     },
     {
       "description": "Disable kubernetes manager for runner sidecar (version managed via kustomize images transformer)",
