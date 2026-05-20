@@ -191,7 +191,7 @@ controllers:
           - name: OPENAI_BASE_URL
             value: "http://litellm.litellm.svc.cluster.local:4000"
           - name: OPENAI_MODEL
-            value: "qwen3.6-plus"
+            value: "deepseek-v3.2"
           - name: EMBEDDING_PROVIDER
             value: "openai"
           - name: AGENTMEMORY_TOOLS
