@@ -13,14 +13,25 @@
       "enabled": false
     },
     {
-      "description": "Coder uses two-channel releases (mainline/stable); 30-day delay avoids adopting unproven mainline versions",
+      "description": "Use semver for n8n docker images to ignore pre-release tags (beta, nightly, etc)",
+      "matchPackageNames": [
+        "n8nio/**"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "versioning": "semver"
+    },
+    {
+      "description": "Coder uses two-channel releases (mainline/stable); 30-day delay + ignore pre-releases",
       "matchPackageNames": [
         "coder"
       ],
       "matchDatasources": [
         "helm"
       ],
-      "minimumReleaseAge": "30 days"
+      "minimumReleaseAge": "30 days",
+      "ignoreUnstable": true
     },
     {
       "description": "Disable dockerfile manager for golang (ARG interpolation breaks updates; custom.regex manager handles these via annotations)",
