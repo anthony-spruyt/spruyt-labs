@@ -183,20 +183,20 @@ controllers:
           - -c
           - npx --yes @agentmemory/agentmemory@0.9.12 --no-engine
         env:
-          - name: OPENROUTER_API_KEY
+          - name: ANTHROPIC_API_KEY
             valueFrom:
               secretKeyRef:
                 name: agentmemory-secrets
                 key: LITELLM_API_KEY
+          - name: ANTHROPIC_BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000"
+          - name: ANTHROPIC_MODEL
+            value: "deepseek-v3.2"
           - name: OPENAI_API_KEY
             valueFrom:
               secretKeyRef:
                 name: agentmemory-secrets
                 key: LITELLM_API_KEY
-          - name: OPENAI_BASE_URL
-            value: "http://litellm.litellm.svc.cluster.local:4000"
-          - name: OPENAI_MODEL
-            value: "deepseek/deepseek-v4-flash:free"
           - name: EMBEDDING_PROVIDER
             value: "openai"
           - name: OPENAI_EMBEDDING_MODEL
