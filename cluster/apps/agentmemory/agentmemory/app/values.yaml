@@ -183,7 +183,7 @@ controllers:
           - -c
           - npx --yes @agentmemory/agentmemory@0.9.12 --no-engine
         env:
-          - name: OPENAI_API_KEY
+          - name: OPENROUTER_API_KEY
             valueFrom:
               secretKeyRef:
                 name: agentmemory-secrets
