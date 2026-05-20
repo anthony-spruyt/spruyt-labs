@@ -51,10 +51,7 @@ spec:
                   fi
               env:
                 - name: AGENTMEMORY_SECRET
-                  valueFrom:
-                    secretKeyRef:
-                      name: agentmemory-secrets
-                      key: AGENTMEMORY_SECRET
+                  value: unused-cluster-internal
               resources:
                 limits:
                   cpu: 100m
