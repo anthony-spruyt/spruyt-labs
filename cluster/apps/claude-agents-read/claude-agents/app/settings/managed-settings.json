@@ -1,13 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "enableAllProjectMcpServers": false,
-  "allowedMcpServers": [
-    { "serverName": "agentmemory" },
-    { "serverCommand": ["npx", "-y", "@agentmemory/mcp"] },
-    { "serverName": "agentplatform" },
-    { "serverName": "bravesearch" },
-    { "serverName": "context7" }
-  ],
   "permissions": {
     "deny": [
     ]
