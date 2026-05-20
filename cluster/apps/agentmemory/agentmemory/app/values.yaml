@@ -316,18 +316,6 @@ persistence:
       agentmemory:
         worker:
           - path: /home/node
-configMaps:
-  agentmemory-scripts:
-    # renovate: datasource=npm depName=@agentmemory/agentmemory
-    version: "0.9.12"
-    data:
-      worker-entrypoint.sh: |
-        #!/bin/bash
-        set -euo pipefail
-
-        VERSION="0.9.12"
-
-        npx --yes "@agentmemory/agentmemory@${VERSION}" --no-engine
 service:
   app:
     controller: agentmemory
