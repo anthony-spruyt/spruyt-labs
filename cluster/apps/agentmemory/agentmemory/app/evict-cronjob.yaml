@@ -29,7 +29,7 @@ spec:
           containers:
             - name: evict
               # renovate: datasource=docker depName=curlimages/curl
-              image: docker.io/curlimages/curl:8.17.1
+              image: docker.io/curlimages/curl:8.17.0
               command:
                 - /bin/sh
                 - -c
