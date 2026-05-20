@@ -1,51 +1,14 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/serviceaccount.json
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: agentmemory-restart
-  namespace: agentmemory
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/role-rbac-v1.json
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: agentmemory-restart
-  namespace: agentmemory
-rules:
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-    verbs:
-      - get
-      - list
-      - watch
-      - patch
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/rolebinding-rbac-v1.json
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: agentmemory-restart
-  namespace: agentmemory
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: agentmemory-restart
-subjects:
-  - kind: ServiceAccount
-    name: agentmemory-restart
-    namespace: agentmemory
----
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/cronjob-batch-v1.json
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: agentmemory-restart
+  name: agentmemory-evict
   namespace: agentmemory
+  labels:
+    app.kubernetes.io/name: agentmemory-evict
 spec:
-  schedule: "0 4,16 * * *"
+  schedule: "0 */6 * * *"
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
   concurrencyPolicy: Forbid
@@ -55,24 +18,43 @@ spec:
       template:
         metadata:
           labels:
-            app.kubernetes.io/name: agentmemory-restart
+            app.kubernetes.io/name: agentmemory-evict
         spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 10001
             runAsGroup: 10001
-          serviceAccountName: agentmemory-restart
+          automountServiceAccountToken: false
           restartPolicy: OnFailure
           containers:
-            - name: restart
-              # renovate: datasource=docker depName=alpine/k8s
-              image: alpine/k8s:1.36.1@sha256:692239d739589247c4a791205ed9619c28ae85a21286e19a6211c04a62c56668
+            - name: evict
+              # renovate: datasource=docker depName=curlimages/curl
+              image: docker.io/curlimages/curl:8.17.1@sha256:8f0e251794ff61a2c29e715093c2b4433f86046f607895c01092a46564919d90
               command:
                 - /bin/sh
                 - -c
                 - |
-                  kubectl rollout restart deployment/agentmemory -n agentmemory && \
-                  kubectl rollout status deployment/agentmemory -n agentmemory --timeout=90s
+                  RESULT=$(curl -sf -X POST http://agentmemory.agentmemory.svc.cluster.local:3111/agentmemory/evict \
+                    -H "Authorization: Bearer ${AGENTMEMORY_SECRET}" \
+                    -H "Content-Type: application/json" \
+                    -d '{"dryRun": true}')
+                  echo "Dry run result: ${RESULT}"
+                  EVICT_COUNT=$(echo "${RESULT}" | grep -o '"wouldEvict":[0-9]*' | grep -o '[0-9]*')
+                  if [ "${EVICT_COUNT:-0}" -gt 0 ]; then
+                    echo "Evicting ${EVICT_COUNT} memories..."
+                    curl -sf -X POST http://agentmemory.agentmemory.svc.cluster.local:3111/agentmemory/evict \
+                      -H "Authorization: Bearer ${AGENTMEMORY_SECRET}" \
+                      -H "Content-Type: application/json" \
+                      -d '{}'
+                  else
+                    echo "No memories to evict."
+                  fi
+              env:
+                - name: AGENTMEMORY_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: agentmemory-secrets
+                      key: AGENTMEMORY_SECRET
               resources:
                 limits:
                   cpu: 100m

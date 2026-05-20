@@ -36,7 +36,7 @@ controllers:
             cpu: 10m
             memory: 256Mi
           limits:
-            memory: 1536Mi
+            memory: 2048Mi
         probes:
           liveness:
             enabled: true
@@ -197,9 +197,11 @@ controllers:
           - name: AGENTMEMORY_TOOLS
             value: "core"
           - name: AGENTMEMORY_AUTO_COMPRESS
-            value: "false"
+            value: "true"
+          - name: TOKEN_BUDGET
+            value: "2000"
           - name: GRAPH_EXTRACTION_ENABLED
-            value: "false"
+            value: "true"
           - name: CONSOLIDATION_ENABLED
             value: "true"
           - name: III_ENGINE_URL
