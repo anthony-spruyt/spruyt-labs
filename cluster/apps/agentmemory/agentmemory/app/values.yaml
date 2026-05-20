@@ -194,6 +194,8 @@ controllers:
             value: "deepseek/deepseek-v4-flash:free"
           - name: EMBEDDING_PROVIDER
             value: "openai"
+          - name: OPENAI_EMBEDDING_MODEL
+            value: "text-embedding-3-small"
           - name: AGENTMEMORY_TOOLS
             value: "core"
           - name: AGENTMEMORY_AUTO_COMPRESS
