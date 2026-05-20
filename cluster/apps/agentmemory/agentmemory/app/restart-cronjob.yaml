@@ -29,21 +29,21 @@ spec:
           containers:
             - name: evict
               # renovate: datasource=docker depName=curlimages/curl
-              image: docker.io/curlimages/curl:8.17.1@sha256:8f0e251794ff61a2c29e715093c2b4433f86046f607895c01092a46564919d90
+              image: docker.io/curlimages/curl:8.17.1
               command:
                 - /bin/sh
                 - -c
                 - |
                   RESULT=$(curl -sf -X POST http://agentmemory.agentmemory.svc.cluster.local:3111/agentmemory/evict \
-                    -H "Authorization: Bearer ${AGENTMEMORY_SECRET}" \
+                    -H "Authorization: Bearer $${AGENTMEMORY_SECRET}" \
                     -H "Content-Type: application/json" \
                     -d '{"dryRun": true}')
-                  echo "Dry run result: ${RESULT}"
-                  EVICT_COUNT=$(echo "${RESULT}" | grep -o '"wouldEvict":[0-9]*' | grep -o '[0-9]*')
-                  if [ "${EVICT_COUNT:-0}" -gt 0 ]; then
-                    echo "Evicting ${EVICT_COUNT} memories..."
+                  echo "Dry run result: $${RESULT}"
+                  EVICT_COUNT=$$(echo "$${RESULT}" | grep -o '"wouldEvict":[0-9]*' | grep -o '[0-9]*')
+                  if [ "$${EVICT_COUNT:-0}" -gt 0 ]; then
+                    echo "Evicting $${EVICT_COUNT} memories..."
                     curl -sf -X POST http://agentmemory.agentmemory.svc.cluster.local:3111/agentmemory/evict \
-                      -H "Authorization: Bearer ${AGENTMEMORY_SECRET}" \
+                      -H "Authorization: Bearer $${AGENTMEMORY_SECRET}" \
                       -H "Content-Type: application/json" \
                       -d '{}'
                   else
