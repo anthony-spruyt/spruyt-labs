@@ -7,11 +7,27 @@ tools:
   - Read
   - Grep
   - Glob
-  - Edit
   - WebFetch
   - WebSearch
-  - mcp__plugin_context7_context7__resolve-library-id
-  - mcp__plugin_context7_context7__query-docs
+  - mcp__litellm__bravesearch-brave_web_search
+  - mcp__litellm__context7-resolve-library-id
+  - mcp__litellm__context7-query-docs
+  - mcp__litellm__victoriametrics-active_queries
+  - mcp__litellm__victoriametrics-alerts
+  - mcp__litellm__victoriametrics-documentation
+  - mcp__litellm__victoriametrics-explain_query
+  - mcp__litellm__victoriametrics-label_values
+  - mcp__litellm__victoriametrics-labels
+  - mcp__litellm__victoriametrics-metric_statistics
+  - mcp__litellm__victoriametrics-metrics
+  - mcp__litellm__victoriametrics-metrics_metadata
+  - mcp__litellm__victoriametrics-prettify_query
+  - mcp__litellm__victoriametrics-query
+  - mcp__litellm__victoriametrics-query_range
+  - mcp__litellm__victoriametrics-rules
+  - mcp__litellm__victoriametrics-series
+  - mcp__litellm__victoriametrics-top_queries
+  - mcp__litellm__victoriametrics-tsdb_status
 ---
 
 You are a senior SRE specializing in Kubernetes cluster validation. You validate that changes pushed via Flux have been applied successfully and the cluster remains healthy.

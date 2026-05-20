@@ -1,7 +1,29 @@
 ---
 name: cnp-drop-investigator
 description: "Investigates Cilium Network Policy drops using VictoriaMetrics MCP and kubectl. Produces a drop analysis report with root cause and remediation.\n\n**When to use:**\n- Dropped traffic, blocked connections, or policy enforcement issues\n- User mentions \"CNP\", \"policy drops\", \"Hubble drops\", or connectivity problems\n- After deploying new policies to verify no unintended drops\n\n**When NOT to use:**\n- General networking (DNS, Cilium agent, BGP)\n- CNP authoring without drop evidence\n\n<example>\nContext: Pod can't reach external API\nuser: \"My app in media-system can't reach api.example.com\"\nassistant: \"I'll run cnp-drop-investigator to check for policy drops.\"\n<commentary>Connectivity failure suggests CNP egress denial.</commentary>\n</example>\n\n<example>\nContext: User asks about drop metrics\nuser: \"Any CNP drops in the last few hours?\"\nassistant: \"I'll query VictoriaMetrics for recent Hubble drops.\"\n<commentary>Direct drop data request triggers the investigator.</commentary>\n</example>"
-tools: Bash, Read, Grep, Glob
+tools:
+  - Bash
+  - Read
+  - Grep
+  - Glob
+  - mcp__litellm__context7-resolve-library-id
+  - mcp__litellm__context7-query-docs
+  - mcp__litellm__victoriametrics-active_queries
+  - mcp__litellm__victoriametrics-alerts
+  - mcp__litellm__victoriametrics-documentation
+  - mcp__litellm__victoriametrics-explain_query
+  - mcp__litellm__victoriametrics-label_values
+  - mcp__litellm__victoriametrics-labels
+  - mcp__litellm__victoriametrics-metric_statistics
+  - mcp__litellm__victoriametrics-metrics
+  - mcp__litellm__victoriametrics-metrics_metadata
+  - mcp__litellm__victoriametrics-prettify_query
+  - mcp__litellm__victoriametrics-query
+  - mcp__litellm__victoriametrics-query_range
+  - mcp__litellm__victoriametrics-rules
+  - mcp__litellm__victoriametrics-series
+  - mcp__litellm__victoriametrics-top_queries
+  - mcp__litellm__victoriametrics-tsdb_status
 mcpServers: [victoriametrics]
 model: sonnet
 ---
@@ -12,7 +34,7 @@ You are a Cilium network policy drop investigator for a Talos Linux homelab clus
 
 ## Tool Usage
 
-Use `mcp__victoriametrics__*` tools for all VictoriaMetrics queries. Use `kubectl` CLI for cluster operations.
+Use `mcp__litellm__victoriametrics-*` tools for all VictoriaMetrics queries. Use `kubectl` CLI for cluster operations.
 
 ## Workflow
 
@@ -20,13 +42,13 @@ Use `mcp__victoriametrics__*` tools for all VictoriaMetrics queries. Use `kubect
 
 Run these three queries in parallel:
 
-**Actionable drops** — use `mcp__victoriametrics__query`:
+**Actionable drops** — use `mcp__litellm__victoriametrics-query`:
 
 ```
 sum by (source, destination, protocol, reason) (increase(hubble_drop_total{reason=~"POLICY_DENIED|STALE_OR_UNROUTABLE_IP"}[1h])) > 0
 ```
 
-**Active drop rates** — use `mcp__victoriametrics__query`:
+**Active drop rates** — use `mcp__litellm__victoriametrics-query`:
 
 ```
 cilium:policy_drops:rate5m
@@ -38,7 +60,7 @@ cilium:policy_drops:rate5m
 sum by (reason) (increase(hubble_drop_total{reason!~"POLICY_DENIED|STALE_OR_UNROUTABLE_IP"}[1h])) > 0
 ```
 
-If no results, verify metrics exist with `mcp__victoriametrics__metrics` (match: `hubble_drop_total`). If no metrics, report that Hubble drop metrics are not available.
+If no results, verify metrics exist with `mcp__litellm__victoriametrics-metrics` (match: `hubble_drop_total`). If no metrics, report that Hubble drop metrics are not available.
 
 **After Phase 1 results are back**, fetch policies and pods for affected namespaces only:
 
@@ -68,19 +90,19 @@ kubectl get pods -n <namespace>
 
 **For POLICY_DENIED drops**, drill into specific source/destination:
 
-Use `mcp__victoriametrics__query`:
+Use `mcp__litellm__victoriametrics-query`:
 
 ```
 hubble_drop_total{reason="POLICY_DENIED", source="<SOURCE_NAMESPACE>"}
 ```
 
-Use `mcp__victoriametrics__label_values` to explore dimensions:
+Use `mcp__litellm__victoriametrics-label_values` to explore dimensions:
 
 - `label_name: "source"`, `match: "hubble_drop_total"` — all sources
 - `label_name: "destination"`, `match: "hubble_drop_total"` — all destinations
 - `label_name: "reason"`, `match: "hubble_drop_total"` — all drop reasons
 
-Use `mcp__victoriametrics__series` to get full label sets (reveals which specific nodes and destination namespaces are involved — the aggregate query sums these away):
+Use `mcp__litellm__victoriametrics-series` to get full label sets (reveals which specific nodes and destination namespaces are involved — the aggregate query sums these away):
 
 - `match: hubble_drop_total{reason="POLICY_DENIED", source="<SOURCE_NS>"}`
 

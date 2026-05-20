@@ -1,17 +1,10 @@
 {
   "mcpServers": {
-    "bravesearch": {
+    "litellm": {
       "type": "http",
-      "url": "https://litellm.${EXTERNAL_DOMAIN}/bravesearch/mcp",
+      "url": "https://litellm.${EXTERNAL_DOMAIN}/mcp",
       "headers": {
-        "Authorization": "Bearer ${ANTHROPIC_AUTH_TOKEN}"
-      }
-    },
-    "context7": {
-      "type": "http",
-      "url": "https://litellm.${EXTERNAL_DOMAIN}/context7/mcp",
-      "headers": {
-        "Authorization": "Bearer ${ANTHROPIC_AUTH_TOKEN}"
+        "x-litellm-api-key": "Bearer ${ANTHROPIC_AUTH_TOKEN}"
       }
     },
     "cclsp": {
@@ -19,20 +12,6 @@
       "command": "cclsp",
       "env": {
         "CCLSP_CONFIG_PATH": "/workspaces/spruyt-labs/.claude/cclsp.json"
-      }
-    },
-    "n8n": {
-      "type": "http",
-      "url": "https://litellm.${EXTERNAL_DOMAIN}/n8n/mcp",
-      "headers": {
-        "Authorization": "Bearer ${ANTHROPIC_AUTH_TOKEN}"
-      }
-    },
-    "victoriametrics": {
-      "type": "http",
-      "url": "https://litellm.${EXTERNAL_DOMAIN}/victoriametrics/mcp",
-      "headers": {
-        "Authorization": "Bearer ${ANTHROPIC_AUTH_TOKEN}"
       }
     }
   }

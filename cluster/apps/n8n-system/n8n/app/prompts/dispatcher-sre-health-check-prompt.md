@@ -22,7 +22,7 @@ Detect silent GitOps failures Alertmanager won't catch:
 ### A. Recent Alert History
 
 ```text
-mcp__victoriametrics__query_range(query="ALERTS{alertstate=\"firing\", alertname!~\"Watchdog|InfoInhibitor\"}", start="-2h", step="60s")
+mcp__litellm__victoriametrics-query_range(query="ALERTS{alertstate=\"firing\", alertname!~\"Watchdog|InfoInhibitor\"}", start="-2h", step="60s")
 ```
 
 - **Storm** — 5+ distinct alertnames within 30 min = common root cause

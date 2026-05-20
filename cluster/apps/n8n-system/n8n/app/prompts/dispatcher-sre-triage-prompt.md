@@ -12,7 +12,7 @@ Investigate and report only. Do not attempt fixes, restarts, or any mutating act
 ### A. Recent Alert History
 
 ```text
-mcp__victoriametrics__query_range(query="ALERTS{alertstate=\"firing\", alertname!~\"Watchdog|InfoInhibitor\"}", start="-2h", step="60s")
+mcp__litellm__victoriametrics-query_range(query="ALERTS{alertstate=\"firing\", alertname!~\"Watchdog|InfoInhibitor\"}", start="-2h", step="60s")
 ```
 
 - **Storm** — 5+ distinct alertnames within 30 min = common root cause. Lead with correlation finding.
@@ -52,7 +52,7 @@ Maintenance typically causes: Node NotReady, pod evictions, etcd elections, sche
 
 ## Steps 1-7 — Investigation
 
-Use at least one `kubectl` AND one `mcp__victoriametrics__*` call per triage. Multi-alert payloads: investigate each resource. Breadth over depth.
+Use at least one `kubectl` AND one `mcp__litellm__victoriametrics-*` call per triage. Multi-alert payloads: investigate each resource. Breadth over depth.
 
 1. **Identify** — alertname, namespace, affected resource from labels
 2. **Workload state** — pods, replicas, restarts
