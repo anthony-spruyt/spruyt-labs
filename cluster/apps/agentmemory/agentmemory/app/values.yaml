@@ -318,8 +318,9 @@ persistence:
           - path: /home/node
 configMaps:
   agentmemory-scripts:
+    # renovate: datasource=npm depName=@agentmemory/agentmemory
+    version: "0.9.12"
     data:
-      # renovate: datasource=npm depName=@agentmemory/agentmemory
       worker-entrypoint.sh: |
         #!/bin/bash
         set -euo pipefail
