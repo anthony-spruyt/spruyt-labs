@@ -296,7 +296,7 @@ persistence:
           - path: /tmp
   worker-script:
     type: configMap
-    name: agentmemory-scripts
+    identifier: agentmemory-scripts
     defaultMode: 0755
     advancedMounts:
       agentmemory:
@@ -316,6 +316,17 @@ persistence:
       agentmemory:
         worker:
           - path: /home/node
+configMaps:
+  agentmemory-scripts:
+    data:
+      # renovate: datasource=npm depName=@agentmemory/agentmemory
+      worker-entrypoint.sh: |
+        #!/bin/bash
+        set -euo pipefail
+
+        VERSION="0.9.12"
+
+        npx --yes "@agentmemory/agentmemory@${VERSION}" --no-engine
 service:
   app:
     controller: agentmemory
