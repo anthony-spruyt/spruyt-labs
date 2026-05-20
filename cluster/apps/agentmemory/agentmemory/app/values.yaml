@@ -197,6 +197,8 @@ controllers:
               secretKeyRef:
                 name: agentmemory-secrets
                 key: LITELLM_API_KEY
+          - name: OPENAI_BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000"
           - name: EMBEDDING_PROVIDER
             value: "openai"
           - name: OPENAI_EMBEDDING_MODEL
