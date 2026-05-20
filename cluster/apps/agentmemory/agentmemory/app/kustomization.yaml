@@ -8,7 +8,7 @@ resources:
   - ./iii-config.yaml
   - ./release.yaml
   - ./network-policies.yaml
-  - ./restart-cronjob.yaml
+  - ./evict-cronjob.yaml
   - ./vpa.yaml
 configMapGenerator:
   - name: agentmemory-values
