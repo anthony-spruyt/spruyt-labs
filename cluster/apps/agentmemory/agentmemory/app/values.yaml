@@ -184,10 +184,11 @@ controllers:
           - name: AGENTMEMORY_AUTO_COMPRESS
             value: "true"
           - name: AGENTMEMORY_INJECT_CONTEXT
-            value: "true"
+            # value: "true"
+            value: "false"
           - name: AGENTMEMORY_TOOLS
-            value: "all"
-            # value: "core"
+            # value: "all"
+            value: "core"
           - name: CONSOLIDATION_ENABLED
             value: "true"
           - name: DO_NOT_TRACK
