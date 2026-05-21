@@ -109,12 +109,18 @@ describe("Processor.process", () => {
     );
   });
 
-  it("does not start timers when health gate throws DelayedError", async () => {
+  it("starts lock extender before health gate check", async () => {
     vi.useFakeTimers();
     const job = createMockJob();
+    // start with clean extendLock mock — reset counters from any prior test interaction
+    job.extendLock = vi.fn().mockResolvedValue(undefined);
     vi.mocked(healthGate.check).mockRejectedValueOnce(new DelayedError());
 
     await expect(processor.process(job as any)).rejects.toThrow(DelayedError);
+
+    // extendLock should not have fired — setInterval was registered then cleared in finally
+    // before any fake time elapsed.
+    expect(job.extendLock).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(35_000);
     expect(job.extendLock).not.toHaveBeenCalled();

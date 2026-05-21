@@ -1,5 +1,4 @@
 import type { Worker, Job } from "bullmq";
-import { DelayedError } from "bullmq";
 import type { Config } from "./config.js";
 import type { AgentJob } from "./job/schema.js";
 import { logger } from "./logger.js";
@@ -25,11 +24,14 @@ interface DepStatus {
   litellm: boolean;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class HealthGate {
   private worker: Worker | undefined;
-  private recoveryInProgress = false;
-  private recoveryInterval: NodeJS.Timeout | undefined;
-  private pollInFlight = false;
+  private _paused = false;
+  private pauseCount = 0;
 
   constructor(private config: Config) {}
 
@@ -49,14 +51,9 @@ export class HealthGate {
       n8n: status.n8n,
       litellm: status.litellm,
     });
-    if (!job.token) {
-      throw new Error(`Job ${job.id} missing token during health gate delay`);
-    }
-    await job.moveToDelayed(
-      Date.now() + this.config.HEALTH_POLL_INTERVAL_MS,
-      job.token
-    );
+    this.pauseCount++;
     await this.worker.pause();
+    this._paused = true;
     metrics.healthPauses.inc({
       reason:
         !status.n8n && !status.litellm
@@ -66,25 +63,42 @@ export class HealthGate {
             : "litellm",
     });
 
-    if (!this.recoveryInProgress) {
-      this.recoveryInProgress = true;
-      this.startRecoveryPoll();
+    // Wait in-process for deps to recover. Lock extension in processor.ts
+    // keeps the BullMQ lock alive during the wait, so the job won't stall.
+    const deadline = Date.now() + this.config.HEALTH_MAX_PAUSE_MS;
+    while (Date.now() < deadline) {
+      await sleep(this.config.HEALTH_POLL_INTERVAL_MS);
+      if ((await this.areDepsHealthy()).healthy) {
+        logger.info("Dependencies recovered, resuming worker");
+        this.resumeWorker();
+        return;
+      }
     }
 
-    throw new DelayedError();
+    logger.warn("Health pause exceeded max duration, resuming worker");
+    this.resumeWorker();
   }
 
   get paused(): boolean {
-    return this.recoveryInProgress;
+    return this._paused;
   }
 
   clear(): void {
-    if (this.recoveryInterval) {
-      clearInterval(this.recoveryInterval);
-      this.recoveryInterval = undefined;
+    this._paused = false;
+    this.pauseCount = 0;
+  }
+
+  private resumeWorker(): void {
+    this.pauseCount--;
+    if (this.pauseCount > 0) return; // other check() calls still waiting
+    this._paused = false;
+    try {
+      if (this.worker && !this.worker.closing) {
+        this.worker.resume();
+      }
+    } catch (err) {
+      logger.error("Failed to resume worker", { error: String(err) });
     }
-    this.recoveryInProgress = false;
-    this.pollInFlight = false;
   }
 
   private async areDepsHealthy(): Promise<DepStatus> {
@@ -99,40 +113,5 @@ export class HealthGate {
       ),
     ]);
     return { healthy: n8n && litellm, n8n, litellm };
-  }
-
-  private startRecoveryPoll(): void {
-    const started = Date.now();
-
-    const interval = setInterval(async () => {
-      if (this.pollInFlight) return;
-      this.pollInFlight = true;
-      try {
-        if (!this.recoveryInProgress) return;
-
-        if (Date.now() - started > this.config.HEALTH_MAX_PAUSE_MS) {
-          this.clear();
-          if (this.worker && !this.worker.closing) {
-            this.worker.resume();
-          }
-          logger.warn("Health pause exceeded max duration, resuming worker");
-          return;
-        }
-
-        if ((await this.areDepsHealthy()).healthy) {
-          this.clear();
-          if (this.worker && !this.worker.closing) {
-            this.worker.resume();
-          }
-          logger.info("Dependencies recovered, worker resumed");
-        }
-      } catch (err) {
-        logger.warn("Recovery poll error", { error: String(err) });
-      } finally {
-        this.pollInFlight = false;
-      }
-    }, this.config.HEALTH_POLL_INTERVAL_MS);
-    interval.unref();
-    this.recoveryInterval = interval;
   }
 }

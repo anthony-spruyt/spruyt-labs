@@ -64,6 +64,7 @@ export class Processor {
     }
 
     let cancelled = false;
+    let lockExtender: ReturnType<typeof setInterval> | undefined;
     try {
       const cached = await this.redis.get(
         `agent:result:${job.id}:${job.attemptsMade}`
@@ -94,6 +95,27 @@ export class Processor {
         }
       }
 
+      // Extend BullMQ lock every 30s to prevent stalled-job false positives
+      // during long async callback waits (lockDuration=120s, jobs run up to 60min)
+      // Must start before healthGate.check() — the health gate may wait for hours
+      // while deps recover, and the lock must stay alive throughout.
+      lockExtender = setInterval(async () => {
+        try {
+          if (!job.token) {
+            logger.warn("Job token missing, skipping lock extension", {
+              jobId: job.id,
+            });
+            return;
+          }
+          await job.extendLock(job.token, 120_000);
+        } catch (err) {
+          logger.warn("Failed to extend job lock", {
+            jobId: job.id,
+            error: String(err),
+          });
+        }
+      }, 30_000);
+
       if (needsDispatch) {
         await this.healthGate.check(job);
       }
@@ -113,24 +135,6 @@ export class Processor {
         timeout,
         `Job ${job.id} timed out after ${timeout}ms`
       );
-      // Extend BullMQ lock every 30s to prevent stalled-job false positives
-      // during long async callback waits (lockDuration=120s, jobs run up to 60min)
-      const lockExtender = setInterval(async () => {
-        try {
-          if (!job.token) {
-            logger.warn("Job token missing, skipping lock extension", {
-              jobId: job.id,
-            });
-            return;
-          }
-          await job.extendLock(job.token, 120_000);
-        } catch (err) {
-          logger.warn("Failed to extend job lock", {
-            jobId: job.id,
-            error: String(err),
-          });
-        }
-      }, 30_000);
 
       try {
         const result = await Promise.race([
@@ -174,7 +178,7 @@ export class Processor {
         logger.error("Job failed", { ...fields, error: String(err) });
         throw err;
       } finally {
-        clearInterval(lockExtender);
+        if (lockExtender) clearInterval(lockExtender);
         deadline.clear();
         timer();
         const resolver = this.callbacks.get(job.id!);
@@ -182,6 +186,7 @@ export class Processor {
         this.callbacks.delete(job.id!);
       }
     } finally {
+      if (lockExtender) clearInterval(lockExtender);
       if (cancelled) {
         await this.redis.del(`agent:active:${job.id}`);
       } else {
