@@ -65,8 +65,7 @@ export class HealthGate {
 
     // Wait in-process for deps to recover. Lock extension in processor.ts
     // keeps the BullMQ lock alive during the wait, so the job won't stall.
-    const deadline = Date.now() + this.config.HEALTH_MAX_PAUSE_MS;
-    while (Date.now() < deadline) {
+    while (true) {
       await sleep(this.config.HEALTH_POLL_INTERVAL_MS);
       if ((await this.areDepsHealthy()).healthy) {
         logger.info("Dependencies recovered, resuming worker");
@@ -74,9 +73,6 @@ export class HealthGate {
         return;
       }
     }
-
-    logger.warn("Health pause exceeded max duration, resuming worker");
-    this.resumeWorker();
   }
 
   get paused(): boolean {

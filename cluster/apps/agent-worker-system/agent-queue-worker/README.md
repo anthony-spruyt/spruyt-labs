@@ -44,9 +44,8 @@ Before job dispatch, worker checks n8n and LiteLLM health endpoints. If either i
 2. Current job remains active — lock extender keeps its BullMQ lock alive
 3. Worker polls health at `HEALTH_POLL_INTERVAL_MS` intervals
 4. When both recover, worker resumes automatically
-5. If `HEALTH_MAX_PAUSE_MS` exceeded, worker resumes regardless of health
 
-The lock extender runs before the health check so the job won't stall while waiting for deps to recover.
+No timeout — waits indefinitely until deps recover. The lock extender runs before the health check so the job won't stall while waiting.
 
 ### Pod Deadline Enforcement
 

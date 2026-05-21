@@ -5,7 +5,6 @@ import { HealthGate } from "./health.js";
 const baseConfig = {
   HEALTH_CHECK_TIMEOUT_MS: 2000,
   HEALTH_POLL_INTERVAL_MS: 100,
-  HEALTH_MAX_PAUSE_MS: 500,
   N8N_HEALTH_URL: "http://n8n.test/healthz/readiness",
   LITELLM_HEALTH_URL: "http://litellm.test/health/readiness",
 } as Config;
@@ -76,26 +75,6 @@ describe("HealthGate", () => {
     expect(worker.resume).toHaveBeenCalledOnce();
   });
 
-  it("resumes worker after max pause duration exceeded", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new Error("permanently down"))
-    );
-    const { gate, worker } = createGate();
-    const job = createMockJob();
-
-    const checkPromise = gate.check(job as any);
-
-    await vi.advanceTimersByTimeAsync(
-      baseConfig.HEALTH_MAX_PAUSE_MS + baseConfig.HEALTH_POLL_INTERVAL_MS + 10
-    );
-
-    await checkPromise;
-
-    expect(worker.pause).toHaveBeenCalledOnce();
-    expect(worker.resume).toHaveBeenCalledOnce();
-  });
-
   it("skips resume when worker is closing on recovery", async () => {
     let callCount = 0;
     vi.stubGlobal(
@@ -114,26 +93,6 @@ describe("HealthGate", () => {
 
     await vi.advanceTimersByTimeAsync(baseConfig.HEALTH_POLL_INTERVAL_MS);
     await vi.advanceTimersByTimeAsync(baseConfig.HEALTH_POLL_INTERVAL_MS);
-
-    await checkPromise;
-
-    expect(worker.resume).not.toHaveBeenCalled();
-  });
-
-  it("skips resume when worker is closing on max pause exceeded", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new Error("permanently down"))
-    );
-    const { gate, worker } = createGate();
-    const job = createMockJob();
-
-    const checkPromise = gate.check(job as any);
-    worker.closing = true;
-
-    await vi.advanceTimersByTimeAsync(
-      baseConfig.HEALTH_MAX_PAUSE_MS + baseConfig.HEALTH_POLL_INTERVAL_MS + 10
-    );
 
     await checkPromise;
 
@@ -160,7 +119,10 @@ describe("HealthGate", () => {
 
     expect(gate.paused).toBe(true);
 
-    await vi.advanceTimersByTimeAsync(baseConfig.HEALTH_MAX_PAUSE_MS + 10);
+    // Now make it recover
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
+    await vi.advanceTimersByTimeAsync(baseConfig.HEALTH_POLL_INTERVAL_MS);
+
     await checkPromise;
 
     expect(gate.paused).toBe(false);
@@ -183,9 +145,9 @@ describe("HealthGate", () => {
     gate.clear();
     expect(gate.paused).toBe(false);
 
-    await vi.advanceTimersByTimeAsync(
-      baseConfig.HEALTH_MAX_PAUSE_MS + baseConfig.HEALTH_POLL_INTERVAL_MS + 10
-    );
+    // Still in loop — make it recover so promise resolves
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
+    await vi.advanceTimersByTimeAsync(baseConfig.HEALTH_POLL_INTERVAL_MS);
     await checkPromise;
   });
 
