@@ -60,6 +60,10 @@ func (m *mockKube) GetDeploymentReplicas(ctx context.Context, ns, name string) (
   return 1, nil
 }
 
+func (m *mockKube) GetCNPGReadyInstances(ctx context.Context, ns, name string) (int, error) {
+  return 0, nil
+}
+
 // mockTalos implements clients.TalosClient.
 type mockTalos struct {
   pingErr error

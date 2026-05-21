@@ -14,6 +14,7 @@ func validConfig() Config {
     ShutdownDelay:            30 * time.Second,
     UPSRuntimeBudget:         600 * time.Second,
     CNPGPhaseTimeout:         60 * time.Second,
+    CNPGWaitTimeout:          300 * time.Second,
     CephFlagPhaseTimeout:     15 * time.Second,
     CephScalePhaseTimeout:    60 * time.Second,
     CephHealthWaitTimeout:    300 * time.Second,

@@ -156,6 +156,10 @@ func (m *orchestratorMockKube) GetDeploymentReplicas(ctx context.Context, ns, na
   return 1, nil
 }
 
+func (m *orchestratorMockKube) GetCNPGReadyInstances(ctx context.Context, ns, name string) (int, error) {
+  return 0, nil
+}
+
 // orchestratorMockTalos implements clients.TalosClient.
 type orchestratorMockTalos struct {
   mu    sync.Mutex
