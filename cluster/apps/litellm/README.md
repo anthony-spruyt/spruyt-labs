@@ -47,18 +47,16 @@ Blueprint creates:
 - Application: slug `litellm`, redirect URI `/sso/callback`
 - Policy binding: restricts access to `LiteLLM Users` group members
 
-### Model Protocol Configuration
+### Model Management
 
-Claude Code sends requests via the Anthropic Messages API (`/v1/messages`). LiteLLM's Anthropic passthrough (`experimental_pass_through`) cannot properly translate `openai/` prefixed models — requests fail with `Unsupported model` or streaming event order errors.
+Model routing is managed via CNPG DB (`LiteLLM_ProxyModelTable`), not config.yaml. All models are registered via the LiteLLM Admin API (`POST /model/new`) or UI.
 
-**Every Claude alias must have both protocol entries:**
+When adding a new Claude alias, create **two entries** — one for each DashScope protocol endpoint:
 
 | Order | Protocol     | Endpoint                          | Used By                            |
 | ----- | ------------ | --------------------------------- | ---------------------------------- |
-| 1     | `anthropic/` | `/apps/anthropic` (PAYG)          | Claude Code, Anthropic API clients |
-| 2     | `anthropic/` | `/apps/anthropic` (code plan)     | Fallback                           |
-| 3     | `openai/`    | `/compatible-mode/v1` (PAYG)      | LiteLLM UI, OpenAI API clients     |
-| 4     | `openai/`    | `/compatible-mode/v1` (code plan) | Last resort                        |
+| 1     | `anthropic/` | `/apps/anthropic` (code plan)     | Claude Code, Anthropic API clients |
+| 2     | `openai/`    | `/compatible-mode/v1` (code plan) | LiteLLM UI, OpenAI API clients     |
 
 DashScope provides two endpoints per billing tier:
 
@@ -66,6 +64,24 @@ DashScope provides two endpoints per billing tier:
 - **Anthropic-compatible**: `https://<host>/apps/anthropic`
 
 Both code plan (`token-plan.ap-southeast-1.maas.aliyuncs.com`) and PAYG (`dashscope-intl.aliyuncs.com`) expose both protocols.
+
+**Adding models via API:**
+
+```bash
+kubectl exec -n litellm deployment/litellm -- python3 -c "
+import urllib.request, json, os
+key = os.environ.get('LITELLM_MASTER_KEY', '')
+payload = json.dumps({
+    'model_name': 'your-alias',
+    'litellm_params': {'model': 'provider/actual-model', 'api_key': 'os.environ/API_KEY'},
+    'model_info': {'input_cost_per_token': 0.0, 'output_cost_per_token': 0.0}
+}).encode()
+req = urllib.request.Request('http://localhost:4000/model/new', data=payload, headers={
+    'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'
+})
+print(urllib.request.urlopen(req).read().decode()[:100])
+"
+```
 
 ### Known Issues
 
