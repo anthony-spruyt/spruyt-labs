@@ -167,14 +167,34 @@ func (p *NodePhase) shutdownControlPlaneSequentially(ctx context.Context, cpNode
 }
 
 // shutdownNode shuts down a single node with a per-node timeout.
+// Retries once after a 10-second delay if the first attempt fails.
 func (p *NodePhase) shutdownNode(ctx context.Context, node NodeEntry, perNodeTimeout time.Duration) error {
   nodeCtx, cancel := context.WithTimeout(ctx, perNodeTimeout)
   defer cancel()
 
   p.logger.Info("shutting down node", "name", node.Name, "ip", node.IP)
-  if err := p.talos.Shutdown(nodeCtx, node.IP, true); err != nil {
-    p.logger.Error("failed to shut down node", "name", node.Name, "ip", node.IP, "error", err)
-    return fmt.Errorf("node %s (%s): %w", node.Name, node.IP, err)
+  err := p.talos.Shutdown(nodeCtx, node.IP, true)
+  if err == nil {
+    return nil
+  }
+
+  p.logger.Warn("first shutdown attempt failed, retrying after delay",
+    "name", node.Name, "ip", node.IP, "error", err)
+
+  select {
+  case <-ctx.Done():
+    return fmt.Errorf("node %s (%s): context cancelled before retry: %w", node.Name, node.IP, err)
+  case <-time.After(10 * time.Second):
+  }
+
+  retryCtx, retryCancel := context.WithTimeout(ctx, perNodeTimeout)
+  defer retryCancel()
+
+  p.logger.Info("retrying shutdown", "name", node.Name, "ip", node.IP)
+  if retryErr := p.talos.Shutdown(retryCtx, node.IP, true); retryErr != nil {
+    p.logger.Error("retry also failed to shut down node",
+      "name", node.Name, "ip", node.IP, "error", retryErr)
+    return fmt.Errorf("node %s (%s): %w", node.Name, node.IP, retryErr)
   }
   return nil
 }

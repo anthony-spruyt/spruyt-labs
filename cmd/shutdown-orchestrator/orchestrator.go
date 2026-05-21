@@ -76,6 +76,12 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
       return o.cnpg.Hibernate(pctx)
     }); err != nil {
       errs = append(errs, fmt.Errorf("cnpg-hibernate: %w", err))
+    } else {
+      if err := runPhase(ctx, o.logger, "cnpg-wait", o.cfg.CNPGWaitTimeout, func(pctx context.Context) error {
+        return o.cnpg.WaitForHibernation(pctx)
+      }); err != nil {
+        errs = append(errs, fmt.Errorf("cnpg-wait: %w", err))
+      }
     }
 
     if err := runPhase(ctx, o.logger, "ceph-set-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {

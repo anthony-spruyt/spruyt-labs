@@ -137,6 +137,9 @@ func (m *mockCephKubeClient) GetCNPGClusters(ctx context.Context) ([]clients.CNP
 func (m *mockCephKubeClient) SetCNPGHibernation(ctx context.Context, ns, name string, hibernate bool) error {
   return nil
 }
+func (m *mockCephKubeClient) GetCNPGReadyInstances(ctx context.Context, ns, name string) (int, error) {
+  return 0, nil
+}
 func (m *mockCephKubeClient) GetNodes(ctx context.Context) ([]clients.Node, error) {
   return nil, nil
 }

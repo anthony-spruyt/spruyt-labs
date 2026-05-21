@@ -5,6 +5,7 @@ import (
   "errors"
   "fmt"
   "log/slog"
+  "time"
 
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
   apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -51,6 +52,53 @@ func (p *CNPGPhase) Hibernate(ctx context.Context) error {
   }
 
   return errors.Join(errs...)
+}
+
+// WaitForHibernation polls all CNPG clusters until they report 0 ready instances
+// or the context is cancelled. Returns immediately if there are no CNPG clusters.
+func (p *CNPGPhase) WaitForHibernation(ctx context.Context) error {
+  ticker := time.NewTicker(5 * time.Second)
+  defer ticker.Stop()
+
+  for {
+    clusters, err := p.kube.GetCNPGClusters(ctx)
+    if err != nil {
+      if isCRDNotInstalled(err) {
+        return nil
+      }
+      return err
+    }
+
+    if len(clusters) == 0 {
+      return nil
+    }
+
+    allStopped := true
+    for _, c := range clusters {
+      ready, err := p.kube.GetCNPGReadyInstances(ctx, c.Namespace, c.Name)
+      if err != nil {
+        p.logger.Warn("failed to check CNPG ready instances", "namespace", c.Namespace, "name", c.Name, "error", err)
+        allStopped = false
+        continue
+      }
+      if ready > 0 {
+        p.logger.Info("waiting for CNPG cluster to hibernate",
+          "namespace", c.Namespace, "name", c.Name, "readyInstances", ready)
+        allStopped = false
+      }
+    }
+
+    if allStopped {
+      p.logger.Info("all CNPG clusters hibernated")
+      return nil
+    }
+
+    select {
+    case <-ctx.Done():
+      return fmt.Errorf("timeout waiting for CNPG hibernation: %w", ctx.Err())
+    case <-ticker.C:
+    }
+  }
 }
 
 // Wake unsets hibernation on all hibernated CNPG clusters.

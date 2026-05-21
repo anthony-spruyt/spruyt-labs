@@ -42,7 +42,7 @@ controllers:
           - name: POLL_INTERVAL
             value: "5"
           - name: UPS_RUNTIME_BUDGET
-            value: "480"
+            value: "1500"
           - name: HEALTH_PORT
             value: "8080"
           - name: MODE
@@ -54,6 +54,8 @@ controllers:
           # Phase timeouts (seconds)
           - name: CNPG_PHASE_TIMEOUT
             value: "60"
+          - name: CNPG_WAIT_TIMEOUT
+            value: "300"
           - name: CEPH_FLAG_PHASE_TIMEOUT
             value: "15"
           - name: CEPH_SCALE_PHASE_TIMEOUT
@@ -61,9 +63,9 @@ controllers:
           - name: CEPH_HEALTH_WAIT_TIMEOUT
             value: "300"
           - name: NODE_SHUTDOWN_PHASE_TIMEOUT
-            value: "120"
+            value: "900"
           - name: PER_NODE_TIMEOUT
-            value: "15"
+            value: "90"
           - name: CEPH_WAIT_TOOLS_TIMEOUT
             value: "600"
           # Node IPs from cluster secrets (Flux substitution)

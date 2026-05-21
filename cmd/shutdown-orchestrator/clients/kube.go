@@ -102,6 +102,37 @@ func (k *RealKubeClient) SetCNPGHibernation(ctx context.Context, ns, name string
   return nil
 }
 
+// GetCNPGReadyInstances reads the CNPG Cluster CR and returns the readyInstances from its status.
+// Returns 0 for readyInstances if the status field is missing or zero.
+func (k *RealKubeClient) GetCNPGReadyInstances(ctx context.Context, ns, name string) (int, error) {
+  obj, err := k.dynamicClient.Resource(cnpgClusterGVR).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+  if err != nil {
+    return 0, fmt.Errorf("getting CNPG cluster %s/%s: %w", ns, name, err)
+  }
+
+  status, ok := obj.Object["status"].(map[string]interface{})
+  if !ok {
+    return 0, nil
+  }
+
+  ready, ok := status["readyInstances"]
+  if !ok {
+    return 0, nil
+  }
+
+  // readyInstances can be int or int64 in the unstructured API.
+  switch v := ready.(type) {
+  case int:
+    return v, nil
+  case int64:
+    return int(v), nil
+  case float64:
+    return int(v), nil
+  default:
+    return 0, nil
+  }
+}
+
 // DeploymentExists checks whether a deployment exists in the given namespace.
 func (k *RealKubeClient) DeploymentExists(ctx context.Context, ns, name string) (bool, error) {
   _, err := k.clientset.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
