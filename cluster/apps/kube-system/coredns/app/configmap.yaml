@@ -39,7 +39,7 @@ data:
         loadbalance
     }
 
-    lan.${EXTERNAL_DOMAIN}:53 {
+    ${EXTERNAL_DOMAIN}:53 {
         errors
         forward . ${TECHNITIUM_IP4} ${TECHNITIUM_SECONDARY_IP4}
         cache 30
