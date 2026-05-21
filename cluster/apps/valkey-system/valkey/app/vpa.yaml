@@ -19,4 +19,4 @@ spec:
           memory: 1Mi
         maxAllowed:
           cpu: 500m
-          memory: 256Mi
+          memory: 384Mi

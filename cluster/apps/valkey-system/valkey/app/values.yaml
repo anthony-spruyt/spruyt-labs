@@ -3,6 +3,20 @@
 # Default values: https://github.com/valkey-io/valkey-helm/blob/main/valkey/values.yaml
 # Documentation: https://github.com/valkey-io/valkey-helm/blob/main/valkey/README.md
 priorityClassName: high-priority
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
 auth:
   enabled: true
   usersExistingSecret: valkey-secrets
@@ -18,6 +32,17 @@ auth:
       permissions: "~authentik:* &* +@all"
     metrics:
       permissions: "~* &* +@read +@connection +info +client +config|get +slowlog +latency +memory +cluster|info +cluster|slots +cluster|nodes"
+deploymentStrategy: Recreate
+valkeyConfig: |
+  appendonly yes
+  appendfsync everysec
+  no-appendfsync-on-rewrite yes
+  maxmemory 256mb
+  maxmemory-policy noeviction
+dataStorage:
+  enabled: true
+  className: rbd-fast-delete
+  requestedSize: 2Gi
 metrics:
   enabled: true
   serviceMonitor:
@@ -30,7 +55,7 @@ metrics:
 resources:
   limits:
     cpu: 500m
-    memory: 256Mi
+    memory: 384Mi
   requests:
     cpu: 50m
     memory: 128Mi
