@@ -99,11 +99,8 @@ locals {
     "AGENTMEMORY_URL" : "http://agentmemory.agentmemory.svc.cluster.local:3111",
     "AGENTMEMORY_SECRET" : "unused-cluster-internal",
     "SAFE_CHAIN_LOGGING" : "silent",
-    # LiteLLM proxy — routes Claude Code CLI through Alibaba Cloud Model Studio (#1451)
-    "ANTHROPIC_BASE_URL"                : "http://litellm.litellm.svc.cluster.local:4000",
-    "CLAUDE_CODE_ATTRIBUTION_HEADER"    : "0",
-    "CLAUDE_CODE_MAX_CONTEXT_TOKENS"    : "200000",
-    "ENABLE_TOOL_SEARCH"                : "true",
+    "CLAUDE_CODE_ATTRIBUTION_HEADER" : "0",
+    "ENABLE_TOOL_SEARCH" : "true",
   }
 }
 
@@ -487,7 +484,7 @@ resource "kubernetes_pod_v1" "main" {
     # Kata Containers: each workspace pod runs in its own lightweight VM
     # (QEMU/Cloud Hypervisor + KVM). Hypervisor boundary around arbitrary
     # AI-agent-generated code inside the workspace. Ref #933.
-    runtime_class_name              = "kata"
+    runtime_class_name               = "kata"
     termination_grace_period_seconds = 300
 
     node_selector = {
@@ -553,13 +550,6 @@ resource "kubernetes_pod_v1" "main" {
       env_from {
         secret_ref {
           name = "coder-workspace-env"
-        }
-      }
-
-      # MCP API keys synced from traefik ns via ExternalSecret
-      env_from {
-        secret_ref {
-          name = "coder-workspace-mcp-api-keys"
         }
       }
 

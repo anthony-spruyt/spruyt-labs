@@ -36,4 +36,3 @@ The following Kubernetes Secrets must exist in `coder-workspaces`:
 
 - `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
 - `coder-workspace-env` — Env vars injected into pods (envbuilder mirror auth, etc.)
-- `coder-workspace-mcp-api-keys` — Generic MCP API keys (Brave Search, GitHub) synced from `traefik/traefik-mcp-api-keys` via ExternalSecret
