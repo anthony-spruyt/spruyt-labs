@@ -39,6 +39,10 @@ data:
         loadbalance
     }
 
+    auth.${EXTERNAL_DOMAIN}:53 {
+        forward . /etc/resolv.conf
+    }
+
     ${EXTERNAL_DOMAIN}:53 {
         errors
         forward . ${TECHNITIUM_IP4} ${TECHNITIUM_SECONDARY_IP4}
