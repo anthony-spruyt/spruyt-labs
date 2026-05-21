@@ -181,44 +181,44 @@ controllers:
         command:
           - /usr/local/bin/worker-entrypoint.sh
         env:
-          - name: ANTHROPIC_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: agentmemory-secrets
-                key: LITELLM_API_KEY
-          - name: ANTHROPIC_BASE_URL
-            value: "http://litellm.litellm.svc.cluster.local:4000"
-          - name: ANTHROPIC_MODEL
-            value: "claude-sonnet-4-6"
+          - name: AGENTMEMORY_AUTO_COMPRESS
+            value: "true"
+          - name: AGENTMEMORY_INJECT_CONTEXT
+            value: "true"
+          - name: AGENTMEMORY_TOOLS
+            value: "all"
+            # value: "core"
+          - name: CONSOLIDATION_ENABLED
+            value: "true"
+          - name: DO_NOT_TRACK
+            value: "1"
+          - name: EMBEDDING_PROVIDER
+            value: "openai"
+          - name: GRAPH_EXTRACTION_ENABLED
+            value: "true"
+          - name: HOME
+            value: /home/node
+          - name: III_ENGINE_URL
+            value: "ws://localhost:49134"
+          - name: LESSON_DECAY_ENABLED
+            value: "true"
           - name: OPENAI_API_KEY
             valueFrom:
               secretKeyRef:
                 name: agentmemory-secrets
                 key: LITELLM_API_KEY
+          - name: OPENAI_API_KEY_FOR_LLM
+            value: "true"
           - name: OPENAI_BASE_URL
             value: "http://litellm.litellm.svc.cluster.local:4000"
-          - name: EMBEDDING_PROVIDER
-            value: "openai"
           - name: OPENAI_EMBEDDING_MODEL
             value: "text-embedding-3-small"
-          - name: AGENTMEMORY_TOOLS
-            value: "core"
-          - name: AGENTMEMORY_AUTO_COMPRESS
-            value: "true"
+          - name: OPENAI_MODEL
+            value: "openrouter/deepseek/deepseek-v4-flash:free"
           - name: TOKEN_BUDGET
             value: "2000"
-          - name: GRAPH_EXTRACTION_ENABLED
-            value: "true"
-          - name: CONSOLIDATION_ENABLED
-            value: "true"
-          - name: III_ENGINE_URL
-            value: "ws://localhost:49134"
           - name: VIEWER_ALLOWED_ORIGINS
             value: "https://agentmemory.lan.${EXTERNAL_DOMAIN},http://localhost:3113"
-          - name: DO_NOT_TRACK
-            value: "1"
-          - name: HOME
-            value: /home/node
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
