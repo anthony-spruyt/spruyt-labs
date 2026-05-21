@@ -26,14 +26,27 @@ Used for `Promise.race` deadline in processor, Valkey active lock TTL, and sessi
 
 ### BullMQ Worker Settings
 
-| Setting            | Value          | Purpose                                |
-| ------------------ | -------------- | -------------------------------------- |
-| `stalledInterval`  | 60s            | How often to check for stalled jobs    |
-| `lockDuration`     | 120s           | Job lock lifetime (2x stalledInterval) |
-| `maxStalledCount`  | 1              | Stall recoveries before failing        |
-| `removeOnComplete` | 1h             | Completed job retention                |
-| `removeOnFail`     | 7d / 500 count | Failed job retention                   |
-| `attempts`         | 1              | No auto-retry; n8n controls retries    |
+| Setting            | Value          | Purpose                               |
+| ------------------ | -------------- | ------------------------------------- |
+| `stalledInterval`  | 120s           | How often to check for stalled jobs   |
+| `lockDuration`     | 120s           | Job lock lifetime                     |
+| `maxStalledCount`  | 2              | Stall recoveries before failing       |
+| `lockExtender`     | 30s interval   | Extends lock by 120s while processing |
+| `removeOnComplete` | 1h             | Completed job retention               |
+| `removeOnFail`     | 7d / 500 count | Failed job retention                  |
+| `attempts`         | 1              | No auto-retry; n8n controls retries   |
+
+### Health Gate
+
+Before job dispatch, worker checks n8n and LiteLLM health endpoints. If either is unhealthy:
+
+1. Worker pauses (no new jobs picked up)
+2. Current job remains active — lock extender keeps its BullMQ lock alive
+3. Worker polls health at `HEALTH_POLL_INTERVAL_MS` intervals
+4. When both recover, worker resumes automatically
+5. If `HEALTH_MAX_PAUSE_MS` exceeded, worker resumes regardless of health
+
+The lock extender runs before the health check so the job won't stall while waiting for deps to recover.
 
 ### Pod Deadline Enforcement
 
@@ -53,7 +66,13 @@ Kyverno enforces `activeDeadlineSeconds` on agent pods based on the `agent-timeo
    - **Symptom**: `agent_queue_depth` metric stays elevated, VMRule alert fires after 75m
    - **Resolution**: Check n8n webhook availability, verify CNP allows egress to n8n-system on port 5678
 
-3. **Circuit breaker open**
+3. **Lock renewal errors on a single job**
+
+   - **Symptom**: Repeated `could not renew lock for job <id>` errors every 30s
+   - **Cause**: BullMQ job key corrupted in Valkey (WRONGTYPE). Occurs when `job.moveToDelayed()` is called while the internal lock timer is still armed.
+   - **Resolution**: Delete the job via Bull Board dashboard or Valkey CLI, then restart the worker pod. Fixed in code by replacing `moveToDelayed` with in-process health gate wait.
+
+4. **Circuit breaker open**
 
    - **Symptom**: POST /jobs returns 429 with `circuit_open`
    - **Resolution**: POST /circuit/{repo}/reset to clear, investigate underlying failures
