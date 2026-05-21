@@ -268,8 +268,6 @@ spec:
                         key: virtual-key
                   - name: CLAUDE_CODE_ATTRIBUTION_HEADER
                     value: "0"
-                  - name: CLAUDE_CODE_MAX_CONTEXT_TOKENS
-                    value: "200000"
                   - name: ENABLE_TOOL_SEARCH
                     value: "true"
                 volumeMounts:
