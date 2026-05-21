@@ -34,7 +34,7 @@ spec:
                 - /bin/sh
                 - -c
                 - |
-                  RESULT=$(curl -sf -X POST http://agentmemory.agentmemory.svc.cluster.local:3111/agentmemory/evict \
+                  RESULT=$(curl -sf --max-time 30 -X POST http://agentmemory.agentmemory.svc.cluster.local:3111/agentmemory/evict \
                     -H "Authorization: Bearer $${AGENTMEMORY_SECRET}" \
                     -H "Content-Type: application/json" \
                     -d '{"dryRun": true}')
@@ -42,7 +42,7 @@ spec:
                   EVICT_COUNT=$$(echo "$${RESULT}" | grep -o '"wouldEvict":[0-9]*' | grep -o '[0-9]*')
                   if [ "$${EVICT_COUNT:-0}" -gt 0 ]; then
                     echo "Evicting $${EVICT_COUNT} memories..."
-                    curl -sf -X POST http://agentmemory.agentmemory.svc.cluster.local:3111/agentmemory/evict \
+                    curl -sf --max-time 120 -X POST http://agentmemory.agentmemory.svc.cluster.local:3111/agentmemory/evict \
                       -H "Authorization: Bearer $${AGENTMEMORY_SECRET}" \
                       -H "Content-Type: application/json" \
                       -d '{}'
