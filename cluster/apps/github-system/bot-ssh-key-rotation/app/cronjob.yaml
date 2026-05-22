@@ -6,7 +6,7 @@ metadata:
   name: bot-ssh-key-rotation
   namespace: github-system
 spec:
-  schedule: "0 3 * * 1"
+  schedule: "0 3 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -44,7 +44,7 @@ spec:
                 - name: SECRET_NAMESPACE
                   value: github-system
                 - name: GRACE_PERIOD_DAYS
-                  value: "4"
+                  value: "2"
                 - name: FORCE_SYNC_NAMESPACES
                   value: claude-agents-write
                 - name: FORCE_SYNC_ES_NAME
