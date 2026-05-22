@@ -102,9 +102,7 @@ locals {
     "OTEL_RESOURCE_ATTRIBUTES" : "agent.namespace=coder-workspaces,workspace.name=${data.coder_workspace.me.name},workspace.owner=${data.coder_workspace_owner.me.name}",
     "AGENTMEMORY_URL" : "http://agentmemory.agentmemory.svc.cluster.local:3111",
     "AGENTMEMORY_SECRET" : "unused-cluster-internal",
-    "SAFE_CHAIN_LOGGING" : "silent",
-    "CLAUDE_CODE_ATTRIBUTION_HEADER" : "0",
-    "ENABLE_TOOL_SEARCH" : "true",
+    "SAFE_CHAIN_LOGGING" : "silent"
   }
 }
 
