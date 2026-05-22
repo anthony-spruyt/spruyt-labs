@@ -213,9 +213,9 @@ controllers:
           - name: OPENAI_BASE_URL
             value: "http://litellm.litellm.svc.cluster.local:4000"
           - name: OPENAI_EMBEDDING_MODEL
-            value: "text-embedding-3-small"
+            value: "agentmemory-openai-embedding"
           - name: OPENAI_MODEL
-            value: "openrouter/deepseek/deepseek-v4-flash:free"
+            value: "agentmemory-openai-model"
           - name: TOKEN_BUDGET
             value: "2000"
           - name: VIEWER_ALLOWED_ORIGINS
