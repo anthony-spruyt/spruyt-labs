@@ -1,25 +1,5 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Traefik
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-traefik-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: mcp-victoriametrics
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: traefik
-            k8s:app.kubernetes.io/name: traefik
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to VictoriaMetrics
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -37,52 +17,6 @@ spec:
       toPorts:
         - ports:
             - port: "8428"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Claude agents (pod-to-pod MCP access)
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-claude-agents-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: mcp-victoriametrics
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: claude-agents-spruyt-labs-read
-            k8s:managed-by: n8n-claude-code
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: claude-agents-spruyt-labs-sre
-            k8s:managed-by: n8n-claude-code
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: claude-agents-spruyt-labs-write
-            k8s:managed-by: n8n-claude-code
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Coder workspace pods (pod-to-pod MCP access)
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-coder-workspace-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: mcp-victoriametrics
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: coder-workspaces
-            k8s:app.kubernetes.io/name: coder-workspace
-      toPorts:
-        - ports:
-            - port: "8080"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json

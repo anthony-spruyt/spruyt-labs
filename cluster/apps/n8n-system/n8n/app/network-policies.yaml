@@ -540,7 +540,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Coder workspace pods (SRE MCP endpoint)
+# Allow ingress from Coder workspace pods
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -653,22 +653,21 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to Brave Search MCP server
+# Allow egress to LiteLLM proxy for LLM API access
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-brave-search-mcp-egress
+  name: allow-litellm-egress
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/instance: n8n
-      app.kubernetes.io/name: n8n
+      managed-by: n8n-claude-code
   egress:
     - toEndpoints:
         - matchLabels:
-            k8s:io.kubernetes.pod.namespace: brave-search-mcp
-            k8s:app.kubernetes.io/name: brave-search-mcp
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
       toPorts:
         - ports:
-            - port: "8000"
+            - port: "4000"
               protocol: TCP
