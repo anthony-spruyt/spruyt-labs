@@ -18,7 +18,7 @@ controllers:
         image:
           # renovate: datasource=docker depName=iiidev/iii
           repository: iiidev/iii
-          tag: "0.11.2@sha256:15f8d4ed16c0bec350b98f4e18ed04498b1fc5ccc50585e087b736717300cf26"
+          tag: "0.12.0@sha256:1f911fc882bfc1bae12071e98fd3c7db7485650024dd814fb7e56c9c2a46699d"
           pullPolicy: IfNotPresent
         args:
           - --config
@@ -67,7 +67,7 @@ controllers:
       console:
         image:
           repository: iiidev/iii
-          tag: "0.11.2@sha256:15f8d4ed16c0bec350b98f4e18ed04498b1fc5ccc50585e087b736717300cf26"
+          tag: "0.12.0@sha256:1f911fc882bfc1bae12071e98fd3c7db7485650024dd814fb7e56c9c2a46699d"
           pullPolicy: IfNotPresent
         args:
           - console
