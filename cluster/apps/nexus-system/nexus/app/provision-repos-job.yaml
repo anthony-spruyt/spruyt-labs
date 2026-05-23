@@ -27,7 +27,7 @@ spec:
       containers:
         - name: provisioner
           # renovate: datasource=docker depName=alpine/curl
-          image: alpine/curl:8.17.0@sha256:9705b37f23afbca210481a6ed5d4c1c22c9322ea4c300cd4f28f270eea2cc89d
+          image: alpine/curl:8.19.0@sha256:43148a72c0b159cf35451056d382df3c96317a0e66712dd7eb4e01edac96081f
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: {drop: [ALL]}
