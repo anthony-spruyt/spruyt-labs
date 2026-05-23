@@ -247,10 +247,11 @@ jobs:
           else
             echo "ignorefile=.trivyignore.yaml" >> "$GITHUB_OUTPUT"
           fi
-      - name: "Trivy vulnerability scan"
+      - name: "Trivy Scan"
         uses: "anthony-spruyt/repo-operator/.github/actions/trivy-scan@main"
         with:
           image-ref: "local/${{ inputs.image }}:ci"
+          image-name: ${{ inputs.image }}
           trivyignores: "${{ steps.trivyconfig.outputs.ignorefile }}"
           category: "trivy-${{ inputs.image }}"
       - name: "Push image to GHCR"
