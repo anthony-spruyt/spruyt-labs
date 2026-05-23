@@ -57,6 +57,10 @@ jobs:
       has-changes: "${{ steps.diff.outputs.has-changes }}"
       changelog: "${{ steps.diff.outputs.changelog }}"
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
@@ -132,6 +136,10 @@ jobs:
     outputs:
       should-build: "${{ steps.check.outputs.should-build }}"
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
       - name: "Login to GHCR (read-only)"
         uses: "docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee" # v4
         with:
@@ -166,6 +174,10 @@ jobs:
     if: "needs.resolve-version.outputs.has-changes == 'true'"
     runs-on: "ubuntu-latest"
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
       - name: "Setup Node.js"
@@ -198,6 +210,10 @@ jobs:
     outputs:
       digest: "${{ steps.push.outputs.digest }}"
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
       - name: "Checkout"
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
       - name: "Set up Docker Buildx"
