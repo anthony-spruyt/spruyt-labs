@@ -9,6 +9,7 @@
   },
   "search.exclude": {
     "**/node_modules": true,
+    ".output/updated_sources": true,
     "**/*.secret.*": true,
     "**/temp/**": true
   },
