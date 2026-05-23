@@ -8,9 +8,9 @@ exit-code: 1
 exit-on-eol: 2
 scan:
   scanners:
-    - "vuln"
-    - "misconfig"
+    - "license"
     - "secret"
+    - "misconfig"
   skip-dirs:
     - "talos/clusterconfig"
 ignorefile: ".trivyignore.yaml"
