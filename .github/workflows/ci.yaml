@@ -100,7 +100,9 @@ jobs:
     if: "needs.changes.outputs.terraform == 'true'"
     uses: "./.github/workflows/_terraform-validate.yaml"
   shutdown-orchestrator:
-    needs: "changes"
+    needs:
+      - "lint"
+      - "changes"
     if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
     uses: "./.github/workflows/_release-image.yaml"
     with:
@@ -111,7 +113,9 @@ jobs:
       push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   kata-tap-qdisc-fix:
-    needs: "changes"
+    needs:
+      - "lint"
+      - "changes"
     if: "needs.changes.outputs.kata-tap-qdisc-fix == 'true'"
     uses: "./.github/workflows/_release-image.yaml"
     with:
@@ -122,7 +126,9 @@ jobs:
       push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   mcp-header-proxy:
-    needs: "changes"
+    needs:
+      - "lint"
+      - "changes"
     if: "needs.changes.outputs.mcp-header-proxy == 'true'"
     uses: "./.github/workflows/_release-image.yaml"
     with:
@@ -133,7 +139,9 @@ jobs:
       push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   llm-guard-adapter:
-    needs: "changes"
+    needs:
+      - "lint"
+      - "changes"
     if: "needs.changes.outputs.llm-guard-adapter == 'true'"
     uses: "./.github/workflows/_release-image.yaml"
     with:
@@ -144,7 +152,9 @@ jobs:
       push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   agent-queue-worker:
-    needs: "changes"
+    needs:
+      - "lint"
+      - "changes"
     if: "needs.changes.outputs.agent-queue-worker == 'true'"
     uses: "./.github/workflows/_release-image.yaml"
     with:
@@ -155,7 +165,9 @@ jobs:
       push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   bull-board:
-    needs: "changes"
+    needs:
+      - "lint"
+      - "changes"
     if: "needs.changes.outputs.bull-board == 'true'"
     uses: "./.github/workflows/_release-image.yaml"
     with:
