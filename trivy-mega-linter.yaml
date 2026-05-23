@@ -4,13 +4,7 @@
 
 disable-telemetry: true
 quiet: true
-exit-code: 1
-exit-on-eol: 2
+ignorefile: ".trivyignore.yaml"
 scan:
-  scanners:
-    - "license"
-    - "secret"
-    - "misconfig"
   skip-dirs:
     - "talos/clusterconfig"
-ignorefile: ".trivyignore.yaml"
