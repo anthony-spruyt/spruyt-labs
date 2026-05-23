@@ -661,7 +661,8 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      managed-by: n8n-claude-code
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
   egress:
     - toEndpoints:
         - matchLabels:
