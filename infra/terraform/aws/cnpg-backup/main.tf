@@ -83,24 +83,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "cnpg" {
   }
 }
 
-resource "aws_s3_bucket_replication_configuration" "cnpg" {
-  depends_on = [aws_s3_bucket_versioning.cnpg_replica]
-
-  role   = aws_iam_role.replication.arn
-  bucket = aws_s3_bucket.cnpg.id
-
-  rule {
-    id       = "cnpg-backup-replication"
-    status   = "Enabled"
-    priority = 1
-
-    destination {
-      bucket        = aws_s3_bucket.cnpg_replica.arn
-      storage_class = "DEEP_ARCHIVE"
-    }
-  }
-}
-
 data "aws_iam_policy_document" "cnpg" {
   statement {
     actions = [
@@ -143,74 +125,6 @@ resource "aws_iam_policy" "cnpg" {
 resource "aws_iam_user_policy_attachment" "cnpg" {
   user       = aws_iam_user.cnpg.name
   policy_arn = aws_iam_policy.cnpg.arn
-}
-
-# IAM role for S3 replication
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["s3.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "replication" {
-  name               = "cnpg-backup-replication-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-  tags               = local.common_tags
-}
-
-data "aws_iam_policy_document" "replication" {
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "s3:GetReplicationConfiguration",
-      "s3:ListBucket",
-    ]
-
-    resources = [aws_s3_bucket.cnpg.arn]
-  }
-
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "s3:GetObjectVersionForReplication",
-      "s3:GetObjectVersionAcl",
-      "s3:GetObjectVersionTagging",
-    ]
-
-    resources = ["${aws_s3_bucket.cnpg.arn}/*"]
-  }
-
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "s3:ReplicateObject",
-      "s3:ReplicateDelete",
-      "s3:ReplicateTags",
-    ]
-
-    resources = ["${aws_s3_bucket.cnpg_replica.arn}/*"]
-  }
-}
-
-resource "aws_iam_policy" "replication" {
-  name   = "cnpg-backup-replication"
-  policy = data.aws_iam_policy_document.replication.json
-  tags   = local.common_tags
-}
-
-resource "aws_iam_role_policy_attachment" "replication" {
-  role       = aws_iam_role.replication.name
-  policy_arn = aws_iam_policy.replication.arn
 }
 
 resource "aws_s3_bucket_public_access_block" "cnpg" {

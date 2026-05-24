@@ -83,24 +83,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "velero" {
   }
 }
 
-resource "aws_s3_bucket_replication_configuration" "velero" {
-  depends_on = [aws_s3_bucket_versioning.velero_replica]
-
-  role   = aws_iam_role.replication.arn
-  bucket = aws_s3_bucket.velero.id
-
-  rule {
-    id       = "velero-backup-replication"
-    status   = "Enabled"
-    priority = 1
-
-    destination {
-      bucket        = aws_s3_bucket.velero_replica.arn
-      storage_class = "DEEP_ARCHIVE"
-    }
-  }
-}
-
 data "aws_iam_policy_document" "velero" {
   statement {
     actions = [
@@ -143,74 +125,6 @@ resource "aws_iam_policy" "velero" {
 resource "aws_iam_user_policy_attachment" "velero" {
   user       = aws_iam_user.velero.name
   policy_arn = aws_iam_policy.velero.arn
-}
-
-# IAM role for S3 replication
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["s3.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "replication" {
-  name               = "velero-backup-replication-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-  tags               = local.common_tags
-}
-
-data "aws_iam_policy_document" "replication" {
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "s3:GetReplicationConfiguration",
-      "s3:ListBucket",
-    ]
-
-    resources = [aws_s3_bucket.velero.arn]
-  }
-
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "s3:GetObjectVersionForReplication",
-      "s3:GetObjectVersionAcl",
-      "s3:GetObjectVersionTagging",
-    ]
-
-    resources = ["${aws_s3_bucket.velero.arn}/*"]
-  }
-
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "s3:ReplicateObject",
-      "s3:ReplicateDelete",
-      "s3:ReplicateTags",
-    ]
-
-    resources = ["${aws_s3_bucket.velero_replica.arn}/*"]
-  }
-}
-
-resource "aws_iam_policy" "replication" {
-  name   = "velero-backup-replication"
-  policy = data.aws_iam_policy_document.replication.json
-  tags   = local.common_tags
-}
-
-resource "aws_iam_role_policy_attachment" "replication" {
-  role       = aws_iam_role.replication.name
-  policy_arn = aws_iam_policy.replication.arn
 }
 
 resource "aws_s3_bucket_public_access_block" "velero" {
