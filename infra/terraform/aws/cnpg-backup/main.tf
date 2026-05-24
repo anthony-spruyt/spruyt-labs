@@ -36,7 +36,7 @@ resource "aws_s3_bucket_versioning" "cnpg" {
   bucket = aws_s3_bucket.cnpg.id
 
   versioning_configuration {
-    status = "Enabled"
+    status = "Suspended"
   }
 }
 

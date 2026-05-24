@@ -36,7 +36,7 @@ resource "aws_s3_bucket_versioning" "velero" {
   bucket = aws_s3_bucket.velero.id
 
   versioning_configuration {
-    status = "Enabled"
+    status = "Suspended"
   }
 }
 
