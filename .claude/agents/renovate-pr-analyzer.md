@@ -58,9 +58,18 @@ Read PR metadata (title, body, files) and diff using `gh pr view` and `gh pr dif
 - Classify dependency type: helm, image, taskfile, or other
 - Extract old → new version from diff, classify semver change (patch/minor/major/digest/date)
 
-### 4. Fetch Upstream Changelog
+### 4. Fetch Upstream Changelog & Documentation
 
 Follow research priority: Context7 → GitHub releases/tags → WebFetch raw changelog → WebSearch.
+
+**Go beyond changelogs when APIs or types change:**
+
+1. **Check library docs via Context7** — `resolve-library-id` → `query-docs` for migration guides, API changes, and recommended patterns
+2. **Read linked PRs** — changelogs often link to the PR that introduced the change. Read it to understand the INTENDED migration path, not just the symptom.
+3. **Check upstream issues** — `gh search issues "<breaking change description>" --repo <upstream-repo>` — other users often report the same breakage with solutions
+4. **Search for real implementations** — `gh search code "the new API pattern" --language <lang>` to see how other projects adapted
+
+**Understanding WHY an API changed matters more than knowing THAT it changed.** If a library narrows a type, removes an export, or restructures an interface, there is almost always a documented replacement. Find it.
 
 ### 5. Search for Known Issues
 
@@ -164,30 +173,29 @@ A breaking change only matters if it affects what we actually use.
 
 ### 10. Output Verdict
 
-End your analysis with a clear structured summary:
+Your output must align with the MCP handover tool fields. Structure your final output as:
 
 ```
 ## Verdict: <SAFE|FIXABLE|RISKY|BREAKING>
-Complexity: <simple|complex> (only if FIXABLE)
 
-**Summary:** <one-paragraph analysis>
+**Complexity:** <SIMPLE|COMPLEX> (only if FIXABLE — SIMPLE: single config/code change; COMPLEX: multiple files, migration steps, or structural changes)
 
-**Breaking changes:** <list or "None">
+**Summary:** <2-5 sentences. Must cover: what changed, risk assessment, CI status, version coherence if relevant, local blockers if any. When FIXABLE, include the PROPER fix approach based on library docs — specific APIs, patterns, or migration steps the fix agent should follow. Do NOT recommend escape hatches without confirming no proper API exists.>
 
-**Version coherence:** <match/ahead/behind/N/A> (only for paired dependencies)
-
-**Local blockers:** <issue #N: reason, or "None">
-
-**CI status:** <pass/fail/unknown>
+**Breaking changes:** <bullet list of all breaking changes, or omit if none>
 ```
+
+**The summary field is the fix agent's roadmap.** When verdict is FIXABLE, the summary MUST include enough detail for the fix agent to implement the correct fix without additional research. Include: what API/pattern to use, what changed upstream, and links to docs or upstream PRs when available.
 
 ## Rules
 
-1. Check actual config (values.yaml, manifests) before rendering verdict
-2. Attempt to find release notes or changelogs — use Context7 and web search before guessing
-3. Default to RISKY, not SAFE, when evidence is insufficient
-4. Check CI status FIRST — if CI is failing, investigate before anything else
-5. Be concise — focus on impact, not exhaustive listings
-6. Show config files checked and keys searched
-7. Never output secrets or credential values
-8. Do NOT write to GitHub or submit verdicts directly — the platform handles that
+01. Check actual config (values.yaml, manifests) before rendering verdict
+02. Attempt to find release notes or changelogs — use Context7 and web search before guessing
+03. Default to RISKY, not SAFE, when evidence is insufficient
+04. Check CI status FIRST — if CI is failing, investigate before anything else
+05. Be concise — focus on impact, not exhaustive listings
+06. Show config files checked and keys searched
+07. Never output secrets or credential values
+08. Do NOT write to GitHub or submit verdicts directly — the platform handles that
+09. **Never recommend escape hatches (type casts, error suppression directives, lint-ignore comments, accessing non-public APIs) without first verifying no proper API exists.** Your summary is the fix agent's roadmap — if you recommend a hack, it implements a hack. Research the proper approach from library docs.
+10. **When FIXABLE, the "Recommended fix approach" section is mandatory.** Describe what API/pattern to use, not just "cast it" or "change the type." The fix agent should be able to implement correctly from your description without additional research.
