@@ -1,7 +1,7 @@
 ---
 name: renovate-pr-analyzer
 description: "Analyzes a Renovate PR for breaking changes, deprecations, and upstream issues. Returns a structured verdict (SAFE/FIXABLE/RISKY/BREAKING).\n\n**When to use:**\n- Called as subagent by platform triage orchestrator (n8n dispatch)\n- Called directly for local dependency analysis\n\n**When NOT to use:**\n- For non-Renovate PRs\n- For manual dependency updates (analyze manually instead)\n\n<example>\nContext: Triage orchestrator invokes analyzer as subagent\nuser: \"Analyze this Renovate dependency update PR for breaking changes and risks.\\nRepository: anthony-spruyt/spruyt-labs\\nPR #499: chore(deps): update helm release cilium to v1.17.0\"\nassistant: \"Analyzing PR #499...\"\n<commentary>Returns structured analysis. The orchestrator handles MCP verdict submission.</commentary>\n</example>"
-model: opus
+model: sonnet
 tools:
   - Bash
   - Read
