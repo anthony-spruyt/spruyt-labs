@@ -124,7 +124,7 @@ controllers:
       viewer-proxy:
         image:
           repository: docker.io/alpine/socat
-          tag: "1.8.0.3@sha256:7880e2be949717df3eb452eb821e2b32b380e963ac16c19cf806fd94c4ff7831"
+          tag: "1.8.0.3@sha256:bf92215fd0252af22a07e7b6c06efc023169468e3920ae88be9700258cc600bb"
           pullPolicy: IfNotPresent
         args:
           - TCP-LISTEN:3116,fork,reuseaddr,bind=0.0.0.0
