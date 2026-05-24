@@ -2,8 +2,7 @@ data "aws_caller_identity" "current" {}
 
 locals {
   # Format: {project}-{accountid}-{environment}-velero-backup
-  bucket_name         = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-velero-backup")
-  replica_bucket_name = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-velero-backup-replica")
+  bucket_name = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-velero-backup")
 
   common_tags = {
     Project     = var.project
@@ -18,26 +17,8 @@ resource "aws_s3_bucket" "velero" {
   tags          = local.common_tags
 }
 
-resource "aws_s3_bucket" "velero_replica" {
-  bucket        = local.replica_bucket_name
-  region        = var.aws_replica_region
-  force_destroy = false
-  tags          = local.common_tags
-}
-
 resource "aws_s3_bucket_server_side_encryption_configuration" "velero" {
   bucket = aws_s3_bucket.velero.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "velero_replica" {
-  bucket = aws_s3_bucket.velero_replica.id
-  region = var.aws_replica_region
 
   rule {
     apply_server_side_encryption_by_default {
@@ -53,15 +34,6 @@ resource "aws_iam_user" "velero" {
 
 resource "aws_s3_bucket_versioning" "velero" {
   bucket = aws_s3_bucket.velero.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_versioning" "velero_replica" {
-  bucket = aws_s3_bucket.velero_replica.id
-  region = var.aws_replica_region
 
   versioning_configuration {
     status = "Enabled"
@@ -129,15 +101,6 @@ resource "aws_iam_user_policy_attachment" "velero" {
 
 resource "aws_s3_bucket_public_access_block" "velero" {
   bucket                  = aws_s3_bucket.velero.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_public_access_block" "velero_replica" {
-  bucket                  = aws_s3_bucket.velero_replica.id
-  region                  = var.aws_replica_region
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true

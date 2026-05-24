@@ -2,8 +2,7 @@ data "aws_caller_identity" "current" {}
 
 locals {
   # Format: {project}-{accountid}-{environment}-cnpg-backup
-  bucket_name         = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-cnpg-backup")
-  replica_bucket_name = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-cnpg-backup-replica")
+  bucket_name = lower("${var.project}-${data.aws_caller_identity.current.account_id}-${var.environment}-cnpg-backup")
 
   common_tags = {
     Project     = var.project
@@ -18,26 +17,8 @@ resource "aws_s3_bucket" "cnpg" {
   tags          = local.common_tags
 }
 
-resource "aws_s3_bucket" "cnpg_replica" {
-  bucket        = local.replica_bucket_name
-  region        = var.aws_replica_region
-  force_destroy = false
-  tags          = local.common_tags
-}
-
 resource "aws_s3_bucket_server_side_encryption_configuration" "cnpg" {
   bucket = aws_s3_bucket.cnpg.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "cnpg_replica" {
-  bucket = aws_s3_bucket.cnpg_replica.id
-  region = var.aws_replica_region
 
   rule {
     apply_server_side_encryption_by_default {
@@ -53,15 +34,6 @@ resource "aws_iam_user" "cnpg" {
 
 resource "aws_s3_bucket_versioning" "cnpg" {
   bucket = aws_s3_bucket.cnpg.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_versioning" "cnpg_replica" {
-  bucket = aws_s3_bucket.cnpg_replica.id
-  region = var.aws_replica_region
 
   versioning_configuration {
     status = "Enabled"
@@ -129,15 +101,6 @@ resource "aws_iam_user_policy_attachment" "cnpg" {
 
 resource "aws_s3_bucket_public_access_block" "cnpg" {
   bucket                  = aws_s3_bucket.cnpg.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_public_access_block" "cnpg_replica" {
-  bucket                  = aws_s3_bucket.cnpg_replica.id
-  region                  = var.aws_replica_region
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true

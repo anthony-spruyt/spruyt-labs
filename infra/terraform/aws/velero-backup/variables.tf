@@ -19,9 +19,3 @@ variable "aws_region" {
   description = "AWS region for resources (override via Terraform Cloud variable set)"
   default     = "ap-southeast-4" # ap-southeast-2 = Sydney ; ap-southeast-4 = Melbourne
 }
-
-variable "aws_replica_region" {
-  type        = string
-  description = "AWS region for cross-region replication destination bucket (override via Terraform Cloud variable set)"
-  default     = "ap-southeast-2" # ap-southeast-2 = Sydney ; ap-southeast-4 = Melbourne
-}
