@@ -175,7 +175,7 @@ A breaking change only matters if it affects what we actually use.
 
 Your output must align with the MCP handover tool fields. Structure your final output as:
 
-```
+```markdown
 ## Verdict: <SAFE|FIXABLE|RISKY|BREAKING>
 
 **Complexity:** <SIMPLE|COMPLEX> (only if FIXABLE — SIMPLE: single config/code change; COMPLEX: multiple files, migration steps, or structural changes)
