@@ -16,7 +16,6 @@ controllers:
     containers:
       engine:
         image:
-          # renovate: datasource=docker depName=iiidev/iii
           repository: iiidev/iii
           tag: "0.11.2@sha256:15f8d4ed16c0bec350b98f4e18ed04498b1fc5ccc50585e087b736717300cf26"
           pullPolicy: IfNotPresent
@@ -124,7 +123,6 @@ controllers:
               periodSeconds: 5
       viewer-proxy:
         image:
-          # renovate: datasource=docker depName=docker.io/alpine/socat
           repository: docker.io/alpine/socat
           tag: "1.8.0.3@sha256:7880e2be949717df3eb452eb821e2b32b380e963ac16c19cf806fd94c4ff7831"
           pullPolicy: IfNotPresent
@@ -174,7 +172,6 @@ controllers:
               periodSeconds: 5
       worker:
         image:
-          # renovate: datasource=docker depName=docker.io/library/node
           repository: docker.io/library/node
           tag: "24-bookworm-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf"
           pullPolicy: IfNotPresent

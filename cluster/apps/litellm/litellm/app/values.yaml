@@ -20,7 +20,6 @@ controllers:
     containers:
       litellm:
         image:
-          # renovate: datasource=docker depName=ghcr.io/berriai/litellm-non_root
           repository: ghcr.io/berriai/litellm-non_root
           tag: v1.85.1@sha256:97ce25938fc7f38f14a4036df78ba3d57725706b6183488af9931750e395c673
           pullPolicy: IfNotPresent
@@ -150,7 +149,6 @@ controllers:
     containers:
       presidio-analyzer:
         image:
-          # renovate: datasource=docker depName=mcr.microsoft.com/presidio-analyzer
           repository: mcr.microsoft.com/presidio-analyzer
           tag: "2.2.362@sha256:286e3fa7f3a7426e775e8564fe1870f1ba8f999d3ab8bbb8cc46a44355d9d6e9"
           pullPolicy: IfNotPresent
@@ -216,7 +214,6 @@ controllers:
     containers:
       presidio-anonymizer:
         image:
-          # renovate: datasource=docker depName=mcr.microsoft.com/presidio-anonymizer
           repository: mcr.microsoft.com/presidio-anonymizer
           tag: "2.2.362@sha256:a10a12a2a613d13cf29d3ad3641e3258444dd8c90403dd644a0a114c472c2483"
           pullPolicy: IfNotPresent
@@ -279,7 +276,6 @@ controllers:
     containers:
       llm-guard:
         image:
-          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/llm-guard
           repository: ghcr.io/anthony-spruyt/llm-guard
           tag: "0.3.1@sha256:0e131ad0ef7488fbd50b7e494d99a67097df9f12dee35689744e6cb492fd91ce"
           pullPolicy: IfNotPresent
@@ -349,7 +345,6 @@ controllers:
     containers:
       llm-guard-adapter:
         image:
-          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/llm-guard-adapter
           repository: ghcr.io/anthony-spruyt/llm-guard-adapter
           tag: "0.0.4@sha256:13719459e5774a71077b0b52e2024d61c9307941b6f15b978d2da8fd7375523f"
           pullPolicy: IfNotPresent

@@ -26,7 +26,6 @@ controllers:
           capabilities:
             drop: [ALL]
         image:
-          # renovate: datasource=docker depName=sonatype/nexus3
           repository: sonatype/nexus3
           tag: "3.92.2@sha256:a32ae23e0fdacccc4f2a9cbf3aa613388d11a1495d5dd66c639c8e84ad39b179"
         env:
@@ -88,7 +87,6 @@ controllers:
           capabilities:
             drop: [ALL]
         image:
-          # renovate: datasource=docker depName=alpine/curl
           repository: alpine/curl
           tag: "8.19.0@sha256:43148a72c0b159cf35451056d382df3c96317a0e66712dd7eb4e01edac96081f"
         command: ["/bin/sh", "/scripts/bootstrap.sh"]
