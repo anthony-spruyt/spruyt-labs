@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/batch/job_v1.json
+# yaml-language-server: $schema=https://k8s-schemas.pages.dev/kubernetes/master/job-batch-v1.json
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -26,8 +26,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: provisioner
-          # renovate: datasource=docker depName=alpine/curl
-          image: alpine/curl:8.19.0@sha256:43148a72c0b159cf35451056d382df3c96317a0e66712dd7eb4e01edac96081f
+          image: docker.io/curlimages/curl:8.20.0@sha256:b3f1fb2a51d923260350d21b8654bbc607164a987e2f7c84a0ac199a67df812a
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: {drop: [ALL]}
