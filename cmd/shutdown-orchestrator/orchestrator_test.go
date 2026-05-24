@@ -5,7 +5,6 @@ import (
   "fmt"
   "io"
   "log/slog"
-  "slices"
   "strings"
   "sync"
   "testing"
@@ -156,10 +155,6 @@ func (m *orchestratorMockKube) GetDeploymentReplicas(ctx context.Context, ns, na
   return 1, nil
 }
 
-func (m *orchestratorMockKube) GetCNPGReadyInstances(ctx context.Context, ns, name string) (int, error) {
-  return 0, nil
-}
-
 // orchestratorMockTalos implements clients.TalosClient.
 type orchestratorMockTalos struct {
   mu    sync.Mutex
@@ -202,7 +197,6 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
   cfg := Config{
     Mode:                     "test",
     NodeName:                 "e2-1",
-    CNPGPhaseTimeout:         5 * time.Second,
     CephFlagPhaseTimeout:     5 * time.Second,
     CephScalePhaseTimeout:    5 * time.Second,
     CephHealthWaitTimeout:    5 * time.Second,
@@ -227,9 +221,6 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
 
 func TestOrchestratorShutdownSequence(t *testing.T) {
   kube := &orchestratorMockKube{
-    clusters: []clients.CNPGCluster{
-      {Namespace: "db", Name: "pg-main", Hibernated: false},
-    },
     toolsExists: true,
     nodes: []clients.Node{
       {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
@@ -247,15 +238,12 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify ordering: CNPG hibernate before Ceph noout before Ceph scale down before node shutdown
-  cnpgIdx := -1
+  // Verify ordering: Ceph noout before Ceph scale down
   cephNooutIdx := -1
   cephScaleIdx := -1
 
   for i, c := range calls {
     switch {
-    case c == "SetCNPGHibernation:true" && cnpgIdx == -1:
-      cnpgIdx = i
     case c == "ExecInDeployment:set:noout" && cephNooutIdx == -1:
       cephNooutIdx = i
     case c == "ScaleDeployment:rook-ceph-operator:0" && cephScaleIdx == -1:
@@ -263,20 +251,11 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
     }
   }
 
-  if cnpgIdx == -1 {
-    t.Fatal("CNPG hibernate was not called")
-  }
   if cephNooutIdx == -1 {
     t.Fatal("Ceph set noout was not called")
   }
   if cephScaleIdx == -1 {
-    // Scale down calls operator first; if no deployments listed by label,
-    // only operator scale is called
     t.Fatal("Ceph scale down was not called")
-  }
-
-  if cnpgIdx >= cephNooutIdx {
-    t.Errorf("CNPG hibernate (idx %d) should come before Ceph set noout (idx %d)", cnpgIdx, cephNooutIdx)
   }
   if cephNooutIdx >= cephScaleIdx {
     t.Errorf("Ceph set noout (idx %d) should come before Ceph scale down (idx %d)", cephNooutIdx, cephScaleIdx)
@@ -309,12 +288,12 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify ordering: wait for tools pod -> Ceph scale up -> Ceph health wait -> Ceph unset noout -> CNPG wake
+  // Verify ordering: wait for tools pod -> Ceph scale up -> Ceph health wait -> Ceph unset noout -> CNPG cleanup
   toolsIdx := -1
   scaleUpIdx := -1
   healthWaitIdx := -1
   unsetNooutIdx := -1
-  wakeIdx := -1
+  cleanupIdx := -1
 
   for i, c := range calls {
     switch {
@@ -326,8 +305,8 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
       healthWaitIdx = i
     case c == "ExecInDeployment:unset:noout" && unsetNooutIdx == -1:
       unsetNooutIdx = i
-    case c == "SetCNPGHibernation:false" && wakeIdx == -1:
-      wakeIdx = i
+    case c == "SetCNPGHibernation:false" && cleanupIdx == -1:
+      cleanupIdx = i
     }
   }
 
@@ -340,8 +319,8 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
   if unsetNooutIdx == -1 {
     t.Fatal("Ceph unset noout was not called")
   }
-  if wakeIdx == -1 {
-    t.Fatal("CNPG wake was not called")
+  if cleanupIdx == -1 {
+    t.Fatal("CNPG cleanup was not called")
   }
 
   if toolsIdx >= unsetNooutIdx {
@@ -353,54 +332,33 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
   if healthWaitIdx >= unsetNooutIdx {
     t.Errorf("Ceph health wait (idx %d) should come before Ceph unset noout (idx %d)", healthWaitIdx, unsetNooutIdx)
   }
-  if unsetNooutIdx >= wakeIdx {
-    t.Errorf("Ceph unset noout (idx %d) should come before CNPG wake (idx %d)", unsetNooutIdx, wakeIdx)
+  if unsetNooutIdx >= cleanupIdx {
+    t.Errorf("Ceph unset noout (idx %d) should come before CNPG cleanup (idx %d)", unsetNooutIdx, cleanupIdx)
   }
 }
 
 func TestOrchestratorPhaseTimeout(t *testing.T) {
+  // A Ceph scale-down failure should not block node shutdown.
   kube := &orchestratorMockKube{
-    getClustersBlocks: true, // CNPG will block forever
-    toolsExists:       true,
+    toolsExists: true,
+    scaleErr:    fmt.Errorf("simulated scale failure"),
     nodes: []clients.Node{
       {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
       {Name: "e2-1", IP: "198.51.100.10", Ready: true},
     },
   }
   talos := &orchestratorMockTalos{}
-  logger := discardLogger()
-  cnpg := phases.NewCNPGPhase(kube, logger)
-  ceph := phases.NewCephPhase(kube, logger)
-  nodes := phases.NewNodePhase(talos, logger)
-
-  cfg := Config{
-    Mode:                     "test",
-    NodeName:                 "e2-1",
-    CNPGPhaseTimeout:         100 * time.Millisecond, // Short timeout
-    CephFlagPhaseTimeout:     5 * time.Second,
-    CephScalePhaseTimeout:    5 * time.Second,
-    NodeShutdownPhaseTimeout: 5 * time.Second,
-    WorkerIPs:                []string{"198.51.100.1"},
-    ControlPlaneIPs:          []string{"198.51.100.10"},
-  }
-
-  orch := NewOrchestrator(cnpg, ceph, nodes, kube, cfg, logger)
+  orch := newTestOrchestrator(kube, talos)
 
   err := orch.Shutdown(context.Background())
   if err == nil {
-    t.Fatal("Shutdown() should return error when CNPG phase times out")
+    t.Fatal("Shutdown() should return error when Ceph scale-down fails")
   }
 
-  // Ceph phases should still run even though CNPG timed out
-  calls := kube.getCalls()
-  if !slices.Contains(calls, "ExecInDeployment:set:noout") {
-    t.Error("Ceph set noout should still run after CNPG phase timeout")
-  }
-
-  // Talos should still run
+  // Node shutdown must still run despite the Ceph phase error.
   talosCalls := talos.getCalls()
   if len(talosCalls) == 0 {
-    t.Error("node shutdown should still run after CNPG phase timeout")
+    t.Error("node shutdown should still run after Ceph phase failure")
   }
 }
 
@@ -442,9 +400,6 @@ func TestOrchestratorNeedsRecoveryFalse(t *testing.T) {
 
 func TestOrchestratorTestMode(t *testing.T) {
   kube := &orchestratorMockKube{
-    clusters: []clients.CNPGCluster{
-      {Namespace: "db", Name: "pg-main", Hibernated: false},
-    },
     toolsExists: true,
     nodes: []clients.Node{
       {Name: "ms-01-1", IP: "198.51.100.1", Ready: true},
@@ -462,31 +417,32 @@ func TestOrchestratorTestMode(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Should see both hibernate and wake calls (shutdown then recovery)
-  foundHibernate := false
-  foundWake := false
-  hibernateIdx := -1
-  wakeIdx := -1
+  // Verify shutdown sets noout and recovery unsets noout, in order.
+  setNooutIdx := -1
+  unsetNooutIdx := -1
 
   for i, c := range calls {
     switch {
-    case c == "SetCNPGHibernation:true" && !foundHibernate:
-      foundHibernate = true
-      hibernateIdx = i
-    case c == "SetCNPGHibernation:false" && !foundWake:
-      foundWake = true
-      wakeIdx = i
+    case c == "ExecInDeployment:set:noout" && setNooutIdx == -1:
+      setNooutIdx = i
+    case c == "ExecInDeployment:unset:noout" && unsetNooutIdx == -1:
+      unsetNooutIdx = i
     }
   }
 
-  if !foundHibernate {
-    t.Error("RunTest() should call CNPG hibernate (shutdown phase)")
+  if setNooutIdx == -1 {
+    t.Error("RunTest() should call Ceph set noout (shutdown phase)")
   }
-  if !foundWake {
-    t.Error("RunTest() should call CNPG wake (recovery phase)")
+  if unsetNooutIdx == -1 {
+    t.Error("RunTest() should call Ceph unset noout (recovery phase)")
   }
-  if foundHibernate && foundWake && hibernateIdx >= wakeIdx {
-    t.Errorf("hibernate (idx %d) should come before wake (idx %d)", hibernateIdx, wakeIdx)
+  if setNooutIdx != -1 && unsetNooutIdx != -1 && setNooutIdx >= unsetNooutIdx {
+    t.Errorf("set noout (idx %d) should come before unset noout (idx %d)", setNooutIdx, unsetNooutIdx)
+  }
+
+  talosCalls := talos.getCalls()
+  if len(talosCalls) == 0 {
+    t.Error("RunTest() should call Talos shutdown")
   }
 }
 
@@ -584,7 +540,6 @@ func TestOrchestratorRecoverFromZeroScaleUpFails(t *testing.T) {
   cfg := Config{
     Mode:                     "test",
     NodeName:                 "e2-1",
-    CNPGPhaseTimeout:         5 * time.Second,
     CephFlagPhaseTimeout:     5 * time.Second,
     CephScalePhaseTimeout:    5 * time.Second,
     CephHealthWaitTimeout:    5 * time.Second,

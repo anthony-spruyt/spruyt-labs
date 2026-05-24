@@ -152,9 +152,17 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
     logger.Warn("failed to check recovery state", "error", err)
   }
   if needsRecovery {
-    logger.Info("recovery needed, running recovery sequence")
-    if err := orch.Recover(ctx); err != nil {
-      logger.Error("recovery failed", "error", err)
+    logger.Info("recovery needed, checking UPS before recovery")
+    // Don't undo shutdown work while still on battery — that would cause a
+    // crash loop (recover → re-detect battery → shutdown → crash → repeat).
+    upsStatus, upsErr := ups.GetStatus(ctx)
+    if upsErr == nil && isOnBattery(upsStatus) {
+      logger.Warn("UPS still on battery, skipping recovery to avoid crash loop", "status", upsStatus)
+    } else {
+      logger.Info("running recovery sequence")
+      if err := orch.Recover(ctx); err != nil {
+        logger.Error("recovery failed", "error", err)
+      }
     }
   }
 

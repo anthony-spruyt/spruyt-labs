@@ -13,8 +13,6 @@ func validConfig() Config {
     PollInterval:             5 * time.Second,
     ShutdownDelay:            30 * time.Second,
     UPSRuntimeBudget:         600 * time.Second,
-    CNPGPhaseTimeout:         60 * time.Second,
-    CNPGWaitTimeout:          300 * time.Second,
     CephFlagPhaseTimeout:     15 * time.Second,
     CephScalePhaseTimeout:    60 * time.Second,
     CephHealthWaitTimeout:    300 * time.Second,
@@ -188,7 +186,7 @@ func TestValidateBudgetOverflow(t *testing.T) {
   // Set phase timeouts that exceed the available budget (runtime - delay).
   cfg.UPSRuntimeBudget = 60 * time.Second
   cfg.ShutdownDelay = 30 * time.Second
-  // Total phase timeouts: 60+15+60+120 = 255s, available: 60-30 = 30s
+  // Total phase timeouts: 15+60+120 = 195s, available: 60-30 = 30s
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for phase timeouts exceeding UPS budget")
   }

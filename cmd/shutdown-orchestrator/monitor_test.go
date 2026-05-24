@@ -6,6 +6,7 @@ import (
   "io"
   "net"
   "net/http"
+  "net/http/httptest"
   "sync"
   "sync/atomic"
   "testing"
@@ -102,12 +103,6 @@ func TestMonitorPowerLossDetection(t *testing.T) {
   if tracker.called.Load() {
     t.Error("shutdown should not trigger before delay expires")
   }
-
-  // shuttingDown should only be true once the delay expires and shutdown begins,
-  // not during the countdown period.
-  if mon.shuttingDown.Load() {
-    t.Error("expected shuttingDown to be false during countdown (before delay expires)")
-  }
 }
 
 func TestMonitorPowerRestoredDuringCountdown(t *testing.T) {
@@ -127,10 +122,6 @@ func TestMonitorPowerRestoredDuringCountdown(t *testing.T) {
   if tracker.called.Load() {
     t.Error("shutdown should not have been triggered after power restored")
   }
-
-  if mon.shuttingDown.Load() {
-    t.Error("shuttingDown should be false after power restored")
-  }
 }
 
 func TestMonitorCountdownExpires(t *testing.T) {
@@ -138,7 +129,8 @@ func TestMonitorCountdownExpires(t *testing.T) {
   ups := &mockUPSClient{
     statuses: []string{"OB", "OB", "OB", "OB", "OB", "OB", "OB", "OB", "OB", "OB"},
   }
-  tracker := &shutdownTracker{}
+  // shutdownFn returns an error — RunPollLoop should still return nil.
+  tracker := &shutdownTracker{err: fmt.Errorf("simulated shutdown error")}
   // Poll every 50ms, shutdown delay 100ms — should trigger after 2 OB polls.
   cfg := testConfig(50*time.Millisecond, 100*time.Millisecond, 0)
   mon := NewMonitor(ups, tracker.shutdownFn, cfg, discardLogger())
@@ -146,8 +138,10 @@ func TestMonitorCountdownExpires(t *testing.T) {
   ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
   defer cancel()
 
-  _ = mon.RunPollLoop(ctx)
-
+  err := mon.RunPollLoop(ctx)
+  if err != nil {
+    t.Errorf("RunPollLoop() should return nil even when shutdownFn errors, got: %v", err)
+  }
   if !tracker.called.Load() {
     t.Error("shutdown should have been triggered after countdown expired")
   }
@@ -244,5 +238,20 @@ func TestIsOnBattery(t *testing.T) {
         t.Errorf("isOnBattery(%q) = %v, want %v", tt.status, got, tt.want)
       }
     })
+  }
+}
+
+// TestMonitorHealthAlwaysOK verifies that healthHandler always returns 200,
+// even during an active shutdown — a 503 would cause the liveness probe to
+// kill the container mid-flight.
+func TestMonitorHealthAlwaysOK(t *testing.T) {
+  mon := &Monitor{}
+  w := httptest.NewRecorder()
+  mon.healthHandler(w, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+  if w.Code != http.StatusOK {
+    t.Errorf("healthHandler returned %d, want %d", w.Code, http.StatusOK)
+  }
+  if w.Body.String() != "ok\n" {
+    t.Errorf("healthHandler body = %q, want %q", w.Body.String(), "ok\n")
   }
 }

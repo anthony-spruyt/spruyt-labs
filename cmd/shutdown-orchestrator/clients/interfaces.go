@@ -21,7 +21,6 @@ type KubeClient interface {
   // CNPG operations
   GetCNPGClusters(ctx context.Context) ([]CNPGCluster, error)
   SetCNPGHibernation(ctx context.Context, ns, name string, hibernate bool) error
-  GetCNPGReadyInstances(ctx context.Context, ns, name string) (int, error)
 
   // Ceph operations
   DeploymentExists(ctx context.Context, ns, name string) (bool, error)

@@ -7,7 +7,6 @@ import (
   "net"
   "net/http"
   "strings"
-  "sync/atomic"
   "time"
 
   "github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator/clients"
@@ -22,11 +21,10 @@ const minShutdownBudget = 30 * time.Second
 // Monitor polls the UPS for status changes and triggers shutdown when power
 // has been lost for longer than the configured ShutdownDelay.
 type Monitor struct {
-  ups          clients.UPSClient
-  shutdownFn   func(context.Context) error
-  cfg          Config
-  logger       *slog.Logger
-  shuttingDown atomic.Bool
+  ups        clients.UPSClient
+  shutdownFn func(context.Context) error
+  cfg        Config
+  logger     *slog.Logger
 }
 
 // NewMonitor creates a new Monitor. If logger is nil, a default logger is used.
@@ -111,7 +109,6 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
 
         if onBatteryElapsed >= m.cfg.ShutdownDelay {
           m.logger.Warn("shutdown delay exceeded, triggering shutdown")
-          m.shuttingDown.Store(true)
 
           // Enforce UPS runtime budget as an overall deadline for the
           // shutdown sequence. Remaining budget = total budget minus
@@ -130,7 +127,6 @@ func (m *Monitor) RunPollLoop(ctx context.Context) error {
           shutdownCancel()
           if err != nil {
             m.logger.Error("shutdown failed", "error", err)
-            return fmt.Errorf("shutdown failed: %w", err)
           }
           return nil
         }
@@ -158,13 +154,9 @@ func isOnBattery(status string) bool {
   return false
 }
 
-// healthHandler responds to health check requests.
+// healthHandler responds to health check requests. Always returns 200 — the
+// liveness probe must not kill the container during an active shutdown sequence.
 func (m *Monitor) healthHandler(w http.ResponseWriter, _ *http.Request) {
-  if m.shuttingDown.Load() {
-    w.WriteHeader(http.StatusServiceUnavailable)
-    fmt.Fprintln(w, "shutting down")
-    return
-  }
   w.WriteHeader(http.StatusOK)
   fmt.Fprintln(w, "ok")
 }

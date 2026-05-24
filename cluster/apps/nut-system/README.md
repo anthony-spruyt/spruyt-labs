@@ -35,11 +35,10 @@ USB (ms-01-1) --> NUT Server Pod --> LoadBalancer (:3493) --> Home Assistant
                        |
          On Battery > 30s: Graceful Shutdown
                        |
-    +------------------+------------------+
-    v                  v                  v
-Hibernate CNPG    Set noout flag    Scale Ceph down
-    |                  |                  |
-    +------------------+------------------+
+         +-------------+-------------+
+         v             v             v
+  Set noout flag  Scale Ceph down  (Node shutdown)
+                                       |
                        v
        talosctl shutdown --force (workers, then CP)
 ```
@@ -48,10 +47,11 @@ Hibernate CNPG    Set noout flag    Scale Ceph down
 
 When power is lost for 30+ seconds:
 
-1. **Hibernate CNPG clusters** - Graceful database shutdown preserving PVCs
-2. **Set Ceph noout flag** - prevents monitors from marking down OSDs as out
-3. **Scale Ceph down** - Operator → OSDs → Monitors → Managers (per Rook [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/))
-4. **Shutdown nodes** - Workers first (concurrent), then control plane (sequential, orchestrator's node last)
+1. **Set Ceph noout flag** - prevents monitors from marking down OSDs as out
+2. **Scale Ceph down** - Operator → OSDs → Monitors → Managers (per Rook [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/))
+3. **Shutdown nodes** - Workers first (concurrent), then control plane (sequential, orchestrator's node last)
+
+CNPG is **not** hibernated before shutdown. Talos `force=true` bypasses PDBs entirely, so CNPG recovers automatically when nodes come back online with Ceph shared storage intact.
 
 **Timeline Budget** (~10-20 min UPS runtime):
 
@@ -59,11 +59,10 @@ When power is lost for 30+ seconds:
 | ---------------------- | -------- | ---------- |
 | Power loss detection   | 0s       | 0s         |
 | Delay timer            | 30s      | 30s        |
-| CNPG hibernation       | 60s      | 90s        |
-| Ceph noout flag        | 15s      | 105s       |
-| Ceph scaling           | 60s      | 165s       |
-| Worker shutdown        | 30s      | 195s       |
-| Control plane shutdown | 30s      | 225s       |
+| Ceph noout flag        | 15s      | 45s        |
+| Ceph scaling           | 60s      | 105s       |
+| Worker shutdown        | 30s      | 135s       |
+| Control plane shutdown | 30s      | 165s       |
 
 ## Operation
 
@@ -92,7 +91,7 @@ Recovery sequence:
 1. Wait for Ceph tools pod to become available
 2. Scale Ceph back up: Monitors → Managers → OSDs → Operator
 3. Unset Ceph noout flag
-4. Wake hibernated CNPG clusters
+4. Clear any CNPG hibernation annotations left by older orchestrator versions (backward compat)
 5. Verify cluster health
 
 ### Manual Recovery
@@ -111,9 +110,6 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout
 
 # Check Ceph status
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
-
-# Wake CNPG clusters (remove hibernation annotation)
-kubectl annotate cluster <name> -n <namespace> cnpg.io/hibernation-
 ```
 
 ## Troubleshooting
@@ -130,17 +126,12 @@ kubectl annotate cluster <name> -n <namespace> cnpg.io/hibernation-
    - **Symptom**: No logs when UPS unplugged
    - **Resolution**: Check NUT server connectivity, verify NUT_SERVER and UPS_NAME env vars, check orchestrator pod logs
 
-3. **CNPG clusters not hibernating**
-
-   - **Symptom**: Annotation errors in logs
-   - **Resolution**: Verify RBAC permissions, check pod logs for details
-
-4. **Ceph flags not setting**
+3. **Ceph flags not setting**
 
    - **Symptom**: "rook-ceph-tools deployment not found"
    - **Resolution**: Ensure rook-ceph-tools is deployed: `kubectl -n rook-ceph get deploy rook-ceph-tools`
 
-5. **Automatic recovery fails**
+4. **Automatic recovery fails**
 
    - **Symptom**: Orchestrator pod logs show recovery errors
    - **Resolution**: Run manual recovery commands (see Manual Recovery section), check pod logs
@@ -161,7 +152,6 @@ kubectl annotate cluster <name> -n <namespace> cnpg.io/hibernation-
 | UPS_RUNTIME_BUDGET          | 600                                         | Total UPS runtime budget (seconds)       |
 | HEALTH_PORT                 | 8080                                        | Health endpoint port (/healthz)          |
 | NODE_NAME                   | (downward API)                              | Kubernetes node name (auto-set)          |
-| CNPG_PHASE_TIMEOUT          | 60                                          | CNPG hibernation timeout (seconds)       |
 | CEPH_FLAG_PHASE_TIMEOUT     | 15                                          | Ceph noout flag timeout (seconds)        |
 | CEPH_SCALE_PHASE_TIMEOUT    | 60                                          | Ceph scale down timeout (seconds)        |
 | CEPH_HEALTH_WAIT_TIMEOUT    | 300                                         | Ceph health wait after scale-up (secs)   |

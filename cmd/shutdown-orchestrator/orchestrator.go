@@ -48,10 +48,11 @@ func NewOrchestrator(
 const minNodeBudget = 60 * time.Second
 
 // Shutdown runs the full shutdown sequence:
-// 1. CNPG hibernate (skipped if budget is low)
-// 2. Ceph set noout (skipped if budget is low)
-// 3. Ceph scale down (skipped if budget is low)
-// 4. Node shutdown (always runs)
+// 1. Ceph set noout (skipped if budget is low)
+// 2. Ceph scale down (skipped if budget is low)
+// 3. Node shutdown (always runs)
+// CNPG is not hibernated: Talos force=true bypasses PDBs entirely, so CNPG
+// recovers automatically when nodes come back online.
 func (o *Orchestrator) Shutdown(ctx context.Context) error {
   o.logger.Info("starting shutdown sequence")
 
@@ -59,7 +60,7 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
 
   // Check whether we have enough budget for non-critical phases.
   // If the context has a deadline and remaining time is tight, skip
-  // CNPG and Ceph phases to preserve time for node shutdown.
+  // Ceph phases to preserve time for node shutdown.
   skipNonCritical := false
   if deadline, ok := ctx.Deadline(); ok {
     remaining := time.Until(deadline)
@@ -72,18 +73,6 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
   }
 
   if !skipNonCritical {
-    if err := runPhase(ctx, o.logger, "cnpg-hibernate", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
-      return o.cnpg.Hibernate(pctx)
-    }); err != nil {
-      errs = append(errs, fmt.Errorf("cnpg-hibernate: %w", err))
-    } else {
-      if err := runPhase(ctx, o.logger, "cnpg-wait", o.cfg.CNPGWaitTimeout, func(pctx context.Context) error {
-        return o.cnpg.WaitForHibernation(pctx)
-      }); err != nil {
-        errs = append(errs, fmt.Errorf("cnpg-wait: %w", err))
-      }
-    }
-
     if err := runPhase(ctx, o.logger, "ceph-set-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
       return o.ceph.SetNoout(pctx)
     }); err != nil {
@@ -119,7 +108,7 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
 // 1. Wait for Ceph tools pod
 // 2. Ceph scale up
 // 3. Ceph unset noout
-// 4. CNPG wake
+// 4. CNPG cleanup (backward compat: clears hibernation annotations left by older versions)
 func (o *Orchestrator) Recover(ctx context.Context) error {
   o.logger.Info("starting recovery sequence")
 
@@ -155,10 +144,10 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
     }
   }
 
-  if err := runPhase(ctx, o.logger, "cnpg-wake", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
-    return o.cnpg.Wake(pctx)
+  if err := runPhase(ctx, o.logger, "cnpg-cleanup", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+    return o.cnpg.Cleanup(pctx)
   }); err != nil {
-    errs = append(errs, fmt.Errorf("cnpg-wake: %w", err))
+    errs = append(errs, fmt.Errorf("cnpg-cleanup: %w", err))
   }
 
   // Verify cluster health — log warning only, do not fail recovery.
@@ -246,10 +235,10 @@ func (o *Orchestrator) RecoverFromZero(ctx context.Context) error {
     }
   }
 
-  if err := runPhase(ctx, o.logger, "cnpg-wake", o.cfg.CNPGPhaseTimeout, func(pctx context.Context) error {
-    return o.cnpg.Wake(pctx)
+  if err := runPhase(ctx, o.logger, "cnpg-cleanup", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+    return o.cnpg.Cleanup(pctx)
   }); err != nil {
-    errs = append(errs, fmt.Errorf("cnpg-wake: %w", err))
+    errs = append(errs, fmt.Errorf("cnpg-cleanup: %w", err))
   }
 
   if err := o.verifyHealth(ctx); err != nil {

@@ -52,10 +52,6 @@ controllers:
               fieldRef:
                 fieldPath: spec.nodeName
           # Phase timeouts (seconds)
-          - name: CNPG_PHASE_TIMEOUT
-            value: "60"
-          - name: CNPG_WAIT_TIMEOUT
-            value: "300"
           - name: CEPH_FLAG_PHASE_TIMEOUT
             value: "15"
           - name: CEPH_SCALE_PHASE_TIMEOUT

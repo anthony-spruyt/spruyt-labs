@@ -20,8 +20,6 @@ type Config struct {
 	NodeName         string
 
 	// Phase timeouts
-	CNPGPhaseTimeout         time.Duration
-	CNPGWaitTimeout          time.Duration
 	CephFlagPhaseTimeout     time.Duration
 	CephScalePhaseTimeout    time.Duration
 	CephHealthWaitTimeout    time.Duration
@@ -48,8 +46,6 @@ func LoadConfig(logger *slog.Logger) Config {
 		UPSRuntimeBudget:         time.Duration(envIntOrDefault(logger, "UPS_RUNTIME_BUDGET", 600)) * time.Second,
 		HealthPort:               envIntOrDefault(logger, "HEALTH_PORT", 8080),
 		NodeName:                 os.Getenv("NODE_NAME"),
-		CNPGPhaseTimeout:         time.Duration(envIntOrDefault(logger, "CNPG_PHASE_TIMEOUT", 60)) * time.Second,
-		CNPGWaitTimeout:          time.Duration(envIntOrDefault(logger, "CNPG_WAIT_TIMEOUT", 300)) * time.Second,
 		CephFlagPhaseTimeout:     time.Duration(envIntOrDefault(logger, "CEPH_FLAG_PHASE_TIMEOUT", 15)) * time.Second,
 		CephScalePhaseTimeout:    time.Duration(envIntOrDefault(logger, "CEPH_SCALE_PHASE_TIMEOUT", 60)) * time.Second,
 		CephHealthWaitTimeout:    time.Duration(envIntOrDefault(logger, "CEPH_HEALTH_WAIT_TIMEOUT", 300)) * time.Second,
@@ -96,8 +92,6 @@ func (c Config) Validate() error {
 		name  string
 		value time.Duration
 	}{
-		{"CNPG_PHASE_TIMEOUT", c.CNPGPhaseTimeout},
-		{"CNPG_WAIT_TIMEOUT", c.CNPGWaitTimeout},
 		{"CEPH_FLAG_PHASE_TIMEOUT", c.CephFlagPhaseTimeout},
 		{"CEPH_SCALE_PHASE_TIMEOUT", c.CephScalePhaseTimeout},
 		{"CEPH_HEALTH_WAIT_TIMEOUT", c.CephHealthWaitTimeout},
@@ -127,7 +121,7 @@ func (c Config) Validate() error {
 	// Warn if shutdown phase timeouts exceed the UPS runtime budget minus shutdown delay.
 	// CephHealthWaitTimeout and CephWaitToolsTimeout are excluded because they only
 	// apply during recovery (power restored), not during the battery-constrained shutdown.
-	totalPhaseTime := c.CNPGPhaseTimeout + c.CNPGWaitTimeout + c.CephFlagPhaseTimeout + c.CephScalePhaseTimeout + c.NodeShutdownPhaseTimeout
+	totalPhaseTime := c.CephFlagPhaseTimeout + c.CephScalePhaseTimeout + c.NodeShutdownPhaseTimeout
 	availableBudget := c.UPSRuntimeBudget - c.ShutdownDelay
 	if totalPhaseTime > availableBudget {
 		return fmt.Errorf("phase timeouts (%s) exceed available UPS budget (%s = %s runtime - %s delay)",
