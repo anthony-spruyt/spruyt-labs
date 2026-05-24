@@ -3,6 +3,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
+import type { Redis } from "ioredis";
 
 class ForceObliterateAdapter extends BullMQAdapter {
   obliterate(): Promise<void> {
@@ -44,7 +45,7 @@ const app = express();
 
 app.get("/healthz", async (_req: Request, res: Response) => {
   try {
-    const client = await queue.client;
+    const client = (await queue.client) as Redis;
     await client.ping();
     res.status(200).json({ status: "ok" });
   } catch {
@@ -110,7 +111,7 @@ app.post(
       }
 
       // Redis-side cleanup (moves job to failed, cleans app keys)
-      const client = await queue.client;
+      const client = (await queue.client) as Redis;
       const lockKey = `${prefix}:agent-jobs:${jobId}:lock`;
       const token = `admin-force-fail-${Date.now()}`;
       await client.del(lockKey);
