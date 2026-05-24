@@ -45,7 +45,7 @@ const app = express();
 
 app.get("/healthz", async (_req: Request, res: Response) => {
   try {
-    const client = (await queue.client) as Redis;
+    const client = (await queue.client) as unknown as Redis;
     await client.ping();
     res.status(200).json({ status: "ok" });
   } catch {
@@ -111,7 +111,7 @@ app.post(
       }
 
       // Redis-side cleanup (moves job to failed, cleans app keys)
-      const client = (await queue.client) as Redis;
+      const client = (await queue.client) as unknown as Redis;
       const lockKey = `${prefix}:agent-jobs:${jobId}:lock`;
       const token = `admin-force-fail-${Date.now()}`;
       await client.del(lockKey);
