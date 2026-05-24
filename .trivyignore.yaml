@@ -121,6 +121,13 @@ misconfigurations:
     paths:
       - infra/terraform/**
 
+  # Versioning intentionally suspended on backup buckets - was only required for
+  # cross-region replication (now removed). Backup tools (CNPG, Velero) manage retention.
+  - id: AVD-AWS-0090
+    paths:
+      - infra/terraform/aws/cnpg-backup/main.tf
+      - infra/terraform/aws/velero-backup/main.tf
+
   # ==============================================================================
   # CSI Addons Controller Manager - third-party manifest from csi-addons project
   # https://github.com/csi-addons/kubernetes-csi-addons
