@@ -230,6 +230,11 @@ process.on("SIGTERM", () => {
     queue
       .close()
       .then(() => redisClient.quit())
-      .then(() => process.exit(0));
+      .then(() => process.exit(0))
+      .catch((err) => {
+        console.error("Shutdown error:", err);
+        redisClient.quit().catch(() => {});
+        process.exit(1);
+      });
   });
 });
