@@ -88,7 +88,7 @@ controllers:
             drop: [ALL]
         image:
           repository: alpine/curl
-          tag: "8.19.0@sha256:43148a72c0b159cf35451056d382df3c96317a0e66712dd7eb4e01edac96081f"
+          tag: "8.19.0@sha256:23b60dc412cd453aba2841da0ee8bc6ad8da32263c557fcc9eccd52840f4ca43"
         command: ["/bin/sh", "/scripts/bootstrap.sh"]
         env:
           NEXUS_USER:
