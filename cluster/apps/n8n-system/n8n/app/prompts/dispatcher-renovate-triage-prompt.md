@@ -24,17 +24,27 @@ Before analyzing, build awareness of the PR beyond just its body:
 
 1. Read ALL PR comments — the platform posts previous triage verdicts and fix summaries there. If a prior triage flagged issues and a fix agent pushed commits, that context is in the comments.
 2. Review ALL commits on the PR branch — not just the original dependency bump. A fix agent may have pushed additional commits to address earlier issues.
-3. Check GitHub code-scanning alerts — SARIF results are indexed under the merge ref, NOT the source branch. Use this exact API call:
-   ```
-   gh api "repos/<<REPO>>/code-scanning/alerts?ref=refs/pull/<<PR_NUMBER>>/merge&per_page=100" \
-     --jq '[.[] | select(.rule.security_severity_level == "critical" or .rule.security_severity_level == "high") | {number, rule: .rule.id, severity: .rule.security_severity_level, state: .state}]'
-   ```
-   Do NOT try to parse CI run logs for CVEs — use this API. If the API returns 404 or empty, it means no SARIF results exist yet (CI may still be running). Include any open alerts in your summary with rule IDs and severities so the fix agent can address all findings in one pass.
-4. If prior triage comments exist:
+3. If prior triage comments exist:
    - Check whether fix commits actually address the flagged issues
    - Don't just rubber-stamp — re-run full analysis with fixes applied
    - If fixes resolved issues, upgrade your verdict accordingly (e.g. FIXABLE → SAFE)
    - If fixes are incomplete or introduced new issues, reflect that in your verdict and summary
+
+### Always: Research Upstream Documentation
+
+**Do NOT recommend fixes based solely on error messages.** When a type, interface, or API changes, research the library's documentation to understand the INTENDED migration path.
+
+1. **Check library docs via MCP** — use Context7 `resolve-library-id` → `query-docs` for the updated dependency
+2. **Check upstream issues/PRs** — `gh search issues "breaking change" --repo <upstream-repo>` for the version range
+3. **Fetch changelogs** — read the actual release notes and linked PRs to understand WHY the API changed, not just THAT it changed
+4. **Identify the documented approach** — if a library narrows a type or removes an API, there is usually a recommended replacement. Find it before recommending a workaround.
+
+**Anti-patterns to avoid in triage summaries:**
+- Recommending type casts, error suppression, or lint-ignore directives — these are escape hatches, not fixes. Only recommend if you verified no proper API exists.
+- Recommending use of non-public/undocumented APIs to restore old behavior — if the library removed it from its public surface, there's a replacement.
+- Describing only the symptom (compiler error, test failure) without the root cause (API changed, here's the new way)
+
+**Your triage summary IS the fix agent's roadmap.** If you recommend a hack, the fix agent will implement a hack. Research the proper approach and include it in your summary: what API to use, what import to change, what pattern the library now expects. Include doc links or upstream PR links so the fix agent can verify.
 
 ### If custom triage/analyzer agent found in .claude/agents/:
 
@@ -49,6 +59,7 @@ Before analyzing, build awareness of the PR beyond just its body:
   - For org-owned images (`ghcr.io/anthony-spruyt/*`): check the source repo (e.g. `container-images`) for recent PRs, commits, or releases that produced the new version/digest
   - For digest-only updates: the content changed even though the tag didn't. Investigate what changed between digests — never assume "digest only = safe"
   - For versioned updates: fetch changelog/release notes for the updated dependency
+- **Research proper migration** — when types or APIs change, check library docs (Context7, upstream README, migration guides) for the recommended approach. Don't guess at workarounds.
 - Check for breaking changes, deprecations, required migrations based on what you found upstream
 - Assess risk: magnitude of upstream changes, how central the dependency is, CI results
 - **Before finalizing verdict:** apply CI Verdict Gate below — if CI is red, verdict MUST be FIXABLE minimum
@@ -57,7 +68,7 @@ Before analyzing, build awareness of the PR beyond just its body:
 
 **If CI is red on the PR, the verdict CANNOT be SAFE. Verdict must be FIXABLE at minimum.**
 
-No exceptions. No reasoning around it. Not "the CVEs are pre-existing." Not "main would also fail." Not "the failure is unrelated to this update." CI red = not SAFE. The fix pipeline handles FIXABLE verdicts automatically.
+No exceptions. No reasoning around it. Not "main would also fail." Not "the failure is unrelated to this update." CI red = not SAFE. The fix pipeline handles FIXABLE verdicts automatically.
 
 ## Phase 3: Submit Result via MCP (MANDATORY)
 
