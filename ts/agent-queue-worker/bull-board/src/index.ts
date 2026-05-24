@@ -3,6 +3,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
+import { Redis } from "ioredis";
 
 class ForceObliterateAdapter extends BullMQAdapter {
   obliterate(): Promise<void> {
@@ -31,6 +32,7 @@ const connection = {
 
 const prefix = process.env.QUEUE_PREFIX ?? "agent:queue";
 const queue = new Queue("agent-jobs", { connection, prefix });
+const redisClient = new Redis(connection);
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/");
@@ -44,8 +46,7 @@ const app = express();
 
 app.get("/healthz", async (_req: Request, res: Response) => {
   try {
-    const client = await queue.client;
-    await client.ping();
+    await redisClient.ping();
     res.status(200).json({ status: "ok" });
   } catch {
     res.status(503).json({ status: "error" });
@@ -110,21 +111,20 @@ app.post(
       }
 
       // Redis-side cleanup (moves job to failed, cleans app keys)
-      const client = await queue.client;
       const lockKey = `${prefix}:agent-jobs:${jobId}:lock`;
       const token = `admin-force-fail-${Date.now()}`;
-      await client.del(lockKey);
-      await client.set(lockKey, token, "PX", 30000);
+      await redisClient.del(lockKey);
+      await redisClient.set(lockKey, token, "PX", 30000);
       job.discard();
       await job.moveToFailed(new Error("Force failed via admin"), token, false);
 
       const appKeys = [`agent:active:${jobId}`];
-      const sessionKeys = await client.keys(`agent:session:${jobId}:*`);
-      const resultKeys = await client.keys(`agent:result:${jobId}:*`);
+      const sessionKeys = await redisClient.keys(`agent:session:${jobId}:*`);
+      const resultKeys = await redisClient.keys(`agent:result:${jobId}:*`);
       const allKeys = [...appKeys, ...sessionKeys, ...resultKeys].filter(
         Boolean
       );
-      if (allKeys.length > 0) await client.del(...allKeys);
+      if (allKeys.length > 0) await redisClient.del(...allKeys);
 
       console.log(
         `Admin: force-failed job ${jobId}, cleaned ${allKeys.length} app keys, worker notified: ${workerNotified}`
@@ -227,6 +227,14 @@ const server = app.listen(port, () => {
 
 process.on("SIGTERM", () => {
   server.close(() => {
-    queue.close().then(() => process.exit(0));
+    queue
+      .close()
+      .then(() => redisClient.quit())
+      .then(() => process.exit(0))
+      .catch((err) => {
+        console.error("Shutdown error:", err);
+        redisClient.quit().catch(() => {});
+        process.exit(1);
+      });
   });
 });
