@@ -174,7 +174,7 @@ describe("createRenovateRole — checkStaleness", () => {
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer ghp_test");
+    expect(headers.Authorization).toBe("Bearer ghp_test");
   });
 
   it("omits Authorization header when config has no GITHUB_TOKEN", async () => {
@@ -186,7 +186,7 @@ describe("createRenovateRole — checkStaleness", () => {
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
-    expect(headers["Authorization"]).toBeUndefined();
+    expect(headers.Authorization).toBeUndefined();
   });
 
   it("calls the correct pull request endpoint", async () => {

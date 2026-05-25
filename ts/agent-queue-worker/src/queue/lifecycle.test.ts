@@ -14,6 +14,7 @@ function removeLifecycleListeners(): void {
     process.removeAllListeners(event);
   }
 }
+
 import type { Config } from "../config.js";
 import { type LifecycleDeps, setupLifecycle } from "./lifecycle.js";
 

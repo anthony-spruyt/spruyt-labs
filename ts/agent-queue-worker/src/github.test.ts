@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getCurrentPrHead, fetchReposWithRevertLabels } from "./github.js";
+import { fetchReposWithRevertLabels, getCurrentPrHead } from "./github.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -61,9 +61,9 @@ describe("getCurrentPrHead", () => {
       RequestInit,
     ];
     const headers = init.headers as Record<string, string>;
-    expect(headers["Accept"]).toBe("application/vnd.github.v3+json");
+    expect(headers.Accept).toBe("application/vnd.github.v3+json");
     expect(headers["User-Agent"]).toBe("agent-queue-worker");
-    expect(headers["Authorization"]).toBeUndefined();
+    expect(headers.Authorization).toBeUndefined();
   });
 
   it("adds Authorization header when token is provided", async () => {
@@ -77,7 +77,7 @@ describe("getCurrentPrHead", () => {
       RequestInit,
     ];
     const headers = init.headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer ghp_TOKEN");
+    expect(headers.Authorization).toBe("Bearer ghp_TOKEN");
   });
 
   it("throws when GitHub API returns a non-ok status", async () => {
@@ -269,7 +269,7 @@ describe("fetchReposWithRevertLabels", () => {
     ][];
     for (const [, init] of allCalls) {
       const headers = init.headers as Record<string, string>;
-      expect(headers["Authorization"]).toBe("Bearer mytoken");
+      expect(headers.Authorization).toBe("Bearer mytoken");
     }
   });
 

@@ -4,6 +4,7 @@ import { loadConfig } from "./config.js";
 const VALID_ENV = {
   VALKEY_HOST: "valkey.default.svc.cluster.local",
   VALKEY_PASSWORD: "test",
+  VALKEY_USER: "test",
   N8N_DISPATCH_WEBHOOK:
     "http://n8n.n8n-system.svc.cluster.local/webhook/dispatch",
   WORKER_TO_N8N_SECRET: "test",
@@ -57,6 +58,12 @@ describe("loadConfig", () => {
   it("throws when VALKEY_PASSWORD missing", () => {
     Object.assign(process.env, VALID_ENV);
     delete process.env.VALKEY_PASSWORD;
+    expect(() => loadConfig()).toThrow();
+  });
+
+  it("throws when VALKEY_USER missing", () => {
+    Object.assign(process.env, VALID_ENV);
+    delete process.env.VALKEY_USER;
     expect(() => loadConfig()).toThrow();
   });
 

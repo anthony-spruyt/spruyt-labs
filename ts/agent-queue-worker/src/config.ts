@@ -7,6 +7,7 @@ const ConfigSchema = z
     VALKEY_HOST: z.string().min(1),
     VALKEY_PORT: z.coerce.number().int().default(6379),
     VALKEY_PASSWORD: z.string().min(1),
+    VALKEY_USER: z.string().min(1),
     N8N_DISPATCH_WEBHOOK: z
       .string()
       .url()

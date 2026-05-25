@@ -3,7 +3,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
-import { Redis } from "ioredis";
+import { Redis, RedisOptions } from "ioredis";
 
 class ForceObliterateAdapter extends BullMQAdapter {
   obliterate(): Promise<void> {
@@ -11,7 +11,7 @@ class ForceObliterateAdapter extends BullMQAdapter {
   }
 }
 
-const required = ["VALKEY_HOST", "VALKEY_PASSWORD"] as const;
+const required = ["VALKEY_HOST", "VALKEY_PASSWORD", "VALKEY_USER"] as const;
 for (const key of required) {
   if (!process.env[key]) {
     console.error(`Missing required env var: ${key}`);
@@ -24,10 +24,11 @@ const readOnly = process.env.READ_ONLY === "true";
 const workerUrl = process.env.WORKER_URL ?? "";
 const workerSecret = process.env.WORKER_AUTH_SECRET ?? "";
 
-const connection = {
+const connection: RedisOptions = {
   host: process.env.VALKEY_HOST!,
   port: parseInt(process.env.VALKEY_PORT ?? "6379", 10),
   password: process.env.VALKEY_PASSWORD!,
+  username: process.env.VALKEY_USER!
 };
 
 const prefix = process.env.QUEUE_PREFIX ?? "agent:queue";

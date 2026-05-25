@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DelayedError } from "bullmq";
 import type { Redis } from "ioredis";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Config } from "./config.js";
 import type { HealthGate } from "./health.js";
-import type { RoleRegistry } from "./roles/registry.js";
 import { Processor } from "./processor.js";
+import type { RoleRegistry } from "./roles/registry.js";
 
 // ─── Shared factories (fresh instances per test) ──────────────────────────────
 
@@ -565,7 +565,7 @@ describe("Processor — dispatchAndAwaitCallback", () => {
     expect(options.method).toBe("POST");
 
     const headers = options.headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer test");
+    expect(headers.Authorization).toBe("Bearer test");
     expect(headers["Content-Type"]).toBe("application/json");
     expect(headers["Idempotency-Key"]).toBe("dispatch-1:0");
   });

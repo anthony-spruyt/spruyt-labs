@@ -1,4 +1,4 @@
-import type { Worker, Job } from "bullmq";
+import type { Job, Worker } from "bullmq";
 import type { Config } from "./config.js";
 import type { AgentJob } from "./job/schema.js";
 import { logger } from "./logger.js";

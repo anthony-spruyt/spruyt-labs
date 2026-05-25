@@ -16,6 +16,7 @@ const redis = new Redis({
   host: config.VALKEY_HOST,
   port: config.VALKEY_PORT,
   password: config.VALKEY_PASSWORD,
+  username: config.VALKEY_USER,
   maxRetriesPerRequest: null,
   retryStrategy: (times: number) => Math.min(times * 500, 5000),
 });
