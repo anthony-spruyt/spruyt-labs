@@ -51,7 +51,14 @@ metrics:
     args:
       - --redis.addr=localhost:6379
       - --redis.user=metrics
-    extraEnvs: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
 resources:
   limits:
     cpu: 500m
