@@ -57,6 +57,7 @@ misconfigurations:
       - cluster/apps/n8n-mcp/n8n-mcp-server/app/mcp-api-keys-reader-rbac.yaml
       - cluster/apps/n8n-system/n8n/app/github-rotation-rbac.yaml
       - cluster/apps/agent-worker-system/agent-queue-worker/app/secret-reader-rbac.yaml
+      - cluster/apps/valkey-system/valkey/app/secret-reader-rbac.yaml
 
   # kubectl-mcp-server needs pod delete for cleanup and pods/eviction for drain
   # Scale subresources (deployments/scale, statefulsets/scale) are also granted but
