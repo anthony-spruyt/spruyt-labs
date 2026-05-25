@@ -76,6 +76,13 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
    rbd snap rm <pool>/<image>@<snapshot>
    ```
 
+6. **Clearing health warnings** -- Clear persistent warnings after recovery
+
+   ```bash
+   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- bash
+   ceph crash archive-all
+   ```
+
 ### Disaster Recovery and Restore Path
 
 1. Restore namespace objects with Velero after etcd stability is confirmed:
