@@ -46,30 +46,6 @@ controllers:
               secretKeyRef:
                 name: litellm-secrets
                 key: LITELLM_SALT_KEY
-          # Alibaba Cloud Model Studio — code plan (token-plan endpoint)
-          DASHSCOPE_API_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: DASHSCOPE_API_KEY
-          # Alibaba Cloud Model Studio — PAYG (dashscope-intl endpoint)
-          DASHSCOPE_PAYG_API_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: DASHSCOPE_PAYG_API_KEY
-          # Gemini API key
-          GEMINI_API_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: GEMINI_API_KEY
-          # OpenAI API key
-          OPENAI_API_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: OPENAI_API_KEY
           # Authentik SSO (OIDC) — credentials from ExternalSecret
           GENERIC_CLIENT_ID:
             valueFrom:
