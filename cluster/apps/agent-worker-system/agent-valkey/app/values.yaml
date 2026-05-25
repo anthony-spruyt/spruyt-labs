@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/valkey-io/valkey-helm/refs/heads/main/valkey/values.schema.json
-priorityClassName: high-priority
+priorityClassName: standard
 podSecurityContext:
   fsGroup: 1000
   runAsUser: 1000
@@ -18,9 +18,16 @@ securityContext:
 auth:
   enabled: true
   usersExistingSecret: agent-valkey-secrets
+  # https://valkey.io/topics/acl/
   aclUsers:
     default:
+      permissions: "~* &* -@all"
+    agentqueueworker:
       permissions: "~* &* +@all"
+    redisinsight:
+      permissions: "~* &* +@read"
+    metrics:
+      permissions: "~* &* +@read +@connection +info +client +config|get +slowlog +latency +memory +cluster|info +cluster|slots +cluster|nodes"
 deploymentStrategy: Recreate
 valkeyConfig: |
   appendonly yes
@@ -37,14 +44,9 @@ metrics:
   serviceMonitor:
     enabled: true
   exporter:
-    extraEnvs:
-      REDIS_PASSWORD_FILE: /secrets/valkey/default
-    extraExporterSecrets:
-      - name: agent-valkey-secrets
-    extraVolumeMounts:
-      - name: agent-valkey-secrets-exporter
-        mountPath: /secrets/valkey
-        readOnly: true
+    args:
+      - --redis.addr=localhost:6379
+      - --redis.user=metrics
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:

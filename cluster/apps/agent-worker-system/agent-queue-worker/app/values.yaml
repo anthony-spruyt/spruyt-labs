@@ -1,4 +1,6 @@
 ---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/tags/app-template-4.2.0/charts/library/common/values.schema.json
 defaultPodOptions:
   automountServiceAccountToken: false
   priorityClassName: standard
@@ -12,8 +14,11 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   worker:
+    type: deployment
+    annotations:
+      reloader.stakater.com/auto: "true"
     replicas: 1
-    strategy: RollingUpdate
+    strategy: Recreate
     rollingUpdate:
       unavailable: 0
     pod:
@@ -22,7 +27,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/agent-queue-worker
-          tag: 3.3.24@sha256:1b8a2787c77424f0ae1eaff2171264edcdb0568ad39676500dc45163e6561838
+          tag: 3.3.25@sha256:621b74189655fa44a7a4b8d58d7ffc3d8ce99579b586afdabe1ad638ff2cd706
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"
@@ -32,11 +37,12 @@ controllers:
           SRE_BATCH_WINDOW_MS: "60000"
           SRE_COOLDOWN_MS: "300000"
           SRE_TRIAGE_SUPPRESS_S: "21600"
+          VALKEY_USER: "agentqueueworker"
           VALKEY_PASSWORD:
             valueFrom:
               secretKeyRef:
                 name: agent-valkey-secrets
-                key: default
+                key: agentqueueworker
         envFrom:
           - secretRef:
               name: agent-queue-worker-secrets
@@ -68,13 +74,16 @@ controllers:
                 path: /readyz
                 port: *port
   bull-board:
+    type: deployment
+    annotations:
+      reloader.stakater.com/auto: "true"
     replicas: 1
-    strategy: RollingUpdate
+    strategy: Recreate
     containers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/bull-board
-          tag: 0.2.13@sha256:fbafd0377901bbdf9702dc721043d22efc0e3be4d9b3c0831829990b5c15a5ec
+          tag: 0.2.14@sha256:831ffcd326f3c2b1ae8b98bbb5858fdff84fe6a7a11b7989cce751f5fe9e5869
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"
@@ -82,11 +91,12 @@ controllers:
           QUEUE_PREFIX: agent:queue
           READ_ONLY: "false"
           WORKER_URL: http://agent-queue-worker.agent-worker-system.svc:3000
+          VALKEY_USER: "agentqueueworker"
           VALKEY_PASSWORD:
             valueFrom:
               secretKeyRef:
                 name: agent-valkey-secrets
-                key: default
+                key: agentqueueworker
           WORKER_AUTH_SECRET:
             valueFrom:
               secretKeyRef:
