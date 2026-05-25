@@ -46,6 +46,11 @@ controllers:
               secretKeyRef:
                 name: litellm-secrets
                 key: LITELLM_SALT_KEY
+          OPENAI_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: OPENAI_API_KEY
           # Authentik SSO (OIDC) — credentials from ExternalSecret
           GENERIC_CLIENT_ID:
             valueFrom:
