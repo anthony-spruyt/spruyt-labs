@@ -28,7 +28,7 @@ const connection: RedisOptions = {
   host: process.env.VALKEY_HOST!,
   port: parseInt(process.env.VALKEY_PORT ?? "6379", 10),
   password: process.env.VALKEY_PASSWORD!,
-  username: process.env.VALKEY_USER!
+  username: process.env.VALKEY_USER!,
 };
 
 const prefix = process.env.QUEUE_PREFIX ?? "agent:queue";

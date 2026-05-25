@@ -11,6 +11,8 @@ resources:
   - ./authentik-technitium-oauth.sops.yaml
   - ./authentik-litellm-oauth.sops.yaml
   - ./authentik-cnpg-object-stores.yaml
+  - ./aws-secret-store.yaml
+  - ./aws-external-secret.yaml
   - ./external-secrets-rbac.yaml
   - ./authentik-cnpg-cluster.yaml
   # Dont need pooling yet, if pooling is needed when load increase can look at enabling.

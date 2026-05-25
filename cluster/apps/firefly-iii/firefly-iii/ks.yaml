@@ -15,6 +15,7 @@ spec:
     - name: authentik
     - name: cnpg-operator
     - name: plugin-barman-cloud
+    - name: external-secrets
   prune: true
   timeout: 5m
   wait: true

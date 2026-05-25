@@ -4,6 +4,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./authentik-outpost-rbac.yaml
+  - ./aws-secret-store.yaml
+  - ./aws-external-secret.yaml
   - ./github-secret-store.yaml
   - ./github-external-secret.yaml
   - ./github-rotation-rbac.yaml

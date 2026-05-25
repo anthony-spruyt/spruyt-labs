@@ -3,6 +3,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - ./aws-secret-store.yaml
+  - ./aws-external-secret.yaml
   - ./authentik-outpost-rbac.yaml
   - ./firefly-iii-secrets.sops.yaml
   - ./network-policies.yaml
