@@ -58,8 +58,9 @@ Before modifying Helm values, ALWAYS check upstream/source values.yaml first:
 
 Every workload must include a `vpa.yaml` in its `app/` directory.
 
-- `updateMode: "Off"` — recommendation-only
+- `updateMode` = `Initial` for non critical workloads and `Off` for critical workloads
 - Per-container `containerPolicies` (no wildcards)
+- `controlledValues` = `RequestsOnly` NO LIMIT AUTO ADJUSTMENTS, ONLY REQUESTS!
 - `minAllowed` = `cpu: 1m, memory: 1Mi` (unclamped for accurate recommendations)
 - `maxAllowed` = current resource limits (omit CPU if no CPU limit is set)
 - Containers with no resource specs: omit from `containerPolicies`
