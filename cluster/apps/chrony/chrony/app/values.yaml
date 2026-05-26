@@ -31,7 +31,6 @@ controllers:
       chrony:
         securityContext:
           allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL
@@ -94,14 +93,6 @@ controllers:
             memory: 10Mi
           limits:
             memory: 64Mi
-
-persistence:
-  config:
-    type: emptyDir
-    advancedMounts:
-      chrony:
-        chrony:
-          - path: /var/lib/chrony/
 
 service:
   chrony:
