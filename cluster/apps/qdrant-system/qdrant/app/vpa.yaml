@@ -10,10 +10,11 @@ spec:
     kind: StatefulSet
     name: qdrant
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: qdrant
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

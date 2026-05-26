@@ -10,10 +10,11 @@ spec:
     kind: Deployment
     name: valkey
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: valkey
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

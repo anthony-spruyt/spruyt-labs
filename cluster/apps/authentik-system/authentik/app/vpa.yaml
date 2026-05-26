@@ -10,10 +10,11 @@ spec:
     kind: Deployment
     name: authentik-server
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: server
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -31,10 +32,11 @@ spec:
     kind: Deployment
     name: authentik-worker
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: worker
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

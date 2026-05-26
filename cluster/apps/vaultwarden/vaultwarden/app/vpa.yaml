@@ -10,10 +10,11 @@ spec:
     kind: StatefulSet
     name: vaultwarden
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: main
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
