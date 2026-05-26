@@ -15,33 +15,33 @@ controllers:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         runAsNonRoot: true
-    initContainers:
-      permissions:
-        image:
-          repository: busybox
-          tag: "1.38.0@sha256:fd8d9aa63ba2f0982b5304e1ee8d3b90a210bc1ffb5314d980eb6962f1a9715d"
-        command:
-          - sh
-          - -c
-          - |
-            find /data -mindepth 1 -maxdepth 1 ! -name 'lost+found' -exec chown -R 1000:1000 {} \; || true
-            if [ -d /data/lost+found ]; then
-              chown 1000:1000 /data/lost+found 2>/dev/null || true
-            fi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: [ALL]
-            add: [CHOWN]
-          runAsUser: 0
-          runAsGroup: 0
-          runAsNonRoot: false
-        resources:
-          requests:
-            cpu: 10m
-            memory: 16Mi
-          limits:
-            memory: 16Mi
+    # initContainers:
+    #   permissions:
+    #     image:
+    #       repository: busybox
+    #       tag: "1.38.0@sha256:fd8d9aa63ba2f0982b5304e1ee8d3b90a210bc1ffb5314d980eb6962f1a9715d"
+    #     command:
+    #       - sh
+    #       - -c
+    #       - |
+    #         find /data -mindepth 1 -maxdepth 1 ! -name 'lost+found' -exec chown -R 1000:1000 {} \; || true
+    #         if [ -d /data/lost+found ]; then
+    #           chown 1000:1000 /data/lost+found 2>/dev/null || true
+    #         fi
+    #     securityContext:
+    #       allowPrivilegeEscalation: false
+    #       capabilities:
+    #         drop: [ALL]
+    #         add: [CHOWN]
+    #       runAsUser: 0
+    #       runAsGroup: 0
+    #       runAsNonRoot: false
+    #     resources:
+    #       requests:
+    #         cpu: 10m
+    #         memory: 16Mi
+    #       limits:
+    #         memory: 16Mi
     containers:
       main:
         securityContext:
