@@ -5,4 +5,4 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./technitium/ks.yaml
-  - ./technitium-secondary/ks.yaml
+  # - ./technitium-secondary/ks.yaml
