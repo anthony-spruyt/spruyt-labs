@@ -12,7 +12,7 @@ resources:
 
 image:
   repository: docker.io/velero/velero
-  tag: v1.18.1
+  tag: v1.18.1@sha256:11459094b1b21ec7c817b08f8067d9e89380835547915cac9c4132ff05b55b90
   pullPolicy: IfNotPresent
 
 # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
