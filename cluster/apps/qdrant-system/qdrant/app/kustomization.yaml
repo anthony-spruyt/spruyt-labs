@@ -6,7 +6,7 @@ resources:
   - ./qdrant-secrets.sops.yaml
   - ./release.yaml
   - ./network-policies.yaml
-  # - ./init-container-policy.yaml # incompabilte with enforce restricted
+  - ./init-container-policy.yaml
   - ./vpa.yaml
 configMapGenerator:
   - name: qdrant-values
