@@ -168,6 +168,10 @@ persistence:
     existingClaim: technitium-v2
     globalMounts:
       - path: /etc/dns
+  logs:
+    type: emptyDir
+    globalMounts:
+      - path: /var/log/technitium
   tls:
     enabled: true
     type: secret

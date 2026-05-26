@@ -167,7 +167,7 @@ persistence:
     existingClaim: technitium-secondary-v2
     globalMounts:
       - path: /etc/dns
-  tmp:
+  logs:
     type: emptyDir
     globalMounts:
       - path: /var/log/technitium
