@@ -14,6 +14,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: cilium-agent
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -33,6 +34,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: cilium-operator
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

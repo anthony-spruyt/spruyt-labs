@@ -14,18 +14,21 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: mgr
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: watch-active
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 100Mi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -47,18 +50,21 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: mgr
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: watch-active
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 100Mi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -80,12 +86,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: mon
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -107,12 +115,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: mon
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -134,12 +144,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: mon
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 2Gi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -161,12 +173,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: osd
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 4Gi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -188,12 +202,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: osd
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 4Gi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -215,12 +231,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: osd
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 4Gi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -242,6 +260,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: ceph-crash
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -263,6 +282,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: ceph-crash
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -284,6 +304,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: ceph-crash
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -305,12 +326,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: ceph-exporter
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 128Mi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -332,12 +355,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: ceph-exporter
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 128Mi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -359,12 +384,14 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: ceph-exporter
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
           memory: 128Mi
       - containerName: log-collector
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -386,6 +413,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: rook-ceph-tools
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

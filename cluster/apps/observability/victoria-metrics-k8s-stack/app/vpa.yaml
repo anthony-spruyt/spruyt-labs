@@ -14,6 +14,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: vmsingle
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -36,6 +37,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: vmalert
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -57,6 +59,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: alertmanager
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -78,6 +81,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: grafana
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -100,6 +104,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: kube-state-metrics
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
@@ -121,6 +126,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: node-exporter
+        controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi

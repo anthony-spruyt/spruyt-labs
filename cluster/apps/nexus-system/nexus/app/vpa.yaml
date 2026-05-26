@@ -11,12 +11,14 @@ spec:
     kind: StatefulSet
     name: nexus
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
       - containerName: main
+        controlledValues: "RequestsOnly"
         minAllowed: {cpu: 1m, memory: 1Mi}
         maxAllowed: {memory: 4Gi}
       - containerName: bootstrap
+        controlledValues: "RequestsOnly"
         minAllowed: {cpu: 1m, memory: 1Mi}
         maxAllowed: {cpu: 100m, memory: 64Mi}
