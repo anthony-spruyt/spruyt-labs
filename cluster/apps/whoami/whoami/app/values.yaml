@@ -21,7 +21,7 @@ controllers:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: whoami
-    replicas: 1
+    replicas: 3
     containers:
       whoami:
         securityContext:
@@ -38,8 +38,8 @@ controllers:
           pullPolicy: IfNotPresent
         resources:
           requests:
-            cpu: 5m
-            memory: 32Mi
+            cpu: 1m
+            memory: 10Mi
           limits:
             memory: 64Mi
         # Probes: HTTP on whoami health endpoint
