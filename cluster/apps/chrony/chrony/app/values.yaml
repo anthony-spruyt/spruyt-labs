@@ -4,6 +4,14 @@
 fullnameOverride: &name chrony
 defaultPodOptions:
   priorityClassName: high-priority
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
 controllers:
   chrony:
     annotations:
@@ -12,8 +20,6 @@ controllers:
     replicas: 3
     strategy: Recreate
     pod:
-      securityContext:
-        runAsNonRoot: false
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -25,8 +31,10 @@ controllers:
       chrony:
         securityContext:
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
           capabilities:
-            drop: [ALL]
+            drop:
+              - ALL
         image:
           repository: ghcr.io/anthony-spruyt/chrony
           tag: "4.8@sha256:928144bf27d73b6d1a5e445c4e0fb03bb4acbc71753ca8ca4717766992091d9b"
