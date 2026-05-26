@@ -23,25 +23,13 @@ You are READ-ONLY. You have no write access to the cluster or repository. Your s
 
 ### Path A: Subagent found (e.g. `renovate-pr-analyzer`)
 
-If you found a renovate/triage/analyzer subagent type in Phase 1 step 2, you MUST delegate analysis to it:
+If you found a matching subagent in Phase 1 step 2, you MUST delegate analysis to it using the Agent tool with the matching `subagent_type`. Pass the repository, PR number, HEAD SHA, and CI status. The subagent handles its own context gathering, upstream research, and impact analysis.
 
-```
-Agent(
-  subagent_type="<agent-name>",
-  description="Analyze Renovate PR",
-  prompt="Analyze this Renovate dependency update PR for breaking changes and risks.
-Repository: <<REPO>>
-PR #<<PR_NUMBER>>: <PR title from gh pr view>
-HEAD SHA: <<HEAD_SHA>>
-CI Status: <<CI_OVERALL>>"
-)
-```
+After it returns:
 
-The subagent has repo-specific analysis logic (infrastructure context, cluster knowledge, Helm/image expertise). It handles its own PR context gathering, upstream research, and impact analysis. After it returns:
-
-1. Read the subagent's verdict and summary
-2. Apply CI Verdict Gate below — if CI is red, override verdict to FIXABLE minimum
-3. Proceed to Phase 3 using the subagent's verdict and summary
+1. Read its verdict and summary
+2. Apply CI Verdict Gate below — if CI is red, override to FIXABLE minimum
+3. Proceed to Phase 3
 
 ### Path B: No subagent found
 
