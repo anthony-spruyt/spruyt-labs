@@ -232,6 +232,7 @@ server:
     fsGroup: 1000
   containerSecurityContext:
     runAsNonRoot: true
+    readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     seccompProfile:
       type: RuntimeDefault
@@ -258,6 +259,7 @@ worker:
     fsGroup: 1000
   containerSecurityContext:
     runAsNonRoot: true
+    readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     seccompProfile:
       type: RuntimeDefault
