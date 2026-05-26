@@ -67,7 +67,7 @@ vmsingle:
       # Convert OTel dot-notation metric names to Prometheus underscore format at ingestion (#1043)
       opentelemetry.usePrometheusNaming: "true"
     # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
-    retentionPeriod: 7d
+    retentionPeriod: 1y
     replicaCount: 1
     # PVC managed by operator — operator doesn't support external PVC (reserves volume name + mount path)
     storage:
@@ -76,7 +76,7 @@ vmsingle:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 30Gi
+          storage: 100Gi
 
 alertmanager:
   enabled: true
