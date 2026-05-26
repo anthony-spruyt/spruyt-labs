@@ -10,6 +10,11 @@ resources:
   limits:
     memory: 1Gi
 
+image:
+  repository: docker.io/velero/velero
+  tag: v1.18.1
+  pullPolicy: IfNotPresent
+
 # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
 # If the value is a string then it is evaluated as a template.
 initContainers:
@@ -19,11 +24,6 @@ initContainers:
     volumeMounts:
       - mountPath: /target
         name: plugins
-
-kubectl:
-  image:
-    repository: public.ecr.aws/bitnami/kubectl
-    tag: "1.36@sha256:39474e86a263bc8bc016bebe50c453fbba3c3bfdeda5419774fd270bdbec72bf"
 
 # This job upgrades the CRDs.
 # upgradeCRDs: false
