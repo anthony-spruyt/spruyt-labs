@@ -4,8 +4,16 @@
 priorityClassName: critical-infrastructure
 # PSS restricted compliance - add seccompProfile (chart defaults handle runAsUser/runAsGroup)
 podSecurityContext:
+  runAsGroup: 65532
+  runAsNonRoot: true
+  runAsUser: 65532
   seccompProfile:
     type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
 logs:
   general:
     format: json
