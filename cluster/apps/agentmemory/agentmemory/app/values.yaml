@@ -12,6 +12,8 @@ defaultPodOptions:
     fsGroupChangePolicy: OnRootMismatch
 controllers:
   agentmemory:
+    type: deployment
+    replicas: 0
     strategy: Recreate
     containers:
       engine:
