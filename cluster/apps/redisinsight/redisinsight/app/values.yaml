@@ -11,6 +11,7 @@ defaultPodOptions:
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
+
 controllers:
   redisinsight:
     annotations:
@@ -29,6 +30,8 @@ controllers:
             value: "false"
           - name: RI_STDOUT_LOGGER
             value: "true"
+          - name: RI_PRE_SETUP_DATABASES_PATH
+            value: /usr/src/app/config.json
         resources:
           requests:
             cpu: 10m
@@ -55,9 +58,22 @@ controllers:
               timeoutSeconds: 3
               failureThreshold: 3
           readiness: *probes
+
 serviceAccount:
   redisinsight:
     enabled: true
+
+persistence:
+  config:
+    type: secret
+    name: redisinsight-secrets
+    advancedMounts:
+      redisinsight:
+        app:
+          - path: /usr/src/app/config.json
+            subPath: config.json
+            readOnly: true
+
 service:
   app:
     # name should not be 'redisinsight'  since the service creates environment variables
