@@ -7,7 +7,6 @@ Open-source Identity Provider for SSO authentication across the cluster.
 ## Prerequisites
 
 - CNPG operator (PostgreSQL) - cluster name: `authentik-cnpg-cluster`
-- Valkey (Redis-compatible)
 - cert-manager for TLS
 
 ## Database
@@ -1052,7 +1051,7 @@ property_mappings:
 
 1. **Blueprint shows error but no logs** - Errors stored in DB, use debug command above
 2. **Database connection failures** - Check CNPG cluster health
-3. **Pods CrashLoopBackOff** - Check secrets and Redis connectivity
+3. **Pods CrashLoopBackOff** - Check secrets
 4. **SAML schema validation error** - Check `audience` matches SP entity ID exactly, ensure `property_mappings` are included
 5. **SAML HTTP vs HTTPS mismatch** - Add `https-proto-header` middleware to Traefik ingress
 6. **User can access app without being in group** - Missing `policybinding` in blueprint; add policy binding to application

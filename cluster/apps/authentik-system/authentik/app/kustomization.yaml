@@ -18,8 +18,6 @@ resources:
   # Dont need pooling yet, if pooling is needed when load increase can look at enabling.
   # - ./authentik-cnpg-poolers.yaml
   - ./authentik-cnpg-scheduled-backups.yaml
-  - ./valkey-secret-store.yaml
-  - ./valkey-external-secret.yaml
   - ./release.yaml
   - ./oauth-secret-rotation
   - ./network-policies.yaml

@@ -28,8 +28,6 @@ auth:
       permissions: "~n8n:* &* +@all"
     redisinsight:
       permissions: "~* &* +@read"
-    authentik:
-      permissions: "~authentik:* &* +@all"
     metrics:
       permissions: "~* &* +@read +@connection +info +client +config|get +slowlog +latency +memory +cluster|info +cluster|slots +cluster|nodes"
 deploymentStrategy: Recreate

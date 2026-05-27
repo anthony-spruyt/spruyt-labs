@@ -33,20 +33,6 @@ global:
         secretKeyRef:
           name: authentik-cnpg-cluster-app
           key: password
-    # Redis connection - uses Valkey
-    - name: AUTHENTIK_REDIS__HOST
-      value: valkey.valkey-system
-    - name: AUTHENTIK_REDIS__PORT
-      value: "6379"
-    - name: AUTHENTIK_REDIS__DB
-      value: "0"
-    - name: AUTHENTIK_REDIS__USERNAME
-      value: authentik
-    - name: AUTHENTIK_REDIS__PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: authentik-secrets
-          key: AUTHENTIK_REDIS_PASSWORD
     # Secret key for session signing
     - name: AUTHENTIK_SECRET_KEY
       valueFrom:
