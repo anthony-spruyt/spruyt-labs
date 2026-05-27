@@ -111,7 +111,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-valkey-egress
+  name: allow-outpost-valkey-egress
   namespace: redisinsight
 spec:
   endpointSelector:
@@ -181,8 +181,8 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-            app.kubernetes.io/instance: agent-valkey
-            app.kubernetes.io/name: valkey
+            k8s:app.kubernetes.io/instance: agent-valkey
+            k8s:app.kubernetes.io/name: valkey
       toPorts:
         - ports:
             - port: "6379"
