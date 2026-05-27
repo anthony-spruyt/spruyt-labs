@@ -47,7 +47,7 @@ func (m *drainMockKube) DeletePod(_ context.Context, ns, name string, _ int64) e
 	for nodeName, pods := range m.podsByNode {
 		filtered := make([]clients.PodInfo, 0, len(pods))
 		for _, p := range pods {
-			if !(p.Namespace == ns && p.Name == name) {
+			if p.Namespace != ns || p.Name != name {
 				filtered = append(filtered, p)
 			}
 		}
