@@ -27,7 +27,7 @@ auth:
     agentqueueworker:
       permissions: "~* &* +@all"
     redisinsight:
-      permissions: "~* &* +@read"
+      permissions: "~* &* +@all"
     metrics:
       permissions: "~* &* +@read +@connection +info +client +config|get +slowlog +latency +memory +cluster|info +cluster|slots +cluster|nodes"
 deploymentStrategy: Recreate
