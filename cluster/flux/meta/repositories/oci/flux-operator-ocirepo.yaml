@@ -7,8 +7,8 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "0.48.0"
-    digest: sha256:8feb57a9af903333443e0024916f4cd65ec9df05402463daa3880863249b903d
+    tag: "0.50.0"
+    digest: sha256:901a00064286b446e723bc145f015470424551ea2ddd8714058eb56fc53d4939
   url: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
   verify:
     provider: cosign
