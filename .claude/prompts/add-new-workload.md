@@ -137,7 +137,7 @@ kind: Namespace
 metadata:
   name: <namespace>
   labels:
-    pod-security.kubernetes.io/enforce: baseline  # or privileged if needed
+    pod-security.kubernetes.io/enforce: restricted  # or privileged/baseline if absolute required and no other option
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
 ```
