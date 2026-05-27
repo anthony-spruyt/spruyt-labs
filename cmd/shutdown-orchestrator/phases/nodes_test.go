@@ -387,6 +387,72 @@ func TestNodeSelfWorkerLastRealMode(t *testing.T) {
   }
 }
 
+func TestNodeShutdownWorkers(t *testing.T) {
+  mock := newMockTalosClient()
+  phase := NewNodePhase(mock, newNodeTestLogger())
+
+  cfg := NodeConfig{
+    Workers: []NodeEntry{
+      {Name: "w1", IP: "198.51.100.1"},
+      {Name: "w2", IP: "198.51.100.2"},
+    },
+    ControlPlane: []NodeEntry{
+      {Name: "cp-1", IP: "198.51.100.101"},
+    },
+    PerNodeTimeout: 5 * time.Second,
+  }
+
+  if err := phase.ShutdownWorkers(context.Background(), cfg); err != nil {
+    t.Fatalf("ShutdownWorkers() error: %v", err)
+  }
+
+  calls := mock.getCalls()
+  if len(calls) != 2 {
+    t.Fatalf("expected 2 worker shutdown calls, got %d", len(calls))
+  }
+  for _, c := range calls {
+    if c.NodeIP == "198.51.100.101" {
+      t.Error("ShutdownWorkers() should not shut down control plane nodes")
+    }
+  }
+}
+
+func TestNodeShutdownControlPlane(t *testing.T) {
+  mock := newMockTalosClient()
+  phase := NewNodePhase(mock, newNodeTestLogger())
+
+  cfg := NodeConfig{
+    Workers: []NodeEntry{
+      {Name: "w1", IP: "198.51.100.1"},
+    },
+    ControlPlane: []NodeEntry{
+      {Name: "cp-1", IP: "198.51.100.101"},
+      {Name: "cp-2", IP: "198.51.100.102"},
+    },
+    PerNodeTimeout: 5 * time.Second,
+  }
+
+  if err := phase.ShutdownControlPlane(context.Background(), cfg); err != nil {
+    t.Fatalf("ShutdownControlPlane() error: %v", err)
+  }
+
+  calls := mock.getCalls()
+  if len(calls) != 2 {
+    t.Fatalf("expected 2 CP shutdown calls, got %d", len(calls))
+  }
+  for _, c := range calls {
+    if c.NodeIP == "198.51.100.1" {
+      t.Error("ShutdownControlPlane() should not shut down worker nodes")
+    }
+  }
+  if calls[0].NodeIP != "198.51.100.101" {
+    t.Errorf("first CP = %s, want 198.51.100.101", calls[0].NodeIP)
+  }
+  if calls[1].NodeIP != "198.51.100.102" {
+    t.Errorf("second CP = %s, want 198.51.100.102", calls[1].NodeIP)
+  }
+}
+
 func TestNodeAllForce(t *testing.T) {
   mock := newMockTalosClient()
   phase := NewNodePhase(mock, newNodeTestLogger())

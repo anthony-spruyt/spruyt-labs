@@ -62,6 +62,20 @@ func (p *NodePhase) ShutdownAll(ctx context.Context, cfg NodeConfig) error {
   return errors.Join(allErrs...)
 }
 
+// ShutdownWorkers shuts down all worker nodes concurrently. It applies the same
+// self-node logic as ShutdownAll (skip in test mode, move to last in real mode).
+func (p *NodePhase) ShutdownWorkers(ctx context.Context, cfg NodeConfig) error {
+  workers, _ := p.prepareNodeLists(cfg)
+  return errors.Join(p.shutdownWorkersConcurrently(ctx, workers, cfg.PerNodeTimeout)...)
+}
+
+// ShutdownControlPlane shuts down control plane nodes sequentially. It applies
+// the same self-node logic as ShutdownAll.
+func (p *NodePhase) ShutdownControlPlane(ctx context.Context, cfg NodeConfig) error {
+  _, cpNodes := p.prepareNodeLists(cfg)
+  return errors.Join(p.shutdownControlPlaneSequentially(ctx, cpNodes, cfg.PerNodeTimeout)...)
+}
+
 // prepareNodeLists adjusts both the worker and control plane lists based on
 // NodeName and TestMode. If the self node is a worker, it is handled the same
 // way as a CP self node (skipped in test mode, moved to last in real mode).

@@ -16,6 +16,15 @@ type Node struct {
   Ready bool
 }
 
+// PodInfo represents metadata about a Kubernetes pod.
+type PodInfo struct {
+  Namespace string
+  Name      string
+  NodeName  string
+  DaemonSet bool // owned by a DaemonSet
+  HasPVC    bool // has persistentVolumeClaim volumes
+}
+
 // KubeClient abstracts Kubernetes API operations.
 type KubeClient interface {
   // CNPG operations
@@ -31,6 +40,10 @@ type KubeClient interface {
 
   // Node operations
   GetNodes(ctx context.Context) ([]Node, error)
+  CordonNode(ctx context.Context, name string) error
+  UncordonNode(ctx context.Context, name string) error
+  GetPodsOnNode(ctx context.Context, nodeName string) ([]PodInfo, error)
+  DeletePod(ctx context.Context, ns, name string, gracePeriodSeconds int64) error
 
   // Recovery detection
   IsCephNooutSet(ctx context.Context) (bool, error)

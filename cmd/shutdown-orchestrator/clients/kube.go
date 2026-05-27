@@ -281,6 +281,70 @@ func (k *RealKubeClient) IsCephNooutSet(ctx context.Context) (bool, error) {
   return false, nil
 }
 
+// CordonNode marks a node as unschedulable.
+func (k *RealKubeClient) CordonNode(ctx context.Context, name string) error {
+	patch := []byte(`{"spec":{"unschedulable":true}}`)
+	_, err := k.clientset.CoreV1().Nodes().Patch(ctx, name, types.MergePatchType, patch, metav1.PatchOptions{})
+	if err != nil {
+		return fmt.Errorf("cordoning node %s: %w", name, err)
+	}
+	return nil
+}
+
+// UncordonNode marks a node as schedulable.
+func (k *RealKubeClient) UncordonNode(ctx context.Context, name string) error {
+	patch := []byte(`{"spec":{"unschedulable":false}}`)
+	_, err := k.clientset.CoreV1().Nodes().Patch(ctx, name, types.MergePatchType, patch, metav1.PatchOptions{})
+	if err != nil {
+		return fmt.Errorf("uncordoning node %s: %w", name, err)
+	}
+	return nil
+}
+
+// GetPodsOnNode lists all pods scheduled on a specific node.
+func (k *RealKubeClient) GetPodsOnNode(ctx context.Context, nodeName string) ([]PodInfo, error) {
+	pods, err := k.clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{
+		FieldSelector: "spec.nodeName=" + nodeName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("listing pods on node %s: %w", nodeName, err)
+	}
+
+	result := make([]PodInfo, 0, len(pods.Items))
+	for _, pod := range pods.Items {
+		info := PodInfo{
+			Namespace: pod.Namespace,
+			Name:      pod.Name,
+			NodeName:  pod.Spec.NodeName,
+		}
+		for _, ref := range pod.OwnerReferences {
+			if ref.Kind == "DaemonSet" {
+				info.DaemonSet = true
+				break
+			}
+		}
+		for _, vol := range pod.Spec.Volumes {
+			if vol.PersistentVolumeClaim != nil {
+				info.HasPVC = true
+				break
+			}
+		}
+		result = append(result, info)
+	}
+	return result, nil
+}
+
+// DeletePod deletes a pod with the specified grace period.
+func (k *RealKubeClient) DeletePod(ctx context.Context, ns, name string, gracePeriodSeconds int64) error {
+	err := k.clientset.CoreV1().Pods(ns).Delete(ctx, name, metav1.DeleteOptions{
+		GracePeriodSeconds: &gracePeriodSeconds,
+	})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("deleting pod %s/%s: %w", ns, name, err)
+	}
+	return nil
+}
+
 // isPodReady returns true if the pod is running and its Ready condition is true.
 func isPodReady(pod *corev1.Pod) bool {
   if pod.Status.Phase != corev1.PodRunning {

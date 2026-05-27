@@ -16,6 +16,7 @@ type Orchestrator struct {
   cnpg   *phases.CNPGPhase
   ceph   *phases.CephPhase
   nodes  *phases.NodePhase
+  drain  *phases.DrainPhase
   kube   clients.KubeClient
   cfg    Config
   logger *slog.Logger
@@ -26,6 +27,7 @@ func NewOrchestrator(
   cnpg *phases.CNPGPhase,
   ceph *phases.CephPhase,
   nodes *phases.NodePhase,
+  drain *phases.DrainPhase,
   kube clients.KubeClient,
   cfg Config,
   logger *slog.Logger,
@@ -34,6 +36,7 @@ func NewOrchestrator(
     cnpg:   cnpg,
     ceph:   ceph,
     nodes:  nodes,
+    drain:  drain,
     kube:   kube,
     cfg:    cfg,
     logger: logger,
@@ -42,25 +45,34 @@ func NewOrchestrator(
 
 // minNodeBudget is a safety margin beyond NodeShutdownPhaseTimeout. If the
 // overall context deadline leaves less than NodeShutdownPhaseTimeout + minNodeBudget,
-// non-critical phases (CNPG, Ceph) are skipped so the orchestrator can proceed
+// non-critical phases (Ceph, drain) are skipped so the orchestrator can proceed
 // directly to shutting down nodes. This accounts for overhead like node name
 // resolution and API latency that falls outside the per-phase timeout.
 const minNodeBudget = 60 * time.Second
 
 // Shutdown runs the full shutdown sequence:
-// 1. Ceph set noout (skipped if budget is low)
-// 2. Ceph scale down (skipped if budget is low)
-// 3. Node shutdown (always runs)
-// CNPG is not hibernated: Talos force=true bypasses PDBs entirely, so CNPG
-// recovers automatically when nodes come back online.
+// 1. Ceph set noout       (skipped if budget is low)
+// 2. Cordon workers       (skipped if budget is low)
+// 3. Drain workers        (skipped if budget is low) — ensures RBD mounts released before Ceph goes down
+// 4. Ceph scale down      (skipped if budget is low)
+// 5. Worker shutdown      (always runs)
+// 6. Control plane shutdown (always runs)
 func (o *Orchestrator) Shutdown(ctx context.Context) error {
   o.logger.Info("starting shutdown sequence")
 
   var errs []error
 
+  // Resolve node names once so cordon, drain, and shutdown all use the same names.
+  nc, err := o.nodeConfig(ctx)
+  if err != nil {
+    return fmt.Errorf("resolving node names: %w", err)
+  }
+  workerNames := make([]string, len(nc.Workers))
+  for i, w := range nc.Workers {
+    workerNames[i] = w.Name
+  }
+
   // Check whether we have enough budget for non-critical phases.
-  // If the context has a deadline and remaining time is tight, skip
-  // Ceph phases to preserve time for node shutdown.
   skipNonCritical := false
   if deadline, ok := ctx.Deadline(); ok {
     remaining := time.Until(deadline)
@@ -79,6 +91,19 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
       errs = append(errs, fmt.Errorf("ceph-set-noout: %w", err))
     }
 
+    if err := runPhase(ctx, o.logger, "cordon-workers", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+      return o.drain.CordonWorkers(pctx, workerNames)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("cordon-workers: %w", err))
+    }
+
+    if err := runPhase(ctx, o.logger, "drain-workers", o.cfg.DrainPhaseTimeout, func(pctx context.Context) error {
+      return o.drain.EvictWorkloads(pctx, workerNames,
+        []string{"rook-ceph", "kube-system", "nut-system"}, 30)
+    }); err != nil {
+      errs = append(errs, fmt.Errorf("drain-workers: %w", err))
+    }
+
     if err := runPhase(ctx, o.logger, "ceph-scale-down", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
       return o.ceph.ScaleDown(pctx)
     }); err != nil {
@@ -86,14 +111,16 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
     }
   }
 
-  if err := runPhase(ctx, o.logger, "node-shutdown", o.cfg.NodeShutdownPhaseTimeout, func(pctx context.Context) error {
-    nc, ncErr := o.nodeConfig(pctx)
-    if ncErr != nil {
-      return ncErr
-    }
-    return o.nodes.ShutdownAll(pctx, nc)
+  if err := runPhase(ctx, o.logger, "worker-shutdown", o.cfg.NodeShutdownPhaseTimeout, func(pctx context.Context) error {
+    return o.nodes.ShutdownWorkers(pctx, nc)
   }); err != nil {
-    errs = append(errs, fmt.Errorf("node-shutdown: %w", err))
+    errs = append(errs, fmt.Errorf("worker-shutdown: %w", err))
+  }
+
+  if err := runPhase(ctx, o.logger, "cp-shutdown", o.cfg.NodeShutdownPhaseTimeout, func(pctx context.Context) error {
+    return o.nodes.ShutdownControlPlane(pctx, nc)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("cp-shutdown: %w", err))
   }
 
   if len(errs) > 0 {
@@ -148,6 +175,12 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
     return o.cnpg.Cleanup(pctx)
   }); err != nil {
     errs = append(errs, fmt.Errorf("cnpg-cleanup: %w", err))
+  }
+
+  if err := runPhase(ctx, o.logger, "uncordon-workers", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+    return o.uncordonWorkers(pctx)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("uncordon-workers: %w", err))
   }
 
   // Verify cluster health — log warning only, do not fail recovery.
@@ -239,6 +272,12 @@ func (o *Orchestrator) RecoverFromZero(ctx context.Context) error {
     return o.cnpg.Cleanup(pctx)
   }); err != nil {
     errs = append(errs, fmt.Errorf("cnpg-cleanup: %w", err))
+  }
+
+  if err := runPhase(ctx, o.logger, "uncordon-workers", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+    return o.uncordonWorkers(pctx)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("uncordon-workers: %w", err))
   }
 
   if err := o.verifyHealth(ctx); err != nil {
@@ -347,6 +386,21 @@ func (o *Orchestrator) verifyHealth(ctx context.Context) error {
 
   o.logger.Info("all nodes are ready")
   return nil
+}
+
+// uncordonWorkers resolves worker names and uncordons them. Used in recovery paths.
+func (o *Orchestrator) uncordonWorkers(ctx context.Context) error {
+  ipToName, err := o.resolveNodeNames(ctx)
+  if err != nil {
+    return fmt.Errorf("resolving worker names for uncordon: %w", err)
+  }
+  names := make([]string, 0, len(o.cfg.WorkerIPs))
+  for _, ip := range o.cfg.WorkerIPs {
+    if name := ipToName[ip]; name != "" {
+      names = append(names, name)
+    }
+  }
+  return o.drain.UncordonWorkers(ctx, names)
 }
 
 // nodeConfig builds a NodeConfig from the orchestrator's Config.

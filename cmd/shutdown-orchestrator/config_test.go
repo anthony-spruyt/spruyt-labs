@@ -19,6 +19,7 @@ func validConfig() Config {
     NodeShutdownPhaseTimeout: 120 * time.Second,
     PerNodeTimeout:           15 * time.Second,
     CephWaitToolsTimeout:     600 * time.Second,
+    DrainPhaseTimeout:        180 * time.Second,
     WorkerIPs:                []string{"198.51.100.1"},
     ControlPlaneIPs:          []string{"198.51.100.11"},
   }
@@ -186,9 +187,17 @@ func TestValidateBudgetOverflow(t *testing.T) {
   // Set phase timeouts that exceed the available budget (runtime - delay).
   cfg.UPSRuntimeBudget = 60 * time.Second
   cfg.ShutdownDelay = 30 * time.Second
-  // Total phase timeouts: 15+60+120 = 195s, available: 60-30 = 30s
+  // Total phase timeouts: 15+180+60+120 = 375s, available: 60-30 = 30s
   if err := cfg.Validate(); err == nil {
     t.Error("Validate() = nil, want error for phase timeouts exceeding UPS budget")
+  }
+}
+
+func TestValidateZeroDrainPhaseTimeout(t *testing.T) {
+  cfg := validConfig()
+  cfg.DrainPhaseTimeout = 0
+  if err := cfg.Validate(); err == nil {
+    t.Error("Validate() = nil, want error for zero DrainPhaseTimeout")
   }
 }
 

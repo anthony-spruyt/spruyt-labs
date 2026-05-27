@@ -79,7 +79,8 @@ func buildOrchestrator(kube clients.KubeClient, talos clients.TalosClient, cfg C
   cnpg := phases.NewCNPGPhase(kube, logger)
   ceph := phases.NewCephPhase(kube, logger)
   nodes := phases.NewNodePhase(talos, logger)
-  return NewOrchestrator(cnpg, ceph, nodes, kube, cfg, logger)
+  drain := phases.NewDrainPhase(kube, logger)
+  return NewOrchestrator(cnpg, ceph, nodes, drain, kube, cfg, logger)
 }
 
 func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
@@ -123,12 +124,16 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
     logger.Error("failed to check Ceph scaled-down state, proceeding to preflight", "error", err)
   }
   if cephDown {
-    logger.Info("ceph is scaled to 0, running recovery before preflight")
-    if err := orch.RecoverFromZero(ctx); err != nil {
-      logger.Error("pre-preflight recovery failed", "error", err)
-      return fmt.Errorf("recovery from Ceph-at-zero failed: %w", err)
+    logger.Info("ceph is scaled to 0, checking UPS before recovery")
+    upsStatus, upsErr := ups.GetStatus(ctx)
+    if upsErr == nil && isOnBattery(upsStatus) {
+      logger.Warn("UPS still on battery, skipping Ceph recovery", "status", upsStatus)
+    } else {
+      if err := orch.RecoverFromZero(ctx); err != nil {
+        return fmt.Errorf("recovery from Ceph-at-zero failed: %w", err)
+      }
+      logger.Info("pre-preflight recovery complete")
     }
-    logger.Info("pre-preflight recovery complete")
   }
 
   // Run preflight checks. If any fail, refuse to start monitoring.

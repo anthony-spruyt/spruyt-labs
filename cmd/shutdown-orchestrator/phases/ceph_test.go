@@ -137,12 +137,13 @@ func (m *mockCephKubeClient) GetCNPGClusters(ctx context.Context) ([]clients.CNP
 func (m *mockCephKubeClient) SetCNPGHibernation(ctx context.Context, ns, name string, hibernate bool) error {
   return nil
 }
-func (m *mockCephKubeClient) GetCNPGReadyInstances(ctx context.Context, ns, name string) (int, error) {
-  return 0, nil
-}
-func (m *mockCephKubeClient) GetNodes(ctx context.Context) ([]clients.Node, error) {
+func (m *mockCephKubeClient) GetNodes(ctx context.Context) ([]clients.Node, error) { return nil, nil }
+func (m *mockCephKubeClient) CordonNode(_ context.Context, _ string) error          { return nil }
+func (m *mockCephKubeClient) UncordonNode(_ context.Context, _ string) error        { return nil }
+func (m *mockCephKubeClient) GetPodsOnNode(_ context.Context, _ string) ([]clients.PodInfo, error) {
   return nil, nil
 }
+func (m *mockCephKubeClient) DeletePod(_ context.Context, _, _ string, _ int64) error { return nil }
 
 func testLogger() *slog.Logger {
   return slog.New(slog.NewTextHandler(io.Discard, nil))

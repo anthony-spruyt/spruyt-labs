@@ -59,10 +59,12 @@ func (m *mockKube) IsCephNooutSet(ctx context.Context) (bool, error) {
 func (m *mockKube) GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error) {
   return 1, nil
 }
-
-func (m *mockKube) GetCNPGReadyInstances(ctx context.Context, ns, name string) (int, error) {
-  return 0, nil
+func (m *mockKube) CordonNode(_ context.Context, _ string) error   { return nil }
+func (m *mockKube) UncordonNode(_ context.Context, _ string) error { return nil }
+func (m *mockKube) GetPodsOnNode(_ context.Context, _ string) ([]clients.PodInfo, error) {
+  return nil, nil
 }
+func (m *mockKube) DeletePod(_ context.Context, _, _ string, _ int64) error { return nil }
 
 // mockTalos implements clients.TalosClient.
 type mockTalos struct {

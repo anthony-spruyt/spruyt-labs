@@ -155,6 +155,26 @@ func (m *orchestratorMockKube) GetDeploymentReplicas(ctx context.Context, ns, na
   return 1, nil
 }
 
+func (m *orchestratorMockKube) CordonNode(_ context.Context, name string) error {
+  m.record("CordonNode:" + name)
+  return nil
+}
+
+func (m *orchestratorMockKube) UncordonNode(_ context.Context, name string) error {
+  m.record("UncordonNode:" + name)
+  return nil
+}
+
+func (m *orchestratorMockKube) GetPodsOnNode(_ context.Context, nodeName string) ([]clients.PodInfo, error) {
+  m.record("GetPodsOnNode:" + nodeName)
+  return nil, nil // no pods — drain completes immediately
+}
+
+func (m *orchestratorMockKube) DeletePod(_ context.Context, ns, name string, _ int64) error {
+  m.record("DeletePod:" + ns + "/" + name)
+  return nil
+}
+
 // orchestratorMockTalos implements clients.TalosClient.
 type orchestratorMockTalos struct {
   mu    sync.Mutex
@@ -193,6 +213,7 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
   cnpg := phases.NewCNPGPhase(kube, logger)
   ceph := phases.NewCephPhase(kube, logger)
   nodes := phases.NewNodePhase(talos, logger)
+  drain := phases.NewDrainPhase(kube, logger)
 
   cfg := Config{
     Mode:                     "test",
@@ -203,6 +224,7 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
     CephWaitToolsTimeout:     5 * time.Second,
     NodeShutdownPhaseTimeout: 5 * time.Second,
     PerNodeTimeout:           5 * time.Second,
+    DrainPhaseTimeout:        5 * time.Second,
     WorkerIPs:                []string{"198.51.100.1"},
     ControlPlaneIPs:          []string{"198.51.100.10", "198.51.100.11"},
   }
@@ -216,7 +238,7 @@ func newTestOrchestrator(kube *orchestratorMockKube, talos *orchestratorMockTalo
     }
   }
 
-  return NewOrchestrator(cnpg, ceph, nodes, kube, cfg, logger)
+  return NewOrchestrator(cnpg, ceph, nodes, drain, kube, cfg, logger)
 }
 
 func TestOrchestratorShutdownSequence(t *testing.T) {
@@ -238,14 +260,17 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify ordering: Ceph noout before Ceph scale down
+  // Verify ordering: noout → cordon → ceph scale down
   cephNooutIdx := -1
+  cordonIdx := -1
   cephScaleIdx := -1
 
   for i, c := range calls {
     switch {
     case c == "ExecInDeployment:set:noout" && cephNooutIdx == -1:
       cephNooutIdx = i
+    case strings.HasPrefix(c, "CordonNode:") && cordonIdx == -1:
+      cordonIdx = i
     case c == "ScaleDeployment:rook-ceph-operator:0" && cephScaleIdx == -1:
       cephScaleIdx = i
     }
@@ -254,11 +279,17 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
   if cephNooutIdx == -1 {
     t.Fatal("Ceph set noout was not called")
   }
+  if cordonIdx == -1 {
+    t.Fatal("CordonNode was not called")
+  }
   if cephScaleIdx == -1 {
     t.Fatal("Ceph scale down was not called")
   }
-  if cephNooutIdx >= cephScaleIdx {
-    t.Errorf("Ceph set noout (idx %d) should come before Ceph scale down (idx %d)", cephNooutIdx, cephScaleIdx)
+  if cephNooutIdx >= cordonIdx {
+    t.Errorf("Ceph set noout (idx %d) should come before cordon (idx %d)", cephNooutIdx, cordonIdx)
+  }
+  if cordonIdx >= cephScaleIdx {
+    t.Errorf("cordon (idx %d) should come before Ceph scale down (idx %d)", cordonIdx, cephScaleIdx)
   }
 
   // Verify talos shutdown was called
@@ -537,6 +568,7 @@ func TestOrchestratorRecoverFromZeroScaleUpFails(t *testing.T) {
   cnpg := phases.NewCNPGPhase(kube, logger)
   ceph := phases.NewCephPhase(kube, logger)
   nodes := phases.NewNodePhase(talos, logger)
+  drain := phases.NewDrainPhase(kube, logger)
   cfg := Config{
     Mode:                     "test",
     NodeName:                 "e2-1",
@@ -546,10 +578,11 @@ func TestOrchestratorRecoverFromZeroScaleUpFails(t *testing.T) {
     CephWaitToolsTimeout:     5 * time.Second,
     NodeShutdownPhaseTimeout: 5 * time.Second,
     PerNodeTimeout:           5 * time.Second,
+    DrainPhaseTimeout:        5 * time.Second,
     WorkerIPs:                []string{"198.51.100.1"},
     ControlPlaneIPs:          []string{"198.51.100.10"},
   }
-  orch := NewOrchestrator(cnpg, ceph, nodes, kube, cfg, logger)
+  orch := NewOrchestrator(cnpg, ceph, nodes, drain, kube, cfg, logger)
 
   err := orch.RecoverFromZero(context.Background())
   if err == nil {

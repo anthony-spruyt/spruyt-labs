@@ -26,6 +26,7 @@ type Config struct {
 	NodeShutdownPhaseTimeout time.Duration
 	PerNodeTimeout           time.Duration
 	CephWaitToolsTimeout     time.Duration
+	DrainPhaseTimeout        time.Duration
 
 	// Node IPs
 	WorkerIPs       []string
@@ -52,6 +53,7 @@ func LoadConfig(logger *slog.Logger) Config {
 		NodeShutdownPhaseTimeout: time.Duration(envIntOrDefault(logger, "NODE_SHUTDOWN_PHASE_TIMEOUT", 120)) * time.Second,
 		PerNodeTimeout:           time.Duration(envIntOrDefault(logger, "PER_NODE_TIMEOUT", 15)) * time.Second,
 		CephWaitToolsTimeout:     time.Duration(envIntOrDefault(logger, "CEPH_WAIT_TOOLS_TIMEOUT", 600)) * time.Second,
+		DrainPhaseTimeout:        time.Duration(envIntOrDefault(logger, "DRAIN_PHASE_TIMEOUT", 180)) * time.Second,
 	}
 
 	// Collect non-empty node IPs
@@ -98,6 +100,7 @@ func (c Config) Validate() error {
 		{"NODE_SHUTDOWN_PHASE_TIMEOUT", c.NodeShutdownPhaseTimeout},
 		{"PER_NODE_TIMEOUT", c.PerNodeTimeout},
 		{"CEPH_WAIT_TOOLS_TIMEOUT", c.CephWaitToolsTimeout},
+		{"DRAIN_PHASE_TIMEOUT", c.DrainPhaseTimeout},
 	} {
 		if check.value <= 0 {
 			return fmt.Errorf("%s must be positive, got %s", check.name, check.value)
@@ -121,7 +124,7 @@ func (c Config) Validate() error {
 	// Warn if shutdown phase timeouts exceed the UPS runtime budget minus shutdown delay.
 	// CephHealthWaitTimeout and CephWaitToolsTimeout are excluded because they only
 	// apply during recovery (power restored), not during the battery-constrained shutdown.
-	totalPhaseTime := c.CephFlagPhaseTimeout + c.CephScalePhaseTimeout + c.NodeShutdownPhaseTimeout
+	totalPhaseTime := c.CephFlagPhaseTimeout + c.DrainPhaseTimeout + c.CephScalePhaseTimeout + c.NodeShutdownPhaseTimeout
 	availableBudget := c.UPSRuntimeBudget - c.ShutdownDelay
 	if totalPhaseTime > availableBudget {
 		return fmt.Errorf("phase timeouts (%s) exceed available UPS budget (%s = %s runtime - %s delay)",
