@@ -168,6 +168,27 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow redisinsight app egress to valkey for viewing data
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-redisinsight-agent-valkey-egress
+  namespace: redisinsight
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: redisinsight
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/instance: agent-valkey
+            app.kubernetes.io/name: valkey
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

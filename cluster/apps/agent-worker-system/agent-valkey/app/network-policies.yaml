@@ -40,3 +40,24 @@ spec:
         - ports:
             - port: "9121"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from redisinsight
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-redisinsight-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: agent-valkey
+      app.kubernetes.io/name: valkey
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: redisinsight
+            k8s:app.kubernetes.io/name: redisinsight
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
