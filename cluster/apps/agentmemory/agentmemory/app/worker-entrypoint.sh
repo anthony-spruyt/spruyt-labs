@@ -2,6 +2,6 @@
 set -euo pipefail
 
 # renovate: depName=@agentmemory/agentmemory datasource=npm
-VERSION="0.9.21"
+VERSION="0.9.22"
 
 npx --yes "@agentmemory/agentmemory@${VERSION}" --no-engine
