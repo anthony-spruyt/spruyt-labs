@@ -55,6 +55,7 @@ nodes:
         mtu: 9000
         vlans:
           - vlanId: 20
+            mtu: 9000
             addresses:
               - ${E2_1_IP4}/24
             routes:
@@ -137,6 +138,7 @@ nodes:
         mtu: 9000
         vlans:
           - vlanId: 20
+            mtu: 9000
             addresses:
               - ${E2_2_IP4}/24
             routes:
@@ -167,6 +169,7 @@ nodes:
         mtu: 9000
         vlans:
           - vlanId: 20
+            mtu: 9000
             addresses:
               - ${E2_3_IP4}/24
             routes:
@@ -201,6 +204,7 @@ nodes:
         mtu: 9000
         vlans:
           - vlanId: 20
+            mtu: 9000
             addresses:
               - ${MS_01_1_IP4}/24
             routes:
@@ -360,6 +364,7 @@ nodes:
         mtu: 9000
         vlans:
           - vlanId: 20
+            mtu: 9000
             addresses:
               - ${MS_01_2_IP4}/24
             routes:
@@ -427,6 +432,7 @@ nodes:
         mtu: 9000
         vlans:
           - vlanId: 20
+            mtu: 9000
             addresses:
               - ${MS_01_3_IP4}/24
             routes:
