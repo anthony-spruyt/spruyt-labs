@@ -30,6 +30,9 @@ monitoring:
   # Disable CephNodeDiskspaceWarning - replaced with Talos-safe version in observability vmrules/
   # Scope Ceph "nodes" group alerts to worker/Ceph nodes only (Ref #1241)
   prometheusRuleOverrides:
+    CephPoolGrowthWarning:
+      expr: |
+        (max by(cluster,pool_id,instance) (predict_linear(ceph_pool_percent_used[2d], 3600 * 24 * 5)) * on(cluster,pool_id,instance) group_right() ceph_pool_metadata) >= 95
     CephNodeDiskspaceWarning:
       disabled: true
     CephNodeNetworkPacketDrops:
