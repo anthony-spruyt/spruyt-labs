@@ -26,7 +26,8 @@
     "source=${localEnv:HOME}/.secrets/talosconfig,target=/home/vscode/.secrets/talosconfig,type=bind"
   ],
   "containerEnv": {
-    "SSH_AUTH_SOCK": "/ssh-agent"
+    "SSH_AUTH_SOCK": "/ssh-agent",
+    "NEXUS_DOCKER_URL": "${localEnv:NEXUS_DOCKER_URL}"
   },
   "features": {
     "ghcr.io/devcontainers/features/go": {
