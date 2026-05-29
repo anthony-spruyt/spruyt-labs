@@ -51,10 +51,9 @@ EXTERNAL_DOMAIN=<cluster-external-domain>
 
 #### OpenTelemetry (optional)
 
-To ship dev container telemetry to the cluster via the `otel.lan.${EXTERNAL_DOMAIN}` OTLP ingress, add these to `.env`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env` does not. `OTEL_API_KEY` comes from the `traefik-api-keys` secret.
+To ship dev container telemetry to the cluster via the `otel.lan.<domain>` OTLP ingress, add these to `.env`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env` does not. The API key comes from the `traefik-api-keys` secret. Substitute the real domain and key inline — `.env` does not expand `${VAR}` references.
 
 ```bash
-OTEL_API_KEY=<otel-api-key>
 CLAUDE_CODE_ENABLE_TELEMETRY=1
 CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1
 OTEL_LOG_TOOL_DETAILS=1
@@ -64,8 +63,8 @@ OTEL_METRICS_EXPORTER=otlp
 OTEL_LOGS_EXPORTER=otlp
 OTEL_TRACES_EXPORTER=otlp
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.lan.${EXTERNAL_DOMAIN}
-OTEL_EXPORTER_OTLP_HEADERS=X-API-KEY=${OTEL_API_KEY}
+OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.lan.<domain>
+OTEL_EXPORTER_OTLP_HEADERS=X-API-KEY=<otel-api-key>
 OTEL_RESOURCE_ATTRIBUTES=agent.namespace=devcontainers
 ```
 
