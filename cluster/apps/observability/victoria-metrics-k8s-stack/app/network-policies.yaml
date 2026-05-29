@@ -1,19 +1,17 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Traefik for OTLP metrics ingest on port 8428
+# Allow ingress from all cluster pods on port 8428 (scraped by VMAgent + OTLP from all namespaces)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-traefik-metrics-ingress
+  name: allow-cluster-metrics-ingress
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: vmsingle
   ingress:
     - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: traefik
-            k8s:app.kubernetes.io/name: traefik
+        - {}
       toPorts:
         - ports:
             - port: "8428"
