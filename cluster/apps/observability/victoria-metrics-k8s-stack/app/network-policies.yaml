@@ -10,8 +10,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: vmsingle
   ingress:
-    - fromEndpoints:
-        - {}
+    - fromEntities:
+        - cluster
       toPorts:
         - ports:
             - port: "8428"

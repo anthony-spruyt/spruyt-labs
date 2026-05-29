@@ -10,8 +10,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: victoria-logs-single
   ingress:
-    - fromEndpoints:
-        - {}
+    - fromEntities:
+        - cluster
       toPorts:
         - ports:
             - port: "9428"
