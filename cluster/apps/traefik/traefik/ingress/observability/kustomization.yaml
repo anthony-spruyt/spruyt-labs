@@ -6,8 +6,10 @@ resources:
   - ../base/compress.yaml
   - ../base/lan-ip-whitelist.yaml
   - ../base/rate-limit.yaml
+  - ./api-key-auth.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
+  - ./path-rewrites.yaml
 patches:
   - target:
       kind: Middleware

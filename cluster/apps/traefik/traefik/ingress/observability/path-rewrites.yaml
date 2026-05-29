@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/middleware_v1alpha1.json
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: otel-traces-rewrite
+  namespace: observability
+spec:
+  replacePathRegex:
+    regex: "^/v1/traces(.*)"
+    replacement: "/insert/opentelemetry/v1/traces${1}"
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/middleware_v1alpha1.json
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: otel-metrics-rewrite
+  namespace: observability
+spec:
+  replacePathRegex:
+    regex: "^/v1/metrics(.*)"
+    replacement: "/opentelemetry/v1/metrics${1}"
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/middleware_v1alpha1.json
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: otel-logs-rewrite
+  namespace: observability
+spec:
+  replacePathRegex:
+    regex: "^/v1/logs(.*)"
+    replacement: "/insert/opentelemetry/v1/logs${1}"

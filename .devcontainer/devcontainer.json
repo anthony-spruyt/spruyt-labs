@@ -27,7 +27,10 @@
   ],
   "containerEnv": {
     "SSH_AUTH_SOCK": "/ssh-agent",
-    "NEXUS_DOCKER_URL": "${localEnv:NEXUS_DOCKER_URL}"
+    "NEXUS_DOCKER_URL": "${localEnv:NEXUS_DOCKER_URL}",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "https://otel.lan.${localEnv:EXTERNAL_DOMAIN}",
+    "OTEL_EXPORTER_OTLP_HEADERS": "X-API-KEY=${localEnv:OTEL_API_KEY}",
+    "OTEL_SERVICE_NAME": "devcontainer"
   },
   "features": {
     "ghcr.io/devcontainers/features/go": {

@@ -13,6 +13,7 @@ resources:
   - ./vmrules
   - ./release.yaml
   - ./vpa.yaml
+  - ./network-policies.yaml
 configMapGenerator:
   - name: victoria-metrics-k8s-stack-values
     namespace: observability

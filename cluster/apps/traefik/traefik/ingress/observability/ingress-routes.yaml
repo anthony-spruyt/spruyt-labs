@@ -52,3 +52,57 @@ spec:
           port: 8429
   tls:
     secretName: "vmagent-lan-${EXTERNAL_DOMAIN/./-}-tls"
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+# OTLP ingestion for local dev containers — standard OTLP paths rewritten to Victoria native paths
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-lan-https-otel
+  namespace: observability
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.alpha.kubernetes.io/hostname: otel.lan.${EXTERNAL_DOMAIN}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`otel.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/v1/traces`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: api-key-auth-otel
+        - name: otel-traces-rewrite
+        - name: compress
+      services:
+        - name: victoria-traces-single-vt-single-server
+          namespace: observability
+          passHostHeader: true
+          port: 10428
+    - kind: Rule
+      match: Host(`otel.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/v1/metrics`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: api-key-auth-otel
+        - name: otel-metrics-rewrite
+        - name: compress
+      services:
+        - name: vmsingle-victoria-metrics-k8s-stack
+          namespace: observability
+          passHostHeader: true
+          port: 8428
+    - kind: Rule
+      match: Host(`otel.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/v1/logs`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: api-key-auth-otel
+        - name: otel-logs-rewrite
+        - name: compress
+      services:
+        - name: victoria-logs-single-server
+          namespace: observability
+          passHostHeader: true
+          port: 9428
+  tls:
+    secretName: "otel-lan-${EXTERNAL_DOMAIN/./-}-tls"
