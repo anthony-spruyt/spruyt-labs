@@ -46,7 +46,30 @@ CONTEXT7_API_KEY=<context7-key>
 SOPS_AGE_KEY_FILE=/home/vscode/.secrets/age.key
 KUBECONFIG=/home/vscode/.secrets/kubeconfig
 TALOSCONFIG=/home/vscode/.secrets/talosconfig
+EXTERNAL_DOMAIN=<cluster-external-domain>
 ```
+
+#### OpenTelemetry (optional)
+
+To ship dev container telemetry to the cluster via the `otel.lan.${EXTERNAL_DOMAIN}` OTLP ingress, add these to `.env`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env` does not. `OTEL_API_KEY` comes from the `traefik-api-keys` secret.
+
+```bash
+OTEL_API_KEY=<otel-api-key>
+CLAUDE_CODE_ENABLE_TELEMETRY=1
+CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1
+OTEL_LOG_TOOL_DETAILS=1
+OTEL_LOG_TOOL_CONTENT=1
+OTEL_LOG_USER_PROMPTS=1
+OTEL_METRICS_EXPORTER=otlp
+OTEL_LOGS_EXPORTER=otlp
+OTEL_TRACES_EXPORTER=otlp
+OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.lan.${EXTERNAL_DOMAIN}
+OTEL_EXPORTER_OTLP_HEADERS=X-API-KEY=${OTEL_API_KEY}
+OTEL_RESOURCE_ATTRIBUTES=agent.namespace=devcontainers
+```
+
+A single base `OTEL_EXPORTER_OTLP_ENDPOINT` is enough — the SDK appends `/v1/{traces,metrics,logs}` and Traefik rewrites each to the Victoria-native path. In-cluster workloads instead set per-signal endpoints because they target distinct pod DNS names per backend.
 
 ### SSH Agent Setup
 
