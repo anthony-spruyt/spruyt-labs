@@ -63,12 +63,14 @@ OTEL_METRICS_EXPORTER=otlp
 OTEL_LOGS_EXPORTER=otlp
 OTEL_TRACES_EXPORTER=otlp
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.lan.<domain>
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://otel.lan.<domain>/v1/traces
+OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=https://otel.lan.<domain>/v1/metrics
+OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://otel.lan.<domain>/v1/logs
 OTEL_EXPORTER_OTLP_HEADERS=X-API-KEY=<otel-api-key>
 OTEL_RESOURCE_ATTRIBUTES=agent.namespace=devcontainers
 ```
 
-A single base `OTEL_EXPORTER_OTLP_ENDPOINT` is enough — the SDK appends `/v1/{traces,metrics,logs}` and Traefik rewrites each to the Victoria-native path. In-cluster workloads instead set per-signal endpoints because they target distinct pod DNS names per backend.
+Per-signal endpoints share the one `otel.lan.<domain>` host but use distinct `/v1/{traces,metrics,logs}` paths, which Traefik rewrites to the Victoria-native paths. Unlike in-cluster workloads — which point each signal at a different backend pod DNS — every signal here hits the same ingress.
 
 ### SSH Agent Setup
 
