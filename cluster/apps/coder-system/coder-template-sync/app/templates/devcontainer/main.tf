@@ -280,10 +280,10 @@ resource "kubernetes_persistent_volume_claim_v1" "home" {
 resource "coder_agent" "main" {
   arch = data.coder_provisioner.me.arch
   os   = "linux"
-  dir  = local.workspace_folder
 
   startup_script = <<-EOT
     set -e
+    cd "${local.workspace_folder}"
 
     # Rootful podman runtime dir (required by podman inside Kata VM).
     sudo mkdir -p /run/user/1000
