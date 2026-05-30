@@ -16,6 +16,7 @@ spec:
     - name: cnpg-operator
     - name: external-secrets
     - name: plugin-barman-cloud
+    - name: litellm-valkey
   prune: true
   timeout: 10m
   wait: true

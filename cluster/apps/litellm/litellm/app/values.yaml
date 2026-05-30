@@ -14,7 +14,11 @@ defaultPodOptions:
 controllers:
   litellm:
     type: deployment
-    replicas: 1
+    replicas: 2
+    strategy: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
     annotations:
       reloader.stakater.com/auto: "true"
     containers:
@@ -63,6 +67,14 @@ controllers:
           STORE_MODEL_IN_DB: "True"
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
+          REDIS_HOST: litellm-valkey.litellm.svc
+          REDIS_PORT: "6379"
+          REDIS_USERNAME: litellm
+          REDIS_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-valkey-secrets
+                key: litellm
         envFrom:
           - secretRef:
               name: litellm-secrets
@@ -452,27 +464,6 @@ configMaps:
   litellm-config:
     data:
       config.yaml: |
-        litellm_settings:
-          drop_params: true
-          callbacks:
-            - otel
-            - prometheus
-            - websearch_interception
-          websearch_interception_params:
-            enabled_providers:
-              - anthropic
-              - hosted_vllm
-              - openai
-            search_tool_name: brave-search
-        search_tools:
-          - search_tool_name: brave-search
-            litellm_params:
-              search_provider: brave
-              api_key: os.environ/BRAVE_API_KEY
-          - search_tool_name: firecrawl-search
-            litellm_params:
-              search_provider: firecrawl
-              api_key: os.environ/FIRECRAWL_API_KEY
         guardrails:
           - guardrail_name: pii-protection
             litellm_params:
@@ -502,6 +493,32 @@ configMaps:
               default_on: false
               skip_system_message_in_guardrail: true
               api_base: http://litellm-llm-guard-adapter.litellm.svc.cluster.local:8080
+        litellm_settings:
+          drop_params: true
+          callbacks:
+            - otel
+            - prometheus
+            - websearch_interception
+          websearch_interception_params:
+            enabled_providers:
+              - anthropic
+              - hosted_vllm
+              - openai
+            search_tool_name: brave-search
+        router_settings:
+          redis_host: litellm-valkey.litellm.svc
+          redis_port: "6379"
+          redis_username: litellm
+          redis_password: os.environ/REDIS_PASSWORD
+        search_tools:
+          - search_tool_name: brave-search
+            litellm_params:
+              search_provider: brave
+              api_key: os.environ/BRAVE_API_KEY
+          - search_tool_name: firecrawl-search
+            litellm_params:
+              search_provider: firecrawl
+              api_key: os.environ/FIRECRAWL_API_KEY
 persistence:
   tmp:
     type: emptyDir
