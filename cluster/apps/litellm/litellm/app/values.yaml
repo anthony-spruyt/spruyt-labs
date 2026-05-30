@@ -465,12 +465,16 @@ configMaps:
   litellm-config:
     data:
       config.yaml: |
-        # model_list managed via LiteLLM API/UI — source of truth is CNPG DB
         litellm_settings:
           drop_params: true
           callbacks:
             - otel
             - prometheus
+        callbacks: ["websearch_interception"]
+          websearch_interception_params:
+            enabled_providers:
+              - hosted_vllm
+            search_tool_name: "brave-search"
         guardrails:
           - guardrail_name: "pii-protection"
             litellm_params:
@@ -500,10 +504,6 @@ configMaps:
               default_on: false
               skip_system_message_in_guardrail: true
               api_base: "http://litellm-llm-guard-adapter.litellm.svc.cluster.local:8080"
-        router_settings:
-          allowed_fails: 3
-          cooldown_time: 300
-        mcp_servers: []
 persistence:
   tmp:
     type: emptyDir
