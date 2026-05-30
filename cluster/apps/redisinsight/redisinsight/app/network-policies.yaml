@@ -196,7 +196,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-redisinsight-agent-valkey-egress
+  name: allow-redisinsight-litellm-valkey-egress
   namespace: redisinsight
 spec:
   endpointSelector:
