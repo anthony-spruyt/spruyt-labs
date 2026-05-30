@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/valkey-io/valkey-helm/refs/heads/main/valkey/values.schema.json
+# Default values: https://github.com/valkey-io/valkey-helm/blob/main/valkey/values.yaml
+# Documentation: https://github.com/valkey-io/valkey-helm/blob/main/valkey/README.md
+priorityClassName: high-priority
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+auth:
+  enabled: true
+  usersExistingSecret: litellm-valkey-secrets
+  # https://valkey.io/topics/acl/
+  aclUsers:
+    default:
+      permissions: "~* &* -@all"
+    litellm:
+      permissions: "~* &* +@all"
+    redisinsight:
+      permissions: "~* &* +@all"
+    metrics:
+      permissions: "~* &* +@read +@connection +info +client +config|get +slowlog +latency +memory +cluster|info +cluster|slots +cluster|nodes"
+deploymentStrategy: Recreate
+valkeyConfig: |
+  appendonly yes
+  appendfsync everysec
+  no-appendfsync-on-rewrite yes
+  maxmemory 128mb
+  maxmemory-policy noeviction
+dataStorage:
+  enabled: true
+  className: rbd-fast-delete
+  requestedSize: 1Gi
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+  exporter:
+    args:
+      - --redis.addr=localhost:6379
+      - --redis.user=metrics
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+resources:
+  limits:
+    memory: 256Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
