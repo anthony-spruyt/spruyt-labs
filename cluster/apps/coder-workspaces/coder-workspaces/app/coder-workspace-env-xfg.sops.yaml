@@ -1,0 +1,24 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: coder-workspace-env-xfg
+    namespace: coder-workspaces
+stringData:
+    AZURE_DEVOPS_EXT_PAT: ENC[AES256_GCM,data:IH+TdfXV/PklEj3mP411uy4KzjsQxmIigSRMuYZmAfwGK51+hqmeDYCfy0UrZahRmhx3IJCR6JMSGjDmE/Ql5c6e6Zff2ZVQknKDZuTcxDXMZGr4,iv:2pehQQHCvhFSAYyFfzo29NOqvC7QdWlY4b50fuO+de4=,tag:ivMJWlYnu+wt0rGe1yuFSg==,type:str]
+    GITLAB_TOKEN: ENC[AES256_GCM,data:l8VkUr+9UCl9da4HgBwKENTQlFZ1no8oOCrUxlqJZp8WtTv5sl2IC86TaH7UI8mJXpVIpUteFwvZ,iv:tFbzrjVu4w/hjVdDimI0MQm2TCnVZ+x6i4mMVrCuu5A=,tag:7mNBn5bVUxlpIhcs8wnnLQ==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBRSm13TzdjeHBLVDJ4ODcy
+            a3RXV2FiVFc1Z2ZRNlJWWG5Ec1l3OG5Pa1VzCk14aER2WGNVQWhHdWFVVzA5a2dz
+            RVBJbEdkdU0wQ2Y0Um56U3FUN0pBaFkKLS0tIFJGdjhJY2JXWGliYlVBQVRvR05m
+            YittTmJiTzZPVDhMbHB5M0RJUjlrZkUK4eFaBrJejAsRqWEaUn0qyzZJ1pDYYUEq
+            kkGVd33VntDLvHUlxqfnRSvn7jlLr9tjD0ZG9oLUaW2V+G5Ya1V3Jw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-30T03:27:57Z"
+    mac: ENC[AES256_GCM,data:qldoJJtBXojL2FC3wO6DTOECQ1g7mVzkM5mTIH4zFFTNl3wH1aabluxDYBUdRuF8wFc9UMpv1kMpBcr+UNxTa0OLgPhQPSieTBiRxWEI4GpMYMbxozeWdEHlYYV++U3dWqXPrf4HmT3W03y8iRVLQSsZ/z7+zMbUXijFbU6J9mQ=,iv:+fnTfkLm7YcMsqHiCpXygnTQheZIe3JHNYp3pvgFT1Y=,tag:JZfZOOMAbIzD+/kZwYlr7w==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

@@ -44,11 +44,7 @@ locals {
   # Traefik LB IP for hostAliases (avoids Cloudflare hairpin for agent downloads)
   traefik_lb_ip = data.kubernetes_service_v1.traefik.status[0].load_balancer[0].ingress[0].ip
 
-  git_author_name = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
-  # Prefer the GitHub noreply address (see `git_email` parameter) so commits
-  # verify without leaking the SSO email and without relying on the SSO email
-  # being added to the GitHub account. Falls back to the Coder profile email
-  # when the parameter is blank (e.g. forks of this template).
+  git_author_name  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
   git_author_email = coalesce(data.coder_parameter.git_email.value, data.coder_workspace_owner.me.email)
   repo_url         = data.coder_parameter.repo.value
 
@@ -113,10 +109,10 @@ locals {
 data "coder_parameter" "git_email" {
   name         = "git_email"
   display_name = "Git commit email"
-  description  = "Email used for git author/committer and SSH signature verification. Must be a GitHub-verified email on anthony-spruyt's account. Defaults to the GitHub noreply address so commits verify without leaking personal email."
+  description  = "Email used for git author/committer and SSH signature verification. Use a GitHub noreply address to avoid leaking personal email. Leave blank to use the Coder profile email."
   type         = "string"
   mutable      = true
-  order        = 2
+  order        = 1
   default      = "99536297+anthony-spruyt@users.noreply.github.com"
 }
 
@@ -126,8 +122,8 @@ data "coder_parameter" "repo" {
   description  = "Git repository to clone and build from its devcontainer.json. SSH URL required so workspace push uses the mounted signing key at /etc/coder/ssh-keys/id_ed25519. HTTPS URLs are rejected."
   type         = "string"
   mutable      = true
-  order        = 1
-  default      = "git@github.com:anthony-spruyt/spruyt-labs.git"
+  order        = 2
+  default      = "git@github.com:anthony-spruyt/xfg.git"
   validation {
     regex = "^(git@|ssh://)"
     error = "Repository URL must be an SSH URL (git@host:owner/repo.git or ssh://). HTTPS URLs break git push because the SSH signing key is not used for HTTPS auth."
@@ -146,7 +142,7 @@ data "coder_parameter" "workspaces_volume_size" {
     min = 5
     max = 200
   }
-  order = 2
+  order = 3
 }
 
 data "coder_parameter" "home_volume_size" {
@@ -161,7 +157,7 @@ data "coder_parameter" "home_volume_size" {
     min = 1
     max = 50
   }
-  order = 3
+  order = 4
 }
 
 data "coder_parameter" "fallback_image" {
@@ -170,7 +166,7 @@ data "coder_parameter" "fallback_image" {
   description  = "Image used if the devcontainer build fails."
   default      = "codercom/enterprise-base:ubuntu"
   mutable      = true
-  order        = 4
+  order        = 5
 }
 
 data "coder_parameter" "devcontainer_builder" {
@@ -179,7 +175,7 @@ data "coder_parameter" "devcontainer_builder" {
   description  = "Envbuilder image used to build the devcontainer. Pin to a specific release in production."
   default      = "ghcr.io/coder/envbuilder:latest"
   mutable      = true
-  order        = 5
+  order        = 6
 }
 
 # ---------------------------------------------------------------------------
@@ -311,39 +307,6 @@ resource "coder_agent" "main" {
     fi
     export XDG_RUNTIME_DIR=/run/user/1000
 
-    # SA token is mounted read-only as root. Copy to readable location for vscode.
-    if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
-      sudo cp /var/run/secrets/kubernetes.io/serviceaccount/token /tmp/sa-token
-      sudo chmod 644 /tmp/sa-token
-      mkdir -p /home/vscode/.kube
-      cat > /home/vscode/.kube/config <<KUBEEOF
-    apiVersion: v1
-    kind: Config
-    clusters:
-    - cluster:
-        certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        server: https://kubernetes.default.svc
-      name: default
-    contexts:
-    - context:
-        cluster: default
-        namespace: coder-workspaces
-        user: default
-      name: default
-    current-context: default
-    users:
-    - name: default
-      user:
-        tokenFile: /tmp/sa-token
-    KUBEEOF
-    fi
-
-
-    # Terraform credentials are root-only on projected volume, copy to readable location
-    mkdir -p /home/vscode/.terraform.d
-    sudo cp /etc/coder/terraform.d/credentials.tfrc.json /home/vscode/.terraform.d/credentials.tfrc.json
-    sudo chown vscode:vscode /home/vscode/.terraform.d/credentials.tfrc.json
-
     # Configure git commit signing using the read-only SSH key mount.
     # Kata virtiofs mounts are frozen at pod creation — secret updates
     # do NOT propagate. Grace period on rotation keeps old key valid.
@@ -361,9 +324,7 @@ resource "coder_agent" "main" {
     # SSH auth uses the read-only key mount directly — no copy needed.
     # Kata virtiofs: mount frozen at pod creation; rotation grace period
     # keeps old key valid on GitHub until next rotation cycle.
-    GIT_SSH_COMMAND   = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-    TALOSCONFIG       = "/etc/coder/talos/config"
-    SOPS_AGE_KEY_FILE = "/etc/coder/sops/age.key"
+    GIT_SSH_COMMAND = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
   }
 
   metadata {
@@ -515,8 +476,9 @@ resource "kubernetes_pod_v1" "main" {
   }
 
   spec {
-    service_account_name = "coder-workspace-admin"
-    restart_policy       = "Never"
+    service_account_name            = "coder-workspace"
+    automount_service_account_token = false
+    restart_policy                  = "Never"
     # Kata Containers: each workspace pod runs in its own lightweight VM
     # (QEMU/Cloud Hypervisor + KVM). Hypervisor boundary around arbitrary
     # AI-agent-generated code inside the workspace. Ref #933.
@@ -589,17 +551,17 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
-      # All keys in coder-workspace-env-spruyt-labs are injected as environment variables
+      # All keys in coder-workspace-env-xfg are injected as environment variables
       env_from {
         secret_ref {
-          name = "coder-workspace-env-spruyt-labs"
+          name = "coder-workspace-env-xfg"
         }
       }
 
       resources {
         requests = {
           cpu    = "500m"
-          memory = "6Gi"
+          memory = "2Gi"
         }
         limits = {
           cpu    = "4000m"
@@ -621,27 +583,6 @@ resource "kubernetes_pod_v1" "main" {
       volume_mount {
         name       = "ssh-signing-key"
         mount_path = "/etc/coder/ssh-keys"
-        read_only  = true
-      }
-
-      # Talosconfig (symlinked to ~/.talos in startup script)
-      volume_mount {
-        name       = "talosconfig"
-        mount_path = "/etc/coder/talos"
-        read_only  = true
-      }
-
-      # Terraform credentials (symlinked to ~/.terraform.d in startup script)
-      volume_mount {
-        name       = "terraform-credentials"
-        mount_path = "/etc/coder/terraform.d"
-        read_only  = true
-      }
-
-      # SOPS Age identity key (read-only, spruyt-labs template only)
-      volume_mount {
-        name       = "sops-age-key"
-        mount_path = "/etc/coder/sops"
         read_only  = true
       }
 
@@ -703,45 +644,6 @@ resource "kubernetes_pod_v1" "main" {
       secret {
         secret_name  = "coder-ssh-signing-key"
         default_mode = "0400"
-      }
-    }
-
-    # Mount only the talosconfig key as "config" file
-    volume {
-      name = "talosconfig"
-      secret {
-        secret_name  = "coder-talosconfig"
-        default_mode = "0400"
-        items {
-          key  = "config"
-          path = "config"
-        }
-      }
-    }
-
-    # Mount only the terraform credentials key as "credentials.tfrc.json"
-    volume {
-      name = "terraform-credentials"
-      secret {
-        secret_name  = "coder-terraform-credentials"
-        default_mode = "0400"
-        items {
-          key  = "credentials.tfrc.json"
-          path = "credentials.tfrc.json"
-        }
-      }
-    }
-
-    # SOPS Age identity key (synced from flux-system via ExternalSecret)
-    volume {
-      name = "sops-age-key"
-      secret {
-        secret_name  = "coder-age-key"
-        default_mode = "0400"
-        items {
-          key  = "age.key"
-          path = "age.key"
-        }
       }
     }
 

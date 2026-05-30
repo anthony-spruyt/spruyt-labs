@@ -24,7 +24,7 @@ coder templates push spruyt-labs --directory .
 ## Nexus artifact proxy
 
 Envbuilder pulls base + feature images via the in-cluster Nexus docker-group connector (`nexus.nexus-system.svc.cluster.local:8082`) and pushes the kaniko layer cache to the Nexus envbuilder-cache hosted repo (`:8083`). Driven by `KANIKO_REGISTRY_MIRROR`, `ENVBUILDER_INSECURE`, and `ENVBUILDER_CACHE_REPO` envs set here and the `ENVBUILDER_DOCKER_CONFIG_BASE64` auth entry in the
-`coder-workspace-env` Secret.
+`coder-workspace-env-common` Secret.
 
 Runtime container pulls (podman, skopeo, buildah) inside the workspace are also routed through Nexus via a `registries.conf` drop-in mounted from the `coder-workspace-registries-conf` ConfigMap (docker.io, ghcr.io, quay.io, mcr.microsoft.com, registry.k8s.io → `nexus:8082`).
 
@@ -40,4 +40,5 @@ The following Kubernetes Secrets must exist in `coder-workspaces`:
 - `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
 - `coder-talosconfig` — Talos client config mounted at `~/.talos/config`
 - `coder-terraform-credentials` — Terraform credentials at `~/.terraform.d/credentials.tfrc.json`
-- `coder-workspace-env` — Env vars injected into pods
+- `coder-workspace-env-common` — Common env vars injected into pods
+- `coder-workspace-env-spruyt-labs` — Project env vars injected into pods

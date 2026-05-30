@@ -544,10 +544,10 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
-      # All keys in coder-workspace-env are injected as environment variables
+      # All keys in coder-workspace-env-common are injected as environment variables
       env_from {
         secret_ref {
-          name = "coder-workspace-env"
+          name = "coder-workspace-env-common"
         }
       }
 

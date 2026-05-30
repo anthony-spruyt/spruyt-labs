@@ -1,4 +1,4 @@
-# Coder Devcontainer Template
+# Coder XFG Template
 
 Generic Kubernetes workspace template for Coder that builds from `devcontainer.json`.
 
@@ -7,7 +7,7 @@ Generic Kubernetes workspace template for Coder that builds from `devcontainer.j
 Push to Coder:
 
 ```bash
-coder templates push devcontainer --directory .
+coder templates push xfg --directory .
 ```
 
 ## Features
@@ -33,4 +33,5 @@ sources.list rewrite to their Dockerfile — see `spruyt-labs` repo `.devcontain
 The following Kubernetes Secrets must exist in `coder-workspaces`:
 
 - `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
-- `coder-workspace-env-common` — Env vars injected into pods
+- `coder-workspace-env-common` — Common env vars injected into pods
+- `coder-workspace-env-xfg` — Project env vars injected into pods
