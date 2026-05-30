@@ -470,11 +470,12 @@ configMaps:
           callbacks:
             - otel
             - prometheus
-        callbacks: ["websearch_interception"]
-          websearch_interception_params:
-            enabled_providers:
-              - hosted_vllm
-            search_tool_name: "brave-search"
+        callbacks:
+          - "websearch_interception"
+        websearch_interception_params:
+          enabled_providers:
+            - hosted_vllm
+          search_tool_name: "brave-search"
         guardrails:
           - guardrail_name: "pii-protection"
             litellm_params:
