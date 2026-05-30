@@ -16,20 +16,21 @@
     "--device",
     "/dev/fuse",
     "--env-file",
-    "${localEnv:HOME}/.secrets/.env"
+    "${localEnv:HOME}/.secrets/.env.common",
+    "--env-file",
+    "${localEnv:HOME}/.secrets/.env.spruyt-labs"
   ],
   "mounts": [
+    "source=${localEnv:HOME}/.secrets/.gitignore,target=/home/vscode/.secrets/.gitignore,type=bind,readonly",
     "source=${localEnv:HOME}/.ssh/agent.sock,target=/ssh-agent,type=bind",
     "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
     "source=${localWorkspaceFolderBasename}-containers,target=/var/lib/containers,type=volume",
     "source=${localEnv:HOME}/.secrets/.terraform.d,target=/home/vscode/.terraform.d,type=bind,readonly",
-    "source=${localEnv:HOME}/.secrets,target=/home/vscode/.secrets,type=bind,readonly",
+    "source=${localEnv:HOME}/.secrets/age.key,target=/home/vscode/.secrets/age.key,type=bind,readonly",
+    "source=${localEnv:HOME}/.secrets/bgp-65000.conf,target=/home/vscode/.secrets/bgp-65000.conf,type=bind,readonly",
+    "source=${localEnv:HOME}/.secrets/kubeconfig,target=/home/vscode/.secrets/kubeconfig,type=bind,readonly",
     "source=${localEnv:HOME}/.secrets/talosconfig,target=/home/vscode/.secrets/talosconfig,type=bind"
   ],
-  "containerEnv": {
-    "SSH_AUTH_SOCK": "/ssh-agent",
-    "NEXUS_DOCKER_URL": "${localEnv:NEXUS_DOCKER_URL}"
-  },
   "features": {
     "ghcr.io/devcontainers/features/go": {
       "version": "1.26.2"
