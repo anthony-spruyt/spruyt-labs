@@ -476,15 +476,24 @@ configMaps:
               - anthropic
               - hosted_vllm
               - openai
-            search_tool_name: "brave-search"
+            search_tool_name: brave-search
+        search_tools:
+          - search_tool_name: brave-search
+            litellm_params:
+              search_provider: brave
+              api_key: os.environ/BRAVE_API_KEY
+          - search_tool_name: firecrawl-search
+            litellm_params:
+              search_provider: firecrawl
+              api_key: os.environ/FIRECRAWL_API_KEY
         guardrails:
-          - guardrail_name: "pii-protection"
+          - guardrail_name: pii-protection
             litellm_params:
               guardrail: presidio
-              mode: "pre_call"
+              mode: pre_call
               default_on: true
               skip_system_message_in_guardrail: true
-              presidio_filter_scope: "input"
+              presidio_filter_scope: input
               presidio_score_thresholds:
                 ALL: 0.7
                 PERSON: 0.85
@@ -493,19 +502,19 @@ configMaps:
                 AU_ABN: 0.4
                 AU_ACN: 0.4
               pii_entities_config:
-                CREDIT_CARD: "MASK"
-                AU_TFN: "BLOCK"
-                AU_MEDICARE: "MASK"
-                AU_ABN: "MASK"
-                AU_ACN: "MASK"
-                IBAN_CODE: "MASK"
-          - guardrail_name: "prompt-injection"
+                CREDIT_CARD: MASK
+                AU_TFN: BLOCK
+                AU_MEDICARE: MASK
+                AU_ABN: MASK
+                AU_ACN: MASK
+                IBAN_CODE: MASK
+          - guardrail_name: prompt-injection
             litellm_params:
               guardrail: generic_guardrail_api
-              mode: "pre_call"
+              mode: pre_call
               default_on: false
               skip_system_message_in_guardrail: true
-              api_base: "http://litellm-llm-guard-adapter.litellm.svc.cluster.local:8080"
+              api_base: http://litellm-llm-guard-adapter.litellm.svc.cluster.local:8080
 persistence:
   tmp:
     type: emptyDir
