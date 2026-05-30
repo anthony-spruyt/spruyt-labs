@@ -473,7 +473,9 @@ configMaps:
             - websearch_interception
           websearch_interception_params:
             enabled_providers:
+              - anthropic
               - hosted_vllm
+              - openai
             search_tool_name: "brave-search"
         guardrails:
           - guardrail_name: "pii-protection"
