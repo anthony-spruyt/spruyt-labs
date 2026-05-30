@@ -35,22 +35,6 @@ controllers:
               secretKeyRef:
                 name: litellm-cnpg-cluster-app
                 key: uri
-          # LiteLLM core secrets
-          LITELLM_MASTER_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: LITELLM_MASTER_KEY
-          LITELLM_SALT_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: LITELLM_SALT_KEY
-          OPENAI_API_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: OPENAI_API_KEY
           # Authentik SSO (OIDC) — credentials from ExternalSecret
           GENERIC_CLIENT_ID:
             valueFrom:
@@ -79,6 +63,9 @@ controllers:
           STORE_MODEL_IN_DB: "True"
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
+        envFrom:
+          - secretRef:
+              name: litellm-secrets
         probes:
           liveness:
             enabled: true
