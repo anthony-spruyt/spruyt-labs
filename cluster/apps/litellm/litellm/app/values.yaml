@@ -19,6 +19,14 @@ controllers:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
+    pod:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/controller: litellm
+              topologyKey: kubernetes.io/hostname
     annotations:
       reloader.stakater.com/auto: "true"
     containers:
@@ -397,6 +405,7 @@ service:
       http:
         port: 8080
         protocol: TCP
+
 configMaps:
   presidio-recognizers:
     data:
@@ -519,6 +528,7 @@ configMaps:
             litellm_params:
               search_provider: firecrawl
               api_key: os.environ/FIRECRAWL_API_KEY
+
 persistence:
   tmp:
     type: emptyDir
