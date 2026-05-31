@@ -32,7 +32,6 @@ jobs:
       shutdown-orchestrator: "${{ steps.filter.outputs.shutdown-orchestrator }}"
       kata-tap-qdisc-fix: "${{ steps.filter.outputs.kata-tap-qdisc-fix }}"
       mcp-header-proxy: "${{ steps.filter.outputs.mcp-header-proxy }}"
-      llm-guard-adapter: "${{ steps.filter.outputs.llm-guard-adapter }}"
       agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
       bull-board: "${{ steps.filter.outputs.bull-board }}"
       claude-agents: "${{ steps.filter.outputs.claude-agents }}"
@@ -76,8 +75,6 @@ jobs:
               - 'cmd/kata-tap-qdisc-fix/**'
             mcp-header-proxy:
               - 'cmd/mcp-header-proxy/**'
-            llm-guard-adapter:
-              - 'cmd/llm-guard-adapter/**'
             agent-queue-worker:
               - 'ts/agent-queue-worker/**'
             bull-board:
@@ -142,19 +139,6 @@ jobs:
       language: "go"
       push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
-  llm-guard-adapter:
-    needs:
-      - "lint"
-      - "changes"
-    if: "needs.changes.outputs.llm-guard-adapter == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
-    with:
-      image: "llm-guard-adapter"
-      workdir: "cmd/llm-guard-adapter"
-      tag-prefix: "llm-guard-adapter/v"
-      language: "go"
-      push: "${{ github.event_name == 'push' }}"
-    secrets: "inherit"
   agent-queue-worker:
     needs:
       - "lint"
@@ -190,7 +174,6 @@ jobs:
       - "shutdown-orchestrator"
       - "kata-tap-qdisc-fix"
       - "mcp-header-proxy"
-      - "llm-guard-adapter"
       - "agent-queue-worker"
       - "bull-board"
       - "bats-test"

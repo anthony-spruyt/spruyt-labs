@@ -265,11 +265,13 @@ controllers:
       llm-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-guard
-          tag: "1.0.0@sha256:33f38a6c945d952b26a74d394d014af225eb4be13dfac2ba50651d4fed4f68f3"
+          tag: "1.0.5@sha256:e20fd0fca9866e4b94873d84169b0a577fbd71da4e710dc454b42e4dbd6606fa"
           pullPolicy: IfNotPresent
         env:
           LISTEN_PORT: "8000"
-          THRESHOLD: "0.97"
+          # Multi-scanner pipeline loaded from the mounted ConfigMap.
+          # Per-scanner thresholds live in scanners.yml, not the THRESHOLD env.
+          CONFIG_FILE: "/config/scanners.yml"
         probes:
           startup:
             enabled: true
@@ -379,6 +381,23 @@ configMaps:
             type: predefined
           - name: MedicalLicenseRecognizer
             type: predefined
+  llm-guard-scanners:
+    data:
+      scanners.yml: |
+        input_scanners:
+          - type: PromptInjection
+            params:
+              threshold: 0.97
+              match_type: sentence
+              model_max_length: 512
+          - type: Regex
+            params:
+              patterns: ["Bearer [A-Za-z0-9-._~+/]+"]
+              is_blocked: true
+              match_type: search
+              redact: true
+          - type: InvisibleText
+            params: {}
   litellm-config:
     data:
       config.yaml: |
@@ -473,3 +492,12 @@ persistence:
       presidio-anonymizer:
         presidio-anonymizer:
           - path: /home/presidio/.cache
+  llm-guard-scanners-config:
+    type: configMap
+    identifier: llm-guard-scanners
+    advancedMounts:
+      llm-guard:
+        llm-guard:
+          - path: /config/scanners.yml
+            subPath: scanners.yml
+            readOnly: true
