@@ -313,11 +313,9 @@ controllers:
         resources:
           requests:
             cpu: 100m
-            memory: 3072Mi
+            memory: 1Gi
           limits:
-            # Qwen3-0.6B (rogue-security sentinel) fp32 weights ~2.4Gi plus
-            # torch runtime/activations; DeBERTa-base only needed ~3Gi.
-            memory: 6144Mi
+            memory: 2Gi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
