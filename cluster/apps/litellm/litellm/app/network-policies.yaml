@@ -283,7 +283,10 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to LLM Guard from LiteLLM proxy, deny all egress (models baked into image)
+# Allow ingress to LLM Guard from LiteLLM proxy.
+# Egress to world:443 is required to pull the rogue-security model from
+# HuggingFace at runtime (gated; not baked into the image). DNS egress is
+# handled by the CiliumClusterwideNetworkPolicy allow-kube-dns-egress.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -303,7 +306,13 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
-  egress: []
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress to Presidio analyzer from LiteLLM proxy, deny all egress

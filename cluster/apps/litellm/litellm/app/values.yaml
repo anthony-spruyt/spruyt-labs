@@ -287,7 +287,9 @@ controllers:
                 port: 8000
               periodSeconds: 10
               timeoutSeconds: 5
-              failureThreshold: 12    # 120s window — model loads in ~24s from baked image
+              # 300s window — rogue-security model is pulled from HF over egress
+              # on first boot (not baked), then loaded; baked model was ~24s.
+              failureThreshold: 30
           liveness:
             enabled: true
             custom: true
@@ -311,9 +313,11 @@ controllers:
         resources:
           requests:
             cpu: 100m
-            memory: 1536Mi
-          limits:
             memory: 3072Mi
+          limits:
+            # Qwen3-0.6B (rogue-security sentinel) fp32 weights ~2.4Gi plus
+            # torch runtime/activations; DeBERTa-base only needed ~3Gi.
+            memory: 6144Mi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
@@ -392,8 +396,10 @@ configMaps:
         input_scanners:
           - type: PromptInjection
             params:
+              model: rogue-security/prompt-injection-jailbreak-sentinel-v2
+              injection_label: jailbreak
               threshold: 0.97
-              match_type: sentence
+              match_type: full
               model_max_length: 512
           - type: Regex
             params:
