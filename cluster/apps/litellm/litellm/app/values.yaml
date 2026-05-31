@@ -272,6 +272,11 @@ controllers:
           # Multi-scanner pipeline loaded from the mounted ConfigMap.
           # Per-scanner thresholds live in scanners.yml, not the THRESHOLD env.
           CONFIG_FILE: "/config/scanners.yml"
+          HF_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: HF_TOKEN
         probes:
           startup:
             enabled: true
