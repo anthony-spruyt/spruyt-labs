@@ -88,6 +88,22 @@ upsert apt/proxy apt-launchpad '{
   "httpClient":{"blocked":false,"autoBlock":true},
   "apt":{"distribution":"stable","flat":true}}'
 
+# --- npm / pypi proxies (pre-commit hook envs, issue #1880) ---
+upsert npm/proxy npm-proxy '{
+  "name":"npm-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"https://registry.npmjs.org","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true},
+  "npm":{"removeNonCataloged":false,"removeQuarantined":false}}'
+
+upsert pypi/proxy pypi-proxy '{
+  "name":"pypi-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"https://pypi.org/","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true}}'
+
 # --- docker proxies ---
 upsert docker/proxy docker-hub-proxy '{
   "name":"docker-hub-proxy","online":true,
