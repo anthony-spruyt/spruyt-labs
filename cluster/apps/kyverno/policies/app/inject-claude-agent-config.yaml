@@ -382,6 +382,9 @@ spec:
               - name: workspace
                 emptyDir:
                   sizeLimit: 1Gi
+              - name: precommit-cache
+                emptyDir:
+                  sizeLimit: 512Mi
             initContainers:
               - name: git-clone
                 image: "{{ request.object.spec.containers[0].image }}"
@@ -403,6 +406,8 @@ spec:
                     cd /workspace/repo
                     echo "[git-clone] installing pre-commit hooks..."
                     pre-commit install
+                    echo "[git-clone] warming pre-commit hook envs into shared cache..."
+                    pre-commit install-hooks
                     echo "[git-clone] done"
                 env:
                   - name: CLONE_URL
@@ -415,6 +420,8 @@ spec:
                     value: "1"
                   - name: GIT_CONFIG_GLOBAL
                     value: /etc/git-config/gitconfig
+                  - name: PRE_COMMIT_HOME
+                    value: /home/node/.cache/pre-commit
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
@@ -424,6 +431,8 @@ spec:
                   - name: github-gitconfig
                     mountPath: /etc/git-config
                     readOnly: true
+                  - name: precommit-cache
+                    mountPath: /home/node/.cache/pre-commit
                 securityContext:
                   allowPrivilegeEscalation: false
                   readOnlyRootFilesystem: false
@@ -472,9 +481,14 @@ spec:
                     memory: 256Mi
             containers:
               - (name): "?*"
+                env:
+                  - name: PRE_COMMIT_HOME
+                    value: /home/node/.cache/pre-commit
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
+                  - name: precommit-cache
+                    mountPath: /home/node/.cache/pre-commit
     - name: inject-repo-clone-read
       match:
         any:
