@@ -422,6 +422,12 @@ spec:
                     value: /etc/git-config/gitconfig
                   - name: PRE_COMMIT_HOME
                     value: /home/node/.cache/pre-commit
+                  - name: NPM_CONFIG_REGISTRY
+                    value: http://nexus.nexus-system.svc.cluster.local:8081/repository/npm-proxy/
+                  - name: PIP_INDEX_URL
+                    value: http://nexus.nexus-system.svc.cluster.local:8081/repository/pypi-proxy/simple
+                  - name: PIP_TRUSTED_HOST
+                    value: nexus.nexus-system.svc.cluster.local:8081
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
@@ -484,6 +490,12 @@ spec:
                 env:
                   - name: PRE_COMMIT_HOME
                     value: /home/node/.cache/pre-commit
+                  - name: NPM_CONFIG_REGISTRY
+                    value: http://nexus.nexus-system.svc.cluster.local:8081/repository/npm-proxy/
+                  - name: PIP_INDEX_URL
+                    value: http://nexus.nexus-system.svc.cluster.local:8081/repository/pypi-proxy/simple
+                  - name: PIP_TRUSTED_HOST
+                    value: nexus.nexus-system.svc.cluster.local:8081
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
