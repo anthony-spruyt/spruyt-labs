@@ -261,48 +261,17 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM proxy to LLM Guard adapter
+# Allow egress from LiteLLM proxy to LLM Guard
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-litellm-llm-guard-adapter-egress
+  name: allow-litellm-llm-guard-egress
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
       app.kubernetes.io/controller: litellm
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: litellm
-            k8s:app.kubernetes.io/controller: llm-guard-adapter
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to LLM Guard adapter from LiteLLM proxy, egress only to llm-guard
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: llm-guard-adapter-policy
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: litellm
-      app.kubernetes.io/name: litellm
-      app.kubernetes.io/controller: llm-guard-adapter
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: litellm
-            k8s:app.kubernetes.io/controller: litellm
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:
@@ -314,7 +283,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to LLM Guard from adapter only, deny all egress (models baked into image)
+# Allow ingress to LLM Guard from LiteLLM proxy, deny all egress (models baked into image)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -329,7 +298,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: litellm
-            k8s:app.kubernetes.io/controller: llm-guard-adapter
+            k8s:app.kubernetes.io/controller: litellm
       toPorts:
         - ports:
             - port: "8000"
