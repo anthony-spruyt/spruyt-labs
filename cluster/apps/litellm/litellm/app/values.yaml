@@ -268,7 +268,7 @@ controllers:
           tag: "0.3.1@sha256:0e131ad0ef7488fbd50b7e494d99a67097df9f12dee35689744e6cb492fd91ce"
           pullPolicy: IfNotPresent
         env:
-          LOG_LEVEL: INFO
+          LOG_LEVEL: DEBUG
           LOG_JSON: "true"
           APP_PORT: "8000"
           SCAN_FAIL_FAST: "true"
@@ -478,7 +478,7 @@ configMaps:
             litellm_params:
               guardrail: presidio
               mode: pre_call
-              default_on: true
+              default_on: false
               skip_system_message_in_guardrail: true
               presidio_filter_scope: input
               presidio_score_thresholds:
