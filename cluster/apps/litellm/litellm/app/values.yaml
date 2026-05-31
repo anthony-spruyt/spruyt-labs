@@ -268,12 +268,8 @@ controllers:
           tag: "1.0.0@sha256:33f38a6c945d952b26a74d394d014af225eb4be13dfac2ba50651d4fed4f68f3"
           pullPolicy: IfNotPresent
         env:
-          LOG_LEVEL: DEBUG
-          LOG_JSON: "true"
-          APP_PORT: "8000"
-          SCAN_FAIL_FAST: "true"
-          SCAN_PROMPT_TIMEOUT: "30"
-          LAZY_LOAD: "false"
+          LISTEN_PORT: "8000"
+          THRESHOLD: "0.97"
         probes:
           startup:
             enabled: true
@@ -318,62 +314,6 @@ controllers:
             drop:
               - ALL
 
-  llm-guard-adapter:
-    type: deployment
-    replicas: 1
-    pod:
-      securityContext:
-        runAsUser: 65534
-        runAsGroup: 65534
-        fsGroup: 65534
-        fsGroupChangePolicy: "OnRootMismatch"
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
-    containers:
-      llm-guard-adapter:
-        image:
-          repository: ghcr.io/anthony-spruyt/llm-guard-adapter
-          tag: "0.0.4@sha256:13719459e5774a71077b0b52e2024d61c9307941b6f15b978d2da8fd7375523f"
-          pullPolicy: IfNotPresent
-        env:
-          LISTEN_ADDR: ":8080"
-          LLM_GUARD_URL: "http://litellm-llm-guard.litellm.svc.cluster.local:8000"
-          INJECTION_THRESHOLD: "0.8"
-        probes:
-          liveness:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /healthz
-                port: 8080
-              periodSeconds: 15
-              failureThreshold: 3
-              timeoutSeconds: 5
-          readiness:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /healthz
-                port: 8080
-              periodSeconds: 10
-              failureThreshold: 3
-              timeoutSeconds: 5
-        resources:
-          requests:
-            cpu: 5m
-            memory: 16Mi
-          limits:
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-              - ALL
-
 service:
   litellm:
     controller: litellm
@@ -398,12 +338,6 @@ service:
     ports:
       http:
         port: 8000
-        protocol: TCP
-  llm-guard-adapter:
-    controller: llm-guard-adapter
-    ports:
-      http:
-        port: 8080
         protocol: TCP
 
 configMaps:
@@ -445,31 +379,6 @@ configMaps:
             type: predefined
           - name: MedicalLicenseRecognizer
             type: predefined
-  llm-guard-scanners:
-    data:
-      scanners.yml: |
-        app:
-          log_level: INFO
-          log_json: true
-          scan_fail_fast: true
-          scan_prompt_timeout: 30
-          scan_output_timeout: 30
-          lazy_load: false
-        input_scanners:
-          - type: PromptInjection
-            params:
-              threshold: 0.97
-              match_type: sentence
-              model_max_length: 512
-          - type: Regex
-            params:
-              patterns: ["Bearer [A-Za-z0-9-._~+/]+"]
-              is_blocked: true
-              match_type: search
-              redact: true
-          - type: InvisibleText
-            params: {}
-        output_scanners: []
   litellm-config:
     data:
       config.yaml: |
@@ -501,7 +410,7 @@ configMaps:
               mode: pre_call
               default_on: false
               skip_system_message_in_guardrail: true
-              api_base: http://litellm-llm-guard-adapter.litellm.svc.cluster.local:8080
+              api_base: http://litellm-llm-guard.litellm.svc.cluster.local:8000
         litellm_settings:
           drop_params: true
           callbacks:
@@ -564,18 +473,3 @@ persistence:
       presidio-anonymizer:
         presidio-anonymizer:
           - path: /home/presidio/.cache
-  llm-guard-scanners-config:
-    type: configMap
-    identifier: llm-guard-scanners
-    advancedMounts:
-      llm-guard:
-        llm-guard:
-          - path: /home/user/app/config/scanners.yml
-            subPath: scanners.yml
-            readOnly: true
-  llm-guard-cache:
-    type: emptyDir
-    advancedMounts:
-      llm-guard:
-        llm-guard:
-          - path: /home/user/.cache
