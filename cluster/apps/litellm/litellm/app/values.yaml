@@ -339,7 +339,7 @@ controllers:
         env:
           LISTEN_ADDR: ":8080"
           LLM_GUARD_URL: "http://litellm-llm-guard.litellm.svc.cluster.local:8000"
-          INJECTION_THRESHOLD: "0.5"
+          INJECTION_THRESHOLD: "0.8"
         probes:
           liveness:
             enabled: true
