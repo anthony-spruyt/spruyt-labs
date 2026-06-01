@@ -84,6 +84,8 @@ prometheusExporter:
   enabled: false
 plugins:
   install: []
+monitoringPasscodeSecretName: sonarqube-secrets
+monitoringPasscodeSecretKey: monitoring-key
 annotations: {}
 resources:
   limits:
