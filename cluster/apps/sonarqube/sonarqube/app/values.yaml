@@ -4,6 +4,8 @@
 deploymentType: Deployment
 replicaCount: 1
 revisionHistoryLimit: 5
+deploymentStrategy:
+  priorityClassName: low-priority
 OpenShift:
   enabled: false
 community:
@@ -64,7 +66,7 @@ extraVolumeMounts: []
 caCerts:
   enabled: false
 initSysctl:
-  enabled: true
+  enabled: false
   vmMaxMapCount: 524288
   fsFileMax: 131072
   nofile: 131072
