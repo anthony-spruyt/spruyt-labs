@@ -33,19 +33,21 @@
   ],
   "features": {
     "ghcr.io/devcontainers/features/go": {
-      "version": "1.26.2"
+      "version": "1.26.3"
     },
     "ghcr.io/devcontainers/features/terraform": {
-      "version": "1.14.8"
+      "version": "1.15.5"
     },
     "ghcr.io/devcontainers-extra/features/renovate-cli": {
-      "version": "43.122.0"
+      "version": "43.205.3"
     },
     "ghcr.io/devcontainers-extra/features/sops": {
-      "version": "3.12.2"
+      "version": "3.13.1"
     },
     "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
-      "yqVersion": "4.52.5"
+      "jqVersion": "1.8.1",
+      "yqVersion": "4.53.2",
+      "gojqVersion": "0.12.19"
     }
   },
   "initializeCommand": "bash ${localWorkspaceFolder}/.devcontainer/initialize.sh",
