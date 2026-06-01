@@ -29,25 +29,6 @@ controllers:
               topologyKey: kubernetes.io/hostname
     annotations:
       reloader.stakater.com/auto: "true"
-    initContainers:
-      copy-node:
-        image:
-          repository: node
-          tag: "22-alpine3.22@sha256:cd7807368cf24826297cbad5dca1a44972ccfd770647db52a8c7589eb4599ac8"
-          pullPolicy: IfNotPresent
-        command:
-          - sh
-          - -c
-          - cp /usr/local/bin/node /usr/local/bin/npm /usr/local/bin/npx /node-bin/
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 65534
-          runAsGroup: 65534
-          capabilities:
-            drop:
-              - ALL
     containers:
       litellm:
         image:
@@ -58,7 +39,7 @@ controllers:
           - sh
           - -c
           - |
-            export PATH="/node-bin:$PATH"
+            export PATH="/root/.cache/prisma-python/nodeenv/bin:$PATH"
             exec /app/docker/prod_entrypoint.sh --config /app/config.yaml --port 4000
         env:
           # Database — CNPG auto-generated secret
@@ -487,14 +468,6 @@ configMaps:
               api_key: os.environ/FIRECRAWL_API_KEY
 
 persistence:
-  node-bin:
-    type: emptyDir
-    advancedMounts:
-      litellm:
-        copy-node:
-          - path: /node-bin
-        litellm:
-          - path: /node-bin
   tmp:
     type: emptyDir
     globalMounts:
