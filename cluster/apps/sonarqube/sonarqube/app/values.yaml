@@ -77,6 +77,7 @@ initSysctl:
     # if run without root permissions, error "sysctl: permission denied on key xxx, ignoring"
     runAsUser: 0
     readOnlyRootFilesystem: true
+    runAsNonRoot: false
   # resources: {}
 initFs:
   enabled: false
