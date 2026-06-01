@@ -54,11 +54,12 @@ controllers:
           repository: ghcr.io/berriai/litellm-non_root
           tag: v1.86.2@sha256:511b513bc68956793433d62c1812daff56984325543f6a15431c622823fd90cb
           pullPolicy: IfNotPresent
-        args:
-          - "--config"
-          - "/app/config.yaml"
-          - "--port"
-          - "4000"
+        command:
+          - sh
+          - -c
+          - |
+            export PATH="/node-bin:$PATH"
+            exec /app/docker/prod_entrypoint.sh --config /app/config.yaml --port 4000
         env:
           # Database — CNPG auto-generated secret
           DATABASE_URL:
@@ -91,7 +92,6 @@ controllers:
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
           OTEL_RESOURCE_ATTRIBUTES: "service.name=litellm,service.namespace=litellm"
-          PATH: "/node-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           STORE_MODEL_IN_DB: "True"
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
