@@ -29,25 +29,6 @@ controllers:
               topologyKey: kubernetes.io/hostname
     annotations:
       reloader.stakater.com/auto: "true"
-    initContainers:
-      copy-node:
-        image:
-          repository: node
-          tag: "22-alpine3.22@sha256:cd7807368cf24826297cbad5dca1a44972ccfd770647db52a8c7589eb4599ac8"
-          pullPolicy: IfNotPresent
-        command:
-          - sh
-          - -c
-          - cp -a /usr/local/bin/node /usr/local/bin/npm /usr/local/bin/npx /node-bin/
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 65534
-          runAsGroup: 65534
-          capabilities:
-            drop:
-              - ALL
     containers:
       litellm:
         image:
@@ -91,7 +72,6 @@ controllers:
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
           OTEL_RESOURCE_ATTRIBUTES: "service.name=litellm,service.namespace=litellm"
-          PATH: "/node-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           STORE_MODEL_IN_DB: "True"
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
@@ -487,14 +467,6 @@ configMaps:
               api_key: os.environ/FIRECRAWL_API_KEY
 
 persistence:
-  node-bin:
-    type: emptyDir
-    advancedMounts:
-      litellm:
-        copy-node:
-          - path: /node-bin
-        litellm:
-          - path: /node-bin
   tmp:
     type: emptyDir
     globalMounts:
