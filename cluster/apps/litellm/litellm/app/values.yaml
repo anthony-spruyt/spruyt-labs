@@ -33,7 +33,7 @@ controllers:
       litellm:
         image:
           repository: ghcr.io/berriai/litellm-non_root
-          tag: v1.86.2@sha256:511b513bc68956793433d62c1812daff56984325543f6a15431c622823fd90cb
+          tag: v1.88.0-rc.1@sha256:94488768b3e1ebe210f1b154ac38fcf9a8e680952d0bf45431868507636ac3ae
           pullPolicy: IfNotPresent
         args:
           - "--config"
