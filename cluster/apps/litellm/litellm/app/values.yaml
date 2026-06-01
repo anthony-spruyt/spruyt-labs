@@ -38,7 +38,7 @@ controllers:
         command:
           - sh
           - -c
-          - cp -a /usr/local/bin/node /usr/local/bin/npm /usr/local/bin/npx /node-bin/
+          - cp /usr/local/bin/node /usr/local/bin/npm /usr/local/bin/npx /node-bin/
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
