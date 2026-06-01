@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow traefik ingress
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+  namespace: sonarqube
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: sonarqube
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP

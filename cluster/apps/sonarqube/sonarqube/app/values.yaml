@@ -1,0 +1,171 @@
+---
+# Default values: https://github.com/SonarSource/helm-chart-sonarqube/blob/master/charts/sonarqube/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SonarSource/helm-chart-sonarqube/refs/heads/master/charts/sonarqube/values.schema.json
+deploymentType: Deployment
+replicaCount: 1
+revisionHistoryLimit: 5
+OpenShift:
+  enabled: false
+community:
+  enabled: true
+securityContext:
+  fsGroup: 0
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 0
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop:
+      - "ALL"
+  readOnlyRootFilesystem: true
+elasticsearch:
+  bootstrapChecks: true
+service:
+  type: ClusterIP
+  externalPort: 9000
+  internalPort: 9000
+  labels:
+  annotations: {}
+# Those proxy settings will be propagated to the install-plugin and prometheus-exporter init containers
+# if httpProxySecret is set the other one will be ignored
+# the secret should contain exactly the keys http_proxy, https_proxy and no_proxy
+httpProxySecret: ""
+httpProxy: ""
+httpsProxy: ""
+noProxy: ""
+networkPolicy:
+  enabled: false
+ingress-nginx:
+  enabled: false
+httproute:
+  enabled: false
+ingress:
+  enabled: false
+initContainers:
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 0
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - "ALL"
+    readOnlyRootFilesystem: true
+    resources: {}
+extraInitContainers: {}
+extraContainers: []
+extraVolumes: []
+extraVolumeMounts: []
+caCerts:
+  enabled: false
+initSysctl:
+  enabled: true
+  vmMaxMapCount: 524288
+  fsFileMax: 131072
+  nofile: 131072
+  nproc: 8192
+  # all initContainers use SonarQube image by default, but you can override it by setting the image field (ex image: ubuntu:24.04)
+  # image:
+  securityContext:
+    # Compatible with podSecurity standard privileged
+    privileged: true
+    # if run without root permissions, error "sysctl: permission denied on key xxx, ignoring"
+    runAsUser: 0
+    readOnlyRootFilesystem: true
+  # resources: {}
+initFs:
+  enabled: false
+prometheusExporter:
+  enabled: false
+plugins:
+  install: []
+annotations: {}
+resources:
+  limits:
+    cpu: 800m
+    memory: 4Gi
+    ephemeral-storage: 100Gi
+  requests:
+    cpu: 400m
+    memory: 2Gi
+    ephemeral-storage: 1.5Gi
+persistence:
+  enabled: false
+  storageClass: rbd-fast-delete
+  accessMode: ReadWriteOnce
+  size: 5Gi
+jdbcOverwrite:
+  enabled: false
+  # jdbcUrl: "jdbc:postgresql://myPostgres/myDatabase"
+  # jdbcUsername: "sonarUser"
+  # jdbcSecretName: "sonarqube-secrets"
+  # jdbcSecretPasswordKey: "jdbc-password"
+tests:
+  image: ""
+  enabled: true
+  resources:
+    requests:
+      cpu: 500m
+      memory: 200M
+      ephemeral-storage: 100M
+    limits:
+      cpu: 500m
+      memory: 200M
+      ephemeral-storage: 1000M
+serviceAccount:
+  create: false
+  # name:
+  automountToken: false
+  annotations: {}
+extraConfig:
+  secrets: []
+  configmaps: []
+mcp:
+  enabled: false
+  port: 8080
+  persistence:
+    enabled: true
+    storageClass: rbd-fast-delete
+    accessMode: ReadWriteOnce
+    size: 1Gi
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 0
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - "ALL"
+  # TLS configuration for encrypted communication between SonarQube and MCP.
+  # When enabled, the MCP server uses HTTPS transport and SonarQube connects via https://.
+  # Requires a PKCS12 or JKS keystore stored in a Kubernetes Secret.
+  tls:
+    enabled: false
+    # Secret containing the keystore file.
+    keystoreSecretName: ""
+    keystoreSecretKey: "keystore.p12"
+    # Secret containing the keystore password.
+    passwordSecretName: ""
+    passwordSecretKey: "password"
+    # Keystore type: PKCS12 or JKS.
+    keystoreType: "PKCS12"
+
+  # Additional environment variables for the MCP container.
+  env: []
+  # - name: MY_VAR
+  #   value: my-value
+
+  resources: {}
+  # limits:
+  #   cpu: 200m
+  #   memory: 256Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
