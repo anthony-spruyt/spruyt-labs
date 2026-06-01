@@ -19,7 +19,6 @@ resources:
   - ./minecraft-server-charts.yaml
   - ./postfinance-charts.yaml
   - ./qdrant-charts.yaml
-  - ./sonarqube-charts.yaml
   - ./stakater-charts.yaml
   - ./traefik-charts.yaml
   - ./valkey-io-charts.yaml

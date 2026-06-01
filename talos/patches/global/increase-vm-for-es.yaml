@@ -1,0 +1,6 @@
+# Increase vitual memory for elastic search
+# https://www.elastic.co/docs/deploy-manage/deploy/self-managed/vm-max-map-count#vm-max-map-count
+# https://artifacthub.io/packages/helm/sonarqube/sonarqube#elasticsearch-prerequisites
+machine:
+  sysctls:
+    vm.max_map_count: "1048576"

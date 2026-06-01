@@ -515,3 +515,4 @@ patches:
   - "@patches/global/enable-kube-prism.yaml"
   - "@patches/global/host-dns-for-cilium.yaml"
   - "@patches/global/wipe-disks-on-install.yaml"
+  - "@patches/global/increase-vm-for-es.yaml"
