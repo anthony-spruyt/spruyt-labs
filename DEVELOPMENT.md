@@ -45,8 +45,6 @@ chmod 600 ~/.secrets/.env.spruyt-labs
 The `.env.common` file must contain:
 
 ```bash
-AGENTMEMORY_SECRET=<value>
-AGENTMEMORY_URL=https://agentmemory-mcp.lan.<external-domain>
 ANTHROPIC_AUTH_TOKEN=<value>
 ANTHROPIC_BASE_URL=https://litellm.<external-domain>
 CLAUDE_CODE_ATTRIBUTION_HEADER=0

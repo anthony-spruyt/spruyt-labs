@@ -172,12 +172,10 @@ misconfigurations:
   - id: AVD-KSV-0048
     paths:
       - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/restart-cronjob.yaml
-      - cluster/apps/agentmemory/agentmemory/app/restart-cronjob.yaml
   # alpine/k8s is a trusted Docker Hub image for kubectl operations
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/csi-addons-system/csi-addons-controller-manager/app/restart-cronjob.yaml
-      - cluster/apps/agentmemory/agentmemory/app/restart-cronjob.yaml
 
   # ==============================================================================
   # Snapshot Controller - third-party manifest from kubernetes-csi project
@@ -521,9 +519,6 @@ misconfigurations:
   - id: AVD-KSV-0125
     paths:
       - .taskfiles/test/resources/stress-test-pod.tmpl.yaml
-  - id: AVD-KSV-0125
-    paths:
-      - cluster/apps/agentmemory/agentmemory/app/evict-cronjob.yaml
 
   # ==============================================================================
   # Coder Workspaces - privileged pods for rootful podman inside Kata VM.

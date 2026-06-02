@@ -8,15 +8,6 @@ data:
   mcp.json: |
     {
       "mcpServers": {
-        "agentmemory": {
-          "type": "stdio",
-          "command": "npx",
-          "args": ["-y", "@agentmemory/mcp"],
-          "env": {
-            "AGENTMEMORY_URL": "${AGENTMEMORY_URL}",
-            "AGENTMEMORY_SECRET": "${AGENTMEMORY_SECRET}"
-          }
-        },
         "agentplatform": {
           "type": "http",
           "url": "http://n8n-webhook.n8n-system.svc:8080/mcp/agent-platform",
