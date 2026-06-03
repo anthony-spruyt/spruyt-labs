@@ -16,6 +16,10 @@ spec:
   #     isWALArchiver: true
   #     parameters:
   #       barmanObjectName: hindsight-cnpg-aws-object-store
+  bootstrap:
+    initdb:
+      database: hindsight
+      owner: hindsight
   managed:
     roles:
       - name: hindsight
