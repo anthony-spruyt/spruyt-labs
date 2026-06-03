@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: hindsight-cnpg-cluster
+spec:
+  enableSuperuserAccess: true
+  imageName: ghcr.io/cloudnative-pg/postgresql:18-minimal-trixie
+  instances: 2
+  monitoring:
+    enablePodMonitor: true
+  # plugins:
+  #   - name: barman-cloud.cloudnative-pg.io
+  #     enabled: true
+  #     isWALArchiver: true
+  #     parameters:
+  #       barmanObjectName: hindsight-cnpg-aws-object-store
+  postgresql:
+    extensions:
+      - name: pgvector
+        image:
+          reference: ghcr.io/cloudnative-pg/pgvector:0.8.2-18-trixie
+    parameters:
+      # maintenance_work_mem: 8GB
+      shared_buffers: 256MB
+  primaryUpdateMethod: switchover
+  primaryUpdateStrategy: unsupervised
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 200m
+      memory: 1Gi
+  storage:
+    pvcTemplate:
+      storageClassName: rbd-fast-delete
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi

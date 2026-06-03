@@ -54,6 +54,7 @@ resources:
   - ./brave-search-mcp
   - ./n8n-mcp
   - ./vpa-system
+  - ./hindsight
   # - ./snmp
   # - ./smtp
   # - ./mysql

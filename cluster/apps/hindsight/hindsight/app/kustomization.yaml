@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # - ./hindsight-secrets.sops.yaml
+  # - ./aws-secret-store.yaml
+  # - ./aws-external-secret.yaml
+  # - ./cnpg-secret-store.yaml
+  # - ./cnpg-external-secret.yaml
+  # - ./cnpg-object-store.yaml
+  - ./hindsight-cnpg-cluster.yaml
+  - ./hindsight-cnpg-database.yaml
+  # - ./cnpg-scheduled-backup.yaml
+  # - ./network-policies.yaml
+  # - ./release.yaml
+  # - ./vpa.yaml
+  # - ./authentik-outpost-rbac.yaml
+  # - ./hindsight-secret-reader-rbac.yaml
+# configMapGenerator:
+#   - name: hindsight-values
+#     namespace: hindsight
+#     files:
+#       - values.yaml
+# configurations:
+#   - ./kustomizeconfig.yaml

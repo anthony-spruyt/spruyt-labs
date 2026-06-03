@@ -22,4 +22,5 @@ resources:
   - ./traefik-charts.yaml
   - ./valkey-io-charts.yaml
   - ./vaultwarden-charts.yaml
+  - ./vectorize-hindsight-charts.yaml
   - ./vmware-tanzu-charts.yaml
