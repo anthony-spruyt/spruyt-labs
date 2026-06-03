@@ -7,6 +7,7 @@ metadata:
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:18-minimal-trixie
   instances: 2
+  enablePDB: false
   monitoring:
     enablePodMonitor: true
   # plugins:
