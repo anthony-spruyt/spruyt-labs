@@ -15,6 +15,10 @@ spec:
   #     isWALArchiver: true
   #     parameters:
   #       barmanObjectName: hindsight-cnpg-aws-object-store
+  managed:
+    roles:
+      - name: hindsight
+        ensure: present
   postgresql:
     extensions:
       - name: pgvector
