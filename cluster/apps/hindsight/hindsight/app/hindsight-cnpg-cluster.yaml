@@ -5,11 +5,6 @@ kind: Cluster
 metadata:
   name: hindsight-cnpg-cluster
 spec:
-  bootstrap:
-    initdb:
-      database: hindsight
-      owner: hindsight
-  enableSuperuserAccess: true
   imageName: ghcr.io/cloudnative-pg/postgresql:18-minimal-trixie
   instances: 2
   monitoring:

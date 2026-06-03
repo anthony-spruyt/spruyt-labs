@@ -10,7 +10,7 @@ resources:
   # - ./cnpg-external-secret.yaml
   # - ./cnpg-object-store.yaml
   - ./hindsight-cnpg-cluster.yaml
-  # - ./hindsight-cnpg-database.yaml
+  - ./hindsight-cnpg-database.yaml
   # - ./cnpg-scheduled-backup.yaml
   # - ./network-policies.yaml
   # - ./release.yaml
