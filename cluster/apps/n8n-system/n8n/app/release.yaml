@@ -19,7 +19,7 @@ spec:
         images:
           - name: n8nio/runners
             # renovate: datasource=docker depName=n8nio/runners
-            newTag: "2.22.5"
+            newTag: "2.23.0"
         patches:
           - target:
               kind: Deployment
