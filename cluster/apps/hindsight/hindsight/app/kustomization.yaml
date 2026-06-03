@@ -3,15 +3,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  # - ./hindsight-secrets.sops.yaml
-  # - ./aws-secret-store.yaml
-  # - ./aws-external-secret.yaml
+  - ./hindsight-secrets.sops.yaml
+  - ./aws-secret-store.yaml
+  - ./aws-external-secret.yaml
   # - ./cnpg-secret-store.yaml
   # - ./cnpg-external-secret.yaml
-  # - ./cnpg-object-store.yaml
+  - ./hindsight-cnpg-object-stores.yaml
   - ./hindsight-cnpg-cluster.yaml
   - ./hindsight-cnpg-database.yaml
-  # - ./cnpg-scheduled-backup.yaml
+  - ./hindsight-cnpg-scheduled-backups.yaml
   # - ./network-policies.yaml
   # - ./release.yaml
   # - ./vpa.yaml
