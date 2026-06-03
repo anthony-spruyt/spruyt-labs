@@ -10,12 +10,12 @@ spec:
   enablePDB: false
   monitoring:
     enablePodMonitor: true
-  # plugins:
-  #   - name: barman-cloud.cloudnative-pg.io
-  #     enabled: true
-  #     isWALArchiver: true
-  #     parameters:
-  #       barmanObjectName: hindsight-cnpg-aws-object-store
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      enabled: true
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: hindsight-cnpg-aws-object-store
   bootstrap:
     initdb:
       database: hindsight
