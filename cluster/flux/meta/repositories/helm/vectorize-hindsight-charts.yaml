@@ -1,9 +1,0 @@
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/helmrepository_v1.json
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: vectorize-hindsight-charts
-  namespace: flux-system
-spec:
-  url: https://vectorize-io.github.io/helm/hindsight
