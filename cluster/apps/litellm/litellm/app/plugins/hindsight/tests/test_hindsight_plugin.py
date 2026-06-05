@@ -65,9 +65,14 @@ async def test_no_bank_skips(plugin, mock_httpx, make_anthropic, make_key):
 
 
 # 4 — retain POSTs items with async:true on success -----------------------
+# litellm nests proxy_server_request inside litellm_params for the success
+# event (litellm_logging.py: get_litellm_params -> litellm_params dict), unlike
+# the pre-call hook where it is top-level on `data`.
 async def test_retain_called_on_success(plugin, mock_httpx, make_response):
     kwargs = {
-        "proxy_server_request": {"headers": {BANK_HEADER: "my-repo"}},
+        "litellm_params": {
+            "proxy_server_request": {"headers": {BANK_HEADER: "my-repo"}},
+        },
         "messages": [{"role": "user", "content": "How do I configure Cilium BGP?"}],
     }
     await _mw(plugin).async_log_success_event(

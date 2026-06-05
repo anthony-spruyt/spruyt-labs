@@ -243,11 +243,17 @@ class HindsightMiddleware(CustomLogger):
             return ""
 
     def _resolve_bank_from_kwargs(self, kwargs: dict) -> Optional[str]:
-        headers = (kwargs.get("proxy_server_request") or {}).get("headers")
-        bank = self._bank_from_headers(headers)
+        # In the success-event kwargs litellm nests proxy_server_request inside
+        # litellm_params (litellm_logging.get_litellm_params). Check that first,
+        # then a top-level fallback for forward/backward compatibility.
+        litellm_params = kwargs.get("litellm_params") or {}
+        psr = (litellm_params.get("proxy_server_request")
+               or kwargs.get("proxy_server_request")
+               or {})
+        bank = self._bank_from_headers(psr.get("headers"))
         if bank:
             return bank
-        meta = kwargs.get("litellm_params", {}).get("metadata") or kwargs.get("metadata") or {}
+        meta = litellm_params.get("metadata") or kwargs.get("metadata") or {}
         if isinstance(meta, dict):
             bank = self._sanitize_bank(meta.get("hindsight_bank"))
             if bank:
