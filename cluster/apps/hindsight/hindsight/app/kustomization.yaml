@@ -5,9 +5,9 @@ kind: Kustomization
 resources:
   - ./hindsight-secrets.sops.yaml
   - ./aws-secret-store.yaml
-  - ./aws-external-secret.yaml
-  # - ./cnpg-secret-store.yaml
-  # - ./cnpg-external-secret.yaml
+  - ./aws-barman-eso.yaml
+  - ./cnpg-password-rbac.yaml
+  - ./cnpg-password-eso.yaml
   - ./hindsight-cnpg-object-stores.yaml
   - ./hindsight-cnpg-cluster.yaml
   - ./hindsight-cnpg-database.yaml

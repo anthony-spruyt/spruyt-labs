@@ -17,10 +17,12 @@ postgresql:
     database: hindsight
     # password comes from `existingSecret` key `postgres-password`
 
-# Inject all keys from this Secret as envFrom on every pod. The chart wires
+# Inject all keys from this Secret as envFrom on every pod. The chart also wires
 # POSTGRES_PASSWORD from key `postgres-password` separately via secretKeyRef.
-# Note: this Secret also carries AWS_* keys (ESO-merged for CNPG barman); they
-# are injected as env on app pods too but are unused by hindsight.
+# This Secret holds ONLY app-relevant keys: HINDSIGHT_API_LLM_API_KEY (SOPS) and
+# postgres-password (ESO-merged from the CNPG-generated hindsight-cnpg-cluster-app
+# secret). AWS creds for CNPG barman live in a SEPARATE secret
+# (hindsight-cnpg-aws-secrets) so they are never exposed as pod env vars.
 existingSecret: hindsight-secrets
 
 # GLOBAL security context — the chart applies these to ALL components
@@ -43,7 +45,10 @@ securityContext:
     drop: [ALL]
 
 api:
-  replicaCount: 2
+  # Warm-up: 1 replica so only ONE node cold-pulls the ~1.42 GB api image.
+  # Once it is cached, spegel (cluster image mirror) can fan it out P2P to a
+  # second node — scale back to 2 for HA after the first pull completes.
+  replicaCount: 1
   image:
     repository: ghcr.io/vectorize-io/hindsight-api
     pullPolicy: IfNotPresent
@@ -59,9 +64,10 @@ api:
   resources:
     requests: {cpu: 250m, memory: 1Gi}
     limits: {cpu: 2000m, memory: 4Gi}
+  # PDB disabled while api runs a single replica (minAvailable=1 on 1 replica
+  # blocks all voluntary node drains). Re-enable when scaling back to 2.
   podDisruptionBudget:
-    enabled: true
-    minAvailable: 1
+    enabled: false
 
 worker:
   enabled: true
