@@ -12,15 +12,15 @@ resources:
   - ./hindsight-cnpg-cluster.yaml
   - ./hindsight-cnpg-database.yaml
   - ./hindsight-cnpg-scheduled-backups.yaml
+  - ./release.yaml
+  - ./vpa.yaml
   # - ./network-policies.yaml
-  # - ./release.yaml
-  # - ./vpa.yaml
   # - ./authentik-outpost-rbac.yaml
   # - ./hindsight-secret-reader-rbac.yaml
-# configMapGenerator:
-#   - name: hindsight-values
-#     namespace: hindsight
-#     files:
-#       - values.yaml
-# configurations:
-#   - ./kustomizeconfig.yaml
+configMapGenerator:
+  - name: hindsight-values
+    namespace: hindsight
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

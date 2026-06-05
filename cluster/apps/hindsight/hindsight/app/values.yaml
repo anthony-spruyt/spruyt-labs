@@ -1,0 +1,104 @@
+---
+# Default values: https://github.com/vectorize-io/hindsight/blob/main/helm/hindsight/values.yaml
+# #yaml-language-server: $schema=TODO
+
+# Image tags default to .Chart.AppVersion (currently 0.7.2). Renovate bumps the
+# OCIRepository tag in cluster/flux/meta/repositories/oci, which moves AppVersion
+# and all three images in lockstep — no per-component tag to maintain.
+# Repositories below are the chart defaults, stated explicitly for clarity.
+
+# Disable bundled Postgres — use external CNPG
+postgresql:
+  enabled: false
+  external:
+    host: hindsight-cnpg-cluster-rw.hindsight.svc.cluster.local
+    port: 5432
+    username: hindsight
+    database: hindsight
+    # password comes from `existingSecret` key `postgres-password`
+
+# Inject all keys from this Secret as envFrom on every pod. The chart wires
+# POSTGRES_PASSWORD from key `postgres-password` separately via secretKeyRef.
+# Note: this Secret also carries AWS_* keys (ESO-merged for CNPG barman); they
+# are injected as env on app pods too but are unused by hindsight.
+existingSecret: hindsight-secrets
+
+# GLOBAL security context — the chart applies these to ALL components
+# (api, worker, controlPlane). Per-component securityContext keys are NOT read
+# by the templates, so security MUST be set here. seccompProfile is required to
+# satisfy the namespace's Pod Security Admission `restricted` enforcement.
+podSecurityContext:
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  # readOnlyRootFilesystem stays false: the chart has no writable-mount hooks
+  # for the control-plane (Node.js) container, so global RORF=true would break
+  # it. PSA `restricted` does not require RORF.
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+
+api:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/vectorize-io/hindsight-api
+    pullPolicy: IfNotPresent
+  env:
+    HINDSIGHT_API_LLM_BASE_URL: "http://litellm.litellm.svc.cluster.local:4000"
+    HINDSIGHT_API_LLM_MODEL: "hindsight-model"
+  # modelCache disabled: LLM is remote (litellm), no confirmed local embedding
+  # model need. A single RWO PVC cannot back a 2-replica Deployment anyway.
+  # Re-enable (and reconsider replica count) if pod logs show model downloads.
+  persistence:
+    modelCache:
+      enabled: false
+  resources:
+    requests: {cpu: 250m, memory: 1Gi}
+    limits: {cpu: 2000m, memory: 4Gi}
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+worker:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/vectorize-io/hindsight-api
+    pullPolicy: IfNotPresent
+  env:
+    HINDSIGHT_API_WORKER_POLL_INTERVAL_MS: "500"
+    HINDSIGHT_API_WORKER_BATCH_SIZE: "10"
+    HINDSIGHT_API_WORKER_MAX_RETRIES: "3"
+    # HINDSIGHT_API_WORKER_HTTP_PORT omitted — chart default (8889) matches.
+  persistence:
+    modelCache:
+      enabled: false
+  resources:
+    requests: {cpu: 250m, memory: 1Gi}
+    limits: {cpu: 2000m, memory: 4Gi}
+  # PDB disabled: single replica. minAvailable=1 on a 1-replica workload blocks
+  # all voluntary node drains. Re-enable with replicaCount>1.
+  podDisruptionBudget:
+    enabled: false
+
+controlPlane:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/vectorize-io/hindsight-control-plane
+    pullPolicy: IfNotPresent
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: 1000m, memory: 2Gi}
+  # PDB disabled: single replica (see worker note).
+  podDisruptionBudget:
+    enabled: false
+
+# No TEI sidecars in v1
+tei:
+  reranker: {enabled: false}
+  embedding: {enabled: false}
