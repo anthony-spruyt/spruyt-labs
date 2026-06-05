@@ -519,7 +519,7 @@ persistence:
   # custom_callbacks.hindsight.hindsight_plugin.
   hindsight-plugin:
     type: configMap
-    identifier: litellm-hindsight-plugin
+    name: litellm-hindsight-plugin
     advancedMounts:
       litellm:
         litellm:
