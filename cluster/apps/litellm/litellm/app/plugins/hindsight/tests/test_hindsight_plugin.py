@@ -70,6 +70,7 @@ async def test_no_bank_skips(plugin, mock_httpx, make_anthropic, make_key):
 # the pre-call hook where it is top-level on `data`.
 async def test_retain_called_on_success(plugin, mock_httpx, make_response):
     kwargs = {
+        "litellm_call_id": "call-abc123",
         "litellm_params": {
             "proxy_server_request": {"headers": {BANK_HEADER: "my-repo"}},
         },
@@ -82,6 +83,17 @@ async def test_retain_called_on_success(plugin, mock_httpx, make_response):
     body = mock_httpx.retain_calls[0]["json"]
     assert body["async"] is True
     assert isinstance(body["items"], list) and body["items"]
+    # Hindsight MemoryItem schema: content is str, context is str|null,
+    # metadata is dict[str,str]. Sending a dict for context yields HTTP 422.
+    for item in body["items"]:
+        assert isinstance(item["content"], str)
+        assert "context" not in item or isinstance(item["context"], (str, type(None)))
+        if "metadata" in item:
+            assert all(isinstance(v, str) for v in item["metadata"].values())
+    # Hindsight rejects a batch with duplicate document_ids (HTTP 500), so the
+    # two turns must carry unique ids.
+    doc_ids = [it.get("document_id") for it in body["items"] if it.get("document_id")]
+    assert len(doc_ids) == len(set(doc_ids))
     assert mock_httpx.retain_calls[0]["url"].endswith(
         "/v1/default/banks/my-repo/memories")
 

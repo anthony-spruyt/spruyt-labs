@@ -260,6 +260,16 @@ class HindsightMiddleware(CustomLogger):
                 return bank
         return None
 
+    @staticmethod
+    def _memory_item(content: str, role: str, doc_id: Optional[str]) -> dict:
+        item = {"content": content, "context": role, "metadata": {"role": role}}
+        if doc_id:
+            # Hindsight rejects a batch with duplicate document_ids, so the
+            # per-turn id is suffixed by role to keep both turns unique while
+            # still grouping them under the same call.
+            item["document_id"] = f"{doc_id}-{role}"
+        return item
+
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
         if not self.retain:
             return
@@ -269,11 +279,15 @@ class HindsightMiddleware(CustomLogger):
                 return
             user_text = self._latest_user_text(kwargs)
             assistant_text = self._response_text(response_obj)
+            # Hindsight MemoryItem: content/context are strings, metadata is
+            # dict[str,str]. The two turns share a document_id so they are
+            # retained as one conversation.
+            doc_id = kwargs.get("litellm_call_id") or kwargs.get("id")
             items = []
             if user_text:
-                items.append({"content": user_text, "context": {"role": "user"}})
+                items.append(self._memory_item(user_text, "user", doc_id))
             if assistant_text:
-                items.append({"content": assistant_text, "context": {"role": "assistant"}})
+                items.append(self._memory_item(assistant_text, "assistant", doc_id))
             if not items:
                 return
             body = {"items": items, "async": True}
