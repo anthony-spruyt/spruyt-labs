@@ -83,6 +83,8 @@ controllers:
               secretKeyRef:
                 name: litellm-valkey-secrets
                 key: litellm
+          # Resolve the custom_callbacks.hindsight.* import for the proxy callback
+          PYTHONPATH: "/app:/app/custom_callbacks"
         envFrom:
           - secretRef:
               name: litellm-secrets
@@ -445,6 +447,7 @@ configMaps:
             - otel
             - prometheus
             - websearch_interception
+            - custom_callbacks.hindsight.hindsight_plugin.hindsight_middleware
           websearch_interception_params:
             enabled_providers:
               - anthropic
@@ -509,4 +512,23 @@ persistence:
         llm-guard:
           - path: /config/scanners.yml
             subPath: scanners.yml
+            readOnly: true
+  # Hindsight proxy-side memory callback. ConfigMap keys are flat (no '/'),
+  # so the custom_callbacks/hindsight/ package tree is recreated via subPath
+  # mounts. The /app entry on PYTHONPATH resolves the dotted import
+  # custom_callbacks.hindsight.hindsight_plugin.
+  hindsight-plugin:
+    type: configMap
+    identifier: litellm-hindsight-plugin
+    advancedMounts:
+      litellm:
+        litellm:
+          - path: /app/custom_callbacks/__init__.py
+            subPath: __init__.py
+            readOnly: true
+          - path: /app/custom_callbacks/hindsight/__init__.py
+            subPath: __init__.py
+            readOnly: true
+          - path: /app/custom_callbacks/hindsight/hindsight_plugin.py
+            subPath: hindsight_plugin.py
             readOnly: true

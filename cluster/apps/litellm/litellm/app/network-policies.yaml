@@ -580,6 +580,29 @@ spec:
             - port: "3000"
               protocol: TCP
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress from LiteLLM proxy to Hindsight API (proxy-side memory callback:
+# pre-call recall + post-success retain).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-litellm-hindsight-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app.kubernetes.io/component: api
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
+---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
