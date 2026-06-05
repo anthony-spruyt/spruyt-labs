@@ -19,7 +19,7 @@ Both phases **fail open**: any error or timeout is logged and swallowed, so memo
 
 Memory is keyed by a **bank** (one logical memory store, e.g. one per repo). The bank is resolved per request, first match wins:
 
-1. Request header `X-Hindsight-Bank`
+1. Request header `x-hindsight-bank`
 2. Virtual-key metadata `hindsight_bank`
 3. Team metadata `hindsight_bank`
 4. **None → skip memory entirely** (no shared default bank — prevents cross-bank contamination)
@@ -31,7 +31,7 @@ The bank value is sanitized to `[A-Za-z0-9-]`.
 Set the custom header to a stable slug (e.g. the repository name). Claude Code already routes to litellm via `ANTHROPIC_BASE_URL`.
 
 ```bash
-export ANTHROPIC_CUSTOM_HEADERS="X-Hindsight-Bank: spruyt-labs"
+export ANTHROPIC_CUSTOM_HEADERS="x-hindsight-bank: spruyt-labs"
 ```
 
 Without the header (and without virtual-key/team metadata) the callback is a safe no-op.
@@ -82,7 +82,7 @@ body = {"model": "claude-haiku-4-5", "max_tokens": 64,
         "messages": [{"role": "user", "content": "Remember: the deploy guardian is a teal otter named Bram."}]}
 req = urllib.request.Request("http://localhost:4000/v1/messages", data=json.dumps(body).encode(),
     headers={"Authorization": "Bearer " + os.environ["LITELLM_MASTER_KEY"],
-             "Content-Type": "application/json", "X-Hindsight-Bank": "smoke-test"})
+             "Content-Type": "application/json", "x-hindsight-bank": "smoke-test"})
 urllib.request.urlopen(req, timeout=60).read(); print("retain sent")
 PY
 sleep 10
@@ -93,7 +93,7 @@ body = {"model": "claude-haiku-4-5", "max_tokens": 64,
         "messages": [{"role": "user", "content": "Who is the deploy guardian? Say UNKNOWN if unsure."}]}
 req = urllib.request.Request("http://localhost:4000/v1/messages", data=json.dumps(body).encode(),
     headers={"Authorization": "Bearer " + os.environ["LITELLM_MASTER_KEY"],
-             "Content-Type": "application/json", "X-Hindsight-Bank": "smoke-test"})
+             "Content-Type": "application/json", "x-hindsight-bank": "smoke-test"})
 r = json.load(urllib.request.urlopen(req, timeout=60))
 print("".join(b.get("text","") for b in r.get("content", []) if b.get("type") == "text"))
 PY

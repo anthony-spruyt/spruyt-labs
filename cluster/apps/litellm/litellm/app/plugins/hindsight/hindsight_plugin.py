@@ -9,7 +9,7 @@ require any change to the calling client (e.g. Claude Code CLI):
   into Hindsight (best effort, fire-and-forget ``async:true``).
 
 bank_id resolution (per request, first match wins):
-  1. request header ``X-Hindsight-Bank``
+  1. request header ``x-hindsight-bank``
   2. virtual-key metadata ``hindsight_bank``
   3. team metadata ``hindsight_bank``
   4. none -> SKIP memory entirely (no shared default bank; avoids cross-repo
