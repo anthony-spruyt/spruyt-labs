@@ -81,7 +81,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Coder workspaces
+# Allow ingress from hindsight pods (api/worker call litellm for LLM completions)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
