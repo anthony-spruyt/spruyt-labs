@@ -187,6 +187,8 @@ global:
             path: technitium-sso.yaml
           - key: litellm-sso.yaml
             path: litellm-sso.yaml
+          - key: hindsight-sso.yaml
+            path: hindsight-sso.yaml
 
 authentik:
   log_level: info

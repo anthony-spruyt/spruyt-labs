@@ -1,0 +1,69 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Hindsight SSO
+entries:
+  - id: hindsight_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Hindsight Users
+    attrs:
+      name: Hindsight Users
+  - id: hindsight_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: Hindsight
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://hindsight.lan.${EXTERNAL_DOMAIN}
+  - id: hindsight_application
+    model: authentik_core.application
+    identifiers:
+      slug: hindsight
+    attrs:
+      name: Hindsight
+      provider: !KeyOf hindsight_provider
+      meta_launch_url: https://hindsight.lan.${EXTERNAL_DOMAIN}
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/hindsight.png
+
+  # Policy binding to restrict access to group members only
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf hindsight_application
+      order: 0
+    attrs:
+      group: !KeyOf hindsight_users_group
+      negate: false
+      enabled: true
+      timeout: 30
+
+  # Standalone outpost deployed to hindsight namespace
+  # Requires RBAC: Role/RoleBinding in hindsight granting authentik SA permissions
+  - id: hindsight_outpost
+    model: authentik_outposts.outpost
+    identifiers:
+      name: Hindsight Outpost
+    attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: hindsight
+      providers:
+        - !KeyOf hindsight_provider

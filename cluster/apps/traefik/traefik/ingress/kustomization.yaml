@@ -10,6 +10,7 @@ resources:
   - ./flux-system
   - ./foundryvtt
   - ./headlamp-system
+  - ./hindsight
   - ./kube-system
   - ./litellm
   - ./minecraft

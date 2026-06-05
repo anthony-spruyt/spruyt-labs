@@ -47,5 +47,6 @@ configMapGenerator:
       - blueprints/bull-board-sso.yaml
       - blueprints/technitium-sso.yaml
       - blueprints/litellm-sso.yaml
+      - blueprints/hindsight-sso.yaml
 configurations:
   - ./kustomizeconfig.yaml

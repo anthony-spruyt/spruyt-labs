@@ -14,9 +14,8 @@ resources:
   - ./hindsight-cnpg-scheduled-backups.yaml
   - ./release.yaml
   - ./vpa.yaml
-  # - ./network-policies.yaml
-  # - ./authentik-outpost-rbac.yaml
-  # - ./hindsight-secret-reader-rbac.yaml
+  - ./authentik-outpost-rbac.yaml
+  # - ./network-policies.yaml  # last phase: hindsight namespace netpols
 configMapGenerator:
   - name: hindsight-values
     namespace: hindsight
