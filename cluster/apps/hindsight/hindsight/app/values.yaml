@@ -80,6 +80,13 @@ worker:
     HINDSIGHT_API_WORKER_BATCH_SIZE: "10"
     HINDSIGHT_API_WORKER_MAX_RETRIES: "3"
     # HINDSIGHT_API_WORKER_HTTP_PORT omitted — chart default (8889) matches.
+    # Override the k8s service-discovery env var: the `hindsight-api` Service
+    # makes Kubernetes inject HINDSIGHT_API_PORT=tcp://<clusterIP>:8888 into
+    # every pod, which the app tries to int()-parse and crashes
+    # (invalid literal for int(): 'tcp://...'). The api Deployment sets this
+    # explicitly in its template; the worker StatefulSet does not, so set it
+    # here too.
+    HINDSIGHT_API_PORT: "8888"
   persistence:
     modelCache:
       enabled: false
