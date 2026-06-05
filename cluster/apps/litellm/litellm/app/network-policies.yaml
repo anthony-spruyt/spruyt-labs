@@ -85,7 +85,7 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-coder-workspaces-ingress
+  name: allow-hindsight-ingress
 spec:
   endpointSelector:
     matchLabels:
