@@ -23,10 +23,6 @@ spec:
   managed:
     roles:
       - name: hindsight
-        # login: true is REQUIRED — CNPG managed roles apply CREATE ROLE
-        # defaults (NOLOGIN), which overrides the LOGIN the initdb owner would
-        # otherwise have. Without it the app fails with
-        # FATAL: role "hindsight" is not permitted to log in.
         login: true
         connectionLimit: -1
         ensure: present
