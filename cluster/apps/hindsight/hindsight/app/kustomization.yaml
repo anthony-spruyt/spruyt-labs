@@ -15,7 +15,7 @@ resources:
   - ./release.yaml
   - ./vpa.yaml
   - ./authentik-outpost-rbac.yaml
-  # - ./network-policies.yaml  # last phase: hindsight namespace netpols
+  - ./network-policies.yaml
 configMapGenerator:
   - name: hindsight-values
     namespace: hindsight
