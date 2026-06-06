@@ -79,6 +79,18 @@ spec:
         - ports:
             - port: "4000"
               protocol: TCP
+    # HuggingFace model downloads (world:443). The reranker is baked into the
+    # image and the app runs with HF_HUB_OFFLINE=1, so this is NOT needed for
+    # the current config — it is a safety net so a future non-baked model (new
+    # reranker, cache miss) can pull from huggingface.co/cdn-lfs instead of
+    # hanging on a dropped connection. Remove HF_HUB_OFFLINE in values.yaml to
+    # actually use it.
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # worker egress: CNPG (job queue) + litellm (LLM extraction during retain).
@@ -110,6 +122,14 @@ spec:
       toPorts:
         - ports:
             - port: "4000"
+              protocol: TCP
+    # HuggingFace model downloads (world:443). Safety net only — reranker is
+    # baked and HF_HUB_OFFLINE=1 is set. See the api egress note above.
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
