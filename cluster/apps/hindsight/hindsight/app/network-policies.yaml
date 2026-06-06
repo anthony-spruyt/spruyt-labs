@@ -167,18 +167,19 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Authentik forward-auth outpost (goauthentik.io managed). Ingress from Traefik
-# (/outpost.goauthentik.io/ route) on 9000 and vmagent metrics on 9300; egress
-# to the public Authentik server over 443 (AUTHENTIK_HOST, via Cloudflare).
+# =============================================================================
+# Authentik Outpost Policies (deployed by Authentik to this namespace)
+# =============================================================================
+# DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
+# Allow Traefik to reach authentik outpost for forward auth
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-hindsight-outpost
+  name: allow-outpost-traefik-ingress
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: authentik-outpost-proxy
-      goauthentik.io/outpost-name: hindsight-outpost
+      app.kubernetes.io/managed-by: goauthentik.io
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -188,6 +189,42 @@ spec:
         - ports:
             - port: "9000"
               protocol: TCP
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow outpost egress to authentik server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-authentik-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:app.kubernetes.io/name: authentik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow metrics scraping from vmagent
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  ingress:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: observability
@@ -195,13 +232,6 @@ spec:
       toPorts:
         - ports:
             - port: "9300"
-              protocol: TCP
-  egress:
-    - toEntities:
-        - world
-      toPorts:
-        - ports:
-            - port: "443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
