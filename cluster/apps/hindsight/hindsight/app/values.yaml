@@ -61,6 +61,15 @@ api:
   persistence:
     modelCache:
       enabled: false
+  # Cold-start: BAAI/bge-small-en-v1.5 loads via sentence_transformers and takes
+  # >60s on first pod start (no persistent modelCache). Give 300s before liveness
+  # fires — readiness still gates traffic with its own shorter window.
+  livenessProbe:
+    httpGet: {path: /health, port: 8888}
+    initialDelaySeconds: 300
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
   resources:
     requests: {cpu: 100m, memory: 1500Mi}
     limits: {cpu: 2000m, memory: 4Gi}
@@ -90,6 +99,13 @@ worker:
   persistence:
     modelCache:
       enabled: false
+  # Same cold-start constraint as api — 300s liveness delay for model load.
+  livenessProbe:
+    httpGet: {path: /health, port: 8889}
+    initialDelaySeconds: 300
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
   resources:
     requests: {cpu: 500m, memory: 2Gi}
     limits: {cpu: 2000m, memory: 4Gi}
