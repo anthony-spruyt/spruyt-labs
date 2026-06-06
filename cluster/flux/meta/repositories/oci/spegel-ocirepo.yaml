@@ -11,4 +11,4 @@ spec:
     digest: sha256:9efb90dbec90f3ffda195196eaa151cd1a6c2c30d44d59bb2c0853edf08d4430
   url: oci://ghcr.io/spegel-org/helm-charts/spegel
   secretRef:
-    name: global-registry-secret
+    name: image-pull-secrets
