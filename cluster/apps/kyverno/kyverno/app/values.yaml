@@ -18,16 +18,12 @@ admissionController:
           resources:
             - secrets
           verbs:
+            - get
             - list
             - watch
-        - apiGroups:
-            - ""
-          resources:
-            - secrets
-          resourceNames:
-            - global-registry-secret
-          verbs:
-            - get
+            - create
+            - update
+            - delete
   container:
     resources:
       requests:
@@ -50,17 +46,10 @@ backgroundController:
           resources:
             - secrets
           verbs:
+            - get
             - list
             - watch
             - create
-        - apiGroups:
-            - ""
-          resources:
-            - secrets
-          resourceNames:
-            - global-registry-secret
-          verbs:
-            - get
             - update
             - delete
   resources:
