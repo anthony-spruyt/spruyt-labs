@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ./release.yaml
   - ./vpa.yaml
-  - ./cluster-secrets.yaml
 configMapGenerator:
   - name: external-secrets-values
     namespace: external-secrets
