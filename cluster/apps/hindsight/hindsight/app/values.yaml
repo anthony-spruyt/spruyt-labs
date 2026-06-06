@@ -56,8 +56,9 @@ api:
     HINDSIGHT_API_LLM_BASE_URL: "http://litellm.litellm.svc.cluster.local:4000"
     HINDSIGHT_API_LLM_MODEL: "hindsight-model"
     HINDSIGHT_API_EMBEDDINGS_PROVIDER: "litellm"
-    HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000"
+    HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000/v1"
     HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embeddings"
+    HINDSIGHT_API_EMBEDDINGS_LITELLM_API_KEY: "$(HINDSIGHT_API_LLM_API_KEY)"
   # modelCache not needed: embeddings offloaded to litellm, reranker is local
   # but small (85MB cross-encoder/ms-marco-MiniLM-L-6-v2, fits in default probe window).
   persistence:
@@ -90,8 +91,9 @@ worker:
     # here too.
     HINDSIGHT_API_PORT: "8888"
     HINDSIGHT_API_EMBEDDINGS_PROVIDER: "litellm"
-    HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000"
+    HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000/v1"
     HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embeddings"
+    HINDSIGHT_API_EMBEDDINGS_LITELLM_API_KEY: "$(HINDSIGHT_API_LLM_API_KEY)"
   persistence:
     modelCache:
       enabled: false
