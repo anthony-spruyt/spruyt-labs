@@ -10,20 +10,6 @@ admissionController:
   crdWatcher: true
   priorityClassName: critical-infrastructure
   replicas: 1
-  rbac:
-    clusterRole:
-      extraResources:
-        - apiGroups:
-            - ""
-          resources:
-            - secrets
-          verbs:
-            - get
-            - list
-            - watch
-            - create
-            - update
-            - delete
   container:
     resources:
       requests:
@@ -38,20 +24,6 @@ admissionController:
 backgroundController:
   priorityClassName: critical-infrastructure
   replicas: 1
-  rbac:
-    clusterRole:
-      extraResources:
-        - apiGroups:
-            - ""
-          resources:
-            - secrets
-          verbs:
-            - get
-            - list
-            - watch
-            - create
-            - update
-            - delete
   resources:
     requests:
       cpu: 50m
