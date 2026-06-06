@@ -62,7 +62,11 @@ entries:
           [name, "Local Kubernetes Cluster"],
         ]
       config:
-        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        # Backchannel (outpost -> server) over the in-cluster ClusterIP, so the
+        # outpost no longer depends on external DNS / the Cloudflare hairpin to
+        # reach the server. Browser redirects + OIDC issuer stay public.
+        authentik_host: http://authentik-server.authentik-system.svc.cluster.local/
+        authentik_host_browser: https://auth.${EXTERNAL_DOMAIN}/
         kubernetes_namespace: agent-worker-system
       providers:
         - !KeyOf bull_board_provider
