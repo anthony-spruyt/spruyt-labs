@@ -59,11 +59,21 @@ api:
     HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000/v1"
     HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embeddings"
     HINDSIGHT_API_EMBEDDINGS_LITELLM_API_KEY: "$(HINDSIGHT_API_LLM_API_KEY)"
-  # modelCache not needed: embeddings offloaded to litellm, reranker is local
-  # but small (85MB cross-encoder/ms-marco-MiniLM-L-6-v2, fits in default probe window).
   persistence:
     modelCache:
       enabled: false
+  livenessProbe:
+    httpGet: {path: /health, port: 8888}
+    initialDelaySeconds: 600
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 100
+  readinessProbe:
+    httpGet: {path: /health, port: 8888}
+    initialDelaySeconds: 600
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 100
   resources:
     requests: {cpu: 100m, memory: 512Mi}
     limits: {cpu: 2000m, memory: 2Gi}
@@ -97,6 +107,18 @@ worker:
   persistence:
     modelCache:
       enabled: false
+  livenessProbe:
+    httpGet: {path: /health, port: 8889}
+    initialDelaySeconds: 600
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 100
+  readinessProbe:
+    httpGet: {path: /health, port: 8889}
+    initialDelaySeconds: 600
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 100
   resources:
     requests: {cpu: 250m, memory: 512Mi}
     limits: {cpu: 2000m, memory: 2Gi}
