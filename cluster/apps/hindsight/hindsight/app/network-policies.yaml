@@ -10,10 +10,10 @@
 # by Cilium and need no explicit rule (same as the litellm namespace).
 #
 # Component map (app.kubernetes.io/component on instance=hindsight,name=hindsight):
-#   api           :8888  <- litellm, control-plane, worker      -> cnpg:5432, litellm:4000
-#   worker        :8889  <- (host probes only)                  -> cnpg:5432, litellm:4000
+#   api           :8888  <- litellm, control-plane, worker      -> cnpg:5432, litellm:4000, world:443 (HF safety net)
+#   worker        :8889  <- (host probes only)                  -> cnpg:5432, litellm:4000, world:443 (HF safety net)
 #   control-plane :3000  <- traefik                             -> api:8888
-#   outpost       :9000  <- traefik     :9300 <- vmagent        -> world:443 (authentik)
+#   outpost       :9000  <- traefik     :9300 <- vmagent        -> authentik-server:9000 (backchannel) + world:443
 #   cnpg-cluster  :5432  <- api, worker  :9187 <- vmagent  + operator/barman/internal
 # =============================================================================
 # api: recall/retain HTTP endpoint. Ingress from litellm proxy (memory
@@ -169,7 +169,8 @@ spec:
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Authentik forward-auth outpost (goauthentik.io managed). Ingress from Traefik
 # (/outpost.goauthentik.io/ route) on 9000 and vmagent metrics on 9300; egress
-# to the public Authentik server over 443 (AUTHENTIK_HOST, via Cloudflare).
+# to the in-cluster authentik-server backchannel on 9000 (authentik_host) plus
+# world:443 (kept during rollout; browser redirects are browser->authentik).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -197,6 +198,20 @@ spec:
             - port: "9300"
               protocol: TCP
   egress:
+    # In-cluster backchannel to the Authentik server (ClusterIP :80 -> :9000),
+    # so the outpost no longer depends on external DNS / the Cloudflare hairpin
+    # to reach the server. Mirrors authentik_host in hindsight-sso.yaml.
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:app.kubernetes.io/name: authentik
+            k8s:app.kubernetes.io/component: server
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+    # Browser redirects are browser->authentik, not outpost->authentik; world:443
+    # kept during rollout (tidy-up candidate once confirmed unused).
     - toEntities:
         - world
       toPorts:
