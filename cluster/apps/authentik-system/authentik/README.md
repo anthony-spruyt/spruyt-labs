@@ -595,31 +595,13 @@ entries:
           [name, "Local Kubernetes Cluster"],
         ]
       config:
-        # Backchannel (outpost -> server) over the in-cluster ClusterIP so the
-        # outpost does not depend on external DNS / the Cloudflare hairpin.
-        authentik_host: http://authentik-server.authentik-system.svc.cluster.local/
-        authentik_host_browser: https://auth.${EXTERNAL_DOMAIN}/
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
         kubernetes_namespace: <app-namespace>
       providers:
         - !KeyOf <app>_provider
 ```
 
 **Note:** No OAuth secrets needed - proxy providers use session-based auth.
-
-**Backchannel vs browser host (important):** Standalone proxy outposts open a control-channel websocket to the Authentik **server**. Point that channel at the in-cluster ClusterIP via `authentik_host`, and keep browser-facing redirects on the public edge via `authentik_host_browser`:
-
-| Config key               | Value                                                         | Used for                                                               |
-| ------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `authentik_host`         | `http://authentik-server.authentik-system.svc.cluster.local/` | Outpost -> server backchannel (websocket, `/outpost.goauthentik.io/*`) |
-| `authentik_host_browser` | `https://auth.${EXTERNAL_DOMAIN}/`                            | Browser redirects + OIDC issuer (stay public)                          |
-
-Why: a public-only `authentik_host` makes every outpost depend on external DNS resolving `auth.${EXTERNAL_DOMAIN}` and the Cloudflare hairpin at startup. A DNS blip then DNS-backoffs every outpost = cluster-wide SSO outage. The in-cluster backchannel removes that dependency. The backchannel is plain `http` to a ClusterIP (no TLS to validate), so `authentik_host_insecure` is not needed and there is
-no cert SAN mismatch. Trust/issuer are unaffected — only the server\<->outpost transport moves in-cluster.
-
-**Required CNP (both sides):** This is a two-sided Cilium policy. Each outpost namespace already permits outpost egress to `authentik:9000` (`allow-outpost-authentik-egress`). The **server side** runs default-deny ingress, so a matching ingress rule on `authentik-server:9000` is required — see `allow-outpost-backchannel-ingress` in `app/network-policies.yaml`, which enumerates every outpost
-namespace (Cilium `fromEndpoints` is namespace-scoped). **Add new outpost namespaces to that rule** or the backchannel times out (drop).
-
-Note: Technitium's OIDC SSO must stay on the public host — it terminates against the public edge certificate and cannot use the ClusterIP without a cert mismatch.
 
 ### Step 3: Create Traefik ForwardAuth Middleware
 
@@ -1073,8 +1055,6 @@ property_mappings:
 4. **SAML schema validation error** - Check `audience` matches SP entity ID exactly, ensure `property_mappings` are included
 5. **SAML HTTP vs HTTPS mismatch** - Add `https-proto-header` middleware to Traefik ingress
 6. **User can access app without being in group** - Missing `policybinding` in blueprint; add policy binding to application
-7. **Outpost stuck/unhealthy, backchannel times out** - If using the in-cluster `authentik_host`, confirm the outpost namespace is listed in `allow-outpost-backchannel-ingress` (`app/network-policies.yaml`). Server runs default-deny ingress; an unlisted namespace is dropped. Verify:
-   `kubectl exec -n <ns> <outpost-pod> -- curl -sS --max-time 8 http://authentik-server.authentik-system.svc.cluster.local/outpost.goauthentik.io/ping -o /dev/null -w "%{http_code}"` should return `204`. After changing the blueprint config, restart the outpost (`kubectl rollout restart deploy -n <ns> ak-outpost-<name>`) so it reloads `authentik_host` from its secret.
 
 ## References
 

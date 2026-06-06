@@ -170,51 +170,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from standalone proxy outposts to the server backchannel (:9000).
-# Outposts moved their backchannel from the public auth hairpin to the in-cluster
-# authentik-server ClusterIP (:80 -> :9000) so they no longer depend on external
-# DNS / Cloudflare to reach the server. Cilium fromEndpoints is namespace-scoped,
-# so each outpost namespace is enumerated. Browser redirects + OIDC issuer stay
-# public (authentik_host_browser); only this backchannel is in-cluster. Ref #1856.
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-outpost-backchannel-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: authentik
-      app.kubernetes.io/name: authentik
-      app.kubernetes.io/component: server
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:app.kubernetes.io/name: authentik-outpost-proxy
-            k8s:io.kubernetes.pod.namespace: hindsight
-        - matchLabels:
-            k8s:app.kubernetes.io/name: authentik-outpost-proxy
-            k8s:io.kubernetes.pod.namespace: redisinsight
-        - matchLabels:
-            k8s:app.kubernetes.io/name: authentik-outpost-proxy
-            k8s:io.kubernetes.pod.namespace: n8n-system
-        - matchLabels:
-            k8s:app.kubernetes.io/name: authentik-outpost-proxy
-            k8s:io.kubernetes.pod.namespace: firefly-iii
-        - matchLabels:
-            k8s:app.kubernetes.io/name: authentik-outpost-proxy
-            k8s:io.kubernetes.pod.namespace: agent-worker-system
-        - matchLabels:
-            k8s:app.kubernetes.io/name: authentik-outpost-proxy
-            k8s:io.kubernetes.pod.namespace: flux-system
-        - matchLabels:
-            k8s:app.kubernetes.io/name: authentik-outpost-proxy
-            k8s:io.kubernetes.pod.namespace: kube-system
-      toPorts:
-        - ports:
-            - port: "9000"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to Kubernetes API for outpost deployment
 # Required for standalone outpost deployment to other namespaces
 apiVersion: cilium.io/v2
