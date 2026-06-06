@@ -61,10 +61,16 @@ api:
   persistence:
     modelCache:
       enabled: false
-  # Cold-start: BAAI/bge-small-en-v1.5 loads via sentence_transformers and takes
-  # >60s on first pod start (no persistent modelCache). Give 300s before liveness
-  # fires — readiness still gates traffic with its own shorter window.
+  # Cold-start: BAAI/bge-small-en-v1.5 + cross-encoder/ms-marco-MiniLM-L-6-v2
+  # load via sentence_transformers and take >60s on first pod start (no persistent
+  # modelCache). Both probes pushed out to 300s initial delay.
   livenessProbe:
+    httpGet: {path: /health, port: 8888}
+    initialDelaySeconds: 300
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
     httpGet: {path: /health, port: 8888}
     initialDelaySeconds: 300
     periodSeconds: 10
@@ -99,8 +105,14 @@ worker:
   persistence:
     modelCache:
       enabled: false
-  # Same cold-start constraint as api — 300s liveness delay for model load.
+  # Same cold-start constraint as api — both probes pushed to 300s.
   livenessProbe:
+    httpGet: {path: /health, port: 8889}
+    initialDelaySeconds: 300
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
     httpGet: {path: /health, port: 8889}
     initialDelaySeconds: 300
     periodSeconds: 10
