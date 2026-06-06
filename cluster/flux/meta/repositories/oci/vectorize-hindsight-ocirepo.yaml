@@ -11,4 +11,4 @@ spec:
     digest: sha256:ba87de9ac8b70e1315ad6bcf46496f93d40fc5dbf228b31d89e4b5fec09da46d
   url: oci://ghcr.io/vectorize-io/charts/hindsight
   secretRef:
-    name: ghcr-docker-config
+    name: global-registry-secret

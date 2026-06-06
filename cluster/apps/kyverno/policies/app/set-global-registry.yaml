@@ -1,0 +1,71 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: sync-global-registry-secret
+  annotations:
+    policies.kyverno.io/title: Sync image pull secret
+    policies.kyverno.io/category: Registry
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Namespace
+    policies.kyverno.io/description: >-
+      Automatically injects a kubernetes.io/dockerconfigjson secret into
+      namespaces with ghcr.io and docker.io read only credentials
+spec:
+  generateExisting: true
+  rules:
+    - name: generate-global-registry-secret
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - flux-system
+      generate:
+        apiVersion: v1
+        kind: Secret
+        name: global-registry-secret
+        namespace: "{{request.object.metadata.name}}"
+        synchronize: true
+        clone:
+          namespace: flux-system
+          name: global-registry-secret
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/kyverno.io/clusterpolicy_v1.json
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-global-registry-secret
+spec:
+  rules:
+    - name: inject-global-registry-secret-conditional
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      # Preconditions prevent this policy from touching other registries
+      preconditions:
+        any:
+          # 1. Match explicit GHCR images
+          - key: "ghcr.io/*"
+            operator: Glob
+            value: "{{ request.object.spec.containers[*].image }}"
+          # 2. Match explicit Docker Hub images
+          - key: "docker.io/*"
+            operator: Glob
+            value: "{{ request.object.spec.containers[*].image }}"
+          # 3. Match short-name Docker Hub images (images without a slash dot, like 'nginx')
+          - key: "*/*.*"
+            operator: NotGlob
+            value: "{{ request.object.spec.containers[*].image }}"
+      mutate:
+        patchStrategicMerge:
+          spec:
+            imagePullSecrets:
+              - name: global-registry-secret

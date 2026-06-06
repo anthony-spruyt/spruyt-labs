@@ -6,5 +6,6 @@ resources:
   - ./cluster-settings.yaml
   - ./cluster-secrets.sops.yaml
   - ./cluster-network-policies.yaml
+  - ./global-registry-secret.sops.yaml
   - ./priority-classes.yaml
   - ./repositories

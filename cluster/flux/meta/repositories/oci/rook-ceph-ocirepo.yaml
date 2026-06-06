@@ -11,4 +11,4 @@ spec:
     digest: sha256:235eb344ff99a3349277bb8bda8d945f5de72dc8309c6f93996cd14cf9233d80
   url: oci://ghcr.io/rook/rook-ceph
   secretRef:
-    name: ghcr-docker-config
+    name: global-registry-secret
