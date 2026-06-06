@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ./authentik-outpost-resources.yaml
   - ./cleanup-agent-pods.yaml
-  - ./default-limitrange.yaml
   - ./helmrelease-defaults.yaml
   - ./inject-claude-agent-config.yaml
   - ./pss-restricted-defaults.yaml
