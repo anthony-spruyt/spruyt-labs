@@ -53,17 +53,17 @@ spec:
       preconditions:
         any:
           # 1. Match explicit GHCR images
-          - key: "ghcr.io/*"
-            operator: Glob
-            value: "{{ request.object.spec.containers[*].image }}"
+          - key: "{{ request.object.spec.containers[?contains(image, 'ghcr.io')][].image | length(@) }}"
+            operator: GreaterThan
+            value: "0"
           # 2. Match explicit Docker Hub images
-          - key: "docker.io/*"
-            operator: Glob
-            value: "{{ request.object.spec.containers[*].image }}"
-          # 3. Match short-name Docker Hub images (images without a slash dot, like 'nginx')
-          - key: "*/*.*"
-            operator: NotGlob
-            value: "{{ request.object.spec.containers[*].image }}"
+          - key: "{{ request.object.spec.containers[?contains(image, 'docker.io')][].image | length(@) }}"
+            operator: GreaterThan
+            value: "0"
+          # 3. Match short-name Docker Hub images (no registry prefix, e.g. 'nginx')
+          - key: "{{ request.object.spec.containers[?!contains(image, '.')][].image | length(@) }}"
+            operator: GreaterThan
+            value: "0"
       mutate:
         patchStrategicMerge:
           spec:
