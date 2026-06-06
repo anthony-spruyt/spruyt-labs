@@ -10,6 +10,24 @@ admissionController:
   crdWatcher: true
   priorityClassName: critical-infrastructure
   replicas: 1
+  rbac:
+    clusterRole:
+      extraResources:
+        - apiGroups:
+            - ""
+          resources:
+            - secrets
+          verbs:
+            - list
+            - watch
+        - apiGroups:
+            - ""
+          resources:
+            - secrets
+          resourceNames:
+            - global-registry-secret
+          verbs:
+            - get
   container:
     resources:
       requests:
