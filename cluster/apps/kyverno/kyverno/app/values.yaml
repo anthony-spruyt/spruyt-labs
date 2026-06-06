@@ -24,6 +24,27 @@ admissionController:
 backgroundController:
   priorityClassName: critical-infrastructure
   replicas: 1
+  rbac:
+    clusterRole:
+      extraResources:
+        - apiGroups:
+            - ""
+          resources:
+            - secrets
+          verbs:
+            - list
+            - watch
+            - create
+        - apiGroups:
+            - ""
+          resources:
+            - secrets
+          resourceNames:
+            - global-registry-secret
+          verbs:
+            - get
+            - update
+            - delete
   resources:
     requests:
       cpu: 50m
