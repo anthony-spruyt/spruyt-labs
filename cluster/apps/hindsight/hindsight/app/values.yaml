@@ -62,7 +62,7 @@ api:
     modelCache:
       enabled: false
   resources:
-    requests: {cpu: 250m, memory: 1Gi}
+    requests: {cpu: 100m, memory: 1500Mi}
     limits: {cpu: 2000m, memory: 4Gi}
   # PDB disabled while api runs a single replica (minAvailable=1 on 1 replica
   # blocks all voluntary node drains). Re-enable when scaling back to 2.
@@ -91,7 +91,7 @@ worker:
     modelCache:
       enabled: false
   resources:
-    requests: {cpu: 250m, memory: 1Gi}
+    requests: {cpu: 500m, memory: 2Gi}
     limits: {cpu: 2000m, memory: 4Gi}
   # PDB disabled: single replica. minAvailable=1 on a 1-replica workload blocks
   # all voluntary node drains. Re-enable with replicaCount>1.
