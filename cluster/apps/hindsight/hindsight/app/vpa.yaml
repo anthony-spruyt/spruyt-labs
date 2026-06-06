@@ -16,7 +16,7 @@ spec:
       - containerName: api
         controlledValues: "RequestsOnly"
         minAllowed: {cpu: 1m, memory: 1Mi}
-        maxAllowed: {cpu: 2000m, memory: 4Gi}
+        maxAllowed: {cpu: 2000m, memory: 2Gi}
 ---
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
@@ -34,7 +34,7 @@ spec:
       - containerName: worker
         controlledValues: "RequestsOnly"
         minAllowed: {cpu: 1m, memory: 1Mi}
-        maxAllowed: {cpu: 2000m, memory: 4Gi}
+        maxAllowed: {cpu: 2000m, memory: 2Gi}
 ---
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler

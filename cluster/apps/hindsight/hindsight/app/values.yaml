@@ -55,30 +55,17 @@ api:
   env:
     HINDSIGHT_API_LLM_BASE_URL: "http://litellm.litellm.svc.cluster.local:4000"
     HINDSIGHT_API_LLM_MODEL: "hindsight-model"
-  # modelCache disabled: LLM is remote (litellm), no confirmed local embedding
-  # model need. A single RWO PVC cannot back a 2-replica Deployment anyway.
-  # Re-enable (and reconsider replica count) if pod logs show model downloads.
+    HINDSIGHT_API_EMBEDDINGS_PROVIDER: "litellm"
+    HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000"
+    HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embeddings"
+  # modelCache not needed: embeddings offloaded to litellm, reranker is local
+  # but small (85MB cross-encoder/ms-marco-MiniLM-L-6-v2, fits in default probe window).
   persistence:
     modelCache:
       enabled: false
-  # Cold-start: BAAI/bge-small-en-v1.5 + cross-encoder/ms-marco-MiniLM-L-6-v2
-  # load via sentence_transformers and take >60s on first pod start (no persistent
-  # modelCache). Both probes pushed out to 300s initial delay.
-  livenessProbe:
-    httpGet: {path: /health, port: 8888}
-    initialDelaySeconds: 300
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
-  readinessProbe:
-    httpGet: {path: /health, port: 8888}
-    initialDelaySeconds: 300
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
   resources:
-    requests: {cpu: 100m, memory: 1500Mi}
-    limits: {cpu: 2000m, memory: 4Gi}
+    requests: {cpu: 100m, memory: 512Mi}
+    limits: {cpu: 2000m, memory: 2Gi}
   # PDB disabled while api runs a single replica (minAvailable=1 on 1 replica
   # blocks all voluntary node drains). Re-enable when scaling back to 2.
   podDisruptionBudget:
@@ -102,25 +89,15 @@ worker:
     # explicitly in its template; the worker StatefulSet does not, so set it
     # here too.
     HINDSIGHT_API_PORT: "8888"
+    HINDSIGHT_API_EMBEDDINGS_PROVIDER: "litellm"
+    HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000"
+    HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embeddings"
   persistence:
     modelCache:
       enabled: false
-  # Same cold-start constraint as api — both probes pushed to 300s.
-  livenessProbe:
-    httpGet: {path: /health, port: 8889}
-    initialDelaySeconds: 300
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
-  readinessProbe:
-    httpGet: {path: /health, port: 8889}
-    initialDelaySeconds: 300
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
   resources:
-    requests: {cpu: 500m, memory: 2Gi}
-    limits: {cpu: 2000m, memory: 4Gi}
+    requests: {cpu: 250m, memory: 512Mi}
+    limits: {cpu: 2000m, memory: 2Gi}
   # PDB disabled: single replica. minAvailable=1 on a 1-replica workload blocks
   # all voluntary node drains. Re-enable with replicaCount>1.
   podDisruptionBudget:
