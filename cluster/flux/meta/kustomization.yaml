@@ -7,5 +7,7 @@ resources:
   - ./cluster-secrets.sops.yaml
   - ./cluster-network-policies.yaml
   - ./global-registry-secret.sops.yaml
+  - ./image-pull-secrets.sops.yaml
+  - ./image-pull-secrets-rbac.yaml
   - ./priority-classes.yaml
   - ./repositories
