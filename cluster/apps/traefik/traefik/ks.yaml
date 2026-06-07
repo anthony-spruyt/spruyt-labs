@@ -33,6 +33,7 @@ spec:
     - name: firemerge
     - name: foundryvtt
     - name: headlamp
+    - name: hindsight
     - name: litellm
     - name: n8n
     - name: n8n-mcp-server

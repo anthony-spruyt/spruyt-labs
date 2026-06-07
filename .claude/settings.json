@@ -4,19 +4,21 @@
   "cleanupPeriodDays": 20,
   "env": {
     "ANTHROPIC_API_KEY": "",
-    "ENABLE_TOOL_SEARCH": "true",
     "API_TIMEOUT_MS": "30000000",
+    "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
     "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
-    "CLAUDE_CODE_MAX_RETRIES": "100",
-    "CLAUDE_CODE_SYNC_PLUGIN_INSTALL": "1",
-    "CLAUDE_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS": "120000",
-    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+    "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
     "CLAUDE_CODE_ENABLE_AWAY_SUMMARY": "0",
     "CLAUDE_CODE_ENABLE_BACKGROUND_PLUGIN_REFRESH": "0",
-    "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
-    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
+    "CLAUDE_CODE_MAX_RETRIES": "100",
+    "CLAUDE_CODE_SYNC_PLUGIN_INSTALL": "1",
+    "CLAUDE_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS": "120000",
+    "ENABLE_TOOL_SEARCH": "true",
+    "ANTHROPIC_CUSTOM_HEADERS": "x-hindsight-bank: spruyt-labs"
   },
   "attribution": {
     "commit": "",
@@ -90,7 +92,6 @@
     "best-practices@aspruyt-plugins": true,
     "superpowers@claude-plugins-official": false,
     "caveman@caveman": true,
-    "agentmemory@agentmemory": false,
     "context7@claude-plugins-official": false,
     "claude-code-setup@claude-plugins-official": false,
     "claude-md-management@claude-plugins-official": false,
@@ -101,13 +102,6 @@
     "security-guidance@claude-plugins-official": false
   },
   "extraKnownMarketplaces": {
-    "agentmemory": {
-      "source": {
-        "source": "github",
-        "repo": "rohitg00/agentmemory"
-      },
-      "autoUpdate": true
-    },
     "aspruyt-plugins": {
       "source": {
         "source": "github",

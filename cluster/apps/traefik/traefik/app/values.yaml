@@ -69,11 +69,6 @@ experimental:
       type: localPath
       volumeName: traefik-api-key-auth-plugin
 env:
-  - name: AGENTMEMORY_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: traefik-api-keys
-        key: AGENTMEMORY_API_KEY
   - name: OTEL_API_KEY
     valueFrom:
       secretKeyRef:

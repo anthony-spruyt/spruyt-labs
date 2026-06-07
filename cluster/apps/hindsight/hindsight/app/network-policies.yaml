@@ -1,0 +1,414 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# =============================================================================
+# Hindsight namespace network policies
+# =============================================================================
+# Flows below were captured live with Hubble before lock-down; every rule maps
+# to an observed connection. DNS egress is handled cluster-wide by the
+# CiliumClusterwideNetworkPolicy allow-kube-dns-egress (empty endpointSelector).
+# Kubelet liveness/readiness probes (host -> local pod) are allowed implicitly
+# by Cilium and need no explicit rule (same as the litellm namespace).
+#
+# Component map (app.kubernetes.io/component on instance=hindsight,name=hindsight):
+#   api           :8888  <- litellm, control-plane, worker      -> cnpg:5432, litellm:4000, world:443 (HF safety net)
+#   worker        :8889  <- (host probes only)                  -> cnpg:5432, litellm:4000, world:443 (HF safety net)
+#   control-plane :3000  <- traefik                             -> api:8888
+#   outpost       :9000  <- traefik     :9300 <- vmagent        -> world:443 (authentik)
+#   cnpg-cluster  :5432  <- api, worker  :9187 <- vmagent  + operator/barman/internal
+# =============================================================================
+# api: recall/retain HTTP endpoint. Ingress from litellm proxy (memory
+# callback), the control-plane dataplane API, and the worker.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-api-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: hindsight
+      app.kubernetes.io/name: hindsight
+      app.kubernetes.io/component: api
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: litellm
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app.kubernetes.io/instance: hindsight
+            k8s:app.kubernetes.io/name: hindsight
+            k8s:app.kubernetes.io/component: control-plane
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app.kubernetes.io/instance: hindsight
+            k8s:app.kubernetes.io/name: hindsight
+            k8s:app.kubernetes.io/component: worker
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# api egress: CNPG (vector store / metadata) + litellm (LLM brain).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: hindsight
+      app.kubernetes.io/name: hindsight
+      app.kubernetes.io/component: api
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:cnpg.io/cluster: hindsight-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: litellm
+      toPorts:
+        - ports:
+            - port: "4000"
+              protocol: TCP
+    # HuggingFace model downloads (world:443). The reranker is baked into the
+    # image and the app runs with HF_HUB_OFFLINE=1, so this is NOT needed for
+    # the current config — it is a safety net so a future non-baked model (new
+    # reranker, cache miss) can pull from huggingface.co/cdn-lfs instead of
+    # hanging on a dropped connection. Remove HF_HUB_OFFLINE in values.yaml to
+    # actually use it.
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# worker egress: CNPG (job queue) + litellm (LLM extraction during retain).
+# Ingress is host probes only (implicit), so no ingress rule is declared.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-worker-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: hindsight
+      app.kubernetes.io/name: hindsight
+      app.kubernetes.io/component: worker
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:cnpg.io/cluster: hindsight-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: litellm
+      toPorts:
+        - ports:
+            - port: "4000"
+              protocol: TCP
+    # HuggingFace model downloads (world:443). Safety net only — reranker is
+    # baked and HF_HUB_OFFLINE=1 is set. See the api egress note above.
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# control-plane admin UI: ingress from Traefik (LAN IngressRoute), egress to
+# the dataplane api only (HINDSIGHT_CP_DATAPLANE_API_URL points to hindsight-api:8888).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-control-plane
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: hindsight
+      app.kubernetes.io/name: hindsight
+      app.kubernetes.io/component: control-plane
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app.kubernetes.io/instance: hindsight
+            k8s:app.kubernetes.io/name: hindsight
+            k8s:app.kubernetes.io/component: api
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# =============================================================================
+# Authentik Outpost Policies (deployed by Authentik to this namespace)
+# =============================================================================
+# DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
+# Allow Traefik to reach authentik outpost for forward auth
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow outpost egress to authentik server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-authentik-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:app.kubernetes.io/name: authentik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow world HTTPS for OAuth/OIDC flows and certificate validation
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-world-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  egress:
+    # Outpost needs HTTPS for OAuth/OIDC flows and certificate validation
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow metrics scraping from vmagent
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9300"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# =============================================================================
+# CNPG PostgreSQL cluster (hindsight-cnpg-cluster) — mirrors the litellm CNPG
+# policy set, which is proven in production.
+# =============================================================================
+# Allow ingress from the hindsight api and worker for database connections.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-cnpg-app-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: hindsight-cnpg-cluster
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app.kubernetes.io/instance: hindsight
+            k8s:app.kubernetes.io/name: hindsight
+            k8s:app.kubernetes.io/component: api
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app.kubernetes.io/instance: hindsight
+            k8s:app.kubernetes.io/name: hindsight
+            k8s:app.kubernetes.io/component: worker
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Internal cluster communication for replication and instance status.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-cnpg-internal-cluster
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: hindsight-cnpg-cluster
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:cnpg.io/cluster: hindsight-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:cnpg.io/cluster: hindsight-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# S3 backup uploads via the Barman cloud plugin (egress to world:443).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-cnpg-world-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: hindsight-cnpg-cluster
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Metrics scraping from vmagent (CNPG exporter on 9187).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-cnpg-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: hindsight-cnpg-cluster
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9187"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# CNPG operator access for cluster management (cnpg-system -> instance :8000).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-cnpg-operator-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: hindsight-cnpg-cluster
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+            k8s:app.kubernetes.io/name: cloudnative-pg
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# kube-api egress for cluster coordination (instance -> kube-apiserver :6443).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-cnpg-kube-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: hindsight-cnpg-cluster
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Egress to the Barman cloud plugin for backup operations (cnpg-system :9090).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-cnpg-barman-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: hindsight-cnpg-cluster
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+            k8s:app.kubernetes.io/name: plugin-barman-cloud
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP

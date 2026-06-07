@@ -227,10 +227,6 @@ spec:
                     value: /etc/git-config/gitconfig
                   - name: MCP_TIMEOUT
                     value: "30000"
-                  - name: AGENTMEMORY_URL
-                    value: "http://agentmemory.agentmemory.svc.cluster.local:3111"
-                  - name: AGENTMEMORY_SECRET
-                    value: "unused-cluster-internal"
                   - name: SAFE_CHAIN_LOGGING
                     value: "silent"
                   - name: CLAUDE_CODE_ENABLE_TELEMETRY
@@ -382,6 +378,9 @@ spec:
               - name: workspace
                 emptyDir:
                   sizeLimit: 1Gi
+              - name: precommit-cache
+                emptyDir:
+                  sizeLimit: 512Mi
             initContainers:
               - name: git-clone
                 image: "{{ request.object.spec.containers[0].image }}"
@@ -403,6 +402,8 @@ spec:
                     cd /workspace/repo
                     echo "[git-clone] installing pre-commit hooks..."
                     pre-commit install
+                    echo "[git-clone] warming pre-commit hook envs into shared cache..."
+                    pre-commit install-hooks
                     echo "[git-clone] done"
                 env:
                   - name: CLONE_URL
@@ -415,6 +416,14 @@ spec:
                     value: "1"
                   - name: GIT_CONFIG_GLOBAL
                     value: /etc/git-config/gitconfig
+                  - name: PRE_COMMIT_HOME
+                    value: /home/node/.cache/pre-commit
+                  - name: NPM_CONFIG_REGISTRY
+                    value: http://nexus.nexus-system.svc.cluster.local:8081/repository/npm-proxy/
+                  - name: PIP_INDEX_URL
+                    value: http://nexus.nexus-system.svc.cluster.local:8081/repository/pypi-proxy/simple
+                  - name: PIP_TRUSTED_HOST
+                    value: nexus.nexus-system.svc.cluster.local:8081
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
@@ -424,6 +433,8 @@ spec:
                   - name: github-gitconfig
                     mountPath: /etc/git-config
                     readOnly: true
+                  - name: precommit-cache
+                    mountPath: /home/node/.cache/pre-commit
                 securityContext:
                   allowPrivilegeEscalation: false
                   readOnlyRootFilesystem: false
@@ -472,9 +483,20 @@ spec:
                     memory: 256Mi
             containers:
               - (name): "?*"
+                env:
+                  - name: PRE_COMMIT_HOME
+                    value: /home/node/.cache/pre-commit
+                  - name: NPM_CONFIG_REGISTRY
+                    value: http://nexus.nexus-system.svc.cluster.local:8081/repository/npm-proxy/
+                  - name: PIP_INDEX_URL
+                    value: http://nexus.nexus-system.svc.cluster.local:8081/repository/pypi-proxy/simple
+                  - name: PIP_TRUSTED_HOST
+                    value: nexus.nexus-system.svc.cluster.local:8081
                 volumeMounts:
                   - name: workspace
                     mountPath: /workspace
+                  - name: precommit-cache
+                    mountPath: /home/node/.cache/pre-commit
     - name: inject-repo-clone-read
       match:
         any:

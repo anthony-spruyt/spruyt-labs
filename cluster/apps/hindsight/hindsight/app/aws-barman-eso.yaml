@@ -1,0 +1,28 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# Syncs AWS credentials from cnpg-system into a DEDICATED secret consumed ONLY
+# by the CNPG barman ObjectStore. These must NOT land in `hindsight-secrets`:
+# the hindsight chart envFrom's that secret into every app pod, which would
+# leak the AWS creds as environment variables to the api / worker /
+# control-plane containers.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: aws-credentials
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: SecretStore
+    name: aws-secret-store
+  target:
+    name: hindsight-cnpg-aws-secrets
+    creationPolicy: Owner
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: aws-secrets
+        property: AWS_ACCESS_KEY_ID
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: aws-secrets
+        property: AWS_SECRET_ACCESS_KEY

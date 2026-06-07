@@ -46,7 +46,7 @@ configMapGenerator:
       - blueprints/firemerge-sso.yaml
       - blueprints/bull-board-sso.yaml
       - blueprints/technitium-sso.yaml
-      - blueprints/agentmemory-sso.yaml
       - blueprints/litellm-sso.yaml
+      - blueprints/hindsight-sso.yaml
 configurations:
   - ./kustomizeconfig.yaml

@@ -75,9 +75,9 @@ controllers:
         resources:
           requests:
             cpu: 220m
-            memory: 384Mi
+            memory: 600Mi
           limits:
-            memory: 1Gi
+            memory: 2Gi
         # Probes: TCP socket on DNS port 53 for health checking
         probes:
           readiness:

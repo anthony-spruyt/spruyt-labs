@@ -74,25 +74,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-agentmemory-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      managed-by: n8n-claude-code
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: agentmemory
-            k8s:app.kubernetes.io/name: agentmemory
-      toPorts:
-        - ports:
-            - {port: "3111", protocol: TCP}
-            - {port: "3112", protocol: TCP}
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to n8n webhook for agent-platform MCP
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -133,4 +114,24 @@ spec:
       toPorts:
         - ports:
             - port: "4000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to Nexus for pre-commit npm/pypi proxy pulls (issue #1880)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-nexus-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      managed-by: n8n-claude-code
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: nexus-system
+            k8s:app.kubernetes.io/name: nexus
+      toPorts:
+        - ports:
+            - port: "8081"
               protocol: TCP

@@ -1,0 +1,55 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: hindsight-api
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hindsight-api
+  updatePolicy:
+    updateMode: "Initial"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: api
+        controlledValues: "RequestsOnly"
+        minAllowed: {cpu: 1m, memory: 1Mi}
+        maxAllowed: {cpu: 2000m, memory: 2Gi}
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: hindsight-worker
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: hindsight-worker
+  updatePolicy:
+    updateMode: "Initial"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: worker
+        controlledValues: "RequestsOnly"
+        minAllowed: {cpu: 1m, memory: 1Mi}
+        maxAllowed: {cpu: 2000m, memory: 2Gi}
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: hindsight-controlplane
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hindsight-control-plane
+  updatePolicy:
+    updateMode: "Initial"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: control-plane
+        controlledValues: "RequestsOnly"
+        minAllowed: {cpu: 1m, memory: 1Mi}
+        maxAllowed: {cpu: 1000m, memory: 2Gi}

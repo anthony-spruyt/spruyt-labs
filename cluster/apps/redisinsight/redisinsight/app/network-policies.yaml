@@ -168,7 +168,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow redisinsight app egress to valkey for viewing data
+# Allow redisinsight app egress to agent valkey for viewing data
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -185,6 +185,30 @@ spec:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: agent-worker-system
             k8s:app.kubernetes.io/instance: agent-valkey
+            k8s:app.kubernetes.io/name: valkey
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow redisinsight app egress to litellm valkey for viewing data
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-redisinsight-litellm-valkey-egress
+  namespace: redisinsight
+spec:
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: redisinsight
+      k8s:app.kubernetes.io/instance: redisinsight
+      k8s:app.kubernetes.io/name: redisinsight
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/instance: litellm-valkey
             k8s:app.kubernetes.io/name: valkey
       toPorts:
         - ports:

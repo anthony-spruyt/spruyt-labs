@@ -20,9 +20,11 @@ Two paths to a working dev environment — both produce identical toolchains.
 
 ```text
 ~/.secrets/
-├── .env              # Environment variables (GH_TOKEN, CONTEXT7_API_KEY, etc.)
+├── .env.common       # Common environment variables (GH_TOKEN, etc.)
+├── .env.spruyt-labs  # Project specific environment variables (KUBECONFIG, etc.)
 ├── .terraform.d/     # Terraform credentials and plugin cache
 ├── age.key           # SOPS Age private key
+├── flux-gitops-key   # For bootstrapping a new cluster
 ├── kubeconfig        # Kubernetes cluster config
 └── talosconfig       # Talos cluster config
 
@@ -33,25 +35,42 @@ Create the required structure:
 
 ```bash
 mkdir -p ~/.secrets/.terraform.d ~/.claude
-touch ~/.secrets/.env
+touch ~/.secrets/.env.common
+touch ~/.secrets/.env.spruyt-labs
 chmod 700 ~/.secrets
-chmod 600 ~/.secrets/.env
+chmod 600 ~/.secrets/.env.common
+chmod 600 ~/.secrets/.env.spruyt-labs
 ```
 
-The `.env` file must contain:
+The `.env.common` file must contain:
 
 ```bash
-GH_TOKEN=<github-token>
-CONTEXT7_API_KEY=<context7-key>
-SOPS_AGE_KEY_FILE=/home/vscode/.secrets/age.key
+ANTHROPIC_AUTH_TOKEN=<value>
+ANTHROPIC_BASE_URL=https://litellm.<external-domain>
+CLAUDE_CODE_ATTRIBUTION_HEADER=0
+CLAUDE_CODE_ENABLE_TELEMETRY=1
+CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1
+ENABLE_TOOL_SEARCH=true
+EXTERNAL_DOMAIN=<external-domain>
+GH_TOKEN=<value>
+NEXUS_DOCKER_URL=https://nexus-docker.lan.<external-domain>
+SAFE_CHAIN_LOGGING=silent
+SSH_AUTH_SOCK=/ssh-agent
+```
+
+The `.env.spruyt-labs` file must contain:
+
+```bash
+ANTHROPIC_AUTH_TOKEN=<value>  # Overrides the value from .env.common
 KUBECONFIG=/home/vscode/.secrets/kubeconfig
+SOPS_AGE_KEY_FILE=/home/vscode/.secrets/age.key
 TALOSCONFIG=/home/vscode/.secrets/talosconfig
-EXTERNAL_DOMAIN=<cluster-external-domain>
 ```
 
 #### OpenTelemetry (optional)
 
-To ship dev container telemetry to the cluster via the `otel.lan.<domain>` OTLP ingress, add these to `.env`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env` does not. The API key comes from the `traefik-api-keys` secret. Substitute the real domain and key inline — `.env` does not expand `${VAR}` references.
+To ship dev container telemetry to the cluster via the `otel.lan.<domain>` OTLP ingress, add these to `.env.common`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env.common` does not. The API key comes from the `traefik-api-keys` secret. Substitute the real domain and key inline — `.env.common` does not expand
+`${VAR}` references.
 
 ```bash
 CLAUDE_CODE_ENABLE_TELEMETRY=1
@@ -137,11 +156,11 @@ The Coder template uses [envbuilder](https://github.com/coder/envbuilder) to bui
 
 ### Persistent Storage
 
-| Mount                  | Storage Class             | Purpose                                 |
-| ---------------------- | ------------------------- | --------------------------------------- |
-| `/workspaces`          | `rbd-fast-delete`         | Repository checkout, build artifacts    |
-| `/home/vscode`         | `rbd-fast-delete`         | User config, Claude memory, tool caches |
-| `/dev/containers-disk` | `rbd-fast-delete` (block) | Podman container storage (ext4)         |
+| Mount                  | Purpose                                 |
+| ---------------------- | --------------------------------------- |
+| `/workspaces`          | Repository checkout, build artifacts    |
+| `/home/vscode`         | User config, Claude memory, tool caches |
+| `/dev/containers-disk` | Podman container storage (ext4)         |
 
 Volumes persist across workspace stop/start. Deleting the workspace deletes volumes.
 

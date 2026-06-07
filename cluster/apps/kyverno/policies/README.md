@@ -10,36 +10,6 @@ Custom Kyverno policies for the spruyt-labs homelab. These policies automate res
 
 ## Policies
 
-### add-default-limitrange
-
-Automatically generates a LimitRange in application namespaces to provide default resource requests for containers that don't specify them. This ensures all pods have at least Burstable QoS class.
-
-**Behavior:**
-
-- Triggers on namespace creation
-- Creates a LimitRange with default CPU/memory requests
-- Synchronized: updates/deletes when policy changes
-- Applies to existing namespaces via `generateExisting: true`
-
-**Default Requests Applied:**
-
-| Resource | Default Request |
-| -------- | --------------- |
-| CPU      | 10m             |
-| Memory   | 64Mi            |
-
-**Excluded Namespaces:**
-
-Infrastructure and critical namespaces are excluded to avoid conflicts with their resource configurations:
-
-- Kubernetes system: kube-system, kube-public, kube-node-lease
-- GitOps/Policy: flux-system, kyverno
-- Core infrastructure: cert-manager, cilium-secrets, cloudflare-system, external-dns, external-secrets, kubelet-csr-approver, reloader, spegel, traefik, velero
-- Storage: csi-addons-system, rook-ceph
-- Database operators: cnpg-system
-- Observability: observability
-- System utilities: chrony, irq-balance
-
 ### add-helmrelease-defaults
 
 Injects default timeout, install, upgrade, and rollback configuration into HelmReleases that don't already specify them. Uses Kyverno `+(anchor)` syntax so individual HelmReleases can override any field by setting it explicitly.

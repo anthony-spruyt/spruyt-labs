@@ -1,0 +1,16 @@
+[project]
+name = "litellm-hindsight-plugin"
+version = "0.1.0"
+description = "LiteLLM proxy callback bridging Claude Code exchanges to Hindsight long-term memory"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

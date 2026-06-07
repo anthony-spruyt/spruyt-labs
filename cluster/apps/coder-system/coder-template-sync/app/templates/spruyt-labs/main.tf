@@ -100,8 +100,6 @@ locals {
     "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT" : "http://victoria-logs-single-server.observability.svc:9428/insert/opentelemetry/v1/logs",
     "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" : "http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces",
     "OTEL_RESOURCE_ATTRIBUTES" : "agent.namespace=coder-workspaces,workspace.name=${data.coder_workspace.me.name},workspace.owner=${data.coder_workspace_owner.me.name}",
-    "AGENTMEMORY_URL" : "http://agentmemory.agentmemory.svc.cluster.local:3111",
-    "AGENTMEMORY_SECRET" : "unused-cluster-internal",
     "SAFE_CHAIN_LOGGING" : "silent"
   }
 }
@@ -284,10 +282,10 @@ resource "kubernetes_persistent_volume_claim_v1" "home" {
 resource "coder_agent" "main" {
   arch = data.coder_provisioner.me.arch
   os   = "linux"
-  dir  = local.workspace_folder
 
   startup_script = <<-EOT
     set -e
+    cd "${local.workspace_folder}"
 
     # Rootful podman runtime dir (required by podman inside Kata VM).
     sudo mkdir -p /run/user/1000
@@ -582,10 +580,17 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
-      # All keys in coder-workspace-env are injected as environment variables
+      # All keys in coder-workspace-env-common are injected as environment variables
       env_from {
         secret_ref {
-          name = "coder-workspace-env"
+          name = "coder-workspace-env-common"
+        }
+      }
+
+      # All keys in coder-workspace-env-spruyt-labs are injected as environment variables
+      env_from {
+        secret_ref {
+          name = "coder-workspace-env-spruyt-labs"
         }
       }
 

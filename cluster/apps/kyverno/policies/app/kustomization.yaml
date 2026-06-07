@@ -4,11 +4,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./authentik-outpost-resources.yaml
-  - ./default-limitrange.yaml
+  - ./cleanup-agent-pods.yaml
   - ./helmrelease-defaults.yaml
   - ./inject-claude-agent-config.yaml
   - ./pss-restricted-defaults.yaml
-  - ./topology-spread-policy.yaml
   - ./set-agent-deadline.yaml
+  - ./remove-image-pull-secrets.yaml
+  - ./topology-spread-policy.yaml
   - ./validate-agent-deadline.yaml
-  - ./cleanup-agent-pods.yaml

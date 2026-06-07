@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: hindsight
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: vectorize-hindsight-ocirepo
+    namespace: flux-system
+  interval: 4h
+  # The hindsight-api image is ~1.42 GB (bundled ML deps). A cold first pull
+  # can far exceed the default 5m. Allow a long window and retry rather than
+  # thrash. `wait: true` blocks until pods are ready within this timeout.
+  timeout: 30m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  valuesFrom:
+    - kind: ConfigMap
+      name: hindsight-values

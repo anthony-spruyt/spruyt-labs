@@ -34,8 +34,8 @@ controllers:
           N8N_DISPATCH_WEBHOOK: http://n8n-webhook.n8n-system.svc/webhook/agent-dispatch
           GITHUB_OWNER: anthony-spruyt
           SRE_BATCH_MAX_SIZE: "50"
-          SRE_BATCH_WINDOW_MS: "60000"
-          SRE_COOLDOWN_MS: "300000"
+          SRE_BATCH_WINDOW_MS: "300000"
+          SRE_COOLDOWN_MS: "900000"
           SRE_TRIAGE_SUPPRESS_S: "21600"
           VALKEY_USER: "agentqueueworker"
           VALKEY_PASSWORD:

@@ -44,6 +44,16 @@ spec:
             k8s:app.kubernetes.io/name: nexus-provisioner
       toPorts:
         - ports: [{port: "8081", protocol: TCP}]
+    # claude-agent write pods — pre-commit npm/pypi pulls (issue #1880)
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-spruyt-labs-write
+            k8s:managed-by: n8n-claude-code
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: claude-agents-write
+            k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports: [{port: "8081", protocol: TCP}]
   egress:
     - toEntities: ["world"]
       toPorts:

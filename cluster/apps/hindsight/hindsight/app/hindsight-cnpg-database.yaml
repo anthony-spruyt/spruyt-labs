@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/database_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: hindsight-cnpg-database
+spec:
+  name: hindsight
+  owner: hindsight
+  cluster:
+    name: hindsight-cnpg-cluster
+  extensions:
+    - name: vector
+      version: "0.8.2"

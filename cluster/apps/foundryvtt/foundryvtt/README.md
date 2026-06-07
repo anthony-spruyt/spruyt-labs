@@ -7,7 +7,7 @@ Foundry Virtual Tabletop (Foundry VTT) is a modern, self-hosted virtual tabletop
 ## Prerequisites
 
 - `foundryvtt-secrets` containing Foundry VTT license key
-- Ceph RBD storage class `rbd-fast-delete` with 10Gi PVC
+- Ceph RBD storage class with 10Gi PVC
 
 ## Access
 

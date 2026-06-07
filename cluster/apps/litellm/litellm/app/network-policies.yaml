@@ -60,27 +60,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-agentmemory-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: litellm
-      app.kubernetes.io/name: litellm
-      app.kubernetes.io/controller: litellm
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: agentmemory
-            k8s:app.kubernetes.io/name: agentmemory
-      toPorts:
-        - ports:
-            - port: "4000"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress from Coder workspaces
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -96,6 +75,27 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: coder-workspaces
+      toPorts:
+        - ports:
+            - port: "4000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from hindsight pods (api/worker call litellm for LLM completions)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
       toPorts:
         - ports:
             - port: "4000"
@@ -261,48 +261,17 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM proxy to LLM Guard adapter
+# Allow egress from LiteLLM proxy to LLM Guard
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-litellm-llm-guard-adapter-egress
+  name: allow-litellm-llm-guard-egress
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/instance: litellm
       app.kubernetes.io/name: litellm
       app.kubernetes.io/controller: litellm
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: litellm
-            k8s:app.kubernetes.io/controller: llm-guard-adapter
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to LLM Guard adapter from LiteLLM proxy, egress only to llm-guard
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: llm-guard-adapter-policy
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: litellm
-      app.kubernetes.io/name: litellm
-      app.kubernetes.io/controller: llm-guard-adapter
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: litellm
-            k8s:app.kubernetes.io/controller: litellm
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:
@@ -314,7 +283,10 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to LLM Guard from adapter only, deny all egress (models baked into image)
+# Allow ingress to LLM Guard from LiteLLM proxy.
+# Egress to world:443 is required to pull the rogue-security model from
+# HuggingFace at runtime (gated; not baked into the image). DNS egress is
+# handled by the CiliumClusterwideNetworkPolicy allow-kube-dns-egress.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -329,12 +301,18 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: litellm
-            k8s:app.kubernetes.io/controller: llm-guard-adapter
+            k8s:app.kubernetes.io/controller: litellm
       toPorts:
         - ports:
             - port: "8000"
               protocol: TCP
-  egress: []
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress to Presidio analyzer from LiteLLM proxy, deny all egress
@@ -600,4 +578,47 @@ spec:
       toPorts:
         - ports:
             - port: "3000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress from LiteLLM proxy to Hindsight API (proxy-side memory callback:
+# pre-call recall + post-success retain).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-litellm-hindsight-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app.kubernetes.io/component: api
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-litellm-valkey-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: valkey
+      toPorts:
+        - ports:
+            - port: "6379"
               protocol: TCP

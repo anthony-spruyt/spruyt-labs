@@ -32,7 +32,6 @@ jobs:
       shutdown-orchestrator: "${{ steps.filter.outputs.shutdown-orchestrator }}"
       kata-tap-qdisc-fix: "${{ steps.filter.outputs.kata-tap-qdisc-fix }}"
       mcp-header-proxy: "${{ steps.filter.outputs.mcp-header-proxy }}"
-      llm-guard-adapter: "${{ steps.filter.outputs.llm-guard-adapter }}"
       agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
       bull-board: "${{ steps.filter.outputs.bull-board }}"
       claude-agents: "${{ steps.filter.outputs.claude-agents }}"
@@ -42,7 +41,7 @@ jobs:
         with:
           egress-policy: audit
       - name: "Checkout"
-        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        uses: "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" # v6
         with:
           fetch-depth: 0
       - name: "Find last successful CI commit"
@@ -76,8 +75,6 @@ jobs:
               - 'cmd/kata-tap-qdisc-fix/**'
             mcp-header-proxy:
               - 'cmd/mcp-header-proxy/**'
-            llm-guard-adapter:
-              - 'cmd/llm-guard-adapter/**'
             agent-queue-worker:
               - 'ts/agent-queue-worker/**'
             bull-board:
@@ -142,19 +139,6 @@ jobs:
       language: "go"
       push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
-  llm-guard-adapter:
-    needs:
-      - "lint"
-      - "changes"
-    if: "needs.changes.outputs.llm-guard-adapter == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
-    with:
-      image: "llm-guard-adapter"
-      workdir: "cmd/llm-guard-adapter"
-      tag-prefix: "llm-guard-adapter/v"
-      language: "go"
-      push: "${{ github.event_name == 'push' }}"
-    secrets: "inherit"
   agent-queue-worker:
     needs:
       - "lint"
@@ -190,7 +174,6 @@ jobs:
       - "shutdown-orchestrator"
       - "kata-tap-qdisc-fix"
       - "mcp-header-proxy"
-      - "llm-guard-adapter"
       - "agent-queue-worker"
       - "bull-board"
       - "bats-test"

@@ -9,7 +9,6 @@ tools:
   - Glob
   - WebFetch
   - WebSearch
-  - mcp__litellm__bravesearch-brave_web_search
   - mcp__litellm__context7-resolve-library-id
   - mcp__litellm__context7-query-docs
   - mcp__litellm__victoriametrics-active_queries

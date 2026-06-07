@@ -14,14 +14,26 @@ defaultPodOptions:
 controllers:
   litellm:
     type: deployment
-    replicas: 1
+    replicas: 2
+    strategy: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    pod:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/controller: litellm
+              topologyKey: kubernetes.io/hostname
     annotations:
       reloader.stakater.com/auto: "true"
     containers:
       litellm:
         image:
           repository: ghcr.io/berriai/litellm-non_root
-          tag: v1.86.2@sha256:511b513bc68956793433d62c1812daff56984325543f6a15431c622823fd90cb
+          tag: v1.88.0-rc.1@sha256:94488768b3e1ebe210f1b154ac38fcf9a8e680952d0bf45431868507636ac3ae
           pullPolicy: IfNotPresent
         args:
           - "--config"
@@ -35,22 +47,6 @@ controllers:
               secretKeyRef:
                 name: litellm-cnpg-cluster-app
                 key: uri
-          # LiteLLM core secrets
-          LITELLM_MASTER_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: LITELLM_MASTER_KEY
-          LITELLM_SALT_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: LITELLM_SALT_KEY
-          OPENAI_API_KEY:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: OPENAI_API_KEY
           # Authentik SSO (OIDC) — credentials from ExternalSecret
           GENERIC_CLIENT_ID:
             valueFrom:
@@ -79,6 +75,19 @@ controllers:
           STORE_MODEL_IN_DB: "True"
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
+          REDIS_HOST: litellm-valkey.litellm.svc
+          REDIS_PORT: "6379"
+          REDIS_USERNAME: litellm
+          REDIS_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-valkey-secrets
+                key: litellm
+          # Resolve the custom_callbacks.hindsight.* import for the proxy callback
+          PYTHONPATH: "/app:/app/custom_callbacks"
+        envFrom:
+          - secretRef:
+              name: litellm-secrets
         probes:
           liveness:
             enabled: true
@@ -258,15 +267,18 @@ controllers:
       llm-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-guard
-          tag: "0.3.1@sha256:0e131ad0ef7488fbd50b7e494d99a67097df9f12dee35689744e6cb492fd91ce"
+          tag: "1.0.9@sha256:6d18ed06e2cec22cb3a4c81fbc24a2ad6f76028f9db2cb16eaced419e91d5cce"
           pullPolicy: IfNotPresent
         env:
-          LOG_LEVEL: INFO
-          LOG_JSON: "true"
-          APP_PORT: "8000"
-          SCAN_FAIL_FAST: "true"
-          SCAN_PROMPT_TIMEOUT: "30"
-          LAZY_LOAD: "false"
+          LISTEN_PORT: "8000"
+          # Multi-scanner pipeline loaded from the mounted ConfigMap.
+          # Per-scanner thresholds live in scanners.yml, not the THRESHOLD env.
+          CONFIG_FILE: "/config/scanners.yml"
+          HF_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: HF_TOKEN
         probes:
           startup:
             enabled: true
@@ -277,7 +289,9 @@ controllers:
                 port: 8000
               periodSeconds: 10
               timeoutSeconds: 5
-              failureThreshold: 12    # 120s window — model loads in ~24s from baked image
+              # 300s window — rogue-security model is pulled from HF over egress
+              # on first boot (not baked), then loaded; baked model was ~24s.
+              failureThreshold: 30
           liveness:
             enabled: true
             custom: true
@@ -301,68 +315,12 @@ controllers:
         resources:
           requests:
             cpu: 100m
-            memory: 1536Mi
+            memory: 1Gi
           limits:
-            memory: 3072Mi
+            memory: 2Gi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
-          capabilities:
-            drop:
-              - ALL
-
-  llm-guard-adapter:
-    type: deployment
-    replicas: 1
-    pod:
-      securityContext:
-        runAsUser: 65534
-        runAsGroup: 65534
-        fsGroup: 65534
-        fsGroupChangePolicy: "OnRootMismatch"
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
-    containers:
-      llm-guard-adapter:
-        image:
-          repository: ghcr.io/anthony-spruyt/llm-guard-adapter
-          tag: "0.0.4@sha256:13719459e5774a71077b0b52e2024d61c9307941b6f15b978d2da8fd7375523f"
-          pullPolicy: IfNotPresent
-        env:
-          LISTEN_ADDR: ":8080"
-          LLM_GUARD_URL: "http://litellm-llm-guard.litellm.svc.cluster.local:8000"
-          INJECTION_THRESHOLD: "0.5"
-        probes:
-          liveness:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /healthz
-                port: 8080
-              periodSeconds: 15
-              failureThreshold: 3
-              timeoutSeconds: 5
-          readiness:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /healthz
-                port: 8080
-              periodSeconds: 10
-              failureThreshold: 3
-              timeoutSeconds: 5
-        resources:
-          requests:
-            cpu: 5m
-            memory: 16Mi
-          limits:
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL
@@ -392,12 +350,7 @@ service:
       http:
         port: 8000
         protocol: TCP
-  llm-guard-adapter:
-    controller: llm-guard-adapter
-    ports:
-      http:
-        port: 8080
-        protocol: TCP
+
 configMaps:
   presidio-recognizers:
     data:
@@ -440,18 +393,13 @@ configMaps:
   llm-guard-scanners:
     data:
       scanners.yml: |
-        app:
-          log_level: INFO
-          log_json: true
-          scan_fail_fast: true
-          scan_prompt_timeout: 30
-          scan_output_timeout: 30
-          lazy_load: false
         input_scanners:
           - type: PromptInjection
             params:
+              model: rogue-security/prompt-injection-jailbreak-sentinel-v2
+              injection_label: jailbreak
               threshold: 0.97
-              match_type: sentence
+              match_type: full
               model_max_length: 512
           - type: Regex
             params:
@@ -461,24 +409,17 @@ configMaps:
               redact: true
           - type: InvisibleText
             params: {}
-        output_scanners: []
   litellm-config:
     data:
       config.yaml: |
-        # model_list managed via LiteLLM API/UI — source of truth is CNPG DB
-        litellm_settings:
-          drop_params: true
-          callbacks:
-            - otel
-            - prometheus
         guardrails:
-          - guardrail_name: "pii-protection"
+          - guardrail_name: pii-protection
             litellm_params:
               guardrail: presidio
-              mode: "pre_call"
-              default_on: true
+              mode: pre_call
+              default_on: false
               skip_system_message_in_guardrail: true
-              presidio_filter_scope: "input"
+              presidio_filter_scope: input
               presidio_score_thresholds:
                 ALL: 0.7
                 PERSON: 0.85
@@ -487,23 +428,47 @@ configMaps:
                 AU_ABN: 0.4
                 AU_ACN: 0.4
               pii_entities_config:
-                CREDIT_CARD: "MASK"
-                AU_TFN: "BLOCK"
-                AU_MEDICARE: "MASK"
-                AU_ABN: "MASK"
-                AU_ACN: "MASK"
-                IBAN_CODE: "MASK"
-          - guardrail_name: "prompt-injection"
+                CREDIT_CARD: MASK
+                AU_TFN: BLOCK
+                AU_MEDICARE: MASK
+                AU_ABN: MASK
+                AU_ACN: MASK
+                IBAN_CODE: MASK
+          - guardrail_name: prompt-injection
             litellm_params:
               guardrail: generic_guardrail_api
-              mode: "pre_call"
+              mode: pre_call
               default_on: false
               skip_system_message_in_guardrail: true
-              api_base: "http://litellm-llm-guard-adapter.litellm.svc.cluster.local:8080"
+              api_base: http://litellm-llm-guard.litellm.svc.cluster.local:8000
+        litellm_settings:
+          drop_params: true
+          callbacks:
+            - otel
+            - prometheus
+            - websearch_interception
+            - custom_callbacks.hindsight.hindsight_plugin.hindsight_middleware
+          websearch_interception_params:
+            enabled_providers:
+              - anthropic
+              - hosted_vllm
+              - openai
+            search_tool_name: brave-search
         router_settings:
-          allowed_fails: 3
-          cooldown_time: 300
-        mcp_servers: []
+          redis_host: litellm-valkey.litellm.svc
+          redis_port: "6379"
+          redis_username: litellm
+          redis_password: os.environ/REDIS_PASSWORD
+        search_tools:
+          - search_tool_name: brave-search
+            litellm_params:
+              search_provider: brave
+              api_key: os.environ/BRAVE_API_KEY
+          - search_tool_name: firecrawl-search
+            litellm_params:
+              search_provider: firecrawl
+              api_key: os.environ/FIRECRAWL_API_KEY
+
 persistence:
   tmp:
     type: emptyDir
@@ -545,12 +510,25 @@ persistence:
     advancedMounts:
       llm-guard:
         llm-guard:
-          - path: /home/user/app/config/scanners.yml
+          - path: /config/scanners.yml
             subPath: scanners.yml
             readOnly: true
-  llm-guard-cache:
-    type: emptyDir
+  # Hindsight proxy-side memory callback. ConfigMap keys are flat (no '/'),
+  # so the custom_callbacks/hindsight/ package tree is recreated via subPath
+  # mounts. The /app entry on PYTHONPATH resolves the dotted import
+  # custom_callbacks.hindsight.hindsight_plugin.
+  hindsight-plugin:
+    type: configMap
+    name: litellm-hindsight-plugin
     advancedMounts:
-      llm-guard:
-        llm-guard:
-          - path: /home/user/.cache
+      litellm:
+        litellm:
+          - path: /app/custom_callbacks/__init__.py
+            subPath: __init__.py
+            readOnly: true
+          - path: /app/custom_callbacks/hindsight/__init__.py
+            subPath: __init__.py
+            readOnly: true
+          - path: /app/custom_callbacks/hindsight/hindsight_plugin.py
+            subPath: hindsight_plugin.py
+            readOnly: true

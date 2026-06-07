@@ -13,4 +13,4 @@ spec:
   verify:
     provider: cosign
   secretRef:
-    name: ghcr-docker-config
+    name: image-pull-secrets

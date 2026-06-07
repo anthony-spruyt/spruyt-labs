@@ -41,5 +41,3 @@ ssh:*
 
 # Truncated URLs from ${VARIABLE} substitution (e.g., https://app/)
 https?://[a-z0-9-]+/$
-
-http://agentmemory:3111/agentmemory/evict

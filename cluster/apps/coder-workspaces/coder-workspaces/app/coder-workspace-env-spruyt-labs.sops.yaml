@@ -1,0 +1,23 @@
+# yamllint disable
+apiVersion: v1
+kind: Secret
+metadata:
+    name: coder-workspace-env-spruyt-labs
+    namespace: coder-workspaces
+stringData:
+    ANTHROPIC_AUTH_TOKEN: ENC[AES256_GCM,data:gT6xGl5LmWkUAT6KHHrF6zeUfccLobNI9w==,iv:GrxQchtlOAkFUKv1Xhp2kY8wlfywOYDc1lOLSxKNfmQ=,tag:B400Phi8aiz01SeMH+pthQ==,type:str]
+sops:
+    age:
+        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBsdUxPWElWdEQ0L3NSOGd1
+            cnFZeDhRNHp5cFpNTm1QQVh0VG9wWHRDT1dRCno2NWJFQVh5TWlwOWRtWnpaUVhr
+            UkpSbzNKL3ZlVzRqaFJGUTBNQ29IYVUKLS0tIDVFUzdpRW1XeVp1aDhuTGNKSStY
+            MEJYZ3lQUlkrVDBhNzFBUmYycUY0UFEK0kB5TQYOnfcRDVTPXxXuUFHWQ2VoT8wC
+            ye4jtiEHj8nlwFlkfTJgyXYw0M5zRn/wyTVIo4dXLznNHg2PhzHApA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-30T03:27:57Z"
+    mac: ENC[AES256_GCM,data:NF+H/oTrrY7HuEK+7ig0bhWPHu2hOcGUonjVqRr5Xd4TV5oWQsQcR7WmtyDoA3bWO6ZRawYvJesjUlq4iwKpt8UD2DDCSKmbe/s04/q+CRlqYSwJ753JJ+atM9ho30PFy9oOMscoog9RTqNnBUug7LIu/OV+Wq8GvILOkVt7ZB8=,iv:MkDhTCT3gss5hJ7jGP2GnNBPTvzxvkUsLPtnJs/aGrc=,tag:7ZLJLKjoOh92lNMlD7/9NA==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

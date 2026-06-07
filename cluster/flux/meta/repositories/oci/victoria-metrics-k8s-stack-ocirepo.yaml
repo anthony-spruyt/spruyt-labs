@@ -11,4 +11,4 @@ spec:
     digest: sha256:89b6c5cf4ba34af7ab6888d804dd6429c8be983a37453ae626dab4e57e964c3c
   url: oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack
   secretRef:
-    name: ghcr-docker-config
+    name: image-pull-secrets

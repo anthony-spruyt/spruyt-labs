@@ -4,6 +4,5 @@ images:
   - "agent-queue-worker"
   - "bull-board"
   - "kata-tap-qdisc-fix"
-  - "llm-guard-adapter"
   - "mcp-header-proxy"
   - "shutdown-orchestrator"
