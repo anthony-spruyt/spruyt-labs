@@ -18,5 +18,5 @@ spec:
     - name: plugin-barman-cloud
     - name: litellm-valkey
   prune: true
-  timeout: 5m
+  timeout: 15m
   wait: true
