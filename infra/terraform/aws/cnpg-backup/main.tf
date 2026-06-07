@@ -17,6 +17,34 @@ resource "aws_s3_bucket" "cnpg" {
   tags          = local.common_tags
 }
 
+resource "aws_s3_bucket_policy" "https-policy" {
+  bucket = "aws_s3_bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "HttpsPolicy"
+    Statement = [
+      {
+        Sid    = "HTTPSOnly"
+        Effect = "Deny"
+        Principal = {
+          "AWS" : "*"
+        }
+        Action = "s3:*"
+        Resource = [
+          aws_s3_bucket.cnpg.arn,
+          "${aws_s3_bucket.cnpg.arn}/*",
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      },
+    ]
+  })
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "cnpg" {
   bucket = aws_s3_bucket.cnpg.id
 
