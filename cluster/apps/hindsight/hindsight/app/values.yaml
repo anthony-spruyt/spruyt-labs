@@ -112,10 +112,10 @@ worker:
   resources:
     requests:
       cpu: 250m
-      memory: 512Mi
+      memory: 1.1Gi
     limits:
       cpu: 3000m
-      memory: 2Gi
+      memory: 2.5Gi
   # PDB disabled: single replica. minAvailable=1 on a 1-replica workload blocks
   # all voluntary node drains. Re-enable with replicaCount>1.
   podDisruptionBudget:
