@@ -430,7 +430,7 @@ configMaps:
                 AU_ACN: 0.4
               pii_entities_config:
                 CREDIT_CARD: MASK
-                AU_TFN: BLOCK
+                AU_TFN: MASK
                 AU_MEDICARE: MASK
                 AU_ABN: MASK
                 AU_ACN: MASK
