@@ -65,13 +65,11 @@ controllers:
           PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
           GENERIC_SCOPE: "openid profile email litellm_role"
           GENERIC_USER_ROLE_ATTRIBUTE: litellm_role
-          # OTEL — LiteLLM uses its own OTEL_EXPORTER/OTEL_ENDPOINT for traces callback
+          LITELLM_OTEL_V2: "true"
           OTEL_EXPORTER: otlp_http
           OTEL_ENDPOINT: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
-          # Standard SDK vars for metrics export
-          OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
-          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
-          OTEL_RESOURCE_ATTRIBUTES: "service.name=litellm,service.namespace=litellm"
+          OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "span_and_event"
+          LITELLM_OTEL_INTEGRATION_ENABLE_METRICS: "true"
           STORE_MODEL_IN_DB: "True"
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
