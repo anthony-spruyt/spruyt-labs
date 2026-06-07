@@ -181,7 +181,7 @@ server:
       - ReadWriteOnce
     # -- Persistent volume annotations
     # -- StorageClass to use for persistent volume. Requires server.persistentVolume.enabled: true. If defined, PVC created automatically
-    storageClassName: "rbd-fast-delete-v2"
+    storageClassName: "rbd-fast-delete"
     #
     #       # -- Existing Claim name. If defined, PVC must be created manually before volume will be bound
     #       existingClaim: ""

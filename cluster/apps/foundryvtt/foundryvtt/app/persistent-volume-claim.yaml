@@ -10,7 +10,7 @@ metadata:
   # finalizers:
   #   - kubernetes.io/pvc-protection
 spec:
-  storageClassName: rbd-fast-delete-v2
+  storageClassName: rbd-fast-delete
   accessModes:
     - ReadWriteOnce
   resources:

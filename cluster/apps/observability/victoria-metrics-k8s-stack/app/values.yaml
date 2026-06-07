@@ -71,7 +71,7 @@ vmsingle:
     replicaCount: 1
     # PVC managed by operator — operator doesn't support external PVC (reserves volume name + mount path)
     storage:
-      storageClassName: "rbd-fast-delete-v2"
+      storageClassName: "rbd-fast-delete"
       accessModes:
         - ReadWriteOnce
       resources:

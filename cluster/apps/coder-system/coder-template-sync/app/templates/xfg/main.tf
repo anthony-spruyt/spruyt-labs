@@ -201,7 +201,7 @@ resource "kubernetes_persistent_volume_claim_v1" "workspaces" {
   wait_until_bound = false
   spec {
     access_modes       = ["ReadWriteOnce"]
-    storage_class_name = "rbd-fast-delete-v2"
+    storage_class_name = "rbd-fast-delete"
     resources {
       requests = {
         storage = "${data.coder_parameter.workspaces_volume_size.value}Gi"
@@ -231,7 +231,7 @@ resource "kubernetes_persistent_volume_claim_v1" "containers" {
   wait_until_bound = false
   spec {
     access_modes       = ["ReadWriteOnce"]
-    storage_class_name = "rbd-fast-delete-v2"
+    storage_class_name = "rbd-fast-delete"
     volume_mode        = "Block"
     resources {
       requests = {
@@ -262,7 +262,7 @@ resource "kubernetes_persistent_volume_claim_v1" "home" {
   wait_until_bound = false
   spec {
     access_modes       = ["ReadWriteOnce"]
-    storage_class_name = "rbd-fast-delete-v2"
+    storage_class_name = "rbd-fast-delete"
     resources {
       requests = {
         storage = "${data.coder_parameter.home_volume_size.value}Gi"
