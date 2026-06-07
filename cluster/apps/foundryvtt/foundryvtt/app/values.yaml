@@ -20,40 +20,6 @@ controllers:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
-    # initContainers:
-    #   permissions:
-    #     image:
-    #       repository: busybox
-    #       tag: "1.38.0@sha256:fd8d9aa63ba2f0982b5304e1ee8d3b90a210bc1ffb5314d980eb6962f1a9715d"
-    #       pullPolicy: IfNotPresent
-    #     command:
-    #       - sh
-    #       - -c
-    #       - |
-    #         # Change ownership of data directory, skipping lost+found
-    #         # lost+found is a system directory that cannot be modified
-    #         find /data -mindepth 1 -maxdepth 1 ! -name 'lost+found' -exec chown -R 1000:1000 {} \; || true
-    #         # Try to change lost+found ownership, but don't fail if it fails
-    #         if [ -d /data/lost+found ]; then
-    #           chown 1000:1000 /data/lost+found 2>/dev/null || true
-    #         fi
-    #     securityContext:
-    #       allowPrivilegeEscalation: false
-    #       capabilities:
-    #         drop:
-    #           - ALL
-    #         add:
-    #           - CHOWN
-    #       runAsUser: 0
-    #       runAsGroup: 0
-    #       runAsNonRoot: false
-    #     resources:
-    #       requests:
-    #         cpu: 10m
-    #         memory: 16Mi
-    #       limits:
-    #         cpu: 10m
-    #         memory: 16Mi
     containers:
       app:
         image:

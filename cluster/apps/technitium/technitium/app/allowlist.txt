@@ -1,1 +1,2 @@
+@@||foundryvtt.store^
 @@||spruyt.xyz^
