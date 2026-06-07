@@ -57,7 +57,7 @@ controllers:
     containers:
       app:
         image:
-          repository: felddy/foundryvtt
+          repository: ghcr.io/felddy/foundryvtt
           tag: "14.363.0@sha256:6e357ceec7fed43e7b910e336ad1e4f5a4f5d50e94d2d1d07cbc188cfd5b4ab4"
           pullPolicy: IfNotPresent
         env:
@@ -79,6 +79,8 @@ controllers:
           FOUNDRY_IP_DISCOVERY: "false"
           FOUNDRY_LANGUAGE: "en.core"
           # FOUNDRY_LOCAL_HOSTNAME:
+          FOUNDRY_LOG_SIZE: "64m"
+          FOUNDRY_MAX_LOGS: "5"
           FOUNDRY_MINIFY_STATIC_FILES: "true"
           FOUNDRY_PROTOCOL: "4"
           FOUNDRY_PROXY_PORT: "443"
@@ -87,6 +89,7 @@ controllers:
           # FOUNDRY_SSL_CERT:
           # FOUNDRY_SSL_KEY:
           FOUNDRY_TELEMETRY: "true"
+          FOUNDRY_TEMP_DIR: "/tmp/foundry"
           FOUNDRY_UPNP: "false"
           # FOUNDRY_UPNP_LEASE_DURATION:
           # FOUNDRY_VERSION:
@@ -144,6 +147,12 @@ persistence:
     existingClaim: "foundryvtt-data"
     globalMounts:
       - path: /data
+  tmp:
+    type: emptyDir
+    advancedMounts:
+      foundryvtt:
+        app:
+          - path: /tmp/foundry
 serviceAccount:
   foundryvtt:
     enabled: true
