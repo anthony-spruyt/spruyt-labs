@@ -7,8 +7,8 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "0.0.9"
-    digest: sha256:78f90a84e64b09cdfbf4f92c0271e2333ae423789348fbe2bc47819fe0c364a1
+    tag: "0.1.7"
+    digest: sha256:cea061cfef72a8815ff4a0d6df0bfe0e5f2d2f57f24d803702a80cc48e306866
   url: oci://ghcr.io/victoriametrics/helm-charts/victoria-traces-single
   secretRef:
     name: image-pull-secrets
