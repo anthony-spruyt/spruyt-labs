@@ -191,31 +191,7 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
       requests:
         cpu: 25m
         memory: 32Mi
-cephBlockPools:
-  - name: ceph-blockpool
-    spec:
-      failureDomain: host
-      replicated:
-        size: 3
-    storageClass:
-      enabled: false
-      name: ceph-block
-      isDefault: false
-      reclaimPolicy: Delete
-      allowVolumeExpansion: true
-      volumeBindingMode: "Immediate"
-      parameters:
-        imageFormat: "2"
-        imageFeatures: layering
-        csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
-        csi.storage.k8s.io/provisioner-secret-namespace: "{{ .Release.Namespace }}"
-        csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
-        csi.storage.k8s.io/controller-expand-secret-namespace: "{{ .Release.Namespace }}"
-        csi.storage.k8s.io/controller-publish-secret-name: rook-csi-rbd-provisioner
-        csi.storage.k8s.io/controller-publish-secret-namespace: "{{ .Release.Namespace }}"
-        csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
-        csi.storage.k8s.io/node-stage-secret-namespace: "{{ .Release.Namespace }}"
-        csi.storage.k8s.io/fstype: ext4
+cephBlockPools: []
 cephFileSystems: []
 cephObjectStores: []
 # -- A list of CephFileSystem configurations to deploy
