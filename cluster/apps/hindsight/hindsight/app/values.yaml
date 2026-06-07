@@ -42,7 +42,8 @@ securityContext:
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
   capabilities:
-    drop: [ALL]
+    drop:
+      - ALL
 
 api:
   # Warm-up: 1 replica so only ONE node cold-pulls the ~1.42 GB api image.
@@ -73,8 +74,12 @@ api:
     modelCache:
       enabled: false
   resources:
-    requests: {cpu: 100m, memory: 512Mi}
-    limits: {cpu: 2000m, memory: 2Gi}
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
   # PDB disabled while api runs a single replica (minAvailable=1 on 1 replica
   # blocks all voluntary node drains). Re-enable when scaling back to 2.
   podDisruptionBudget:
@@ -128,13 +133,19 @@ controlPlane:
     repository: ghcr.io/vectorize-io/hindsight-control-plane
     pullPolicy: IfNotPresent
   resources:
-    requests: {cpu: 100m, memory: 256Mi}
-    limits: {cpu: 1000m, memory: 2Gi}
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
   # PDB disabled: single replica (see worker note).
   podDisruptionBudget:
     enabled: false
 
 # No TEI sidecars in v1
 tei:
-  reranker: {enabled: false}
-  embedding: {enabled: false}
+  reranker:
+    enabled: false
+  embedding:
+    enabled: false
