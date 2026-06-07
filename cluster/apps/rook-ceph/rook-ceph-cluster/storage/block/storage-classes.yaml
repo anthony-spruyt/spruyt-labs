@@ -1,6 +1,209 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass rbd-fast
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd-fast-v2
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "8 19 * * *"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  pool: rbd-fast
+  imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten,discard
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+  csi.storage.k8s.io/fstype: ext4
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+mountOptions:
+  - discard
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd-fast-delete-v2
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "16 19 * * *"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  pool: rbd-fast
+  imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten,discard
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+  csi.storage.k8s.io/fstype: ext4
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+mountOptions:
+  - discard
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd-fast-ec-v2
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "24 19 * * *"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  dataPool: rbd-fast-ec
+  pool: rbd-fast-ec-metadata
+  imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten,discard
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+  csi.storage.k8s.io/fstype: ext4
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+mountOptions:
+  - discard
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd-fast-ec-delete-v2
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "32 19 * * *"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  dataPool: rbd-fast-ec
+  pool: rbd-fast-ec-metadata
+  imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten,discard
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+  csi.storage.k8s.io/fstype: ext4
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+mountOptions:
+  - discard
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd-fast-encrypted-v2
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "40 19 * * *"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  pool: rbd-fast
+  imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten,discard
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: "true"
+  encryptionKMSID: "user-secret-metadata"
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+mountOptions:
+  - discard
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd-fast-encrypted-delete-v2
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "48 19 * * *"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  pool: rbd-fast
+  imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten,discard
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: "true"
+  encryptionKMSID: "user-secret-metadata"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+mountOptions:
+  - discard
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd-fast-ec-encrypted-v2
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "56 19 * * *"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  dataPool: rbd-fast-ec
+  pool: rbd-fast-ec-metadata
+  imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten,discard
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: "true"
+  encryptionKMSID: "user-secret-metadata"
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+mountOptions:
+  - discard
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd-fast-ec-encrypted-delete-v2
+  annotations:
+    reclaimspace.csiaddons.openshift.io/schedule: "4 20 * * *"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  dataPool: rbd-fast-ec
+  pool: rbd-fast-ec-metadata
+  imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten,discard
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: "true"
+  encryptionKMSID: "user-secret-metadata"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+mountOptions:
+  - discard
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -25,13 +228,11 @@ mountOptions:
   - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass rbd-fast-delete
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: rbd-fast-delete
   annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
     reclaimspace.csiaddons.openshift.io/schedule: "16 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
@@ -51,7 +252,6 @@ mountOptions:
   - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass rbd-fast-ec
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -77,7 +277,6 @@ mountOptions:
   - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass rbd-fast-ec
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -103,7 +302,6 @@ mountOptions:
   - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass rbd-fast
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -130,7 +328,6 @@ mountOptions:
   - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass rbd-fast-delete
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -157,7 +354,6 @@ mountOptions:
   - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass rbd-fast-ec
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -185,7 +381,6 @@ mountOptions:
   - discard
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass rbd-fast-ec
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
