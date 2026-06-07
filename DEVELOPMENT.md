@@ -156,11 +156,11 @@ The Coder template uses [envbuilder](https://github.com/coder/envbuilder) to bui
 
 ### Persistent Storage
 
-| Mount                  | Storage Class             | Purpose                                 |
-| ---------------------- | ------------------------- | --------------------------------------- |
-| `/workspaces`          | `rbd-fast-delete`         | Repository checkout, build artifacts    |
-| `/home/vscode`         | `rbd-fast-delete`         | User config, Claude memory, tool caches |
-| `/dev/containers-disk` | `rbd-fast-delete` (block) | Podman container storage (ext4)         |
+| Mount                  | Purpose                                 |
+| ---------------------- | --------------------------------------- |
+| `/workspaces`          | Repository checkout, build artifacts    |
+| `/home/vscode`         | User config, Claude memory, tool caches |
+| `/dev/containers-disk` | Podman container storage (ext4)         |
 
 Volumes persist across workspace stop/start. Deleting the workspace deletes volumes.
 

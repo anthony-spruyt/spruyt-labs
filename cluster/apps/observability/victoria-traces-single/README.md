@@ -6,7 +6,7 @@ VictoriaTraces single-node deployment provides OpenTelemetry trace ingestion and
 
 ## Prerequisites
 
-- Rook Ceph block storage (`rbd-fast-delete` StorageClass) available
+- Rook Ceph block storage available
 - `ghcr-docker-config` secret in `flux-system` for OCI chart pulls
 
 ### OTLP Endpoint

@@ -39,7 +39,7 @@ valkeyConfig: |
   maxmemory-policy noeviction
 dataStorage:
   enabled: true
-  className: rbd-fast-delete
+  className: rbd-fast-delete-v2
   requestedSize: 1Gi
 metrics:
   enabled: true

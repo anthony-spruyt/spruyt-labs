@@ -20,7 +20,7 @@ Coder is a self-hosted development environment platform that provides browser-ba
 | External URL | `https://code.${EXTERNAL_DOMAIN}`      |
 | Auth         | Authentik OIDC                         |
 | Database     | CNPG PostgreSQL (`coder-cnpg-cluster`) |
-| Storage      | Rook Ceph (`rbd-fast-delete`)          |
+| Storage      | Rook Ceph block storage available      |
 | Metrics      | Prometheus endpoint on `0.0.0.0:2112`  |
 | Ingress      | Traefik + Cloudflare Tunnel            |
 

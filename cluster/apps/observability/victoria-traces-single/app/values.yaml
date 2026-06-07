@@ -45,7 +45,7 @@ server:
     enabled: true
     accessModes:
       - ReadWriteOnce
-    storageClassName: "rbd-fast-delete"
+    storageClassName: "rbd-fast-delete-v2"
     # -- Smaller than logs since traces are sampled and retention is short
     size: 20Gi
 
