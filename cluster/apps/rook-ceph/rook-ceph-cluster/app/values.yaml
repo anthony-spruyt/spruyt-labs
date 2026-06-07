@@ -198,7 +198,7 @@ cephBlockPools:
       replicated:
         size: 3
     storageClass:
-      enabled: true
+      enabled: false
       name: ceph-block
       isDefault: false
       reclaimPolicy: Delete
