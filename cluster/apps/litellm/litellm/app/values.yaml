@@ -463,7 +463,6 @@ configMaps:
         router_settings:
           redis_host: litellm-valkey.litellm.svc
           redis_port: "6379"
-          redis_username: litellm
           redis_password: os.environ/REDIS_PASSWORD
         search_tools:
           - search_tool_name: brave-search
