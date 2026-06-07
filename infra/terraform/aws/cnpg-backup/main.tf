@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "cnpg" {
 }
 
 resource "aws_s3_bucket_policy" "https-policy" {
-  bucket = "aws_s3_bucket"
+  bucket = local.bucket_name
 
   policy = jsonencode({
     Version = "2012-10-17"
