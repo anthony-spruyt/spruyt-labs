@@ -110,8 +110,12 @@ worker:
     modelCache:
       enabled: false
   resources:
-    requests: {cpu: 250m, memory: 512Mi}
-    limits: {cpu: 2000m, memory: 2Gi}
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 3000m
+      memory: 2Gi
   # PDB disabled: single replica. minAvailable=1 on a 1-replica workload blocks
   # all voluntary node drains. Re-enable with replicaCount>1.
   podDisruptionBudget:
