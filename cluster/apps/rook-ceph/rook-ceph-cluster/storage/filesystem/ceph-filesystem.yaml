@@ -14,7 +14,7 @@ spec:
       size: 3
       requireSafeReplicaSize: true
   dataPools:
-    - name: fs-fast
+    - name: fast
       failureDomain: host
       deviceClass: nvme
       replicated:
