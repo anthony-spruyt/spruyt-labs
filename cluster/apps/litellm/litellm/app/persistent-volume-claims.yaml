@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chatgpt-auth-data
+  namespace: litellm
+spec:
+  storageClassName: fs-fast
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 8Mi

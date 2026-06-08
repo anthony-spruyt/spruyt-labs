@@ -42,13 +42,18 @@ controllers:
           - "--port"
           - "4000"
         env:
-          # Database — CNPG auto-generated secret
+          AUTO_REDIRECT_UI_LOGIN_TO_SSO: "true"
+          CHATGPT_TOKEN_DIR: "~/.config/litellm/chatgpt"
+          CHATGPT_AUTH_FILE: "auth.json"
+          CHATGPT_API_BASE: "https://chatgpt.com/backend-api/codex"
+          # CHATGPT_USER_AGENT: "codex-cli/0.137.0"
+          # CHATGPT_ORIGINATOR:
           DATABASE_URL:
             valueFrom:
               secretKeyRef:
                 name: litellm-cnpg-cluster-app
                 key: uri
-          # Authentik SSO (OIDC) — credentials from ExternalSecret
+          GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/authorize/"
           GENERIC_CLIENT_ID:
             valueFrom:
               secretKeyRef:
@@ -59,21 +64,20 @@ controllers:
               secretKeyRef:
                 name: litellm-oauth-credentials
                 key: GENERIC_CLIENT_SECRET
-          AUTO_REDIRECT_UI_LOGIN_TO_SSO: "true"
-          GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/authorize/"
-          GENERIC_TOKEN_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/token/"
-          GENERIC_USERINFO_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/"
-          PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
           GENERIC_SCOPE: "openid profile email litellm_role"
+          GENERIC_TOKEN_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/token/"
           GENERIC_USER_ROLE_ATTRIBUTE: litellm_role
+          GENERIC_USERINFO_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/"
+          LITELLM_OTEL_INTEGRATION_ENABLE_METRICS: "true"
           LITELLM_OTEL_V2: "true"
           OTEL_EXPORTER: otlp_http
           OTEL_ENDPOINT: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
           OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "span_and_event"
-          LITELLM_OTEL_INTEGRATION_ENABLE_METRICS: "true"
-          STORE_MODEL_IN_DB: "True"
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
+          PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
+          # Resolve the custom_callbacks.hindsight.* import for the proxy callback
+          PYTHONPATH: "/app:/app/custom_callbacks"
           REDIS_HOST: litellm-valkey.litellm.svc
           REDIS_PORT: "6379"
           REDIS_USERNAME: litellm
@@ -82,8 +86,7 @@ controllers:
               secretKeyRef:
                 name: litellm-valkey-secrets
                 key: litellm
-          # Resolve the custom_callbacks.hindsight.* import for the proxy callback
-          PYTHONPATH: "/app:/app/custom_callbacks"
+          STORE_MODEL_IN_DB: "True"
         envFrom:
           - secretRef:
               name: litellm-secrets
@@ -549,3 +552,10 @@ persistence:
           - path: /app/custom_callbacks/hindsight/hindsight_plugin.py
             subPath: hindsight_plugin.py
             readOnly: true
+  chatgpt-auth-data:
+    type: persistentVolumeClaim
+    existingClaim: chatgpt-auth-data
+    advancedMounts:
+      litellm:
+        litellm:
+          - path: /app/.config/litellm/chatgpt
