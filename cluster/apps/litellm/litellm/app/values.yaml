@@ -412,7 +412,6 @@ configMaps:
     data:
       config.yaml: |
         general_settings:
-          always_include_stream_usage: true
           use_redis_transaction_buffer: true
           user_api_key_cache_ttl: 300
         guardrails:
@@ -466,16 +465,19 @@ configMaps:
               mode: responses
             litellm_params:
               model: chatgpt/gpt-5.5
+              stream: true
           - model_name: chatgpt/gpt-5.4
             model_info:
               mode: responses
             litellm_params:
               model: chatgpt/gpt-5.4
+              stream: true
           - model_name: chatgpt/gpt-5.4-mini
             model_info:
               mode: responses
             litellm_params:
               model: chatgpt/gpt-5.4-mini
+              stream: true
         router_settings:
           redis_host: litellm-valkey.litellm.svc
           redis_port: "6379"
