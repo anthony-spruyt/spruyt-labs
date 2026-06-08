@@ -4,10 +4,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: chatgpt-auth-data
+  name: chatgpt-auth-data-v2
   namespace: litellm
 spec:
-  storageClassName: fs-fast
+  storageClassName: fs-fast-fuse
   accessModes:
     - ReadWriteMany
   resources:

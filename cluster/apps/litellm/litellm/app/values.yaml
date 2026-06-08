@@ -554,7 +554,7 @@ persistence:
             readOnly: true
   chatgpt-auth-data:
     type: persistentVolumeClaim
-    existingClaim: chatgpt-auth-data
+    existingClaim: chatgpt-auth-data-v2
     advancedMounts:
       litellm:
         litellm:

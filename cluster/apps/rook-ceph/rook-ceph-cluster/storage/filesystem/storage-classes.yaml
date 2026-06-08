@@ -1,14 +1,15 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-## StorageClass fs-fast
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: fs-fast
+  name: fs-fast-fuse
 provisioner: rook-ceph.cephfs.csi.ceph.com
 parameters:
   clusterID: rook-ceph
   fsName: fs
+  fuseMountOptions: ms_mode=secure
+  mounter: fuse
   pool: fs-fast
   csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
   csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
@@ -16,31 +17,5 @@ parameters:
   csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
   csi.storage.k8s.io/node-stage-secret-name: rook-csi-cephfs-node
   csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
-  csi.storage.k8s.io/fstype: ext4
 reclaimPolicy: Delete
 allowVolumeExpansion: true
-mountOptions:
-  - discard
-# ---
-# # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master/storageclass-storage-v1.json
-# ## StorageClass fs-fast-ec
-# apiVersion: storage.k8s.io/v1
-# kind: StorageClass
-# metadata:
-#   name: fs-fast-ec
-# provisioner: rook-ceph.cephfs.csi.ceph.com
-# parameters:
-#   clusterID: rook-ceph
-#   fsName: fs
-#   pool: fs-fast-ec
-#   csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
-#   csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
-#   csi.storage.k8s.io/controller-expand-secret-name: rook-csi-cephfs-provisioner
-#   csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
-#   csi.storage.k8s.io/node-stage-secret-name: rook-csi-cephfs-node
-#   csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
-#   csi.storage.k8s.io/fstype: ext4
-# reclaimPolicy: Delete
-# allowVolumeExpansion: true
-# mountOptions:
-#   - discard

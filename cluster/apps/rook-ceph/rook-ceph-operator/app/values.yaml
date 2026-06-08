@@ -21,8 +21,10 @@ csi:
   enableVolumeGroupSnapshot: false
   # -- Set CephFS Kernel mount options to use https://docs.ceph.com/en/latest/man/8/mount.ceph/#options.
   # Set to "ms_mode=secure" when connections.encrypted is enabled in CephCluster CR
-  cephFSKernelMountOptions:
-    - ms_mode=secure
+  cephFSKernelMountOptions: ms_mode=secure
+  # Talos does not ship the CephFS kernel client module. Use ceph-fuse for
+  # CephFS volumes instead of forcing kernel mounts.
+  forceCephFSKernelClient: false
   enableMetadata: true
   csiRBDProvisionerResource:
     - name: csi-provisioner
