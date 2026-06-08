@@ -11,6 +11,7 @@ defaultPodOptions:
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
+
 controllers:
   litellm:
     type: deployment
@@ -121,7 +122,6 @@ controllers:
           capabilities:
             drop:
               - ALL
-
   presidio-analyzer:
     type: deployment
     replicas: 1
@@ -186,7 +186,6 @@ controllers:
           capabilities:
             drop:
               - ALL
-
   presidio-anonymizer:
     type: deployment
     replicas: 1
@@ -248,7 +247,6 @@ controllers:
           capabilities:
             drop:
               - ALL
-
   llm-guard:
     type: deployment
     replicas: 1
@@ -458,6 +456,22 @@ configMaps:
               - hosted_vllm
               - openai
             search_tool_name: brave-search
+        model_list:
+          - model_name: chatgpt/gpt-5.5
+            model_info:
+              mode: responses
+            litellm_params:
+              model: chatgpt/gpt-5.5
+          - model_name: chatgpt/gpt-5.4
+            model_info:
+              mode: responses
+            litellm_params:
+              model: chatgpt/gpt-5.4
+          - model_name: chatgpt/gpt-5.4-mini
+            model_info:
+              mode: responses
+            litellm_params:
+              model: chatgpt/gpt-5.4-mini
         router_settings:
           redis_host: litellm-valkey.litellm.svc
           redis_port: "6379"
