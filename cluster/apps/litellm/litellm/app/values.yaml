@@ -46,7 +46,7 @@ controllers:
           CHATGPT_TOKEN_DIR: "/app/.config/litellm/chatgpt"
           CHATGPT_AUTH_FILE: "auth.json"
           CHATGPT_API_BASE: "https://chatgpt.com/backend-api/codex"
-          # CHATGPT_USER_AGENT: "codex-cli/0.137.0"
+          # CHATGPT_USER_AGENT: "codex-cli/0.137.0 ((node/v24.15.0; linux; x64))"
           # CHATGPT_ORIGINATOR:
           DATABASE_URL:
             valueFrom:
@@ -412,6 +412,7 @@ configMaps:
     data:
       config.yaml: |
         general_settings:
+          always_include_stream_usage: true
           use_redis_transaction_buffer: true
           user_api_key_cache_ttl: 300
         guardrails:
