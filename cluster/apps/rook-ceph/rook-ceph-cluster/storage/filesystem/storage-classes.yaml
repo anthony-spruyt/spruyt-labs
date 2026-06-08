@@ -8,7 +8,6 @@ provisioner: rook-ceph.cephfs.csi.ceph.com
 parameters:
   clusterID: rook-ceph
   fsName: fs
-  fuseMountOptions: ms_mode=secure
   mounter: fuse
   pool: fs-fast
   csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
