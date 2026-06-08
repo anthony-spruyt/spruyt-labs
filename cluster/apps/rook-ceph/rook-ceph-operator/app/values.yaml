@@ -15,7 +15,7 @@ csi:
   # https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-read-affinity-for-rbd-and-cephfs-volumes
   readAffinity:
     enabled: true
-  enableCephfsDriver: false
+  enableCephfsDriver: true
   enableCephfsSnapshotter: false
   enableCSIEncryption: true
   enableVolumeGroupSnapshot: false
