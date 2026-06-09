@@ -126,6 +126,8 @@ controllers:
   presidio-analyzer:
     type: deployment
     replicas: 1
+    annotations:
+      reloader.stakater.com/auto: "true"
     pod:
       securityContext:
         runAsUser: 1001
@@ -190,6 +192,8 @@ controllers:
   presidio-anonymizer:
     type: deployment
     replicas: 1
+    annotations:
+      reloader.stakater.com/auto: "true"
     pod:
       securityContext:
         runAsUser: 1001
@@ -251,6 +255,8 @@ controllers:
   llm-guard:
     type: deployment
     replicas: 1
+    annotations:
+      reloader.stakater.com/auto: "true"
     pod:
       securityContext:
         runAsUser: 1000
