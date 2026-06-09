@@ -452,7 +452,6 @@ configMaps:
             - otel
             - prometheus
             - websearch_interception
-            - custom_callbacks.chatgpt.chatgpt_plugin.chatgpt_middleware
             - custom_callbacks.hindsight.hindsight_plugin.hindsight_middleware
           drop_params: true
           websearch_interception_params:
@@ -553,18 +552,6 @@ persistence:
             readOnly: true
           - path: /app/custom_callbacks/hindsight/hindsight_plugin.py
             subPath: hindsight_plugin.py
-            readOnly: true
-  chatgpt-plugin:
-    type: configMap
-    name: litellm-chatgpt-plugin
-    advancedMounts:
-      litellm:
-        litellm:
-          - path: /app/custom_callbacks/chatgpt/__init__.py
-            subPath: __init__.py
-            readOnly: true
-          - path: /app/custom_callbacks/chatgpt/chatgpt_plugin.py
-            subPath: chatgpt_plugin.py
             readOnly: true
   chatgpt-auth-data:
     type: persistentVolumeClaim

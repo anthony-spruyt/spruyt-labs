@@ -22,18 +22,14 @@ configMapGenerator:
     namespace: litellm
     files:
       - values.yaml
-  - name: litellm-chatgpt-plugin
-    namespace: litellm
-    options:
-      disableNameSuffixHash: true
-    files:
-      - __init__.py=plugins/chatgpt/__init__.py
-      - chatgpt_plugin.py=plugins/chatgpt/chatgpt_plugin.py
   - name: litellm-hindsight-plugin
     namespace: litellm
     options:
       disableNameSuffixHash: true
     files:
+      # ConfigMap keys must be flat (no '/'); nesting is recreated via subPath
+      # mounts in values.yaml. The empty __init__.py is reused for both the
+      # custom_callbacks and hindsight package markers.
       - __init__.py=plugins/hindsight/__init__.py
       - hindsight_plugin.py=plugins/hindsight/hindsight_plugin.py
 configurations:
