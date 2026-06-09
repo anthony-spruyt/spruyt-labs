@@ -41,17 +41,48 @@ def _resolve_alias(config: dict, model: str) -> str | None:
     return None
 
 
-def _resolve_model_list_entry(config: dict, model: str) -> str | None:
+def _get_model_list_entry(config: dict, model: str) -> dict | None:
     model_list = config.get("model_list") or []
     if not isinstance(model_list, list):
         return None
     for entry in model_list:
-        if not isinstance(entry, dict) or entry.get("model_name") != model:
-            continue
-        litellm_params = entry.get("litellm_params") or {}
-        target = litellm_params.get("model")
-        return target if isinstance(target, str) else None
+        if isinstance(entry, dict) and entry.get("model_name") == model:
+            return entry
     return None
+
+
+def _resolve_model_list_entry(config: dict, model: str) -> str | None:
+    entry = _get_model_list_entry(config, model)
+    if not isinstance(entry, dict):
+        return None
+    litellm_params = entry.get("litellm_params") or {}
+    target = litellm_params.get("model")
+    return target if isinstance(target, str) else None
+
+
+def _configured_num_retries(config: dict, model: str) -> int | None:
+    entry = _get_model_list_entry(config, model)
+    if isinstance(entry, dict):
+        litellm_params = entry.get("litellm_params") or {}
+        num_retries = litellm_params.get("num_retries")
+        if isinstance(num_retries, int):
+            return num_retries
+
+    router_settings = config.get("router_settings") or {}
+    if not isinstance(router_settings, dict):
+        return None
+    num_retries = router_settings.get("num_retries")
+    return num_retries if isinstance(num_retries, int) else None
+
+
+def _configured_chatgpt_num_retries(model: Any) -> int | None:
+    if not isinstance(model, str):
+        return None
+    config = _load_config(_config_path())
+    resolved = _resolve_configured_model(model, config)
+    if resolved != "chatgpt/gpt-5.5":
+        return None
+    return _configured_num_retries(config, resolved) or _configured_num_retries(config, model) or 2
 
 
 def _resolve_configured_model(model: str, config: dict) -> str:
@@ -95,6 +126,10 @@ class ChatGPTMiddleware:
         self, user_api_key_dict, cache, data: dict, call_type: str,
     ) -> dict:
         if _is_chatgpt_routed_model(data.get("model")):
+            retry_count = _configured_chatgpt_num_retries(data.get("model"))
+            if retry_count is not None and data.get("num_retries") is None:
+                data["num_retries"] = retry_count
+
             # Anthropic Messages format: top-level "system" field
             system_content = data.get("system")
             if system_content:

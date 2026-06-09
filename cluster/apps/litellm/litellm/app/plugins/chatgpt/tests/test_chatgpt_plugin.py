@@ -65,7 +65,46 @@ async def test_system_roles_are_renamed_for_chatgpt_only(plugin):
     out = await plugin.chatgpt_middleware.async_pre_call_hook(
         None, None, data, "completion")
 
+    assert out["num_retries"] == 2
     assert out["messages"][0]["role"] == "developer"
+
+
+async def test_configured_alias_to_gpt55_gets_retry_count(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps({
+        "router_settings": {"num_retries": 5, "model_group_alias": {"claude-opus-4-7": "chatgpt/gpt-5.5"}},
+        "model_list": [
+            {
+                "model_name": "chatgpt/gpt-5.5",
+                "litellm_params": {"model": "chatgpt/gpt-5.5", "num_retries": 4},
+            },
+        ],
+    }))
+    monkeypatch.setenv("CHATGPT_CONFIG_PATH", str(config_path))
+    sys.modules.pop("chatgpt_plugin", None)
+    plugin = importlib.import_module("chatgpt_plugin")
+    data = {
+        "model": "claude-opus-4-7",
+        "messages": [{"role": "user", "content": "hello"}],
+    }
+
+    out = await plugin.chatgpt_middleware.async_pre_call_hook(
+        None, None, data, "completion")
+
+    assert out["num_retries"] == 4
+
+
+async def test_existing_num_retries_is_preserved(plugin):
+    data = {
+        "model": "chatgpt/gpt-5.5",
+        "num_retries": 9,
+        "messages": [{"role": "user", "content": "hello"}],
+    }
+
+    out = await plugin.chatgpt_middleware.async_pre_call_hook(
+        None, None, data, "completion")
+
+    assert out["num_retries"] == 9
 
 
 async def test_configured_alias_to_chatgpt_is_renamed(monkeypatch, tmp_path):
@@ -122,6 +161,7 @@ async def test_non_chatgpt_models_are_untouched(plugin):
     out = await plugin.chatgpt_middleware.async_pre_call_hook(
         None, None, data, "anthropic_messages")
 
+    assert "num_retries" not in out
     assert out == data
 
 
