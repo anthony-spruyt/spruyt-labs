@@ -4,9 +4,15 @@ version: "3"
 
 vars:
   testDiscordAlertScript: "{{ .ROOT_DIR }}/.taskfiles/test/scripts/test-discord-alert.sh"
+  testLitellmMiddlewareScript: "{{ .ROOT_DIR }}/.taskfiles/test/scripts/test-litellm-middleware.sh"
   stressTestPodTemplate: "{{ .ROOT_DIR }}/.taskfiles/test/resources/stress-test-pod.tmpl.yaml"
 
 tasks:
+  litellm-middleware:
+    desc: "Run LiteLLM custom middleware unit tests"
+    cmds:
+      - bash {{ .testLitellmMiddlewareScript }}
+
   stress:
     desc: "Run CPU stress test on a node (usage: task test:stress node=ms-01-1 [cpus=16] [duration=120])"
     vars:

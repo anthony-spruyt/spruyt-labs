@@ -1,0 +1,121 @@
+import json
+import os
+from functools import lru_cache
+from typing import Any
+
+
+_DEFAULT_CONFIG_PATH = "/app/config.yaml"
+
+
+def _config_path() -> str:
+    return os.getenv("CHATGPT_CONFIG_PATH") or os.getenv(
+        "LITELLM_CONFIG_PATH", _DEFAULT_CONFIG_PATH)
+
+
+@lru_cache(maxsize=4)
+def _load_config(path: str) -> dict:
+    if not path or not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as handle:
+        raw = handle.read()
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        try:
+            import yaml  # type: ignore[import-untyped]
+        except ImportError:
+            return {}
+        parsed = yaml.safe_load(raw)
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _resolve_alias(config: dict, model: str) -> str | None:
+    aliases = (config.get("router_settings") or {}).get("model_group_alias") or {}
+    if not isinstance(aliases, dict) or model not in aliases:
+        return None
+    target = aliases[model]
+    if isinstance(target, str):
+        return target
+    if isinstance(target, dict) and isinstance(target.get("model"), str):
+        return target["model"]
+    return None
+
+
+def _resolve_model_list_entry(config: dict, model: str) -> str | None:
+    model_list = config.get("model_list") or []
+    if not isinstance(model_list, list):
+        return None
+    for entry in model_list:
+        if not isinstance(entry, dict) or entry.get("model_name") != model:
+            continue
+        litellm_params = entry.get("litellm_params") or {}
+        target = litellm_params.get("model")
+        return target if isinstance(target, str) else None
+    return None
+
+
+def _resolve_configured_model(model: str, config: dict) -> str:
+    current = model
+    seen = set()
+    while current not in seen:
+        seen.add(current)
+        target = _resolve_alias(config, current) or _resolve_model_list_entry(
+            config, current)
+        if not target:
+            return current
+        current = target
+    return current
+
+
+def _is_chatgpt_routed_model(model: Any) -> bool:
+    if not isinstance(model, str):
+        return False
+    if model.startswith("chatgpt/"):
+        return True
+    resolved = _resolve_configured_model(model, _load_config(_config_path()))
+    return resolved.startswith("chatgpt/")
+
+
+def _system_to_developer_content(system: Any) -> str:
+    if isinstance(system, str):
+        return system
+    if isinstance(system, list):
+        parts = []
+        for block in system:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and block.get("type") == "text":
+                parts.append(str(block.get("text", "")))
+        return "\n\n".join(part for part in parts if part)
+    return str(system)
+
+
+class ChatGPTMiddleware:
+    async def async_pre_call_hook(
+        self, user_api_key_dict, cache, data: dict, call_type: str,
+    ) -> dict:
+        if _is_chatgpt_routed_model(data.get("model")):
+            # Anthropic Messages format: top-level "system" field
+            system_content = data.get("system")
+            if system_content:
+                messages = data.get("messages")
+                if not isinstance(messages, list):
+                    return data
+                dev_msg = {
+                    "role": "developer",
+                    "content": _system_to_developer_content(system_content),
+                }
+                messages.insert(0, dev_msg)
+                data["messages"] = messages
+                data.pop("system", None)
+            # Chat Completions format: role in messages/input
+            for key in ("messages", "input"):
+                items = data.get(key)
+                if isinstance(items, list):
+                    for msg in items:
+                        if isinstance(msg, dict) and msg.get("role") == "system":
+                            msg["role"] = "developer"
+        return data
+
+# Module-level instance consumed by custom_callbacks.middleware.registry.
+chatgpt_middleware = ChatGPTMiddleware()

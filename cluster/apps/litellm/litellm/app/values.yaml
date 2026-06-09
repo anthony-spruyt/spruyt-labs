@@ -30,6 +30,25 @@ controllers:
               topologyKey: kubernetes.io/hostname
     annotations:
       reloader.stakater.com/auto: "true"
+      configmap.reloader.stakater.com/reload: "litellm-chatgpt-plugin,litellm-hindsight-plugin,litellm-middleware-plugin"
+    initContainers:
+      prepare-custom-callbacks:
+        image:
+          repository: busybox
+          tag: "1.38.0@sha256:fd8d9aa63ba2f0982b5304e1ee8d3b90a210bc1ffb5314d980eb6962f1a9715d"
+          pullPolicy: IfNotPresent
+        command:
+          - sh
+          - -c
+          - |
+            mkdir -p /app/custom_callbacks/hindsight /app/custom_callbacks/chatgpt /app/custom_callbacks/middleware
+            touch /app/custom_callbacks/__init__.py
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
     containers:
       litellm:
         image:
@@ -456,7 +475,7 @@ configMaps:
             - otel
             - prometheus
             - websearch_interception
-            - custom_callbacks.hindsight.hindsight_plugin.hindsight_middleware
+            - custom_callbacks.middleware.pipeline_plugin.pipeline_middleware
           drop_params: true
           websearch_interception_params:
             enabled_providers:
@@ -611,24 +630,62 @@ persistence:
           - path: /config/scanners.yml
             subPath: scanners.yml
             readOnly: true
-  # Hindsight proxy-side memory callback. ConfigMap keys are flat (no '/'),
-  # so the custom_callbacks/hindsight/ package tree is recreated via subPath
-  # mounts. The /app entry on PYTHONPATH resolves the dotted import
-  # custom_callbacks.hindsight.hindsight_plugin.
+  custom-callbacks-workdir:
+    type: emptyDir
+    advancedMounts:
+      litellm:
+        prepare-custom-callbacks:
+          - path: /app/custom_callbacks
+        litellm:
+          - path: /app/custom_callbacks
+  # Proxy-side callback plugins. ConfigMap keys are flat (no '/'), so the
+  # custom_callbacks/* package tree is created by the init container above and
+  # populated through subPath mounts. The /app entry on PYTHONPATH resolves the
+  # custom_callbacks.* dotted imports.
   hindsight-plugin:
     type: configMap
     name: litellm-hindsight-plugin
     advancedMounts:
       litellm:
         litellm:
-          - path: /app/custom_callbacks/__init__.py
-            subPath: __init__.py
-            readOnly: true
           - path: /app/custom_callbacks/hindsight/__init__.py
             subPath: __init__.py
             readOnly: true
           - path: /app/custom_callbacks/hindsight/hindsight_plugin.py
             subPath: hindsight_plugin.py
+            readOnly: true
+  chatgpt-plugin:
+    type: configMap
+    name: litellm-chatgpt-plugin
+    advancedMounts:
+      litellm:
+        litellm:
+          - path: /app/custom_callbacks/chatgpt/__init__.py
+            subPath: __init__.py
+            readOnly: true
+          - path: /app/custom_callbacks/chatgpt/chatgpt_plugin.py
+            subPath: chatgpt_plugin.py
+            readOnly: true
+  middleware-plugin:
+    type: configMap
+    name: litellm-middleware-plugin
+    advancedMounts:
+      litellm:
+        litellm:
+          - path: /app/custom_callbacks/middleware/__init__.py
+            subPath: __init__.py
+            readOnly: true
+          - path: /app/custom_callbacks/middleware/base.py
+            subPath: base.py
+            readOnly: true
+          - path: /app/custom_callbacks/middleware/pipeline.py
+            subPath: pipeline.py
+            readOnly: true
+          - path: /app/custom_callbacks/middleware/pipeline_plugin.py
+            subPath: pipeline_plugin.py
+            readOnly: true
+          - path: /app/custom_callbacks/middleware/registry.py
+            subPath: registry.py
             readOnly: true
   chatgpt-auth-data:
     type: persistentVolumeClaim

@@ -1,7 +1,8 @@
 """Transparent proxy-side long-term memory for LiteLLM <-> Hindsight.
 
-A ``CustomLogger`` callback that runs inside the LiteLLM proxy pod. It does NOT
-require any change to the calling client (e.g. Claude Code CLI):
+A middleware that runs inside the LiteLLM proxy pod via the shared middleware
+pipeline. It does NOT require any change to the calling client (e.g. Claude Code
+CLI):
 
 * ``async_pre_call_hook``  — RECALL relevant memories for the request's bank from
   Hindsight and inject them into the system prompt before the LLM call.
@@ -27,7 +28,6 @@ from typing import Any, Optional
 
 import httpx
 
-from litellm.integrations.custom_logger import CustomLogger
 from litellm._logging import verbose_proxy_logger
 
 # Wraps injected memory so we can strip a prior block before re-injecting
@@ -53,16 +53,37 @@ def _env_bool(name: str, default: bool) -> bool:
     return raw.strip().lower() in ("1", "true", "yes", "on")
 
 
-class HindsightMiddleware(CustomLogger):
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        verbose_proxy_logger.warning("invalid %s=%r; using %s", name, raw, default)
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        verbose_proxy_logger.warning("invalid %s=%r; using %s", name, raw, default)
+        return default
+
+
+class HindsightMiddleware:
     def __init__(self) -> None:
-        super().__init__()
         self.base_url = os.getenv(
             "HINDSIGHT_BASE_URL",
             "http://hindsight-api.hindsight.svc.cluster.local:8888",
         ).rstrip("/")
-        self.timeout_s = float(os.getenv("HINDSIGHT_TIMEOUT_S", "3.0"))
+        self.timeout_s = _env_float("HINDSIGHT_TIMEOUT_S", 3.0)
         self.recall_budget = os.getenv("HINDSIGHT_RECALL_BUDGET", "mid")
-        self.max_memory_tokens = int(os.getenv("HINDSIGHT_MAX_MEMORY_TOKENS", "4096"))
+        self.max_memory_tokens = _env_int("HINDSIGHT_MAX_MEMORY_TOKENS", 4096)
         self.inject = _env_bool("HINDSIGHT_INJECT", True)
         self.retain = _env_bool("HINDSIGHT_RETAIN", True)
         self.bank_header = os.getenv("HINDSIGHT_BANK_HEADER", "x-hindsight-bank").lower()
@@ -113,10 +134,17 @@ class HindsightMiddleware(CustomLogger):
     def _content_to_text(content: Any) -> str:
         if isinstance(content, str):
             return content
+        if isinstance(content, dict):
+            if content.get("type") in {"text", "input_text", "output_text"}:
+                return str(content.get("text", ""))
+            if "content" in content:
+                return HindsightMiddleware._content_to_text(content.get("content"))
         if isinstance(content, list):
             parts = []
             for block in content:
-                if isinstance(block, dict) and block.get("type") == "text":
+                if isinstance(block, dict) and block.get("type") in {
+                    "text", "input_text", "output_text",
+                }:
                     parts.append(block.get("text", ""))
                 elif isinstance(block, str):
                     parts.append(block)
@@ -127,6 +155,17 @@ class HindsightMiddleware(CustomLogger):
         for msg in reversed(data.get("messages", []) or []):
             if isinstance(msg, dict) and msg.get("role") == "user":
                 return self._content_to_text(msg.get("content"))
+        input_data = data.get("input")
+        if isinstance(input_data, str):
+            return input_data
+        if isinstance(input_data, list):
+            for item in reversed(input_data):
+                if isinstance(item, dict) and item.get("role") == "user":
+                    text = self._content_to_text(item.get("content"))
+                    if text:
+                        return text
+        if isinstance(input_data, dict) and input_data.get("role") == "user":
+            return self._content_to_text(input_data.get("content"))
         return ""
 
     @staticmethod
@@ -258,6 +297,11 @@ class HindsightMiddleware(CustomLogger):
             bank = self._sanitize_bank(meta.get("hindsight_bank"))
             if bank:
                 return bank
+            team_meta = meta.get("team_metadata") or meta.get("team_member_info") or {}
+            if isinstance(team_meta, dict):
+                bank = self._sanitize_bank(team_meta.get("hindsight_bank"))
+                if bank:
+                    return bank
         return None
 
     @staticmethod
@@ -300,6 +344,5 @@ class HindsightMiddleware(CustomLogger):
             verbose_proxy_logger.warning("hindsight retain failed (swallowed): %s", exc)
 
 
-# Module-level instance referenced by litellm_settings.callbacks as
-# custom_callbacks.hindsight.hindsight_plugin.hindsight_middleware
+# Module-level instance consumed by custom_callbacks.middleware.registry.
 hindsight_middleware = HindsightMiddleware()

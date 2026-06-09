@@ -1,0 +1,15 @@
+[project]
+name = "litellm-chatgpt-plugin"
+version = "0.1.0"
+description = "LiteLLM proxy callback to convert system to developer for chatgpt subscription models"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -9,6 +9,7 @@ identical either way.
 import importlib
 import os
 import sys
+import types
 from types import SimpleNamespace
 
 import httpx
@@ -18,6 +19,23 @@ _HERE = os.path.dirname(__file__)
 _PLUGIN_DIR = os.path.dirname(_HERE)
 if _PLUGIN_DIR not in sys.path:
     sys.path.insert(0, _PLUGIN_DIR)
+
+
+@pytest.fixture(autouse=True)
+def fake_litellm_logging(monkeypatch):
+    litellm = types.ModuleType("litellm")
+    logging = types.ModuleType("litellm._logging")
+
+    class Logger:
+        def debug(self, *args, **kwargs):
+            pass
+
+        def warning(self, *args, **kwargs):
+            pass
+
+    logging.verbose_proxy_logger = Logger()
+    monkeypatch.setitem(sys.modules, "litellm", litellm)
+    monkeypatch.setitem(sys.modules, "litellm._logging", logging)
 
 
 # ---------------------------------------------------------------------------
@@ -122,6 +140,24 @@ def make_openai():
             "model": "gpt-4o",
             "messages": messages if messages is not None
             else [{"role": "user", "content": user_text}],
+            "proxy_server_request": {"headers": headers or {}},
+        }
+    return _make
+
+
+@pytest.fixture
+def make_responses():
+    def _make(input_data=None, headers=None):
+        return {
+            "model": "chatgpt/gpt-5.5",
+            "input": input_data if input_data is not None else [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": "How do I configure Cilium BGP?"},
+                    ],
+                },
+            ],
             "proxy_server_request": {"headers": headers or {}},
         }
     return _make

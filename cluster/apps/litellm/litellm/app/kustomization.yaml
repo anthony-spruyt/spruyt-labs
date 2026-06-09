@@ -22,6 +22,23 @@ configMapGenerator:
     namespace: litellm
     files:
       - values.yaml
+  - name: litellm-chatgpt-plugin
+    namespace: litellm
+    options:
+      disableNameSuffixHash: true
+    files:
+      - __init__.py=plugins/chatgpt/__init__.py
+      - chatgpt_plugin.py=plugins/chatgpt/chatgpt_plugin.py
+  - name: litellm-middleware-plugin
+    namespace: litellm
+    options:
+      disableNameSuffixHash: true
+    files:
+      - __init__.py=plugins/middleware/__init__.py
+      - base.py=plugins/middleware/base.py
+      - pipeline.py=plugins/middleware/pipeline.py
+      - pipeline_plugin.py=plugins/middleware/pipeline_plugin.py
+      - registry.py=plugins/middleware/registry.py
   - name: litellm-hindsight-plugin
     namespace: litellm
     options:

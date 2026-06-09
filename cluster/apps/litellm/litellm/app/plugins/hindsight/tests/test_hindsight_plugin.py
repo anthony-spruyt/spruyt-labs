@@ -146,3 +146,31 @@ async def test_bank_from_key_metadata(plugin, mock_httpx, make_anthropic, make_k
     assert mock_httpx.recall_calls[0]["url"].endswith(
         "/v1/default/banks/key-bank/memories/recall")
     assert MEMORY in str(out["system"])
+
+
+async def test_responses_input_text_used_for_recall(plugin, mock_httpx, make_responses, make_key):
+    mock_httpx.recall_texts = [MEMORY]
+    data = make_responses(headers={BANK_HEADER: "my-repo"})
+
+    out = await _mw(plugin).async_pre_call_hook(
+        make_key(), None, data, "responses")
+
+    assert mock_httpx.recall_calls[0]["json"]["query"] == "How do I configure Cilium BGP?"
+    assert MEMORY in out["messages"][0]["content"]
+
+
+async def test_retain_bank_from_team_metadata(plugin, mock_httpx, make_response):
+    kwargs = {
+        "litellm_params": {
+            "metadata": {
+                "team_metadata": {"hindsight_bank": "team-bank"},
+            },
+        },
+        "messages": [{"role": "user", "content": "How do I configure Cilium BGP?"}],
+    }
+
+    await _mw(plugin).async_log_success_event(kwargs, make_response(), 0.0, 1.0)
+
+    assert len(mock_httpx.retain_calls) == 1
+    assert mock_httpx.retain_calls[0]["url"].endswith(
+        "/v1/default/banks/team-bank/memories")
