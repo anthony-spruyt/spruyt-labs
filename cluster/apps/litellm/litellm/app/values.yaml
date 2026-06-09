@@ -557,20 +557,34 @@ configMaps:
             litellm_params:
               model: openai/text-embedding-3-small
               api_key: os.environ/OPENAI_API_KEY
+          # --------------------------------------------------------------------------
+          # n8n
+          # --------------------------------------------------------------------------
+          - model_name: n8n-renovate-classifier
+            model_info:
+              mode: responses
+            litellm_params:
+              model: chatgpt/gpt-5.4-mini
         router_settings:
           model_group_alias:
+            # ------------------------------------------------------------------------
+            # Codex - Only gpt-5.4 currently works
+            # ------------------------------------------------------------------------
             "gpt-5.4": "chatgpt/gpt-5.4"
             "gpt-5.5": "chatgpt/gpt-5.4"
             "gpt-5.4-mini": "chatgpt/gpt-5.4"
-            "claude-opus-4-6": "chatgpt/gpt-5.4"
-            "claude-opus-4-7": "chatgpt/gpt-5.4"
-            "claude-opus-4-8": "chatgpt/gpt-5.4"
-            "claude-haiku-4-5": "chatgpt/gpt-5.4"
+            # ------------------------------------------------------------------------
+            # Claude Code
+            # ------------------------------------------------------------------------
+            "claude-opus-4-6": "chatgpt/gpt-5.5"
+            "claude-opus-4-7": "chatgpt/gpt-5.5"
+            "claude-opus-4-8": "chatgpt/gpt-5.5"
+            "claude-haiku-4-5": "chatgpt/gpt-5.4-mini"
             "claude-sonnet-4-5": "chatgpt/gpt-5.4"
             "claude-sonnet-4-6": "chatgpt/gpt-5.4"
-            "claude-opus-4-6-20250514": "chatgpt/gpt-5.4"
-            "claude-opus-4-7-20250515": "chatgpt/gpt-5.4"
-            "claude-haiku-4-5-20251001": "chatgpt/gpt-5.4"
+            "claude-opus-4-6-20250514": "chatgpt/gpt-5.5"
+            "claude-opus-4-7-20250515": "chatgpt/gpt-5.5"
+            "claude-haiku-4-5-20251001": "chatgpt/gpt-5.4-mini"
             "claude-sonnet-4-5-20250514": "chatgpt/gpt-5.4"
             "claude-sonnet-4-6-20250514": "chatgpt/gpt-5.4"
           redis_host: litellm-valkey.litellm.svc
