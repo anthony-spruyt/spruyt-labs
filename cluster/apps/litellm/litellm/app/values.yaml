@@ -46,7 +46,7 @@ controllers:
           CHATGPT_TOKEN_DIR: "/app/.config/litellm/chatgpt"
           CHATGPT_AUTH_FILE: "auth.json"
           CHATGPT_API_BASE: "https://chatgpt.com/backend-api/codex"
-          # CHATGPT_USER_AGENT: "codex-cli/0.137.0"
+          CHATGPT_USER_AGENT: "User-Agent: codex-tui/0.137.0 (Ubuntu 22.4.0; x86_64) vscode/1.123.0 (codex-tui; 0.137.0)"
           # CHATGPT_ORIGINATOR:
           DATABASE_URL:
             valueFrom:
