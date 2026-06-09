@@ -80,7 +80,7 @@ def _configured_chatgpt_num_retries(model: Any) -> int | None:
         return None
     config = _load_config(_config_path())
     resolved = _resolve_configured_model(model, config)
-    if resolved != "chatgpt/gpt-5.5":
+    if resolved not in {"chatgpt/gpt-5.5", "chatgpt/responses/gpt-5.5"}:
         return None
     return _configured_num_retries(config, resolved) or _configured_num_retries(config, model) or 2
 
