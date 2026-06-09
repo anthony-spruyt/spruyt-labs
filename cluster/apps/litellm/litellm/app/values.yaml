@@ -491,11 +491,6 @@ configMaps:
             model_info:
               mode: responses
             litellm_params:
-              model: chatgpt/gpt-5.5
-          - model_name: chatgpt/responses/gpt-5.5
-            model_info:
-              mode: responses
-            litellm_params:
               model: chatgpt/responses/gpt-5.5
           - model_name: chatgpt/gpt-5.4
             model_info:
@@ -506,7 +501,7 @@ configMaps:
             model_info:
               mode: responses
             litellm_params:
-              model: chatgpt/gpt-5.4-mini
+              model: chatgpt/responses/gpt-5.4-mini
           # --------------------------------------------------------------------------
           # OpenAI: PAYG
           # --------------------------------------------------------------------------
@@ -576,14 +571,14 @@ configMaps:
             # Codex - Only gpt-5.4 currently works
             # ------------------------------------------------------------------------
             "gpt-5.4": "chatgpt/gpt-5.4"
-            "gpt-5.5": "chatgpt/gpt-5.4"
-            "gpt-5.4-mini": "chatgpt/gpt-5.4"
+            "gpt-5.5": "chatgpt/gpt-5.5"
+            "gpt-5.4-mini": "chatgpt/gpt-5.4-mini"
             # ------------------------------------------------------------------------
             # Claude Code
             # ------------------------------------------------------------------------
             "claude-opus-4-6": "chatgpt/gpt-5.5"
             "claude-opus-4-7": "chatgpt/gpt-5.5"
-            "claude-opus-4-8": "chatgpt/responses/gpt-5.5"
+            "claude-opus-4-8": "chatgpt/gpt-5.5"
             "claude-haiku-4-5": "chatgpt/gpt-5.4-mini"
             "claude-sonnet-4-5": "chatgpt/gpt-5.4"
             "claude-sonnet-4-6": "chatgpt/gpt-5.4"

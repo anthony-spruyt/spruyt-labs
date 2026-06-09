@@ -65,6 +65,7 @@ async def test_system_roles_are_renamed_for_chatgpt_only(plugin):
     out = await plugin.chatgpt_middleware.async_pre_call_hook(
         None, None, data, "completion")
 
+    assert out["stream"] is True
     assert out["num_retries"] == 2
     assert out["messages"][0]["role"] == "developer"
 
@@ -77,6 +78,7 @@ async def test_configured_alias_to_gpt55_gets_retry_count(monkeypatch, tmp_path)
             "model_group_alias": {
                 "claude-opus-4-7": "chatgpt/gpt-5.5",
                 "claude-opus-4-8": "chatgpt/responses/gpt-5.5",
+                "claude-haiku-4-5": "chatgpt/gpt-5.4-mini",
             },
         },
         "model_list": [
@@ -87,6 +89,10 @@ async def test_configured_alias_to_gpt55_gets_retry_count(monkeypatch, tmp_path)
             {
                 "model_name": "chatgpt/responses/gpt-5.5",
                 "litellm_params": {"model": "chatgpt/responses/gpt-5.5", "num_retries": 6},
+            },
+            {
+                "model_name": "chatgpt/gpt-5.4-mini",
+                "litellm_params": {"model": "chatgpt/responses/gpt-5.4-mini", "num_retries": 3},
             },
         ],
     }))
@@ -106,9 +112,19 @@ async def test_configured_alias_to_gpt55_gets_retry_count(monkeypatch, tmp_path)
         {"model": "claude-opus-4-8", "messages": [{"role": "user", "content": "hello"}]},
         "completion",
     )
+    mini_out = await plugin.chatgpt_middleware.async_pre_call_hook(
+        None,
+        None,
+        {"model": "claude-haiku-4-5", "messages": [{"role": "user", "content": "hello"}]},
+        "completion",
+    )
 
+    assert out["stream"] is True
     assert out["num_retries"] == 4
+    assert responses_out["stream"] is True
     assert responses_out["num_retries"] == 6
+    assert mini_out["stream"] is True
+    assert mini_out["num_retries"] == 3
 
 
 async def test_existing_num_retries_is_preserved(plugin):
@@ -121,6 +137,7 @@ async def test_existing_num_retries_is_preserved(plugin):
     out = await plugin.chatgpt_middleware.async_pre_call_hook(
         None, None, data, "completion")
 
+    assert out["stream"] is True
     assert out["num_retries"] == 9
 
 

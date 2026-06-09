@@ -6,6 +6,13 @@ from typing import Any
 
 _DEFAULT_CONFIG_PATH = "/app/config.yaml"
 
+_CHATGPT_RESPONSES_MODELS = {
+    "chatgpt/gpt-5.5",
+    "chatgpt/responses/gpt-5.5",
+    "chatgpt/gpt-5.4-mini",
+    "chatgpt/responses/gpt-5.4-mini",
+}
+
 
 def _config_path() -> str:
     return os.getenv("CHATGPT_CONFIG_PATH") or os.getenv(
@@ -60,14 +67,16 @@ def _resolve_model_list_entry(config: dict, model: str) -> str | None:
     return target if isinstance(target, str) else None
 
 
-def _configured_num_retries(config: dict, model: str) -> int | None:
+def _model_entry_num_retries(config: dict, model: str) -> int | None:
     entry = _get_model_list_entry(config, model)
-    if isinstance(entry, dict):
-        litellm_params = entry.get("litellm_params") or {}
-        num_retries = litellm_params.get("num_retries")
-        if isinstance(num_retries, int):
-            return num_retries
+    if not isinstance(entry, dict):
+        return None
+    litellm_params = entry.get("litellm_params") or {}
+    num_retries = litellm_params.get("num_retries")
+    return num_retries if isinstance(num_retries, int) else None
 
+
+def _router_num_retries(config: dict) -> int | None:
     router_settings = config.get("router_settings") or {}
     if not isinstance(router_settings, dict):
         return None
@@ -75,14 +84,33 @@ def _configured_num_retries(config: dict, model: str) -> int | None:
     return num_retries if isinstance(num_retries, int) else None
 
 
-def _configured_chatgpt_num_retries(model: Any) -> int | None:
+def _resolve_configured_chatgpt_model(model: Any) -> tuple[dict, str | None]:
     if not isinstance(model, str):
-        return None
+        return {}, None
     config = _load_config(_config_path())
-    resolved = _resolve_configured_model(model, config)
-    if resolved not in {"chatgpt/gpt-5.5", "chatgpt/responses/gpt-5.5"}:
+    return config, _resolve_configured_model(model, config)
+
+
+def _configured_chatgpt_num_retries(
+    config: dict,
+    model: str,
+    resolved: str | None,
+) -> int | None:
+    if resolved not in _CHATGPT_RESPONSES_MODELS:
         return None
-    return _configured_num_retries(config, resolved) or _configured_num_retries(config, model) or 2
+
+    current = model
+    seen = set()
+    while current not in seen:
+        seen.add(current)
+        configured = _model_entry_num_retries(config, current)
+        if configured is not None:
+            return configured
+        target = _resolve_alias(config, current) or _resolve_model_list_entry(config, current)
+        if not target:
+            break
+        current = target
+    return _router_num_retries(config) or 2
 
 
 def _resolve_configured_model(model: str, config: dict) -> str:
@@ -125,10 +153,17 @@ class ChatGPTMiddleware:
     async def async_pre_call_hook(
         self, user_api_key_dict, cache, data: dict, call_type: str,
     ) -> dict:
-        if _is_chatgpt_routed_model(data.get("model")):
-            retry_count = _configured_chatgpt_num_retries(data.get("model"))
-            if retry_count is not None and data.get("num_retries") is None:
-                data["num_retries"] = retry_count
+        model = data.get("model")
+        if _is_chatgpt_routed_model(model):
+            config, resolved_model = _resolve_configured_chatgpt_model(model)
+            if resolved_model in _CHATGPT_RESPONSES_MODELS:
+                data["stream"] = True
+
+            if isinstance(model, str):
+                retry_count = _configured_chatgpt_num_retries(
+                    config, model, resolved_model)
+                if retry_count is not None and data.get("num_retries") is None:
+                    data["num_retries"] = retry_count
 
             # Anthropic Messages format: top-level "system" field
             system_content = data.get("system")
