@@ -76,7 +76,6 @@ controllers:
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
           PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
-          # Resolve the custom_callbacks.hindsight.* import for the proxy callback
           PYTHONPATH: "/app:/app/custom_callbacks"
           REDIS_HOST: litellm-valkey.litellm.svc
           REDIS_PORT: "6379"
@@ -86,7 +85,6 @@ controllers:
               secretKeyRef:
                 name: litellm-valkey-secrets
                 key: litellm
-          STORE_MODEL_IN_DB: "True"
         envFrom:
           - secretRef:
               name: litellm-secrets
@@ -461,6 +459,9 @@ configMaps:
               - openai
             search_tool_name: brave-search
         model_list:
+          # --------------------------------------------------------------------------
+          # OpenAI: Subscription
+          # --------------------------------------------------------------------------
           - model_name: chatgpt/gpt-5.5
             model_info:
               mode: responses
@@ -476,7 +477,77 @@ configMaps:
               mode: responses
             litellm_params:
               model: chatgpt/gpt-5.4-mini
+          # --------------------------------------------------------------------------
+          # OpenAI: PAYG
+          # --------------------------------------------------------------------------
+          - model_name: openai/openai/text-embedding-3-small
+            litellm_params:
+              model: openai/text-embedding-3-small
+              api_key: os.environ/OPENAI_API_KEY
+          # --------------------------------------------------------------------------
+          # Zenmux: Subscription
+          # --------------------------------------------------------------------------
+          - model_name: zenmux/anthropic/claude-opus-4-8
+            litellm_params:
+              model: anthropic/claude-opus-4-8
+              api_base: https://zenmux.ai/api/anthropic
+              api_key: os.environ/ZENMUX_SUB_API_KEY
+          - model_name: zenmux/anthropic/claude-sonnet-4-6
+            litellm_params:
+              model: anthropic/claude-sonnet-4-6
+              api_base: https://zenmux.ai/api/anthropic
+              api_key: os.environ/ZENMUX_SUB_API_KEY
+          - model_name: zenmux/anthropic/claude-haiku-4-5
+            litellm_params:
+              model: anthropic/claude-haiku-4-5
+              api_base: https://zenmux.ai/api/anthropic
+              api_key: os.environ/ZENMUX_SUB_API_KEY
+          # --------------------------------------------------------------------------
+          # Zenmux: PAYG
+          # --------------------------------------------------------------------------
+          - model_name: zenmux-payg/anthropic/claude-opus-4-8
+            litellm_params:
+              model: anthropic/claude-opus-4-8
+              api_base: https://zenmux.ai/api/anthropic
+              api_key: os.environ/ZENMUX_PAYG_API_KEY
+          - model_name: zenmux-payg/anthropic/claude-sonnet-4-6
+            litellm_params:
+              model: anthropic/claude-sonnet-4-6
+              api_base: https://zenmux.ai/api/anthropic
+              api_key: os.environ/ZENMUX_PAYG_API_KEY
+          - model_name: zenmux-payg/anthropic/claude-haiku-4-5
+            litellm_params:
+              model: anthropic/claude-haiku-4-5
+              api_base: https://zenmux.ai/api/anthropic
+              api_key: os.environ/ZENMUX_PAYG_API_KEY
+          # --------------------------------------------------------------------------
+          # Hindsight
+          # --------------------------------------------------------------------------
+          - model_name: hindsight-model
+            litellm_params:
+              model: openai/gpt-4o-mini
+              api_base: https://zenmux.ai/api/v1
+              api_key: os.environ/ZENMUX_SUB_API_KEY
+          - model_name: hindsight-embeddings
+            litellm_params:
+              model: openai/text-embedding-3-small
+              api_key: os.environ/OPENAI_API_KEY
         router_settings:
+          model_group_alias:
+            "gpt-5.4": "chatgpt/gpt-5.4"
+            "gpt-5.5": "chatgpt/gpt-5.5"
+            "gpt-5.4-mini": "chatgpt/gpt-5.4-mini"
+            "claude-opus-4-6": "chatgpt/gpt-5.5"
+            "claude-opus-4-7": "chatgpt/gpt-5.5"
+            "claude-opus-4-8": "chatgpt/gpt-5.5"
+            "claude-haiku-4-5": "chatgpt/gpt-5.4-mini"
+            "claude-sonnet-4-5": "chatgpt/gpt-5.4"
+            "claude-sonnet-4-6": "chatgpt/gpt-5.4"
+            "claude-opus-4-6-20250514": "chatgpt/gpt-5.5"
+            "claude-opus-4-7-20250515": "chatgpt/gpt-5.5"
+            "claude-haiku-4-5-20251001": "chatgpt/gpt-5.4-mini"
+            "claude-sonnet-4-5-20250514": "chatgpt/gpt-5.4"
+            "claude-sonnet-4-6-20250514": "chatgpt/gpt-5.4"
           redis_host: litellm-valkey.litellm.svc
           redis_port: "6379"
           redis_password: os.environ/REDIS_PASSWORD
