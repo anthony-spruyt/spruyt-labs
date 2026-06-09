@@ -1,5 +1,6 @@
 import importlib
 import json
+import logging
 import os
 import sys
 
@@ -139,6 +140,27 @@ async def test_existing_num_retries_is_preserved(plugin):
 
     assert out["stream"] is True
     assert out["num_retries"] == 9
+
+
+async def test_responses_model_logs_forced_stream_and_retry(plugin, caplog):
+    data = {
+        "model": "chatgpt/gpt-5.5",
+        "messages": [{"role": "user", "content": "hello"}],
+    }
+
+    with caplog.at_level(logging.WARNING):
+        out = await plugin.chatgpt_middleware.async_pre_call_hook(
+            None, None, data, "completion")
+
+    assert out["stream"] is True
+    assert out["num_retries"] == 2
+    assert "chatgpt middleware prepared request" in caplog.text
+    assert "model=chatgpt/gpt-5.5" in caplog.text
+    assert "resolved_model=chatgpt/gpt-5.5" in caplog.text
+    assert "stream_before=None" in caplog.text
+    assert "stream_after=True" in caplog.text
+    assert "forced_stream=True" in caplog.text
+    assert "hydrated_num_retries=True" in caplog.text
 
 
 async def test_configured_alias_to_chatgpt_is_renamed(monkeypatch, tmp_path):
