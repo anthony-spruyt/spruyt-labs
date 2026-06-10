@@ -22,7 +22,7 @@ import traceback
 from concurrent import futures
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from copy import deepcopy
-from functools import partial
+from functools import lru_cache, partial
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -956,8 +956,8 @@ _ROUTED_CHATGPT_RESPONSES_MODELS = {
 
 def _enable_chatgpt_anthropic_responses_routing() -> None:
     # Anthropic pass-through only routes OpenAI providers to the responses
-    # bridge by default. Routed ChatGPT aliases need the same treatment so
-    # they stay on `/responses` instead of falling back to chat completions.
+    # bridge by default. Routed ChatGPT aliases need same treatment so they
+    # stay on `/responses` instead of falling back to chat completions.
     from litellm.llms.anthropic.experimental_pass_through.messages import (
         handler as anthropic_messages_handler,
     )
@@ -973,10 +973,65 @@ def _enable_chatgpt_anthropic_responses_routing() -> None:
 _enable_chatgpt_anthropic_responses_routing()
 
 
-def _should_force_chatgpt_responses_stream(
-    custom_llm_provider: Optional[str],
-) -> bool:
-    return custom_llm_provider == "chatgpt"
+@lru_cache(maxsize=4)
+def _chatgpt_config_alias_map() -> Dict[str, str]:
+    config_path = os.getenv("CHATGPT_CONFIG_PATH") or os.getenv(
+        "LITELLM_CONFIG_PATH", "/app/config.yaml"
+    )
+    if not config_path or not os.path.exists(config_path):
+        return {}
+
+    with open(config_path, encoding="utf-8") as handle:
+        raw = handle.read()
+
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        try:
+            import yaml  # type: ignore[import-untyped]
+        except ImportError:
+            return {}
+        parsed = yaml.safe_load(raw)
+
+    if not isinstance(parsed, dict):
+        return {}
+
+    aliases = (parsed.get("router_settings") or {}).get("model_group_alias") or {}
+    if not isinstance(aliases, dict):
+        return {}
+
+    alias_map: Dict[str, str] = {}
+    for alias, target in aliases.items():
+        if isinstance(alias, str) and isinstance(target, str):
+            alias_map[alias] = target
+        elif isinstance(alias, str) and isinstance(target, dict):
+            model_name = target.get("model")
+            if isinstance(model_name, str):
+                alias_map[alias] = model_name
+    return alias_map
+
+
+@lru_cache(maxsize=16)
+def _resolve_chatgpt_alias_target(model: str) -> str:
+    current = model
+    seen = set()
+    alias_map = _chatgpt_config_alias_map()
+    while current not in seen:
+        seen.add(current)
+        target = alias_map.get(current)
+        if not target:
+            return current
+        current = target
+    return current
+
+
+@lru_cache(maxsize=16)
+def _is_chatgpt_responses_alias(model: str) -> bool:
+    if not isinstance(model, str):
+        return False
+    resolved = _resolve_chatgpt_alias_target(model)
+    stripped = resolved.removeprefix("chatgpt/").removeprefix("responses/")
+    return stripped in _ROUTED_CHATGPT_RESPONSES_MODELS
 
 
 async def _collect_forced_chatgpt_responses_result(result: Any) -> Any:
@@ -1024,23 +1079,52 @@ def _collect_forced_chatgpt_responses_result_sync(result: Any) -> Any:
 
 
 def _enable_chatgpt_responses_transport_streaming() -> None:
-    # ChatGPT codex `/responses` requires SSE transport even for callers that
-    # expect a non-streaming response object. Force stream at HTTP layer for
-    # ChatGPT responses requests, then collect completed SSE event back into a
-    # normal ResponsesAPIResponse before returning upstream.
+    # Anthropic-routed ChatGPT aliases arrive at the responses transport with
+    # `stream=True` in optional params, but Codex still receives a non-streaming
+    # httpx send. Force SSE transport for aliases that ultimately resolve to the
+    # ChatGPT responses-only models, then collect the completed event back into a
+    # normal ResponsesAPIResponse for non-streaming callers.
     from litellm.llms.custom_httpx import llm_http_handler
 
     handler_cls = llm_http_handler.BaseLLMHTTPHandler
     if getattr(handler_cls, "_chatgpt_stream_patch", False):
         return
 
-    original_async = handler_cls.async_response_api_handler
     original_sync = handler_cls.response_api_handler
+    original_async = handler_cls.async_response_api_handler
+
+    def _should_force(model: str, custom_llm_provider: str) -> bool:
+        return custom_llm_provider == "chatgpt" and _is_chatgpt_responses_alias(model)
+
+    def _prepare_forced_params(params: Dict[str, Any]) -> Dict[str, Any]:
+        forced_params = dict(params)
+        forced_params["stream"] = True
+        return forced_params
+
+    def _force_sync_http_send(streaming_client: Any) -> Any:
+        original_post = streaming_client.post
+
+        def _patched_post(*args: Any, **kwargs: Any) -> Any:
+            kwargs["stream"] = True
+            return original_post(*args, **kwargs)
+
+        streaming_client.post = _patched_post
+        return original_post
+
+    async def _force_async_http_send(streaming_client: Any) -> Any:
+        original_post = streaming_client.post
+
+        async def _patched_post(*args: Any, **kwargs: Any) -> Any:
+            kwargs["stream"] = True
+            return await original_post(*args, **kwargs)
+
+        streaming_client.post = _patched_post
+        return original_post
 
     async def _patched_async_response_api_handler(
         self,
         model: str,
-        input: Any,
+        input: Union[str, Any],
         responses_api_provider_config: Any,
         response_api_optional_request_params: Dict,
         custom_llm_provider: str,
@@ -1054,10 +1138,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
         litellm_metadata: Optional[Dict[str, Any]] = None,
         shared_session: Optional[Any] = None,
     ) -> Any:
-        forced_transport_stream = _should_force_chatgpt_responses_stream(
-            custom_llm_provider,
-        )
-        if not forced_transport_stream:
+        if not _should_force(model, custom_llm_provider):
             return await original_async(
                 self,
                 model=model,
@@ -1077,50 +1158,46 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
             )
 
         original_stream = bool(response_api_optional_request_params.get("stream", False))
-        if original_stream:
-            return await original_async(
+        forced_params = _prepare_forced_params(response_api_optional_request_params)
+        async_client = client
+        if async_client is None:
+            async_client = llm_http_handler.get_async_httpx_client(
+                llm_provider=litellm.LlmProviders(custom_llm_provider),
+                params={"ssl_verify": litellm_params.get("ssl_verify", None)},
+                shared_session=shared_session,
+            )
+        restore_post = await _force_async_http_send(async_client)
+
+        try:
+            result = await original_async(
                 self,
                 model=model,
                 input=input,
                 responses_api_provider_config=responses_api_provider_config,
-                response_api_optional_request_params=response_api_optional_request_params,
+                response_api_optional_request_params=forced_params,
                 custom_llm_provider=custom_llm_provider,
                 litellm_params=litellm_params,
                 logging_obj=logging_obj,
                 extra_headers=extra_headers,
                 extra_body=extra_body,
                 timeout=timeout,
-                client=client,
+                client=async_client,
                 fake_stream=fake_stream,
                 litellm_metadata=litellm_metadata,
                 shared_session=shared_session,
             )
+        finally:
+            if restore_post is not None:
+                async_client.post = restore_post
 
-        forced_params = dict(response_api_optional_request_params)
-        forced_params["stream"] = True
-        result = await original_async(
-            self,
-            model=model,
-            input=input,
-            responses_api_provider_config=responses_api_provider_config,
-            response_api_optional_request_params=forced_params,
-            custom_llm_provider=custom_llm_provider,
-            litellm_params=litellm_params,
-            logging_obj=logging_obj,
-            extra_headers=extra_headers,
-            extra_body=extra_body,
-            timeout=timeout,
-            client=client,
-            fake_stream=fake_stream,
-            litellm_metadata=litellm_metadata,
-            shared_session=shared_session,
-        )
+        if original_stream:
+            return result
         return await _collect_forced_chatgpt_responses_result(result)
 
     def _patched_response_api_handler(
         self,
         model: str,
-        input: Any,
+        input: Union[str, Any],
         responses_api_provider_config: Any,
         response_api_optional_request_params: Dict,
         custom_llm_provider: str,
@@ -1155,10 +1232,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 shared_session=shared_session,
             )
 
-        forced_transport_stream = _should_force_chatgpt_responses_stream(
-            custom_llm_provider,
-        )
-        if not forced_transport_stream:
+        if not _should_force(model, custom_llm_provider):
             return original_sync(
                 self,
                 model=model,
@@ -1172,53 +1246,46 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 extra_body=extra_body,
                 timeout=timeout,
                 client=client,
-                _is_async=_is_async,
+                _is_async=False,
                 fake_stream=fake_stream,
                 litellm_metadata=litellm_metadata,
                 shared_session=shared_session,
             )
 
         original_stream = bool(response_api_optional_request_params.get("stream", False))
-        if original_stream:
-            return original_sync(
+        forced_params = _prepare_forced_params(response_api_optional_request_params)
+        sync_client = client
+        if sync_client is None:
+            sync_client = llm_http_handler._get_httpx_client(
+                params={"ssl_verify": litellm_params.get("ssl_verify", None)}
+            )
+        restore_post = _force_sync_http_send(sync_client)
+
+        try:
+            result = original_sync(
                 self,
                 model=model,
                 input=input,
                 responses_api_provider_config=responses_api_provider_config,
-                response_api_optional_request_params=response_api_optional_request_params,
+                response_api_optional_request_params=forced_params,
                 custom_llm_provider=custom_llm_provider,
                 litellm_params=litellm_params,
                 logging_obj=logging_obj,
                 extra_headers=extra_headers,
                 extra_body=extra_body,
                 timeout=timeout,
-                client=client,
-                _is_async=_is_async,
+                client=sync_client,
+                _is_async=False,
                 fake_stream=fake_stream,
                 litellm_metadata=litellm_metadata,
                 shared_session=shared_session,
             )
+        finally:
+            if restore_post is not None:
+                sync_client.post = restore_post
 
-        forced_params = dict(response_api_optional_request_params)
-        forced_params["stream"] = True
-        result = original_sync(
-            self,
-            model=model,
-            input=input,
-            responses_api_provider_config=responses_api_provider_config,
-            response_api_optional_request_params=forced_params,
-            custom_llm_provider=custom_llm_provider,
-            litellm_params=litellm_params,
-            logging_obj=logging_obj,
-            extra_headers=extra_headers,
-            extra_body=extra_body,
-            timeout=timeout,
-            client=client,
-            _is_async=False,
-            fake_stream=fake_stream,
-            litellm_metadata=litellm_metadata,
-            shared_session=shared_session,
-        )
+        if original_stream:
+            return result
         return _collect_forced_chatgpt_responses_result_sync(result)
 
     handler_cls.async_response_api_handler = _patched_async_response_api_handler
