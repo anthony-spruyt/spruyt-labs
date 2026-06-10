@@ -953,6 +953,11 @@ _ROUTED_CHATGPT_RESPONSES_MODELS = {
     "gpt-5.4-mini",
 }
 
+_CHATGPT_RESPONSES_TRANSPORT_STREAM = contextvars.ContextVar(
+    "chatgpt_responses_transport_stream",
+    default=False,
+)
+
 
 def _enable_chatgpt_anthropic_responses_routing() -> None:
     # Anthropic pass-through only routes OpenAI providers to the responses
@@ -1121,6 +1126,28 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
         streaming_client.post = _patched_post
         return original_post
 
+    original_async_http_post = AsyncHTTPHandler.post
+    original_sync_http_post = HTTPHandler.post
+
+    async def _patched_async_http_post(self, *args: Any, **kwargs: Any) -> Any:
+        if _CHATGPT_RESPONSES_TRANSPORT_STREAM.get():
+            kwargs["stream"] = True
+        return await original_async_http_post(self, *args, **kwargs)
+
+    def _patched_sync_http_post(self, *args: Any, **kwargs: Any) -> Any:
+        if _CHATGPT_RESPONSES_TRANSPORT_STREAM.get():
+            kwargs["stream"] = True
+        return original_sync_http_post(self, *args, **kwargs)
+
+    AsyncHTTPHandler.post = _patched_async_http_post
+    HTTPHandler.post = _patched_sync_http_post
+
+    def _force_transport_stream_context() -> contextvars.Token[bool]:
+        return _CHATGPT_RESPONSES_TRANSPORT_STREAM.set(True)
+
+    def _restore_transport_stream_context(token: contextvars.Token[bool]) -> None:
+        _CHATGPT_RESPONSES_TRANSPORT_STREAM.reset(token)
+
     async def _patched_async_response_api_handler(
         self,
         model: str,
@@ -1167,6 +1194,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 shared_session=shared_session,
             )
         restore_post = await _force_async_http_send(async_client)
+        transport_token = _force_transport_stream_context()
 
         try:
             result = await original_async(
@@ -1187,6 +1215,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 shared_session=shared_session,
             )
         finally:
+            _restore_transport_stream_context(transport_token)
             if restore_post is not None:
                 async_client.post = restore_post
 
@@ -1260,6 +1289,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 params={"ssl_verify": litellm_params.get("ssl_verify", None)}
             )
         restore_post = _force_sync_http_send(sync_client)
+        transport_token = _force_transport_stream_context()
 
         try:
             result = original_sync(
@@ -1281,6 +1311,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 shared_session=shared_session,
             )
         finally:
+            _restore_transport_stream_context(transport_token)
             if restore_post is not None:
                 sync_client.post = restore_post
 
