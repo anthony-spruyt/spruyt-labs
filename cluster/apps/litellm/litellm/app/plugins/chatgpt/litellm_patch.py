@@ -118,6 +118,38 @@ def _completed_responses_api_response(result: Any) -> Any:
     raise ValueError(f"Expected completed ResponsesAPIResponse, got {type(completed)}")
 
 
+def _record_stream_chunks(result: Any) -> tuple[list[str], Any]:
+    chunks: list[str] = []
+    original_process_chunk = result._process_chunk
+
+    def _recording_process_chunk(chunk: Any) -> Any:
+        if isinstance(chunk, bytes):
+            chunks.append(chunk.decode("utf-8", errors="replace"))
+        elif isinstance(chunk, str):
+            chunks.append(chunk)
+        return original_process_chunk(chunk)
+
+    result._process_chunk = _recording_process_chunk
+    return chunks, original_process_chunk
+
+
+def _recover_empty_output_from_chunks(completed: Any, chunks: list[str]) -> Any:
+    output = getattr(completed, "output", None)
+    if output or not chunks:
+        return completed
+
+    from litellm.completion_extras.litellm_responses_transformation.transformation import (
+        LiteLLMResponsesTransformationHandler,
+    )
+
+    recovered = LiteLLMResponsesTransformationHandler._recover_output_items_from_raw_sse(
+        "\n".join(chunks)
+    )
+    if recovered:
+        completed.output = recovered
+    return completed
+
+
 async def _collect_forced_responses_result(result: Any, logging_obj: Any) -> Any:
     from litellm.responses.streaming_iterator import BaseResponsesAPIStreamingIterator
 
@@ -125,10 +157,15 @@ async def _collect_forced_responses_result(result: Any, logging_obj: Any) -> Any
         return result
 
     result._completed_response_logged = True
-    async for _ in result:
-        pass
+    chunks, original_process_chunk = _record_stream_chunks(result)
+    try:
+        async for _ in result:
+            pass
+    finally:
+        result._process_chunk = original_process_chunk
 
-    completed = _completed_responses_api_response(result)
+    completed = _recover_empty_output_from_chunks(
+        _completed_responses_api_response(result), chunks)
     await logging_obj.async_success_handler(result=completed)
     return completed
 
@@ -140,10 +177,15 @@ def _collect_forced_responses_result_sync(result: Any, logging_obj: Any) -> Any:
         return result
 
     result._completed_response_logged = True
-    for _ in result:
-        pass
+    chunks, original_process_chunk = _record_stream_chunks(result)
+    try:
+        for _ in result:
+            pass
+    finally:
+        result._process_chunk = original_process_chunk
 
-    completed = _completed_responses_api_response(result)
+    completed = _recover_empty_output_from_chunks(
+        _completed_responses_api_response(result), chunks)
     logging_obj.success_handler(result=completed)
     return completed
 
