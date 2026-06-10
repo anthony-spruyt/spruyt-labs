@@ -954,6 +954,25 @@ _ROUTED_CHATGPT_RESPONSES_MODELS = {
 }
 
 
+def _enable_chatgpt_anthropic_responses_routing() -> None:
+    # Anthropic pass-through only routes OpenAI providers to the responses
+    # bridge by default. Routed ChatGPT aliases need the same treatment so
+    # they stay on `/responses` instead of falling back to chat completions.
+    from litellm.llms.anthropic.experimental_pass_through.messages import (
+        handler as anthropic_messages_handler,
+    )
+
+    providers = getattr(anthropic_messages_handler, "_RESPONSES_API_PROVIDERS", frozenset())
+    if "chatgpt" in providers:
+        return
+    anthropic_messages_handler._RESPONSES_API_PROVIDERS = frozenset(
+        {"chatgpt", *providers}
+    )
+
+
+_enable_chatgpt_anthropic_responses_routing()
+
+
 def _normalize_routed_chatgpt_responses_target(
     *,
     original_model: str,
