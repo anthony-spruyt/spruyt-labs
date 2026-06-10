@@ -1023,167 +1023,210 @@ def _collect_forced_chatgpt_responses_result_sync(result: Any) -> Any:
     raise ValueError(f"Expected completed ResponsesAPIResponse, got {type(completed)}")
 
 
-def _enable_chatgpt_anthropic_responses_streaming() -> None:
+def _enable_chatgpt_responses_transport_streaming() -> None:
     # ChatGPT codex `/responses` requires SSE transport even for callers that
-    # expect a non-streaming Anthropic response. Force upstream streaming for
-    # ChatGPT provider, then collect the completed SSE result back into the
-    # non-streaming Anthropic shape after LiteLLM finishes parsing it.
-    from litellm.llms.anthropic.experimental_pass_through.responses_adapters import (
-        handler as responses_adapter_handler,
-    )
+    # expect a non-streaming response object. Force stream at HTTP layer for
+    # ChatGPT responses requests, then collect completed SSE event back into a
+    # normal ResponsesAPIResponse before returning upstream.
+    from litellm.llms.custom_httpx import llm_http_handler
 
-    handler_cls = responses_adapter_handler.LiteLLMMessagesToResponsesAPIHandler
+    handler_cls = llm_http_handler.BaseLLMHTTPHandler
     if getattr(handler_cls, "_chatgpt_stream_patch", False):
         return
 
-    async def _patched_async_anthropic_messages_handler(
-        max_tokens: int,
-        messages: List[Dict],
+    original_async = handler_cls.async_response_api_handler
+    original_sync = handler_cls.response_api_handler
+
+    async def _patched_async_response_api_handler(
+        self,
         model: str,
-        context_management: Optional[Dict] = None,
-        metadata: Optional[Dict] = None,
-        output_config: Optional[Dict] = None,
-        stop_sequences: Optional[List[str]] = None,
-        stream: Optional[bool] = False,
-        system: Optional[str] = None,
-        temperature: Optional[float] = None,
-        thinking: Optional[Dict] = None,
-        tool_choice: Optional[Dict] = None,
-        tools: Optional[List[Dict]] = None,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
-        output_format: Optional[Dict] = None,
-        **kwargs,
-    ) -> Union[Any, AsyncIterator]:
+        input: Union[str, ResponseInputParam],
+        responses_api_provider_config: Any,
+        response_api_optional_request_params: Dict,
+        custom_llm_provider: str,
+        litellm_params: Any,
+        logging_obj: Any,
+        extra_headers: Optional[Dict[str, Any]] = None,
+        extra_body: Optional[Dict[str, Any]] = None,
+        timeout: Optional[Union[float, httpx.Timeout]] = None,
+        client: Optional[Any] = None,
+        fake_stream: bool = False,
+        litellm_metadata: Optional[Dict[str, Any]] = None,
+        shared_session: Optional[Any] = None,
+    ) -> Any:
         forced_transport_stream = _should_force_chatgpt_responses_stream(
-            kwargs.get("custom_llm_provider"),
+            custom_llm_provider,
         )
-        responses_kwargs = responses_adapter_handler._build_responses_kwargs(
-            max_tokens=max_tokens,
-            messages=messages,
-            model=model,
-            context_management=context_management,
-            metadata=metadata,
-            output_config=output_config,
-            stop_sequences=stop_sequences,
-            stream=stream or forced_transport_stream,
-            system=system,
-            temperature=temperature,
-            thinking=thinking,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_k=top_k,
-            top_p=top_p,
-            output_format=output_format,
-            extra_kwargs=kwargs,
-        )
-
-        result = await litellm.aresponses(**responses_kwargs)
-
-        if stream:
-            wrapper = responses_adapter_handler.AnthropicResponsesStreamWrapper(
-                responses_stream=result, model=model
-            )
-            return wrapper.async_anthropic_sse_wrapper()
-
-        if forced_transport_stream:
-            result = await _collect_forced_chatgpt_responses_result(result)
-
-        if not isinstance(result, responses_adapter_handler.ResponsesAPIResponse):
-            raise ValueError(f"Expected ResponsesAPIResponse, got {type(result)}")
-
-        return responses_adapter_handler._ADAPTER.translate_response(result)
-
-    def _patched_anthropic_messages_handler(
-        max_tokens: int,
-        messages: List[Dict],
-        model: str,
-        context_management: Optional[Dict] = None,
-        metadata: Optional[Dict] = None,
-        output_config: Optional[Dict] = None,
-        stop_sequences: Optional[List[str]] = None,
-        stream: Optional[bool] = False,
-        system: Optional[str] = None,
-        temperature: Optional[float] = None,
-        thinking: Optional[Dict] = None,
-        tool_choice: Optional[Dict] = None,
-        tools: Optional[List[Dict]] = None,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
-        output_format: Optional[Dict] = None,
-        _is_async: bool = False,
-        **kwargs,
-    ) -> Union[Any, AsyncIterator, Coroutine[Any, Any, Union[Any, AsyncIterator]]]:
-        if _is_async:
-            return _patched_async_anthropic_messages_handler(
-                max_tokens=max_tokens,
-                messages=messages,
+        if not forced_transport_stream:
+            return await original_async(
+                self,
                 model=model,
-                context_management=context_management,
-                metadata=metadata,
-                output_config=output_config,
-                stop_sequences=stop_sequences,
-                stream=stream,
-                system=system,
-                temperature=temperature,
-                thinking=thinking,
-                tool_choice=tool_choice,
-                tools=tools,
-                top_k=top_k,
-                top_p=top_p,
-                output_format=output_format,
-                **kwargs,
+                input=input,
+                responses_api_provider_config=responses_api_provider_config,
+                response_api_optional_request_params=response_api_optional_request_params,
+                custom_llm_provider=custom_llm_provider,
+                litellm_params=litellm_params,
+                logging_obj=logging_obj,
+                extra_headers=extra_headers,
+                extra_body=extra_body,
+                timeout=timeout,
+                client=client,
+                fake_stream=fake_stream,
+                litellm_metadata=litellm_metadata,
+                shared_session=shared_session,
+            )
+
+        original_stream = bool(response_api_optional_request_params.get("stream", False))
+        if original_stream:
+            return await original_async(
+                self,
+                model=model,
+                input=input,
+                responses_api_provider_config=responses_api_provider_config,
+                response_api_optional_request_params=response_api_optional_request_params,
+                custom_llm_provider=custom_llm_provider,
+                litellm_params=litellm_params,
+                logging_obj=logging_obj,
+                extra_headers=extra_headers,
+                extra_body=extra_body,
+                timeout=timeout,
+                client=client,
+                fake_stream=fake_stream,
+                litellm_metadata=litellm_metadata,
+                shared_session=shared_session,
+            )
+
+        forced_params = dict(response_api_optional_request_params)
+        forced_params["stream"] = True
+        result = await original_async(
+            self,
+            model=model,
+            input=input,
+            responses_api_provider_config=responses_api_provider_config,
+            response_api_optional_request_params=forced_params,
+            custom_llm_provider=custom_llm_provider,
+            litellm_params=litellm_params,
+            logging_obj=logging_obj,
+            extra_headers=extra_headers,
+            extra_body=extra_body,
+            timeout=timeout,
+            client=client,
+            fake_stream=fake_stream,
+            litellm_metadata=litellm_metadata,
+            shared_session=shared_session,
+        )
+        return await _collect_forced_chatgpt_responses_result(result)
+
+    def _patched_response_api_handler(
+        self,
+        model: str,
+        input: Union[str, ResponseInputParam],
+        responses_api_provider_config: Any,
+        response_api_optional_request_params: Dict,
+        custom_llm_provider: str,
+        litellm_params: Any,
+        logging_obj: Any,
+        extra_headers: Optional[Dict[str, Any]] = None,
+        extra_body: Optional[Dict[str, Any]] = None,
+        timeout: Optional[Union[float, httpx.Timeout]] = None,
+        client: Optional[Any] = None,
+        _is_async: bool = False,
+        fake_stream: bool = False,
+        litellm_metadata: Optional[Dict[str, Any]] = None,
+        shared_session: Optional[Any] = None,
+    ) -> Any:
+        if _is_async:
+            return original_sync(
+                self,
+                model=model,
+                input=input,
+                responses_api_provider_config=responses_api_provider_config,
+                response_api_optional_request_params=response_api_optional_request_params,
+                custom_llm_provider=custom_llm_provider,
+                litellm_params=litellm_params,
+                logging_obj=logging_obj,
+                extra_headers=extra_headers,
+                extra_body=extra_body,
+                timeout=timeout,
+                client=client,
+                _is_async=True,
+                fake_stream=fake_stream,
+                litellm_metadata=litellm_metadata,
+                shared_session=shared_session,
             )
 
         forced_transport_stream = _should_force_chatgpt_responses_stream(
-            kwargs.get("custom_llm_provider"),
+            custom_llm_provider,
         )
-        responses_kwargs = responses_adapter_handler._build_responses_kwargs(
-            max_tokens=max_tokens,
-            messages=messages,
-            model=model,
-            context_management=context_management,
-            metadata=metadata,
-            output_config=output_config,
-            stop_sequences=stop_sequences,
-            stream=stream or forced_transport_stream,
-            system=system,
-            temperature=temperature,
-            thinking=thinking,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_k=top_k,
-            top_p=top_p,
-            output_format=output_format,
-            extra_kwargs=kwargs,
-        )
-
-        result = litellm.responses(**responses_kwargs)
-
-        if stream:
-            wrapper = responses_adapter_handler.AnthropicResponsesStreamWrapper(
-                responses_stream=result, model=model
+        if not forced_transport_stream:
+            return original_sync(
+                self,
+                model=model,
+                input=input,
+                responses_api_provider_config=responses_api_provider_config,
+                response_api_optional_request_params=response_api_optional_request_params,
+                custom_llm_provider=custom_llm_provider,
+                litellm_params=litellm_params,
+                logging_obj=logging_obj,
+                extra_headers=extra_headers,
+                extra_body=extra_body,
+                timeout=timeout,
+                client=client,
+                _is_async=_is_async,
+                fake_stream=fake_stream,
+                litellm_metadata=litellm_metadata,
+                shared_session=shared_session,
             )
-            return wrapper.async_anthropic_sse_wrapper()
 
-        if forced_transport_stream:
-            result = _collect_forced_chatgpt_responses_result_sync(result)
+        original_stream = bool(response_api_optional_request_params.get("stream", False))
+        if original_stream:
+            return original_sync(
+                self,
+                model=model,
+                input=input,
+                responses_api_provider_config=responses_api_provider_config,
+                response_api_optional_request_params=response_api_optional_request_params,
+                custom_llm_provider=custom_llm_provider,
+                litellm_params=litellm_params,
+                logging_obj=logging_obj,
+                extra_headers=extra_headers,
+                extra_body=extra_body,
+                timeout=timeout,
+                client=client,
+                _is_async=_is_async,
+                fake_stream=fake_stream,
+                litellm_metadata=litellm_metadata,
+                shared_session=shared_session,
+            )
 
-        if not isinstance(result, responses_adapter_handler.ResponsesAPIResponse):
-            raise ValueError(f"Expected ResponsesAPIResponse, got {type(result)}")
+        forced_params = dict(response_api_optional_request_params)
+        forced_params["stream"] = True
+        result = original_sync(
+            self,
+            model=model,
+            input=input,
+            responses_api_provider_config=responses_api_provider_config,
+            response_api_optional_request_params=forced_params,
+            custom_llm_provider=custom_llm_provider,
+            litellm_params=litellm_params,
+            logging_obj=logging_obj,
+            extra_headers=extra_headers,
+            extra_body=extra_body,
+            timeout=timeout,
+            client=client,
+            _is_async=False,
+            fake_stream=fake_stream,
+            litellm_metadata=litellm_metadata,
+            shared_session=shared_session,
+        )
+        return _collect_forced_chatgpt_responses_result_sync(result)
 
-        return responses_adapter_handler._ADAPTER.translate_response(result)
-
-    handler_cls.async_anthropic_messages_handler = staticmethod(
-        _patched_async_anthropic_messages_handler
-    )
-    handler_cls.anthropic_messages_handler = staticmethod(
-        _patched_anthropic_messages_handler
-    )
+    handler_cls.async_response_api_handler = _patched_async_response_api_handler
+    handler_cls.response_api_handler = _patched_response_api_handler
     handler_cls._chatgpt_stream_patch = True
 
 
-_enable_chatgpt_anthropic_responses_streaming()
+_enable_chatgpt_responses_transport_streaming()
 
 
 def _transform_responses_result_for_anthropic_logging(
