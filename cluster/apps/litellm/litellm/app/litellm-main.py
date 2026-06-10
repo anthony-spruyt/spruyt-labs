@@ -1230,7 +1230,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 extra_body=extra_body,
                 timeout=timeout,
                 client=async_client,
-                fake_stream=fake_stream,
+                fake_stream=False,
                 litellm_metadata=litellm_metadata,
                 shared_session=shared_session,
             )
@@ -1346,7 +1346,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 timeout=timeout,
                 client=sync_client,
                 _is_async=False,
-                fake_stream=fake_stream,
+                fake_stream=False,
                 litellm_metadata=litellm_metadata,
                 shared_session=shared_session,
             )
