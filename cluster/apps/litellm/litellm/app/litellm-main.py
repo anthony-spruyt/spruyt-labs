@@ -961,10 +961,10 @@ def _normalize_routed_chatgpt_responses_target(
     responses_api_model_info: Dict[str, Any],
     custom_llm_provider: Optional[str],
 ) -> Tuple[str, Optional[str]]:
-    # Temporary local fix: routed ChatGPT responses models can lose their
-    # provider-specific responses config after LiteLLM strips the provider prefix.
-    if responses_api_model_info.get("mode") != "responses":
-        return resolved_model, custom_llm_provider
+    # Temporary local fix: routed ChatGPT responses models can lose both their
+    # provider-specific config and their `mode: responses` metadata after alias
+    # and provider normalization. Preserve the ChatGPT provider and force the
+    # responses bridge to keep these models on `/responses` with bare model IDs.
     if custom_llm_provider != "chatgpt":
         return resolved_model, custom_llm_provider
 
@@ -973,6 +973,7 @@ def _normalize_routed_chatgpt_responses_target(
     if stripped_candidate not in _ROUTED_CHATGPT_RESPONSES_MODELS:
         return resolved_model, custom_llm_provider
 
+    responses_api_model_info["mode"] = "responses"
     return stripped_candidate, "chatgpt"
 
 
