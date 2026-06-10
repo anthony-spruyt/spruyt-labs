@@ -1241,8 +1241,29 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
         litellm_metadata: Optional[Dict[str, Any]] = None,
         shared_session: Optional[Any] = None,
     ) -> Any:
+        should_force = _should_force(model, custom_llm_provider)
+
         if _is_async:
-            return original_sync(
+            if not should_force:
+                return original_sync(
+                    self,
+                    model=model,
+                    input=input,
+                    responses_api_provider_config=responses_api_provider_config,
+                    response_api_optional_request_params=response_api_optional_request_params,
+                    custom_llm_provider=custom_llm_provider,
+                    litellm_params=litellm_params,
+                    logging_obj=logging_obj,
+                    extra_headers=extra_headers,
+                    extra_body=extra_body,
+                    timeout=timeout,
+                    client=client,
+                    _is_async=True,
+                    fake_stream=fake_stream,
+                    litellm_metadata=litellm_metadata,
+                    shared_session=shared_session,
+                )
+            return _patched_async_response_api_handler(
                 self,
                 model=model,
                 input=input,
@@ -1255,13 +1276,12 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
                 extra_body=extra_body,
                 timeout=timeout,
                 client=client,
-                _is_async=True,
                 fake_stream=fake_stream,
                 litellm_metadata=litellm_metadata,
                 shared_session=shared_session,
             )
 
-        if not _should_force(model, custom_llm_provider):
+        if not should_force:
             return original_sync(
                 self,
                 model=model,
