@@ -973,6 +973,63 @@ def _enable_chatgpt_anthropic_responses_routing() -> None:
 _enable_chatgpt_anthropic_responses_routing()
 
 
+def _transform_responses_result_for_anthropic_logging(
+    logging_obj: Any,
+    result: Any,
+) -> ModelResponse:
+    from litellm.completion_extras.litellm_responses_transformation.transformation import (
+        LiteLLMResponsesTransformationHandler,
+    )
+    from litellm.types.llms.openai import ResponseCompletedEvent, ResponsesAPIResponse
+
+    if isinstance(result, ResponseCompletedEvent):
+        result = result.response
+    if not isinstance(result, ResponsesAPIResponse):
+        return result
+
+    return LiteLLMResponsesTransformationHandler().transform_response(
+        model=logging_obj.model,
+        raw_response=result,
+        model_response=litellm.ModelResponse(),
+        logging_obj=logging_obj,
+        request_data={},
+        messages=[],
+        optional_params={},
+        litellm_params={},
+        encoding=litellm.encoding,
+        json_mode=False,
+    )
+
+
+def _enable_chatgpt_anthropic_responses_logging() -> None:
+    # Anthropic messages success logging assumes Anthropic-native payloads.
+    # Routed ChatGPT responses aliases return Responses API objects instead,
+    # so convert them through LiteLLM's existing bridge before logging.
+    from litellm.litellm_core_utils.litellm_logging import Logging
+
+    if getattr(Logging, "_chatgpt_anthropic_responses_logging_patch", False):
+        return
+
+    original = Logging._handle_anthropic_messages_response_logging
+
+    def _patched_handle_anthropic_messages_response_logging(
+        self,
+        result: Any,
+    ) -> ModelResponse:
+        transformed = _transform_responses_result_for_anthropic_logging(self, result)
+        if isinstance(transformed, ModelResponse):
+            return transformed
+        return original(self, transformed)
+
+    Logging._handle_anthropic_messages_response_logging = (
+        _patched_handle_anthropic_messages_response_logging
+    )
+    Logging._chatgpt_anthropic_responses_logging_patch = True
+
+
+_enable_chatgpt_anthropic_responses_logging()
+
+
 def _normalize_routed_chatgpt_responses_target(
     *,
     original_model: str,
