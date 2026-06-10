@@ -1040,7 +1040,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
     async def _patched_async_response_api_handler(
         self,
         model: str,
-        input: Union[str, ResponseInputParam],
+        input: Any,
         responses_api_provider_config: Any,
         response_api_optional_request_params: Dict,
         custom_llm_provider: str,
@@ -1120,7 +1120,7 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
     def _patched_response_api_handler(
         self,
         model: str,
-        input: Union[str, ResponseInputParam],
+        input: Any,
         responses_api_provider_config: Any,
         response_api_optional_request_params: Dict,
         custom_llm_provider: str,
