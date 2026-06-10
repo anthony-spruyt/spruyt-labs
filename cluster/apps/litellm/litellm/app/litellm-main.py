@@ -1296,6 +1296,41 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
 _enable_chatgpt_responses_transport_streaming()
 
 
+def _build_fallback_model_response_for_responses_logging(
+    logging_obj: Any,
+    result: Any,
+) -> ModelResponse:
+    from litellm.types.utils import Usage
+
+    # Anthropic success logging only needs a chat-completions-shaped object.
+    # Some ChatGPT responses return empty `output` even though `output_text` and
+    # usage are present, so synthesize minimal shape instead of failing logging.
+    model_response = litellm.ModelResponse()
+    model_response.model = logging_obj.model
+    model_response.created = int(time.time())
+    model_response.choices = [
+        Choices(
+            index=0,
+            finish_reason="stop",
+            message=Message(
+                role="assistant",
+                content=getattr(result, "output_text", "") or "",
+            ),
+        )
+    ]
+
+    usage = getattr(result, "usage", None)
+    if usage is not None:
+        model_response.usage = Usage(
+            prompt_tokens=getattr(usage, "input_tokens", None),
+            completion_tokens=getattr(usage, "output_tokens", None),
+            total_tokens=getattr(usage, "total_tokens", None),
+        )
+
+    return model_response
+
+
+
 def _transform_responses_result_for_anthropic_logging(
     logging_obj: Any,
     result: Any,
@@ -1310,18 +1345,23 @@ def _transform_responses_result_for_anthropic_logging(
     if not isinstance(result, ResponsesAPIResponse):
         return result
 
-    return LiteLLMResponsesTransformationHandler().transform_response(
-        model=logging_obj.model,
-        raw_response=result,
-        model_response=litellm.ModelResponse(),
-        logging_obj=logging_obj,
-        request_data={},
-        messages=[],
-        optional_params={},
-        litellm_params={},
-        encoding=litellm.encoding,
-        json_mode=False,
-    )
+    try:
+        return LiteLLMResponsesTransformationHandler().transform_response(
+            model=logging_obj.model,
+            raw_response=result,
+            model_response=litellm.ModelResponse(),
+            logging_obj=logging_obj,
+            request_data={},
+            messages=[],
+            optional_params={},
+            litellm_params={},
+            encoding=litellm.encoding,
+            json_mode=False,
+        )
+    except ValueError as exc:
+        if "Unknown items in responses API response" not in str(exc):
+            raise
+        return _build_fallback_model_response_for_responses_logging(logging_obj, result)
 
 
 def _enable_chatgpt_anthropic_responses_logging() -> None:
