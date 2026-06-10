@@ -973,7 +973,7 @@ def _normalize_routed_chatgpt_responses_target(
     if stripped_candidate not in _ROUTED_CHATGPT_RESPONSES_MODELS:
         return resolved_model, custom_llm_provider
 
-    return f"chatgpt/responses/{stripped_candidate}", "chatgpt"
+    return stripped_candidate, "chatgpt"
 
 
 def responses_api_bridge_check(
