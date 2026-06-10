@@ -3,6 +3,13 @@ import os
 from functools import lru_cache
 from typing import Any
 
+try:
+    from .litellm_patch import install_litellm_patches
+except ImportError:
+    from litellm_patch import install_litellm_patches
+
+
+install_litellm_patches()
 
 _DEFAULT_CONFIG_PATH = "/app/config.yaml"
 

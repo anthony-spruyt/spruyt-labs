@@ -29,6 +29,7 @@ configMapGenerator:
     files:
       - __init__.py=plugins/chatgpt/__init__.py
       - chatgpt_plugin.py=plugins/chatgpt/chatgpt_plugin.py
+      - litellm_patch.py=plugins/chatgpt/litellm_patch.py
   - name: litellm-middleware-plugin
     namespace: litellm
     options:
@@ -49,11 +50,5 @@ configMapGenerator:
       # custom_callbacks and hindsight package markers.
       - __init__.py=plugins/hindsight/__init__.py
       - hindsight_plugin.py=plugins/hindsight/hindsight_plugin.py
-  - name: litellm-main-override
-    namespace: litellm
-    options:
-      disableNameSuffixHash: true
-    files:
-      - main.py=litellm-main.py
 configurations:
   - ./kustomizeconfig.yaml

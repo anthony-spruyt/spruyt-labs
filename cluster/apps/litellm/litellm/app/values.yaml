@@ -30,7 +30,7 @@ controllers:
               topologyKey: kubernetes.io/hostname
     annotations:
       reloader.stakater.com/auto: "true"
-      configmap.reloader.stakater.com/reload: "litellm-chatgpt-plugin,litellm-hindsight-plugin,litellm-main-override,litellm-middleware-plugin"
+      configmap.reloader.stakater.com/reload: "litellm-chatgpt-plugin,litellm-hindsight-plugin,litellm-middleware-plugin"
     initContainers:
       prepare-custom-callbacks:
         image:
@@ -680,6 +680,9 @@ persistence:
           - path: /app/custom_callbacks/chatgpt/chatgpt_plugin.py
             subPath: chatgpt_plugin.py
             readOnly: true
+          - path: /app/custom_callbacks/chatgpt/litellm_patch.py
+            subPath: litellm_patch.py
+            readOnly: true
   middleware-plugin:
     type: configMap
     name: litellm-middleware-plugin
@@ -700,15 +703,6 @@ persistence:
             readOnly: true
           - path: /app/custom_callbacks/middleware/registry.py
             subPath: registry.py
-            readOnly: true
-  litellm-main-override:
-    type: configMap
-    name: litellm-main-override
-    advancedMounts:
-      litellm:
-        litellm:
-          - path: /app/litellm/main.py
-            subPath: main.py
             readOnly: true
   chatgpt-auth-data:
     type: persistentVolumeClaim
