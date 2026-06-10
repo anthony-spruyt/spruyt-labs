@@ -974,40 +974,213 @@ _enable_chatgpt_anthropic_responses_routing()
 
 
 def _should_force_chatgpt_responses_stream(
-    model: str,
     custom_llm_provider: Optional[str],
 ) -> bool:
-    if custom_llm_provider != "chatgpt":
-        return False
-    return model.removeprefix("chatgpt/").removeprefix("responses/") in _ROUTED_CHATGPT_RESPONSES_MODELS
+    return custom_llm_provider == "chatgpt"
+
+
+async def _collect_forced_chatgpt_responses_result(result: Any) -> Any:
+    from litellm.responses.streaming_iterator import BaseResponsesAPIStreamingIterator
+    from litellm.types.llms.openai import ResponseCompletedEvent, ResponsesAPIResponse
+
+    if not isinstance(result, BaseResponsesAPIStreamingIterator):
+        return result
+
+    async for _ in result:
+        pass
+
+    completed = getattr(result, "completed_response", None)
+    if isinstance(completed, ResponseCompletedEvent):
+        return completed.response
+    if isinstance(completed, ResponsesAPIResponse):
+        return completed
+
+    response = getattr(completed, "response", None)
+    if isinstance(response, ResponsesAPIResponse):
+        return response
+    raise ValueError(f"Expected completed ResponsesAPIResponse, got {type(completed)}")
+
+
+def _collect_forced_chatgpt_responses_result_sync(result: Any) -> Any:
+    from litellm.responses.streaming_iterator import BaseResponsesAPIStreamingIterator
+    from litellm.types.llms.openai import ResponseCompletedEvent, ResponsesAPIResponse
+
+    if not isinstance(result, BaseResponsesAPIStreamingIterator):
+        return result
+
+    for _ in result:
+        pass
+
+    completed = getattr(result, "completed_response", None)
+    if isinstance(completed, ResponseCompletedEvent):
+        return completed.response
+    if isinstance(completed, ResponsesAPIResponse):
+        return completed
+
+    response = getattr(completed, "response", None)
+    if isinstance(response, ResponsesAPIResponse):
+        return response
+    raise ValueError(f"Expected completed ResponsesAPIResponse, got {type(completed)}")
 
 
 def _enable_chatgpt_anthropic_responses_streaming() -> None:
-    # ChatGPT codex `/responses` path needs streaming transport enabled, not only
-    # `{"stream": true}` in request body. Anthropic pass-through currently drops
-    # that flag for non-streaming callers, so force it for routed ChatGPT aliases.
+    # ChatGPT codex `/responses` requires SSE transport even for callers that
+    # expect a non-streaming Anthropic response. Force upstream streaming for
+    # ChatGPT provider, then collect the completed SSE result back into the
+    # non-streaming Anthropic shape after LiteLLM finishes parsing it.
     from litellm.llms.anthropic.experimental_pass_through.responses_adapters import (
         handler as responses_adapter_handler,
     )
 
-    if getattr(responses_adapter_handler, "_chatgpt_stream_patch", False):
+    handler_cls = responses_adapter_handler.LiteLLMMessagesToResponsesAPIHandler
+    if getattr(handler_cls, "_chatgpt_stream_patch", False):
         return
 
-    original = responses_adapter_handler._build_responses_kwargs
+    async def _patched_async_anthropic_messages_handler(
+        max_tokens: int,
+        messages: List[Dict],
+        model: str,
+        context_management: Optional[Dict] = None,
+        metadata: Optional[Dict] = None,
+        output_config: Optional[Dict] = None,
+        stop_sequences: Optional[List[str]] = None,
+        stream: Optional[bool] = False,
+        system: Optional[str] = None,
+        temperature: Optional[float] = None,
+        thinking: Optional[Dict] = None,
+        tool_choice: Optional[Dict] = None,
+        tools: Optional[List[Dict]] = None,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
+        output_format: Optional[Dict] = None,
+        **kwargs,
+    ) -> Union[Any, AsyncIterator]:
+        forced_transport_stream = _should_force_chatgpt_responses_stream(
+            kwargs.get("custom_llm_provider"),
+        )
+        responses_kwargs = responses_adapter_handler._build_responses_kwargs(
+            max_tokens=max_tokens,
+            messages=messages,
+            model=model,
+            context_management=context_management,
+            metadata=metadata,
+            output_config=output_config,
+            stop_sequences=stop_sequences,
+            stream=stream or forced_transport_stream,
+            system=system,
+            temperature=temperature,
+            thinking=thinking,
+            tool_choice=tool_choice,
+            tools=tools,
+            top_k=top_k,
+            top_p=top_p,
+            output_format=output_format,
+            extra_kwargs=kwargs,
+        )
 
-    def _patched_build_responses_kwargs(*args: Any, **kwargs: Any) -> Dict[str, Any]:
-        responses_kwargs = original(*args, **kwargs)
-        model = responses_kwargs.get("model")
-        custom_llm_provider = responses_kwargs.get("custom_llm_provider")
-        if isinstance(model, str) and _should_force_chatgpt_responses_stream(
-            model,
-            custom_llm_provider,
-        ):
-            responses_kwargs["stream"] = True
-        return responses_kwargs
+        result = await litellm.aresponses(**responses_kwargs)
 
-    responses_adapter_handler._build_responses_kwargs = _patched_build_responses_kwargs
-    responses_adapter_handler._chatgpt_stream_patch = True
+        if stream:
+            wrapper = responses_adapter_handler.AnthropicResponsesStreamWrapper(
+                responses_stream=result, model=model
+            )
+            return wrapper.async_anthropic_sse_wrapper()
+
+        if forced_transport_stream:
+            result = await _collect_forced_chatgpt_responses_result(result)
+
+        if not isinstance(result, responses_adapter_handler.ResponsesAPIResponse):
+            raise ValueError(f"Expected ResponsesAPIResponse, got {type(result)}")
+
+        return responses_adapter_handler._ADAPTER.translate_response(result)
+
+    def _patched_anthropic_messages_handler(
+        max_tokens: int,
+        messages: List[Dict],
+        model: str,
+        context_management: Optional[Dict] = None,
+        metadata: Optional[Dict] = None,
+        output_config: Optional[Dict] = None,
+        stop_sequences: Optional[List[str]] = None,
+        stream: Optional[bool] = False,
+        system: Optional[str] = None,
+        temperature: Optional[float] = None,
+        thinking: Optional[Dict] = None,
+        tool_choice: Optional[Dict] = None,
+        tools: Optional[List[Dict]] = None,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
+        output_format: Optional[Dict] = None,
+        _is_async: bool = False,
+        **kwargs,
+    ) -> Union[Any, AsyncIterator, Coroutine[Any, Any, Union[Any, AsyncIterator]]]:
+        if _is_async:
+            return _patched_async_anthropic_messages_handler(
+                max_tokens=max_tokens,
+                messages=messages,
+                model=model,
+                context_management=context_management,
+                metadata=metadata,
+                output_config=output_config,
+                stop_sequences=stop_sequences,
+                stream=stream,
+                system=system,
+                temperature=temperature,
+                thinking=thinking,
+                tool_choice=tool_choice,
+                tools=tools,
+                top_k=top_k,
+                top_p=top_p,
+                output_format=output_format,
+                **kwargs,
+            )
+
+        forced_transport_stream = _should_force_chatgpt_responses_stream(
+            kwargs.get("custom_llm_provider"),
+        )
+        responses_kwargs = responses_adapter_handler._build_responses_kwargs(
+            max_tokens=max_tokens,
+            messages=messages,
+            model=model,
+            context_management=context_management,
+            metadata=metadata,
+            output_config=output_config,
+            stop_sequences=stop_sequences,
+            stream=stream or forced_transport_stream,
+            system=system,
+            temperature=temperature,
+            thinking=thinking,
+            tool_choice=tool_choice,
+            tools=tools,
+            top_k=top_k,
+            top_p=top_p,
+            output_format=output_format,
+            extra_kwargs=kwargs,
+        )
+
+        result = litellm.responses(**responses_kwargs)
+
+        if stream:
+            wrapper = responses_adapter_handler.AnthropicResponsesStreamWrapper(
+                responses_stream=result, model=model
+            )
+            return wrapper.async_anthropic_sse_wrapper()
+
+        if forced_transport_stream:
+            result = _collect_forced_chatgpt_responses_result_sync(result)
+
+        if not isinstance(result, responses_adapter_handler.ResponsesAPIResponse):
+            raise ValueError(f"Expected ResponsesAPIResponse, got {type(result)}")
+
+        return responses_adapter_handler._ADAPTER.translate_response(result)
+
+    handler_cls.async_anthropic_messages_handler = staticmethod(
+        _patched_async_anthropic_messages_handler
+    )
+    handler_cls.anthropic_messages_handler = staticmethod(
+        _patched_anthropic_messages_handler
+    )
+    handler_cls._chatgpt_stream_patch = True
 
 
 _enable_chatgpt_anthropic_responses_streaming()
