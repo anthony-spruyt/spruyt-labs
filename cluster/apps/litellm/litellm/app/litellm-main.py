@@ -973,6 +973,46 @@ def _enable_chatgpt_anthropic_responses_routing() -> None:
 _enable_chatgpt_anthropic_responses_routing()
 
 
+def _should_force_chatgpt_responses_stream(
+    model: str,
+    custom_llm_provider: Optional[str],
+) -> bool:
+    if custom_llm_provider != "chatgpt":
+        return False
+    return model.removeprefix("chatgpt/").removeprefix("responses/") in _ROUTED_CHATGPT_RESPONSES_MODELS
+
+
+def _enable_chatgpt_anthropic_responses_streaming() -> None:
+    # ChatGPT codex `/responses` path needs streaming transport enabled, not only
+    # `{"stream": true}` in request body. Anthropic pass-through currently drops
+    # that flag for non-streaming callers, so force it for routed ChatGPT aliases.
+    from litellm.llms.anthropic.experimental_pass_through.responses_adapters import (
+        handler as responses_adapter_handler,
+    )
+
+    if getattr(responses_adapter_handler, "_chatgpt_stream_patch", False):
+        return
+
+    original = responses_adapter_handler._build_responses_kwargs
+
+    def _patched_build_responses_kwargs(*args: Any, **kwargs: Any) -> Dict[str, Any]:
+        responses_kwargs = original(*args, **kwargs)
+        model = responses_kwargs.get("model")
+        custom_llm_provider = responses_kwargs.get("custom_llm_provider")
+        if isinstance(model, str) and _should_force_chatgpt_responses_stream(
+            model,
+            custom_llm_provider,
+        ):
+            responses_kwargs["stream"] = True
+        return responses_kwargs
+
+    responses_adapter_handler._build_responses_kwargs = _patched_build_responses_kwargs
+    responses_adapter_handler._chatgpt_stream_patch = True
+
+
+_enable_chatgpt_anthropic_responses_streaming()
+
+
 def _transform_responses_result_for_anthropic_logging(
     logging_obj: Any,
     result: Any,
