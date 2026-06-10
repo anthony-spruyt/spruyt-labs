@@ -1111,6 +1111,11 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
 
         def _patched_post(*args: Any, **kwargs: Any) -> Any:
             kwargs["stream"] = True
+            payload = kwargs.get("json")
+            if isinstance(payload, dict):
+                payload = dict(payload)
+                payload["stream"] = True
+                kwargs["json"] = payload
             return original_post(*args, **kwargs)
 
         streaming_client.post = _patched_post
@@ -1121,6 +1126,11 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
 
         async def _patched_post(*args: Any, **kwargs: Any) -> Any:
             kwargs["stream"] = True
+            payload = kwargs.get("json")
+            if isinstance(payload, dict):
+                payload = dict(payload)
+                payload["stream"] = True
+                kwargs["json"] = payload
             return await original_post(*args, **kwargs)
 
         streaming_client.post = _patched_post
@@ -1132,11 +1142,21 @@ def _enable_chatgpt_responses_transport_streaming() -> None:
     async def _patched_async_http_post(self, *args: Any, **kwargs: Any) -> Any:
         if _CHATGPT_RESPONSES_TRANSPORT_STREAM.get():
             kwargs["stream"] = True
+            payload = kwargs.get("json")
+            if isinstance(payload, dict):
+                payload = dict(payload)
+                payload["stream"] = True
+                kwargs["json"] = payload
         return await original_async_http_post(self, *args, **kwargs)
 
     def _patched_sync_http_post(self, *args: Any, **kwargs: Any) -> Any:
         if _CHATGPT_RESPONSES_TRANSPORT_STREAM.get():
             kwargs["stream"] = True
+            payload = kwargs.get("json")
+            if isinstance(payload, dict):
+                payload = dict(payload)
+                payload["stream"] = True
+                kwargs["json"] = payload
         return original_sync_http_post(self, *args, **kwargs)
 
     AsyncHTTPHandler.post = _patched_async_http_post
