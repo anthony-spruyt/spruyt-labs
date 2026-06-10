@@ -1,6 +1,5 @@
 import importlib
 import json
-import logging
 import os
 import sys
 
@@ -66,7 +65,6 @@ async def test_system_roles_are_renamed_for_chatgpt_only(plugin):
     out = await plugin.chatgpt_middleware.async_pre_call_hook(
         None, None, data, "completion")
 
-    assert out["stream"] is True
     assert out["num_retries"] == 2
     assert out["messages"][0]["role"] == "developer"
 
@@ -120,11 +118,8 @@ async def test_configured_alias_to_gpt55_gets_retry_count(monkeypatch, tmp_path)
         "completion",
     )
 
-    assert out["stream"] is True
     assert out["num_retries"] == 4
-    assert responses_out["stream"] is True
     assert responses_out["num_retries"] == 6
-    assert mini_out["stream"] is True
     assert mini_out["num_retries"] == 3
 
 
@@ -138,29 +133,7 @@ async def test_existing_num_retries_is_preserved(plugin):
     out = await plugin.chatgpt_middleware.async_pre_call_hook(
         None, None, data, "completion")
 
-    assert out["stream"] is True
     assert out["num_retries"] == 9
-
-
-async def test_responses_model_logs_forced_stream_and_retry(plugin, caplog):
-    data = {
-        "model": "chatgpt/gpt-5.5",
-        "messages": [{"role": "user", "content": "hello"}],
-    }
-
-    with caplog.at_level(logging.WARNING):
-        out = await plugin.chatgpt_middleware.async_pre_call_hook(
-            None, None, data, "completion")
-
-    assert out["stream"] is True
-    assert out["num_retries"] == 2
-    assert "chatgpt middleware prepared request" in caplog.text
-    assert "model=chatgpt/gpt-5.5" in caplog.text
-    assert "resolved_model=chatgpt/gpt-5.5" in caplog.text
-    assert "stream_before=None" in caplog.text
-    assert "stream_after=True" in caplog.text
-    assert "forced_stream=True" in caplog.text
-    assert "hydrated_num_retries=True" in caplog.text
 
 
 async def test_configured_alias_to_chatgpt_is_renamed(monkeypatch, tmp_path):
@@ -246,3 +219,31 @@ async def test_bad_messages_shape_preserves_anthropic_system(plugin):
 
     assert out["system"] == "do not drop this"
     assert out["messages"] is None
+
+
+async def test_stream_flag_is_not_mutated(plugin):
+    absent = {
+        "model": "chatgpt/gpt-5.5",
+        "messages": [{"role": "system", "content": "sys"}],
+    }
+    false_stream = {
+        "model": "chatgpt/gpt-5.5",
+        "stream": False,
+        "messages": [{"role": "system", "content": "sys"}],
+    }
+    true_stream = {
+        "model": "chatgpt/gpt-5.5",
+        "stream": True,
+        "messages": [{"role": "system", "content": "sys"}],
+    }
+
+    absent_out = await plugin.chatgpt_middleware.async_pre_call_hook(
+        None, None, absent, "completion")
+    false_out = await plugin.chatgpt_middleware.async_pre_call_hook(
+        None, None, false_stream, "completion")
+    true_out = await plugin.chatgpt_middleware.async_pre_call_hook(
+        None, None, true_stream, "completion")
+
+    assert "stream" not in absent_out
+    assert false_out["stream"] is False
+    assert true_out["stream"] is True

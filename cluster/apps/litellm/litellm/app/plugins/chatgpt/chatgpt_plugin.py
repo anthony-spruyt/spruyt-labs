@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from functools import lru_cache
 from typing import Any
@@ -13,8 +12,6 @@ _CHATGPT_RESPONSES_MODELS = {
     "chatgpt/gpt-5.4-mini",
     "chatgpt/responses/gpt-5.4-mini",
 }
-
-_LOG = logging.getLogger(__name__)
 
 
 def _config_path() -> str:
@@ -152,34 +149,6 @@ def _system_to_developer_content(system: Any) -> str:
     return str(system)
 
 
-def _log_responses_model_pre_call(
-    *,
-    model: str,
-    resolved_model: str,
-    call_type: str,
-    stream_before: Any,
-    stream_after: Any,
-    forced_stream: bool,
-    num_retries_before: Any,
-    num_retries_after: Any,
-    hydrated_num_retries: bool,
-) -> None:
-    _LOG.warning(
-        "chatgpt middleware prepared request: model=%s resolved_model=%s call_type=%s "
-        "stream_before=%r stream_after=%r forced_stream=%s "
-        "num_retries_before=%r num_retries_after=%r hydrated_num_retries=%s",
-        model,
-        resolved_model,
-        call_type,
-        stream_before,
-        stream_after,
-        forced_stream,
-        num_retries_before,
-        num_retries_after,
-        hydrated_num_retries,
-    )
-
-
 class ChatGPTMiddleware:
     async def async_pre_call_hook(
         self, user_api_key_dict, cache, data: dict, call_type: str,
@@ -187,32 +156,12 @@ class ChatGPTMiddleware:
         model = data.get("model")
         if _is_chatgpt_routed_model(model):
             config, resolved_model = _resolve_configured_chatgpt_model(model)
-            stream_before = data.get("stream")
-            num_retries_before = data.get("num_retries")
-            forced_stream = False
-            hydrated_num_retries = False
-            if resolved_model in _CHATGPT_RESPONSES_MODELS:
-                forced_stream = data.get("stream") is not True
-                data["stream"] = True
 
             if isinstance(model, str):
                 retry_count = _configured_chatgpt_num_retries(
                     config, model, resolved_model)
                 if retry_count is not None and data.get("num_retries") is None:
                     data["num_retries"] = retry_count
-                    hydrated_num_retries = True
-                if resolved_model in _CHATGPT_RESPONSES_MODELS:
-                    _log_responses_model_pre_call(
-                        model=model,
-                        resolved_model=resolved_model,
-                        call_type=call_type,
-                        stream_before=stream_before,
-                        stream_after=data.get("stream"),
-                        forced_stream=forced_stream,
-                        num_retries_before=num_retries_before,
-                        num_retries_after=data.get("num_retries"),
-                        hydrated_num_retries=hydrated_num_retries,
-                    )
 
             # Anthropic Messages format: top-level "system" field
             system_content = data.get("system")

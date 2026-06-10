@@ -49,5 +49,11 @@ configMapGenerator:
       # custom_callbacks and hindsight package markers.
       - __init__.py=plugins/hindsight/__init__.py
       - hindsight_plugin.py=plugins/hindsight/hindsight_plugin.py
+  - name: litellm-main-override
+    namespace: litellm
+    options:
+      disableNameSuffixHash: true
+    files:
+      - main.py=litellm-main.py
 configurations:
   - ./kustomizeconfig.yaml
