@@ -535,9 +535,9 @@ configMaps:
               api_key: os.environ/OPENAI_API_KEY
               order: 2
               weight: 1
-          - model_name: "openai/text-embedding-3-small"
+          - model_name: "text-embedding-3-small"
             litellm_params:
-              model: "openai/text-embedding-3-small"
+              model: "text-embedding-3-small"
               api_key: os.environ/OPENAI_API_KEY
               order: 2
               weight: 1
@@ -580,9 +580,9 @@ configMaps:
               output_cost_per_token: 0.0
               order: 1
               weight: 1
-          - model_name: "openai/text-embedding-3-small"
+          - model_name: "text-embedding-3-small"
             litellm_params:
-              model: "openai/text-embedding-3-small"
+              model: "text-embedding-3-small"
               api_base: https://zenmux.ai/api/v1
               api_key: os.environ/ZENMUX_SUB_API_KEY
               input_cost_per_token: 0.0
@@ -605,7 +605,7 @@ configMaps:
             "claude-sonnet-4-6-20250514": "medium-complexity"
             "n8n-renovate-classifier": "classifier"
             "hindsight-model": "classifier"
-            "hindsight-embedding": "openai/text-embedding-3-small"
+            "hindsight-embedding": "text-embedding-3-small"
           redis_host: litellm-valkey.litellm.svc
           redis_port: "6379"
           redis_password: os.environ/REDIS_PASSWORD
