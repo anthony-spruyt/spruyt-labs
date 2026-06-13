@@ -537,7 +537,7 @@ configMaps:
               weight: 1
           - model_name: "openai/text-embedding-3-small"
             litellm_params:
-              model: "text-embedding-3-small"
+              model: "openai/text-embedding-3-small"
               api_key: os.environ/OPENAI_API_KEY
               order: 2
               weight: 1
@@ -605,7 +605,7 @@ configMaps:
             "claude-sonnet-4-6-20250514": "medium-complexity"
             "n8n-renovate-classifier": "classifier"
             "hindsight-model": "classifier"
-            "hindsight-embedding": "embedding"
+            "hindsight-embedding": "openai/text-embedding-3-small"
           redis_host: litellm-valkey.litellm.svc
           redis_port: "6379"
           redis_password: os.environ/REDIS_PASSWORD
@@ -629,10 +629,6 @@ configMaps:
               models:
                 - "openrouter/free"
                 - "openai/gpt-4o-mini"
-              routing_strategy: cost-based-routing
-            - group_name: embedding
-              models:
-                - "openai/text-embedding-3-small"
               routing_strategy: cost-based-routing
           routing_strategy: simple-shuffle
         search_tools:
