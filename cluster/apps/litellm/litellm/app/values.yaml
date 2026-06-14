@@ -15,11 +15,13 @@ defaultPodOptions:
 controllers:
   litellm:
     type: deployment
-    replicas: 2
-    strategy: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+    replicas: 1
+    strategy: Recreate
+    # replicas: 2
+    # strategy: RollingUpdate
+    # rollingUpdate:
+    #   maxSurge: 1
+    #   maxUnavailable: 0
     pod:
       affinity:
         podAntiAffinity:
