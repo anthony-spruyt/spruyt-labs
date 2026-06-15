@@ -83,7 +83,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/bull-board
-          tag: 0.2.20@sha256:d9a600d10e94273602cc3c5d58d40bb21cc9e62451f036c13c25373ce4f63c9d
+          tag: 0.2.22@sha256:5b825fb3d3254d5ecf845e8f5012e914f183a114eccb95935efed7c80d7ab9f1
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"
