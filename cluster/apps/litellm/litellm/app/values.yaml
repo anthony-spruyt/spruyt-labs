@@ -480,7 +480,7 @@ configMaps:
             - otel
             - prometheus
             - websearch_interception
-            - custom_callbacks.middleware.pipeline_plugin.pipeline_middleware
+            # - custom_callbacks.middleware.pipeline_plugin.pipeline_middleware
           drop_params: true
           websearch_interception_params:
             enabled_providers:
@@ -492,7 +492,7 @@ configMaps:
           # --------------------------------------------------------------------------
           # Openrouter: PAYG
           # --------------------------------------------------------------------------
-          - model_name: "classifier"
+          - model_name: "openrouter/free"
             litellm_params:
               model: "openrouter/free"
               api_base: https://openrouter.ai/api/v1
@@ -504,7 +504,7 @@ configMaps:
           # --------------------------------------------------------------------------
           # OpenAI: Subscription
           # --------------------------------------------------------------------------
-          - model_name: "high-complexity"
+          - model_name: "chatgpt/gpt-5.5"
             model_info:
               mode: responses
             litellm_params:
@@ -513,7 +513,7 @@ configMaps:
               output_cost_per_token: 0.0
               order: 1
               weight: 1
-          - model_name: "medium-complexity"
+          - model_name: "chatgpt/gpt-5.4"
             model_info:
               mode: responses
             litellm_params:
@@ -522,7 +522,7 @@ configMaps:
               output_cost_per_token: 0.0
               order: 1
               weight: 1
-          - model_name: "low-complexity"
+          - model_name: "chatgpt/gpt-5.4-mini"
             model_info:
               mode: responses
             litellm_params:
@@ -534,13 +534,13 @@ configMaps:
           # --------------------------------------------------------------------------
           # OpenAI: PAYG
           # --------------------------------------------------------------------------
-          - model_name: "classifier"
+          - model_name: "openai/gpt-4o-mini"
             litellm_params:
               model: "openai/gpt-4o-mini"
               api_key: os.environ/OPENAI_API_KEY
-              order: 3
+              order: 2
               weight: 1
-          - model_name: "embedding"
+          - model_name: "openai/text-embedding-3-small"
             litellm_params:
               model: "text-embedding-3-small"
               api_key: os.environ/OPENAI_API_KEY
@@ -551,41 +551,41 @@ configMaps:
           # --------------------------------------------------------------------------
           - model_name: "anthropic/claude-opus-4-8"
             litellm_params:
-              model: "high-complexity"
+              model: "anthropic/claude-opus-4-8"
               api_base: https://zenmux.ai/api/anthropic
               api_key: os.environ/ZENMUX_SUB_API_KEY
               input_cost_per_token: 0.0
               output_cost_per_token: 0.0
-              order: 2
+              order: 1
               weight: 1
-          - model_name: "medium-complexity"
+          - model_name: "anthropic/claude-sonnet-4-6"
             litellm_params:
               model: "anthropic/claude-sonnet-4-6"
               api_base: https://zenmux.ai/api/anthropic
               api_key: os.environ/ZENMUX_SUB_API_KEY
               input_cost_per_token: 0.0
               output_cost_per_token: 0.0
-              order: 2
+              order: 1
               weight: 1
-          - model_name: "low-complexity"
+          - model_name: "anthropic/claude-haiku-4-5"
             litellm_params:
               model: "anthropic/claude-haiku-4-5"
               api_base: https://zenmux.ai/api/anthropic
               api_key: os.environ/ZENMUX_SUB_API_KEY
               input_cost_per_token: 0.0
               output_cost_per_token: 0.0
-              order: 2
+              order: 1
               weight: 1
-          - model_name: "classifier"
+          - model_name: "openai/gpt-4o-mini"
             litellm_params:
               model: "openai/gpt-4o-mini"
               api_base: https://zenmux.ai/api/v1
               api_key: os.environ/ZENMUX_SUB_API_KEY
               input_cost_per_token: 0.0
               output_cost_per_token: 0.0
-              order: 2
+              order: 1
               weight: 1
-          - model_name: "embedding"
+          - model_name: "openai/text-embedding-3-small"
             litellm_params:
               model: "text-embedding-3-small"
               api_base: https://zenmux.ai/api/v1
@@ -600,17 +600,17 @@ configMaps:
             "gpt-5.5": "high-complexity"
             "gpt-5.4": "medium-complexity"
             "gpt-5.4-mini": "low-complexity"
-            "claude-opus-4-6": "high-complexity"
-            "claude-opus-4-7": "high-complexity"
-            "claude-sonnet-4-5": "medium-complexity"
-            "claude-opus-4-6-20250514": "high-complexity"
-            "claude-opus-4-7-20250515": "high-complexity"
-            "claude-haiku-4-5-20251001": "low-complexity"
-            "claude-sonnet-4-5-20250514": "medium-complexity"
-            "claude-sonnet-4-6-20250514": "medium-complexity"
-            "n8n-renovate-classifier": "classifier"
-            "hindsight-model": "classifier"
-            "hindsight-embedding": "embedding"
+            "claude-opus-4-6": "anthropic/claude-opus-4-8"
+            "claude-opus-4-7": "anthropic/claude-opus-4-8"
+            "claude-sonnet-4-5": "anthropic/claude-sonnet-4-6"
+            "claude-opus-4-6-20250514": "anthropic/claude-opus-4-8"
+            "claude-opus-4-7-20250515": "anthropic/claude-opus-4-8"
+            "claude-haiku-4-5-20251001": "anthropic/claude-haiku-4-5"
+            "claude-sonnet-4-5-20250514": "anthropic/claude-sonnet-4-6"
+            "claude-sonnet-4-6-20250514": "anthropic/claude-sonnet-4-6"
+            "n8n-renovate-classifier": "openai/gpt-4o-mini"
+            "hindsight-model": "openai/gpt-4o-mini"
+            "hindsight-embedding": "openai/text-embedding-3-small"
           redis_host: litellm-valkey.litellm.svc
           redis_port: "6379"
           redis_password: os.environ/REDIS_PASSWORD
