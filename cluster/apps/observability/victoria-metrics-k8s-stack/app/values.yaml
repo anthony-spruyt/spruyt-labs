@@ -149,11 +149,11 @@ vmagent:
       requests:
         cpu: 450m
         memory: 256Mi
-    env:
+    extraEnvs:
       - name: GOGC
-        value: 100
+        value: "100"
       - name: GOMAXPROCS
-        value: 1
+        value: "1"
     extraArgs:
       promscrape.streamParse: "true"
       promscrape.dropOriginalLabels: "false"
