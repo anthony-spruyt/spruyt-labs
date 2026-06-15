@@ -15,13 +15,13 @@ defaultPodOptions:
 controllers:
   litellm:
     type: deployment
-    replicas: 1
-    strategy: Recreate
-    # replicas: 2
-    # strategy: RollingUpdate
-    # rollingUpdate:
-    #   maxSurge: 1
-    #   maxUnavailable: 0
+    # replicas: 1
+    # strategy: Recreate
+    replicas: 2
+    strategy: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
     pod:
       affinity:
         podAntiAffinity:
@@ -66,8 +66,8 @@ controllers:
           AUTO_REDIRECT_UI_LOGIN_TO_SSO: "true"
           CHATGPT_TOKEN_DIR: "/app/.config/litellm/chatgpt"
           CHATGPT_AUTH_FILE: "auth.json"
-          CHATGPT_API_BASE: "https://chatgpt.com/backend-api/codex"
-          CHATGPT_USER_AGENT: "User-Agent: codex-tui/0.137.0 (Ubuntu 22.4.0; x86_64) vscode/1.123.0 (codex-tui; 0.137.0)"
+          # CHATGPT_API_BASE: "https://chatgpt.com/backend-api/codex"
+          # CHATGPT_USER_AGENT: "User-Agent: codex-tui/0.137.0 (Ubuntu 22.4.0; x86_64) vscode/1.123.0 (codex-tui; 0.137.0)"
           # CHATGPT_ORIGINATOR:
           DATABASE_URL:
             valueFrom:
@@ -504,33 +504,33 @@ configMaps:
           # --------------------------------------------------------------------------
           # OpenAI: Subscription
           # --------------------------------------------------------------------------
-          - model_name: "chatgpt/gpt-5.5"
-            model_info:
-              mode: responses
-            litellm_params:
-              model: "chatgpt/gpt-5.5"
-              input_cost_per_token: 0.0
-              output_cost_per_token: 0.0
-              order: 1
-              weight: 1
-          - model_name: "chatgpt/gpt-5.4"
-            model_info:
-              mode: responses
-            litellm_params:
-              model: "chatgpt/gpt-5.4"
-              input_cost_per_token: 0.0
-              output_cost_per_token: 0.0
-              order: 1
-              weight: 1
-          - model_name: "chatgpt/gpt-5.4-mini"
-            model_info:
-              mode: responses
-            litellm_params:
-              model: "chatgpt/gpt-5.4-mini"
-              input_cost_per_token: 0.0
-              output_cost_per_token: 0.0
-              order: 1
-              weight: 1
+          # - model_name: "chatgpt/gpt-5.5"
+          #   model_info:
+          #     mode: responses
+          #   litellm_params:
+          #     model: "chatgpt/gpt-5.5"
+          #     input_cost_per_token: 0.0
+          #     output_cost_per_token: 0.0
+          #     order: 1
+          #     weight: 1
+          # - model_name: "chatgpt/gpt-5.4"
+          #   model_info:
+          #     mode: responses
+          #   litellm_params:
+          #     model: "chatgpt/gpt-5.4"
+          #     input_cost_per_token: 0.0
+          #     output_cost_per_token: 0.0
+          #     order: 1
+          #     weight: 1
+          # - model_name: "chatgpt/gpt-5.4-mini"
+          #   model_info:
+          #     mode: responses
+          #   litellm_params:
+          #     model: "chatgpt/gpt-5.4-mini"
+          #     input_cost_per_token: 0.0
+          #     output_cost_per_token: 0.0
+          #     order: 1
+          #     weight: 1
           # --------------------------------------------------------------------------
           # OpenAI: PAYG
           # --------------------------------------------------------------------------
@@ -603,6 +603,7 @@ configMaps:
             "claude-opus-4-6": "anthropic/claude-opus-4-8"
             "claude-opus-4-7": "anthropic/claude-opus-4-8"
             "claude-sonnet-4-5": "anthropic/claude-sonnet-4-6"
+            "claude-sonnet-4-6": "anthropic/claude-sonnet-4-6"
             "claude-opus-4-6-20250514": "anthropic/claude-opus-4-8"
             "claude-opus-4-7-20250515": "anthropic/claude-opus-4-8"
             "claude-haiku-4-5-20251001": "anthropic/claude-haiku-4-5"
@@ -729,10 +730,10 @@ persistence:
           - path: /app/custom_callbacks/middleware/registry.py
             subPath: registry.py
             readOnly: true
-  chatgpt-auth-data:
-    type: persistentVolumeClaim
-    existingClaim: chatgpt-auth-data
-    advancedMounts:
-      litellm:
-        litellm:
-          - path: /app/.config/litellm/chatgpt
+  # chatgpt-auth-data:
+  #   type: persistentVolumeClaim
+  #   existingClaim: chatgpt-auth-data
+  #   advancedMounts:
+  #     litellm:
+  #       litellm:
+  #         - path: /app/.config/litellm/chatgpt
