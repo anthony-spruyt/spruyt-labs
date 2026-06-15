@@ -34,7 +34,7 @@ pluginsManager:
       # renovate: depName=headlamp-plugins/headlamp_cert-manager
       - name: headlamp_cert-manager
         source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager
-        version: 0.1.0
+        version: 0.1.1
     installOptions:
       parallel: true
       maxConcurrent: 2
