@@ -11,8 +11,8 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@bull-board/api": "^7.0.0",
-    "@bull-board/express": "^7.0.0",
+    "@bull-board/api": "^8.0.0",
+    "@bull-board/express": "^8.0.0",
     "bullmq": "^5.52.0",
     "express": "^5.0.0"
   },
