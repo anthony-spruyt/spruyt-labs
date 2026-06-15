@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=budimanjojo/talhelper datasource=github-releases
-VERSION="v3.1.10"
+VERSION="v3.1.11"
 
 ARCH=$(uname -m)
 case "$ARCH" in
