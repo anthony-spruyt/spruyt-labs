@@ -3,12 +3,13 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: fs-fast-fuse
+  name: fs-fast
 provisioner: rook-ceph.cephfs.csi.ceph.com
 parameters:
   clusterID: rook-ceph
   fsName: fs
-  mounter: fuse
+  mounter: kernel
+  kernelMountOptions: ms_mode=secure
   pool: fs-fast
   csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
   csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
