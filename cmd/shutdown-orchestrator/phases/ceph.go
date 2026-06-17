@@ -73,7 +73,7 @@ func (p *CephPhase) UnsetNoout(ctx context.Context) error {
 }
 
 // ScaleDown scales Ceph components to 0 replicas in order:
-// operator -> OSDs -> monitors -> managers
+// operator -> MDSs -> OSDs -> monitors -> managers
 // per Rook node-maintenance docs: https://rook.io/docs/rook/latest/Upgrade/node-maintenance/
 //
 // If scaling one component fails, it logs a warning and continues.
@@ -89,26 +89,32 @@ func (p *CephPhase) ScaleDown(ctx context.Context) error {
     return errors.Join(append(errs, ctx.Err())...)
   }
 
-  // 2. OSDs
+  // 2. MDSs
+  errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mds", 0)...)
+  if ctx.Err() != nil {
+    return errors.Join(append(errs, ctx.Err())...)
+  }
+
+  // 3. OSDs
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 0)...)
   if ctx.Err() != nil {
     return errors.Join(append(errs, ctx.Err())...)
   }
 
-  // 3. Monitors
+  // 4. Monitors
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mon", 0)...)
   if ctx.Err() != nil {
     return errors.Join(append(errs, ctx.Err())...)
   }
 
-  // 4. Managers
+  // 5. Managers
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mgr", 0)...)
 
   return errors.Join(errs...)
 }
 
 // ScaleUp scales Ceph components to 1 replica in reverse order:
-// monitors -> managers -> OSDs -> operator
+// monitors -> managers -> OSDs -> MDSs -> operator
 // per Rook node-maintenance docs: https://rook.io/docs/rook/latest/Upgrade/node-maintenance/
 //
 // Each Rook component (mon, mgr, osd) is its own individual deployment with
@@ -136,7 +142,10 @@ func (p *CephPhase) ScaleUp(ctx context.Context) error {
   // 3. OSDs
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 1)...)
 
-  // 4. Operator
+  // 4. MDSs
+  errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mds", 1)...)
+
+  // 5. Operator
   if err := p.scaleComponent(ctx, cephOperatorDeploy, 1); err != nil {
     errs = append(errs, err)
   }
@@ -241,7 +250,7 @@ func (p *CephPhase) NeedsRecovery(ctx context.Context) (bool, error) {
 // previous orchestrator shutdown that needs recovery. This uses only the
 // Kubernetes API (no Ceph exec required) so it works even when Ceph is down.
 //
-// Returns true if the operator OR any MON/OSD deployment is at 0 replicas.
+// Returns true if the operator OR any MON/OSD/MDS deployment is at 0 replicas.
 func (p *CephPhase) IsCephScaledDown(ctx context.Context) (bool, error) {
   operatorReplicas, err := p.kube.GetDeploymentReplicas(ctx, cephNamespace, cephOperatorDeploy)
   if err != nil {
@@ -278,6 +287,21 @@ func (p *CephPhase) IsCephScaledDown(ctx context.Context) (bool, error) {
     }
     if replicas == 0 {
       p.logger.Info("ceph osd at 0 replicas, shutdown recovery needed", "deployment", name)
+      return true, nil
+    }
+  }
+
+  mdsNames, err := p.kube.ListDeploymentNames(ctx, cephNamespace, "app=rook-ceph-mds")
+  if err != nil {
+    return false, fmt.Errorf("listing mds deployments: %w", err)
+  }
+  for _, name := range mdsNames {
+    replicas, err := p.kube.GetDeploymentReplicas(ctx, cephNamespace, name)
+    if err != nil {
+      return false, fmt.Errorf("checking mds %s replicas: %w", name, err)
+    }
+    if replicas == 0 {
+      p.logger.Info("ceph mds at 0 replicas, shutdown recovery needed", "deployment", name)
       return true, nil
     }
   }

@@ -219,6 +219,7 @@ func TestCephScaleDown(t *testing.T) {
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{"rook-ceph-osd-0"}
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mgr"] = []string{"rook-ceph-mgr-a"}
+  mock.listDeploymentResult["rook-ceph/app=rook-ceph-mds"] = []string{"rook-ceph-mds-fs-a"}
   phase := NewCephPhase(mock, testLogger())
 
   err := phase.ScaleDown(context.Background())
@@ -226,9 +227,9 @@ func TestCephScaleDown(t *testing.T) {
     t.Fatalf("ScaleDown() returned error: %v", err)
   }
 
-  // Verify correct order: operator -> OSDs -> monitors -> managers
-  if len(mock.scaleDeploymentCalls) < 4 {
-    t.Fatalf("expected at least 4 scale calls, got %d", len(mock.scaleDeploymentCalls))
+  // Verify correct order: operator -> MDSs -> OSDs -> monitors -> managers
+  if len(mock.scaleDeploymentCalls) < 5 {
+    t.Fatalf("expected at least 5 scale calls, got %d", len(mock.scaleDeploymentCalls))
   }
 
   // First call should be operator
@@ -243,19 +244,23 @@ func TestCephScaleDown(t *testing.T) {
     }
   }
 
-  // Verify order: operator, then OSD, then mon, then mgr
+  // Verify order: operator, then MDS, then OSD, then mon, then mgr
   names := make([]string, len(mock.scaleDeploymentCalls))
   for i, c := range mock.scaleDeploymentCalls {
     names[i] = c.Name
   }
 
   operatorIdx := indexOf(names, "rook-ceph-operator")
+  mdsIdx := indexOf(names, "rook-ceph-mds-fs-a")
   osdIdx := indexOf(names, "rook-ceph-osd-0")
   monIdx := indexOf(names, "rook-ceph-mon-a")
   mgrIdx := indexOf(names, "rook-ceph-mgr-a")
 
-  if operatorIdx >= osdIdx {
-    t.Errorf("operator (idx %d) should be scaled before OSDs (idx %d)", operatorIdx, osdIdx)
+  if operatorIdx >= mdsIdx {
+    t.Errorf("operator (idx %d) should be scaled before MDSs (idx %d)", operatorIdx, mdsIdx)
+  }
+  if mdsIdx >= osdIdx {
+    t.Errorf("MDSs (idx %d) should be scaled before OSDs (idx %d)", mdsIdx, osdIdx)
   }
   if osdIdx >= monIdx {
     t.Errorf("OSDs (idx %d) should be scaled before monitors (idx %d)", osdIdx, monIdx)
@@ -272,6 +277,7 @@ func TestCephScaleDownMultipleOSDs(t *testing.T) {
   }
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mgr"] = []string{"rook-ceph-mgr-a"}
+  mock.listDeploymentResult["rook-ceph/app=rook-ceph-mds"] = []string{"rook-ceph-mds-fs-a"}
   phase := NewCephPhase(mock, testLogger())
 
   err := phase.ScaleDown(context.Background())
@@ -297,6 +303,7 @@ func TestCephScaleDownOperatorFails(t *testing.T) {
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{"rook-ceph-osd-0"}
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mgr"] = []string{"rook-ceph-mgr-a"}
+  mock.listDeploymentResult["rook-ceph/app=rook-ceph-mds"] = []string{"rook-ceph-mds-fs-a"}
   phase := NewCephPhase(mock, testLogger())
 
   // Should return error summarizing failures, but still continue to all components.
@@ -309,8 +316,8 @@ func TestCephScaleDownOperatorFails(t *testing.T) {
   }
 
   // Should still attempt to scale other components
-  if len(mock.scaleDeploymentCalls) < 4 {
-    t.Errorf("expected at least 4 scale calls (including failed operator), got %d", len(mock.scaleDeploymentCalls))
+  if len(mock.scaleDeploymentCalls) < 5 {
+    t.Errorf("expected at least 5 scale calls (including failed operator), got %d", len(mock.scaleDeploymentCalls))
   }
 }
 
@@ -319,6 +326,7 @@ func TestCephScaleUp(t *testing.T) {
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-osd"] = []string{"rook-ceph-osd-0"}
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mon"] = []string{"rook-ceph-mon-a"}
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mgr"] = []string{"rook-ceph-mgr-a"}
+  mock.listDeploymentResult["rook-ceph/app=rook-ceph-mds"] = []string{"rook-ceph-mds-fs-a"}
   phase := NewCephPhase(mock, testLogger())
 
   err := phase.ScaleUp(context.Background())
@@ -326,9 +334,9 @@ func TestCephScaleUp(t *testing.T) {
     t.Fatalf("ScaleUp() returned error: %v", err)
   }
 
-  // Verify correct order: monitors -> managers -> OSDs -> operator
-  if len(mock.scaleDeploymentCalls) < 4 {
-    t.Fatalf("expected at least 4 scale calls, got %d", len(mock.scaleDeploymentCalls))
+  // Verify correct order: monitors -> managers -> OSDs -> MDSs -> operator
+  if len(mock.scaleDeploymentCalls) < 5 {
+    t.Fatalf("expected at least 5 scale calls, got %d", len(mock.scaleDeploymentCalls))
   }
 
   // All replicas should be 1
@@ -338,7 +346,7 @@ func TestCephScaleUp(t *testing.T) {
     }
   }
 
-  // Verify order: mon, mgr, osd, operator
+  // Verify order: mon, mgr, osd, mds, operator
   names := make([]string, len(mock.scaleDeploymentCalls))
   for i, c := range mock.scaleDeploymentCalls {
     names[i] = c.Name
@@ -347,6 +355,7 @@ func TestCephScaleUp(t *testing.T) {
   monIdx := indexOf(names, "rook-ceph-mon-a")
   mgrIdx := indexOf(names, "rook-ceph-mgr-a")
   osdIdx := indexOf(names, "rook-ceph-osd-0")
+  mdsIdx := indexOf(names, "rook-ceph-mds-fs-a")
   operatorIdx := indexOf(names, "rook-ceph-operator")
 
   if monIdx >= mgrIdx {
@@ -355,8 +364,11 @@ func TestCephScaleUp(t *testing.T) {
   if mgrIdx >= osdIdx {
     t.Errorf("managers (idx %d) should be scaled before OSDs (idx %d)", mgrIdx, osdIdx)
   }
-  if osdIdx >= operatorIdx {
-    t.Errorf("OSDs (idx %d) should be scaled before operator (idx %d)", osdIdx, operatorIdx)
+  if osdIdx >= mdsIdx {
+    t.Errorf("OSDs (idx %d) should be scaled before MDSs (idx %d)", osdIdx, mdsIdx)
+  }
+  if mdsIdx >= operatorIdx {
+    t.Errorf("MDSs (idx %d) should be scaled before operator (idx %d)", mdsIdx, operatorIdx)
   }
 }
 

@@ -127,6 +127,8 @@ func (m *orchestratorMockKube) ListDeploymentNames(ctx context.Context, ns, labe
     return []string{"rook-ceph-mon-a", "rook-ceph-mon-b", "rook-ceph-mon-c"}, nil
   case "app=rook-ceph-mgr":
     return []string{"rook-ceph-mgr-a", "rook-ceph-mgr-b"}, nil
+  case "app=rook-ceph-mds":
+    return []string{"rook-ceph-mds-fs-a"}, nil
   default:
     return []string{}, nil
   }
