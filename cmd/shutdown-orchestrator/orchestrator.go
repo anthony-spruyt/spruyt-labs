@@ -97,14 +97,18 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
       errs = append(errs, fmt.Errorf("cordon-workers: %w", err))
     }
 
+    drainFailed := false
     if err := runPhase(ctx, o.logger, "drain-workers", o.cfg.DrainPhaseTimeout, func(pctx context.Context) error {
       return o.drain.EvictWorkloads(pctx, workerNames,
         []string{"rook-ceph", "kube-system", "nut-system"}, 30)
     }); err != nil {
       errs = append(errs, fmt.Errorf("drain-workers: %w", err))
+      drainFailed = true
     }
 
-    if err := runPhase(ctx, o.logger, "ceph-scale-down", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
+    if drainFailed {
+      o.logger.Warn("skipping ceph scale-down because workload drain failed")
+    } else if err := runPhase(ctx, o.logger, "ceph-scale-down", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
       return o.ceph.ScaleDown(pctx)
     }); err != nil {
       errs = append(errs, fmt.Errorf("ceph-scale-down: %w", err))

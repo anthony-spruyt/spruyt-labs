@@ -28,7 +28,7 @@ spec:
     #     codingChunks: 1
   metadataServer:
     activeCount: 1
-    activeStandby: false
+    activeStandby: true
     resources:
       requests:
         cpu: 500m
