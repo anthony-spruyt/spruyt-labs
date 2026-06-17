@@ -14,10 +14,9 @@ securityContext:
   capabilities:
     drop: [ALL]
   readOnlyRootFilesystem: true
-logs:
-  general:
-    format: json
-    level: INFO
+log:
+  format: json
+  level: INFO
 resources:
   requests:
     cpu: 50m
