@@ -12,39 +12,7 @@ resources:
     memory: 256Mi
 currentNamespaceOnly: true
 csi:
-  # https://rook.io/docs/rook/latest/Storage-Configuration/Ceph-CSI/ceph-csi-drivers/#enable-read-affinity-for-rbd-and-cephfs-volumes
-  readAffinity:
-    enabled: true
-  enableCephfsDriver: true
-  enableCephfsSnapshotter: false
-  enableCSIEncryption: true
-  enableVolumeGroupSnapshot: false
-  # -- Set CephFS Kernel mount options to use https://docs.ceph.com/en/latest/man/8/mount.ceph/#options.
-  # Set to "ms_mode=secure" when connections.encrypted is enabled in CephCluster CR
-  cephFSKernelMountOptions: ms_mode=secure
-  # Talos ships CONFIG_CEPH_FS=y (validated on kernel 6.18.29). Force the
-  # in-kernel CephFS client so PVCs avoid the ceph-fuse userspace teardown
-  # path, which wedges mounts in D-state and blocks node shutdown. Ref #2166.
-  forceCephFSKernelClient: true
-  enableMetadata: true
-  csiRBDProvisionerResource:
-    - name: csi-provisioner
-      resource:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-    - name: csi-resizer
-      resource:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-  csiAddons:
-    enabled: true
-  #pluginTolerations:
-  #  - key: node-role.kubernetes.io/control-plane
-  #    operator: Exists
-  #    effect: NoSchedule
-  enableLiveness: true
+  installCsiOperator: true
 enableDiscoveryDaemon: true
 monitoring:
   # -- Enable monitoring. Requires Prometheus to be pre-installed.

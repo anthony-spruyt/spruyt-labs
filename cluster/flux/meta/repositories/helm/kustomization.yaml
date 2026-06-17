@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./cilium-charts.yaml
+  - ./ceph-csi-operator-charts.yaml
   - ./coder-charts.yaml
   - ./cowboysysop-charts.yaml
   - ./descheduler-charts.yaml

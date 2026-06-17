@@ -12,7 +12,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: rook-ceph-operator
+    - name: rook-ceph-csi-drivers
     # Note: No authentik dependency here to avoid circular dependency
     # (authentik → rook-ceph-cluster-storage → rook-ceph-cluster)
     # The SSO sidecar on toolbox handles this gracefully - it waits for

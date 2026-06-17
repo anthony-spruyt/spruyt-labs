@@ -1,0 +1,138 @@
+---
+# Rook-compatible values for the ceph-csi-drivers chart. Mirrors the spec
+# Rook previously applied to the live Driver/OperatorConfig CRs (captured from
+# the v1.19.6 cluster) so Helm adoption on the v1.20 cutover does NOT degrade
+# replicas, hostNetwork, resource requests, or snapshot policy. Ref #2006.
+operatorConfig:
+  namespace: rook-ceph
+  driverSpecDefaults:
+    clusterName: rook-ceph
+    imageSet:
+      name: rook-csi-operator-image-set-configmap
+    nodePlugin:
+      priorityClassName: system-node-critical
+      kubeletDirPath: /var/lib/kubelet
+      enableSeLinuxHostMount: false
+      updateStrategy:
+        type: RollingUpdate
+    controllerPlugin:
+      priorityClassName: system-cluster-critical
+      hostNetwork: true
+      replicas: 2
+      deploymentStrategy:
+        type: Recreate
+
+drivers:
+  rbd:
+    enabled: true
+    name: rook-ceph.rbd.csi.ceph.com
+    snapshotPolicy: volumeSnapshot
+    deployCsiAddons: true
+    fsGroupPolicy: File
+    encryption:
+      configMapRef:
+        name: rook-ceph-csi-kms-config
+    # nodePlugin.resources must live per-driver: the chart's operatorConfig.yaml
+    # template mis-indents driverSpecDefaults.nodePlugin.resources (nindent 4 ->
+    # invalid YAML). Other nodePlugin fields come from OperatorConfig defaults.
+    nodePlugin:
+      resources:
+        plugin:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        registrar:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+    # Per-driver controllerPlugin must restate hostNetwork/replicas: the chart
+    # template applies `| default false` / `| default 2` when this block is set,
+    # which would otherwise clobber the OperatorConfig defaults.
+    controllerPlugin:
+      hostNetwork: true
+      replicas: 2
+      priorityClassName: system-cluster-critical
+      deploymentStrategy:
+        type: Recreate
+      # Migrated from former operator csi.csiRBDProvisionerResource.
+      resources:
+        provisioner:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        resizer:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+  cephfs:
+    enabled: true
+    name: rook-ceph.cephfs.csi.ceph.com
+    # Live cephfs Driver runs volumeGroupSnapshot; preserve to avoid disabling
+    # CephFS group snapshots on cutover.
+    snapshotPolicy: volumeGroupSnapshot
+    deployCsiAddons: true
+    cephFsClientType: kernel
+    fsGroupPolicy: File
+    kernelMountOptions:
+      ms_mode: secure
+    nodePlugin:
+      resources:
+        plugin:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        registrar:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+    controllerPlugin:
+      hostNetwork: true
+      replicas: 2
+      priorityClassName: system-cluster-critical
+      deploymentStrategy:
+        type: Recreate
+      resources:
+        attacher:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        provisioner:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        resizer:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        snapshotter:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        plugin:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+  nfs:
+    enabled: false
+    name: rook-ceph.nfs.csi.ceph.com
+  nvmeof:
+    enabled: false
+    name: rook-ceph.nvmeof.csi.ceph.com
