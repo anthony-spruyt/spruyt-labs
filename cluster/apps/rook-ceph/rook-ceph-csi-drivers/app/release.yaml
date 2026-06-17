@@ -17,3 +17,22 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: rook-ceph-csi-drivers-values
+  # Upstream chart bug: ceph-csi-drivers 1.0.1 templates render
+  # spec.encryption.configMapRef, but the matching Driver CRD (also v1.0.1,
+  # bundled with rook-ceph-operator) only accepts spec.encryption.configMapName.
+  # The mismatch makes the rbd Driver patch fail validation
+  # (configMapName: Required), wedging the rbd controller plugin. Rewrite the
+  # field to configMapName until the upstream chart is fixed. Ref #2208.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Driver
+              name: rook-ceph.rbd.csi.ceph.com
+            patch: |
+              - op: remove
+                path: /spec/encryption/configMapRef
+              - op: add
+                path: /spec/encryption/configMapName
+                value:
+                  name: rook-ceph-csi-kms-config
