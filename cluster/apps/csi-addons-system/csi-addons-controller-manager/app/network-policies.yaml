@@ -59,7 +59,16 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to rook-ceph CSI sidecars for addon operations
+# Allow egress to rook-ceph CSI sidecars for addon operations.
+# Two separate rules are required because the CSI ctrlplugin pods run with hostNetwork: true,
+# meaning they bind to the node's host IP and are represented by Cilium as reserved:remote-node
+# (identity 6) rather than as pod namespace endpoints. toEndpoints only matches regular
+# (non-hostNetwork) pod identities such as the nodeplugin-csi-addons DaemonSet pods.
+#
+# Ports:
+#   9070 - rbd ctrlplugin csi-addons sidecar   (hostNetwork, reserved:remote-node)
+#   9071 - nodeplugin csi-addons sidecar        (regular pod IP, toEndpoints matches)
+#   9080 - cephfs ctrlplugin csi-addons sidecar (hostNetwork, reserved:remote-node)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -70,12 +79,21 @@ spec:
     matchLabels:
       app.kubernetes.io/name: csi-addons
   egress:
+    # Non-hostNetwork nodeplugin-csi-addons pods (regular pod IPs) — port 9071
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: rook-ceph
       toPorts:
         - ports:
+            - port: "9071"
+              protocol: TCP
+    # hostNetwork ctrlplugin pods bind to node host IPs and appear as remote-node identity.
+    # toEntities: remote-node allows egress to any cluster node host IP.
+    - toEntities:
+        - remote-node
+      toPorts:
+        - ports:
             - port: "9070"
               protocol: TCP
-            - port: "9071"
+            - port: "9080"
               protocol: TCP
