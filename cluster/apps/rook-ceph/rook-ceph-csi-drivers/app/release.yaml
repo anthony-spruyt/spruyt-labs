@@ -14,17 +14,6 @@ spec:
         name: ceph-csi-operator-charts
         namespace: flux-system
   interval: 4h
-  # The rook operator wrote the rbd Driver CR first and owns
-  # spec.deployCsiAddons via SSA (value false, rook's default). The encryption
-  # chart bug (configMapRef vs configMapName, fixed in 50a947ef) wedged the rbd
-  # Driver apply during the v1.20 migration, so helm-controller never took
-  # ownership of deployCsiAddons on rbd — leaving the rbd nodeplugin without a
-  # csi-addons sidecar and breaking all RBD ReclaimSpaceJobs. A plain reconcile
-  # cannot fix it (helm 3-way merge sees no change to its own value). Drift
-  # detection makes helm-controller force-apply the rendered manifest via SSA,
-  # reclaiming the conflicting field and setting deployCsiAddons: true. Ref #2213.
-  driftDetection:
-    mode: enabled
   valuesFrom:
     - kind: ConfigMap
       name: rook-ceph-csi-drivers-values
