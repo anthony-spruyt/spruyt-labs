@@ -36,6 +36,12 @@ drivers:
     # template mis-indents driverSpecDefaults.nodePlugin.resources (nindent 4 ->
     # invalid YAML). Other nodePlugin fields come from OperatorConfig defaults.
     nodePlugin:
+      # When resources is set, the chart's driver.yaml renders EVERY subkey
+      # (registrar/liveness/addons/logRotator/plugin); any omitted key emits
+      # `null`, which the Driver CRD rejects as "must be object" on a
+      # server-side apply dry-run (the path driftDetection uses). Define the
+      # otherwise-unset keys as empty objects so drift detection can dry-run
+      # cleanly. Ref #2213.
       resources:
         plugin:
           limits:
@@ -49,6 +55,9 @@ drivers:
           requests:
             cpu: 50m
             memory: 128Mi
+        liveness: {}
+        addons: {}
+        logRotator: {}
     # Per-driver controllerPlugin must restate hostNetwork/replicas: the chart
     # template applies `| default false` / `| default 2` when this block is set,
     # which would otherwise clobber the OperatorConfig defaults.
@@ -58,7 +67,8 @@ drivers:
       priorityClassName: system-cluster-critical
       deploymentStrategy:
         type: Recreate
-      # Migrated from former operator csi.csiRBDProvisionerResource.
+      # Migrated from former operator csi.csiRBDProvisionerResource. Unset
+      # subkeys are empty objects to avoid null renders (see nodePlugin note).
       resources:
         provisioner:
           requests:
@@ -68,6 +78,13 @@ drivers:
           requests:
             cpu: 100m
             memory: 128Mi
+        attacher: {}
+        snapshotter: {}
+        omapGenerator: {}
+        liveness: {}
+        addons: {}
+        logRotator: {}
+        plugin: {}
   cephfs:
     enabled: true
     name: rook-ceph.cephfs.csi.ceph.com
@@ -80,6 +97,8 @@ drivers:
     kernelMountOptions:
       ms_mode: secure
     nodePlugin:
+      # Empty-object subkeys avoid null renders rejected by the Driver CRD on
+      # the driftDetection dry-run (see rbd nodePlugin note). Ref #2213.
       resources:
         plugin:
           limits:
@@ -93,6 +112,9 @@ drivers:
           requests:
             cpu: 50m
             memory: 128Mi
+        liveness: {}
+        addons: {}
+        logRotator: {}
     controllerPlugin:
       hostNetwork: true
       replicas: 2
@@ -130,6 +152,10 @@ drivers:
           requests:
             cpu: 250m
             memory: 512Mi
+        omapGenerator: {}
+        liveness: {}
+        addons: {}
+        logRotator: {}
   nfs:
     enabled: false
     name: rook-ceph.nfs.csi.ceph.com

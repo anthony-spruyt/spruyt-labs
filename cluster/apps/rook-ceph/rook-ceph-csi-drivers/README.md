@@ -48,6 +48,24 @@ Driver names keep the `rook-ceph.` prefix (`rook-ceph.rbd.csi.ceph.com`, `rook-c
    - **Symptom**: Helm refuses to adopt a `Driver`/`OperatorConfig` CR that Rook created at runtime without Helm labels.
    - **Resolution**: The live CRs must carry `app.kubernetes.io/managed-by: Helm` plus `meta.helm.sh/release-name: rook-ceph-csi-drivers` / `meta.helm.sh/release-namespace: rook-ceph` before first reconcile. Relabel (do not delete — deletion disrupts the data path) and re-reconcile.
 
+3. **rbd Driver patch fails: `spec.encryption.configMapName: Required value`**
+
+   - **Symptom**: Chart 1.0.1 renders `spec.encryption.configMapRef`, but the Driver CRD v1.0.1 (bundled with rook-ceph-operator) only accepts `spec.encryption.configMapName`. The field-name mismatch fails CRD validation and wedges the rbd controller plugin. CephFS is unaffected (no encryption block).
+   - **Resolution**: A HelmRelease `postRenderers` kustomize patch in `release.yaml` rewrites the rbd Driver encryption field to `configMapName`. Keep encryption — encrypted RBD StorageClasses depend on it. Remove the patch once the upstream chart renders `configMapName`.
+
+4. **rbd controller plugin stuck 0/2: `serviceaccount "rbd-ctrlplugin-sa" not found`**
+
+   - **Symptom**: The rbd Driver's `spec.controllerPlugin.serviceAccountName` is empty, so the operator (env `CSI_SERVICE_ACCOUNT_PREFIX=""`) falls back to the legacy unprefixed SA `rbd-ctrlplugin-sa`, which does not exist. Typically a side effect of a failed first install (e.g. the encryption error above) where `helm-controller` never wrote the SA field; CephFS installs clean and is unaffected.
+   - **Resolution**: The chart's rendered desired-state already sets the prefixed SA (`rook-ceph-rbd-csi-ceph-com-{ctrl,node}plugin-sa`); once the blocking error is fixed, a clean reconcile converges. To restore the data path immediately, patch the live Driver:
+     `kubectl -n rook-ceph patch driver rook-ceph.rbd.csi.ceph.com --type=merge -p '{"spec":{"controllerPlugin":{"serviceAccountName":"rook-ceph-rbd-csi-ceph-com-ctrlplugin-sa"},"nodePlugin":{"serviceAccountName":"rook-ceph-rbd-csi-ceph-com-nodeplugin-sa"}}}'`. Ref [rook/rook#17644](https://github.com/rook/rook/issues/17644).
+
+5. **RBD ReclaimSpaceJobs fail: `node Client not found for <node> nodeID`**
+
+   - **Symptom**: Every `ReclaimSpaceJob` for RBD PVCs fails after retries. The rbd nodeplugin pod has no `csi-addons` sidecar. The live `Driver/rook-ceph.rbd.csi.ceph.com` has `spec.deployCsiAddons: false` even though `values.yaml` sets it `true`. CephFS reclaim is unaffected.
+   - **Cause**: The rook operator wrote the Driver CR first and owns `spec.deployCsiAddons` via SSA (value `false`, its default). Helm's 3-way merge sees no diff against its own rendered value and emits no corrective patch, so rook's `false` persists. A plain reconcile cannot fix it.
+   - **Resolution**: `driftDetection.mode: enabled` in `release.yaml` makes `helm-controller` force-apply the rendered manifest via SSA, reclaiming the field and setting it `true`. This requires the empty-object (`{}`) resource subkeys in `values.yaml`: when `resources` is set, the chart renders every subkey, and unset ones emit `null`, which the Driver CRD rejects (`must be object`) on the SSA
+     dry-run that drift detection performs. Do not remove `driftDetection` or the empty-object subkeys — either regresses all RBD ReclaimSpaceJobs.
+
 ## References
 
 - [ceph-csi-operator](https://github.com/ceph/ceph-csi-operator)
