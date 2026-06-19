@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=helm/helm datasource=github-releases
-VERSION="v4.2.1"
+VERSION="v4.2.2"
 
 ARCH=$(uname -m)
 case "$ARCH" in
