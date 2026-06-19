@@ -27,7 +27,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/agent-queue-worker
-          tag: 3.3.44@sha256:1c252201175a1777f38d702f2a7669f037326c51ce391d58009bcfeabae5e223
+          tag: 3.3.45@sha256:83f27d047385f522476796d3cab95117b80bd5be075d129a744e7266fe6cd208
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"
