@@ -133,7 +133,7 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
   resources:
     mgr:
       limits:
-        memory: 2Gi
+        memory: 3Gi
       requests:
         cpu: 100m
         memory: 768Mi
