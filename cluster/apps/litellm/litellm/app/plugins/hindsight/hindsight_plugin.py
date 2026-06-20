@@ -46,6 +46,14 @@ _ANTHROPIC_CALL_TYPES = {"anthropic_messages"}
 
 _BANK_SANITIZE_RE = re.compile(r"[^A-Za-z0-9-]")
 
+# Claude Code appends <system-reminder> blocks to user turns (and sometimes a
+# whole reminder-only user turn). They are harness boilerplate, not the user's
+# prompt — strip them so neither recall queries nor retained memories are
+# polluted with them. Only real user text + assistant text reach Hindsight.
+_SYSTEM_REMINDER_RE = re.compile(
+    r"<system-reminder>.*?</system-reminder>", re.DOTALL | re.IGNORECASE
+)
+
 
 def _env_bool(name: str, default: bool) -> bool:
     raw = os.getenv(name)
@@ -152,21 +160,28 @@ class HindsightMiddleware:
             return "\n".join(p for p in parts if p)
         return ""
 
+    @staticmethod
+    def _strip_reminders(text: str) -> str:
+        return _SYSTEM_REMINDER_RE.sub("", text).strip()
+
     def _latest_user_text(self, data: dict) -> str:
+        # Walk newest-first; skip reminder-only turns so the real prompt wins.
         for msg in reversed(data.get("messages", []) or []):
             if isinstance(msg, dict) and msg.get("role") == "user":
-                return self._content_to_text(msg.get("content"))
+                text = self._strip_reminders(self._content_to_text(msg.get("content")))
+                if text:
+                    return text
         input_data = data.get("input")
         if isinstance(input_data, str):
-            return input_data
+            return self._strip_reminders(input_data)
         if isinstance(input_data, list):
             for item in reversed(input_data):
                 if isinstance(item, dict) and item.get("role") == "user":
-                    text = self._content_to_text(item.get("content"))
+                    text = self._strip_reminders(self._content_to_text(item.get("content")))
                     if text:
                         return text
         if isinstance(input_data, dict) and input_data.get("role") == "user":
-            return self._content_to_text(input_data.get("content"))
+            return self._strip_reminders(self._content_to_text(input_data.get("content")))
         return ""
 
     @staticmethod

@@ -164,6 +164,64 @@ async def test_responses_input_text_used_for_recall(plugin, mock_httpx, make_res
     assert MEMORY in out["messages"][0]["content"]
 
 
+_REMINDER = (
+    "<system-reminder>As you answer, consider the following context: "
+    "today is 2026-06-20. This may not be relevant.</system-reminder>"
+)
+
+
+# trailing system-reminder user turn must NOT become the recall query --------
+async def test_recall_skips_trailing_system_reminder(plugin, mock_httpx, make_anthropic, make_key):
+    mock_httpx.recall_texts = [MEMORY]
+    data = make_anthropic(system="sys", headers={BANK_HEADER: "my-repo"})
+    # Claude Code appends a reminder-only user turn AFTER the real question.
+    data["messages"] = [
+        {"role": "user", "content": "What is the cluster mascot?"},
+        {"role": "assistant", "content": "Let me help."},
+        {"role": "user", "content": _REMINDER},
+    ]
+    out = await _mw(plugin).async_pre_call_hook(
+        make_key(), None, data, "anthropic_messages")
+
+    # recall must query the real question, not the reminder boilerplate
+    assert mock_httpx.recall_calls[0]["json"]["query"] == "What is the cluster mascot?"
+    assert MEMORY in str(out["system"])
+
+
+# inline reminder appended to a real question is stripped from the query -----
+async def test_recall_strips_inline_system_reminder(plugin, mock_httpx, make_anthropic, make_key):
+    mock_httpx.recall_texts = [MEMORY]
+    data = make_anthropic(headers={BANK_HEADER: "my-repo"})
+    data["messages"] = [
+        {"role": "user", "content": f"What is the cluster mascot?\n{_REMINDER}"},
+    ]
+    await _mw(plugin).async_pre_call_hook(
+        make_key(), None, data, "anthropic_messages")
+
+    assert mock_httpx.recall_calls[0]["json"]["query"] == "What is the cluster mascot?"
+
+
+# retain must not store reminder boilerplate as the user turn ----------------
+async def test_retain_strips_system_reminder(plugin, mock_httpx, make_response):
+    import json
+
+    kwargs = {
+        "litellm_params": {
+            "proxy_server_request": {"headers": {BANK_HEADER: "my-repo"}},
+        },
+        "messages": [
+            {"role": "user", "content": f"What is the cluster mascot?\n{_REMINDER}"},
+        ],
+    }
+    await _mw(plugin).async_log_success_event(kwargs, make_response(), 0.0, 1.0)
+
+    body = mock_httpx.retain_calls[0]["json"]
+    conversation = json.loads(body["items"][0]["content"])
+    user_turn = next(t for t in conversation if t["role"] == "user")
+    assert "<system-reminder>" not in user_turn["content"]
+    assert user_turn["content"] == "What is the cluster mascot?"
+
+
 async def test_retain_bank_from_team_metadata(plugin, mock_httpx, make_response):
     kwargs = {
         "litellm_params": {
