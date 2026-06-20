@@ -1,11 +1,5 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/cronjob-batch-v1.json
-# Nightly memory consolidation (issue #2270). Auto-consolidation was moved OFF
-# the per-turn retain hot path (ENABLE_AUTO_CONSOLIDATION=false in values.yaml)
-# because it fired an LLM pass on every Claude Code turn. This job lists every
-# bank and triggers consolidation once per night instead. The hindsight API has
-# no auth enabled (no HINDSIGHT_API_TENANT_EXTENSION), so the job only needs
-# in-cluster network reach to api:8888 — see consolidate-network-policy.yaml.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -35,8 +29,6 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: consolidate
-              # alpine/k8s ships curl + jq; already cached in-cluster (also used
-              # by github-token-rotation). No package installs, no world egress.
               image: alpine/k8s:1.36.2@sha256:44ef4942e171939b9c665a4a84beb80e2dcdb9a24330d4651cfdfd2e9deecc47
               env:
                 - name: HINDSIGHT_BASE_URL

@@ -309,12 +309,9 @@ class HindsightMiddleware:
     def _conversation_item(
         turns: list, context: str, doc_id: Optional[str]
     ) -> dict:
-        # content is a JSON-encoded conversation array (list of {role, content}
-        # dicts). Upstream chunk_text() (fact_extraction.py) only takes the
-        # whole-turn-preserving _chunk_conversation path when json.loads yields
-        # a list of dicts — a bare turn string falls through to plain-text
-        # splitting at retain_chunk_size and fragments the memory. context is a
-        # string (a dict yields HTTP 422); metadata is dict[str,str].
+        # content is a JSON conversation array so chunk_text() keeps each turn
+        # whole (a bare string fragments at retain_chunk_size). context must be
+        # a str (dict -> 422); metadata is dict[str, str].
         item = {
             "content": json.dumps(turns, ensure_ascii=False),
             "context": context,
@@ -333,10 +330,8 @@ class HindsightMiddleware:
                 return
             user_text = self._latest_user_text(kwargs)
             assistant_text = self._response_text(response_obj)
-            # Retain the exchange as ONE conversation item so Hindsight's
-            # conversation-aware chunker keeps each turn whole (up to
-            # retain_structured_chunk_size) instead of splitting bare strings at
-            # retain_chunk_size. One item -> one document_id, no per-role suffix.
+            # One conversation item per exchange -> one document_id; lets the
+            # chunker keep each turn whole. See _conversation_item.
             turns = []
             if user_text:
                 turns.append({"role": "user", "content": user_text})

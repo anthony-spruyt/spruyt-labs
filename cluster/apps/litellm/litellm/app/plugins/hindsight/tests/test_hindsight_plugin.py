@@ -66,14 +66,8 @@ async def test_no_bank_skips(plugin, mock_httpx, make_anthropic, make_key):
 
 # 4 — retain POSTs one conversation item with async:true on success -------
 # litellm nests proxy_server_request inside litellm_params for the success
-# event (litellm_logging.py: get_litellm_params -> litellm_params dict), unlike
-# the pre-call hook where it is top-level on `data`.
-#
-# The item's `content` MUST be a JSON-encoded conversation array
-# (list of {role, content} dicts). Upstream chunk_text() (fact_extraction.py)
-# only takes the whole-turn-preserving _chunk_conversation path when it can
-# json.loads the content into a list of dicts; a bare turn string falls through
-# to plain-text splitting at retain_chunk_size and fragments the memory.
+# event, unlike the pre-call hook where it is top-level on `data`. The item's
+# `content` must be a JSON conversation array so chunk_text keeps turns whole.
 async def test_retain_sends_conversation_array(plugin, mock_httpx, make_response):
     import json
 

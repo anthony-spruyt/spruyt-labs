@@ -137,6 +137,29 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Nightly consolidate CronJob egress: api:8888 only (list banks + POST
+# /consolidate). DNS handled cluster-wide. Matching api ingress above.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-hindsight-consolidate-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app: hindsight-consolidate
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app.kubernetes.io/instance: hindsight
+            k8s:app.kubernetes.io/name: hindsight
+            k8s:app.kubernetes.io/component: api
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # control-plane admin UI: ingress from Traefik (LAN IngressRoute), egress to
 # the dataplane api only (HINDSIGHT_CP_DATAPLANE_API_URL points to hindsight-api:8888).
 apiVersion: cilium.io/v2

@@ -73,7 +73,7 @@ The retain payload **must** be a JSON conversation array for `STRUCTURED_CHUNK_S
 
 ## Nightly consolidation CronJob
 
-`consolidate-cronjob.yaml` runs `hindsight-consolidate` nightly: it lists banks (`GET /v1/default/banks`) and POSTs `/v1/default/banks/{bank_id}/consolidate` for each. It replaces per-turn auto-consolidation. Network reach is restricted to api:8888 by `consolidate-network-policy.yaml` plus the matching ingress rule in `network-policies.yaml`.
+`consolidate-cronjob.yaml` runs `hindsight-consolidate` nightly: it lists banks (`GET /v1/default/banks`) and POSTs `/v1/default/banks/{bank_id}/consolidate` for each. It replaces per-turn auto-consolidation. Network reach is restricted to api:8888 by the `allow-hindsight-consolidate-egress` policy in `network-policies.yaml` plus the matching api ingress rule.
 
 ## Verification
 

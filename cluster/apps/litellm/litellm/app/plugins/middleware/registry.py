@@ -22,11 +22,11 @@ DEFAULT_MIDDLEWARE_SPECS = (
         module="custom_callbacks.hindsight.hindsight_plugin",
         attribute="hindsight_middleware",
     ),
-    MiddlewareSpec(
-        name="chatgpt",
-        module="custom_callbacks.chatgpt.chatgpt_plugin",
-        attribute="chatgpt_middleware",
-    ),
+    # MiddlewareSpec(
+    #     name="chatgpt",
+    #     module="custom_callbacks.chatgpt.chatgpt_plugin",
+    #     attribute="chatgpt_middleware",
+    # ),
 )
 
 
