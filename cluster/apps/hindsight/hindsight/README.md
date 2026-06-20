@@ -56,6 +56,25 @@ Read once at module init. Defaults shown.
 
 The callback is wired in `values.yaml` under `litellm_settings.callbacks` as `custom_callbacks.hindsight.hindsight_plugin.hindsight_middleware`, resolved via `PYTHONPATH=/app:/app/custom_callbacks` and the configMap subPath mounts.
 
+## Extraction tuning (env on the hindsight-api / worker)
+
+Set in `cluster/apps/hindsight/hindsight/app/values.yaml` under `api.env` and `worker.env` (the worker processes async retain, so both must match). Tuned for Claude Code coding sessions (issue #2270):
+
+| Env var                                      | Value               | Purpose                                                                   |
+| -------------------------------------------- | ------------------- | ------------------------------------------------------------------------- |
+| `HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE` | `8192`              | Keep a whole conversation turn intact (vs splitting at 3000-char default) |
+| `HINDSIGHT_API_RETAIN_EXTRACTION_MODE`       | `verbose`           | Richer, context-rich facts (vs `concise` fragmentation)                   |
+| `HINDSIGHT_API_RETAIN_MISSION`               | coding-focused      | Steers extraction toward self-contained engineering facts                 |
+| `HINDSIGHT_API_RETAIN_LLM_MODEL`             | `claude-haiku-4-5`  | Per-turn extraction — lighter model conserves subscription usage budget   |
+| `HINDSIGHT_API_CONSOLIDATION_LLM_MODEL`      | `claude-sonnet-4-6` | Nightly consolidation — stronger model, low volume                        |
+| `HINDSIGHT_API_ENABLE_AUTO_CONSOLIDATION`    | `false`             | Consolidation moved off the per-turn path to the nightly CronJob          |
+
+The retain payload **must** be a JSON conversation array for `STRUCTURED_CHUNK_SIZE` to apply — the LiteLLM callback sends the exchange as one such item (see `_conversation_item`).
+
+## Nightly consolidation CronJob
+
+`consolidate-cronjob.yaml` runs `hindsight-consolidate` nightly: it lists banks (`GET /v1/default/banks`) and POSTs `/v1/default/banks/{bank_id}/consolidate` for each. It replaces per-turn auto-consolidation. Network reach is restricted to api:8888 by `consolidate-network-policy.yaml` plus the matching ingress rule in `network-policies.yaml`.
+
 ## Verification
 
 ```bash
@@ -102,14 +121,14 @@ PY
 
 ## Troubleshooting
 
-| Symptom                | Check                                                                                                                                                                                     |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No memory injected     | Bank not resolving — confirm the header reaches litellm (`data["proxy_server_request"]["headers"]`) or virtual-key metadata. No bank → intentional skip.                                  |
-| Retain silently absent | `kubectl -n litellm logs "$POD" -c litellm \| grep -i "hindsight retain failed"`. The retain path reads the bank from `litellm_params.proxy_server_request.headers` in the success event. |
-| `422` on retain        | `MemoryItem.context` must be a string; role is sent in `context` + `metadata.role`.                                                                                                       |
-| `500` on retain        | Batch rejects duplicate `document_id`; the plugin suffixes per role (`-user` / `-assistant`).                                                                                             |
-| Slow first token       | Recall is a vector lookup with a 3s fail-open timeout. No per-request LLM call (reflect is intentionally avoided on the hot path).                                                        |
-| Cache-hit regression   | Memory is injected as the **last** system block to preserve the cached prefix. Watch prompt-cache metrics after changes.                                                                  |
+| Symptom                       | Check                                                                                                                                                                                                |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No memory injected            | Bank not resolving — confirm the header reaches litellm (`data["proxy_server_request"]["headers"]`) or virtual-key metadata. No bank → intentional skip.                                             |
+| Retain silently absent        | `kubectl -n litellm logs "$POD" -c litellm \| grep -i "hindsight retain failed"`. The retain path reads the bank from `litellm_params.proxy_server_request.headers` in the success event.            |
+| `422` on retain               | `MemoryItem.context` must be a string. The exchange is sent as ONE item whose `content` is a JSON conversation array (`[{role,content},…]`); `context` is the session label.                         |
+| Partial / fragmented memories | Each turn must reach Hindsight as a conversation array so `chunk_text` keeps it whole up to `HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE` (8192). A bare string splits at `RETAIN_CHUNK_SIZE` (3000). |
+| Slow first token              | Recall is a vector lookup with a 3s fail-open timeout. No per-request LLM call (reflect is intentionally avoided on the hot path).                                                                   |
+| Cache-hit regression          | Memory is injected as the **last** system block to preserve the cached prefix. Watch prompt-cache metrics after changes.                                                                             |
 
 Historical logs for deleted/rotated pods: use the `victoria-logs` skill, e.g. `{namespace="litellm"} |~ "hindsight"`.
 

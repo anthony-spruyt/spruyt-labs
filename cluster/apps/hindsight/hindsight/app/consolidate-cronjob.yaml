@@ -1,0 +1,102 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/cronjob-batch-v1.json
+# Nightly memory consolidation (issue #2270). Auto-consolidation was moved OFF
+# the per-turn retain hot path (ENABLE_AUTO_CONSOLIDATION=false in values.yaml)
+# because it fired an LLM pass on every Claude Code turn. This job lists every
+# bank and triggers consolidation once per night instead. The hindsight API has
+# no auth enabled (no HINDSIGHT_API_TENANT_EXTENSION), so the job only needs
+# in-cluster network reach to api:8888 — see consolidate-network-policy.yaml.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hindsight-consolidate
+  namespace: hindsight
+spec:
+  schedule: "23 17 * * *" # 03:23 AEST (UTC+10), off-peak
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: hindsight-consolidate
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          containers:
+            - name: consolidate
+              # alpine/k8s ships curl + jq; already cached in-cluster (also used
+              # by github-token-rotation). No package installs, no world egress.
+              image: alpine/k8s:1.36.2@sha256:44ef4942e171939b9c665a4a84beb80e2dcdb9a24330d4651cfdfd2e9deecc47
+              env:
+                - name: HINDSIGHT_BASE_URL
+                  value: "http://hindsight-api.hindsight.svc.cluster.local:8888"
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  BASE="$${HINDSIGHT_BASE_URL}/v1/default/banks"
+
+                  echo "=== Hindsight nightly consolidation ==="
+                  BANKS=$$(curl -sfS --max-time 30 "$${BASE}" \
+                    | jq -r '.banks[].bank_id') || {
+                    echo "ERROR: failed to list banks"
+                    exit 1
+                  }
+
+                  if [ -z "$${BANKS}" ]; then
+                    echo "No banks found — nothing to consolidate."
+                    exit 0
+                  fi
+
+                  RC=0
+                  for bank in $${BANKS}; do
+                    echo "--- consolidating bank: $${bank} ---"
+                    if curl -sfS --max-time 600 -X POST \
+                        -H "Content-Type: application/json" -d '{}' \
+                        "$${BASE}/$${bank}/consolidate"; then
+                      echo ""
+                      echo "  ok: $${bank}"
+                    else
+                      echo "  ERROR: consolidate failed for $${bank}" >&2
+                      RC=1
+                    fi
+                  done
+
+                  echo "=== consolidation complete (rc=$${RC}) ==="
+                  exit $${RC}
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 10001
+                runAsGroup: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}

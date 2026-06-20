@@ -60,6 +60,32 @@ api:
     HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000/v1"
     HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embedding"
     HINDSIGHT_API_EMBEDDINGS_LITELLM_API_KEY: "$(HINDSIGHT_API_LLM_API_KEY)"
+    # ---- Retain / extraction tuning (issue #2270) ----------------------------
+    # The LiteLLM memory callback retains each Claude Code exchange as ONE
+    # conversation item (JSON array of {role,content}). Upstream chunk_text()
+    # keeps a whole turn intact up to STRUCTURED_CHUNK_SIZE; without it a turn is
+    # split at RETAIN_CHUNK_SIZE (3000) and facts lose context. 8192 is the
+    # canonical chat-transcript value from the bank-template schema.
+    HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE: "8192"
+    # verbose = richer facts with full context and relationships (vs the default
+    # `concise`, which aggressively summarizes into fragments).
+    HINDSIGHT_API_RETAIN_EXTRACTION_MODE: "verbose"
+    HINDSIGHT_API_RETAIN_MISSION: >-
+      Extract technical decisions, architectural trade-offs, API and design
+      choices, file paths and symbols touched, root causes, blockers, and exact
+      error messages from this software-engineering session. Keep each memory
+      self-contained with enough surrounding context to be understood in
+      isolation. Prefer fewer, richer facts over many fragments.
+    # Per-operation model overrides (LiteLLM aliases; provider/base inherit).
+    # Retain runs per turn (high volume) -> haiku conserves the subscription's
+    # 5-hour / weekly usage budget. Consolidation is a nightly batch (low
+    # volume) -> sonnet for stronger belief synthesis. Both support >=64k output
+    # so the RETAIN_MAX_COMPLETION_TOKENS default (64000) needs no clamp.
+    HINDSIGHT_API_RETAIN_LLM_MODEL: "claude-haiku-4-5"
+    HINDSIGHT_API_CONSOLIDATION_LLM_MODEL: "claude-sonnet-4-6"
+    # Auto-consolidation moved OFF the per-turn hot path (it fired an LLM pass on
+    # every retain). A nightly CronJob calls /consolidate per bank instead.
+    HINDSIGHT_API_ENABLE_AUTO_CONSOLIDATION: "false"
     # Reranker model (cross-encoder/ms-marco-MiniLM-L-6-v2) is baked into the
     # image cache at /home/hindsight/.cache/huggingface/hub. The egress
     # CiliumNetworkPolicy permits ONLY postgres + litellm — no DNS, no
@@ -105,8 +131,25 @@ worker:
     HINDSIGHT_API_PORT: "8888"
     HINDSIGHT_API_EMBEDDINGS_PROVIDER: "litellm"
     HINDSIGHT_API_LITELLM_API_BASE: "http://litellm.litellm.svc.cluster.local:4000/v1"
-    HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embeddings"
+    # Must match the LiteLLM model alias exactly. The alias is `hindsight-embedding`
+    # (singular) in litellm values.yaml; the previous plural `hindsight-embeddings`
+    # did not resolve, so worker retain embeddings failed (issue #2270).
+    HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embedding"
     HINDSIGHT_API_EMBEDDINGS_LITELLM_API_KEY: "$(HINDSIGHT_API_LLM_API_KEY)"
+    # ---- Retain / extraction tuning (issue #2270) ----------------------------
+    # Async retain jobs are processed by the worker, so the extraction knobs must
+    # be set here too (mirrors api.env). See api.env for rationale.
+    HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE: "8192"
+    HINDSIGHT_API_RETAIN_EXTRACTION_MODE: "verbose"
+    HINDSIGHT_API_RETAIN_MISSION: >-
+      Extract technical decisions, architectural trade-offs, API and design
+      choices, file paths and symbols touched, root causes, blockers, and exact
+      error messages from this software-engineering session. Keep each memory
+      self-contained with enough surrounding context to be understood in
+      isolation. Prefer fewer, richer facts over many fragments.
+    HINDSIGHT_API_RETAIN_LLM_MODEL: "claude-haiku-4-5"
+    HINDSIGHT_API_CONSOLIDATION_LLM_MODEL: "claude-sonnet-4-6"
+    HINDSIGHT_API_ENABLE_AUTO_CONSOLIDATION: "false"
     # See api.env note: force HF offline so the baked reranker cache is used
     # without the egress-blocked huggingface.co etag check that hangs startup.
     HF_HUB_OFFLINE: "1"

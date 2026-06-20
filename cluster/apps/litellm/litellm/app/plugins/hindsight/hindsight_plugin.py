@@ -22,6 +22,7 @@ degrades or blocks the primary completion path.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from typing import Any, Optional
@@ -305,13 +306,22 @@ class HindsightMiddleware:
         return None
 
     @staticmethod
-    def _memory_item(content: str, role: str, doc_id: Optional[str]) -> dict:
-        item = {"content": content, "context": role, "metadata": {"role": role}}
+    def _conversation_item(
+        turns: list, context: str, doc_id: Optional[str]
+    ) -> dict:
+        # content is a JSON-encoded conversation array (list of {role, content}
+        # dicts). Upstream chunk_text() (fact_extraction.py) only takes the
+        # whole-turn-preserving _chunk_conversation path when json.loads yields
+        # a list of dicts — a bare turn string falls through to plain-text
+        # splitting at retain_chunk_size and fragments the memory. context is a
+        # string (a dict yields HTTP 422); metadata is dict[str,str].
+        item = {
+            "content": json.dumps(turns, ensure_ascii=False),
+            "context": context,
+            "metadata": {"format": "conversation"},
+        }
         if doc_id:
-            # Hindsight rejects a batch with duplicate document_ids, so the
-            # per-turn id is suffixed by role to keep both turns unique while
-            # still grouping them under the same call.
-            item["document_id"] = f"{doc_id}-{role}"
+            item["document_id"] = doc_id
         return item
 
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
@@ -323,23 +333,26 @@ class HindsightMiddleware:
                 return
             user_text = self._latest_user_text(kwargs)
             assistant_text = self._response_text(response_obj)
-            # Hindsight MemoryItem: content/context are strings, metadata is
-            # dict[str,str]. The two turns share a document_id so they are
-            # retained as one conversation.
-            doc_id = kwargs.get("litellm_call_id") or kwargs.get("id")
-            items = []
+            # Retain the exchange as ONE conversation item so Hindsight's
+            # conversation-aware chunker keeps each turn whole (up to
+            # retain_structured_chunk_size) instead of splitting bare strings at
+            # retain_chunk_size. One item -> one document_id, no per-role suffix.
+            turns = []
             if user_text:
-                items.append(self._memory_item(user_text, "user", doc_id))
+                turns.append({"role": "user", "content": user_text})
             if assistant_text:
-                items.append(self._memory_item(assistant_text, "assistant", doc_id))
-            if not items:
+                turns.append({"role": "assistant", "content": assistant_text})
+            if not turns:
                 return
-            body = {"items": items, "async": True}
+            doc_id = kwargs.get("litellm_call_id") or kwargs.get("id")
+            item = self._conversation_item(
+                turns, f"Claude Code session: {bank}", doc_id)
+            body = {"items": [item], "async": True}
             async with httpx.AsyncClient(timeout=self.timeout_s) as client:
                 resp = await client.post(self._memories_url(bank), json=body)
                 resp.raise_for_status()
             verbose_proxy_logger.debug(
-                "hindsight: retained %d item(s) for bank=%s", len(items), bank)
+                "hindsight: retained %d turn(s) for bank=%s", len(turns), bank)
         except Exception as exc:  # noqa: BLE001 — never raise into the success path
             verbose_proxy_logger.warning("hindsight retain failed (swallowed): %s", exc)
 

@@ -44,6 +44,10 @@ spec:
             k8s:app.kubernetes.io/instance: hindsight
             k8s:app.kubernetes.io/name: hindsight
             k8s:app.kubernetes.io/component: worker
+        # Nightly consolidate CronJob (issue #2270): lists banks + POST /consolidate.
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hindsight
+            k8s:app: hindsight-consolidate
       toPorts:
         - ports:
             - port: "8888"

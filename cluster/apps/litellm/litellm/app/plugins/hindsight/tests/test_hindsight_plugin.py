@@ -64,11 +64,19 @@ async def test_no_bank_skips(plugin, mock_httpx, make_anthropic, make_key):
     assert mock_httpx.calls == []
 
 
-# 4 — retain POSTs items with async:true on success -----------------------
+# 4 — retain POSTs one conversation item with async:true on success -------
 # litellm nests proxy_server_request inside litellm_params for the success
 # event (litellm_logging.py: get_litellm_params -> litellm_params dict), unlike
 # the pre-call hook where it is top-level on `data`.
-async def test_retain_called_on_success(plugin, mock_httpx, make_response):
+#
+# The item's `content` MUST be a JSON-encoded conversation array
+# (list of {role, content} dicts). Upstream chunk_text() (fact_extraction.py)
+# only takes the whole-turn-preserving _chunk_conversation path when it can
+# json.loads the content into a list of dicts; a bare turn string falls through
+# to plain-text splitting at retain_chunk_size and fragments the memory.
+async def test_retain_sends_conversation_array(plugin, mock_httpx, make_response):
+    import json
+
     kwargs = {
         "litellm_call_id": "call-abc123",
         "litellm_params": {
@@ -82,18 +90,21 @@ async def test_retain_called_on_success(plugin, mock_httpx, make_response):
     assert len(mock_httpx.retain_calls) == 1
     body = mock_httpx.retain_calls[0]["json"]
     assert body["async"] is True
-    assert isinstance(body["items"], list) and body["items"]
-    # Hindsight MemoryItem schema: content is str, context is str|null,
-    # metadata is dict[str,str]. Sending a dict for context yields HTTP 422.
-    for item in body["items"]:
-        assert isinstance(item["content"], str)
-        assert "context" not in item or isinstance(item["context"], (str, type(None)))
-        if "metadata" in item:
-            assert all(isinstance(v, str) for v in item["metadata"].values())
-    # Hindsight rejects a batch with duplicate document_ids (HTTP 500), so the
-    # two turns must carry unique ids.
-    doc_ids = [it.get("document_id") for it in body["items"] if it.get("document_id")]
-    assert len(doc_ids) == len(set(doc_ids))
+    # Exactly ONE item per exchange — the whole conversation, not split per role.
+    assert isinstance(body["items"], list) and len(body["items"]) == 1
+    item = body["items"][0]
+    # content is a JSON string (Hindsight MemoryItem.content is str|null).
+    assert isinstance(item["content"], str)
+    conversation = json.loads(item["content"])
+    assert isinstance(conversation, list)
+    assert all(isinstance(t, dict) for t in conversation)
+    roles = [t.get("role") for t in conversation]
+    assert roles == ["user", "assistant"]
+    assert all(isinstance(t.get("content"), str) and t["content"] for t in conversation)
+    # context is str|null (a dict here yields HTTP 422); metadata is dict[str,str].
+    assert "context" not in item or isinstance(item["context"], (str, type(None)))
+    if "metadata" in item:
+        assert all(isinstance(v, str) for v in item["metadata"].values())
     assert mock_httpx.retain_calls[0]["url"].endswith(
         "/v1/default/banks/my-repo/memories")
 

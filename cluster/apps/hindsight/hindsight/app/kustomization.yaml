@@ -16,6 +16,8 @@ resources:
   - ./vpa.yaml
   - ./authentik-outpost-rbac.yaml
   - ./network-policies.yaml
+  - ./consolidate-cronjob.yaml
+  - ./consolidate-network-policy.yaml
 configMapGenerator:
   - name: hindsight-values
     namespace: hindsight
