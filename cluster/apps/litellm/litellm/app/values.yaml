@@ -478,7 +478,7 @@ configMaps:
             - otel
             - prometheus
             - websearch_interception
-            # - custom_callbacks.middleware.pipeline_plugin.pipeline_middleware
+            - custom_callbacks.middleware.pipeline_plugin.pipeline_middleware
           drop_params: true
           websearch_interception_params:
             enabled_providers:
