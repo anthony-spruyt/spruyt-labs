@@ -136,20 +136,6 @@ worker:
     # did not resolve, so worker retain embeddings failed (issue #2270).
     HINDSIGHT_API_EMBEDDINGS_LITELLM_MODEL: "hindsight-embedding"
     HINDSIGHT_API_EMBEDDINGS_LITELLM_API_KEY: "$(HINDSIGHT_API_LLM_API_KEY)"
-    # ---- Retain / extraction tuning (issue #2270) ----------------------------
-    # Async retain jobs are processed by the worker, so the extraction knobs must
-    # be set here too (mirrors api.env). See api.env for rationale.
-    HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE: "8192"
-    HINDSIGHT_API_RETAIN_EXTRACTION_MODE: "verbose"
-    HINDSIGHT_API_RETAIN_MISSION: >-
-      Extract technical decisions, architectural trade-offs, API and design
-      choices, file paths and symbols touched, root causes, blockers, and exact
-      error messages from this software-engineering session. Keep each memory
-      self-contained with enough surrounding context to be understood in
-      isolation. Prefer fewer, richer facts over many fragments.
-    HINDSIGHT_API_RETAIN_LLM_MODEL: "claude-haiku-4-5"
-    HINDSIGHT_API_CONSOLIDATION_LLM_MODEL: "claude-sonnet-4-6"
-    HINDSIGHT_API_ENABLE_AUTO_CONSOLIDATION: "false"
     # See api.env note: force HF offline so the baked reranker cache is used
     # without the egress-blocked huggingface.co etag check that hangs startup.
     HF_HUB_OFFLINE: "1"
