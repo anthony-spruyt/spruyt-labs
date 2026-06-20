@@ -47,7 +47,7 @@ Read once at module init. Defaults shown.
 | Env var                       | Default                                                 | Purpose                                  |
 | ----------------------------- | ------------------------------------------------------- | ---------------------------------------- |
 | `HINDSIGHT_BASE_URL`          | `http://hindsight-api.hindsight.svc.cluster.local:8888` | Hindsight API base                       |
-| `HINDSIGHT_TIMEOUT_S`         | `3.0`                                                   | Recall/retain HTTP timeout (fails open)  |
+| `HINDSIGHT_TIMEOUT_S`         | `30.0`                                                  | Recall/retain HTTP timeout (fails open)  |
 | `HINDSIGHT_RECALL_BUDGET`     | `mid`                                                   | Recall budget: `low` / `mid` / `high`    |
 | `HINDSIGHT_MAX_MEMORY_TOKENS` | `4096`                                                  | Cap on injected memory tokens            |
 | `HINDSIGHT_INJECT`            | `true`                                                  | Master switch for the recall/inject path |
