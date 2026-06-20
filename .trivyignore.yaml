@@ -535,3 +535,11 @@ misconfigurations:
     paths:
       - cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/main.tf
       - cluster/apps/coder-workspaces/**
+
+  # ==============================================================================
+  # Hindsight consolidate CronJob - nightly memory consolidation
+  # ==============================================================================
+  # alpine/k8s is a trusted Docker Hub image for kubectl operations
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/hindsight/hindsight/app/consolidate-cronjob.yaml
