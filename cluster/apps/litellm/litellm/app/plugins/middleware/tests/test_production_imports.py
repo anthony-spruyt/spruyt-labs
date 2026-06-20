@@ -42,9 +42,14 @@ def production_import_shape(monkeypatch):
     monkeypatch.setitem(sys.modules, "custom_callbacks", custom_callbacks)
 
 
+# chatgpt middleware is disabled in registry.DEFAULT_MIDDLEWARE_SPECS (buggy
+# startup auth). Only hindsight loads. Re-enable these when chatgpt is restored.
+_CHATGPT_DISABLED = pytest.mark.skip(
+    reason="chatgpt middleware commented out in registry — hindsight only")
+
+
 def test_production_dotted_imports_resolve(production_import_shape):
     modules = [
-        "custom_callbacks.chatgpt.chatgpt_plugin",
         "custom_callbacks.hindsight.hindsight_plugin",
         "custom_callbacks.middleware.pipeline",
         "custom_callbacks.middleware.registry",
@@ -56,8 +61,9 @@ def test_production_dotted_imports_resolve(production_import_shape):
 
     plugin = importlib.import_module("custom_callbacks.middleware.pipeline_plugin")
 
+    # Only hindsight is active while chatgpt is disabled in the registry.
     assert plugin.pipeline_middleware.middlewares
-    assert len(plugin.pipeline_middleware.middlewares) == 2
+    assert len(plugin.pipeline_middleware.middlewares) == 1
 
 
 class _FakeResponse:
@@ -82,6 +88,7 @@ class _FakeAsyncClient:
         return _FakeResponse()
 
 
+@_CHATGPT_DISABLED
 async def test_production_pipeline_runs_hindsight_then_chatgpt(
     monkeypatch, production_import_shape,
 ):
