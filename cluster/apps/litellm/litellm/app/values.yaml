@@ -87,6 +87,10 @@ controllers:
           GENERIC_TOKEN_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/token/"
           GENERIC_USER_ROLE_ATTRIBUTE: litellm_role
           GENERIC_USERINFO_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/"
+          # Recall runs inline in the pre-call hook; it grows with bank size
+          # (rerank over all facts). At ~30 facts it takes 2.4-3.5s, exceeding
+          # the plugin's 3.0s default and tripping fail-open (no injection).
+          HINDSIGHT_TIMEOUT_S: "8.0"
           LITELLM_OTEL_INTEGRATION_ENABLE_METRICS: "true"
           LITELLM_OTEL_V2: "true"
           OTEL_EXPORTER: otlp_http
