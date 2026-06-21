@@ -132,8 +132,10 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
       encryptedDevice: "true"
   resources:
     mgr:
+      # Active mgr runs prometheus/dashboard/pg_autoscaler modules; VPA uncapped
+      # target peaks ~4.5Gi. 6Gi gives headroom to avoid OOMKilled (Ref #2271).
       limits:
-        memory: 3Gi
+        memory: 6Gi
       requests:
         cpu: 100m
         memory: 768Mi

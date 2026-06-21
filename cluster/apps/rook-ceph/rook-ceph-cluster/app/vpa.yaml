@@ -19,7 +19,7 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 3Gi
+          memory: 6Gi
       - containerName: watch-active
         controlledValues: "RequestsOnly"
         minAllowed:
@@ -55,7 +55,7 @@ spec:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 3Gi
+          memory: 6Gi
       - containerName: watch-active
         controlledValues: "RequestsOnly"
         minAllowed:
