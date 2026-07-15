@@ -33,20 +33,20 @@
   ],
   "features": {
     "ghcr.io/devcontainers/features/go": {
-      "version": "1.26.4"
+      "version": "1.26.5"
     },
     "ghcr.io/devcontainers/features/terraform": {
-      "version": "1.15.5"
+      "version": "1.15.7"
     },
     "ghcr.io/devcontainers-extra/features/renovate-cli": {
-      "version": "43.205.3"
+      "version": "43.214.6"
     },
     "ghcr.io/devcontainers-extra/features/sops": {
-      "version": "3.13.1"
+      "version": "3.13.2"
     },
     "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
       "jqVersion": "1.8.1",
-      "yqVersion": "4.53.2",
+      "yqVersion": "4.53.3",
       "gojqVersion": "0.12.19"
     }
   },
