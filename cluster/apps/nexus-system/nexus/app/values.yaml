@@ -27,7 +27,7 @@ controllers:
             drop: [ALL]
         image:
           repository: sonatype/nexus3
-          tag: "3.93.1@sha256:20eff0386283951be6c494e3f82030dec06ff14d39da8aff7d001d3d6620ba85"
+          tag: "3.94.0@sha256:6e8905c14210c595a8177910179ce080cdc22fa3f6b660a13e6dfa1f8378a866"
         env:
           TZ:
             value: "${TIMEZONE}"
