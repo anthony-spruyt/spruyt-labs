@@ -19,7 +19,7 @@ spec:
         images:
           - name: n8nio/runners
             # renovate: datasource=docker depName=n8nio/runners
-            newTag: "2.26.5"
+            newTag: "2.31.2"
             digest: sha256:f43c5a81d0f27931aaa35d0c32fad85af5919e095562f8f9849c14af773dc526
         patches:
           - target:
