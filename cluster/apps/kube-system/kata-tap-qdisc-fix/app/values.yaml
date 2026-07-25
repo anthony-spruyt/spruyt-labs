@@ -25,7 +25,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/kata-tap-qdisc-fix
-          tag: 0.2.7@sha256:f2f7c961334ebb0c15b692cd7e022ee3d325f96773354fbfb7d36377dabf4d3c
+          tag: 0.2.8@sha256:0a58a7ce3a5362f5c4eef6e75b2bc9250c7d96885e074c112042779514be1849
           pullPolicy: IfNotPresent
         env:
           - name: DRY_RUN
