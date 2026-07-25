@@ -13,7 +13,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
   -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT}" \
   -o /kata-tap-qdisc-fix .
 
-FROM gcr.io/distroless/static:nonroot@sha256:963fa6c544fe5ce420f1f54fb88b6fb01479f054c8056d0f74cc2c6000df5240
+FROM gcr.io/distroless/static:nonroot@sha256:f7f8f729987ad0fdf6b05eeeae94b26e6a0f613bdf46feea7fc40f7bd72953e6
 COPY --from=builder /kata-tap-qdisc-fix /kata-tap-qdisc-fix
 USER 65534:65534
 # Health monitored via Kubernetes liveness/readiness probes, not docker healthcheck.
