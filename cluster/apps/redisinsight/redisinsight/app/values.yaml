@@ -23,7 +23,7 @@ controllers:
       app:
         image:
           repository: redis/redisinsight
-          tag: 3.6.0@sha256:aa21bbd198455b4ad964f76782db951155aa0d712321f599972d1525f031f0e6
+          tag: 3.8.0@sha256:b5e19ee240abef6edb435871b90ff8a210995422e8e018ab61c0339d318a1f84
           pullPolicy: IfNotPresent
         env:
           - name: RI_FILES_LOGGER
