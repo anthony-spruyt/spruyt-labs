@@ -7,8 +7,8 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "3.8.1"
-    digest: sha256:61d8cd025a27bd2962e1a6daf40fc98218a97ca2164f1184d14f41d40db84efa
+    tag: "3.8.2"
+    digest: sha256:2d267f9a36a0cf42efb735f5e984acac8a9f5eabe501f48138825f1cf07efafe
   url: oci://ghcr.io/kyverno/charts/kyverno
   secretRef:
     name: image-pull-secrets
