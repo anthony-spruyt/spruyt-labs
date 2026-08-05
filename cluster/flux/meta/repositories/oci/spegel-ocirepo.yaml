@@ -7,8 +7,8 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "0.7.2"
-    digest: sha256:24605308daa03e1920b4c1db044f2de6ad241dd6a9ec886d8d643a2682f2ae98
+    tag: "0.7.4"
+    digest: sha256:eaf39cc0967adead1cb6b8c48080c0ecc301016870be7aa43f3e6a8fb8e78000
   url: oci://ghcr.io/spegel-org/helm-charts/spegel
   secretRef:
     name: image-pull-secrets
