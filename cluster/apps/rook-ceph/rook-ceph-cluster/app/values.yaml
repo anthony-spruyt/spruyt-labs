@@ -120,6 +120,40 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
     addressRanges:
       cluster:
         - "169.254.255.0/24"
+  # CephX key rotation for CVE-2025-30156 (Ceph v20.2.4 introduced the aes256k key type).
+  # https://github.com/rook/rook/blob/release-1.20/Documentation/Storage-Configuration/Advanced/cephx-key-rotation.md
+  security:
+    cephx:
+      daemon:
+        keyRotationPolicy: KeyGeneration
+        keyGeneration: 1
+        keyType: aes256k
+      csi:
+        # DO NOT set aes256k: kernel CephX aes256k support lands in Linux 7.0.
+        # Talos nodes run kernel 6.18.x and this cluster uses the kernel mounter for
+        # both RBD and CephFS -- rotating to aes256k would strand every PVC mount.
+        # Tracked in #2558.
+        keyType: aes
+      rbdMirrorPeer:
+        keyRotationPolicy: KeyGeneration
+        keyGeneration: 1
+        keyType: aes256k
+      # allowedCiphers is intentionally NOT narrowed to [aes256k] while CSI keys are aes.
+  healthCheck:
+    # Residual AUTH_INSECURE_* warnings are expected until CSI keys can move to aes256k
+    # (blocked on kernel 7.0+, see #2558). Muted here rather than via `ceph health mute`,
+    # which has a TTL and would silently lapse back into HEALTH_ERR/WARN.
+    # AUTH_INSECURE_ROTATING_SERVICE_KEY_TYPE is pre-muted: it appears post-rotation and
+    # self-clears ~2-3h later; muting avoids a transient WARN flap.
+    muteHealthWarning:
+      AUTH_INSECURE_CLIENT_KEY_TYPE:
+        policy: mute
+      AUTH_INSECURE_KEYS_ALLOWED:
+        policy: mute
+      AUTH_INSECURE_KEYS_CREATABLE:
+        policy: mute
+      AUTH_INSECURE_ROTATING_SERVICE_KEY_TYPE:
+        policy: mute
   crashCollector:
     daysToRetain: 30
   storage:

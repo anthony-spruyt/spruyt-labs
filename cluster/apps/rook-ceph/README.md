@@ -130,6 +130,61 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
    ceph orch ps --daemon-type mon,mgr,osd
    ```
 
+### CephX key rotation (`aes` / `aes256k`)
+
+Ceph v20.2.4 fixed CVE-2025-30156 by adding a new CephX key type, `aes256k`, plus six `AUTH_INSECURE_*` health checks that fire while keys are still `aes`. Configuration lives under `cephClusterSpec.security.cephx` and `cephClusterSpec.healthCheck.muteHealthWarning` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml).
+
+Current state:
+
+| Key set                                              | Type      | Notes                                   |
+| ---------------------------------------------------- | --------- | --------------------------------------- |
+| Daemons (`mon`, `mgr`, `osd`, `mds`, `rgw`, `crash`) | `aes256k` | `keyRotationPolicy: KeyGeneration`      |
+| `client.rbd-mirror-peer`                             | `aes256k` | No mirroring configured, safe to rotate |
+| CSI clients (`csi-rbd-*`, `csi-cephfs-*`)            | `aes`     | Pinned -- see kernel gate below         |
+
+**Why CSI stays on `aes`:** upstream kernel support for `aes256k` begins in Linux 7.0. The nodes run kernel 6.18.x and this cluster uses the *kernel* mounter for both RBD and CephFS, so rotating CSI keys to `aes256k` would strand every kernel-mounted PVC. Do not set `allowedCiphers: [aes256k]` either -- it would reject the still-`aes` CSI keys.
+
+Because of that, `AUTH_INSECURE_CLIENT_KEY_TYPE`, `AUTH_INSECURE_KEYS_ALLOWED` and `AUTH_INSECURE_KEYS_CREATABLE` remain and are muted declaratively via `healthCheck.muteHealthWarning` (Rook re-applies the mute on reconcile; `ceph health mute` has a TTL and would silently lapse).
+
+**Rotating daemon keys again** -- increment `keyGeneration` under `security.cephx.daemon` and commit. Rook restarts daemons one at a time; expect several minutes and transient PG peering. Verify:
+
+```bash
+kubectl -n rook-ceph get cephcluster rook-ceph -o json | jq '.status.cephx'
+kubectl -n rook-ceph logs deploy/rook-ceph-operator --tail=100 | grep -i cephx
+```
+
+If the toolbox errors on the admin keyring after rotation, restart it:
+
+```bash
+kubectl -n rook-ceph rollout restart deploy/rook-ceph-tools
+```
+
+**Emergency escape** -- if daemons cannot authenticate after a rotation, widen the ciphers and force the old type, wait for mon pods to show `--mon-auth-emergency-allowed-ciphers`, confirm recovery, then drop the `daemon.keyType` override:
+
+```yaml
+security:
+  cephx:
+    allowedCiphers: [aes, aes256k]
+    daemon:
+      keyType: aes # workaround only
+```
+
+**Unmute procedure** (once every node runs kernel >= 7.0):
+
+1. Confirm the kernel on every node:
+
+   ```bash
+   kubectl get nodes -o custom-columns=NAME:.metadata.name,KERNEL:.status.nodeInfo.kernelVersion
+   ```
+
+2. Set `security.cephx.csi` to `keyRotationPolicy: KeyGeneration`, `keyGeneration: 1`, `keepPriorKeyCountMax: 1`, `keyType: aes256k`.
+
+3. Wait for `status.cephx.csi.keyGeneration` to advance, then cordon/drain/uncordon each node in turn so pods remount with the new key.
+
+4. Set `keepPriorKeyCountMax: 0` and add `allowedCiphers: [aes256k]`.
+
+5. Flip every `muteHealthWarning` entry to `policy: unmute`.
+
 ### OSD down or out unexpectedly
 
 1. List failing daemons:
