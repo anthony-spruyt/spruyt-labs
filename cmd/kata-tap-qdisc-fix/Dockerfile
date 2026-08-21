@@ -1,5 +1,5 @@
 # renovate: depName=golang datasource=docker
-ARG GO_VERSION=1.26.5
+ARG GO_VERSION=1.27.0
 FROM golang:${GO_VERSION}-alpine AS builder
 
 ARG VERSION=dev
