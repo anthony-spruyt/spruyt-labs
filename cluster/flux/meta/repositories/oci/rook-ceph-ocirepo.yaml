@@ -7,8 +7,8 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: v1.20.1
-    digest: sha256:e57bbce7d259a3cc4dc4300b919688fb903daad9da645f838e05fcdfaeeea775
+    tag: v1.20.6
+    digest: sha256:a24d8f48670097d206dc9e1b7e434841221afdfca09117dc6608f5c951fe35f5
   url: oci://ghcr.io/rook/rook-ceph
   secretRef:
     name: image-pull-secrets
