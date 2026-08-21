@@ -6,7 +6,7 @@
 # Ceph container image - KEEP IN SYNC with toolbox init container in release.yaml
 cephImage:
   repository: quay.io/ceph/ceph
-  tag: v20.2.2@sha256:6b4b5ae33acd3d736eb26d2a19238bce71a22f9cfb99cca887ba6312d0957644
+  tag: v20.2.4@sha256:6bb1c8a42fbc0bf87938946990b65174466997bc11c31eb5a323225a779fd8f9
 
 toolbox:
   # -- Enable Ceph debugging pod deployment. See [toolbox](https://github.com/rook/rook/blob/master/Documentation/Troubleshooting/ceph-toolbox.md)
