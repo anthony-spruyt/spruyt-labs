@@ -440,6 +440,7 @@ configMaps:
       config.yaml: |
         general_settings:
           always_include_stream_usage: true
+          forward_client_headers_to_llm_api: true
           store_model_in_db: true
           supported_db_objects:
             - mcp
@@ -504,6 +505,21 @@ configMaps:
               order: 1
               weight: 1
           # --------------------------------------------------------------------------
+          # Anthropic: Subscription
+          # --------------------------------------------------------------------------
+          - model_name: "anthropic/claude-fable-5"
+            litellm_params:
+              model: "anthropic/claude-fable-5"
+          - model_name: "anthropic/claude-opus-5"
+            litellm_params:
+              model: "anthropic/claude-opus-5"
+          - model_name: "anthropic/claude-sonnet-5"
+            litellm_params:
+              model: "anthropic/claude-sonnet-5"
+          - model_name: "anthropic/claude-haiku-4-5"
+            litellm_params:
+              model: "anthropic/claude-haiku-4-5"
+          # --------------------------------------------------------------------------
           # OpenAI: Subscription
           # --------------------------------------------------------------------------
           # - model_name: "chatgpt/gpt-5.5"
@@ -540,79 +556,21 @@ configMaps:
             litellm_params:
               model: "openai/gpt-4o-mini"
               api_key: os.environ/OPENAI_API_KEY
-              order: 2
-              weight: 1
           - model_name: "openai/text-embedding-3-small"
             litellm_params:
               model: "text-embedding-3-small"
               api_key: os.environ/OPENAI_API_KEY
-              order: 2
-              weight: 1
-          # --------------------------------------------------------------------------
-          # Zenmux: Subscription
-          # --------------------------------------------------------------------------
-          - model_name: "anthropic/claude-opus-4-8"
-            litellm_params:
-              model: "anthropic/claude-opus-4-8"
-              api_base: https://zenmux.ai/api/anthropic
-              api_key: os.environ/ZENMUX_SUB_API_KEY
-              input_cost_per_token: 0.0
-              output_cost_per_token: 0.0
-              order: 1
-              weight: 1
-          - model_name: "anthropic/claude-sonnet-4-6"
-            litellm_params:
-              model: "anthropic/claude-sonnet-4-6"
-              api_base: https://zenmux.ai/api/anthropic
-              api_key: os.environ/ZENMUX_SUB_API_KEY
-              input_cost_per_token: 0.0
-              output_cost_per_token: 0.0
-              order: 1
-              weight: 1
-          - model_name: "anthropic/claude-haiku-4-5"
-            litellm_params:
-              model: "anthropic/claude-haiku-4-5"
-              api_base: https://zenmux.ai/api/anthropic
-              api_key: os.environ/ZENMUX_SUB_API_KEY
-              input_cost_per_token: 0.0
-              output_cost_per_token: 0.0
-              order: 1
-              weight: 1
-          - model_name: "openai/gpt-4o-mini"
-            litellm_params:
-              model: "openai/gpt-4o-mini"
-              api_base: https://zenmux.ai/api/v1
-              api_key: os.environ/ZENMUX_SUB_API_KEY
-              input_cost_per_token: 0.0
-              output_cost_per_token: 0.0
-              order: 1
-              weight: 1
-          - model_name: "openai/text-embedding-3-small"
-            litellm_params:
-              model: "text-embedding-3-small"
-              api_base: https://zenmux.ai/api/v1
-              api_key: os.environ/ZENMUX_SUB_API_KEY
-              input_cost_per_token: 0.0
-              output_cost_per_token: 0.0
-              order: 1
-              weight: 1
         router_settings:
           enable_weighted_failover: true
           model_group_alias:
-            "gpt-5.5": "chatgpt/gpt-5.5"
-            "gpt-5.4": "chatgpt/gpt-5.4"
-            "gpt-5.4-mini": "chatgpt/gpt-5.4-mini"
+            # "gpt-5.5": "chatgpt/gpt-5.5"
+            # "gpt-5.4": "chatgpt/gpt-5.4"
+            # "gpt-5.4-mini": "chatgpt/gpt-5.4-mini"
             "claude-haiku-4-5": "anthropic/claude-haiku-4-5"
             "claude-haiku-4-5-20251001": "anthropic/claude-haiku-4-5"
-            "claude-sonnet-4-5": "anthropic/claude-sonnet-4-6"
-            "claude-sonnet-4-5-20250514": "anthropic/claude-sonnet-4-6"
-            "claude-sonnet-4-6": "anthropic/claude-sonnet-4-6"
-            "claude-sonnet-4-6-20250514": "anthropic/claude-sonnet-4-6"
-            "claude-opus-4-6": "anthropic/claude-opus-4-8"
-            "claude-opus-4-6-20250514": "anthropic/claude-opus-4-8"
-            "claude-opus-4-7": "anthropic/claude-opus-4-8"
-            "claude-opus-4-7-20250515": "anthropic/claude-opus-4-8"
-            "claude-opus-4-8": "anthropic/claude-opus-4-8"
+            "claude-sonnet-5": "anthropic/claude-sonnet-5"
+            "claude-opus-5": "anthropic/claude-opus-5"
+            "claude-fable-5": "anthropic/claude-fable-5"
             "n8n-renovate-classifier": "openai/gpt-4o-mini"
             "hindsight-model": "openai/gpt-4o-mini"
             "hindsight-embedding": "openai/text-embedding-3-small"
