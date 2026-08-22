@@ -27,6 +27,30 @@ spec:
         continue: true
       - receiver: discord
         continue: true
+  inhibit_rules:
+    # The chart ships an always-on InfoInhibitor alert that is only useful with a matching
+    # inhibit rule; without one, every severity=info alert is delivered unconditionally.
+    # See #2562.
+    - source_matchers:
+        - alertname="InfoInhibitor"
+      target_matchers:
+        - severity="info"
+      equal:
+        - namespace
+    - source_matchers:
+        - severity="critical"
+      target_matchers:
+        - severity=~"warning|info"
+      equal:
+        - namespace
+        - alertname
+    - source_matchers:
+        - severity="warning"
+      target_matchers:
+        - severity="info"
+      equal:
+        - namespace
+        - alertname
   receivers:
     - name: discord
       discord_configs:
