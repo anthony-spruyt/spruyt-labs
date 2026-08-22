@@ -10,7 +10,13 @@ spec:
     name: app-template
     namespace: flux-system
   interval: 4h
-  timeout: 15m
+  # Bounds image pull AND readiness for every controller here. Worst case is
+  # roughly 23m: the ~2.9GB llm-guard image took ~18m to pull cold on a worker,
+  # plus its 5m startup probe budget (failureThreshold 30 x periodSeconds 10).
+  # At the previous 15m the pull alone blew the deadline, so Flux rolled the
+  # whole release back and re-upgraded, restarting the proxy and both Presidio
+  # controllers as collateral. Ref #2591
+  timeout: 30m
   valuesFrom:
     - kind: ConfigMap
       name: litellm-values

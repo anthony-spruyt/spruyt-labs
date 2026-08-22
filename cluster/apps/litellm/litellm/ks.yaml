@@ -19,5 +19,14 @@ spec:
     - name: litellm-valkey
     - name: rook-ceph-cluster-storage
   prune: true
-  timeout: 15m
+  # Matches the HelmRelease timeout. With wait: true this bounds health
+  # checking, which includes the HelmRelease Ready condition — so leaving it at
+  # 15m would fail the Kustomization on a slow image pull even after the Helm
+  # upgrade itself succeeds, and traefik-ingress dependsOn this. Ref #2591
+  timeout: 30m
+  # Without this, a failed reconcile waits the full 4h interval before retrying.
+  # Raising timeout to 30m pushes failure detection later, so worst-case recovery
+  # from a transient overrun would be ~4.5h with traefik-ingress blocked behind
+  # dependsOn for all of it. Ref #2591
+  retryInterval: 5m
   wait: true

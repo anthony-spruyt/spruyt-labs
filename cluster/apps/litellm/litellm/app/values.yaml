@@ -300,6 +300,16 @@ controllers:
           # Multi-scanner pipeline loaded from the mounted ConfigMap.
           # Per-scanner thresholds live in scanners.yml, not the THRESHOLD env.
           CONFIG_FILE: "/config/scanners.yml"
+          # Resolve the model entirely from the HF_HOME cache PVC. Without this
+          # a warm start still makes metadata revalidation calls to the Hub, so
+          # a hung huggingface.co could stall readiness even though every byte
+          # of the model is already on local storage.
+          #
+          # Deliberately fail-closed: a pod starting against an EMPTY cache
+          # cannot populate it and will never become ready. If the cache PVC is
+          # ever lost, drop this var, let one pod repopulate, then restore it.
+          # Ref #2592
+          HF_HUB_OFFLINE: "1"
           HF_TOKEN:
             valueFrom:
               secretKeyRef:
