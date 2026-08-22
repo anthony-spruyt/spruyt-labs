@@ -315,8 +315,9 @@ controllers:
                 port: 8000
               periodSeconds: 10
               timeoutSeconds: 5
-              # 300s window — rogue-security model is pulled from HF over egress
-              # on first boot (not baked), then loaded; baked model was ~24s.
+              # 300s window sized for the cold case: the first pod to run after
+              # the HF cache PVC is empty pulls the rogue-security model over
+              # egress before loading it. Warm starts read from the PVC instead.
               failureThreshold: 30
           liveness:
             enabled: true
@@ -632,6 +633,15 @@ persistence:
           - path: /config/scanners.yml
             subPath: scanners.yml
             readOnly: true
+  # HF_HOME for llm-guard. Weights are pulled from the Hub on first load and
+  # reused from here afterwards, so a restart no longer re-downloads the model.
+  llm-guard-hf-cache:
+    type: persistentVolumeClaim
+    existingClaim: llm-guard-hf-cache
+    advancedMounts:
+      llm-guard:
+        llm-guard:
+          - path: /app/.cache/huggingface
   custom-callbacks-workdir:
     type: emptyDir
     advancedMounts:

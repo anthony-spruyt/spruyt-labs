@@ -13,3 +13,28 @@ spec:
   resources:
     requests:
       storage: 8Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/persistentvolumeclaim.json
+# HuggingFace cache for llm-guard. Model weights are not baked into the image
+# (upstream removed the pre-download at build time), so the scanner pulls them
+# from the Hub on first load. Without this volume the cache lives in the
+# container writable layer and is lost on every restart, forcing a fresh
+# download inside the startup probe window.
+#
+# RWO block rather than CephFS: the deployment uses the Recreate strategy at
+# replicas 1, so there is never a second pod contending for the volume, and
+# loading safetensors is large sequential reads that block serves better than
+# CephFS. Going to replicas > 1 later means switching to an RWX class (and one
+# cold refill). Delete reclaim — the cache regenerates itself from the Hub.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-guard-hf-cache
+  namespace: litellm
+spec:
+  storageClassName: rbd-fast-delete
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
