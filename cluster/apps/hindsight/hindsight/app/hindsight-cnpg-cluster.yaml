@@ -31,7 +31,7 @@ spec:
     extensions:
       - name: pgvector
         image:
-          reference: ghcr.io/cloudnative-pg/pgvector:0.8.2-18-trixie
+          reference: ghcr.io/cloudnative-pg/pgvector:0.8.6-18-trixie
     parameters:
       # maintenance_work_mem: 8GB
       shared_buffers: 256MB
