@@ -25,7 +25,7 @@ tools:
   - mcp__litellm__victoriametrics-top_queries
   - mcp__litellm__victoriametrics-tsdb_status
 mcpServers: [victoriametrics]
-model: sonnet
+model: opus
 ---
 
 ## Persona

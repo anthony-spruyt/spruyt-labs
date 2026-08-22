@@ -4,15 +4,12 @@ import type { Config } from "../config.js";
 import type { AgentJob } from "../job/schema.js";
 
 export type DuplicateAction =
-  | { action: "replace" }
-  | { action: "buffer" }
-  | { action: "discard" };
+  { action: "replace" } | { action: "buffer" } | { action: "discard" };
 
 export type JobState = "waiting" | "prioritized" | "active" | "delayed";
 
 export type StalenessResult =
-  | { stale: false }
-  | { stale: true; reason: string };
+  { stale: false } | { stale: true; reason: string };
 
 export interface RoleDefinition {
   readonly timeoutMs: number;

@@ -28,11 +28,24 @@ defaultDatasources:
       access: proxy
       isDefault: false
 
-# Disable default NodeFilesystemSpaceFillingUp alerts - replaced with Talos-safe version in vmrules/
 defaultRules:
   rules:
+    # Disable default NodeFilesystemSpaceFillingUp alerts - replaced with Talos-safe version in vmrules/
     NodeFilesystemSpaceFillingUp:
       create: false
+    # The kube-scheduler.rules quantile recording rules produce no samples while the cluster
+    # is idle: rate() over the histogram buckets is all-zero, so histogram_quantile() returns
+    # NaN and the sample is dropped. Occasional pod scheduling emits a single sample, which
+    # resets the default 30m timer and flaps the alert every few minutes. See #2562.
+    RecordingRulesNoData:
+      spec:
+        for: 6h
+  groups:
+    # count:up0 is count(up == 0), which is an empty vector whenever every scrape target is
+    # healthy, so it trips RecordingRulesNoData permanently. Neither count:up0 nor count:up1
+    # is referenced by any dashboard or rule in this repo. See #2562.
+    kube-prometheus-general.rules:
+      enabled: false
 
 victoria-metrics-operator:
   enabled: false
@@ -84,6 +97,9 @@ alertmanager:
   # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
   spec:
     priorityClassName: high-priority
+    # Required by the inhibit_rules in alertmanager-config.yaml. When false, the operator
+    # appends namespace="observability" to both the source and target matchers of every
+    # inhibit rule, silently scoping them to this namespace with no error or symptom.
     disableNamespaceMatcher: true
     resources:
       limits:

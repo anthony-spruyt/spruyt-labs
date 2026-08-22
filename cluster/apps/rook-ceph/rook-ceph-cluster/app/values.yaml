@@ -126,8 +126,14 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
     cephx:
       daemon:
         keyRotationPolicy: KeyGeneration
-        keyGeneration: 1
-        keyType: aes256k
+        # Generation 2, not 1: mds.fs-a/b, both RGWs and osd.2 were already at generation 1
+        # from automatic rotations during earlier Ceph upgrades, and the MDS/OSD rotation
+        # paths ignore keyType (ignoreKeyType=true), so only a generation bump moves them.
+        keyGeneration: 2
+        # keyType is intentionally unset. Rook's default preferred cipher is already aes256k,
+        # and setting daemon.keyType makes Rook pass --mon-auth-emergency-allowed-ciphers to
+        # the mons (mon/spec.go), which raises a permanent AUTH_EMERGENCY_CIPHERS_SET warning.
+        # Upstream treats daemon.keyType as a bootstrap workaround only.
       csi:
         # DO NOT set aes256k: kernel CephX aes256k support lands in Linux 7.0.
         # Talos nodes run kernel 6.18.x and this cluster uses the kernel mounter for

@@ -146,7 +146,24 @@ Current state:
 
 Because of that, `AUTH_INSECURE_CLIENT_KEY_TYPE`, `AUTH_INSECURE_KEYS_ALLOWED` and `AUTH_INSECURE_KEYS_CREATABLE` remain and are muted declaratively via `healthCheck.muteHealthWarning` (Rook re-applies the mute on reconcile; `ceph health mute` has a TTL and would silently lapse).
 
-**Rotating daemon keys again** -- increment `keyGeneration` under `security.cephx.daemon` and commit. Rook restarts daemons one at a time; expect several minutes and transient PG peering. Verify:
+**Why `daemon.keyType` stays unset:** Rook's default preferred cipher is already `aes256k`, so pinning `daemon.keyType` buys nothing -- and it makes Rook pass `--mon-auth-emergency-allowed-ciphers=aes,aes256k` to the mons, which raises a permanent `AUTH_EMERGENCY_CIPHERS_SET` warning. Upstream treats that field as a bootstrap/recovery workaround only.
+
+**Rotating daemon keys again** -- increment `keyGeneration` under `security.cephx.daemon` and commit. Rook restarts daemons one at a time; expect several minutes and transient PG peering.
+
+The generation counter is tracked *per entity*, not cluster-wide, and daemons created under earlier Ceph releases may already sit above 0 from automatic rotations during upgrades. The MDS and OSD rotation paths also ignore `keyType` entirely (`ignoreKeyType=true` upstream), so a generation bump is the only lever that moves them. Set `keyGeneration` strictly higher than the highest value already
+recorded:
+
+```bash
+# CephCluster-level (mon, mgr, exporter, crash, ...)
+kubectl -n rook-ceph get cephcluster rook-ceph -o json | jq '.status.cephx'
+# Child CRs track their own generation
+kubectl -n rook-ceph get cephfilesystem,cephobjectstore -o json | jq '.items[] | {name: .metadata.name, cephx: .status.cephx}'
+# OSDs store it in a pod-template annotation
+kubectl -n rook-ceph get deploy -l app=rook-ceph-osd \
+  -o custom-columns=NAME:.metadata.name,CEPHX:'.spec.template.metadata.annotations.cephx-status'
+```
+
+Verify:
 
 ```bash
 kubectl -n rook-ceph get cephcluster rook-ceph -o json | jq '.status.cephx'
