@@ -195,24 +195,21 @@ kubectl uncordon <hostname>
      talosctl upgrade \
        --nodes <worker-node-ip> \
        --endpoints <cluster-endpoint-ip> \
-       --drain=false \
        --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
      ```
 
-   - **CRITICAL: workers require `--drain=false`.** `talosctl upgrade` defaults to `--drain=true`, which evicts pods via the eviction API before rebooting. Several CloudNativePG clusters in this repo run a single instance, and the operator gives each one a PodDisruptionBudget with `minAvailable: 1`. With no standby to fail over to, `disruptionsAllowed` is permanently `0` and the primary pod can
-     never be evicted, so the drain always times out.
-
-     The resulting abort is destructive: it evicts Ceph mons and OSDs first, then gives up *before* touching the OS, leaving the node cordoned so those host-pinned pods cannot reschedule. Ceph drops to `HEALTH_WARN` with a mon and an OSD down.
-
-     `--drain=false` is safe because Talos enables kubelet graceful node shutdown (`shutdownGracePeriod: 1m0s`), so pods still get SIGTERM and their grace period during the reboot. Leave the node **uncordoned** throughout — cordoning recreates the same deadlock.
-
-     Survey blockers before starting:
+   - **Survey PodDisruptionBudgets before starting.** `talosctl upgrade` defaults to `--drain=true`, which evicts pods via the eviction API before rebooting. Any PDB stuck at `disruptionsAllowed: 0` blocks that drain until it times out:
 
      ```sh
      kubectl get pdb -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,ALLOWED:.status.disruptionsAllowed'
      ```
 
-     If a drain-based upgrade already aborted and left a node cordoned, recover with `kubectl uncordon <hostname>`; Ceph returns to `HEALTH_OK` in about 90 seconds.
+     Every CNPG cluster in this repo sets `enablePDB: false`, so the operator creates no PDB and drains proceed normally. If that setting is ever removed, the operator adds a primary-role PDB with `minAvailable: 1` that targets the single primary pod — `disruptionsAllowed` is then permanently `0` regardless of instance count, and the primary becomes structurally unevictable. Raising
+     `--drain-timeout` does not help; it is a structural zero, not a slow eviction.
+
+     An aborted drain is destructive: it evicts Ceph mons and OSDs first, then gives up *before* touching the OS, leaving the node cordoned so those host-pinned pods cannot reschedule. Ceph drops to `HEALTH_WARN` with a mon and an OSD down. Recover with `kubectl uncordon <hostname>`; Ceph returns to `HEALTH_OK` in about 90 seconds.
+
+     If a PDB deadlock cannot be cleared, `--drain=false` is a safe fallback: Talos enables kubelet graceful node shutdown (`shutdownGracePeriod: 1m0s`), so pods still get SIGTERM and their termination grace period during the reboot. Leave the node **uncordoned** throughout — cordoning recreates the same deadlock.
 
    - **CRITICAL: Wait for Ceph HEALTH_OK between each worker upgrade:**
 

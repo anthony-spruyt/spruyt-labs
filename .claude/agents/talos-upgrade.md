@@ -166,19 +166,14 @@ kubectl get pdb -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name
 
 Any PDB with `disruptionsAllowed: 0` will block a drain-based upgrade. Classify what you find:
 
-| PDB pattern                                             | Meaning                                         | Action                        |
-| ------------------------------------------------------- | ----------------------------------------------- | ----------------------------- |
-| `*-cnpg-cluster-primary`, `minAvailable: 1`, 1 instance | Single-instance DB, **permanently** unevictable | Use `--drain=false` (Phase 4) |
-| `rook-ceph-osd-host-<node>`                             | Rook's own drain protection, normal             | Expected, not a blocker       |
-| `rook-ceph-mon-pdb` showing `CURRENT < DESIRED`         | A mon is already down                           | STOP, investigate first       |
+| PDB pattern                                     | Meaning                                       | Action                        |
+| ----------------------------------------------- | --------------------------------------------- | ----------------------------- |
+| `*-cnpg-cluster-primary`, `minAvailable: 1`     | Primary-role PDB, **permanently** unevictable | Use `--drain=false` (Phase 4) |
+| `rook-ceph-osd-host-<node>`                     | Rook's own drain protection, normal           | Expected, not a blocker       |
+| `rook-ceph-mon-pdb` showing `CURRENT < DESIRED` | A mon is already down                         | STOP, investigate first       |
 
-Confirm CNPG instance counts before deciding:
-
-```bash
-kubectl get cluster -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,INSTANCES:.spec.instances,READY:.status.readyInstances,PHASE:.status.phase'
-```
-
-Any CNPG cluster with `instances: 1` makes drain-based worker upgrades impossible. Do not try to "fix" this during the upgrade (scaling to 2 instances is a declarative change needing its own PR) — just use `--drain=false` and note it as follow-up work.
+Every CNPG cluster in this repo sets `enablePDB: false`, so the operator creates no PDB and drains proceed normally. Expect the survey above to return no CNPG entries. If one appears, that setting has been removed from the manifest — the operator's primary-role PDB targets only the primary pod, so `disruptionsAllowed` is `0` regardless of instance count. Do not try to "fix" it during the upgrade
+(it is a declarative change needing its own PR) — use `--drain=false` and note it as follow-up work.
 
 **Pre-upgrade checklist (all must pass):**
 
@@ -366,20 +361,19 @@ SCHEMATIC=$(grep -A10 "worker:" talos/talconfig.yaml | grep -i schematic | head 
 
 #### Step 4.3: Execute upgrade
 
-**Use `--drain=false` for workers in this cluster.** See the pre-flight PDB check in Phase 1 for why.
+Default drain is fine when the Phase 1 PDB survey came back clean:
 
 ```bash
 talosctl upgrade \
   --nodes <node-ip> \
   --endpoints <cp-node-ip> \
-  --drain=false \
   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<target-version>
 ```
 
-**Why `--drain=false`:** `talosctl upgrade` defaults to `--drain=true`, which cordons the node and evicts pods via the eviction API before rebooting. This cluster has multiple single-instance CloudNativePG clusters. The CNPG operator gives each one a PodDisruptionBudget with `minAvailable: 1`, and with only one instance there is no standby to fail over to, so `disruptionsAllowed` is permanently
-`0` and the primary pod is **structurally unevictable**.
+**When to add `--drain=false`:** only if the Phase 1 survey found a PDB stuck at `disruptionsAllowed: 0`. `talosctl upgrade` defaults to `--drain=true`, which cordons the node and evicts pods via the eviction API before rebooting. A CNPG cluster without `enablePDB: false` gets an operator-managed primary-role PodDisruptionBudget with `minAvailable: 1` that targets only the primary pod, so
+`disruptionsAllowed` is `0` regardless of instance count and the primary is **structurally unevictable**.
 
-The drain therefore always hits its timeout and the upgrade aborts. This failure mode is worse than useless — it is actively destructive:
+The drain then always hits its timeout and the upgrade aborts. This failure mode is worse than useless — it is actively destructive:
 
 1. The drain evicts Ceph mons, OSDs and other pods first
 2. Then it times out on the CNPG primary and aborts **before touching the OS**
@@ -471,9 +465,9 @@ kubectl -n rook-ceph wait pod -l ceph-osd-id=<osd-id> --for=condition=Ready --ti
 
 Prefer waiting over restarting. Restarting the OSD triggers another round of peering and degraded PGs, which is more disruptive than the cosmetic warning it resolves.
 
-#### Step 4.5a: Stale `Error` pods after `--drain=false` upgrades
+#### Step 4.5a: Stale `Error` pods after node reboots
 
-After a drain-free reboot you will see pods in `Error` state from the previous boot. These are **stale pod objects**, not real failures — Kubernetes garbage collects them within a few minutes.
+After a node reboot you will see pods in `Error` state from the previous boot. These are **stale pod objects**, not real failures — Kubernetes garbage collects them within a few minutes.
 
 Do not panic and do not delete them manually. Verify via controllers rather than pod phase:
 
@@ -743,7 +737,7 @@ query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
 05. **NEVER hardcode IPs** - query dynamically from cluster
 06. **NEVER force upgrades** - if stuck, investigate rather than force
 07. **NEVER skip health checks** - even for "quick" upgrades
-08. **ALWAYS survey PDBs before worker upgrades** - single-instance CNPG clusters make drain-based upgrades impossible; use `--drain=false` (see Phase 1 and Phase 4)
+08. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
 09. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
 10. **NEVER run `talhelper genconfig` / `talosctl apply-config` during an OS-only upgrade** - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If talconfig's `kubernetesVersion` differs from the running kubelet, that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade
 
