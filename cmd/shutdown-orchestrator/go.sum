@@ -180,6 +180,8 @@ github.com/siderolabs/talos/pkg/machinery v1.13.4 h1:wwvvP4s9AwPW3N7BcWI/4nKdJ+e
 github.com/siderolabs/talos/pkg/machinery v1.13.4/go.mod h1:RdU2CNuyxPLXpxVYgJlK3XxIw0QIleSR3I8T+x1cxZU=
 github.com/siderolabs/talos/pkg/machinery v1.13.8 h1:3h8wHf/6oCUHcCjjTDoOEzSW6E3ESCDuhoL8d6mIzR8=
 github.com/siderolabs/talos/pkg/machinery v1.13.8/go.mod h1:2PtzQFjql5bg9YNp8gv1vARJT5rhmBUtoj1+fYXbLk8=
+github.com/siderolabs/talos/pkg/machinery v1.13.9 h1:4Qch4CVfhT3C48PfiIFXYa1LAhSWA6o7NmrEO2bsLlg=
+github.com/siderolabs/talos/pkg/machinery v1.13.9/go.mod h1:Ksw0+dndjKS0t1hJlkOfzNdv8KWY0g8En1rJZ0zB9YY=
 github.com/spf13/pflag v1.0.9 h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stoewer/go-strcase v1.3.0 h1:g0eASXYtp+yvN9fK8sH94oCIk0fau9uV1/ZdJ0AVEzs=
