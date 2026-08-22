@@ -198,6 +198,19 @@ kubectl uncordon <hostname>
        --image factory.talos.dev/metal-installer-secureboot/<schematic>:<version>
      ```
 
+   - **Survey PodDisruptionBudgets before starting.** `talosctl upgrade` defaults to `--drain=true`, which evicts pods via the eviction API before rebooting. Any PDB stuck at `disruptionsAllowed: 0` blocks that drain until it times out:
+
+     ```sh
+     kubectl get pdb -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,ALLOWED:.status.disruptionsAllowed'
+     ```
+
+     Every CNPG cluster in this repo sets `enablePDB: false`, so the operator creates no PDB and drains proceed normally. If that setting is ever removed, the operator adds a primary-role PDB with `minAvailable: 1` that targets the single primary pod — `disruptionsAllowed` is then permanently `0` regardless of instance count, and the primary becomes structurally unevictable. Raising
+     `--drain-timeout` does not help; it is a structural zero, not a slow eviction.
+
+     An aborted drain is destructive: it evicts Ceph mons and OSDs first, then gives up *before* touching the OS, leaving the node cordoned so those host-pinned pods cannot reschedule. Ceph drops to `HEALTH_WARN` with a mon and an OSD down. Recover with `kubectl uncordon <hostname>`; Ceph returns to `HEALTH_OK` in about 90 seconds.
+
+     If a PDB deadlock cannot be cleared, `--drain=false` is a safe fallback: Talos enables kubelet graceful node shutdown (`shutdownGracePeriod: 1m0s`), so pods still get SIGTERM and their termination grace period during the reboot. Leave the node **uncordoned** throughout — cordoning recreates the same deadlock.
+
    - **CRITICAL: Wait for Ceph HEALTH_OK between each worker upgrade:**
 
      ```sh
@@ -205,6 +218,11 @@ kubectl uncordon <hostname>
      ```
 
      Only proceed to the next worker when Ceph reports `HEALTH_OK`. This prevents data unavailability during rolling upgrades.
+
+     Data recovery (all PGs back to `active+clean`) typically completes in 60-90 seconds. After that, `OSD_SLOW_PING_TIME_BACK` / `OSD_SLOW_PING_TIME_FRONT` warnings may linger — these are a decaying average of ping times sampled during the reboot and clear on their own, which can take a further 10 minutes. If the millisecond value is trending down, keep waiting rather than restarting the OSD.
+     Data is already safe once all OSDs are up and all PGs are `active+clean`.
+
+     Pods left in `Error` state after a drain-free reboot are stale objects from the previous boot and are garbage collected automatically. Verify health via controller ready replicas rather than pod phase.
 
    - Repeat for each node, ensuring workers are upgraded after the control plane pool has converged.
 

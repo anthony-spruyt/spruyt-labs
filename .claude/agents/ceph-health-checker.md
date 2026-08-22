@@ -1,7 +1,7 @@
 ---
 name: ceph-health-checker
 description: "Checks Rook Ceph storage cluster health including OSDs, PGs, pools, and capacity. Reports HEALTHY/DEGRADED/CRITICAL verdict.\\n\\n**When to use:**\\n- User asks about storage health, Ceph status, or disk usage\\n- After storage-related changes (Rook Ceph config, OSD changes, pool modifications)\\n- Periodic storage health check\\n\\n**When NOT to use:**\\n- Ceph cluster bootstrap or initial setup\\n- Rook operator upgrades (use cluster-validator after push)\\n- Non-storage cluster health checks\\n\\n<example>\\nuser: \"check ceph health\"\\nassistant: \"I'll run ceph-health-checker to inspect the storage cluster.\"\\n<commentary>Direct request for Ceph status triggers the checker.</commentary>\\n</example>\\n\\n<example>\\nuser: \"I changed the Ceph pool replication, just pushed\"\\nassistant: [runs cluster-validator, then] \"I'll also run ceph-health-checker to verify pool health.\"\\n<commentary>Storage config change warrants a dedicated Ceph health check after cluster validation.</commentary>\\n</example>"
-model: sonnet
+model: opus
 tools:
   - Bash
   - Read

@@ -157,7 +157,23 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 # Parallel Group 3 - GitOps
 flux get kustomizations -A
 flux get helmreleases -A
+
+# Parallel Group 4 - Eviction blockers (determines worker drain strategy)
+kubectl get pdb -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,MIN:.spec.minAvailable,MAX:.spec.maxUnavailable,ALLOWED:.status.disruptionsAllowed' | awk 'NR==1 || $5=="0"'
 ```
+
+**Pre-flight PDB check (determines worker upgrade strategy — do NOT skip):**
+
+Any PDB with `disruptionsAllowed: 0` will block a drain-based upgrade. Classify what you find:
+
+| PDB pattern                                     | Meaning                                       | Action                        |
+| ----------------------------------------------- | --------------------------------------------- | ----------------------------- |
+| `*-cnpg-cluster-primary`, `minAvailable: 1`     | Primary-role PDB, **permanently** unevictable | Use `--drain=false` (Phase 4) |
+| `rook-ceph-osd-host-<node>`                     | Rook's own drain protection, normal           | Expected, not a blocker       |
+| `rook-ceph-mon-pdb` showing `CURRENT < DESIRED` | A mon is already down                         | STOP, investigate first       |
+
+Every CNPG cluster in this repo sets `enablePDB: false`, so the operator creates no PDB and drains proceed normally. Expect the survey above to return no CNPG entries. If one appears, that setting has been removed from the manifest — the operator's primary-role PDB targets only the primary pod, so `disruptionsAllowed` is `0` regardless of instance count. Do not try to "fix" it during the upgrade
+(it is a declarative change needing its own PR) — use `--drain=false` and note it as follow-up work.
 
 **Pre-upgrade checklist (all must pass):**
 
@@ -167,6 +183,16 @@ flux get helmreleases -A
 - [ ] Ceph reports HEALTH_OK (not HEALTH_WARN or HEALTH_ERR)
 - [ ] All Flux kustomizations are Ready
 - [ ] No pending HelmRelease upgrades/failures
+- [ ] PDBs surveyed and worker drain strategy chosen
+- [ ] Target installer images verified to exist for BOTH schematics (see below)
+
+**Verify installer images before starting.** The Factory builds SecureBoot assets lazily, so the first request for a new version can take 60+ seconds and may appear to hang. Retry once before concluding the image is missing:
+
+```bash
+curl -sS --max-time 60 -o /dev/null -w "%{http_code}\n" \
+  "https://factory.talos.dev/v2/metal-installer-secureboot/<schematic>/manifests/<target-version>"
+# Expect 200. A timeout on first call usually means the image is still being built - retry.
+```
 
 **If ANY check fails, STOP and report:**
 
@@ -262,6 +288,15 @@ talosctl health -n <node-ip>
 talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 ```
 
+**Expect the raft term to advance by 1 when you upgrade the node currently holding the leader lease.** Rebooting the leader triggers exactly one leader election. This is normal and benign.
+
+What actually matters, and what you should verify:
+
+- All 3 members respond
+- `RAFT INDEX` is consistent across members (they may differ by a few as writes land)
+- The `ERRORS` column is empty
+- The term is **stable** afterwards — a term that keeps climbing across checks means flapping, which IS a problem worth stopping for
+
 #### Step 3.5: Post-node validation
 
 ```bash
@@ -326,12 +361,55 @@ SCHEMATIC=$(grep -A10 "worker:" talos/talconfig.yaml | grep -i schematic | head 
 
 #### Step 4.3: Execute upgrade
 
+Default drain is fine when the Phase 1 PDB survey came back clean:
+
 ```bash
 talosctl upgrade \
   --nodes <node-ip> \
-  --endpoints <cluster-endpoint> \
+  --endpoints <cp-node-ip> \
   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<target-version>
 ```
+
+**When to add `--drain=false`:** only if the Phase 1 survey found a PDB stuck at `disruptionsAllowed: 0`. `talosctl upgrade` defaults to `--drain=true`, which cordons the node and evicts pods via the eviction API before rebooting. A CNPG cluster without `enablePDB: false` gets an operator-managed primary-role PodDisruptionBudget with `minAvailable: 1` that targets only the primary pod, so
+`disruptionsAllowed` is `0` regardless of instance count and the primary is **structurally unevictable**.
+
+The drain then always hits its timeout and the upgrade aborts. This failure mode is worse than useless — it is actively destructive:
+
+1. The drain evicts Ceph mons, OSDs and other pods first
+2. Then it times out on the CNPG primary and aborts **before touching the OS**
+3. It leaves the node **cordoned**, so the evicted mon and OSD cannot reschedule back (they are pinned to their host's local storage) and sit `Pending`
+4. Ceph drops to `HEALTH_WARN` with a mon down, an OSD down and ~33% objects degraded
+
+**Raising `--drain-timeout` does not help.** This is a structural zero, not a slow eviction.
+
+**`--drain=false` is safe here** because Talos has kubelet graceful node shutdown enabled by default. Verify on the live node before relying on it:
+
+```bash
+talosctl -n <node-ip> read /etc/kubernetes/kubelet.yaml | grep -i shutdownGracePeriod
+# Expect: shutdownGracePeriod: 1m0s / shutdownGracePeriodCriticalPods: 30s
+```
+
+Pods still receive SIGTERM and their termination grace period during the reboot sequence, so Postgres shuts down cleanly and Ceph daemons stop gracefully. Only the eviction-API deadlock is bypassed.
+
+**Do NOT manually cordon the node as a substitute.** Cordoning creates the same deadlock: after the reboot the host-pinned mon and OSD pods cannot be scheduled back onto their own node. Leave workers uncordoned throughout.
+
+**Control plane nodes are different** — the default `--drain=true` works fine there, because the CNPG and Ceph workloads that block eviction do not run on control plane nodes.
+
+#### Step 4.3a: Recovery if a drain-based upgrade already aborted
+
+If an upgrade aborted during drain and left the node cordoned with Ceph degraded, fix it immediately before anything else:
+
+```bash
+kubectl uncordon <hostname>
+```
+
+The evicted mon and OSD reschedule onto their home host and Ceph returns to `HEALTH_OK` (typically ~90 seconds). Confirm the node was NOT upgraded before retrying:
+
+```bash
+talosctl version --nodes <node-ip> --endpoints <cp-node-ip> --short
+```
+
+An abort during drain happens before the OS is touched, so the node stays on the old version and retrying with `--drain=false` is safe.
 
 #### Step 4.4: Wait for node recovery
 
@@ -366,23 +444,39 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
 **Stale OSD heartbeat warnings (`OSD_SLOW_PING_TIME_BACK` / `OSD_SLOW_PING_TIME_FRONT`):**
 
-These warnings often persist after node reboots and will NOT self-clear. If Ceph is stuck on slow heartbeat warnings after 300s:
+These are a **decaying exponential moving average** of ping times sampled while the node was rebooting. They DO self-clear. Observed in practice: a peak of ~7900 ms decayed steadily to under the 1000 ms warning threshold over roughly 11 minutes, clearing without any intervention.
+
+**Judge safety by data state, not by the overall `HEALTH_OK` string.** If the only remaining warnings are `OSD_SLOW_PING_TIME_*`, the cluster is already fully safe:
 
 ```bash
-# Identify which OSD has stale heartbeats
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
-
-# Restart the offending OSD pod (replace <osd-id> with the OSD number from health detail)
-kubectl -n rook-ceph delete pod -l ceph-osd-id=<osd-id>
-
-# Wait for OSD pod to come back
-kubectl -n rook-ceph wait pod -l ceph-osd-id=<osd-id> --for=condition=Ready --timeout=120s
-
-# Verify HEALTH_OK
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status | grep -E "health|osd:|mon:|pgs:|volumes"
+# Data is safe when: all OSDs up and in, all PGs active+clean, mons in quorum
 ```
 
-Do NOT wait indefinitely for these warnings to clear on their own — they stick after reboots and require an OSD restart.
+Poll and watch the millisecond value trend. If it is **decreasing**, just keep waiting — it will clear. Budget up to ~15 minutes for this alone, on top of data recovery.
+
+Only restart the OSD if the value is genuinely **flat across several minutes** (not decreasing):
+
+```bash
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail   # identify the OSD
+kubectl -n rook-ceph delete pod -l ceph-osd-id=<osd-id>
+kubectl -n rook-ceph wait pod -l ceph-osd-id=<osd-id> --for=condition=Ready --timeout=120s
+```
+
+Prefer waiting over restarting. Restarting the OSD triggers another round of peering and degraded PGs, which is more disruptive than the cosmetic warning it resolves.
+
+#### Step 4.5a: Stale `Error` pods after node reboots
+
+After a node reboot you will see pods in `Error` state from the previous boot. These are **stale pod objects**, not real failures — Kubernetes garbage collects them within a few minutes.
+
+Do not panic and do not delete them manually. Verify via controllers rather than pod phase:
+
+```bash
+kubectl get deploy -A -o json | jq -r '.items[] | select((.status.readyReplicas // 0) < (.spec.replicas // 0)) | "\(.metadata.namespace)/\(.metadata.name) \(.status.readyReplicas // 0)/\(.spec.replicas)"'
+kubectl get cluster -A -o json | jq -r '.items[] | select(.status.phase != "Cluster in healthy state") | "\(.metadata.namespace)/\(.metadata.name) \(.status.phase)"'
+```
+
+If every controller reports full ready replicas, the `Error` pods are leftovers. Allow a few minutes for workloads (especially CNPG clusters) to settle before declaring a problem.
 
 #### Step 4.6: Post progress to issue
 
@@ -636,20 +730,26 @@ query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
 
 ## Critical Safety Rules
 
-1. **NEVER upgrade multiple control plane nodes simultaneously**
-2. **ALWAYS verify etcd quorum (3 healthy) after each control plane upgrade**
-3. **ALWAYS wait for Ceph HEALTH_OK between worker upgrades**
-4. **ALWAYS create etcd backup before control plane upgrades**
-5. **NEVER hardcode IPs** - query dynamically from cluster
-6. **NEVER force upgrades** - if stuck, investigate rather than force
-7. **NEVER skip health checks** - even for "quick" upgrades
+01. **NEVER upgrade multiple control plane nodes simultaneously**
+02. **ALWAYS verify etcd quorum (3 healthy) after each control plane upgrade**
+03. **ALWAYS wait for Ceph HEALTH_OK between worker upgrades**
+04. **ALWAYS create etcd backup before control plane upgrades**
+05. **NEVER hardcode IPs** - query dynamically from cluster
+06. **NEVER force upgrades** - if stuck, investigate rather than force
+07. **NEVER skip health checks** - even for "quick" upgrades
+08. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
+09. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
+10. **NEVER run `talhelper genconfig` / `talosctl apply-config` during an OS-only upgrade** - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If talconfig's `kubernetesVersion` differs from the running kubelet, that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade
 
 ## Timeout Expectations
 
-| Operation               | Expected Duration | Timeout    |
-| ----------------------- | ----------------- | ---------- |
-| Node upgrade command    | 2-5 minutes       | 10 minutes |
-| Node Ready after reboot | 1-3 minutes       | 5 minutes  |
-| etcd rejoin             | 30-60 seconds     | 2 minutes  |
-| Ceph HEALTH_OK recovery | 2-10 minutes      | 30 minutes |
-| Full cluster upgrade    | 45-90 minutes     | 3 hours    |
+| Operation                                | Expected Duration | Timeout    |
+| ---------------------------------------- | ----------------- | ---------- |
+| Node upgrade command                     | 2-5 minutes       | 10 minutes |
+| Node Ready after reboot                  | 1-3 minutes       | 5 minutes  |
+| etcd rejoin                              | 30-60 seconds     | 2 minutes  |
+| Ceph data recovery (PGs `active+clean`)  | 60-90 seconds     | 10 minutes |
+| Ceph `HEALTH_OK` (incl. heartbeat decay) | 90s-12 minutes    | 30 minutes |
+| Full cluster upgrade                     | 45-90 minutes     | 3 hours    |
+
+**Measured reference (6-node cluster, v1.13.4 to v1.13.9):** control plane nodes took ~4 minutes each with drain enabled. Workers took ~4 minutes each plus Ceph recovery. Ceph data recovery was consistently 60-90 seconds; on one worker the `OSD_SLOW_PING_TIME_*` average then took a further ~10 minutes to decay below threshold while all PGs were already `active+clean`.

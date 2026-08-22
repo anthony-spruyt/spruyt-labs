@@ -17,6 +17,7 @@ spec:
   imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:664ebfe87d1cda6f429613d265ae1db758eb19ee050a2752ac38e856b0bd24ad"
   # Single instance for personal finance app (HA optional)
   instances: 1
+  enablePDB: false
   monitoring:
     enablePodMonitor: true
   plugins:
