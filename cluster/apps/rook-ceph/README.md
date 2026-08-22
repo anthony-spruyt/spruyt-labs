@@ -18,6 +18,9 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 
 ## Operation
 
+> **No `ceph orch` in this cluster.** The `rook` mgr module is disabled under `cephClusterSpec.mgr.modules` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml), matching the upstream chart default, so there is no orchestrator backend and `ceph orch ...` returns `Error ENOENT: Module not found`. Daemon lifecycle is driven by the operator from the CephCluster CR instead. The
+> Ceph Dashboard's Physical Disks, Services and Upgrade pages show "Orchestrator is not available" for the same reason.
+
 ### Preconditions
 
 - Target disks visible and unused:
@@ -37,23 +40,32 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 
    Extend the `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml) and commit.
 
-2. **Add or replace OSD devices** -- Use orchestrator commands in the toolbox:
+2. **Add or replace OSD devices** -- OSD creation is declarative. Take inventory, then add the device's `by-id` path to `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml) and commit. The operator runs the OSD prepare job on the next reconcile.
 
    ```bash
-   ceph orch device ls
-   ceph orch daemon add osd <host>:<device-path>
+   # Devices Ceph already knows about, with their host and OSD mapping
+   ceph device ls
+   # Everything present on the node, including unclaimed disks
+   talosctl --nodes <node-ip> ls /dev/disk/by-id
+   # Once the new OSD is up
    ceph osd df
    ```
 
-3. **Remove OSD for maintenance** -- Drain and remove the daemon:
+3. **Remove OSD for maintenance** -- Drain, stop, then purge. Scaling the OSD Deployment is the Rook equivalent of `ceph orch daemon stop`.
+
+   > `ceph osd purge` is irreversible. Confirm every PG is `active+clean` and that the remaining OSDs have capacity for the data first. Remove one OSD at a time.
 
    ```bash
    ceph osd out <id>
-   ceph orch daemon stop osd.<id>
-   ceph orch daemon rm osd.<id> --force
+   # Block here until backfill finishes and all PGs report active+clean
+   ceph status
+   kubectl -n rook-ceph scale deploy/rook-ceph-osd-<id> --replicas=0
+   ceph osd purge <id> --yes-i-really-mean-it
+   kubectl -n rook-ceph delete deploy/rook-ceph-osd-<id>
+   ceph osd tree
    ```
 
-   Recreate after hardware service using the add flow.
+   Drop the retired device from `devicePathFilter` in the same commit, otherwise the operator recreates the OSD on the next reconcile. Recreate after hardware service using the add flow -- the replacement may be assigned a different OSD ID.
 
 4. **Pool tuning** -- Apply changes and persist in Git:
 
@@ -105,8 +117,10 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 3. Validate daemon health post-restore:
 
    ```bash
-   ceph orch ps --daemon-type mon,osd,mgr
-   ceph health
+   ceph -s
+   ceph mon stat
+   ceph osd tree
+   ceph health detail
    ```
 
 ### Escalation
@@ -127,8 +141,82 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 2. Identify failing services:
 
    ```bash
-   ceph orch ps --daemon-type mon,mgr,osd
+   ceph mon stat
+   ceph mgr stat
+   ceph osd tree
    ```
+
+### CephX key rotation (`aes` / `aes256k`)
+
+Ceph v20.2.4 fixed CVE-2025-30156 by adding a new CephX key type, `aes256k`, plus six `AUTH_INSECURE_*` health checks that fire while keys are still `aes`. Configuration lives under `cephClusterSpec.security.cephx` and `cephClusterSpec.healthCheck.muteHealthWarning` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml).
+
+Current state:
+
+| Key set                                              | Type      | Notes                                   |
+| ---------------------------------------------------- | --------- | --------------------------------------- |
+| Daemons (`mon`, `mgr`, `osd`, `mds`, `rgw`, `crash`) | `aes256k` | `keyRotationPolicy: KeyGeneration`      |
+| `client.rbd-mirror-peer`                             | `aes256k` | No mirroring configured, safe to rotate |
+| CSI clients (`csi-rbd-*`, `csi-cephfs-*`)            | `aes`     | Pinned -- see kernel gate below         |
+
+**Why CSI stays on `aes`:** upstream kernel support for `aes256k` begins in Linux 7.0. The nodes run kernel 6.18.x and this cluster uses the *kernel* mounter for both RBD and CephFS, so rotating CSI keys to `aes256k` would strand every kernel-mounted PVC. Do not set `allowedCiphers: [aes256k]` either -- it would reject the still-`aes` CSI keys.
+
+Because of that, `AUTH_INSECURE_CLIENT_KEY_TYPE`, `AUTH_INSECURE_KEYS_ALLOWED` and `AUTH_INSECURE_KEYS_CREATABLE` remain and are muted declaratively via `healthCheck.muteHealthWarning` (Rook re-applies the mute on reconcile; `ceph health mute` has a TTL and would silently lapse).
+
+**Why `daemon.keyType` stays unset:** Rook's default preferred cipher is already `aes256k`, so pinning `daemon.keyType` buys nothing -- and it makes Rook pass `--mon-auth-emergency-allowed-ciphers=aes,aes256k` to the mons, which raises a permanent `AUTH_EMERGENCY_CIPHERS_SET` warning. Upstream treats that field as a bootstrap/recovery workaround only.
+
+**Rotating daemon keys again** -- increment `keyGeneration` under `security.cephx.daemon` and commit. Rook restarts daemons one at a time; expect several minutes and transient PG peering.
+
+The generation counter is tracked *per entity*, not cluster-wide, and daemons created under earlier Ceph releases may already sit above 0 from automatic rotations during upgrades. The MDS and OSD rotation paths also ignore `keyType` entirely (`ignoreKeyType=true` upstream), so a generation bump is the only lever that moves them. Set `keyGeneration` strictly higher than the highest value already
+recorded:
+
+```bash
+# CephCluster-level (mon, mgr, exporter, crash, ...)
+kubectl -n rook-ceph get cephcluster rook-ceph -o json | jq '.status.cephx'
+# Child CRs track their own generation
+kubectl -n rook-ceph get cephfilesystem,cephobjectstore -o json | jq '.items[] | {name: .metadata.name, cephx: .status.cephx}'
+# OSDs store it in a pod-template annotation
+kubectl -n rook-ceph get deploy -l app=rook-ceph-osd \
+  -o custom-columns=NAME:.metadata.name,CEPHX:'.spec.template.metadata.annotations.cephx-status'
+```
+
+Verify:
+
+```bash
+kubectl -n rook-ceph get cephcluster rook-ceph -o json | jq '.status.cephx'
+kubectl -n rook-ceph logs deploy/rook-ceph-operator --tail=100 | grep -i cephx
+```
+
+If the toolbox errors on the admin keyring after rotation, restart it:
+
+```bash
+kubectl -n rook-ceph rollout restart deploy/rook-ceph-tools
+```
+
+**Emergency escape** -- if daemons cannot authenticate after a rotation, widen the ciphers and force the old type, wait for mon pods to show `--mon-auth-emergency-allowed-ciphers`, confirm recovery, then drop the `daemon.keyType` override:
+
+```yaml
+security:
+  cephx:
+    allowedCiphers: [aes, aes256k]
+    daemon:
+      keyType: aes # workaround only
+```
+
+**Unmute procedure** (once every node runs kernel >= 7.0):
+
+1. Confirm the kernel on every node:
+
+   ```bash
+   kubectl get nodes -o custom-columns=NAME:.metadata.name,KERNEL:.status.nodeInfo.kernelVersion
+   ```
+
+2. Set `security.cephx.csi` to `keyRotationPolicy: KeyGeneration`, `keyGeneration: 1`, `keepPriorKeyCountMax: 1`, `keyType: aes256k`.
+
+3. Wait for `status.cephx.csi.keyGeneration` to advance, then cordon/drain/uncordon each node in turn so pods remount with the new key.
+
+4. Set `keepPriorKeyCountMax: 0` and add `allowedCiphers: [aes256k]`.
+
+5. Flip every `muteHealthWarning` entry to `policy: unmute`.
 
 ### OSD down or out unexpectedly
 
@@ -145,10 +233,10 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
    ceph crash info <crash-id>
    ```
 
-3. Restart or replace the daemon:
+3. Restart or replace the daemon. Each `osd.<id>` is backed by a Deployment of the same number:
 
    ```bash
-   ceph orch daemon restart osd.<id>
+   kubectl -n rook-ceph rollout restart deploy/rook-ceph-osd-<id>
    ```
 
    If hardware failed, follow the removal and replacement steps in Day-2 operations.

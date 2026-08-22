@@ -68,8 +68,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
         suppressedFingerprints.add(String(job.data.data.fingerprint));
       }
       const processedAlerts = job.data.data?.alerts as
-        | Array<Record<string, unknown>>
-        | undefined;
+        Array<Record<string, unknown>> | undefined;
       if (processedAlerts) {
         for (const a of processedAlerts) {
           if (a.fingerprint) suppressedFingerprints.add(String(a.fingerprint));
@@ -105,8 +104,7 @@ export function setupLifecycle(deps: LifecycleDeps): void {
     try {
       const drainedData = await roleDef.drainBuffer(job.id!, job.data, redis);
       let alerts = drainedData.data?.alerts as
-        | Array<Record<string, unknown>>
-        | undefined;
+        Array<Record<string, unknown>> | undefined;
       if (!alerts || alerts.length === 0) return;
 
       if (suppressedFingerprints.size > 0) {
