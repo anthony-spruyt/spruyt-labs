@@ -18,6 +18,9 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 
 ## Operation
 
+> **No `ceph orch` in this cluster.** The `rook` mgr module is disabled under `cephClusterSpec.mgr.modules` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml), matching the upstream chart default, so there is no orchestrator backend and `ceph orch ...` returns `Error ENOENT: Module not found`. Daemon lifecycle is driven by the operator from the CephCluster CR instead. The
+> Ceph Dashboard's Physical Disks, Services and Upgrade pages show "Orchestrator is not available" for the same reason.
+
 ### Preconditions
 
 - Target disks visible and unused:
@@ -37,23 +40,32 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 
    Extend the `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml) and commit.
 
-2. **Add or replace OSD devices** -- Use orchestrator commands in the toolbox:
+2. **Add or replace OSD devices** -- OSD creation is declarative. Take inventory, then add the device's `by-id` path to `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml) and commit. The operator runs the OSD prepare job on the next reconcile.
 
    ```bash
-   ceph orch device ls
-   ceph orch daemon add osd <host>:<device-path>
+   # Devices Ceph already knows about, with their host and OSD mapping
+   ceph device ls
+   # Everything present on the node, including unclaimed disks
+   talosctl --nodes <node-ip> ls /dev/disk/by-id
+   # Once the new OSD is up
    ceph osd df
    ```
 
-3. **Remove OSD for maintenance** -- Drain and remove the daemon:
+3. **Remove OSD for maintenance** -- Drain, stop, then purge. Scaling the OSD Deployment is the Rook equivalent of `ceph orch daemon stop`.
+
+   > `ceph osd purge` is irreversible. Confirm every PG is `active+clean` and that the remaining OSDs have capacity for the data first. Remove one OSD at a time.
 
    ```bash
    ceph osd out <id>
-   ceph orch daemon stop osd.<id>
-   ceph orch daemon rm osd.<id> --force
+   # Block here until backfill finishes and all PGs report active+clean
+   ceph status
+   kubectl -n rook-ceph scale deploy/rook-ceph-osd-<id> --replicas=0
+   ceph osd purge <id> --yes-i-really-mean-it
+   kubectl -n rook-ceph delete deploy/rook-ceph-osd-<id>
+   ceph osd tree
    ```
 
-   Recreate after hardware service using the add flow.
+   Drop the retired device from `devicePathFilter` in the same commit, otherwise the operator recreates the OSD on the next reconcile. Recreate after hardware service using the add flow -- the replacement may be assigned a different OSD ID.
 
 4. **Pool tuning** -- Apply changes and persist in Git:
 
@@ -105,8 +117,10 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 3. Validate daemon health post-restore:
 
    ```bash
-   ceph orch ps --daemon-type mon,osd,mgr
-   ceph health
+   ceph -s
+   ceph mon stat
+   ceph osd tree
+   ceph health detail
    ```
 
 ### Escalation
@@ -127,7 +141,9 @@ Chart versions are managed by Renovate and Flux. Check the release files for cur
 2. Identify failing services:
 
    ```bash
-   ceph orch ps --daemon-type mon,mgr,osd
+   ceph mon stat
+   ceph mgr stat
+   ceph osd tree
    ```
 
 ### CephX key rotation (`aes` / `aes256k`)
@@ -217,10 +233,10 @@ security:
    ceph crash info <crash-id>
    ```
 
-3. Restart or replace the daemon:
+3. Restart or replace the daemon. Each `osd.<id>` is backed by a Deployment of the same number:
 
    ```bash
-   ceph orch daemon restart osd.<id>
+   kubectl -n rook-ceph rollout restart deploy/rook-ceph-osd-<id>
    ```
 
    If hardware failed, follow the removal and replacement steps in Day-2 operations.

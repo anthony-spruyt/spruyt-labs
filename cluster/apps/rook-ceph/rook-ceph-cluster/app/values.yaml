@@ -86,13 +86,21 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
   mgr:
     config:
       mgr/crash/warn_recent_interval: "7200" # 2h
+    # Only modules Rook actually applies from this spec belong here (Ref #2561).
+    # "prometheus" was removed: it is a "well known" module Rook configures from the
+    # monitoring/dashboard settings, and listing it aborts configureMgrModules with
+    # 'cannot configure mgr module "prometheus" ...', skipping every module after it.
     modules:
       - name: pg_autoscaler
         enabled: true
+      # Disabled to match the upstream chart default (rook#18213). The module leaks memory on
+      # Ceph v20.2.2 and crashes the mgr on v20.2.3-v20.2.4, so Rook force-disables it on those
+      # versions regardless of this setting; upstream also does not test or support it.
+      # Cost: no orchestrator backend, so `ceph orch ...` returns ENOENT and the dashboard's
+      # Physical Disks / Services / Upgrade pages show "Orchestrator is not available".
+      # All three are read-only views of state this repo manages declaratively.
       - name: rook
-        enabled: true
-      - name: prometheus
-        enabled: true
+        enabled: false
   csi:
     readAffinity:
       enabled: true
