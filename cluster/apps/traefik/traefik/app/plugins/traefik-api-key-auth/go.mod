@@ -1,3 +1,3 @@
 module github.com/linkphoenix/traefik-api-key-auth
 
-go 1.27.0
+go 1.26.7
