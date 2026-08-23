@@ -23,8 +23,10 @@ data:
       return cachedIssueCookie;
     }
 
-    const log = (msg) => console.log(`[forward-auth] ${msg}`);
-    const logError = (msg, err) => console.error(`[forward-auth] ${msg}`, err instanceof Error ? err.stack : String(err));
+    // Flux postBuild substitution rewrites dollar-brace placeholders in this
+    // manifest, so use string concatenation, never template literals.
+    const log = (msg) => console.log('[forward-auth] ' + msg);
+    const logError = (msg, err) => console.error('[forward-auth] ' + msg, err instanceof Error ? err.stack : String(err));
 
     module.exports = {
       n8n: {
@@ -99,7 +101,7 @@ data:
               };
 
               stack.splice(index + 1, 0, new Layer('/', { strict: false, end: false }, handler));
-              log(`middleware installed after cookieParser at index ${index}`);
+              log('middleware installed after cookieParser at index ' + index);
             } catch (err) {
               // n8n awaits n8n.ready unguarded; never let an install failure stop boot.
               logError('SSO disabled - install failed', err);
