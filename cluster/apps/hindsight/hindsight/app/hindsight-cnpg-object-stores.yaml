@@ -5,7 +5,7 @@ kind: ObjectStore
 metadata:
   name: hindsight-cnpg-aws-object-store
 spec:
-  retentionPolicy: 2d
+  retentionPolicy: 7d
   configuration:
     destinationPath: s3://spruyt-labs-470715245270-prod-cnpg-backup/object-store
     s3Credentials:

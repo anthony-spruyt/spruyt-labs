@@ -6,7 +6,8 @@ metadata:
   name: hindsight-cnpg-daily-scheduled-backup
 spec:
   immediate: true
-  suspend: false
+  # Cluster is hibernated (see hindsight-cnpg-cluster.yaml); no instance to back up.
+  suspend: true
   schedule: "0 0 16 * * *" # At 02:00 daily Melbourne (UTC+10)
   cluster:
     name: hindsight-cnpg-cluster

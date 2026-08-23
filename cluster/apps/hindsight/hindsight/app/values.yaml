@@ -49,7 +49,7 @@ api:
   # Warm-up: 1 replica so only ONE node cold-pulls the ~1.42 GB api image.
   # Once it is cached, spegel (cluster image mirror) can fan it out P2P to a
   # second node — scale back to 2 for HA after the first pull completes.
-  replicaCount: 1
+  replicaCount: 0
   image:
     repository: ghcr.io/vectorize-io/hindsight-api
     pullPolicy: IfNotPresent
@@ -98,7 +98,7 @@ api:
 
 worker:
   enabled: true
-  replicaCount: 1
+  replicaCount: 0
   image:
     repository: ghcr.io/vectorize-io/hindsight-api
     pullPolicy: IfNotPresent
@@ -139,7 +139,7 @@ worker:
 
 controlPlane:
   enabled: true
-  replicaCount: 1
+  replicaCount: 0
   image:
     repository: ghcr.io/vectorize-io/hindsight-control-plane
     pullPolicy: IfNotPresent
