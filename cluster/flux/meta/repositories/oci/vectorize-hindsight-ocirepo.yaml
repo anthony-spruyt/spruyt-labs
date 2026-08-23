@@ -7,8 +7,8 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "0.8.3"
-    digest: sha256:5445452aa193b68c4b94b816cf19a9a0b7357f938a7f100c0b8f8e8f16433fd4
+    tag: "0.9.1"
+    digest: sha256:1ddfcdc0caee84c78148784438441be474ee33d85d8fa2cedff407de7a7c0ec0
   url: oci://ghcr.io/vectorize-io/charts/hindsight
   secretRef:
     name: image-pull-secrets
