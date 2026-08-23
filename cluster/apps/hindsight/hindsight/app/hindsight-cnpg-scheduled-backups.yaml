@@ -7,7 +7,7 @@ metadata:
 spec:
   immediate: true
   suspend: false
-  schedule: "0 16 * * *"
+  schedule: "0 0 16 * * *" # At 02:00 daily Melbourne (UTC+10)
   cluster:
     name: hindsight-cnpg-cluster
   method: plugin
