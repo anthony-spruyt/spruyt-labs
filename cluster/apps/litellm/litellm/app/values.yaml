@@ -91,7 +91,11 @@ controllers:
           # (rerank over all facts). At ~30 facts it takes 2.4-3.5s, exceeding
           # the plugin's 3.0s default and tripping fail-open (no injection).
           HINDSIGHT_TIMEOUT_S: "30.0"
-          LITELLM_OTEL_INTEGRATION_ENABLE_METRICS: "true"
+          # OTLP metrics stay off: the integration derives the metrics endpoint
+          # from OTEL_ENDPOINT by swapping the trailing signal path, so metrics
+          # would be POSTed to VictoriaTraces (traces-only, returns 400).
+          # Metrics reach VictoriaMetrics via the prometheus callback + VMServiceScrape.
+          LITELLM_OTEL_INTEGRATION_ENABLE_METRICS: "false"
           LITELLM_OTEL_V2: "true"
           OTEL_EXPORTER: otlp_http
           OTEL_ENDPOINT: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
