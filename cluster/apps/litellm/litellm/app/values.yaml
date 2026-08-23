@@ -309,7 +309,7 @@ controllers:
           # cannot populate it and will never become ready. If the cache PVC is
           # ever lost, drop this var, let one pod repopulate, then restore it.
           # Ref #2592
-          HF_HUB_OFFLINE: "1"
+          # HF_HUB_OFFLINE: "1"
           HF_TOKEN:
             valueFrom:
               secretKeyRef:
