@@ -7,6 +7,6 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "2.1.0"
-    digest: sha256:49b7b6e126afb792683d3fb2e99c92a0c70fdaf9e359cddf5b8db6a54c81119c
+    tag: "2.0.1"
+    digest: sha256:c863145bcb57e8ff42bff42df1c5b1fb7745bb44fea2bca217268e9b0bab161c
   url: oci://8gears.container-registry.com/library/n8n
