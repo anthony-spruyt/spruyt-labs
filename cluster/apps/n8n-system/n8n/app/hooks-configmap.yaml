@@ -9,52 +9,101 @@ metadata:
   namespace: n8n-system
 data:
   hooks.js: |
-    const { dirname, resolve } = require('path');
-    const Layer = require('router/lib/layer');
-    const { issueCookie } = require(resolve(dirname(require.resolve('n8n')), 'auth/jwt'));
+    const { createRequire } = require('node:module');
+
+    // n8n's dependencies live in pnpm's isolated store and are not resolvable from this
+    // file's own location. Anchoring a require at an n8n dist file reaches them.
+    const ANCHOR = '/usr/local/lib/node_modules/n8n/dist/server.js';
+
+    let cachedIssueCookie;
+    function getIssueCookie() {
+      if (!cachedIssueCookie) {
+        cachedIssueCookie = createRequire(ANCHOR)('./auth/jwt.js').issueCookie;
+      }
+      return cachedIssueCookie;
+    }
+
+    const log = (msg) => console.log(`[forward-auth] ${msg}`);
+    const logError = (msg, err) => console.error(`[forward-auth] ${msg}`, err instanceof Error ? err.stack : String(err));
 
     module.exports = {
       n8n: {
         ready: [
           async function ({ app }, config) {
-            const { stack } = app.router;
-            const index = stack.findIndex((l) => l.name === 'cookieParser');
-
-            stack.splice(index + 1, 0, new Layer('/', {
-              strict: false,
-              end: false
-            }, async (req, res, next) => {
-
-              // Skip if instance owner not set up yet
-              if (!config.get('userManagement.isInstanceOwnerSetUp', false)) return next();
-
-              // Skip if already has n8n session cookie (already authenticated)
-              if (req.cookies?.['n8n-auth']) return next();
-
-              // Skip if no forward auth header configured
-              if (!process.env.N8N_FORWARD_AUTH_HEADER) return next();
-
-              // Get email from trusted Authentik header (headers are lowercase in Node.js)
-              const email = req.headers[process.env.N8N_FORWARD_AUTH_HEADER.toLowerCase()];
-              if (!email) return next();
-
-              // Find existing user by email - user must be pre-provisioned
-              // TypeORM findOneBy uses parameterized queries (SQL injection safe)
-              const user = await this.dbCollections.User.findOneBy({ email });
-              if (!user) {
-                res.statusCode = 401;
-                // Don't include email in response to avoid information disclosure
-                res.end('User not found. Please have an admin invite this user first.');
+            try {
+              const stack = app.router?.stack ?? app._router?.stack;
+              if (!stack) {
+                logError('SSO disabled - no Express router stack', new Error('app.router missing'));
                 return;
               }
 
-              // Ensure role exists (required for cookie issuance)
-              if (!user.role) user.role = {};
+              const index = stack.findIndex((l) => l.name === 'cookieParser');
+              if (index < 0) {
+                logError('SSO disabled - cookieParser layer not found', new Error('splice anchor missing'));
+                return;
+              }
 
-              // Issue n8n session cookie and continue
-              issueCookie(res, user);
-              return next();
-            }));
+              // Take the Layer constructor off the live stack. Requiring it by path would
+              // depend on express's internal dependency layout.
+              const Layer = stack[index].constructor;
+              if (typeof Layer !== 'function') {
+                logError('SSO disabled - Layer constructor unavailable', new Error('stack[i].constructor is not a function'));
+                return;
+              }
+
+              const handler = async (req, res, next) => {
+                try {
+                  // Skip if instance owner not set up yet
+                  if (!config.get('userManagement.isInstanceOwnerSetUp', false)) return next();
+
+                  // Skip if already has n8n session cookie (already authenticated)
+                  if (req.cookies?.['n8n-auth']) return next();
+
+                  // Skip if no forward auth header configured
+                  if (!process.env.N8N_FORWARD_AUTH_HEADER) return next();
+
+                  // Get email from trusted Authentik header (headers are lowercase in Node.js)
+                  const raw = req.headers[process.env.N8N_FORWARD_AUTH_HEADER.toLowerCase()];
+                  const value = Array.isArray(raw) ? raw[0] : raw;
+                  if (!value) return next();
+                  const email = value.trim().toLowerCase();
+                  if (!email) return next();
+
+                  // Find existing user by email - user must be pre-provisioned.
+                  // The role relation must be loaded: issueCookie dereferences user.role.slug.
+                  // TypeORM parameterises the where clause (SQL injection safe).
+                  const user = await this.dbCollections.User.findOne({
+                    where: { email },
+                    relations: ['role'],
+                  });
+                  if (!user) {
+                    res.statusCode = 401;
+                    // Don't include email in response to avoid information disclosure
+                    res.end('User not found. Please have an admin invite this user first.');
+                    return;
+                  }
+
+                  // Never issue a cookie for a user whose role failed to load
+                  if (!user.role?.slug) {
+                    logError('refusing to issue cookie - user role not loaded', new Error('user.role.slug missing'));
+                    return next();
+                  }
+
+                  getIssueCookie()(res, user);
+                  return next();
+                } catch (err) {
+                  // Fall through unauthenticated rather than 500; n8n's own login still applies.
+                  logError('request failed - passing through unauthenticated', err);
+                  return next();
+                }
+              };
+
+              stack.splice(index + 1, 0, new Layer('/', { strict: false, end: false }, handler));
+              log(`middleware installed after cookieParser at index ${index}`);
+            } catch (err) {
+              // n8n awaits n8n.ready unguarded; never let an install failure stop boot.
+              logError('SSO disabled - install failed', err);
+            }
           },
         ],
       },
