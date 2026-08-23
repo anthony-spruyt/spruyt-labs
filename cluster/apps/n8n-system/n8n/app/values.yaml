@@ -6,7 +6,7 @@
 image:
   repository: n8nio/n8n
   pullPolicy: IfNotPresent
-  tag: "2.26.5@sha256:d34bc102575275c5c00dfabcec7bfab9220d4acd3237c135c4045cd194594fb5"
+  tag: "2.35.7@sha256:166d7e3ca384afdffe75394bf00046c299d84a4bf17b19b35d6cf7773af0a147"
 main:
   config:
     queue:
@@ -108,6 +108,8 @@ main:
         secretKeyRef:
           name: n8n-runner-secrets
           key: N8N_RUNNERS_AUTH_TOKEN
+    N8N_RUNNERS_TASK_TIMEOUT:
+      value: "60"
     N8N_NATIVE_PYTHON_RUNNER:
       value: "true"
     N8N_SKIP_AUTH_ON_OAUTH_CALLBACK:
@@ -130,7 +132,7 @@ main:
         secretKeyRef:
           name: n8n-secrets
           key: QUEUE_BULL_REDIS_PASSWORD
-    WEBHOOK_URL:
+    N8N_WEBHOOK_URL:
       value: https://n8n.${EXTERNAL_DOMAIN}
     N8N_OTEL_ENABLED:
       value: "true"
@@ -140,6 +142,12 @@ main:
       value: /insert/opentelemetry/v1/traces
     N8N_REINSTALL_MISSING_PACKAGES:
       value: "true"
+    N8N_UNVERIFIED_PACKAGES_ENABLED:
+      value: "true"
+    N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES:
+      value: "268435456"
+    N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES:
+      value: "1000"
   extraVolumeMounts: &extraVolumeMounts
     - name: db-ca-cert
       mountPath: /home/ssl/certs/postgresql
@@ -216,6 +224,7 @@ main:
       memory: 768Mi
 worker:
   enabled: true
+  terminationGracePeriodSeconds: 60
   extraEnv: *extraEnv
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
