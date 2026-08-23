@@ -6,14 +6,17 @@ metadata:
   name: hindsight-cnpg-cluster
   annotations:
     # Hindsight application is scaled to 0; keep PVCs, drop the Postgres pods.
-    # Set to "off" and unsuspend the ScheduledBackup to bring the cluster back.
+    # To bring the cluster back: set to "off", unsuspend the ScheduledBackup,
+    # and re-enable monitoring.enablePodMonitor below.
     cnpg.io/hibernation: "on"
 spec:
   imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:d7a81cb5da3182d95d0da5fabfb9e484e375db899dcd54b684105f1e8966e9ca"
   instances: 2
   enablePDB: false
   monitoring:
-    enablePodMonitor: true
+    # Disabled while hibernated: no instances means an empty scrape pool,
+    # which fires ScrapePoolHasNoTargets.
+    enablePodMonitor: false
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       enabled: true
