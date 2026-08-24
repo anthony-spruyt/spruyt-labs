@@ -21,7 +21,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/firemerge
-          tag: "0.7.3@sha256:d25f4ee33bc477e0d0ea5e1eda1a1714894dfefc6b237b194d5eb62ad0e29931"
+          tag: "0.7.4@sha256:b039baf27f955d4ef0d157d84c7f11f67c61a211cccd4ba6c9d9b51dd1f72f9a"
           pullPolicy: IfNotPresent
         env:
           # Python/uv environment - use writable path for venv
