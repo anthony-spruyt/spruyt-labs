@@ -6,7 +6,7 @@
 image:
   repository: n8nio/n8n
   pullPolicy: IfNotPresent
-  tag: "2.35.7@sha256:166d7e3ca384afdffe75394bf00046c299d84a4bf17b19b35d6cf7773af0a147"
+  tag: "2.36.1@sha256:67452a32990e0426ae2b78fcf1fc92d41e7cf0765686ce6623cc4003a23ed446"
 main:
   config:
     queue:
