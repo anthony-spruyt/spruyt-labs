@@ -31,6 +31,13 @@ data:
         ready: [
           async function ({ app }, config) {
             try {
+              // Only the main process builds the UI auth stack to splice into.
+              const role = process.argv.slice(2).find((a) => a === 'webhook' || a === 'worker');
+              if (role) {
+                log(`not applicable for the $${role} process - skipping`);
+                return;
+              }
+
               const stack = app.router?.stack ?? app._router?.stack;
               if (!stack) {
                 logError('SSO disabled - no Express router stack', new Error('app.router missing'));

@@ -43,6 +43,9 @@ spec:
                         env:
                           - name: N8N_RUNNERS_TASK_BROKER_URI
                             value: http://localhost:5679
+                          # Default 15s is shorter than the gap between tasks
+                          - name: N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT
+                            value: "300"
                           - name: N8N_RUNNERS_AUTH_TOKEN
                             valueFrom:
                               secretKeyRef:

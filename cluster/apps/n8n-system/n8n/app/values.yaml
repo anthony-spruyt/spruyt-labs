@@ -192,6 +192,9 @@ main:
       emptyDir: {}
   deploymentAnnotations: &deploymentAnnotations
     secret.reloader.stakater.com/reload: "n8n-cnpg-cluster-app,n8n-secrets,n8n-runner-secrets"
+    # Static name + subPath mount, so pods never pick up edits without a roll.
+    # Excludes n8n-prompts: directory mount, kubelet updates it live (see #1131)
+    configmap.reloader.stakater.com/reload: "n8n-hooks"
   securityContext: &securityContext
     capabilities:
       drop:
