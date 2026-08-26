@@ -13,14 +13,21 @@
       "enabled": false
     },
     {
-      "description": "Use semver for n8n docker images to ignore pre-release tags (beta, nightly, etc)",
+      // n8n ships beta builds as plain semver docker tags with no pre-release
+      // suffix, so no versioning option can filter them — only the GitHub Release
+      // prerelease flag marks a build as beta, and the docker datasource never
+      // sees it. followTag does not help either: it reads ReleaseResult.tags,
+      // which the docker datasource does not populate, so it would return no
+      // updates at all. Gate these behind the dependency dashboard instead, so a
+      // beta surfaces for review rather than opening a PR on its own.
+      "description": "Require dashboard approval for n8n docker images, since beta builds are indistinguishable by version string alone",
       "matchPackageNames": [
         "n8nio/**"
       ],
       "matchDatasources": [
         "docker"
       ],
-      "versioning": "semver"
+      "dependencyDashboardApproval": true
     },
     {
       "description": "Coder: ignore pre-release versions (default versioning delay handles maturity)",
