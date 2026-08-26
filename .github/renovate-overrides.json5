@@ -13,14 +13,20 @@
       "enabled": false
     },
     {
-      "description": "Use semver for n8n docker images to ignore pre-release tags (beta, nightly, etc)",
+      // n8n ships beta builds as plain semver docker tags with no pre-release
+      // suffix, so ignoreUnstable has nothing to key off and `versioning: semver`
+      // does not filter them — only the GitHub Release prerelease flag marks them,
+      // and the docker datasource never sees it. Follow the stable channel tag
+      // instead. Note this bypasses normal versioning logic entirely: if upstream
+      // renames or drops the `stable` tag, updates stop silently.
+      "description": "Follow the n8n stable channel tag, since beta builds are indistinguishable by version string alone",
       "matchPackageNames": [
         "n8nio/**"
       ],
       "matchDatasources": [
         "docker"
       ],
-      "versioning": "semver"
+      "followTag": "stable"
     },
     {
       "description": "Coder: ignore pre-release versions (default versioning delay handles maturity)",
