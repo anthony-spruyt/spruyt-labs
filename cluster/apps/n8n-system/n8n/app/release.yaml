@@ -17,8 +17,8 @@ spec:
   postRenderers:
     - kustomize:
         images:
+          # renovate: datasource=docker depName=n8nio/runners
           - name: n8nio/runners
-            # renovate: datasource=docker depName=n8nio/runners
             newTag: "2.36.7"
             digest: sha256:7d4463a5bd2da20dcaab904a761196ffbc0699d46f5f812c100526e4956f1de1
         patches:
