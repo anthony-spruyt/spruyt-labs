@@ -1,4 +1,4 @@
-import type { Histogram } from "prom-client";
+import type { Histogram } from "@prometheus-io/client";
 import { describe, expect, it, vi } from "vitest";
 import type { Config } from "../config.js";
 import { createDefaultRegistry } from "../roles/registry.js";

@@ -1,4 +1,4 @@
-import type { Histogram } from "prom-client";
+import type { Histogram } from "@prometheus-io/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Config } from "../config.js";
 import type { AgentJob } from "../job/schema.js";

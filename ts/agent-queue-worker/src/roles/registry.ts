@@ -1,4 +1,4 @@
-import type { Histogram } from "prom-client";
+import type { Histogram } from "@prometheus-io/client";
 import type { Config } from "../config.js";
 import { executeIssueRole } from "./execute-issue-role.js";
 import { createRenovateRole } from "./renovate-role.js";
