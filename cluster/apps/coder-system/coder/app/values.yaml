@@ -41,7 +41,13 @@ coder:
       value: "disable"
   image:
     repo: "ghcr.io/coder/coder"
-    tag: "v2.35.4@sha256:016e94c09db658a04db5b5d4bf821ea28892de42f2a95e9acd7e92147258435f"
+    # Tag intentionally unset: the chart falls back to v{{ .Chart.AppVersion }},
+    # which always equals the chart version pinned in release.yaml. Renovate
+    # cannot see this key (helm-values does not recognise coder's repo/tag
+    # shape), so a pinned tag silently drifts behind the chart on every bump.
+    # Letting the chart drive it keeps server and chart in lockstep on the
+    # stable channel, with one version to track. Ref #2640
+    tag: ""
   resources:
     requests:
       cpu: 100m

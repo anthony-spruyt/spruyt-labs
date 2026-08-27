@@ -1,5 +1,24 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "customDatasources": {
+    // Coder runs two concurrent channels off the same Helm repo: mainline (cut
+    // from main on the first Tuesday of each month) and stable (the previous
+    // mainline, promoted after ~a month in the field). Both are plain semver with
+    // no pre-release suffix and prerelease=false on every GitHub release, so
+    // ignoreUnstable and versioning options cannot separate them.
+    //
+    // Coder's own install.sh resolves --stable by following the
+    // github.com/coder/coder/releases/latest redirect, which makes the GitHub
+    // "latest release" marker the authoritative stable pointer. Read it directly
+    // so the pin tracks stable and mainline never opens a PR. Ref #2640
+    "coder-stable": {
+      "defaultRegistryUrlTemplate": "https://api.github.com/repos/coder/coder/releases/latest",
+      "format": "json",
+      "transformTemplates": [
+        "{ \"releases\": [{ \"version\": $substring(tag_name, 1) }], \"sourceUrl\": \"https://github.com/coder/coder\", \"homepage\": \"https://coder.com\" }"
+      ]
+    }
+  },
   "packageRules": [
     {
       "description": "Disable kubernetes manager for runner sidecar (version managed via kustomize images transformer)",
@@ -30,14 +49,21 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "Coder: ignore pre-release versions (default versioning delay handles maturity)",
+      // The helm datasource sees every published chart, mainline included, and
+      // ranks 2.36.1 above the stable 2.35.6 pin. The annotated custom.regex
+      // manager on the HelmRelease owns this version instead, backed by the
+      // custom.coder-stable datasource above. Ref #2640
+      "description": "Disable flux manager for the Coder chart (version tracked via the coder-stable custom datasource)",
+      "matchManagers": [
+        "flux"
+      ],
       "matchPackageNames": [
         "coder"
       ],
       "matchDatasources": [
         "helm"
       ],
-      "ignoreUnstable": true
+      "enabled": false
     },
     {
       "description": "Disable dockerfile manager for golang (ARG interpolation breaks updates; custom.regex manager handles these via annotations)",
