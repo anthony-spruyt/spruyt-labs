@@ -1,5 +1,5 @@
+import type { Histogram } from "@prometheus-io/client";
 import type { Redis } from "ioredis";
-import type { Histogram } from "prom-client";
 import type { Config } from "../config.js";
 import type { AgentJob } from "../job/schema.js";
 import type { DuplicateAction, JobState, RoleDefinition } from "./types.js";
