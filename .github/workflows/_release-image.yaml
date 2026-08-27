@@ -185,10 +185,25 @@ jobs:
         uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v7
         with:
           node-version: "24"
+      - name: "Install dependencies (Node)"
+        if: "inputs.language == 'node'"
+        working-directory: "${{ inputs.workdir }}"
+        run: npm ci --ignore-scripts
       - name: "Type check (Node)"
         if: "inputs.language == 'node'"
         working-directory: "${{ inputs.workdir }}"
-        run: npm ci --ignore-scripts && npx tsc --noEmit
+        run: npx tsc --noEmit
+      - name: "Run tests (Node)"
+        if: "inputs.language == 'node'"
+        working-directory: "${{ inputs.workdir }}"
+        env:
+          WORKDIR: "${{ inputs.workdir }}"
+        run: |
+          if node -e 'process.exit(require("./package.json").scripts?.test ? 0 : 1)'; then
+            npm test
+          else
+            echo "::notice::No test script in ${WORKDIR}/package.json, skipping tests"
+          fi
       - name: "Setup Go"
         if: "inputs.language == 'go'"
         uses: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" # v7
