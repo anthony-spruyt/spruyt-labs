@@ -19,13 +19,13 @@
   "dependencies": {
     "@prometheus-io/client": "^0.16.0",
     "bullmq": "^5.52.0",
-    "ioredis": "5.11.1",
+    "ioredis": "6.0.0",
     "zod": "^4.0.0"
   },
   "overrides": {
     "uuid": "^14.0.0",
     "picomatch": "^4.0.4",
-    "ioredis": "5.11.1"
+    "ioredis": "6.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
