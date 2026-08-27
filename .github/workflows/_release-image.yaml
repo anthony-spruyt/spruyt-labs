@@ -160,14 +160,17 @@ jobs:
             exit 0
           fi
 
-          # Check if image tag already exists in registry
+          # The version was derived from git tags, so the image cannot legitimately
+          # exist yet. If it does, a previous run pushed the image but never created
+          # the tag, and every subsequent release would silently resolve to this same
+          # version and skip. Fail instead of accumulating unreleased commits.
           if docker manifest inspect "$IMAGE_REF" > /dev/null 2>&1; then
-            echo "::warning::Image $IMAGE_REF already exists in registry, skipping build"
-            echo "should-build=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "::notice::Image $IMAGE_REF not found in registry, will build"
-            echo "should-build=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Registry and git tags have drifted: $IMAGE_REF already exists, but ${TAG_PREFIX}${VERSION} does not. A previous run pushed the image without creating the tag. Backfill the tag at the commit the image was built from, then re-run: git tag ${TAG_PREFIX}${VERSION} <commit> && git push origin ${TAG_PREFIX}${VERSION}"
+            exit 1
           fi
+
+          echo "::notice::Image $IMAGE_REF not found in registry, will build"
+          echo "should-build=true" >> "$GITHUB_OUTPUT"
   test:
     name: "Test"
     needs: "resolve-version"
