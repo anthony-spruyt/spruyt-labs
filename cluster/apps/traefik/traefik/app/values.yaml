@@ -30,14 +30,29 @@ tracing:
       enabled: true
       endpoint: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
 ports:
+  # aliasHeadersStrategy mitigates GHSA-rf44-j88r-hh8c: clients can spoof
+  # ForwardAuth identity headers (X-authentik-*) using underscore or dot
+  # aliases that CGI-style backends fold onto the canonical header name.
+  # "delete" strips header names containing non-alphanumeric, non-dash
+  # characters. Traefik defaults to "keep" for backwards compatibility and
+  # warns on every entry point where this is unset, so set it explicitly.
+  traefik:
+    http:
+      aliasHeadersStrategy: delete
+  metrics:
+    http:
+      aliasHeadersStrategy: delete
   web:
     http:
+      aliasHeadersStrategy: delete
       redirections:
         entryPoint:
           to: websecure
           scheme: https
           permanent: true
   websecure:
+    http:
+      aliasHeadersStrategy: delete
     forwardedHeaders:
       trustedIPs:
         - "${CLUSTER_POD_CIDR_IP4}"
