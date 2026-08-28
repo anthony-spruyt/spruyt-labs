@@ -5,7 +5,7 @@ kind: StorageClass
 metadata:
   name: rbd-fast
   annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "8 19 * * *"
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
@@ -29,7 +29,7 @@ kind: StorageClass
 metadata:
   name: rbd-fast-delete
   annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "16 19 * * *"
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
@@ -53,7 +53,7 @@ kind: StorageClass
 metadata:
   name: rbd-fast-ec
   annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "24 19 * * *"
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
@@ -78,7 +78,7 @@ kind: StorageClass
 metadata:
   name: rbd-fast-delete-ec
   annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "32 19 * * *"
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
@@ -103,7 +103,7 @@ kind: StorageClass
 metadata:
   name: rbd-fast-encrypted
   annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "40 19 * * *"
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
@@ -129,7 +129,7 @@ kind: StorageClass
 metadata:
   name: rbd-fast-delete-encrypted
   annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "48 19 * * *"
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
@@ -155,7 +155,7 @@ kind: StorageClass
 metadata:
   name: rbd-fast-ec-encrypted
   annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "56 19 * * *"
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
@@ -182,7 +182,7 @@ kind: StorageClass
 metadata:
   name: rbd-fast-ec-delete-encrypted
   annotations:
-    reclaimspace.csiaddons.openshift.io/schedule: "4 20 * * *"
+    reclaimspace.csiaddons.openshift.io/schedule: "0 19 * * *"
 provisioner: rook-ceph.rbd.csi.ceph.com
 parameters:
   clusterID: rook-ceph
