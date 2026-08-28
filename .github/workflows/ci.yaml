@@ -62,6 +62,9 @@ jobs:
         id: "filter"
         with:
           base: "${{ steps.last-success.outputs.base }}"
+          # Default 'some' makes a filter match when any pattern matches, which
+          # turns a negated pattern into a match-everything rule.
+          predicate-quantifier: "some-with-excludes"
           filters: |
             cluster:
               - 'cluster/**/*.yaml'
@@ -77,6 +80,7 @@ jobs:
               - 'cmd/mcp-header-proxy/**'
             agent-queue-worker:
               - 'ts/agent-queue-worker/**'
+              - '!ts/agent-queue-worker/bull-board/**'
             bull-board:
               - 'ts/agent-queue-worker/bull-board/**'
             claude-agents:
@@ -100,71 +104,89 @@ jobs:
     needs: "changes"
     if: "needs.changes.outputs.terraform == 'true'"
     uses: "./.github/workflows/_terraform-validate.yaml"
+  # Test and build only. release-please.yaml owns every release, so nothing here
+  # pushes an image or creates a tag. The write scopes below cannot be narrowed:
+  # a run is rejected outright if the caller grants less than the called
+  # workflow declares, whether or not the job that declares them ever runs.
   shutdown-orchestrator:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "shutdown-orchestrator"
       workdir: "cmd/shutdown-orchestrator"
-      tag-prefix: "shutdown-orchestrator/v"
       language: "go"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   kata-tap-qdisc-fix:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.kata-tap-qdisc-fix == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "kata-tap-qdisc-fix"
       workdir: "cmd/kata-tap-qdisc-fix"
-      tag-prefix: "kata-tap-qdisc-fix/v"
       language: "go"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
-  # Build/test only; release-please.yaml owns releases for this service.
   mcp-header-proxy:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.mcp-header-proxy == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "mcp-header-proxy"
       workdir: "cmd/mcp-header-proxy"
-      tag-prefix: "mcp-header-proxy/v"
       language: "go"
-      push: false
     secrets: "inherit"
   agent-queue-worker:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.agent-queue-worker == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "agent-queue-worker"
       workdir: "ts/agent-queue-worker"
-      tag-prefix: "agent-queue-worker/v"
       language: "node"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   bull-board:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.bull-board == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "bull-board"
       workdir: "ts/agent-queue-worker/bull-board"
-      tag-prefix: "bull-board/v"
       language: "node"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   summary:
     needs:

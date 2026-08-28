@@ -15,6 +15,4 @@ Streaming responses are flushed immediately (`FlushInterval: -1`) so SSE streams
 
 ## Releases
 
-Versioning is managed by release-please. A push to `main` that touches this directory updates a release pull request; merging it creates the tag and a draft release, which triggers the image build. The release is published once the image has been pushed, so a published release always has an image behind it.
-
-Commit types drive the version: `feat` bumps the minor, `feat!` or a `BREAKING CHANGE` footer bumps the major, and anything else bumps the patch. A `Release-As: X.Y.Z` footer overrides the computed version.
+Versioning is managed by release-please. See `docs/releases.md`.
