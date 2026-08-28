@@ -1,0 +1,110 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+
+name: "Rebuild Release"
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Service to rebuild"
+        required: true
+        type: "choice"
+        options:
+          - "shutdown-orchestrator"
+          - "kata-tap-qdisc-fix"
+          - "mcp-header-proxy"
+          - "agent-queue-worker"
+          - "bull-board"
+      version:
+        description: "Version to rebuild, without a leading v (e.g., 0.2.10)"
+        required: true
+        type: "string"
+concurrency:
+  group: "rebuild-${{ inputs.service }}-${{ inputs.version }}"
+  cancel-in-progress: false
+jobs:
+  resolve:
+    name: "Resolve"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: "write"
+    outputs:
+      workdir: "${{ steps.service.outputs.workdir }}"
+      language: "${{ steps.service.outputs.language }}"
+      tag: "${{ steps.service.outputs.tag }}"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+        with:
+          fetch-depth: 0
+      - name: "Resolve service"
+        id: "service"
+        env:
+          SERVICE: "${{ inputs.service }}"
+          VERSION: "${{ inputs.version }}"
+        run: |
+          case "$SERVICE" in
+            shutdown-orchestrator) WORKDIR="cmd/shutdown-orchestrator"; LANGUAGE="go" ;;
+            kata-tap-qdisc-fix)    WORKDIR="cmd/kata-tap-qdisc-fix";    LANGUAGE="go" ;;
+            mcp-header-proxy)      WORKDIR="cmd/mcp-header-proxy";      LANGUAGE="go" ;;
+            agent-queue-worker)    WORKDIR="ts/agent-queue-worker";     LANGUAGE="node" ;;
+            bull-board)            WORKDIR="ts/agent-queue-worker/bull-board"; LANGUAGE="node" ;;
+            *) echo "::error::Unknown service $SERVICE"; exit 1 ;;
+          esac
+
+          TAG="${SERVICE}/v${VERSION}"
+          {
+            echo "workdir=$WORKDIR"
+            echo "language=$LANGUAGE"
+            echo "tag=$TAG"
+          } >> "$GITHUB_OUTPUT"
+      - name: "Verify the release is recoverable"
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          TAG: "${{ steps.service.outputs.tag }}"
+          SERVICE: "${{ inputs.service }}"
+          VERSION: "${{ inputs.version }}"
+        run: |
+          if ! git rev-parse -q --verify "refs/tags/${TAG}" > /dev/null; then
+            echo "::error::Tag ${TAG} does not exist. This workflow rebuilds an existing release; it does not create one."
+            exit 1
+          fi
+
+          if ! DRAFT=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null); then
+            echo "::error::No release found for ${TAG}."
+            exit 1
+          fi
+
+          if [ "$DRAFT" != "true" ]; then
+            echo "::error::Release ${TAG} is already published. Cut a new version instead."
+            exit 1
+          fi
+
+          NEWEST=$(gh release list --limit 200 --json tagName,isDraft \
+            --jq '.[] | select(.isDraft == false) | .tagName' \
+            | sed -n "s|^${SERVICE}/v||p" | sort -V | tail -n 1)
+
+          if [ -n "$NEWEST" ] && [ "$(printf '%s\n%s\n' "$NEWEST" "$VERSION" | sort -V | tail -n 1)" != "$VERSION" ]; then
+            echo "::error::${SERVICE} ${NEWEST} is already published, so rebuilding ${VERSION} would move the latest and major.minor tags backwards. Cut a new version instead."
+            exit 1
+          fi
+  build:
+    name: "${{ inputs.service }}"
+    needs: "resolve"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
+    with:
+      image: "${{ inputs.service }}"
+      workdir: "${{ needs.resolve.outputs.workdir }}"
+      language: "${{ needs.resolve.outputs.language }}"
+      push: true
+      version: "${{ inputs.version }}"
+      tag-name: "${{ needs.resolve.outputs.tag }}"
+    secrets: "inherit"

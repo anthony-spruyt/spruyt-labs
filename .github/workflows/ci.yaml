@@ -62,6 +62,7 @@ jobs:
         id: "filter"
         with:
           base: "${{ steps.last-success.outputs.base }}"
+          predicate-quantifier: "some-with-excludes"
           filters: |
             cluster:
               - 'cluster/**/*.yaml'
@@ -77,6 +78,7 @@ jobs:
               - 'cmd/mcp-header-proxy/**'
             agent-queue-worker:
               - 'ts/agent-queue-worker/**'
+              - '!ts/agent-queue-worker/bull-board/**'
             bull-board:
               - 'ts/agent-queue-worker/bull-board/**'
             claude-agents:
@@ -105,65 +107,80 @@ jobs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "shutdown-orchestrator"
       workdir: "cmd/shutdown-orchestrator"
-      tag-prefix: "shutdown-orchestrator/v"
       language: "go"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   kata-tap-qdisc-fix:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.kata-tap-qdisc-fix == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "kata-tap-qdisc-fix"
       workdir: "cmd/kata-tap-qdisc-fix"
-      tag-prefix: "kata-tap-qdisc-fix/v"
       language: "go"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   mcp-header-proxy:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.mcp-header-proxy == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "mcp-header-proxy"
       workdir: "cmd/mcp-header-proxy"
-      tag-prefix: "mcp-header-proxy/v"
       language: "go"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   agent-queue-worker:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.agent-queue-worker == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "agent-queue-worker"
       workdir: "ts/agent-queue-worker"
-      tag-prefix: "agent-queue-worker/v"
       language: "node"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   bull-board:
     needs:
       - "lint"
       - "changes"
     if: "needs.changes.outputs.bull-board == 'true'"
-    uses: "./.github/workflows/_release-image.yaml"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "bull-board"
       workdir: "ts/agent-queue-worker/bull-board"
-      tag-prefix: "bull-board/v"
       language: "node"
-      push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
   summary:
     needs:

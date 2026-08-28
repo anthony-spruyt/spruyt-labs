@@ -62,6 +62,10 @@ Alerting (PromQL):
 
 - `increase(kata_tap_qdisc_replace_failures_total[10m]) > 0` — WARN
 
+## Releases
+
+Versioning is managed by release-please. See `docs/releases.md`.
+
 ## Root cause reference
 
 See issue anthony-spruyt/spruyt-labs#951 for the packet-trace evidence and anthony-spruyt/spruyt-labs#959 for the proc-enumeration spike results.
