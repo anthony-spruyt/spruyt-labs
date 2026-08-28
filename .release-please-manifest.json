@@ -2,6 +2,6 @@
   "cmd/mcp-header-proxy": "0.0.10",
   "cmd/shutdown-orchestrator": "1.1.17",
   "cmd/kata-tap-qdisc-fix": "0.2.10",
-  "ts/agent-queue-worker": "3.3.47",
+  "ts/agent-queue-worker": "3.3.48",
   "ts/agent-queue-worker/bull-board": "0.2.31"
 }
