@@ -76,6 +76,75 @@
       "enabled": false
     },
     {
+      // Renovate resolves release notes for a docker dep either by matching a
+      // GitHub Release tag against "(?:^|/)(?:packageName|depName)[@_/-]v?<version>",
+      // or by parsing CHANGELOG.md. Neither works here by default:
+      //
+      //   1. depName/packageName is the full registry path
+      //      (ghcr.io/anthony-spruyt/<name>), while release-please tags are
+      //      "<component>/v<version>". No tag format can bridge that, since the
+      //      tag carries the short component name.
+      //   2. CHANGELOG.md is looked up at the repo root unless sourceDirectory
+      //      is set, and sourceDirectory is only derived from a sourceUrl that
+      //      carries a /tree/<ref>/<path> suffix. docker/metadata-action sets
+      //      org.opencontainers.image.source to the bare repo URL, and this
+      //      monorepo has no root CHANGELOG.md, so the lookup 404s.
+      //
+      // Setting sourceDirectory here points Renovate at the release-please
+      // package directory, so it reads that package's CHANGELOG.md. Fixing this
+      // via the image label instead would append a path to
+      // org.opencontainers.image.source and break the GHCR package-to-repo link.
+      // Ref #2684
+      "description": "Point own image changelogs at their release-please package directory",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/anthony-spruyt/agent-queue-worker"
+      ],
+      "sourceDirectory": "ts/agent-queue-worker"
+    },
+    {
+      "description": "Point own image changelogs at their release-please package directory. Ref #2684",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/anthony-spruyt/bull-board"
+      ],
+      "sourceDirectory": "ts/agent-queue-worker/bull-board"
+    },
+    {
+      "description": "Point own image changelogs at their release-please package directory. Ref #2684",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/anthony-spruyt/mcp-header-proxy"
+      ],
+      "sourceDirectory": "cmd/mcp-header-proxy"
+    },
+    {
+      "description": "Point own image changelogs at their release-please package directory. Ref #2684",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/anthony-spruyt/shutdown-orchestrator"
+      ],
+      "sourceDirectory": "cmd/shutdown-orchestrator"
+    },
+    {
+      "description": "Point own image changelogs at their release-please package directory. Ref #2684",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/anthony-spruyt/kata-tap-qdisc-fix"
+      ],
+      "sourceDirectory": "cmd/kata-tap-qdisc-fix"
+    },
+    {
       "description": "Hold Go on the 1.26 line: CodeQL CLI caps maxGoVersion at 1.26 and MegaLinter ships golangci-lint built with go1.26, so a 1.27 go directive breaks both required checks. Remove once CodeQL CLI >= 2.27.0 and MegaLinter ships golangci-lint >= 2.13.0. Ref #2575",
       "matchDatasources": [
         "golang-version",
