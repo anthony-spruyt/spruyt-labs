@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/gitrepository_v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: external-snapshotter-gitrepo
+  namespace: flux-system
+spec:
+  interval: 12h
+  timeout: 3m
+  url: https://github.com/kubernetes-csi/external-snapshotter
+  ref:
+    tag: v8.5.0
+  sparseCheckout:
+    - client/config/crd

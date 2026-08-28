@@ -14,3 +14,25 @@ spec:
   prune: true
   timeout: 3m
   wait: true
+---
+# Gateway API CRDs. Talos seeds them at bootstrap; Flux owns updates.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gateway-api-crds
+  namespace: flux-system
+  labels:
+    kustomizationdefaults.flux.home.arpa/disabled: "true"
+    substitution.flux.home.arpa/disabled: "true"
+    sops.flux.home.arpa/disabled: "true"
+spec:
+  interval: 4h
+  sourceRef:
+    kind: GitRepository
+    name: gateway-api-gitrepo
+    namespace: flux-system
+  path: ./config/crd/experimental
+  prune: false
+  timeout: 5m
+  wait: true

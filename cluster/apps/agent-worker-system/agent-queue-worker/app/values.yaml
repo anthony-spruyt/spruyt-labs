@@ -27,7 +27,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/agent-queue-worker
-          tag: 3.3.47@sha256:315c2aa09b65e1ebc1c66eb2974138da6d4fa9e74c0381710cda9e4c1b6c2351
+          tag: 3.3.48@sha256:89513b2152fcea6e3629be79bbb55b636229284cd543c61985adc50613c10d5f
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"
@@ -83,7 +83,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/bull-board
-          tag: 0.2.31@sha256:ee07aa72b47d610f286b0c39d90b6cf3cd13dd0417329820767c7735cd6c8533
+          tag: 0.2.32@sha256:8612e29b68f07657ee5bd18d8e6a9694385cff6f803f334cb09a6bfb2c8a27a7
         env:
           VALKEY_HOST: agent-valkey.agent-worker-system.svc
           VALKEY_PORT: "6379"
