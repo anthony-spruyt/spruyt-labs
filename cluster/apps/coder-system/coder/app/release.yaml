@@ -13,7 +13,7 @@ spec:
       # chart and the version is tracked via the coder-stable custom datasource
       # (GitHub "latest release" pointer). See .github/renovate-overrides.json5
       # renovate: datasource=custom.coder-stable depName=coder
-      version: "2.35.4"
+      version: "2.35.6"
       sourceRef:
         kind: HelmRepository
         name: coder-charts
