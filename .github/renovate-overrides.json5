@@ -145,6 +145,23 @@
       "sourceDirectory": "cmd/kata-tap-qdisc-fix"
     },
     {
+      // github-tags declares no defaultVersioning, so lookups fall back to
+      // semver-coerced. That coerces the tag to 1.6.0 and reports it valid, but
+      // isStable() requires a leading digit or v, so every autoscaler tag is
+      // treated as unstable and no candidate ever passes the filter.
+      "description": "VPA release tags are prefixed, not semver",
+      "matchManagers": [
+        "flux"
+      ],
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchPackageNames": [
+        "kubernetes/autoscaler"
+      ],
+      "versioning": "regex:^vertical-pod-autoscaler-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+    },
+    {
       "description": "Hold Go on the 1.26 line: CodeQL CLI caps maxGoVersion at 1.26 and MegaLinter ships golangci-lint built with go1.26, so a 1.27 go directive breaks both required checks. Remove once CodeQL CLI >= 2.27.0 and MegaLinter ships golangci-lint >= 2.13.0. Ref #2575",
       "matchDatasources": [
         "golang-version",

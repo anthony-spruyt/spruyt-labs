@@ -2,7 +2,8 @@
 # Chart: https://github.com/cowboysysop/charts/tree/master/charts/vertical-pod-autoscaler
 
 crds:
-  # CRDs managed via Talos extraManifests (talos/patches/control-plane/extra-manifests.yaml)
+  # Chart ships 1.5.0 CRDs; Talos seeds 1.6.0 and the vertical-pod-autoscaler-crds
+  # Kustomization owns updates.
   enabled: false
 
 admissionController:
