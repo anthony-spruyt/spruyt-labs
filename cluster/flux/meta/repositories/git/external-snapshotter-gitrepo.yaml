@@ -10,6 +10,6 @@ spec:
   timeout: 3m
   url: https://github.com/kubernetes-csi/external-snapshotter
   ref:
-    tag: v8.5.0
+    tag: v8.6.0
   sparseCheckout:
     - client/config/crd
