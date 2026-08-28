@@ -15,5 +15,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install bats
         run: sudo apt-get update && sudo apt-get install -y bats
-      - name: Run bootstrap-plugins tests
-        run: bats cluster/apps/claude-agents-shared/base/scripts/bootstrap-plugins.bats
+      - name: Run bats tests
+        run: |
+          mapfile -t suites < <(git ls-files '*.bats')
+          if [ "${#suites[@]}" -eq 0 ]; then
+            echo "no .bats files found" >&2
+            exit 1
+          fi
+          printf 'running %d suite(s)\n' "${#suites[@]}"
+          bats "${suites[@]}"

@@ -34,7 +34,7 @@ jobs:
       mcp-header-proxy: "${{ steps.filter.outputs.mcp-header-proxy }}"
       agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
       bull-board: "${{ steps.filter.outputs.bull-board }}"
-      claude-agents: "${{ steps.filter.outputs.claude-agents }}"
+      bats: "${{ steps.filter.outputs.bats }}"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
@@ -81,8 +81,13 @@ jobs:
               - '!ts/agent-queue-worker/bull-board/**'
             bull-board:
               - 'ts/agent-queue-worker/bull-board/**'
-            claude-agents:
+            bats:
+              - '**/*.bats'
               - 'cluster/apps/claude-agents-shared/**'
+              # Sources asserted by tests/crd-controller-sync.bats
+              - 'cluster/flux/meta/repositories/git/**'
+              - 'cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml'
+              - 'cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml'
   lint:
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@main"
     secrets: "inherit"
@@ -96,7 +101,7 @@ jobs:
     uses: "./.github/workflows/_kyverno-test.yaml"
   bats-test:
     needs: "changes"
-    if: "needs.changes.outputs.claude-agents == 'true'"
+    if: "needs.changes.outputs.bats == 'true'"
     uses: "./.github/workflows/_bats-test.yaml"
   terraform-validate:
     needs: "changes"

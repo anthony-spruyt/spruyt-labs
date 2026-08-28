@@ -159,7 +159,21 @@
       "matchPackageNames": [
         "kubernetes/autoscaler"
       ],
-      "versioning": "regex:^vertical-pod-autoscaler-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+      "versioning": "regex:^vertical-pod-autoscaler-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Gateway API CRDs follow Cilium's supported version, so bumps need review",
+      "matchManagers": [
+        "flux"
+      ],
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchPackageNames": [
+        "kubernetes-sigs/gateway-api"
+      ],
+      "dependencyDashboardApproval": true
     },
     {
       "description": "Hold Go on the 1.26 line: CodeQL CLI caps maxGoVersion at 1.26 and MegaLinter ships golangci-lint built with go1.26, so a 1.27 go directive breaks both required checks. Remove once CodeQL CLI >= 2.27.0 and MegaLinter ships golangci-lint >= 2.13.0. Ref #2575",
