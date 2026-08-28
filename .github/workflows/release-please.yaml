@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+
+# Pilot scope: mcp-header-proxy only. Other services still release via ci.yaml.
+name: "Release Please"
+on:
+  push:
+    branches:
+      - "main"
+permissions:
+  contents: "write"
+  pull-requests: "write"
+concurrency:
+  group: "release-please-${{ github.ref }}"
+  cancel-in-progress: false
+jobs:
+  release-please:
+    name: "Release please"
+    runs-on: "ubuntu-latest"
+    outputs:
+      released: "${{ steps.release.outputs['cmd/mcp-header-proxy--release_created'] }}"
+      version: "${{ steps.release.outputs['cmd/mcp-header-proxy--version'] }}"
+      tag_name: "${{ steps.release.outputs['cmd/mcp-header-proxy--tag_name'] }}"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
+      # GITHUB_TOKEN cannot open pull requests here, and its pull requests would
+      # not trigger CI in repos that require status checks.
+      - name: "Mint app token"
+        id: "app-token"
+        uses: "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1" # v3
+        with:
+          client-id: "${{ secrets.RELEASE_PLEASE_APP_CLIENT_ID }}"
+          private-key: "${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}"
+      - name: "Run release-please"
+        id: "release"
+        uses: "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7" # v5.0.0
+        with:
+          token: "${{ steps.app-token.outputs.token }}"
+          config-file: "release-please-config.json"
+          manifest-file: ".release-please-manifest.json"
+  mcp-header-proxy:
+    name: "mcp-header-proxy"
+    needs: "release-please"
+    if: "needs.release-please.outputs.released == 'true'"
+    # A called workflow can only downgrade the caller's token permissions, never
+    # raise them, so the scopes _build-image.yaml needs have to be granted here.
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
+    with:
+      image: "mcp-header-proxy"
+      workdir: "cmd/mcp-header-proxy"
+      language: "go"
+      version: "${{ needs.release-please.outputs.version }}"
+      tag-name: "${{ needs.release-please.outputs.tag_name }}"
+    secrets: "inherit"
