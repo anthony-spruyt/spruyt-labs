@@ -45,15 +45,17 @@ chmod 600 ~/.secrets/.env.spruyt-labs
 The `.env.common` file must contain:
 
 ```bash
-ANTHROPIC_AUTH_TOKEN=<value>
+ANTHROPIC_CUSTOM_HEADERS=x-litellm-api-key: Bearer <litellm-api-key>
 ANTHROPIC_BASE_URL=https://litellm.<external-domain>
 CLAUDE_CODE_ATTRIBUTION_HEADER=0
 CLAUDE_CODE_ENABLE_TELEMETRY=1
 CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1
 ENABLE_TOOL_SEARCH=true
 EXTERNAL_DOMAIN=<external-domain>
-GH_TOKEN=<value>
+GH_TOKEN=<github-pat>
+LITELLM_API_KEY=<litellm-api-key>
 NEXUS_DOCKER_URL=https://nexus-docker.lan.<external-domain>
+OPENAI_API_KEY=<litellm-api-key>
 SAFE_CHAIN_LOGGING=silent
 SSH_AUTH_SOCK=/ssh-agent
 ```
@@ -61,8 +63,10 @@ SSH_AUTH_SOCK=/ssh-agent
 The `.env.spruyt-labs` file must contain:
 
 ```bash
-ANTHROPIC_AUTH_TOKEN=<value>  # Overrides the value from .env.common
+ANTHROPIC_CUSTOM_HEADERS=x-litellm-api-key: Bearer <litellm-api-key> # Overrides the value from .env.common
 KUBECONFIG=/home/vscode/.secrets/kubeconfig
+LITELLM_API_KEY=<litellm-api-key> # Overrides the value from .env.common
+OPENAI_API_KEY=<litellm-api-key> # Overrides the value from .env.common
 SOPS_AGE_KEY_FILE=/home/vscode/.secrets/age.key
 TALOSCONFIG=/home/vscode/.secrets/talosconfig
 ```
@@ -82,14 +86,14 @@ OTEL_METRICS_EXPORTER=otlp
 OTEL_LOGS_EXPORTER=otlp
 OTEL_TRACES_EXPORTER=otlp
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://otel.lan.<domain>/v1/traces
-OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=https://otel.lan.<domain>/v1/metrics
-OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://otel.lan.<domain>/v1/logs
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://otel.lan.<external-domain>/v1/traces
+OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=https://otel.lan.<external-domain>/v1/metrics
+OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://otel.lan.<external-domain>/v1/logs
 OTEL_EXPORTER_OTLP_HEADERS=X-API-KEY=<otel-api-key>
 OTEL_RESOURCE_ATTRIBUTES=agent.namespace=devcontainers
 ```
 
-Per-signal endpoints share the one `otel.lan.<domain>` host but use distinct `/v1/{traces,metrics,logs}` paths, which Traefik rewrites to the Victoria-native paths. Unlike in-cluster workloads — which point each signal at a different backend pod DNS — every signal here hits the same ingress.
+Per-signal endpoints share the one `otel.lan.<external-domain>` host but use distinct `/v1/{traces,metrics,logs}` paths, which Traefik rewrites to the Victoria-native paths. Unlike in-cluster workloads — which point each signal at a different backend pod DNS — every signal here hits the same ingress.
 
 ### SSH Agent Setup
 
