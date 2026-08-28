@@ -10,6 +10,8 @@ spec:
     - name: csi-reclaim-space
       rules:
         - alert: ReclaimSpaceJobFailed
+          # Coder workspaces are stopped most of the time and fstrim cannot run
+          # on an unmounted volume, so failures there are expected.
           expr: |
             kube_customresource_reclaimspacejob_info{result="Failed", namespace!="coder-workspaces"} == 1
             and on (namespace, name)
