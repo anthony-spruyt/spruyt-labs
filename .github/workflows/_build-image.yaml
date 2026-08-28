@@ -1,0 +1,168 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+
+name: "Build Image"
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Image name (e.g., mcp-header-proxy)"
+        required: true
+        type: "string"
+      workdir:
+        description: "Build context path (e.g., cmd/mcp-header-proxy)"
+        required: true
+        type: "string"
+      language:
+        description: "node or go"
+        required: true
+        type: "string"
+      version:
+        description: "Version to publish, without a leading v (e.g., 0.0.9)"
+        required: true
+        type: "string"
+      tag-name:
+        description: "Git tag release-please created (e.g., mcp-header-proxy/v0.0.9)"
+        required: true
+        type: "string"
+    outputs:
+      digest:
+        description: "Image digest"
+        value: "${{ jobs.build.outputs.digest }}"
+concurrency:
+  group: "build-${{ inputs.image }}-${{ inputs.version }}"
+  cancel-in-progress: false
+jobs:
+  test:
+    name: "Test"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: "read"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+        with:
+          ref: "${{ inputs.tag-name }}"
+      - name: "Setup Node.js"
+        if: "inputs.language == 'node'"
+        uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v7
+        with:
+          node-version: "24"
+      - name: "Install dependencies (Node)"
+        if: "inputs.language == 'node'"
+        working-directory: "${{ inputs.workdir }}"
+        run: npm ci --ignore-scripts
+      - name: "Type check (Node)"
+        if: "inputs.language == 'node'"
+        working-directory: "${{ inputs.workdir }}"
+        run: ./node_modules/.bin/tsc --noEmit
+      - name: "Run tests (Node)"
+        if: "inputs.language == 'node'"
+        working-directory: "${{ inputs.workdir }}"
+        env:
+          WORKDIR: "${{ inputs.workdir }}"
+        run: |
+          if node -e 'process.exit(require("./package.json").scripts?.test ? 0 : 1)'; then
+            npm test
+          else
+            echo "::notice::No test script in ${WORKDIR}/package.json, skipping tests"
+          fi
+      - name: "Setup Go"
+        if: "inputs.language == 'go'"
+        uses: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" # v7
+        with:
+          go-version-file: "${{ inputs.workdir }}/go.mod"
+          cache-dependency-path: "${{ inputs.workdir }}/go.sum"
+      - name: "Run tests (Go)"
+        if: "inputs.language == 'go'"
+        working-directory: "${{ inputs.workdir }}"
+        run: go test -race ./...
+  build:
+    name: "Build and publish"
+    needs: "test"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    outputs:
+      digest: "${{ steps.push.outputs.digest }}"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+        with:
+          ref: "${{ inputs.tag-name }}"
+      - name: "Set up Docker Buildx"
+        uses: "docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e" # v4
+      - name: "Login to GHCR"
+        uses: "docker/login-action@dbcb813823bdd20940b903addbd779551569679f" # v4
+        with:
+          registry: "ghcr.io"
+          username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
+      - name: "Docker metadata"
+        id: "meta"
+        uses: "docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302" # v6
+        with:
+          images: "ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}"
+          tags: |
+            type=semver,pattern={{version}},value=v${{ inputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ inputs.version }}
+            type=raw,value=latest
+      - name: "Extract Go version"
+        if: "inputs.language == 'go'"
+        id: "go-version"
+        env:
+          WORKDIR: "${{ inputs.workdir }}"
+        run: echo "version=$(grep '^go ' "${WORKDIR}/go.mod" | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - name: "Push image to GHCR"
+        id: "push"
+        uses: "docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a" # v7
+        with:
+          context: "${{ inputs.workdir }}"
+          push: true
+          tags: "${{ steps.meta.outputs.tags }}"
+          labels: "${{ steps.meta.outputs.labels }}"
+          build-args: "${{ inputs.language == 'go' && format('GO_VERSION={0}\nVERSION=v{1}\nCOMMIT={2}', steps.go-version.outputs.version, inputs.version, github.sha) || '' }}"
+          cache-from: "type=gha"
+          cache-to: "type=gha,mode=max"
+          sbom: true
+          provenance: "mode=max"
+      - name: "Generate provenance attestation"
+        uses: "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8" # v4
+        with:
+          subject-name: "ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}"
+          subject-digest: "${{ steps.push.outputs.digest }}"
+          push-to-registry: true
+      # Must stay last: on failure the release stays a draft, so a published
+      # release always has an image behind it.
+      - name: "Publish release with image details"
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          TAG: "${{ inputs.tag-name }}"
+          IMAGE_REF: "ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}:${{ inputs.version }}"
+          DIGEST: "${{ steps.push.outputs.digest }}"
+          RUN_ID: "${{ github.run_id }}"
+          SERVER_URL: "${{ github.server_url }}"
+          REPO: "${{ github.repository }}"
+        run: |
+          BODY=$(gh release view "$TAG" --json body --jq .body)
+          {
+            printf '%s\n\n' "$BODY"
+            printf '## Container Image\n\n'
+            # shellcheck disable=SC2016
+            printf '```\n%s\n```\n\n' "$IMAGE_REF"
+            # shellcheck disable=SC2016
+            printf '**Digest:** `%s`\n\n' "$DIGEST"
+            printf '**Run:** [#%s](%s/%s/actions/runs/%s)\n' \
+              "$RUN_ID" "$SERVER_URL" "$REPO" "$RUN_ID"
+          } > notes.md
+          gh release edit "$TAG" --notes-file notes.md --draft=false

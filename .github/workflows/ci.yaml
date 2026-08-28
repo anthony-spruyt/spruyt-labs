@@ -126,6 +126,7 @@ jobs:
       language: "go"
       push: "${{ github.event_name == 'push' }}"
     secrets: "inherit"
+  # Build/test only; release-please.yaml owns releases for this service.
   mcp-header-proxy:
     needs:
       - "lint"
@@ -137,7 +138,7 @@ jobs:
       workdir: "cmd/mcp-header-proxy"
       tag-prefix: "mcp-header-proxy/v"
       language: "go"
-      push: "${{ github.event_name == 'push' }}"
+      push: false
     secrets: "inherit"
   agent-queue-worker:
     needs:
