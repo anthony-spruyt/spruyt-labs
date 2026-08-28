@@ -6,9 +6,6 @@ on:
   push:
     branches:
       - "main"
-permissions:
-  contents: "write"
-  pull-requests: "write"
 concurrency:
   group: "release-please-${{ github.ref }}"
   cancel-in-progress: false
@@ -16,6 +13,9 @@ jobs:
   release-please:
     name: "Release please"
     runs-on: "ubuntu-latest"
+    permissions:
+      contents: "write"
+      pull-requests: "write"
     outputs:
       released: "${{ steps.release.outputs['cmd/mcp-header-proxy--release_created'] }}"
       version: "${{ steps.release.outputs['cmd/mcp-header-proxy--version'] }}"

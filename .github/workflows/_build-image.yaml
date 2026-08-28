@@ -31,15 +31,12 @@ on:
 concurrency:
   group: "build-${{ inputs.image }}-${{ inputs.version }}"
   cancel-in-progress: false
-permissions:
-  contents: "write"
-  packages: "write"
-  id-token: "write"
-  attestations: "write"
 jobs:
   test:
     name: "Test"
     runs-on: "ubuntu-latest"
+    permissions:
+      contents: "read"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
@@ -61,7 +58,7 @@ jobs:
       - name: "Type check (Node)"
         if: "inputs.language == 'node'"
         working-directory: "${{ inputs.workdir }}"
-        run: npx tsc --noEmit
+        run: ./node_modules/.bin/tsc --noEmit
       - name: "Run tests (Node)"
         if: "inputs.language == 'node'"
         working-directory: "${{ inputs.workdir }}"
@@ -87,6 +84,11 @@ jobs:
     name: "Build and publish"
     needs: "test"
     runs-on: "ubuntu-latest"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
     outputs:
       digest: "${{ steps.push.outputs.digest }}"
     steps:
