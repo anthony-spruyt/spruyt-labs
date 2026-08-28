@@ -1,5 +1,5 @@
 {
-  "cmd/mcp-header-proxy": "0.0.9",
+  "cmd/mcp-header-proxy": "0.0.10",
   "cmd/shutdown-orchestrator": "1.1.17",
   "cmd/kata-tap-qdisc-fix": "0.2.9",
   "ts/agent-queue-worker": "3.3.47",
