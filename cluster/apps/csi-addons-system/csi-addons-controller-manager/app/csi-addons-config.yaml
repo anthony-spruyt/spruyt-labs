@@ -10,11 +10,5 @@ data:
   "reclaim-space-timeout": "5m"
   "max-concurrent-reconciles": "1"
   "max-group-pvcs": "100"
-  # Spreads ReclaimSpaceCronJobs over a 2h window by hashing each CR's own UID
-  # into an offset, so deleting and recreating them reshuffles every offset.
-  # Same as the v0.15.0 default, pinned so it is not implicit. "0" disables.
   "cronjob-stagger-window": "2"
-  # Read the schedule from the StorageClass on every reconcile. Under the
-  # default "pvc" the controller writes the schedule onto each PVC and then
-  # reads it back first, so StorageClass edits never reach existing volumes.
   "schedule-precedence": "storageclass"

@@ -48,9 +48,6 @@ metadata:
   name: csi-addons-controller-restart
   namespace: csi-addons-system
 spec:
-  # 15 min ahead of the reclaim window, which now opens at 19:00 exactly. The
-  # old 8-minute gap came from the manual StorageClass stagger; the UID-derived
-  # offsets that replaced it can land on 19:00 and reshuffle on CR recreation.
   schedule: "45 18 * * *"
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
