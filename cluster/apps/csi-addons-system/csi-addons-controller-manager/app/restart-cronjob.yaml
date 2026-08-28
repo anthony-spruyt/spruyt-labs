@@ -39,15 +39,16 @@ subjects:
     namespace: csi-addons-system
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/cronjob-batch-v1.json
-# Workaround: csi-addons controller caches gRPC connections to nodeplugin
-# sidecars that go stale and never auto-recover (v0.14.0 bug). Restart
-# ensures fresh connections before daily ReclaimSpaceCronJobs fire.
+# Workaround for a v0.14.0 bug: the controller cached gRPC connections to
+# nodeplugin sidecars that went stale and never recovered. Suspended on
+# v0.15.0 pending removal - see #2624 for the evidence.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: csi-addons-controller-restart
   namespace: csi-addons-system
 spec:
+  suspend: true
   schedule: "45 18 * * *"
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
