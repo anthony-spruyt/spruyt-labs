@@ -29,6 +29,14 @@ tracing:
     http:
       enabled: true
       endpoint: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
+metrics:
+  prometheus:
+    service:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      scrapeTimeout: 10s
 ports:
   # aliasHeadersStrategy mitigates GHSA-rf44-j88r-hh8c: clients can spoof
   # ForwardAuth identity headers (X-authentik-*) using underscore or dot
