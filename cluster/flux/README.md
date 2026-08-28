@@ -16,6 +16,7 @@ workload-focused procedures in `cluster/apps/`.
 | `cluster/flux/meta/cluster-settings.yaml`     | Non-secret key-value pairs exposed to downstream Kustomizations through `postBuild.substituteFrom`.                                            |
 | `cluster/flux/meta/cluster-secrets.sops.yaml` | Encrypted values decrypted by Flux using the `sops-age` secret referenced in `cluster/flux/cluster/ks.yaml`.                                   |
 | `cluster/flux/meta/repositories/`             | Canonical registry of Flux `GitRepository`, `OCIRepository`, and `HelmRepository` sources. Subdirectories partition sources by type.           |
+| `cluster/flux/meta/repositories/git/`         | Upstream Git sources pinned to release tags, supplying CRD sets that Talos only seeds at bootstrap. Flux owns their updates.                   |
 | `cluster/flux/meta/repositories/helm/`        | Helm repositories consumed by `HelmRelease` objects throughout `cluster/apps/`. Each file pins repository endpoints and intervals.             |
 | `cluster/flux/meta/repositories/oci/`         | OCI-backed sources for GitOps artifacts (e.g., Flux operator bundles, pre-rendered charts).                                                    |
 | `.taskfiles/flux/tasks.yaml`                  | Task runner entry point for launching Flux Capacitor to visualize reconciliation state (CLI name `task flux:cap`).                             |
