@@ -3,7 +3,6 @@
   "separate-pull-requests": true,
   "draft": true,
   "force-tag-creation": true,
-  "last-release-sha": "73f5a38a538d8fb63a0e7ac45a5865e241e20836",
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
     { "type": "fix", "section": "Bug Fixes" },
@@ -17,6 +16,33 @@
     "cmd/mcp-header-proxy": {
       "release-type": "simple",
       "component": "mcp-header-proxy",
+      "tag-separator": "/",
+      "include-component-in-tag": true,
+      "bump-minor-pre-major": true
+    },
+    "cmd/shutdown-orchestrator": {
+      "release-type": "simple",
+      "component": "shutdown-orchestrator",
+      "tag-separator": "/",
+      "include-component-in-tag": true
+    },
+    "cmd/kata-tap-qdisc-fix": {
+      "release-type": "simple",
+      "component": "kata-tap-qdisc-fix",
+      "tag-separator": "/",
+      "include-component-in-tag": true,
+      "bump-minor-pre-major": true
+    },
+    "ts/agent-queue-worker": {
+      "release-type": "node",
+      "component": "agent-queue-worker",
+      "tag-separator": "/",
+      "include-component-in-tag": true,
+      "exclude-paths": ["ts/agent-queue-worker/bull-board"]
+    },
+    "ts/agent-queue-worker/bull-board": {
+      "release-type": "node",
+      "component": "bull-board",
       "tag-separator": "/",
       "include-component-in-tag": true,
       "bump-minor-pre-major": true

@@ -16,20 +16,27 @@ on:
         description: "node or go"
         required: true
         type: "string"
+      push:
+        description: "Publish the image and the release. Off for pull request checks."
+        required: false
+        type: "boolean"
+        default: false
       version:
-        description: "Version to publish, without a leading v (e.g., 0.0.9)"
-        required: true
+        description: "Version to publish, without a leading v (e.g., 0.0.9). Required when push is true."
+        required: false
         type: "string"
+        default: ""
       tag-name:
-        description: "Git tag release-please created (e.g., mcp-header-proxy/v0.0.9)"
-        required: true
+        description: "Git tag release-please created (e.g., mcp-header-proxy/v0.0.9). Required when push is true."
+        required: false
         type: "string"
+        default: ""
     outputs:
       digest:
         description: "Image digest"
         value: "${{ jobs.build.outputs.digest }}"
 concurrency:
-  group: "build-${{ inputs.image }}-${{ inputs.version }}"
+  group: "build-${{ inputs.image }}-${{ inputs.version || github.ref }}"
   cancel-in-progress: false
 jobs:
   test:
@@ -81,7 +88,7 @@ jobs:
         working-directory: "${{ inputs.workdir }}"
         run: go test -race ./...
   build:
-    name: "Build and publish"
+    name: "${{ inputs.push && 'Build and publish' || 'Build' }}"
     needs: "test"
     runs-on: "ubuntu-latest"
     permissions:
@@ -103,12 +110,14 @@ jobs:
       - name: "Set up Docker Buildx"
         uses: "docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e" # v4
       - name: "Login to GHCR"
+        if: "inputs.push"
         uses: "docker/login-action@dbcb813823bdd20940b903addbd779551569679f" # v4
         with:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
           password: "${{ secrets.GITHUB_TOKEN }}"
       - name: "Docker metadata"
+        if: "inputs.push"
         id: "meta"
         uses: "docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302" # v6
         with:
@@ -123,20 +132,21 @@ jobs:
         env:
           WORKDIR: "${{ inputs.workdir }}"
         run: echo "version=$(grep '^go ' "${WORKDIR}/go.mod" | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-      - name: "Push image to GHCR"
+      - name: "Build image"
         id: "push"
         uses: "docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a" # v7
         with:
           context: "${{ inputs.workdir }}"
-          push: true
-          tags: "${{ steps.meta.outputs.tags }}"
+          push: "${{ inputs.push }}"
+          tags: "${{ inputs.push && steps.meta.outputs.tags || format('local/{0}:ci', inputs.image) }}"
           labels: "${{ steps.meta.outputs.labels }}"
-          build-args: "${{ inputs.language == 'go' && format('GO_VERSION={0}\nVERSION=v{1}\nCOMMIT={2}', steps.go-version.outputs.version, inputs.version, github.sha) || '' }}"
+          build-args: "${{ inputs.language == 'go' && format('GO_VERSION={0}\nVERSION=v{1}\nCOMMIT={2}', steps.go-version.outputs.version, inputs.version || '0.0.0-ci', github.sha) || '' }}"
           cache-from: "type=gha"
           cache-to: "type=gha,mode=max"
-          sbom: true
-          provenance: "mode=max"
+          sbom: "${{ inputs.push }}"
+          provenance: "${{ inputs.push && 'mode=max' || 'false' }}"
       - name: "Generate provenance attestation"
+        if: "inputs.push"
         uses: "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8" # v4
         with:
           subject-name: "ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}"
@@ -145,6 +155,7 @@ jobs:
       # Must stay last: on failure the release stays a draft, so a published
       # release always has an image behind it.
       - name: "Publish release with image details"
+        if: "inputs.push"
         env:
           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           TAG: "${{ inputs.tag-name }}"
