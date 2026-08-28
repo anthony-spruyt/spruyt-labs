@@ -1,6 +1,6 @@
 # Releases
 
-Every container image in this repository is released by [release-please](https://github.com/googleapis/release-please). There is no manual dispatch, no version input, and no tag to push by hand.
+Every container image in this repository is released by [release-please](https://github.com/googleapis/release-please). You never choose a version or push a tag by hand. The one manual entry point is `Rebuild Release`, which only recovers a release that has already been tagged.
 
 ## Services
 
@@ -22,7 +22,7 @@ Every container image in this repository is released by [release-please](https:/
 4. In the same run, the build job for that service tests the tag and pushes the image to GHCR with a provenance attestation.
 5. The image reference and digest are appended to the release notes and the release is published.
 
-The draft is only published after the image is pushed, so a published release always has an image behind it. If the build fails the release stays a draft and the tag points at code with no image — re-run the workflow rather than cutting a new version.
+The draft is only published after the image is pushed, so a published release always has an image behind it. If the build fails the release stays a draft and the tag points at code that may have no image — see the troubleshooting section rather than cutting a new version.
 
 ## Choosing the version
 
@@ -48,12 +48,13 @@ Release-As: 2.0.0
 
 ## Configuration
 
-| File                                    | Purpose                                           |
-| --------------------------------------- | ------------------------------------------------- |
-| `release-please-config.json`            | Package list, release types, changelog sections   |
-| `.release-please-manifest.json`         | Current version of each package — source of truth |
-| `.github/workflows/release-please.yaml` | Opens release pull requests, dispatches builds    |
-| `.github/workflows/_build-image.yaml`   | Shared test and build workflow                    |
+| File                                     | Purpose                                                |
+| ---------------------------------------- | ------------------------------------------------------ |
+| `release-please-config.json`             | Package list, release types, changelog sections        |
+| `.release-please-manifest.json`          | Current version of each package — source of truth      |
+| `.github/workflows/release-please.yaml`  | Opens release pull requests, dispatches builds         |
+| `.github/workflows/_build-image.yaml`    | Shared test and build workflow                         |
+| `.github/workflows/rebuild-release.yaml` | Rebuilds a tagged release whose image never got pushed |
 
 ## Troubleshooting
 
@@ -61,4 +62,6 @@ Release-As: 2.0.0
 
 **The release pull request is not merging.** Mergify requires `summary / Check Results` to pass, the author to be `repo-operator-release-bot[bot]`, the branch to start with `release-please--branches--`, and the diff to touch `.release-please-manifest.json`. Anything else needs a human review.
 
-**A tag exists with no image.** The build failed after the tag was created. The release is still a draft. Re-run the failed run in `release-please.yaml`; do not delete the tag.
+**A tag exists with no image.** The build failed after the tag was created, so the release is still a draft. Run the `Rebuild Release` workflow with that service and version. Do not delete the tag and do not cut a new version.
+
+The workflow refuses to run unless the tag exists, the release is still a draft, and no newer version of that service has been published — the last check stops a rebuild from moving `latest` and `{major}.{minor}` backwards. It does not check the registry: the image is pushed before the release is published, so a draft release can still have an image behind it, and rebuilding overwrites that tag.
