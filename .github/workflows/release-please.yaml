@@ -1,0 +1,143 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+
+name: "Release Please"
+on:
+  push:
+    branches:
+      - "main"
+concurrency:
+  group: "release-please-${{ github.ref }}"
+  cancel-in-progress: false
+jobs:
+  release-please:
+    name: "Release please"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: "write"
+      pull-requests: "write"
+    outputs:
+      mcp-header-proxy-released: "${{ steps.release.outputs['cmd/mcp-header-proxy--release_created'] }}"
+      mcp-header-proxy-version: "${{ steps.release.outputs['cmd/mcp-header-proxy--version'] }}"
+      mcp-header-proxy-tag: "${{ steps.release.outputs['cmd/mcp-header-proxy--tag_name'] }}"
+      shutdown-orchestrator-released: "${{ steps.release.outputs['cmd/shutdown-orchestrator--release_created'] }}"
+      shutdown-orchestrator-version: "${{ steps.release.outputs['cmd/shutdown-orchestrator--version'] }}"
+      shutdown-orchestrator-tag: "${{ steps.release.outputs['cmd/shutdown-orchestrator--tag_name'] }}"
+      kata-tap-qdisc-fix-released: "${{ steps.release.outputs['cmd/kata-tap-qdisc-fix--release_created'] }}"
+      kata-tap-qdisc-fix-version: "${{ steps.release.outputs['cmd/kata-tap-qdisc-fix--version'] }}"
+      kata-tap-qdisc-fix-tag: "${{ steps.release.outputs['cmd/kata-tap-qdisc-fix--tag_name'] }}"
+      agent-queue-worker-released: "${{ steps.release.outputs['ts/agent-queue-worker--release_created'] }}"
+      agent-queue-worker-version: "${{ steps.release.outputs['ts/agent-queue-worker--version'] }}"
+      agent-queue-worker-tag: "${{ steps.release.outputs['ts/agent-queue-worker--tag_name'] }}"
+      bull-board-released: "${{ steps.release.outputs['ts/agent-queue-worker/bull-board--release_created'] }}"
+      bull-board-version: "${{ steps.release.outputs['ts/agent-queue-worker/bull-board--version'] }}"
+      bull-board-tag: "${{ steps.release.outputs['ts/agent-queue-worker/bull-board--tag_name'] }}"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
+      # GITHUB_TOKEN cannot open pull requests here, and its pull requests would
+      # not trigger CI in repos that require status checks.
+      - name: "Mint app token"
+        id: "app-token"
+        uses: "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1" # v3
+        with:
+          client-id: "${{ secrets.RELEASE_PLEASE_APP_CLIENT_ID }}"
+          private-key: "${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}"
+      - name: "Run release-please"
+        id: "release"
+        uses: "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7" # v5.0.0
+        with:
+          token: "${{ steps.app-token.outputs.token }}"
+          config-file: "release-please-config.json"
+          manifest-file: ".release-please-manifest.json"
+  mcp-header-proxy:
+    name: "mcp-header-proxy"
+    needs: "release-please"
+    if: "needs.release-please.outputs.mcp-header-proxy-released == 'true'"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
+    with:
+      image: "mcp-header-proxy"
+      workdir: "cmd/mcp-header-proxy"
+      language: "go"
+      push: true
+      version: "${{ needs.release-please.outputs.mcp-header-proxy-version }}"
+      tag-name: "${{ needs.release-please.outputs.mcp-header-proxy-tag }}"
+    secrets: "inherit"
+  shutdown-orchestrator:
+    name: "shutdown-orchestrator"
+    needs: "release-please"
+    if: "needs.release-please.outputs.shutdown-orchestrator-released == 'true'"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
+    with:
+      image: "shutdown-orchestrator"
+      workdir: "cmd/shutdown-orchestrator"
+      language: "go"
+      push: true
+      version: "${{ needs.release-please.outputs.shutdown-orchestrator-version }}"
+      tag-name: "${{ needs.release-please.outputs.shutdown-orchestrator-tag }}"
+    secrets: "inherit"
+  kata-tap-qdisc-fix:
+    name: "kata-tap-qdisc-fix"
+    needs: "release-please"
+    if: "needs.release-please.outputs.kata-tap-qdisc-fix-released == 'true'"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
+    with:
+      image: "kata-tap-qdisc-fix"
+      workdir: "cmd/kata-tap-qdisc-fix"
+      language: "go"
+      push: true
+      version: "${{ needs.release-please.outputs.kata-tap-qdisc-fix-version }}"
+      tag-name: "${{ needs.release-please.outputs.kata-tap-qdisc-fix-tag }}"
+    secrets: "inherit"
+  agent-queue-worker:
+    name: "agent-queue-worker"
+    needs: "release-please"
+    if: "needs.release-please.outputs.agent-queue-worker-released == 'true'"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
+    with:
+      image: "agent-queue-worker"
+      workdir: "ts/agent-queue-worker"
+      language: "node"
+      push: true
+      version: "${{ needs.release-please.outputs.agent-queue-worker-version }}"
+      tag-name: "${{ needs.release-please.outputs.agent-queue-worker-tag }}"
+    secrets: "inherit"
+  bull-board:
+    name: "bull-board"
+    needs: "release-please"
+    if: "needs.release-please.outputs.bull-board-released == 'true'"
+    permissions:
+      contents: "write"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+    uses: "./.github/workflows/_build-image.yaml"
+    with:
+      image: "bull-board"
+      workdir: "ts/agent-queue-worker/bull-board"
+      language: "node"
+      push: true
+      version: "${{ needs.release-please.outputs.bull-board-version }}"
+      tag-name: "${{ needs.release-please.outputs.bull-board-tag }}"
+    secrets: "inherit"
