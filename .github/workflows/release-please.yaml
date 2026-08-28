@@ -55,8 +55,6 @@ jobs:
     name: "mcp-header-proxy"
     needs: "release-please"
     if: "needs.release-please.outputs.mcp-header-proxy-released == 'true'"
-    # A called workflow can only downgrade the caller's token permissions, never
-    # raise them, so the scopes _build-image.yaml needs have to be granted here.
     permissions:
       contents: "write"
       packages: "write"

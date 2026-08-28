@@ -62,8 +62,6 @@ jobs:
         id: "filter"
         with:
           base: "${{ steps.last-success.outputs.base }}"
-          # Default 'some' makes a filter match when any pattern matches, which
-          # turns a negated pattern into a match-everything rule.
           predicate-quantifier: "some-with-excludes"
           filters: |
             cluster:
@@ -104,10 +102,6 @@ jobs:
     needs: "changes"
     if: "needs.changes.outputs.terraform == 'true'"
     uses: "./.github/workflows/_terraform-validate.yaml"
-  # Test and build only. release-please.yaml owns every release, so nothing here
-  # pushes an image or creates a tag. The write scopes below cannot be narrowed:
-  # a run is rejected outright if the caller grants less than the called
-  # workflow declares, whether or not the job that declares them ever runs.
   shutdown-orchestrator:
     needs:
       - "lint"
