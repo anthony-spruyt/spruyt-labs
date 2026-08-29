@@ -15,16 +15,13 @@ csi:
   installCsiOperator: true
   csiAddons:
     repository: quay.io/csiaddons/k8s-sidecar
-    # v0.15.0 rejects the --v=0 that ceph-csi-operator passes from
-    # log.verbosity. Blocked on #2711.
+    # v0.15.0+ rejects --v=0; needs log.verbosity >= 1 in rook-ceph-csi-drivers.
     # renovate: depName=quay.io/csiaddons/k8s-sidecar datasource=docker versioning=docker
-    tag: v0.14.0
+    tag: v0.15.0
   snapshotter:
     repository: registry.k8s.io/sig-storage/csi-snapshotter
     # renovate: depName=registry.k8s.io/sig-storage/csi-snapshotter datasource=docker versioning=docker
     tag: v8.6.0
 enableDiscoveryDaemon: true
 monitoring:
-  # -- Enable monitoring. Requires Prometheus to be pre-installed.
-  # Enabling will also create RBAC rules to allow Operator to create ServiceMonitors
   enabled: true
