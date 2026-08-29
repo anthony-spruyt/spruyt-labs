@@ -39,16 +39,16 @@ subjects:
     namespace: csi-addons-system
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/cronjob-batch-v1.json
-# Workaround for a v0.14.0 bug: the controller cached gRPC connections to
-# nodeplugin sidecars that went stale and never recovered. Suspended on
-# v0.15.0 pending removal - see #2624 for the evidence.
+# Workaround: after a sidecar rollout the controller can keep dialling the old
+# sidecar address while CSIAddonsNode still reports Connected. Drop when
+# upstream invalidates pooled connections on endpoint change. Ref #2624.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: csi-addons-controller-restart
   namespace: csi-addons-system
 spec:
-  suspend: true
+  suspend: false
   schedule: "45 18 * * *"
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
