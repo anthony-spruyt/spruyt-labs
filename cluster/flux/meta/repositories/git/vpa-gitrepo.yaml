@@ -10,7 +10,7 @@ spec:
   timeout: 3m
   url: https://github.com/kubernetes/autoscaler
   ref:
-    tag: vertical-pod-autoscaler-1.6.0
+    tag: vertical-pod-autoscaler-1.7.1
   sparseCheckout:
     - vertical-pod-autoscaler/deploy
   # Allowlist vpa-v1-crd-gen.yaml. The deploy directory also holds the
