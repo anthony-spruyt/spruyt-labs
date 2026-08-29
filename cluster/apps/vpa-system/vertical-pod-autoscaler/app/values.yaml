@@ -4,8 +4,6 @@
 admissionController:
   replicas: 1
   priorityClassName: high-priority
-  # certGen writes a cert that never renews and needs cluster-scoped rights to
-  # patch mutatingwebhookconfigurations. cert-manager rotates on 168h/24h.
   certGen:
     enabled: false
   certManager:

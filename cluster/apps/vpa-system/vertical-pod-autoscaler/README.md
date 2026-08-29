@@ -22,7 +22,10 @@ Components:
 
 The chart ships the VPA CRD in its own `crds/` directory, so the CRD and the controller images move together as one version. Plain Helm never upgrades `crds/`, so the HelmRelease sets `install.crds` and `upgrade.crds` to `CreateReplace`.
 
-Talos also seeds the CRD at bootstrap via `talos/patches/control-plane/extra-manifests.yaml`, because Flux applies ~100 `VerticalPodAutoscaler` objects across app directories before this release reconciles. That URL is a write-once bootstrap seed -- keep its tag matching the chart's appVersion.
+Talos also seeds the CRD at bootstrap via `talos/patches/control-plane/extra-manifests.yaml`, because Flux applies ~100 `VerticalPodAutoscaler` objects across app directories before this release reconciles. That URL is a write-once bootstrap seed: bumping it has no effect on a running cluster.
+
+Renovate tracks its tag from the `# renovate:` annotation above it, against `kubernetes/autoscaler` release tags -- which are cut independently of chart releases, so the seed tag is *not* the chart's appVersion and should not be hand-edited to match it. The seed is gated on dependency dashboard approval so it cannot get ahead of the chart: if it did, a fresh bootstrap would seed the newer CRD,
+create the VPA objects against it, then have `CreateReplace` swap the older chart CRD in underneath them. Approve a seed bump only once the chart has shipped the matching appVersion.
 
 ### Webhook certificate
 

@@ -14,8 +14,6 @@ spec:
         name: autoscaler-charts
         namespace: flux-system
   install:
-    # Plain Helm never touches crds/ on upgrade, so the chart-owned CRDs would
-    # go stale without this.
     crds: CreateReplace
     strategy:
       name: RetryOnFailure

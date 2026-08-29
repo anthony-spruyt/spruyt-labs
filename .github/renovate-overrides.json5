@@ -145,10 +145,17 @@
       "sourceDirectory": "cmd/kata-tap-qdisc-fix"
     },
     {
-      "description": "Gateway API CRDs follow Cilium's supported version, so bumps need review",
-      "matchManagers": [
-        "flux"
+      "description": "The VPA bootstrap CRD seed must not get ahead of the chart appVersion",
+      "matchDatasources": [
+        "github-tags"
       ],
+      "matchPackageNames": [
+        "kubernetes/autoscaler"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Gateway API CRDs follow Cilium's supported version, so bumps need review",
       "matchDatasources": [
         "github-tags"
       ],
