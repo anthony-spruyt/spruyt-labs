@@ -13,6 +13,14 @@ resources:
 currentNamespaceOnly: true
 csi:
   installCsiOperator: true
+  csiAddons:
+    repository: quay.io/csiaddons/k8s-sidecar
+    # renovate: depName=quay.io/csiaddons/k8s-sidecar datasource=docker versioning=docker
+    tag: v0.15.0
+  snapshotter:
+    repository: registry.k8s.io/sig-storage/csi-snapshotter
+    # renovate: depName=registry.k8s.io/sig-storage/csi-snapshotter datasource=docker versioning=docker
+    tag: v8.6.0
 enableDiscoveryDaemon: true
 monitoring:
   # -- Enable monitoring. Requires Prometheus to be pre-installed.
