@@ -13,3 +13,17 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: rook-ceph-operator-values
+  # ceph-csi-operator does not watch the imageSet ConfigMap. Ref #2712
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: ceph-csi-controller-manager
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: ceph-csi-controller-manager
+                annotations:
+                  configmap.reloader.stakater.com/reload: rook-csi-operator-image-set-configmap
