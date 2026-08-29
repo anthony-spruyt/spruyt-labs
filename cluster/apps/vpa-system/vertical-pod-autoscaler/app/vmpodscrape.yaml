@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmpodscrape_v1beta1.json
+# The chart ships no metrics Services, but every component names its metrics
+# port `prometheus`, so one scrape covers all three.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: vertical-pod-autoscaler
+  namespace: vpa-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+  podMetricsEndpoints:
+    - port: prometheus
+      path: /metrics
+      interval: 60s
+      scrapeTimeout: 30s

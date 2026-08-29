@@ -8,11 +8,28 @@ spec:
   chart:
     spec:
       chart: vertical-pod-autoscaler
-      version: 11.1.1
+      version: 0.11.0
       sourceRef:
         kind: HelmRepository
-        name: cowboysysop-charts
+        name: autoscaler-charts
         namespace: flux-system
+  install:
+    # Plain Helm never touches crds/ on upgrade, so the chart-owned CRDs would
+    # go stale without this.
+    crds: CreateReplace
+    strategy:
+      name: RetryOnFailure
+  rollback:
+    cleanupOnFail: true
+    recreate: true
+  upgrade:
+    cleanupOnFail: true
+    crds: CreateReplace
+    strategy:
+      name: RemediateOnFailure
+    remediation:
+      remediateLastFailure: true
+      retries: 2
   interval: 4h
   valuesFrom:
     - kind: ConfigMap

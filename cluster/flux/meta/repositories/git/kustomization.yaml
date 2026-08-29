@@ -6,4 +6,3 @@ resources:
   - ./csi-addons-gitrepo.yaml
   - ./external-snapshotter-gitrepo.yaml
   - ./gateway-api-gitrepo.yaml
-  - ./vpa-gitrepo.yaml

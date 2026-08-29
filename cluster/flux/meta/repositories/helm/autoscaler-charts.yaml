@@ -3,7 +3,7 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
-  name: cowboysysop-charts
+  name: autoscaler-charts
   namespace: flux-system
 spec:
-  url: https://cowboysysop.github.io/charts
+  url: https://kubernetes.github.io/autoscaler

@@ -65,7 +65,7 @@ Every workload must include a `vpa.yaml` in its `app/` directory.
 - `maxAllowed` = current resource limits (omit CPU if no CPU limit is set)
 - Containers with no resource specs: omit from `containerPolicies`
 - `targetRef.name` must match the actual resource name in the cluster
-- No `dependsOn: vertical-pod-autoscaler` needed — CRDs are seeded at bootstrap via Talos `extraManifests`, then updated by the `vertical-pod-autoscaler-crds` Kustomization
+- No `dependsOn: vertical-pod-autoscaler` needed — CRDs are seeded at bootstrap via Talos `extraManifests`, then updated by the `vertical-pod-autoscaler` chart's `crds/` directory
 - Schema: `https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json`
 
 If a recommendation hits a boundary, adjust `minAllowed`/`maxAllowed` and recheck.

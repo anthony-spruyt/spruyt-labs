@@ -1,13 +1,20 @@
 # Default values for vertical-pod-autoscaler
-# Chart: https://github.com/cowboysysop/charts/tree/master/charts/vertical-pod-autoscaler
-
-crds:
-  # Chart ships 1.5.0 CRDs; Talos seeds 1.6.0 and the vertical-pod-autoscaler-crds
-  # Kustomization owns updates.
-  enabled: false
+# Chart: https://github.com/kubernetes/autoscaler/tree/master/charts/vertical-pod-autoscaler
 
 admissionController:
+  replicas: 1
   priorityClassName: high-priority
+  # certGen writes a cert that never renews and needs cluster-scoped rights to
+  # patch mutatingwebhookconfigurations. cert-manager rotates on 168h/24h.
+  certGen:
+    enabled: false
+  certManager:
+    enabled: true
+    createSelfSignedIssuer:
+      enabled: true
+  # minAvailable: 1 on a single replica blocks node drains, breaking Talos upgrades.
+  podDisruptionBudget:
+    enabled: false
   resources:
     requests:
       cpu: 50m
@@ -16,19 +23,22 @@ admissionController:
       memory: 512Mi
 
 recommender:
+  replicas: 1
   priorityClassName: high-priority
   extraArgs:
-    pod-recommendation-min-cpu-millicores: 1
-    pod-recommendation-min-memory-mb: 10
-    storage: prometheus
-    prometheus-address: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428
-    prometheus-cadvisor-job-name: kubelet
-    history-length: 14d
-    container-pod-name-label: pod
-    container-name-label: container
-    pod-namespace-label: namespace
-    pod-name-label: pod
-    metric-for-pod-labels: "kube_pod_labels{job=\"kube-state-metrics\"}[8d]"
+    - --pod-recommendation-min-cpu-millicores=1
+    - --pod-recommendation-min-memory-mb=10
+    - --storage=prometheus
+    - --prometheus-address=http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428
+    - --prometheus-cadvisor-job-name=kubelet
+    - --history-length=14d
+    - --container-pod-name-label=pod
+    - --container-name-label=container
+    - --pod-namespace-label=namespace
+    - --pod-name-label=pod
+    - --metric-for-pod-labels=kube_pod_labels{job="kube-state-metrics"}[8d]
+  podDisruptionBudget:
+    enabled: false
   resources:
     requests:
       cpu: 50m
@@ -37,7 +47,10 @@ recommender:
       memory: 1024Mi
 
 updater:
+  replicas: 1
   priorityClassName: high-priority
+  podDisruptionBudget:
+    enabled: false
   resources:
     requests:
       cpu: 50m

@@ -45,10 +45,10 @@ assert_paired() {
     "$(image_tag "${SNAPSHOT_CONTROLLER}" 'registry.k8s.io/sig-storage/snapshot-controller')"
 }
 
-# gateway-api and vpa share no version string with their consumers and are
-# gated on dashboard approval in .github/renovate-overrides.json5 instead.
+# gateway-api shares no version string with its consumer and is gated on
+# dashboard approval in .github/renovate-overrides.json5 instead.
 @test "every GitRepository CRD source is accounted for" {
-  local expected="csi-addons-gitrepo external-snapshotter-gitrepo gateway-api-gitrepo vpa-gitrepo"
+  local expected="csi-addons-gitrepo external-snapshotter-gitrepo gateway-api-gitrepo"
   local found
   found="$(find "${GIT_SOURCES}" -name '*-gitrepo.yaml' -exec basename {} .yaml \; | sort | tr '\n' ' ')"
 

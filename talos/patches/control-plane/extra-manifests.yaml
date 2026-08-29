@@ -1,7 +1,8 @@
 # Bootstrap seeds. Talos creates these once and never updates them, so bumping
 # a URL here has no effect on a running cluster. Updates are owned by the
 # GitRepository sources in cluster/flux/meta/repositories/git/ - bump the tag
-# there.
+# there. The VPA CRD has no GitRepository: the vertical-pod-autoscaler chart
+# ships it, so match this tag to that chart's appVersion.
 cluster:
   extraManifests:
     - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
@@ -12,4 +13,4 @@ cluster:
     - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshotcontents.yaml
     - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/groupsnapshot.storage.k8s.io_volumegroupsnapshots.yaml
     - https://raw.githubusercontent.com/csi-addons/kubernetes-csi-addons/v0.15.0/deploy/controller/crds.yaml
-    - https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-1.6.0/vertical-pod-autoscaler/deploy/vpa-v1-crd-gen.yaml
+    - https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/deploy/vpa-v1-crd-gen.yaml
