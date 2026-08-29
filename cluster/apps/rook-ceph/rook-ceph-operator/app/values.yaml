@@ -15,8 +15,10 @@ csi:
   installCsiOperator: true
   csiAddons:
     repository: quay.io/csiaddons/k8s-sidecar
+    # v0.15.0 rejects the --v=0 that ceph-csi-operator passes from
+    # log.verbosity. Blocked on #2711.
     # renovate: depName=quay.io/csiaddons/k8s-sidecar datasource=docker versioning=docker
-    tag: v0.15.0
+    tag: v0.14.0
   snapshotter:
     repository: registry.k8s.io/sig-storage/csi-snapshotter
     # renovate: depName=registry.k8s.io/sig-storage/csi-snapshotter datasource=docker versioning=docker
