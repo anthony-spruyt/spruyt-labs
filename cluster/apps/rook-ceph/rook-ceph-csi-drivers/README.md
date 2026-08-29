@@ -66,6 +66,17 @@ Driver names keep the `rook-ceph.` prefix (`rook-ceph.rbd.csi.ceph.com`, `rook-c
    - **Resolution**: `driftDetection.mode: enabled` in `release.yaml` makes `helm-controller` force-apply the rendered manifest via SSA, reclaiming the field and setting it `true`. This requires the empty-object (`{}`) resource subkeys in `values.yaml`: when `resources` is set, the chart renders every subkey, and unset ones emit `null`, which the Driver CRD rejects (`must be object`) on the SSA
      dry-run that drift detection performs. Do not remove `driftDetection` or the empty-object subkeys — either regresses all RBD ReclaimSpaceJobs.
 
+6. **All csi-addons containers CrashLoopBackOff: `invalid value "0" for flag -v: invalid log level "0"`**
+
+   - **Symptom**: Immediately after a csi-addons sidecar image bump, every `csi-addons` container fails to start — both ctrlplugin Deployments go 0/2 and both `-nodeplugin-csi-addons` DaemonSets crash-loop. Provisioning, attach, resize and snapshot are unavailable; mounted volumes keep serving I/O (the main nodeplugin DaemonSets carry no csi-addons container).
+   - **Cause**: The operator renders `--v={{ log.verbosity }}` onto every CSI container. Sidecar v0.15.0 dropped klog for controller-runtime zap and aliased `--v` to `--zap-log-level`, which accepts `debug`/`info`/`error`/`panic` or an integer **strictly greater than 0**. The operator's own default verbosity of `0` is therefore no longer a legal value. Registration is not the signal — v0.15.0
+     still registers `--v` and `--log_file`; only the accepted values changed.
+   - **Resolution**: Keep `log.verbosity` at `1` or higher. It must be set in **three** places in `values.yaml` — `operatorConfig.driverSpecDefaults.log`, `drivers.rbd.log` and `drivers.cephfs.log` — because the chart's own defaults render `spec.log` into both Driver CRs, and the operator's `mergeDriverSpecs` only falls back to `driverSpecDefaults` when `spec.log` is nil. Setting the shared
+     default alone is inert.
+   - **Ordering**: The sidecar tag lives in `rook-ceph-operator` values while verbosity lives here, and Flux reconciles the operator first. Because a `postRenderers` patch adds a Reloader annotation to `ceph-csi-controller-manager`, a single push carrying both changes restarts the operator onto the new image while verbosity is still `0`. Push the verbosity change, let all six workloads converge,
+     then push the image bump. Ref [#2711](https://github.com/anthony-spruyt/spruyt-labs/issues/2711).
+   - **Log volume**: Verbosity `1` applies to every CSI container. Growth is negligible — cephcsi maps `Default=1 … Debug=4`, so `--v=1` activates only startup-level sites, measured at roughly 200–1000 bytes/day compressed per node. Only the cephcsi and csi-addons containers write to the hostPath; the sig-storage sidecars log to stderr.
+
 ## References
 
 - [ceph-csi-operator](https://github.com/ceph/ceph-csi-operator)
