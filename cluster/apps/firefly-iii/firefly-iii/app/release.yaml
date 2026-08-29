@@ -49,7 +49,7 @@ spec:
                     command: ["/bin/sh", "-c"]
                     args:
                       # renovate: depName=pelaxa/ff3-ofx datasource=github-releases
-                      - wget -O /tmp/ff3-ofx.tar.gz https://github.com/pelaxa/ff3-ofx/releases/download/v1.1.1/ff3-ofx-1.1.1.tar.gz && tar -xzf /tmp/ff3-ofx.tar.gz -C /ofx --strip-components=1
+                      - wget -O /tmp/ff3-ofx.tar.gz https://github.com/pelaxa/ff3-ofx/releases/download/v2.0.1/ff3-ofx-2.0.1.tar.gz && tar -xzf /tmp/ff3-ofx.tar.gz -C /ofx --strip-components=1
                     volumeMounts:
                       - name: ff3-ofx
                         mountPath: /ofx
