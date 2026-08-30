@@ -1,0 +1,7 @@
+# powersave governor, not performance - ms-01-2 has a cooling defect
+machine:
+  sysfs:
+    devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1
+  udev:
+    rules:
+      - SUBSYSTEM=="cpu", ATTR{cpufreq/scaling_governor}="powersave"

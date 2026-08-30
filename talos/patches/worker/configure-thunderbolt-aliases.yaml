@@ -1,0 +1,15 @@
+# Thunderbolt ring network for Ceph cluster traffic.
+# Match on bus path: it is stable across reboots, the kernel interface name is not.
+# Every MS-01 is cabled the same way, so 0-1.0 and 1-1.0 point at different peers per node -
+# see the addresses in @patches/node/<host>/configure-thunderbolt-links.yaml.
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: ethSel0
+selector:
+  match: glob("0-1.0", link.bus_path)
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: ethSel1
+selector:
+  match: glob("1-1.0", link.bus_path)

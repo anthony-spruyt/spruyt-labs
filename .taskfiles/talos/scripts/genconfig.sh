@@ -4,6 +4,21 @@ set -euo pipefail
 TALOS_DIR="/workspaces/spruyt-labs/talos"
 CLUSTERCONFIG_DIR="${TALOS_DIR}/clusterconfig"
 
+# The install disk is declared twice: talhelper rejects a node without
+# installDiskSelector, and the patch file is what topf will use. The patch is applied
+# last, so it wins - editing only talconfig.yaml would silently install to the old disk.
+# Removed with talhelper in issue #2637 phase 2.
+while read -r host; do
+  patch="${TALOS_DIR}/patches/node/${host}/configure-install-disk.yaml"
+  [[ -f "${patch}" ]] || continue
+  declared=$(yq eval ".nodes[] | select(.hostname == \"${host}\") | .installDiskSelector.serial" "${TALOS_DIR}/talconfig.yaml")
+  patched=$(yq eval '.machine.install.diskSelector.serial' "${patch}")
+  if [[ "${declared}" != "${patched}" ]]; then
+    echo "install disk serial mismatch for ${host}: talconfig.yaml has ${declared}, ${patch} has ${patched}" >&2
+    exit 1
+  fi
+done < <(yq eval '.nodes[].hostname' "${TALOS_DIR}/talconfig.yaml")
+
 talhelper validate talconfig "${TALOS_DIR}/talconfig.yaml" \
   -e "${TALOS_DIR}/talenv.sops.yaml"
 

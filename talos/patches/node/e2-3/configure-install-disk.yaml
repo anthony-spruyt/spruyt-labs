@@ -1,0 +1,4 @@
+machine:
+  install:
+    diskSelector:
+      serial: P300ADBB25032803816

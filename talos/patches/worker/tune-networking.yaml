@@ -1,0 +1,10 @@
+# Tuned for the 10Gb/s NICs and jumbo frames on the MS-01 nodes
+machine:
+  sysctls:
+    net.core.default_qdisc: fq
+    net.ipv4.tcp_congestion_control: bbr
+    net.ipv4.tcp_fastopen: 3
+    net.ipv4.tcp_mtu_probing: 1 # Jumbo frames
+    net.ipv4.tcp_rmem: 4096 87380 33554432
+    net.ipv4.tcp_window_scaling: 1
+    net.ipv4.tcp_wmem: 4096 65536 33554432

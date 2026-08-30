@@ -1,0 +1,19 @@
+apiVersion: v1alpha1
+kind: LinkConfig
+name: ethSel0 # to ms-01-1
+mtu: 65520
+addresses:
+  - address: 169.254.255.103/32
+routes:
+  - destination: 169.254.255.101/32
+    metric: 2048
+---
+apiVersion: v1alpha1
+kind: LinkConfig
+name: ethSel1 # to ms-01-2
+mtu: 65520
+addresses:
+  - address: 169.254.255.103/32
+routes:
+  - destination: 169.254.255.102/32
+    metric: 2048
