@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: Layer2VIPConfig
+name: ${KUBEAPI_VIP}
+link: enp1s0.20

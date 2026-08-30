@@ -1,0 +1,11 @@
+apiVersion: v1alpha1
+kind: VLANConfig
+name: enp1s0.20
+vlanID: 20
+parent: enp1s0
+mtu: 9000
+addresses:
+  - address: ${E2_1_IP4}/24
+routes:
+  - gateway: ${GATEWAY_IP4}
+    metric: 512

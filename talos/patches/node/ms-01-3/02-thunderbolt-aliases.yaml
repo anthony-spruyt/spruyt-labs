@@ -1,0 +1,13 @@
+# Thunderbolt ring network for Ceph cluster traffic.
+# Match on bus path: it is stable across reboots, the kernel interface name is not.
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: ethSel0
+selector:
+  match: glob("0-1.0", link.bus_path) # Physical path to ms-01-1
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: ethSel1
+selector:
+  match: glob("1-1.0", link.bus_path) # Physical path to ms-01-2

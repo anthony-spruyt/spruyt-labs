@@ -1,0 +1,4 @@
+machine:
+  sysctls:
+    net.ipv6.conf.enp1s0.autoconf: "0"
+    net.ipv6.conf.enp1s0.accept_ra: "0"

@@ -1,0 +1,3 @@
+machine:
+  nodeLabels:
+    kata.spruyt-labs/ready: "true"

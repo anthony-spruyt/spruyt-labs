@@ -38,6 +38,8 @@ additionalMachineCertSans:
 nodes:
   - hostname: e2-1
     controlPlane: true
+    # Duplicated in @patches/node/e2-1/00-install-disk.yaml, which wins - patches apply
+    # last. Edit both; genconfig.sh refuses to render if they disagree.
     installDiskSelector:
       serial: 50026B76874DDE95 # Kinston
       # serial: P300ADBB25032802523 # Patriot
@@ -47,39 +49,16 @@ nodes:
       arch: amd64
       secureboot: true
       useUKI: true
-    networkInterfaces:
-      - interface: eno1
-        ignore: true
-      - interface: enp1s0
-        dhcp: false
-        mtu: 9000
-        vlans:
-          - vlanId: 20
-            mtu: 9000
-            addresses:
-              - ${E2_1_IP4}/24
-            routes:
-              - network: 0.0.0.0/0
-                gateway: ${GATEWAY_IP4}
-                metric: 512
-        vip:
-          ip: ${KUBEAPI_VIP}
     nodeAnnotations: &e2NodeAnnotations
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
-    patches: &e2Patches
-      # Disable ipv6 auto config
-      # Disable ipv6 accept RAs
-      - |-
-        machine:
-          sysctls:
-            net.ipv6.conf.enp1s0.autoconf: "0"
-            net.ipv6.conf.enp1s0.accept_ra: "0"
-      # Set all disks to `none` scheduler (optimal setting for Ceph and ZFS)
-      - |-
-        machine:
-          udev:
-            rules:
-              - SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"
+    patches:
+      - "@patches/node/e2-1/00-install-disk.yaml"
+      - "@patches/node/e2-1/01-volumes.yaml"
+      - "@patches/node/e2-1/02-vip.yaml"
+      - "@patches/node/e2-1/03-link.yaml"
+      - "@patches/node/e2-1/04-vlan.yaml"
+      - "@patches/node/e2-1/05-ipv6-sysctls.yaml"
+      - "@patches/node/e2-1/06-disk-scheduler.yaml"
     schematic: &e2Schematic
       customization:
         secureboot:
@@ -101,27 +80,9 @@ nodes:
             - siderolabs/lldpd
             - siderolabs/iscsi-tools
             - siderolabs/util-linux-tools
-    volumes: &e2TpmEncryptedVolumes
-      - name: STATE
-        encryption:
-          provider: luks2
-          keys:
-            - slot: 0
-              nodeID: {}
-            - slot: 1
-              tpm: {}
-      - name: EPHEMERAL
-        encryption:
-          provider: luks2
-          keys:
-            - slot: 0
-              nodeID: {}
-              lockToState: true
-            - slot: 1
-              tpm: {}
-              lockToState: true
   - hostname: e2-2
     controlPlane: true
+    # Duplicated in @patches/node/e2-2/00-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: P300ADBB25032802429
     ipAddress: ${E2_2_IP4}
@@ -130,29 +91,19 @@ nodes:
       arch: amd64
       secureboot: true
       useUKI: true
-    networkInterfaces:
-      - interface: eno1
-        ignore: true
-      - interface: enp1s0
-        dhcp: false
-        mtu: 9000
-        vlans:
-          - vlanId: 20
-            mtu: 9000
-            addresses:
-              - ${E2_2_IP4}/24
-            routes:
-              - network: 0.0.0.0/0
-                gateway: ${GATEWAY_IP4}
-                metric: 512
-        vip:
-          ip: ${KUBEAPI_VIP}
     nodeAnnotations: *e2NodeAnnotations
-    patches: *e2Patches
+    patches:
+      - "@patches/node/e2-2/00-install-disk.yaml"
+      - "@patches/node/e2-2/01-volumes.yaml"
+      - "@patches/node/e2-2/02-vip.yaml"
+      - "@patches/node/e2-2/03-link.yaml"
+      - "@patches/node/e2-2/04-vlan.yaml"
+      - "@patches/node/e2-2/05-ipv6-sysctls.yaml"
+      - "@patches/node/e2-2/06-disk-scheduler.yaml"
     schematic: *e2Schematic
-    volumes: *e2TpmEncryptedVolumes
   - hostname: e2-3
     controlPlane: true
+    # Duplicated in @patches/node/e2-3/00-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: P300ADBB25032803816
     ipAddress: ${E2_3_IP4}
@@ -161,29 +112,19 @@ nodes:
       arch: amd64
       secureboot: true
       useUKI: true
-    networkInterfaces:
-      - interface: eno1
-        ignore: true
-      - interface: enp1s0
-        dhcp: false
-        mtu: 9000
-        vlans:
-          - vlanId: 20
-            mtu: 9000
-            addresses:
-              - ${E2_3_IP4}/24
-            routes:
-              - network: 0.0.0.0/0
-                gateway: ${GATEWAY_IP4}
-                metric: 512
-        vip:
-          ip: ${KUBEAPI_VIP}
     nodeAnnotations: *e2NodeAnnotations
-    patches: *e2Patches
+    patches:
+      - "@patches/node/e2-3/00-install-disk.yaml"
+      - "@patches/node/e2-3/01-volumes.yaml"
+      - "@patches/node/e2-3/02-vip.yaml"
+      - "@patches/node/e2-3/03-link.yaml"
+      - "@patches/node/e2-3/04-vlan.yaml"
+      - "@patches/node/e2-3/05-ipv6-sysctls.yaml"
+      - "@patches/node/e2-3/06-disk-scheduler.yaml"
     schematic: *e2Schematic
-    volumes: *e2TpmEncryptedVolumes
   - hostname: ms-01-1
     controlPlane: false
+    # Duplicated in @patches/node/ms-01-1/00-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: MQ11W14606696
     ipAddress: ${MS_01_1_IP4}
@@ -192,121 +133,17 @@ nodes:
       arch: amd64
       secureboot: true
       useUKI: true
-    networkInterfaces:
-      - interface: enp2s0f0np0
-        ignore: true
-      - interface: enp2s0f1np1
-        ignore: true
-      - interface: enp87s0
-        ignore: true
-      - interface: enp89s0
-        dhcp: false
-        mtu: 9000
-        vlans:
-          - vlanId: 20
-            mtu: 9000
-            addresses:
-              - ${MS_01_1_IP4}/24
-            routes:
-              - network: 0.0.0.0/0
-                gateway: ${GATEWAY_IP4}
-                metric: 512
-      # Thunderbolt ring network for Ceph cluster traffic
-      # Using deviceSelector with busPath for stable interface matching across reboots
-      - deviceSelector:
-          busPath: "0-1.0" # Physical path to ms-01-2
-        addresses:
-          - 169.254.255.101/32
-        mtu: 65520
-        routes:
-          - network: 169.254.255.102/32
-            metric: 2048
-      - deviceSelector:
-          busPath: "1-1.0" # Physical path to ms-01-3
-        addresses:
-          - 169.254.255.101/32
-        mtu: 65520
-        routes:
-          - network: 169.254.255.103/32
-            metric: 2048
     nodeAnnotations: &ms01NodeAnnotations
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
-    nodeLabels:
-      ups.spruyt-labs.io/connected: "true"
-      kata.spruyt-labs/ready: "true"
     patches:
-      # ===== MS-01 shared patches (anchors defined here, referenced by ms-01-2/3) =====
-      - &patchThunderbolt |-
-        machine:
-          kernel:
-            modules:
-              - name: nbd
-              - name: thunderbolt
-              - name: thunderbolt_net
-      # Disable ipv6 auto config and accept RAs
-      # - |-
-      #   machine:
-      #     sysctls:
-      #       net.ipv6.conf.enp2s0f0np0.autoconf: "0"
-      #       net.ipv6.conf.enp2s0f0np0.accept_ra: "0"
-      #       net.ipv6.conf.enp2s0f1np1.autoconf: "0"
-      #       net.ipv6.conf.enp2s0f1np1.accept_ra: "0"
-      #       net.ipv6.conf.enp87s0.autoconf: "0"
-      #       net.ipv6.conf.enp87s0.accept_ra: "0"
-      #       net.ipv6.conf.enp89s0.autoconf: "0"
-      #       net.ipv6.conf.enp89s0.accept_ra: "0"
-      # Optimize networking for 10Gb/s NICs
-      - &patchNetworking |-
-        machine:
-          sysctls:
-            net.core.default_qdisc: fq                      # 10Gb/s
-            net.ipv4.tcp_congestion_control: bbr            # 10Gb/s
-            net.ipv4.tcp_fastopen: 3                        # TCP Fast Open
-            net.ipv4.tcp_mtu_probing: 1                     # Jumbo frames
-            net.ipv4.tcp_rmem: 4096 87380 33554432          # 10Gb/s
-            net.ipv4.tcp_window_scaling: 1                  # 10Gb/s
-            net.ipv4.tcp_wmem: 4096 65536 33554432          # 10Gb/s
-      # Enable Intel CPU boost and set performance governor powersave|performance
-      - &patchCpuBoost |-
-        machine:
-          sysfs:
-            devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1
-          udev:
-            rules:
-              - SUBSYSTEM=="cpu", ATTR{cpufreq/scaling_governor}="powersave"
-      # Intel GPU passthrough
-      - &patchGpuPassthrough |-
-        machine:
-          udev:
-            rules:
-              - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
-      # Auto authorize Thunderbolt devices
-      - &patchThunderboltAuth |-
-        machine:
-          udev:
-            rules:
-              - ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
-      # Boost transmit queue length - high-throughput workloads
-      - &patchTxQueue |-
-        machine:
-          udev:
-            rules:
-              - SUBSYSTEM=="net", ACTION=="add", KERNEL=="tap*", ATTR{tx_queue_len}="10000"
-              - SUBSYSTEM=="net", ACTION=="add", KERNEL=="tun*", ATTR{tx_queue_len}="10000"
-      # Set all disks to `none` scheduler (optimal setting for Ceph and ZFS)
-      - &patchDiskScheduler |-
-        machine:
-          udev:
-            rules:
-              - SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"
-      # USB UPS (CyberPower CP1500) access for NUT server - move with nodeLabels when relocating UPS
-      - |-
-        machine:
-          udev:
-            rules:
-              - SUBSYSTEM=="usb", ATTR{idVendor}=="0764", MODE="0666"
-              - KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0666"
-              - KERNEL=="hiddev*", SUBSYSTEM=="usbmisc", MODE="0666"
+      - "@patches/node/ms-01-1/00-install-disk.yaml"
+      - "@patches/node/ms-01-1/01-volumes.yaml"
+      - "@patches/node/ms-01-1/02-thunderbolt-aliases.yaml"
+      - "@patches/node/ms-01-1/03-link.yaml"
+      - "@patches/node/ms-01-1/04-thunderbolt-links.yaml"
+      - "@patches/node/ms-01-1/05-vlan.yaml"
+      - "@patches/node/ms-01-1/06-node-labels.yaml"
+      - "@patches/node/ms-01-1/07-ups-udev.yaml"
     schematic: &ms01Scehmatic
       customization:
         secureboot:
@@ -328,22 +165,9 @@ nodes:
             - siderolabs/thunderbolt
             - siderolabs/iscsi-tools
             - siderolabs/util-linux-tools
-    volumes: &ms01TpmEncryptedVolumes
-      - name: STATE
-        encryption:
-          provider: "luks2"
-          keys:
-            - slot: 0
-              tpm: {}
-      - name: EPHEMERAL
-        encryption:
-          provider: "luks2"
-          keys:
-            - slot: 0
-              tpm: {}
-              lockToState: true
   - hostname: ms-01-2
     controlPlane: false
+    # Duplicated in @patches/node/ms-01-2/00-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: MP46W15115349
     ipAddress: ${MS_01_2_IP4}
@@ -352,66 +176,19 @@ nodes:
       arch: amd64
       secureboot: true
       useUKI: true
-    networkInterfaces:
-      - interface: enp2s0f0np0
-        ignore: true
-      - interface: enp2s0f1np1
-        ignore: true
-      - interface: enp87s0
-        ignore: true
-      - interface: enp89s0
-        dhcp: false
-        mtu: 9000
-        vlans:
-          - vlanId: 20
-            mtu: 9000
-            addresses:
-              - ${MS_01_2_IP4}/24
-            routes:
-              - network: 0.0.0.0/0
-                gateway: ${GATEWAY_IP4}
-                metric: 512
-      # Thunderbolt ring network for Ceph cluster traffic
-      # Using deviceSelector with busPath for stable interface matching across reboots
-      - deviceSelector:
-          busPath: "0-1.0" # Physical path to ms-01-1
-        addresses:
-          - 169.254.255.102/32
-        mtu: 65520
-        routes:
-          - network: 169.254.255.101/32
-            metric: 2048
-      - deviceSelector:
-          busPath: "1-1.0" # Physical path to ms-01-3
-        addresses:
-          - 169.254.255.102/32
-        mtu: 65520
-        routes:
-          - network: 169.254.255.103/32
-            metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
-    nodeLabels:
-      kata.spruyt-labs/ready: "true"
     patches:
-      - *patchThunderbolt
-      - *patchNetworking
-      # - *patchCpuBoost
-      # Node-specific: hwp_dynamic_boost only, powersave governor due to cooling defect powersave|performance
-      - |-
-        machine:
-          sysfs:
-            devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1
-          udev:
-            rules:
-              - SUBSYSTEM=="cpu", ATTR{cpufreq/scaling_governor}="powersave"
-      - *patchGpuPassthrough
-      - *patchThunderboltAuth
-      - *patchTxQueue
-      - *patchDiskScheduler
+      - "@patches/node/ms-01-2/00-install-disk.yaml"
+      - "@patches/node/ms-01-2/01-volumes.yaml"
+      - "@patches/node/ms-01-2/02-thunderbolt-aliases.yaml"
+      - "@patches/node/ms-01-2/03-link.yaml"
+      - "@patches/node/ms-01-2/04-thunderbolt-links.yaml"
+      - "@patches/node/ms-01-2/05-vlan.yaml"
+      - "@patches/node/ms-01-2/06-node-labels.yaml"
     schematic: *ms01Scehmatic
-    volumes: *ms01TpmEncryptedVolumes
   - hostname: ms-01-3
     controlPlane: false
+    # Duplicated in @patches/node/ms-01-3/00-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: MQ19B55500378
     ipAddress: ${MS_01_3_IP4}
@@ -420,56 +197,16 @@ nodes:
       arch: amd64
       secureboot: true
       useUKI: true
-    networkInterfaces:
-      - interface: enp2s0f0np0
-        ignore: true
-      - interface: enp2s0f1np1
-        ignore: true
-      - interface: enp87s0
-        ignore: true
-      - interface: enp89s0
-        dhcp: false
-        mtu: 9000
-        vlans:
-          - vlanId: 20
-            mtu: 9000
-            addresses:
-              - ${MS_01_3_IP4}/24
-            routes:
-              - network: 0.0.0.0/0
-                gateway: ${GATEWAY_IP4}
-                metric: 512
-      # Thunderbolt ring network for Ceph cluster traffic
-      # Using deviceSelector with busPath for stable interface matching across reboots
-      - deviceSelector:
-          busPath: "0-1.0" # Physical path to ms-01-1
-        addresses:
-          - 169.254.255.103/32
-        mtu: 65520
-        routes:
-          - network: 169.254.255.101/32
-            metric: 2048
-      - deviceSelector:
-          busPath: "1-1.0" # Physical path to ms-01-2
-        addresses:
-          - 169.254.255.103/32
-        mtu: 65520
-        routes:
-          - network: 169.254.255.102/32
-            metric: 2048
     nodeAnnotations: *ms01NodeAnnotations
-    nodeLabels:
-      kata.spruyt-labs/ready: "true"
     patches:
-      - *patchThunderbolt
-      - *patchNetworking
-      - *patchCpuBoost
-      - *patchGpuPassthrough
-      - *patchThunderboltAuth
-      - *patchTxQueue
-      - *patchDiskScheduler
+      - "@patches/node/ms-01-3/00-install-disk.yaml"
+      - "@patches/node/ms-01-3/01-volumes.yaml"
+      - "@patches/node/ms-01-3/02-thunderbolt-aliases.yaml"
+      - "@patches/node/ms-01-3/03-link.yaml"
+      - "@patches/node/ms-01-3/04-thunderbolt-links.yaml"
+      - "@patches/node/ms-01-3/05-vlan.yaml"
+      - "@patches/node/ms-01-3/06-node-labels.yaml"
     schematic: *ms01Scehmatic
-    volumes: *ms01TpmEncryptedVolumes
 
 controlPlane:
   disableSearchDomain: &disableSearchDomain true
@@ -503,8 +240,15 @@ worker:
   disableSearchDomain: *disableSearchDomain
   extensionServices: *extensionServices
   nameservers: *nameservers
-  nodeLabels:
-    bgp: "65050"
+
+  patches:
+    - "@patches/worker/00-thunderbolt-modules.yaml"
+    - "@patches/worker/01-networking-sysctls.yaml"
+    - "@patches/worker/02-cpu-boost.yaml"
+    - "@patches/worker/03-gpu-passthrough.yaml"
+    - "@patches/worker/04-thunderbolt-auth.yaml"
+    - "@patches/worker/05-tx-queue.yaml"
+    - "@patches/worker/06-disk-scheduler.yaml"
 
 patches:
   - "@patches/global/configure-containerd.yaml"

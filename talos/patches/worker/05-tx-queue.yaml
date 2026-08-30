@@ -1,0 +1,6 @@
+# Longer transmit queues for high-throughput workloads
+machine:
+  udev:
+    rules:
+      - SUBSYSTEM=="net", ACTION=="add", KERNEL=="tap*", ATTR{tx_queue_len}="10000"
+      - SUBSYSTEM=="net", ACTION=="add", KERNEL=="tun*", ATTR{tx_queue_len}="10000"
