@@ -26,20 +26,23 @@ spec:
               cert-manager Certificate {{ $labels.namespace }}/{{ $labels.name }} has been in a
               non-Ready state for more than 15 minutes. Check certificate requests and orders.
 
-        # Alert when a certificate expires in less than 7 days
-        - alert: CertificateExpiringSoon
+        # Alert when a certificate is past its renewal time and still not renewed.
+        # A fixed "expires in less than N days" threshold false-fires for the entire
+        # lifetime of any certificate issued for less than N days.
+        - alert: CertificateRenewalOverdue
           expr: |
-            (certmanager_certificate_expiration_timestamp_seconds - time()) < 604800
+            (time() - certmanager_certificate_renewal_timestamp_seconds) > 0
             and
             (certmanager_certificate_expiration_timestamp_seconds - time()) > 0
           for: 1h
           labels:
             severity: warning
           annotations:
-            summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in less than 7 days"
+            summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} is overdue for renewal"
             description: |
-              cert-manager Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in
-              {{ $value | humanizeDuration }}. Renewal may be failing.
+              cert-manager Certificate {{ $labels.namespace }}/{{ $labels.name }} passed its
+              renewal time {{ $value | humanizeDuration }} ago and has not been reissued.
+              Renewal is likely failing. Check certificate requests and orders.
 
         # Alert when a certificate has expired
         - alert: CertificateExpired
