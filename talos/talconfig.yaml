@@ -35,11 +35,15 @@ additionalMachineCertSans:
   - ${MS_01_3_IP4}
   - 127.0.0.1 # KubePrism
 
+# Patch list order is load-bearing: talhelper appends each patch's Talos documents in the
+# order they are applied - role, then node, then global - and talosctl diffs config
+# textually. Reordering these lists changes the rendered output even when nothing semantic
+# changes, and a udev rule reorder alone turns a reboot-free apply into a reboot.
 nodes:
   - hostname: e2-1
     controlPlane: true
-    # Duplicated in @patches/node/e2-1/00-install-disk.yaml, which wins - patches apply
-    # last. Edit both; genconfig.sh refuses to render if they disagree.
+    # Duplicated in @patches/node/e2-1/configure-install-disk.yaml, which wins - patches
+    # apply last. Edit both; genconfig.sh refuses to render if they disagree.
     installDiskSelector:
       serial: 50026B76874DDE95 # Kinston
       # serial: P300ADBB25032802523 # Patriot
@@ -52,13 +56,8 @@ nodes:
     nodeAnnotations: &e2NodeAnnotations
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
     patches:
-      - "@patches/node/e2-1/00-install-disk.yaml"
-      - "@patches/node/e2-1/01-volumes.yaml"
-      - "@patches/node/e2-1/02-vip.yaml"
-      - "@patches/node/e2-1/03-link.yaml"
-      - "@patches/node/e2-1/04-vlan.yaml"
-      - "@patches/node/e2-1/05-ipv6-sysctls.yaml"
-      - "@patches/node/e2-1/06-disk-scheduler.yaml"
+      - "@patches/node/e2-1/configure-install-disk.yaml"
+      - "@patches/node/e2-1/configure-vlan.yaml"
     schematic: &e2Schematic
       customization:
         secureboot:
@@ -82,7 +81,7 @@ nodes:
             - siderolabs/util-linux-tools
   - hostname: e2-2
     controlPlane: true
-    # Duplicated in @patches/node/e2-2/00-install-disk.yaml, which wins - edit both
+    # Duplicated in @patches/node/e2-2/configure-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: P300ADBB25032802429
     ipAddress: ${E2_2_IP4}
@@ -93,17 +92,12 @@ nodes:
       useUKI: true
     nodeAnnotations: *e2NodeAnnotations
     patches:
-      - "@patches/node/e2-2/00-install-disk.yaml"
-      - "@patches/node/e2-2/01-volumes.yaml"
-      - "@patches/node/e2-2/02-vip.yaml"
-      - "@patches/node/e2-2/03-link.yaml"
-      - "@patches/node/e2-2/04-vlan.yaml"
-      - "@patches/node/e2-2/05-ipv6-sysctls.yaml"
-      - "@patches/node/e2-2/06-disk-scheduler.yaml"
+      - "@patches/node/e2-2/configure-install-disk.yaml"
+      - "@patches/node/e2-2/configure-vlan.yaml"
     schematic: *e2Schematic
   - hostname: e2-3
     controlPlane: true
-    # Duplicated in @patches/node/e2-3/00-install-disk.yaml, which wins - edit both
+    # Duplicated in @patches/node/e2-3/configure-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: P300ADBB25032803816
     ipAddress: ${E2_3_IP4}
@@ -114,17 +108,12 @@ nodes:
       useUKI: true
     nodeAnnotations: *e2NodeAnnotations
     patches:
-      - "@patches/node/e2-3/00-install-disk.yaml"
-      - "@patches/node/e2-3/01-volumes.yaml"
-      - "@patches/node/e2-3/02-vip.yaml"
-      - "@patches/node/e2-3/03-link.yaml"
-      - "@patches/node/e2-3/04-vlan.yaml"
-      - "@patches/node/e2-3/05-ipv6-sysctls.yaml"
-      - "@patches/node/e2-3/06-disk-scheduler.yaml"
+      - "@patches/node/e2-3/configure-install-disk.yaml"
+      - "@patches/node/e2-3/configure-vlan.yaml"
     schematic: *e2Schematic
   - hostname: ms-01-1
     controlPlane: false
-    # Duplicated in @patches/node/ms-01-1/00-install-disk.yaml, which wins - edit both
+    # Duplicated in @patches/node/ms-01-1/configure-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: MQ11W14606696
     ipAddress: ${MS_01_1_IP4}
@@ -136,14 +125,10 @@ nodes:
     nodeAnnotations: &ms01NodeAnnotations
       installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
     patches:
-      - "@patches/node/ms-01-1/00-install-disk.yaml"
-      - "@patches/node/ms-01-1/01-volumes.yaml"
-      - "@patches/node/ms-01-1/02-thunderbolt-aliases.yaml"
-      - "@patches/node/ms-01-1/03-link.yaml"
-      - "@patches/node/ms-01-1/04-thunderbolt-links.yaml"
-      - "@patches/node/ms-01-1/05-vlan.yaml"
-      - "@patches/node/ms-01-1/06-node-labels.yaml"
-      - "@patches/node/ms-01-1/07-ups-udev.yaml"
+      - "@patches/node/ms-01-1/configure-install-disk.yaml"
+      - "@patches/node/ms-01-1/configure-thunderbolt-links.yaml"
+      - "@patches/node/ms-01-1/configure-vlan.yaml"
+      - "@patches/node/ms-01-1/enable-ups-access.yaml"
     schematic: &ms01Scehmatic
       customization:
         secureboot:
@@ -167,7 +152,7 @@ nodes:
             - siderolabs/util-linux-tools
   - hostname: ms-01-2
     controlPlane: false
-    # Duplicated in @patches/node/ms-01-2/00-install-disk.yaml, which wins - edit both
+    # Duplicated in @patches/node/ms-01-2/configure-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: MP46W15115349
     ipAddress: ${MS_01_2_IP4}
@@ -178,17 +163,13 @@ nodes:
       useUKI: true
     nodeAnnotations: *ms01NodeAnnotations
     patches:
-      - "@patches/node/ms-01-2/00-install-disk.yaml"
-      - "@patches/node/ms-01-2/01-volumes.yaml"
-      - "@patches/node/ms-01-2/02-thunderbolt-aliases.yaml"
-      - "@patches/node/ms-01-2/03-link.yaml"
-      - "@patches/node/ms-01-2/04-thunderbolt-links.yaml"
-      - "@patches/node/ms-01-2/05-vlan.yaml"
-      - "@patches/node/ms-01-2/06-node-labels.yaml"
+      - "@patches/node/ms-01-2/configure-install-disk.yaml"
+      - "@patches/node/ms-01-2/configure-thunderbolt-links.yaml"
+      - "@patches/node/ms-01-2/configure-vlan.yaml"
     schematic: *ms01Scehmatic
   - hostname: ms-01-3
     controlPlane: false
-    # Duplicated in @patches/node/ms-01-3/00-install-disk.yaml, which wins - edit both
+    # Duplicated in @patches/node/ms-01-3/configure-install-disk.yaml, which wins - edit both
     installDiskSelector:
       serial: MQ19B55500378
     ipAddress: ${MS_01_3_IP4}
@@ -199,13 +180,9 @@ nodes:
       useUKI: true
     nodeAnnotations: *ms01NodeAnnotations
     patches:
-      - "@patches/node/ms-01-3/00-install-disk.yaml"
-      - "@patches/node/ms-01-3/01-volumes.yaml"
-      - "@patches/node/ms-01-3/02-thunderbolt-aliases.yaml"
-      - "@patches/node/ms-01-3/03-link.yaml"
-      - "@patches/node/ms-01-3/04-thunderbolt-links.yaml"
-      - "@patches/node/ms-01-3/05-vlan.yaml"
-      - "@patches/node/ms-01-3/06-node-labels.yaml"
+      - "@patches/node/ms-01-3/configure-install-disk.yaml"
+      - "@patches/node/ms-01-3/configure-thunderbolt-links.yaml"
+      - "@patches/node/ms-01-3/configure-vlan.yaml"
     schematic: *ms01Scehmatic
 
 controlPlane:
@@ -234,7 +211,14 @@ controlPlane:
     - "@patches/control-plane/extra-manifests.yaml"
     - "@patches/control-plane/enable-talos-api-access.yaml"
     - "@patches/control-plane/tune-disk-writeback.yaml"
+    # Applies to every node, but talhelper applies the global list last, which would put
+    # this udev rule after the node-level ones. Referenced per role to keep rule order.
+    - "@patches/global/tune-disk-scheduler.yaml"
     - "@patches/control-plane/resources.yaml"
+    - "@patches/control-plane/encrypt-volumes.yaml"
+    - "@patches/control-plane/configure-vip.yaml"
+    - "@patches/control-plane/configure-link.yaml"
+    - "@patches/control-plane/disable-ipv6-autoconf.yaml"
 
 worker:
   disableSearchDomain: *disableSearchDomain
@@ -242,13 +226,18 @@ worker:
   nameservers: *nameservers
 
   patches:
-    - "@patches/worker/00-thunderbolt-modules.yaml"
-    - "@patches/worker/01-networking-sysctls.yaml"
-    - "@patches/worker/02-cpu-boost.yaml"
-    - "@patches/worker/03-gpu-passthrough.yaml"
-    - "@patches/worker/04-thunderbolt-auth.yaml"
-    - "@patches/worker/05-tx-queue.yaml"
-    - "@patches/worker/06-disk-scheduler.yaml"
+    - "@patches/worker/load-thunderbolt-modules.yaml"
+    - "@patches/worker/tune-networking.yaml"
+    - "@patches/worker/enable-cpu-boost.yaml"
+    - "@patches/worker/enable-gpu-passthrough.yaml"
+    - "@patches/worker/authorize-thunderbolt.yaml"
+    - "@patches/worker/tune-tx-queue.yaml"
+    # Per-role rather than in the global list - see the note on the control plane list
+    - "@patches/global/tune-disk-scheduler.yaml"
+    - "@patches/worker/configure-node-labels.yaml"
+    - "@patches/worker/encrypt-volumes.yaml"
+    - "@patches/worker/configure-thunderbolt-aliases.yaml"
+    - "@patches/worker/configure-link.yaml"
 
 patches:
   - "@patches/global/configure-containerd.yaml"

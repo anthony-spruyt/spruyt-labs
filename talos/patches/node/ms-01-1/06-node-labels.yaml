@@ -1,4 +1,0 @@
-machine:
-  nodeLabels:
-    ups.spruyt-labs.io/connected: "true"
-    kata.spruyt-labs/ready: "true"

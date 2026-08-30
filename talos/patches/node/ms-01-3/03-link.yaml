@@ -1,4 +1,0 @@
-apiVersion: v1alpha1
-kind: LinkConfig
-name: enp89s0
-mtu: 9000

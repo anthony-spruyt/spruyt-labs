@@ -9,7 +9,7 @@ CLUSTERCONFIG_DIR="${TALOS_DIR}/clusterconfig"
 # last, so it wins - editing only talconfig.yaml would silently install to the old disk.
 # Removed with talhelper in issue #2637 phase 2.
 while read -r host; do
-  patch="${TALOS_DIR}/patches/node/${host}/00-install-disk.yaml"
+  patch="${TALOS_DIR}/patches/node/${host}/configure-install-disk.yaml"
   [[ -f "${patch}" ]] || continue
   declared=$(yq eval ".nodes[] | select(.hostname == \"${host}\") | .installDiskSelector.serial" "${TALOS_DIR}/talconfig.yaml")
   patched=$(yq eval '.machine.install.diskSelector.serial' "${patch}")

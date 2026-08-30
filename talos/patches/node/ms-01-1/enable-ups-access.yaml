@@ -1,6 +1,8 @@
 # USB access for the NUT server talking to the CyberPower CP1500.
-# Move this file - and the ups.spruyt-labs.io/connected label - if the UPS is relocated.
+# Label and udev rules move together if the UPS is relocated to another node.
 machine:
+  nodeLabels:
+    ups.spruyt-labs.io/connected: "true"
   udev:
     rules:
       - SUBSYSTEM=="usb", ATTR{idVendor}=="0764", MODE="0666"

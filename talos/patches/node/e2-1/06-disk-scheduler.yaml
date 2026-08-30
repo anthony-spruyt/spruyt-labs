@@ -1,5 +1,0 @@
-# `none` scheduler is the optimal setting for Ceph and ZFS
-machine:
-  udev:
-    rules:
-      - SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"

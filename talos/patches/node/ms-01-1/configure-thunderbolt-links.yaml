@@ -1,6 +1,6 @@
 apiVersion: v1alpha1
 kind: LinkConfig
-name: ethSel0
+name: ethSel0 # to ms-01-2
 mtu: 65520
 addresses:
   - address: 169.254.255.101/32
@@ -10,7 +10,7 @@ routes:
 ---
 apiVersion: v1alpha1
 kind: LinkConfig
-name: ethSel1
+name: ethSel1 # to ms-01-3
 mtu: 65520
 addresses:
   - address: 169.254.255.101/32

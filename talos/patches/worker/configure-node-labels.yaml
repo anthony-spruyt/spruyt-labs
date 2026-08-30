@@ -1,3 +1,4 @@
 machine:
   nodeLabels:
+    bgp: "65050"
     kata.spruyt-labs/ready: "true"
