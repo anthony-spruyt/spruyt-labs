@@ -15,9 +15,36 @@ tasks:
     cmds:
       - NODE='{{ .NODE }}' bash {{ .scriptsDir }}/apply.sh --dry-run
   apply:
-    desc: Apply Talos config (NODE=<regex> to filter, e.g. NODE=ms-01-1)
+    desc: Apply Talos config to all nodes (NODE=<regex> to filter, e.g. NODE=ms-01-1)
     cmds:
       - NODE='{{ .NODE }}' bash {{ .scriptsDir }}/apply.sh
+
+  # The Task UI cannot pass NODE, so each node also gets its own entry.
+  apply-c1:
+    desc: Apply Talos config to control plane 1 (e2-1)
+    cmds:
+      - NODE='^e2-1$' bash {{ .scriptsDir }}/apply.sh
+  apply-c2:
+    desc: Apply Talos config to control plane 2 (e2-2)
+    cmds:
+      - NODE='^e2-2$' bash {{ .scriptsDir }}/apply.sh
+  apply-c3:
+    desc: Apply Talos config to control plane 3 (e2-3)
+    cmds:
+      - NODE='^e2-3$' bash {{ .scriptsDir }}/apply.sh
+  apply-w1:
+    desc: Apply Talos config to worker 1 (ms-01-1)
+    cmds:
+      - NODE='^ms-01-1$' bash {{ .scriptsDir }}/apply.sh
+  apply-w2:
+    desc: Apply Talos config to worker 2 (ms-01-2)
+    cmds:
+      - NODE='^ms-01-2$' bash {{ .scriptsDir }}/apply.sh
+  apply-w3:
+    desc: Apply Talos config to worker 3 (ms-01-3)
+    cmds:
+      - NODE='^ms-01-3$' bash {{ .scriptsDir }}/apply.sh
+
   schematic-ids:
     desc: Print the distinct Image Factory schematic IDs in use (sorted, unlabelled - ignores NODE)
     cmds:

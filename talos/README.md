@@ -104,6 +104,8 @@ Platform engineering owns the Talos lifecycle. Operators provision control-plane
    task talos:apply NODE=<hostname>
    ```
 
+   `NODE` is a Go regex over the hosts in `topf.yaml`; omit it to target every node. The Task UI cannot pass variables, so `talos:apply-c1` … `talos:apply-w3` exist as clickable per-node equivalents.
+
 6. Bootstrap the first control-plane node with `talosctl bootstrap`.
 
 Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md#provisioning-new-hardware-or-vms).
