@@ -1,6 +1,6 @@
 ---
 name: kubernetes-upgrade
-description: Use when the user asks to "upgrade Kubernetes", "upgrade k8s", "update Kubernetes version", "bump Kubernetes version", mentions a target version like "upgrade to 1.35.1", or when Renovate updates kubernetesVersion in talconfig.yaml. Not for Talos OS upgrades (use talos-upgrade agent).
+description: Use when the user asks to "upgrade Kubernetes", "upgrade k8s", "update Kubernetes version", "bump Kubernetes version", mentions a target version like "upgrade to 1.35.1", or when Renovate updates kubernetesVersion in topf.yaml. Not for Talos OS upgrades (use talos-upgrade agent).
 argument-hint: <target-version>
 ---
 
@@ -13,7 +13,7 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 | Item            | Value                                               |
 | --------------- | --------------------------------------------------- |
 | Upgrade command | `talosctl upgrade-k8s -n <cp-node> --to v<version>` |
-| Config file     | `talos/talconfig.yaml` (`kubernetesVersion` field)  |
+| Config file     | `talos/topf.yaml` (`kubernetesVersion` field)       |
 | Node topology   | 3 CP (e2-1/2/3), 3 workers (ms-01-1/2/3)            |
 | Talos OS agent  | `talos-upgrade` (different from this skill)         |
 
@@ -22,7 +22,7 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 ### Phase 1: Input Parsing
 
 - Parse target version from user message; prompt if missing
-- Read current version from `talos/talconfig.yaml` (`kubernetesVersion`)
+- Read current version from `talos/topf.yaml` (`kubernetesVersion`)
 - Classify: **minor** (1.34→1.35, higher risk) or **patch** (1.35.0→1.35.1)
 
 ### Phase 2: Create GitHub Issue
@@ -48,7 +48,7 @@ Consult `references/api-deprecation-scanning.md` for procedures.
 
 ### Phase 5: Talos Compatibility Check
 
-1. Read Talos version from `talos/talconfig.yaml` (`talosVersion`)
+1. Read Talos version from `talos/topf.yaml` (`talosVersion`)
 2. Query Context7: `query-docs(libraryId: "/siderolabs/talos", query: "supported kubernetes versions for Talos v<current>")`
 
 **HARD GATE:** If incompatible, BLOCK. Recommend `talos-upgrade` agent first.
@@ -134,11 +134,11 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 
 ### Phase 12: Update Files & Report
 
-1. Update `kubernetesVersion` in `talos/talconfig.yaml`
+1. Update `kubernetesVersion` in `talos/topf.yaml`
 2. Search for **all** old version references:
    - Grep tool: search `<old-version>` (no `v` prefix) in `talos/*.yaml`, `docs/*.md`, `cluster/*.yaml`
    - **Grep may miss hookify-blocked files.** Fallback: `grep -r "v<old-version>" cluster/ --include="*.yaml" -l 2>/dev/null`. Files found only by bash need `sed -i` instead of Edit tool.
-3. Common locations: `talos/talconfig.yaml`, `talos/README.md`, `cluster/flux/meta/cluster-settings.yaml`, `kubernetes-json-schema` URLs in 30+ manifest files
+3. Common locations: `talos/topf.yaml`, `talos/README.md`, `cluster/flux/meta/cluster-settings.yaml`, `kubernetes-json-schema` URLs in 30+ manifest files
 4. Update all references; verify zero remain
 5. Present final report: version change, node status, health results, files changed
 

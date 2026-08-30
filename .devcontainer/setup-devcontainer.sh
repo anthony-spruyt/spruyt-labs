@@ -17,7 +17,8 @@ task install:helm-plugins
 task install:cilium-cli
 task install:hubble-cli
 task install:talosctl-cli
-task install:talhelper-cli
+task install:topf-cli
+task install:vals-cli
 task install:flux-cli
 task install:flux-capacitor
 task install:age-cli

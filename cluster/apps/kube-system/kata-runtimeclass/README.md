@@ -7,8 +7,8 @@ Registers the `kata` `RuntimeClass` so pods opt into VM-level isolation via Kata
 ## Prerequisites
 
 - `kube-system` namespace (this Kustomization targets it)
-- `siderolabs/kata-containers` Talos system extension installed on at least one node (declared in `talos/talconfig.yaml` per-node `schematic`)
-- Node labeled `kata.spruyt-labs/ready: "true"` via `machine.nodeLabels` in `talconfig.yaml` (not `kubectl label`)
+- `siderolabs/kata-containers` Talos system extension installed on at least one node (declared in `talos/schematics/ms-01.yaml`)
+- Node labeled `kata.spruyt-labs/ready: "true"` via `machine.nodeLabels` in `talos/patches/worker/08-configure-node-labels.yaml` (not `kubectl label`)
 
 ## Operation
 
@@ -36,9 +36,9 @@ kubectl get nodes -l kata.spruyt-labs/ready=true
 
 ### Promote to more nodes
 
-1. Add `siderolabs/kata-containers` to the target node's schematic in `talconfig.yaml`
-2. Add `kata.spruyt-labs/ready: "true"` to that node's `machine.nodeLabels`
-3. `task talos:gen` → `talosctl upgrade --image=...` (new schematic URL) → `task talos:apply-<node>`
+1. Add `siderolabs/kata-containers` to the target node's schematic under `talos/schematics/`
+2. Add `kata.spruyt-labs/ready: "true"` to a `machine.nodeLabels` patch that covers the node
+3. `task talos:render` → `talosctl upgrade --image=...` (new schematic URL) → `task talos:apply NODE=<node>`
 
 ## Troubleshooting
 

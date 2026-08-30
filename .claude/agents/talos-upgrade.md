@@ -1,6 +1,6 @@
 ---
 name: talos-upgrade
-description: Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification. Use when Renovate creates a PR updating talosVersion in talconfig.yaml, when user requests "upgrade Talos", or during planned OS maintenance.\n\n**When to use:**\n- Renovate PR updates talosVersion in talconfig.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use talosctl upgrade-k8s instead)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n**Critical safety:**\n- NEVER upgrade more than one control plane node at a time\n- ALWAYS wait for etcd quorum after each control plane upgrade\n- ALWAYS wait for Ceph HEALTH_OK between worker upgrades\n- Sequential order: Control Plane first, then Workers\n\n**Handoff flow:** On completion → returns SUCCESS (ready to commit) or ROLLBACK (with recovery steps) or PARTIAL (intervention needed)\n\n<example>\nContext: Renovate PR updates talosVersion in talconfig.yaml\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I'll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nContext: User requests Talos upgrade\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I'll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>\n\n<example>\nContext: Planned maintenance window\nuser: "We have a maintenance window, let's upgrade Talos"\nassistant: "I'll run talos-upgrade to handle the upgrade with quorum safety checks."\n<commentary>\nScheduled maintenance involving Talos upgrade triggers the agent.\n</commentary>\n</example>
+description: Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification. Use when Renovate creates a PR updating talosVersion in topf.yaml, when user requests "upgrade Talos", or during planned OS maintenance.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use talosctl upgrade-k8s instead)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n**Critical safety:**\n- NEVER upgrade more than one control plane node at a time\n- ALWAYS wait for etcd quorum after each control plane upgrade\n- ALWAYS wait for Ceph HEALTH_OK between worker upgrades\n- Sequential order: Control Plane first, then Workers\n\n**Handoff flow:** On completion → returns SUCCESS (ready to commit) or ROLLBACK (with recovery steps) or PARTIAL (intervention needed)\n\n<example>\nContext: Renovate PR updates talosVersion in topf.yaml\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I'll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nContext: User requests Talos upgrade\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I'll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>\n\n<example>\nContext: Planned maintenance window\nuser: "We have a maintenance window, let's upgrade Talos"\nassistant: "I'll run talos-upgrade to handle the upgrade with quorum safety checks."\n<commentary>\nScheduled maintenance involving Talos upgrade triggers the agent.\n</commentary>\n</example>
 model: opus
 tools: Bash, Read, Grep, Glob, Edit
 ---
@@ -95,7 +95,7 @@ talosctl config info | grep -i endpoint
 
 ## Schematic Discovery
 
-**IMPORTANT:** Get schematics from LIVE nodes, not from documentation or talconfig (which may be outdated).
+**IMPORTANT:** Get schematics from LIVE nodes, not from documentation or `topf.yaml` (which may be outdated).
 
 ```bash
 # Get schematic ID from a running node (most reliable)
@@ -109,20 +109,22 @@ CP_SCHEMATIC=$(talosctl get extensions -n $CP_IP 2>/dev/null | grep schematic | 
 WORKER_IP=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
 WORKER_SCHEMATIC=$(talosctl get extensions -n $WORKER_IP 2>/dev/null | grep schematic | awk '{print $NF}')
 
-# Fallback: read from talconfig (may be outdated)
-grep -A10 "controlPlane:" talos/talconfig.yaml | grep -i schematic
-grep -A10 "worker:" talos/talconfig.yaml | grep -i schematic
+# Fallback: resolve one hardware class at a time from its schematic definition.
+# `task talos:schematic-ids` prints the whole set sorted and unlabelled, so it cannot
+# tell you which ID belongs to which class. talos/topf.yaml maps node -> schematic file.
+curl -sX POST --data-binary @talos/schematics/e2.yaml https://factory.talos.dev/schematics
+curl -sX POST --data-binary @talos/schematics/ms-01.yaml https://factory.talos.dev/schematics
 ```
 
-**Why live nodes?** Documentation and talconfig may reference old schematics. The running node always has the correct schematic ID for that hardware class.
+**Why live nodes?** Documentation and `talos/schematics/` may reference old schematics. The running node always has the correct schematic ID for that hardware class.
 
 ## Version Detection
 
 Detect current and target versions:
 
 ```bash
-# Current version in talconfig
-grep "^talosVersion:" talos/talconfig.yaml
+# Current version in topf.yaml
+grep "^talosVersion:" talos/topf.yaml
 
 # Running version on nodes
 talosctl version --nodes <node-ip> --short
@@ -136,7 +138,7 @@ talosctl version --nodes <node-ip> --short
 
 1. Determine upgrade parameters:
    - Source: Renovate PR number or user-provided version
-   - Read `talos/talconfig.yaml` to get current and target versions
+   - Read `talos/topf.yaml` to get current and target versions
    - Validate version format (vX.Y.Z)
 
 ### Phase 1: Pre-Upgrade Validation (CRITICAL)
@@ -240,8 +242,8 @@ CP_NODES=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpat
 # Get cluster endpoint
 ENDPOINT=$(talosctl config info | grep -i endpoint | awk '{print $2}')
 
-# Get schematic from talconfig
-SCHEMATIC=$(grep -A10 "controlPlane:" talos/talconfig.yaml | grep -i schematic | head -1 | awk -F': ' '{print $2}' | tr -d '"')
+# Get schematic from the live control plane node (see Schematic Discovery)
+SCHEMATIC=$(talosctl get extensions -n "${CP_IP}" 2>/dev/null | grep schematic | awk '{print $NF}')
 ```
 
 #### Step 3.2: Pre-node health check
@@ -355,8 +357,8 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 # Get worker node IPs
 WORKER_NODES=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
 
-# Get schematic from talconfig
-SCHEMATIC=$(grep -A10 "worker:" talos/talconfig.yaml | grep -i schematic | head -1 | awk -F': ' '{print $2}' | tr -d '"')
+# Get schematic from a live worker node (see Schematic Discovery)
+SCHEMATIC=$(talosctl get extensions -n "${WORKER_IP}" 2>/dev/null | grep schematic | awk '{print $NF}')
 ```
 
 #### Step 4.3: Execute upgrade
@@ -558,10 +560,10 @@ grep -n "v<old-version>" talos/README.md talos/docs/machine-lifecycle.md
 # Use Edit tool to update each reference
 ```
 
-**`talos/talconfig.yaml` version update:**
+**`talos/topf.yaml` version update:**
 
 - **If triggered by Renovate PR:** Do NOT update - Renovate already changed the version in the PR.
-- **If triggered by manual user request:** MUST update `talosVersion` in `talos/talconfig.yaml` to match the new version. Otherwise talconfig will be out of sync with the running cluster, causing issues with `talhelper` config generation.
+- **If triggered by manual user request:** MUST update `talosVersion` in `talos/topf.yaml` to match the new version. Otherwise the installer image topf renders will point at the old release.
 
 ### Phase 8: Final Report
 
@@ -656,7 +658,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 - Documentation: Updated
 
 ### Files Changed
-- talos/talconfig.yaml (talosVersion - manual upgrades only)
+- talos/topf.yaml (talosVersion - manual upgrades only)
 - talos/README.md (version references)
 - talos/docs/machine-lifecycle.md (version references)
 
@@ -739,7 +741,7 @@ query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
 07. **NEVER skip health checks** - even for "quick" upgrades
 08. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
 09. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
-10. **NEVER run `talhelper genconfig` / `talosctl apply-config` during an OS-only upgrade** - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If talconfig's `kubernetesVersion` differs from the running kubelet, that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade
+10. **NEVER run `task talos:apply` / `topf apply` during an OS-only upgrade** - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet, that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade
 
 ## Timeout Expectations
 

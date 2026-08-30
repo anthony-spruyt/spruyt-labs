@@ -107,7 +107,7 @@ Ceph provides redundant storage with automatic replication.
 
    ```bash
    talosctl apply-config --insecure --nodes <new-node-ip> \
-     --file talos/clusterconfig/<node-hostname>.yaml
+     --file talos/clusterconfig/topf/<node-hostname>.yaml
    ```
 
 5. **Verify node joins cluster**:

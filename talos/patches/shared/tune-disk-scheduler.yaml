@@ -1,0 +1,10 @@
+# shared/ is not one of topf's merge passes. A patch that applies to every node belongs
+# in all/ - put it here only when merging first would break ordering, and symlink it from
+# each role directory at the position that preserves it. This rule appends to
+# machine.udev.rules partway down the list, and a reorder there forces a reboot.
+#
+# `none` scheduler is the optimal setting for Ceph and ZFS
+machine:
+  udev:
+    rules:
+      - SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"

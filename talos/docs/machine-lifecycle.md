@@ -9,7 +9,7 @@ response that touches Talos nodes.
 
 ## Preconditions
 
-- Work from the project devcontainer or install `talhelper`, `talosctl`, `kubectl`, `flux`, `task`, `age`, and `sops` locally.
+- Work from the project devcontainer or install `topf`, `vals`, `talosctl`, `kubectl`, `flux`, `task`, `age`, and `sops` locally.
 - Confirm you have access to the Age identity capable of decrypting Talos secrets (`talos/talenv.sops.yaml`, `talos/talsecret.sops.yaml`).
 - Sync the latest `main` branch and start from a clean feature branch before changing machine definitions.
 - Validate Flux controllers prior to disruptive work:
@@ -25,20 +25,20 @@ flux get kustomizations -n flux-system
 
 ### Configuration Preparation
 
-1. Update [`talos/talconfig.yaml`](../talconfig.yaml) with new node metadata (hostname, IP, schematic reference, disk layout).
-2. Create or extend overlay snippets in `cluster/machines/*` (control-plane, workers, VMs) to declare node-specific patches.
-3. Regenerate rendered configs:
+1. Add the node to [`talos/topf.yaml`](../topf.yaml) with its hostname, address reference, role, and schematic reference.
+2. Create `talos/patches/node/<hostname>/` for anything unique to the node (install disk, addressing), and extend overlay snippets in `cluster/machines/*` as needed.
+3. Render configs for inspection:
 
 ```bash
-talhelper genconfig
+task talos:render
 ```
 
-Outputs are written to `talos/clusterconfig/` (gitignored) for secure distribution.
+Outputs are written to `talos/clusterconfig/topf/` (gitignored). `topf apply` renders in memory and does not read them.
 
-1. If secrets need rotation or first-time generation, run:
+1. If the local client credentials need refreshing, run:
 
 ```bash
-task talos:gen
+task talos:talosconfig
 ```
 
 ### Physical Hardware Provisioning
@@ -54,7 +54,7 @@ talosctl health --nodes <node-ip>
 
 ```bash
 talosctl apply-config --insecure --nodes <node-ip> \
-   --file talos/clusterconfig/<hostname>.yaml
+   --file talos/clusterconfig/topf/<hostname>.yaml
 ```
 
 1. For the first control-plane node, perform bootstrap:
@@ -68,7 +68,7 @@ Record the etcd snapshot generated during the bootstrap sequence.
 ### Virtual Machine Provisioning
 
 1. Provision a UEFI VM with at least 2 vCPUs and attach the SecureBoot ISO.
-2. Place the VM NIC on the appropriate VLAN and assign the IP declared in `talconfig`.
+2. Place the VM NIC on the appropriate VLAN and assign the IP declared in `topf.yaml`.
 3. Inject the rendered `machineconfig` via virtual media or cloud-init userdata.
 4. Apply the configuration with `talosctl apply-config` once the Talos API is reachable.
 5. Verify kubelet registration:
@@ -88,7 +88,7 @@ Update the machine inventory sheet with hardware IDs, BMC credentials, and schem
 3. Render configs and review diffs without writing secrets:
 
 ```bash
-talhelper genconfig --dry-run --diff
+task talos:diff
 ```
 
 1. Execute repository checks:
@@ -115,7 +115,7 @@ For persistent drift, reapply configs:
 
 ```bash
 talosctl apply-config --nodes <node-ip> \
-   --file talos/clusterconfig/<hostname>.yaml
+   --file talos/clusterconfig/topf/<hostname>.yaml
 ```
 
 ## Node Pool Management
@@ -207,7 +207,7 @@ kubectl uncordon <hostname>
      Every CNPG cluster in this repo sets `enablePDB: false`, so the operator creates no PDB and drains proceed normally. If that setting is ever removed, the operator adds a primary-role PDB with `minAvailable: 1` that targets the single primary pod — `disruptionsAllowed` is then permanently `0` regardless of instance count, and the primary becomes structurally unevictable. Raising
      `--drain-timeout` does not help; it is a structural zero, not a slow eviction.
 
-     An aborted drain is destructive: it evicts Ceph mons and OSDs first, then gives up *before* touching the OS, leaving the node cordoned so those host-pinned pods cannot reschedule. Ceph drops to `HEALTH_WARN` with a mon and an OSD down. Recover with `kubectl uncordon <hostname>`; Ceph returns to `HEALTH_OK` in about 90 seconds.
+     An aborted drain is destructive: it evicts Ceph mons and OSDs first, then gives up _before_ touching the OS, leaving the node cordoned so those host-pinned pods cannot reschedule. Ceph drops to `HEALTH_WARN` with a mon and an OSD down. Recover with `kubectl uncordon <hostname>`; Ceph returns to `HEALTH_OK` in about 90 seconds.
 
      If a PDB deadlock cannot be cleared, `--drain=false` is a safe fallback: Talos enables kubelet graceful node shutdown (`shutdownGracePeriod: 1m0s`), so pods still get SIGTERM and their termination grace period during the reboot. Leave the node **uncordoned** throughout — cordoning recreates the same deadlock.
 
@@ -364,7 +364,7 @@ ceph osd unset norecover
 4. **Secrets Recovery**
 
    - Decrypt backups of `talos/talenv.sops.yaml` and `talos/talsecret.sops.yaml`.
-   - Rotate Age identities if compromise is suspected; re-run `task talos:gen`.
+   - Rotate Age identities if compromise is suspected; re-run `task talos:talosconfig`.
 
 5. **Disaster Scenario**
 
@@ -374,7 +374,7 @@ ceph osd unset norecover
 ## Validation
 
 - During provisioning: `talosctl health`, `talosctl kubeconfig --nodes <control-plane-ip>`.
-- Post GitOps change: `talhelper genconfig --diff`, `flux get kustomizations cluster-machines -n flux-system`.
+- Post GitOps change: `task talos:diff`, `flux get kustomizations cluster-machines -n flux-system`.
 - Node readiness: `kubectl get nodes -o wide`, `kubectl describe node <hostname>`.
 - Upgrade confirmation: `talosctl version -n <node-ip>`, `talosctl get machineconfig`.
 - Storage validation: `kubectl -n rook-ceph get pods`, `ceph status`.
@@ -430,7 +430,7 @@ ceph osd unset norecover
 - Detect differences:
 
   ```bash
-  talhelper genconfig --diff
+  task talos:diff
   talosctl -n <node-ip> get appliedconfiguration
   ```
 
@@ -451,7 +451,7 @@ Reference the Talos SecureBoot documentation for ISO usage: <https://docs.sidero
 
 ## Secrets and Credentials
 
-- Generate or rotate Talos secrets via `task talos:gen`.
+- Regenerate the local talosconfig via `task talos:talosconfig`. The secrets bundle itself lives in `talos/talsecret.sops.yaml` and is reused, never regenerated by these tasks.
 - Store decrypted outputs only in secure local paths; never commit rendered secrets.
 - Age identities should be rotated annually or after suspected compromise.
 
