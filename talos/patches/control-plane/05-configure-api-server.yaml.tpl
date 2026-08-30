@@ -1,5 +1,9 @@
 cluster:
   apiServer:
+    certSANs:
+{{- range .Data.apiServerCertSans }}
+      - {{ . }}
+{{- end }}
     extraArgs:
       # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
       enable-aggregator-routing: true
@@ -8,7 +12,7 @@ cluster:
       runtime-config: admissionregistration.k8s.io/v1beta1=true
       # OIDC authentication via Authentik for Headlamp user impersonation
       # https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens
-      oidc-issuer-url: "https://auth.${EXTERNAL_DOMAIN}/application/o/headlamp/"
-      oidc-client-id: "${HEADLAMP_OIDC_CLIENT_ID}"
+      oidc-issuer-url: "https://auth.{{ .Data.externalDomain }}/application/o/headlamp/"
+      oidc-client-id: "{{ .Data.headlampOidcClientId }}"
       oidc-username-claim: "email"
       oidc-groups-claim: "groups"

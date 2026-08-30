@@ -1,0 +1,82 @@
+---
+# Node addressing and credentials stay in talenv.sops.yaml and are pulled in through
+# vals references. vals only expands a `ref+` that occupies a whole scalar or ends at
+# whitespace, so anything that has to be interpolated into a larger string (a URL, a
+# CIDR suffix) is exposed under `data` here and consumed from a `.yaml.tpl` patch.
+# Relative paths resolve against this file's directory, and vals resolves
+# `ref+sops://` against the process working directory - run topf from talos/.
+
+clusterName: ref+sops://talenv.sops.yaml#/CLUSTER_NAME
+clusterEndpoint: ref+sops://talenv.sops.yaml#/KUBEAPI_ENDPOINT
+# renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
+kubernetesVersion: v1.36.4
+# renovate: depName=ghcr.io/siderolabs/installer datasource=docker
+talosVersion: v1.13.9
+
+platform: metal
+secureboot: true
+
+patchesDir: patches
+secretsPath: talsecret.sops.yaml
+
+data:
+  clusterDomain: ref+sops://talenv.sops.yaml#/CLUSTER_DOMAIN
+  gateway: ref+sops://talenv.sops.yaml#/GATEWAY_IP4
+  kubeapiVip: ref+sops://talenv.sops.yaml#/KUBEAPI_VIP
+  nodeCidr: ref+sops://talenv.sops.yaml#/CLUSTER_NODE_CIDR_IP4
+  podCidr: ref+sops://talenv.sops.yaml#/CLUSTER_POD_CIDR_IP4
+  svcCidr: ref+sops://talenv.sops.yaml#/CLUSTER_SVC_CIDR_IP4
+  externalDomain: ref+sops://talenv.sops.yaml#/EXTERNAL_DOMAIN
+  headlampOidcClientId: ref+sops://talenv.sops.yaml#/HEADLAMP_OIDC_CLIENT_ID
+  ghUsername: ref+sops://talenv.sops.yaml#/GH_USERNAME
+  ghToken: ref+sops://talenv.sops.yaml#/GH_TOKEN
+  dockerUsername: ref+sops://talenv.sops.yaml#/DOCKER_USERNAME
+  dockerToken: ref+sops://talenv.sops.yaml#/DOCKER_TOKEN
+  nameservers:
+    - ref+sops://talenv.sops.yaml#/DNS_1
+    - ref+sops://talenv.sops.yaml#/DNS_2
+  # Order is load-bearing: certSANs render as a list and any reordering shows up as a
+  # config diff on every node.
+  machineCertSans:
+    - ref+sops://talenv.sops.yaml#/KUBEAPI_VIP
+    - ref+sops://talenv.sops.yaml#/E2_1_IP4
+    - ref+sops://talenv.sops.yaml#/E2_2_IP4
+    - ref+sops://talenv.sops.yaml#/E2_3_IP4
+    - ref+sops://talenv.sops.yaml#/MS_01_1_IP4
+    - ref+sops://talenv.sops.yaml#/MS_01_2_IP4
+    - ref+sops://talenv.sops.yaml#/MS_01_3_IP4
+    - 127.0.0.1 # KubePrism
+  apiServerCertSans:
+    - ref+sops://talenv.sops.yaml#/E2_1_IP4
+    - ref+sops://talenv.sops.yaml#/E2_2_IP4
+    - ref+sops://talenv.sops.yaml#/E2_3_IP4
+    - ref+sops://talenv.sops.yaml#/MS_01_1_IP4
+    - ref+sops://talenv.sops.yaml#/MS_01_2_IP4
+    - ref+sops://talenv.sops.yaml#/MS_01_3_IP4
+    - 127.0.0.1 # KubePrism
+
+nodes:
+  - host: e2-1
+    ip: ref+sops://talenv.sops.yaml#/E2_1_IP4
+    role: control-plane
+    schematicId: "@schematics/e2.yaml"
+  - host: e2-2
+    ip: ref+sops://talenv.sops.yaml#/E2_2_IP4
+    role: control-plane
+    schematicId: "@schematics/e2.yaml"
+  - host: e2-3
+    ip: ref+sops://talenv.sops.yaml#/E2_3_IP4
+    role: control-plane
+    schematicId: "@schematics/e2.yaml"
+  - host: ms-01-1
+    ip: ref+sops://talenv.sops.yaml#/MS_01_1_IP4
+    role: worker
+    schematicId: "@schematics/ms-01.yaml"
+  - host: ms-01-2
+    ip: ref+sops://talenv.sops.yaml#/MS_01_2_IP4
+    role: worker
+    schematicId: "@schematics/ms-01.yaml"
+  - host: ms-01-3
+    ip: ref+sops://talenv.sops.yaml#/MS_01_3_IP4
+    role: worker
+    schematicId: "@schematics/ms-01.yaml"

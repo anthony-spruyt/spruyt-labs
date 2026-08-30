@@ -40,4 +40,4 @@ machine:
         imagefs.available: "2Gi"
     nodeIP:
       validSubnets:
-        - ${CLUSTER_NODE_CIDR_IP4}
+        - {{ .Data.nodeCidr }}

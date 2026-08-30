@@ -62,28 +62,28 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
 
 ### Phase 3: Talos Configuration Generation
 
-1. **Update talconfig.yaml** with node specifications:
+1. **Update topf.yaml** with node specifications. Addresses and cluster identity are pulled from `talenv.sops.yaml` through `vals`:
 
    ```yaml
-   clusterName: spruyt-labs
-   endpoint: https://<KUBEAPI_VIP>:6443
+   clusterName: ref+sops://talenv.sops.yaml#/CLUSTER_NAME
+   clusterEndpoint: ref+sops://talenv.sops.yaml#/KUBEAPI_ENDPOINT
    nodes:
-     - hostname: <node-hostname>
-       ipAddress: <node-ip>
-       controlPlane: true
-       schematic: <schematic-id>
+     - host: <node-hostname>
+       ip: ref+sops://talenv.sops.yaml#/<NODE_IP_KEY>
+       role: control-plane
+       schematicId: "@schematics/<hardware-class>.yaml"
    ```
 
-2. **Generate Talos secrets**:
+2. **Generate the local talosconfig**:
 
    ```bash
-   task talos:gen
+   task talos:talosconfig
    ```
 
-3. **Generate machine configurations**:
+3. **Render machine configurations for inspection**:
 
    ```bash
-   talhelper genconfig
+   task talos:render
    ```
 
 ### Phase 4: Node Provisioning
@@ -96,7 +96,7 @@ This guide covers the one-time initial deployment of the Talos Linux Kubernetes 
 
    ```bash
    talosctl apply-config --insecure --nodes <node-ip> \
-     --file talos/clusterconfig/<node-hostname>.yaml
+     --file talos/clusterconfig/topf/<node-hostname>.yaml
    ```
 
 4. **Bootstrap Kubernetes**:

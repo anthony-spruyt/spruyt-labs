@@ -32,7 +32,7 @@ This ensures network, USB, and other IRQs are handled by P-cores for lower laten
 
 ### Intel HWP Dynamic Boost
 
-**File:** `talos/talconfig.yaml`
+**File:** `talos/patches/worker/03-enable-cpu-boost.yaml`
 
 Enables Hardware P-state dynamic boosting for P-core turbo:
 
@@ -159,4 +159,4 @@ Should show P-core CPUs (0-7) for network/USB IRQs.
 
 - [Workload Classification](workload-classification.md) - Priority classes
 - [cluster/apps/irq-balance/](../cluster/apps/irq-balance/) - IRQ balance deployments
-- [talos/talconfig.yaml](../talos/talconfig.yaml) - Node configuration
+- [talos/topf.yaml](../talos/topf.yaml) - Node configuration

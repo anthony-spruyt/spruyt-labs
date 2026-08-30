@@ -3,46 +3,53 @@
 version: "3"
 
 vars:
-  genConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/genconfig.sh"
-  applyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config.sh"
-  c1ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-e2-1.sh"
-  c2ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-e2-2.sh"
-  c3ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-e2-3.sh"
-  w1ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-ms-01-1.sh"
-  w2ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-ms-01-2.sh"
-  w3ApplyConfigScript: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts/apply-config-ms-01-3.sh"
+  scriptsDir: "{{ .ROOT_DIR }}/.taskfiles/talos/scripts"
 
 tasks:
-  gen:
-    # desc: 'DO NOT RUN THIS FROM TASK UI -> USE CLI: "task talos:gen"'
-    desc: Generate new Talos configuration files.
+  render:
+    desc: Render machine configs to talos/clusterconfig/topf for inspection
     cmds:
-      - bash {{ .genConfigScript }}
+      - bash {{ .scriptsDir }}/render.sh
+  diff:
+    desc: Show what a Talos config apply would change (NODE=<regex> to filter; exits non-zero when there is drift)
+    cmds:
+      - NODE='{{ .NODE }}' bash {{ .scriptsDir }}/apply.sh --dry-run
   apply:
-    desc: Apply Talos config to all nodes
+    desc: Apply Talos config to all nodes (NODE=<regex> to filter, e.g. NODE=ms-01-1)
     cmds:
-      - bash {{ .applyConfigScript }}
+      - NODE='{{ .NODE }}' bash {{ .scriptsDir }}/apply.sh
+
+  # The Task UI cannot pass NODE, so each node also gets its own entry.
   apply-c1:
-    desc: Apply Talos config to control plane 1
+    desc: Apply Talos config to control plane 1 (e2-1)
     cmds:
-      - bash {{ .c1ApplyConfigScript }}
+      - NODE='^e2-1$' bash {{ .scriptsDir }}/apply.sh
   apply-c2:
-    desc: Apply Talos config to control plane 2
+    desc: Apply Talos config to control plane 2 (e2-2)
     cmds:
-      - bash {{ .c2ApplyConfigScript }}
+      - NODE='^e2-2$' bash {{ .scriptsDir }}/apply.sh
   apply-c3:
-    desc: Apply Talos config to control plane 3
+    desc: Apply Talos config to control plane 3 (e2-3)
     cmds:
-      - bash {{ .c3ApplyConfigScript }}
+      - NODE='^e2-3$' bash {{ .scriptsDir }}/apply.sh
   apply-w1:
-    desc: Apply Talos config to worker 1
+    desc: Apply Talos config to worker 1 (ms-01-1)
     cmds:
-      - bash {{ .w1ApplyConfigScript }}
+      - NODE='^ms-01-1$' bash {{ .scriptsDir }}/apply.sh
   apply-w2:
-    desc: Apply Talos config to worker 2
+    desc: Apply Talos config to worker 2 (ms-01-2)
     cmds:
-      - bash {{ .w2ApplyConfigScript }}
+      - NODE='^ms-01-2$' bash {{ .scriptsDir }}/apply.sh
   apply-w3:
-    desc: Apply Talos config to worker 3
+    desc: Apply Talos config to worker 3 (ms-01-3)
     cmds:
-      - bash {{ .w3ApplyConfigScript }}
+      - NODE='^ms-01-3$' bash {{ .scriptsDir }}/apply.sh
+
+  schematic-ids:
+    desc: Print the distinct Image Factory schematic IDs in use (sorted, unlabelled - ignores NODE)
+    cmds:
+      - bash {{ .scriptsDir }}/topf.sh schematic-ids
+  talosconfig:
+    desc: Regenerate talosconfig from the secrets bundle and merge it locally
+    cmds:
+      - bash {{ .scriptsDir }}/talosconfig.sh

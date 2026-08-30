@@ -1,0 +1,9 @@
+machine:
+  nodeLabels:
+    node-role.kubernetes.io/control-plane: ""
+    bgp: "65050"
+    # Talos sets this label by default. These nodes have never carried it; removing it
+    # here keeps that so, rather than silently excluding the control plane from
+    # LoadBalancer backends the first time this config is applied.
+    node.kubernetes.io/exclude-from-external-load-balancers:
+      $patch: delete

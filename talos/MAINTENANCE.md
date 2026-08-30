@@ -19,14 +19,14 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
 1. **Update Talos Configuration**:
 
    ```bash
-   # Edit talos/talconfig.yaml to add new node
-   vim talos/talconfig.yaml
+   # Add the node to talos/topf.yaml and create talos/patches/node/<hostname>/
+   vim talos/topf.yaml
    ```
 
-2. **Generate Machine Config**:
+2. **Render Machine Config**:
 
    ```bash
-   talhelper genconfig
+   task talos:render
    ```
 
 3. **Provision Hardware**:
@@ -36,7 +36,7 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
 
    ```bash
    talosctl apply-config --insecure --nodes <new-node-ip> \
-     --file talos/clusterconfig/<hostname>.yaml
+     --file talos/clusterconfig/topf/<hostname>.yaml
    ```
 
 4. **Verify Node Join**:
@@ -84,9 +84,9 @@ This document outlines maintenance procedures for the spruyt-labs Talos cluster,
 3. **Remove from Talos Configuration**:
 
    ```bash
-   # Edit talos/talconfig.yaml to remove node
-   vim talos/talconfig.yaml
-   talhelper genconfig
+   # Remove the node from talos/topf.yaml and delete talos/patches/node/<hostname>/
+   vim talos/topf.yaml
+   task talos:render
    ```
 
 4. **Shutdown Node**:

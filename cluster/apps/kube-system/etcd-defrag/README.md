@@ -20,7 +20,7 @@ Runs every Monday at 2:00 AM AEST (Sunday 16:00 UTC).
 1. **Job fails with permission error**
 
    - **Symptom**: `rpc error: code = PermissionDenied`
-   - **Resolution**: Verify Talos machine config has `kubernetesTalosAPIAccess` enabled. Run `task talos:generate` and `talosctl apply-config` to all control plane nodes.
+   - **Resolution**: Verify Talos machine config has `kubernetesTalosAPIAccess` enabled. Run `task talos:apply NODE='e2-.*'` to reapply it to the control plane.
 
 2. **Secret not found**
 

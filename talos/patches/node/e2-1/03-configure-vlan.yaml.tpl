@@ -5,7 +5,7 @@ vlanID: 20
 parent: enp1s0
 mtu: 9000
 addresses:
-  - address: ${E2_3_IP4}/24
+  - address: {{ .Node.IP }}/24
 routes:
-  - gateway: ${GATEWAY_IP4}
+  - gateway: {{ .Data.gateway }}
     metric: 512

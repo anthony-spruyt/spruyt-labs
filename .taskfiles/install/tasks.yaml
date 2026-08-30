@@ -70,10 +70,14 @@ tasks:
     desc: Installs safe-chain
     cmds:
       - bash {{ .installScriptsDir }}/install-safe-chain.sh
-  talhelper-cli:
-    desc: Installs the Talhelper CLI
+  topf-cli:
+    desc: Installs the topf CLI
     cmds:
-      - bash {{ .installScriptsDir }}/install-talhelper.sh
+      - bash {{ .installScriptsDir }}/install-topf.sh
+  vals-cli:
+    desc: Installs the vals CLI
+    cmds:
+      - bash {{ .installScriptsDir }}/install-vals.sh
   talosctl-cli:
     desc: Installs talosctl
     cmds:

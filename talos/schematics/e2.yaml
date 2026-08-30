@@ -1,0 +1,20 @@
+customization:
+  secureboot:
+    includeWellKnownCertificates: true
+  extraKernelArgs:
+    - -lockdown # Secure boot lockdown needs updating
+    - lockdown=integrity # to integrity for Cilium
+    - quiet # Reduce noise
+    - loglevel=3 # Reduce noise
+    - amd_pstate=1 # Enable AMD CPU boost
+    - pcie_aspm=off # Stop link ASPM transitions
+    - pci=pcie_bus_perf # Set device MPS to the largest allowable MPS based on its parent bus.
+    - nvme_core.default_ps_maxlatency_us=0 # Prevent entering low PS
+    - iommu=pt # PCI Passthrough
+    - idle=nomwait # Prevent deep CPU idle states
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/amd-ucode
+      - siderolabs/lldpd
+      - siderolabs/iscsi-tools
+      - siderolabs/util-linux-tools

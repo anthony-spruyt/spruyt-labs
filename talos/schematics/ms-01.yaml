@@ -1,0 +1,20 @@
+customization:
+  secureboot:
+    includeWellKnownCertificates: true
+  extraKernelArgs:
+    - -lockdown # Secure boot lockdown needs updating
+    - lockdown=integrity # to integrity for Cilium
+    - quiet # Reduce noise
+    - loglevel=3 # Reduce noise
+    - intel_iommu=on # PCI Passthrough
+    - iommu=pt # PCI Passthrough
+    - net.ifnames=0 # Thunderbolt ring https://gist.github.com/gavinmcfall/ea6cb1233d3a300e9f44caf65a32d519
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/i915
+      - siderolabs/intel-ucode
+      - siderolabs/kata-containers
+      - siderolabs/lldpd
+      - siderolabs/thunderbolt
+      - siderolabs/iscsi-tools
+      - siderolabs/util-linux-tools

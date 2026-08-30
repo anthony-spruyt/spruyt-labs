@@ -2,8 +2,8 @@
 
 ## Overview
 
-The Talos subsystem codifies the lifecycle of spruyt-labs Kubernetes machines, from configuration generation with Talhelper through provisioning, maintenance, and recovery activities. This document summarizes operator responsibilities, the supporting assets stored under `talos/`, and the high-level runbook for managing Bossgame E2 control planes, MS-01 workers, and lab VMs. Deep-dive procedures
-live in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md).
+The Talos subsystem codifies the lifecycle of spruyt-labs Kubernetes machines, from configuration generation with topf through provisioning, maintenance, and recovery activities. This document summarizes operator responsibilities, the supporting assets stored under `talos/`, and the high-level runbook for managing Bossgame E2 control planes, MS-01 workers, and lab VMs. Deep-dive procedures live in
+[`docs/machine-lifecycle.md`](docs/machine-lifecycle.md).
 
 ## Directory Layout
 
@@ -11,15 +11,16 @@ live in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md).
 
 | Path                            | Description                                                                                                                                                                   |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `talconfig.yaml`                | Talhelper entrypoint describing cluster topology, schematics, networking, and secrets references.                                                                             |
-| `baseconfig/` _(generated)_     | Optional working directory for upstream Talos defaults extracted during new hardware enablement. Created locally when running Talhelper helpers; typically gitignored.        |
+| `topf.yaml`                     | topf entrypoint describing cluster identity, node roles, schematic references, and `ref+sops://` pointers into `talenv.sops.yaml`.                                            |
+| `schematics/`                   | Image Factory schematic definitions per hardware class, referenced from `topf.yaml` as `@schematics/<class>.yaml`.                                                            |
+| `baseconfig/` _(generated)_     | Optional working directory for upstream Talos defaults extracted during new hardware enablement. Typically gitignored.                                                        |
 | `bootstrap/` _(generated)_      | Local scratch space for bootstrap artifacts (first control-plane secrets, discovery data). Historically populated by install scripts and retained outside Git for security.   |
-| `clusterconfig/` _(gitignored)_ | Rendered machine configuration bundle produced by `talhelper genconfig`. Used for `talosctl apply-config` during provisioning and drift remediation.                          |
+| `clusterconfig/` _(gitignored)_ | Inspection output from `task talos:render`, plus the generated `talosconfig`. `topf apply` does not need it - it renders in memory.                                           |
 | `docs/`                         | In-repo operations handbook. Includes [`machine-lifecycle.md`](docs/machine-lifecycle.md) for exhaustive runbook details.                                                     |
 | `flux/` _(virtual)_             | Flux applies Talos definitions via the `cluster/machines/` kustomization. Flux bootstrap manifests that seed Talos resources are maintained in `talos/helmfile/` (see below). |
 | `helmfile/`                     | Helmfile definitions that pin Flux bootstrap components and Talos support charts (e.g., Cilium).                                                                              |
 | `legacy/`                       | Historical installation and upgrade scripts retained for reference. Prefer Taskfile automation and documented procedures instead of invoking these scripts directly.          |
-| `patches/`                      | Talos patch library (global, control-plane, etc.) consumed by overlays when generating configs.                                                                               |
+| `patches/`                      | Talos patch library. topf merges `all/`, then `<role>/`, then `node/<host>/`, each in lexicographic filename order - see [Patch layering](#patch-layering).                   |
 | `scripts/` _(virtual)_          | One-off automation is implemented as Taskfile targets (see `.taskfiles/`). Legacy shell scripts remain in `legacy/` for audit purposes.                                       |
 | `secrets/` _(virtual)_          | Age-encrypted Talos secrets (`talenv.sops.yaml`, `talsecret.sops.yaml`) live at the repository root. Access requires the platform Age identity.                               |
 
@@ -27,9 +28,30 @@ live in [`docs/machine-lifecycle.md`](docs/machine-lifecycle.md).
 
 > _Generated or virtual directories may be absent in a clean clone. They will appear locally when running documented tasks._
 
+## Patch layering
+
+topf builds each node's machine config by merging patches in three passes - `all/`, then the node's role directory, then `node/<hostname>/` - and within each directory in lexicographic filename order. That is why every patch carries a numeric prefix.
+
+**The order is load-bearing, so do not renumber files to tidy them up.** Talos concatenates list entries across patches unless the field is tagged `merge:"replace"` in its config machinery (`podSubnets` and `serviceSubnets` are; `machine.udev.rules` is not), and `talosctl` diffs machine config textually. Reordering `machine.udev.rules` changes nothing semantically but still registers as a config
+change, and a udev reorder alone turns a reboot-free apply into a reboot.
+
+`patches/shared/` is outside the three merge passes - topf never reads it directly. **A patch that applies to every node belongs in `all/`.** Use `shared/` only when merging first would break ordering, and symlink it from each role directory at the position that preserves that ordering. Today that is one file: the disk scheduler udev rule, which has to land partway down `machine.udev.rules` rather
+than at the top.
+
+Two patch formats are in use:
+
+| Extension   | Behaviour                                                                         |
+| ----------- | --------------------------------------------------------------------------------- |
+| `.yaml`     | Strategic merge patch. SOPS-decrypted, then `ref+` references resolved by `vals`. |
+| `.yaml.tpl` | Go template (sprig available). **Skips SOPS and vals entirely.**                  |
+
+A `.tpl` cannot resolve a `ref+sops://` reference. Anything secret that has to be interpolated into a larger string is therefore exposed under `data:` in `topf.yaml` - which is itself resolved through vals - and read from the template as `.Data.<key>`. topf only detects a `ref+` at the start of a value, so a reference buried mid-string is silently left as literal text rather than failing.
+
+> `task talos:render` works offline and uses the `talosVersion` declared in `topf.yaml`. `task talos:apply` asks each node for its **running** version and generates against that version contract. The two agree except during an upgrade window, when a render is not a faithful preview of an apply.
+
 ## Optional: Prerequisites
 
-- Use the devcontainer or install the required CLIs (`talhelper`, `talosctl`, `kubectl`, `flux`, `task`, `age`, `sops`).
+- Use the devcontainer or install the required CLIs (`topf`, `vals`, `talosctl`, `kubectl`, `flux`, `task`, `age`, `sops`).
 
 - Possess the Age identity that decrypts Talos secrets.
 
@@ -58,20 +80,20 @@ Platform engineering owns the Talos lifecycle. Operators provision control-plane
 
 #### Provision new hardware or VMs
 
-1. Update `talconfig.yaml` and overlay snippets under `cluster/machines/` to describe the node.
+1. Add the node to `topf.yaml`, create `patches/node/<hostname>/` for anything unique to it (install disk, addressing), and update overlay snippets under `cluster/machines/`.
 
-2. Generate configs:
+2. Render the config for inspection:
 
    ```bash
-   talhelper genconfig
+   task talos:render
    ```
 
-   Outputs land in `talos/clusterconfig/`.
+   Outputs land in `talos/clusterconfig/topf/`.
 
-3. **Secrets** – Rotate or create Talos secrets when necessary:
+3. **Secrets** – The bundle in `talsecret.sops.yaml` is reused as-is. Refresh the local client credentials when necessary:
 
    ```bash
-   task talos:gen
+   task talos:talosconfig
    ```
 
 4. Boot the host with the appropriate SecureBoot ISO (see [Talos image schematics](#talos-image-schematics)).
@@ -79,9 +101,10 @@ Platform engineering owns the Talos lifecycle. Operators provision control-plane
 5. Apply configs once the Talos API responds:
 
    ```bash
-   talosctl apply-config --insecure --nodes <node-ip> \
-     --file talos/clusterconfig/<hostname>.yaml
+   task talos:apply NODE=<hostname>
    ```
+
+   `NODE` is a Go regex over the hosts in `topf.yaml`; omit it to target every node. The Task UI cannot pass variables, so `talos:apply-c1` … `talos:apply-w3` exist as clickable per-node equivalents.
 
 6. Bootstrap the first control-plane node with `talosctl bootstrap`.
 
@@ -100,7 +123,7 @@ Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machi
 3. Render diffs without secrets:
 
    ```bash
-   talhelper genconfig --dry-run --diff
+   task talos:diff
    ```
 
 4. Run validation:
@@ -208,7 +231,7 @@ Detailed provisioning guidance lives in [`docs/machine-lifecycle.md`](docs/machi
 
 - `talosctl health` – global Talos API health.
 
-- `talhelper genconfig --diff` – detect config drift.
+- `task talos:diff` – detect config drift.
 
 - `kubectl get nodes -o wide` and `kubectl describe node <host>` – kubelet state, labels, taints.
 
@@ -255,12 +278,12 @@ Confirm Ceph OSD placement labels and ensure encrypted volumes unlocked correctl
 #### Machineconfig drift
 
 ```bash
-talhelper genconfig --diff
+task talos:diff
 talosctl -n <node-ip> get appliedconfiguration
-talosctl apply-config --nodes <node-ip> --file talos/clusterconfig/<hostname>.yaml
+task talos:apply NODE=<hostname>
 ```
 
-Rotate secrets with `task talos:gen` if drift stems from credential mismatch.
+Refresh local client credentials with `task talos:talosconfig` if drift stems from a credential mismatch.
 
 #### Diagnostic command quick reference
 
@@ -347,6 +370,6 @@ Additional asset: SecureBoot UKI – <https://factory.talos.dev/image/1d6296ab09
 - Flux GitOps workflows – [`cluster/flux/README.md`](../cluster/flux/README.md)
 - Application runbooks – [`cluster/apps/README.md`](../cluster/apps/README.md)
 - Talos upstream documentation – <https://www.talos.dev/>
-- Talhelper project – <https://github.com/budimanjojo/talhelper>
+- topf project – <https://github.com/postfinance/topf>
 - FluxCD documentation – <https://fluxcd.io/>
 - Ceph maintenance reference – <https://rook.io/docs/rook/latest/>
