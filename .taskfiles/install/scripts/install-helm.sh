@@ -23,7 +23,7 @@ TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
 TARBALL="helm-${VERSION}-linux-${ARCH}.tar.gz"
-curl -Lo "$TMPDIR/$TARBALL" "https://get.helm.sh/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://get.helm.sh/${TARBALL}"
 tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
 sudo mv "$TMPDIR/linux-${ARCH}/helm" /usr/local/bin/helm
 sudo chmod +x /usr/local/bin/helm

@@ -8,7 +8,7 @@ CURRENT_VERSION=$(task --version 2>/dev/null | head -1 || echo "unknown")
 echo "Current version: $CURRENT_VERSION"
 
 # Install/update using official installer
-curl -sSfL https://taskfile.dev/install.sh | sudo sh -s -- -b /usr/local/bin
+curl --proto '=https' --tlsv1.2 -sSfL https://taskfile.dev/install.sh | sudo sh -s -- -b /usr/local/bin
 
 # Show new version
 NEW_VERSION=$(task --version 2>/dev/null | head -1)

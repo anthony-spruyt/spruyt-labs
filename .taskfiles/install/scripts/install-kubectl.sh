@@ -22,7 +22,7 @@ fi
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
-curl -Lo "$TMPDIR/kubectl" "https://dl.k8s.io/release/${VERSION}/bin/linux/${ARCH}/kubectl"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/kubectl" "https://dl.k8s.io/release/${VERSION}/bin/linux/${ARCH}/kubectl"
 sudo install -o root -g root -m 0755 "$TMPDIR/kubectl" /usr/local/bin/kubectl
 
 echo "✅ kubectl ${VERSION} installed successfully."

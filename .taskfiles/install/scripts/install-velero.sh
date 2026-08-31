@@ -23,7 +23,7 @@ TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
 TARBALL="velero-${VERSION}-linux-${ARCH}.tar.gz"
-curl -Lo "$TMPDIR/$TARBALL" "https://github.com/vmware-tanzu/velero/releases/download/${VERSION}/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/vmware-tanzu/velero/releases/download/${VERSION}/${TARBALL}"
 tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
 sudo mv "$TMPDIR/velero-${VERSION}-linux-${ARCH}/velero" /usr/local/bin/velero
 sudo chmod +x /usr/local/bin/velero

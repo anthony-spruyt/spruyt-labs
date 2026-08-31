@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-curl -s https://fluxcd.io/install.sh | sudo bash
+curl --proto '=https' --tlsv1.2 -sSf https://fluxcd.io/install.sh | sudo bash
 
 # ✅ Verify installation
 if command -v flux &>/dev/null; then

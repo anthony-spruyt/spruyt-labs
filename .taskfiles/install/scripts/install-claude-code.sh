@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "Installing Claude Code CLI..."
-curl -fsSL https://claude.ai/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://claude.ai/install.sh | bash
 
 # Verify installation
 if command -v claude &>/dev/null; then

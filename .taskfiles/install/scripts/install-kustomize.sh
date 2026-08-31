@@ -23,7 +23,7 @@ TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
 TARBALL="kustomize_${VERSION}_linux_${ARCH}.tar.gz"
-curl -Lo "$TMPDIR/$TARBALL" "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${VERSION}/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${VERSION}/${TARBALL}"
 tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
 sudo mv "$TMPDIR/kustomize" /usr/local/bin/kustomize
 sudo chmod +x /usr/local/bin/kustomize

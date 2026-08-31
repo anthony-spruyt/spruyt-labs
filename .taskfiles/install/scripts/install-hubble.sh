@@ -23,8 +23,8 @@ TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
 TARBALL="hubble-linux-${ARCH}.tar.gz"
-curl -Lo "$TMPDIR/$TARBALL" "https://github.com/cilium/hubble/releases/download/${VERSION}/${TARBALL}"
-curl -Lo "$TMPDIR/${TARBALL}.sha256sum" "https://github.com/cilium/hubble/releases/download/${VERSION}/${TARBALL}.sha256sum"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/cilium/hubble/releases/download/${VERSION}/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/${TARBALL}.sha256sum" "https://github.com/cilium/hubble/releases/download/${VERSION}/${TARBALL}.sha256sum"
 (cd "$TMPDIR" && sha256sum --check "${TARBALL}.sha256sum")
 tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
 sudo mv "$TMPDIR/hubble" /usr/local/bin/hubble

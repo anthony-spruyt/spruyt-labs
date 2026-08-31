@@ -25,7 +25,7 @@ trap 'rm -rf "$TMPDIR"' EXIT
 # Version without 'v' prefix for download URL
 VERSION_NUM="${VERSION#v}"
 TARBALL="falcoctl_${VERSION_NUM}_linux_${ARCH}.tar.gz"
-curl -Lo "$TMPDIR/$TARBALL" "https://github.com/falcosecurity/falcoctl/releases/download/${VERSION}/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/falcosecurity/falcoctl/releases/download/${VERSION}/${TARBALL}"
 tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
 sudo mv "$TMPDIR/falcoctl" /usr/local/bin/falcoctl
 sudo chmod +x /usr/local/bin/falcoctl

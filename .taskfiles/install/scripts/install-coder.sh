@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-curl -L https://coder.com/install.sh | sh
+curl --proto '=https' --tlsv1.2 -Lf https://coder.com/install.sh | sh
 
 # ✅ Verify installation
 if command -v coder &>/dev/null; then

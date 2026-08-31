@@ -25,8 +25,8 @@ trap 'rm -rf "$TMPDIR"' EXIT
 # CNPG strips the 'v' prefix in filenames
 FILE_VERSION="${VERSION#v}"
 TARBALL="kubectl-cnpg_${FILE_VERSION}_linux_${ARCH}.tar.gz"
-curl -Lo "$TMPDIR/$TARBALL" "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/${VERSION}/${TARBALL}"
-curl -Lo "$TMPDIR/checksums.txt" "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/${VERSION}/cnpg-${FILE_VERSION}-checksums.txt"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/${VERSION}/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/checksums.txt" "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/${VERSION}/cnpg-${FILE_VERSION}-checksums.txt"
 (cd "$TMPDIR" && grep "${TARBALL}$" checksums.txt | sha256sum --check)
 tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
 sudo mv "$TMPDIR/kubectl-cnpg" /usr/local/bin/kubectl-cnpg
