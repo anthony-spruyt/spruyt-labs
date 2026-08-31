@@ -25,8 +25,8 @@ trap 'rm -rf "$TMPDIR"' EXIT
 TARBALL="topf_linux_${ARCH}.tar.gz"
 # Checksum filename interpolates the version without the leading "v"
 CHECKSUMS="topf_${VERSION#v}_checksums.txt"
-curl -Lo "$TMPDIR/$TARBALL" "https://github.com/postfinance/topf/releases/download/${VERSION}/${TARBALL}"
-curl -Lo "$TMPDIR/$CHECKSUMS" "https://github.com/postfinance/topf/releases/download/${VERSION}/${CHECKSUMS}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/postfinance/topf/releases/download/${VERSION}/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$CHECKSUMS" "https://github.com/postfinance/topf/releases/download/${VERSION}/${CHECKSUMS}"
 (cd "$TMPDIR" && grep "$TARBALL" "$CHECKSUMS" | sha256sum --check)
 tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
 sudo mv "$TMPDIR/topf" /usr/local/bin/topf

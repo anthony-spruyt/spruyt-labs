@@ -24,8 +24,8 @@ trap 'rm -rf "$TMPDIR"' EXIT
 
 TARBALL="vals_${VERSION#v}_linux_${ARCH}.tar.gz"
 CHECKSUMS="vals_${VERSION#v}_checksums.txt"
-curl -Lo "$TMPDIR/$TARBALL" "https://github.com/helmfile/vals/releases/download/${VERSION}/${TARBALL}"
-curl -Lo "$TMPDIR/$CHECKSUMS" "https://github.com/helmfile/vals/releases/download/${VERSION}/${CHECKSUMS}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/helmfile/vals/releases/download/${VERSION}/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$CHECKSUMS" "https://github.com/helmfile/vals/releases/download/${VERSION}/${CHECKSUMS}"
 (cd "$TMPDIR" && grep "$TARBALL" "$CHECKSUMS" | sha256sum --check)
 tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
 sudo mv "$TMPDIR/vals" /usr/local/bin/vals
