@@ -1,2 +1,3 @@
 @@||foundryvtt.store^
 @@||spruyt.xyz^
+@@||html-load.com^
