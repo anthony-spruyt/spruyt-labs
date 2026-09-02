@@ -24,7 +24,7 @@ controllers:
               - ALL
         image:
           repository: pugmatt/bedrock-connect
-          tag: "1.66@sha256:6fbbe37a4d94af7d60fb399d0b55cd70a00c5dfee76dbb859844a48cf74ebcf6"
+          tag: "1.70.0@sha256:b065a5a8ebfae226d4dfbc7986cb4baab9b4d884849f578aed3382c32b823054"
           pullPolicy: IfNotPresent
         resources:
           requests:
