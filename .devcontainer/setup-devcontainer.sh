@@ -18,6 +18,7 @@ task install:cilium-cli
 task install:hubble-cli
 task install:talosctl-cli
 task install:topf-cli
+task install:uv-cli
 task install:vals-cli
 task install:flux-cli
 task install:flux-capacitor

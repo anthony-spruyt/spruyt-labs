@@ -2,24 +2,25 @@
 set -euo pipefail
 
 ROOT_DIR="$(git rev-parse --show-toplevel)"
-VENV_DIR="${LITELLM_MIDDLEWARE_TEST_VENV:-/tmp/litellm-middleware-tests}"
-PYTHON_BIN="${PYTHON_BIN:-python3}"
+PLUGINS_DIR="${ROOT_DIR}/cluster/apps/litellm/litellm/app/plugins"
 export PYTHONDONTWRITEBYTECODE=1
 
-if [[ ! -x "${VENV_DIR}/bin/python" ]]; then
-  "${PYTHON_BIN}" -m venv "${VENV_DIR}"
+# safe-chain ships a permanent uv shim on PATH, so command -v always succeeds
+if ! uv --version >/dev/null 2>&1; then
+  echo "❌ uv not found. Run: task install:uv-cli"
+  exit 1
 fi
 
-if ! "${VENV_DIR}/bin/python" - <<'PY' >/dev/null 2>&1; then
-import httpx
-import pytest
-import pytest_asyncio
-PY
-  "${VENV_DIR}/bin/python" -m pip install --quiet --disable-pip-version-check \
-    pytest \
-    pytest-asyncio \
-    httpx
-fi
+status=0
+for manifest in "${PLUGINS_DIR}"/*/pyproject.toml; do
+  plugin_dir="$(dirname "${manifest}")"
+  echo "=== $(basename "${plugin_dir}") ==="
+  # cd so pytest resolves rootdir from the plugin's pyproject.toml, not the repo root.
+  # --frozen fails instead of silently relocking, so a stale uv.lock surfaces here.
+  if ! (cd "${plugin_dir}" && uv run --extra dev --frozen pytest); then
+    status=1
+  fi
+  echo ""
+done
 
-"${VENV_DIR}/bin/python" -m pytest \
-  "${ROOT_DIR}/cluster/apps/litellm/litellm/app/plugins"
+exit "${status}"

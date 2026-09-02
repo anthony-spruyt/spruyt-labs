@@ -82,6 +82,10 @@ tasks:
     desc: Installs talosctl
     cmds:
       - bash {{ .installScriptsDir }}/install-talosctl.sh
+  uv-cli:
+    desc: Installs uv (Python package and project manager)
+    cmds:
+      - bash {{ .installScriptsDir }}/install-uv.sh
   velero-cli:
     desc: Installs the Velero CLI
     cmds:
