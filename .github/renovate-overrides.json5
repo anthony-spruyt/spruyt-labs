@@ -1,16 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "customDatasources": {
-    // Coder runs two concurrent channels off the same Helm repo: mainline (cut
-    // from main on the first Tuesday of each month) and stable (the previous
-    // mainline, promoted after ~a month in the field). Both are plain semver with
-    // no pre-release suffix and prerelease=false on every GitHub release, so
-    // ignoreUnstable and versioning options cannot separate them.
-    //
-    // Coder's own install.sh resolves --stable by following the
-    // github.com/coder/coder/releases/latest redirect, which makes the GitHub
-    // "latest release" marker the authoritative stable pointer. Read it directly
-    // so the pin tracks stable and mainline never opens a PR. Ref #2640
     "coder-stable": {
       "defaultRegistryUrlTemplate": "https://api.github.com/repos/coder/coder/releases/latest",
       "format": "json",
@@ -19,6 +9,22 @@
       ]
     }
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": [
+        "Annotated CNPG Database extension version pin (datasource first)."
+      ],
+      "managerFilePatterns": [
+        "/(^|/)cluster/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s+extractVersion=(?<extractVersion>\\S+)\\n\\s*version:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
+      "versioningTemplate": "semver"
+    }
+  ],
   "packageRules": [
     {
       "description": "Disable kubernetes manager for runner sidecar (version managed via kustomize images transformer)",
@@ -32,13 +38,6 @@
       "enabled": false
     },
     {
-      // n8n ships beta builds as plain semver docker tags with no pre-release
-      // suffix, so no versioning option can filter them — only the GitHub Release
-      // prerelease flag marks a build as beta, and the docker datasource never
-      // sees it. followTag does not help either: it reads ReleaseResult.tags,
-      // which the docker datasource does not populate, so it would return no
-      // updates at all. Gate these behind the dependency dashboard instead, so a
-      // beta surfaces for review rather than opening a PR on its own.
       "description": "Require dashboard approval for n8n docker images, since beta builds are indistinguishable by version string alone",
       "matchPackageNames": [
         "n8nio/**"
@@ -76,25 +75,6 @@
       "enabled": false
     },
     {
-      // Renovate resolves release notes for a docker dep either by matching a
-      // GitHub Release tag against "(?:^|/)(?:packageName|depName)[@_/-]v?<version>",
-      // or by parsing CHANGELOG.md. Neither works here by default:
-      //
-      //   1. depName/packageName is the full registry path
-      //      (ghcr.io/anthony-spruyt/<name>), while release-please tags are
-      //      "<component>/v<version>". No tag format can bridge that, since the
-      //      tag carries the short component name.
-      //   2. CHANGELOG.md is looked up at the repo root unless sourceDirectory
-      //      is set, and sourceDirectory is only derived from a sourceUrl that
-      //      carries a /tree/<ref>/<path> suffix. docker/metadata-action sets
-      //      org.opencontainers.image.source to the bare repo URL, and this
-      //      monorepo has no root CHANGELOG.md, so the lookup 404s.
-      //
-      // Setting sourceDirectory here points Renovate at the release-please
-      // package directory, so it reads that package's CHANGELOG.md. Fixing this
-      // via the image label instead would append a path to
-      // org.opencontainers.image.source and break the GHCR package-to-repo link.
-      // Ref #2684
       "description": "Point own image changelogs at their release-please package directory",
       "matchDatasources": [
         "docker"
@@ -175,6 +155,16 @@
         "golang"
       ],
       "allowedVersions": "<1.27.0"
+    },
+    {
+      "description": "Bump the pgvector extension image and the CNPG Database version pin in one PR",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/cloudnative-pg/pgvector"
+      ],
+      "groupName": "pgvector"
     }
   ]
 }
