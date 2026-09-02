@@ -456,10 +456,13 @@ configMaps:
         general_settings:
           always_include_stream_usage: true
           forward_client_headers_to_llm_api: true
+          mcp_trusted_proxy_ranges:
+            - "${CLUSTER_POD_CIDR_IP4}"
           store_model_in_db: true
           supported_db_objects:
             - mcp
           use_redis_transaction_buffer: true
+          use_x_forwarded_for: true
           user_api_key_cache_ttl: 300
         guardrails:
           - guardrail_name: pii-protection
