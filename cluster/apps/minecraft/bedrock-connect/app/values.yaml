@@ -55,19 +55,9 @@ configMaps:
       custom_servers.json: |-
         [
           {
-            "name": "Better on Bedrock",
-            "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19132
-          },
-          {
-            "name": "Better on Bedrock - Creative Edition",
-            "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19133
-          },
-          {
             "name": "Fambam",
             "address": "minecraft.${EXTERNAL_DOMAIN}",
-            "port": 19134
+            "port": 19132
           }
         ]
       config.yml: |-
