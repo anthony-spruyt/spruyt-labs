@@ -17,7 +17,8 @@ for manifest in "${PLUGINS_DIR}"/*/pyproject.toml; do
   echo "=== $(basename "${plugin_dir}") ==="
   # cd so pytest resolves rootdir from the plugin's pyproject.toml, not the repo root.
   # --frozen fails instead of silently relocking, so a stale uv.lock surfaces here.
-  if ! (cd "${plugin_dir}" && uv run --extra dev --frozen pytest); then
+  # --no-build refuses sdists, so no dependency's build backend executes locally.
+  if ! (cd "${plugin_dir}" && uv run --extra dev --frozen --no-build pytest); then
     status=1
   fi
   echo ""
