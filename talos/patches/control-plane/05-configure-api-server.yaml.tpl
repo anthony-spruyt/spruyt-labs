@@ -24,11 +24,17 @@ configuration:
   apiVersion: apiserver.config.k8s.io/v1beta1
   kind: AuthenticationConfiguration
   # AuthConfig is merge:"replace", so this block substitutes Talos' generated one rather
-  # than merging into it. Anything Talos would have supplied has to be restated here or
-  # it is silently dropped - omitting anonymous reinstates the Kubernetes default of
-  # unrestricted anonymous access, where these nodes run --anonymous-auth=false today.
+  # than merging into it. Anything Talos would have supplied has to be restated here or it
+  # is silently dropped. This reproduces Talos' default: v1.14 gives the apiserver startup,
+  # readiness and liveness probes, which issue unauthenticated GETs and 401 unless anonymous
+  # access reaches these three paths. Kubernetes enforces the allowlist at the authentication
+  # layer, so nothing outside these paths is anonymously reachable regardless of RBAC.
   anonymous:
-    enabled: false
+    enabled: true
+    conditions:
+      - path: /livez
+      - path: /readyz
+      - path: /healthz
   jwt:
     - issuer:
         url: "https://auth.{{ .Data.externalDomain }}/application/o/headlamp/"
