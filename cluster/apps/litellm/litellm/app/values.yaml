@@ -520,8 +520,13 @@ configMaps:
               api_key: os.environ/OPENROUTER_API_KEY
               input_cost_per_token: 0.0
               output_cost_per_token: 0.0
-              order: 1
-              weight: 1
+          - model_name: "meta/muse-spark-1.3-contributor"
+            litellm_params:
+              model: "meta/muse-spark-1.3-contributor"
+              api_base: https://openrouter.ai/api/v1
+              api_key: os.environ/OPENROUTER_API_KEY
+              input_cost_per_token: 0.1
+              output_cost_per_token: 0.2
           # --------------------------------------------------------------------------
           # Anthropic: Subscription
           # --------------------------------------------------------------------------
