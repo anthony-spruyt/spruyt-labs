@@ -1,5 +1,5 @@
 {{- /* KubeFlannelCNIConfig does not exist before Talos v1.14. */ -}}
-{{- if semverCompare ">=1.14.0-0" (default .TalosVersion .Node.TalosVersion) }}
+{{- if semverCompare ">=1.14.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
 ---
 apiVersion: v1alpha1
 kind: KubeFlannelCNIConfig

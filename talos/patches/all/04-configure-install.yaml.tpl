@@ -8,4 +8,4 @@ machine:
   install:
     grubUseUKICmdline: true
   nodeAnnotations:
-    installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.TalosVersion) }}
+    installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
