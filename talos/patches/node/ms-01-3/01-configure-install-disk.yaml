@@ -1,4 +1,0 @@
-machine:
-  install:
-    diskSelector:
-      serial: MQ19B55500378

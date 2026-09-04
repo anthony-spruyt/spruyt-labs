@@ -1,4 +1,0 @@
-machine:
-  install:
-    diskSelector:
-      serial: MQ11W14606696

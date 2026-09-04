@@ -15,7 +15,11 @@ machine:
   nodeAnnotations:
     installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
 {{- end }}
+{{- if not (semverCompare ">=1.14.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion)) }}
 ---
 machine:
   install:
+    # GRUB-only knob, and these nodes boot systemd-boot from a UKI because topf.yaml
+    # sets secureboot. UnattendedInstallConfig has no equivalent and needs none.
     grubUseUKICmdline: true
+{{- end }}

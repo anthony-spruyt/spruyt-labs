@@ -1,5 +1,0 @@
-machine:
-  install:
-    diskSelector:
-      serial: 50026B76874DDE95 # Kinston
-      # serial: P300ADBB25032802523 # Patriot
