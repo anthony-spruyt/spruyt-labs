@@ -517,14 +517,20 @@ configMaps:
             litellm_params:
               model: "openrouter/free"
               api_key: os.environ/OPENROUTER_API_KEY
+              input_cost_per_token: 0.0
+              output_cost_per_token: 0.0
           - model_name: "openrouter/meta/muse-spark-1.3-contributor"
             litellm_params:
               model: "openrouter/meta/muse-spark-1.3-contributor"
               api_key: os.environ/OPENROUTER_API_KEY
+              input_cost_per_token: 0.0000001
+              output_cost_per_token: 0.0000002
           - model_name: "openrouter/x-ai/grok-4.6"
             litellm_params:
               model: "openrouter/x-ai/grok-4.6"
               api_key: os.environ/OPENROUTER_API_KEY
+              input_cost_per_token: 0.000002
+              output_cost_per_token: 0.000006
           # --------------------------------------------------------------------------
           # Anthropic: Subscription
           # --------------------------------------------------------------------------
