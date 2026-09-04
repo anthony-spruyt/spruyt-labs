@@ -818,8 +818,8 @@ query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
 07. **NEVER skip health checks** - even for "quick" upgrades
 08. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
 09. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
-10. **NEVER run `task talos:apply` / `topf apply` while Phase 3 or Phase 4 is in flight** - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet, that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade
-    the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Steps 2b.3 and 2b.4 are the only sanctioned applies: once before Phase 3, once after Phase 4 completes
+10. **NEVER run `task talos:apply` / `topf apply` between the start of Phase 3 and the completion of Phase 4** - including the gap between the two phases, while nodes straddle versions - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet,
+    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Steps 2b.3 and 2b.4 are the only sanctioned applies: once before Phase 3, once after Phase 4 completes
 
 ## Timeout Expectations
 
