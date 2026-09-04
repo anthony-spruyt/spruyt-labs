@@ -14,7 +14,7 @@ kubernetesVersion: v1.36.4
 # this annotation only feeds the version. ghcr.io/siderolabs/installer stopped publishing at
 # v1.13.10 when 1.14 moved the default installer to the Factory, so track the release tags.
 # renovate: depName=siderolabs/talos datasource=github-releases
-talosVersion: v1.13.9
+talosVersion: v1.14.0
 
 platform: metal
 secureboot: true
