@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=postfinance/topf datasource=github-releases
-VERSION="v0.5.0"
+VERSION="v0.6.0"
 
 ARCH=$(uname -m)
 case "$ARCH" in
