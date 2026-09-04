@@ -23,6 +23,12 @@ kind: KubeAuthenticationConfig
 configuration:
   apiVersion: apiserver.config.k8s.io/v1beta1
   kind: AuthenticationConfiguration
+  # AuthConfig is merge:"replace", so this block substitutes Talos' generated one rather
+  # than merging into it. Anything Talos would have supplied has to be restated here or
+  # it is silently dropped - omitting anonymous reinstates the Kubernetes default of
+  # unrestricted anonymous access, where these nodes run --anonymous-auth=false today.
+  anonymous:
+    enabled: false
   jwt:
     - issuer:
         url: "https://auth.{{ .Data.externalDomain }}/application/o/headlamp/"

@@ -4,16 +4,20 @@
 # topf.yaml pins all three cluster-wide. The version falls back the same way topf's
 # own InstallerImage() does, so a per-node talosVersion during a staged upgrade does
 # not leave the annotation pointing at the cluster-wide release.
+#
+# The annotation mirrors the configured pin, so it reads .Node.TalosVersion - the
+# per-node override - while the guard below reads .Node.RuntimeData.TalosVersion,
+# which is what the node is actually running. They are different questions.
 {{- if semverCompare ">=1.14.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
 ---
 apiVersion: v1alpha1
 kind: KubeNodeConfig
 annotations:
-  installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
+  installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.TalosVersion) }}
 {{- else }}
 machine:
   nodeAnnotations:
-    installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
+    installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.TalosVersion) }}
 {{- end }}
 {{- if not (semverCompare ">=1.14.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion)) }}
 ---
