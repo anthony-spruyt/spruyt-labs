@@ -4,8 +4,18 @@
 # topf.yaml pins all three cluster-wide. The version falls back the same way topf's
 # own InstallerImage() does, so a per-node talosVersion during a staged upgrade does
 # not leave the annotation pointing at the cluster-wide release.
+{{- if semverCompare ">=1.14.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+annotations:
+  installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
+{{- else }}
+machine:
+  nodeAnnotations:
+    installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
+{{- end }}
+---
 machine:
   install:
     grubUseUKICmdline: true
-  nodeAnnotations:
-    installerImage: factory.talos.dev/metal-installer-secureboot/{{ .SchematicID }}:v{{ trimPrefix "v" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
