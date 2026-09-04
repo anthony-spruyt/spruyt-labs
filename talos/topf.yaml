@@ -10,7 +10,10 @@ clusterName: ref+sops://talenv.sops.yaml#/CLUSTER_NAME
 clusterEndpoint: ref+sops://talenv.sops.yaml#/KUBEAPI_ENDPOINT
 # renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
 kubernetesVersion: v1.36.4
-# renovate: depName=ghcr.io/siderolabs/installer datasource=docker
+# The installer is pulled from the Image Factory (see patches/all/04-configure-install.yaml.tpl);
+# this annotation only feeds the version. ghcr.io/siderolabs/installer stopped publishing at
+# v1.13.10 when 1.14 moved the default installer to the Factory, so track the release tags.
+# renovate: depName=siderolabs/talos datasource=github-releases
 talosVersion: v1.13.9
 
 platform: metal
