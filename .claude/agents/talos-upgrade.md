@@ -46,9 +46,10 @@ Talos (machine configs, upgrades)
 2. Config migration and `talosctl validate` (minor upgrades only)
 3. Upgrade control plane nodes (sequential)
 4. Upgrade worker nodes (sequential, Ceph health gates)
-5. Trigger descheduler for workload rebalancing
-6. Update version references in documentation
-7. Post-upgrade validation
+5. Apply the migrated config once every node reports the new version (minor upgrades only)
+6. Trigger descheduler for workload rebalancing
+7. Update version references in documentation
+8. Post-upgrade validation
 
 ## Rollback Plan
 1. Downgrade affected node using previous version image
@@ -276,18 +277,32 @@ talosctl validate --config talos/clusterconfig/topf/<node>.yaml --mode metal
 
 Every node must validate. A conflict error names both the v1alpha1 path and the document that supersedes it — migrate the offending patch to the new document, then re-render and re-validate.
 
-#### Step 2b.3: Land the migration before upgrading
+#### Step 2b.3: Land the migration on main before upgrading
 
-The migrated patches are a normal PR: commit, push, merge. Do not begin Phase 3 with an unmerged migration — a mid-upgrade node that reboots into the new version will generate against the new contract and needs the migrated patches already on main.
+Commit, push and merge the migrated patches. Do not begin Phase 3 with an unmerged migration — a node that reboots into the new version generates against the new contract and needs the migrated patches already on main.
 
-Apply the migrated config to every node while they are still on the old version:
+**The new documents cannot be applied yet, and that is expected.** `apply` generates against each node's running version, so while every node is still on the old release the guards take their old-version branch and `topf apply` emits the *old* config form. The migrated documents only reach a node after that node is running the new version. An apply at this point changes nothing but
+`machine.install.image`, which is the upgrade target pointer:
 
 ```bash
-task talos:diff    # exits non-zero when there is drift
+task talos:diff    # exits non-zero when there is drift; expect only the installer image
 task talos:apply
 ```
 
-This is the one point in the workflow where applying config is correct. Confirm the cluster is healthy afterwards before starting Phase 3.
+Confirm the diff shows nothing beyond the installer image before applying. Anything else means a guard is keyed wrong and would push new-version documents at an old-version node.
+
+#### Step 2b.4: Apply the migrated config after the nodes are upgraded
+
+Run this **after** Phase 4, once every node reports the new version. Only now does `apply` generate the new documents:
+
+```bash
+task talos:diff    # now shows the migrated documents
+task talos:apply
+```
+
+Anything whose behaviour is expressed through a migrated document — authentication, kubelet settings, node labels — changes here, not in Phase 2b.3. Verify those specifically rather than assuming the upgrade covered them.
+
+Once this apply is healthy the old-version template branches are dead code. Removing them is follow-up work, not part of the upgrade.
 
 ### Phase 3: Control Plane Upgrades (Sequential)
 
@@ -803,8 +818,8 @@ query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
 07. **NEVER skip health checks** - even for "quick" upgrades
 08. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
 09. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
-10. **NEVER run `task talos:apply` / `topf apply` between Phase 3 and Phase 6** - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet, that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Phase 2b is the sole
-    exception: a minor upgrade applies its migrated config once, before any node is touched
+10. **NEVER run `task talos:apply` / `topf apply` while Phase 3 or Phase 4 is in flight** - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet, that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade
+    the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Steps 2b.3 and 2b.4 are the only sanctioned applies: once before Phase 3, once after Phase 4 completes
 
 ## Timeout Expectations
 
