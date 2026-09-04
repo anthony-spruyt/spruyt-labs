@@ -11,7 +11,7 @@ clusterEndpoint: ref+sops://talenv.sops.yaml#/KUBEAPI_ENDPOINT
 # renovate: depName=ghcr.io/siderolabs/kubelet datasource=docker
 kubernetesVersion: v1.36.4
 # renovate: depName=ghcr.io/siderolabs/installer datasource=docker
-talosVersion: v1.13.9
+talosVersion: v1.13.10
 
 platform: metal
 secureboot: true
