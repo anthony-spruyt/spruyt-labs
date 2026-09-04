@@ -527,6 +527,13 @@ configMaps:
               api_key: os.environ/OPENROUTER_API_KEY
               input_cost_per_token: 0.1
               output_cost_per_token: 0.2
+          - model_name: "x-ai/grok-4.6"
+            litellm_params:
+              model: "x-ai/grok-4.6"
+              api_base: https://openrouter.ai/api/v1
+              api_key: os.environ/OPENROUTER_API_KEY
+              input_cost_per_token: 2.0
+              output_cost_per_token: 6.0
           # --------------------------------------------------------------------------
           # Anthropic: Subscription
           # --------------------------------------------------------------------------
