@@ -22,7 +22,7 @@ func (t *RealTalosClient) Shutdown(ctx context.Context, nodeIP string, force boo
 		return fmt.Errorf("creating Talos client for node %s: %w", nodeIP, err)
 	}
 	defer c.Close()
-	nodeCtx := client.WithNodes(ctx, nodeIP)
+	nodeCtx := client.WithNode(ctx, nodeIP)
 	if err := c.Shutdown(nodeCtx, client.WithShutdownForce(force)); err != nil {
 		return fmt.Errorf("shutting down node %s: %w", nodeIP, err)
 	}
@@ -36,7 +36,7 @@ func (t *RealTalosClient) Ping(ctx context.Context, nodeIP string) error {
 		return fmt.Errorf("creating Talos client for node %s: %w", nodeIP, err)
 	}
 	defer c.Close()
-	nodeCtx := client.WithNodes(ctx, nodeIP)
+	nodeCtx := client.WithNode(ctx, nodeIP)
 	if _, err := c.Version(nodeCtx); err != nil {
 		return fmt.Errorf("pinging Talos node %s: %w", nodeIP, err)
 	}
