@@ -1,0 +1,29 @@
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMNodeScrape
+metadata:
+  name: containerd
+  labels:
+    app.kubernetes.io/instance: victoria-metrics-k8s-stack
+spec:
+  # Plain HTTP on a host port opened by the CRICustomizationConfig in
+  # talos/patches/all/05-configure-containerd.yaml. containerd serves Prometheus
+  # metrics at /v1/metrics, not /metrics.
+  port: "11234"
+  scheme: http
+  path: /v1/metrics
+  interval: 60s
+  scrapeTimeout: 10s
+  selector: {}
+  relabelConfigs:
+    - action: labelmap
+      regex: __meta_kubernetes_node_label_(.+)
+    - replacement: containerd
+      targetLabel: job
+  metricRelabelConfigs:
+    # container_* duplicates the cadvisor node scrape, churns a container_id label on
+    # every restart, and carries containerd's own namespace label (k8s.io, system) into
+    # the cluster-wide namespace label set.
+    - action: drop
+      sourceLabels: [__name__]
+      regex: container_.*

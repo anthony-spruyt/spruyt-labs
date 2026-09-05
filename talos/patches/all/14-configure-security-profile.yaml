@@ -1,6 +1,8 @@
 ---
 apiVersion: v1alpha1
 kind: SecurityProfileConfig
-# Under the sandbox a hostPID pod sees the sandbox namespace, not the host, which
-# breaks irq-balance and kata-tap-qdisc-fix. Enable once those run clean under sandboxd.
+# Under the sandbox a hostPID pod sees the sandbox namespace, not the host. Five
+# daemonsets rely on that: irq-balance-e2, irq-balance-ms-01, kata-tap-qdisc-fix,
+# victoria-metrics-k8s-stack-prometheus-node-exporter and
+# rook-ceph.rbd.csi.ceph.com-nodeplugin. Enable once all five run clean under sandboxd.
 workloadIsolation: false

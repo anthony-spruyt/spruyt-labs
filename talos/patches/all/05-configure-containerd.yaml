@@ -1,15 +1,15 @@
-machine:
-  files:
-    # dont discard unpacked layers for spegel
-    # expose containerd metrics
-    # set log level to warn
-    - op: create
-      path: /etc/cri/conf.d/20-customization.part
-      permissions: 0o644
-      content: |
-        [plugins."io.containerd.cri.v1.images"]
-          discard_unpacked_layers = false
-        [metrics]
-          address = "0.0.0.0:11234"
-        [debug]
-          level = "warn"
+---
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+# The reserved name "customization" maps to the legacy
+# /etc/cri/conf.d/20-customization.part machine file and cannot be used here.
+name: node-defaults
+content: |
+  # Spegel serves layers out of the local content store; discarding them empties it.
+  [plugins."io.containerd.cri.v1.images"]
+    discard_unpacked_layers = false
+  # Scraped by the containerd VMNodeScrape at /v1/metrics, not /metrics.
+  [plugins."io.containerd.server.v1.metrics"]
+    address = "0.0.0.0:11234"
+  [debug]
+    level = "warn"

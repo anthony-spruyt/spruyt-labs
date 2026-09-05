@@ -1,7 +1,9 @@
 {
   "permissions": {
     "deny": [
-      "Read(./talos/clusterconfig/**)"
+      "Read(./talos/clusterconfig/**)",
+      "Read(./talos/output/**)",
+      "Read(/tmp/topf-*/**)"
     ]
   },
   "enabledPlugins": {

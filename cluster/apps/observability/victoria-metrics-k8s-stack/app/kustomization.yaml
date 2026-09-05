@@ -10,6 +10,7 @@ resources:
   - ./alertmanager-credentials.sops.yaml
   - ./alertmanager-config.yaml
   - ./vm-service-scrapes.yaml
+  - ./vm-node-scrapes.yaml
   - ./vmrules
   - ./release.yaml
   - ./vpa.yaml
