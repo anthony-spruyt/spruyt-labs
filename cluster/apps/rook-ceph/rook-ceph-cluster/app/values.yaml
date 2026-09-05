@@ -79,6 +79,15 @@ monitoring:
     # -- Annotations applied to PrometheusRule
     annotations: {}
 cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-cluster-crd.html
+  cephConfig:
+    global:
+      # Default is 2, which is unreachable here: one OSD per host, and the cluster
+      # network is a point-to-point Thunderbolt ring. A single ring link failure is
+      # only observable by the two OSDs on either end, giving one reporter each,
+      # while the third OSD still reaches both and never reports. The mons then
+      # never mark anyone down and writes to the affected PGs block indefinitely
+      # instead of peering on the surviving two replicas (Ref #2781).
+      mon_osd_min_down_reporters: "1"
   priorityClassNames:
     mon: critical-infrastructure
     osd: critical-infrastructure
