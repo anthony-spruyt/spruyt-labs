@@ -1,4 +1,5 @@
-machine:
-  sysctls:
-    net.ipv6.conf.enp1s0.autoconf: "0"
-    net.ipv6.conf.enp1s0.accept_ra: "0"
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+  net.ipv6.conf.enp1s0.autoconf: "0"
+  net.ipv6.conf.enp1s0.accept_ra: "0"
