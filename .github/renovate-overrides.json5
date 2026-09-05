@@ -164,6 +164,19 @@
       "allowedVersions": "<1.27.0"
     },
     {
+      // Both images ship the same upstream curl release to the same app, so a
+      // split would let the two pins drift apart. Ref #2786
+      "description": "Bump both curl images in one PR",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "alpine/curl",
+        "docker.io/curlimages/curl"
+      ],
+      "groupName": "curl"
+    },
+    {
       "description": "Bump the pgvector extension image and the CNPG Database version pin in one PR",
       "matchDatasources": [
         "docker"
