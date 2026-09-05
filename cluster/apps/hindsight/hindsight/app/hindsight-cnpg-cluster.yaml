@@ -7,7 +7,7 @@ metadata:
   annotations:
     # Hindsight application is scaled to 0; keep PVCs, drop the Postgres pods.
     # To bring the cluster back: set to "off", unsuspend the ScheduledBackup,
-    # and re-enable monitoring.enablePodMonitor below.
+    # re-enable monitoring.enablePodMonitor below, and restore wait: true on ks.yaml.
     cnpg.io/hibernation: "on"
 spec:
   imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:899d3ed526b659d77935dde0e6bf2d69dbbf17d3d8c6486ca8cfd04bd3c18533"

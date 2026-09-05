@@ -19,4 +19,7 @@ spec:
     - name: authentik
   prune: true
   timeout: 5m
-  wait: true
+  # A hibernated CNPG cluster never reports Ready, so health checks can only time out,
+  # and traefik-ingress dependsOn this Kustomization. Set back to true when clearing
+  # cnpg.io/hibernation on hindsight-cnpg-cluster.yaml.
+  wait: false
