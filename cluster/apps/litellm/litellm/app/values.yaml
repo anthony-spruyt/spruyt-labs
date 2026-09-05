@@ -503,6 +503,16 @@ configMaps:
             - websearch_interception
             - custom_callbacks.middleware.pipeline_plugin.pipeline_middleware
           drop_params: true
+          # Claude groups fail over to grok-4.6 when Anthropic 429s / remaining errors.
+          fallbacks:
+            - claude-fable-5: ["openrouter/x-ai/grok-4.6"]
+            - claude-opus-5: ["openrouter/x-ai/grok-4.6"]
+            - claude-sonnet-5: ["openrouter/x-ai/grok-4.6"]
+            - claude-haiku-4-5: ["openrouter/x-ai/grok-4.6"]
+            - "anthropic/claude-fable-5": ["openrouter/x-ai/grok-4.6"]
+            - "anthropic/claude-opus-5": ["openrouter/x-ai/grok-4.6"]
+            - "anthropic/claude-sonnet-5": ["openrouter/x-ai/grok-4.6"]
+            - "anthropic/claude-haiku-4-5": ["openrouter/x-ai/grok-4.6"]
           websearch_interception_params:
             enabled_providers:
               - anthropic
