@@ -308,7 +308,7 @@ Refresh local client credentials with `task talos:talosconfig` if drift stems fr
 
 | Hardware class            | Schematic ID                                                       | SecureBoot ISO                                                                                                                                  | Upgrade image                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Bossgame E2 control plane | `9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d` | [Download](https://factory.talos.dev/image/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d/v1.13.9/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d:v1.13.9` |
+| Bossgame E2 control plane | `9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d` | [Download](https://factory.talos.dev/image/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d/v1.14.0/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d:v1.14.0` |
 
 Your image schematic ID is: `9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d`
 
@@ -334,7 +334,7 @@ customization:
       - siderolabs/util-linux-tools
 ```
 
-| MS-01 worker | `1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1` | [Download](https://factory.talos.dev/image/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1/v1.13.9/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1:v1.13.9` |
+| MS-01 worker | `1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1` | [Download](https://factory.talos.dev/image/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1/v1.14.0/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1:v1.14.0` |
 
 Your image schematic ID is: `1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1`
 
@@ -361,7 +361,7 @@ customization:
 
 <!-- markdownlint-enable MD013 -->
 
-Additional asset: SecureBoot UKI – <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.13.9/metal-amd64-secureboot-uki.efi>
+Additional asset: SecureBoot UKI – <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.14.0/metal-amd64-secureboot-uki.efi>
 
 ## References
 
