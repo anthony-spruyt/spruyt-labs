@@ -135,13 +135,20 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "Gateway API CRDs follow Cilium's supported version, so bumps need review",
+      // The Talos extra-manifest URL and the Flux GitRepository tag pin the same
+      // upstream release through different managers. Split PRs would let the CRDs
+      // Talos applies drift from the ones Flux reconciles. Ref #2778
+      "description": "Bump the Gateway API extra manifest and the Flux GitRepository tag in one PR; CRDs follow Cilium's supported version, so bumps need review",
       "matchDatasources": [
         "github-tags"
       ],
       "matchPackageNames": [
         "kubernetes-sigs/gateway-api"
       ],
+      // Do not add a group.branchTopic carrying newVersion: the regex manager
+      // renders 1.6.2 while the Flux manager renders v1.6.2, which would split
+      // the group back into two PRs.
+      "groupName": "gateway-api",
       "dependencyDashboardApproval": true
     },
     {
