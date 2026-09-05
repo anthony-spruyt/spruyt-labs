@@ -4,6 +4,12 @@ machine:
     net.core.default_qdisc: fq
     net.ipv4.tcp_congestion_control: bbr
     net.ipv4.tcp_fastopen: 3
+    # Without this the kernel keeps selecting routes on a link that has lost carrier
+    # but is still IFF_UP, so the Thunderbolt ring's metric 2048 routes would win over
+    # the LAN fallback routes in patches/node/ms-01-*/03-configure-vlan.yaml.tpl and
+    # traffic would black-hole instead of failing over.
+    net.ipv4.conf.all.ignore_routes_with_linkdown: 1
+    net.ipv4.conf.default.ignore_routes_with_linkdown: 1
     net.ipv4.tcp_mtu_probing: 1 # Jumbo frames
     net.ipv4.tcp_rmem: 4096 87380 33554432
     net.ipv4.tcp_window_scaling: 1

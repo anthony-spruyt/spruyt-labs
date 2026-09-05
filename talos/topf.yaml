@@ -25,6 +25,11 @@ secretsPath: talsecret.sops.yaml
 data:
   clusterDomain: ref+sops://talenv.sops.yaml#/CLUSTER_DOMAIN
   gateway: ref+sops://talenv.sops.yaml#/GATEWAY_IP4
+  # Worker LAN addresses, consumed as route gateways by the Thunderbolt ring
+  # fallback routes in patches/node/ms-01-*/03-configure-vlan.yaml.tpl.
+  ms011Ip4: ref+sops://talenv.sops.yaml#/MS_01_1_IP4
+  ms012Ip4: ref+sops://talenv.sops.yaml#/MS_01_2_IP4
+  ms013Ip4: ref+sops://talenv.sops.yaml#/MS_01_3_IP4
   kubeapiVip: ref+sops://talenv.sops.yaml#/KUBEAPI_VIP
   nodeCidr: ref+sops://talenv.sops.yaml#/CLUSTER_NODE_CIDR_IP4
   podCidr: ref+sops://talenv.sops.yaml#/CLUSTER_POD_CIDR_IP4
