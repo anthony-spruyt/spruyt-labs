@@ -503,16 +503,6 @@ configMaps:
             - websearch_interception
             - custom_callbacks.middleware.pipeline_plugin.pipeline_middleware
           drop_params: true
-          # Claude groups fail over to grok-4.6 when Anthropic 429s / remaining errors.
-          fallbacks:
-            - claude-fable-5: ["openrouter/x-ai/grok-4.6"]
-            - claude-opus-5: ["openrouter/x-ai/grok-4.6"]
-            - claude-sonnet-5: ["openrouter/x-ai/grok-4.6"]
-            - claude-haiku-4-5: ["openrouter/x-ai/grok-4.6"]
-            - "anthropic/claude-fable-5": ["openrouter/x-ai/grok-4.6"]
-            - "anthropic/claude-opus-5": ["openrouter/x-ai/grok-4.6"]
-            - "anthropic/claude-sonnet-5": ["openrouter/x-ai/grok-4.6"]
-            - "anthropic/claude-haiku-4-5": ["openrouter/x-ai/grok-4.6"]
           websearch_interception_params:
             enabled_providers:
               - anthropic
@@ -599,6 +589,17 @@ configMaps:
               api_key: os.environ/OPENAI_API_KEY
         router_settings:
           enable_weighted_failover: true
+          # Keys are model groups as the client sends them (alias) and after alias
+          # resolve (anthropic/*). litellm_settings.fallbacks never reach Router.
+          fallbacks:
+            - claude-fable-5: ["openrouter/x-ai/grok-4.6"]
+            - claude-opus-5: ["openrouter/x-ai/grok-4.6"]
+            - claude-sonnet-5: ["openrouter/x-ai/grok-4.6"]
+            - claude-haiku-4-5: ["openrouter/x-ai/grok-4.6"]
+            - "anthropic/claude-fable-5": ["openrouter/x-ai/grok-4.6"]
+            - "anthropic/claude-opus-5": ["openrouter/x-ai/grok-4.6"]
+            - "anthropic/claude-sonnet-5": ["openrouter/x-ai/grok-4.6"]
+            - "anthropic/claude-haiku-4-5": ["openrouter/x-ai/grok-4.6"]
           model_group_alias:
             # "gpt-5.5": "chatgpt/gpt-5.5"
             # "gpt-5.4": "chatgpt/gpt-5.4"
