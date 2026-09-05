@@ -1,13 +1,7 @@
-{{- /*
-v1.14 split .machine.kubelet: the kubelet itself moves to KubeletConfig, while nodeIP
-moves to KubeNodeConfig alongside labels and taints.
-*/ -}}
-{{- if semverCompare ">=1.14.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
 ---
 apiVersion: v1alpha1
 kind: KubeletConfig
-# KubeletConfig hardcodes DisableManifestsDirectory to true, so the v1alpha1 setting
-# has no key here and the behaviour carries over unchanged.
+# KubeletConfig hardcodes DisableManifestsDirectory to true, so there is no key for it here.
 defaultRuntimeSeccompProfileEnabled: true
 # https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options
 extraArgs:
@@ -51,48 +45,3 @@ kind: KubeNodeConfig
 nodeIP:
   validSubnets:
     - {{ .Data.nodeCidr }}
-{{- else }}
-machine:
-  kubelet:
-    defaultRuntimeSeccompProfileEnabled: true
-    disableManifestsDirectory: true
-    # https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options
-    extraArgs:
-      logging-format: json # Deprecated, needs to be moved to config file IE --config string
-    # https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration
-    extraConfig:
-      imageGCHighThresholdPercent: 70
-      imageGCLowThresholdPercent: 60
-      imageMaximumGCAge: "168h"
-      maxParallelImagePulls: 10
-      maxPods: 150
-      serializeImagePulls: false
-      serverTLSBootstrap: true
-      shutdownGracePeriod: 60s
-      shutdownGracePeriodCriticalPods: 30s
-      # Container log rotation
-      containerLogMaxSize: "50Mi"
-      containerLogMaxFiles: 3
-      # Soft eviction thresholds (warning with grace period)
-      evictionSoft:
-        memory.available: "500Mi"
-        nodefs.available: "15%"
-        imagefs.available: "20%"
-      evictionSoftGracePeriod:
-        memory.available: "2m"
-        nodefs.available: "5m"
-        imagefs.available: "5m"
-      # Hard eviction thresholds
-      evictionHard:
-        memory.available: "200Mi"
-        nodefs.available: "10%"
-        imagefs.available: "15%"
-      # Minimum reclaim amounts when evicting
-      evictionMinimumReclaim:
-        memory.available: "100Mi"
-        nodefs.available: "1Gi"
-        imagefs.available: "2Gi"
-    nodeIP:
-      validSubnets:
-        - {{ .Data.nodeCidr }}
-{{- end }}

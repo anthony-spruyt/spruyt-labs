@@ -1,4 +1,3 @@
-{{- if semverCompare ">=1.14.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}
 ---
 apiVersion: v1alpha1
 kind: KubeControllerManagerConfig
@@ -9,12 +8,3 @@ apiVersion: v1alpha1
 kind: KubeSchedulerConfig
 extraArgs:
   bind-address: 0.0.0.0
-{{- else }}
-cluster:
-  controllerManager:
-    extraArgs:
-      bind-address: 0.0.0.0
-  scheduler:
-    extraArgs:
-      bind-address: 0.0.0.0
-{{- end }}
