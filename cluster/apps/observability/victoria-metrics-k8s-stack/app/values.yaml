@@ -398,8 +398,10 @@ kubeEtcd:
   enabled: true
   service:
     enabled: true
-    port: 2379
-    targetPort: 2379
+    # Talos v1.14 moved etcd's HTTP endpoints (/metrics, /health) to a dedicated
+    # listener so gRPC stays off Go's net/http HTTP/2 server; 2379 is gRPC-only now.
+    port: 2383
+    targetPort: 2383
     selector:
       component: kube-controller-manager # instead of using hardcoded IP endpoints,
       # this is a trick borrowed from from https://github.com/siderolabs/talos/discussions/7214#discussioncomment-10255876
