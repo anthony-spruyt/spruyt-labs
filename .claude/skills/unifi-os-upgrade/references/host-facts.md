@@ -443,6 +443,34 @@ docker ps  Status="Up 3 months"  RunningFor="23 minutes ago"
 
 The same artifact explains why the old `uosserver.service` reported "active since 2026-06-06; 3 months 1 day ago" while `uptime` said 19 h — see Phase 0. Trust `RunningFor` / `uptime`, not `Status`. Harmless; no action taken.
 
+## Host hardening (applied 2026-09-06)
+
+| Change            | State                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| SSH password auth | disabled — `/etc/ssh/sshd_config.d/10-hardening.conf`, key-only, `PermitRootLogin no`, `MaxAuthTries 3` |
+| `fail2ban`        | enabled, `sshd` jail, systemd backend, nftables ban action, `bantime 1h`, `maxretry 5`                  |
+| `ufw`             | active, default deny incoming, `limit` on 22/tcp, explicit allows for all 10 UniFi ports                |
+| Container privs   | unchanged — not privileged, `docker-default` AppArmor, only `CAP_NET_ADMIN` + `CAP_NET_RAW`             |
+
+`fail2ban`'s `ignoreip` allowlists the admin workstation subnet and both Docker bridges, so an operator fumbling keys cannot lock themselves out of a headless box. Bans expire after an hour regardless.
+
+Verified after the change: fresh key-only SSH succeeds, password auth returns `Permission denied (publickey)`, `https://localhost:11443` returns 200, `/inform` returns 400, and both are still reachable from the admin workstation across subnets.
+
+### Adding a port later
+
+`ufw` is now active, so a new published port needs a matching rule or it will work from the host and fail from the network:
+
+```bash
+ssh unifi 'sudo ufw allow <PORT>/<PROTO> comment "unifi-os"'
+```
+
+Caveat: `ufw` does **not** filter Docker-published ports — Docker's iptables rules are evaluated first. The rules above document intent and protect host services such as SSH. To genuinely restrict the UniFi ports by source, add `DOCKER-USER` rules, which requires knowing the VLAN layout of the AP subnets.
+
+### Unpatched OS
+
+The host runs Ubuntu 25.10 (`questing`), which reached end of life on 2026-07-09. `unattended-upgrades` is enabled and active but reports zero pending updates because no further security updates are published for this release — it looks healthy and patches nothing. `do-release-upgrade` refuses with "Your Ubuntu release is not supported anymore." Upgrading to the 26.04 LTS series is outstanding;
+see below.
+
 ## Rollback status (still available)
 
 The 4.2.23 install remains intact and stopped on disk. To revert:
@@ -459,4 +487,6 @@ Keep it until the 5.1.40 stack has run clean for a while. `uosserver-purge` recl
 1. **The native 4.2.23 install stays until roughly December 2026** — user decision, 2026-09-06. It is stopped and disabled and costs ~4 GB on a disk with 209 G free. It is the one-minute rollback path, so do not remove it early. When the time comes, `uosserver-purge` is the documented uninstaller (`uosserver` itself has no `uninstall` subcommand); its behaviour has never been verified, so probe it
    for a help/dry-run flag first.
 2. **Off-box backups are handled by UniFi cloud** — automatic, weekly. The Phase 5 restore was done straight from a cloud backup listed in the setup wizard, so this path is proven, not assumed. The local copies in `/home/aspruyt/uos-migration-backups/` are a manual belt-and-braces layer, mainly for the 4.x-era artifacts that cloud will not hold once 4.2.23 is purged.
-3. **The compose file lives only on the Pi**, not in git. Renovate was considered and dropped — it would open a PR but nothing on the Pi watches for merges, so it would notify without deploying. Upgrades are driven by this skill instead.
+3. **The host OS is past end of life.** Ubuntu 25.10 stopped receiving security updates on 2026-07-09. The fix is `do-release-upgrade` to the 26.04 LTS series, which needs a sources swap because the release is already unsupported. Nothing on this host is internet-exposed, so this is drift rather than an emergency, but it only gets worse. Bind-mounted data in `/srv/uos/` and the pinned image mean
+   the container itself is indifferent to the host version.
+4. **The compose file lives only on the Pi**, not in git. Renovate was considered and dropped — it would open a PR but nothing on the Pi watches for merges, so it would notify without deploying. Upgrades are driven by this skill instead.

@@ -164,7 +164,8 @@ If present, that is a last-resort fallback — see `references/host-facts.md`. I
 - **The Pi has no RTC.** It boots with a stale clock, so `docker ps` reports nonsense uptimes like "Up 3 months" for a container started minutes ago. Trust `RunningFor` and `uptime`, not `Status`.
 - **The old install's podman runs rootless as user `uosserver`.** `sudo podman ps` as root shows nothing. Use `sudo -u uosserver env HOME=/home/uosserver XDG_RUNTIME_DIR=/run/user/1001 podman ps -a`.
 - **Do not run `stat -fc %T /sys/fs/cgroup/`** — it prints `UNKNOWN (0x63677270)` on this host, which IS `CGROUP2_SUPER_MAGIC` and is a pass. Test `/sys/fs/cgroup/cgroup.controllers` exists instead.
-- **This is Ubuntu, not Raspberry Pi OS.** No `dphys-swapfile`. Use Docker's Ubuntu repo.
+- **This is Ubuntu, not Raspberry Pi OS.** No `dphys-swapfile`. Use Docker's Ubuntu repo. The release is past end of life — see `references/host-facts.md`.
+- **`ufw` is active and SSH is key-only.** A newly published port needs `sudo ufw allow <PORT>/<PROTO>` or it will answer on `localhost` and fail from the network. Never re-enable `PasswordAuthentication`.
 - **Do not add Watchtower or any unattended auto-updater.** Unattended pulls on a network controller are how you discover a bad release at 3am.
 - Application updates (Network, InnerSpace, Protect) are **separate** from the container image and are applied from the UI: Settings → Control Plane → Updates.
 
