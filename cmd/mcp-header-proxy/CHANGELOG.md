@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.11](https://github.com/anthony-spruyt/spruyt-labs/compare/mcp-header-proxy/v0.0.10...mcp-header-proxy/v0.0.11) (2026-09-08)
+
+
+### Dependencies
+
+* **deps:** update container image golang to v1.26.8 ([#2807](https://github.com/anthony-spruyt/spruyt-labs/issues/2807)) ([ee757ce](https://github.com/anthony-spruyt/spruyt-labs/commit/ee757ced515583ba4a6496121a433b9840706daf))
+* **deps:** update go module directive to v1.26.8 ([#2749](https://github.com/anthony-spruyt/spruyt-labs/issues/2749)) ([69d23ba](https://github.com/anthony-spruyt/spruyt-labs/commit/69d23bac88dc7155414b200380407635be47c980))
+
 ## [0.0.10](https://github.com/anthony-spruyt/spruyt-labs/compare/mcp-header-proxy/v0.0.9...mcp-header-proxy/v0.0.10) (2026-08-28)
 
 
