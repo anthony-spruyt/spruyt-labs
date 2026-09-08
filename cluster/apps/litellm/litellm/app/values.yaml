@@ -87,6 +87,13 @@ controllers:
           GENERIC_TOKEN_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/token/"
           GENERIC_USER_ROLE_ATTRIBUTE: litellm_role
           GENERIC_USERINFO_ENDPOINT: "https://auth.${EXTERNAL_DOMAIN}/application/o/userinfo/"
+          # Same value as the sidecar's HEADROOM_PROXY_TOKEN - one secret key,
+          # two names.
+          HEADROOM_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: HEADROOM_API_KEY
           # Recall runs inline in the pre-call hook; it grows with bank size
           # (rerank over all facts). At ~30 facts it takes 2.4-3.5s, exceeding
           # the plugin's 3.0s default and tripping fail-open (no injection).
@@ -366,6 +373,93 @@ controllers:
             drop:
               - ALL
 
+  headroom:
+    type: deployment
+    replicas: 1
+    # RWO cache volume - a surge pod cannot attach it while the old pod holds it.
+    strategy: Recreate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+    containers:
+      headroom:
+        image:
+          repository: ghcr.io/headroomlabs-ai/headroom
+          tag: 0.37.0-nonroot@sha256:73c176f288bdc2586341606204f1e5e8ea7ce514d8431fd479c010065c24dd71
+          pullPolicy: IfNotPresent
+        env:
+          # /v1/compress carries a loopback-only dependency without this, so
+          # every call from the proxy 404s. Unlocks only that route.
+          HEADROOM_COMPRESS_ALLOW_REMOTE: "1"
+          # User/system rows are skipped by default, and Anthropic-format
+          # requests translate to user-role - most traffic would pass through
+          # uncompressed.
+          HEADROOM_COMPRESS_USER_MESSAGES: "1"
+          # /readyz HEAD-probes the provider API otherwise. Nothing here
+          # proxies to a provider, so the pod would never go ready.
+          HEADROOM_SKIP_UPSTREAM_CHECK: "1"
+          HEADROOM_TELEMETRY: "off"
+          HEADROOM_WORKSPACE_DIR: /app/.cache/headroom
+          HF_HOME: /app/.cache/huggingface
+          HEADROOM_PROXY_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: HEADROOM_API_KEY
+        probes:
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /readyz
+                port: 8787
+              periodSeconds: 10
+              timeoutSeconds: 5
+              # 300s window sized for a cold cache: the artifact is fetched
+              # from the Hub before the pod goes ready.
+              failureThreshold: 30
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /livez
+                port: 8787
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /readyz
+                port: 8787
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+
 service:
   litellm:
     controller: litellm
@@ -390,6 +484,12 @@ service:
     ports:
       http:
         port: 8000
+        protocol: TCP
+  headroom:
+    controller: headroom
+    ports:
+      http:
+        port: 8787
         protocol: TCP
 
 configMaps:
@@ -493,6 +593,16 @@ configMaps:
               default_on: false
               skip_system_message_in_guardrail: true
               api_base: http://litellm-llm-guard.litellm.svc.cluster.local:8000
+          - guardrail_name: headroom-compression
+            litellm_params:
+              guardrail: headroom
+              mode: pre_call
+              default_on: false
+              api_base: http://litellm-headroom.litellm.svc.cluster.local:8787
+              api_key: os.environ/HEADROOM_API_KEY
+              # Default (fail_closed) 502s every opted-in request when the
+              # sidecar is down. Compression is an optimisation, not a gate.
+              unreachable_fallback: fail_open
         litellm_settings:
           cache: true
           cache_params:
@@ -679,6 +789,13 @@ persistence:
       llm-guard:
         llm-guard:
           - path: /app/.cache/huggingface
+  headroom-cache:
+    type: persistentVolumeClaim
+    existingClaim: headroom-cache
+    advancedMounts:
+      headroom:
+        headroom:
+          - path: /app/.cache
   custom-callbacks-workdir:
     type: emptyDir
     advancedMounts:

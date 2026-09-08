@@ -83,6 +83,36 @@ print(urllib.request.urlopen(req).read().decode()[:100])
 "
 ```
 
+### Headroom Context Compression
+
+The `headroom` controller is a compression sidecar. The proxy never routes traffic to it — the `headroom-compression` guardrail POSTs the message array to its `/v1/compress` during the `pre_call` hook and substitutes the returned messages before forwarding upstream.
+
+It is **opt-in** (`default_on: false`). Attach it to a virtual key:
+
+```bash
+curl -X POST "http://litellm.litellm.svc.cluster.local:4000/key/update" \
+  -H "Authorization: Bearer <LITELLM_MASTER_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "sk-...", "guardrails": ["headroom-compression"]}'
+```
+
+Or per request — `"guardrails": ["headroom-compression"]` in an OpenAI-format body, or `"litellm_metadata": {"guardrails": [...]}` on `/v1/messages`, which has no top-level guardrails field. Send header `x-headroom-bypass: true` to skip compression for one call.
+
+Verify it ran via the `x-litellm-applied-guardrails: headroom-compression` response header, or the `guardrail_information` field on the spend log row.
+
+Deployment notes not covered by the upstream guide, both confirmed against the sidecar source:
+
+| Setting                             | Why it is required                                                                                                                                        |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HEADROOM_COMPRESS_ALLOW_REMOTE=1`  | `/v1/compress` carries a loopback-only dependency by default, so an in-cluster caller gets 404. Only this route is exposed; inbound auth still applies.   |
+| `HEADROOM_SKIP_UPSTREAM_CHECK=1`    | `/readyz` HEAD-probes the upstream provider API. Nothing here proxies to a provider, so the check would keep the pod permanently unready.                 |
+| `HEADROOM_COMPRESS_USER_MESSAGES=1` | User/system rows are skipped by default. Anthropic-format requests translate to user-role rows, so without this most traffic passes through uncompressed. |
+| `HEADROOM_WORKSPACE_DIR`            | Relocates the read-write state root off `$HOME` onto the cache PVC.                                                                                       |
+
+Messages carrying an Anthropic `cache_control` marker are never compressed — there is no override, because rewriting them would break prompt-cache prefix matching.
+
+`unreachable_fallback: fail_open` is deliberate: the upstream default (`fail_closed`) turns an unreachable sidecar into a 502 on every opted-in request. Compression is an optimisation, so a failure should cost tokens, not availability.
+
 ### Known Issues
 
 | Issue                 | Description                                            | Mitigation                                      |
@@ -117,6 +147,8 @@ LiteLLM PyPI versions 1.82.7-1.82.8 were compromised. **NEVER install from PyPI.
 ## References
 
 - [LiteLLM Documentation](https://docs.litellm.ai/)
+- [LiteLLM Headroom Guardrail](https://docs.litellm.ai/docs/proxy/headroom)
+- [Headroom](https://github.com/headroomlabs-ai/headroom)
 - [LiteLLM DashScope Provider](https://docs.litellm.ai/docs/providers/dashscope)
 - [Alibaba Cloud Model Studio](https://www.alibabacloud.com/en/product/model-studio)
 - [Claude Code LLM Gateway Docs](https://code.claude.com/docs/en/llm-gateway)
