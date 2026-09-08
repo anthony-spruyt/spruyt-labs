@@ -603,6 +603,14 @@ configMaps:
               # Default (fail_closed) 502s every opted-in request when the
               # sidecar is down. Compression is an optimisation, not a gate.
               unreachable_fallback: fail_open
+              # Retrieval cannot work in a sidecar deployment: /v1/retrieve is
+              # loopback-only with no remote opt-in, and the guardrail never
+              # sets config.mode=ccr, so the service returns ccr_hashes: [].
+              # Upstream defaults this to true - left on, the retrieve tool
+              # gets injected on hashes that can never resolve, costing a
+              # billed round trip per turn. Ignored until BerriAI/litellm#39974
+              # ships (not in v1.100.0), which is why it is set now.
+              ccr_retrieval: false
         litellm_settings:
           cache: true
           cache_params:

@@ -111,6 +111,15 @@ Deployment notes not covered by the upstream guide, both confirmed against the s
 
 Messages carrying an Anthropic `cache_control` marker are never compressed — there is no override, because rewriting them would break prompt-cache prefix matching.
 
+**Compression here is one-way and lossy.** Headroom has a retrieval path (CCR): it can leave a `hash=` marker in place of dropped content and inject a `headroom_retrieve` tool so the model can ask for the original. That path cannot work in this deployment — `/v1/retrieve` is loopback-only with no remote opt-in, and the guardrail never sends `config.mode=ccr`, so the service reports
+`ccr_hashes: []`. Anything compressed away is gone for that request; budget for that when choosing which keys opt in.
+
+`ccr_retrieval: false` is set for that reason. Upstream defaults it to `true`, which would inject the retrieval tool for hashes that can never resolve — costing a billed model round trip per turn to answer `not found or expired`. The field does not exist in v1.100.0 and is silently ignored (`LitellmParams` allows extra keys); it is set ahead of time so the correct behaviour applies automatically
+when [BerriAI/litellm#39974](https://github.com/BerriAI/litellm/pull/39974) ships.
+
+> **Known issue on v1.100.0:** the deployed version finds retrieval hashes by regex-scanning message text for `hash=<hex>`, so a git SHA in a tool result can register a bogus hash. Verified against the running sidecar: a `hash=`-shaped commit SHA survives compression while `ccr_hashes` comes back empty. It is inert today only because the guardrail is opt-in and `/v1/retrieve` is unreachable.
+> #39974 replaces the regex with service-declared hashes.
+
 `unreachable_fallback: fail_open` is deliberate: the upstream default (`fail_closed`) turns an unreachable sidecar into a 502 on every opted-in request. Compression is an optimisation, so a failure should cost tokens, not availability.
 
 ### Known Issues
