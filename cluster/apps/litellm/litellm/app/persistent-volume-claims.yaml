@@ -38,3 +38,23 @@ spec:
   resources:
     requests:
       storage: 5Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/persistentvolumeclaim.json
+# HF cache + workspace root for headroom. The Kompress ONNX artifact is not
+# baked into the image, so without this it re-downloads from the Hub on every
+# restart, inside the startup probe window.
+#
+# RWO block for the same reasons as llm-guard-hf-cache above. Delete reclaim —
+# the cache regenerates itself from the Hub.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: headroom-cache
+  namespace: litellm
+spec:
+  storageClassName: rbd-fast-delete
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
