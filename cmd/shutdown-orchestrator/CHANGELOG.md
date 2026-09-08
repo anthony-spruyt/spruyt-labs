@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.20](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.19...shutdown-orchestrator/v1.1.20) (2026-09-08)
+
+
+### Dependencies
+
+* **deps:** update container image golang to v1.26.8 ([#2807](https://github.com/anthony-spruyt/spruyt-labs/issues/2807)) ([ee757ce](https://github.com/anthony-spruyt/spruyt-labs/commit/ee757ced515583ba4a6496121a433b9840706daf))
+* **deps:** update go module directive to v1.26.8 ([#2749](https://github.com/anthony-spruyt/spruyt-labs/issues/2749)) ([69d23ba](https://github.com/anthony-spruyt/spruyt-labs/commit/69d23bac88dc7155414b200380407635be47c980))
+
 ## [1.1.19](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.18...shutdown-orchestrator/v1.1.19) (2026-09-04)
 
 
