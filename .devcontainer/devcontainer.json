@@ -36,7 +36,7 @@
       "version": "1.27.1"
     },
     "ghcr.io/devcontainers/features/terraform": {
-      "version": "1.16.0"
+      "version": "1.16.1"
     },
     "ghcr.io/devcontainers-extra/features/renovate-cli": {
       "version": "44.52.1"
