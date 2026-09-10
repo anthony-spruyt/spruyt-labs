@@ -7,14 +7,14 @@ Registers the `kata` `RuntimeClass` so pods opt into VM-level isolation via Kata
 ## Prerequisites
 
 - `kube-system` namespace (this Kustomization targets it)
-- `siderolabs/kata-containers` Talos system extension installed on at least one node (declared in `talos/schematics/ms-01.yaml`)
-- Node labeled `kata.spruyt-labs/ready: "true"` via `machine.nodeLabels` in `talos/patches/worker/08-configure-node-labels.yaml` (not `kubectl label`)
+- `siderolabs/kata-containers` Talos system extension installed on the worker nodes (declared in `talos/schematics/ms-01.yaml`)
+- Nodes labeled `kata.spruyt-labs/ready: "true"` via `machine.nodeLabels` in `talos/patches/worker/08-configure-node-labels.yaml` (not `kubectl label`)
 
 ## Operation
 
-### Pilot scope
+### Node scope
 
-Only `ms-01-3` runs the Kata-enabled schematic and carries the `kata.spruyt-labs/ready` label. The RuntimeClass's `scheduling.nodeSelector` pins Kata pods to that node.
+All three `ms-01` workers run the Kata-enabled schematic and carry the `kata.spruyt-labs/ready` label. The RuntimeClass's `scheduling.nodeSelector` pins Kata pods to that pool.
 
 ### Adopt Kata for a workload
 
@@ -34,7 +34,7 @@ kubectl get runtimeclass kata -o yaml
 kubectl get nodes -l kata.spruyt-labs/ready=true
 ```
 
-### Promote to more nodes
+### Extend to a node outside the `ms-01` pool
 
 1. Add `siderolabs/kata-containers` to the target node's schematic under `talos/schematics/`
 2. Add `kata.spruyt-labs/ready: "true"` to a `machine.nodeLabels` patch that covers the node
