@@ -28,7 +28,7 @@ misconfigurations:
   # kata-tap-qdisc-fix - setns() into host-owned netns requires hostNetwork,
   # hostPID, runAsRoot + NET_ADMIN/SYS_ADMIN. Defence in depth: cap-drop ALL,
   # readOnlyRootFilesystem, denyall-egress CNP, deterministic regex-gated
-  # inputs, single-node scope via nodeSelector kata.spruyt-labs/ready=true.
+  # inputs, scoped via nodeSelector kata.spruyt-labs/ready=true.
   - id: AVD-KSV-0008
     paths:
       - cluster/apps/kube-system/kata-tap-qdisc-fix/app/values.yaml
