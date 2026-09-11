@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.51](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.50...agent-queue-worker/v3.3.51) (2026-09-11)
+
+
+### Dependencies
+
+* **deps:** update container image node to 24-alpine ([#2814](https://github.com/anthony-spruyt/spruyt-labs/issues/2814)) ([6f57eeb](https://github.com/anthony-spruyt/spruyt-labs/commit/6f57eebaa8c6c82942428816d214d6f672c0eb7e))
+* **deps:** update dependency @biomejs/biome to v2.5.12 ([#2817](https://github.com/anthony-spruyt/spruyt-labs/issues/2817)) ([965a06c](https://github.com/anthony-spruyt/spruyt-labs/commit/965a06c7d113bc59c638b6bce38023d2078c296a))
+
 ## [3.3.50](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.49...agent-queue-worker/v3.3.50) (2026-08-31)
 
 
