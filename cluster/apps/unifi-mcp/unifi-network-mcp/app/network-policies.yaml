@@ -1,0 +1,45 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to the UniFi controller, which runs outside the cluster on the LAN
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-unifi-controller-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: unifi-network-mcp
+  egress:
+    - toCIDRSet:
+        - cidr: ${UNIFI_IP4}/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow ingress from LiteLLM MCP gateway.
+# The MCP listener has no inbound authentication of its own (verified against
+# 0.32.6) — this policy is the only thing standing between an unauthenticated
+# caller and full read access to the UniFi controller. Do not widen it.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-litellm-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: unifi-network-mcp
+  ingress:
+    - fromEndpoints:
+        # The controller label is load-bearing: llm-guard and the presidio
+        # sidecars also carry app.kubernetes.io/name: litellm, and those are the
+        # pods handling untrusted model input. Only the proxy itself may connect.
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: litellm
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
