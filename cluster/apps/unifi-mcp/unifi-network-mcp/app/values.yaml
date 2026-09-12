@@ -116,7 +116,10 @@ controllers:
             spec:
               tcpSocket:
                 port: 3000
-              failureThreshold: 30
+              # The app connects to the controller before binding the listener,
+              # retrying 3x for ~156s when unreachable. A budget under that kills
+              # the pod moments before it would have become ready.
+              failureThreshold: 90
               periodSeconds: 5
 persistence:
   tmp:
