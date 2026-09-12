@@ -53,6 +53,7 @@ resources:
   - ./agent-worker-system
   - ./brave-search-mcp
   - ./n8n-mcp
+  - ./unifi-mcp
   - ./vpa-system
   - ./hindsight
   # - ./snmp

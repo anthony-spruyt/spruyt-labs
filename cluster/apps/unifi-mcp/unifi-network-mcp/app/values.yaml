@@ -1,0 +1,135 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  unifi-network-mcp:
+    strategy: Recreate
+    containers:
+      app:
+        # On version bump: check whether upstream added inbound auth to the MCP
+        # listener (transport.py -> run_http). It has none as of 0.32.6, so the
+        # CiliumNetworkPolicy is the only boundary. See README "No inbound
+        # authentication". Renovate will not flag this.
+        image:
+          repository: ghcr.io/sirkirby/unifi-network-mcp
+          tag: 0.32.6@sha256:d45fd9ee9006bbab15d79b6813f27f374a8cd11a2ec8e430125cf1dd91f5ac21
+          pullPolicy: IfNotPresent
+        env:
+          - name: HOME
+            value: /home/app
+          # Upstream default is 127.0.0.1, which is unreachable from the pod network.
+          - name: UNIFI_MCP_HOST
+            value: "0.0.0.0"
+          # HTTP binds only when the app is PID 1. Never set command/args here —
+          # a wrapper would make it PID 2 and the listener silently never starts.
+          - name: UNIFI_MCP_HTTP_ENABLED
+            value: "true"
+          - name: UNIFI_MCP_HTTP_TRANSPORT
+            value: "streamable-http"
+          - name: UNIFI_MCP_PORT
+            value: "3000"
+          # Default is localhost,127.0.0.1 — rejects the Host header LiteLLM sends.
+          # Entries MUST carry the :3000 port suffix. Upstream docs claim bare hostnames
+          # normalise to host:*, but verified against 0.32.6 they return 421.
+          - name: UNIFI_MCP_ALLOWED_HOSTS
+            value: "unifi-network-mcp.unifi-mcp.svc:3000,unifi-network-mcp.unifi-mcp.svc.${CLUSTER_DOMAIN}:3000,unifi-network-mcp:3000,localhost:3000,127.0.0.1:3000"
+          - name: UNIFI_MCP_ENABLE_DNS_REBINDING_PROTECTION
+            value: "true"
+          - name: UNIFI_MCP_LOG_LEVEL
+            value: "INFO"
+          - name: UNIFI_TOOL_REGISTRATION_MODE
+            value: "lazy"
+          - name: UNIFI_REDACT_SENSITIVE_FIELDS
+            value: "true"
+          # A typo in any UNIFI_POLICY_* name fails open — check startup logs for
+          # "[policy] Unrecognized env var" after changing these.
+          - name: UNIFI_POLICY_CREATE
+            value: "false"
+          - name: UNIFI_POLICY_UPDATE
+            value: "false"
+          - name: UNIFI_POLICY_DELETE
+            value: "false"
+          - name: UNIFI_NETWORK_SITE
+            value: "default"
+          - name: UNIFI_NETWORK_PORT
+            value: "443"
+          - name: UNIFI_NETWORK_VERIFY_SSL
+            value: "false"
+          - name: UNIFI_NETWORK_HOST
+            value: "${UNIFI_IP4}"
+          - name: UNIFI_NETWORK_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: unifi-network-mcp-secrets
+                key: UNIFI_NETWORK_USERNAME
+          - name: UNIFI_NETWORK_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: unifi-network-mcp-secrets
+                key: UNIFI_NETWORK_PASSWORD
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 1024Mi
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 3000
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 3000
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 3000
+              failureThreshold: 30
+              periodSeconds: 5
+persistence:
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+  home:
+    type: emptyDir
+    globalMounts:
+      - path: /home/app
+service:
+  app:
+    controller: unifi-network-mcp
+    ports:
+      http:
+        port: 3000
