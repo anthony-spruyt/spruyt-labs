@@ -13,8 +13,10 @@ spec:
     - toCIDRSet:
         - cidr: ${UNIFI_IP4}/32
       toPorts:
+        # UniFi OS Server publishes the UI on host 11443; host 443 is unused.
+        # Must stay in sync with UNIFI_NETWORK_PORT in values.yaml.
         - ports:
-            - port: "443"
+            - port: "11443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json

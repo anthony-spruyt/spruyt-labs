@@ -61,8 +61,11 @@ controllers:
             value: "false"
           - name: UNIFI_NETWORK_SITE
             value: "default"
+          # UniFi OS Server publishes the UI on host 11443 -> container 443.
+          # Host 443 is deliberately unused. See the unifi-os-upgrade skill's
+          # host-facts reference for the full published port list.
           - name: UNIFI_NETWORK_PORT
-            value: "443"
+            value: "11443"
           - name: UNIFI_NETWORK_VERIFY_SSL
             value: "false"
           - name: UNIFI_NETWORK_HOST

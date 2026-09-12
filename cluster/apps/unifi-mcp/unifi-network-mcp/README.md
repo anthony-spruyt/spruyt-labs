@@ -14,7 +14,7 @@ MCP (Model Context Protocol) server giving AI assistants read access to the UniF
 
 - **In-cluster only**: `http://unifi-network-mcp.unifi-mcp.svc:3000/mcp`
 - **Via agents**: brokered by LiteLLM; tools surface under the `mcp__litellm__unifi-*` prefix
-- **Network policies**: ingress from the `litellm` namespace only; egress restricted to the single controller address (`${UNIFI_IP4}/32`) on port 443
+- **Network policies**: ingress from the `litellm` namespace only; egress restricted to the single controller address (`${UNIFI_IP4}/32`) on port 11443. UniFi OS Server publishes the UI on host `11443` mapped to container `443`; host `443` is deliberately unused, so `UNIFI_NETWORK_PORT` and the egress policy must both say `11443`.
 - No IngressRoute and no Cloudflare Tunnel route — the listener has **no caller authentication** of its own, so the CiliumNetworkPolicy is the security boundary
 
 ## Operations
@@ -110,6 +110,14 @@ A **typo in a policy variable name fails open** — the gate silently does not a
 
    - **Symptom**: an expected tool does not appear
    - **Resolution**: expected in `lazy` mode — use `unifi_tool_index` then `unifi_execute`. Policy gates never hide tools.
+
+7. **Tool calls time out; pod logs show `Connection attempt N failed: RequestError`**
+
+   - **Symptom**: the pod is Ready and serves MCP, but every tool call times out. Logs read `Pre-login detection inconclusive` then `RequestError`. The app logs `Tool functionality may be impaired` and serves anyway, so this does not crash-loop.
+   - **Resolution**: TCP to the controller is being dropped before it arrives. The controller sits behind a zone-based firewall policy on the gateway, and the allow rule for the cluster network is **order-sensitive** — a broader block policy with a lower rule ID is evaluated first and silently drops the SYN.
+   - **Rule ordering**: the allow rule must sit **above** that block. A rule in the wrong position looks correct in the UI and reports zero hits.
+   - **Diagnosis**: ICMP reaching the controller while every TCP port reads `filtered` is the signature — ICMP is permitted by a separate, higher-ordered rule. Confirm with `tcpdump` on the controller host: if the SYN never arrives but the echo request does, the drop is on the gateway, not the host. Checking the rule's hit counter is faster than either.
+   - Not to be confused with the controller host's own `ufw`, which allows all published UniFi ports from any source and is **not** the cause.
 
 ## References
 
