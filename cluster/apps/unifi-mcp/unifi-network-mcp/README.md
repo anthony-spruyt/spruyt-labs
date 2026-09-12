@@ -2,7 +2,7 @@
 
 ## Overview
 
-MCP (Model Context Protocol) server giving AI assistants read access to the UniFi Network controller — clients, devices, networks, firewall policies, events. Runs in streamable-HTTP transport mode as a low-priority workload, reachable only from the `litellm` namespace.
+MCP (Model Context Protocol) server giving AI assistants read and write access to the UniFi Network controller — clients, devices, networks, firewall policies, events. Runs in streamable-HTTP transport mode as a low-priority workload, reachable only from the `litellm` namespace.
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ MCP (Model Context Protocol) server giving AI assistants read access to the UniF
 
 ### No inbound authentication — the CiliumNetworkPolicy is the only boundary
 
-> **Do not relax `allow-litellm-ingress`, and do not add an IngressRoute or Cloudflare Tunnel route to this app.** Anything that can reach port 3000 gets the full read surface of the UniFi controller with no credential at all.
+> **Do not relax `allow-litellm-ingress`, and do not add an IngressRoute or Cloudflare Tunnel route to this app.** Anything that can reach port 3000 gets full read *and write* control of the UniFi controller with no credential at all.
 
 This is a **gap in the upstream server**, not a missing setting on our side. Verified against image `0.32.6`: an MCP `initialize` + `tools/list` over plain HTTP with no token, no key and no `Authorization` header returns `HTTP 200`.
 
@@ -43,7 +43,7 @@ What the adjacent settings actually do — none of them authenticate a caller:
 | ------------------------- | ---------------------------------------- | ------------------------------------ |
 | `UNIFI_MCP_ALLOWED_HOSTS` | `Host` header check (anti-DNS-rebinding) | No — the header is caller-controlled |
 | `UNIFI_NETWORK_PASSWORD`  | Login **to the UniFi controller**        | No — outbound credential             |
-| `UNIFI_POLICY_*`          | Blocks mutating tools                    | No — limits blast radius only        |
+| `UNIFI_POLICY_*`          | Gates mutating tools (all enabled here)  | No — and currently limits nothing    |
 
 Caller identity is enforced one layer up: agents authenticate to **LiteLLM** with a LiteLLM key, and LiteLLM makes the unauthenticated in-cluster call on their behalf. Note this differs from `n8n-mcp-server` in this repo, which *does* support a real bearer token via `AUTH_TOKEN` — do not assume a matching variable exists here.
 
@@ -68,9 +68,18 @@ MCP servers are registered through the **LiteLLM UI**, not `config.yaml`. This d
 
 No client-side change is needed: `.mcp.json` holds a single `litellm` entry and every downstream MCP server is fanned out through it.
 
-### Write operations are gated off
+### Write operations are enabled
 
-`UNIFI_POLICY_CREATE`, `UNIFI_POLICY_UPDATE` and `UNIFI_POLICY_DELETE` are all `false`, making this a read-only deployment. Gates block execution at invocation time; they do **not** hide tools from the tool list, so an agent can still see mutating tools and will get a refusal naming the variable to flip.
+`UNIFI_POLICY_CREATE`, `UNIFI_POLICY_UPDATE` and `UNIFI_POLICY_DELETE` are all `true`. Every mutating tool in the catalog reaches the production controller — creating and deleting firewall policies, networks, WLANs and clients included.
+
+Combined with the absent inbound authentication described above, **anything that reaches port 3000 can reconfigure or wipe the network**, not merely read it. The CiliumNetworkPolicy carries that entire weight. Treat `allow-litellm-ingress` as a production security control.
+
+Mutations still require an explicit `confirm=true` argument — all 96 mutating tools default to `confirm=false` and return a preview instead. `UNIFI_TOOL_PERMISSION_MODE` is pinned to `confirm` for that reason. **Do not set it to `bypass`**: that auto-injects `confirm=true` into every mutating call, removing the last in-process guard before a live change.
+
+The controller is covered by weekly automated cloud backups, which is the recovery path for a destructive mistake. There is no undo on the controller side.
+
+Set any of the three policy variables to `false` to gate that verb off. Upstream also supports narrower `UNIFI_POLICY_<SERVER>_<CATEGORY>_<ACTION>` gates (most specific wins) if the blast radius ever needs cutting to a few categories rather than all 96 tools. Gates block execution at invocation time; they do **not** hide tools from the tool list, so an agent still sees every mutating tool either
+way.
 
 A **typo in a policy variable name fails open** — the gate silently does not apply. After changing any `UNIFI_POLICY_*` value, check the startup logs for `[policy] Unrecognized env var`.
 

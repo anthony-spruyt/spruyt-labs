@@ -54,11 +54,15 @@ controllers:
           # A typo in any UNIFI_POLICY_* name fails open — check startup logs for
           # "[policy] Unrecognized env var" after changing these.
           - name: UNIFI_POLICY_CREATE
-            value: "false"
+            value: "true"
           - name: UNIFI_POLICY_UPDATE
-            value: "false"
+            value: "true"
           - name: UNIFI_POLICY_DELETE
-            value: "false"
+            value: "true"
+          # Leave as confirm — bypass auto-injects confirm=true into every
+          # mutating tool, removing the last guard before a live change.
+          - name: UNIFI_TOOL_PERMISSION_MODE
+            value: "confirm"
           - name: UNIFI_NETWORK_SITE
             value: "default"
           # UniFi OS Server publishes the UI on host 11443 -> container 443.

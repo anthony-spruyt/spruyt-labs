@@ -22,8 +22,9 @@ spec:
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress from LiteLLM MCP gateway.
 # The MCP listener has no inbound authentication of its own (verified against
-# 0.32.6) — this policy is the only thing standing between an unauthenticated
-# caller and full read access to the UniFi controller. Do not widen it.
+# 0.32.6) and UNIFI_POLICY_CREATE/UPDATE/DELETE are all true — this policy is
+# the only thing standing between an unauthenticated caller and the ability to
+# reconfigure or wipe the UniFi controller. Do not widen it.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
