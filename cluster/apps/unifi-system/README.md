@@ -69,7 +69,7 @@ Rules live in `cluster/apps/observability/victoria-metrics-k8s-stack/app/vmrules
 | ------------------------------- | -------- | ---------------------------------------------------- |
 | `UnifiInfraClientAbsent`        | critical | A tracked MAC seen in the last 7d, absent for 1h     |
 | `UnifiInfraClientsAllAbsent`    | critical | No tracked MAC reporting at all for 1h               |
-| `UnifiWANDown`                  | critical | `unpoller_wan_uptime_percentage < 95` for 15m        |
+| `UnifiWANDown`                  | critical | WAN uptime below 95% for 15m, ignoring unused ports  |
 | `UnifiWANDrops`                 | warning  | Any WAN disconnection in the last hour, sustained 5m |
 | `UnpollerDown`                  | warning  | Scrape target down for 5m                            |
 | `UnpollerControllerPollFailing` | warning  | `unpoller_controller_up == 0` for 15m                |
@@ -83,6 +83,9 @@ A plain `absent()` over a multi-MAC selector will not do this job: it fires only
 selector broke rather than the network.
 
 **`UnifiWANDown` / `UnifiWANDrops`** exist because the Home Assistant UniFi integration exposes no WAN status entity at all. Confirmed against the integration docs — WAN health is genuinely unmonitored otherwise.
+
+Both carry a guard clause that is easy to mistake for noise and delete. The controller reports `uptime_percentage: -1` for a configured-but-unused WAN port — this site's WAN2 does exactly that — and UnPoller passes the sentinel through unchanged, so `UnifiWANDown` needs `>= 0` or it fires on a port that was never in service. `UnifiWANDrops` needs its `offset 1h` term because `increase()` reads a
+brand-new counter's first sample as growth from zero, paging for a drop that happened before collection started. Both were caught firing against live data before they could page; the `offset` guard clears itself once an hour of history exists.
 
 **`UnpollerDown` and `UnpollerControllerPollFailing`** are not optional. Without them this component has exactly the failure mode it was built to catch: it stops reporting and nobody finds out for eleven months. The two are distinct failures — the pod can be up and scrapeable while its controller polls fail on an expired credential, in which case `/metrics` serves a stale cache and every absence
 rule silently stops meaning anything.

@@ -60,8 +60,12 @@ spec:
       rules:
         # Home Assistant's UniFi integration exposes no WAN status entity at all,
         # so this is the only place WAN health is watched.
+        # The >= 0 guard is load-bearing: the controller reports -1 for a
+        # configured-but-unused WAN port (WAN2 here) and UnPoller passes it
+        # through unchanged. Without the guard this fires on day one and never
+        # clears.
         - alert: UnifiWANDown
-          expr: unpoller_wan_uptime_percentage < 95
+          expr: unpoller_wan_uptime_percentage < 95 and unpoller_wan_uptime_percentage >= 0
           for: 15m
           labels:
             severity: critical
@@ -70,8 +74,15 @@ spec:
             description: 'WAN {{ $labels.wan_name }} uptime is {{ $value | printf "%.1f" }}% (site: {{ $labels.site_name }})'
 
         # Metric name carries an upstream typo (intenet). Do not "fix" it.
+        #
+        # The `offset 1h` term requires the counter to have existed an hour ago.
+        # Without it, increase() reads a brand-new counter's first sample as
+        # growth from zero and pages on a drop that happened before collection
+        # started. The guard is self-clearing once there is an hour of history.
         - alert: UnifiWANDrops
-          expr: increase(unpoller_site_intenet_drops_total[1h]) > 0
+          expr: |
+            increase(unpoller_site_intenet_drops_total[1h]) > 0
+            and unpoller_site_intenet_drops_total offset 1h
           for: 5m
           labels:
             severity: warning
