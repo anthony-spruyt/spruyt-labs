@@ -85,9 +85,13 @@ selector broke rather than the network.
 **This is a 7-day detection window, not a permanent tripwire.** The left-hand side of the expression forgets: once a device has been gone longer than the 7d lookback, it is absent from both sides, they cancel, and `UnifiInfraClientAbsent` stops firing. Acknowledge it within the week or the signal is lost — an unacknowledged page here goes quiet on its own, which is the one way this rule can repeat
 the failure it exists to prevent. `UnifiInfraClientsAllAbsent` has no such horizon and still covers total loss past that point. Widening the lookback trades detection duration against evaluation cost; 7d was chosen to comfortably outlast a weekend plus a holiday Monday.
 
-The `for: 1h` window is also load-bearing rather than merely conservative. The controller intermittently returns `502` and forces a re-auth, during which UnPoller exports a cycle with zero clients — observed 8 times in the first 17 minutes. That produces real series gaps of ~40s which `for: 1h` absorbs. Do not shorten it.
+The `for: 1h` window is also load-bearing rather than merely conservative, and a controller firmware update during the first hour of deployment demonstrated why. While the Network application restarted, UniFi OS's reverse proxy stayed up and answered `/proxy/network/*` with `502 Bad Gateway`, so UnPoller re-authenticated and exported cycles carrying zero clients for about three minutes. Every
+tracked series gapped simultaneously. `for: 1h` absorbed it and **no alert fired** — the intended behaviour, and the reason not to shorten the window. A `for: 5m` would have paged for a routine update.
 
-Note also that `unpoller_controller_up` stays `1` through those partial exports, so `UnpollerControllerPollFailing` does **not** catch them. A zero-client export is currently invisible to all six rules; only the `for` windows protect against it.
+Note also that `unpoller_controller_up` stays `1` through those partial exports — the poll itself succeeds, it just returns nothing — so `UnpollerControllerPollFailing` does **not** catch them. A zero-client export is invisible to all six rules; only the `for` windows protect against it. That is an accepted gap: the condition is indistinguishable from a genuine controller restart, which is not
+worth paging about.
+
+This was a single ~3-minute event with a known cause, not a recurring fault. If `502`s ever appear **outside** a firmware update or controller restart, that is new and worth investigating — `unpoller_prometheus_refresh_failures_total` is the counter to watch, and it should stay flat between maintenance events.
 
 **`UnifiWANDown` / `UnifiWANDrops`** exist because the Home Assistant UniFi integration exposes no WAN status entity at all. Confirmed against the integration docs — WAN health is genuinely unmonitored otherwise.
 
@@ -158,12 +162,18 @@ The acceptance test that matters. Unplug a device whose MAC is in `UNIFI_INFRA_M
    - **Symptom**: Device unplugged, no alert after an hour
    - **Resolution**: Confirm the MAC actually matches. UnPoller emits `mac` lowercase and colon-separated; `UNIFI_INFRA_MACS` is a regex matched against that label. Also confirm `UP_UNIFI_DEFAULT_HASH_PII` is still `false` — with it on, the label holds an md5 hash and nothing matches.
 
-3. **Controller API errors in logs after a controller upgrade**
+3. **`502 Bad Gateway` on every endpoint, with repeated re-authentication**
 
-   - **Symptom**: `400` or `404` on a specific collector (upstream issue #1050 saw this on `collectAlarms` for Network 10.5.67)
+   - **Symptom**: `502` on `/proxy/network/*`, re-auth loops, exports carrying zero clients, `unpoller_prometheus_refresh_failures_total` incrementing. Usually lasts a few minutes.
+   - **Resolution**: Normally none — this is what a controller firmware update or restart looks like from outside. UniFi OS's reverse proxy keeps answering while the Network application is down behind it, and UnPoller recovers on its own, serving its last good snapshot meanwhile. Confirm against the controller's update history before treating it as a fault; investigate only if it persists beyond a
+     few minutes or occurs with no maintenance to explain it.
+
+4. **Controller API errors on one specific collector**
+
+   - **Symptom**: `400` or `404` naming a single collector, while everything else keeps working (upstream issue #1050 saw this on `collectAlarms` for Network 10.5.67). Distinct from the blanket `502` above.
    - **Resolution**: Identify the failing collector in the logs and disable its `UP_UNIFI_DEFAULT_SAVE_*` toggle. All `save_*` options default off except `save_sites` and `save_speedtest`, so the surface is small.
 
-4. **Dashboard panels empty while metrics exist**
+5. **Dashboard panels empty while metrics exist**
 
    - **Symptom**: Series present in VictoriaMetrics, panels blank
    - **Resolution**: Check the dashboard's Site variable — it is populated from `unpoller_site_users` and will be empty if `UP_UNIFI_DEFAULT_SAVE_SITES` was turned off. The Gateway type variable defaults to `ugw|uxg|udm|usg`; adjust if the gateway reports a type outside that set.
