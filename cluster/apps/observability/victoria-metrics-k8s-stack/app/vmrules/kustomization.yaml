@@ -13,3 +13,4 @@ resources:
   - ./csi-reclaim-space.yaml
   - ./node-memory-saturation.yaml
   - ./container-oomkilled.yaml
+  - ./unifi.yaml
