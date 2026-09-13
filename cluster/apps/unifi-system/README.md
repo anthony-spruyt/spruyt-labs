@@ -82,6 +82,13 @@ on both sides and cancels out, leaving only ones that have gone quiet.
 A plain `absent()` over a multi-MAC selector will not do this job: it fires only when **every** matching series is gone, so one dead device stays masked by its healthy peers. That is precisely the eleven-month failure mode. `UnifiInfraClientsAllAbsent` is the `absent()` companion, and it covers the different case the per-MAC rule cannot see — all of them vanishing at once, which usually means the
 selector broke rather than the network.
 
+**This is a 7-day detection window, not a permanent tripwire.** The left-hand side of the expression forgets: once a device has been gone longer than the 7d lookback, it is absent from both sides, they cancel, and `UnifiInfraClientAbsent` stops firing. Acknowledge it within the week or the signal is lost — an unacknowledged page here goes quiet on its own, which is the one way this rule can repeat
+the failure it exists to prevent. `UnifiInfraClientsAllAbsent` has no such horizon and still covers total loss past that point. Widening the lookback trades detection duration against evaluation cost; 7d was chosen to comfortably outlast a weekend plus a holiday Monday.
+
+The `for: 1h` window is also load-bearing rather than merely conservative. The controller intermittently returns `502` and forces a re-auth, during which UnPoller exports a cycle with zero clients — observed 8 times in the first 17 minutes. That produces real series gaps of ~40s which `for: 1h` absorbs. Do not shorten it.
+
+Note also that `unpoller_controller_up` stays `1` through those partial exports, so `UnpollerControllerPollFailing` does **not** catch them. A zero-client export is currently invisible to all six rules; only the `for` windows protect against it.
+
 **`UnifiWANDown` / `UnifiWANDrops`** exist because the Home Assistant UniFi integration exposes no WAN status entity at all. Confirmed against the integration docs — WAN health is genuinely unmonitored otherwise.
 
 Both carry a guard clause that is easy to mistake for noise and delete. The controller reports `uptime_percentage: -1` for a configured-but-unused WAN port — this site's WAN2 does exactly that — and UnPoller passes the sentinel through unchanged, so `UnifiWANDown` needs `>= 0` or it fires on a port that was never in service. `UnifiWANDrops` needs its `offset 1h` term because `increase()` reads a

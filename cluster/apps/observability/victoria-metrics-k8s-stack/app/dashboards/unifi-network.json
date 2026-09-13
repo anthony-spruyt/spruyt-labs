@@ -534,14 +534,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min(unpoller_wan_uptime_percentage{site_name=~\"$site\"})",
+          "expr": "min(unpoller_wan_uptime_percentage{site_name=~\"$site\"} >= 0)",
           "legendFormat": "{{wan_name}}",
           "range": false,
           "instant": true,
           "refId": "A"
         }
       ],
-      "description": "Alerts UnifiWANDown below 95% for 15m. Home Assistant has no WAN status entity, so this is the only WAN health signal."
+      "description": "Alerts UnifiWANDown below 95% for 15m. Home Assistant has no WAN status entity, so this is the only WAN health signal. The >= 0 filter drops the controller's -1 sentinel for a configured-but-unused WAN port; without it min() reports -1% and hides the primary WAN's real figure."
     },
     {
       "datasource": {
@@ -886,7 +886,7 @@
           }
         }
       ],
-      "description": "Seconds since each tracked MAC last produced a sample, over a 7-day lookback. Anything above ~120s is not reporting right now; above 3600s the alert has fired."
+      "description": "Seconds since each tracked MAC last produced a sample, over a 7-day lookback. Anything above ~120s is not reporting right now; above 3600s the alert has fired. Uses lag() rather than timestamp(last_over_time(...)): timestamp() reports the evaluation-step time, not the sample's, so every device came back identical and a vanished one was indistinguishable from a live one."
     },
     {
       "collapsed": false,
