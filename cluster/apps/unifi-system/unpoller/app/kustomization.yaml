@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./unpoller-secrets.sops.yaml
+  - ./release.yaml
+  - ./network-policies.yaml
+  - ./vm-service-scrape.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: unpoller-values
+    namespace: unifi-system
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

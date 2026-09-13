@@ -218,5 +218,13 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  # UniFi network telemetry dashboard (UnPoller)
+  - name: grafana-dashboard-unifi-network
+    namespace: observability
+    files:
+      - dashboards/unifi-network.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml

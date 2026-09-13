@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow egress to the UniFi controller, which runs outside the cluster on the LAN
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-unifi-controller-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: unpoller
+  egress:
+    - toCIDRSet:
+        - cidr: ${UNIFI_IP4}/32
+      toPorts:
+        # UniFi OS Server publishes the UI on host 11443; host 443 is unused.
+        # Must stay in sync with UP_UNIFI_DEFAULT_URL in values.yaml.
+        - ports:
+            - port: "11443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow metrics scraping from vmagent.
+# /metrics is unauthenticated and exposes every client name, MAC and IP on the
+# network. This policy is the only boundary — there is deliberately no
+# IngressRoute and no Cloudflare Tunnel route. Do not widen it.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: unpoller
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9130"
+              protocol: TCP

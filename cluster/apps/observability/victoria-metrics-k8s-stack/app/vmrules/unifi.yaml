@@ -1,0 +1,106 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+# Alert rules for UniFi network telemetry collected by UnPoller.
+#
+# Scope is deliberately narrow. The Home Assistant UniFi integration already
+# covers firmware/upgrade availability, device CPU/memory/temperature, device
+# and client presence (300s threshold), and notifies on them. Duplicating those
+# here produces two pages for one event. What HA cannot do is express "this was
+# present every day for a month and is now gone" — it has no historical query
+# language. That gap is what UnifiInfraClientAbsent exists for.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: unifi-alerts
+  namespace: observability
+spec:
+  groups:
+    - name: unifi-presence
+      interval: 60s
+      rules:
+        # A network audit on 2026-09-12 found a switch whose management plane
+        # had been dead for ~11 months. L2 kept forwarding, so nothing broke and
+        # nothing alerted. UnPoller emits no last_seen metric and no presence
+        # gauge — a vanished client simply stops producing series, which is
+        # invisible to every threshold rule. These two rules are the only thing
+        # in the stack that turns absence into a signal.
+        #
+        # Durable form: MACs seen at some point in the last 7 days but not in the
+        # last 10 minutes. Works from the first hour of data — the 7d window
+        # includes recent samples, so a device present throughout appears on both
+        # sides and cancels out.
+        - alert: UnifiInfraClientAbsent
+          expr: |
+            (
+              count by (mac) (last_over_time(unpoller_client_uptime_seconds{mac=~"${UNIFI_INFRA_MACS}"}[7d]))
+              unless
+              count by (mac) (last_over_time(unpoller_client_uptime_seconds{mac=~"${UNIFI_INFRA_MACS}"}[10m]))
+            ) > 0
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "Infrastructure client {{ $labels.mac }} has vanished from the UniFi controller"
+            description: "MAC {{ $labels.mac }} was reporting to the controller within the last 7 days and has produced no series for over an hour. This is the failure mode that went unnoticed for 11 months — investigate before assuming it is benign."
+
+        # Covers the case the rule above cannot: every infra MAC gone at once
+        # (controller wiped, site renamed, credential scope changed), where the
+        # `unless` join has nothing on either side to compare.
+        - alert: UnifiInfraClientsAllAbsent
+          expr: absent(unpoller_client_uptime_seconds{mac=~"${UNIFI_INFRA_MACS}"})
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "No infrastructure clients are reporting to the UniFi controller"
+            description: "Not one MAC in UNIFI_INFRA_MACS is producing series. Either every tracked device is gone, or the selector no longer matches — check hash_pii is still false and the MAC list is current."
+
+    - name: unifi-wan
+      interval: 60s
+      rules:
+        # Home Assistant's UniFi integration exposes no WAN status entity at all,
+        # so this is the only place WAN health is watched.
+        - alert: UnifiWANDown
+          expr: unpoller_wan_uptime_percentage < 95
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "WAN {{ $labels.wan_name }} uptime degraded"
+            description: 'WAN {{ $labels.wan_name }} uptime is {{ $value | printf "%.1f" }}% (site: {{ $labels.site_name }})'
+
+        # Metric name carries an upstream typo (intenet). Do not "fix" it.
+        - alert: UnifiWANDrops
+          expr: increase(unpoller_site_intenet_drops_total[1h]) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "WAN disconnections on {{ $labels.site_name }}"
+            description: 'WAN dropped {{ $value | printf "%.0f" }} time(s) in the last hour'
+
+    - name: unifi-collector
+      interval: 60s
+      rules:
+        # Not optional. Without it this system has the same failure mode as the
+        # switch that prompted the issue: it stops reporting and nobody notices.
+        - alert: UnpollerDown
+          expr: up{job=~".*unpoller.*"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "UnPoller is offline"
+            description: "Cannot scrape UnPoller - all UniFi network monitoring, including the infrastructure absence alerts, is blind"
+
+        # The pod can be healthy and scrapeable while its controller polls fail
+        # (expired credential, controller offline). /metrics then serves a stale
+        # cache and every absence rule silently stops being meaningful.
+        - alert: UnpollerControllerPollFailing
+          expr: unpoller_controller_up == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "UnPoller cannot poll the UniFi controller"
+            description: "Background polls of {{ $labels.source }} have been failing. Metrics are being served from a stale cache — absence alerts cannot be trusted until this clears."

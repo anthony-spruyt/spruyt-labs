@@ -1,0 +1,120 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  unpoller:
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: ghcr.io/unpoller/unpoller
+          tag: v5.2.4@sha256:e1fad2c2d897cd71e3aaebe32c6fa87b1b205b6ebfde5c8fc036bc62b1930731
+          pullPolicy: IfNotPresent
+        env:
+          # Env names come from the `xml` struct tags (golift.io/cnfg uses "xml"
+          # as its env tag), prefixed UP_ and joined with underscores. A name
+          # that does not match a tag is silently ignored — no startup error.
+          #
+          # UniFi OS Server publishes the UI on host 11443 -> container 443.
+          # Host 443 is deliberately unused. Must stay in sync with the egress
+          # CiliumNetworkPolicy in network-policies.yaml.
+          - name: UP_UNIFI_DEFAULT_URL
+            value: "https://${UNIFI_IP4}:11443"
+          - name: UP_UNIFI_DEFAULT_VERIFY_SSL
+            value: "false"
+          # `sites` is a []string with xml tag "site", so cnfg indexes it as
+          # _SITE_0. UP_UNIFI_DEFAULT_SITES does nothing.
+          - name: UP_UNIFI_DEFAULT_SITE_0
+            value: "default"
+          - name: UP_UNIFI_DEFAULT_SAVE_SITES
+            value: "true"
+          # Must stay false. With it on, client names and MACs are md5-hashed
+          # and UnifiInfraClientAbsent can no longer match a MAC.
+          - name: UP_UNIFI_DEFAULT_HASH_PII
+            value: "false"
+          # ~150 extra series per client for data nothing here queries.
+          - name: UP_UNIFI_DEFAULT_SAVE_DPI
+            value: "false"
+          - name: UP_PROMETHEUS_NAMESPACE
+            value: "unpoller"
+          - name: UP_PROMETHEUS_HTTP_LISTEN
+            value: "0.0.0.0:9130"
+          # Background cache refresh, decoupled from the scrape interval — it is
+          # what stops controller 429 backoff from stalling /metrics. Values
+          # under 15s are clamped up by upstream.
+          - name: UP_PROMETHEUS_INTERVAL
+            value: "60s"
+          # The image ships /etc/unpoller/up.conf with influxdb enabled by
+          # default; without this it retries a nonexistent InfluxDB forever.
+          - name: UP_INFLUXDB_DISABLE
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: unpoller-secrets
+                key: UNIFI_USER
+          - name: UP_UNIFI_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: unpoller-secrets
+                key: UNIFI_PASS
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 512Mi
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /metrics
+                port: 9130
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /metrics
+                port: 9130
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              timeoutSeconds: 10
+              failureThreshold: 3
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 9130
+              # The first controller poll happens before the listener binds and
+              # can take a while against a busy controller.
+              failureThreshold: 60
+              periodSeconds: 5
+service:
+  app:
+    controller: unpoller
+    ports:
+      http:
+        port: 9130
