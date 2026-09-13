@@ -20,12 +20,16 @@ Components:
 
 ### CRD ownership
 
-The chart ships the VPA CRD in its own `crds/` directory, so the CRD and the controller images move together as one version. Plain Helm never upgrades `crds/`, so the HelmRelease sets `install.crds` and `upgrade.crds` to `CreateReplace`.
+The chart templates the VPA CRDs under `templates/crds/`, so the CRDs and the controller images move together as one version and upgrade with the release. They carry `helm.sh/resource-policy: keep`, so uninstalling the release leaves the CRDs -- and every `VerticalPodAutoscaler` object across the cluster -- intact. Gate them with `crds.enabled` / `crds.keep` if that ever needs to change.
+
+The HelmRelease still sets `install.crds` and `upgrade.crds` to `CreateReplace`; with no `crds/` directory left in the chart, those are inert for this release.
+
+Chart 0.12.0 moved the CRDs out of `crds/`, which means Helm has to adopt two objects it did not previously own. Flux's helm-controller enables take-ownership by default, so the adoption is automatic. Setting `disableTakeOwnership: true` on this HelmRelease would break upgrades with an `invalid ownership metadata` error.
 
 Talos also seeds the CRD at bootstrap via `talos/patches/control-plane/extra-manifests.yaml`, because Flux applies ~100 `VerticalPodAutoscaler` objects across app directories before this release reconciles. That URL is a write-once bootstrap seed: bumping it has no effect on a running cluster.
 
 Renovate tracks its tag from the `# renovate:` annotation above it, against `kubernetes/autoscaler` release tags -- which are cut independently of chart releases, so the seed tag is *not* the chart's appVersion and should not be hand-edited to match it. The seed is gated on dependency dashboard approval so it cannot get ahead of the chart: if it did, a fresh bootstrap would seed the newer CRD,
-create the VPA objects against it, then have `CreateReplace` swap the older chart CRD in underneath them. Approve a seed bump only once the chart has shipped the matching appVersion.
+create the VPA objects against it, then have the chart adopt and overwrite it with the older CRD underneath them. Approve a seed bump only once the chart has shipped the matching appVersion.
 
 ### Webhook certificate
 
