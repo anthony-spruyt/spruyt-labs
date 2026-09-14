@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.12](https://github.com/anthony-spruyt/spruyt-labs/compare/mcp-header-proxy/v0.0.11...mcp-header-proxy/v0.0.12) (2026-09-14)
+
+
+### Dependencies
+
+* **deps:** update container image gcr.io/distroless/static to nonroot ([#2837](https://github.com/anthony-spruyt/spruyt-labs/issues/2837)) ([b4688fd](https://github.com/anthony-spruyt/spruyt-labs/commit/b4688fd27fc16239ae63a5c84f3f839eacbad1a4))
+
 ## [0.0.11](https://github.com/anthony-spruyt/spruyt-labs/compare/mcp-header-proxy/v0.0.10...mcp-header-proxy/v0.0.11) (2026-09-08)
 
 
