@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.12](https://github.com/anthony-spruyt/spruyt-labs/compare/kata-tap-qdisc-fix/v0.2.11...kata-tap-qdisc-fix/v0.2.12) (2026-09-14)
+
+
+### Dependencies
+
+* **deps:** update container image gcr.io/distroless/static to nonroot ([#2837](https://github.com/anthony-spruyt/spruyt-labs/issues/2837)) ([b4688fd](https://github.com/anthony-spruyt/spruyt-labs/commit/b4688fd27fc16239ae63a5c84f3f839eacbad1a4))
+
 ## [0.2.11](https://github.com/anthony-spruyt/spruyt-labs/compare/kata-tap-qdisc-fix/v0.2.10...kata-tap-qdisc-fix/v0.2.11) (2026-09-08)
 
 
