@@ -93,6 +93,16 @@ See `docs/sre-automation/sre.md` for the full architecture and investigation flo
 
 See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via-proxy-provider-forward-auth) for the complete SSO integration pattern.
 
+## Task Drain on Shutdown
+
+Since 2.38, n8n caps in-flight task timers at `N8N_GRACEFUL_SHUTDOWN_TIMEOUT * 0.8` once shutdown starts (`SHUTDOWN_TASK_BUDGET_RATIO` in `task-broker-ws-server.ts`). The env var is set to `75` so the cap lands on the configured `N8N_RUNNERS_TASK_TIMEOUT` of 60, and `terminationGracePeriodSeconds` is `90` on all three deployments so the kubelet does not SIGKILL mid-drain.
+
+This holds for pod-level rollouts only. On a **node** shutdown the kubelet gives regular pods `shutdownGracePeriod - shutdownGracePeriodCriticalPods`, which is 60s - 30s = 30s (`talos/patches/all/06-configure-kubelet.yaml.tpl`), truncating the drain regardless of the value in the manifest.
+
+This is deliberate and should stay that way. A priority class would not help: the kubelet only counts `system-cluster-critical` and `system-node-critical` as critical, and that tier gets the same 30s anyway. Widening `shutdownGracePeriod` would delay every node shutdown, including an emergency one on UPS failure — not worth it to drain a workflow run.
+
+The tradeoff is real, so know what it costs. `maxStalledCount` is hardcoded to `0` in n8n's `scaling.service.ts`, so a job whose worker is SIGKILLed does not retry — it fails as `MaxStalledCountError` and needs a manual re-run. Only affects executions still running past the 30s mark when a node goes down.
+
 ## References
 
 - [n8n Documentation](https://docs.n8n.io/)
