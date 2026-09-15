@@ -8,6 +8,7 @@ image:
   pullPolicy: IfNotPresent
   tag: "2.38.7@sha256:a8c95f75c6fdf65f5f2b7a7b354744eaa1c62bb911b5c00af6499c3f38e4cd32"
 main:
+  terminationGracePeriodSeconds: 90
   config:
     queue:
       health:
@@ -89,6 +90,11 @@ main:
       value: "true"
     N8N_GIT_NODE_DISABLE_BARE_REPOS:
       value: "true"
+    # Shutdown caps in-flight tasks at 80% of this, so 75 yields the 60s
+    # N8N_RUNNERS_TASK_TIMEOUT below. Must stay under every
+    # terminationGracePeriodSeconds or the kubelet SIGKILLs mid-drain.
+    N8N_GRACEFUL_SHUTDOWN_TIMEOUT:
+      value: "75"
     N8N_LICENSE_ACTIVATION_KEY:
       valueFrom:
         secretKeyRef:
@@ -227,7 +233,7 @@ main:
       memory: 768Mi
 worker:
   enabled: true
-  terminationGracePeriodSeconds: 60
+  terminationGracePeriodSeconds: 90
   extraEnv: *extraEnv
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
@@ -245,6 +251,7 @@ worker:
       memory: 512Mi
 webhook:
   enabled: true
+  terminationGracePeriodSeconds: 90
   extraEnv: *extraEnv
   extraVolumeMounts: *extraVolumeMounts
   extraVolumes: *extraVolumes
