@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.52](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.51...agent-queue-worker/v3.3.52) (2026-09-15)
+
+
+### Bug Fixes
+
+* **agent-queue-worker:** resolve biome noUnsafeOptionalChaining in roles test ([0a0c1c5](https://github.com/anthony-spruyt/spruyt-labs/commit/0a0c1c52cac0cc1e6f9b6abdc2376702fd053079))
+
 ## [3.3.51](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.50...agent-queue-worker/v3.3.51) (2026-09-11)
 
 
