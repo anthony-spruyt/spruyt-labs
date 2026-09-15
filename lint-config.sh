@@ -5,7 +5,7 @@
 
 # MegaLinter Docker image (use digest for reproducibility)
 # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/megalinter-spruyt-labs
-MEGALINTER_IMAGE="ghcr.io/anthony-spruyt/megalinter-spruyt-labs:latest"
+MEGALINTER_IMAGE="ghcr.io/anthony-spruyt/megalinter-spruyt-labs:v1.0.38@sha256:582a2ee3dbd174e2f86ddb9f5dca806abb323bfd2b71b97e09e3cac8a1de8558"
 
 # Skip linting for renovate/dependabot commits in CI
 SKIP_BOT_COMMITS=false
