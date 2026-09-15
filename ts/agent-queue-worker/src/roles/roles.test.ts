@@ -324,13 +324,15 @@ describe("sre-alert drainBuffer", () => {
 
     const result = await def.drainBuffer!("job1", job, mockRedis);
 
+    const alerts = result.data?.alerts as any[];
+
     expect(mockHistogram.observe).toHaveBeenCalledWith(6);
-    expect(result.data?.alerts).toHaveLength(6);
-    expect((result.data?.alerts as any[])[0]).toEqual({
+    expect(alerts).toHaveLength(6);
+    expect(alerts[0]).toEqual({
       fingerprint: "fp-1",
       alertname: "HighCPU",
     });
-    expect((result.data?.alerts as any[])[1]).toEqual({ alertname: "A1" });
+    expect(alerts[1]).toEqual({ alertname: "A1" });
   });
 
   it("returns single-element alerts array when buffer empty", async () => {
