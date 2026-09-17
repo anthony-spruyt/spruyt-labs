@@ -7,6 +7,10 @@ global:
   deploymentAnnotations:
     reloader.stakater.com/auto: "true"
   env:
+    # Bootstrap only - ignored once the Base URL system setting is populated.
+    # Becomes mandatory in 2026.11.
+    - name: AUTHENTIK_WEB__BASE_URL
+      value: https://auth.${EXTERNAL_DOMAIN}
     # Database connection - uses CNPG auto-generated secret
     - name: AUTHENTIK_POSTGRESQL__HOST
       valueFrom:
