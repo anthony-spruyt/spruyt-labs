@@ -22,7 +22,7 @@ controllers:
         # authentication". Renovate will not flag this.
         image:
           repository: ghcr.io/sirkirby/unifi-network-mcp
-          tag: 0.32.6@sha256:d45fd9ee9006bbab15d79b6813f27f374a8cd11a2ec8e430125cf1dd91f5ac21
+          tag: 0.32.8@sha256:325c87e977f4b807b867740e2ab68114d0968786fc005e86d1f1645ce73a70ec
           pullPolicy: IfNotPresent
         env:
           - name: HOME
