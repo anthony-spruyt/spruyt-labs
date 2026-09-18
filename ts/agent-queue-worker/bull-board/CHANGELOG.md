@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.36](https://github.com/anthony-spruyt/spruyt-labs/compare/bull-board/v0.2.35...bull-board/v0.2.36) (2026-09-18)
+
+
+### Dependencies
+
+* **deps:** update container image node to 24-alpine ([#2884](https://github.com/anthony-spruyt/spruyt-labs/issues/2884)) ([71c2ca9](https://github.com/anthony-spruyt/spruyt-labs/commit/71c2ca97c327e1902aa0d0bac7b383f14ab8bfdf))
+* **deps:** update dependency bullmq to v5.81.5 ([#2886](https://github.com/anthony-spruyt/spruyt-labs/issues/2886)) ([0bdd7ce](https://github.com/anthony-spruyt/spruyt-labs/commit/0bdd7ce3443e04a0af2af18d854a927853f5ae95))
+
 ## [0.2.35](https://github.com/anthony-spruyt/spruyt-labs/compare/bull-board/v0.2.34...bull-board/v0.2.35) (2026-09-17)
 
 
