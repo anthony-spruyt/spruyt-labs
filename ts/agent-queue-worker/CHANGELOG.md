@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.3.54](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.53...agent-queue-worker/v3.3.54) (2026-09-18)
+
+
+### Dependencies
+
+* **deps:** update container image node to 24-alpine ([#2884](https://github.com/anthony-spruyt/spruyt-labs/issues/2884)) ([71c2ca9](https://github.com/anthony-spruyt/spruyt-labs/commit/71c2ca97c327e1902aa0d0bac7b383f14ab8bfdf))
+* **deps:** update dependency @biomejs/biome to v2.5.13 ([#2880](https://github.com/anthony-spruyt/spruyt-labs/issues/2880)) ([2d5b97d](https://github.com/anthony-spruyt/spruyt-labs/commit/2d5b97daee6e9cdcc19e56bfe0856c4538933b6e))
+* **deps:** update dependency bullmq to v5.81.5 ([#2886](https://github.com/anthony-spruyt/spruyt-labs/issues/2886)) ([0bdd7ce](https://github.com/anthony-spruyt/spruyt-labs/commit/0bdd7ce3443e04a0af2af18d854a927853f5ae95))
+* **deps:** update dependency zod to v4.6.2 ([#2887](https://github.com/anthony-spruyt/spruyt-labs/issues/2887)) ([b74d1d2](https://github.com/anthony-spruyt/spruyt-labs/commit/b74d1d2d4c98e9d4ae31368f16d4eadeca0446fc))
+
 ## [3.3.53](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.52...agent-queue-worker/v3.3.53) (2026-09-17)
 
 
