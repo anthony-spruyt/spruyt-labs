@@ -1,6 +1,6 @@
 {
   "name": "agent-queue-worker",
-  "version": "3.3.53",
+  "version": "3.3.54",
   "private": true,
   "type": "module",
   "engines": {
