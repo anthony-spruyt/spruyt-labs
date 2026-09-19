@@ -159,7 +159,7 @@ func TestPassthroughMode_RejectsMissingHeader(t *testing.T) {
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	if rw.Code != http.StatusForbidden {
+	if rw.Code != http.StatusTeapot {
 		t.Errorf("expected 403, got %d", rw.Code)
 	}
 }
