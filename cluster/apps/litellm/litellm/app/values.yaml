@@ -297,7 +297,7 @@ controllers:
       llm-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-guard
-          tag: "1.0.37@sha256:0cfbcdc143cb1b512aad24939df08f61fa8f169aa6e0c6641e810bdf88514cfd"
+          tag: "1.0.38@sha256:5e7b9a10f9f8ff46841271674f3a7b7203ea0885bb07e177648000093a237d9d"
           pullPolicy: IfNotPresent
         env:
           LISTEN_PORT: "8000"
