@@ -36,7 +36,7 @@ Both are published as plain semver chart versions, and every GitHub release carr
 
 This deployment tracks **stable only**. Expect the pinned chart version to sit roughly one minor behind the newest version visible in the Helm repository; that gap is intentional, not a missed upgrade.
 
-The mechanism lives in `.github/renovate-overrides.json5`:
+The mechanism lives in the shared Renovate config at [repo-operator](https://github.com/anthony-spruyt/repo-operator/tree/main/.github/renovate), which this repository extends:
 
 - A `coder-stable` custom datasource reads `https://api.github.com/repos/coder/coder/releases/latest`. Coder's own `install.sh` resolves its `--stable` flag by following that same redirect, which makes the GitHub "latest release" marker the authoritative stable pointer.
 - The `flux` manager is disabled for this chart, so the Helm repository index no longer proposes mainline.

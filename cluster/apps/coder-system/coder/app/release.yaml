@@ -11,7 +11,8 @@ spec:
       # Stable channel only — mainline charts are published to the same Helm repo
       # with indistinguishable semver, so the flux manager is disabled for this
       # chart and the version is tracked via the coder-stable custom datasource
-      # (GitHub "latest release" pointer). See .github/renovate-overrides.json5
+      # (GitHub "latest release" pointer). Both live in the shared Renovate config
+      # at anthony-spruyt/repo-operator//.github/renovate
       # renovate: datasource=custom.coder-stable depName=coder
       version: "2.36.4"
       sourceRef:
