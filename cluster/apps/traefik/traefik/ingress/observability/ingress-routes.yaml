@@ -8,7 +8,8 @@ metadata:
   namespace: observability
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: grafana.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/hostname: grafana.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/target: ${TRAEFIK_IP4}
 spec:
   entryPoints:
     - websecure
@@ -35,7 +36,8 @@ metadata:
   namespace: observability
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: vmagent.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/hostname: vmagent.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/target: ${TRAEFIK_IP4}
 spec:
   entryPoints:
     - websecure
@@ -63,7 +65,8 @@ metadata:
   namespace: observability
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: otel.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/hostname: otel.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/target: ${TRAEFIK_IP4}
 spec:
   entryPoints:
     - websecure

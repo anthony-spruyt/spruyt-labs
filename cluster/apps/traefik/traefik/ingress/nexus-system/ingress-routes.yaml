@@ -6,7 +6,8 @@ metadata:
   name: nexus-ui
   namespace: nexus-system
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: nexus.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/hostname: nexus.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/target: ${TRAEFIK_IP4}
 spec:
   entryPoints: [websecure]
   routes:
@@ -29,7 +30,8 @@ metadata:
   name: nexus-docker
   namespace: nexus-system
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: nexus-docker.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/hostname: nexus-docker.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/target: ${TRAEFIK_IP4}
 spec:
   entryPoints: [websecure]
   routes:

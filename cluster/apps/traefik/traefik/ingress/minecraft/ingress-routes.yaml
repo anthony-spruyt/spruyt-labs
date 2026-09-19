@@ -9,7 +9,8 @@ metadata:
   namespace: minecraft
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    external-dns.alpha.kubernetes.io/hostname: crafty.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/hostname: crafty.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/target: ${TRAEFIK_IP4}
 spec:
   entryPoints:
     - websecure
