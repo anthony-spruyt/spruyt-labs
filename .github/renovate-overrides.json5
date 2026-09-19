@@ -1,14 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "customDatasources": {
-    "coder-stable": {
-      "defaultRegistryUrlTemplate": "https://api.github.com/repos/coder/coder/releases/latest",
-      "format": "json",
-      "transformTemplates": [
-        "{ \"releases\": [{ \"version\": $substring(tag_name, 1) }], \"sourceUrl\": \"https://github.com/coder/coder\", \"homepage\": \"https://coder.com\" }"
-      ]
-    }
-  },
   "customManagers": [
     {
       "customType": "regex",
@@ -35,43 +26,6 @@
         "n8nio/runners"
       ],
       "pinDigests": false,
-      "enabled": false
-    },
-    {
-      "description": "Require dashboard approval for n8n docker images, since beta builds are indistinguishable by version string alone",
-      "matchPackageNames": [
-        "n8nio/**"
-      ],
-      "matchDatasources": [
-        "docker"
-      ],
-      "dependencyDashboardApproval": true
-    },
-    {
-      // The helm datasource sees every published chart, mainline included, and
-      // ranks 2.36.1 above the stable 2.35.6 pin. The annotated custom.regex
-      // manager on the HelmRelease owns this version instead, backed by the
-      // custom.coder-stable datasource above. Ref #2640
-      "description": "Disable flux manager for the Coder chart (version tracked via the coder-stable custom datasource)",
-      "matchManagers": [
-        "flux"
-      ],
-      "matchPackageNames": [
-        "coder"
-      ],
-      "matchDatasources": [
-        "helm"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "Disable dockerfile manager for golang (ARG interpolation breaks updates; custom.regex manager handles these via annotations)",
-      "matchManagers": [
-        "dockerfile"
-      ],
-      "matchPackageNames": [
-        "golang"
-      ],
       "enabled": false
     },
     {
@@ -150,19 +104,6 @@
       // the group back into two PRs.
       "groupName": "gateway-api",
       "dependencyDashboardApproval": true
-    },
-    {
-      // Both images ship the same upstream curl release to the same app, so a
-      // split would let the two pins drift apart. Ref #2786
-      "description": "Bump both curl images in one PR",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "alpine/curl",
-        "docker.io/curlimages/curl"
-      ],
-      "groupName": "curl"
     },
     {
       "description": "Bump the pgvector extension image and the CNPG Database version pin in one PR",
