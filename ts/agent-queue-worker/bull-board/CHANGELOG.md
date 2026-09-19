@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.37](https://github.com/anthony-spruyt/spruyt-labs/compare/bull-board/v0.2.36...bull-board/v0.2.37) (2026-09-19)
+
+
+### Bug Fixes
+
+* **ci:** close the Go lint and test coverage gaps ([#2963](https://github.com/anthony-spruyt/spruyt-labs/issues/2963)) ([5f89343](https://github.com/anthony-spruyt/spruyt-labs/commit/5f89343fd88fd6c377520eeb09b946f762dce5a1))
+
 ## [0.2.36](https://github.com/anthony-spruyt/spruyt-labs/compare/bull-board/v0.2.35...bull-board/v0.2.36) (2026-09-18)
 
 
