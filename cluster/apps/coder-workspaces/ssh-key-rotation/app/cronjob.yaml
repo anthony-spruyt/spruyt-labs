@@ -30,7 +30,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: rotate-ssh-key
-              image: ghcr.io/anthony-spruyt/ssh-key-rotation:2.0.8@sha256:3f61b3c2b2ffc9aaeeb5e3617aa45dee39a34e54d21518080b070e0eb85cd508
+              image: ghcr.io/anthony-spruyt/ssh-key-rotation:2.0.9@sha256:8dc8d655a0c87ca4b06434332b0b3a63ddc8a0554f7a881c2c0cdebb69d39ecf
               env:
                 - name: GITHUB_PAT
                   valueFrom:
