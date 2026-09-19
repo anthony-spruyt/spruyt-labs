@@ -14,7 +14,7 @@ spec:
       # (GitHub "latest release" pointer). Both live in the shared Renovate config
       # at anthony-spruyt/repo-operator//.github/renovate
       # renovate: datasource=custom.coder-stable depName=coder
-      version: "2.36.4"
+      version: "2.36.5"
       sourceRef:
         kind: HelmRepository
         name: coder-charts

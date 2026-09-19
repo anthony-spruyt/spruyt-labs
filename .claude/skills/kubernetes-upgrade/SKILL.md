@@ -113,7 +113,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 
    - `kubectl rollout restart` for Deployments
    - `kubectl delete pod` for StatefulSets (one at a time, wait for Ready)
-   - Namespaces: observability, authentik, cnpg plugins, firefly-iii, nexus, app workloads
+   - Namespaces: observability, authentik, cnpg plugins, nexus, app workloads
 
 2. **DNS tier** — technitium primary + secondary:
 

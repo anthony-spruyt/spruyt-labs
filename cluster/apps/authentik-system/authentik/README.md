@@ -990,18 +990,6 @@ patches:
         value: X-Custom-Header
 ```
 
-**Firefly III Example** (shared household finance):
-
-Uses `X-Firefly-Household-Email` header so multiple family members share one Firefly III account:
-
-| Component     | Location                                         |
-| ------------- | ------------------------------------------------ |
-| Blueprint     | `app/blueprints/firefly-iii-sso.yaml`            |
-| Scope mapping | `firefly_iii_shared_email_scope`                 |
-| Header        | `X-Firefly-Household-Email`                      |
-| Value         | `household@firefly.local` (static)               |
-| Traefik patch | `traefik/ingress/firefly-iii/kustomization.yaml` |
-
 ### email_verified Claim
 
 **Problem**: Some OIDC consumers (notably Kubernetes API server) reject tokens with `email_verified: false`. Authentik v2025.10+ returns `email_verified: false` by default and has **no native email verification system**.

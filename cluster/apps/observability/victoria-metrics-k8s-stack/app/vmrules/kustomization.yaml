@@ -14,3 +14,4 @@ resources:
   - ./node-memory-saturation.yaml
   - ./container-oomkilled.yaml
   - ./unifi.yaml
+  - ./thunderbolt-ring-errors.yaml
