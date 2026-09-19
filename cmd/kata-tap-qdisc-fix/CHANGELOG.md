@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.14](https://github.com/anthony-spruyt/spruyt-labs/compare/kata-tap-qdisc-fix/v0.2.13...kata-tap-qdisc-fix/v0.2.14) (2026-09-19)
+
+
+### Dependencies
+
+* **deps:** update container image golang to v1.27.1 ([#2971](https://github.com/anthony-spruyt/spruyt-labs/issues/2971)) ([5108a49](https://github.com/anthony-spruyt/spruyt-labs/commit/5108a493abd7a9c30c0d8a47aae5cda2c3da016f))
+
 ## [0.2.13](https://github.com/anthony-spruyt/spruyt-labs/compare/kata-tap-qdisc-fix/v0.2.12...kata-tap-qdisc-fix/v0.2.13) (2026-09-19)
 
 
