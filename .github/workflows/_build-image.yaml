@@ -39,8 +39,9 @@ concurrency:
   group: "build-${{ inputs.image }}-${{ inputs.version || github.ref }}"
   cancel-in-progress: false
 jobs:
-  test:
+  test-node:
     name: "Test"
+    if: "inputs.language == 'node'"
     runs-on: "ubuntu-latest"
     permissions:
       contents: "read"
@@ -77,19 +78,26 @@ jobs:
           else
             echo "::notice::No test script in ${WORKDIR}/package.json, skipping tests"
           fi
-      - name: "Setup Go"
-        if: "inputs.language == 'go'"
-        uses: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" # v7
-        with:
-          go-version-file: "${{ inputs.workdir }}/go.mod"
-          cache-dependency-path: "${{ inputs.workdir }}/go.sum"
-      - name: "Run tests (Go)"
-        if: "inputs.language == 'go'"
-        working-directory: "${{ inputs.workdir }}"
-        run: go test -race ./...
+  test-go:
+    name: "Test"
+    if: "inputs.language == 'go'"
+    permissions:
+      contents: "read"
+    uses: "./.github/workflows/_go-test.yaml"
+    with:
+      workdir: "${{ inputs.workdir }}"
+      ref: "${{ inputs.tag-name }}"
   build:
     name: "${{ inputs.push && 'Build and publish' || 'Build' }}"
-    needs: "test"
+    needs:
+      - "test-node"
+      - "test-go"
+    # Exactly one test job runs; the other is skipped. A skipped dependency makes
+    # the implicit success() false, so !cancelled() is required to override it.
+    if: |
+      !cancelled() &&
+      (needs.test-node.result == 'success' || needs.test-node.result == 'skipped') &&
+      (needs.test-go.result == 'success' || needs.test-go.result == 'skipped')
     runs-on: "ubuntu-latest"
     permissions:
       contents: "write"
