@@ -14,6 +14,11 @@ ENABLE_LINTERS:
   - TYPESCRIPT_BIOME
 FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|.*sops.*|.*/mcp\.json$|\.taskfiles/talos/scripts/'
 GO_GOLANGCI_LINT_CLI_LINT_MODE: file
+# Toolchain bumps touch only go.mod/go.sum. Without these the changed-files
+# scope sends golangci-lint nothing and the check passes without running.
+GO_GOLANGCI_LINT_FILE_NAMES_REGEX:
+  - "go\\.mod"
+  - "go\\.sum"
 GO_GOLANGCI_LINT_PRE_COMMANDS:
   - command: |
       export GOMODCACHE=/tmp/gomod GOPATH=/tmp/gopath GOTOOLCHAIN=auto
@@ -43,9 +48,13 @@ GO_GOLANGCI_LINT_PRE_COMMANDS:
       esac
       target=""
       for _arg in "$@"; do target="$_arg"; done
-      if [ -z "$target" ] || [ "${target%.go}" = "$target" ]; then
+      if [ -z "$target" ]; then
         exit 0
       fi
+      case "$target" in
+        *.go|go.mod|go.sum|*/go.mod|*/go.sum) ;;
+        *) exit 0;;
+      esac
       dir="$(cd "$(dirname "$target")" && pwd)" || exit 0
       modroot=""
       while [ "$dir" != "/" ] && [ -n "$dir" ]; do

@@ -7,13 +7,20 @@
     ]
   },
   "enabledPlugins": {
-    "n8n-mcp-skills@n8n-mcp-skills": true
+    "n8n-mcp-skills@n8n-mcp-skills": true,
+    "typesafe@typesafe-ai": true
   },
   "extraKnownMarketplaces": {
     "n8n-mcp-skills": {
       "source": {
         "source": "github",
         "repo": "czlonkowski/n8n-skills"
+      }
+    },
+    "typesafe-ai": {
+      "source": {
+        "source": "github",
+        "repo": "typesafe-ai/skills"
       }
     }
   }

@@ -1,8 +1,8 @@
-import express, { type Request, type Response } from "express";
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
+import express, { type Request, type Response } from "express";
 import { Redis, type RedisOptions } from "ioredis";
 
 class ForceObliterateAdapter extends BullMQAdapter {
