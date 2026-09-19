@@ -107,6 +107,11 @@ alertmanager:
       requests:
         cpu: 5m
         memory: 64Mi
+    extraEnvs:
+      # ~90% of the memory limit, leaving headroom for non-heap RSS that GOMEMLIMIT
+      # does not govern. Go's parser requires the MiB suffix - a bare "Mi" panics at startup.
+      - name: GOMEMLIMIT
+        value: "115MiB"
     configRawYaml: |
       global:
         resolve_timeout: 5m
