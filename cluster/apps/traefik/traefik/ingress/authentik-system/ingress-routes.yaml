@@ -8,10 +8,8 @@ metadata:
   namespace: authentik-system
   annotations:
     cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
-    # Split DNS: auth resolves publicly via Cloudflare, not the ingress IP. Pointing
-    # external-dns at it breaks SSO. This opts the route out at index time, before
-    # hostnames are read from the Host() match rules — omitting the target annotation
-    # alone would not, since those rules are parsed regardless.
+    # Split DNS - auth resolves via Cloudflare, not the ingress IP. Dropping the
+    # target annotation is not enough: hostnames are also read from Host() rules.
     external-dns.kubernetes.io/controller: none
 spec:
   entryPoints:
