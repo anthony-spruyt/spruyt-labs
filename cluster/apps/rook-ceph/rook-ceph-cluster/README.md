@@ -119,26 +119,43 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd dump | grep -E "^os
 
 ## Troubleshooting
 
-### CephNodeNetworkPacketErrors flapping on a Thunderbolt link
+### Receive errors on a Thunderbolt ring link
 
-The alert has no `for:` duration and fires on a ratio of errors to packets, so a marginal ring link produces an alert that clears and re-fires as cluster traffic rises and falls. A quiet link with a low absolute error count still trips the ratio. Treat repeated flapping as a real hardware signal rather than alert noise.
+Do not read the aggregate `node_network_receive_errs_total` as a wire-fault signal on these interfaces. The `thunderbolt-net` driver sums five unrelated sub-counters into it (`tbnet_get_stats64`), and on a healthy ring the dominant contributor is `rx_missed_errors` -- roughly 84% of the total across all three nodes when last measured.
 
-Identify which link is degrading -- errors land on the **receiving** side, so the interface reporting them is the one being sent corrupt frames by its peer:
+That counter increments in `tbnet_check_frame` when a fragment arrives out of sequence. At MTU 65520 a single packet spans many frames, so one dropped fragment invalidates every remaining fragment of that packet and inflates the count by a large multiple. It is receive-path sequencing under load, not corruption. The same contamination reaches the drop column in `/proc/net/dev`, which sums
+`rx_dropped` with `rx_missed_errors` -- sysfs `rx_dropped` can read 0 while node-exporter reports over a thousand.
+
+Both Ceph packet alerts therefore exclude `thunderbolt*`, and the ring is covered by `ThunderboltRingFrameErrors` in the observability `vmrules/` directory.
+
+That rule watches `node_network_receive_frame_total`, which is the least contaminated counter node-exporter exposes here but is **not** corruption-only. Under the default legacy mapping node-exporter computes it as `rx_frame_errors + rx_length_errors + rx_over_errors + rx_crc_errors`, and this driver never writes `rx_frame_errors` at all. Its thresholds are calibrated against a 30 day replay of
+this ring rather than derived from the counter's nominal meaning, so recalibrate them after any change to ring MTU, node count or node-exporter netdev flags.
+
+The rule gates on a minimum packet rate, so a link carrying very little traffic sits outside it and will not alert regardless of its error ratio -- inherent to ratio alerting, and the reason the ring's quietest interface is effectively uncovered. Check such a link by hand using the counter split below rather than relying on the alert.
+
+Split the aggregate before drawing any conclusion:
 
 ```bash
-# Error rate as a percentage of packets, per ring interface
-100 * sum by (instance,device) (rate(node_network_receive_errs_total{device=~"thunderbolt.*"}[5m]))
-  / sum by (instance,device) (rate(node_network_receive_packets_total{device=~"thunderbolt.*"}[5m]))
+for c in rx_errors rx_crc_errors rx_length_errors rx_over_errors rx_missed_errors; do
+  echo "$c = $(talosctl -n ms-01-3 read /sys/class/net/thunderbolt1/statistics/$c)"
+done
 ```
 
-Cross-reference `node_network_receive_frame_total` to confirm the errors are framing/CRC rather than drops, and check the kernel log for retimer instability, which points at the cable or connector:
+Only `rx_crc_errors` is unambiguously physical -- `tbnet_check_frame` sets it solely from the `RING_DESC_CRC_ERROR` hardware descriptor flag. `rx_missed_errors` and `rx_over_errors` mean the receive path could not keep up. `rx_length_errors` is ambiguous and should not be read as a hardware signal on its own: the driver increments it at five sites, including the mid-packet `frame_count` mismatch
+and the `TBNET_MAX_MTU` overflow check, which belong to the same jumbo-frame cascade that drives `rx_missed_errors`.
+
+Confirm link health independently before suspecting a cable -- a degrading cable negotiates fewer lanes or a lower speed, and logs retimer instability:
 
 ```bash
+talosctl -n ms-01-1 read /sys/bus/thunderbolt/devices/0-1/rx_speed   # expect 20.0 Gb/s
+talosctl -n ms-01-1 read /sys/bus/thunderbolt/devices/0-1/rx_lanes   # expect 2
 talosctl -n ms-01-1 dmesg | grep -i thunderbolt
 # Repeated "retimer disconnected" / "new retimer found" indicates a marginal physical link
 ```
 
-Reseating a marginal cable can make it substantially worse -- compare the error ratio before and after. A cable that degrades on reseat needs replacing, not reseating.
+Errors land on the **receiving** side, so the peer transmitting into the reporting port shares the suspect segment. Map the ring from the `new host found` lines in the kernel log rather than assuming which cable joins which pair.
+
+Reseating a marginal cable can make it substantially worse -- compare `rx_crc_errors` before and after. A cable that degrades on reseat needs replacing, not reseating.
 
 ### Ring link down and OSD traffic stalled
 

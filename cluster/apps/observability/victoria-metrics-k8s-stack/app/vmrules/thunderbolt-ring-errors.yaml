@@ -1,0 +1,80 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+# Thunderbolt ring link corruption alerts (Ref #2992)
+#
+# The Ceph packet alerts exclude thunderbolt* because the thunderbolt-net driver folds
+# rx_missed_errors (jumbo-frame fragment sequencing at MTU 65520) into rx_errors.
+#
+# node_network_receive_frame_total is the least contaminated counter available here, but it
+# is not clean: under node_exporter's default legacy mapping it sums rx_frame_errors (which
+# this driver never writes), rx_length_errors, rx_over_errors and rx_crc_errors. Only
+# rx_crc_errors is unambiguously physical - rx_length_errors shares the same fragment
+# cascade as rx_missed_errors. Reading it directly needs --collector.netdev.enable-detailed-metrics,
+# which renames netdev metrics cluster-wide and would break existing dashboards and rules.
+#
+# The thresholds below compensate: they are calibrated against a 30d replay of this ring
+# rather than derived from the counter's nominal meaning. Recalibrate after any change to
+# ring MTU, node count or node-exporter netdev flags.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: thunderbolt-ring-errors
+  namespace: observability
+spec:
+  groups:
+    - name: thunderbolt-ring
+      interval: 1m
+      rules:
+        # Triple gate: ratio, a denominator large enough to make the ratio meaningful, and an
+        # absolute floor. Ratio alone trips on near-idle links where one burst dominates.
+        #
+        # The packet gate is 300/s against a measured p99 of 16-543/s across the ring. A higher
+        # gate looks stricter but disables the rule, and fails in the wrong direction: a degrading
+        # link loses throughput as it retrains, dropping below the gate and going silent during
+        # the very fault this is meant to catch.
+        #
+        # The absolute floor is the binding constraint, not the packet gate, because the two are
+        # multiplicative - clearing 500 frames per 30m at the threshold ratio needs roughly
+        # 1400/s sustained, well above the 300/s gate. It was chosen at 500 rather than 1000 to
+        # keep that implied rate within reach of more than one interface. A genuine fault raises
+        # the ratio, which lowers the throughput needed to trip the floor.
+        - alert: ThunderboltRingFrameErrors
+          expr: |
+            1e6 * (
+              sum by(instance,device) (rate(node_network_receive_frame_total{device=~"thunderbolt.*"}[30m]))
+              /
+              sum by(instance,device) (rate(node_network_receive_packets_total{device=~"thunderbolt.*"}[30m]))
+            ) > 200
+            and
+            sum by(instance,device) (rate(node_network_receive_packets_total{device=~"thunderbolt.*"}[30m])) > 300
+            and
+            sum by(instance,device) (increase(node_network_receive_frame_total{device=~"thunderbolt.*"}[30m])) > 500
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Thunderbolt ring link error rate above calibrated baseline"
+            description: >-
+              Interface {{ $labels.device }} on {{ $labels.instance }} is above the ring's measured
+              error baseline. This counter mixes CRC corruption with jumbo-frame length errors, so
+              confirm before acting - read rx_crc_errors under
+              /sys/class/net/{{ $labels.device }}/statistics/ and compare against rx_length_errors
+              and rx_missed_errors. Only a rising rx_crc_errors indicates a physical fault. Errors
+              land on the receiving side, so the peer transmitting into this port shares the segment.
+
+        # 2000/h against a 30d observed peak of 562. Deliberately wide headroom: the counter is a
+        # composite, so a tight threshold would page on sequencing noise.
+        - alert: ThunderboltRingLinkDegraded
+          expr: |
+            sum by(instance,device) (increase(node_network_receive_frame_total{device=~"thunderbolt.*"}[1h])) > 2000
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Thunderbolt ring link error rate far above baseline"
+            description: >-
+              Interface {{ $labels.device }} on {{ $labels.instance }} has accumulated more than 2000
+              errors in the last hour, against a 30 day observed peak of 562 on this ring. Check
+              rx_crc_errors, link speed and lane count
+              (/sys/bus/thunderbolt/devices/*/rx_speed, rx_lanes) and the kernel log for retimer
+              instability before replacing hardware.
