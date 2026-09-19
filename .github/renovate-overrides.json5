@@ -106,6 +106,22 @@
       "dependencyDashboardApproval": true
     },
     {
+      // Coder tagged v2.36.6 and marked it Latest, but the chart is absent from
+      // helm.coder.com/v2 index.yaml (the tarball exists; the index was
+      // regenerated after the tag and still omits it), so Flux cannot resolve
+      // it. Drop the skip once upstream re-indexes or a later stable release
+      // lands. node-semver has no "!=" operator — an exclusion must be written
+      // as a two-sided range. Ref #2997
+      "description": "Skip coder 2.36.6 — GitHub release exists but the chart is missing from the Helm index",
+      "matchDatasources": [
+        "custom.coder-stable"
+      ],
+      "matchPackageNames": [
+        "coder"
+      ],
+      "allowedVersions": "<2.36.6 || >2.36.6"
+    },
+    {
       "description": "Bump the pgvector extension image and the CNPG Database version pin in one PR",
       "matchDatasources": [
         "docker"
