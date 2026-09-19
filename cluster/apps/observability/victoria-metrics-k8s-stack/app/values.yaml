@@ -103,10 +103,10 @@ alertmanager:
     disableNamespaceMatcher: true
     resources:
       limits:
-        memory: 64Mi
+        memory: 128Mi
       requests:
         cpu: 5m
-        memory: 32Mi
+        memory: 64Mi
     configRawYaml: |
       global:
         resolve_timeout: 5m
