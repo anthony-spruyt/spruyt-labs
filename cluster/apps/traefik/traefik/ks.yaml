@@ -29,8 +29,6 @@ spec:
     - name: brave-search-mcp
     - name: coder
     - name: crafty-controller
-    - name: firefly-iii
-    - name: firemerge
     - name: foundryvtt
     - name: headlamp
     - name: hindsight

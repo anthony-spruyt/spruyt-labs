@@ -42,7 +42,6 @@ resources:
   - ./kyverno
   - ./litellm
   - ./falco-system
-  - ./firefly-iii
   - ./nut-system
   - ./github-system
   - ./claude-agents-read

@@ -21,15 +21,6 @@ spec:
         - ports:
             - port: "9090"
               protocol: TCP
-    # CNPG clusters in firefly-iii
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: firefly-iii
-            k8s:cnpg.io/cluster: firefly-iii-cnpg-cluster
-      toPorts:
-        - ports:
-            - port: "9090"
-              protocol: TCP
     # CNPG clusters in n8n-system
     - fromEndpoints:
         - matchLabels:

@@ -42,8 +42,6 @@ configMapGenerator:
       - blueprints/hubble-sso.yaml
       - blueprints/redisinsight-sso.yaml
       - blueprints/flux-sso.yaml
-      - blueprints/firefly-iii-sso.yaml
-      - blueprints/firemerge-sso.yaml
       - blueprints/bull-board-sso.yaml
       - blueprints/technitium-sso.yaml
       - blueprints/litellm-sso.yaml

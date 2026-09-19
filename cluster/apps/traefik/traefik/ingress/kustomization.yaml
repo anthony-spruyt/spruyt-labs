@@ -6,7 +6,6 @@ resources:
   - ./authentik-system
   - ./bull-board
   - ./coder-system
-  - ./firefly-iii
   - ./flux-system
   - ./foundryvtt
   - ./headlamp-system

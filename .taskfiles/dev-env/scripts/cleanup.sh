@@ -23,7 +23,6 @@ tmp_dirs=(
   /tmp/SunGather
   /tmp/claude-config
   /tmp/repo-operator
-  /tmp/firemerge
   /tmp/claude-plugins
   /tmp/n8n-nodes-claude-code-cli
   /tmp/velero-chart
