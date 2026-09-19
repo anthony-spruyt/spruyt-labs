@@ -32,7 +32,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: push
-          image: ghcr.io/anthony-spruyt/coder-gitops:1.0.25@sha256:3b970dafc9bf7f67b3f191e2d26e543c31b84040c8f2300eaa2a915ec5bce6bf
+          image: ghcr.io/anthony-spruyt/coder-gitops:1.0.26@sha256:d95de43b9ab99e21985fb292f536d794cbc2a453802dcb9345ea58f8df5a0a37
           command: ["/usr/local/bin/push-templates.sh"]
           env:
             - name: CODER_URL
