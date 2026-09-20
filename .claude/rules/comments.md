@@ -1,7 +1,3 @@
----
-paths: [cluster/**, talos/**, infra/**, cmd/**, ts/**, scripts/**, .taskfiles/**, .github/**, "*.go", "*.ts", "*.yaml", "*.yml", "*.tf", "*.sh"]
----
-
 # Comments
 
 The default is no comment. Comment why, not what. Reasoning about a change goes in the commit body, not the code.
