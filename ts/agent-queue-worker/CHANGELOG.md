@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.55](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.54...agent-queue-worker/v3.3.55) (2026-09-20)
+
+
+### Dependencies
+
+* **deps:** update dependency zod to v4.6.4 ([#3015](https://github.com/anthony-spruyt/spruyt-labs/issues/3015)) ([3103899](https://github.com/anthony-spruyt/spruyt-labs/commit/3103899b05fb3c69fa3fb017a107e856c8597797))
+
 ## [3.3.54](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.53...agent-queue-worker/v3.3.54) (2026-09-18)
 
 
