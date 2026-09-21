@@ -2,7 +2,9 @@
 
 ## Overview
 
-LiteLLM Proxy provides a centralized, OpenAI-compatible LLM gateway backed by Alibaba Cloud Model Studio (DashScope). Routes multiple model providers (Qwen, DeepSeek, Zhipu GLM, MiniMax, Kimi) through a single gateway. Replaces direct Anthropic API usage for Claude Code CLI automation, providing virtual key management, spend tracking, and OTEL observability.
+LiteLLM Proxy provides a centralized LLM gateway exposing both Anthropic-compatible (`/v1/messages`) and OpenAI-compatible (`/v1/chat/completions`) APIs. Claude models route to Anthropic directly, with OpenRouter as the failover provider. Replaces direct Anthropic API usage for Claude Code CLI automation, providing virtual key management, spend tracking, and OTEL observability.
+
+Priority tier: `standard`.
 
 ## Prerequisites
 
@@ -10,6 +12,8 @@ LiteLLM Proxy provides a centralized, OpenAI-compatible LLM gateway backed by Al
 - cnpg-operator (CloudNativePG)
 - external-secrets (cross-namespace OIDC credential sync)
 - plugin-barman-cloud (CNPG backup plugin)
+- litellm-valkey (Redis-compatible cache and router state)
+- rook-ceph-cluster-storage (PVCs for the ChatGPT plugin auth data and the llm-guard model cache)
 
 ## Operations
 
@@ -31,10 +35,12 @@ curl -X POST "http://litellm.litellm.svc.cluster.local:4000/key/generate" \
 
 Virtual keys are stored in PostgreSQL. Each consumer should have a dedicated key with appropriate budget and rate limits.
 
-| Consumer         | Secret Location                                       | Key Name               |
-| ---------------- | ----------------------------------------------------- | ---------------------- |
-| n8n agent pods   | `mcp-credentials` in each `claude-agents-*` namespace | `litellm-api-key`      |
-| Coder workspaces | Per-developer workspace secret or `.env`              | `ANTHROPIC_AUTH_TOKEN` |
+| Consumer          | Secret Location                                           | Secret Key    | Injected As            |
+| ----------------- | --------------------------------------------------------- | ------------- | ---------------------- |
+| Claude agent pods | `litellm-credentials` in each `claude-agents-*` namespace | `virtual-key` | `ANTHROPIC_AUTH_TOKEN` |
+| Coder workspaces  | Per-developer workspace secret or `.env`                  | —             | `ANTHROPIC_AUTH_TOKEN` |
+
+Agent pods get `ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL` injected by the Kyverno policy in `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` — not by their own manifests.
 
 ### Authentik SSO
 
@@ -49,53 +55,32 @@ Blueprint creates:
 
 ### Model Management
 
-Model routing is managed via CNPG DB (`LiteLLM_ProxyModelTable`), not config.yaml. All models are registered via the LiteLLM Admin API (`POST /model/new`) or UI.
+Models are declared in `config.yaml`, embedded in `litellm/app/values.yaml` under `configMaps.litellm-config`. Edit that file and let Flux reconcile — do not use the Admin API (`POST /model/new`) or the UI, since those writes are lost on the next pod roll.
 
-When adding a new Claude alias, create **two entries** — one for each DashScope protocol endpoint:
+`store_model_in_db: true` is set, but `supported_db_objects` is scoped to `mcp`, so the DB persists **MCP objects only**. `config.yaml` is authoritative for models. Widening `supported_db_objects` would make DB-stored models shadow the declared ones — don't, without revisiting this.
 
-| Order | Protocol     | Endpoint                          | Used By                            |
-| ----- | ------------ | --------------------------------- | ---------------------------------- |
-| 1     | `anthropic/` | `/apps/anthropic` (code plan)     | Claude Code, Anthropic API clients |
-| 2     | `openai/`    | `/compatible-mode/v1` (code plan) | LiteLLM UI, OpenAI API clients     |
+Adding a Claude model takes three edits in `values.yaml`:
 
-DashScope provides two endpoints per billing tier:
+| Key                                 | Entry                                                    | Why                                               |
+| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------- |
+| `model_list`                        | `anthropic/<model>` pointing at itself                   | Registers the deployment                          |
+| `router_settings.model_group_alias` | `<model>` → `anthropic/<model>`                          | Lets clients send the bare name Claude Code uses  |
+| `router_settings.fallbacks`         | Both the bare and `anthropic/`-prefixed key → OpenRouter | Router sees the group pre- and post-alias-resolve |
 
-- **OpenAI-compatible**: `https://<host>/compatible-mode/v1`
-- **Anthropic-compatible**: `https://<host>/apps/anthropic`
+Omit cost params for models LiteLLM already prices in its bundled `model_prices_and_context_window.json` (all current Claude models). Only set `input_cost_per_token` / `output_cost_per_token` for models absent from that registry, such as OpenRouter entries.
 
-Both code plan (`token-plan.ap-southeast-1.maas.aliyuncs.com`) and PAYG (`dashscope-intl.aliyuncs.com`) expose both protocols.
-
-**Adding models via API:**
-
-```bash
-kubectl exec -n litellm deployment/litellm -- python3 -c "
-import urllib.request, json, os
-key = os.environ.get('LITELLM_MASTER_KEY', '')
-payload = json.dumps({
-    'model_name': 'your-alias',
-    'litellm_params': {'model': 'provider/actual-model', 'api_key': 'os.environ/API_KEY'},
-    'model_info': {'input_cost_per_token': 0.0, 'output_cost_per_token': 0.0}
-}).encode()
-req = urllib.request.Request('http://localhost:4000/model/new', data=payload, headers={
-    'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'
-})
-print(urllib.request.urlopen(req).read().decode()[:100])
-"
-```
+Only live models are registered. Retired names (e.g. `claude-opus-4-8`) are deliberately left unmapped so they fail fast with a clear error rather than silently routing somewhere unintended.
 
 ### Known Issues
 
-| Issue                 | Description                                            | Mitigation                                      |
-| --------------------- | ------------------------------------------------------ | ----------------------------------------------- |
-| BerriAI/litellm#25868 | Tool results silently dropped (list-format content)    | Monitor, wait for upstream fix                  |
-| BerriAI/litellm#27839 | Multi-turn conversations may get stuck                 | Retry logic in consumers                        |
-| Anthropic passthrough | `openai/` models fail on `/v1/messages` endpoint       | Use `anthropic/` entries at higher priority     |
-| Claude Code cost_usd  | Broken — internal price table only knows Claude models | Use LiteLLM Grafana dashboard for cost tracking |
-| Cache tokens          | Zero — models may lack prompt caching                  | Expected behavior                               |
+| Issue                | Description                                                                                                                     | Mitigation                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Lossy passthrough    | `openai/` models on `/v1/messages` are translated via the Responses API — `cache_control` is dropped and `thinking` is remapped | Call `openai/` models on `/v1/chat/completions` when those fields matter |
+| Claude Code cost_usd | Broken — internal price table only knows Claude models                                                                          | Use LiteLLM Grafana dashboard for cost tracking                          |
 
 ### Security: PyPI Supply Chain Advisory
 
-LiteLLM PyPI versions 1.82.7-1.82.8 were compromised. **NEVER install from PyPI.** Docker/GHCR images were NOT affected. Always pin to a specific version tag with digest.
+LiteLLM PyPI versions 1.82.7-1.82.8 were compromised via a trivy scan dependency. The incident is contained, and Docker/GHCR images were never affected. Retained as standing policy: install from GHCR only, never PyPI, and always pin to a version tag with digest.
 
 ## Troubleshooting
 
@@ -109,15 +94,16 @@ LiteLLM PyPI versions 1.82.7-1.82.8 were compromised. **NEVER install from PyPI.
    - **Symptom**: Login redirects endlessly between LiteLLM and Authentik
    - **Resolution**: Verify `PROXY_BASE_URL` matches the IngressRoute hostname exactly. Check Authentik Application redirect URI includes `/sso/callback`.
 
-3. **Alibaba Cloud Model Studio API errors**
+3. **Upstream provider 401/403**
 
-   - **Symptom**: 401/403 from upstream provider
-   - **Resolution**: Verify `DASHSCOPE_API_KEY` in litellm-secrets. Check Alibaba Cloud Model Studio subscription status and quota.
+   - **Symptom**: The alias resolves, but the upstream call returns 401 or 403
+   - **Resolution**: The provider key is missing or invalid. `openrouter/*` and `openai/*` entries name their env var inline (`OPENROUTER_API_KEY`, `OPENAI_API_KEY`); the `anthropic/*` entries set no `api_key` and rely on `ANTHROPIC_API_KEY` from `litellm-secrets`. Confirm the relevant key exists and check the provider's quota.
+   - **Note**: A 401 means the alias resolved and only the credential is at fault — contrast with a `BadRequestError` about "no healthy deployments", which means the model is not registered at all.
 
 ## References
 
 - [LiteLLM Documentation](https://docs.litellm.ai/)
-- [LiteLLM DashScope Provider](https://docs.litellm.ai/docs/providers/dashscope)
-- [Alibaba Cloud Model Studio](https://www.alibabacloud.com/en/product/model-studio)
+- [LiteLLM Anthropic Provider](https://docs.litellm.ai/docs/providers/anthropic)
+- [LiteLLM Routing and Fallbacks](https://docs.litellm.ai/docs/routing)
 - [Claude Code LLM Gateway Docs](https://code.claude.com/docs/en/llm-gateway)
-- [PyPI Compromise Advisory](https://github.com/BerriAI/litellm/issues/24524)
+- [PyPI Compromise Advisory](https://github.com/BerriAI/litellm/issues/24518)
