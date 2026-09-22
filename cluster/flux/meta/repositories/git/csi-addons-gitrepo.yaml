@@ -10,7 +10,7 @@ spec:
   timeout: 3m
   url: https://github.com/csi-addons/kubernetes-csi-addons
   ref:
-    tag: v0.15.0
+    tag: v0.15.1
   sparseCheckout:
     - deploy/controller
   ignore: |
