@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=astral-sh/uv datasource=github-releases
-VERSION="0.12.14"
+VERSION="0.12.15"
 
 ARCH=$(uname -m)
 case "$ARCH" in
