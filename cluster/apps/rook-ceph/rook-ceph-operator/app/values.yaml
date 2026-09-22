@@ -17,7 +17,7 @@ csi:
     repository: quay.io/csiaddons/k8s-sidecar
     # v0.15.0+ rejects --v=0; needs log.verbosity >= 1 in rook-ceph-csi-drivers.
     # renovate: depName=quay.io/csiaddons/k8s-sidecar datasource=docker versioning=docker
-    tag: v0.15.0
+    tag: v0.15.1
   snapshotter:
     repository: registry.k8s.io/sig-storage/csi-snapshotter
     # renovate: depName=registry.k8s.io/sig-storage/csi-snapshotter datasource=docker versioning=docker
