@@ -189,6 +189,8 @@ global:
             path: litellm-sso.yaml
           - key: hindsight-sso.yaml
             path: hindsight-sso.yaml
+          - key: temporal-sso.yaml
+            path: temporal-sso.yaml
 
 authentik:
   log_level: info

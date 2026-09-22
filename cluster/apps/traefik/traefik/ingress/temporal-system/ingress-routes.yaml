@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-lan-https
+  namespace: temporal-system
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.kubernetes.io/hostname: temporal.lan.${EXTERNAL_DOMAIN}
+    external-dns.kubernetes.io/target: ${TRAEFIK_IP4}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`temporal.lan.${EXTERNAL_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: compress
+      services:
+        - name: ak-outpost-temporal-outpost
+          passHostHeader: true
+          port: 9000
+    - kind: Rule
+      match: Host(`temporal.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: authentik-forward-auth
+        - name: lan-ip-whitelist
+        - name: compress
+      services:
+        - name: temporal-web
+          namespace: temporal-system
+          passHostHeader: true
+          port: 8080
+  tls:
+    secretName: "temporal-lan-${EXTERNAL_DOMAIN/./-}-tls"

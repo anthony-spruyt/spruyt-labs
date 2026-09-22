@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: temporal-cnpg-cluster
+spec:
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:899d3ed526b659d77935dde0e6bf2d69dbbf17d3d8c6486ca8cfd04bd3c18533"
+  instances: 2
+  enablePDB: false
+  monitoring:
+    enablePodMonitor: true
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      enabled: true
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: temporal-cnpg-aws-object-store
+  bootstrap:
+    initdb:
+      database: temporal
+      owner: temporal
+  managed:
+    roles:
+      - name: temporal
+        login: true
+        connectionLimit: -1
+        ensure: present
+        inherit: true
+  postgresql:
+    parameters:
+      # 4 server pods x 2 stores x maxConns 10 (values.yaml) already needs 80 of the default 100.
+      max_connections: "200"
+      shared_buffers: 256MB
+  primaryUpdateMethod: switchover
+  primaryUpdateStrategy: unsupervised
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 200m
+      memory: 1Gi
+  storage:
+    pvcTemplate:
+      storageClassName: rbd-fast-delete
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi

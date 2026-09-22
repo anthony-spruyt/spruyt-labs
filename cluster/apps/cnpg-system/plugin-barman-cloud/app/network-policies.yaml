@@ -48,6 +48,15 @@ spec:
         - ports:
             - port: "9090"
               protocol: TCP
+    # CNPG clusters in temporal-system
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:cnpg.io/cluster: temporal-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow ingress from CNPG operator for plugin registration/health checks

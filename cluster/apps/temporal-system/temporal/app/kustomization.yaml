@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./aws-secret-store.yaml
+  - ./aws-barman-eso.yaml
+  - ./temporal-cnpg-object-stores.yaml
+  - ./temporal-cnpg-cluster.yaml
+  - ./temporal-cnpg-database.yaml
+  - ./temporal-cnpg-scheduled-backups.yaml
+  - ./release.yaml
+  - ./vpa.yaml
+  - ./authentik-outpost-rbac.yaml
+  - ./network-policies.yaml
+configMapGenerator:
+  - name: temporal-values
+    namespace: temporal-system
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

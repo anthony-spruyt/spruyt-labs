@@ -1,0 +1,221 @@
+---
+# Documentation: https://github.com/temporalio/helm-charts/blob/main/README.md
+# Default values: https://github.com/temporalio/helm-charts/blob/main/charts/temporal/values.yaml
+server:
+  image:
+    repository: temporalio/server
+    tag: 1.32.0@sha256:c3e752127759616bb1615e0f9ba0e21635aeb5fdeb922de4f371c350955f46ae
+  priorityClassName: standard
+  versionCheckDisabled: true
+  metrics:
+    serviceMonitor:
+      enabled: true
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  additionalVolumes:
+    - name: postgres-ca
+      secret:
+        secretName: temporal-cnpg-cluster-ca
+        items:
+          - key: ca.crt
+            path: ca.crt
+  additionalVolumeMounts:
+    - name: postgres-ca
+      mountPath: /etc/temporal/tls/postgres
+      readOnly: true
+  config:
+    logLevel: info
+    persistence:
+      defaultStore: default
+      visibilityStore: visibility
+      # Immutable after first deploy. Changing it requires wiping both databases.
+      numHistoryShards: 512
+      datastores:
+        default:
+          sql:
+            createDatabase: false
+            manageSchema: true
+            pluginName: postgres12
+            driverName: postgres12
+            databaseName: temporal
+            connectAddr: temporal-cnpg-cluster-rw.temporal-system.svc:5432
+            connectProtocol: tcp
+            user: temporal
+            existingSecret: temporal-cnpg-cluster-app
+            secretKey: password
+            maxConns: 10
+            maxIdleConns: 10
+            maxConnLifetime: 1h
+            tls:
+              enabled: true
+              enableHostVerification: true
+              serverName: temporal-cnpg-cluster-rw.temporal-system.svc
+              caFile: /etc/temporal/tls/postgres/ca.crt
+        visibility:
+          sql:
+            createDatabase: false
+            manageSchema: true
+            pluginName: postgres12
+            driverName: postgres12
+            databaseName: temporal_visibility
+            connectAddr: temporal-cnpg-cluster-rw.temporal-system.svc:5432
+            connectProtocol: tcp
+            user: temporal
+            existingSecret: temporal-cnpg-cluster-app
+            secretKey: password
+            maxConns: 10
+            maxIdleConns: 10
+            maxConnLifetime: 1h
+            tls:
+              enabled: true
+              enableHostVerification: true
+              serverName: temporal-cnpg-cluster-rw.temporal-system.svc
+              caFile: /etc/temporal/tls/postgres/ca.crt
+    namespaces:
+      create: true
+      useHelmHooks: false
+      namespace:
+        - name: default
+          retention: 3d
+  frontend:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    containerSecurityContext: &serverContainerSecurityContext
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+          - ALL
+  history:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
+    containerSecurityContext: *serverContainerSecurityContext
+  matching:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    containerSecurityContext: *serverContainerSecurityContext
+  worker:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    containerSecurityContext: *serverContainerSecurityContext
+
+admintools:
+  enabled: true
+  image:
+    repository: temporalio/admin-tools
+    tag: 1.32.0@sha256:a9f84fb9a374b2374fe2e67c8efc0468ff3f1c66c8a0b14597ec86e349e62bca
+  priorityClassName: standard
+  additionalVolumes:
+    - name: postgres-ca
+      secret:
+        secretName: temporal-cnpg-cluster-ca
+        items:
+          - key: ca.crt
+            path: ca.crt
+  additionalVolumeMounts:
+    - name: postgres-ca
+      mountPath: /etc/temporal/tls/postgres
+      readOnly: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
+
+web:
+  enabled: true
+  image:
+    repository: temporalio/ui
+    tag: 2.54.1@sha256:ff0943fe532b8e33c46cd28b29e81e0ce0b6f55b9ee50a38ef1b437cc4de3fa5
+  priorityClassName: standard
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
+
+schema:
+  # Helm hooks do not work with Flux; plain Jobs run on every revision instead.
+  useHelmHooks: false
+  backoffLimit: 20
+  ttlSecondsAfterFinished: 86400
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL

@@ -18,6 +18,7 @@ resources:
   - ./postfinance-charts.yaml
   - ./qdrant-charts.yaml
   - ./stakater-charts.yaml
+  - ./temporal-charts.yaml
   - ./traefik-charts.yaml
   - ./valkey-io-charts.yaml
   - ./vaultwarden-charts.yaml

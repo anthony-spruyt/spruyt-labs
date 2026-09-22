@@ -1,0 +1,67 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Temporal SSO
+entries:
+  - id: temporal_users_group
+    model: authentik_core.group
+    identifiers:
+      name: Temporal Users
+    attrs:
+      name: Temporal Users
+  - id: temporal_provider
+    model: authentik_providers_proxy.proxyprovider
+    identifiers:
+      name: Temporal
+    attrs:
+      authorization_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-authorization-implicit-consent"],
+        ]
+      invalidation_flow:
+        !Find [
+          authentik_flows.flow,
+          [slug, "default-provider-invalidation-flow"],
+        ]
+      mode: forward_single
+      external_host: https://temporal.lan.${EXTERNAL_DOMAIN}
+  - id: temporal_application
+    model: authentik_core.application
+    identifiers:
+      slug: temporal
+    attrs:
+      name: Temporal
+      provider: !KeyOf temporal_provider
+      meta_launch_url: https://temporal.lan.${EXTERNAL_DOMAIN}
+      icon: https://avatars.githubusercontent.com/u/56493103?s=200
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf temporal_application
+      order: 0
+    attrs:
+      group: !KeyOf temporal_users_group
+      negate: false
+      enabled: true
+      timeout: 30
+
+  # Requires RBAC: Role/RoleBinding in temporal-system granting the authentik SA permissions
+  - id: temporal_outpost
+    model: authentik_outposts.outpost
+    identifiers:
+      name: Temporal Outpost
+    attrs:
+      type: proxy
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
+      config:
+        authentik_host: https://auth.${EXTERNAL_DOMAIN}/
+        kubernetes_namespace: temporal-system
+      providers:
+        - !KeyOf temporal_provider

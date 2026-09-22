@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: temporal
+spec:
+  chart:
+    spec:
+      chart: temporal
+      version: "1.7.0"
+      sourceRef:
+        kind: HelmRepository
+        name: temporal-charts
+        namespace: flux-system
+  interval: 4h
+  valuesFrom:
+    - kind: ConfigMap
+      name: temporal-values

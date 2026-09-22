@@ -56,6 +56,7 @@ resources:
   - ./unifi-system
   - ./vpa-system
   - ./hindsight
+  - ./temporal-system
   # - ./snmp
   # - ./smtp
   # - ./mysql

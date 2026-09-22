@@ -1,0 +1,458 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Component map (app.kubernetes.io/component on instance=temporal,name=temporal):
+#   frontend   rpc 7233  membership 6933  http 7243  metrics 9090
+#   history    rpc 7234  membership 6934  http 7244  metrics 9090
+#   matching   rpc 7235  membership 6935  http 7245  metrics 9090
+#   worker     rpc 7239  membership 6939  http 7249  metrics 9090
+#   web        :8080  <- traefik                -> frontend:7233
+#   admintools / database (schema + namespace jobs)  -> cnpg:5432, frontend:7233
+#   outpost    :9000  <- traefik  :9300 <- vmagent  -> authentik, world:443
+#   cnpg       :5432  <- server pods, admintools, database jobs
+# Server pods talk to each other over rpc + membership (ringpop gossip); membership state lives in Postgres.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-server-internal
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: temporal
+      app.kubernetes.io/name: temporal
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - frontend
+          - history
+          - matching
+          - worker
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:app.kubernetes.io/instance: temporal
+            k8s:app.kubernetes.io/name: temporal
+          matchExpressions:
+            - key: k8s:app.kubernetes.io/component
+              operator: In
+              values:
+                - frontend
+                - history
+                - matching
+                - worker
+      toPorts:
+        - ports:
+            - port: "7233"
+              protocol: TCP
+            - port: "7234"
+              protocol: TCP
+            - port: "7235"
+              protocol: TCP
+            - port: "7239"
+              protocol: TCP
+            - port: "6933"
+              protocol: TCP
+            - port: "6934"
+              protocol: TCP
+            - port: "6935"
+              protocol: TCP
+            - port: "6939"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:app.kubernetes.io/instance: temporal
+            k8s:app.kubernetes.io/name: temporal
+          matchExpressions:
+            - key: k8s:app.kubernetes.io/component
+              operator: In
+              values:
+                - frontend
+                - history
+                - matching
+                - worker
+      toPorts:
+        - ports:
+            - port: "7233"
+              protocol: TCP
+            - port: "7234"
+              protocol: TCP
+            - port: "7235"
+              protocol: TCP
+            - port: "7239"
+              protocol: TCP
+            - port: "6933"
+              protocol: TCP
+            - port: "6934"
+              protocol: TCP
+            - port: "6935"
+              protocol: TCP
+            - port: "6939"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:cnpg.io/cluster: temporal-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-frontend-clients-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: temporal
+      app.kubernetes.io/name: temporal
+      app.kubernetes.io/component: frontend
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:app.kubernetes.io/instance: temporal
+            k8s:app.kubernetes.io/name: temporal
+          matchExpressions:
+            - key: k8s:app.kubernetes.io/component
+              operator: In
+              values:
+                - web
+                - admintools
+                - database
+      toPorts:
+        - ports:
+            - port: "7233"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-server-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: temporal
+      app.kubernetes.io/name: temporal
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - frontend
+          - history
+          - matching
+          - worker
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-web
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: temporal
+      app.kubernetes.io/name: temporal
+      app.kubernetes.io/component: web
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:app.kubernetes.io/instance: temporal
+            k8s:app.kubernetes.io/name: temporal
+            k8s:app.kubernetes.io/component: frontend
+      toPorts:
+        - ports:
+            - port: "7233"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# admintools Deployment plus the schema and namespace Jobs (component=database).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-admintools-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: temporal
+      app.kubernetes.io/name: temporal
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - admintools
+          - database
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:cnpg.io/cluster: temporal-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:app.kubernetes.io/instance: temporal
+            k8s:app.kubernetes.io/name: temporal
+            k8s:app.kubernetes.io/component: frontend
+      toPorts:
+        - ports:
+            - port: "7233"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-traefik-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-authentik-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik-system
+            k8s:app.kubernetes.io/name: authentik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+            - port: "9443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-world-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-outpost-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: goauthentik.io
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9300"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-cnpg-app-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: temporal-cnpg-cluster
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:app.kubernetes.io/instance: temporal
+            k8s:app.kubernetes.io/name: temporal
+          matchExpressions:
+            - key: k8s:app.kubernetes.io/component
+              operator: In
+              values:
+                - frontend
+                - history
+                - matching
+                - worker
+                - admintools
+                - database
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-cnpg-internal-cluster
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: temporal-cnpg-cluster
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:cnpg.io/cluster: temporal-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: temporal-system
+            k8s:cnpg.io/cluster: temporal-cnpg-cluster
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-cnpg-world-https-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: temporal-cnpg-cluster
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-cnpg-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: temporal-cnpg-cluster
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "9187"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-cnpg-operator-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: temporal-cnpg-cluster
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+            k8s:app.kubernetes.io/name: cloudnative-pg
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-cnpg-kube-api-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: temporal-cnpg-cluster
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-cnpg-barman-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: temporal-cnpg-cluster
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+            k8s:app.kubernetes.io/name: plugin-barman-cloud
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP
