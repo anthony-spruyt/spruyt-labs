@@ -36,7 +36,7 @@ entries:
       name: Temporal
       provider: !KeyOf temporal_provider
       meta_launch_url: https://temporal.lan.${EXTERNAL_DOMAIN}
-      icon: https://avatars.githubusercontent.com/u/56493103?s=200
+      icon: https://cdn.simpleicons.org/temporal
 
   - model: authentik_policies.policybinding
     identifiers:

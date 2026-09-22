@@ -76,7 +76,7 @@ entries:
       name: LiteLLM
       provider: !KeyOf litellm_provider
       meta_launch_url: https://litellm.${EXTERNAL_DOMAIN}
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/litellm.png
+      icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/litellm.png
 
   - model: authentik_policies.policybinding
     identifiers:
