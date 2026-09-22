@@ -452,6 +452,7 @@ configMaps:
       config.yaml: |
         general_settings:
           always_include_stream_usage: true
+          disable_env_credential_login: true
           forward_client_headers_to_llm_api: true
           mcp_trusted_proxy_ranges:
             - "${CLUSTER_POD_CIDR_IP4}"
