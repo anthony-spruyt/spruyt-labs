@@ -6,6 +6,7 @@
 image:
   repository: n8nio/n8n
   pullPolicy: IfNotPresent
+  # renovate: datasource=custom.n8n-stable depName=n8nio/n8n
   tag: "2.38.7@sha256:a8c95f75c6fdf65f5f2b7a7b354744eaa1c62bb911b5c00af6499c3f38e4cd32"
 main:
   terminationGracePeriodSeconds: 90
