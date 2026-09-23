@@ -3,7 +3,7 @@ output "tunnel_id" {
   description = "ID of the spruyt-labs-01 Cloudflare Tunnel"
 }
 
-output "tunnel_hostnames" {
-  value       = values(local.tunnel_hostnames)
-  description = "Public hostnames routed through the tunnel"
+output "tunnel_subdomains" {
+  value       = keys(local.tunnel_hostnames)
+  description = "Subdomains routed through the tunnel (\"@\" is the zone apex)"
 }
