@@ -574,7 +574,8 @@ configMaps:
               complexity_router_default_model: "anthropic/claude-sonnet-5"
               complexity_router_config:
                 tiers:
-                  SIMPLE: "anthropic/claude-haiku-4-5"
+                  # Not Haiku 4.5 - Claude Code sends Claude 5 features to unknown models and Haiku 400s
+                  SIMPLE: "anthropic/claude-sonnet-5"
                   MEDIUM: "anthropic/claude-sonnet-5"
                   COMPLEX: "anthropic/claude-opus-5-5"
                   REASONING: "anthropic/claude-fable-5-1"
