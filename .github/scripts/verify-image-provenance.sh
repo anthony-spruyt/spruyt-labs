@@ -164,6 +164,7 @@ reachable_branches() {
         found+=("${branch}")
         break
         ;;
+      *) ;;
       esac
     done < <(gh api "repos/${slug}/branches?per_page=100" --jq '.[].name' 2>/dev/null || true)
   fi
@@ -179,8 +180,9 @@ allowlisted() {
 }
 
 epoch() {
-  [[ -n "$1" ]] || return 1
-  date -u -d "$1" +%s 2>/dev/null
+  local timestamp="$1"
+  [[ -n "${timestamp}" ]] || return 1
+  date -u -d "${timestamp}" +%s 2>/dev/null
 }
 
 verify() {
@@ -234,11 +236,10 @@ verify() {
   fi
 
   local built_epoch committed_epoch
-  if built_epoch="$(epoch "${built_at}")" && committed_epoch="$(epoch "${committed_at}")"; then
-    if [[ "${built_epoch}" -lt $((committed_epoch - CLOCK_SKEW_SECONDS)) ]]; then
-      echo "FAILED ${ref} — build time ${built_at} predates its source commit ${committed_at}"
-      return 1
-    fi
+  if built_epoch="$(epoch "${built_at}")" && committed_epoch="$(epoch "${committed_at}")" &&
+    [[ "${built_epoch}" -lt $((committed_epoch - CLOCK_SKEW_SECONDS)) ]]; then
+    echo "FAILED ${ref} — build time ${built_at} predates its source commit ${committed_at}"
+    return 1
   fi
 
   echo "VERIFIED ${ref} — built from ${revision} on $(jq -r '.branches | join(", ")' <<<"${facts}") in ${source}"
