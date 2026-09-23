@@ -146,6 +146,18 @@
       "groupName": "pgvector"
     },
     {
+      // Server image, dev-env CLI and AWS plugin are bumped together when
+      // their updates land together; grouping coalesces concurrently pending
+      // updates, it does not enforce the compatibility matrix. Ref #3081
+      "description": "Bump the velero server image, CLI installer pin and AWS plugin in one PR",
+      "matchPackageNames": [
+        "docker.io/velero/velero",
+        "vmware-tanzu/velero",
+        "velero/velero-plugin-for-aws"
+      ],
+      "groupName": "velero"
+    },
+    {
       // Helm values use the short name, the Kyverno policy the fully-qualified
       // one; Renovate splits one digest bump into two PRs. Ref #3076
       "description": "Bump busybox in one PR regardless of how the image is referenced",
