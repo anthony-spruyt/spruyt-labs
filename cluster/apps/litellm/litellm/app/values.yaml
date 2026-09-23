@@ -491,6 +491,16 @@ configMaps:
               default_on: false
               skip_system_message_in_guardrail: true
               api_base: http://litellm-llm-guard.litellm.svc.cluster.local:8000
+          # Sends tool outputs to TypeSafe (external) - keep opt-in
+          - guardrail_name: jev-compaction
+            litellm_params:
+              guardrail: typesafe
+              mode: pre_call
+              default_on: false
+              api_key: os.environ/TYPESAFE_API_KEY
+              unreachable_fallback: fail_open
+              optional_params:
+                relevance_threshold: 0.2
         litellm_settings:
           cache: true
           cache_params:
@@ -555,6 +565,25 @@ configMaps:
             litellm_params:
               model: "text-embedding-3-small"
               api_key: os.environ/OPENAI_API_KEY
+          # --------------------------------------------------------------------------
+          # Auto router: TypeSafe Jev classifier
+          # --------------------------------------------------------------------------
+          - model_name: "jev-router"
+            litellm_params:
+              model: "auto_router/complexity_router"
+              complexity_router_default_model: "anthropic/claude-sonnet-5"
+              complexity_router_config:
+                tiers:
+                  SIMPLE: "anthropic/claude-haiku-4-5"
+                  MEDIUM: "anthropic/claude-sonnet-5"
+                  COMPLEX: "anthropic/claude-opus-5-5"
+                  REASONING: "anthropic/claude-fable-5-1"
+                classifier_type: jev
+                jev_classifier_config:
+                  model: jev-latest
+                  timeout_ms: 3000
+                # Replays the held tier on tool-result turns - no mid-loop model switches
+                classification_mode: user_turn
         router_settings:
           enable_weighted_failover: true
           # Keys are model groups as the client sends them (alias) and after alias
