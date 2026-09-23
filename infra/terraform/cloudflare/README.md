@@ -45,7 +45,3 @@ Set on the `workspace-factory` TFC workspace, which copies them to this workspac
 Add an entry to `local.tunnel_routes` in `tunnel.tf`. That creates both the ingress rule and the proxied CNAME. Do not add routes in the dashboard; the next apply will remove them.
 
 Order matters: cloudflared matches ingress rules top-down, and the `http_status:404` catch-all is always appended last.
-
-## Initial import
-
-`imports.tf` adopts the existing clickops resources on the first apply. The first plan must show only imports (0 to add, 0 to change, 0 to destroy). Delete `imports.tf` after that apply.
