@@ -16,32 +16,29 @@ require() {
   done
 }
 
+# registries redirect to CDNs, so follow only while the scheme stays https
+fetch() {
+  curl -fsSL --proto '=https' --proto-redir '=https' "$@"
+}
+
 registry_token() {
-  local host="$1" path="$2"
+  local host="$1" path="$2" url
   case "${host}" in
-  ghcr.io)
-    curl -fsS "https://ghcr.io/token?scope=repository:${path}:pull&service=ghcr.io" | jq -r '.token'
-    ;;
-  docker.io)
-    curl -fsS "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${path}:pull" | jq -r '.token'
-    ;;
-  quay.io)
-    curl -fsS "https://quay.io/v2/auth?service=quay.io&scope=repository:${path}:pull" | jq -r '.token'
-    ;;
-  public.ecr.aws)
-    curl -fsS "https://public.ecr.aws/token/?service=public.ecr.aws&scope=repository:${path}:pull" | jq -r '.token'
-    ;;
-  *)
-    curl -fsS "https://${host}/v2/token?scope=repository:${path}:pull&service=${host}" 2>/dev/null |
-      jq -r '.token // empty' 2>/dev/null
-    ;;
+  ghcr.io) url="https://ghcr.io/token?service=ghcr.io&scope=repository:${path}:pull" ;;
+  docker.io) url="https://auth.docker.io/token?service=registry.docker.io&scope=repository:${path}:pull" ;;
+  quay.io) url="https://quay.io/v2/auth?service=quay.io&scope=repository:${path}:pull" ;;
+  public.ecr.aws) url="https://public.ecr.aws/token/?service=public.ecr.aws&scope=repository:${path}:pull" ;;
+  *) url="https://${host}/v2/token?service=${host}&scope=repository:${path}:pull" ;;
   esac
+
+  fetch "${url}" 2>/dev/null | jq -r '.token // empty' 2>/dev/null
 }
 
 registry_host() {
-  case "$1" in
+  local host="$1"
+  case "${host}" in
   docker.io) echo "registry-1.docker.io" ;;
-  *) echo "$1" ;;
+  *) echo "${host}" ;;
   esac
 }
 
@@ -55,25 +52,25 @@ fetch_registry_facts() {
   api_host="$(registry_host "${host}")"
   token="$(registry_token "${host}" "${path}" 2>/dev/null || true)"
   local -a auth=()
-  if [ -n "${token}" ] && [ "${token}" != "null" ]; then
+  if [[ -n "${token}" ]] && [[ "${token}" != "null" ]]; then
     auth=(-H "Authorization: Bearer ${token}")
   fi
 
   accept="application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json"
-  manifest="$(curl -fsSL "${auth[@]+"${auth[@]}"}" -H "Accept: ${accept}" \
+  manifest="$(fetch "${auth[@]+"${auth[@]}"}" -H "Accept: ${accept}" \
     "https://${api_host}/v2/${path}/manifests/${tag}")" || die "image ${ref} does not resolve in the registry"
 
   amd64="$(jq -r 'if .manifests then (.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux") | .digest) else empty end' <<<"${manifest}" | head -1)"
-  if [ -n "${amd64}" ]; then
-    manifest="$(curl -fsSL "${auth[@]+"${auth[@]}"}" -H "Accept: ${accept}" \
+  if [[ -n "${amd64}" ]]; then
+    manifest="$(fetch "${auth[@]+"${auth[@]}"}" -H "Accept: ${accept}" \
       "https://${api_host}/v2/${path}/manifests/${amd64}")"
   fi
 
   config="$(jq -r '.config.digest // empty' <<<"${manifest}")"
-  [ -n "${config}" ] || die "image ${ref} exposes no config blob"
+  [[ -n "${config}" ]] || die "image ${ref} exposes no config blob"
 
   local config_json
-  config_json="$(curl -fsSL "${auth[@]+"${auth[@]}"}" "https://${api_host}/v2/${path}/blobs/${config}")"
+  config_json="$(fetch "${auth[@]+"${auth[@]}"}" "https://${api_host}/v2/${path}/blobs/${config}")"
   source="$(jq -r '.config.Labels["org.opencontainers.image.source"] // ""' <<<"${config_json}")"
   revision="$(jq -r '.config.Labels["org.opencontainers.image.revision"] // ""' <<<"${config_json}")"
   built_at="$(jq -r '.created // ""' <<<"${config_json}")"
@@ -81,7 +78,7 @@ fetch_registry_facts() {
   # Base-image labels survive into the final image, so the SLSA predicate wins
   local slsa slsa_built_at=""
   slsa="$(fetch_slsa_vcs "${api_host}" "${path}" "${tag}" "${amd64}" "${auth[@]+"${auth[@]}"}" || true)"
-  if [ -n "${slsa}" ]; then
+  if [[ -n "${slsa}" ]]; then
     source="$(jq -r '.source' <<<"${slsa}")"
     revision="$(jq -r '.revision' <<<"${slsa}")"
     slsa_built_at="$(jq -r '.built_at' <<<"${slsa}")"
@@ -97,21 +94,21 @@ fetch_slsa_vcs() {
   local api_host="$1" path="$2" tag="$3" amd64="$4"
   shift 4
   local -a auth=("$@")
-  [ -n "${amd64}" ] || return 1
+  [[ -n "${amd64}" ]] || return 1
 
   local index attestation layer predicate
   local index_accept="application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json"
-  index="$(curl -fsSL "${auth[@]+"${auth[@]}"}" -H "Accept: ${index_accept}" \
+  index="$(fetch "${auth[@]+"${auth[@]}"}" -H "Accept: ${index_accept}" \
     "https://${api_host}/v2/${path}/manifests/${tag}" 2>/dev/null)" || return 1
   attestation="$(jq -r --arg d "${amd64}" '.manifests[]? | select(.annotations["vnd.docker.reference.digest"] == $d) | .digest' <<<"${index}" | head -1)"
-  [ -n "${attestation}" ] || return 1
+  [[ -n "${attestation}" ]] || return 1
 
-  layer="$(curl -fsSL "${auth[@]+"${auth[@]}"}" -H "Accept: application/vnd.oci.image.manifest.v1+json" \
+  layer="$(fetch "${auth[@]+"${auth[@]}"}" -H "Accept: application/vnd.oci.image.manifest.v1+json" \
     "https://${api_host}/v2/${path}/manifests/${attestation}" 2>/dev/null |
     jq -r '.layers[]? | select(.annotations["in-toto.io/predicate-type"] == "https://slsa.dev/provenance/v1") | .digest' | head -1)"
-  [ -n "${layer}" ] || return 1
+  [[ -n "${layer}" ]] || return 1
 
-  predicate="$(curl -fsSL "${auth[@]+"${auth[@]}"}" "https://${api_host}/v2/${path}/blobs/${layer}" 2>/dev/null)" || return 1
+  predicate="$(fetch "${auth[@]+"${auth[@]}"}" "https://${api_host}/v2/${path}/blobs/${layer}" 2>/dev/null)" || return 1
   jq -e '{
     source: (.predicate.buildDefinition.externalParameters.request.root.request.args["vcs:source"] // ""),
     revision: (.predicate.buildDefinition.externalParameters.request.root.request.args["vcs:revision"] // ""),
@@ -124,7 +121,7 @@ fetch_upstream_facts() {
   local slug="${source#https://github.com/}"
   slug="${slug%.git}"
 
-  if [ -z "${source}" ] || [ -z "${revision}" ] || [ "${slug}" = "${source}" ]; then
+  if [[ -z "${source}" ]] || [[ -z "${revision}" ]] || [[ "${slug}" = "${source}" ]]; then
     jq -n '{repo_exists: false, commit_exists: false, branches: [], committed_at: ""}'
     return
   fi
@@ -155,12 +152,12 @@ reachable_branches() {
 
   heads="$(gh api "repos/${slug}/commits/${revision}/branches-where-head" --jq '.[].name' 2>/dev/null || true)"
   while IFS= read -r branch; do
-    [ -n "${branch}" ] && found+=("${branch}")
+    [[ -n "${branch}" ]] && found+=("${branch}")
   done <<<"${heads}"
 
-  if [ "${#found[@]}" -eq 0 ]; then
+  if [[ "${#found[@]}" -eq 0 ]]; then
     while IFS= read -r branch; do
-      [ -n "${branch}" ] || continue
+      [[ -n "${branch}" ]] || continue
       status="$(gh api "repos/${slug}/compare/${branch}...${revision}" --jq '.status' 2>/dev/null || true)"
       case "${status}" in
       identical | behind)
@@ -177,24 +174,24 @@ reachable_branches() {
 allowlisted() {
   local repo="${1%%@*}"
   repo="${repo%:*}"
-  [ -f "${ALLOWLIST}" ] || return 1
+  [[ -f "${ALLOWLIST}" ]] || return 1
   grep -qxF "${repo}" <(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "${ALLOWLIST}" | grep -v '^$')
 }
 
 epoch() {
-  [ -n "$1" ] || return 1
+  [[ -n "$1" ]] || return 1
   date -u -d "$1" +%s 2>/dev/null
 }
 
 verify() {
   local ref="$1" facts
 
-  if [ -n "${PROVENANCE_OFFLINE_FIXTURE:-}" ]; then
+  if [[ -n "${PROVENANCE_OFFLINE_FIXTURE:-}" ]]; then
     facts="$(cat "${PROVENANCE_OFFLINE_FIXTURE}")"
   else
     local registry upstream
     # die() inside the command substitution exits only the subshell
-    if ! registry="$(fetch_registry_facts "${ref}")" || [ -z "${registry}" ]; then
+    if ! registry="$(fetch_registry_facts "${ref}")" || [[ -z "${registry}" ]]; then
       echo "FAILED ${ref} — registry lookup failed"
       return 1
     fi
@@ -212,7 +209,7 @@ verify() {
   built_at="$(jq -r 'if (.slsa_built_at // "") != "" then .slsa_built_at else .built_at end' <<<"${facts}")"
   committed_at="$(jq -r '.committed_at' <<<"${facts}")"
 
-  if [ -z "${source}" ] || [ -z "${revision}" ]; then
+  if [[ -z "${source}" ]] || [[ -z "${revision}" ]]; then
     if allowlisted "${ref}"; then
       echo "UNVERIFIABLE ${ref} — publisher exposes no provenance, allowlisted"
       return 0
@@ -221,24 +218,24 @@ verify() {
     return 1
   fi
 
-  if [ "${repo_exists}" != "true" ]; then
+  if [[ "${repo_exists}" != "true" ]]; then
     echo "FAILED ${ref} — source repository ${source} does not exist"
     return 1
   fi
 
-  if [ "${commit_exists}" != "true" ]; then
+  if [[ "${commit_exists}" != "true" ]]; then
     echo "FAILED ${ref} — build commit ${revision} does not exist in ${source}"
     return 1
   fi
 
-  if [ "${branch_count}" -eq 0 ]; then
+  if [[ "${branch_count}" -eq 0 ]]; then
     echo "FAILED ${ref} — build commit ${revision} is not reachable from any branch in ${source}"
     return 1
   fi
 
   local built_epoch committed_epoch
   if built_epoch="$(epoch "${built_at}")" && committed_epoch="$(epoch "${committed_at}")"; then
-    if [ "${built_epoch}" -lt $((committed_epoch - CLOCK_SKEW_SECONDS)) ]; then
+    if [[ "${built_epoch}" -lt $((committed_epoch - CLOCK_SKEW_SECONDS)) ]]; then
       echo "FAILED ${ref} — build time ${built_at} predates its source commit ${committed_at}"
       return 1
     fi
@@ -291,9 +288,9 @@ main() {
     ;;
   --verify)
     shift
-    [ $# -ge 1 ] || die "usage: $0 --verify <image-ref>"
+    [[ $# -ge 1 ]] || die "usage: $0 --verify <image-ref>"
     require jq
-    [ -n "${PROVENANCE_OFFLINE_FIXTURE:-}" ] || require curl gh
+    [[ -n "${PROVENANCE_OFFLINE_FIXTURE:-}" ]] || require curl gh
     local failed=0
     for ref in "$@"; do
       verify "${ref}" || failed=1
