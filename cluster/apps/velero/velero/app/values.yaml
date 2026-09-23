@@ -15,8 +15,7 @@ image:
   tag: v1.18.3@sha256:b839e52bc2c69eb3b5a84b010b8b3c7f714f3c5ef50b77ec7770a382a8f2e0ab
   pullPolicy: IfNotPresent
 
-# Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
-# If the value is a string then it is evaluated as a template.
+# At least one plugin provider image is required.
 initContainers:
   - name: velero-plugin-for-aws
     image: velero/velero-plugin-for-aws:v1.14.3@sha256:74597d39c143d4d7bc66a27f62a627947715c60ce498b9dfbbd6513f2a113030
@@ -25,55 +24,33 @@ initContainers:
       - mountPath: /target
         name: plugins
 
-# This job upgrades the CRDs.
-# upgradeCRDs: false
-
-##
-## Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,
-## and additional server settings.
-##
 configuration:
-  # Name of the default backup storage location. Default: default
   defaultBackupStorageLocation: aws-primary
-  # Repository maintenance job settings
   repositoryMaintenanceJob:
     repositoryConfigData:
       global:
         keepLatestMaintenanceJobs: 1
+  # Server Deployment only - the chart does not pass these to node-agent
   extraArgs:
     - --backup-repository-configmap=velero-backup-repo-config
-  # Name of the default volume snapshot location.
   defaultVolumeSnapshotLocations: csi:aws-primary
-  # Set log-format for Velero pod. Default: text. Other option: json.
   logFormat: json
-  # Set log-level for Velero pod. Default: info. Other options: debug, warning, error, fatal, panic.
-  # logLevel: debug
-  # Bool flag to configure Velero server to move data by default for all snapshots supporting data movement. Default: false
   defaultSnapshotMoveData: true
-  # Comma separated list of velero feature flags. default: empty
   features: EnableCSI
 
-# Info about the secret to be used by the Velero deployment, which
-# should contain credentials for the cloud provider IAM account you've
-# set up for Velero.
 credentials:
-  # Whether a secret should be used. Set to false if, for examples:
-  # - using kube2iam or kiam to provide AWS IAM credentials instead of providing the key file. (AWS only)
-  # - using workload identity instead of providing the key file. (Azure/GCP only)
   useSecret: true
-  # Name of a pre-existing secret (if any) in the Velero namespace
-  # that should be used to get IAM account credentials. Optional.
   existingSecret: velero-secret
 
-# Whether to create backupstoragelocation crd, if false => do not create a default backup location
+# BSL and VSL are managed as separate manifests, not by the chart
 backupsEnabled: false
-# Whether to create volumesnapshotlocation crd, if false => disable snapshot feature
 snapshotsEnabled: false
 
-# Whether to deploy the node-agent daemonset.
 deployNodeAgent: true
 nodeAgent:
   priorityClassName: high-priority
+  extraArgs:
+    - --backup-repository-configmap=velero-backup-repo-config
   resources:
     requests:
       cpu: 20m
