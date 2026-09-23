@@ -40,7 +40,9 @@ spec:
   timeout: 15m  # Overrides the 10m default
 ```
 
-Current overrides: cilium (`timeout: 2m`), n8n/rook-ceph-cluster (`timeout: 15m`).
+Current overrides: n8n/rook-ceph-cluster (`timeout: 15m`), hindsight/litellm (`timeout: 30m`).
+
+> **Exempt namespaces:** the Kyverno mutating webhook excludes `kube-system` (chart default, avoids control-plane deadlock), so HelmReleases there are never mutated and fall back to helm-controller defaults — not the defaults above. Set every field explicitly. `cilium` sets `timeout: 10m` for this reason.
 
 ### inject-claude-agent-config
 
