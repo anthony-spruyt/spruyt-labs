@@ -24,7 +24,7 @@ The repo is public, so the account ID, zone name, and domain-identifying DNS tok
 
 ## Variables
 
-Set on the `workspace-factory` TFC workspace, which copies them to this workspace:
+Set on the `workspace-factory` TFC workspace, which copies them to this workspace as write-only values (never stored in the factory state or plan). After changing any of them, bump `cloudflare_tfc_variables_version` in [`variables.auto.tfvars`](../workspace-factory/variables.auto.tfvars) so the next factory apply pushes the new values:
 
 | workspace-factory variable    | This workspace          | Notes                         |
 | ----------------------------- | ----------------------- | ----------------------------- |

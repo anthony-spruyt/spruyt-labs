@@ -21,38 +21,42 @@ resource "tfe_workspace" "my_workspace" {
 }
 
 resource "tfe_variable" "cloudflare_api_token" {
-  workspace_id = tfe_workspace.my_workspace.id
-  key          = "CLOUDFLARE_API_TOKEN"
-  value        = var.cloudflare_api_token
-  category     = "env"
-  sensitive    = true
-  description  = "Cloudflare API token used by the provider."
+  workspace_id     = tfe_workspace.my_workspace.id
+  key              = "CLOUDFLARE_API_TOKEN"
+  value_wo         = var.cloudflare_api_token
+  value_wo_version = var.tfc_variables_version
+  category         = "env"
+  sensitive        = true
+  description      = "Cloudflare API token used by the provider."
 }
 
 resource "tfe_variable" "cloudflare_account_id" {
-  workspace_id = tfe_workspace.my_workspace.id
-  key          = "cloudflare_account_id"
-  value        = var.cloudflare_account_id
-  category     = "terraform"
-  sensitive    = true
-  description  = "Cloudflare account ID."
+  workspace_id     = tfe_workspace.my_workspace.id
+  key              = "cloudflare_account_id"
+  value_wo         = var.cloudflare_account_id
+  value_wo_version = var.tfc_variables_version
+  category         = "terraform"
+  sensitive        = true
+  description      = "Cloudflare account ID."
 }
 
 resource "tfe_variable" "zone_name" {
-  workspace_id = tfe_workspace.my_workspace.id
-  key          = "zone_name"
-  value        = var.cloudflare_zone_name
-  category     = "terraform"
-  sensitive    = true
-  description  = "Cloudflare zone (apex domain) name."
+  workspace_id     = tfe_workspace.my_workspace.id
+  key              = "zone_name"
+  value_wo         = var.cloudflare_zone_name
+  value_wo_version = var.tfc_variables_version
+  category         = "terraform"
+  sensitive        = true
+  description      = "Cloudflare zone (apex domain) name."
 }
 
 resource "tfe_variable" "dns_verification" {
-  workspace_id = tfe_workspace.my_workspace.id
-  key          = "dns_verification"
-  value        = jsonencode(var.cloudflare_dns_verification)
-  category     = "terraform"
-  hcl          = true
-  sensitive    = true
-  description  = "Per-domain DNS verification tokens and IDs."
+  workspace_id     = tfe_workspace.my_workspace.id
+  key              = "dns_verification"
+  value_wo         = jsonencode(var.cloudflare_dns_verification)
+  value_wo_version = var.tfc_variables_version
+  category         = "terraform"
+  hcl              = true
+  sensitive        = true
+  description      = "Per-domain DNS verification tokens and IDs."
 }

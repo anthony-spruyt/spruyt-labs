@@ -53,23 +53,32 @@ variable "tfc_vcs_repo_ingress_submodules" {
 variable "cloudflare_api_token" {
   type        = string
   sensitive   = true
+  ephemeral   = true
   description = "Cloudflare API token the workspace uses to manage Cloudflare"
 }
 
 variable "cloudflare_account_id" {
   type        = string
   sensitive   = true
+  ephemeral   = true
   description = "Cloudflare account ID"
 }
 
 variable "cloudflare_zone_name" {
   type        = string
   sensitive   = true
+  ephemeral   = true
   description = "Cloudflare zone (apex domain) name"
 }
 
 variable "cloudflare_dns_verification" {
   type        = map(string)
   sensitive   = true
+  ephemeral   = true
   description = "Per-domain DNS verification tokens and IDs, passed through to the workspace's dns_verification variable"
+}
+
+variable "tfc_variables_version" {
+  type        = number
+  description = "Bump to push new values of the write-only Cloudflare variables to the workspace"
 }

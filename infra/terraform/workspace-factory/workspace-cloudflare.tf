@@ -13,4 +13,5 @@ module "cloudflare" {
   cloudflare_account_id                   = var.cloudflare_account_id
   cloudflare_zone_name                    = var.cloudflare_zone_name
   cloudflare_dns_verification             = var.cloudflare_dns_verification
+  tfc_variables_version                   = var.cloudflare_tfc_variables_version
 }

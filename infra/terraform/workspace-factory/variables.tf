@@ -125,23 +125,32 @@ variable "cloudflare_tfc_working_directory" {
 variable "cloudflare_api_token" {
   type        = string
   sensitive   = true
+  ephemeral   = true
   description = "Cloudflare API token for the Cloudflare workspace (set in Terraform Cloud, not in git)"
 }
 
 variable "cloudflare_account_id" {
   type        = string
   sensitive   = true
+  ephemeral   = true
   description = "Cloudflare account ID (set in Terraform Cloud, not in git)"
 }
 
 variable "cloudflare_zone_name" {
   type        = string
   sensitive   = true
+  ephemeral   = true
   description = "Cloudflare zone (apex domain) name (set in Terraform Cloud, not in git)"
 }
 
 variable "cloudflare_dns_verification" {
   type        = map(string)
   sensitive   = true
+  ephemeral   = true
   description = "Per-domain DNS verification tokens and IDs for the Cloudflare workspace (HCL map, set in Terraform Cloud, not in git)"
+}
+
+variable "cloudflare_tfc_variables_version" {
+  type        = number
+  description = "Bump after changing any cloudflare_* secret variable in Terraform Cloud so the new values are pushed to the Cloudflare workspace"
 }
