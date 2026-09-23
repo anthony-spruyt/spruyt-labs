@@ -24,7 +24,6 @@ tasks:
         fi
 
         mapfile -t refs < <(bash {{ .verifyImageProvenanceScript }} --list-refs $(git ls-files 'cluster/**/*.yaml' | grep -v sops) \
-          | grep -E '^[a-z0-9.-]+\.[a-z]+/' \
           | grep -vE '\$\{|\{\{' \
           | sed 's/@sha256.*//' \
           | sort -u)

@@ -39,7 +39,6 @@ jobs:
           fi
 
           mapfile -t refs < <(.taskfiles/test/scripts/verify-image-provenance.sh --list-refs "${changed[@]}" \
-            | grep -E '^[a-z0-9.-]+\.[a-z]+/' \
             | grep -vE '\$\{|\{\{' \
             | sed 's/@sha256.*//' \
             | sort -u)

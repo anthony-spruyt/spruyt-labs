@@ -4,10 +4,19 @@
 # short: every line is an image we cannot trace back to upstream source. Drop a
 # line as soon as the publisher starts attaching provenance.
 
+docker.io/alpine/curl
+docker.io/alpine/k8s
+docker.io/arcadiatechnology/crafty-4 # source is on GitLab
+docker.io/bitnami/kubectl
 docker.io/brave/brave-search-mcp-server
 docker.io/cloudflare/cloudflared
 docker.io/curlimages/curl
+docker.io/instantlinux/nut-upsd
+docker.io/library/alpine
 docker.io/library/busybox
+docker.io/n8nio/n8n
+docker.io/n8nio/runners
+docker.io/redis/redisinsight
 docker.io/velero/velero
 mcr.microsoft.com/presidio-analyzer
 mcr.microsoft.com/presidio-anonymizer
