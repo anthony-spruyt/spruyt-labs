@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.58](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.57...agent-queue-worker/v3.3.58) (2026-09-23)
+
+
+### Bug Fixes
+
+* **agent-queue-worker:** pin the picomatch override and drop the dead uuid one ([#3087](https://github.com/anthony-spruyt/spruyt-labs/issues/3087)) ([6775c2d](https://github.com/anthony-spruyt/spruyt-labs/commit/6775c2d207db7100e42104fb530aeeed418ea013)), closes [#3088](https://github.com/anthony-spruyt/spruyt-labs/issues/3088) [#3086](https://github.com/anthony-spruyt/spruyt-labs/issues/3086)
+
 ## [3.3.57](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.56...agent-queue-worker/v3.3.57) (2026-09-23)
 
 
