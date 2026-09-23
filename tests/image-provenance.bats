@@ -3,7 +3,7 @@
 # Provenance checks for third-party image bumps. Ref #3084
 
 REPO_ROOT="${BATS_TEST_DIRNAME}/.."
-SCRIPT="${REPO_ROOT}/.github/scripts/verify-image-provenance.sh"
+SCRIPT="${REPO_ROOT}/.taskfiles/test/scripts/verify-image-provenance.sh"
 
 setup() {
   TMP="$(mktemp -d "${BATS_TMPDIR:-/tmp}/provenance.XXXXXX")"

@@ -38,7 +38,7 @@ jobs:
             exit 0
           fi
 
-          mapfile -t refs < <(.github/scripts/verify-image-provenance.sh --list-refs "${changed[@]}" \
+          mapfile -t refs < <(.taskfiles/test/scripts/verify-image-provenance.sh --list-refs "${changed[@]}" \
             | grep -E '^[a-z0-9.-]+\.[a-z]+/' \
             | grep -vE '\$\{|\{\{' \
             | sed 's/@sha256.*//' \
@@ -50,7 +50,7 @@ jobs:
 
           printf 'checking %d image(s)\n' "${#refs[@]}"
           status=0
-          .github/scripts/verify-image-provenance.sh --verify "${refs[@]}" \
+          .taskfiles/test/scripts/verify-image-provenance.sh --verify "${refs[@]}" \
             >"${RUNNER_TEMP}/provenance.txt" 2>&1 || status=$?
 
           {

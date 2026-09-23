@@ -2,7 +2,7 @@
 # Verify that a third-party image was built from source that exists upstream. Ref #3084
 set -euo pipefail
 
-ALLOWLIST="${PROVENANCE_ALLOWLIST:-$(dirname "${BASH_SOURCE[0]}")/provenance-allowlist.txt}"
+ALLOWLIST="${PROVENANCE_ALLOWLIST:-$(dirname "${BASH_SOURCE[0]}")/../resources/provenance-allowlist.txt}"
 CLOCK_SKEW_SECONDS="${PROVENANCE_CLOCK_SKEW:-600}"
 
 die() {

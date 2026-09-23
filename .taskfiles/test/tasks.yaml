@@ -5,6 +5,7 @@ version: "3"
 vars:
   testDiscordAlertScript: "{{ .ROOT_DIR }}/.taskfiles/test/scripts/test-discord-alert.sh"
   testLitellmMiddlewareScript: "{{ .ROOT_DIR }}/.taskfiles/test/scripts/test-litellm-middleware.sh"
+  verifyImageProvenanceScript: "{{ .ROOT_DIR }}/.taskfiles/test/scripts/verify-image-provenance.sh"
   stressTestPodTemplate: "{{ .ROOT_DIR }}/.taskfiles/test/resources/stress-test-pod.tmpl.yaml"
 
 tasks:
@@ -12,6 +13,23 @@ tasks:
     desc: "Run LiteLLM custom middleware unit tests"
     cmds:
       - bash {{ .testLitellmMiddlewareScript }}
+
+  image-provenance:
+    desc: "Verify upstream build provenance for cluster images (usage: task test:image-provenance [ref=ghcr.io/org/image:tag])"
+    cmds:
+      - |
+        if [ -n "{{ .ref }}" ]; then
+          bash {{ .verifyImageProvenanceScript }} --verify "{{ .ref }}"
+          exit $?
+        fi
+
+        mapfile -t refs < <(bash {{ .verifyImageProvenanceScript }} --list-refs $(git ls-files 'cluster/**/*.yaml' | grep -v sops) \
+          | grep -E '^[a-z0-9.-]+\.[a-z]+/' \
+          | grep -vE '\$\{|\{\{' \
+          | sed 's/@sha256.*//' \
+          | sort -u)
+        printf 'checking %d image(s)\n' "${#refs[@]}"
+        bash {{ .verifyImageProvenanceScript }} --verify "${refs[@]}"
 
   stress:
     desc: "Run CPU stress test on a node (usage: task test:stress node=ms-01-1 [cpus=16] [duration=120])"
