@@ -130,6 +130,19 @@
         "ghcr.io/cloudnative-pg/pgvector"
       ],
       "groupName": "pgvector"
+    },
+    {
+      // Helm values use the short name, the Kyverno policy the fully-qualified
+      // one; Renovate splits one digest bump into two PRs. Ref #3076
+      "description": "Bump busybox in one PR regardless of how the image is referenced",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "busybox",
+        "docker.io/library/busybox"
+      ],
+      "groupName": "busybox"
     }
   ]
 }
