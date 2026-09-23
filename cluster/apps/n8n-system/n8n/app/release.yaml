@@ -20,7 +20,6 @@ spec:
           # renovate: datasource=custom.n8n-stable depName=n8nio/runners
           - name: n8nio/runners
             newTag: "2.38.7"
-            digest: sha256:82167390e7c3b58ccb30147c9f642997b3074233f1d4bf44fdc1d8a59266b27f
         patches:
           - target:
               kind: Deployment

@@ -29,6 +29,20 @@
       "enabled": false
     },
     {
+      // 2.39.x is missing the worker-side MCP toolkit fix that 2.38.7 carries
+      // as a backport (upstream #38069 landed on master only in 2.40.0), so the
+      // whole line is a functional downgrade under EXECUTIONS_MODE=queue:
+      // StructuredToolkit tools throw "did not return a valid Tool" on workers
+      // and MCP connections leak. Verified absent in job-processor.ts at 2.39.0
+      // through 2.39.10, present at 2.38.7 and 2.40.0. Drop this once the pin
+      // is on 2.40.x. Ref #3075
+      "description": "Skip the n8n 2.39.x line (missing worker MCP toolkit fix)",
+      "matchDatasources": [
+        "custom.n8n-stable"
+      ],
+      "allowedVersions": "!/^2\\.39\\./"
+    },
+    {
       "description": "Point own image changelogs at their release-please package directory",
       "matchDatasources": [
         "docker"
