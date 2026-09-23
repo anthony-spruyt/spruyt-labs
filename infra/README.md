@@ -29,6 +29,7 @@ This document governs the Terraform-backed infrastructure that supports the spru
 - [`terraform/aws/cnpg-backup/`](terraform/aws/cnpg-backup) — Manages CloudNativePG backup storage. Additional usage notes live in [`terraform/aws/cnpg-backup/README.md`](terraform/aws/cnpg-backup/README.md).
 - [`terraform/aws/external-secrets/`](terraform/aws/external-secrets) — Supplies External Secrets Operator dependencies such as S3 secret backends and IAM roles.
 - [`terraform/aws/velero-backup/`](terraform/aws/velero-backup) — Defines Velero backup buckets and IAM users. Extra guidance is captured in [`terraform/aws/velero-backup/README.md`](terraform/aws/velero-backup/README.md).
+- [`terraform/cloudflare/`](terraform/cloudflare) — Cloudflare tunnel, ingress routes, DNS records, rulesets, and zone settings. See [`terraform/cloudflare/README.md`](terraform/cloudflare/README.md).
 - [`terraform/workspace-factory/`](terraform/workspace-factory) — Bootstraps Terraform Cloud workspaces and AWS workload identity roles. Reusable modules live under [`terraform/workspace-factory/modules/`](terraform/workspace-factory/modules).
 - [`terraform/workspace-factory/variables.auto.tfvars`](terraform/workspace-factory/variables.auto.tfvars) — Shared configuration for workspace bootstrap runs. Sensitive values belong in Terraform Cloud variable sets, not version control.
 
@@ -42,7 +43,7 @@ Operate and maintain Terraform Cloud backed infrastructure for spruyt-labs, cove
 
 ### Preconditions
 
-- Confirm Terraform Cloud workspace access for the expected names: `ceph-objectstore`, `cnpg-backup`, `external-secrets`, `velero-backup`, and `workspace-factory`.
+- Confirm Terraform Cloud workspace access for the expected names: `ceph-objectstore`, `cloudflare`, `cnpg-backup`, `external-secrets`, `velero-backup`, and `workspace-factory`.
 - Verify AWS credentials through `aws sts get-caller-identity` before applying.
 - Ensure pending infrastructure changes are committed or staged for review.
 - Complete baseline linting (`task terraform:fmt`, `task terraform:validate`, `tflint`) and repository level preflight checks as described in [`README.md`](README.md).

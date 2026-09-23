@@ -18,3 +18,6 @@ cnpg_backup_aws_tfc_trigger_pattern        = "infra/terraform/aws/cnpg-backup/**
 external_secrets_aws_tfc_workspace_name    = "external-secrets-aws"
 external_secrets_aws_tfc_working_directory = "infra/terraform/aws/external-secrets"
 external_secrets_aws_tfc_trigger_pattern   = "infra/terraform/aws/external-secrets/**"
+cloudflare_tfc_workspace_name              = "cloudflare"
+cloudflare_tfc_working_directory           = "infra/terraform/cloudflare"
+cloudflare_tfc_trigger_pattern             = "infra/terraform/cloudflare/**"

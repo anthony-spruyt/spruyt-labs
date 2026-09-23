@@ -106,3 +106,42 @@ variable "external_secrets_aws_tfc_working_directory" {
   type        = string
   description = "The working directory within the VCS repository for the External Secrets Terraform Cloud workspace"
 }
+
+variable "cloudflare_tfc_workspace_name" {
+  type        = string
+  description = "The name of the Terraform Cloud workspace for Cloudflare"
+}
+
+variable "cloudflare_tfc_trigger_pattern" {
+  type        = string
+  description = "The glob pattern used to match VCS webhook triggers for the Cloudflare workspace"
+}
+
+variable "cloudflare_tfc_working_directory" {
+  type        = string
+  description = "The working directory within the VCS repository for the Cloudflare Terraform Cloud workspace"
+}
+
+variable "cloudflare_api_token" {
+  type        = string
+  sensitive   = true
+  description = "Cloudflare API token for the Cloudflare workspace (set in Terraform Cloud, not in git)"
+}
+
+variable "cloudflare_account_id" {
+  type        = string
+  sensitive   = true
+  description = "Cloudflare account ID (set in Terraform Cloud, not in git)"
+}
+
+variable "cloudflare_zone_name" {
+  type        = string
+  sensitive   = true
+  description = "Cloudflare zone (apex domain) name (set in Terraform Cloud, not in git)"
+}
+
+variable "cloudflare_dns_verification" {
+  type        = map(string)
+  sensitive   = true
+  description = "Per-domain DNS verification tokens and IDs for the Cloudflare workspace (HCL map, set in Terraform Cloud, not in git)"
+}

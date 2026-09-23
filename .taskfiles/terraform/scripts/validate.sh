@@ -7,6 +7,8 @@ cd /workspaces/spruyt-labs/infra/terraform/workspace-factory/modules/aws-workspa
 terraform validate
 cd /workspaces/spruyt-labs/infra/terraform/workspace-factory/modules/aws-oidc-provider
 terraform validate
+cd /workspaces/spruyt-labs/infra/terraform/workspace-factory/modules/cloudflare-workspace
+terraform validate
 cd /workspaces/spruyt-labs/infra/terraform/aws/velero-backup
 terraform validate
 cd /workspaces/spruyt-labs/infra/terraform/aws/ceph-objectstore
@@ -14,4 +16,6 @@ terraform validate
 cd /workspaces/spruyt-labs/infra/terraform/aws/cnpg-backup
 terraform validate
 cd /workspaces/spruyt-labs/infra/terraform/aws/external-secrets
+terraform validate
+cd /workspaces/spruyt-labs/infra/terraform/cloudflare
 terraform validate
