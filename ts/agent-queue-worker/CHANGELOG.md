@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.59](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.58...agent-queue-worker/v3.3.59) (2026-09-23)
+
+
+### Dependencies
+
+* **deps:** update dependency @biomejs/biome to v2.5.14 ([#3094](https://github.com/anthony-spruyt/spruyt-labs/issues/3094)) ([49fba0c](https://github.com/anthony-spruyt/spruyt-labs/commit/49fba0ca03cb471ffa8bee1635f60125a9f57901))
+
 ## [3.3.58](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.57...agent-queue-worker/v3.3.58) (2026-09-23)
 
 
