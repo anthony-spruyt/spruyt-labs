@@ -1,0 +1,17 @@
+# Images whose publisher exposes no build provenance. Ref #3084
+#
+# Entries here are reported UNVERIFIABLE instead of failing CI. Keep this list
+# short: every line is an image we cannot trace back to upstream source. Drop a
+# line as soon as the publisher starts attaching provenance.
+
+docker.io/brave/brave-search-mcp-server
+docker.io/cloudflare/cloudflared
+docker.io/curlimages/curl
+docker.io/library/busybox
+docker.io/velero/velero
+mcr.microsoft.com/presidio-analyzer
+mcr.microsoft.com/presidio-anonymizer
+public.ecr.aws/docker/library/eclipse-mosquitto
+quay.io/ceph/ceph
+registry.k8s.io/sig-storage/csi-snapshotter
+registry.k8s.io/sig-storage/snapshot-controller

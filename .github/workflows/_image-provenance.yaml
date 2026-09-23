@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+name: Image Provenance
+on: # yamllint disable-line rule:truthy
+  workflow_call: {}
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Verify upstream build provenance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify changed image references
+        env:
+          GH_TOKEN: "${{ github.token }}"
+          BASE_SHA: "${{ github.event.pull_request.base.sha || github.event.before }}"
+          HEAD_SHA: "${{ github.sha }}"
+        run: |
+          # a force-push or deleted base leaves no usable diff range
+          if [ -z "${BASE_SHA}" ] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "base ${BASE_SHA:-<empty>} unavailable, checking every cluster manifest"
+            mapfile -t changed < <(git ls-files 'cluster/**/*.yaml' | grep -v sops || true)
+          else
+            mapfile -t changed < <(git diff --name-only --diff-filter=d "${BASE_SHA}" "${HEAD_SHA}" -- 'cluster/**/*.yaml' | grep -v sops || true)
+          fi
+
+          if [ "${#changed[@]}" -eq 0 ]; then
+            echo "no cluster manifests changed"
+            exit 0
+          fi
+
+          mapfile -t refs < <(.github/scripts/verify-image-provenance.sh --list-refs "${changed[@]}" \
+            | grep -E '^[a-z0-9.-]+\.[a-z]+/' \
+            | grep -vE '\$\{|\{\{' \
+            | sed 's/@sha256.*//' \
+            | sort -u)
+          if [ "${#refs[@]}" -eq 0 ]; then
+            echo "no third-party image references in the changed files"
+            exit 0
+          fi
+
+          printf 'checking %d image(s)\n' "${#refs[@]}"
+          status=0
+          .github/scripts/verify-image-provenance.sh --verify "${refs[@]}" \
+            >"${RUNNER_TEMP}/provenance.txt" 2>&1 || status=$?
+
+          {
+            echo "## Image provenance"
+            echo
+            echo '```'
+            cat "${RUNNER_TEMP}/provenance.txt"
+            echo '```'
+          } >>"${GITHUB_STEP_SUMMARY}"
+
+          cat "${RUNNER_TEMP}/provenance.txt"
+          exit "${status}"

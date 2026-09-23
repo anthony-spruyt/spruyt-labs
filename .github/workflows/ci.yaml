@@ -98,6 +98,10 @@ jobs:
     needs: "changes"
     if: "needs.changes.outputs.cluster == 'true'"
     uses: "./.github/workflows/_kubeconform.yaml"
+  image-provenance:
+    needs: "changes"
+    if: "needs.changes.outputs.cluster == 'true'"
+    uses: "./.github/workflows/_image-provenance.yaml"
   kyverno-test:
     needs: "changes"
     if: "needs.changes.outputs.kyverno == 'true'"
@@ -200,6 +204,7 @@ jobs:
     needs:
       - "lint"
       - "kubeconform"
+      - "image-provenance"
       - "kyverno-test"
       - "terraform-validate"
       - "shutdown-orchestrator"
