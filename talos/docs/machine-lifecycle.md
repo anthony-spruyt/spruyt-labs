@@ -174,7 +174,7 @@ kubectl uncordon <hostname>
    - Choose the hardware schematic that matches your platform, then confirm the SecureBoot choice matches your nodes:
      - SecureBoot-enabled nodes require the `secureboot:1` schematic.
      - Traditional BIOS/UEFI nodes without SecureBoot must use the `secureboot:0` schematic.
-   - Copy the fully-qualified installer reference returned by Factory (format: `factory.talos.dev/metal-installer-secureboot/<SCHEMATIC_ID>:<TALOS_VERSION>`). Current cluster schematic IDs are tracked in [`talos/README.md`](../README.md#schematics) — avoid hard-coding them here to prevent stale docs.
+   - Copy the fully-qualified installer reference returned by Factory (format: `factory.talos.dev/metal-installer-secureboot/<SCHEMATIC_ID>:<TALOS_VERSION>`). Current cluster schematic IDs are tracked in [`talos/README.md`](../README.md#talos-image-schematics) — avoid hard-coding them here to prevent stale docs.
 
 2. **Run `talosctl upgrade`**
 

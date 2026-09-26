@@ -304,64 +304,16 @@ Refresh local client credentials with `task talos:talosconfig` if drift stems fr
 
 ## Talos Image Schematics
 
+Schematic definitions live in [`schematics/`](schematics/). Resolve an ID with `curl -sX POST --data-binary @talos/schematics/<class>.yaml https://factory.talos.dev/schematics`.
+
 <!-- markdownlint-disable MD013 -->
 
-| Hardware class            | Schematic ID                                                       | SecureBoot ISO                                                                                                                                  | Upgrade image                                                                                                           |
-| ------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Bossgame E2 control plane | `9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d` | [Download](https://factory.talos.dev/image/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d/v1.14.1/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d:v1.14.1` |
-
-Your image schematic ID is: `9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d`
-
-```yaml
-customization:
-  extraKernelArgs:
-    - -lockdown
-    - lockdown=integrity
-    - quiet
-    - loglevel=3
-    - amd_pstate=1
-    - pcie_aspm=off
-    - pci=pcie_bus_perf
-    - nvme_core.default_ps_maxlatency_us=0
-    - iommu=pt
-    - idle=nomwait
-  systemExtensions:
-    officialExtensions:
-      - siderolabs/amd-ucode
-      - siderolabs/iscsi-tools
-      - siderolabs/lldpd
-      - siderolabs/nvme-cli
-      - siderolabs/util-linux-tools
-```
-
-| MS-01 worker | `1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1` | [Download](https://factory.talos.dev/image/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1/v1.14.1/metal-amd64-secureboot.iso) | `factory.talos.dev/metal-installer-secureboot/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1:v1.14.1` |
-
-Your image schematic ID is: `1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1`
-
-```yaml
-customization:
-  extraKernelArgs:
-    - -lockdown
-    - lockdown=integrity
-    - quiet
-    - loglevel=3
-    - intel_iommu=on
-    - iommu=pt
-    - net.ifnames=0
-  systemExtensions:
-    officialExtensions:
-      - siderolabs/i915
-      - siderolabs/intel-ucode
-      - siderolabs/kata-containers
-      - siderolabs/lldpd
-      - siderolabs/thunderbolt
-      - siderolabs/iscsi-tools
-      - siderolabs/util-linux-tools
-```
+| Hardware class            | Definition                            | Schematic ID                                                       | SecureBoot assets                                                                                                                                                                                                                                                                           | Upgrade image                                                                                                           |
+| ------------------------- | ------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Bossgame E2 control plane | [`e2.yaml`](schematics/e2.yaml)       | `9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d` | [ISO](https://factory.talos.dev/image/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d/v1.14.1/metal-amd64-secureboot.iso) · [UKI](https://factory.talos.dev/image/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d/v1.14.1/metal-amd64-secureboot-uki.efi) | `factory.talos.dev/metal-installer-secureboot/9245f77a34e6874d7aa65cad39741cfa32a663c95251eeecb529853b81ab3d2d:v1.14.1` |
+| MS-01 worker              | [`ms-01.yaml`](schematics/ms-01.yaml) | `1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1` | [ISO](https://factory.talos.dev/image/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1/v1.14.1/metal-amd64-secureboot.iso) · [UKI](https://factory.talos.dev/image/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1/v1.14.1/metal-amd64-secureboot-uki.efi) | `factory.talos.dev/metal-installer-secureboot/1405ea9d3df696997aab915b3f992117ef0f1121ef7b1674b77c3589f13424d1:v1.14.1` |
 
 <!-- markdownlint-enable MD013 -->
-
-Additional asset: SecureBoot UKI – <https://factory.talos.dev/image/1d6296ab0966f9bd87ec25c8fc39f15b15768c33fc1cccd52a8c098a930fbafb/v1.14.1/metal-amd64-secureboot-uki.efi>
 
 ## References
 
