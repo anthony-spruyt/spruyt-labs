@@ -64,7 +64,10 @@
       "Read(~/.gnupg/*)",
       "Read(~/.gnupg/**/*)",
       "Read(~/.password-store/*)",
-      "Read(~/.password-store/**/*)"
+      "Read(~/.password-store/**/*)",
+      "Read(~/.claude/.credentials.json)",
+      "Read(~/.secrets/**)",
+      "Read(~/.terraform.d/**)"
     ]
   },
   "hooks": {
