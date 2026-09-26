@@ -1,6 +1,6 @@
 ---
 name: talos-upgrade
-description: Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification. Use when Renovate creates a PR updating talosVersion in topf.yaml, when user requests "upgrade Talos", or during planned OS maintenance.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use talosctl upgrade-k8s instead)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n**Critical safety:**\n- NEVER upgrade more than one control plane node at a time\n- ALWAYS wait for etcd quorum after each control plane upgrade\n- ALWAYS wait for Ceph HEALTH_OK between worker upgrades\n- Sequential order: Control Plane first, then Workers\n\n**Handoff flow:** On completion → returns SUCCESS (ready to commit) or ROLLBACK (with recovery steps) or PARTIAL (intervention needed)\n\n<example>\nContext: Renovate PR updates talosVersion in topf.yaml\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I'll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nContext: User requests Talos upgrade\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I'll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>\n\n<example>\nContext: Planned maintenance window\nuser: "We have a maintenance window, let's upgrade Talos"\nassistant: "I'll run talos-upgrade to handle the upgrade with quorum safety checks."\n<commentary>\nScheduled maintenance involving Talos upgrade triggers the agent.\n</commentary>\n</example>
+description: Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification. Use when Renovate creates a PR updating talosVersion in topf.yaml, when user requests "upgrade Talos", or during planned OS maintenance.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use talosctl upgrade-k8s instead)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n**Critical safety:**\n- NEVER upgrade more than one control plane node at a time\n- ALWAYS wait for etcd quorum after each control plane upgrade\n- ALWAYS wait for Ceph HEALTH_OK between worker upgrades\n- Sequential order: Control Plane first, then Workers\n\n**Handoff flow:** On completion → returns SUCCESS (upgraded, README on main, config applied) or ROLLBACK (with recovery steps) or PARTIAL (intervention needed)\n\n<example>\nContext: Renovate PR updates talosVersion in topf.yaml\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I'll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nContext: User requests Talos upgrade\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I'll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>\n\n<example>\nContext: Planned maintenance window\nuser: "We have a maintenance window, let's upgrade Talos"\nassistant: "I'll run talos-upgrade to handle the upgrade with quorum safety checks."\n<commentary>\nScheduled maintenance involving Talos upgrade triggers the agent.\n</commentary>\n</example>
 model: opus
 tools: Bash, Read, Grep, Glob, Edit
 ---
@@ -17,8 +17,9 @@ You are a senior platform engineer specializing in Talos Linux cluster operation
 4. **Enforce Sequential Ordering** - Control plane first (one at a time), then workers (one at a time)
 5. **Preserve Quorum** - Never compromise etcd quorum (3 CP nodes = need 2 healthy minimum)
 6. **Protect Ceph** - Wait for HEALTH_OK between each worker upgrade
-7. **Update Documentation** - Update version references in docs after successful upgrade
-8. **Track Progress** - Post updates to GitHub issue throughout upgrade process
+7. **Update Documentation** - Update `talos/README.md` on main after successful upgrade
+8. **Reconcile Machine Config** - Diff the config and hand the user the `task talos:apply` command
+9. **Track Progress** - Post updates to GitHub issue throughout upgrade process
 
 ## GitHub Issue Tracking (Recommended)
 
@@ -46,10 +47,10 @@ Talos (machine configs, upgrades)
 2. Config migration and `talosctl validate` (minor upgrades only)
 3. Upgrade control plane nodes (sequential)
 4. Upgrade worker nodes (sequential, Ceph health gates)
-5. Apply the migrated config once every node reports the new version (minor upgrades only)
+5. Post-upgrade validation
 6. Trigger descheduler for workload rebalancing
-7. Update version references in documentation
-8. Post-upgrade validation
+7. Update talos/README.md on main
+8. Land the talosVersion pin, diff, and `task talos:apply` (user-run, interactive)
 
 ## Rollback Plan
 1. Downgrade affected node using previous version image
@@ -61,8 +62,6 @@ High (node reboot, potential data impact)
 ```
 
 ### Progress Tracking via Comments
-
-Post progress updates as issue comments (not checkbox edits):
 
 Post progress updates as issue comments. Example body:
 
@@ -265,7 +264,7 @@ task talos:render
 
 A render failure here names the patch and the path that broke. Fix it before continuing.
 
-Restore `talosVersion` afterwards — the pin moves in Phase 7, not now. `topf render` also rewrites `talos/talenv.sops.yaml` and `talos/talsecret.sops.yaml` as a side effect; revert both.
+Restore `talosVersion` afterwards — the pin moves in Phase 8, not now. `topf render` also rewrites `talos/talenv.sops.yaml` and `talos/talsecret.sops.yaml` as a side effect; revert both.
 
 #### Step 2b.2: Validate against the target contract
 
@@ -286,21 +285,13 @@ Commit, push and merge the migrated patches. Do not begin Phase 3 with an unmerg
 
 ```bash
 task talos:diff    # exits non-zero when there is drift; expect only the installer image
-task talos:apply
 ```
 
-Confirm the diff shows nothing beyond the installer image before applying. Anything else means a guard is keyed wrong and would push new-version documents at an old-version node.
+Confirm the diff shows nothing beyond the installer image. Anything else means a guard is keyed wrong and would push new-version documents at an old-version node. Then stop and have the user run `task talos:apply` — it prompts for confirmation, so you cannot run it (see Phase 8). Resume once they confirm it succeeded.
 
 #### Step 2b.4: Apply the migrated config after the nodes are upgraded
 
-Run this **after** Phase 4, once every node reports the new version. Only now does `apply` generate the new documents:
-
-```bash
-task talos:diff    # now shows the migrated documents
-task talos:apply
-```
-
-Anything whose behaviour is expressed through a migrated document — authentication, kubelet settings, node labels — changes here, not in Phase 2b.3. Verify those specifically rather than assuming the upgrade covered them.
+This is the Phase 8 apply. Only once every node reports the new version does `apply` generate the new documents, so the Phase 8 diff shows them. Anything whose behaviour is expressed through a migrated document — authentication, kubelet settings, node labels — changes there, not in Phase 2b.3. Verify those specifically rather than assuming the upgrade covered them.
 
 Once this apply is healthy the old-version template branches are dead code. Removing them is follow-up work, not part of the upgrade.
 
@@ -615,34 +606,54 @@ kubectl get pods -A -o wide
 
 Count pod distribution per node from results.
 
-### Phase 7: Update Version References
+### Phase 7: Update talos/README.md
 
-After all nodes are upgraded, update documentation files that reference the old version.
+`talos/README.md` "Talos Image Schematics" is the only place that pins the Talos version in docs; `talos/docs/machine-lifecycle.md` links to it. Update it on main — do not open a separate docs PR.
 
-**Files to update:**
+1. Replace `v<old-version>` with `v<new-version>` in the ISO, UKI and upgrade-image columns:
 
-- `talos/README.md` - Schematic table and UKI link
-- `talos/docs/machine-lifecycle.md` - Schematic table and UKI link
+   ```bash
+   grep -n "v<old-version>" talos/README.md
+   ```
 
-**Pattern:** Replace `v<old-version>` with `v<new-version>` in:
+2. Confirm the Schematic ID column still matches the live IDs from Schematic Discovery. If a class's ID changed, update the ID in every column of that row.
 
-- ISO download URLs
-- Upgrade image references
-- SecureBoot UKI links
+3. Commit only `talos/README.md` with `Ref #<issue>` and push to main.
+
+### Phase 8: Land the Pin and Apply Machine Config
+
+`talosctl upgrade` only swaps the running image. The machine config on each node still carries the old `machine.install.image`, and for minor upgrades the old config documents. Run `task talos:apply` to bring it in line with the repo. Skipping this leaves the nodes drifted from `talos/topf.yaml`.
+
+**The pin must be on main first.** `apply` renders `machine.install.image` from `talosVersion` in `talos/topf.yaml`. If you apply before the pin moves, every node goes back to the old installer image.
+
+- **Renovate PR:** tell the user to merge it. Do not merge it yourself.
+- **Manual request:** set `talosVersion` in `talos/topf.yaml`, then commit and push it to main with the README change.
+
+Once the pin is on main and pulled locally, run the dry run. It's non-interactive and safe:
 
 ```bash
-# Find all version references
-grep -n "v<old-version>" talos/README.md talos/docs/machine-lifecycle.md
-
-# Use Edit tool to update each reference
+git pull --ff-only
+task talos:diff    # exits non-zero when there is drift - that is the expected result here
 ```
 
-**`talos/topf.yaml` version update:**
+Expected diff:
 
-- **If triggered by Renovate PR:** Do NOT update - Renovate already changed the version in the PR.
-- **If triggered by manual user request:** MUST update `talosVersion` in `talos/topf.yaml` to match the new version. Otherwise the installer image topf renders will point at the old release.
+- **Patch upgrade:** only `machine.install.image` → `<schematic>:<new-version>` on each node
+- **Minor upgrade:** the installer image, plus the migrated documents from Phase 2b
 
-### Phase 8: Final Report
+Anything else, such as a Kubernetes version change or unrelated patch drift, means stop and report it. Do not hand off an apply.
+
+**`task talos:apply` asks for interactive confirmation, and you have no TTY, so never run it.** Give the user this exact command, including the `!` so it runs in their session:
+
+```text
+! task talos:apply
+```
+
+After they confirm it succeeded, re-run `task talos:diff`. It must exit 0 (no drift). Re-check node Ready, etcd 3/3 and Ceph `HEALTH_OK`, because an apply can restart services.
+
+If you can't finish this phase in the session (for example the Renovate PR isn't merged yet), return PARTIAL with the merge → diff → apply steps as the required actions. Do not return SUCCESS.
+
+### Phase 9: Final Report
 
 Post completion report:
 
@@ -666,14 +677,14 @@ Post completion report:
 - Ceph: HEALTH_OK
 - Flux: All kustomizations Ready
 
-### Documentation Updated
-- talos/README.md: version references updated
-- talos/docs/machine-lifecycle.md: version references updated
+### Config
+- talos/README.md: updated on main (<commit>)
+- talosVersion pin: on main (<commit or PR #>)
+- task talos:apply: run by user, post-apply diff clean
 
 ### Next Steps
-1. Review and commit changes
-2. Push to main
-3. Close tracking issue after cluster-validator confirms
+1. Run cluster-validator if the pin PR touched `cluster/`
+2. Close tracking issue after it confirms
 ```
 
 ## Rollback Procedures
@@ -732,18 +743,18 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 - All nodes upgraded to v<new-version>
 - etcd quorum: 3/3 healthy
 - Ceph: HEALTH_OK
-- Documentation: Updated
+- talos/README.md: updated on main
+- Machine config: applied, `task talos:diff` clean
 
-### Files Changed
-- talos/topf.yaml (talosVersion - manual upgrades only)
-- talos/README.md (version references)
-- talos/docs/machine-lifecycle.md (version references)
+### Commits on main
+- talos/README.md (and talos/topf.yaml for manual upgrades)
 
 ### Next Steps
-1. Review changes with `git diff`
-2. Commit: `chore(deps): upgrade Talos to v<new-version>`
-3. Push and close tracking issue
+1. Run cluster-validator if the pin PR touched `cluster/`
+2. Close tracking issue
 ```
+
+SUCCESS requires Phase 8 done: pin on main, apply run, clean diff. Otherwise return PARTIAL.
 
 ### For ROLLBACK:
 
@@ -819,7 +830,8 @@ query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
 08. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
 09. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
 10. **NEVER run `task talos:apply` / `topf apply` between the start of Phase 3 and the completion of Phase 4** - including the gap between the two phases, while nodes straddle versions - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet,
-    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Steps 2b.3 and 2b.4 are the only sanctioned applies: once before Phase 3, once after Phase 4 completes
+    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Step 2b.3 and Phase 8 are the only sanctioned applies: once before Phase 3 (minor only), once after the pin lands. The user runs both; `task talos:apply` is interactive
+11. **NEVER run `task talos:apply` yourself** - it needs interactive confirmation. Run `task talos:diff`, then hand the user `! task talos:apply`
 
 ## Timeout Expectations
 
