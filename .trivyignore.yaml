@@ -350,18 +350,20 @@ misconfigurations:
   # Own ghcr.io image (trivy flags non-standard registries)
   - id: AVD-KSV-0125
     paths:
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
-  # SSH key rotation role needs resourceName-scoped secret access (least-privilege)
+      - cluster/apps/github-system/coder-ssh-key-rotation/app/cronjob.yaml
+  # Rotation and reader roles need resourceName-scoped secret access (least-privilege)
   - id: AVD-KSV-0113
     paths:
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/role.yaml
+      - cluster/apps/github-system/coder-ssh-key-rotation/app/role.yaml
+      - cluster/apps/github-system/coder-ssh-key-rotation/app/reader-role.yaml
+      - cluster/apps/github-system/coder-ssh-key-rotation/app/reader-role-binding-coder-workspaces.yaml
   # UID/GID 1000 matches the ssh-key-rotation image baked-in user
   - id: AVD-KSV-0020
     paths:
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/github-system/coder-ssh-key-rotation/app/cronjob.yaml
   - id: AVD-KSV-0021
     paths:
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
+      - cluster/apps/github-system/coder-ssh-key-rotation/app/cronjob.yaml
 
   # ==============================================================================
   # Bot SSH Key Rotation - CronJob and RBAC
@@ -395,7 +397,6 @@ misconfigurations:
     paths:
       - cluster/apps/coder-system/coder-template-sync/app/job-template-push.yaml
       - cluster/apps/coder-system/coder-template-sync/app/cronjob-token-rotation.yaml
-      - cluster/apps/coder-workspaces/ssh-key-rotation/app/cronjob.yaml
   # Token-rotation Role is resourceName-scoped to a single Secret (least-privilege)
   - id: AVD-KSV-0113
     paths:

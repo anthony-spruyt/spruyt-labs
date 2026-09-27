@@ -20,7 +20,7 @@ data:
         "litellm": {
           "type": "http",
           "url": "http://litellm.litellm.svc.cluster.local:4000/mcp",
-          "headers": { "x-litellm-api-key": "Bearer $${ANTHROPIC_AUTH_TOKEN}" }
+          "headers": { "x-litellm-api-key": "Bearer $${LITELLM_API_KEY}" }
         }
       }
     }
