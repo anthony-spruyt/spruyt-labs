@@ -257,11 +257,13 @@ spec:
                     value: "agent.namespace={{request.object.metadata.namespace}}"
                   - name: ANTHROPIC_BASE_URL
                     value: "http://litellm.litellm.svc.cluster.local:4000"
-                  - name: ANTHROPIC_AUTH_TOKEN
+                  - name: LITELLM_API_KEY
                     valueFrom:
                       secretKeyRef:
                         name: litellm-credentials
                         key: virtual-key
+                  - name: ANTHROPIC_CUSTOM_HEADERS
+                    value: "x-litellm-api-key: Bearer \\$(LITELLM_API_KEY)"
                   - name: CLAUDE_CODE_ATTRIBUTION_HEADER
                     value: "0"
                   - name: ENABLE_TOOL_SEARCH

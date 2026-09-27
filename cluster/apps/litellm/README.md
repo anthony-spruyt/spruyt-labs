@@ -35,12 +35,16 @@ curl -X POST "http://litellm.litellm.svc.cluster.local:4000/key/generate" \
 
 Virtual keys are stored in PostgreSQL. Each consumer should have a dedicated key with appropriate budget and rate limits.
 
-| Consumer          | Secret Location                                           | Secret Key    | Injected As            |
-| ----------------- | --------------------------------------------------------- | ------------- | ---------------------- |
-| Claude agent pods | `litellm-credentials` in each `claude-agents-*` namespace | `virtual-key` | `ANTHROPIC_AUTH_TOKEN` |
-| Coder workspaces  | Per-developer workspace secret or `.env`                  | —             | `ANTHROPIC_AUTH_TOKEN` |
+Anthropic models use subscription (OAuth) passthrough: the client's `Authorization` header goes to Anthropic unchanged, so the LiteLLM virtual key must travel in the `x-litellm-api-key` header instead. Never put the virtual key in `ANTHROPIC_AUTH_TOKEN` or `ANTHROPIC_API_KEY` — Anthropic rejects it.
 
-Agent pods get `ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL` injected by the Kyverno policy in `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` — not by their own manifests.
+| Consumer          | Secret Location                                            | Secret Key    | Injected As                                                 |
+| ----------------- | ---------------------------------------------------------- | ------------- | ----------------------------------------------------------- |
+| Claude agent pods | `litellm-credentials` in each `claude-agents-*` namespace  | `virtual-key` | `LITELLM_API_KEY`, referenced by `ANTHROPIC_CUSTOM_HEADERS` |
+| Coder workspaces  | `coder-workspace-env-*` SOPS secrets in `coder-workspaces` | —             | `LITELLM_API_KEY` and `ANTHROPIC_CUSTOM_HEADERS`            |
+| Dev containers    | `~/.secrets/.env.*` (see `DEVELOPMENT.md`)                 | —             | `LITELLM_API_KEY` and `ANTHROPIC_CUSTOM_HEADERS`            |
+
+Agent pods get `LITELLM_API_KEY`, `ANTHROPIC_CUSTOM_HEADERS` and `ANTHROPIC_BASE_URL` injected by the Kyverno policy in `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` — not by their own manifests. `ANTHROPIC_CUSTOM_HEADERS` uses `$(LITELLM_API_KEY)`, so it must stay listed after it, and the policy writes it as `\\$(LITELLM_API_KEY)` so Kyverno doesn't try to substitute it. The
+subscription login is set per credential in n8n (`claudeCodeK8s*` credentials, "Claude OAuth Credentials" field).
 
 ### Authentik SSO
 
