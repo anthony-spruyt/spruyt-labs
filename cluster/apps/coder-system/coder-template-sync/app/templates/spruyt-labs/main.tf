@@ -592,6 +592,14 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
+      # Root podman's default authfile when XDG_RUNTIME_DIR is unset; /etc/containers/auth.json is never read. Ref #3163.
+      volume_mount {
+        name       = "nexus-auth"
+        mount_path = "/run/containers/0/auth.json"
+        sub_path   = "auth.json"
+        read_only  = true
+      }
+
       # virtio-blk so podman overlay runs on real ext4, avoiding virtiofs xattr limits.
       volume_device {
         name        = "containers"
