@@ -130,7 +130,7 @@ PY
 | Slow first token              | Recall is a vector lookup with a 3s fail-open timeout. No per-request LLM call (reflect is intentionally avoided on the hot path).                                                                   |
 | Cache-hit regression          | Memory is injected as the **last** system block to preserve the cached prefix. Watch prompt-cache metrics after changes.                                                                             |
 
-Historical logs for deleted/rotated pods: use the `victoria-logs` skill, e.g. `{namespace="litellm"} |~ "hindsight"`.
+Historical logs for deleted/rotated pods: use the `victorialogs` MCP tools (via LiteLLM), e.g. `{namespace="litellm"} |~ "hindsight"`.
 
 ## Notes & limitations
 
