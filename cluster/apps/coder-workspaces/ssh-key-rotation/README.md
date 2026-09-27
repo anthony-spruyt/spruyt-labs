@@ -2,7 +2,7 @@
 
 ## Overview
 
-Weekly CronJob that rotates the `coder-ssh-signing-key` Secret used by Coder workspaces for Git SSH auth. Formerly colocated under `coder/app/`; relocated to its own top-level app (parallels `coder-template-sync/`) so it has an independent Flux Kustomization and lifecycle.
+CronJob (every 2 days, `0 3 */2 * *`) that rotates the `coder-ssh-signing-key` Secret used by Coder workspaces for Git SSH auth. Formerly colocated under `coder/app/`; relocated to its own top-level app (parallels `coder-template-sync/`) so it has an independent Flux Kustomization and lifecycle.
 
 > **Note**: No HelmRelease — this is a Kustomize-only component.
 
@@ -25,7 +25,7 @@ Weekly CronJob that rotates the `coder-ssh-signing-key` Secret used by Coder wor
 
 ## Kata VM grace period
 
-Kata virtiofs mounts are frozen at pod creation — Kubernetes secret volume updates do NOT propagate into the guest. `GRACE_PERIOD_DAYS=8` keeps the previous key valid on GitHub for one full rotation cycle (7 days) plus buffer, so workspaces that span a rotation boundary continue signing/pushing.
+Kata virtiofs mounts are frozen at pod creation — Kubernetes secret volume updates do NOT propagate into the guest. `GRACE_PERIOD_DAYS=8` keeps old keys valid on GitHub for 8 days (four 2-day rotation cycles), so workspaces up to 8 days old continue signing/pushing.
 
 ## References
 

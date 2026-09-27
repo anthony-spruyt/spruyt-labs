@@ -16,7 +16,7 @@ coder templates push spruyt-labs --directory .
 - Validation regex `^(git@|ssh://)` rejects HTTPS at create
 - Builds from the repo's `.devcontainer/devcontainer.json`
 - Podman-in-Kata for container builds (rootful, virtio-blk storage)
-- `coder-workspace-admin` ServiceAccount bound to cluster-admin for kubectl/helm/flux
+- `coder-workspace-admin` ServiceAccount bound to `coder-workspace-ops` (scoped-down cluster-admin, no secret access) for kubectl/helm/flux
 - SSH key for git auth and verified commit signing
 - Talosconfig and Terraform credentials mounted
 - Nexus registries.conf drop-in for container pull mirroring
@@ -37,7 +37,7 @@ Devcontainer features that manage their own apt source lists (github-cli, nodeso
 
 The following Kubernetes Secrets must exist in `coder-workspaces`:
 
-- `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
+- `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated every 2 days by CronJob)
 - `coder-talosconfig` — Talos client config mounted at `~/.talos/config`
 - `coder-terraform-credentials` — Terraform credentials at `~/.terraform.d/credentials.tfrc.json`
 - `coder-workspace-env-common` — Common env vars injected into pods

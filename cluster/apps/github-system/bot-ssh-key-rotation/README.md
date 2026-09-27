@@ -2,7 +2,7 @@
 
 ## Overview
 
-Weekly CronJob that rotates the `github-bot-ssh-key` Secret used by `claude-agents-write` for Git SSH transport and commit signing. Generates a new ed25519 keypair, registers it on the `spruyt-labs-bot` GitHub account (auth + signing), cleans up old keys, patches the Kubernetes secret, and force-syncs ExternalSecrets in consumer namespaces.
+Daily CronJob (`0 3 * * *`) that rotates the `github-bot-ssh-key` Secret used by `claude-agents-write` for Git SSH transport and commit signing. Generates a new ed25519 keypair, registers it on the `spruyt-labs-bot` GitHub account (auth + signing), cleans up old keys, patches the Kubernetes secret, and force-syncs ExternalSecrets in consumer namespaces.
 
 > **Note**: No HelmRelease — this is a Kustomize-only component.
 
