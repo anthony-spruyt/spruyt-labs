@@ -79,6 +79,7 @@ locals {
     # Expose as shell variable so devcontainer.json lifecycle commands
     # using ${containerWorkspaceFolder} expand correctly under envbuilder.
     "containerWorkspaceFolder" : local.workspace_folder,
+    "TZ" : "Australia/Melbourne",
     # Claude Code CLI OpenTelemetry — full audit visibility (#1043).
     # Kata isolates workspace from cluster Kyverno mutating webhooks, so OTel
     # env must be set on the pod template directly. Endpoints resolve to the

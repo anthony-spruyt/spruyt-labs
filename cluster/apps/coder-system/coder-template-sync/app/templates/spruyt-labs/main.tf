@@ -64,6 +64,7 @@ locals {
     "ENVBUILDER_IGNORE_PATHS" : "/etc/coder,/var/run",
     "ENVBUILDER_GIT_SSH_PRIVATE_KEY_PATH" : "/etc/coder/ssh-keys/id_ed25519",
     "containerWorkspaceFolder" : local.workspace_folder,
+    "TZ" : "Australia/Melbourne",
     # Set here, not by Kyverno: Kata isolates the workspace from mutating webhooks. Ref #1043.
     "CLAUDE_CODE_ENABLE_TELEMETRY" : "1",
     "CLAUDE_CODE_ENHANCED_TELEMETRY_BETA" : "1",
