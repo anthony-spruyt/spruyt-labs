@@ -2,7 +2,7 @@
 
 ## Overview
 
-LiteLLM Proxy provides a centralized LLM gateway exposing both Anthropic-compatible (`/v1/messages`) and OpenAI-compatible (`/v1/chat/completions`) APIs. Claude models route to Anthropic directly, with OpenRouter as the failover provider. Replaces direct Anthropic API usage for Claude Code CLI automation, providing virtual key management, spend tracking, and OTEL observability.
+LiteLLM Proxy provides a centralized LLM gateway exposing both Anthropic-compatible (`/v1/messages`) and OpenAI-compatible (`/v1/chat/completions`) APIs. Claude models route to Anthropic directly, with no cross-provider fallback. Replaces direct Anthropic API usage for Claude Code CLI automation, providing virtual key management, spend tracking, and OTEL observability.
 
 Priority tier: `standard`.
 
@@ -63,13 +63,14 @@ Models are declared in `config.yaml`, embedded in `litellm/app/values.yaml` unde
 
 `store_model_in_db: true` is set, but `supported_db_objects` is scoped to `mcp`, so the DB persists **MCP objects only**. `config.yaml` is authoritative for models. Widening `supported_db_objects` would make DB-stored models shadow the declared ones — don't, without revisiting this.
 
-Adding a Claude model takes three edits in `values.yaml`:
+Adding a Claude model takes two edits in `values.yaml`:
 
-| Key                                 | Entry                                                    | Why                                               |
-| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------- |
-| `model_list`                        | `anthropic/<model>` pointing at itself                   | Registers the deployment                          |
-| `router_settings.model_group_alias` | `<model>` → `anthropic/<model>`                          | Lets clients send the bare name Claude Code uses  |
-| `router_settings.fallbacks`         | Both the bare and `anthropic/`-prefixed key → OpenRouter | Router sees the group pre- and post-alias-resolve |
+| Key                                 | Entry                                  | Why                                              |
+| ----------------------------------- | -------------------------------------- | ------------------------------------------------ |
+| `model_list`                        | `anthropic/<model>` pointing at itself | Registers the deployment                         |
+| `router_settings.model_group_alias` | `<model>` → `anthropic/<model>`        | Lets clients send the bare name Claude Code uses |
+
+Claude groups deliberately have no `router_settings.fallbacks` — a 429 surfaces to the client instead of silently switching provider.
 
 Omit cost params for models LiteLLM already prices in its bundled `model_prices_and_context_window.json` (all current Claude models). Only set `input_cost_per_token` / `output_cost_per_token` for models absent from that registry, such as OpenRouter entries.
 
