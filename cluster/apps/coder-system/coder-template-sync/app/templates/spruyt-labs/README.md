@@ -16,7 +16,7 @@ coder templates push spruyt-labs --directory .
 - Validation regex `^(git@|ssh://)` rejects HTTPS at create
 - Builds from the repo's `.devcontainer/devcontainer.json`
 - Podman-in-Kata for container builds (rootful, virtio-blk storage)
-- `coder-workspace-admin` ServiceAccount bound to `coder-workspace-ops` (scoped-down cluster-admin, no secret access) for kubectl/helm/flux
+- `coder-workspace-ops` ServiceAccount bound to the `coder-workspace-ops` ClusterRole (scoped-down cluster-admin, no secret access) for kubectl/helm/flux
 - SSH key for git auth and verified commit signing
 - Talosconfig and Terraform credentials mounted
 - Nexus registries.conf drop-in for container pull mirroring

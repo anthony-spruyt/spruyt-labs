@@ -513,7 +513,7 @@ resource "kubernetes_pod_v1" "main" {
   }
 
   spec {
-    service_account_name = "coder-workspace-admin"
+    service_account_name = "coder-workspace-ops"
     restart_policy       = "Never"
     # Kata Containers: each workspace pod runs in its own lightweight VM
     # (QEMU/Cloud Hypervisor + KVM). Hypervisor boundary around arbitrary
