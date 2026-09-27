@@ -4,7 +4,6 @@
 # LiteLLM Proxy Policies
 # =============================================================================
 # DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
-# Allow ingress from Traefik for admin UI and external API access
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -26,7 +25,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Claude agent pods (all namespaces)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -60,7 +58,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Coder workspaces
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -81,7 +78,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from hindsight pods (api/worker call litellm for LLM completions)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -102,7 +98,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from n8n pods
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -124,7 +119,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from agent-queue-worker for health checks
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -147,7 +141,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to CNPG PostgreSQL
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -169,7 +162,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to Z.ai API and Authentik OIDC endpoints
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -189,7 +181,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to OTEL endpoints in observability namespace
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -214,7 +205,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -236,7 +226,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM proxy to Presidio services
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -261,7 +250,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM proxy to LLM Guard
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -283,10 +271,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to LLM Guard from LiteLLM proxy.
-# Egress to world:443 is required to pull the rogue-security model from
-# HuggingFace at runtime (gated; not baked into the image). DNS egress is
-# handled by the CiliumClusterwideNetworkPolicy allow-kube-dns-egress.
+# world:443 egress pulls the gated rogue-security model from HuggingFace at runtime
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -315,7 +300,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to Presidio analyzer from LiteLLM proxy, deny all egress
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -338,7 +322,6 @@ spec:
   egress: []
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress to Presidio anonymizer from LiteLLM proxy, deny all egress
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -365,7 +348,6 @@ spec:
 # CNPG PostgreSQL Cluster Policies
 # =============================================================================
 # DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
-# Allow ingress from LiteLLM for database connections
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -386,7 +368,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow internal cluster communication for replication and status
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -419,7 +400,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow S3 backup uploads via Barman cloud plugin
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -437,7 +417,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -457,7 +436,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow CNPG operator access for cluster management
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -477,7 +455,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow kube-api egress for cluster coordination
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -495,7 +472,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to Barman cloud plugin for backup operations
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -515,7 +491,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM to Brave Search MCP server
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -537,7 +512,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM to VictoriaMetrics MCP server
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -559,7 +533,27 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM to n8n MCP server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-victorialogs-mcp-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+      app.kubernetes.io/controller: litellm
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: mcp-victorialogs
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -581,7 +575,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM to UniFi Network MCP server
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -603,8 +596,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress from LiteLLM proxy to Hindsight API (proxy-side memory callback:
-# pre-call recall + post-success retain).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

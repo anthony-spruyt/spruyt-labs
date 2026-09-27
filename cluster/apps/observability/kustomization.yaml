@@ -10,3 +10,4 @@ resources:
   - ./victoria-logs-single/ks.yaml
   - ./victoria-traces-single/ks.yaml
   - ./mcp-victoriametrics/ks.yaml
+  - ./mcp-victorialogs/ks.yaml
