@@ -2,7 +2,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/traefik/traefik-helm-chart/refs/heads/master/traefik/values.schema.json
 # Default values for traefik: https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml
 priorityClassName: critical-infrastructure
-# PSS restricted compliance - add seccompProfile (chart defaults handle runAsUser/runAsGroup)
 podSecurityContext:
   runAsGroup: 65532
   runAsNonRoot: true
@@ -67,6 +66,7 @@ ports:
 providers:
   kubernetesCRD:
     allowCrossNamespace: false
+    safeNaming: true
 service:
   annotations:
     lbipam.cilium.io/ips: "${TRAEFIK_IP4}"
