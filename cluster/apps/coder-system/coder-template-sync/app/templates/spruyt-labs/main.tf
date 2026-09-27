@@ -577,6 +577,13 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
+      volume_mount {
+        name       = "claude-managed-settings"
+        mount_path = "/etc/claude-code/managed-settings.json"
+        sub_path   = "managed-settings.json"
+        read_only  = true
+      }
+
       # Nexus docker-group forces basic auth (rejects anonymous bearer). Ref #976.
       volume_mount {
         name       = "nexus-auth"
@@ -662,6 +669,14 @@ resource "kubernetes_pod_v1" "main" {
       name = "registries-conf"
       config_map {
         name         = "coder-workspace-registries-conf"
+        default_mode = "0444"
+      }
+    }
+
+    volume {
+      name = "claude-managed-settings"
+      config_map {
+        name         = "coder-workspace-claude-managed-settings"
         default_mode = "0444"
       }
     }

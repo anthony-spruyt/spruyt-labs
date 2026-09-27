@@ -20,6 +20,7 @@ coder templates push spruyt-labs --directory .
 - SSH key for git auth and verified commit signing
 - Talosconfig and Terraform credentials mounted
 - Nexus registries.conf drop-in for container pull mirroring
+- Claude Code managed settings (`bypassPermissions` default) mounted from the `coder-workspace-claude-managed-settings` ConfigMap at `/etc/claude-code/managed-settings.json`
 
 ## Nexus artifact proxy
 

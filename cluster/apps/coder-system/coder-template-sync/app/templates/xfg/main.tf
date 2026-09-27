@@ -595,6 +595,13 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
+      volume_mount {
+        name       = "claude-managed-settings"
+        mount_path = "/etc/claude-code/managed-settings.json"
+        sub_path   = "managed-settings.json"
+        read_only  = true
+      }
+
       # Basic-auth credentials for docker-group (8082) + envbuilder-cache
       # (8083). Nexus 3 rejects anonymous bearer tokens on docker-group
       # (forceBasicAuth=true), so workspaces authenticate as the read-only
@@ -650,6 +657,14 @@ resource "kubernetes_pod_v1" "main" {
       name = "registries-conf"
       config_map {
         name         = "coder-workspace-registries-conf"
+        default_mode = "0444"
+      }
+    }
+
+    volume {
+      name = "claude-managed-settings"
+      config_map {
+        name         = "coder-workspace-claude-managed-settings"
         default_mode = "0444"
       }
     }

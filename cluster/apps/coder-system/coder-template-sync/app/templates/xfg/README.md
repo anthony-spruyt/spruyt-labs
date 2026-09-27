@@ -17,6 +17,7 @@ coder templates push xfg --directory .
 - `coder-workspace` ServiceAccount (no cluster role binding) with token automount disabled — no cluster API access
 - SSH key for git auth and verified commit signing
 - Nexus registries.conf drop-in for container pull mirroring
+- Claude Code managed settings (`bypassPermissions` default) mounted from the `coder-workspace-claude-managed-settings` ConfigMap at `/etc/claude-code/managed-settings.json`
 
 ## Nexus artifact proxy
 
