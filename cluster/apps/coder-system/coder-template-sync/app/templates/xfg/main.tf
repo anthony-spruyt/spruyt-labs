@@ -284,17 +284,6 @@ resource "coder_agent" "main" {
     set -e
     cd "${local.workspace_folder}"
 
-    # Rootful podman runtime dir (required by podman inside Kata VM).
-    sudo mkdir -p /run/user/1000
-    sudo chown 1000:1000 /run/user/1000
-
-    # Relax /etc/containers perms so rootless podman (which strips supplementary
-    # groups inside its user namespace) can read storage.conf, registries.conf.d/*,
-    # and containers.conf.d/*. Image ships these as 0750 root:root which is
-    # unreadable from inside the userns. Ref #976.
-    sudo chmod a+rx /etc/containers /etc/containers/registries.conf.d 2>/dev/null || true
-    [ -d /etc/containers/containers.conf.d ] && sudo chmod a+rx /etc/containers/containers.conf.d
-
     # Direct-assigned block device for podman storage. First boot: mkfs.
     # Subsequent boots: detect existing ext4 and mount.
     if [ -b /dev/containers-disk ]; then
@@ -304,7 +293,6 @@ resource "coder_agent" "main" {
       sudo mkdir -p /var/lib/containers
       sudo mount -o noatime /dev/containers-disk /var/lib/containers || true
     fi
-    export XDG_RUNTIME_DIR=/run/user/1000
 
     # Configure git commit signing using the read-only SSH key mount.
     # Kata virtiofs mounts are frozen at pod creation — secret updates
