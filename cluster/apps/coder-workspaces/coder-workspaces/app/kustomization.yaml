@@ -7,11 +7,13 @@ resources:
   - ./coder-workspace-env-spruyt-labs.sops.yaml
   - ./coder-workspace-env-xfg.sops.yaml
   - ./coder-talosconfig.sops.yaml
-  - ./coder-ssh-signing-key.sops.yaml
   - ./coder-terraform-credentials.sops.yaml
   - ./coder-workspace-nexus-clients.sops.yaml
   - ./sops-age-secret-store.yaml
   - ./sops-age-externalsecret.yaml
+  - ./github-secret-store.yaml
+  - ./github-ssh-external-secret.yaml
+  - ./github-rotation-rbac.yaml
   - ./rbac.yaml
   - ./registries-conf-configmap.yaml
   - ./network-policies.yaml

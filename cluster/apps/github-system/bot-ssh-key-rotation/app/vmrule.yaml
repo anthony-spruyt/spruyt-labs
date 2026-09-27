@@ -17,12 +17,13 @@ spec:
           annotations:
             summary: "Bot SSH key rotation CronJob failed"
             description: "CronJob {{ $labels.job_name }} failed. Bot SSH key was not rotated."
+        # Must stay below GRACE_PERIOD_DAYS (2d) so it fires before agent keys expire
         - alert: BotSSHKeyRotationConsecutiveFailures
           expr: |
-            time() - kube_cronjob_status_last_successful_time{namespace="github-system", cronjob="bot-ssh-key-rotation"} > 1209600
+            time() - kube_cronjob_status_last_successful_time{namespace="github-system", cronjob="bot-ssh-key-rotation"} > 129600
           for: 10m
           labels:
             severity: critical
           annotations:
-            summary: "Bot SSH key rotation has not succeeded in 14+ days"
-            description: "The spruyt-labs-bot SSH key has not been rotated in over 2 weeks."
+            summary: "Bot SSH key rotation has not succeeded in 36+ hours"
+            description: "The spruyt-labs-bot SSH key has not been rotated in over 36 hours."

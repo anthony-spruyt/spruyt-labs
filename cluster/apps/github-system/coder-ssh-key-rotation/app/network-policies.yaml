@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow world HTTPS egress for apk package installs and GitHub API calls
+# Allow world HTTPS egress for GitHub API calls
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -8,7 +8,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: ssh-key-rotation
+      app: coder-ssh-key-rotation
   egress:
     - toEntities:
         - world
@@ -18,7 +18,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow kube-api egress for kubectl patch on coder-ssh-signing-key secret
+# Allow egress to kube-apiserver for kubectl patch operations
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -26,7 +26,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: ssh-key-rotation
+      app: coder-ssh-key-rotation
   egress:
     - toEntities:
         - kube-apiserver

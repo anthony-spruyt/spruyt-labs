@@ -3,16 +3,18 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app ssh-key-rotation
+  name: &app coder-ssh-key-rotation
   namespace: flux-system
 spec:
-  targetNamespace: coder-workspaces
-  path: ./cluster/apps/coder-workspaces/ssh-key-rotation/app
+  targetNamespace: github-system
+  path: ./cluster/apps/github-system/coder-ssh-key-rotation/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  dependsOn:
-    - name: coder-workspaces
   prune: true
   timeout: 5m
-  wait: false
+  wait: true
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age

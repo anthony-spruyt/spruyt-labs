@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Secret
 metadata:
     name: coder-ssh-signing-key
-    namespace: coder-workspaces
+    namespace: github-system
     annotations:
         kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
 stringData:
@@ -11,8 +11,7 @@ stringData:
     id_ed25519.pub: ENC[AES256_GCM,data:A77tSWA+dvYMoZJ9UVM8YpOkVI5h/iXw64dMdkaxXz6V5BnEXKj4bWIbreEufqMaVDX/OrsHlWtjF3sDJNiRt/0/UsZUWlrvFhAvrTYS4ZuPd15160fWxboFUWirvYGA3Id86nEBxsmikf+i,iv:f70BJ7oJlJ5QbL9pbF5T4KtfTswaBJV9DUOkdWQkvH0=,tag:jud+T7Q7pkUTO2bw49ni8Q==,type:str]
 sops:
     age:
-        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
-          enc: |
+        - enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
             YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB3V0VSTzl4Smg0ZktROHRY
             SU9WamRqTkk0ejNrSWxrU0JKd3JxWDkxdXg0CkhDdWc1OVBhZnoxSGpNMUdDUWJ2
@@ -20,7 +19,8 @@ sops:
             aXBPeEFNcUN4cXpVa3UvbkUwL1Zzbk0KJzv2GyenrfNfXBYpI6oOYs2GUcWIkXOR
             +1cyRJHc6tx3s8DdNMr5UC72ZwPLB5LRvBTYyJM4LhNNbXQ+e8fkbg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-04-17T23:12:13Z"
-    mac: ENC[AES256_GCM,data:Q44nCVMCqzlAmrVTnDpwEhiNCknN8ZbLnUjU9g9WEYsI8FAGbJYGtnrltRTZ/xwZEdJrs7U4GFh25o1mzSpNpWaLRXXqwvWFEOKU+uwF7FXPjgiu96DyM7KwnxhYiZfGRihOQXvmOYs+E7h7QzI2IaUksvYbKwVVDEpcXxvloks=,iv:8aNPjjm78Fo1Ww2W1derMRHjWM5kwofN7Pggu1fqPXw=,tag:QtU8tv/mRdpLHToqJf7TJg==,type:str]
+          recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
     encrypted_regex: ^(data|stringData)$
-    version: 3.12.2
+    lastmodified: "2026-09-27T07:45:28Z"
+    mac: ENC[AES256_GCM,data:mbMQirYUhQb9X5GzgVASU5au9gtzAiSc9E4afizdg+seeN8LfKn6qFyJ/LMhiyE8lBTgI7eAmcZwxBu4jUHXofBDo2pfEBUnTS+Ehi8+yEr16eZC5lUn37PX+0juO32cmOiGUb7Li62struY7BE+zaZ8O7OnsDSxwM/anmK33JY=,iv:r67xi3eZp2XBs1Dwe1CgiiVJmQ7I6UM7oy/1Uj4zOUo=,tag:+pBxhP27xiI824m4BlVV7g==,type:str]
+    version: 3.13.3
