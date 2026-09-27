@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.3.60](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.59...agent-queue-worker/v3.3.60) (2026-09-27)
+
+
+### Dependencies
+
+* **deps:** update dependency @types/node to v24.13.6 ([#3123](https://github.com/anthony-spruyt/spruyt-labs/issues/3123)) ([f9a6bdd](https://github.com/anthony-spruyt/spruyt-labs/commit/f9a6bdd320f085ec77b303afa0572080839d6446))
+* **deps:** update dependency tsx to v4.23.14 ([#3143](https://github.com/anthony-spruyt/spruyt-labs/issues/3143)) ([e920956](https://github.com/anthony-spruyt/spruyt-labs/commit/e920956bb31db0addcb7e8c49f83ad04792319e8))
+* **deps:** update dependency tsx to v4.23.15 ([#3154](https://github.com/anthony-spruyt/spruyt-labs/issues/3154)) ([ca9d670](https://github.com/anthony-spruyt/spruyt-labs/commit/ca9d6702f4cef344db04d1564a576843bbe61222))
+
 ## [3.3.59](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.58...agent-queue-worker/v3.3.59) (2026-09-23)
 
 
