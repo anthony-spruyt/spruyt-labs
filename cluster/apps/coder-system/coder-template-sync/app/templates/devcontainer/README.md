@@ -32,5 +32,5 @@ sources.list rewrite to their Dockerfile — see `spruyt-labs` repo `.devcontain
 
 The following Kubernetes Secrets must exist in `coder-workspaces`:
 
-- `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated weekly by CronJob)
+- `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated every 2 days by CronJob)
 - `coder-workspace-env-common` — Env vars injected into pods
