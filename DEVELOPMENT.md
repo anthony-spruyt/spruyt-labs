@@ -172,7 +172,7 @@ Volumes persist across workspace stop/start. Deleting the workspace deletes volu
 
 ### Base Image
 
-Both paths use `ghcr.io/anthony-spruyt/devcontainer-common` which includes Python, Node, GitHub CLI, pre-commit, rootless Podman, and the `agent-run` policy wrapper.
+Both paths use `ghcr.io/anthony-spruyt/devcontainer-common` which includes Python, Node, GitHub CLI, pre-commit, Podman, and the `agent-run` policy wrapper.
 
 ### Devcontainer Features
 
@@ -192,7 +192,7 @@ kubectl, kustomize, helm, helmfile, helm plugins, cilium, hubble, talosctl, topf
 
 ### Container Runtime
 
-The devcontainer uses **rootless Podman** (via `podman-docker` shim). The `docker` command maps to `podman`. Container image pulls route through a registry allow-list — short-name pulls from unregistered registries are rejected.
+The devcontainer runs **rootful Podman** by design; the `podman` and `docker` commands are wrappers that call it via `sudo`. Container image pulls route through a registry allow-list — short-name pulls from unregistered registries are rejected.
 
 For details on the security posture (seccomp, `agent-run` wrapper, registry enforcement), see [`.devcontainer/README.md`](.devcontainer/README.md).
 
