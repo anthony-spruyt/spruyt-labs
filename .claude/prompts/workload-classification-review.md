@@ -104,8 +104,8 @@ Update `docs/workload-classification.md`:
 ### 5c: Commit Changes
 
 ```bash
-# Code changes
-git add cluster/apps/
+# Code changes - stage each file you edited
+git add cluster/apps/<namespace>/<app>/app/values.yaml
 git commit -m "fix(priority): align priorityClassName with classification"
 
 # Doc changes (separate commit)

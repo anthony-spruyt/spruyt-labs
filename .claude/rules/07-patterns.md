@@ -48,11 +48,7 @@ Pattern: `<name>-secrets.sops.yaml` or `<name>.sops.yaml`
 
 ## Helm Values
 
-Before modifying Helm values, ALWAYS check upstream/source values.yaml first:
-
-- Use Context7 or WebFetch with raw.githubusercontent.com to find correct key paths
-- Never assume key names
-- Verify the chart version matches when checking upstream docs
+Check the chart's upstream `values.yaml` for the pinned chart version before editing Helm values (Context7, or WebFetch raw.githubusercontent.com) — key paths differ between charts and versions.
 
 ## VPA (Vertical Pod Autoscaler)
 
@@ -60,7 +56,7 @@ Every workload must include a `vpa.yaml` in its `app/` directory.
 
 - `updateMode` = `Initial` for non critical workloads and `Off` for critical workloads
 - Per-container `containerPolicies` (no wildcards)
-- `controlledValues` = `RequestsOnly` NO LIMIT AUTO ADJUSTMENTS, ONLY REQUESTS!
+- `controlledValues` = `RequestsOnly` — VPA adjusts requests only, never limits
 - `minAllowed` = `cpu: 1m, memory: 1Mi` (unclamped for accurate recommendations)
 - `maxAllowed` = current resource limits (omit CPU if no CPU limit is set)
 - Containers with no resource specs: omit from `containerPolicies`

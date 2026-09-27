@@ -113,7 +113,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 
    - `kubectl rollout restart` for Deployments
    - `kubectl delete pod` for StatefulSets (one at a time, wait for Ready)
-   - Namespaces: observability, authentik, cnpg plugins, nexus, app workloads
+   - Namespaces: observability, authentik-system, cnpg plugins, nexus-system, app workloads
 
 2. **DNS tier** — technitium primary + secondary:
 
@@ -138,7 +138,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 2. Search for **all** old version references:
    - Grep tool: search `<old-version>` (no `v` prefix) in `talos/*.yaml`, `docs/*.md`, `cluster/*.yaml`
    - **Grep may miss hookify-blocked files.** Fallback: `grep -r "v<old-version>" cluster/ --include="*.yaml" -l 2>/dev/null`. Files found only by bash need `sed -i` instead of Edit tool.
-3. Common locations: `talos/topf.yaml`, `talos/README.md`, `cluster/flux/meta/cluster-settings.yaml`, `kubernetes-json-schema` URLs in 30+ manifest files
+3. Common locations: `talos/topf.yaml`, `talos/README.md`
 4. Update all references; verify zero remain
 5. Present final report: version change, node status, health results, files changed
 

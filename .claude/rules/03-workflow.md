@@ -52,8 +52,6 @@ Read templates from `.github/ISSUE_TEMPLATE/` to get title prefix, labels, and r
 
 ## Commits
 
-Skip qa-validator for trivial changes (typos, single-line fixes, SOPS-only). Pre-commit hooks catch basic issues.
-
 **After push:** Flux webhooks auto-reconcile - no manual `flux reconcile` needed.
 
 ## Pull Requests

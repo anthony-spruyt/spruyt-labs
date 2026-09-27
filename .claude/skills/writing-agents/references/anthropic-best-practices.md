@@ -6,8 +6,8 @@ Reference material from official Anthropic documentation. Each principle include
 
 01. [Token Efficiency](#1-token-efficiency)
 02. [Right Altitude](#2-right-altitude)
-03. [Opus 4.5/4.6 Calibration](#3-opus-4546-calibration)
-04. [Opus 4.5/4.6 Overengineering Tendency](#4-opus-4546-overengineering-tendency)
+03. [Emphasis Calibration](#3-emphasis-calibration)
+04. [Scope Creep](#4-scope-creep)
 05. [Autonomy and Safety](#5-autonomy-and-safety)
 06. [Parallel Execution](#6-parallel-execution)
 07. [Progressive Disclosure](#7-progressive-disclosure)
@@ -32,28 +32,27 @@ Match specificity to task fragility. High freedom (text guidance) for judgment c
 
 Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
 
-## 3. Opus 4.5/4.6 Calibration
+## 3. Emphasis Calibration
 
-Opus 4.5 and 4.6 are more responsive to system prompts than previous models. Instructions designed to reduce undertriggering now cause overtriggering. Replace "CRITICAL: You MUST use this tool when..." with "Use this tool when...". Soften CRITICAL/MANDATORY/NEVER markers to normal language. Sonnet 4.6 defaults to `high` effort and may also overtrigger — dial back aggressive language for all
-4.5/4.6 models.
+Current Claude models follow system prompts closely; emphasis written to fix undertriggering causes overtriggering. Replace "CRITICAL: You MUST use this tool when..." with "Use this tool when...". Keep strong language for safety gates only.
 
 Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
-## 4. Opus 4.5/4.6 Overengineering Tendency
+## 4. Scope Creep
 
-Opus 4.5 and 4.6 tend to overengineer by creating extra files, adding unnecessary abstractions, or building in flexibility that wasn't requested. Opus 4.6 also does significantly more upfront exploration than previous models. Use targeted scope instructions: "Only make changes that are directly requested." Prefer direct grep/read over spawning subagents for simple lookups.
+If testing shows an agent creating extra files, abstractions, or unrequested flexibility, add a targeted line: "Only make changes that are directly requested." Add it when observed, not by default.
 
 Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
 ## 5. Autonomy and Safety
 
-Without guidance, Opus 4.6 may take actions that are hard to reverse — deleting files, force-pushing, posting to external services. Agents performing destructive or externally-visible operations should include confirmation gates. Add explicit guidance on which actions require user confirmation vs. which can proceed autonomously.
+Without guidance, an agent may take actions that are hard to reverse — deleting files, force-pushing, posting to external services. Agents performing destructive or externally-visible operations should include confirmation gates. Add explicit guidance on which actions require user confirmation vs. which can proceed autonomously.
 
 Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
 ## 6. Parallel Execution
 
-Claude 4.6 excels at parallel tool calls. Explicitly state which checks are independent to boost parallel calling to ~100%. Group independent operations and mark dependencies. Example: "These checks can run in parallel: [list]. Run these after the above pass: [list]."
+State which checks are independent and which depend on earlier results, so independent ones run in parallel. Example: "These checks can run in parallel: [list]. Run these after the above pass: [list]."
 
 Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
@@ -65,7 +64,7 @@ Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/b
 
 ## 8. Subagent Design
 
-One clear goal, input, output, and handoff rule per agent. Well-scoped tools make it easier for Claude to decide next steps. Minimize tool set overlap. Opus 4.6 has a strong predilection for subagents and may spawn them when a simpler direct approach suffices — add explicit guidance on when NOT to use subagents for focused agents.
+One clear goal, input, output, and handoff rule per agent. Well-scoped tools make it easier for Claude to decide next steps. Minimize tool set overlap. If an agent spawns subagents where a direct lookup would do, say when not to.
 
 Sources: https://claude.com/blog/building-agents-with-the-claude-agent-sdk, https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 

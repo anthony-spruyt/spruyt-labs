@@ -3,7 +3,7 @@
 | Mistake                                                 | Fix                                                                                                                                |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Workflow summary in description                         | Brief capability + triggering conditions only. Put workflow in body                                                                |
-| CRITICAL/MANDATORY/NEVER overuse                        | Normal language. Claude 4.5/4.6 overtriggers on aggressive emphasis                                                                |
+| CRITICAL/MANDATORY/NEVER overuse                        | Normal language. Current models overtrigger on aggressive emphasis                                                                 |
 | Explaining Kubernetes/YAML/Git basics                   | Remove. Opus knows these                                                                                                           |
 | Copying CLAUDE.md secret rules                          | Remove. Agent inherits project rules                                                                                               |
 | 500+ line system prompt                                 | Cut aggressively — remove what Opus knows, inherited context. Target < 300 lines                                                   |

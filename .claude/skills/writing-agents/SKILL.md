@@ -14,12 +14,11 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 | Task                   | Reference                                          |
 | ---------------------- | -------------------------------------------------- |
 | Frontmatter fields     | `references/agent-frontmatter.md`                  |
-| Description examples   | `references/project-patterns.md` Section 7         |
+| Description examples   | `references/project-patterns.md` Section 6         |
 | Model selection        | `references/project-patterns.md` Section 2         |
 | Size targets           | `references/project-patterns.md` Section 3         |
-| Memory patterns        | `references/project-patterns.md` Section 4         |
-| Output format patterns | `references/project-patterns.md` Section 5         |
-| Handoff patterns       | `references/project-patterns.md` Section 6         |
+| Output format patterns | `references/project-patterns.md` Section 4         |
+| Handoff patterns       | `references/project-patterns.md` Section 5         |
 | Emphasis calibration   | `references/anthropic-best-practices.md` Section 3 |
 | Parallel execution     | `references/anthropic-best-practices.md` Section 6 |
 | Common mistakes        | `references/common-mistakes.md`                    |
@@ -38,7 +37,7 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 - "When NOT to use" anti-conditions
 - 1-2 `<example>` blocks with `<commentary>` explaining why it triggers
 
-See `references/project-patterns.md` Section 7 for working examples.
+See `references/project-patterns.md` Section 6 for working examples.
 
 ## System Prompt Structure
 
@@ -52,13 +51,13 @@ Canonical section order for this project:
 6. **Output Format** — Structured template (verdict header, evidence, next steps)
 7. **Handoff Protocol** — How results return to caller
 8. **Critical Rules** — Numbered constraints
-9. **Self-Improvement** — If using memory (see `references/project-patterns.md` Section 4)
+9. **Self-Improvement** — If the agent uses `memory`
 
 Not every agent needs all sections. Small focused agents may only need Persona, Workflow, Rules, and Output Format.
 
-**Output format:** Agents feeding orchestrators use rigid parseable formats. Standalone agents use human-readable reports. See `references/project-patterns.md` Section 5.
+**Output format:** Agents feeding orchestrators use rigid parseable formats. Standalone agents use human-readable reports. See `references/project-patterns.md` Section 4.
 
-**Handoff patterns:** Choose from: GitHub issue comment, structured return to caller, terminal states (SUCCESS/ROLLBACK/PARTIAL), or fix-and-retry loop. See `references/project-patterns.md` Section 6.
+**Handoff patterns:** Choose from: GitHub issue comment, structured return to caller, terminal states (SUCCESS/ROLLBACK/PARTIAL), or fix-and-retry loop. See `references/project-patterns.md` Section 5.
 
 ## Creation Workflow
 
@@ -73,7 +72,7 @@ Dispatch a creation sub-agent. Provide it with: the agent requirements, this ski
 03. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, 1-2 examples with `<commentary>`, "When to use" and "When NOT to use" sections). Choose model and tools (least privilege — see `references/anthropic-best-practices.md` Section 9)
 04. **Structure system prompt** — Follow section order from System Prompt Structure above. Include output format template and handoff protocol
 05. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
-06. **Scope-limit Opus** — For agents that make modifications, add "Only make changes directly requested." Prefer direct Grep/Read over spawning subagents for simple lookups (see `references/anthropic-best-practices.md` Section 4)
+06. **Scope-limit** — If testing shows over-reach, add "Only make changes directly requested." (see `references/anthropic-best-practices.md` Section 4)
 07. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, use strong language (e.g., "stop immediately with BLOCKED"). Add "stop on error" for sequential workflows
 08. **Calibrate emphasis** — Same rules as Optimization Phase 1 step 4. Safety gates keep strong language; operational preferences use normal language
 09. **Avoid inherited duplication** — Read CLAUDE.md and `.claude/rules/*`. Do not duplicate content. Use single-line references (e.g., "Follow inherited secret handling rules")
@@ -127,7 +126,7 @@ If either validator returns FAIL/DEGRADED: dispatch a fix sub-agent with the spe
 | Mistake                          | Fix                                                                 |
 | -------------------------------- | ------------------------------------------------------------------- |
 | Workflow summary in description  | Brief capability + triggering conditions only. Put workflow in body |
-| CRITICAL/MANDATORY/NEVER overuse | Normal language. Claude 4.5/4.6 overtriggers on aggressive emphasis |
+| CRITICAL/MANDATORY/NEVER overuse | Normal language. Current models overtrigger on aggressive emphasis |
 | 500+ line system prompt          | Cut aggressively — remove what Opus knows. Target < 300 lines       |
 | No output format specified       | Add structured output template                                      |
 | No examples in description       | Add 1-2 `<example>` blocks with context/user/assistant/commentary   |

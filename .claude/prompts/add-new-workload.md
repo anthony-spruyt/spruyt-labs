@@ -11,7 +11,7 @@ ______________________________________________________________________
 > **All work requires a linked GitHub issue. No exceptions.**
 
 1. Search for existing issue for `<workload-name>`
-2. If not, create using `feature_request.yml` template (see @.claude/rules/github-workflow.md)
+2. If not, create using `feature_request.yml` template (see `.claude/rules/03-workflow.md`)
 3. Track the issue number for all subsequent steps
 
 ______________________________________________________________________
@@ -48,7 +48,7 @@ Before writing any files, understand the chart:
 
 1. **Find the chart values and schema**:
 
-   - Use Context7: `resolve-library-id` then `get-library-docs`
+   - Use Context7: `resolve-library-id` then `query-docs`
    - Or fetch raw values.yaml from GitHub: `raw.githubusercontent.com/<org>/<repo>/...`
    - **Check for values.schema.json**: Many charts provide JSON schemas for validation
      - Look for `values.schema.json` in the chart directory
@@ -98,6 +98,7 @@ cluster/apps/<namespace>/
         ├── kustomization.yaml  # Kustomize config
         ├── release.yaml        # HelmRelease
         ├── values.yaml         # Helm values
+        ├── vpa.yaml            # Required - see .claude/rules/07-patterns.md
         ├── kustomizeconfig.yaml
         └── [optional files]    # secrets, network policies, etc.
 ```
@@ -144,8 +145,8 @@ metadata:
 
 PSA Label Guide:
 
-- `baseline` - Default for most workloads
-- `privileged` - Required for: eBPF, host networking, privileged containers
+- `restricted` - Default for most workloads
+- `baseline` / `privileged` - Only when the workload can't run restricted (eBPF, host networking, privileged containers)
 
 ### 4c. Namespace Kustomization
 
@@ -254,6 +255,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./release.yaml
+  - ./vpa.yaml
 configMapGenerator:
   - name: <app-name>-values
     namespace: <namespace>
@@ -283,13 +285,7 @@ nameReference:
 
 Use template from [docs/templates/readme_template.md](../../docs/templates/readme_template.md).
 
-Required sections:
-
-- Overview (mention priority tier)
-- Prerequisites (list dependsOn items)
-- Operation (key kubectl/flux commands)
-- Troubleshooting (common issues)
-- References (official docs links)
+Required sections are listed in `.claude/rules/05-documentation.md`.
 
 ______________________________________________________________________
 
@@ -340,11 +336,7 @@ git commit -m "feat(<namespace>): add <app-name>
 - <key feature 1>
 - <key feature 2>
 
-Closes #<issue-number>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+Closes #<issue-number>"
 ```
 
 ### 6c. Post-push validation
@@ -416,6 +408,7 @@ Before considering the task complete:
 - [ ] Flux Kustomization with dependsOn
 - [ ] HelmRelease pointing to chart
 - [ ] values.yaml with priorityClassName and resources
+- [ ] vpa.yaml per `.claude/rules/07-patterns.md`
 - [ ] YAML schemas added where available (validated HTTP 200)
 - [ ] README.md following template
 - [ ] Added to cluster/apps/kustomization.yaml
@@ -429,7 +422,7 @@ ______________________________________________________________________
 
 - [docs/workload-classification.md](../../docs/workload-classification.md) - Priority tiers and CPU limits
 - [docs/templates/readme_template.md](../../docs/templates/readme_template.md) - README template
-- [.claude/rules/documentation.md](../rules/documentation.md) - Documentation standards
+- [.claude/rules/05-documentation.md](../rules/05-documentation.md) - Documentation standards
 - [cluster/flux/meta/priority-classes.yaml](../../cluster/flux/meta/priority-classes.yaml) - Priority class definitions
 
 ### Common YAML Schema URLs

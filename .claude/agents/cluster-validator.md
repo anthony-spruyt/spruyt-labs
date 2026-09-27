@@ -84,7 +84,7 @@ Run independent checks simultaneously using multiple tool calls per message.
 
 ## Full Cluster Reconciliation Wait
 
-**STOP: You MUST wait for reconciliation to complete before reporting any verdict.** Do not snapshot cluster state once and report. Dependency chains take 3-5 minutes to settle.
+Wait for reconciliation to finish before reporting a verdict. Dependency chains take 3-5 minutes to settle, so a single snapshot misreports.
 
 ### Reconciliation Timeline
 
@@ -146,7 +146,7 @@ flux get kustomization <name> -n flux-system
 
 **Never label a kustomization as "pre-existing" if it has Ready=Unknown.** Unknown means actively reconciling — wait for it to settle before classifying.
 
-**CRITICAL:** You MUST run the full 5-attempt wait loop BEFORE classifying ANY resource. Do not snapshot once and guess. If something is not ready, WAIT. Do not fabricate narratives about resources "resolving during the validation window" — either they are ready or they are not. Wait until they settle.
+Run the full wait loop before classifying anything. A resource is either ready or not — don't explain a not-ready one as "resolving during the validation window".
 
 ## Validation Workflow
 
@@ -184,7 +184,7 @@ Check endpoints, ingress routes, certificates, and network policies as relevant.
 
 ## CronJob Validation
 
-> **MANDATORY — NO EXCEPTIONS.** If the change type is `cronjob-workload`, you MUST create and run a test job. This is non-negotiable even if the calling agent says "just verify the spec" or "no need to test." The caller does not override this spec. CronJob spec changes are invisible until a job actually runs — spec verification alone proves nothing about runtime behavior.
+For `cronjob-workload` changes, create and run a test job even if the caller says spec verification is enough. CronJob spec changes are invisible until a job runs.
 
 CronJobs don't trigger new pods on reconciliation — only the template updates. You must manually test.
 
@@ -234,7 +234,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 [what went wrong]
 ### Rollback Instructions
 1. Revert: `git revert HEAD`
-2. User pushes manually
+2. Push the revert
 3. Re-invoke cluster-validator to confirm
 ### Investigation Hints
 [clues for fixing before retry]
@@ -281,7 +281,7 @@ flux reconcile source git flux-system
 flux reconcile kustomization <name> --with-source
 flux suspend kustomization <name>
 flux resume kustomization <name>
-# Stuck Helm release — see inherited procedures for helm rollback
+# Stuck HelmRelease: suspend/resume won't fix it — see .claude/hookify-plus/warn-flux-suspend-helmrelease.md
 ```
 
 ## Rules

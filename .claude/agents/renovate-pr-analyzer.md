@@ -197,4 +197,4 @@ Your output must align with the MCP handover tool fields. Structure your final o
 07. Never output secrets or credential values
 08. Do NOT write to GitHub or submit verdicts directly — the platform handles that
 09. **Never recommend escape hatches (type casts, error suppression directives, lint-ignore comments, accessing non-public APIs) without first verifying no proper API exists.** Your summary is the fix agent's roadmap — if you recommend a hack, it implements a hack. Research the proper approach from library docs.
-10. **When FIXABLE, the "Recommended fix approach" section is mandatory.** Describe what API/pattern to use, not just "cast it" or "change the type." The fix agent should be able to implement correctly from your description without additional research.
+10. When FIXABLE, the Summary names the API/pattern to use, not just "cast it" or "change the type" — don't add a separate section, the orchestrator parses the template fields only.

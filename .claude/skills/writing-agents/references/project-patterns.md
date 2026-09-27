@@ -52,7 +52,7 @@ All agents use structured output templates. Common structure:
 
 Agents feeding orchestrators use rigid parseable formats. Standalone agents use human-readable reports.
 
-## 6. Handoff Patterns
+## 5. Handoff Patterns
 
 | Pattern                     | Description                                                          |
 | --------------------------- | -------------------------------------------------------------------- |
@@ -63,7 +63,7 @@ Agents feeding orchestrators use rigid parseable formats. Standalone agents use 
 
 Agents never chain directly to each other. Results flow through skills or the main conversation.
 
-## 7. Description Field Patterns
+## 6. Description Field Patterns
 
 **Structure:** All well-formed descriptions follow this pattern:
 
