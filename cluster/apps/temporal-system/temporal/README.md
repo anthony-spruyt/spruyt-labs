@@ -67,6 +67,20 @@ Temporal has no webhook receiver. GitHub and other external callers hit an intak
    - **Symptom**: Login works but the page shows a gateway error.
    - **Resolution**: The UI pod only starts once it can reach the frontend service. Check `temporal-frontend` pod readiness first.
 
+4. **`CiliumPolicyDrops` for `temporal-system` after a node drain or Talos upgrade**
+
+   - **Symptom**: Steady egress `POLICY_DENIED` drops from the server pods to IPs with no pod behind them (empty destination), on membership ports 6933-6939.
+
+   - **Cause**: Ringpop keeps dead peers as faulty for 24h (hardcoded, not configurable in Temporal) and keeps dialing them. Not a missing CNP rule; do not add a `world` egress rule.
+
+   - **Resolution**: A rolling restart is not enough; a new pod rejoins through a survivor and inherits the stale list. Take all four servers down together (brief outage):
+
+     ```bash
+     kubectl -n temporal-system scale deploy/temporal-{frontend,history,matching,worker} --replicas=0
+     # wait for the pods to terminate
+     kubectl -n temporal-system scale deploy/temporal-{frontend,history,matching,worker} --replicas=1
+     ```
+
 ## References
 
 - [Temporal Helm chart](https://github.com/temporalio/helm-charts)
