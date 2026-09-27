@@ -5,11 +5,11 @@ metadata:
     name: coder-workspace-env-spruyt-labs
     namespace: coder-workspaces
 stringData:
-    ANTHROPIC_AUTH_TOKEN: ENC[AES256_GCM,data:gT6xGl5LmWkUAT6KHHrF6zeUfccLobNI9w==,iv:GrxQchtlOAkFUKv1Xhp2kY8wlfywOYDc1lOLSxKNfmQ=,tag:B400Phi8aiz01SeMH+pthQ==,type:str]
+    ANTHROPIC_CUSTOM_HEADERS: ENC[AES256_GCM,data:509TaDK9YFlGOohTqg/ssDNGrHwsvPIycRIMU/+NUyGYz5y+VDe4Olf5srA1r6zaWeCg,iv:VPXcJj0b+4TPZ8VGXVtxgQavV3Z81o+VMqhsRXoVDMo=,tag:cM4pT/KJpNAS1reCr1ePIw==,type:str]
+    LITELLM_API_KEY: ENC[AES256_GCM,data:fpENBVmRF8EOyXlL1QF1g7GmTRh2LaFCqQ==,iv:giZcvwT/qqvglRrfRXMgxcOoXHnKje9hRGpxheovPyY=,tag:tetMB0ol+cUtLrvaCvLieA==,type:str]
 sops:
     age:
-        - recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
-          enc: |
+        - enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
             YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBsdUxPWElWdEQ0L3NSOGd1
             cnFZeDhRNHp5cFpNTm1QQVh0VG9wWHRDT1dRCno2NWJFQVh5TWlwOWRtWnpaUVhr
@@ -17,7 +17,8 @@ sops:
             MEJYZ3lQUlkrVDBhNzFBUmYycUY0UFEK0kB5TQYOnfcRDVTPXxXuUFHWQ2VoT8wC
             ye4jtiEHj8nlwFlkfTJgyXYw0M5zRn/wyTVIo4dXLznNHg2PhzHApA==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-05-30T03:27:57Z"
-    mac: ENC[AES256_GCM,data:NF+H/oTrrY7HuEK+7ig0bhWPHu2hOcGUonjVqRr5Xd4TV5oWQsQcR7WmtyDoA3bWO6ZRawYvJesjUlq4iwKpt8UD2DDCSKmbe/s04/q+CRlqYSwJ753JJ+atM9ho30PFy9oOMscoog9RTqNnBUug7LIu/OV+Wq8GvILOkVt7ZB8=,iv:MkDhTCT3gss5hJ7jGP2GnNBPTvzxvkUsLPtnJs/aGrc=,tag:7ZLJLKjoOh92lNMlD7/9NA==,type:str]
+          recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
     encrypted_regex: ^(data|stringData)$
-    version: 3.12.2
+    lastmodified: "2026-09-27T07:53:08Z"
+    mac: ENC[AES256_GCM,data:KMsB07Z1rxSNfeiLIwM5meuQJ2q6Cjz3sh3bSRdklve0BRIipEtaI4754GqKKv4cOkMCVe7vVj2Ks3KsI7pszHmNnlf3yNXYPrq/8vtF0WWAJC2dDVvwEqjdfDoggSMU3YjdCDiXnerxfcyQtnyu9jMez55eNHwf/qceC2Slnhk=,iv:ZTLfh2nwom19laYdxtMcDYBKdGHCHxeroNj0rMaViJs=,tag:5KIkmyP729lOW3/i4f73mA==,type:str]
+    version: 3.13.3
