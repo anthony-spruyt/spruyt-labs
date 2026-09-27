@@ -12,10 +12,12 @@ Deployed as a `low-priority` workload using bjw-s app-template.
 
 ## Access
 
-| Consumer                    | URL                                         | Transport                    |
-| --------------------------- | ------------------------------------------- | ---------------------------- |
-| Claude Code (dev container) | `https://mcp-vm.lan.${EXTERNAL_DOMAIN}/sse` | SSE over HTTPS (LAN-only)    |
-| Streamable HTTP             | Same host, `/mcp` endpoint                  | HTTP (alternative transport) |
+Reached only through the LiteLLM MCP gateway (`http://mcp-victoriametrics.observability.svc:8080/mcp`, streamable HTTP). The server is registered in the LiteLLM UI, not in Git, and is granted per key/team there.
+
+| Consumer          | Path                                             |
+| ----------------- | ------------------------------------------------ |
+| Claude Code       | `litellm` MCP server → `victoriametrics-*` tools |
+| Claude agent pods | Same, if their LiteLLM key has the server        |
 
 ## Troubleshooting
 
@@ -24,10 +26,10 @@ Deployed as a `low-priority` workload using bjw-s app-template.
    - **Symptom**: Connection refused or timeout in logs
    - **Resolution**: Verify VMSingle is running: `kubectl get pods -n observability -l app.kubernetes.io/name=vmsingle`
 
-2. **Claude Code cannot connect**
+2. **Tools missing in Claude Code**
 
-   - **Symptom**: MCP connection error in Claude Code
-   - **Resolution**: Verify IngressRoute is active: `kubectl get ingressroute -n observability ingress-routes-lan-https-mcp-vm` and certificate is ready: `kubectl get certificate -n observability -l app.kubernetes.io/name=mcp-victoriametrics`
+   - **Symptom**: No `victoriametrics-*` tools under the `litellm` MCP server
+   - **Resolution**: Check the server is registered in the LiteLLM UI and granted to your key or team. Check for drops on the `allow-victoriametrics-mcp-egress` CNP in the `litellm` namespace.
 
 ## References
 

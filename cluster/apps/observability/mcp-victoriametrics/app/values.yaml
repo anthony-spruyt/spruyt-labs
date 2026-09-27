@@ -17,8 +17,8 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/victoriametrics-community/mcp-victoriametrics
-          tag: v1.18.0@sha256:177f32eb91640b70a4ad2c246b7d27b4b2d0a530a423db7b3a6e4f2f9cb4d10f
+          repository: ghcr.io/victoriametrics/mcp-victoriametrics
+          tag: v1.20.2@sha256:bcbf84f945d6efb03fb8b2d2ccc3294420dccdc0b445752dce96f02619416dfe
           pullPolicy: IfNotPresent
         env:
           - name: VM_INSTANCE_ENTRYPOINT
@@ -29,6 +29,9 @@ controllers:
             value: "http"
           - name: MCP_LISTEN_ADDR
             value: ":8080"
+          # info logs every tool result, which ships back into VictoriaLogs
+          - name: MCP_LOG_LEVEL
+            value: "warn"
         resources:
           requests:
             cpu: 25m
