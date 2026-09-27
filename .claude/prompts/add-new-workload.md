@@ -328,6 +328,7 @@ git add cluster/apps/<namespace>/<app>/ks.yaml
 git add cluster/apps/<namespace>/<app>/app/kustomization.yaml
 git add cluster/apps/<namespace>/<app>/app/release.yaml
 git add cluster/apps/<namespace>/<app>/app/values.yaml
+git add cluster/apps/<namespace>/<app>/app/vpa.yaml
 # Add any other files you created
 
 git commit -m "feat(<namespace>): add <app-name>
@@ -341,7 +342,7 @@ Closes #<issue-number>"
 
 ### 6c. Post-push validation
 
-After user pushes, invoke `cluster-validator` agent with the GitHub issue number to verify deployment.
+After pushing, invoke `cluster-validator` agent with the GitHub issue number to verify deployment.
 
 ______________________________________________________________________
 
