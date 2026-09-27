@@ -389,7 +389,7 @@ resource "coder_agent" "main" {
 module "vscode" {
   count    = data.coder_workspace.me.start_count
   source   = "registry.coder.com/coder/vscode-desktop/coder"
-  version  = "1.2.1"
+  version  = "1.3.0"
   agent_id = coder_agent.main.id
   folder   = local.workspace_folder
 }
