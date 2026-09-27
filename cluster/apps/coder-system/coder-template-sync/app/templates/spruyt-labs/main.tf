@@ -254,13 +254,6 @@ resource "coder_agent" "main" {
     set -e
     cd "${local.workspace_folder}"
 
-    sudo mkdir -p /run/user/1000
-    sudo chown 1000:1000 /run/user/1000
-
-    # Rootless podman drops supplementary groups in its userns; image ships these 0750 root:root. Ref #976.
-    sudo chmod a+rx /etc/containers /etc/containers/registries.conf.d 2>/dev/null || true
-    [ -d /etc/containers/containers.conf.d ] && sudo chmod a+rx /etc/containers/containers.conf.d
-
     if [ -b /dev/containers-disk ]; then
       if ! sudo blkid /dev/containers-disk >/dev/null 2>&1; then
         sudo mkfs.ext4 -q -L containers /dev/containers-disk
@@ -268,7 +261,6 @@ resource "coder_agent" "main" {
       sudo mkdir -p /var/lib/containers
       sudo mount -o noatime /dev/containers-disk /var/lib/containers || true
     fi
-    export XDG_RUNTIME_DIR=/run/user/1000
 
     if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
       sudo cp /var/run/secrets/kubernetes.io/serviceaccount/token /tmp/sa-token
