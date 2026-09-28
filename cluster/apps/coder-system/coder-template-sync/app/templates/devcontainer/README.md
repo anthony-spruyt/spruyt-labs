@@ -1,37 +1,27 @@
-# Coder Devcontainer Template
+# devcontainer - Workspace for any repo with a devcontainer
 
-Generic Kubernetes workspace template for Coder that builds from `devcontainer.json`.
+## Overview
 
-## Usage
+Builds a workspace from any repository's `.devcontainer/devcontainer.json`. It has no access to the cluster API and no project credentials; use `spruyt-labs` for homelab ops and `xfg` for xfg.
 
-Push to Coder:
+## Prerequisites
 
-```bash
-coder templates push devcontainer --directory .
-```
+The repository needs:
 
-## Features
+- An SSH URL (`git@` or `ssh://`). HTTPS is rejected at create time: pushes and commit signing use the workspace SSH key, which HTTPS remotes never call.
+- A `vscode` remote user (UID 1000) with passwordless `sudo`. Home is mounted at `/home/vscode`, and startup uses `sudo` to mount the container disk. Without it startup stops before commit signing is configured.
+- `jq` in the image, if you want `customizations.vscode.extensions` installed into VS Code Web.
+- For apt through the Nexus cache: `"build": { "args": { "NEXUS_URL": "${localEnv:NEXUS_URL}" } }` in `devcontainer.json`, plus `ARG NEXUS_URL` and a `sources.list` rewrite in the Dockerfile. Copy the [spruyt-labs Dockerfile](https://github.com/anthony-spruyt/spruyt-labs/blob/main/.devcontainer/Dockerfile). Without it apt goes to the internet directly.
 
-- Builds from any repo's `.devcontainer/devcontainer.json`
-- Podman-in-Kata for container builds (rootful, virtio-blk storage)
-- `coder-workspace` ServiceAccount (no cluster role binding) with token automount disabled — no cluster API access
-- SSH key for git auth and verified commit signing
-- Nexus registries.conf drop-in for container pull mirroring
-- Claude Code managed settings (`bypassPermissions` default) mounted from the `coder-workspace-claude-managed-settings` ConfigMap at `/etc/claude-code/managed-settings.json`
+## What to expect
 
-## Nexus artifact proxy
+- **Persistence:** `/workspaces`, `/home/vscode` and podman storage (`/var/lib/containers`) survive restarts. Everything else is rebuilt from the devcontainer on each start.
+- **Containers:** rootful podman works inside the workspace. Pulls from docker.io, ghcr.io, quay.io, mcr.microsoft.com and registry.k8s.io go through the Nexus mirror automatically.
+- **Git signing key rotates:** the SSH key is replaced every 2 days and old keys stay valid on GitHub for 8. If push or signing starts failing with `publickey` errors on a long-running workspace, restart it.
+- **Claude Code:** starts in `bypassPermissions` mode from managed settings. Telemetry, including prompts and tool content, goes to the cluster's VictoriaMetrics/Logs/Traces.
 
-Envbuilder pulls base + feature images via the in-cluster Nexus docker-group connector (`nexus.nexus-system.svc.cluster.local:8082`) and pushes the kaniko layer cache to the Nexus envbuilder-cache hosted repo (`:8083`). Driven by `KANIKO_REGISTRY_MIRROR`, `ENVBUILDER_INSECURE`, and `ENVBUILDER_CACHE_REPO` envs set here and the `ENVBUILDER_DOCKER_CONFIG_BASE64` auth entry in the
-`coder-workspace-env-common` Secret.
+## Troubleshooting
 
-Runtime container pulls (podman, skopeo, buildah) inside the workspace are also routed through Nexus via a `registries.conf` drop-in mounted from the `coder-workspace-registries-conf` ConfigMap (docker.io, ghcr.io, quay.io, mcr.microsoft.com, registry.k8s.io → `nexus:8082`).
-
-Base-layer Ubuntu archive apt is routed through Nexus `apt-ubuntu-proxy`: envbuilder injects `NEXUS_URL=http://nexus.nexus-system.svc.cluster.local:8081` into the devcontainer build (via `envbuilder_env` + the consumer repo's `devcontainer.json` `build.args.NEXUS_URL`), and the consumer Dockerfile rewrites `/etc/apt/sources.list` to point at the proxy. Consumer repos must add an `ARG NEXUS_URL` +
-sources.list rewrite to their Dockerfile — see `spruyt-labs` repo `.devcontainer/Dockerfile` for the reference pattern (Ref #988).
-
-## Secrets Required
-
-The following Kubernetes Secrets must exist in `coder-workspaces`:
-
-- `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated every 2 days by CronJob)
-- `coder-workspace-env-common` — Env vars injected into pods
+1. **Workspace starts without your tools**
+   - **Cause**: The devcontainer build failed, so the `Fallback image` parameter was started instead.
+   - **Fix**: Read the build output in the workspace logs, fix the devcontainer, then restart.

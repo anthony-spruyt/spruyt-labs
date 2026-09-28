@@ -19,7 +19,7 @@ Template files are packed into the `coder-templates` ConfigMap with a hashed nam
 
 ### Add a template
 
-1. Create `app/templates/<name>/` with `main.tf` and `README.md`.
+1. Create `app/templates/<name>/` with `main.tf` and `README.md`. The README is shown on the template page in the Coder UI, so write it for the person creating a workspace, keep it self-contained, and use absolute GitHub links; relative links and links to cluster-side docs are useless there.
 2. Add each file to `configMapGenerator.files` in `app/kustomization.yaml` as `<name>__<file>=./templates/<name>/<file>` (ConfigMap keys cannot contain `/`).
 3. Add a matching `items` entry to the `templates` volume in `app/job-template-push.yaml` mapping the key back to `<name>/<file>`. A file missing here is silently absent from the push.
 

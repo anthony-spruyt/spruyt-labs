@@ -1,45 +1,27 @@
-# Coder spruyt-labs Template
+# spruyt-labs - Homelab operations workspace
 
-Kubernetes workspace template for Coder, hardcoded to the `spruyt-labs` repo (SSH URL enforced). Sibling of the generic `devcontainer` template; this one pre-fills `coder_parameter.repo` and rejects HTTPS URLs at create time so `git push` via the mounted signing key always works.
+## Overview
 
-## Usage
+Workspace for working on the spruyt-labs repo against the live cluster. Unlike `devcontainer` and `xfg`, it carries operator credentials, so `kubectl`, `flux`, `helm`, `talosctl`, `terraform` and `sops` work out of the box.
 
-Push to Coder:
+- **kubectl/flux/helm:** a kubeconfig is generated at startup for the `coder-workspace-ops` ServiceAccount. That account is a scoped-down cluster-admin: it cannot read Secrets or change RBAC, webhooks or CRDs.
+- **talosctl:** `TALOSCONFIG` points at a Talos-issued `os:operator` config with a short-lived cert ([#3188](https://github.com/anthony-spruyt/spruyt-labs/issues/3188)). Logs, dmesg, services, health, etcd status/snapshot and reboot work. Upgrades, `apply-config` and reading machine config do not; run those from the host devcontainer.
+- **terraform:** credentials are copied to `~/.terraform.d/credentials.tfrc.json` at startup.
+- **sops:** `SOPS_AGE_KEY_FILE` points at the cluster's age key, which decrypts every SOPS file in the repo.
 
-```bash
-coder templates push spruyt-labs --directory .
-```
+## Operations
 
-## Features
+- **Point it only at trusted repos.** The `Repository URL` parameter is editable, but whatever repo it builds runs with the credentials above.
+- **SSH repo URL is enforced.** Git auth uses the workspace SSH key through `GIT_SSH_COMMAND`. HTTPS remotes never call it, so clone works anonymously but the first push fails with `Permission denied (publickey)` ([#984](https://github.com/anthony-spruyt/spruyt-labs/issues/984)).
+- **Git signing key rotates.** The SSH key is replaced every 2 days and old keys stay valid on GitHub for 8. If push or signing starts failing with `publickey` errors on a long-running workspace, restart it.
+- **Apt through Nexus needs repo support.** The template only sets `NEXUS_URL`. The repo's [devcontainer.json](https://github.com/anthony-spruyt/spruyt-labs/blob/main/.devcontainer/devcontainer.json) passes it as a build arg and its [Dockerfile](https://github.com/anthony-spruyt/spruyt-labs/blob/main/.devcontainer/Dockerfile) rewrites `sources.list`. Drop either and apt goes direct to Ubuntu.
+- **Persistence:** `/workspaces`, `/home/vscode` and podman storage survive restarts. Everything else is rebuilt from the devcontainer on each start.
+- **Claude Code:** starts in `bypassPermissions` mode from managed settings. Telemetry, including prompts and tool content, goes to the cluster's VictoriaMetrics/Logs/Traces.
 
-- Defaults `repo` to `git@github.com:anthony-spruyt/spruyt-labs.git`
-- Validation regex `^(git@|ssh://)` rejects HTTPS at create
-- Builds from the repo's `.devcontainer/devcontainer.json`
-- Podman-in-Kata for container builds (rootful, virtio-blk storage)
-- `coder-workspace-ops` ServiceAccount bound to the `coder-workspace-ops` ClusterRole (scoped-down cluster-admin, no secret access) for kubectl/helm/flux
-- SSH key for git auth and verified commit signing
-- Talosconfig and Terraform credentials mounted
-- Nexus registries.conf drop-in for container pull mirroring
-- Claude Code managed settings (`bypassPermissions` default) mounted from the `coder-workspace-claude-managed-settings` ConfigMap at `/etc/claude-code/managed-settings.json`
+## Troubleshooting
 
-## Nexus artifact proxy
+1. **Workspace starts without your tools**
+   - **Cause**: The devcontainer build failed, so the `Fallback image` parameter was started instead.
+   - **Fix**: Read the build output in the workspace logs, fix the devcontainer, then restart.
 
-Envbuilder pulls base + feature images via the in-cluster Nexus docker-group connector (`nexus.nexus-system.svc.cluster.local:8082`) and pushes the kaniko layer cache to the Nexus envbuilder-cache hosted repo (`:8083`). Driven by `KANIKO_REGISTRY_MIRROR`, `ENVBUILDER_INSECURE`, and `ENVBUILDER_CACHE_REPO` envs set here and the `ENVBUILDER_DOCKER_CONFIG_BASE64` auth entry in the
-`coder-workspace-env-common` Secret.
-
-Runtime container pulls (podman, skopeo, buildah) inside the workspace are also routed through Nexus via a `registries.conf` drop-in mounted from the `coder-workspace-registries-conf` ConfigMap (docker.io, ghcr.io, quay.io, mcr.microsoft.com, registry.k8s.io → `nexus:8082`).
-
-Base-layer Ubuntu archive apt is routed through Nexus `apt-ubuntu-proxy`: envbuilder injects `NEXUS_URL=http://nexus.nexus-system.svc.cluster.local:8081` into the devcontainer build (via `envbuilder_env` + the consumer repo's `devcontainer.json` `build.args.NEXUS_URL`), and the consumer Dockerfile rewrites `/etc/apt/sources.list` to point at the proxy. See `spruyt-labs` repo
-`.devcontainer/Dockerfile` for the reference pattern (Ref #988).
-
-Devcontainer features that manage their own apt source lists (github-cli, nodesource, hashicorp, launchpad PPAs) still fetch upstream direct — per- feature apt source overrides are out of scope.
-
-## Secrets Required
-
-The following Kubernetes Secrets must exist in `coder-workspaces`:
-
-- `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated every 2 days by CronJob)
-- `coder-talosconfig` — Talos client config mounted at `/etc/coder/talos/config`
-- `coder-terraform-credentials` — Terraform credentials at `~/.terraform.d/credentials.tfrc.json`
-- `coder-workspace-env-common` — Common env vars injected into pods
-- `coder-workspace-env-spruyt-labs` — Project env vars injected into pods
+Cluster-side design (Kata isolation, Nexus routing, RBAC): [Coder README](https://github.com/anthony-spruyt/spruyt-labs/blob/main/cluster/apps/coder-system/coder/README.md).

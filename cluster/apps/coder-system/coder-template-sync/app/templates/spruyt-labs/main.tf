@@ -119,7 +119,7 @@ data "coder_parameter" "workspaces_volume_size" {
     min = 5
     max = 200
   }
-  order = 2
+  order = 3
 }
 
 data "coder_parameter" "home_volume_size" {
@@ -134,7 +134,7 @@ data "coder_parameter" "home_volume_size" {
     min = 1
     max = 50
   }
-  order = 3
+  order = 4
 }
 
 data "coder_parameter" "fallback_image" {
@@ -143,7 +143,7 @@ data "coder_parameter" "fallback_image" {
   description  = "Image used if the devcontainer build fails."
   default      = "codercom/enterprise-base:ubuntu"
   mutable      = true
-  order        = 4
+  order        = 5
 }
 
 data "coder_parameter" "devcontainer_builder" {
@@ -152,7 +152,7 @@ data "coder_parameter" "devcontainer_builder" {
   description  = "Envbuilder image used to build the devcontainer. Pin to a specific release in production."
   default      = "ghcr.io/coder/envbuilder:latest"
   mutable      = true
-  order        = 5
+  order        = 6
 }
 
 resource "kubernetes_persistent_volume_claim_v1" "workspaces" {

@@ -40,15 +40,25 @@ Kata freezes secret volumes at pod start, so rotated secrets (the SSH signing ke
 
 ### What each template gets
 
-| Template       | ServiceAccount                           | Extra mounts                                                                         |
-| -------------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| `spruyt-labs`  | `coder-workspace-ops` (cluster-wide ops) | talosconfig, Terraform credentials, SOPS age key (`coder-age-key`), project env vars |
-| `devcontainer` | `coder-workspace` (no API access)        | common env only                                                                      |
-| `xfg`          | `coder-workspace` (no API access)        | common env, `coder-workspace-env-xfg`                                                |
+| Template       | ServiceAccount                           | Credentials beyond the shared set                                                   |
+| -------------- | ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| `spruyt-labs`  | `coder-workspace-ops` (cluster-wide ops) | Talos `os:operator` config, Terraform credentials, SOPS age key, project env        |
+| `devcontainer` | `coder-workspace` (no API access)        | none                                                                                |
+| `xfg`          | `coder-workspace` (no API access)        | `coder-workspace-env-xfg` (Azure DevOps and GitLab tokens, reach any repo it opens) |
+
+The shared set, in every template: `coder-workspace-env-common`, the SSH signing key, Nexus pull auth, and Claude managed settings. Project env Secrets come after common in `env_from`, so their keys override common ones with the same name.
 
 `coder-workspace-ops` is a scoped-down cluster-admin (no Secrets, no RBAC/webhook/CRD writes); its ClusterRole is in `coder-workspaces/coder-workspaces/app/rbac.yaml`. The SOPS age key is pulled from `flux-system` by an ExternalSecret, so a `spruyt-labs` workspace can decrypt every SOPS file in the repo.
 
-All templates route container pulls and the envbuilder layer cache through [Nexus](../../nexus-system/nexus/README.md), authenticated with `coder-workspace-nexus-clients`.
+The spruyt-labs Talos config comes from the Talos `ServiceAccount` `coder-workspace-talos` (role `os:operator`, short-lived and auto-renewed), not a static admin config (#3188).
+
+The three `main.tf` files are near-copies: beyond this table they differ only in the `repo` default and, for `spruyt-labs`, parameter order, a higher memory request, and the startup steps that build the kubeconfig and copy Terraform credentials. A fix to shared behaviour must be applied to all three.
+
+### Nexus routing
+
+All templates route container pulls and the envbuilder layer cache through [Nexus](../../nexus-system/nexus/README.md), authenticated with `coder-workspace-nexus-clients`. The endpoints and the reasons behind them are commented inline in each `main.tf`.
+
+Apt only goes through Nexus if the workspace repo opts in: `devcontainer.json` passes `build.args.NEXUS_URL: ${localEnv:NEXUS_URL}` and the Dockerfile rewrites `sources.list` to `apt-ubuntu-proxy` (#988; see this repo's `.devcontainer/`). Devcontainer features that add their own apt sources (github-cli, nodesource, hashicorp, PPAs) still fetch upstream directly.
 
 ## Troubleshooting
 
