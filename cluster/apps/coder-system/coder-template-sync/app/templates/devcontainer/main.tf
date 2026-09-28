@@ -52,6 +52,8 @@ locals {
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
 
   workspace_folder = "/workspaces/${one(regex("([^/:]+?)(?:\\.git)?/?$", local.repo_url))}"
+  # Keyed on owner/repo, not workspace name, so new workspaces reuse layers from earlier builds.
+  cache_key = replace(lower(one(regex("([^/:]+/[^/:]+?)(?:\\.git)?/?$", split("#", local.repo_url)[0]))), "/[^a-z0-9._/-]/", "-")
 
   # Environment variables passed into the envbuilder container.
   envbuilder_env = {
@@ -63,7 +65,7 @@ locals {
     # Cache pushes hit the envbuilder-cache hosted repo on its own connector (8083).
     # Pulls/mirror go through the docker-group connector (8082).
     # URL has NO /repository/ segment — Nexus docker connectors serve OCI v2 at host-root.
-    "ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/${data.coder_workspace.me.name}",
+    "ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/${local.cache_key}",
     "KANIKO_REGISTRY_MIRROR" : "nexus.nexus-system.svc.cluster.local:8082",
     "ENVBUILDER_INSECURE" : "true",
     "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
