@@ -38,13 +38,16 @@ spec:
         # 1400/s sustained, well above the 300/s gate. It was chosen at 500 rather than 1000 to
         # keep that implied rate within reach of more than one interface. A genuine fault raises
         # the ratio, which lowers the throughput needed to trip the floor.
+        #
+        # Workaround (#3161): kernel 6.18.45+ dropped Tx E2E flow control, so bad boots peak at
+        # ~1400 ppm. At 2500 the packet gate binds, not the floor. Return to 200 once Talos ships Tx E2E.
         - alert: ThunderboltRingFrameErrors
           expr: |
             1e6 * (
               sum by(instance,device) (rate(node_network_receive_frame_total{device=~"thunderbolt.*"}[30m]))
               /
               sum by(instance,device) (rate(node_network_receive_packets_total{device=~"thunderbolt.*"}[30m]))
-            ) > 200
+            ) > 2500
             and
             sum by(instance,device) (rate(node_network_receive_packets_total{device=~"thunderbolt.*"}[30m])) > 300
             and
@@ -62,19 +65,19 @@ spec:
               and rx_missed_errors. Only a rising rx_crc_errors indicates a physical fault. Errors
               land on the receiving side, so the peer transmitting into this port shares the segment.
 
-        # 2000/h against a 30d observed peak of 562. Deliberately wide headroom: the counter is a
-        # composite, so a tight threshold would page on sequencing noise.
+        # Workaround (#3161): 10000/h against a peak of ~4100/h on the 6.18.45+ kernel, whose
+        # p99 is ~560/h. Return to 2000 once Talos ships a kernel with Tx E2E back.
         - alert: ThunderboltRingLinkDegraded
           expr: |
-            sum by(instance,device) (increase(node_network_receive_frame_total{device=~"thunderbolt.*"}[1h])) > 2000
+            sum by(instance,device) (increase(node_network_receive_frame_total{device=~"thunderbolt.*"}[1h])) > 10000
           for: 15m
           labels:
             severity: warning
           annotations:
             summary: "Thunderbolt ring link error rate far above baseline"
             description: >-
-              Interface {{ $labels.device }} on {{ $labels.instance }} has accumulated more than 2000
-              errors in the last hour, against a 30 day observed peak of 562 on this ring. Check
-              rx_crc_errors, link speed and lane count
+              Interface {{ $labels.device }} on {{ $labels.instance }} has accumulated more than 10000
+              errors in the last hour, well above the ~4100/h peak of the known kernel flow control
+              regression (#3161). Check rx_crc_errors, link speed and lane count
               (/sys/bus/thunderbolt/devices/*/rx_speed, rx_lanes) and the kernel log for retimer
               instability before replacing hardware.
