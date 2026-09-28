@@ -632,7 +632,7 @@ resource "kubernetes_pod_v1" "main" {
     volume {
       name = "talosconfig"
       secret {
-        secret_name  = "coder-talosconfig"
+        secret_name  = "coder-workspace-talos"
         default_mode = "0400"
         items {
           key  = "config"
