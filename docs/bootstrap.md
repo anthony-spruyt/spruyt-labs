@@ -15,7 +15,7 @@ Ceph OSDs run on the workers only. The workers are joined by a Thunderbolt ring 
 
 - The devcontainer (or Coder workspace) from [DEVELOPMENT.md](../DEVELOPMENT.md). It ships `task`, `talosctl`, `topf`, `vals`, `sops`, `helmfile`, `kubectl`, `flux` and `terraform`.
 - `SOPS_AGE_KEY_FILE` points at the Age key that decrypts `talos/*.sops.yaml` and `cluster/**/*.sops.yaml`.
-- The Flux deploy key (`flux-gitops-key` private key) is available inside the container and its public half is a deploy key on the GitHub repository. The devcontainer does not mount it; copy it in for the bootstrap.
+- The Flux deploy key, copied into the container for step 4. It lives only on the host as `~/.secrets/flux-gitops-key` and the devcontainer does not mount it. Its public half, `flux-gitops-key.pub`, is a `flux-gitops*` deploy key on the GitHub repository. To replace it, see [flux-instance/README.md](../cluster/apps/flux-system/flux-instance/README.md#rotate-the-deploy-key).
 - Terraform Cloud access (`task terraform:login`) for the S3 buckets and Cloudflare tunnel.
 - Console access to every node (keyboard and monitor, or BMC).
 
@@ -49,7 +49,13 @@ Node hostnames, roles and schematics are in [`talos/topf.yaml`](../talos/topf.ya
 
    **Verify:** `talosctl config info` shows the `spruyt-labs` context and a certificate expiry in the future.
 
-2. Boot every node from the SecureBoot ISO for its hardware class. ISO links and schematic IDs are in the [schematics table](../talos/README.md#talos-image-schematics). On first install, enrol the Talos SecureBoot keys from the ISO boot menu.
+2. Boot every node from the SecureBoot ISO for its hardware class. ISO links and schematic IDs are in the [schematics table](../talos/README.md#talos-image-schematics). On first install, enrol the Talos SecureBoot keys:
+
+   1. In the firmware setup, reset SecureBoot to **Setup Mode** (clears the factory keys).
+   2. Boot the ISO and choose **Enroll Secure Boot keys: auto** from the boot menu. The node reboots.
+   3. In the firmware setup, turn SecureBoot on, then boot the ISO again.
+
+   The steps are the same on the Bossgame E2 and the MS-01.
 
    **Verify:** each node answers in maintenance mode on its configured address:
 
@@ -88,17 +94,16 @@ Node hostnames, roles and schematics are in [`talos/topf.yaml`](../talos/topf.ya
 
 ## 3. Cilium
 
-Talos ships with no CNI or kube-proxy (`talos/patches/control-plane/17-*` and `18-*`), so Cilium must be installed before Flux can run.
+Talos ships with no CNI or kube-proxy (`talos/patches/control-plane/17-*` and `18-*`), so Cilium must be installed before Flux can run. The helmfile takes the chart version from `cluster/apps/kube-system/cilium/app/release.yaml` and reaches the API server through KubePrism, so nothing needs editing first. See
+[cilium/README.md](../cluster/apps/kube-system/cilium/README.md#bootstrap-vs-flux-values).
 
-1. In [`talos/helmfile/cilium-values.yaml`](../talos/helmfile/cilium-values.yaml), switch `k8sServiceHost` / `k8sServicePort` to the KubePrism pair (`localhost` / `7445`). The file carries both variants; the direct-address variant is only for recovering an already bootstrapped cluster.
-
-2. Install Cilium:
+1. Install Cilium:
 
    ```bash
-   helmfile -f talos/helmfile/cilium.yaml apply --suppress-diff
+   helmfile -f talos/helmfile/cilium.yaml.gotmpl apply --suppress-diff
    ```
 
-3. Kubelets request serving certificates (`serverTLSBootstrap: true`), and `kubelet-csr-approver` is not running yet. Approve the pending requests:
+2. Kubelets request serving certificates (`serverTLSBootstrap: true`), and `kubelet-csr-approver` is not running yet. Approve the pending requests:
 
    ```bash
    kubectl get csr -o name | xargs kubectl certificate approve
@@ -127,10 +132,10 @@ Flux is installed by the Flux Operator, not `flux bootstrap`. The `FluxInstance`
      --from-file=known_hosts=/tmp/known_hosts
    ```
 
-2. Install the operator and instance:
+2. Install the operator and instance. The helmfile takes chart versions from the OCIRepositories in `cluster/flux/meta/repositories/oci/`:
 
    ```bash
-   helmfile -f talos/helmfile/flux.yaml apply --suppress-diff
+   helmfile -f talos/helmfile/flux.yaml.gotmpl apply --suppress-diff
    ```
 
 **Verify:** the instance is ready and the two root Kustomizations reconcile. The full tree takes a while; re-run the second command until it prints nothing:
@@ -140,13 +145,7 @@ kubectl -n flux-system get fluxinstance flux
 flux get kustomizations -A --status-selector ready=false
 ```
 
-Flux then takes over the Cilium and Flux Operator Helm releases installed above (same release names) and upgrades them to the versions pinned in `cluster/apps/`.
-
-If Kustomizations fail with `no matches for kind "Certificate"`, cert-manager's CRDs are not in place yet. Install the CRDs for the chart version pinned in `cluster/apps/cert-manager/cert-manager/app/release.yaml`:
-
-```bash
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/<version>/cert-manager.crds.yaml
-```
+Flux then takes over the Cilium and Flux Operator Helm releases installed above (same release names and chart versions) and replaces the minimal Cilium bootstrap values with the full set from `cluster/apps/kube-system/cilium/app/values.yaml`.
 
 ## 5. Final Checks
 

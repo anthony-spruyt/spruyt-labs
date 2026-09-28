@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/helmfile
+{{- $operator := readFile "../../cluster/flux/meta/repositories/oci/flux-operator-ocirepo.yaml" | fromYaml }}
+{{- $instance := readFile "../../cluster/flux/meta/repositories/oci/flux-instance-ocirepo.yaml" | fromYaml }}
+releases:
+  - name: flux-operator
+    namespace: flux-system
+    chart: {{ $operator.spec.url }}
+    version: {{ $operator.spec.ref.tag | quote }}
+    wait: true
+    disableValidation: true
+    values:
+      - ../../cluster/apps/flux-system/flux-operator/app/values.yaml
+      # ServiceMonitor CRD and high-priority class do not exist until Flux deploys them
+      - serviceMonitor:
+          create: false
+        priorityClassName: ""
+  - name: flux-instance
+    namespace: flux-system
+    chart: {{ $instance.spec.url }}
+    version: {{ $instance.spec.ref.tag | quote }}
+    needs: ["flux-system/flux-operator"]
+    disableValidation: true
+    values: ["../../cluster/apps/flux-system/flux-instance/app/values.yaml"]

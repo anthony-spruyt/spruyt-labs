@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/helmfile
+{{- $repo := readFile "../../cluster/flux/meta/repositories/helm/cilium-charts.yaml" | fromYaml }}
+{{- $release := readFile "../../cluster/apps/kube-system/cilium/app/release.yaml" | fromYaml }}
+helmDefaults:
+  cleanupOnFail: true
+  wait: true
+  waitForJobs: true
+repositories:
+  - name: cilium
+    url: {{ $repo.spec.url }}
+releases:
+  - name: cilium
+    namespace: kube-system
+    chart: cilium/{{ $release.spec.chart.spec.chart }}
+    version: {{ $release.spec.chart.spec.version }}
+    disableValidation: true
+    values: ["cilium-values.yaml"]

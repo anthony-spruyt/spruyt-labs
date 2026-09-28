@@ -25,8 +25,8 @@ Two paths to a working dev environment — both produce identical toolchains.
 ├── .gitignore        # Mounted read-only
 ├── .terraform.d/     # Terraform credentials and plugin cache
 ├── age.key           # SOPS Age private key
-├── bgp-65000.conf    # Mounted read-only
-├── flux-gitops-key   # Flux deploy key, only for bootstrapping a new cluster (not mounted)
+├── bgp-65000.conf    # BGP config uploaded to the UniFi gateway to peer with Cilium (mounted read-only)
+├── flux-gitops-key   # Flux deploy key + .pub, for bootstrap and rotation (not mounted)
 ├── kubeconfig        # Kubernetes cluster config (mounted read-only)
 └── talosconfig       # Talos cluster config
 

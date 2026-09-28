@@ -17,8 +17,8 @@ Outside `ks.yaml`:
 
 ### Bootstrap vs Flux values
 
-`talos/helmfile/cilium.yaml` + `cilium-values.yaml` install Cilium on a fresh cluster before Flux exists. Those values are a minimal bootstrap set (policy enforcement off, direct API server address) and deliberately differ from `app/values.yaml`; Flux converges to the full config once it runs. Renovate ignores `talos/helmfile`, so bump the bootstrap chart by hand before a rebuild.
-`cilium-values.yaml` currently points at a node address rather than KubePrism - its own comment explains when to switch.
+`talos/helmfile/cilium.yaml.gotmpl` + `cilium-values.yaml` install Cilium on a fresh cluster before Flux exists. The helmfile reads the chart version from `app/release.yaml` and the repo URL from the `cilium-charts` HelmRepository, so there is no separate bootstrap pin to bump. The values are a minimal bootstrap set (policy enforcement off, no BGP or Hubble) and deliberately differ from
+`app/values.yaml`; Flux converges to the full config once it runs. Both sets reach the API server through KubePrism, which works on a fresh or an existing cluster.
 
 ### Non-default choices
 

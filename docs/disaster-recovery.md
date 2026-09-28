@@ -100,7 +100,7 @@ Only when two or more control planes have lost etcd. This rolls the whole cluste
    talosctl -n <cp-ip> cp /var/lib/etcd/member/snap/db .
    ```
 
-2. On every control plane whose etcd is not healthy, wipe the EPHEMERAL partition:
+2. On every control plane whose etcd is not healthy, wipe the EPHEMERAL partition. EPHEMERAL is LUKS2-encrypted; Talos re-encrypts the empty partition on the next boot, and STATE (node identity and keys) is not touched:
 
    ```bash
    talosctl -n <cp-ip> reset --graceful=false --reboot --system-labels-to-wipe=EPHEMERAL
