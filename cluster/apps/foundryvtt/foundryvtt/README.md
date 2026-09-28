@@ -2,36 +2,27 @@
 
 ## Overview
 
-Foundry Virtual Tabletop (Foundry VTT) is a modern, self-hosted virtual tabletop application designed for playing tabletop role-playing games over the internet. It provides dynamic lighting, token management, audio/video integration, and extensive module support.
+Self-hosted virtual tabletop for the household's tabletop RPG games, exposed publicly so remote players can join. Uses the `felddy/foundryvtt` image, which downloads and installs Foundry itself at startup using the licence credentials.
 
 ## Prerequisites
 
-- `foundryvtt-secrets` containing Foundry VTT license key
-- Ceph RBD storage class with 10Gi PVC
+- A foundryvtt.com account with a licence. Its credentials (`FOUNDRY_USERNAME`/`FOUNDRY_PASSWORD`, optionally `FOUNDRY_LICENSE_KEY` and `FOUNDRY_ADMIN_KEY`) go in `app/foundryvtt-secrets.sops.yaml`; the image uses them to download and activate Foundry at startup.
+- Public exposure is a Cloudflare Tunnel route (`foundry` in `infra/terraform/cloudflare/tunnel.tf`), not just the IngressRoute. Removing or renaming the host needs both changed.
 
-## Access
+## Operations
 
-For external access, create ingress routes in `cluster/apps/traefik/traefik/ingress/foundryvtt/` with:
-
-- Host: `foundryvtt.${EXTERNAL_DOMAIN}`
-- TLS secret: `foundryvtt-${EXTERNAL_DOMAIN/./-}-tls`
-
-For LAN access, use `foundryvtt.lan.${EXTERNAL_DOMAIN}`.
+- `FOUNDRY_PROXY_SSL=true` and `FOUNDRY_PROXY_PORT=443` tell Foundry it sits behind a TLS-terminating proxy. Without them, invitation links and A/V point at the container port without TLS.
+- Downloaded Foundry releases are cached on the PVC (`CONTAINER_CACHE`), so a restart on the same version does not re-download.
+- `CONTAINER_PRESERVE_CONFIG=false` means `options.json` and `admin.txt` are regenerated from env vars on every start. Change server settings in `values.yaml`, not in Foundry's setup UI. If `FOUNDRY_ADMIN_KEY` is not in the secret, the admin password is cleared on every start.
 
 ## Troubleshooting
 
-1. **Foundry VTT won't start**
+1. **Pod restarts under heavy sessions**
 
-   - **Symptom**: Pod in CrashLoopBackoff or InitContainer failures
-   - **Resolution**: Verify `foundryvtt-secrets` contains valid FOUNDRY_LICENSE_KEY; check PVC status and init container logs for permission issues
-
-2. **High resource usage causing OOM restarts**
-
-   - **Symptom**: Pod restarts due to OOM
-   - **Resolution**: Increase memory limits in `values.yaml`; adjust UV_THREADPOOL_SIZE and NODE_OPTIONS for performance tuning based on active gaming sessions and module usage
+   - **Cause**: `NODE_OPTIONS=--max-old-space-size` exceeds the container memory limit, so the kernel OOM-kills the process before Node's heap limit is hit.
+   - **Fix**: Keep `--max-old-space-size` below the memory limit in `values.yaml`, leaving headroom for off-heap memory.
 
 ## References
 
-- [Foundry VTT Official Documentation](https://foundryvtt.com/article/installation/)
-- [felddy/foundryvtt-docker GitHub](https://github.com/felddy/foundryvtt-docker)
-- [BJW-S Labs Helm Charts](https://github.com/bjw-s-labs/helm-charts)
+- [felddy/foundryvtt-docker](https://github.com/felddy/foundryvtt-docker)
+- [Foundry VTT installation](https://foundryvtt.com/article/installation/)

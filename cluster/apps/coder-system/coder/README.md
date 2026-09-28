@@ -1,30 +1,8 @@
-# Coder - Self-Hosted Codespaces
+# Coder - Self-Hosted Dev Workspaces
 
 ## Overview
 
-Coder is a self-hosted development environment platform that provides browser-based workspaces (similar to GitHub Codespaces) running as Kubernetes pods. It manages workspace lifecycle, authentication, and resource provisioning via Terraform templates.
-
-## Prerequisites
-
-- `cnpg-operator` - CloudNative-PG operator for PostgreSQL
-- `plugin-barman-cloud` - CNPG Barman plugin for S3 backups
-- `external-secrets` - ExternalSecretOperator for secret delivery
-- `authentik` - Identity provider for OIDC authentication
-
-## Configuration
-
-| Detail          | Value                                      |
-| --------------- | ------------------------------------------ |
-| Helm chart      | `coder` from `coder-charts`                |
-| Release channel | Stable only (see Operations)               |
-| Namespace       | `coder-system`                             |
-| External URL    | `https://code.${EXTERNAL_DOMAIN}`          |
-| Auth            | Authentik OIDC                             |
-| Database        | CNPG PostgreSQL (`coder-cnpg-cluster`)     |
-| Storage         | Rook Ceph block storage available          |
-| Metrics         | Prometheus endpoint on `0.0.0.0:2112`      |
-| Ingress         | Traefik + Cloudflare Tunnel                |
-| Server image    | Unpinned; follows the chart's `appVersion` |
+Browser and SSH dev workspaces for humans and AI coding agents, provisioned as Kata-isolated pods in `coder-workspaces`. Login is Authentik OIDC. Templates are pushed from Git by [coder-template-sync](../coder-template-sync/README.md); workspace-side secrets, RBAC and policies live in `cluster/apps/coder-workspaces/`.
 
 ## Operations
 
@@ -50,32 +28,41 @@ A pinned tag here would drift: Renovate's `helm-values` manager does not recogni
 
 This is the one image-bearing `values.yaml` in the repository without a `@sha256:` digest — a consequence of the same blind spot, since Renovate cannot maintain a digest it cannot see.
 
+### Workspace isolation model
+
+Workspace containers run `privileged: true` (envbuilder/kaniko and rootful podman need it) inside a Kata VM, which is the real isolation boundary (#933). Because of that:
+
+- `coder-workspaces` is labelled PSA `privileged`; PSA there is a guardrail, not the control.
+- The Kyverno policy `restrict-privileged-to-coder-workspace-sa` (in `coder-workspaces/coder-workspaces/app/`) only admits privileged pods whose ServiceAccount starts with `coder-workspace`.
+- Templates pin `runtime_class_name = "kata"` and a `kata.spruyt-labs/ready=true` node selector. Removing either from a template removes the VM boundary.
+
+Kata freezes secret volumes at pod start, so rotated secrets (the SSH signing key, for example) only reach a workspace when it is restarted; see `github-system/coder-ssh-key-rotation/README.md` for how the grace period covers this.
+
+### What each template gets
+
+| Template       | ServiceAccount                           | Extra mounts                                                                         |
+| -------------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| `spruyt-labs`  | `coder-workspace-ops` (cluster-wide ops) | talosconfig, Terraform credentials, SOPS age key (`coder-age-key`), project env vars |
+| `devcontainer` | `coder-workspace` (no API access)        | common env only                                                                      |
+| `xfg`          | `coder-workspace` (no API access)        | common env, `coder-workspace-env-xfg`                                                |
+
+`coder-workspace-ops` is a scoped-down cluster-admin (no Secrets, no RBAC/webhook/CRD writes); its ClusterRole is in `coder-workspaces/coder-workspaces/app/rbac.yaml`. The SOPS age key is pulled from `flux-system` by an ExternalSecret, so a `spruyt-labs` workspace can decrypt every SOPS file in the repo.
+
+All templates route container pulls and the envbuilder layer cache through [Nexus](../../nexus-system/nexus/README.md), authenticated with `coder-workspace-nexus-clients`.
+
 ## Troubleshooting
 
-### Common Issues
+1. **Workspace pod stuck Pending**
 
-1. **Coder pod fails to start - database connection error**
+   - **Cause**: No worker labelled `kata.spruyt-labs/ready=true` has capacity. The label comes from `talos/patches/worker/08-configure-node-labels.yaml`.
+   - **Fix**: Free capacity on a labelled worker, or check the Kata runtime class in `kube-system/kata-runtimeclass`.
 
-   - **Symptom**: Pod crashes with PostgreSQL connection refused
-   - **Resolution**: Check CNPG cluster is ready: `kubectl get cluster -n coder-system coder-cnpg-cluster`
+2. **Workspace pod rejected: "Privileged pods in coder-workspaces require a 'coder-workspace\*' ServiceAccount"**
 
-2. **OIDC login fails**
-
-   - **Symptom**: Login redirect fails or token error
-   - **Resolution**: Verify Authentik application is configured and `coder-oauth-credentials` ExternalSecret is synced: `kubectl get externalsecret -n coder-system`
-
-3. **Workspace pod stuck pending**
-
-   - **Symptom**: Workspace created in Coder UI but pod never starts
-   - **Resolution**: Check workspace RBAC and PVC provisioning: `kubectl get pvc -n coder-workspaces`, `kubectl describe pod -n coder-workspaces -l app.kubernetes.io/name=coder-workspace`
-
-4. **Metrics not scraped**
-
-   - **Symptom**: No Coder metrics in VictoriaMetrics
-   - **Resolution**: Verify `CODER_PROMETHEUS_ADDRESS` is set to `0.0.0.0:2112` and the `allow-metrics-ingress` network policy allows vmagent ingress on port 2112
+   - **Cause**: A template set a ServiceAccount outside the `coder-workspace*` prefix.
+   - **Fix**: Use `coder-workspace` or `coder-workspace-ops`.
 
 ## References
 
 - [Coder Documentation](https://coder.com/docs)
 - [Coder Helm Chart](https://github.com/coder/coder/tree/main/helm)
-- [CloudNative-PG Documentation](https://cloudnative-pg.io/documentation/)

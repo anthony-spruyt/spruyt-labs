@@ -1,10 +1,14 @@
-# Minecraft Bedrock Connect - Server List Tool
+# Bedrock Connect - Console Server List
 
 ## Overview
 
-Minecraft Bedrock Connect is a DNS redirect and server list tool that allows Minecraft Bedrock Edition players on consoles (Xbox, PlayStation, Switch) to connect to third-party servers. It works by redirecting DNS queries for featured servers to the Bedrock Connect server, which presents a custom server list UI. In the spruyt-labs homelab, this enables console players to join self-hosted Minecraft
-servers that aren't on the official featured server list.
+Lets Minecraft Bedrock players on consoles (Xbox, PlayStation, Switch), which can only join Mojang's featured servers, reach the household's self-hosted server. Consoles are tricked into connecting here, and Bedrock Connect shows a custom server list from `custom_servers.json` in `app/values.yaml`.
+
+## Prerequisites
+
+- DNS overrides on the LAN resolver that point the featured-server hostnames at this service's LoadBalancer IP (`${BEDROCK_CONNECT_IP4}`). They are not managed in this repo; without them consoles never reach Bedrock Connect. The hostname list is in the upstream README.
+- A DNS record for `minecraft.${EXTERNAL_DOMAIN}`, the address in the custom server list. Also not managed here.
 
 ## References
 
-- [Bedrock Connect Documentation](https://github.com/Pugmatt/BedrockConnect)
+- [BedrockConnect](https://github.com/Pugmatt/BedrockConnect)

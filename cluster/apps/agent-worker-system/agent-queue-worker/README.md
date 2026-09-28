@@ -2,81 +2,55 @@
 
 ## Overview
 
-BullMQ-based job queue worker that coordinates agent job lifecycle. Receives job submissions via HTTP API, dispatches to n8n webhooks, and tracks completion via callbacks. Includes Bull Board dashboard for queue visibility.
+Queues agent jobs (Renovate triage/fix, validate, execute-issue, SRE) in front of n8n, so bursts are serialised, deduplicated and circuit-broken per repo instead of spawning agent pods directly. n8n submits jobs over HTTP, the worker dispatches each to the n8n `agent-dispatch` webhook and waits for n8n's callback. Bull Board runs as a second controller behind Authentik forward-auth. Source is in
+`ts/agent-queue-worker/`; `agent-valkey` is its dedicated BullMQ store.
 
-## Prerequisites
+## Operations
 
-- agent-valkey (Valkey instance for BullMQ queue storage)
-- n8n (webhook target for job dispatch)
+### Shared secret wiring
 
-## Timeouts
+`agent-queue-worker-secrets` holds two bearer secrets: `WORKER_TO_N8N_SECRET` (worker → n8n dispatch webhook) and `N8N_TO_WORKER_SECRET` (n8n → worker API, also used by Bull Board). The separate `agent-queue-worker-n8n-secret` Kustomization (`n8n-secret/`) copies both into `n8n-system` as `agent-worker-auth` through an ESO SecretStore that reads back into `agent-worker-system` (RBAC in
+`app/secret-reader-rbac.yaml`). Rotate by editing the SOPS file here only; ESO propagates to n8n within 5 minutes.
 
-### Per-Role Job Timeouts
+### Timeouts
 
-Used for `Promise.race` deadline in processor, Valkey active lock TTL, and session token TTL.
+The timeout for each role is `timeoutMs` in `ts/agent-queue-worker/src/roles/*.ts` (registered in `roles/registry.ts`). One value drives four things, which is why they must not be tuned separately:
 
-| Role       | Timeout             | Use Case                    |
-| ---------- | ------------------- | --------------------------- |
-| `triage`   | 10min (600,000ms)   | Read-only PR/issue analysis |
-| `fix`      | 30min (1,800,000ms) | Code changes                |
-| `validate` | 30min (1,800,000ms) | Post-push validation        |
-| `execute`  | 60min (3,600,000ms) | Full execution workflows    |
-| `sre`      | 15min (900,000ms)   | Alert triage / health check |
-| fallback   | 30min (1,800,000ms) | Unknown roles               |
+- the `Promise.race` deadline in the processor
+- the TTL of the Valkey `agent:active:<job>` lock and `agent:session:<job>` token
+- `timeout_seconds` sent to n8n, which the Claude Code node writes to the pod's `agent-timeout` annotation
+- via that annotation, the pod's `activeDeadlineSeconds`, set by Kyverno `set-agent-deadline` (default 3h if the annotation is missing)
 
-### BullMQ Worker Settings
+The `AgentQueueStuck` alert in `app/vmrule.yaml` fires after 75m, sized as "max role timeout + buffer". The longest role timeout is now 3h (`execute-issue`), so a single long job can trip it while the queue is healthy. Revisit the alert when changing role timeouts.
 
-| Setting            | Value          | Purpose                               |
-| ------------------ | -------------- | ------------------------------------- |
-| `stalledInterval`  | 120s           | How often to check for stalled jobs   |
-| `lockDuration`     | 120s           | Job lock lifetime                     |
-| `maxStalledCount`  | 2              | Stall recoveries before failing       |
-| `lockExtender`     | 30s interval   | Extends lock by 120s while processing |
-| `removeOnComplete` | 1h             | Completed job retention               |
-| `removeOnFail`     | 7d / 500 count | Failed job retention                  |
-| `attempts`         | 1              | No auto-retry; n8n controls retries   |
+BullMQ worker settings are in `src/index.ts` (`lockDuration`/`stalledInterval` 120s, `maxStalledCount` 2) and job defaults in `src/queue/options.ts` (`attempts: 1`; n8n owns retries). A 30s lock extender keeps long jobs from being marked stalled.
 
-### Health Gate
+### Health gate
 
-Before job dispatch, worker checks n8n and LiteLLM health endpoints. If either is unhealthy:
+Before dispatching, the worker checks n8n and LiteLLM health. If either is down it pauses the worker (not the queue) and polls at `HEALTH_POLL_INTERVAL_MS` until both recover, with no upper bound. The lock extender starts before the health check, so the waiting job keeps its lock. Pauses are counted in `agent_health_pause_total`. `agent_queue_paused` reflects only a queue-level pause, so a
+health-gate pause does **not** suppress `AgentQueueStuck`; a long n8n or LiteLLM outage fires it.
 
-1. Worker pauses (no new jobs picked up)
-2. Current job remains active — lock extender keeps its BullMQ lock alive
-3. Worker polls health at `HEALTH_POLL_INTERVAL_MS` intervals
-4. When both recover, worker resumes automatically
+### Circuit breaker
 
-No timeout — waits indefinitely until deps recover. The lock extender runs before the health check so the job won't stall while waiting.
-
-### Pod Deadline Enforcement
-
-Kyverno enforces `activeDeadlineSeconds` on agent pods based on the `agent-timeout` annotation set at pod creation. See [Kyverno policies README](../../kyverno/policies/README.md#set-agent-deadline) for policy details.
+Five failed jobs for the same repo within an hour open that repo's circuit: `POST /jobs` returns `429 {"reason":"circuit_open"}` until the failures age out. Reset early with `POST /circuit/<owner%2Frepo>/reset` using the `N8N_TO_WORKER_SECRET` bearer token, after fixing the underlying failure.
 
 ## Troubleshooting
 
-### Common Issues
+1. **Repeated `could not renew lock for job <id>` every 30s for one job**
 
-1. **Worker not connecting to Valkey**
+   - **Cause**: The job key is corrupted in Valkey (`WRONGTYPE`). Happens when `job.moveToDelayed()` runs while BullMQ's internal lock timer is still armed. The health-gate path no longer does this, but the `cancelled` path in `processor.ts` still calls `moveToDelayed`.
+   - **Fix**: Delete the job in Bull Board (or Valkey), then restart the worker pod.
 
-   - **Symptom**: Pod CrashLoopBackOff, logs show Redis connection errors
-   - **Resolution**: Verify agent-valkey pod is running and CNP allows egress on port 6379
+2. **Jobs queue but never dispatch, no errors**
 
-2. **Jobs stuck in queue**
+   - **Cause**: The health gate has paused the worker because n8n or LiteLLM health is failing, or their CNPs no longer allow the worker's health probes.
+   - **Fix**: Check `agent_health_pause_total` and the worker logs for `Dependencies unhealthy`, then the `allow-n8n-health-egress` / `allow-litellm-health-egress` CNPs and the matching ingress on each side.
 
-   - **Symptom**: `agent_queue_depth` metric stays elevated, VMRule alert fires after 75m
-   - **Resolution**: Check n8n webhook availability, verify CNP allows egress to n8n-system on port 5678
+3. **Dispatch fails with 401 from n8n**
 
-3. **Lock renewal errors on a single job**
-
-   - **Symptom**: Repeated `could not renew lock for job <id>` errors every 30s
-   - **Cause**: BullMQ job key corrupted in Valkey (WRONGTYPE). Occurs when `job.moveToDelayed()` is called while the internal lock timer is still armed.
-   - **Resolution**: Delete the job via Bull Board dashboard or Valkey CLI, then restart the worker pod. Fixed in code by replacing `moveToDelayed` with in-process health gate wait.
-
-4. **Circuit breaker open**
-
-   - **Symptom**: POST /jobs returns 429 with `circuit_open`
-   - **Resolution**: POST /circuit/{repo}/reset to clear, investigate underlying failures
+   - **Cause**: `agent-worker-auth` in `n8n-system` is out of sync with `agent-queue-worker-secrets`.
+   - **Fix**: Check the `agent-worker-auth` ExternalSecret in `n8n-system` is `SecretSynced`.
 
 ## References
 
 - [BullMQ Documentation](https://docs.bullmq.io/)
-- [bjw-s app-template](https://bjw-s.github.io/helm-charts/docs/app-template/)

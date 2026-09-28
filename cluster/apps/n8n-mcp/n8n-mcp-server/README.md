@@ -2,43 +2,32 @@
 
 ## Overview
 
-MCP (Model Context Protocol) server providing AI assistants with access to n8n node documentation, workflow templates, validation, and workflow management via the n8n API. Runs in HTTP transport mode as a low-priority workload.
-
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the target namespace specified in ks.yaml.
+Gives agents n8n node documentation, template search, workflow validation and workflow management against the in-cluster n8n, as an MCP server behind the LiteLLM MCP gateway. Only the `litellm` namespace can reach it, and its only egress is the n8n API.
 
 ## Prerequisites
 
-- n8n instance running in n8n-system namespace
-- n8n API key with appropriate scopes (stored in SOPS secret)
+- An n8n API key (created in n8n under Settings > n8n API) stored as `N8N_API_KEY` in `app/n8n-mcp-secrets.sops.yaml`. Workflow-management tools fail without it; documentation tools still work.
+- `AUTH_TOKEN` in the same secret. n8n-mcp requires it in HTTP mode and validates it on every call (it cannot be disabled), so LiteLLM's registration for this server must send it as a bearer token.
 
-## Access
+## Operations
 
-- **In-cluster**: `http://n8n-mcp-server.n8n-mcp.svc:3000/mcp`
-- **LAN**: `https://n8n-mcp.lan.${EXTERNAL_DOMAIN}/mcp` (API key required)
-- **Health**: `GET /health`
-- **Network policies**: Ingress from claude-agents-read, claude-agents-write, coder-workspaces, and traefik namespaces; egress to n8n.n8n-system.svc (port 80 → pod 5678)
+- Registered in LiteLLM through the UI at `http://n8n-mcp-server.n8n-mcp.svc:3000/mcp`; the registration and its auth header live in LiteLLM's database, not Git. See [litellm README](../../litellm/README.md#mcp-servers). Rotating `AUTH_TOKEN` means updating that registration too.
+- The node database ships inside the image and is copied into an `emptyDir` by the `copy-db` init container. The server writes to it, and with a read-only root filesystem it fails with `attempt to write a readonly database` (#1119).
+- n8n must allow the traffic too: `allow-n8n-mcp-ingress` in `n8n-system/n8n/app/network-policies.yaml`.
 
 ## Troubleshooting
 
-### Common Issues
+1. **All tool calls return 401 from LiteLLM's side**
 
-1. **Pod fails to start**
+   - **Cause**: The token in LiteLLM's MCP registration does not match `AUTH_TOKEN`.
+   - **Fix**: Re-align them.
 
-   - **Symptom**: CrashLoopBackOff
-   - **Resolution**: Check logs; likely missing or invalid N8N_API_KEY in n8n-mcp-secrets.
+2. **Documentation tools work, workflow tools fail**
 
-2. **Workflow management tools unavailable**
-
-   - **Symptom**: MCP tool calls return errors for create/update/execute operations
-   - **Resolution**: Verify N8N_API_KEY has required scopes and n8n API is reachable.
-
-3. **Connection refused to n8n**
-
-   - **Symptom**: MCP tools return connection errors
-   - **Resolution**: Verify n8n pods are running in n8n-system and CiliumNetworkPolicy `allow-n8n-mcp-ingress` exists.
+   - **Cause**: `N8N_API_KEY` is invalid or revoked, or n8n is unreachable.
+   - **Fix**: Create a new API key in n8n and update the secret; check `allow-n8n-mcp-ingress` exists in `n8n-system`.
 
 ## References
 
 - [n8n-mcp GitHub](https://github.com/czlonkowski/n8n-mcp)
 - [n8n API docs](https://docs.n8n.io/api/)
-- [bjw-s app-template](https://github.com/bjw-s-labs/helm-charts)

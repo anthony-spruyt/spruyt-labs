@@ -1,94 +1,84 @@
-# Nexus OSS - Artifact Proxy for Coder Workspace Builds
+# Nexus OSS - Artifact Proxy for Workspaces and Agents
 
 ## Overview
 
-Sonatype Nexus Repository 3 OSS deployed in-cluster via the `bjw-s-labs/app-template` chart as an apt + docker artifact proxy for Coder workspace (envbuilder) builds and developer workstations. Also hosts the kaniko layer cache on LAN-local Ceph storage, replacing the previous ghcr-hosted cache.
+Pull-through cache for apt, container images, npm and PyPI, plus the envbuilder/kaniko layer cache, so Coder workspace builds, agent pre-commit runs and dev PCs don't hit upstream registries each time (#968). Nexus serves plain HTTP in-cluster; Traefik terminates TLS for LAN access at `nexus.lan.${EXTERNAL_DOMAIN}` (UI, apt, npm, PyPI) and `nexus-docker.lan.${EXTERNAL_DOMAIN}` (docker-group).
 
-Runs as a single-replica StatefulSet with a 100Gi Ceph RBD PVC at `/nexus-data`. The Service exposes three ports:
-
-- `8081` - UI, apt repositories, REST API, metrics
-- `8082` - `docker-group` connector (OCI v2 at host-root for proxy pulls)
-- `8083` - `envbuilder-cache` connector (hosted docker repo for kaniko layer cache)
-
-Nexus listens plain HTTP only. Workspace pods hit `nexus.nexus-system.svc.cluster.local` with `ENVBUILDER_INSECURE=true`. Traefik terminates TLS (ZeroSSL) for dev PC access at `nexus.lan.${EXTERNAL_DOMAIN}` and `nexus-docker.lan.${EXTERNAL_DOMAIN}`.
-
-> **Scope:** Explicitly for Coder workspace builds and developer workstations. Cluster image pulls (kubelet, Spegel, Flux OCIRepositories) remain on direct upstream paths — Nexus being down must never block cluster bootstrap or Flux reconciliation.
+> **Scope:** Only workspaces, agents and dev PCs use Nexus. Cluster image pulls (kubelet, Spegel, Flux OCIRepositories) stay on direct upstream paths — Nexus being down must never block bootstrap or Flux reconciliation.
 
 ## Prerequisites
 
-- `cert-manager` (ZeroSSL ClusterIssuer)
-- `kyverno` (admission policies)
-- `rook-ceph-cluster-storage` (provides `rook-ceph-block` StorageClass)
-- SOPS secrets created by user:
-  - `nexus-admin` (admin-username, admin-password)
-  - `nexus-upstream-creds` (dockerhub-username/token, ghcr-username/token)
+SOPS secrets in `app/`, created by hand:
 
-## Operation
+| Secret                    | Keys                               | Used by                                                |
+| ------------------------- | ---------------------------------- | ------------------------------------------------------ |
+| `nexus-admin`             | `admin-username`, `admin-password` | bootstrap sidecar, provisioning Job                    |
+| `nexus-upstream-creds`    | Docker Hub and GHCR username/token | proxy repos (avoids anonymous rate limits)             |
+| `nexus-secrets-key`       | `secrets.json`                     | Nexus secret encryption key (`NEXUS_SECRETS_KEY_FILE`) |
+| `nexus-workspace-clients` | `puller-password`                  | `workspace-puller` user                                |
 
-### UI Login
+`coder-workspaces/coder-workspaces/app/coder-workspace-nexus-clients.sops.yaml` holds the matching client-side auth for workspaces and must be updated whenever `puller-password` changes.
 
-Access `https://nexus.lan.${EXTERNAL_DOMAIN}` (LAN IP whitelist enforced by Traefik middleware). Log in with `admin` and the password from the `nexus-admin` SOPS secret.
+## Operations
 
-### Rerunning the Provisioning Job
+### Connectors
 
-The provisioner uses `configMapGenerator` for `provision.sh` — editing the script changes its hash, which Flux picks up. Because the Job manifest carries `kustomize.toolkit.fluxcd.io/force: "Enabled"`, Flux deletes and recreates the Job on every spec change. The Job is GET-merge-PUT safe — existing repos are updated in place, and anonymous-role privileges are merged (not replaced).
+| Port   | Repo               | Purpose                                                                      |
+| ------ | ------------------ | ---------------------------------------------------------------------------- |
+| `8081` | all non-docker     | UI, REST API, apt/npm/PyPI proxies, metrics                                  |
+| `8082` | `docker-group`     | OCI v2 at host root; aggregates Docker Hub, GHCR, Quay, MCR, registry.k8s.io |
+| `8083` | `envbuilder-cache` | Hosted docker repo for the kaniko layer cache                                |
 
-To force a rerun without a spec change:
+Docker connectors serve at the host root with no `/repository/` prefix. `docker-group` uses `forceBasicAuth`, so anonymous pulls get a 401 after the bearer realm is advertised — clients must use `workspace-puller` (or admin).
 
-```bash
-kubectl delete job -n nexus-system nexus-provision-repos
-flux reconcile kustomization nexus --with-source
-```
+### First boot: admin bootstrap
 
-### PVC Expansion
+The official image ignores `NEXUS_SECURITY_INITIAL_PASSWORD`. On an empty PVC, Nexus writes a random password to `/nexus-data/admin.password`; the `bootstrap` sidecar (`app/bootstrap.sh`) uses it to create the admin user from `nexus-admin`, disable the built-in `admin`, delete the password file, and re-encrypt stored secrets to the `primary` key from `nexus-secrets-key`. Marker files on the PVC
+(`.bootstrap-done`, `.rekey-primary-done`) make later restarts a no-op.
 
-Online resize via Ceph RBD:
+Consequence: the user in `nexus-admin` is **not** `admin`, and changing `nexus-admin` after first boot does not change the live password.
 
-```bash
-kubectl patch pvc data-nexus-0 -n nexus-system \
-  -p '{"spec":{"resources":{"requests":{"storage":"200Gi"}}}}'
-```
+### Provisioning Job
 
-### Admin Password Rotation
+`nexus-provision-repos` (`app/provision.sh`) upserts every repo, the `anonymous-extras` role (`nx-metrics-all`, `nx-healthcheck-read`, so vmagent can scrape anonymously), and the `workspace-puller` user. It is GET-merge-PUT safe and re-runs whenever `provision.sh` changes (hashed ConfigMap + `kustomize.toolkit.fluxcd.io/force: "Enabled"`). It also resets `workspace-puller`'s password to
+`puller-password` on every run.
 
-`NEXUS_SECURITY_INITIAL_PASSWORD` applies only on first-boot with an empty PVC. To rotate later:
+To re-run without a script change, delete the Job and reconcile the `nexus` Kustomization.
 
-1. `PUT /service/rest/v1/security/users/admin/change-password` via the API
-2. Update the `nexus-admin` SOPS secret with the new password
+### Admin password rotation
 
-The provisioning Job reads `admin-password` on every run — if it's stale, the Job's curl commands will 401. Always rotate in the API first, then update the secret.
+1. Change the password via the API (`PUT /service/rest/v1/security/users/<admin-username>/change-password`).
+2. Update `admin-password` in `nexus-admin`.
+
+In that order: the provisioning Job reads `admin-password` on every run and 401s if it is stale.
+
+### Rotating the workspace puller password
+
+Update `puller-password` in `nexus-workspace-clients` and the auth in `coder-workspace-nexus-clients` together. The provisioning Job applies the new password on its next run, so change `provision.sh` or re-run the Job. Running workspaces keep the old auth until restarted (Kata freezes secret mounts).
 
 ## Troubleshooting
 
-### Common Issues
+1. **Provisioning Job fails on a single `upsert`**
 
-1. **Provisioning Job stuck or CrashLoopBackOff**
+   - **Cause**: Usually Nexus not yet writable (the Job retries, `backoffLimit: 10`), or the repo JSON no longer matches the Nexus API version.
+   - **Fix**: Check the provisioner logs; for privilege-ID errors (`nx-metrics-all` renamed between versions) list `/v1/security/privileges?type=application` and adjust `provision.sh`.
 
-   - **Symptom**: Repos never appear in the UI; `kubectl get job` shows 0/1 completions
-   - **Diagnosis**: `kubectl logs -n nexus-system -l app.kubernetes.io/name=nexus-provisioner`
-   - **Resolution**: Most common cause is Nexus not yet writable. Job retries up to `backoffLimit: 10`. If a specific `upsert` call 400s, check the repo JSON body against the Nexus API version. Privilege ID mismatch (`nx-metrics-all` vs `nx-metrics-read`) on older Nexus versions — grep `/v1/security/privileges?type=application` for the current ID and adjust `provision.sh`.
+2. **apt proxy returns 502/504**
 
-2. **apt upstream proxy returns 502/504**
+   - **Cause**: Nexus auto-blocks a proxy repo after repeated upstream failures.
+   - **Fix**: Unblock `apt-ubuntu-proxy` (or the affected repo) in the UI, or wait for the auto-unblock window.
 
-   - **Symptom**: `curl https://nexus.lan.${EXTERNAL_DOMAIN}/repository/apt-ubuntu-proxy/dists/jammy/Release` fails
-   - **Diagnosis**: Nexus auto-blocks proxy repos after upstream failures (configurable). Check Nexus UI → Repositories → `apt-ubuntu-proxy` → Status.
-   - **Resolution**: Click "Unblock now" in UI, or wait for the auto-unblock window. Verify egress CNP rule permits `world:443/80`.
+3. **`java.net.BindException: Address already in use`**
 
-3. **Metrics endpoint unreachable from vmagent**
+   - **Cause**: Two repos claim the same `httpPort`.
+   - **Fix**: Only `docker-group` (8082) and `envbuilder-cache` (8083) may set one in `provision.sh`.
 
-   - **Symptom**: VMPodScrape target shows as down in VictoriaMetrics
-   - **Diagnosis**: `kubectl get vmpodscrape -n nexus-system nexus -o yaml`; check vmagent logs
-   - **Resolution**: Confirm the CNP allows `k8s:app.kubernetes.io/name: vmagent` from `observability` to port 8081, and that `nx-metrics-all` is on the anonymous role (merged by the provisioning Job).
+4. **Workspace image pulls fail with 401 from `:8082`**
 
-4. **Docker connector `BindException` in Nexus logs**
-
-   - **Symptom**: Nexus log reports `java.net.BindException: Address already in use`
-   - **Diagnosis**: Two repos claim the same `httpPort` in their JSON
-   - **Resolution**: Fix `provision.sh` — `docker-group` owns `8082`, `envbuilder-cache` owns `8083`, no other repo should claim those.
+   - **Cause**: `coder-workspace-nexus-clients` and `puller-password` are out of step.
+   - **Fix**: Re-align them and re-run the provisioning Job.
 
 ## References
 
-- [Issue #968](https://github.com/anthony-spruyt/spruyt-labs/issues/968)
 - [Sonatype Nexus Repository 3 documentation](https://help.sonatype.com/en/sonatype-nexus-repository.html)
 - [Docker reverse-proxy strategies](https://help.sonatype.com/en/docker-repository-reverse-proxy-strategies.html)
-- [bjw-s-labs app-template](https://github.com/bjw-s-labs/helm-charts/tree/main/charts/other/app-template)

@@ -2,196 +2,62 @@
 
 ## Overview
 
-CNCF/kubernetes-sigs Kubernetes dashboard with plugins for GitOps and certificate visualization. Provides in-cluster UI for viewing Flux resources and cert-manager certificates.
+LAN-only Kubernetes UI (with Flux and cert-manager plugins) where users act **as themselves** against the API server: Headlamp passes the user's Authentik OIDC token to kube-apiserver, which validates it directly. It is the only app here that needs kube-apiserver OIDC, and that requirement drives most of the setup below.
 
 ## Prerequisites
 
-- Authentik (OIDC SSO)
-- External Secrets operator
-- cert-manager for TLS
-- Traefik ingress
+- kube-apiserver OIDC in `talos/patches/control-plane/05-configure-api-server.yaml.tpl` (a `KubeAuthenticationConfig`). Its audience is `HEADLAMP_OIDC_CLIENT_ID`, read from `talos/talenv.sops.yaml` via `talos/topf.yaml`. A Talos config apply is needed after changing either.
+- The same client ID in `authentik-system/authentik/app/authentik-headlamp-oauth.sops.yaml`. The two copies must match, which is why Headlamp's `client_id` is never rotated.
+- Authentik blueprint `authentik-system/authentik/app/blueprints/headlamp-sso.yaml`.
 
-## Access
+## Operations
 
-- **URL**: `https://headlamp.lan.${EXTERNAL_DOMAIN}`
-- **Auth**: Authentik OIDC (Headlamp Users group)
+### How authentication works
 
-## Plugins
+1. Headlamp authenticates the user against Authentik (OIDC, RS256).
+2. The ID token is sent to kube-apiserver, which accepts issuer `https://auth.${EXTERNAL_DOMAIN}/application/o/headlamp/` with the Headlamp client ID as audience.
+3. The username is the `email` claim with no prefix, so RBAC subjects are plain email addresses. `app/user-rbac.yaml` binds `${MY_AUTHENTIK_USER_EMAIL}` to `cluster-admin`; add a subject there for each additional user.
 
-Headlamp supports plugins from ArtifactHub. Plugin installation is managed via the `pluginsManager` sidecar.
+The Talos patch replaces Talos' generated `AuthenticationConfiguration` wholesale, which is why it also restates anonymous access to `/livez`, `/readyz` and `/healthz`. Dropping that block breaks the API server's own probes.
 
-### Plugin Configuration Format
+### email_verified claim
 
-Plugins must be configured with:
+kube-apiserver rejects tokens with `email_verified: false`, and Authentik (v2025.10+) always returns `false` because it has no email verification. The Headlamp blueprint replaces the default email scope mapping with one that returns `email_verified: true`. This is acceptable because access requires membership in `Headlamp Users` (policy binding) and the claim carries no real verification in
+Authentik anyway. Pattern details are in the [authentik README](../../authentik-system/authentik/README.md#email_verified-claim).
 
-- **name**: Must match pattern `^[a-z0-9][a-z0-9-_]*[a-z0-9-]$` (no `@` scopes)
-- **source**: Must be ArtifactHub URL format `https://artifacthub.io/packages/headlamp/<repo>/<plugin>`
-- **version**: Plugin version
+### OIDC config comes from one secret
 
-```yaml
-pluginsManager:
-  enabled: true
-  configContent: |
-    plugins:
-      - name: headlamp_flux
-        source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux
-        version: 0.5.0
-    installOptions:
-      parallel: true
-      maxConcurrent: 2
-```
+The chart's `externalSecret` mode expects **all** OIDC settings in the secret, so `app/headlamp-oauth-external-secret.yaml` templates issuer, scopes and callback URL alongside the synced client ID and secret. It writes each value twice: `OIDC_*` for the chart's `envFrom`, and `HEADLAMP_CONFIG_OIDC_*` for Headlamp's own config loader, which keeps the client secret off the command line
+(`/proc/<pid>/cmdline`).
 
-### Available Plugins
+Client-secret rotation follows the shared Authentik rotation job; see the [authentik README](../../authentik-system/authentik/README.md#oauth-credential-rotation).
 
-| Plugin       | ArtifactHub URL                                                                   | Description            |
-| ------------ | --------------------------------------------------------------------------------- | ---------------------- |
-| Flux         | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux`         | GitOps visualization   |
-| cert-manager | `https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager` | Certificate management |
+### Plugins
 
-### Plugin Installation Troubleshooting
-
-Common errors:
-
-| Error                       | Cause                         | Fix                                  |
-| --------------------------- | ----------------------------- | ------------------------------------ |
-| `name must match pattern`   | Used `@org/plugin` npm format | Use `plugin_name` ArtifactHub format |
-| `source must match pattern` | Used npmjs.com URL            | Use `artifacthub.io/packages/...`    |
-| `Installation failed`       | Network/version issue         | Check version exists on ArtifactHub  |
-
-## OIDC Configuration
-
-Headlamp uses OIDC for two purposes:
-
-1. **UI Authentication**: Users authenticate via Authentik to access Headlamp
-2. **Kubernetes API Impersonation**: The OIDC token is used to authenticate as the user against the Kubernetes API
-
-### Kubernetes API Server OIDC
-
-The kube-apiserver must be configured with OIDC to validate tokens from Authentik. This is set in `talos/patches/control-plane/configure-api-server.yaml`:
-
-```yaml
-oidc-issuer-url: "https://auth.${EXTERNAL_DOMAIN}/application/o/headlamp/"
-oidc-client-id: "<client-id-from-authentik>"
-oidc-username-claim: "email"
-oidc-groups-claim: "groups"
-```
-
-**Important**: The `oidc-client-id` must match the Authentik provider's client_id and remain stable (not rotated).
-
-### email_verified Claim Requirement
-
-**Problem**: Kubernetes API server rejects OIDC tokens with `email_verified: false`. Authentik v2025.10+ returns `email_verified: false` by default and has **no native email verification system**.
-
-**Solution**: The Headlamp SSO blueprint includes a custom scope mapping that returns `email_verified: true`:
-
-```yaml
-# In authentik-system/authentik/app/blueprints/headlamp-sso.yaml
-- id: headlamp_email_mapping
-  model: authentik_providers_oauth2.scopemapping
-  identifiers:
-    name: "Headlamp OAuth Mapping: email verified"
-  attrs:
-    scope_name: email
-    expression: |
-      return {
-          "email": request.user.email,
-          "email_verified": True,
-      }
-```
-
-This is safe because:
-
-1. Users must be in the "Headlamp Users" group to access the application
-2. Authentik has no built-in email verification - the claim is purely informational
-3. This is a homelab with trusted users
-
-### User RBAC
-
-OIDC-authenticated users need Kubernetes RBAC permissions. The user is identified by their email (from the `oidc-username-claim`). See `app/user-rbac.yaml` for the ClusterRoleBinding.
-
-### ExternalSecret Flow
-
-```text
-authentik-system/authentik-headlamp-oauth (SOPS: clientID, clientSecret)
-    |
-    v (RBAC: headlamp-oauth-reader)
-headlamp-system/headlamp-oauth-credentials (ExternalSecret template)
-    |
-    +-- OIDC_CLIENT_ID: synced from authentik
-    +-- OIDC_CLIENT_SECRET: synced from authentik
-    +-- OIDC_ISSUER_URL: static in template
-    +-- OIDC_SCOPES: static in template
-    +-- OIDC_CALLBACK_URL: static in template
-    |
-    v (chart externalSecret feature)
-Headlamp pods (envFrom secretRef)
-```
-
-### Required Configuration
-
-1. **Blueprint**: `authentik-system/authentik/app/blueprints/headlamp-sso.yaml`
-2. **OAuth Secret**: `authentik-system/authentik/app/authentik-headlamp-oauth.sops.yaml`
-3. **Env Vars**: HEADLAMP_OIDC\_\* in authentik values.yaml
-4. **Volume Mount**: headlamp-sso.yaml in authentik blueprints volume
-5. **API Server OIDC**: `talos/patches/control-plane/configure-api-server.yaml`
-6. **User RBAC**: `app/user-rbac.yaml`
-
-## OAuth Credential Rotation
-
-Headlamp is integrated with the Authentik OAuth rotation CronJob. Only `client_secret` rotates weekly - `client_id` remains stable (required for kube-apiserver OIDC config).
-
-### Rotation Components
-
-| Component     | Location                                           |
-| ------------- | -------------------------------------------------- |
-| Rotation Call | `authentik/app/oauth-secret-rotation/cronjob.yaml` |
-| Secret RBAC   | `authentik/app/oauth-secret-rotation/role.yaml`    |
-| ES Patch RBAC | `headlamp/app/oauth-rotation-rbac.yaml`            |
-
-The rotation job:
-
-1. Generates new client_secret (client_id unchanged)
-2. Updates Authentik OAuth2 provider via API
-3. Patches `authentik-headlamp-oauth` secret
-4. Forces ExternalSecret sync in headlamp-system
-
-## File Reference
-
-| Component             | Location                                                |
-| --------------------- | ------------------------------------------------------- |
-| HelmRelease           | `app/release.yaml`                                      |
-| Helm values           | `app/values.yaml`                                       |
-| SecretStore           | `app/authentik-secret-store.yaml`                       |
-| ExternalSecret        | `app/headlamp-oauth-external-secret.yaml`               |
-| Rotation RBAC         | `app/oauth-rotation-rbac.yaml`                          |
-| User RBAC             | `app/user-rbac.yaml`                                    |
-| ConfigMap transformer | `app/kustomizeconfig.yaml`                              |
-| Ingress               | `traefik/traefik/ingress/headlamp-system`               |
-| API Server OIDC       | `talos/patches/control-plane/configure-api-server.yaml` |
+Plugins install at startup through the chart's `pluginsManager`. Entries must use the ArtifactHub name (e.g. `headlamp_flux`, no `@org/` npm scope) and an `https://artifacthub.io/packages/headlamp/<repo>/<plugin>` source; npm names or npmjs URLs fail schema validation. Each entry has a `# renovate: depName=` line so Renovate can bump its version.
 
 ## Troubleshooting
 
-### Common Issues
+1. **Login succeeds but every API call is 401**
 
-1. **Plugin install fails**
+   - **Cause**: kube-apiserver rejected the token. Usually `email_verified: false` (the custom email mapping is missing from the blueprint) or a client ID mismatch between the Talos patch and the Authentik secret.
+   - **Fix**: Check the kube-apiserver logs for the rejection reason; fix the blueprint or re-align the client ID and apply the Talos config.
 
-   Check plugin container logs. Plugin name must be lowercase alphanumeric (no `@` org prefix), source must be ArtifactHub URL.
+2. **Login succeeds but resources are forbidden**
 
-2. **OIDC login fails / redirect loop**
+   - **Cause**: The user's email has no RBAC binding.
+   - **Fix**: Add a `User` subject with that exact email to `app/user-rbac.yaml`.
 
-   - Verify ExternalSecret is synced: `kubectl get es -n headlamp-system`
-   - Check Authentik blueprint applied: look for "Headlamp SSO" in Authentik admin
-   - Verify certificate is ready: `kubectl get cert -n headlamp-system`
-   - Check kube-apiserver logs for `email_verified` errors - if present, ensure custom email mapping is in blueprint
+3. **Plugin install fails with `name must match pattern` or `source must match pattern`**
 
-3. **Kubeconfig errors in logs**
+   - **Cause**: npm-style name or source.
+   - **Fix**: Use the ArtifactHub name and URL.
 
-   Normal - Headlamp attempts to load kubeconfig files that don't exist in-cluster. Uses serviceaccount token instead.
+4. **Kubeconfig errors in the logs**
+
+   - Expected in-cluster; Headlamp looks for kubeconfig files before falling back to the service account.
 
 ## References
 
 - [Headlamp Documentation](https://headlamp.dev/docs/latest/)
-- [Helm Chart](https://github.com/kubernetes-sigs/headlamp/tree/main/charts/headlamp)
-- [Default Values](https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml)
-- [Flux Plugin](https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux)
-- [Authentik SSO Integration](../../authentik-system/authentik/README.md)
+- [Kubernetes structured authentication configuration](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration)

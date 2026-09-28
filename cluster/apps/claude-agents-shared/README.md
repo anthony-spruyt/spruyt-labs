@@ -1,110 +1,106 @@
 # Claude Agents
 
-Ephemeral Claude Code agent pods spawned by n8n. Five namespaces, two tiers.
+## Overview
 
-## Namespace Matrix
+n8n spawns short-lived Claude Code agent pods in five namespaces (label `managed-by: n8n-claude-code`). Almost everything these pods run with is injected at admission time by Kyverno, not by the namespace manifests. This README covers what each namespace gets, where the injection happens, and which places must change together.
 
-| Namespace                         | GitHub           | kubectl   | MCP Servers                          | Priority | RBAC                    |
-| --------------------------------- | ---------------- | --------- | ------------------------------------ | -------- | ----------------------- |
-| `claude-agents-read`              | read + comment   | none      | agentplatform, bravesearch, context7 | low      | SA only                 |
-| `claude-agents-write`             | write (push, PR) | none      | agentplatform, bravesearch, context7 | standard | SA only                 |
-| `claude-agents-spruyt-labs-read`  | read + comment   | read-only | + victoriametrics                    | low      | `claude-agent-reader`   |
-| `claude-agents-spruyt-labs-sre`   | read + comment   | operator  | + victoriametrics                    | high     | `claude-agent-operator` |
-| `claude-agents-spruyt-labs-write` | write (push, PR) | operator  | + victoriametrics                    | standard | `claude-agent-operator` |
+`base/` holds the shared resources (spawner RBAC, egress CNPs, GitHub SecretStore, read-only gitconfig, MCP credentials, plugin bootstrap script). Each `claude-agents-*/claude-agents/app/` overlay adds its MCP config, settings profiles, GitHub and LiteLLM credentials, and any tier-specific CNPs and RBAC.
 
-**Generic** namespaces have no kube-apiserver access. **Infra** (`spruyt-labs-*`) namespaces get kube-apiserver egress CNPs, RBAC ClusterRoleBindings, and additional MCP servers.
+## Namespace Tiers
 
-## RBAC
+| Namespace                         | GitHub token    | Clone | kube-apiserver | Priority (Kyverno) |
+| --------------------------------- | --------------- | ----- | -------------- | ------------------ |
+| `claude-agents-read`              | read            | HTTPS | none           | `low-priority`     |
+| `claude-agents-write`             | write + SSH key | SSH   | none           | `standard`         |
+| `claude-agents-spruyt-labs-read`  | read            | HTTPS | reader         | `low-priority`     |
+| `claude-agents-spruyt-labs-sre`   | read            | HTTPS | operator       | `high-priority`    |
+| `claude-agents-spruyt-labs-write` | write + SSH key | SSH   | operator       | `standard`         |
 
-| ClusterRole             | Capabilities                                                                      |
-| ----------------------- | --------------------------------------------------------------------------------- |
-| `claude-agent-reader`   | get/list/watch on all standard resources, secrets list only (no values)           |
-| `claude-agent-operator` | reader + pod delete/eviction, deployment/statefulset/daemonset patch, scale patch |
+Generic namespaces have no kube-apiserver egress or RBAC. `spruyt-labs-*` namespaces add an `allow-kube-api-egress` CNP and a ClusterRoleBinding for the `claude-agent` ServiceAccount:
 
-## Shared Base (`claude-agents-shared/base/`)
+- `claude-agent-reader` (defined in `claude-agents-spruyt-labs-read`): get/list/watch on core, apps, batch, Flux, Cilium, Ceph, CNPG and other CRDs used for diagnosis. No access to Secrets at all.
+- `claude-agent-operator` (defined in `claude-agents-spruyt-labs-sre`, also bound by `spruyt-labs-write`): reader plus pod delete, pod eviction, and patch on deployments/statefulsets/daemonsets and their `scale` subresources.
 
-All namespaces inherit:
-
-| Resource                         | Purpose                                                                                   |
-| -------------------------------- | ----------------------------------------------------------------------------------------- |
-| `rbac.yaml`                      | `claude-agent` ServiceAccount                                                             |
-| `rbac-spawner.yaml`              | Role/RoleBinding for n8n pod creation                                                     |
-| `network-policies.yaml`          | CNPs: world egress, OTLP (vmsingle, vlogs, vtraces), Brave Search MCP, agent-platform MCP |
-| `github-secret-store.yaml`       | ESO SecretStore → `github-system`                                                         |
-| `github-bot-gitconfig-read.yaml` | Read-only git identity                                                                    |
-| `github-rotation-rbac.yaml`      | Token rotation CronJob RBAC                                                               |
-| `mcp-credentials.sops.yaml`      | Encrypted MCP API keys                                                                    |
-
-Per-namespace overlays add: MCP config, settings profiles, GitHub ExternalSecret, and optionally network policies, RBAC, SSH key, and write gitconfig.
+The ClusterRoles live in the namespace that first needed them, so pruning `claude-agents-spruyt-labs-sre` would also remove the role that `spruyt-labs-write` binds.
 
 ## Kyverno Injection
 
-`inject-claude-agent-config` ClusterPolicy mutates all pods with `managed-by: n8n-claude-code`:
+`cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml` mutates every pod with `managed-by: n8n-claude-code` in the five namespaces. The namespace list is repeated in each rule.
 
-| Rule                      | Namespaces  | Injects                                                                                                                                                                                      |
-| ------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `strip-explicit-priority` | all 5       | Removes n8n-set priority (Kyverno sets correct one)                                                                                                                                          |
-| `inject-priority-*`       | per-tier    | `low-priority` (read), `standard` (write), `high-priority` (sre)                                                                                                                             |
-| `inject-shared-config`    | all 5       | gh CLI config, gitconfig, settings profiles, managed-settings, claude-home emptyDir, bootstrap-script ConfigMap, plugin-bootstrap init container (managed+user), Context7 key, OTEL env vars |
-| `inject-managed-mcp`      | all 5       | MCP config volume + agent-platform auth token                                                                                                                                                |
-| `inject-github-ssh`       | write tiers | SSH key + write gitconfig (with commit signing)                                                                                                                                              |
-| `inject-repo-clone-write` | write tiers | SSH clone init container + pre-commit install + plugin-bootstrap-project init container (project+local)                                                                                      |
-| `inject-repo-clone-read`  | read + sre  | HTTPS clone init container (token-authenticated) + plugin-bootstrap-project init container (project+local)                                                                                   |
+| Rule                                  | Namespaces  | Injects                                                                                                                                                                                                                        |
+| ------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `strip-explicit-priority`             | all         | Removes any priority set by n8n                                                                                                                                                                                                |
+| `inject-priority-{low,standard,high}` | per tier    | `priorityClassName` from the table above                                                                                                                                                                                       |
+| `inject-shared-config`                | all         | gh CLI config (with a `gh-config-sync` sidecar that re-copies the rotated token every 30s), read-only gitconfig, settings profiles, managed settings, plugin-bootstrap init container, OTEL env vars, LiteLLM base URL and key |
+| `inject-managed-mcp`                  | all         | `claude-mcp-config` at `/etc/mcp/mcp.json` and `/etc/claude-code/managed-mcp.json`, plus `AGENT_PLATFORM_MCP_AUTH_TOKEN`                                                                                                       |
+| `inject-github-ssh`                   | write tiers | SSH key and the write gitconfig (commit signing)                                                                                                                                                                               |
+| `inject-repo-clone-write`             | write tiers | SSH clone init container, pre-commit install, project plugin bootstrap                                                                                                                                                         |
+| `inject-repo-clone-read`              | read + sre  | HTTPS clone with the read token, project plugin bootstrap                                                                                                                                                                      |
+| `validate-clone-url-write` / `-read`  | per tier    | Rejects a `CLONE_URL` that is not `git@github.com:anthony-spruyt/...` (write) or `https://github.com/anthony-spruyt/...` (read/sre)                                                                                            |
 
-Clone preconditions enforce URL prefix: `git@github.com:anthony-spruyt/` (write) or `https://github.com/anthony-spruyt/` (read/sre).
+Three further policies act on the same label: `set-agent-deadline` sets `activeDeadlineSeconds` from the `agent-timeout` pod annotation (default 3h), `validate-agent-deadline` rejects pods without one, and `cleanup-agent-pods` deletes Succeeded/Failed pods hourly as a backstop for n8n's own cleanup.
 
 ## MCP Servers
 
-| Server          | URL                                          | Auth                                | CNP Location                   |
-| --------------- | -------------------------------------------- | ----------------------------------- | ------------------------------ |
-| agentplatform   | `n8n-webhook.n8n-system.svc:8080`            | Bearer token from `mcp-credentials` | shared base                    |
-| bravesearch     | `brave-search-mcp.brave-search-mcp.svc:8000` | none                                | shared base                    |
-| context7        | `mcp.context7.com` (external)                | API key from `mcp-credentials`      | world egress (shared base)     |
-| victoriametrics | `mcp-victoriametrics.observability.svc:8080` | none                                | per-namespace (spruyt-labs-\*) |
+Each overlay's `claude-mcp-config.yaml` defines two servers:
 
-`$${}` syntax in MCP config is replaced at runtime from pod env vars.
+| Server          | Endpoint                                     | Auth                                                                         |
+| --------------- | -------------------------------------------- | ---------------------------------------------------------------------------- |
+| `agentplatform` | `n8n-webhook.n8n-system.svc:8080/mcp/...`    | `AGENT_PLATFORM_MCP_AUTH_TOKEN` from `mcp-credentials`, plus job/session IDs |
+| `litellm`       | `litellm.litellm.svc.cluster.local:4000/mcp` | LiteLLM virtual key from `litellm-credentials`                               |
 
-### Adding a New MCP Server
+Every other MCP server (e.g. Brave Search, VictoriaMetrics, n8n-mcp, UniFi) is reached through the LiteLLM MCP gateway and registered in LiteLLM, not here. Port 8080 on `n8n-webhook` is the `mcp-header-proxy` sidecar added by a postRenderer in `n8n-system/n8n/app/release.yaml`.
 
-1. Add entry to relevant `claude-mcp-config.yaml`
-2. If authenticated: add key to `mcp-credentials.sops.yaml`, add env var injection to Kyverno policy
-3. If in-cluster: add egress CNP (shared base for all namespaces, per-namespace overlay for tier-specific)
-4. If in-cluster: add ingress CNP on destination allowing agent namespace(s)
+`$${VAR}` in the MCP config is Flux's escape for a literal `${VAR}`; Claude Code expands it from the pod environment at runtime.
 
-## Settings Profiles
+### Adding an MCP server
 
-Mounted at `/etc/claude/settings/` via Kyverno. Set in n8n: `--settings /etc/claude/settings/<profile>.json`
-
-| Namespace                         | Profiles                                     |
-| --------------------------------- | -------------------------------------------- |
-| `claude-agents-read`              | `renovate-triage`, `review-pr`, `validate`   |
-| `claude-agents-write`             | `execute-issue`, `pr-fix`, `renovate-fix`    |
-| `claude-agents-spruyt-labs-read`  | `renovate-triage`, `review-pr`, `validate`   |
-| `claude-agents-spruyt-labs-sre`   | `sre-health-check`, `sre-triage`, `validate` |
-| `claude-agents-spruyt-labs-write` | `execute-issue`, `pr-fix`, `renovate-fix`    |
+- **Preferred:** register it in LiteLLM (see `litellm/README.md`); no agent-side change is needed.
+- **Direct:** add it to every relevant `claude-mcp-config.yaml`; if it needs a credential, add the key to `base/mcp-credentials.sops.yaml` and inject it in `inject-managed-mcp`; if it is in-cluster, add an egress CNP here (base for all tiers, overlay for one) and an ingress CNP on the destination listing the agent namespaces.
 
 ## Credential Rotation
 
-| Secret         | Method                                                                          |
-| -------------- | ------------------------------------------------------------------------------- |
-| GitHub tokens  | `github-token-rotation` CronJob (automatic)                                     |
-| GitHub SSH key | Same CronJob (write namespaces only)                                            |
-| MCP API keys   | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml` |
+| Credential                                   | Rotation                                                                                                                                                       |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub App tokens (`github-bot-credentials`) | `github-token-rotation` CronJob in `github-system`, every 30 min; force-syncs the ExternalSecret in all five namespaces                                        |
+| Bot SSH key (`github-bot-ssh-key`)           | `bot-ssh-key-rotation` CronJob, daily. It only force-syncs `claude-agents-write`; `claude-agents-spruyt-labs-write` picks up the new key on the 5m ESO refresh |
+| `mcp-credentials`                            | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml`                                                                                |
+| `litellm-credentials`                        | Manual: one LiteLLM virtual key per namespace in each overlay's `litellm-credentials.sops.yaml`                                                                |
 
-## Prerequisites
+The Claude subscription login is not stored here; it is set per n8n credential (see `litellm/README.md`).
 
-- Flux CD, External Secrets Operator
-- `github-token-rotation` CronJob in `github-system`
-- Kyverno `inject-claude-agent-config` ClusterPolicy
-- PriorityClasses: `low-priority`, `standard`, `high-priority`
+## Adding an Agent Namespace
+
+The namespace name is hardcoded outside this directory. All of these must change together:
+
+1. A new overlay under `cluster/apps/claude-agents-<name>/` including `../../../claude-agents-shared/base`
+2. Every rule in `kyverno/policies/app/inject-claude-agent-config.yaml` that applies to the tier
+3. `litellm/litellm/app/network-policies.yaml` (`allow-claude-agents-ingress`)
+4. `n8n-system/n8n/app/network-policies.yaml` (`allow-claude-agent-ingress`, for the agentplatform MCP)
+5. `observability/victoria-traces-single/app/network-policies.yaml` (OTLP traces)
+6. `nexus-system/nexus/app/network-policies.yaml`, write tiers only (pre-commit package pulls)
+7. `github-system/github-token-rotation/app/`: a `reader-role-binding-<ns>.yaml` and the namespace loop in `cronjob.yaml`
+8. For write tiers, `FORCE_SYNC_NAMESPACES` in `github-system/bot-ssh-key-rotation/app/cronjob.yaml`
+9. A matching Claude Code K8s credential and Dispatcher branch in n8n
 
 ## Troubleshooting
 
-| Symptom               | Check                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------- |
-| GitHub 401            | `kubectl get externalsecret -n <ns>` — trigger manual rotation if stale             |
-| ESO sync error        | `kubectl describe secretstore github-secret-store -n <ns>`                          |
-| Pod creation denied   | `kubectl get rolebinding -n <ns>` — verify spawner RBAC                             |
-| Egress blocked        | `kubectl get ciliumnetworkpolicy -n <ns>`                                           |
-| kubectl forbidden     | `kubectl auth can-i <verb> <resource> --as=system:serviceaccount:<ns>:claude-agent` |
-| MCP connection failed | Verify egress CNP exists + ingress CNP on destination includes namespace            |
+1. **Pod rejected with "CLONE_URL in write namespaces must use SSH format" (or the HTTPS variant)**
+
+   - **Cause**: n8n dispatched a role to the wrong tier. The Dispatcher picks SSH for `renovate-fix`, `execute-issue` and `revert` and HTTPS for everything else.
+   - **Fix**: Route the role to a namespace of the matching tier in the n8n Dispatcher.
+
+2. **Pod rejected with "Agent pods must have activeDeadlineSeconds set"**
+
+   - **Cause**: `set-agent-deadline` did not mutate the pod (Kyverno webhook timeout or policy not ready), so the validate policy blocks it.
+   - **Fix**: Check `set-agent-deadline` is Ready and the Kyverno admission controller is healthy.
+
+3. **gh CLI returns 401 mid-run**
+
+   - **Cause**: Installation tokens last 1h. The pod mounts the rotated token through the `gh-config-sync` sidecar; if `github-token-rotation` stopped running, every pod ends up with an expired token.
+   - **Fix**: Check the last `github-token-rotation` Job in `github-system`.
+
+4. **MCP connection refused or times out**
+
+   - **Cause**: Needs both an egress CNP from the agent namespace and an ingress CNP on the destination that lists that namespace.
+   - **Fix**: See "Adding an Agent Namespace" for the destinations that hardcode the namespace list.

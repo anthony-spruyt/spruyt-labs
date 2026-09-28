@@ -1,68 +1,23 @@
-# Crafty Controller - Game Server Management Panel
+# Crafty Controller - Minecraft Server Panel
 
 ## Overview
 
-Crafty Controller 4 provides a web-based UI for managing Minecraft Bedrock servers. Enables kids to create servers and install addons without editing YAML files. Runs game servers as child processes within the container (no Docker-in-Docker required).
+Web panel that lets the kids create and run Minecraft Bedrock servers and install add-ons without touching YAML. Game servers run as child processes inside the Crafty container, so there is no Docker-in-Docker. LAN only at `crafty.lan.${EXTERNAL_DOMAIN}`; console players reach it through [Bedrock Connect](../bedrock-connect/README.md).
 
-Priority: low-priority (gaming workload)
+## Operations
 
-> **Note**: HelmRelease resources are managed by Flux in flux-system namespace but deploy workloads to the target namespace specified in ks.yaml.
+### Ports are fixed in advance
 
-## Prerequisites
+The `bedrock` LoadBalancer Service (IP `${CRAFTY_CONTROLLER_IP4}`) exposes UDP 19132-19139 up front, so a server created in the UI must use a port in that range to be reachable. A ninth server needs a new port added to the Service in `app/values.yaml`.
 
-- Rook Ceph storage (rbd-fast-delete StorageClass)
-- Traefik ingress controller
-- `CRAFTY_CONTROLLER_IP4` defined in cluster-secrets
+### First login
 
-## Operation
+The panel has no SSO. On an empty PVC, Crafty generates the `admin` password on first start and writes it to `/crafty/app/config/default-creds.txt` on the data PVC, not to a Kubernetes Secret. Read it from the pod, then change it immediately.
 
-### Web Access
+### Add-ons
 
-Access the panel at `https://crafty.lan.${EXTERNAL_DOMAIN}`. Create admin account on first login.
-
-### Creating Bedrock Servers
-
-1. In Crafty UI: Create new server -> Select Bedrock
-2. Configure port (use 19132-19139 range)
-3. Start server
-
-### Installing Addons
-
-1. Select server -> Files
-2. Upload .mcpack/.mcaddon to `behavior_packs/` or `resource_packs/`
-3. Restart server
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Web UI not accessible**
-
-   - **Symptom**: Cannot reach `crafty.lan.${EXTERNAL_DOMAIN}`
-   - **Resolution**: Check ingress and certificate status:
-     ```bash
-     kubectl get ingressroute -n minecraft
-     kubectl get certificate -n minecraft
-     ```
-
-2. **Game connection failed**
-
-   - **Symptom**: Players cannot connect to server
-   - **Resolution**: Verify LoadBalancer and server status:
-     ```bash
-     kubectl get svc -n minecraft crafty-controller-bedrock
-     ```
-
-3. **Storage permission errors**
-
-   - **Symptom**: Crafty cannot write to data directories
-   - **Resolution**: Check PVC binding and init container logs:
-     ```bash
-     kubectl get pvc -n minecraft crafty-controller-data
-     kubectl logs -n minecraft -l app.kubernetes.io/name=crafty-controller -c permissions
-     ```
+Upload `.mcpack`/`.mcaddon` files through the server's Files view into `behavior_packs/` or `resource_packs/`, then restart that server.
 
 ## References
 
 - [Crafty Controller Documentation](https://docs.craftycontrol.com/)
-- [Crafty Controller GitLab](https://gitlab.com/crafty-controller/crafty-4)

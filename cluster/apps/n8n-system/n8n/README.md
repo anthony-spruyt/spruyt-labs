@@ -2,98 +2,33 @@
 
 ## Overview
 
-n8n is a workflow automation tool that connects various applications and services through visual workflows. It provides a low-code platform for integrating APIs, databases, and cloud services in the spruyt-labs homelab infrastructure, enabling powerful automation capabilities.
+Workflow engine and the control plane for the agent platform: it receives GitHub and Alertmanager webhooks, queues jobs through [agent-queue-worker](../../agent-worker-system/agent-queue-worker/README.md), and spawns Claude Code agent pods in the `claude-agents-*` namespaces ([claude-agents-shared](../../claude-agents-shared/README.md)). Runs in queue mode with separate main, worker and webhook
+deployments.
 
-## Prerequisites
+## Operations
 
-- CNPG operator deployed (dependency)
-- Barman Cloud plugin deployed (dependency)
-- Authentik deployed (dependency)
-- Valkey deployed (dependency)
-- Claude agents write deployed (dependency)
+### SSO via forward-auth and an external hook
 
-## Database
+n8n Community Edition has no OAuth login, so SSO is Authentik proxy-provider forward-auth ([pattern](../../authentik-system/authentik/README.md#adding-sso-via-proxy-provider-forward-auth)) plus a custom external hook, `app/hooks-configmap.yaml`:
 
-See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `n8n-cnpg-cluster`
+1. Traefik forward-auth to the Authentik outpost injects `X-authentik-email`.
+2. The hook, spliced into the Express stack right after `cookieParser`, looks the email up in n8n's user table and issues an n8n session cookie.
+3. Unknown users get a 401. **Users must be invited in n8n (Settings > Users) with their Authentik email before SSO works for them.**
 
-## SSO Authentication
+The hook reaches into n8n internals (`dist/server.js`, `auth/jwt.js` `issueCookie`, the Express router stack). An n8n upgrade that moves any of these disables SSO silently: n8n still boots, and the hook logs `[forward-auth] SSO disabled - ...`. Check for that log line after every n8n bump. If SSO is disabled, n8n's own password login still works.
 
-N8N Community Edition doesn't support OAuth2 natively. SSO is implemented via Authentik's Proxy Provider with forward-auth and external hooks.
+Paths that must work without a browser session are excluded in the blueprint's `skip_path_regex` (`authentik-system/authentik/app/blueprints/n8n-sso.yaml`): webhooks, MCP endpoints, OAuth credential callbacks and static assets. Add new machine-facing paths there, not in Traefik.
 
-### How It Works
+For users with MFA enabled in n8n, disable it (`n8n mfa:disable --email=<email>` in the main pod) and rely on Authentik MFA instead.
 
-1. User navigates to `https://n8n.${EXTERNAL_DOMAIN}`
-2. Traefik's forwardAuth middleware calls Authentik's standalone outpost
-3. Authentik authenticates user and injects `X-authentik-email` header
-4. N8N's external hooks (`hooks.js`) read the header and issue a session cookie
-5. User is logged in with their pre-provisioned N8N account
+### Agent platform wiring
 
-### User Provisioning
+- **Prompts**: `app/prompts/*.md` become the `n8n-prompts` ConfigMap, mounted as a directory so edits reach running pods without a restart (the Dispatcher workflow reads them at run time).
+- **Agent MCP endpoint**: a `mcp-header-proxy` sidecar is added to the webhook deployment by a postRenderer in `app/release.yaml` and exposed as port 8080 on the `n8n-webhook` Service. Agent pods call `n8n-webhook.n8n-system.svc:8080/mcp/agent-platform`.
+- **Workflows** (Dispatcher, callbacks, MCP Server, SRE schedule) live only in the n8n database; they are not in Git, so they are backed up only as part of the n8n database.
+- **Credentials** for the Claude Code node (one K8s credential per agent namespace, including the Claude subscription login) also live only in n8n.
 
-**Users must be pre-provisioned in N8N before SSO login works.** The hooks script looks up users by email - if not found, returns 401.
-
-To add a user:
-
-1. Log in to N8N as admin
-2. Go to Settings > Users
-3. Invite user with their Authentik email address
-
-### MFA Considerations
-
-If a user has MFA enabled in N8N, it should be disabled for SSO users since authentication is handled by Authentik:
-
-```bash
-kubectl exec -n n8n-system deploy/n8n -- n8n mfa:disable --email=user@example.com
-```
-
-MFA at the Authentik level is recommended instead for SSO users.
-
-### Webhook Bypass
-
-Webhooks are excluded from SSO authentication to allow external integrations:
-
-- `/webhook/*` - Production webhooks
-- `/webhook-test/*` - Test webhooks
-- `/healthz` - Health checks
-
-## Unified SRE Workflow
-
-n8n hosts a unified SRE workflow that combines alert triage and scheduled health checks. Each agent has a dedicated MCP tool (`submit_alert_triage` / `submit_health_check_triage`) which validates the schema.
-
-### Triggers
-
-| Trigger              | Source                                                          | Agent             |
-| -------------------- | --------------------------------------------------------------- | ----------------- |
-| Alertmanager Webhook | Firing alerts (filtered: Watchdog, InfoInhibitor, resolved)     | SRE triage        |
-| Cron (6h)            | Scheduled                                                       | Health check      |
-| MCP Server Trigger   | Agent `submit_alert_triage` / `submit_health_check_triage` call | Result processing |
-
-### Authentication
-
-| Endpoint             | Credential                                        |
-| -------------------- | ------------------------------------------------- |
-| Alertmanager Webhook | `Alertmanager webhook for SRE agent` (headerAuth) |
-| MCP Server Trigger   | `SRE Agent MCP auth` (headerAuth)                 |
-
-### Agent Configuration
-
-- **Model:** `claude-opus-4-6`
-- **Connection mode:** `k8sEphemeral`
-- **MCP config:** `/etc/mcp/mcp.json` (includes SRE MCP server for `submit_alert_triage` / `submit_health_check_triage`)
-
-See `docs/sre-automation/sre.md` for the full architecture and investigation flow.
-
-### Configuration Files
-
-| Component       | Location                      |
-| --------------- | ----------------------------- |
-| Hooks ConfigMap | `app/hooks-configmap.yaml`    |
-| Values (env)    | `app/values.yaml`             |
-| Ingress Routes  | `traefik/ingress/n8n-system/` |
-
-See [Authentik README](../../authentik-system/authentik/README.md#adding-sso-via-proxy-provider-forward-auth) for the complete SSO integration pattern.
-
-## Task Drain on Shutdown
+### Task drain on shutdown
 
 Since 2.38, n8n caps in-flight task timers at `N8N_GRACEFUL_SHUTDOWN_TIMEOUT * 0.8` once shutdown starts (`SHUTDOWN_TASK_BUDGET_RATIO` in `task-broker-ws-server.ts`). The env var is set to `75` so the cap lands on the configured `N8N_RUNNERS_TASK_TIMEOUT` of 60, and `terminationGracePeriodSeconds` is `90` on all three deployments so the kubelet does not SIGKILL mid-drain.
 
@@ -103,8 +38,24 @@ This is deliberate and should stay that way. A priority class would not help: th
 
 The tradeoff is real, so know what it costs. `maxStalledCount` is hardcoded to `0` in n8n's `scaling.service.ts`, so a job whose worker is SIGKILLed does not retry — it fails as `MaxStalledCountError` and needs a manual re-run. Only affects executions still running past the 30s mark when a node goes down.
 
+## Troubleshooting
+
+1. **SSO login returns "User not found. Please have an admin invite this user first."**
+
+   - **Cause**: No n8n user with that Authentik email.
+   - **Fix**: Invite the user in n8n with the exact email Authentik sends.
+
+2. **SSO stopped working after an n8n upgrade, n8n otherwise fine**
+
+   - **Cause**: The external hook could not find an n8n internal it depends on.
+   - **Fix**: Look for `[forward-auth]` errors in the main pod log and update `hooks-configmap.yaml` for the new internals.
+
+3. **A webhook or MCP call from outside is redirected to the Authentik login page**
+
+   - **Cause**: The path is not in the blueprint's `skip_path_regex`.
+   - **Fix**: Add it there and let the blueprint re-apply.
+
 ## References
 
 - [n8n Documentation](https://docs.n8n.io/)
-- [n8n API Documentation](https://docs.n8n.io/api/)
-- [CloudNative-PG Documentation](https://cloudnative-pg.io/)
+- [n8n external hooks](https://docs.n8n.io/hosting/configuration/environment-variables/external-hooks/)

@@ -2,38 +2,18 @@
 
 ## Overview
 
-MCP (Model Context Protocol) server providing AI assistants with web search capabilities via the Brave Search API. Runs in HTTP transport mode as a low-priority workload.
+Web search for agents, exposed as an MCP server behind the LiteLLM MCP gateway. The server itself has no caller authentication; only the `litellm` namespace can reach it, and its only egress is `api.search.brave.com`.
 
 ## Prerequisites
 
-- Brave Search API key (stored in SOPS secret)
+- Brave Search API subscription; key in `app/brave-search-secrets.sops.yaml` (`BRAVE_API_KEY`). LiteLLM's own `brave-search` search tool reads a separate `BRAVE_API_KEY` from `litellm-secrets`; when rotating the Brave key, check both.
 
-## Access
+## Operations
 
-- **In-cluster only**: `http://brave-search-mcp.brave-search-mcp.svc:8000/mcp`
-- **Network policies**: Ingress from claude-agents-read, claude-agents-write, and coder-workspaces namespaces; egress to api.search.brave.com only
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Pod fails to start**
-
-   - **Symptom**: CrashLoopBackOff
-   - **Resolution**: Check logs; likely missing or invalid BRAVE_API_KEY in brave-search-secrets.
-
-2. **Search requests fail with 401/403**
-
-   - **Symptom**: MCP tool calls return authentication errors
-   - **Resolution**: Verify BRAVE_API_KEY is valid and the Brave Search plan is active.
-
-3. **Search tool not available on plan**
-
-   - **Symptom**: Specific tools (e.g., video search) return errors
-   - **Resolution**: Check Brave Search plan tier; some tools require higher-tier plans.
+- Registered in LiteLLM through the UI at `http://brave-search-mcp.brave-search-mcp.svc:8000/mcp`; the registration lives in LiteLLM's database, not Git. See [litellm README](../../litellm/README.md#mcp-servers).
+- Some tools (e.g. video search) need a higher Brave plan tier; on a lower tier they return errors rather than being hidden.
 
 ## References
 
 - [brave-search-mcp GitHub](https://github.com/brave/brave-search-mcp)
 - [Brave Search API](https://api-dashboard.search.brave.com/)
-- [bjw-s app-template](https://github.com/bjw-s-labs/helm-charts)

@@ -2,78 +2,61 @@
 
 ## Overview
 
-Temporal runs long-lived, retryable workflows for the agent platform. It replaces n8n dispatch and BullMQ as the job engine (see `docs/agent-platform-v2.md`). Deployed with the official `temporalio/helm-charts` chart in the `temporal-system` namespace at `standard` priority. Four server services (frontend, history, matching, worker), the web UI, and an admin-tools pod, all backed by a CNPG
-PostgreSQL cluster.
+Durable, retryable workflow engine intended to take over job orchestration for the agent platform from n8n dispatch and BullMQ (#3045). Deployed from the official Temporal chart against its own CNPG cluster. No workloads use it yet.
 
 ## Prerequisites
 
-- CNPG operator deployed (dependency)
-- External Secrets deployed (dependency)
-- Barman Cloud plugin deployed (dependency), with the `temporal-secret-reader` Role and barman ingress entry in `cluster/apps/cnpg-system/plugin-barman-cloud/app/`
-- Traefik deployed (dependency)
-- Authentik deployed (dependency)
+- `temporal-secret-reader` Role and a barman plugin ingress entry for `temporal-system` in `cluster/apps/cnpg-system/plugin-barman-cloud/app/`, outside this directory.
 
-## Database
+## Operations
 
-See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `temporal-cnpg-cluster`.
+### Database layout
 
-Two databases on one cluster, both owned by the `temporal` role:
+Two databases on one CNPG cluster, both owned by the `temporal` role:
 
 | Database              | Store      | Created by                        |
 | --------------------- | ---------- | --------------------------------- |
 | `temporal`            | default    | `bootstrap.initdb` on the Cluster |
 | `temporal_visibility` | visibility | `Database` CRD                    |
 
-The chart does not create databases (`createDatabase: false`). It only runs schema migrations, as a plain Job named `temporal-schema-<chart>-<revision>`, on every Helm revision. Connections use TLS with host verification against the CNPG CA mounted from `temporal-cnpg-cluster-ca`.
+The chart does not create databases (`createDatabase: false`). Helm hooks do not run under Flux, so schema migrations and namespace creation run as plain Jobs on every Helm revision. Connections use TLS with host verification against the CNPG CA (the `-rw` service name is in the operator-issued cert SANs).
 
-## Operations
+`max_connections` is raised to 200 on the cluster because four server pods × two stores × `maxConns` 10 already consume 80 of the default 100. Recalculate if you add replicas or raise `maxConns`.
 
 ### Connecting a client
 
-In-cluster address: `temporal-frontend.temporal-system.svc:7233` (gRPC). Clients need a Cilium egress rule to that port and a matching ingress rule added to `allow-temporal-frontend-clients-ingress` in `app/network-policies.yaml`.
+In-cluster: `temporal-frontend.temporal-system.svc:7233` (gRPC) or `:7243` (HTTP API). The frontend has **no authentication**; the CNP is the only boundary. A new client needs its own egress rule to 7233 and an entry in `allow-temporal-frontend-clients-ingress` in `app/network-policies.yaml`. Never expose the frontend through Traefik or the tunnel.
 
 ### Namespaces
 
-Temporal namespaces are declared under `server.config.namespaces.namespace` in `app/values.yaml`. A Job creates any that are missing on each Helm revision. Only `default` (3 day retention) exists today.
-
-### Admin CLI
-
-```bash
-kubectl exec -n temporal-system deploy/temporal-admintools -- temporal operator namespace list
-```
-
-### UI access
-
-`https://temporal.lan.${EXTERNAL_DOMAIN}` behind Authentik forward-auth and the LAN whitelist. Users must be in the `Temporal Users` group in Authentik. The UI is admin-only, so it stays LAN-scoped.
+Temporal namespaces are declared under `server.config.namespaces.namespace` in `app/values.yaml` and created on the next Helm revision. Only `default` (3-day retention) exists.
 
 ### External webhooks
 
-Temporal has no webhook receiver. GitHub and other external callers hit an intake service (n8n today) that verifies the payload and starts a workflow over the in-cluster gRPC address above, or the HTTP API on `temporal-frontend:7243`. Do not expose the frontend ports publicly; they have no authentication by default.
+Temporal has no webhook receiver. External callers (GitHub etc.) hit an intake service (n8n today) that verifies the payload and starts a workflow over gRPC.
+
+### UI access
+
+`https://temporal.lan.${EXTERNAL_DOMAIN}`, behind Authentik forward-auth and the LAN whitelist. Access requires the `Temporal Users` group. The UI is admin-only, so it stays LAN-scoped.
 
 ## Troubleshooting
 
-1. **History shard count cannot be changed**
+1. **History pods crash-loop with a shard count mismatch after editing `numHistoryShards`**
 
-   - **Symptom**: History pods crash-loop after editing `numHistoryShards` with a shard count mismatch error.
-   - **Resolution**: Revert the value. It is fixed at first schema setup. Changing it means dropping both databases and starting over.
+   - **Cause**: The shard count is fixed at first schema setup.
+   - **Fix**: Revert the value. Changing it means dropping both databases and starting over.
 
-2. **Schema Job fails with TLS or auth errors**
+2. **Schema Job init containers restart repeatedly with TLS or auth errors**
 
-   - **Symptom**: `manage-schema-*` init containers restart repeatedly.
-   - **Resolution**: Check that `temporal-cnpg-cluster-app` and `temporal-cnpg-cluster-ca` exist and that the CNPG cluster is Ready. The Job retries on its own once the database is up.
+   - **Fix**: Check `temporal-cnpg-cluster-app` and `temporal-cnpg-cluster-ca` exist and the CNPG cluster is Ready. The Job retries on its own once the database is up.
 
-3. **Web UI returns 502 from Traefik**
+3. **`CiliumPolicyDrops` for `temporal-system` after a node drain or Talos upgrade**
 
-   - **Symptom**: Login works but the page shows a gateway error.
-   - **Resolution**: The UI pod only starts once it can reach the frontend service. Check `temporal-frontend` pod readiness first.
+   - **Symptom**: Steady egress `POLICY_DENIED` drops from the server pods to IPs with no pod behind them, on membership ports 6933-6939.
 
-4. **`CiliumPolicyDrops` for `temporal-system` after a node drain or Talos upgrade**
+   - **Cause**: Ringpop keeps dead peers as faulty for 24h (hardcoded in Temporal) and keeps dialing them. Not a missing CNP rule; do not add a `world` egress rule.
 
-   - **Symptom**: Steady egress `POLICY_DENIED` drops from the server pods to IPs with no pod behind them (empty destination), on membership ports 6933-6939.
-
-   - **Cause**: Ringpop keeps dead peers as faulty for 24h (hardcoded, not configurable in Temporal) and keeps dialing them. Not a missing CNP rule; do not add a `world` egress rule.
-
-   - **Resolution**: A rolling restart is not enough; a new pod rejoins through a survivor and inherits the stale list. Take all four servers down together (brief outage):
+   - **Fix**: A rolling restart is not enough; a new pod rejoins through a survivor and inherits the stale list. Take all four servers down together (brief outage):
 
      ```bash
      kubectl -n temporal-system scale deploy/temporal-{frontend,history,matching,worker} --replicas=0
@@ -86,4 +69,3 @@ Temporal has no webhook receiver. GitHub and other external callers hit an intak
 - [Temporal Helm chart](https://github.com/temporalio/helm-charts)
 - [Temporal self-hosted guide](https://docs.temporal.io/self-hosted-guide)
 - [Temporal configuration reference](https://docs.temporal.io/references/configuration)
-- [CloudNative-PG Documentation](https://cloudnative-pg.io/)

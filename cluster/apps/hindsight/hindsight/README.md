@@ -1,138 +1,68 @@
-# Hindsight Proxy-Side Memory
+# Hindsight - Proxy-Side Long-Term Memory
 
-Transparent long-term memory for any client routed through the LiteLLM proxy (Claude Code CLI, Coder workspaces, agent workers). A LiteLLM `CustomLogger` callback running inside the litellm pod recalls relevant memories before each LLM call and retains the exchange afterwards — **no client code changes**.
+## Overview
 
-- Plugin: `cluster/apps/litellm/litellm/app/plugins/hindsight/hindsight_plugin.py`
-- Memory store: `hindsight-api.hindsight.svc.cluster.local:8888`
-- Issue: #1890
+Long-term memory for anything routed through LiteLLM, with no client changes: a LiteLLM middleware recalls memories before each call and retains the exchange afterwards. The Hindsight API stores them in its own CNPG cluster (#1890).
 
-## How it works
+> **Dormant.** The api, worker and controlPlane are at `replicaCount: 0`, the CNPG cluster is hibernated (`cnpg.io/hibernation: "on"`), its ScheduledBackup is suspended, and the LiteLLM middleware is commented out in `litellm/litellm/app/plugins/middleware/registry.py`. The component is slated for removal (#3025). Nothing below is active until it is revived.
 
-| Phase        | LiteLLM hook              | Action                                                                                                           |
-| ------------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| pre-call     | `async_pre_call_hook`     | RECALL memories for the request's bank, inject as the **last** system block (preserves the cached prompt prefix) |
-| post-success | `async_log_success_event` | RETAIN the user prompt + assistant response (async, best effort)                                                 |
+## Operations
 
-Both phases **fail open**: any error or timeout is logged and swallowed, so memory never blocks or degrades the primary completion.
+### Reviving it
 
-## Enabling memory for a client (bank selection)
+Every item is required; skipping one leaves it broken in a non-obvious way.
 
-Memory is keyed by a **bank** (one logical memory store, e.g. one per repo). The bank is resolved per request, first match wins:
+1. `app/hindsight-cnpg-cluster.yaml`: set `cnpg.io/hibernation` to `"off"` and `monitoring.enablePodMonitor` to `true` (it is off because an empty scrape pool fires `ScrapePoolHasNoTargets`).
+2. `app/hindsight-cnpg-scheduled-backups.yaml`: set `suspend: false`.
+3. `ks.yaml`: restore `wait: true`. It is `false` only because a hibernated cluster never reports Ready and `traefik-ingress` depends on this Kustomization.
+4. `app/values.yaml`: scale api, worker and controlPlane back up. Bring the api to 1 first so only one node cold-pulls the ~1.4 GB image; Spegel fans it out before you go to 2. Re-enable the PDBs only once replicas are above 1.
+5. LiteLLM: re-register the `hindsight-model` and `hindsight-embedding` aliases in `config.yaml`. They were removed (#3025), so the api and worker will get 400s from LiteLLM without them.
+6. LiteLLM: uncomment the `hindsight` `MiddlewareSpec` in `middleware/registry.py`. Keep it before `chatgpt` — Hindsight injects into the Anthropic `system` field and the ChatGPT middleware then translates the final system content.
+7. Check that `HINDSIGHT_API_CONSOLIDATION_LLM_MODEL` in `values.yaml` still names a model LiteLLM serves; it was not updated when older Claude models were retired.
+
+### Bank selection
+
+Memory is keyed by a **bank** (one logical store, e.g. one per repo), resolved per request, first match wins:
 
 1. Request header `x-hindsight-bank`
 2. Virtual-key metadata `hindsight_bank`
 3. Team metadata `hindsight_bank`
-4. **None → skip memory entirely** (no shared default bank — prevents cross-bank contamination)
+4. **None → skip memory entirely** (no shared default bank — prevents cross-repo contamination)
 
-The bank value is sanitized to `[A-Za-z0-9-]`.
+The value is sanitized to `[A-Za-z0-9-]`. For Claude Code, add `x-hindsight-bank: <repo>` to `ANTHROPIC_CUSTOM_HEADERS` alongside the LiteLLM key header.
 
-### Claude Code CLI
+### Middleware behaviour
 
-Set the custom header to a stable slug (e.g. the repository name). Claude Code already routes to litellm via `ANTHROPIC_BASE_URL`.
+- Both recall and retain **fail open**: errors and timeouts are logged and swallowed.
+- Memory is injected as the **last** Anthropic `system` block so the cached prompt prefix is preserved. Watch prompt-cache metrics after changing injection.
+- Recall runs inline and slows as the bank grows (2.4-3.5s at ~30 facts), which exceeds the plugin's 3s default; `HINDSIGHT_TIMEOUT_S` is raised to 30 on the LiteLLM container for that reason.
+- Each exchange is retained as one item whose `content` is a JSON conversation array. That shape is what makes `HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE` (8192) apply; a bare string is split at the 3000-char default and fragments memories.
+- Other plugin env vars and their defaults are at the top of `HindsightMiddleware.__init__` in `litellm/litellm/app/plugins/hindsight/hindsight_plugin.py`.
 
-```bash
-export ANTHROPIC_CUSTOM_HEADERS="x-hindsight-bank: spruyt-labs"
-```
+### Extraction tuning
 
-Without the header (and without virtual-key/team metadata) the callback is a safe no-op.
-
-### Virtual-key fallback
-
-To bind a bank to a LiteLLM virtual key instead of a header, set `hindsight_bank` in the key's metadata. Any request using that key then shares the bank without needing the header.
-
-## Configuration (env on the litellm container)
-
-Read once at module init. Defaults shown.
-
-| Env var                       | Default                                                 | Purpose                                  |
-| ----------------------------- | ------------------------------------------------------- | ---------------------------------------- |
-| `HINDSIGHT_BASE_URL`          | `http://hindsight-api.hindsight.svc.cluster.local:8888` | Hindsight API base                       |
-| `HINDSIGHT_TIMEOUT_S`         | `30.0`                                                  | Recall/retain HTTP timeout (fails open)  |
-| `HINDSIGHT_RECALL_BUDGET`     | `mid`                                                   | Recall budget: `low` / `mid` / `high`    |
-| `HINDSIGHT_MAX_MEMORY_TOKENS` | `4096`                                                  | Cap on injected memory tokens            |
-| `HINDSIGHT_INJECT`            | `true`                                                  | Master switch for the recall/inject path |
-| `HINDSIGHT_RETAIN`            | `true`                                                  | Master switch for the retain path        |
-| `HINDSIGHT_BANK_HEADER`       | `x-hindsight-bank`                                      | Header name used for bank resolution     |
-
-The callback is wired in `values.yaml` under `litellm_settings.callbacks` as `custom_callbacks.hindsight.hindsight_plugin.hindsight_middleware`, resolved via `PYTHONPATH=/app:/app/custom_callbacks` and the configMap subPath mounts.
-
-## Extraction tuning (env on the hindsight-api / worker)
-
-Set in `cluster/apps/hindsight/hindsight/app/values.yaml` under `api.env` and `worker.env` (the worker processes async retain, so both must match). Tuned for Claude Code coding sessions (issue #2270):
-
-| Env var                                      | Value               | Purpose                                                                   |
-| -------------------------------------------- | ------------------- | ------------------------------------------------------------------------- |
-| `HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE` | `8192`              | Keep a whole conversation turn intact (vs splitting at 3000-char default) |
-| `HINDSIGHT_API_RETAIN_EXTRACTION_MODE`       | `verbose`           | Richer, context-rich facts (vs `concise` fragmentation)                   |
-| `HINDSIGHT_API_RETAIN_MISSION`               | coding-focused      | Steers extraction toward self-contained engineering facts                 |
-| `HINDSIGHT_API_RETAIN_LLM_MODEL`             | `claude-haiku-4-5`  | Per-turn extraction — lighter model conserves subscription usage budget   |
-| `HINDSIGHT_API_CONSOLIDATION_LLM_MODEL`      | `claude-sonnet-4-6` | Nightly consolidation — stronger model, low volume                        |
-| `HINDSIGHT_API_ENABLE_AUTO_CONSOLIDATION`    | `false`             | Consolidation moved off the per-turn path to the nightly CronJob          |
-
-The retain payload **must** be a JSON conversation array for `STRUCTURED_CHUNK_SIZE` to apply — the LiteLLM callback sends the exchange as one such item (see `_conversation_item`).
-
-## Nightly consolidation CronJob
-
-`consolidate-cronjob.yaml` runs `hindsight-consolidate` nightly: it lists banks (`GET /v1/default/banks`) and POSTs `/v1/default/banks/{bank_id}/consolidate` for each. It replaces per-turn auto-consolidation. Network reach is restricted to api:8888 by the `allow-hindsight-consolidate-egress` policy in `network-policies.yaml` plus the matching api ingress rule.
-
-## Verification
-
-```bash
-# Plugin importable inside the pod
-POD=$(kubectl -n litellm get pod -l app.kubernetes.io/name=litellm -o name | head -1)
-kubectl -n litellm exec "$POD" -c litellm -- \
-  python -c "import custom_callbacks.hindsight.hindsight_plugin as m; print(type(m.hindsight_middleware))"
-
-# Recall activity (per request)
-kubectl -n hindsight logs deploy/hindsight-api | grep -iE "RECALL"
-
-# A recall hit looks like:
-#   [RECALL <bank>-...] Complete: 3 facts (70 tok), 0 chunks, 4 entities | ... | 0.15s
-```
-
-End-to-end smoke test (master key is referenced, never printed):
-
-```bash
-POD=$(kubectl -n litellm get pod -l app.kubernetes.io/name=litellm -o name | head -1)
-# 1) RETAIN a fact
-kubectl -n litellm exec "$POD" -c litellm -- python - <<'PY'
-import os, urllib.request, json
-body = {"model": "claude-haiku-4-5", "max_tokens": 64,
-        "messages": [{"role": "user", "content": "Remember: the deploy guardian is a teal otter named Bram."}]}
-req = urllib.request.Request("http://localhost:4000/v1/messages", data=json.dumps(body).encode(),
-    headers={"Authorization": "Bearer " + os.environ["LITELLM_MASTER_KEY"],
-             "Content-Type": "application/json", "x-hindsight-bank": "smoke-test"})
-urllib.request.urlopen(req, timeout=60).read(); print("retain sent")
-PY
-sleep 10
-# 2) RECALL it (fact is NOT in this prompt)
-kubectl -n litellm exec "$POD" -c litellm -- python - <<'PY'
-import os, urllib.request, json
-body = {"model": "claude-haiku-4-5", "max_tokens": 64,
-        "messages": [{"role": "user", "content": "Who is the deploy guardian? Say UNKNOWN if unsure."}]}
-req = urllib.request.Request("http://localhost:4000/v1/messages", data=json.dumps(body).encode(),
-    headers={"Authorization": "Bearer " + os.environ["LITELLM_MASTER_KEY"],
-             "Content-Type": "application/json", "x-hindsight-bank": "smoke-test"})
-r = json.load(urllib.request.urlopen(req, timeout=60))
-print("".join(b.get("text","") for b in r.get("content", []) if b.get("type") == "text"))
-PY
-# Expect the answer to name Bram — supplied only by recall injection.
-```
+Retain settings in `app/values.yaml` are tuned for coding sessions (#2270): whole-turn chunks, `verbose` extraction, and a coding-focused `RETAIN_MISSION`. Per-turn auto-consolidation is off; `app/consolidate-cronjob.yaml` consolidates every bank nightly instead, so the heavier consolidation model runs once a day rather than per turn.
 
 ## Troubleshooting
 
-| Symptom                       | Check                                                                                                                                                                                                |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No memory injected            | Bank not resolving — confirm the header reaches litellm (`data["proxy_server_request"]["headers"]`) or virtual-key metadata. No bank → intentional skip.                                             |
-| Retain silently absent        | `kubectl -n litellm logs "$POD" -c litellm \| grep -i "hindsight retain failed"`. The retain path reads the bank from `litellm_params.proxy_server_request.headers` in the success event.            |
-| `422` on retain               | `MemoryItem.context` must be a string. The exchange is sent as ONE item whose `content` is a JSON conversation array (`[{role,content},…]`); `context` is the session label.                         |
-| Partial / fragmented memories | Each turn must reach Hindsight as a conversation array so `chunk_text` keeps it whole up to `HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE` (8192). A bare string splits at `RETAIN_CHUNK_SIZE` (3000). |
-| Slow first token              | Recall is a vector lookup with a 3s fail-open timeout. No per-request LLM call (reflect is intentionally avoided on the hot path).                                                                   |
-| Cache-hit regression          | Memory is injected as the **last** system block to preserve the cached prefix. Watch prompt-cache metrics after changes.                                                                             |
+1. **api or worker crash-loops at ~50s with no useful log**
 
-Historical logs for deleted/rotated pods: use the `victorialogs` MCP tools (via LiteLLM), e.g. `{namespace="litellm"} |~ "hindsight"`.
+   - **Cause**: The egress CNP allows only Postgres and LiteLLM. Without offline mode, transformers does an online check against huggingface.co that hangs until the liveness probe kills the pod.
+   - **Fix**: Keep `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1` on both api and worker; the reranker model is baked into the image.
 
-## Notes & limitations
+2. **Worker crashes with `invalid literal for int(): 'tcp://...'`**
 
-- **Streaming**: `async_log_success_event` fires after the full response is assembled, so retain works for streamed responses. An aborted stream is not retained (best effort, acceptable).
-- The hindsight namespace is locked down with CiliumNetworkPolicies; the litellm → hindsight `api:8888` path is explicitly allowed (`allow-litellm-hindsight-egress` + `allow-hindsight-api-ingress`).
+   - **Cause**: The `hindsight-api` Service makes Kubernetes inject `HINDSIGHT_API_PORT=tcp://...` into every pod.
+   - **Fix**: Keep the explicit `HINDSIGHT_API_PORT: "8888"` in `worker.env`.
+
+3. **`422` on retain**
+
+   - **Cause**: `MemoryItem.context` must be a string; the conversation array belongs in `content`.
+
+4. **No memory injected**
+
+   - **Cause**: No bank resolved, which is an intentional skip. Confirm the header reaches LiteLLM or the key/team has `hindsight_bank` metadata.
+
+## References
+
+- [Hindsight](https://github.com/vectorize-io/hindsight)

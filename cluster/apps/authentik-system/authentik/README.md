@@ -2,16 +2,9 @@
 
 ## Overview
 
-Open-source Identity Provider for SSO authentication across the cluster.
+Single sign-on for every web UI in the cluster. All providers, applications and groups are declared as blueprints in `app/blueprints/`; nothing is configured by hand in the Authentik UI. This README is the reference for wiring a new app into SSO (OAuth2, proxy/forward-auth, or SAML) and for the OAuth client-secret rotation job.
 
-## Prerequisites
-
-- CNPG operator (PostgreSQL) - cluster name: `authentik-cnpg-cluster`
-- cert-manager for TLS
-
-## Database
-
-See [CNPG operator docs](../../cnpg-system/cnpg-operator/README.md#kubectl-cnpg-plugin) for `kubectl cnpg` plugin usage. Cluster name: `authentik-cnpg-cluster`
+Paths below starting with `app/` are relative to this directory; other paths are relative to `cluster/apps/`.
 
 ## Adding SSO Integration (Blueprints)
 
@@ -202,7 +195,7 @@ metadata:
   name: <app>-oauth-credentials
   namespace: <consumer-namespace>
 spec:
-  refreshInterval: 1h
+  refreshInterval: 5m
   secretStoreRef:
     kind: SecretStore
     name: <app>-oauth-store
@@ -220,7 +213,7 @@ spec:
         property: <APP>_OAUTH_CLIENT_SECRET
 ```
 
-**RBAC (in authentik-system)** - create `app/<app>-oauth-rbac.yaml`:
+**RBAC (in authentik-system)** - append a Role/RoleBinding pair to `app/external-secrets-rbac.yaml`, which holds one pair per consumer:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -264,38 +257,14 @@ token_url: http://authentik-server.authentik-system/application/o/token/ # Inter
 api_url: http://authentik-server.authentik-system/application/o/userinfo/ # Internal
 ```
 
-Mount credentials via `envFromSecrets` or similar mechanism.
+The authorize, token and userinfo endpoints have no app slug in the path. Mount credentials via `envFrom` or similar mechanism.
 
 ### OAuth2Provider Required Attrs
 
 - `authorization_flow`, `invalidation_flow` - Required flows
 - `client_type: confidential` - For server-side apps
 - `redirect_uris` - List with `url` and `matching_mode: strict`
-- `property_mappings` - Required for userinfo to return claims:
-
-```yaml
-property_mappings:
-  - !Find [
-      authentik_core.propertymapping,
-      [name, "authentik default OAuth Mapping: OpenID 'openid'"],
-    ]
-  - !Find [
-      authentik_core.propertymapping,
-      [name, "authentik default OAuth Mapping: OpenID 'profile'"],
-    ]
-  - !Find [
-      authentik_core.propertymapping,
-      [name, "authentik default OAuth Mapping: OpenID 'email'"],
-    ]
-```
-
-**OIDC Endpoints** (no app slug in path):
-
-- `auth_url` - External: `https://auth.example.com/application/o/authorize/`
-- `token_url` - Internal: `http://authentik-server.authentik-system/application/o/token/`
-- `api_url` - Internal: `http://authentik-server.authentik-system/application/o/userinfo/`
-
-Use internal K8s service URLs for token/userinfo (server-to-server calls).
+- `property_mappings` - Required, or userinfo returns no claims (see the Step 1 blueprint)
 
 **Blueprint file format**: `# yamllint disable-file` must be on line 1.
 
@@ -310,7 +279,7 @@ print(Importer.from_string(bp.retrieve(), bp.context).apply())
 "
 ```
 
-### Force Blueprint Reload
+### Blueprint Status and Force Reload
 
 To list all blueprints and their status:
 
@@ -336,16 +305,18 @@ else:
 "
 ```
 
-### OAuth Credential Rotation
+## OAuth Credential Rotation
 
-Automated weekly rotation of OAuth `client_secret` via CronJob. Only the secret is rotated - `client_id` remains stable (required for integrations like kube-apiserver OIDC).
+A CronJob (`app/oauth-secret-rotation/cronjob.yaml`) rotates each OAuth provider's `client_secret`. Only the secret is rotated - `client_id` remains stable (required for integrations like kube-apiserver OIDC).
 
 ### How It Works
 
 1. CronJob generates new client_secret
-2. Updates Authentik OAuth2 provider via REST API
+2. Looks up the OAuth2 provider by **name** and updates it via REST API
 3. Patches the app's dedicated OAuth secret (e.g., `authentik-grafana-oauth`)
 4. Forces ExternalSecret sync in consumer namespace
+
+The first argument to `rotate_oauth` must match the provider `name` in the blueprint exactly. Renaming a provider in a blueprint without updating the CronJob breaks rotation for that app.
 
 ### Rotation Prerequisites
 
@@ -410,7 +381,7 @@ subjects:
 
 3. **Update CronJob Role** (`app/oauth-secret-rotation/role.yaml`):
 
-Ensure secret keys are listed in resourceNames for patching.
+Add the app's `authentik-<app>-oauth` secret name to `resourceNames`, or the patch step is forbidden.
 
 ## File Reference
 
@@ -419,58 +390,24 @@ Ensure secret keys are listed in resourceNames for patching.
 | Blueprint                | `app/blueprints/<app>-sso.yaml`                      |
 | OAuth Secret             | `app/authentik-<app>-oauth.sops.yaml`                |
 | Core Secrets             | `app/authentik-secrets.sops.yaml`                    |
-| Helm values              | `app/values.yaml`                                    |
-| OAuth Reader RBAC        | `app/<app>-oauth-rbac.yaml`                          |
+| OAuth Reader RBAC        | `app/external-secrets-rbac.yaml`                     |
 | Rotation Service Account | `app/blueprints/oauth-rotation-service-account.yaml` |
 | Rotation CronJob         | `app/oauth-secret-rotation/cronjob.yaml`             |
 | Rotation RBAC            | `app/oauth-secret-rotation/role.yaml`                |
 
-**Grafana Example Files:**
-
-| Component      | Location                                                            |
-| -------------- | ------------------------------------------------------------------- |
-| Blueprint      | `app/blueprints/grafana-sso.yaml`                                   |
-| OAuth Secret   | `app/authentik-grafana-oauth.sops.yaml`                             |
-| Reader RBAC    | `app/external-secrets-rbac.yaml`                                    |
-| SecretStore    | `victoria-metrics-k8s-stack/app/authentik-secret-store.yaml`        |
-| ExternalSecret | `victoria-metrics-k8s-stack/app/grafana-oauth-external-secret.yaml` |
-| Rotation RBAC  | `victoria-metrics-k8s-stack/app/oauth-rotation-rbac.yaml`           |
-
-**Vaultwarden Example Files:**
-
-| Component      | Location                                                             |
-| -------------- | -------------------------------------------------------------------- |
-| Blueprint      | `app/blueprints/vaultwarden-sso.yaml`                                |
-| OAuth Secret   | `app/authentik-vaultwarden-oauth.sops.yaml`                          |
-| Reader RBAC    | `app/external-secrets-rbac.yaml`                                     |
-| SecretStore    | `vaultwarden/vaultwarden/app/authentik-secret-store.yaml`            |
-| ExternalSecret | `vaultwarden/vaultwarden/app/vaultwarden-oauth-external-secret.yaml` |
-| Rotation RBAC  | `vaultwarden/vaultwarden/app/oauth-rotation-rbac.yaml`               |
+Worked OAuth2 examples: Grafana (`observability/victoria-metrics-k8s-stack/app/`), Vaultwarden (`vaultwarden/vaultwarden/app/`), Headlamp (`headlamp-system/headlamp/app/`), Coder (`coder-system/coder/app/`), LiteLLM (`litellm/litellm/app/`). Each consumer directory has `authentik-secret-store.yaml`, `<app>-oauth-external-secret.yaml` and `oauth-rotation-rbac.yaml`.
 
 **Vaultwarden-specific notes:**
 
-- Requires `testing-alpine` image tag (SSO not in stable releases yet)
 - `access_token_validity: minutes=10` required (Bitwarden clients detect 5min expiry)
 - `signing_key` required - must use RS256 (HS256 incompatible with Vaultwarden)
 - Include `offline_access` scope for refresh tokens
 - Callback URL: `https://vaultwarden.${EXTERNAL_DOMAIN}/identity/connect/oidc-signin`
 
-**Headlamp Example Files:**
-
-| Component      | Location                                           |
-| -------------- | -------------------------------------------------- |
-| Blueprint      | `app/blueprints/headlamp-sso.yaml`                 |
-| OAuth Secret   | `app/authentik-headlamp-oauth.sops.yaml`           |
-| Reader RBAC    | `app/headlamp-oauth-rbac.yaml`                     |
-| SecretStore    | `headlamp/app/authentik-secret-store.yaml`         |
-| ExternalSecret | `headlamp/app/headlamp-oauth-external-secret.yaml` |
-| Rotation RBAC  | `headlamp/app/oauth-rotation-rbac.yaml`            |
-| User RBAC      | `headlamp/app/user-rbac.yaml`                      |
-
 **Headlamp-specific notes:**
 
 - Requires RS256 signing (HS256 incompatible with Headlamp)
-- Uses kube-apiserver OIDC for user impersonation - see `talos/patches/control-plane/configure-api-server.yaml`
+- Uses kube-apiserver OIDC for user impersonation - see `talos/patches/control-plane/05-configure-api-server.yaml.tpl`
 - Only `client_secret` rotates - `client_id` must be stable (referenced in kube-apiserver config)
 - Requires custom email mapping for `email_verified: true` (see below)
 
@@ -605,27 +542,25 @@ entries:
 
 ### Step 3: Create Traefik ForwardAuth Middleware
 
-Create middleware in `traefik/ingress/<app-namespace>/` kustomization. The base template is in `traefik/ingress/base/authentik-forward-auth.yaml`:
+Include the base middleware `traefik/traefik/ingress/base/authentik-forward-auth.yaml` in `traefik/traefik/ingress/<app-namespace>/kustomization.yaml` and patch its namespace and address (the base ships a placeholder address):
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: authentik-forward-auth
-  namespace: <app-namespace>
-spec:
-  forwardAuth:
-    # FQDN required - Traefik resolves from its own namespace context
-    # Service name format: ak-outpost-<outpost-name-slug>
-    address: http://ak-outpost-<app>-outpost.<app-namespace>.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
-    trustForwardHeader: true
-    authResponseHeaders:
-      - X-authentik-username
-      - X-authentik-groups
-      - X-authentik-email
-      - X-authentik-name
-      - X-authentik-uid
+resources:
+  - ../base/authentik-forward-auth.yaml
+patches:
+  - target:
+      kind: Middleware
+      name: authentik-forward-auth
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: <app-namespace>
+      - op: replace
+        path: /spec/forwardAuth/address
+        value: http://ak-outpost-<app>-outpost.<app-namespace>.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
 ```
+
+The address must be an FQDN - Traefik resolves it from its own namespace.
 
 **Outpost service naming:** Authentik creates services named `ak-outpost-<slug>` where slug is the lowercase, hyphenated outpost name. Example: "N8N Outpost" → `ak-outpost-n8n-outpost`.
 
@@ -653,16 +588,11 @@ spec:
           port: 80
 ```
 
-### Step 5: Add Flux Dependency
+### Step 5: Add Flux Dependency and Outpost Network Policies
 
-The app's Kustomization must depend on authentik to ensure RBAC exists before outpost deployment:
+The app's Kustomization must `dependsOn: authentik` so the outpost RBAC exists before Authentik tries to deploy the outpost.
 
-```yaml
-# In <app>/ks.yaml
-spec:
-  dependsOn:
-    - name: authentik
-```
+The outpost pod is covered by the app namespace's default-deny, so it needs its own CiliumNetworkPolicies (selector `app.kubernetes.io/managed-by: goauthentik.io`): Traefik ingress on 9000/9443, egress to `authentik-system` on 9000/9443, world 443 egress, and vmagent ingress on 9300. Copy the `allow-outpost-*` policies from `n8n-system/n8n/app/network-policies.yaml`.
 
 ### Step 6: Configure Application
 
@@ -677,13 +607,13 @@ Configure the application to trust and use these headers for authentication.
 
 **N8N Example Files:**
 
-| Component       | Location                                           |
-| --------------- | -------------------------------------------------- |
-| Blueprint       | `app/blueprints/n8n-sso.yaml`                      |
-| Outpost RBAC    | `n8n/app/authentik-outpost-rbac.yaml`              |
-| ForwardAuth     | `traefik/ingress/base/authentik-forward-auth.yaml` |
-| Ingress Routes  | `traefik/ingress/n8n-system/ingress-routes.yaml`   |
-| Hooks ConfigMap | `n8n/app/hooks-configmap.yaml`                     |
+| Component       | Location                                                 |
+| --------------- | -------------------------------------------------------- |
+| Blueprint       | `app/blueprints/n8n-sso.yaml`                            |
+| Outpost RBAC    | `n8n-system/n8n/app/authentik-outpost-rbac.yaml`         |
+| ForwardAuth     | `traefik/traefik/ingress/n8n-system/kustomization.yaml`  |
+| Ingress Routes  | `traefik/traefik/ingress/n8n-system/ingress-routes.yaml` |
+| Hooks ConfigMap | `n8n-system/n8n/app/hooks-configmap.yaml`                |
 
 ## Adding SSO via SAML Provider
 
@@ -790,7 +720,7 @@ When the application is behind TLS termination (Traefik terminates HTTPS), the b
 **Add the `https-proto-header` middleware** to set `X-Forwarded-Proto: https`:
 
 ```yaml
-# In traefik/ingress/<app-namespace>/kustomization.yaml
+# In traefik/traefik/ingress/<app-namespace>/kustomization.yaml
 resources:
   - ../base/https-proto-header.yaml # Add this
 
@@ -840,31 +770,16 @@ For applications with CLI-based SAML setup (like Ceph Dashboard), automation via
 
 **Ceph Dashboard Example Files:**
 
-| Component          | Location                                        |
-| ------------------ | ----------------------------------------------- |
-| Blueprint          | `app/blueprints/ceph-dashboard-sso.yaml`        |
-| SSO Config Sidecar | `rook-ceph/rook-ceph-cluster/app/release.yaml`  |
-| HTTPS Header MW    | `traefik/ingress/base/https-proto-header.yaml`  |
-| Ingress Routes     | `traefik/ingress/rook-ceph/ingress-routes.yaml` |
+| Component          | Location                                                |
+| ------------------ | ------------------------------------------------------- |
+| Blueprint          | `app/blueprints/ceph-dashboard-sso.yaml`                |
+| SSO Config Sidecar | `rook-ceph/rook-ceph-cluster/app/release.yaml`          |
+| HTTPS Header MW    | `traefik/traefik/ingress/base/https-proto-header.yaml`  |
+| Ingress Routes     | `traefik/traefik/ingress/rook-ceph/ingress-routes.yaml` |
 
 ## Group-Based Access Control
 
-All SSO blueprints include `authentik_policies.policybinding` to restrict application access to group members only. Without this binding, any authenticated Authentik user can access the application.
-
-### Policy Binding Pattern
-
-```yaml
-# Policy binding to restrict access to group members only
-- model: authentik_policies.policybinding
-  identifiers:
-    target: !KeyOf <app>_application
-    order: 0
-  attrs:
-    group: !KeyOf <app>_users_group
-    negate: false
-    enabled: true
-    timeout: 30
-```
+Every SSO blueprint includes an `authentik_policies.policybinding` on the application (see the blueprints above). Without it, any authenticated Authentik user can access the application.
 
 ### Group Hierarchy
 
@@ -978,7 +893,7 @@ Include BOTH the default proxy scope AND custom scope:
 Traefik only forwards headers explicitly listed in `authResponseHeaders`. Add a patch to the app's ingress kustomization:
 
 ```yaml
-# In traefik/ingress/<app-namespace>/kustomization.yaml
+# In traefik/traefik/ingress/<app-namespace>/kustomization.yaml
 patches:
   - target:
       kind: Middleware
@@ -1038,11 +953,11 @@ property_mappings:
 ## Troubleshooting
 
 1. **Blueprint shows error but no logs** - Errors stored in DB, use debug command above
-2. **Database connection failures** - Check CNPG cluster health
-3. **Pods CrashLoopBackOff** - Check secrets
-4. **SAML schema validation error** - Check `audience` matches SP entity ID exactly, ensure `property_mappings` are included
-5. **SAML HTTP vs HTTPS mismatch** - Add `https-proto-header` middleware to Traefik ingress
-6. **User can access app without being in group** - Missing `policybinding` in blueprint; add policy binding to application
+2. **Blueprint never discovered** - The file is missing from either the `configMapGenerator` list or the `blueprints-custom` volume `items` (Step 3)
+3. **SAML schema validation error** - Check `audience` matches SP entity ID exactly, ensure `property_mappings` are included
+4. **SAML HTTP vs HTTPS mismatch** - Add `https-proto-header` middleware to Traefik ingress
+5. **User can access app without being in group** - Missing `policybinding` in blueprint; add policy binding to application
+6. **Rotation job fails with "Could not find OAuth2 provider"** - The `rotate_oauth` provider name no longer matches the blueprint provider `name`
 
 ## References
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-MCP (Model Context Protocol) server giving AI assistants read and write access to the UniFi Network controller — clients, devices, networks, firewall policies, events. Runs in streamable-HTTP transport mode as a low-priority workload, reachable only from the `litellm` namespace.
+MCP server giving agents read and write access to the UniFi Network controller (clients, devices, networks, firewall policies, events), brokered through LiteLLM. It has no inbound authentication, so the network policy is its only security boundary — read Operations before changing anything.
 
 ## Prerequisites
 
@@ -10,14 +10,13 @@ MCP (Model Context Protocol) server giving AI assistants read and write access t
 - A dedicated **local** UniFi admin account with **no MFA/2FA**. Ubiquiti Cloud SSO accounts do not work; an MFA-enabled account fails at login with `SSO MFA required but no totp_secret configured`.
 - Credentials stored in `unifi-network-mcp-secrets` (SOPS). The controller address comes from the `UNIFI_IP4` substitution variable in `cluster-secrets`.
 
-## Access
-
-- **In-cluster only**: `http://unifi-network-mcp.unifi-mcp.svc:3000/mcp`
-- **Via agents**: brokered by LiteLLM; tools surface under the `mcp__litellm__unifi-*` prefix
-- **Network policies**: ingress from the `litellm` namespace only; egress restricted to the single controller address (`${UNIFI_IP4}/32`) on port 11443. UniFi OS Server publishes the UI on host `11443` mapped to container `443`; host `443` is deliberately unused, so `UNIFI_NETWORK_PORT` and the egress policy must both say `11443`.
-- No IngressRoute and no Cloudflare Tunnel route — the listener has **no caller authentication** of its own, so the CiliumNetworkPolicy is the security boundary
-
 ## Operations
+
+### Access and controller port
+
+- Endpoint registered in LiteLLM: `http://unifi-network-mcp.unifi-mcp.svc:3000/mcp`. Agents see the tools under the `mcp__litellm__unifi-*` prefix.
+- UniFi OS Server publishes the UI on host `11443` mapped to container `443`; host `443` is deliberately unused, so `UNIFI_NETWORK_PORT` and the egress CNP must both say `11443`.
+- No IngressRoute and no Cloudflare Tunnel route, by design (see next section).
 
 ### No inbound authentication — the CiliumNetworkPolicy is the only boundary
 
@@ -62,7 +61,8 @@ If it has landed: add the credential to `unifi-network-mcp-secrets`, set the cor
 
 ### LiteLLM registration is manual
 
-MCP servers are registered through the **LiteLLM UI**, not `config.yaml`. This deviates from the repo's declarative-only rule. YAML-side MCP config was unreliable when the other MCP servers were added; LiteLLM runs with `store_model_in_db: true` and `supported_db_objects: [mcp]`, so UI registration persists in Postgres.
+MCP servers are registered through the **LiteLLM UI**, not `config.yaml`. This deviates from the repo's declarative-only rule. YAML-side MCP config was unreliable when the other MCP servers were added; LiteLLM runs with `store_model_in_db: true` and `supported_db_objects: [mcp]`, so UI registration persists in Postgres. The same applies to every MCP server behind LiteLLM (Brave Search, n8n-mcp,
+the Victoria MCP servers).
 
 **On a cluster rebuild this registration does not come back on its own** — re-add the server in the LiteLLM UI pointing at `http://unifi-network-mcp.unifi-mcp.svc:3000/mcp`.
 
@@ -89,7 +89,7 @@ A **typo in a policy variable name fails open** — the gate silently does not a
 
 ## Troubleshooting
 
-1. **403 Forbidden / "host not allowed"**
+1. **421 Misdirected Request / "Invalid Host header"**
 
    - **Symptom**: a 421 from the MCP endpoint; pod logs show `mcp.server.transport_security - WARNING - Invalid Host header: <name>`
    - **Resolution**: the Host header LiteLLM sends must appear in `UNIFI_MCP_ALLOWED_HOSTS` in `values.yaml`, **with the `:3000` port suffix**. Upstream docs say bare hostnames are normalised to `host:*`; verified against image `0.32.6` that is not true — a bare entry is rejected with 421 while the `host:3000` form is accepted. If the entry list ever needs to match an unknown port,
@@ -134,4 +134,3 @@ A **typo in a policy variable name fails open** — the gate silently does not a
 - [Network server configuration](https://github.com/sirkirby/unifi-mcp/blob/main/apps/network/docs/configuration.md)
 - [Transports](https://github.com/sirkirby/unifi-mcp/blob/main/apps/network/docs/transports.md)
 - [Permissions](https://github.com/sirkirby/unifi-mcp/blob/main/docs/permissions.md)
-- [bjw-s app-template](https://github.com/bjw-s-labs/helm-charts)

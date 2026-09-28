@@ -1,63 +1,53 @@
-# coder-template-sync — GitOps template sync for Coder
+# coder-template-sync - GitOps template sync for Coder
 
 ## Overview
 
-Hash-triggered Job pushes every directory under `app/templates/**` to the Coder control plane via the `gitops-bot` headless user. A CronJob (every 3 days, `0 2 */3 * *`) rotates the `gitops-bot` session token and patches the Secret in place; the SOPS-seeded manifest uses `kustomize.toolkit.fluxcd.io/ssa: IfNotPresent` so runtime rotations are preserved.
-
-Image: `ghcr.io/anthony-spruyt/coder-gitops` (see [container-images#458](https://github.com/anthony-spruyt/container-images/issues/458)).
-
-> **Note**: This component has no HelmRelease — it ships Kustomize-rendered resources directly.
+Keeps Coder workspace templates in Git: a Job pushes every template under `app/templates/` to Coder as the `gitops-bot` headless user whenever a template file changes, and a CronJob keeps that user's session token alive. Kustomize-only; no HelmRelease.
 
 ## Prerequisites
 
-- `coder` Kustomization deployed (dependsOn).
-- `gitops-bot` headless user exists in Coder with `template-admin` site role.
-- `coder-gitops-bot-token` Secret seeded by Flux from `app/secret-bootstrap.sops.yaml` (keys: `token`, `token-id`).
+- `gitops-bot` headless user in Coder with the `template-admin` site role (manual, one-time).
+- A bootstrap session token for it in `app/secret-bootstrap.sops.yaml` (`coder-gitops-bot-token`, keys `token` and `token-id`).
 
-## Operation
+## Operations
 
-### Add a new template
+### How a change triggers a push
 
-1. Create `app/templates/<name>/` and place Terraform sources inside.
-2. Append each file to `configMapGenerator.files` in `app/kustomization.yaml` (explicit list, not a glob, so the hash changes visibly).
-3. Commit + push — Flux re-renders the ConfigMap with a new hash, which triggers a new `coder-template-push` Job.
+Template files are packed into the `coder-templates` ConfigMap with a hashed name. `app/kustomizeconfig.yaml` rewrites the Job's volume to that hashed name, so any template edit changes the Job spec. Job specs are immutable, so the Job carries `kustomize.toolkit.fluxcd.io/force: "Enabled"` (the value must be `Enabled`; `true` is ignored) and Flux deletes and recreates it (#966).
 
-### Manual push (escape hatch)
+`ks.yaml` sets `substitution.flux.home.arpa/disabled: "true"` because HCL `${...}` interpolation cannot be escaped for Flux. **Do not use `${VAR}` Flux substitutions in this component.**
 
-From a shell with `coder` CLI logged in as an admin:
+### Add a template
 
-```bash
-coder templates push <name> -y
-```
+1. Create `app/templates/<name>/` with `main.tf` and `README.md`.
+2. Add each file to `configMapGenerator.files` in `app/kustomization.yaml` as `<name>__<file>=./templates/<name>/<file>` (ConfigMap keys cannot contain `/`).
+3. Add a matching `items` entry to the `templates` volume in `app/job-template-push.yaml` mapping the key back to `<name>/<file>`. A file missing here is silently absent from the push.
 
-### Manual rotation
+### Token rotation
 
-```bash
-kubectl -n coder-system create job \
-  --from=cronjob/coder-token-rotation rotation-smoke-test
-kubectl -n coder-system logs job/rotation-smoke-test
-```
+The CronJob `coder-token-rotation` mints a new 7-day token every 3 days and patches `coder-gitops-bot-token` in place. The bootstrap SOPS secret is only the seed, so after the first rotation the value in Git is stale by design.
+
+Manual push, if the Job is broken: `coder templates push <name> --directory app/templates/<name> -y` as a template admin.
 
 ## Troubleshooting
 
-1. **Rotation CronJob fails, token expires**
+1. **Rotation or push fails with `401 unauthorized`**
 
-   - **Symptom**: Job complains `401 unauthorized`.
-   - **Resolution**: Delete the Secret so Flux re-seeds from SOPS, then trigger the CronJob manually: `kubectl -n coder-system delete secret coder-gitops-bot-token && flux reconcile kustomization coder-template-sync`.
+   - **Cause**: The live token expired (rotation missed for 7 days).
+   - **Fix**: Create a new token for `gitops-bot` in Coder, update `app/secret-bootstrap.sops.yaml`, delete the live `coder-gitops-bot-token` Secret so Flux re-seeds it, then run the CronJob once.
 
-2. **Template ConfigMap exceeds 1 MiB**
+2. **Template ConfigMap too large**
 
-   - **Symptom**: Flux reports `ConfigMap ... is invalid` / `Request entity too large`.
-   - **Resolution**: Switch strategy to a Flux `GitRepository` source mounted via `volumes.persistentVolumeClaim` or an init container that clones at runtime. Current size budget: ~900 kB.
+   - **Symptom**: Flux reports `ConfigMap ... is invalid` or `Request entity too large`.
+   - **Cause**: ConfigMaps are capped at 1 MiB; the current templates total roughly 75 kB.
+   - **Fix**: Move to a `GitRepository` source or an init container that clones at runtime.
 
-3. **Job fails with `cannot connect to coder`**
+3. **Push Job cannot reach Coder**
 
-   - **Symptom**: `push-templates.sh` logs `dial tcp: lookup coder...`.
-   - **Resolution**: Verify the CiliumNetworkPolicy `coder-template-sync-egress` selector still matches the Coder pod (`app.kubernetes.io/name: coder`) and the Service port is `80`.
+   - **Fix**: Check that the `coder-template-sync-egress` CNP selector still matches the Coder pod (`app.kubernetes.io/name: coder`) and that the matching `allow-template-sync-ingress` exists.
 
 ## References
 
 - [Coder templates](https://coder.com/docs/admin/templates)
 - [Coder long-lived tokens](https://coder.com/docs/admin/users/sessions-tokens)
-- [Flux Kustomization `force`](https://fluxcd.io/flux/components/kustomize/kustomizations/#force)
-- [Flux SSA strategies](https://fluxcd.io/flux/components/kustomize/kustomizations/#controlling-the-apply-behavior-of-resources)
+- [Flux Kustomization apply behaviour](https://fluxcd.io/flux/components/kustomize/kustomizations/#controlling-the-apply-behavior-of-resources)
