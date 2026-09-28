@@ -70,12 +70,9 @@ If a recommendation hits a boundary, adjust `minAllowed`/`maxAllowed` and rechec
 
 ## Descheduler Namespace Exclusion
 
-To exclude a namespace from descheduler eviction, add it to the per-plugin `namespaces.exclude` lists in `cluster/apps/kube-system/descheduler/app/values.yaml`.
+To exclude a namespace from descheduler eviction, label it `descheduler.kubernetes.io/exclude: "true"` in its `namespace.yaml`. `DefaultEvictor.namespaceLabelSelector` skips any namespace carrying that label; no descheduler config change is needed.
 
 Only core infrastructure namespaces should be excluded — workload namespaces rely on priority classes to control eviction order.
-
-The `descheduler.kubernetes.io/exclude` namespace label is not yet wired up; it becomes the mechanism once #641 moves
-exclusion to `DefaultEvictor.namespaceLabelSelector` (fixed upstream in v0.36.0, kubernetes-sigs/descheduler#1853).
 
 ## HelmRelease with ConfigMapGenerator
 

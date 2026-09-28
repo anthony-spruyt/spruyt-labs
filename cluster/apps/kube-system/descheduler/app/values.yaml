@@ -10,11 +10,6 @@ resources:
     cpu: 10m
     memory: 64Mi
 
-# Upstream bug (descheduler v0.35.1): DefaultEvictor.namespaceLabelSelector
-# ignores matchExpressions when matchLabels is empty.
-# Per-plugin namespaces.exclude lists are the only working mechanism.
-# TODO: Switch to namespaceLabelSelector once upstream is fixed.
-
 deschedulerPolicy:
   metricsProviders:
     - source: KubernetesMetrics
@@ -27,56 +22,24 @@ deschedulerPolicy:
             evictSystemCriticalPods: false
             evictFailedBarePods: true
             nodeFit: true
+            namespaceLabelSelector:
+              matchExpressions:
+                - key: descheduler.kubernetes.io/exclude
+                  operator: DoesNotExist
         - name: RemoveDuplicates
-          args:
-            namespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
-                - agent-worker-system
+          args: {}
         - name: RemovePodsViolatingTopologySpreadConstraint
           args:
             constraints:
               - DoNotSchedule
               - ScheduleAnyway
-            namespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
-                - agent-worker-system
         - name: RemoveFailedPods
           args:
             minPodLifetimeSeconds: 3600
-            namespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
-                - agent-worker-system
         - name: RemovePodsHavingTooManyRestarts
           args:
             podRestartThreshold: 10
             includingInitContainers: true
-            namespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
-                - agent-worker-system
         - name: LowNodeUtilization
           args:
             metricsUtilization:
@@ -89,15 +52,6 @@ deschedulerPolicy:
               memory: 70
             evictionLimits:
               node: 5
-            evictableNamespaces:
-              exclude:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - flux-system
-                - rook-ceph
-                - cloudflare-system
-                - agent-worker-system
       plugins:
         balance:
           enabled:

@@ -6,8 +6,8 @@ Runs every 30 minutes to rebalance pods across nodes (duplicates, topology sprea
 
 ## Operations
 
-### Namespace exclusions are duplicated per plugin
+### Excluding a namespace
 
-Namespaces carry a `descheduler.kubernetes.io/exclude: "true"` label, but it is not yet what excludes them. Every plugin in `app/values.yaml` repeats the same `exclude` list, a leftover from an upstream selector bug fixed in v0.36.0 (kubernetes-sigs/descheduler#1853). Moving to `DefaultEvictor.namespaceLabelSelector` is tracked in #641.
+Label the namespace `descheduler.kubernetes.io/exclude: "true"`. `DefaultEvictor.namespaceLabelSelector` in `app/values.yaml` skips every labelled namespace for all plugins. `flux-system` gets its label through a patch in `flux-instance/app/values.yaml` because flux-operator owns that Namespace.
 
-Until then, to exclude a namespace add it to **every** plugin's list and label its namespace. `flux-system` gets its label through a patch in `flux-instance/app/values.yaml` because flux-operator owns that Namespace.
+The selector is `DoesNotExist` on the key, so the value is ignored: `"false"` still excludes, and a typo in the key silently makes the namespace evictable. After labelling, confirm with `kubectl get ns -l descheduler.kubernetes.io/exclude`.
