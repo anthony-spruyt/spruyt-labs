@@ -84,10 +84,11 @@ misconfigurations:
     paths:
       - cluster/apps/**/authentik-outpost-rbac.yaml
 
-  # Shutdown orchestrator needs deployment access for Ceph scaling
+  # Shutdown orchestrator scales Ceph deployments and drains pods cluster-wide
   - id: AVD-KSV-0048
     paths:
       - cluster/apps/nut-system/shutdown-orchestrator/rbac-rook-ceph/rbac.yaml
+      - cluster/apps/nut-system/shutdown-orchestrator/app/rbac.yaml
 
   # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)
   - id: AVD-KSV-0013

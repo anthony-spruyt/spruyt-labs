@@ -21,7 +21,7 @@ The timeout for each role is `timeoutMs` in `ts/agent-queue-worker/src/roles/*.t
 - `timeout_seconds` sent to n8n, which the Claude Code node writes to the pod's `agent-timeout` annotation
 - via that annotation, the pod's `activeDeadlineSeconds`, set by Kyverno `set-agent-deadline` (default 3h if the annotation is missing)
 
-The `AgentQueueStuck` alert in `app/vmrule.yaml` fires after 75m, sized as "max role timeout + buffer". The longest role timeout is now 3h (`execute-issue`), so a single long job can trip it while the queue is healthy. Revisit the alert when changing role timeouts.
+The `AgentQueueStuck` alert in `app/vmrule.yaml` fires after 195m: the longest role timeout (3h, `execute-issue`) plus a 15m buffer. Revisit the alert when changing role timeouts.
 
 BullMQ worker settings are in `src/index.ts` (`lockDuration`/`stalledInterval` 120s, `maxStalledCount` 2) and job defaults in `src/queue/options.ts` (`attempts: 1`; n8n owns retries). A 30s lock extender keeps long jobs from being marked stalled.
 

@@ -88,8 +88,8 @@ kubectl uncordon ms-01-1 ms-01-2 ms-01-3
 
 2. **Recovery fails at `uncordon-workers` with `cannot patch resource "nodes"`**
 
-   - **Cause**: The orchestrator's ClusterRole grants only `get`/`list` on nodes, and nothing for pods, but the drain phases cordon/uncordon nodes and list/delete pods cluster-wide.
-   - **Fix**: Add `patch` on `nodes` and `list`/`delete` on `pods` to `shutdown-orchestrator/app/rbac.yaml`. Until then a real shutdown fails the cordon and drain phases, so the Ceph scale-down is skipped and nodes go down with Ceph still running, and every recovery ends in this error.
+   - **Cause**: The ClusterRole in `shutdown-orchestrator/app/rbac.yaml` lost `patch` on `nodes` or `list`/`delete` on `pods`. The drain phases need both (#3181).
+   - **Impact**: Without them a real shutdown fails cordon and drain, so the Ceph scale-down is skipped and nodes go down with Ceph still running.
 
 ## References
 

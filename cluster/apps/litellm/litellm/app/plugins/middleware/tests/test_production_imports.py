@@ -42,12 +42,10 @@ def production_import_shape(monkeypatch):
     monkeypatch.setitem(sys.modules, "custom_callbacks", custom_callbacks)
 
 
-# Both middlewares are commented out of registry.DEFAULT_MIDDLEWARE_SPECS, so the
-# pipeline loads empty. Re-enable these when the registry entries come back.
 _CHATGPT_DISABLED = pytest.mark.skip(
-    reason="chatgpt middleware commented out in registry")
+    reason="chatgpt middleware not in registry.DEFAULT_MIDDLEWARE_SPECS")
 _MIDDLEWARE_DISABLED = pytest.mark.skip(
-    reason="all middlewares commented out in registry — pipeline loads empty")
+    reason="registry.DEFAULT_MIDDLEWARE_SPECS is empty — pipeline loads nothing")
 
 
 def test_production_dotted_imports_resolve(production_import_shape):

@@ -96,7 +96,7 @@ export class Processor {
       }
 
       // Extend BullMQ lock every 30s to prevent stalled-job false positives
-      // during long async callback waits (lockDuration=120s, jobs run up to 60min)
+      // during long async callback waits (lockDuration=120s, jobs run up to 3h)
       // Must start before healthGate.check() — the health gate may wait for hours
       // while deps recover, and the lock must stay alive throughout.
       lockExtender = setInterval(async () => {

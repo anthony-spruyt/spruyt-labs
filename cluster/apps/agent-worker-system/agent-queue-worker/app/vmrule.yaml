@@ -25,12 +25,12 @@ spec:
             agent_queue_depth{queue="agent-jobs"} > 0
             unless
             agent_queue_paused{queue="agent-jobs"} == 1
-          for: 75m
+          for: 195m
           labels:
             severity: warning
           annotations:
-            summary: "Agent queue has jobs stuck for >75 minutes"
-            description: "Queue depth {{ $value }} sustained for 75+ minutes (max role timeout + buffer)."
+            summary: "Agent queue has jobs stuck for >195 minutes"
+            description: "Queue depth {{ $value }} sustained for 195+ minutes (execute-issue 3h timeout + buffer)."
         - alert: AgentValkeyMemoryHigh
           expr: |
             redis_memory_used_bytes{namespace="agent-worker-system"} /

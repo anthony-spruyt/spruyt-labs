@@ -59,8 +59,8 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 
 ### Proxy-side plugins
 
-`litellm/app/plugins/` is mounted into the pod as ConfigMap subPath files under `/app/custom_callbacks/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. The `hindsight` and `chatgpt` middlewares are currently commented out there, so both are
-inert even though their files are still mounted.
+`litellm/app/plugins/` is mounted into the pod as ConfigMap subPath files under `/app/custom_callbacks/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. `DEFAULT_MIDDLEWARE_SPECS` is currently empty, so the `hindsight` and `chatgpt` middlewares
+are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content).
 
 When adding a file to a plugin, also add it to the plugin's ConfigMap generator and its `advancedMounts` list in `values.yaml`. Run the plugin unit tests with `task test:litellm-middleware`.
 

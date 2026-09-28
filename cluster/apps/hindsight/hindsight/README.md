@@ -4,7 +4,7 @@
 
 Long-term memory for anything routed through LiteLLM, with no client changes: a LiteLLM middleware recalls memories before each call and retains the exchange afterwards. The Hindsight API stores them in its own CNPG cluster (#1890).
 
-> **Dormant.** The api, worker and controlPlane are at `replicaCount: 0`, the CNPG cluster is hibernated (`cnpg.io/hibernation: "on"`), its ScheduledBackup is suspended, and the LiteLLM middleware is commented out in `litellm/litellm/app/plugins/middleware/registry.py`. The component is slated for removal (#3025). Nothing below is active until it is revived.
+> **Dormant.** The api, worker and controlPlane are at `replicaCount: 0`, the CNPG cluster is hibernated (`cnpg.io/hibernation: "on"`), its ScheduledBackup is suspended, and the LiteLLM middleware is not registered in `litellm/litellm/app/plugins/middleware/registry.py`. The component is slated for removal (#3025). Nothing below is active until it is revived.
 
 ## Operations
 
@@ -17,7 +17,7 @@ Every item is required; skipping one leaves it broken in a non-obvious way.
 3. `ks.yaml`: restore `wait: true`. It is `false` only because a hibernated cluster never reports Ready and `traefik-ingress` depends on this Kustomization.
 4. `app/values.yaml`: scale api, worker and controlPlane back up. Bring the api to 1 first so only one node cold-pulls the ~1.4 GB image; Spegel fans it out before you go to 2. Re-enable the PDBs only once replicas are above 1.
 5. LiteLLM: re-register the `hindsight-model` and `hindsight-embedding` aliases in `config.yaml`. They were removed (#3025), so the api and worker will get 400s from LiteLLM without them.
-6. LiteLLM: uncomment the `hindsight` `MiddlewareSpec` in `middleware/registry.py`. Keep it before `chatgpt` — Hindsight injects into the Anthropic `system` field and the ChatGPT middleware then translates the final system content.
+6. LiteLLM: add a `MiddlewareSpec(name="hindsight", module="custom_callbacks.hindsight.hindsight_plugin", attribute="hindsight_middleware")` to `DEFAULT_MIDDLEWARE_SPECS` in `middleware/registry.py`. Keep it before `chatgpt` — Hindsight injects into the Anthropic `system` field and the ChatGPT middleware then translates the final system content.
 7. Check that `HINDSIGHT_API_CONSOLIDATION_LLM_MODEL` in `values.yaml` still names a model LiteLLM serves; it was not updated when older Claude models were retired.
 
 ### Bank selection

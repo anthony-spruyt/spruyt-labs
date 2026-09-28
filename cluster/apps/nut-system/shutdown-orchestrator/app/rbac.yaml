@@ -5,20 +5,21 @@ metadata:
   name: shutdown-orchestrator
   namespace: nut-system
 ---
-# Cluster-wide permissions (nodes, CNPG clusters across namespaces)
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: shutdown-orchestrator
 rules:
-  # Hibernate CNPG clusters across all namespaces
   - apiGroups: ["postgresql.cnpg.io"]
     resources: ["clusters"]
     verbs: ["get", "list", "patch", "update"]
-  # Node operations (cluster-wide by nature, read-only)
   - apiGroups: [""]
     resources: ["nodes"]
-    verbs: ["get", "list"]
+    verbs: ["get", "list", "patch"]
+  # Drain deletes pods in any namespace; without it Ceph scale-down is skipped on power loss
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

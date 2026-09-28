@@ -13,21 +13,7 @@ class MiddlewareSpec:
     required: bool = True
 
 
-DEFAULT_MIDDLEWARE_SPECS = (
-    # Ordering is intentional:
-    # 1. Hindsight may inject memory into Anthropic ``system``.
-    # 2. ChatGPT then translates all final system content to OpenAI developer role.
-    # MiddlewareSpec(
-    #     name="hindsight",
-    #     module="custom_callbacks.hindsight.hindsight_plugin",
-    #     attribute="hindsight_middleware",
-    # ),
-    # MiddlewareSpec(
-    #     name="chatgpt",
-    #     module="custom_callbacks.chatgpt.chatgpt_plugin",
-    #     attribute="chatgpt_middleware",
-    # ),
-)
+DEFAULT_MIDDLEWARE_SPECS: tuple[MiddlewareSpec, ...] = ()
 
 
 def load_middlewares(specs: Iterable[MiddlewareSpec], logger: Any = None) -> tuple[Any, ...]:
