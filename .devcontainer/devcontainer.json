@@ -39,7 +39,7 @@
       "version": "1.16.3"
     },
     "ghcr.io/devcontainers-extra/features/renovate-cli": {
-      "version": "44.104.2"
+      "version": "44.105.0"
     },
     "ghcr.io/devcontainers-extra/features/sops": {
       "version": "3.13.3"
