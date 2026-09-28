@@ -39,7 +39,7 @@ Devcontainer features that manage their own apt source lists (github-cli, nodeso
 The following Kubernetes Secrets must exist in `coder-workspaces`:
 
 - `coder-ssh-signing-key` — SSH key for git auth + commit signing (rotated every 2 days by CronJob)
-- `coder-talosconfig` — Talos client config mounted at `~/.talos/config`
+- `coder-talosconfig` — Talos client config mounted at `/etc/coder/talos/config`
 - `coder-terraform-credentials` — Terraform credentials at `~/.terraform.d/credentials.tfrc.json`
 - `coder-workspace-env-common` — Common env vars injected into pods
 - `coder-workspace-env-spruyt-labs` — Project env vars injected into pods
