@@ -59,11 +59,12 @@ Cluster works without these, but operating it is impaired.
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
 | authentik-system | authentik-server, authentik-worker, authentik-cnpg-cluster                                                                                       | SSO and its database      |
 | chrony           | chrony                                                                                                                                           | Time synchronization      |
-| falco-system     | falcosidekick                                                                                                                                    | Runtime security alerting |
+| falco-system     | falco (DaemonSet), falcosidekick                                                                                                                 | Runtime security alerting |
 | flux-system      | flux-operator                                                                                                                                    | GitOps operator           |
 | kube-system      | descheduler (CronJob)                                                                                                                            | Pod rebalancing           |
 | litellm          | litellm-valkey                                                                                                                                   | LLM gateway cache         |
 | observability    | grafana, kube-state-metrics, victoria-metrics-operator, vmagent, vmalert, vmalertmanager, vmsingle, victoria-logs-single, victoria-traces-single | Monitoring stack          |
+| reloader         | reloader                                                                                                                                         | Config reload on change   |
 | spegel           | spegel                                                                                                                                           | Container image caching   |
 | valkey-system    | valkey                                                                                                                                           | Redis-compatible cache    |
 | vaultwarden      | vaultwarden                                                                                                                                      | Password manager          |
@@ -72,8 +73,8 @@ Cluster works without these, but operating it is impaired.
 
 ### standard
 
-Explicitly set or inherited from the global default. Includes, among others: agent-worker-system, coder, n8n and its CNPG cluster and poolers, litellm (except its Valkey), temporal, hindsight, nexus, qdrant, mosquitto, sungather, technitium-secondary, external-dns-technitium, csi-addons-controller-manager, snapshot-controller, hubble-relay, hubble-ui, reloader, the Falco DaemonSet, vector and
-node-exporter, the Ceph auxiliaries (crashcollector, exporter, tools, rgw, mds, rook-discover, ceph-csi-controller-manager), every Authentik outpost, and all other CronJobs.
+Explicitly set or inherited from the global default. Includes, among others: agent-worker-system, coder, n8n and its CNPG cluster and poolers, litellm (except its Valkey), temporal, hindsight, nexus, qdrant, mosquitto, sungather, technitium-secondary, external-dns-technitium, csi-addons-controller-manager, snapshot-controller, hubble-relay, hubble-ui, vector and node-exporter, the Ceph auxiliaries
+(crashcollector, exporter, tools, rgw, mds, rook-discover, ceph-csi-controller-manager), every Authentik outpost, and all other CronJobs.
 
 ### low-priority
 
@@ -110,12 +111,10 @@ No workloads use it today.
 
 Workloads whose live priority does not match the intended tier:
 
-| Workload                                     | Live       | Intended      | Cause                                                                                                     |
-| -------------------------------------------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------------- |
-| reloader                                     | `standard` | high-priority | `values.yaml` sets top-level `priorityClassName`; the chart reads `reloader.deployment.priorityClassName` |
-| falco (DaemonSet)                            | `standard` | high-priority | `values.yaml` sets `priorityClassName`; the chart reads `podPriorityClassName`                            |
-| external-secrets cert-controller and webhook | `standard` | unclassified  | Only the controller's priority is set                                                                     |
-| notification-controller                      | `standard` | unclassified  | Not patched in `flux-instance/app/values.yaml`, unlike the other Flux controllers                         |
+| Workload                                     | Live       | Intended     | Cause                                                                             |
+| -------------------------------------------- | ---------- | ------------ | --------------------------------------------------------------------------------- |
+| external-secrets cert-controller and webhook | `standard` | unclassified | Only the controller's priority is set                                             |
+| notification-controller                      | `standard` | unclassified | Not patched in `flux-instance/app/values.yaml`, unlike the other Flux controllers |
 
 ## Classification Guidelines
 

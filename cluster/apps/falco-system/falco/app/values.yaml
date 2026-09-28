@@ -1,13 +1,10 @@
 ---
 # #yaml-language-server: $schema=TODO
-# High-priority: security observability (per docs/workload-classification.md)
 driver:
   kind: modern_ebpf
 
-# Priority class for scheduling precedence
-priorityClassName: high-priority
+podPriorityClassName: high-priority
 
-# Run on all nodes including control plane
 tolerations:
   - effect: NoSchedule
     key: node-role.kubernetes.io/control-plane
@@ -21,7 +18,6 @@ resources:
     cpu: 1000m
     memory: 400Mi
 
-# Enable Falcosidekick for alert forwarding
 falcosidekick:
   enabled: true
   priorityClassName: high-priority
@@ -45,11 +41,9 @@ falcosidekick:
 falco-talon:
   enabled: false
 
-# Disable k8s-metacollector (optional, adds pod metadata enrichment)
 k8s-metacollector:
   enabled: false
 
-# Mount custom exception rules from ConfigMap
 mounts:
   volumes:
     - name: falco-exceptions
