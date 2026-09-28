@@ -16,9 +16,9 @@ Every container image in this repository is released by [release-please](https:/
 
 ## How a release happens
 
-1. A push to `main` touching a service directory updates that service's release pull request. Each service gets its own pull request.
-2. The pull request is opened by the `repo-operator-release-bot` app, carries the `autorelease: pending` label, and is merged automatically by Mergify once CI passes.
-3. Merging creates the git tag and a **draft** release.
+1. A push to `main` touching a service directory updates the single release pull request, `chore: release main` on branch `release-please--branches--main`. Every service with pending changes is bumped in that one pull request.
+2. The pull request is opened by the `repo-operator-release-bot` app and carries the `autorelease: pending` label. Mergify auto-merges it once CI passes, but only inside its schedule window (Mondays 09:00-12:00 Australia/Melbourne, see `.mergify.yml`). Merge it by hand to release sooner.
+3. Merging creates a git tag and a **draft** release per bumped service.
 4. In the same run, the build job for that service tests the tag and pushes the image to GHCR with a provenance attestation.
 5. The image reference and digest are appended to the release notes and the release is published.
 
@@ -58,9 +58,9 @@ Release-As: 2.0.0
 
 ## Troubleshooting
 
-**No release pull request appeared.** The commit did not touch the service's directory, or every commit since the last release maps to a hidden changelog section. All conventional types used here are visible, so the first cause is far more likely.
+**The service is missing from the release pull request.** The commit did not touch the service's directory, or every commit since the last release maps to a hidden changelog section. All conventional types used here are visible, so the first cause is far more likely.
 
-**The release pull request is not merging.** Mergify requires `summary / Check Results` to pass, the author to be `repo-operator-release-bot[bot]`, the branch to start with `release-please--branches--`, and the diff to touch `.release-please-manifest.json`. Anything else needs a human review.
+**The release pull request is not merging.** Outside the Monday window this is expected. Otherwise, Mergify requires `summary / Check Results` to pass, the author to be `repo-operator-release-bot[bot]`, the branch to start with `release-please--branches--`, and the diff to touch `.release-please-manifest.json`. Anything else needs a human review.
 
 **A tag exists with no image.** The build failed after the tag was created, so the release is still a draft. Run the `Rebuild Release` workflow with that service and version. Do not delete the tag and do not cut a new version.
 

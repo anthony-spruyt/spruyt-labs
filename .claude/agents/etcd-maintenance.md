@@ -82,7 +82,7 @@ talosctl etcd status
 
 Provide a clear summary:
 
-```
+```text
 ## etcd Health Report
 
 ### Cluster Status

@@ -6,14 +6,14 @@ Research priority per CLAUDE.md rules: Context7 → GitHub → WebFetch → WebS
 
 ### 1. Context7
 
-```
+```text
 resolve-library-id(libraryName: "kubernetes", query: "changelog breaking changes <version>")
 query-docs(libraryId: "<resolved-id>", query: "breaking changes removed APIs deprecations v<version>")
 ```
 
 ### 2. GitHub Changelog
 
-```
+```text
 WebFetch: https://raw.githubusercontent.com/kubernetes/kubernetes/master/CHANGELOG/CHANGELOG-<minor>.md
 Prompt: "Extract breaking changes, removed APIs, deprecated APIs, behavior changes for v<version>"
 ```
@@ -36,13 +36,13 @@ Search GitHub issues for `breaking change v<version>` in `kubernetes/kubernetes`
 
 ## Talos-Specific Filters
 
-| Change Area         | Relevance            | Why                                                                 |
-| ------------------- | -------------------- | ------------------------------------------------------------------- |
-| kube-proxy          | Informational only   | Disabled; Cilium handles networking                                 |
-| kubelet             | Applies via Talos OS | Talos bundles kubelet                                               |
-| CNI changes         | May not apply        | Cilium is CNI                                                       |
-| SSH/systemd changes | N/A                  | Talos has neither                                                   |
-| API server flags    | Check patches        | Managed via `talos/patches/control-plane/configure-api-server.yaml` |
+| Change Area         | Relevance            | Why                                                                        |
+| ------------------- | -------------------- | -------------------------------------------------------------------------- |
+| kube-proxy          | Informational only   | Disabled; Cilium handles networking                                        |
+| kubelet             | Applies via Talos OS | Talos bundles kubelet                                                      |
+| CNI changes         | May not apply        | Cilium is CNI                                                              |
+| SSH/systemd changes | N/A                  | Talos has neither                                                          |
+| API server flags    | Check patches        | Managed via `talos/patches/control-plane/05-configure-api-server.yaml.tpl` |
 
 ## Output
 

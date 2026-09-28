@@ -219,7 +219,7 @@ curl -sS --max-time 60 -o /dev/null -w "%{http_code}\n" \
 
 **If ANY check fails, STOP and report:**
 
-```
+```text
 ## PRE-UPGRADE BLOCKED
 
 ### Failed Check
@@ -402,7 +402,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd tree
 
 **BLOCK if Ceph is not HEALTH_OK:**
 
-```
+```text
 ## WORKER UPGRADE BLOCKED
 
 ### Reason
@@ -657,7 +657,7 @@ If you can't finish this phase in the session (for example the Renovate PR isn't
 
 Post completion report:
 
-```
+```text
 ## Upgrade Complete
 
 ### Summary
@@ -736,7 +736,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 
 ### For SUCCESS:
 
-```
+```text
 ## UPGRADE COMPLETE - SUCCESS
 
 ### Summary
@@ -758,7 +758,7 @@ SUCCESS requires Phase 8 done: pin on main, apply run, clean diff. Otherwise ret
 
 ### For ROLLBACK:
 
-```
+```text
 ## UPGRADE FAILED - ROLLBACK REQUIRED
 
 ### Failure Point
@@ -780,7 +780,7 @@ SUCCESS requires Phase 8 done: pin on main, apply run, clean diff. Otherwise ret
 
 ### For PARTIAL:
 
-```
+```text
 ## UPGRADE PARTIAL - INTERVENTION REQUIRED
 
 ### Progress
@@ -805,7 +805,7 @@ SUCCESS requires Phase 8 done: pin on main, apply run, clean diff. Otherwise ret
 
 When encountering errors during upgrade:
 
-```
+```text
 # For Talos upgrade issues
 resolve-library-id(libraryName: "talos", query: "upgrade troubleshooting")
 query-docs(libraryId: "/siderolabs/talos", query: "talosctl upgrade stuck timeout recovery")

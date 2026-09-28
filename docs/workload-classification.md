@@ -1,136 +1,121 @@
 # Workload Classification
 
-Defines priority tiers for all cluster workloads. Priority classes control scheduling precedence and preemption behavior during resource contention.
+Priority tiers for cluster workloads. Priority classes decide scheduling order and who gets preempted when a node runs out of resources.
 
 ## Priority Classes
 
-Defined in `cluster/flux/meta/priority-classes.yaml`:
+Defined in [`cluster/flux/meta/priority-classes.yaml`](../cluster/flux/meta/priority-classes.yaml). `standard` is the global default, so a workload that sets nothing lands there.
 
-| Priority Class            | Value         | Preemption | Use Case                                      |
-| ------------------------- | ------------- | ---------- | --------------------------------------------- |
-| `system-node-critical`    | 2,000,001,000 | Yes        | Node-level system components                  |
-| `system-cluster-critical` | 2,000,000,000 | Yes        | Kubernetes system components                  |
-| `critical-infrastructure` | 1,000,000     | Yes        | Cluster won't function without it             |
-| `high-priority`           | 100,000       | Yes        | Essential user-facing services, observability |
-| `standard`                | 10,000        | Yes        | Business applications (global default)        |
-| `low-priority`            | 1,000         | Yes        | Internal tools, gaming, hobby projects        |
-| `best-effort`             | 100           | Never      | Batch jobs, preemptible workloads             |
+| Priority Class            | Value         | Preempts others | Use Case                                      |
+| ------------------------- | ------------- | --------------- | --------------------------------------------- |
+| `system-node-critical`    | 2,000,001,000 | Yes             | Built-in. Per-node system components          |
+| `system-cluster-critical` | 2,000,000,000 | Yes             | Built-in. Kubernetes and Flux controllers     |
+| `critical-infrastructure` | 1,000,000     | Yes             | Cluster won't function without it             |
+| `high-priority`           | 100,000       | Yes             | Essential user-facing services, observability |
+| `standard`                | 10,000        | Yes             | Business applications (global default)        |
+| `low-priority`            | 1,000         | Yes             | Internal tools, gaming, hobby projects, MCPs  |
+| `best-effort`             | 100           | Never           | Preemptible batch work (currently unused)     |
 
 ## CPU Limit Policy
 
-CPU limits protect hardware from thermal throttling caused by unbounded workloads. Policy varies by tier:
+Unbounded CPU on these small nodes causes thermal throttling that slows every pod on the node, including critical ones. Limits are set per tier:
 
 | Priority Class            | CPU Limit            | Rationale                                  |
 | ------------------------- | -------------------- | ------------------------------------------ |
-| `critical-infrastructure` | None                 | Must never be throttled - cluster fails    |
+| `critical-infrastructure` | None                 | Throttling these breaks the whole cluster  |
 | `high-priority`           | 5x request           | High burst headroom for essential services |
 | `standard`                | 3x request           | Moderate burst capacity                    |
 | `low-priority`            | 2x request           | Limited burst, can tolerate throttling     |
 | `best-effort`             | 1x (limit = request) | No burst, preemptible workloads            |
 
-**Background**: Unbounded CPU workloads can cause physical thermal throttling on nodes, which affects ALL pods on that node - including critical infrastructure. Generous limits (3-5x requests) allow burst capacity while preventing runaway CPU consumption.
+## Current Assignments
 
-**Exceptions**: Critical infrastructure (CNI, storage operators, DNS) must remain unbounded because throttling them causes cluster-wide failures. These workloads are expected to self-regulate.
-
-## Classification Criteria
+Taken from the live cluster. When adding a workload, set `priorityClassName` explicitly and add it here.
 
 ### critical-infrastructure
 
-**Criteria**: Cluster won't function without it. Core networking, storage, secrets management, DNS.
+Core networking, storage, secrets, DNS, and the UPS shutdown path.
 
-| Namespace            | Workload                           | Rationale                                       |
-| -------------------- | ---------------------------------- | ----------------------------------------------- |
-| kube-system          | cilium, cilium-operator            | CNI - no networking without it                  |
-| kube-system          | cilium-envoy                       | L7 proxy for Cilium                             |
-| cert-manager         | cert-manager, cainjector, webhook  | TLS certificates for all services               |
-| cloudflare-system    | cloudflared                        | External access tunnel                          |
-| cnpg-system          | cnpg-operator, plugin-barman-cloud | PostgreSQL operator - databases fail without it |
-| external-secrets     | external-secrets                   | Secrets delivery to namespaces                  |
-| kubelet-csr-approver | kubelet-csr-approver               | Node certificate approval                       |
-| kyverno              | all controllers                    | Policy enforcement, resource generation         |
-| rook-ceph            | rook-ceph-operator, mon, mgr, osd  | Storage - PVCs fail without it                  |
-| technitium           | technitium                         | Primary DNS server                              |
-| traefik              | traefik                            | Ingress - no internal routing without it        |
-| irq-balance          | irq-balance-\*                     | Interrupt balancing for performance             |
+| Namespace            | Workload                                            | Rationale                                       |
+| -------------------- | --------------------------------------------------- | ----------------------------------------------- |
+| cert-manager         | cert-manager, cainjector, webhook                   | TLS certificates for all services               |
+| cloudflare-system    | cloudflared                                         | External access tunnel                          |
+| cnpg-system          | cnpg-operator, plugin-barman-cloud                  | PostgreSQL operator - databases fail without it |
+| external-secrets     | external-secrets (controller only)                  | Secrets delivery to namespaces                  |
+| irq-balance          | irq-balance-e2, irq-balance-ms-01                   | Interrupt placement on every node               |
+| kube-system          | kata-tap-qdisc-fix                                  | Kata VM networking fix on every node            |
+| kubelet-csr-approver | kubelet-csr-approver                                | Kubelet serving certificate approval            |
+| kyverno              | admission, background, cleanup, reports controllers | Policy enforcement, resource generation         |
+| nut-system           | nut-server, shutdown-orchestrator                   | UPS monitoring and graceful power-loss shutdown |
+| rook-ceph            | rook-ceph-operator, mon, mgr, osd                   | Storage - PVCs fail without it                  |
+| technitium           | technitium                                          | Primary DNS server                              |
+| traefik              | traefik                                             | Ingress                                         |
 
 ### high-priority
 
-**Criteria**: Essential user-facing services, observability, auth, cluster utilities. Cluster functions but operations are impacted.
+Cluster works without these, but operating it is impaired.
 
-| Namespace        | Workload                                            | Rationale                   |
-| ---------------- | --------------------------------------------------- | --------------------------- |
-| authentik-system | authentik-server, authentik-worker                  | SSO authentication          |
-| authentik-system | authentik-cnpg-cluster                              | Auth database               |
-| chrony           | chrony                                              | Time synchronization        |
-| flux-system      | flux-operator                                       | GitOps operator             |
-| observability    | grafana, vmagent, vmalert, vmsingle, vmalertmanager | Monitoring stack            |
-| reloader         | reloader                                            | Config reload automation    |
-| spegel           | spegel                                              | Container image caching     |
-| valkey-system    | valkey                                              | Redis-compatible cache      |
-| vaultwarden      | vaultwarden                                         | Password manager            |
-| velero           | velero, node-agent                                  | Backup and DR               |
-| falco-system     | falco, falcosidekick                                | Runtime security monitoring |
+| Namespace        | Workload                                                                                                                                         | Rationale                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| authentik-system | authentik-server, authentik-worker, authentik-cnpg-cluster                                                                                       | SSO and its database      |
+| chrony           | chrony                                                                                                                                           | Time synchronization      |
+| falco-system     | falcosidekick                                                                                                                                    | Runtime security alerting |
+| flux-system      | flux-operator                                                                                                                                    | GitOps operator           |
+| kube-system      | descheduler (CronJob)                                                                                                                            | Pod rebalancing           |
+| litellm          | litellm-valkey                                                                                                                                   | LLM gateway cache         |
+| observability    | grafana, kube-state-metrics, victoria-metrics-operator, vmagent, vmalert, vmalertmanager, vmsingle, victoria-logs-single, victoria-traces-single | Monitoring stack          |
+| spegel           | spegel                                                                                                                                           | Container image caching   |
+| valkey-system    | valkey                                                                                                                                           | Redis-compatible cache    |
+| vaultwarden      | vaultwarden                                                                                                                                      | Password manager          |
+| velero           | velero, node-agent                                                                                                                               | Backup and DR             |
+| vpa-system       | admission-controller, recommender, updater                                                                                                       | Resource recommendations  |
 
-### standard (default)
+### standard
 
-**Criteria**: Business applications with availability expectations. Not critical for cluster operations.
-
-| Namespace         | Workload                                             | Rationale               |
-| ----------------- | ---------------------------------------------------- | ----------------------- |
-| n8n-system        | n8n, n8n-worker, n8n-webhook, n8n-cnpg-cluster       | Workflow automation     |
-| n8n-system        | ak-outpost-n8n-outpost                               | Authentik outpost       |
-| observability     | victoria-logs-single, vector                         | Log aggregation         |
-| observability     | victoria-metrics-operator, kube-state-metrics        | Metrics operators       |
-| qdrant-system     | qdrant                                               | Vector database         |
-| mosquitto         | mosquitto                                            | MQTT broker             |
-| csi-addons-system | csi-addons-controller-manager                        | CSI extensions          |
-| kube-system       | snapshot-controller                                  | Volume snapshots        |
-| kube-system       | hubble-relay, hubble-ui                              | Cilium observability    |
-| rook-ceph         | crashcollector, exporter, tools, rgw, csi-controller | Ceph auxiliary services |
-| sungather         | sungather                                            | Solar monitoring        |
-| technitium        | technitium-secondary                                 | Secondary DNS           |
-| external-dns      | external-dns-technitium                              | DNS record management   |
+Explicitly set or inherited from the global default. Includes, among others: agent-worker-system, coder, n8n and its CNPG cluster and poolers, litellm (except its Valkey), temporal, hindsight, nexus, qdrant, mosquitto, sungather, technitium-secondary, external-dns-technitium, csi-addons-controller-manager, snapshot-controller, hubble-relay, hubble-ui, reloader, the Falco DaemonSet, vector and
+node-exporter, the Ceph auxiliaries (crashcollector, exporter, tools, rgw, mds, rook-discover, ceph-csi-controller-manager), every Authentik outpost, and all other CronJobs.
 
 ### low-priority
 
-**Criteria**: Internal tools, gaming, hobby projects. Can tolerate preemption.
+Can tolerate preemption.
 
-| Namespace       | Workload                           | Rationale            |
-| --------------- | ---------------------------------- | -------------------- |
-| headlamp-system | headlamp                           | Kubernetes dashboard |
-| minecraft       | crafty-controller, bedrock-connect | Gaming servers       |
-| foundryvtt      | foundryvtt                         | Gaming (D&D)         |
-| redisinsight    | redisinsight                       | Redis GUI            |
-| whoami          | whoami                             | Test/debug service   |
+| Namespace        | Workload                              | Rationale            |
+| ---------------- | ------------------------------------- | -------------------- |
+| brave-search-mcp | brave-search-mcp                      | Agent tooling        |
+| foundryvtt       | foundryvtt                            | Gaming (D&D)         |
+| headlamp-system  | headlamp                              | Kubernetes dashboard |
+| minecraft        | crafty-controller, bedrock-connect    | Gaming servers       |
+| n8n-mcp          | n8n-mcp-server                        | Agent tooling        |
+| observability    | mcp-victorialogs, mcp-victoriametrics | Agent tooling        |
+| redisinsight     | redisinsight                          | Redis GUI            |
+| unifi-mcp        | unifi-network-mcp                     | Agent tooling        |
+| unifi-system     | unpoller                              | UniFi metrics        |
+| whoami           | whoami                                | Test/debug service   |
 
 ### best-effort
 
-**Criteria**: Batch jobs, maintenance tasks. Preemptible, no guaranteed resources.
+No workloads use it today.
 
-Currently no persistent workloads. Used by:
+### Built-in classes
 
-- Backup jobs
-- Maintenance CronJobs
-- One-off tasks
+| Workload                                                               | Priority Class            |
+| ---------------------------------------------------------------------- | ------------------------- |
+| cilium, cilium-envoy, cilium-operator                                  | `system-node-critical`    |
+| Ceph CSI node plugins (rbd, cephfs, and their csi-addons sidecars)     | `system-node-critical`    |
+| Ceph CSI controller plugins (rbd, cephfs)                              | `system-cluster-critical` |
+| helm-controller, kustomize-controller, source-controller               | `system-cluster-critical` |
+| coredns, metrics-server, kube-apiserver, controller-manager, scheduler | `system-cluster-critical` |
 
-## Flux Controllers (system-cluster-critical)
+## Known Gaps
 
-These use Kubernetes built-in priority classes:
+Workloads whose live priority does not match the intended tier:
 
-| Controller              | Priority Class           |
-| ----------------------- | ------------------------ |
-| helm-controller         | system-cluster-critical  |
-| kustomize-controller    | system-cluster-critical  |
-| source-controller       | system-cluster-critical  |
-| notification-controller | (none - should be added) |
-
-## Rook Ceph CSI (system-node-critical)
-
-| Controller                             | Priority Class          |
-| -------------------------------------- | ----------------------- |
-| rbd.csi.ceph.com-ctrlplugin            | system-node-critical    |
-| rbd.csi.ceph.com-nodeplugin            | system-cluster-critical |
-| rbd.csi.ceph.com-nodeplugin-csi-addons | system-cluster-critical |
+| Workload                                     | Live       | Intended      | Cause                                                                                                     |
+| -------------------------------------------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------------- |
+| reloader                                     | `standard` | high-priority | `values.yaml` sets top-level `priorityClassName`; the chart reads `reloader.deployment.priorityClassName` |
+| falco (DaemonSet)                            | `standard` | high-priority | `values.yaml` sets `priorityClassName`; the chart reads `podPriorityClassName`                            |
+| external-secrets cert-controller and webhook | `standard` | unclassified  | Only the controller's priority is set                                                                     |
+| notification-controller                      | `standard` | unclassified  | Not patched in `flux-instance/app/values.yaml`, unlike the other Flux controllers                         |
 
 ## Classification Guidelines
 
@@ -146,14 +131,13 @@ These use Kubernetes built-in priority classes:
 - Only affects single user/use case
 - Has external fallback (e.g., external DNS, public registries)
 
-### Review Process
+### Review
 
-Run `.claude/prompts/workload-classification-review.md` quarterly or when:
+Compare this page against the live cluster quarterly, and when adding workloads or after an incident involving resource contention:
 
-- Adding new workloads
-- Changing dependencies between services
-- After incidents involving resource contention
+```bash
+kubectl get deploy,sts,ds -A \
+  -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,PRIORITY:.spec.template.spec.priorityClassName'
+```
 
-## Related
-
-- [cluster/flux/meta/priority-classes.yaml](../cluster/flux/meta/priority-classes.yaml) - Priority class definitions
+An empty `PRIORITY` column means the pod falls back to `standard`.

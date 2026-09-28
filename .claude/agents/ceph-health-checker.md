@@ -96,7 +96,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph crash ls-new
 
 ## Output Format
 
-```
+```text
 ## Ceph Health Report
 
 ### Issue Reference

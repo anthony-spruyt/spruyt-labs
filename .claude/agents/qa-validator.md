@@ -63,7 +63,7 @@ No MegaLinter, no dry-run, no Context7, no cross-reference, no kustomize build. 
 
 ### Scope Decision
 
-```
+```text
 IF every diff is cosmetic (no runtime behavior change possible) → trivial
 ELSE → full
 ```
@@ -218,7 +218,7 @@ Flag concerns as WARNING with simpler alternative. Let calling agent/user decide
 
 ### Trivial Scope (fast path)
 
-```
+```text
 ## QA Validation — Fast Path
 
 Issue: #<number>
@@ -233,7 +233,7 @@ Verdict: APPROVED / BLOCKED
 
 ### Full Scope
 
-```
+```text
 ## QA Validation Report
 
 ### Issue Reference

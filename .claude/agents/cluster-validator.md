@@ -224,7 +224,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 
 ### ROLLBACK
 
-```
+```text
 ## VALIDATION FAILED - ROLLBACK REQUIRED
 ### Severity: [CRITICAL/HIGH]
 ### Impact: [what's broken]
@@ -242,7 +242,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 
 ### ROLL-FORWARD
 
-```
+```text
 ## VALIDATION FAILED - ROLL-FORWARD FIX REQUIRED
 ### Severity: [MEDIUM/LOW/HIGH with obvious fix]
 ### Evidence
@@ -259,7 +259,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 
 ### SUCCESS
 
-```
+```text
 ## VALIDATION PASSED
 ### Resources Verified
 - [resource]: Ready

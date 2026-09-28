@@ -22,24 +22,27 @@ Two paths to a working dev environment — both produce identical toolchains.
 ~/.secrets/
 ├── .env.common       # Common environment variables (GH_TOKEN, etc.)
 ├── .env.spruyt-labs  # Project specific environment variables (KUBECONFIG, etc.)
+├── .gitignore        # Mounted read-only
 ├── .terraform.d/     # Terraform credentials and plugin cache
 ├── age.key           # SOPS Age private key
-├── flux-gitops-key   # For bootstrapping a new cluster
-├── kubeconfig        # Kubernetes cluster config
+├── bgp-65000.conf    # Mounted read-only
+├── flux-gitops-key   # Flux deploy key, only for bootstrapping a new cluster (not mounted)
+├── kubeconfig        # Kubernetes cluster config (mounted read-only)
 └── talosconfig       # Talos cluster config
 
 ~/.claude/            # Claude Code settings and memory (persists across rebuilds)
 ```
 
+`devcontainer.json` bind-mounts each of these files individually, so every mounted path must exist on the host or the container fails to start. An empty file is enough for ones you don't use.
+
 Create the required structure:
 
 ```bash
 mkdir -p ~/.secrets/.terraform.d ~/.claude
-touch ~/.secrets/.env.common
-touch ~/.secrets/.env.spruyt-labs
+touch ~/.secrets/.env.common ~/.secrets/.env.spruyt-labs ~/.secrets/.gitignore \
+  ~/.secrets/age.key ~/.secrets/bgp-65000.conf ~/.secrets/kubeconfig ~/.secrets/talosconfig
 chmod 700 ~/.secrets
-chmod 600 ~/.secrets/.env.common
-chmod 600 ~/.secrets/.env.spruyt-labs
+chmod 600 ~/.secrets/.env.common ~/.secrets/.env.spruyt-labs
 ```
 
 The `.env.common` file must contain:
@@ -73,8 +76,8 @@ TALOSCONFIG=/home/vscode/.secrets/talosconfig
 
 #### OpenTelemetry (optional)
 
-To ship dev container telemetry to the cluster via the `otel.lan.<domain>` OTLP ingress, add these to `.env.common`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env.common` does not. The API key comes from the `traefik-api-keys` secret. Substitute the real domain and key inline — `.env.common` does not expand
-`${VAR}` references.
+To ship dev container telemetry to the cluster via the `otel.lan.<external-domain>` OTLP ingress, add these to `.env.common`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env.common` does not. The API key comes from the `traefik-api-keys` secret. Substitute the real domain and key inline — `.env.common` does
+not expand `${VAR}` references.
 
 ```bash
 CLAUDE_CODE_ENABLE_TELEMETRY=1
@@ -149,7 +152,7 @@ The Coder template uses [envbuilder](https://github.com/coder/envbuilder) to bui
 - **Secrets via Kubernetes volumes** — SSH signing key, talosconfig, SOPS age key, Terraform credentials (no `~/.secrets/` needed)
 - **Git commit signing** — automatic via mounted SSH key at `/etc/coder/ssh-keys/id_ed25519`
 - **Nexus proxy** — apt and container pulls route through in-cluster Nexus for caching
-- **OTel telemetry** — Claude Code traces/metrics/logs ship to VictoriaMetrics
+- **OTel telemetry** — Claude Code traces, metrics and logs ship to the in-cluster Victoria stack
 
 ### Accessing the Workspace
 
@@ -182,13 +185,13 @@ Pinned versions installed as devcontainer features:
 - Renovate CLI
 - Terraform
 - SOPS
-- yq
+- jq, yq, gojq
 
 ### CLI Tools
 
 Installed by `setup-devcontainer.sh` via Taskfile:
 
-kubectl, kustomize, helm, helmfile, helm plugins, cilium, hubble, talosctl, topf, vals, flux, flux-capacitor, age, velero, cnpg plugin, falcoctl, gopls, cclsp, coder
+kubectl, kustomize, helm, helmfile, helm plugins, cilium, hubble, talosctl, topf, uv, vals, flux, flux-capacitor, age, velero, cnpg plugin, falcoctl, gopls, cclsp, coder
 
 ### Container Runtime
 
@@ -200,7 +203,7 @@ For details on the security posture (seccomp, `agent-run` wrapper, registry enfo
 
 Auto-installed in both local and Coder workspaces:
 
-Claude Code, Markdown Mermaid, Better JSON5, Prettier, Git Graph, YAML, GitHub Actions, Go, Terraform, Task Runner, Helm Intellisense
+Claude Code, Markdown Mermaid, Better JSON5, Prettier, Git Graph, YAML, GitHub Actions, Go, Terraform, Bats, Task Runner, Helm Intellisense
 
 ## Troubleshooting
 

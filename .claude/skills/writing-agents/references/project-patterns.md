@@ -74,7 +74,7 @@ Agents never chain directly to each other. Results flow through skills or the ma
 
 **Template:**
 
-```
+```text
 <Brief capability statement — what the agent does, one sentence.>
 
 **When to use:**

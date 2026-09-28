@@ -1,195 +1,236 @@
-# Disaster Recovery Guide
+# Disaster Recovery
 
-Procedures for recovering the Talos Linux Kubernetes cluster from various failure scenarios.
+Recovering nodes, etcd, Ceph and application data. For a full rebuild, start with [bootstrap.md](bootstrap.md) and come back here for the data.
 
-## Backup Systems
+## What Is Backed Up
 
-### Velero (Kubernetes Resources)
+| Data                                | Mechanism                                                         | Where                         | Retention |
+| ----------------------------------- | ----------------------------------------------------------------- | ----------------------------- | --------- |
+| Desired state (all manifests)       | Git                                                               | GitHub                        | -         |
+| Kubernetes objects, all namespaces  | Velero schedule `spruyt-labs-cluster-backup`, daily               | S3 (`aws-primary`)            | 25 days   |
+| PVC contents                        | Velero, **only PVCs labelled** `velero.io/backup-volumes: "true"` | S3 (`aws-primary`)            | 25 days   |
+| PostgreSQL (every `*-cnpg-cluster`) | CNPG barman-cloud plugin, daily base + WAL                        | S3, one `ObjectStore` per app | 7 days    |
+| etcd                                | Manual snapshots only                                             | Wherever you saved them       | -         |
 
-Velero backs up Kubernetes resources and persistent volumes to S3.
+Any PVC without the label is **not** backed up off-cluster; it only has Ceph replication. List the ones that are:
 
-### CNPG (PostgreSQL Databases)
+```bash
+kubectl get pvc -A -l velero.io/backup-volumes=true
+```
 
-CloudNativePG handles PostgreSQL backups via Barman to S3.
+## Preconditions
 
-### Ceph (Block/File Storage)
+- Devcontainer with `talosctl`, `kubectl`, `flux`, `velero` and the `kubectl cnpg` plugin.
+- Valid `talosconfig` (`task talos:talosconfig` regenerates it from the secrets bundle) and kubeconfig.
+- For Velero and CNPG restores: the cluster is up, Flux is reconciling, and the S3 credentials in the SOPS secrets are still valid. Check with `velero backup-location get` (expect `aws-primary Available`).
 
-Ceph provides redundant storage with automatic replication.
+## Replace a Node
 
-## Recovery Procedures
+Use when a node's hardware is dead or swapped. The node keeps its hostname and address.
 
-### Restore Kubernetes Resources (Velero)
-
-1. **List available backups**:
-
-   ```bash
-   velero get backups
-   ```
-
-2. **Describe backup to verify contents**:
-
-   ```bash
-   velero backup describe <backup-name> --details
-   ```
-
-3. **Create restore**:
+1. If the node is still reachable, drain it. Set `noout` first when it is a worker, so Ceph does not start rebalancing:
 
    ```bash
-   # Full restore
-   velero restore create <restore-name> --from-backup <backup-name>
-
-   # Namespace-specific restore
-   velero restore create <restore-name> --from-backup <backup-name> \
-     --include-namespaces <namespace>
-
-   # Exclude specific resources
-   velero restore create <restore-name> --from-backup <backup-name> \
-     --exclude-resources persistentvolumeclaims
-   ```
-
-4. **Monitor restore progress**:
-
-   ```bash
-   velero restore describe <restore-name>
-   velero restore logs <restore-name>
-   ```
-
-### Restore PostgreSQL Database (CNPG)
-
-1. **Check available backups**:
-
-   ```bash
-   kubectl get backups -n <namespace>
-   ```
-
-2. **Create recovery cluster from backup**:
-
-   ```yaml
-   apiVersion: postgresql.cnpg.io/v1
-   kind: Cluster
-   metadata:
-     name: <cluster-name>-restored
-   spec:
-     bootstrap:
-       recovery:
-         source: <cluster-name>
-     externalClusters:
-       - name: <cluster-name>
-         barmanObjectStore:
-           destinationPath: s3://<bucket>/<path>
-           s3Credentials:
-             accessKeyId:
-               name: <secret-name>
-               key: ACCESS_KEY_ID
-             secretAccessKey:
-               name: <secret-name>
-               key: ACCESS_SECRET_KEY
-   ```
-
-### Node Replacement
-
-1. **Cordon and drain the node**:
-
-   ```bash
-   kubectl cordon <node-name>
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd set noout
    kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
    ```
 
-2. **Set Ceph noout flag** (if node has OSDs):
+2. For a control-plane node, remove its etcd member from a surviving control plane:
 
    ```bash
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd set noout
+   talosctl -n <surviving-cp-ip> etcd members
+   talosctl -n <surviving-cp-ip> etcd remove-member <member-id>
    ```
 
-3. **Provision replacement node** with Talos ISO
+   **Verify:** `etcd members` lists two members.
 
-4. **Apply Talos configuration**:
+3. Remove the stale Node object:
 
    ```bash
-   talosctl apply-config --insecure --nodes <new-node-ip> \
-     --file talos/clusterconfig/topf/<node-hostname>.yaml
+   kubectl delete node <node-name>
    ```
 
-5. **Verify node joins cluster**:
+4. Update disk serials in Git for the new hardware and push:
+
+   - Install disk: `talos/patches/node/<node-name>/01-configure-install-disk.yaml` (`disk.serial`).
+   - Workers only, Ceph disk: `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](../cluster/apps/rook-ceph/rook-ceph-cluster/app/values.yaml).
+
+   Read the serials from the new node once it is in maintenance mode:
 
    ```bash
-   talosctl health
+   talosctl -n <node-ip> get disks --insecure
    ```
 
-6. **Unset Ceph noout flag**:
+5. Boot the new node from the SecureBoot ISO for its class (see the [schematics table](../talos/README.md#talos-image-schematics)) and apply its config:
 
    ```bash
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd unset noout
+   task talos:apply NODE='^<node-name>$'
    ```
 
-7. **Verify Ceph recovery**:
+   If `topf` cannot reach the node in maintenance mode, apply a rendered config instead:
 
    ```bash
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph status
+   task talos:render
+   talosctl apply-config --insecure -n <node-ip> --file talos/clusterconfig/topf/<node-name>.yaml
    ```
 
-### Ceph Recovery
-
-#### Single OSD Failure
-
-Ceph handles single OSD failures automatically. Monitor recovery:
-
-```bash
-kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph status
-kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd tree
-```
-
-#### Multiple OSD Failures
-
-1. **Assess damage**:
+6. **Verify:** the node is `Ready`, and for a control plane, etcd is back to three members:
 
    ```bash
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph health detail
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd tree
+   kubectl get nodes
+   talosctl -n <cp-1-ip>,<cp-2-ip>,<cp-3-ip> etcd status
    ```
 
-2. **If pool is degraded but recoverable**, wait for automatic recovery
-
-3. **If OSDs are permanently lost**, remove them:
+7. Workers: unset `noout` and wait for Ceph to settle. A replaced OSD disk comes up as a new OSD; retire the old ID with the remove-OSD flow in [rook-ceph/README.md](../cluster/apps/rook-ceph/README.md).
 
    ```bash
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd out <osd-id>
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd crush remove osd.<osd-id>
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph auth del osd.<osd-id>
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd rm <osd-id>
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
    ```
 
-### Full Cluster Rebuild
+   **Good:** `health: HEALTH_OK`, 3 OSDs `up` and `in`, all PGs `active+clean`.
 
-In case of complete cluster loss:
+## Restore etcd (Quorum Lost)
 
-1. **Follow bootstrap procedure** in [docs/bootstrap.md](bootstrap.md)
+Only when two or more control planes have lost etcd. This rolls the whole cluster back to the snapshot. Procedure from the [Talos disaster recovery guide](https://docs.siderolabs.com/talos/v1.14/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery).
 
-2. **Restore from Velero backup**:
+1. Get a snapshot. Prefer a recent one taken with `talosctl etcd snapshot`. With no quorum, copy the raw database from a surviving control plane instead:
 
    ```bash
-   # After Flux is running and Velero is deployed
-   velero restore create full-restore --from-backup <latest-backup>
+   talosctl -n <cp-ip> cp /var/lib/etcd/member/snap/db .
    ```
 
-3. **Restore databases from CNPG backups** as needed
+2. On every control plane whose etcd is not healthy, wipe the EPHEMERAL partition:
 
-4. **Verify all workloads** are running and Flux kustomizations are reconciled
+   ```bash
+   talosctl -n <cp-ip> reset --graceful=false --reboot --system-labels-to-wipe=EPHEMERAL
+   ```
 
-## Validation
+3. **Verify:** etcd is waiting on every control plane:
 
-After any recovery:
+   ```bash
+   talosctl -n <cp-ip> service etcd
+   ```
 
-- [ ] All nodes report Ready status
-- [ ] Flux kustomizations reconciled
-- [ ] Core services running: Cilium, cert-manager, Traefik
-- [ ] Ceph healthy: `ceph status` shows HEALTH_OK
-- [ ] Applications accessible via ingress
-- [ ] Monitoring dashboards show data
+   **Good:** `STATE` is `Preparing` on all three.
+
+4. Bootstrap from the snapshot on one control plane. Add `--recover-skip-hash-check` when the file came from `talosctl cp` in step 1:
+
+   ```bash
+   talosctl -n <cp-ip> bootstrap --recover-from=./db.snapshot
+   ```
+
+5. **Verify:** three healthy members and all nodes `Ready`:
+
+   ```bash
+   talosctl -n <cp-1-ip>,<cp-2-ip>,<cp-3-ip> etcd status
+   kubectl get nodes
+   ```
+
+## Ceph
+
+Ceph recovers from a single OSD or node loss on its own; `rook-ceph-tools` runs `ceph status` to watch it. For OSD removal, replacement and health warnings, use [rook-ceph/README.md](../cluster/apps/rook-ceph/README.md). Thunderbolt ring failures are in [rook-ceph-cluster/README.md](../cluster/apps/rook-ceph/rook-ceph-cluster/README.md).
+
+## Restore a PostgreSQL Database (CNPG)
+
+A CNPG `Cluster` only honours `bootstrap` when it is created. Restoring means creating the cluster with `bootstrap.recovery` instead of `bootstrap.initdb`. The steps below follow the n8n restore of December 2025; the commented block at the top of `cluster/apps/n8n-system/n8n/app/n8n-cnpg-cluster.yaml` is the template.
+
+**During a full rebuild, do this before Flux creates the cluster.** Otherwise Flux creates an empty database with `initdb` and you have to delete it first.
+
+1. **Verify** a backup exists:
+
+   ```bash
+   kubectl -n <namespace> get backups.postgresql.cnpg.io
+   ```
+
+   **Good:** recent entries with phase `completed`. On a fresh cluster these CRs are gone; the data is still in S3.
+
+2. If the cluster exists, stop Flux from recreating it, then delete it. **This destroys the current database.**
+
+   ```bash
+   flux suspend kustomization <app>
+   kubectl -n <namespace> delete clusters.postgresql.cnpg.io <app>-cnpg-cluster
+   ```
+
+3. Edit `<app>-cnpg-cluster.yaml` in Git:
+
+   ```yaml
+   spec:
+     bootstrap:
+       recovery:
+         source: origin
+         # Optional point-in-time target:
+         # recoveryTarget:
+         #   targetTime: "<YYYY-MM-DD HH:MM:SS.00000+TZ>"
+     externalClusters:
+       - name: origin
+         plugin:
+           name: barman-cloud.cloudnative-pg.io
+           parameters:
+             barmanObjectName: <app>-cnpg-aws-object-store
+             serverName: <app>-cnpg-cluster
+   ```
+
+   Comment out the `spec.plugins` WAL-archiver entry while restoring. The restored cluster would otherwise archive into the same `serverName` path it is reading from, and the plugin refuses a non-empty archive.
+
+4. Push, then resume Flux:
+
+   ```bash
+   flux resume kustomization <app>
+   ```
+
+5. **Verify:**
+
+   ```bash
+   kubectl cnpg status <app>-cnpg-cluster -n <namespace>
+   ```
+
+   **Good:** `Cluster in healthy state`, all instances ready.
+
+6. Revert the Git change to `bootstrap.initdb` and re-enable `spec.plugins`. `bootstrap` is ignored after creation, so reverting it does nothing to the running cluster. Take a fresh base backup once archiving is back:
+
+   ```bash
+   kubectl cnpg backup <app>-cnpg-cluster -n <namespace> --method plugin --plugin-name barman-cloud.cloudnative-pg.io
+   ```
+
+## Restore from Velero
+
+Velero depends on Flux having deployed it and on its S3 location being `Available`.
+
+1. List backups and inspect the one to use:
+
+   ```bash
+   velero backup get
+   velero backup describe <backup-name> --details
+   ```
+
+2. Restore one namespace at a time:
+
+   ```bash
+   velero restore create <restore-name> --from-backup <backup-name> \
+     --include-namespaces <namespace> --wait
+   ```
+
+   Velero skips any object that already exists, and that includes PVCs. A PVC that Flux has already recreated empty is not overwritten, so its data is not restored.
+
+3. **Verify:**
+
+   ```bash
+   velero restore describe <restore-name>
+   ```
+
+   **Good:** `Phase: Completed` with no errors. Check `velero restore logs <restore-name>` for warnings about skipped objects.
+
+## Full Cluster Rebuild
+
+1. Build the cluster with [bootstrap.md](bootstrap.md) up to and including Flux.
+2. Restore PostgreSQL databases (see [Restore a PostgreSQL Database](#restore-a-postgresql-database-cnpg)).
+3. Restore labelled PVCs with Velero (see [Restore from Velero](#restore-from-velero)).
+4. Run the final checks table in [bootstrap.md](bootstrap.md#5-final-checks).
 
 ## Related
 
-- [cluster/apps/velero/velero/README.md](../cluster/apps/velero/velero/README.md) - Velero details
-- [cluster/apps/rook-ceph/README.md](../cluster/apps/rook-ceph/README.md) - Ceph details
-- [docs/bootstrap.md](bootstrap.md) - Full cluster bootstrap
-- [talos/README.md](../talos/README.md) - Talos node procedures
+- [talos/README.md](../talos/README.md) - Talos tasks and schematics
+- [rook-ceph/README.md](../cluster/apps/rook-ceph/README.md) - Ceph operations
+- [velero/README.md](../cluster/apps/velero/velero/README.md) - Velero
+- [nut-system/README.md](../cluster/apps/nut-system/README.md) - UPS shutdown and recovery

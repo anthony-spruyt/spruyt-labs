@@ -44,19 +44,19 @@ Run these three queries in parallel:
 
 **Actionable drops** — use `mcp__litellm__victoriametrics-query`:
 
-```
+```text
 sum by (source, destination, protocol, reason) (increase(hubble_drop_total{reason=~"POLICY_DENIED|STALE_OR_UNROUTABLE_IP"}[1h])) > 0
 ```
 
 **Active drop rates** — use `mcp__litellm__victoriametrics-query`:
 
-```
+```text
 cilium:policy_drops:rate5m
 ```
 
 **Noise check** (report totals, don't investigate individually):
 
-```
+```text
 sum by (reason) (increase(hubble_drop_total{reason!~"POLICY_DENIED|STALE_OR_UNROUTABLE_IP"}[1h])) > 0
 ```
 
@@ -92,7 +92,7 @@ kubectl get pods -n <namespace>
 
 Use `mcp__litellm__victoriametrics-query`:
 
-```
+```text
 hubble_drop_total{reason="POLICY_DENIED", source="<SOURCE_NAMESPACE>"}
 ```
 

@@ -57,7 +57,7 @@ irqbalance can move these interrupts to P-cores:
 
 ### What irqbalance Cannot Control
 
-NVMe "managed interrupts" are pinned by the kernel at boot:
+NVMe "managed interrupts" are pinned by the kernel at boot. Each drive (`nvme0`, `nvme1`) has eight I/O queues laid out the same way:
 
 | NVMe Queue | CPU Affinity | Core Type |
 | ---------- | ------------ | --------- |
@@ -90,44 +90,11 @@ Limiting queues to P-cores only (`nvme.num_queues=8`) would:
 
 ## Guaranteed P-Core Execution
 
-For workloads requiring guaranteed P-core execution (ultra-low latency, real-time):
+Not configured. Nothing in the cluster pins a workload to P-cores today. If a workload ever needs it:
 
-### Option 1: Kubernetes CPU Manager (Recommended)
-
-Add to kubelet configuration in `talos/patches/global/configure-kubelet.yaml`:
-
-```yaml
-machine:
-  kubelet:
-    extraConfig:
-      cpuManagerPolicy: static
-      cpuManagerReconcilePeriod: 10s
-      reservedSystemCPUs: "0-1"  # Reserve 2 CPUs for system
-```
-
-Then request integer CPUs in pod spec:
-
-```yaml
-resources:
-  requests:
-    cpu: "2"    # Integer = dedicated cores
-  limits:
-    cpu: "2"    # Must match for static policy
-```
-
-The kubelet will pin this pod to specific P-cores (from available pool after reserved).
-
-### Option 2: Node Affinity + Taints
-
-Create a node label for P-core-only nodes or use pod topology hints.
-
-### Option 3: Kernel Parameters (Not Recommended)
-
-```text
-isolcpus=8-15
-```
-
-Prevents any scheduling on E-cores. Wastes 50% of CPU capacity.
+- **Kubernetes static CPU manager** (`cpuManagerPolicy: static` in `talos/patches/all/06-configure-kubelet.yaml.tpl`, plus integer CPU requests equal to limits) gives a pod exclusive CPUs. The CPU manager does not know about P-cores and E-cores. It prefers whole physical cores, which on this CPU are only the hyper-threaded P-cores, but an odd CPU count or an exhausted P-core pool will hand out
+  E-cores. Check the result with `/proc/<pid>/status` (`Cpus_allowed_list`) rather than assuming.
+- **`isolcpus=8-15`** on the kernel command line keeps everything off the E-cores and wastes half the CPU. Not recommended.
 
 ## Verification Commands
 
@@ -158,5 +125,5 @@ Should show P-core CPUs (0-7) for network/USB IRQs.
 ## Related Documentation
 
 - [Workload Classification](workload-classification.md) - Priority classes
-- [cluster/apps/irq-balance/](../cluster/apps/irq-balance/) - IRQ balance deployments
+- [irq-balance-ms-01/README.md](../cluster/apps/irq-balance/irq-balance-ms-01/README.md) - IRQ and RSS tuning on the workers
 - [talos/topf.yaml](../talos/topf.yaml) - Node configuration
