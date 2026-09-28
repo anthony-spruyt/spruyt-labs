@@ -191,7 +191,7 @@ Pinned versions installed as devcontainer features:
 
 Installed by `setup-devcontainer.sh` via Taskfile:
 
-kubectl, kustomize, helm, helmfile, helm plugins, cilium, hubble, talosctl, topf, uv, vals, flux, flux-capacitor, age, velero, cnpg plugin, falcoctl, gopls, cclsp, coder
+kubectl, kustomize, helm, helmfile, helm plugins, cilium, hubble, talosctl, topf, uv, vals, flux, age, velero, cnpg plugin, falcoctl, gopls, cclsp, coder
 
 ### Container Runtime
 

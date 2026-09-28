@@ -69,11 +69,5 @@
         "tim-koehler.helm-intellisense"
       ]
     }
-  },
-  "portsAttributes": {
-    "3333": {
-      "label": "Capacitor",
-      "onAutoForward": "openBrowser"
-    }
   }
 }

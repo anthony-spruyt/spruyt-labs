@@ -40,7 +40,3 @@ Every Kustomization under `cluster-apps` substitutes `${VAR}` from `meta/cluster
 - List the available names (keys only, no values) with `task flux:list-vars`.
 - A literal `${...}` that Flux must leave alone, such as a shell or JavaScript template, is written `$${...}`.
 - Add or change a secret value by editing the file with `sops cluster/flux/meta/cluster-secrets.sops.yaml` and committing it. Flux decrypts it in the cluster; do not decrypt it on the command line.
-
-## Tooling
-
-- `task flux:cap` starts [Flux Capacitor](https://github.com/gimlet-io/capacitor), a local web UI for Kustomization and HelmRelease state.

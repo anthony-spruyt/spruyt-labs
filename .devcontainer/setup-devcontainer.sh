@@ -21,7 +21,6 @@ task install:topf-cli
 task install:uv-cli
 task install:vals-cli
 task install:flux-cli
-task install:flux-capacitor
 task install:age-cli
 task install:velero-cli
 task install:cnpg-plugin

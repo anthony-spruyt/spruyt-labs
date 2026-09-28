@@ -22,7 +22,6 @@ image_list.txt
 
 # Project specific
 temp
-.capacitor
 .output
 agent.sock
 

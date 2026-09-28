@@ -38,10 +38,6 @@ tasks:
     desc: Installs gopls (Go language server)
     cmds:
       - bash {{ .installScriptsDir }}/install-gopls.sh
-  flux-capacitor:
-    desc: Installs Flux Capacitor v2 local FluxCD GUI
-    cmds:
-      - bash {{ .installScriptsDir }}/install-flux-capacitor.sh
   helm-cli:
     desc: Installs Helm
     cmds:
