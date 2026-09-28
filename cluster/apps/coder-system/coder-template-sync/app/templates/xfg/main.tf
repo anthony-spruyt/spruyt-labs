@@ -295,9 +295,6 @@ resource "coder_agent" "main" {
       sudo mount -o noatime /dev/containers-disk /var/lib/containers || true
     fi
 
-    # Configure git commit signing using the read-only SSH key mount.
-    # Kata virtiofs mounts are frozen at pod creation — secret updates
-    # do NOT propagate. Grace period on rotation keeps old key valid.
     git config --global gpg.format ssh
     git config --global user.signingKey /etc/coder/ssh-keys/id_ed25519
     git config --global commit.gpgSign true
@@ -309,10 +306,7 @@ resource "coder_agent" "main" {
     GIT_AUTHOR_EMAIL    = local.git_author_email
     GIT_COMMITTER_NAME  = local.git_author_name
     GIT_COMMITTER_EMAIL = local.git_author_email
-    # SSH auth uses the read-only key mount directly — no copy needed.
-    # Kata virtiofs: mount frozen at pod creation; rotation grace period
-    # keeps old key valid on GitHub until next rotation cycle.
-    GIT_SSH_COMMAND = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+    GIT_SSH_COMMAND     = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
   }
 
   metadata {

@@ -11,9 +11,9 @@ Rotates the SSH key Coder workspaces use for Git push and commit signing. Same i
 
 ## Operations
 
-### Kata grace period
+### Grace period
 
-Workspaces run under Kata, and virtiofs mounts are frozen at pod creation: a Secret update never reaches a running workspace. `GRACE_PERIOD_DAYS=8` keeps old keys valid on GitHub for four rotation cycles, so a workspace up to 8 days old can still push and sign. A workspace older than that loses Git access until it is restarted.
+Secret updates reach running Kata workspaces within a couple of minutes (kubelet sync plus the Kata agent's 2s watcher; limit 16 files / 1 MiB per volume, and never through `subPath`). `GRACE_PERIOD_DAYS=8` keeps old keys valid on GitHub for four rotation cycles, which covers a slow ExternalSecret refresh and already-signed commits that are not pushed yet.
 
 `CoderSSHKeyRotationConsecutiveFailures` fires after 5 days without a successful run, leaving 3 days to fix the job before the newest key ages out.
 

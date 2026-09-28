@@ -46,7 +46,7 @@ spec:
                 - name: GRACE_PERIOD_DAYS
                   value: "2"
                 - name: FORCE_SYNC_NAMESPACES
-                  value: claude-agents-write,claude-agents-spruyt-labs-write
+                  value: claude-agents-write,claude-agents-spruyt-labs-write,coder-workspaces
                 - name: FORCE_SYNC_ES_NAME
                   value: github-bot-ssh-key
               resources:

@@ -36,7 +36,7 @@ Workspace containers run `privileged: true` (envbuilder/kaniko and rootful podma
 - The Kyverno policy `restrict-privileged-to-coder-workspace-sa` (in `coder-workspaces/coder-workspaces/app/`) only admits privileged pods whose ServiceAccount starts with `coder-workspace`.
 - Templates pin `runtime_class_name = "kata"` and a `kata.spruyt-labs/ready=true` node selector. Removing either from a template removes the VM boundary.
 
-Kata freezes secret volumes at pod start, so rotated secrets (the SSH signing key, for example) only reach a workspace when it is restarted; see `github-system/coder-ssh-key-rotation/README.md` for how the grace period covers this.
+Rotated Secrets reach running workspaces within a couple of minutes: the Kata agent copies Secret and ConfigMap volume updates into the VM (limit 16 files / 1 MiB per volume). `subPath` mounts never update, so mount rotating Secrets as whole volumes (#3189).
 
 ### What each template gets
 
@@ -48,11 +48,13 @@ Kata freezes secret volumes at pod start, so rotated secrets (the SSH signing ke
 
 The shared set, in every template: `coder-workspace-env-common`, the SSH signing key, Nexus pull auth, and Claude managed settings. Project env Secrets come after common in `env_from`, so their keys override common ones with the same name.
 
+`spruyt-labs` swaps the SSH key for the `spruyt-labs-bot` key and runs `gh` on the write-tier GitHub App token, the same identity as the write-tier Claude agents. In repos that require PR approval, the owner approves its PRs with their own account.
+
 `coder-workspace-ops` is a scoped-down cluster-admin (no Secrets, no RBAC/webhook/CRD writes); its ClusterRole is in `coder-workspaces/coder-workspaces/app/rbac.yaml`. The SOPS age key is pulled from `flux-system` by an ExternalSecret, so a `spruyt-labs` workspace can decrypt every SOPS file in the repo.
 
 The spruyt-labs Talos config comes from the Talos `ServiceAccount` `coder-workspace-talos` (role `os:operator`, short-lived and auto-renewed), not a static admin config (#3188).
 
-The three `main.tf` files are near-copies: beyond this table they differ only in the `repo` default and, for `spruyt-labs`, parameter order, a higher memory request, and the startup steps that build the kubeconfig and copy Terraform credentials. A fix to shared behaviour must be applied to all three.
+The three `main.tf` files are near-copies: beyond this table they differ only in the `repo` default and, for `spruyt-labs`, parameter order, a higher memory request, the bot identity, and the startup steps that build the kubeconfig and link the Terraform and `gh` credentials. A fix to shared behaviour must be applied to all three.
 
 ### Nexus routing
 

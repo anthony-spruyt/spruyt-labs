@@ -39,8 +39,9 @@ locals {
   workspace_name = "coder-${lower(data.coder_workspace.me.id)}"
   traefik_lb_ip  = data.kubernetes_service_v1.traefik.status[0].load_balancer[0].ingress[0].ip
 
-  git_author_name  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
-  git_author_email = coalesce(data.coder_parameter.git_email.value, data.coder_workspace_owner.me.email)
+  # Same identity as the write-tier Claude agents, so the owner can approve its PRs with their own account.
+  git_author_name  = "spruyt-labs-bot"
+  git_author_email = "spruyt-labs-bot@users.noreply.github.com"
   repo_url         = data.coder_parameter.repo.value
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
@@ -81,16 +82,6 @@ locals {
     "OTEL_RESOURCE_ATTRIBUTES" : "agent.namespace=coder-workspaces,workspace.name=${data.coder_workspace.me.name},workspace.owner=${data.coder_workspace_owner.me.name}",
     "SAFE_CHAIN_LOGGING" : "silent"
   }
-}
-
-data "coder_parameter" "git_email" {
-  name         = "git_email"
-  display_name = "Git commit email"
-  description  = "Email used for git author/committer and SSH signature verification. Must be a GitHub-verified email on anthony-spruyt's account. Defaults to the GitHub noreply address so commits verify without leaking personal email."
-  type         = "string"
-  mutable      = true
-  order        = 2
-  default      = "99536297+anthony-spruyt@users.noreply.github.com"
 }
 
 data "coder_parameter" "repo" {
@@ -264,8 +255,6 @@ resource "coder_agent" "main" {
     fi
 
     if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
-      sudo cp /var/run/secrets/kubernetes.io/serviceaccount/token /tmp/sa-token
-      sudo chmod 644 /tmp/sa-token
       mkdir -p /home/vscode/.kube
       cat > /home/vscode/.kube/config <<KUBEEOF
     apiVersion: v1
@@ -285,15 +274,15 @@ resource "coder_agent" "main" {
     users:
     - name: default
       user:
-        tokenFile: /tmp/sa-token
+        tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
     KUBEEOF
     fi
 
-    mkdir -p /home/vscode/.terraform.d
-    sudo cp /etc/coder/terraform.d/credentials.tfrc.json /home/vscode/.terraform.d/credentials.tfrc.json
-    sudo chown vscode:vscode /home/vscode/.terraform.d/credentials.tfrc.json
+    # Symlinks, not copies: rotated Secrets reach the mounts, copies would go stale.
+    mkdir -p /home/vscode/.terraform.d /home/vscode/.config/gh
+    ln -sfn /etc/coder/terraform.d/credentials.tfrc.json /home/vscode/.terraform.d/credentials.tfrc.json
+    ln -sfn /etc/coder/gh/hosts.yml /home/vscode/.config/gh/hosts.yml
 
-    # Kata freezes secret mounts at pod start; the rotation grace period keeps this key valid on GitHub.
     git config --global gpg.format ssh
     git config --global user.signingKey /etc/coder/ssh-keys/id_ed25519
     git config --global commit.gpgSign true
@@ -546,6 +535,12 @@ resource "kubernetes_pod_v1" "main" {
       }
 
       volume_mount {
+        name       = "gh-hosts"
+        mount_path = "/etc/coder/gh"
+        read_only  = true
+      }
+
+      volume_mount {
         name       = "talosconfig"
         mount_path = "/etc/coder/talos"
         read_only  = true
@@ -625,8 +620,20 @@ resource "kubernetes_pod_v1" "main" {
     volume {
       name = "ssh-signing-key"
       secret {
-        secret_name  = "coder-ssh-signing-key"
+        secret_name  = "github-bot-ssh-key"
         default_mode = "0400"
+      }
+    }
+
+    volume {
+      name = "gh-hosts"
+      secret {
+        secret_name  = "github-bot-credentials"
+        default_mode = "0400"
+        items {
+          key  = "hosts.yml"
+          path = "hosts.yml"
+        }
       }
     }
 

@@ -12,6 +12,7 @@ resources:
   - ./sops-age-externalsecret.yaml
   - ./github-secret-store.yaml
   - ./github-ssh-external-secret.yaml
+  - ./github-bot-external-secret.yaml
   - ./github-rotation-rbac.yaml
   - ./rbac.yaml
   - ./registries-conf-configmap.yaml

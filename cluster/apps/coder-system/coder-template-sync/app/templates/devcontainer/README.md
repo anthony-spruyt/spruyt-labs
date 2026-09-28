@@ -17,7 +17,7 @@ The repository needs:
 
 - **Persistence:** `/workspaces`, `/home/vscode` and podman storage (`/var/lib/containers`) survive restarts. Everything else is rebuilt from the devcontainer on each start.
 - **Containers:** rootful podman works inside the workspace. Pulls from docker.io, ghcr.io, quay.io, mcr.microsoft.com and registry.k8s.io go through the Nexus mirror automatically.
-- **Git signing key rotates:** the SSH key is replaced every 2 days and old keys stay valid on GitHub for 8. If push or signing starts failing with `publickey` errors on a long-running workspace, restart it.
+- **Git signing key rotates:** the SSH key is replaced every 2 days and reaches a running workspace within a couple of minutes. Old keys stay valid on GitHub for 8 days.
 - **Claude Code:** starts in `bypassPermissions` mode from managed settings. Telemetry, including prompts and tool content, goes to the cluster's VictoriaMetrics/Logs/Traces.
 
 ## Troubleshooting

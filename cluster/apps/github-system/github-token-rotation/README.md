@@ -2,8 +2,8 @@
 
 ## Overview
 
-Every 30 minutes, mints installation tokens for two GitHub Apps (a write app and a read app) from their private keys, writes them into `github-bot-credentials`, and force-syncs the ExternalSecrets in the Claude agent namespaces and `n8n-system`. Installation tokens live one hour, so the schedule leaves one retry of headroom. The flow is stateless - each run starts from the App private key - so a
-failed run heals on the next one.
+Every 30 minutes, mints installation tokens for two GitHub Apps (a write app and a read app) from their private keys, writes them into `github-bot-credentials`, and force-syncs the ExternalSecrets in the Claude agent namespaces, `n8n-system` and `coder-workspaces`. Installation tokens live one hour, so the schedule leaves one retry of headroom. The flow is stateless - each run starts from the App
+private key - so a failed run heals on the next one.
 
 ## Prerequisites
 

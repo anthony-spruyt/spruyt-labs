@@ -54,7 +54,7 @@ In that order: the provisioning Job reads `admin-password` on every run and 401s
 
 ### Rotating the workspace puller password
 
-Update `puller-password` in `nexus-workspace-clients` and the auth in `coder-workspace-nexus-clients` together. The provisioning Job applies the new password on its next run, so change `provision.sh` or re-run the Job. Running workspaces keep the old auth until restarted (Kata freezes secret mounts).
+Update `puller-password` in `nexus-workspace-clients` and the auth in `coder-workspace-nexus-clients` together. The provisioning Job applies the new password on its next run, so change `provision.sh` or re-run the Job. Running workspaces keep the old auth until restarted: templates mount `auth.json` with `subPath`, and `subPath` mounts never receive Secret updates.
 
 ## Troubleshooting
 
