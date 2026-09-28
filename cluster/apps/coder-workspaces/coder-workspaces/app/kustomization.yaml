@@ -18,6 +18,7 @@ resources:
   - ./registries-conf-configmap.yaml
   - ./network-policies.yaml
   - ./restrict-privileged-to-coder-workspace-sa.yaml
+  - ./talos-serviceaccount.yaml
 configMapGenerator:
   - name: coder-workspace-claude-managed-settings
     files:
