@@ -1,70 +1,45 @@
-# Technitium - DNS Server
+# Technitium - Internal DNS
 
 ## Overview
 
-Technitium serves as the primary DNS server for internal domain resolution, providing reliable and configurable DNS services for the homelab environment.
+Primary internal DNS server (LAN resolver and authoritative for the internal copy of `${EXTERNAL_DOMAIN}` and `lan.${EXTERNAL_DOMAIN}`). `technitium-secondary` replicates from it. external-dns writes records here, and CoreDNS forwards the domain here for in-cluster lookups.
 
 ## Prerequisites
 
-- Persistent storage for DNS zone data
-- Authentik OIDC provider configured (blueprint: `technitium-sso.yaml`)
+- Authentik OIDC provider from `authentik-system/authentik/app/blueprints/technitium-sso.yaml`. One provider serves both instances, with a redirect URI for each.
+- TSIG key for external-dns, configured in the Technitium UI (see [external-dns-technitium](../../external-dns/external-dns-technitium/README.md)).
 
-## Single Sign-On (SSO)
+## Operations
 
-Technitium v15+ supports OIDC SSO via Authentik. Both primary and secondary instances share a single Authentik OIDC provider with separate redirect URIs.
+### Config lives on the PVC, not in env vars
 
-### Architecture
+Technitium reads its `DNS_SERVER_*` environment variables **only on first start** with an empty config directory. After that everything - zones, SSO settings, admin password - is persisted on the PVC and the env vars are ignored. Consequences:
 
-```text
-Browser -> Technitium UI -> Authentik (auth.${EXTERNAL_DOMAIN}) -> OIDC callback -> Technitium
-```
+- Changing SSO or the admin password in `app/values.yaml` does nothing on a running instance. Change it in the admin UI (Settings -> SSO) on **each** instance.
+- The env vars only matter for a fresh PVC, where SSO auto-configures from them.
 
-- **Authentik provider**: `Technitium` (blueprint-managed)
-- **Redirect URIs**: `https://dns.lan.${EXTERNAL_DOMAIN}:53443/sso/callback`, `https://dns-secondary.lan.${EXTERNAL_DOMAIN}:53443/sso/callback`
-- **Access control**: Authentik `Technitium Users` group
-- **ExternalSecret**: Syncs OIDC credentials from `authentik-system` -> `technitium` namespace
+### OIDC secret rotation is manual
 
-### Important: Config Persistence
+Technitium is deliberately left out of the weekly Authentik `oauth-secret-rotation` CronJob. That job updates Authentik and the Kubernetes secret, Reloader restarts the pod, and Technitium keeps using the old secret from its PVC - so SSO breaks. To rotate:
 
-Technitium reads environment variables **only on first startup**. After that, config is persisted to PVC and env vars are ignored. This means:
+1. Generate a new client secret.
+2. Update the provider in Authentik (API or admin UI).
+3. Update `TECHNITIUM_OIDC_CLIENT_SECRET` in `authentik-technitium-oauth` (`authentik-system`) with `sops`.
+4. Enter the new secret in the SSO settings of **both** instances' admin UIs.
+5. Test SSO login on both.
 
-- SSO must be configured via the **Technitium admin UI** (Settings -> SSO) on each instance
-- Env vars in `values.yaml` serve as fallback for fresh PVC provisioning only
-- If the PVC is deleted/recreated, SSO will auto-configure from env vars on first boot
+### Primary and secondary
 
-### Secret Rotation: NOT Automated
+Zones reach the secondary by zone transfer (catalog zone, AXFR/IXFR incl. XFR-over-TLS on 853) with NOTIFY from the primary; `app/network-policies.yaml` carries both directions. A required pod anti-affinity on the `role` label keeps primary and secondary on different nodes.
 
-Technitium is **excluded** from the weekly `oauth-secret-rotation` CronJob because:
-
-1. Rotation updates Authentik + K8s secrets, then Reloader restarts the pod
-2. Technitium ignores env vars on restart, reads old secret from PVC
-3. Result: Authentik has new secret, Technitium has old -> SSO breaks
-
-**To manually rotate the Technitium OIDC client secret:**
-
-1. Generate a new secret
-2. Update the Authentik provider via API or admin UI
-3. Update the `authentik-technitium-oauth` secret in `authentik-system` namespace
-4. Update SSO settings in **both** Technitium instances via their admin UIs
-5. Verify SSO login works on both instances
+`app/allowlist.txt` (Adblock `@@||domain^` syntax) is not referenced by any manifest - it is not in `kustomization.yaml` and nothing mounts it. It only takes effect if Technitium's blocking settings point at the file's raw GitHub URL; editing it does nothing otherwise.
 
 ## Troubleshooting
 
-1. **SSO button not appearing**
-
-   - SSO must be enabled via Technitium admin UI, not just env vars
-   - Verify Settings -> SSO -> "Enable Single Sign-On" is checked
-
-2. **SSO login fails with redirect error**
-
-   - Verify redirect URI in Authentik matches exactly: `https://dns.lan.${EXTERNAL_DOMAIN}:53443/sso/callback`
-   - Check Authentik provider has both redirect URIs (primary + secondary)
-
-3. **SSO login fails with invalid client**
-
-   - Client secret may have been rotated -- check current value in `technitium-oauth-credentials` secret matches what Technitium has in its config
-   - Re-enter credentials in Technitium UI if needed
+1. **SSO button missing** - SSO was never enabled in the UI on that instance; env vars alone do not enable it on an existing PVC.
+2. **SSO fails with invalid client** - the secret was rotated in Authentik but not re-entered in the Technitium UI.
+3. **SSO redirect error** - the redirect URI must match exactly, including port `53443`.
 
 ## References
 
-- [Technitium Documentation](https://technitium.com/dns/)
+- [Technitium DNS Server](https://technitium.com/dns/)

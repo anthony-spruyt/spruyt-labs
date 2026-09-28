@@ -1,30 +1,10 @@
-# Metrics Server - Kubernetes Resource Metrics API
+# Metrics Server - Resource Metrics API
 
 ## Overview
 
-Metrics Server provides the `metrics.k8s.io` Kubernetes API, exposing real-time container and node CPU/memory usage. Used by VPA recommender, HPA, `kubectl top`, and Headlamp resource display.
+Serves `metrics.k8s.io` for the VPA recommender's live samples, the descheduler's `LowNodeUtilization` plugin, `kubectl top` and Headlamp.
 
-Deployed with 2 replicas and `--kubelet-insecure-tls` for Talos Linux compatibility (self-signed kubelet serving certs).
+## Operations
 
-## Prerequisites
-
-- kyverno-policies (from ks.yaml dependsOn)
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Metrics API unavailable**
-
-   - **Symptom**: `kubectl top` returns "Metrics API not available"
-   - **Resolution**: Check APIService status: `kubectl get apiservice v1beta1.metrics.k8s.io -o yaml`. Verify pods are Running and endpoints exist.
-
-2. **TLS errors to kubelets**
-
-   - **Symptom**: Logs show `x509: cannot validate certificate` errors
-   - **Resolution**: Ensure `--kubelet-insecure-tls` is set in values.yaml `args`. Required for Talos Linux.
-
-## References
-
-- [Metrics Server GitHub](https://github.com/kubernetes-sigs/metrics-server)
-- [Kubernetes Metrics API](https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/)
+`--kubelet-insecure-tls` was added on the assumption that Talos kubelets serve self-signed certificates. That no longer holds: Talos runs kubelets with `serverTLSBootstrap: true` and kubelet-csr-approver gets the serving certificates signed by the cluster CA, with the node's InternalIP in the SANs (the address type metrics-server dials). The flag is likely removable, but that has not been tested -
+if you try, watch for `x509` errors in the metrics-server logs and a failing `v1beta1.metrics.k8s.io` APIService.

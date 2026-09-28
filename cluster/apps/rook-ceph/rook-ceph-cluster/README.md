@@ -1,23 +1,14 @@
-# rook-ceph-cluster - Ceph Storage Cluster
+# rook-ceph-cluster - Ceph Cluster and Thunderbolt Ring
 
 ## Overview
 
-Rook Ceph Cluster deploys and manages a Ceph storage cluster using Rook, providing distributed block storage, shared filesystem storage, and object storage for Kubernetes workloads.
-
-## Prerequisites
-
-- Storage devices must be available and properly configured for Ceph OSDs
-- rook-ceph-operator deployed
+The `CephCluster`, pools, StorageClasses and object stores. Cluster-wide operations (OSDs, CephX rotation, RGW, Grafana embedding) are in the [namespace README](../README.md); this one covers the Thunderbolt ring that carries OSD replication traffic and its failure modes.
 
 ## Cluster Network Architecture
 
 ### Thunderbolt Ring Network
 
-The Ceph cluster uses a dedicated Thunderbolt ring network for OSD-to-OSD traffic (cluster network), separate from the public network used for client I/O. This provides:
-
-- **High bandwidth**: 40Gbps Thunderbolt 4 links between storage nodes
-- **Low latency**: Direct point-to-point connections
-- **Isolation**: Cluster replication traffic doesn't compete with client traffic
+OSD-to-OSD replication uses a dedicated Thunderbolt ring (the Ceph cluster network, `addressRanges.cluster` in `values.yaml`), separate from the public network used for client I/O, so replication never competes with client traffic.
 
 #### Physical Topology
 
@@ -34,13 +25,7 @@ Each node has two Thunderbolt ports connecting to the other two nodes in a full 
 
 #### Network Configuration
 
-Each node has a link-local IP on the Thunderbolt network:
-
-| Node    | IP Address      |
-| ------- | --------------- |
-| ms-01-1 | 169.254.255.101 |
-| ms-01-2 | 169.254.255.102 |
-| ms-01-3 | 169.254.255.103 |
+Each node has one link-local ring address, assigned to both of its ring links, in `talos/patches/node/ms-01-*/02-configure-thunderbolt-links.yaml`.
 
 #### Stable Interface Matching with Link Aliases
 
@@ -60,9 +45,9 @@ kind: LinkConfig
 name: ethSel0
 mtu: 65520
 addresses:
-  - address: 169.254.255.101/32
+  - address: <this-node-ring-ip>/32
 routes:
-  - destination: 169.254.255.102/32
+  - destination: <peer-ring-ip>/32
     metric: 2048
 ```
 
@@ -114,7 +99,7 @@ Check Ceph is using the cluster network:
 
 ```bash
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd dump | grep -E "^osd\."
-# Each OSD lists both a public address and a cluster address in 169.254.255.0/24
+# Each OSD lists a public address and a cluster address in the ring range (addressRanges.cluster)
 ```
 
 ## Troubleshooting

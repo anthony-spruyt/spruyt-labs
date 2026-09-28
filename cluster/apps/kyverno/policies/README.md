@@ -2,136 +2,52 @@
 
 ## Overview
 
-Custom Kyverno policies for the spruyt-labs homelab. These policies automate resource management and enforce cluster standards.
-
-## Prerequisites
-
-- Kyverno installed and running (dependsOn: kyverno)
+Cluster-wide Kyverno policies. Each policy's intent is in its manifest and `policies.kyverno.io/description` annotation; this README covers the behaviour that is easy to trip over. None of them apply in `kube-system` or `kyverno` (see [kyverno](../kyverno/README.md)).
 
 ## Policies
 
 ### add-helmrelease-defaults
 
-Injects default timeout, install, upgrade, and rollback configuration into HelmReleases that don't already specify them. Uses Kyverno `+(anchor)` syntax so individual HelmReleases can override any field by setting it explicitly.
+Fills in `timeout`, `install`, `upgrade` and `rollback` on HelmReleases using `+(anchor)` syntax, so any field set in a HelmRelease wins. `interval` is not defaulted; every HelmRelease sets it explicitly. Because the whole `install` / `upgrade` / `rollback` block is anchored, setting **any** key in one of them (for example `upgrade.crds`) drops all the other defaults for that block - copy the full
+block when overriding.
 
-The `interval` field is **not** managed by this policy — it is set explicitly to `4h` in each HelmRelease manifest (required CRD field).
-
-**Defaults Applied:**
-
-| Field                                           | Default Value        |
-| ----------------------------------------------- | -------------------- |
-| `spec.timeout`                                  | `10m`                |
-| `spec.install.crds`                             | `CreateReplace`      |
-| `spec.install.strategy.name`                    | `RetryOnFailure`     |
-| `spec.rollback.cleanupOnFail`                   | `true`               |
-| `spec.rollback.recreate`                        | `true`               |
-| `spec.upgrade.cleanupOnFail`                    | `true`               |
-| `spec.upgrade.crds`                             | `CreateReplace`      |
-| `spec.upgrade.strategy.name`                    | `RemediateOnFailure` |
-| `spec.upgrade.remediation.remediateLastFailure` | `true`               |
-| `spec.upgrade.remediation.retries`              | `2`                  |
-
-**Overriding Defaults:**
-
-Set the field explicitly in the HelmRelease spec. For example, to use a longer timeout:
-
-```yaml
-spec:
-  timeout: 15m  # Overrides the 10m default
-```
-
-Current overrides: n8n/rook-ceph-cluster (`timeout: 15m`), hindsight/litellm (`timeout: 30m`).
-
-> **Exempt namespaces:** the Kyverno mutating webhook excludes `kube-system` (chart default, avoids control-plane deadlock), so HelmReleases there are never mutated and fall back to helm-controller defaults — not the defaults above. Set every field explicitly. `cilium` sets `timeout: 10m` for this reason.
+HelmReleases in `kube-system` are never mutated and fall back to helm-controller defaults (5m timeout), which is why `cilium` sets `timeout: 10m` itself.
 
 ### inject-claude-agent-config
 
-Injects configuration into Claude agent pods spawned by n8n. A shared rule injects GitHub bot credentials (gh CLI config, read-only gitconfig), MCP server config, plugin bootstrap volumes, and a `plugin-bootstrap` init container (reads managed-settings.json and user settings.json) into all agent namespaces. Clone rules inject a `plugin-bootstrap-project` init container (after `git-clone`) that
-reads project settings.json and settings.local.json to install additional marketplaces and plugins via `claude plugins` CLI. The write namespace additionally receives SSH key and full gitconfig (with commit signing) via strategic merge override. Read and SRE namespaces clone repos via HTTPS using a read-scoped GitHub App token instead of SSH (no SSH key = no push capability).
-
-**Injected resources:** See [`inject-claude-agent-config.yaml`](app/inject-claude-agent-config.yaml) for the full list of volumes, volume mounts, and environment variables.
+Injects credentials, MCP config, settings profiles, plugin bootstrap and repo clone init containers into agent pods. Documented with the agent design in [claude-agents-shared](../../claude-agents-shared/README.md).
 
 ### set-agent-deadline
 
-Mutates agent pods (labeled `managed-by: n8n-claude-code`) to set `activeDeadlineSeconds` from the `agent-timeout` annotation. Prevents orphaned agent pods from running indefinitely. Excludes persistent agent pods (`app: claude-code-persistent`).
-
-- **Default deadline**: 1740s (29min) if annotation missing
-- **Annotation**: `agent-timeout` (seconds)
-
-The timeout annotation is set by the BullMQ worker at pod creation based on per-role job timeouts. See [agent-queue-worker README](../../agent-worker-system/agent-queue-worker/README.md#timeouts) for role timeout values.
-
-### validate-agent-deadline
-
-Safety net for `set-agent-deadline`. Rejects agent pods missing `activeDeadlineSeconds` (Enforce mode). Catches mutation policy failures.
+Paired with `validate-agent-deadline`. `set-agent-deadline` sets `activeDeadlineSeconds` on pods labelled `managed-by: n8n-claude-code` from their `agent-timeout` annotation, falling back to 3h when it is missing. `validate-agent-deadline` (Enforce) rejects any agent pod that still has no deadline, so a mutation failure blocks the pod rather than letting it run forever. Pods labelled
+`app: claude-code-persistent` are excluded from both. Per-role timeouts are set by the worker; see [agent-queue-worker](../../agent-worker-system/agent-queue-worker/README.md#timeouts).
 
 ### cleanup-agent-pods
 
-Hourly cleanup policy (`ClusterCleanupPolicy`). Removes completed/failed agent pods that n8n failed to delete. Defense-in-depth — normal path deletes pods immediately after job completion.
+Hourly `ClusterCleanupPolicy` removing `Succeeded`/`Failed` agent pods that n8n did not delete. Needs the pod `delete` RBAC granted in the kyverno values.
 
 ### add-pss-restricted-defaults
 
-Mutates incoming Pods to add security context fields required for Pod Security Standards (PSS) Restricted profile compliance. Only sets fields that are not already defined, preserving app-specific configurations. Adds `seccompProfile: RuntimeDefault`, `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, and drops all capabilities on containers and init containers.
-
-**Excluded Namespaces:** kube-system, kube-public, kube-node-lease, flux-system, kyverno, rook-ceph, falco-system, irq-balance, spegel, velero, observability, nut-system, dev-debug
+Adds seccomp, `runAsNonRoot`, `allowPrivilegeEscalation: false` and `drop: [ALL]` to new pods where unset. Namespaces running legitimately privileged workloads are excluded in the manifest. A pod that needs root or capabilities in a non-excluded namespace must set those fields explicitly; the anchors leave explicit values alone. Other policies layer on top of this one - `qdrant-allow-init-root`
+(in `qdrant-system`) and `restrict-privileged-to-coder-workspace-sa` (in `coder-workspaces`) live with their apps, not here.
 
 ### add-default-topology-spread
 
-Automatically injects topology spread constraints on Deployments and StatefulSets that don't already have them. Uses soft constraints (`ScheduleAnyway`) with `maxSkew: 1` to ensure balanced pod distribution across nodes without blocking scheduling. Matches on `app.kubernetes.io/name` label for the label selector.
-
-**Excluded Namespaces:** kube-system, kube-public, kube-node-lease, flux-system, kyverno
+Adds a soft (`ScheduleAnyway`, `maxSkew: 1`) hostname spread keyed on `app.kubernetes.io/name` to Deployments and StatefulSets without one. Soft constraints never block scheduling, so balance is enforced after the fact by the [descheduler](../../kube-system/descheduler/README.md).
 
 ### authentik-outpost-resources
 
-Injects default resource requests and limits into Authentik outpost Deployments (matched by label `app.kubernetes.io/managed-by: goauthentik.io`) that don't already have resources set. Ensures outpost pods have Burstable QoS and VPA can generate recommendations.
+Authentik creates outpost Deployments with no resource requests, which leaves them BestEffort and invisible to VPA. This policy adds small defaults to Deployments labelled `app.kubernetes.io/managed-by: goauthentik.io`.
 
-**Resources Applied:**
+### remove-image-pull-secrets
 
-| Resource | Request | Limit |
-| -------- | ------- | ----- |
-| CPU      | 5m      | --    |
-| Memory   | 32Mi    | 64Mi  |
-
-### Adding Namespace Exclusions
-
-1. Edit `cluster/apps/kyverno/policies/app/default-limitrange.yaml`
-
-2. Add namespace to the `exclude.any.resources.names` list
-
-3. Commit and push
-
-4. If policy update is rejected (immutable field error):
-
-   ```bash
-   kubectl delete clusterpolicy add-default-limitrange
-   flux reconcile ks kyverno-policies --with-source
-   ```
+Strips `imagePullSecrets` from pods pulling from GHCR or Docker Hub. Registry credentials for those registries are set at the node level in `talos/patches/all/07-configure-registries.yaml.tpl`, so per-pod pull secrets (often injected by charts) are redundant and break when the named secret does not exist in the pod's namespace.
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **Pod fails with "requests must be less than or equal to limit"**
-
-   - **Cause**: App requests more memory than LimitRange default limit
-   - **Resolution**: Either add explicit limits to the app, or exclude the namespace from the policy
-
-2. **LimitRange not created in new namespace**
-
-   - **Diagnosis**: Check if namespace is in exclude list or policy is ready
-
-   - **Resolution**:
-
-     ```bash
-     kubectl get clusterpolicy add-default-limitrange -o jsonpath='{.status.conditions}'
-     kubectl logs -n kyverno -l app.kubernetes.io/component=background-controller --tail=20
-     ```
-
-3. **Orphaned LimitRanges after policy changes**
-
-   - **Cause**: Policy deleted without `synchronize: true`
-   - **Resolution**: With `synchronize: true`, Kyverno auto-cleans generated resources
+1. **Policy update rejected with an immutable-field error**
+   - **Fix**: Delete the ClusterPolicy and let Flux recreate it.
 
 ## References
 
-- [Kyverno Generate Rules](https://kyverno.io/docs/writing-policies/generate/)
-- [LimitRange Documentation](https://kubernetes.io/docs/concepts/policy/limit-range/)
+- [Kyverno mutate rules and anchors](https://kyverno.io/docs/writing-policies/mutate/)

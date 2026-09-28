@@ -4,17 +4,13 @@
 
 [UnPoller](https://unpoller.com/) polls the UniFi Network controller and exports its device, client, site and WAN state as Prometheus metrics for the VictoriaMetrics stack. It exists to answer one question that nothing else in the homelab could: **has something that was always on the network stopped being there?**
 
-| Component | Purpose                                        | Namespace    |
-| --------- | ---------------------------------------------- | ------------ |
-| unpoller  | Polls the UniFi controller, exports `/metrics` | unifi-system |
-
 Related but separate: `cluster/apps/unifi-mcp/` runs an MCP tool server against the same controller. It has write policies enabled and a different credential. UnPoller is read-only and does not share anything with it.
 
 ## Prerequisites
 
 - UniFi OS Server reachable at `${UNIFI_IP4}:11443`
 - A **local** UniFi account with read-only access to all sites (see [Credential](#credential))
-- `victoria-metrics-k8s-stack` deployed in `observability` (provides `vmagent` and the `VMServiceScrape` / `VMRule` CRDs)
+- `victoria-metrics-k8s-stack` deployed in `observability` (provides `vmagent` and the `VMServiceScrape` / `VMRule` CRDs; not expressed as a `dependsOn`)
 - Cluster variables `${UNIFI_IP4}` and `${UNIFI_INFRA_MACS}` present in `cluster/flux/meta/` (see [Cluster variables](#cluster-variables))
 
 ## Why this exists
@@ -49,13 +45,6 @@ Separate from `unifi-mcp`'s credential on purpose: the two have different blast 
 **Adding a device to the watchlist:** edit `cluster/flux/meta/cluster-secrets.sops.yaml` with `sops`, append `|<mac>` to `UNIFI_INFRA_MACS`, commit. The regex is matched against the `mac` label, which UnPoller emits lowercase and colon-separated.
 
 ## Scrape target
-
-| Property        | Value                            |
-| --------------- | -------------------------------- |
-| Service         | `unpoller.unifi-system.svc:9130` |
-| Path            | `/metrics`                       |
-| Scrape interval | 60s (`vm-service-scrape.yaml`)   |
-| Metric prefix   | `unpoller_`                      |
 
 UnPoller serves `/metrics` from a cache refreshed on its own `UP_PROMETHEUS_INTERVAL` (60s) rather than polling the controller per scrape. That decoupling is what stops a controller 429 backoff from stalling scrapes. Scraping faster than the refresh interval only duplicates samples — keep the two in sync if you change either.
 

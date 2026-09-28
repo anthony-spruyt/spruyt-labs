@@ -1,58 +1,24 @@
-# irq-balance-ms-01 - IRQ and RSS Tuning for MS-01 Nodes
+# irq-balance-ms-01 - IRQ and RSS Tuning for MS-01 Workers
 
 ## Overview
 
-IRQ Balance is a Linux daemon that distributes hardware interrupts across multiple CPUs to improve system performance. This deployment includes both IRQ balancing and RSS (Receive Side Scaling) tuning for MS-01 nodes.
+Keeps hardware interrupts off the E-cores and spreads NIC receive queues across P-cores on the MS-01 workers. Added after one P-core pair took nearly all network interrupts on ms-01-2 and thermally throttled ([#236](https://github.com/anthony-spruyt/spruyt-labs/issues/236)). The e2 control-plane variant is plain irqbalance with no tuning.
 
-**Components:**
+## Operations
 
-- **irqbalance daemon**: Distributes hardware interrupts across available P-cores
-- **RSS tuning (init container)**: Configures network card flow distribution to prevent thermal hotspots
+- `IRQBALANCE_BANNED_CPULIST: 8-15` bans the E-cores. See [`docs/intel-hybrid-architecture.md`](../../../../docs/intel-hybrid-architecture.md) for the core layout and which interrupts (NVMe queues) irqbalance cannot move.
+- The `tune-rss` init container runs `ethtool -X enp89s0 equal 4` on the host network namespace. `enp89s0` is the kernel alternate name; Talos lists the same NIC as `eth1`, and its interrupts show as `eth1-TxRx-*` in `/proc/interrupts`. The init container logs success or failure but never fails the pod, so a silently unsupported NIC looks healthy.
+- RSS changes only affect new flows; existing connections stay on their original queue until they reconnect.
 
-## Prerequisites
-
-- MS-01 nodes with appropriate CPU configuration
-
-## Operation
-
-### Verify RSS Indirection Table
-
-Talos has no SSH — use a privileged debug pod to inspect NIC RSS tables:
+### Checking the result
 
 ```bash
-kubectl run ethtool-check --image=nicolaka/netshoot:latest --namespace=dev-debug \
-  --restart=Never --rm --overrides='{
-    "spec": {
-      "hostNetwork": true,
-      "nodeName": "ms-01-2",
-      "containers": [{
-        "name": "ethtool",
-        "image": "nicolaka/netshoot:latest",
-        "command": ["ethtool", "-x", "enp89s0"],
-        "securityContext": {"privileged": true}
-      }]
-    }
-  }'
+# Interrupt spread per queue (should be balanced across CPUs 0-7)
+talosctl -n ms-01-2 read /proc/interrupts | grep eth1-TxRx
 ```
 
-Monitor interrupt distribution (should be balanced across P-cores):
-
-```bash
-talosctl -n ms-01-2 read /proc/interrupts | grep "eth1-TxRx"
-```
-
-## Troubleshooting
-
-1. **RSS tuning not applied**
-
-   - **Symptom**: Network interrupts still concentrated on single CPU
-   - **Diagnosis**: Check init container logs: `kubectl logs -n irq-balance <pod> -c tune-rss`
-   - **Resolution**: Verify NIC supports RSS, ensure init container has privileged mode
-   - **Note**: RSS only affects new network flows; existing connections stay on original queue
+For the RSS indirection table itself, `ethtool -x enp89s0` needs a privileged host-network pod on the node (`task dev-env:priv-pod-ms-2` gives a shell; install `ethtool` in it).
 
 ## References
 
-- [IRQ Balance Documentation](https://github.com/irqbalance/irqbalance)
-- [RSS (Receive Side Scaling)](https://www.kernel.org/doc/html/latest/networking/scaling.html)
-- [ethtool RSS Configuration](https://www.kernel.org/doc/Documentation/networking/scaling.txt)
-- [Issue #236: CPU thermal throttling](https://github.com/anthony-spruyt/spruyt-labs/issues/236)
+- [Linux RSS and RPS scaling](https://docs.kernel.org/networking/scaling.html)

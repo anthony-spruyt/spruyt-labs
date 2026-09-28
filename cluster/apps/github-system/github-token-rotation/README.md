@@ -1,51 +1,42 @@
-# github-token-rotation - GitHub App Installation Token Rotation
+# github-token-rotation - GitHub App Installation Tokens
 
 ## Overview
 
-CronJob that mints GitHub App installation tokens every 30 minutes. It generates a JWT from each App's private key, exchanges it for a short-lived installation token (`ghs_*`) via the GitHub API, patches the `github-bot-credentials` source secret in `github-system`, and force-syncs ESO ExternalSecrets in all consumer namespaces (`claude-agents-read`, `claude-agents-write`,
-`claude-agents-spruyt-labs-read`, `claude-agents-spruyt-labs-sre`, `claude-agents-spruyt-labs-write`).
-
-Installation tokens expire after 1 hour (fixed by GitHub). The 30-minute rotation schedule provides a safety margin. Unlike the previous OAuth refresh token design, this flow is **stateless** — each run generates tokens from scratch using only the static App private key. If a run fails, the next run self-heals with no manual intervention.
+Every 30 minutes, mints installation tokens for two GitHub Apps (a write app and a read app) from their private keys, writes them into `github-bot-credentials`, and force-syncs the ExternalSecrets in the Claude agent namespaces and `n8n-system`. Installation tokens live one hour, so the schedule leaves one retry of headroom. The flow is stateless - each run starts from the App private key - so a
+failed run heals on the next one.
 
 ## Prerequisites
 
-- SOPS-encrypted secrets in `github-system`:
-  - `github-app-credentials` — App ID, Installation ID, and PEM private key for both write and read apps
-  - `github-bot-credentials` — target secret for rotated tokens (created/maintained by CronJob)
-  - `github-bot-ssh-key` — SSH signing key for verified commits
-- External Secrets Operator (`external-secrets` Kustomization)
+- Two GitHub Apps installed on the target repositories. App ID, installation ID and PEM private key for each are in `app/github-app-credentials.sops.yaml` (`write-*` and `read-*` keys).
+
+## Operations
+
+### Secrets in this directory
+
+| Secret                   | Written by                                                | Notes                                                          |
+| ------------------------ | --------------------------------------------------------- | -------------------------------------------------------------- |
+| `github-app-credentials` | You (SOPS)                                                | Only secret here that needs manual rotation                    |
+| `github-bot-credentials` | This job                                                  | `<write\|read>-access-token`, `-hosts.yml`, `-git-credentials` |
+| `github-bot-ssh-key`     | [bot-ssh-key-rotation](../bot-ssh-key-rotation/README.md) | Lives here so both jobs share the reader RBAC                  |
+
+`github-bot-credentials` and `github-bot-ssh-key` carry `kustomize.toolkit.fluxcd.io/ssa: IfNotPresent`: Flux seeds them once and never reverts the rotated values. Removing the annotation makes every Flux reconcile roll the tokens back to the stale SOPS copy.
+
+### Adding a consumer namespace
+
+1. In the consumer: a `SecretStore` pointing at `github-system` and an `ExternalSecret` for `github-bot-credentials` (see `claude-agents-shared/base/github-secret-store.yaml`).
+2. Here: a `reader-role-binding-<ns>.yaml` binding the consumer's reader ServiceAccount to the `reader-role`.
+3. Add the namespace to the `force_sync_consumers` loop in `app/cronjob.yaml`, and grant this job's ServiceAccount `get, patch` on the ExternalSecret in that namespace (see `n8n-system/n8n/app/github-rotation-rbac.yaml`). Without step 3 the consumer still converges, but only on its own `refreshInterval`.
+
+### Rotating an App private key
+
+Generate a new key in the GitHub App settings, replace it in `github-app-credentials` with `sops`, then delete the old key in GitHub once a run has succeeded.
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **JWT signing failure**
-
-   - **Symptom**: Job logs show `openssl` errors during JWT generation.
-   - **Resolution**: Verify the PEM private key in `github-app-credentials` is valid. Check that the App ID matches the key.
-
-2. **Installation token mint fails with 401**
-
-   - **Symptom**: `curl` returns 401 when calling the installations endpoint.
-   - **Resolution**: JWT may be malformed or the App private key was rotated in GitHub. Regenerate the key in GitHub App settings and update the SOPS secret.
-
-3. **Installation token mint fails with 404**
-
-   - **Symptom**: `curl` returns 404 for the installations endpoint.
-   - **Resolution**: The installation ID is wrong or the App was uninstalled. Verify at `https://github.com/settings/installations`.
-
-4. **ESO sync not propagating after rotation**
-
-   - **Symptom**: Consumer pods still use old tokens after a successful rotation job.
-   - **Resolution**: The job force-syncs ExternalSecrets automatically. If it still fails, check SecretStore connectivity:
-     ```bash
-     kubectl get secretstore github-secret-store -n claude-agents-write
-     kubectl describe secretstore github-secret-store -n claude-agents-write
-     ```
+1. **401 from the installations endpoint** - the App private key was revoked or does not match the App ID.
+2. **404 from the installations endpoint** - wrong installation ID, or the App was uninstalled.
+3. **Job fails before minting** - it downloads `openssl` from the Alpine CDN at runtime (retried 3 times); a CDN or egress outage fails the run. The next run retries.
 
 ## References
 
 - [GitHub App installation tokens](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app)
-- [Generating a JWT for a GitHub App](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app)
-- [External Secrets Operator - Kubernetes SecretStore](https://external-secrets.io/latest/provider/kubernetes/)
-- [Flux Kustomization decryption (SOPS)](https://fluxcd.io/flux/guides/mozilla-sops/)

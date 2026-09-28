@@ -1,44 +1,26 @@
-# coder-ssh-key-rotation — Coder SSH signing key rotation
+# coder-ssh-key-rotation - Coder Workspace SSH Key Rotation
 
 ## Overview
 
-CronJob (every 2 days, `0 3 */2 * *`) that rotates the `coder-ssh-signing-key` Secret used by Coder workspaces for Git SSH transport and commit signing. Generates a new ed25519 keypair, registers it on GitHub (auth + signing), cleans up old keys, patches the Secret in `github-system`, and force-syncs the `coder-ssh-signing-key` ExternalSecret in `coder-workspaces`.
-
-> **Note**: No HelmRelease — this is a Kustomize-only component.
+Rotates the SSH key Coder workspaces use for Git push and commit signing. Same image and flow as [bot-ssh-key-rotation](../bot-ssh-key-rotation/README.md), but every two days, with its own PAT and key title prefix (`coder-workspace`), patching `coder-ssh-signing-key` and force-syncing it into `coder-workspaces`.
 
 ## Prerequisites
 
-- Image `ghcr.io/anthony-spruyt/ssh-key-rotation` published.
-- Classic PAT with `admin:public_key` + `admin:ssh_signing_key` scopes stored in `coder-ssh-rotation-token` SOPS secret.
-- `coder-workspaces` Kustomization provides the `github-secret-store` SecretStore, the `coder-ssh-signing-key` ExternalSecret, and the Role that lets this job force-sync it.
+- Classic PAT with `admin:public_key` and `admin:ssh_signing_key` in `app/coder-ssh-rotation-token.sops.yaml`. Not rotated automatically.
+- In `coder-workspaces`: the `github-secret-store` SecretStore, the `coder-ssh-signing-key` ExternalSecret, and `github-rotation-rbac.yaml` (lets this job force-sync it). Read access for that store is granted here by `app/reader-role-binding-coder-workspaces.yaml`.
 
-## Kata VM grace period
+## Operations
 
-Kata virtiofs mounts are frozen at pod creation — Kubernetes secret volume updates do NOT propagate into the guest. `GRACE_PERIOD_DAYS=8` keeps old keys valid on GitHub for 8 days (four 2-day rotation cycles), so workspaces up to 8 days old continue signing/pushing. `CoderSSHKeyRotationConsecutiveFailures` fires after 5 days so there is time to fix the job before keys expire.
+### Kata grace period
 
-## Troubleshooting
+Workspaces run under Kata, and virtiofs mounts are frozen at pod creation: a Secret update never reaches a running workspace. `GRACE_PERIOD_DAYS=8` keeps old keys valid on GitHub for four rotation cycles, so a workspace up to 8 days old can still push and sign. A workspace older than that loses Git access until it is restarted.
 
-1. **Job fails patching Secret**
+`CoderSSHKeyRotationConsecutiveFailures` fires after 5 days without a successful run, leaving 3 days to fix the job before the newest key ages out.
 
-   - **Symptom**: `secrets "coder-ssh-signing-key" forbidden`.
-   - **Resolution**: Verify the `coder-ssh-key-rotation` Role grants `get, patch` on that Secret and the RoleBinding targets the ServiceAccount.
+### Seed secret
 
-2. **NetworkPolicy drops egress**
-
-   - **Symptom**: Job logs `connection refused` to kube-apiserver or GitHub.
-   - **Resolution**: Egress CNPs live in `app/network-policies.yaml`. Confirm the pod label `app: coder-ssh-key-rotation` still matches.
-
-3. **ExternalSecret force-sync fails**
-
-   - **Symptom**: `externalsecrets "coder-ssh-signing-key" forbidden` in logs.
-   - **Resolution**: Check `github-rotation-rbac.yaml` in `coder-workspaces/coder-workspaces/app/` binds the `coder-ssh-key-rotation` SA. Non-fatal — ExternalSecret `refreshInterval` will recover.
-
-4. **ExternalSecret not syncing**
-
-   - **Symptom**: `coder-ssh-signing-key` ExternalSecret in `coder-workspaces` is not `SecretSynced`.
-   - **Resolution**: Check `app/reader-role-binding-coder-workspaces.yaml` binds `coder-workspaces/github-secret-reader` to the `coder-ssh-signing-key-reader` Role.
+`app/coder-ssh-signing-key.sops.yaml` carries `kustomize.toolkit.fluxcd.io/ssa: IfNotPresent` so Flux creates it once and never reverts the job's writes. Keep the annotation.
 
 ## References
 
 - [GitHub SSH signing keys API](https://docs.github.com/en/rest/users/ssh-signing-keys)
-- [GitHub user keys API](https://docs.github.com/en/rest/users/keys)

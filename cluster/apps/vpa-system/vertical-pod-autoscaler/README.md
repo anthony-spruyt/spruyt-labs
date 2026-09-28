@@ -2,19 +2,9 @@
 
 ## Overview
 
-VPA automatically recommends resource requests and limits for workloads based on actual usage metrics. Workloads run with `updateMode: "Initial"` or `"Off"` -- no workload uses `"Auto"`, so the updater never evicts. Priority tier: `high-priority`.
+Sizes workload requests from observed usage. Every VPA object in the repo uses `updateMode: "Initial"` or `"Off"` - none use `"Auto"` - so the updater never evicts; the admission webhook applies recommendations only when a pod is created. Initial-mode VPAs set `controlledValues: RequestsOnly`, because VPA otherwise scales limits proportionally and produced absurdly low memory limits.
 
-Components:
-
-- **Recommender**: Watches all workloads, generates resource recommendations
-- **Updater**: Evicts pods needing updates (inactive without `updateMode: "Auto"`)
-- **Admission Controller**: Mutating webhook that sets resources on pod creation (applies with `updateMode: "Initial"`)
-
-> **Note**: The Flux Kustomization lives in flux-system but the HelmRelease and workloads are deployed to the vpa-system namespace via `targetNamespace` in ks.yaml.
-
-## Prerequisites
-
-- `cert-manager` -- issues the admission controller's webhook certificate
+The recommender loads 14 days of history from VictoriaMetrics at startup (`--storage=prometheus`) and takes live samples from metrics-server, so recommendations survive recommender restarts without a warm-up period.
 
 ## Operations
 
@@ -26,7 +16,7 @@ The HelmRelease still sets `install.crds` and `upgrade.crds` to `CreateReplace`;
 
 Chart 0.12.0 moved the CRDs out of `crds/`, which means Helm has to adopt two objects it did not previously own. Flux's helm-controller enables take-ownership by default, so the adoption is automatic. Setting `disableTakeOwnership: true` on this HelmRelease would break upgrades with an `invalid ownership metadata` error.
 
-Talos also seeds the CRD at bootstrap via `talos/patches/control-plane/extra-manifests.yaml`, because Flux applies ~100 `VerticalPodAutoscaler` objects across app directories before this release reconciles. That URL is a write-once bootstrap seed: bumping it has no effect on a running cluster.
+Talos also seeds the CRD at bootstrap via `talos/patches/control-plane/07-extra-manifests.yaml`, because Flux applies ~100 `VerticalPodAutoscaler` objects across app directories before this release reconciles. That URL is a write-once bootstrap seed: bumping it has no effect on a running cluster.
 
 Renovate tracks its tag from the `# renovate:` annotation above it, against `kubernetes/autoscaler` release tags -- which are cut independently of chart releases, so the seed tag is *not* the chart's appVersion and should not be hand-edited to match it. The seed is gated on dependency dashboard approval so it cannot get ahead of the chart: if it did, a fresh bootstrap would seed the newer CRD,
 create the VPA objects against it, then have the chart adopt and overwrite it with the older CRD underneath them. Approve a seed bump only once the chart has shipped the matching appVersion.
@@ -35,13 +25,7 @@ create the VPA objects against it, then have the chart adopt and overwrite it wi
 
 cert-manager owns the webhook cert, not the chart's `certGen` Job. `createSelfSignedIssuer` produces a self-signed `Issuer`, a CA `Certificate`, a CA `Issuer` and the leaf `Certificate` (secret `vpa-tls-certs`), rotating on a 168h/24h schedule. The `MutatingWebhookConfiguration` carries `cert-manager.io/inject-ca-from`, so cainjector maintains the caBundle.
 
-The admission controller runs with `--register-webhook=false`; Helm owns `vertical-pod-autoscaler-webhook-config`.
-
-The previous chart let the controller self-register `vpa-webhook-config`, which left an unmanaged cluster-scoped object with a stale caBundle. `failurePolicy: Ignore` keeps it harmless, but it fails TLS on every pod CREATE, so delete it once after the migration:
-
-```bash
-kubectl delete mutatingwebhookconfiguration vpa-webhook-config
-```
+The admission controller runs with `--register-webhook=false`; Helm owns `vertical-pod-autoscaler-webhook-config`. If a self-registered `vpa-webhook-config` ever reappears (for example after running the controller with default flags), it is unmanaged, carries a stale caBundle and fails TLS on every pod CREATE - delete it.
 
 ### Metrics
 
@@ -55,8 +39,8 @@ Disabled on all three components. Each runs a single replica, and the chart's de
 
 1. **VPA recommendations not appearing**
 
-   - **Symptom**: `kubectl describe vpa` shows no recommendations
-   - **Resolution**: Recommender needs ~24h of metrics data. Check recommender logs for errors.
+   - **Symptom**: `kubectl describe vpa` shows no recommendations for a new workload
+   - **Resolution**: A workload with no history in VictoriaMetrics needs time to accumulate samples. For an existing workload, check the recommender logs for Prometheus query errors and the egress CNP to vmsingle on 8428.
 
 2. **Pods created without VPA-applied requests**
 

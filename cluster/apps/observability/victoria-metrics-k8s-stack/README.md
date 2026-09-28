@@ -1,29 +1,35 @@
-# Victoria Metrics k8s Stack - Cluster Monitoring
+# Victoria Metrics k8s Stack - Metrics, Alerting and Grafana
 
 ## Overview
 
-Victoria Metrics k8s stack provides comprehensive monitoring, alerting, and visualization capabilities for the cluster. This component is critical for observability and operational awareness.
+VMSingle, vmagent, vmalert, Alertmanager and Grafana for the whole cluster. The operator comes from the separate `victoria-metrics-operator` release (`victoria-metrics-operator.enabled: false` here).
 
-## Prerequisites
+## Operations
 
-- victoria-metrics-operator (dependsOn)
-- external-secrets (dependsOn)
-- authentik (dependsOn)
-- Storage class configured for persistent volume claims
+### Alert routing
 
-## Troubleshooting
+`app/alertmanager-config.yaml` routes on `severity`: every non-`Watchdog` alert also goes to the n8n SRE triage webhook, and everything goes to Discord. Webhook URLs and the bearer token are in `app/alertmanager-credentials.sops.yaml`. New rules only need a `severity` label; there is nothing to wire.
 
-1. **VictoriaMetrics pods not starting**
+`vmalertmanager.spec.disableNamespaceMatcher: true` is required by the inhibit rules. Without it the operator silently scopes every inhibit rule to `namespace="observability"`, and cross-namespace inhibition stops working with no error.
 
-   - **Symptom**: Pods in CrashLoopBackOff or Pending
-   - **Resolution**: Check resource constraints and PVC availability. Verify storage class and chart version compatibility.
+### Adding rules and dashboards
 
-2. **No data appearing in metrics**
+- Rules: a `VMRule` file in `app/vmrules/`, listed in `app/vmrules/kustomization.yaml`.
+- Dashboards: a JSON file in `app/dashboards/` plus a `configMapGenerator` entry with the `grafana_dashboard: "1"` label in `app/kustomization.yaml`. The Grafana sidecar picks it up; dashboards are not persisted in Grafana.
 
-   - **Symptom**: Queries return empty results
-   - **Resolution**: Validate service monitor configurations. Check Cilium network policies for observability namespace. Verify service endpoints are correctly annotated.
+### Overridden defaults
 
-## References
+- `NodeFilesystemSpaceFillingUp` is disabled and replaced by `vmrules/talos-node-filesystem.yaml`, which adds a `deriv() < 0` guard; the default rule's linear prediction misfires on the disk-metric jumps a Talos node restart produces.
+- `kube-prometheus-general.rules` is disabled and `RecordingRulesNoData` waits 6h, because idle-cluster recording rules legitimately produce no samples and flapped the alert (#2562).
 
-- [VictoriaMetrics Official Documentation](https://docs.victoriametrics.com/)
-- [Helm Chart Reference](https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-metrics-k8s-stack)
+### Ceph Dashboard integration
+
+The Grafana `Dashboard1` datasource, iframe embedding and the official ceph-mixin dashboards all exist so the Ceph Dashboard can embed Grafana panels. See the [rook-ceph README](../../rook-ceph/README.md#grafana-dashboard-integration) before renaming the datasource or dropping any `grafana-dashboard-ceph-official-*` ConfigMap.
+
+### Grafana SSO
+
+Grafana logs in only through Authentik (`disable_login_form`), with roles mapped from the `Grafana Admins` / `Grafana Editors` groups. The OAuth client comes from Authentik via ExternalSecret and is rotated weekly; see the [authentik README](../../authentik-system/authentik/README.md) (Grafana is the reference example there).
+
+### etcd scraping
+
+The etcd target selects the `kube-controller-manager` pods to discover control-plane IPs (etcd runs on the same nodes) and scrapes port 2383, the HTTP metrics listener Talos v1.14 split out from gRPC. Client certs come from [victoria-metrics-secret-writer](../victoria-metrics-secret-writer/README.md).

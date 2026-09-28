@@ -1,9 +1,10 @@
-# chrony - NTP Time Synchronization
+# chrony - LAN NTP Server
 
 ## Overview
 
-Chrony is a versatile implementation of the Network Time Protocol (NTP) that provides precise time synchronization for the Kubernetes cluster. It ensures all nodes maintain accurate time, which is critical for distributed systems, logging, authentication, and other time-sensitive operations.
+Serves NTP (with NTS upstream) to LAN clients on the `${NTP_IP4}` LoadBalancer address. The Talos nodes do **not** use it: they sync directly to the upstream servers in `talos/patches/all/08-configure-ntp.yaml`, so this workload can be down without affecting cluster time.
 
-## References
+## Operations
 
-- [Chrony Documentation](https://chrony.tuxfamily.org/)
+- The image is built from the `chrony` directory of [anthony-spruyt/container-images](https://github.com/anthony-spruyt/container-images), not an upstream chart image.
+- `ENABLE_SYSCLK=false` means the pods never discipline the host clock; they only answer queries.

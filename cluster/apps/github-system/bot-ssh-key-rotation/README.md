@@ -1,33 +1,19 @@
-# bot-ssh-key-rotation — Bot SSH signing key rotation
+# bot-ssh-key-rotation - Bot SSH Key Rotation
 
 ## Overview
 
-Daily CronJob (`0 3 * * *`) that rotates the `github-bot-ssh-key` Secret used by `claude-agents-write` for Git SSH transport and commit signing. Generates a new ed25519 keypair, registers it on the `spruyt-labs-bot` GitHub account (auth + signing), cleans up old keys, patches the Kubernetes secret, and force-syncs ExternalSecrets in consumer namespaces.
-
-> **Note**: No HelmRelease — this is a Kustomize-only component.
+Daily job that replaces the `spruyt-labs-bot` SSH key used by the write-tier Claude agents for Git push and commit signing. It registers a fresh ed25519 key on GitHub as both an auth and a signing key, deletes keys older than the grace period, patches `github-bot-ssh-key`, and force-syncs the consumers' ExternalSecrets. Consumer side: [claude-agents-shared](../../claude-agents-shared/README.md).
 
 ## Prerequisites
 
-- `github-token-rotation` Kustomization deployed (dependsOn) — provides the `github-bot-ssh-key` Secret the CronJob patches.
-- Image `ghcr.io/anthony-spruyt/ssh-key-rotation:2.0.0` published.
-- Classic PAT for `spruyt-labs-bot` with `admin:public_key` + `admin:ssh_signing_key` scopes stored in `bot-ssh-rotation-token` SOPS secret.
+- Classic PAT for the `spruyt-labs-bot` account with `admin:public_key` and `admin:ssh_signing_key`, stored as `GITHUB_PAT` in `app/bot-ssh-rotation-token.sops.yaml`. Fine-grained PATs and the GitHub App tokens cannot manage user keys. The PAT itself is not rotated - renew it before it expires.
 
-## Troubleshooting
+## Operations
 
-1. **Job fails patching Secret**
-
-   - **Symptom**: `secrets "github-bot-ssh-key" forbidden`.
-   - **Resolution**: Verify the `bot-ssh-key-rotation` Role grants `get, patch` on that Secret and the RoleBinding targets the ServiceAccount.
-
-2. **NetworkPolicy drops egress**
-
-   - **Symptom**: Job logs `connection refused` to kube-apiserver or GitHub.
-   - **Resolution**: Egress CNPs live in `app/network-policies.yaml`. Confirm the pod label `app: bot-ssh-key-rotation` still matches.
-
-3. **ExternalSecret force-sync fails**
-
-   - **Symptom**: `externalsecrets "github-bot-ssh-key" forbidden` in logs.
-   - **Resolution**: Check `github-rotation-rbac.yaml` in `claude-agents-shared/base/` includes `bot-ssh-key-rotation` SA as subject. Non-fatal — ExternalSecret `refreshInterval` will recover.
+- The rotated secret is created by `github-token-rotation` (`github-bot-ssh-key.sops.yaml`) with `kustomize.toolkit.fluxcd.io/ssa: IfNotPresent`, so Flux seeds it once and never overwrites the job's writes. Do not remove that annotation.
+- The job only force-syncs `claude-agents-write`. `claude-agents-spruyt-labs-write` also consumes the key and picks it up on its ExternalSecret `refreshInterval` or on the next `github-token-rotation` run (every 30 minutes), which force-syncs `github-bot-ssh-key` in every agent namespace.
+- The force-sync permission comes from `claude-agents-shared/base/github-rotation-rbac.yaml`, which binds this job's ServiceAccount in every agent namespace.
+- `BotSSHKeyRotationFailed` / `BotSSHKeyRotationConsecutiveFailures` in `app/vmrule.yaml` alert on failures.
 
 ## References
 

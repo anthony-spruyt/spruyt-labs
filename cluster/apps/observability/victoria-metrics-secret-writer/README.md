@@ -1,41 +1,12 @@
-# Victoria Metrics Secret Writer - etcd TLS Certificate Provisioner
+# victoria-metrics-secret-writer - etcd Client Certificate Copy
 
 ## Overview
 
-One-shot Kubernetes Job that copies etcd TLS certificates from the host filesystem into a Kubernetes secret (`etcd-secrets`) in the `observability` namespace. This enables VictoriaMetrics to scrape etcd metrics over TLS.
+One-shot Job that copies the etcd CA and server certificate/key from a control-plane node's `/system/secrets/etcd/` into the `etcd-secrets` Secret, which the k8s-stack etcd scrape uses for mTLS. Talos exposes no other way to get etcd client credentials into the cluster.
 
-> **Note**: This is a Job (not a Deployment). It runs once, copies the certs, and exits. To re-run, delete the completed Job and reconcile.
+## Operations
 
-## Prerequisites
-
-- Control plane nodes with etcd TLS certificates at `/system/secrets/etcd/`
-
-## Architecture
-
-The Job:
-
-1. Schedules on a control plane node (nodeAffinity + toleration)
-2. Mounts `/system/secrets/etcd` via hostPath
-3. Uses `bitnami/kubectl` to create/update the `etcd-secrets` secret from `ca.crt`, `server.crt`, and `server.key`
-4. Runs as the `secrets-writer` ServiceAccount with a Role scoped to secrets CRUD in the `observability` namespace
-
-## Troubleshooting
-
-1. **Job stuck in Pending**
-
-   - **Symptom**: Pod not scheduled
-   - **Resolution**: Verify control plane node has the `node-role.kubernetes.io/control-plane` label and the toleration is correct
-
-2. **Job fails with permission denied**
-
-   - **Symptom**: Pod logs show RBAC or filesystem errors
-   - **Resolution**: Check `secrets-writer` ServiceAccount, Role, and RoleBinding exist in `observability` namespace. Verify etcd certs are readable at `/system/secrets/etcd/` on control plane nodes.
-
-3. **Secret not updated after cert rotation**
-
-   - **Symptom**: `etcd-secrets` contains stale certificates
-   - **Resolution**: Delete the completed Job and reconcile to re-run it
-
-## References
-
-- [VictoriaMetrics etcd Monitoring](https://docs.victoriametrics.com/)
+- **Re-running**: the Kustomization sets `force: true`, so changing the Job spec in Git makes Flux delete and recreate it. Without a spec change, delete the completed Job and let Flux recreate it.
+- **After etcd certificate rotation** (Talos upgrades or a CA rotation) the copied certs go stale and etcd scrapes fail with TLS errors. Re-run the Job.
+- **`runAsUser: 60`** matches the owner of the etcd PKI files on Talos; any other UID cannot read the key.
+- The copied `server.key` is a full etcd server key, not a scoped client credential. Anything that can read `etcd-secrets` in `observability` can talk to etcd directly.

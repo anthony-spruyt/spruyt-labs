@@ -2,183 +2,96 @@
 
 ## Overview
 
-Network UPS Tools (NUT) integration for UPS monitoring with automated graceful cluster shutdown during power outages. Protects Ceph storage and CNPG databases from data corruption.
+Monitors the USB-attached CyberPower CP1500 and, on sustained battery power, shuts the whole cluster down in an order that protects Ceph. Two apps share this namespace:
 
-**UPS**: CyberPower CP1500 (USB connection, ~2 min runtime) **USB Node**: ms-01-1 (worker node with `ups.spruyt-labs.io/connected: "true"` label)
-
-## Components
-
-| Component             | Purpose                                     | Namespace  | Status |
-| --------------------- | ------------------------------------------- | ---------- | ------ |
-| nut-server            | USB driver + upsd daemon + metrics exporter | nut-system | Active |
-| shutdown-orchestrator | Monitors UPS, triggers graceful shutdown    | nut-system | Active |
+| App                     | Role                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| `nut-server`            | `upsd` + USB driver on the node wired to the UPS, NUT exporter for metrics              |
+| `shutdown-orchestrator` | Go service (`cmd/shutdown-orchestrator/`) that polls NUT and runs shutdown and recovery |
 
 ## Prerequisites
 
-- Talos node with USB UPS connected and labeled `ups.spruyt-labs.io/connected: "true"`
-- Talos udev rules configured for USB UPS access
-- rook-ceph with rook-ceph-tools deployment
-- CNPG operator installed
-- **Talos API access patch applied**: The `enable-talos-api-access.yaml` patch (`talos/patches/control-plane/`) must include `nut-system` in the allowed namespaces list. This patch must be applied and Talos configs regenerated **before** deploying the shutdown-orchestrator — the Talos ServiceAccount CRD auto-provisions the `shutdown-orchestrator-talos-secrets` Kubernetes Secret via the Talos API,
-  and the pod will fail to start if this secret does not exist.
+- **Talos, UPS node**: `talos/patches/node/ms-01-1/04-enable-ups-access.yaml.tpl` sets the `ups.spruyt-labs.io/connected` label and the udev rules that open the USB/hidraw devices. Label and udev rules move together if the UPS is moved to another node.
+- **Talos, control plane**: `nut-system` must be in `allowedKubernetesNamespaces` in `talos/patches/control-plane/08-enable-talos-api-access.yaml`. Talos then materialises the `shutdown-orchestrator-talos-secrets` Secret from `shutdown-orchestrator/app/talos-serviceaccount.yaml`; without it the orchestrator pod never starts.
+- **NUT config**: `ups.conf`, `upsd.conf`, `upsd.users` and `upsmon.conf` are keys in `nut-server/app/nut-secrets.sops.yaml`, mounted into `/etc/nut/local/`.
+- `rook-ceph-tools` must be running; every Ceph step is an exec into it.
 
 ## Architecture
 
 ```text
-USB (ms-01-1) --> NUT Server Pod --> LoadBalancer (:3493) --> Home Assistant
-                       |
-                       v
-                  NUT Exporter --> VictoriaMetrics --> Alerts
-                       |
-                       v
-              Shutdown Orchestrator (monitors OB status)
-                       |
-         On Battery > 30s: Graceful Shutdown
-                       |
-         +-------------+-------------+
-         v             v             v
-  Set noout flag  Scale Ceph down  (Node shutdown)
-                                       |
-                       v
-       talosctl shutdown --force (workers, then CP)
+UPS --USB--> nut-server (UPS node) --:3493--> LoadBalancer ${NUT_IP4} --> Home Assistant
+                  |                                     |
+            nut exporter --> vmagent --> UPS* alerts    +--> shutdown-orchestrator (control plane)
+                                                                    |
+                                                 on battery for SHUTDOWN_DELAY
+                                                                    v
+                                     noout -> cordon/drain workers -> scale Ceph to 0
+                                       -> talosctl shutdown --force (workers, then control plane)
 ```
 
 ## Shutdown Sequence
 
-When power is lost for 30+ seconds:
+After `SHUTDOWN_DELAY` seconds on battery (`OB` status):
 
-1. **Set Ceph noout flag** - prevents monitors from marking down OSDs as out
-2. **Scale Ceph down** - Operator → OSDs → Monitors → Managers (per Rook [node-maintenance.md](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/))
-3. **Shutdown nodes** - Workers first (concurrent), then control plane (sequential, orchestrator's node last)
+1. `ceph osd set noout`
+2. Cordon workers, then evict workloads on them (excluding `rook-ceph`, `kube-system`, `nut-system`) so RBD mounts are released before storage goes away. If the drain fails, the Ceph scale-down is skipped.
+3. Scale Ceph to 0: operator -> MDS -> OSD -> MON -> MGR.
+4. Shut down workers concurrently, then control-plane nodes one at a time. The node the orchestrator runs on goes last.
 
-CNPG is **not** hibernated before shutdown. Talos `force=true` bypasses PDBs entirely, so CNPG recovers automatically when nodes come back online with Ceph shared storage intact.
+Steps 1-3 are skipped if the remaining UPS budget cannot also cover the node-shutdown phase plus 60s. Node shutdown always runs.
 
-**Timeline Budget** (~10-20 min UPS runtime):
+Node shutdown uses Talos with `force: true`, which bypasses PDBs. CNPG is not hibernated first; it recovers from the intact Ceph volumes on the next boot.
 
-| Phase                  | Duration | Cumulative |
-| ---------------------- | -------- | ---------- |
-| Power loss detection   | 0s       | 0s         |
-| Delay timer            | 30s      | 30s        |
-| Ceph noout flag        | 15s      | 45s        |
-| Ceph scaling           | 60s      | 105s       |
-| Worker shutdown        | 30s      | 135s       |
-| Control plane shutdown | 30s      | 165s       |
+### Timing budget
+
+`UPS_RUNTIME_BUDGET` must be at least `SHUTDOWN_DELAY` + the sum of the shutdown phase timeouts (`CEPH_FLAG_PHASE_TIMEOUT`, `DRAIN_PHASE_TIMEOUT`, `CEPH_SCALE_PHASE_TIMEOUT`, `NODE_SHUTDOWN_PHASE_TIMEOUT`); the orchestrator refuses to start otherwise. The values in `shutdown-orchestrator/app/values.yaml` were raised after node shutdowns timed out in practice (#1640). The budget is only safe while
+the UPS's reported runtime (`network_ups_tools_battery_runtime`) stays above it - check that metric before adding load to the UPS.
 
 ## Operation
 
-### Testing
+### Modes
 
-The orchestrator supports three modes via `MODE` env var:
+`MODE` in `shutdown-orchestrator/app/values.yaml` selects the behaviour. Change it in Git and revert it afterwards; leaving the pod in `preflight` or `test` means nothing is watching the UPS.
 
-- **`monitor`** (default) — preflight checks → auto-recover if needed → UPS polling
-- **`test`** — executes real shutdown sequence, skips orchestrator's own CP node, waits for nodes to be powered back on, then auto-recovers and verifies health. Requires `CONFIRM_TEST=yes` to prevent accidental execution.
-- **`preflight`** — validates all prerequisites against live cluster, reports pass/fail, exits
+| Mode        | Behaviour                                                                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `monitor`   | Default. Preflight, recover if needed, then poll the UPS.                                                                                            |
+| `preflight` | Validates prerequisites against the live cluster, logs pass/fail, exits.                                                                             |
+| `test`      | Runs the **real** shutdown sequence, skipping only its own node, waits for you to power nodes back on, then recovers. Also needs `CONFIRM_TEST=yes`. |
 
-```bash
-# Run preflight checks
-kubectl -n nut-system set env deploy/shutdown-orchestrator MODE=preflight
+### Recovery
 
-# Watch logs
-kubectl logs -n nut-system -l app.kubernetes.io/name=shutdown-orchestrator -f
-```
+On startup the orchestrator checks for leftover shutdown state (Ceph deployments at 0 replicas, or any CNPG cluster with `cnpg.io/hibernation: "on"`) and runs recovery: wait for the tools pod, scale MON -> MGR -> OSD -> MDS -> operator back to 1, wait for `HEALTH_OK`, unset `noout`, clear CNPG hibernation, uncordon workers.
 
-### Recovery After Power Outage
+> The CNPG check does not distinguish a cluster hibernated on purpose. `hindsight-cnpg-cluster` is hibernated in Git, so every orchestrator restart "recovers" it by clearing the annotation, and Flux sets it back on the next reconcile.
 
-Recovery is automatic — the shutdown-orchestrator pod detects stale state on startup and recovers before entering the UPS monitoring loop.
+### Manual recovery
 
-Recovery sequence:
-
-1. Wait for Ceph tools pod to become available
-2. Scale Ceph back up: Monitors → Managers → OSDs → Operator
-3. Unset Ceph noout flag
-4. Clear any CNPG hibernation annotations left by older orchestrator versions (backward compat)
-5. Verify cluster health
-
-### Manual Recovery
-
-If automatic recovery fails or the orchestrator pod is not running:
+If the orchestrator is not running or recovery failed:
 
 ```bash
-# Scale Ceph back up (in order)
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-mon --replicas=1
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-mgr --replicas=1
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-osd --replicas=1
+kubectl -n rook-ceph scale deploy -l app=rook-ceph-mds --replicas=1
 kubectl -n rook-ceph scale deploy rook-ceph-operator --replicas=1
-
-# Unset Ceph noout flag
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout
-
-# Check Ceph status
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
+kubectl uncordon ms-01-1 ms-01-2 ms-01-3
 ```
 
 ## Troubleshooting
 
-### Common Issues
+1. **`upsc` reports "Data stale" or the driver cannot claim the device**
 
-1. **NUT server can't see UPS**
+   - **Cause**: UPS cable moved, or the udev rules/label are missing on the node.
+   - **Fix**: Re-check the node patch above and that `nut-server` landed on the labelled node.
 
-   - **Symptom**: `upsc` returns "Data stale" or connection errors
-   - **Resolution**: Verify USB cable connected to labeled node, check udev rules in Talos config
+2. **Recovery fails at `uncordon-workers` with `cannot patch resource "nodes"`**
 
-2. **Orchestrator not detecting power loss**
-
-   - **Symptom**: No logs when UPS unplugged
-   - **Resolution**: Check NUT server connectivity, verify NUT_SERVER and UPS_NAME env vars, check orchestrator pod logs
-
-3. **Ceph flags not setting**
-
-   - **Symptom**: "rook-ceph-tools deployment not found"
-   - **Resolution**: Ensure rook-ceph-tools is deployed: `kubectl -n rook-ceph get deploy rook-ceph-tools`
-
-4. **Automatic recovery fails**
-
-   - **Symptom**: Orchestrator pod logs show recovery errors
-   - **Resolution**: Run manual recovery commands (see Manual Recovery section), check pod logs
-
-## Configuration
-
-### Environment Variables (shutdown-orchestrator)
-
-| Variable                    | Default                                     | Description                              |
-| --------------------------- | ------------------------------------------- | ---------------------------------------- |
-| MODE                        | monitor                                     | Operating mode: monitor, test, preflight |
-| CONFIRM_TEST                | (unset)                                     | Must be "yes" to allow test mode         |
-| NUT_SERVER                  | nut-server-nut.nut-system.svc.cluster.local | NUT server address                       |
-| NUT_PORT                    | 3493                                        | NUT server port                          |
-| UPS_NAME                    | cp1500                                      | UPS name in NUT config                   |
-| SHUTDOWN_DELAY              | 30                                          | Seconds on battery before shutdown       |
-| POLL_INTERVAL               | 5                                           | Seconds between UPS status checks        |
-| UPS_RUNTIME_BUDGET          | 600                                         | Total UPS runtime budget (seconds)       |
-| HEALTH_PORT                 | 8080                                        | Health endpoint port (/healthz)          |
-| NODE_NAME                   | (downward API)                              | Kubernetes node name (auto-set)          |
-| CEPH_FLAG_PHASE_TIMEOUT     | 15                                          | Ceph noout flag timeout (seconds)        |
-| CEPH_SCALE_PHASE_TIMEOUT    | 60                                          | Ceph scale down timeout (seconds)        |
-| CEPH_HEALTH_WAIT_TIMEOUT    | 300                                         | Ceph health wait after scale-up (secs)   |
-| NODE_SHUTDOWN_PHASE_TIMEOUT | 120                                         | Node shutdown timeout (seconds)          |
-| PER_NODE_TIMEOUT            | 15                                          | Per-node shutdown timeout (seconds)      |
-| CEPH_WAIT_TOOLS_TIMEOUT     | 600                                         | Ceph tools pod readiness timeout (secs)  |
-
-### Alerts (VMRule)
-
-| Alert              | Severity | Condition                          |
-| ------------------ | -------- | ---------------------------------- |
-| UPSOnBattery       | critical | UPS running on battery (immediate) |
-| UPSBatteryLow      | critical | Battery < 30%                      |
-| UPSBatteryWarning  | warning  | Battery < 50% for 1m               |
-| UPSExporterOffline | warning  | Exporter unreachable for 1m        |
-| UPSHighLoad        | warning  | Load > 80% for 5m                  |
-
-## Security
-
-- Orchestrator runs on control plane (tolerates taint) for maximum uptime during shutdown
-- RBAC scoped: ClusterRole for nodes/CNPG, Role in rook-ceph for pods/exec and deployments
-- Go binary from GHCR with read-only root filesystem and non-root execution
-- Secrets (NUT users, talosconfig) encrypted with SOPS
+   - **Cause**: The orchestrator's ClusterRole grants only `get`/`list` on nodes, and nothing for pods, but the drain phases cordon/uncordon nodes and list/delete pods cluster-wide.
+   - **Fix**: Add `patch` on `nodes` and `list`/`delete` on `pods` to `shutdown-orchestrator/app/rbac.yaml`. Until then a real shutdown fails the cordon and drain phases, so the Ceph scale-down is skipped and nodes go down with Ceph still running, and every recovery ends in this error.
 
 ## References
 
 - [Network UPS Tools](https://networkupstools.org/)
-- [CNPG Hibernation](https://cloudnative-pg.io/documentation/current/declarative_hibernation/)
-- [Ceph OSD Flags](https://docs.ceph.com/en/latest/rados/operations/health-checks/)
-- [Talos Shutdown](https://www.talos.dev/latest/reference/cli/#talosctl-shutdown)
+- [Rook node maintenance](https://rook.io/docs/rook/latest/Upgrade/node-maintenance/)

@@ -2,45 +2,31 @@
 
 ## Overview
 
-CloudNativePG Operator provides comprehensive PostgreSQL management for Kubernetes, offering high availability, backup, restore, and monitoring capabilities. It serves as the primary PostgreSQL operator for the cluster, managing database instances for various applications.
+Cluster-wide operator for every app database (authentik, n8n, coder, temporal, hindsight, litellm). Backups go through the Barman Cloud plugin; see [plugin-barman-cloud](../plugin-barman-cloud/README.md) for the S3 wiring.
 
 ## kubectl cnpg Plugin
 
-Install the CNPG kubectl plugin for enhanced cluster management:
+Install with `task install:cnpg-plugin`. Operations worth knowing:
 
 ```bash
-task dev-env:install-cnpg
-```
-
-Common operations:
-
-```bash
-# Check cluster status (detailed view)
+# Detailed status, including replication and WAL archiving health
 kubectl cnpg status <cluster-name> -n <namespace>
 
-# Restart cluster (preferred over pod deletion for secret rotation, config changes)
+# Rolling restart - preferred over deleting pods after a secret rotation or config change
 kubectl cnpg restart <cluster-name> -n <namespace>
 
-# Trigger manual backup
-kubectl cnpg backup <cluster-name> -n <namespace>
-
-# Reload configuration without restart
+# Reload configuration without a restart
 kubectl cnpg reload <cluster-name> -n <namespace>
+
+# On-demand backup
+kubectl cnpg backup <cluster-name> -n <namespace>
 ```
 
-## Troubleshooting
+## Operations
 
-1. **PostgreSQL cluster stuck initializing**
-
-   - **Symptom**: Clusters stuck in initializing state
-   - **Resolution**: Verify storage class provisioning and network policies
-
-2. **Scheduled backups not running**
-
-   - **Symptom**: Backups not executing on schedule
-   - **Resolution**: Verify backup storage credentials and schedules
+A cluster hibernated with the `cnpg.io/hibernation: "on"` annotation never reports Ready, so its Flux Kustomization needs `wait: false` while hibernated (see `hindsight`).
 
 ## References
 
-- [CloudNativePG Documentation](https://cloudnative-pg.io/)
-- [CNPG GitHub](https://github.com/cloudnative-pg/cloudnative-pg)
+- [CloudNativePG documentation](https://cloudnative-pg.io/documentation/current/)
+- [kubectl cnpg plugin](https://cloudnative-pg.io/documentation/current/kubectl-plugin/)

@@ -2,30 +2,24 @@
 
 ## Overview
 
-cert-manager is a native Kubernetes certificate management controller that automates the management and issuance of TLS certificates. It integrates with various issuers including Let's Encrypt, HashiCorp Vault, and private CAs to provide certificates for ingress resources and other services.
+Issues every TLS certificate in the cluster via ACME DNS01 against Cloudflare, including the Traefik wildcard default certificate and the per-host `*.lan.${EXTERNAL_DOMAIN}` certificates.
 
 ## Prerequisites
 
-- DNS records properly configured for domains
+- **Cloudflare API token** in `app/solver-secrets.sops.yaml` (`CLOUDFLARE_API_TOKEN`) with `Zone:DNS:Edit` and `Zone:Read` on the zone. Created by hand in the Cloudflare dashboard, not by Terraform - the `cloudflare` workspace lacks token-admin permissions (see [`infra/terraform/cloudflare/README.md`](../../../../infra/terraform/cloudflare/README.md)).
+- **ZeroSSL EAB credentials**: key ID in `ZEROSSL_EAB_KID` (cluster-secrets), HMAC key in `app/zerossl-eab-secret.sops.yaml`. Both come from the ZeroSSL dashboard.
 
-## Troubleshooting
+## Operations
 
-1. **Certificate issuance failures**
+### Choosing the issuer
 
-   - **Symptom**: Certificates stuck in "Pending" state
-   - **Resolution**: Check issuer status and challenge resolution; verify DNS records and issuer configuration
+Three `ClusterIssuer`s exist (`letsencrypt-staging`, `letsencrypt-production`, `zerossl-production`). Nothing references them by name: every `Certificate` and IngressRoute annotation uses `${CLUSTER_ISSUER}` from `cluster/flux/meta/cluster-settings.yaml`. Switch issuers cluster-wide by changing that one value; use `letsencrypt-staging` when iterating to stay clear of production rate limits.
 
-2. **DNS challenge timeouts**
+### Why DNS01 self-checks bypass cluster DNS
 
-   - **Symptom**: Certificate issuance times out
-   - **Resolution**: Verify DNS records and challenge solver configuration
-
-3. **Rate limit errors**
-
-   - **Symptom**: Let's Encrypt rate limit errors
-   - **Resolution**: Reduce request frequency or use staging environment
+`dns01RecursiveNameserversOnly` is set because in-cluster DNS forwards `${EXTERNAL_DOMAIN}` to Technitium (see the CoreDNS Corefile in `cluster/apps/kube-system/coredns/`). Technitium holds the internal copy of the zone and never sees the `_acme-challenge` TXT record written to Cloudflare, so the propagation self-check would never pass. Do not remove it.
 
 ## References
 
-- [cert-manager Documentation](https://cert-manager.io/docs/)
-- [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
+- [cert-manager DNS01 Cloudflare](https://cert-manager.io/docs/configuration/acme/dns01/cloudflare/)
+- [ZeroSSL ACME EAB](https://zerossl.com/documentation/acme/)

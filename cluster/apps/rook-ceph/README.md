@@ -1,150 +1,57 @@
-# Rook-Ceph Storage Runbook
+# Rook-Ceph Storage
 
 ## Overview
 
-Rook-Ceph provides distributed storage services for Kubernetes workloads, including block storage (RBD), shared filesystem storage (CephFS), and object storage (RGW).
+Rook-Ceph provides all persistent storage: RBD block (replicated and 2+1 erasure-coded, with encrypted variants), CephFS, and S3-compatible object storage via RGW. It runs on the three MS-01 workers, one encrypted NVMe OSD each, with replication over a dedicated Thunderbolt ring. Component READMEs:
 
-## Current Version
+- [rook-ceph-cluster](rook-ceph-cluster/README.md) - Thunderbolt ring network and its failure modes
+- [rook-ceph-csi-drivers](rook-ceph-csi-drivers/README.md) - ceph-csi-operator Driver CRs and their workarounds
 
-Chart versions are managed by Renovate and Flux. Check the release files for current pinned versions:
-
-- **Operator**: `cluster/apps/rook-ceph/rook-ceph-operator/app/release.yaml`
-- **Cluster**: `cluster/apps/rook-ceph/rook-ceph-cluster/app/release.yaml`
+Ceph commands below run in the toolbox: `task rook-ceph:tools`.
 
 ## Prerequisites
 
-- Storage nodes must be available with NVMe devices meeting the regular expression in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml)
-- Velero schedules capture the `rook-ceph` namespace and required secrets for backup operations
+- OSD devices are selected by `/dev/disk/by-id` path in `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml). A disk not in the filter is never used.
+- Ring network, link aliases and fallback routes are Talos config under `talos/patches/worker/` and `talos/patches/node/ms-01-*/`.
 
 ## Operation
 
-> **No `ceph orch` in this cluster.** The `rook` mgr module is disabled under `cephClusterSpec.mgr.modules` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml), matching the upstream chart default, so there is no orchestrator backend and `ceph orch ...` returns `Error ENOENT: Module not found`. Daemon lifecycle is driven by the operator from the CephCluster CR instead. The
-> Ceph Dashboard's Physical Disks, Services and Upgrade pages show "Orchestrator is not available" for the same reason.
+> **No `ceph orch` in this cluster.** The `rook` mgr module is disabled under `cephClusterSpec.mgr.modules` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml), matching the upstream chart default (it leaks memory or crashes the mgr on current Ceph releases), so there is no orchestrator backend and `ceph orch ...` returns `Error ENOENT: Module not found`. Daemon lifecycle
+> is driven by the operator from the CephCluster CR instead. The Ceph Dashboard's Physical Disks, Services and Upgrade pages show "Orchestrator is not available" for the same reason.
 
-### Preconditions
+### Adding or replacing an OSD
 
-- Target disks visible and unused:
+OSD creation is declarative. Find the device's `by-id` path, add it to `devicePathFilter`, and commit; the operator runs the OSD prepare job on the next reconcile.
 
-  ```bash
-  talosctl --nodes <node-ip> ls /dev/disk/by-id | grep KINGSTON
-  ```
+```bash
+# Devices Ceph already knows about, with host and OSD mapping
+ceph device ls
+# Everything present on the node, including unclaimed disks
+talosctl --nodes <node-ip> ls /dev/disk/by-id
+```
 
-### Day-2 Operations and Capacity Management
+### Removing an OSD
 
-1. **Add storage nodes** -- Label new nodes and verify devices:
+Scaling the OSD Deployment is the Rook equivalent of `ceph orch daemon stop`.
 
-   ```bash
-   kubectl label node <hostname> node-role.kubernetes.io/worker=
-   talosctl --nodes <node-ip> ls /dev/disk/by-id
-   ```
+> `ceph osd purge` is irreversible. Confirm every PG is `active+clean` and that the remaining OSDs have capacity for the data first. Remove one OSD at a time.
 
-   Extend the `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml) and commit.
+```bash
+ceph osd out <id>
+# Wait until backfill finishes and all PGs report active+clean
+ceph status
+kubectl -n rook-ceph scale deploy/rook-ceph-osd-<id> --replicas=0
+ceph osd purge <id> --yes-i-really-mean-it
+kubectl -n rook-ceph delete deploy/rook-ceph-osd-<id>
+```
 
-2. **Add or replace OSD devices** -- OSD creation is declarative. Take inventory, then add the device's `by-id` path to `devicePathFilter` in [`rook-ceph-cluster/app/values.yaml`](rook-ceph-cluster/app/values.yaml) and commit. The operator runs the OSD prepare job on the next reconcile.
+Drop the retired device from `devicePathFilter` in the same commit, otherwise the operator recreates the OSD on the next reconcile. The replacement may get a different OSD ID.
 
-   ```bash
-   # Devices Ceph already knows about, with their host and OSD mapping
-   ceph device ls
-   # Everything present on the node, including unclaimed disks
-   talosctl --nodes <node-ip> ls /dev/disk/by-id
-   # Once the new OSD is up
-   ceph osd df
-   ```
+### Restore
 
-3. **Remove OSD for maintenance** -- Drain, stop, then purge. Scaling the OSD Deployment is the Rook equivalent of `ceph orch daemon stop`.
-
-   > `ceph osd purge` is irreversible. Confirm every PG is `active+clean` and that the remaining OSDs have capacity for the data first. Remove one OSD at a time.
-
-   ```bash
-   ceph osd out <id>
-   # Block here until backfill finishes and all PGs report active+clean
-   ceph status
-   kubectl -n rook-ceph scale deploy/rook-ceph-osd-<id> --replicas=0
-   ceph osd purge <id> --yes-i-really-mean-it
-   kubectl -n rook-ceph delete deploy/rook-ceph-osd-<id>
-   ceph osd tree
-   ```
-
-   Drop the retired device from `devicePathFilter` in the same commit, otherwise the operator recreates the OSD on the next reconcile. Recreate after hardware service using the add flow -- the replacement may be assigned a different OSD ID.
-
-4. **Pool tuning** -- Apply changes and persist in Git:
-
-   ```bash
-   ceph osd pool set <pool> size 3
-   ceph osd pool application enable csi-rbd-nvme rbd
-   ```
-
-5. **Block image maintenance** -- Flatten cloned RBD images to remove dependency on parent snapshots:
-
-   ```bash
-   # List children of a snapshot to see what needs flattening
-   rbd list <pool>/<image>@<snapshot>
-
-   # Flatten an image to make it independent
-   rbd flatten <pool>/<image>
-
-   # After flattening, you can remove the parent snapshot if no longer needed
-   rbd snap unprotect <pool>/<image>@<snapshot>
-   rbd snap rm <pool>/<image>@<snapshot>
-   ```
-
-6. **Clearing health warnings** -- Clear persistent warnings after recovery
-
-   ```bash
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- bash
-   ceph crash archive-all
-   ```
-
-### Disaster Recovery and Restore Path
-
-1. Restore namespace objects with Velero after etcd stability is confirmed:
-
-   ```bash
-   velero restore create rook-ceph-restore-$(date +%Y%m%d%H%M) \
-     --from-backup rook-ceph-scheduled-latest \
-     --include-namespaces rook-ceph \
-     --preserve-nodeports \
-     --wait
-   ```
-
-2. Recover Ceph data from snapshots when needed:
-
-   ```bash
-   rbd snap ls <pool>/<image>
-   rbd snap rollback <pool>/<image>@<snapshot>
-   ```
-
-3. Validate daemon health post-restore:
-
-   ```bash
-   ceph -s
-   ceph mon stat
-   ceph osd tree
-   ceph health detail
-   ```
-
-### Escalation
-
-- Engage storage on-call with recent `ceph status`, `kubectl -n rook-ceph get events`, and the Flux commit SHA.
-- Capture `ceph crash ls` and `ceph crash info <id>` outputs prior to external escalation.
+Velero backs up the `rook-ceph` namespace objects with the rest of the cluster (`spruyt-labs-cluster-backup-*`); the restore procedure is in [`docs/disaster-recovery.md`](../../../docs/disaster-recovery.md). Pool data itself is not in Velero - only PVCs that opt in via the `velero.io/backup-volumes` label are copied out (see [velero](../velero/velero/README.md)).
 
 ## Troubleshooting
-
-### Ceph reports `HEALTH_WARN` or `HEALTH_ERR`
-
-1. Inspect detailed health:
-
-   ```bash
-   ceph health detail
-   ```
-
-2. Identify failing services:
-
-   ```bash
-   ceph mon stat
-   ceph mgr stat
-   ceph osd tree
-   ```
 
 ### CephX key rotation (`aes` / `aes256k`)
 
@@ -156,17 +63,17 @@ Current state:
 | ---------------------------------------------------- | --------- | --------------------------------------- |
 | Daemons (`mon`, `mgr`, `osd`, `mds`, `rgw`, `crash`) | `aes256k` | `keyRotationPolicy: KeyGeneration`      |
 | `client.rbd-mirror-peer`                             | `aes256k` | No mirroring configured, safe to rotate |
-| CSI clients (`csi-rbd-*`, `csi-cephfs-*`)            | `aes`     | Pinned -- see kernel gate below         |
+| CSI clients (`csi-rbd-*`, `csi-cephfs-*`)            | `aes`     | Pinned - see kernel gate below          |
 
-**Why CSI stays on `aes`:** upstream kernel support for `aes256k` begins in Linux 7.0. The nodes run kernel 6.18.x and this cluster uses the *kernel* mounter for both RBD and CephFS, so rotating CSI keys to `aes256k` would strand every kernel-mounted PVC. Do not set `allowedCiphers: [aes256k]` either -- it would reject the still-`aes` CSI keys.
+**Why CSI stays on `aes`:** upstream kernel support for `aes256k` begins in Linux 7.0. The nodes run kernel 6.18.x and this cluster uses the _kernel_ mounter for both RBD and CephFS, so rotating CSI keys to `aes256k` would strand every kernel-mounted PVC (#2558). Do not set `allowedCiphers: [aes256k]` either - it would reject the still-`aes` CSI keys.
 
 Because of that, `AUTH_INSECURE_CLIENT_KEY_TYPE`, `AUTH_INSECURE_KEYS_ALLOWED` and `AUTH_INSECURE_KEYS_CREATABLE` remain and are muted declaratively via `healthCheck.muteHealthWarning` (Rook re-applies the mute on reconcile; `ceph health mute` has a TTL and would silently lapse).
 
-**Why `daemon.keyType` stays unset:** Rook's default preferred cipher is already `aes256k`, so pinning `daemon.keyType` buys nothing -- and it makes Rook pass `--mon-auth-emergency-allowed-ciphers=aes,aes256k` to the mons, which raises a permanent `AUTH_EMERGENCY_CIPHERS_SET` warning. Upstream treats that field as a bootstrap/recovery workaround only.
+**Why `daemon.keyType` stays unset:** Rook's default preferred cipher is already `aes256k`, so pinning `daemon.keyType` buys nothing - and it makes Rook pass `--mon-auth-emergency-allowed-ciphers=aes,aes256k` to the mons, which raises a permanent `AUTH_EMERGENCY_CIPHERS_SET` warning. Upstream treats that field as a bootstrap/recovery workaround only.
 
-**Rotating daemon keys again** -- increment `keyGeneration` under `security.cephx.daemon` and commit. Rook restarts daemons one at a time; expect several minutes and transient PG peering.
+**Rotating daemon keys again** - increment `keyGeneration` under `security.cephx.daemon` and commit. Rook restarts daemons one at a time; expect several minutes and transient PG peering.
 
-The generation counter is tracked *per entity*, not cluster-wide, and daemons created under earlier Ceph releases may already sit above 0 from automatic rotations during upgrades. The MDS and OSD rotation paths also ignore `keyType` entirely (`ignoreKeyType=true` upstream), so a generation bump is the only lever that moves them. Set `keyGeneration` strictly higher than the highest value already
+The generation counter is tracked _per entity_, not cluster-wide, and daemons created under earlier Ceph releases may already sit above 0 from automatic rotations during upgrades. The MDS and OSD rotation paths also ignore `keyType` entirely (`ignoreKeyType=true` upstream), so a generation bump is the only lever that moves them. Set `keyGeneration` strictly higher than the highest value already
 recorded:
 
 ```bash
@@ -179,20 +86,13 @@ kubectl -n rook-ceph get deploy -l app=rook-ceph-osd \
   -o custom-columns=NAME:.metadata.name,CEPHX:'.spec.template.metadata.annotations.cephx-status'
 ```
 
-Verify:
-
-```bash
-kubectl -n rook-ceph get cephcluster rook-ceph -o json | jq '.status.cephx'
-kubectl -n rook-ceph logs deploy/rook-ceph-operator --tail=100 | grep -i cephx
-```
-
 If the toolbox errors on the admin keyring after rotation, restart it:
 
 ```bash
 kubectl -n rook-ceph rollout restart deploy/rook-ceph-tools
 ```
 
-**Emergency escape** -- if daemons cannot authenticate after a rotation, widen the ciphers and force the old type, wait for mon pods to show `--mon-auth-emergency-allowed-ciphers`, confirm recovery, then drop the `daemon.keyType` override:
+**Emergency escape** - if daemons cannot authenticate after a rotation, widen the ciphers and force the old type, wait for mon pods to show `--mon-auth-emergency-allowed-ciphers`, confirm recovery, then drop the `daemon.keyType` override:
 
 ```yaml
 security:
@@ -218,82 +118,20 @@ security:
 
 5. Flip every `muteHealthWarning` entry to `policy: unmute`.
 
-### OSD down or out unexpectedly
+### Toolbox init container changes do not take effect
 
-1. List failing daemons:
-
-   ```bash
-   ceph osd tree | grep down
-   ```
-
-2. Review crash data:
-
-   ```bash
-   ceph crash ls
-   ceph crash info <crash-id>
-   ```
-
-3. Restart or replace the daemon. Each `osd.<id>` is backed by a Deployment of the same number:
-
-   ```bash
-   kubectl -n rook-ceph rollout restart deploy/rook-ceph-osd-<id>
-   ```
-
-   If hardware failed, follow the removal and replacement steps in Day-2 operations.
-
-### PersistentVolumeClaims stuck in `Pending`
-
-1. Inspect provisioner logs:
-
-   ```bash
-   kubectl -n rook-ceph logs deploy/rook-ceph-csi-rbd-provisioner -c csi-provisioner
-   ```
-
-2. Confirm pool capacity:
-
-   ```bash
-   ceph df
-   ceph osd pool stats <pool>
-   ```
-
-3. Ensure node plugins can map RBD devices; restart relevant DaemonSet pods if mount errors persist.
-
-### Velero restore conflicts or failures
-
-1. Retry with `--restore-volumes=false` when PVC data remains intact but CRDs need reseeding.
+The Ceph Dashboard SSO, RGW realm and Grafana/Alertmanager settings are applied by the `sso-config` init container patched into `rook-ceph-tools` via `postRenderers` in `rook-ceph-cluster/app/release.yaml`. Its image must match `cephImage.tag` in `values.yaml`. After changing its script, delete the toolbox pod so the init container runs again.
 
 ## Object Storage (RGW)
 
-Ceph Object Storage provides S3-compatible object storage via the RADOS Gateway (RGW). Two object stores are deployed:
+Two object stores, each exposed through `ObjectBucketClaim` StorageClasses:
 
-<!-- markdownlint-disable MD013 -->
+| Store     | Data pool           | StorageClasses                                     |
+| --------- | ------------------- | -------------------------------------------------- |
+| `fast`    | 3-way replicated    | `ceph-bucket` (Retain), `ceph-bucket-delete`       |
+| `fast-ec` | Erasure-coded (2+1) | `ceph-bucket-ec` (Retain), `ceph-bucket-ec-delete` |
 
-| Store     | Type                | Port | Use Case                                    |
-| --------- | ------------------- | ---- | ------------------------------------------- |
-| `fast`    | 3-way replicated    | 8080 | High-durability workloads, default          |
-| `fast-ec` | Erasure-coded (2+1) | 8081 | Capacity-efficient storage (~1.5x overhead) |
-
-<!-- markdownlint-enable MD013 -->
-
-### Storage Classes
-
-Four StorageClasses enable declarative bucket provisioning via `ObjectBucketClaim`:
-
-| StorageClass            | Store   | Reclaim Policy |
-| ----------------------- | ------- | -------------- |
-| `ceph-bucket`           | fast    | Retain         |
-| `ceph-bucket-delete`    | fast    | Delete         |
-| `ceph-bucket-ec`        | fast-ec | Retain         |
-| `ceph-bucket-ec-delete` | fast-ec | Delete         |
-
-### Internal Users
-
-Rook automatically creates internal users for RGW management:
-
-- **`dashboard-admin`** -- Created per-realm for Ceph Dashboard integration with RGW
-- **`rgw-admin-ops-user`** -- Created on-demand when ObjectBucketClaim or CephBucketNotification resources are deployed
-
-### Creating Buckets with ObjectBucketClaim
+An `ObjectBucketClaim` in an app namespace creates the bucket plus a ConfigMap (`BUCKET_NAME`, `BUCKET_HOST`, `BUCKET_PORT`) and a Secret (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`), both named after the claim:
 
 ```yaml
 apiVersion: objectbucket.io/v1alpha1
@@ -306,27 +144,21 @@ spec:
   generateBucketName: my-bucket
 ```
 
-This creates:
+Notes:
 
-- An S3 bucket in the `fast` object store
-- A ConfigMap `my-bucket` with bucket info (BUCKET_NAME, BUCKET_HOST, BUCKET_PORT)
-- A Secret `my-bucket` with credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-
-### Configuration Notes
-
-- **`preservePoolsOnDelete: false`** -- Pools are deleted when CephObjectStore is removed. GitOps provides protection; manual deletion requires explicit pool removal.
-- **Dashboard integration** -- SSO config and zone system_key setup handled by init container in toolbox deployment (see `release.yaml` postRenderers).
-- **Default realm** -- `fast` is set as the global default realm/zonegroup/zone for dashboard display.
+- **`preservePoolsOnDelete: false`** - deleting a CephObjectStore deletes its pools and all data. Git is the only protection.
+- **Internal RGW users** - Rook creates `dashboard-admin` per realm for the Dashboard, and `rgw-admin-ops-user` when an ObjectBucketClaim or CephBucketNotification first appears. Do not delete them.
+- **Default realm** - the toolbox init container sets `fast` as the default realm/zonegroup/zone and configures each zone's `system_key`, which the Dashboard needs to show RGW status.
 
 ## Grafana Dashboard Integration
 
-The Ceph Dashboard embeds Grafana panels for metrics visualization. This requires specific configuration in both Grafana and Ceph.
+The Ceph Dashboard embeds Grafana panels, which needs matching configuration on both sides.
 
 ### Requirements
 
-1. **Dashboard1 datasource** -- The Ceph Dashboard hardcodes `var-datasource=Dashboard1` in iframe URLs. A Grafana datasource named exactly "Dashboard1" must exist pointing to Prometheus/VictoriaMetrics.
+1. **`Dashboard1` datasource** - the Ceph Dashboard hardcodes `var-datasource=Dashboard1` in its iframe URLs. A Grafana datasource named exactly `Dashboard1` must point at VictoriaMetrics (`defaultDatasources.extra` in `cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml`).
 
-2. **Official ceph-mixin dashboards** -- The Ceph Dashboard expects dashboards with specific UIDs from the [ceph-mixin](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out):
+2. **Official ceph-mixin dashboards** - the Ceph Dashboard looks dashboards up by fixed UID, so the [ceph-mixin](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out) JSON must be loaded unmodified:
 
    | Dashboard                  | UID                 | Used By                 |
    | -------------------------- | ------------------- | ----------------------- |
@@ -343,44 +175,17 @@ The Ceph Dashboard embeds Grafana panels for metrics visualization. This require
    | radosgw-detail.json        | `x5ARzZtmk`         | RGW instance details    |
    | cephfsdashboard.json       | `MUsmxkziz`         | CephFS overview         |
 
-3. **Grafana embedding** -- Enable iframe embedding in Grafana config:
+   The mixin's `node-exporter.json` is not loaded: it shares UID `rYdddlPWk` with the VM stack's node-exporter dashboard, which the Ceph iframes work with.
 
-   ```yaml
-   grafana.ini:
-     security:
-       allow_embedding: true
-       cookie_samesite: disabled
-   ```
+3. **Grafana embedding** - `security.allow_embedding: true` and `cookie_samesite: disabled` in the Grafana config.
 
-### Configuration (Done via Init Container)
+### Where it is configured
 
-The toolbox deployment includes an init container that configures monitoring endpoints:
-
-```bash
-ceph dashboard set-alertmanager-api-host 'http://vmalertmanager-victoria-metrics-k8s-stack.observability.svc.cluster.local:9093'
-ceph dashboard set-grafana-api-url 'http://victoria-metrics-k8s-stack-grafana.observability.svc.cluster.local:80'
-ceph dashboard set-grafana-frontend-api-url 'https://grafana.lan.${EXTERNAL_DOMAIN}'
-ceph dashboard set-grafana-api-ssl-verify false
-ceph dashboard set-alertmanager-api-ssl-verify false
-```
-
-The `prometheusEndpoint` is configured via the CephCluster CRD in `values.yaml`:
-
-```yaml
-cephClusterSpec:
-  dashboard:
-    prometheusEndpoint: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local:8428
-    prometheusEndpointSSLVerify: false
-```
-
-### Dashboard Locations
-
-- **Custom dashboards** -- `cluster/apps/observability/victoria-metrics-k8s-stack/app/dashboards/`
-- **Dashboard ConfigMaps** -- `cluster/apps/observability/victoria-metrics-k8s-stack/app/kustomization.yaml`
-- **Dashboard1 datasource** -- `cluster/apps/observability/victoria-metrics-k8s-stack/app/values.yaml` under `defaultDatasources.extra`
+- Grafana/Alertmanager URLs (`ceph dashboard set-grafana-api-url`, `set-alertmanager-api-host`, ...) are set by the toolbox init container.
+- `prometheusEndpoint` is set in `cephClusterSpec.dashboard` in `values.yaml`.
+- Dashboards are ConfigMaps generated in `cluster/apps/observability/victoria-metrics-k8s-stack/app/kustomization.yaml` from JSON in `app/dashboards/`.
 
 ## References
 
 - [Rook Ceph documentation](https://rook.io/docs/rook/latest/)
 - [Ceph Dashboard Grafana integration source](https://github.com/ceph/ceph/blob/main/src/pybind/mgr/dashboard/frontend/src/app/shared/components/grafana/grafana.component.ts)
-- [Ceph mixin dashboards](https://github.com/ceph/ceph/tree/main/monitoring/ceph-mixin/dashboards_out)

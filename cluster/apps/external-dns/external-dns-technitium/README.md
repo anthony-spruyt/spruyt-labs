@@ -1,27 +1,28 @@
-# external-dns-technitium - DNS Management
+# external-dns-technitium - Internal DNS Records
 
 ## Overview
 
-ExternalDNS is a Kubernetes controller that automatically manages DNS records based on Kubernetes resources. The technitium variant integrates with Technitium DNS server to provide dynamic DNS management, ensuring that DNS records are automatically created, updated, and deleted as services are deployed or removed.
+Writes A records for cluster hostnames into Technitium over RFC2136 (TSIG-authenticated dynamic updates). It never touches Cloudflare; public DNS is Terraform-managed in `infra/terraform/cloudflare/`.
 
 ## Prerequisites
 
-- Technitium DNS server deployed and operational (dependsOn: technitium)
-- API credentials for Technitium DNS server
+- A TSIG key configured in Technitium and allowed to update both zones. The key name and secret are copied by hand into `app/external-dns-technitium-secrets.sops.yaml`.
+
+## Operations
+
+The IngressRoute annotations it needs, the dead `alpha` prefix, and how to opt a route out are in [`.claude/rules/04-ingress-and-certificates.md`](../../../../.claude/rules/04-ingress-and-certificates.md#dns-annotations). The one opted-out route today is `auth` in `traefik/ingress/authentik-system/`: it must resolve through Cloudflare, and an internal record breaks SSO.
+
+What stays manual in the Technitium UI:
+
+- HTTPS (SVCB) records - outside the managed record types.
+- Records created before external-dns worked (#2999) have no TXT ownership entry, so deleting their workload does not remove them.
 
 ## Troubleshooting
 
-1. **DNS records not being created**
-
-   - **Symptom**: Services deployed but no DNS records appear
-   - **Resolution**: Check Technitium DNS server connectivity and API credentials
-
-2. **API authentication errors**
-
-   - **Symptom**: Authentication failures in logs
-   - **Resolution**: Verify API credentials in the Technitium DNS server configuration
+1. **Record never appears, logs say "All records are already up to date"**
+   - **Cause**: The source found zero endpoints - wrong annotation prefix or missing `target` annotation.
+   - **Fix**: Check `external_dns_source_endpoints_total`; if it is 0, fix the annotations.
 
 ## References
 
-- [ExternalDNS Documentation](https://github.com/kubernetes-sigs/external-dns)
-- [Technitium DNS Documentation](https://technitium.com/dns/)
+- [external-dns RFC2136 provider](https://kubernetes-sigs.github.io/external-dns/latest/docs/tutorials/rfc2136/)
