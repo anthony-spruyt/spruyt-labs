@@ -6,7 +6,6 @@ resources:
   - ./coder-workspace-env-common.sops.yaml
   - ./coder-workspace-env-spruyt-labs.sops.yaml
   - ./coder-workspace-env-xfg.sops.yaml
-  - ./coder-talosconfig.sops.yaml
   - ./coder-terraform-credentials.sops.yaml
   - ./coder-workspace-nexus-clients.sops.yaml
   - ./sops-age-secret-store.yaml
