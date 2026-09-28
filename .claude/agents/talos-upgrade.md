@@ -608,7 +608,7 @@ Count pod distribution per node from results.
 
 ### Phase 7: Update talos/README.md
 
-`talos/README.md` "Talos Image Schematics" is the only place that pins the Talos version in docs; `talos/docs/machine-lifecycle.md` links to it. Update it on main — do not open a separate docs PR.
+`talos/README.md` "Talos Image Schematics" is the only place that pins the Talos version in docs; the runbooks in `docs/` link to it. Update it on main — do not open a separate docs PR.
 
 1. Replace `v<old-version>` with `v<new-version>` in the ISO, UKI and upgrade-image columns:
 

@@ -138,7 +138,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 2. Search for **all** old version references:
    - Grep tool: search `<old-version>` (no `v` prefix) in `talos/*.yaml`, `talos/*.md`, `docs/*.md`, `cluster/*.yaml`, `.github/workflows/*.yaml`, `.taskfiles/**/*.sh`
    - **Grep may miss hookify-blocked files.** Fallback: `grep -r "v<old-version>" cluster/ --include="*.yaml" -l 2>/dev/null`. Files found only by bash need `sed -i` instead of Edit tool.
-3. Common locations: `talos/topf.yaml`, `talos/README.md`, `.github/workflows/_kubeconform.yaml` (`KUBERNETES_VERSION`), `.taskfiles/install/scripts/install-kubectl.sh` (`VERSION`)
+3. Common locations: `talos/topf.yaml`, `.github/workflows/_kubeconform.yaml` (`KUBERNETES_VERSION`), `.taskfiles/install/scripts/install-kubectl.sh` (`VERSION`)
 4. Update all references; verify zero remain
 5. Present final report: version change, node status, health results, files changed
 

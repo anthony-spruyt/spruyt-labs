@@ -262,8 +262,8 @@ See the dedicated [Troubleshooting](#troubleshooting) section for common remedia
 
 <!-- markdownlint-disable MD013 -->
 
-- Runbook standards overview: [`README.md`](../README.md#runbook-standards)
-- Infrastructure maintenance procedures: [`MAINTENANCE.md`](MAINTENANCE.md)
+- Runbooks overview: [`README.md`](../README.md#runbooks)
+- Terraform maintenance: [`docs/maintenance.md`](../docs/maintenance.md#terraform)
 - Flux GitOps operations: [`cluster/flux/README.md`](../cluster/flux/README.md)
 - Talos platform guidance: [`talos/README.md`](../talos/README.md)
 - Terraform CLI reference: <https://developer.hashicorp.com/terraform/cli>
