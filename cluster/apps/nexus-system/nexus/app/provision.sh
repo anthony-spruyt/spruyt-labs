@@ -5,7 +5,7 @@
 # them literal (${VAR}) for the shell to expand at runtime. shellcheck sees
 # the raw source and flags $${...} as PID-plus-brace — safe to ignore.
 #
-# shellcheck disable=SC2193
+# shellcheck disable=SC2193,SC2195,SC2157
 set -eu
 
 echo "Waiting for Nexus writable..."
@@ -25,9 +25,37 @@ done
 
 AUTH="$${NEXUS_USER}:$${NEXUS_PASSWORD}"
 API="$${NEXUS_URL}/service/rest/v1"
+CLEANUP_POLICY="unused-90d"
+
+check() {
+  http=$(printf '%s' "$${1}" | tail -n1)
+  case "$${http}" in
+  2*) : ;;
+  *)
+    echo "    FAILED HTTP $${http}: $(printf '%s' "$${1}" | sed '$d')"
+    exit 1
+    ;;
+  esac
+}
+
+# Public /v1/cleanup-policies is Pro-only (404 on Community); the UI's internal endpoint works.
+echo "Upserting cleanup policy $${CLEANUP_POLICY}..."
+POLICY_BODY='{"name":"'"$${CLEANUP_POLICY}"'","format":"*","notes":"Managed by nexus-provision-repos","criteriaLastDownloaded":90}'
+POLICY_API="$${NEXUS_URL}/service/rest/internal/cleanup-policies"
+code=$(curl -sS -o /dev/null -w '%{http_code}' -u "$${AUTH}" "$${POLICY_API}/$${CLEANUP_POLICY}" || echo 000)
+if [ "$${code}" = "200" ]; then
+  check "$(curl -sS -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d "$${POLICY_BODY}" "$${POLICY_API}/$${CLEANUP_POLICY}")"
+else
+  check "$(curl -sS -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d "$${POLICY_BODY}" "$${POLICY_API}")"
+fi
 
 upsert() {
   kind="$1" name="$2" body="$3"
+  # Group repos hold no content of their own, so they take no cleanup policy.
+  case "$${kind}" in
+  */group) : ;;
+  *) body="{\"cleanup\":{\"policyNames\":[\"$${CLEANUP_POLICY}\"]},$${body#\{}" ;;
+  esac
   code=$(curl -sS -o /dev/null -w '%{http_code}' -u "$${AUTH}" "$${API}/repositories/$${name}" || echo 000)
   if [ "$${code}" = "200" ]; then
     echo "  [$${name}] exists, updating"
@@ -36,15 +64,7 @@ upsert() {
     echo "  [$${name}] creating (GET returned $${code})"
     resp=$(curl -sS -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d "$${body}" "$${API}/repositories/$${kind}")
   fi
-  http=$(printf '%s' "$${resp}" | tail -n1)
-  bod=$(printf '%s' "$${resp}" | sed '$d')
-  case "$${http}" in
-  2*) : ;;
-  *)
-    echo "    FAILED HTTP $${http}: $${bod}"
-    exit 1
-    ;;
-  esac
+  check "$${resp}"
 }
 
 # --- apt proxies ---
@@ -244,5 +264,35 @@ else
     --data-binary "$${WORKSPACE_PULLER_PASSWORD}" \
     "$${API}/security/users/workspace-puller/change-password"
 fi
+
+# --- scheduled tasks that turn cleanup soft-deletes into freed disk ---
+# The daily 01:00 "Cleanup service" task is built in; these two are not.
+# One task per type, so the first task of that type is the one we manage.
+upsert_task() {
+  type="$1" body="$2"
+  # Check the lookup first: an empty id on a failed GET would create a duplicate task.
+  resp=$(curl -sS -w '\n%{http_code}' -u "$${AUTH}" "$${API}/tasks?type=$${type}")
+  check "$${resp}"
+  id=$(printf '%s' "$${resp}" | sed '$d' | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | head -n1)
+  if [ -n "$${id}" ]; then
+    echo "  [task $${type}] exists, updating"
+    check "$(curl -sS -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d "$${body}" "$${API}/tasks/$${id}")"
+  else
+    echo "  [task $${type}] creating"
+    check "$(curl -sS -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d "{\"type\":\"$${type}\",$${body#\{}" "$${API}/tasks")"
+  fi
+}
+
+echo "Upserting scheduled tasks..."
+# Soft-deletes untagged layers and manifests, which includes digest-pinned proxy pulls.
+# Weekly with a 30-day (720h) offset so those stay cached between re-fetches.
+upsert_task repository.docker.gc '{
+  "name":"docker-gc-all","enabled":true,"notificationCondition":"FAILURE",
+  "frequency":{"schedule":"cron","cronExpression":"0 0 2 ? * SUN"},
+  "properties":{"repositoryName":"*","deployOffset":"720"}}'
+upsert_task blobstore.compact '{
+  "name":"compact-default","enabled":true,"notificationCondition":"FAILURE",
+  "frequency":{"schedule":"cron","cronExpression":"0 0 4 * * ?"},
+  "properties":{"blobstoreName":"default","blobsOlderThan":"0"}}'
 
 echo "Provisioning complete."

@@ -40,8 +40,16 @@ Consequence: the user in `nexus-admin` is **not** `admin`, and changing `nexus-a
 
 ### Provisioning Job
 
-`nexus-provision-repos` (`app/provision.sh`) upserts every repo, the `anonymous-extras` role (`nx-metrics-all`, `nx-healthcheck-read`, so vmagent can scrape anonymously), and the `workspace-puller` user. It is GET-merge-PUT safe and re-runs whenever `provision.sh` changes (hashed ConfigMap + `kustomize.toolkit.fluxcd.io/force: "Enabled"`). It also resets `workspace-puller`'s password to
-`puller-password` on every run.
+`nexus-provision-repos` (`app/provision.sh`) upserts every repo, the cleanup policy and tasks (see [Cleanup](#cleanup)), the `anonymous-extras` role (`nx-metrics-all`, `nx-healthcheck-read`, so vmagent can scrape anonymously), and the `workspace-puller` user. It is GET-merge-PUT safe and re-runs whenever `provision.sh` changes (hashed ConfigMap + `kustomize.toolkit.fluxcd.io/force: "Enabled"`). It
+also resets `workspace-puller`'s password to `puller-password` on every run.
+
+### Cleanup
+
+The provisioner owns cleanup; do not configure it in the UI, the next run overwrites it.
+
+- Cleanup policy `unused-90d` (all formats, not downloaded in 90 days) is attached to every repo except `docker-group`. It goes through `/service/rest/internal/cleanup-policies`, because the public cleanup API is Pro-only (404 on Community).
+- The built-in "Cleanup service" task (daily 01:00) only soft-deletes. `docker-gc-all` (Sundays 02:00) soft-deletes untagged Docker layers and manifests older than 30 days, including digest-pinned proxy pulls, and `compact-default` (daily 04:00) frees the disk. Task times are UTC.
+- Proxy content that gets deleted is fetched again on the next pull; envbuilder layers are rebuilt on the next build.
 
 To re-run without a script change, delete the Job and reconcile the `nexus` Kustomization.
 
