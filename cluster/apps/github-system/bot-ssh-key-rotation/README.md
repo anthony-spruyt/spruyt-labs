@@ -2,7 +2,7 @@
 
 ## Overview
 
-Daily job that replaces the `spruyt-labs-bot` SSH key used by the write-tier Claude agents and the `spruyt-labs` Coder workspace for Git push and commit signing. It registers a fresh ed25519 key on GitHub as both an auth and a signing key, deletes keys older than the grace period, patches `github-bot-ssh-key`, and force-syncs the consumers' ExternalSecrets. Consumer side:
+Daily job that replaces the `spruyt-labs-bot` SSH key used by the write-tier Claude agents and every Coder workspace for Git push and commit signing. It registers a fresh ed25519 key on GitHub as both an auth and a signing key, deletes keys older than the grace period, patches `github-bot-ssh-key`, and force-syncs the consumers' ExternalSecrets. Consumer side:
 [claude-agents-shared](../../claude-agents-shared/README.md).
 
 ## Prerequisites

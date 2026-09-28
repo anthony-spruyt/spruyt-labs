@@ -44,8 +44,9 @@ locals {
   # Traefik LB IP for hostAliases (avoids Cloudflare hairpin for agent downloads)
   traefik_lb_ip = data.kubernetes_service_v1.traefik.status[0].load_balancer[0].ingress[0].ip
 
-  git_author_name  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
-  git_author_email = coalesce(data.coder_parameter.git_email.value, data.coder_workspace_owner.me.email)
+  # Same identity as the write-tier Claude agents, so the owner can approve its PRs with their own account.
+  git_author_name  = "spruyt-labs-bot"
+  git_author_email = "spruyt-labs-bot@users.noreply.github.com"
   repo_url         = data.coder_parameter.repo.value
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
@@ -104,16 +105,6 @@ locals {
 # ---------------------------------------------------------------------------
 # Parameters
 # ---------------------------------------------------------------------------
-
-data "coder_parameter" "git_email" {
-  name         = "git_email"
-  display_name = "Git commit email"
-  description  = "Email used for git author/committer and SSH signature verification. Use a GitHub noreply address to avoid leaking personal email. Leave blank to use the Coder profile email."
-  type         = "string"
-  mutable      = true
-  order        = 1
-  default      = "99536297+anthony-spruyt@users.noreply.github.com"
-}
 
 data "coder_parameter" "repo" {
   name         = "repo"
@@ -299,6 +290,26 @@ resource "coder_agent" "main" {
     git config --global user.signingKey /etc/coder/ssh-keys/id_ed25519
     git config --global commit.gpgSign true
     git config --global tag.gpgSign true
+
+    mkdir -p /home/vscode/.local/bin
+    cat > /home/vscode/.local/bin/git-allowed-signers <<'SIGNERSEOF'
+    #!/bin/sh
+    # Rerun after a key rotation if git verify-commit reports "No principal matched".
+    f=/home/vscode/.config/git/allowed_signers
+    mkdir -p /home/vscode/.config/git
+    {
+      echo "${local.git_author_email} $(cut -d' ' -f1,2 /etc/coder/ssh-keys/id_ed25519.pub)"
+      curl -fsS --max-time 10 https://api.github.com/users/spruyt-labs-bot/ssh_signing_keys |
+        jq -r '.[] | "${local.git_author_email} " + .key'
+    } >"$f.tmp" && mv "$f.tmp" "$f"
+    git config --global gpg.ssh.allowedSignersFile "$f"
+    SIGNERSEOF
+    chmod +x /home/vscode/.local/bin/git-allowed-signers
+    /home/vscode/.local/bin/git-allowed-signers || true
+
+    # Symlink, not a copy: the rotated token reaches the mount, a copy would go stale.
+    mkdir -p /home/vscode/.config/gh
+    ln -sfn /etc/coder/gh/hosts.yml /home/vscode/.config/gh/hosts.yml
   EOT
 
   env = {
@@ -561,6 +572,12 @@ resource "kubernetes_pod_v1" "main" {
         read_only  = true
       }
 
+      volume_mount {
+        name       = "gh-hosts"
+        mount_path = "/etc/coder/gh"
+        read_only  = true
+      }
+
       # Podman registries.conf drop-in: route container pulls through Nexus
       # pull-through proxies (docker.io, ghcr.io, quay.io, mcr.microsoft.com,
       # registry.k8s.io). Ref #976.
@@ -632,8 +649,20 @@ resource "kubernetes_pod_v1" "main" {
     volume {
       name = "ssh-signing-key"
       secret {
-        secret_name  = "coder-ssh-signing-key"
+        secret_name  = "github-bot-ssh-key"
         default_mode = "0400"
+      }
+    }
+
+    volume {
+      name = "gh-hosts"
+      secret {
+        secret_name  = "github-bot-credentials"
+        default_mode = "0400"
+        items {
+          key  = "hosts.yml"
+          path = "hosts.yml"
+        }
       }
     }
 

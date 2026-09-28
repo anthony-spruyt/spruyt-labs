@@ -46,15 +46,15 @@ Rotated Secrets reach running workspaces within a couple of minutes: the Kata ag
 | `devcontainer` | `coder-workspace` (no API access)        | none                                                                                |
 | `xfg`          | `coder-workspace` (no API access)        | `coder-workspace-env-xfg` (Azure DevOps and GitLab tokens, reach any repo it opens) |
 
-The shared set, in every template: `coder-workspace-env-common`, the SSH signing key, Nexus pull auth, and Claude managed settings. Project env Secrets come after common in `env_from`, so their keys override common ones with the same name.
+The shared set, in every template: `coder-workspace-env-common`, the `spruyt-labs-bot` SSH key and write-tier GitHub App token, Nexus pull auth, and Claude managed settings. Project env Secrets come after common in `env_from`, so their keys override common ones with the same name.
 
-`spruyt-labs` swaps the SSH key for the `spruyt-labs-bot` key and runs `gh` on the write-tier GitHub App token, the same identity as the write-tier Claude agents. In repos that require PR approval, the owner approves its PRs with their own account.
+Every workspace commits and runs `gh` as `spruyt-labs-bot`, the same identity as the write-tier Claude agents. In repos that require PR approval, the owner approves its PRs with their own account.
 
 `coder-workspace-ops` is a scoped-down cluster-admin (no Secrets, no RBAC/webhook/CRD writes); its ClusterRole is in `coder-workspaces/coder-workspaces/app/rbac.yaml`. The SOPS age key is pulled from `flux-system` by an ExternalSecret, so a `spruyt-labs` workspace can decrypt every SOPS file in the repo.
 
 The spruyt-labs Talos config comes from the Talos `ServiceAccount` `coder-workspace-talos` (role `os:operator`, short-lived and auto-renewed), not a static admin config (#3188).
 
-The three `main.tf` files are near-copies: beyond this table they differ only in the `repo` default and, for `spruyt-labs`, parameter order, a higher memory request, the bot identity, and the startup steps that build the kubeconfig and link the Terraform and `gh` credentials. A fix to shared behaviour must be applied to all three.
+The three `main.tf` files are near-copies: beyond this table they differ only in the `repo` default and, for `spruyt-labs`, parameter order, a higher memory request, and the startup steps that build the kubeconfig, link the Terraform credentials and wrap `talosctl`. A fix to shared behaviour must be applied to all three.
 
 ### Nexus routing
 

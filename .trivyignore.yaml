@@ -346,27 +346,6 @@ misconfigurations:
       - cluster/apps/nexus-system/nexus/app/provision-repos-job.yaml
 
   # ==============================================================================
-  # Coder SSH Key Rotation - CronJob and RBAC
-  # ==============================================================================
-  # Own ghcr.io image (trivy flags non-standard registries)
-  - id: AVD-KSV-0125
-    paths:
-      - cluster/apps/github-system/coder-ssh-key-rotation/app/cronjob.yaml
-  # Rotation and reader roles need resourceName-scoped secret access (least-privilege)
-  - id: AVD-KSV-0113
-    paths:
-      - cluster/apps/github-system/coder-ssh-key-rotation/app/role.yaml
-      - cluster/apps/github-system/coder-ssh-key-rotation/app/reader-role.yaml
-      - cluster/apps/github-system/coder-ssh-key-rotation/app/reader-role-binding-coder-workspaces.yaml
-  # UID/GID 1000 matches the ssh-key-rotation image baked-in user
-  - id: AVD-KSV-0020
-    paths:
-      - cluster/apps/github-system/coder-ssh-key-rotation/app/cronjob.yaml
-  - id: AVD-KSV-0021
-    paths:
-      - cluster/apps/github-system/coder-ssh-key-rotation/app/cronjob.yaml
-
-  # ==============================================================================
   # Bot SSH Key Rotation - CronJob and RBAC
   # ==============================================================================
   # Own ghcr.io image (trivy flags non-standard registries)

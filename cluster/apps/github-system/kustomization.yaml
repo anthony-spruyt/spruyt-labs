@@ -5,5 +5,4 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./bot-ssh-key-rotation/ks.yaml
-  - ./coder-ssh-key-rotation/ks.yaml
   - ./github-token-rotation/ks.yaml
