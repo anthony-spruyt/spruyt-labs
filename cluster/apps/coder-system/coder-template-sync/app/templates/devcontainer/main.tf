@@ -50,7 +50,7 @@ locals {
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
 
-  workspace_folder = "/workspaces/${replace(element(split("/", replace(local.repo_url, ".git", "")), length(split("/", replace(local.repo_url, ".git", ""))) - 1), ".git", "")}"
+  workspace_folder = "/workspaces/${one(regex("([^/:]+?)(?:\\.git)?/?$", local.repo_url))}"
 
   # Environment variables passed into the envbuilder container.
   envbuilder_env = {
@@ -171,10 +171,11 @@ data "coder_parameter" "fallback_image" {
 data "coder_parameter" "devcontainer_builder" {
   name         = "devcontainer_builder"
   display_name = "Devcontainer builder"
-  description  = "Envbuilder image used to build the devcontainer. Pin to a specific release in production."
-  default      = "ghcr.io/coder/envbuilder:latest"
-  mutable      = true
-  order        = 6
+  description  = "Envbuilder image used to build the devcontainer."
+  # renovate: datasource=docker depName=ghcr.io/coder/envbuilder
+  default = "ghcr.io/coder/envbuilder:1.3.0@sha256:b34ade2fb90a8536df76e7a15c6dd8c6352d0ae835a187b13467fa0c8a71e280"
+  mutable = true
+  order   = 6
 }
 
 # ---------------------------------------------------------------------------
