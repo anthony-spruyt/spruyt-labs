@@ -33,14 +33,7 @@ After the run completes, note the outputs for:
 
 ### Kubernetes Secret
 
-Create a Kubernetes secret in the `velero` namespace with the AWS credentials:
-
-```sh
-kubectl -n velero create secret generic velero-aws-creds \
-  --from-literal=cloud=<access_key_id>:<secret_access_key>
-```
-
-Or, for the standard Velero format, create a file `credentials-velero`:
+Velero reads the credentials from the `velero-secret` Secret, stored SOPS-encrypted in `cluster/apps/velero/velero/app/velero-secret.sops.yaml`. Edit it with `sops` and set the `cloud` key to an AWS credentials file:
 
 ```ini
 [default]
@@ -48,15 +41,9 @@ aws_access_key_id = <access_key_id>
 aws_secret_access_key = <secret_access_key>
 ```
 
-Then:
+### Bucket Names
 
-```sh
-kubectl -n velero create secret generic velero-aws-creds --from-file=cloud=credentials-velero
-```
-
-### Helm Values
-
-Update your Velero Helm values (`values.yaml`) with the bucket name, region, and secret name.
+If the bucket name or region changes, update `cluster/apps/velero/velero/resources/backup-storage-location.yaml` (bucket and region) and `volume-snapshot-location.yaml` (region).
 
 ## Security & Compliance
 

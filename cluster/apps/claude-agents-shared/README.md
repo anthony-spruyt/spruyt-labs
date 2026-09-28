@@ -60,12 +60,12 @@ Every other MCP server (e.g. Brave Search, VictoriaMetrics, n8n-mcp, UniFi) is r
 
 ## Credential Rotation
 
-| Credential                                   | Rotation                                                                                                                                                       |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub App tokens (`github-bot-credentials`) | `github-token-rotation` CronJob in `github-system`, every 30 min; force-syncs the ExternalSecret in all five namespaces                                        |
-| Bot SSH key (`github-bot-ssh-key`)           | `bot-ssh-key-rotation` CronJob, daily. It only force-syncs `claude-agents-write`; `claude-agents-spruyt-labs-write` picks up the new key on the 5m ESO refresh |
-| `mcp-credentials`                            | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml`                                                                                |
-| `litellm-credentials`                        | Manual: one LiteLLM virtual key per namespace in each overlay's `litellm-credentials.sops.yaml`                                                                |
+| Credential                                   | Rotation                                                                                                                |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| GitHub App tokens (`github-bot-credentials`) | `github-token-rotation` CronJob in `github-system`, every 30 min; force-syncs the ExternalSecret in all five namespaces |
+| Bot SSH key (`github-bot-ssh-key`)           | `bot-ssh-key-rotation` CronJob, daily; force-syncs the ExternalSecret in both write-tier namespaces                     |
+| `mcp-credentials`                            | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml`                                         |
+| `litellm-credentials`                        | Manual: one LiteLLM virtual key per namespace in each overlay's `litellm-credentials.sops.yaml`                         |
 
 The Claude subscription login is not stored here; it is set per n8n credential (see `litellm/README.md`).
 

@@ -26,8 +26,7 @@ instance:
     pullSecret: "flux-gitops-key"
   kustomize:
     patches:
-      # Add descheduler exclusion label to flux-system namespace
-      # The flux-operator manages this namespace and overrides labels from namespace.yaml
+      # flux-operator owns this namespace and overrides labels from namespace.yaml
       - target:
           kind: Namespace
           name: flux-system
@@ -35,7 +34,6 @@ instance:
           - op: add
             path: /metadata/labels/descheduler.kubernetes.io~1exclude
             value: "true"
-      # SOPS decryption for flux system kustomization
       - patch: |
           - op: add
             path: /spec/decryption
@@ -46,7 +44,6 @@ instance:
         target:
           kind: Kustomization
           name: flux-system
-      # Controller-level SOPS decryption
       - patch: |
           - op: add
             path: /spec/template/spec/containers/0/args/-
@@ -93,7 +90,6 @@ instance:
         target:
           kind: Deployment
           name: kustomize-controller
-      # Enable Helm repositories caching
       - patch: |
           - op: add
             path: /spec/template/spec/containers/0/args/-
@@ -122,7 +118,6 @@ instance:
         target:
           kind: Deployment
           name: helm-controller
-      # Disable chart digest tracking
       - patch: |
           - op: add
             path: /spec/template/spec/containers/0/args/-
@@ -130,7 +125,6 @@ instance:
         target:
           kind: Deployment
           name: helm-controller
-      # Adjust resources and limits
       - patch: |
           apiVersion: apps/v1
           kind: Deployment
@@ -207,7 +201,15 @@ instance:
         target:
           kind: Deployment
           name: source-controller
-      # Add pod anti-affinity to spread Flux controllers across nodes
+      # Upstream flux2 sets system-cluster-critical on source, kustomize and helm controllers, not this one
+      - patch: |
+          - op: add
+            path: /spec/template/spec/priorityClassName
+            value: system-cluster-critical
+        target:
+          kind: Deployment
+          name: notification-controller
+      # Spread Flux controllers across nodes
       # Ref: https://github.com/anthony-spruyt/spruyt-labs/issues/233
       - patch: |
           apiVersion: apps/v1

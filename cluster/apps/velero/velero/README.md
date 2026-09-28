@@ -6,7 +6,7 @@ Nightly backup of all Kubernetes resources to S3, plus data-mover copies of the 
 
 ## Prerequisites
 
-- S3 bucket and IAM user from [`infra/terraform/aws/velero-backup/`](../../../../infra/terraform/aws/velero-backup/README.md). The access key goes by hand into the `cloud` key of `app/velero-secret.sops.yaml` (AWS credentials-file format). The Terraform README's `kubectl create secret` example uses a different secret name; the one used here is `velero-secret`.
+- S3 bucket and IAM user from [`infra/terraform/aws/velero-backup/`](../../../../infra/terraform/aws/velero-backup/README.md). The access key goes by hand into the `cloud` key of `app/velero-secret.sops.yaml` (AWS credentials-file format).
 
 ## Operations
 

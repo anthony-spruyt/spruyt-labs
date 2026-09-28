@@ -11,7 +11,7 @@ Daily job that replaces the `spruyt-labs-bot` SSH key used by the write-tier Cla
 ## Operations
 
 - The rotated secret is created by `github-token-rotation` (`github-bot-ssh-key.sops.yaml`) with `kustomize.toolkit.fluxcd.io/ssa: IfNotPresent`, so Flux seeds it once and never overwrites the job's writes. Do not remove that annotation.
-- The job only force-syncs `claude-agents-write`. `claude-agents-spruyt-labs-write` also consumes the key and picks it up on its ExternalSecret `refreshInterval` or on the next `github-token-rotation` run (every 30 minutes), which force-syncs `github-bot-ssh-key` in every agent namespace.
+- `FORCE_SYNC_NAMESPACES` must list every namespace with a `github-bot-ssh-key` ExternalSecret. A namespace left out still gets the key, but only on its ExternalSecret `refreshInterval` or the next `github-token-rotation` run.
 - The force-sync permission comes from `claude-agents-shared/base/github-rotation-rbac.yaml`, which binds this job's ServiceAccount in every agent namespace.
 - `BotSSHKeyRotationFailed` / `BotSSHKeyRotationConsecutiveFailures` in `app/vmrule.yaml` alert on failures.
 

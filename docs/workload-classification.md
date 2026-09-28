@@ -99,22 +99,21 @@ No workloads use it today.
 
 ### Built-in classes
 
-| Workload                                                               | Priority Class            |
-| ---------------------------------------------------------------------- | ------------------------- |
-| cilium, cilium-envoy, cilium-operator                                  | `system-node-critical`    |
-| Ceph CSI node plugins (rbd, cephfs, and their csi-addons sidecars)     | `system-node-critical`    |
-| Ceph CSI controller plugins (rbd, cephfs)                              | `system-cluster-critical` |
-| helm-controller, kustomize-controller, source-controller               | `system-cluster-critical` |
-| coredns, metrics-server, kube-apiserver, controller-manager, scheduler | `system-cluster-critical` |
+| Workload                                                                          | Priority Class            |
+| --------------------------------------------------------------------------------- | ------------------------- |
+| cilium, cilium-envoy, cilium-operator                                             | `system-node-critical`    |
+| Ceph CSI node plugins (rbd, cephfs, and their csi-addons sidecars)                | `system-node-critical`    |
+| Ceph CSI controller plugins (rbd, cephfs)                                         | `system-cluster-critical` |
+| helm-controller, kustomize-controller, notification-controller, source-controller | `system-cluster-critical` |
+| coredns, metrics-server, kube-apiserver, controller-manager, scheduler            | `system-cluster-critical` |
 
 ## Known Gaps
 
 Workloads whose live priority does not match the intended tier:
 
-| Workload                                     | Live       | Intended     | Cause                                                                             |
-| -------------------------------------------- | ---------- | ------------ | --------------------------------------------------------------------------------- |
-| external-secrets cert-controller and webhook | `standard` | unclassified | Only the controller's priority is set                                             |
-| notification-controller                      | `standard` | unclassified | Not patched in `flux-instance/app/values.yaml`, unlike the other Flux controllers |
+| Workload                                     | Live       | Intended     | Cause                                 |
+| -------------------------------------------- | ---------- | ------------ | ------------------------------------- |
+| external-secrets cert-controller and webhook | `standard` | unclassified | Only the controller's priority is set |
 
 ## Classification Guidelines
 

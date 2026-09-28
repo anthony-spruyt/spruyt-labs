@@ -13,19 +13,6 @@ spec:
         kind: HelmRepository
         name: traefik-charts
         namespace: flux-system
-  install:
-    strategy:
-      name: RetryOnFailure
-  rollback:
-    cleanupOnFail: true
-    recreate: true
-  upgrade:
-    cleanupOnFail: true
-    strategy:
-      name: RemediateOnFailure
-    remediation:
-      remediateLastFailure: true
-      retries: 2
   interval: 4h
   valuesFrom:
     - kind: ConfigMap
