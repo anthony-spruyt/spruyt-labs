@@ -1,47 +1,31 @@
-# [Component Name] - [Brief Description]
+# [Component] - [One-line purpose]
 
 ## Overview
 
-[Brief description of the component, its purpose, and role in the homelab.]
+[1-3 sentences: what it does here and why it exists in this cluster. Not a product description.]
+
+<!-- Every section below is OPTIONAL. Delete any without real content.
+     Don't restate anything readable from ks.yaml / release.yaml / values.yaml. -->
 
 ## Prerequisites
 
-- [List actual dependencies from ks.yaml dependsOn field]
+<!-- Only what ks.yaml dependsOn can't express: Talos patches, Terraform, external accounts, one-time manual setup. -->
 
-<!-- OPTIONAL: Operations section — include when the component has non-obvious
-     operational knowledge that can't be derived from reading manifests alone.
-     Delete this section if not applicable.
+- [External prerequisite and where it lives]
 
-     Good candidates:
-     - Integration procedures (e.g., adding SSO, onboarding a new consumer)
-     - Cross-component interaction patterns (e.g., secret sync, RBAC wiring)
-     - Naming conventions or format requirements the component enforces
-     - Workarounds for upstream bugs or limitations
-     - Credential rotation or lifecycle procedures
-     - File reference tables mapping concepts to manifest locations
+## Operations
 
-     See authentik/README.md for a comprehensive example.
--->
+<!-- Non-obvious procedures: integrations, cross-component wiring, credential rotation, naming rules, workarounds.
+     See cluster/apps/authentik-system/authentik/README.md for a good example. -->
 
 ## Troubleshooting
 
-<!-- Only document non-obvious, component-specific issues. Do NOT add generic kubectl/flux commands. -->
+<!-- Only failures whose fix isn't obvious from the error. No generic kubectl/flux commands. -->
 
-1. **[Issue description]**
-   - **Symptom**: [What you observe]
-   - **Resolution**: [How to fix - prefer editing manifests and reconciling over manual kubectl]
+1. **[Symptom]**
+   - **Cause**: [Why it happens]
+   - **Fix**: [Prefer manifest change + reconcile over manual kubectl]
 
 ## References
 
-- [Official Documentation](https://docs.example.com)
-
-______________________________________________________________________
-
-<!--
-TEMPLATE USAGE NOTES (delete this section when using):
-- Replace all [bracketed] placeholders with actual values
-- Verify namespace matches ks.yaml targetNamespace
-- Verify component name matches release.yaml metadata.name
-- List actual dependencies from ks.yaml spec.dependsOn
-- Test all commands before documenting
--->
+- [Upstream docs](https://example.com)

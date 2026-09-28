@@ -52,9 +52,11 @@ Check the chart's upstream `values.yaml` for the pinned chart version before edi
 
 ## VPA (Vertical Pod Autoscaler)
 
-Every workload must include a `vpa.yaml` in its `app/` directory.
+Every long-running workload (Deployment, StatefulSet, DaemonSet) must include a `vpa.yaml` in its `app/` directory.
+Short-lived CronJobs/Jobs may skip it.
 
-- `updateMode` = `Initial` for non critical workloads and `Off` for critical workloads
+- `updateMode` = `Off` for Cilium, Rook Ceph, and the Victoria observability stack (a resize-on-restart there costs
+  networking, storage quorum, or the telemetry you'd debug with); `Initial` for everything else
 - Per-container `containerPolicies` (no wildcards)
 - `controlledValues` = `RequestsOnly` — VPA adjusts requests only, never limits
 - `minAllowed` = `cpu: 1m, memory: 1Mi` (unclamped for accurate recommendations)
@@ -72,8 +74,8 @@ To exclude a namespace from descheduler eviction, add it to the per-plugin `name
 
 Only core infrastructure namespaces should be excluded — workload namespaces rely on priority classes to control eviction order.
 
-> **Upstream bug (descheduler v0.35.1):** `DefaultEvictor.namespaceLabelSelector` ignores `matchExpressions` when `matchLabels` is empty (`defaultevictor.go` guards with `len(MatchLabels) > 0`). The `descheduler.kubernetes.io/exclude` label is therefore inert. When upgrading descheduler, check if this is fixed — if so, switch from per-plugin `namespaces.exclude` lists to
-> `DefaultEvictor.namespaceLabelSelector` with the label.
+The `descheduler.kubernetes.io/exclude` namespace label is not yet wired up; it becomes the mechanism once #641 moves
+exclusion to `DefaultEvictor.namespaceLabelSelector` (fixed upstream in v0.36.0, kubernetes-sigs/descheduler#1853).
 
 ## HelmRelease with ConfigMapGenerator
 
@@ -102,6 +104,12 @@ configurations:
 ```
 
 This transforms `valuesFrom.name: <app>-values` to `valuesFrom.name: <app>-values-<hash>` automatically.
+
+## Component Docs
+
+READMEs are optional. If your change adds knowledge the manifests can't show (workaround, manual step, external
+prerequisite, cross-component wiring, credential rotation), create or update the app's `README.md` in the same commit
+using `docs/templates/readme_template.md`. See `.claude/rules/05-documentation.md`.
 
 ## Renovate Annotations
 
