@@ -287,6 +287,48 @@ resource "coder_agent" "main" {
     git config --global user.signingKey /etc/coder/ssh-keys/id_ed25519
     git config --global commit.gpgSign true
     git config --global tag.gpgSign true
+
+    mkdir -p /home/vscode/.local/bin
+    cat > /home/vscode/.local/bin/git-allowed-signers <<'SIGNERSEOF'
+    #!/bin/sh
+    # Rerun after a key rotation if git verify-commit reports "No principal matched".
+    f=/home/vscode/.config/git/allowed_signers
+    mkdir -p /home/vscode/.config/git
+    {
+      echo "${local.git_author_email} $(cut -d' ' -f1,2 /etc/coder/ssh-keys/id_ed25519.pub)"
+      curl -fsS --max-time 10 https://api.github.com/users/spruyt-labs-bot/ssh_signing_keys |
+        jq -r '.[] | "${local.git_author_email} " + .key'
+    } >"$f.tmp" && mv "$f.tmp" "$f"
+    git config --global gpg.ssh.allowedSignersFile "$f"
+    SIGNERSEOF
+    chmod +x /home/vscode/.local/bin/git-allowed-signers
+    /home/vscode/.local/bin/git-allowed-signers || true
+
+    # The mounted talosconfig has no nodes and can't be edited. Default -n for read-only
+    # commands only: os:operator can reboot and restart services, so never default those to every node.
+    cat > /home/vscode/.local/bin/talosctl <<'TALOSEOF'
+    #!/bin/sh
+    for a in "$@"; do
+      case "$a" in
+        -n | -n* | --nodes | --nodes=*) exec /usr/local/bin/talosctl "$@" ;;
+      esac
+    done
+    if [ "$1" = service ] || [ "$1" = services ]; then
+      for a in "$@"; do
+        case "$a" in start | stop | restart) exec /usr/local/bin/talosctl "$@" ;; esac
+      done
+    fi
+    case "$1 $2" in
+      "etcd members" | "etcd status") sel=node-role.kubernetes.io/control-plane ;;
+      version\ * | get\ * | service\ * | services\ * | logs\ *| dmesg\ * | containers\ * | stats\ * | processes\ * | \
+        memory\ * | mounts\ * | disks\ * | time\ * | events\ * | netstat\ * | cgroups\ * | dashboard\ *) sel= ;;
+      *) exec /usr/local/bin/talosctl "$@" ;;
+    esac
+    nodes=$(kubectl get nodes -l "$sel" -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' | tr ' ' ',')
+    [ -n "$nodes" ] || exec /usr/local/bin/talosctl "$@"
+    exec /usr/local/bin/talosctl -n "$nodes" "$@"
+    TALOSEOF
+    chmod +x /home/vscode/.local/bin/talosctl
   EOT
 
   env = {
