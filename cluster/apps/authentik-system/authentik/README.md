@@ -6,6 +6,14 @@ Single sign-on for every web UI in the cluster. All providers, applications and 
 
 Paths below starting with `app/` are relative to this directory; other paths are relative to `cluster/apps/`.
 
+## Database Credentials
+
+The `authentik` Postgres login is ESO-generated (`sl_` prefix) into `authentik-cnpg-owner` by `app/cnpg-roles-eso.yaml`; nothing is in SOPS and superuser access is off. `bootstrap.initdb.secret` points CNPG at it, so CNPG no longer generates `authentik-cnpg-cluster-app`.
+
+The database is deliberately not a db-mcp source: it holds sessions, tokens and provider secrets. Use `kubectl cnpg psql authentik-cnpg-cluster -n authentik-system`.
+
+To rotate, delete both the Secret and the ExternalSecret (`kubectl -n authentik-system delete secret,externalsecret authentik-cnpg-owner`). Flux recreates the ExternalSecret with a new password and CNPG applies it. Then `kubectl -n authentik-system rollout restart deploy -l app.kubernetes.io/name=authentik` - Reloader ignores a recreated Secret. Logins fail until the pods restart.
+
 ## Adding SSO Integration (Blueprints)
 
 ### Step 1: Create Blueprint

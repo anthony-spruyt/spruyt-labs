@@ -11,33 +11,19 @@ global:
     # Becomes mandatory in 2026.11.
     - name: AUTHENTIK_WEB__BASE_URL
       value: https://auth.${EXTERNAL_DOMAIN}
-    # Database connection - uses CNPG auto-generated secret
     - name: AUTHENTIK_POSTGRESQL__HOST
-      valueFrom:
-        secretKeyRef:
-          name: authentik-cnpg-cluster-app
-          key: host
+      value: authentik-cnpg-cluster-rw
     - name: AUTHENTIK_POSTGRESQL__PORT
-      valueFrom:
-        secretKeyRef:
-          name: authentik-cnpg-cluster-app
-          key: port
+      value: "5432"
     - name: AUTHENTIK_POSTGRESQL__NAME
-      valueFrom:
-        secretKeyRef:
-          name: authentik-cnpg-cluster-app
-          key: dbname
+      value: authentik
     - name: AUTHENTIK_POSTGRESQL__USER
-      valueFrom:
-        secretKeyRef:
-          name: authentik-cnpg-cluster-app
-          key: user
+      value: authentik
     - name: AUTHENTIK_POSTGRESQL__PASSWORD
       valueFrom:
         secretKeyRef:
-          name: authentik-cnpg-cluster-app
+          name: authentik-cnpg-owner
           key: password
-    # Secret key for session signing
     - name: AUTHENTIK_SECRET_KEY
       valueFrom:
         secretKeyRef:
@@ -111,7 +97,6 @@ global:
         secretKeyRef:
           name: authentik-secrets
           key: OAUTH_ROTATION_API_TOKEN
-    # SMTP configuration for email verification
     - name: AUTHENTIK_EMAIL__HOST
       valueFrom:
         secretKeyRef:

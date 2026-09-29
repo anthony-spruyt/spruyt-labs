@@ -14,7 +14,9 @@ spec:
     initdb:
       database: authentik
       owner: authentik
-  enableSuperuserAccess: true
+      secret:
+        name: authentik-cnpg-owner
+  enableSuperuserAccess: false
   imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:899d3ed526b659d77935dde0e6bf2d69dbbf17d3d8c6486ca8cfd04bd3c18533"
   instances: 2
   enablePDB: false

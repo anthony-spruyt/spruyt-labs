@@ -14,6 +14,7 @@ resources:
   - ./aws-secret-store.yaml
   - ./aws-external-secret.yaml
   - ./external-secrets-rbac.yaml
+  - ./cnpg-roles-eso.yaml
   - ./authentik-cnpg-cluster.yaml
   # Dont need pooling yet, if pooling is needed when load increase can look at enabling.
   # - ./authentik-cnpg-poolers.yaml
