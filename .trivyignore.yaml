@@ -63,6 +63,7 @@ misconfigurations:
       - cluster/apps/temporal-system/temporal/app/cnpg-roles-eso.yaml
       - cluster/apps/agent-worker-system/agent-valkey/app/secret-reader-rbac.yaml
       - cluster/apps/litellm/litellm-valkey/app/secret-reader-rbac.yaml
+      - cluster/apps/nexus-system/nexus/app/secret-reader-rbac.yaml
       - cluster/flux/meta/image-pull-secrets-rbac.yaml
 
   # kubectl-mcp-server needs pod delete for cleanup and pods/eviction for drain

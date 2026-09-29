@@ -539,6 +539,17 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
+      # Explicit env beats env_from, so this wins over any stale key in coder-workspace-env-common
+      env {
+        name = "ENVBUILDER_DOCKER_CONFIG_BASE64"
+        value_from {
+          secret_key_ref {
+            name = "coder-workspace-nexus-clients"
+            key  = "ENVBUILDER_DOCKER_CONFIG_BASE64"
+          }
+        }
+      }
+
       env_from {
         secret_ref {
           name = "coder-workspace-env-common"

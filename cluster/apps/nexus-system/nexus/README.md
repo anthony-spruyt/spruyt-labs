@@ -10,14 +10,22 @@ Pull-through cache for apt, container images, npm and PyPI, plus the envbuilder/
 
 SOPS secrets in `app/`, created by hand:
 
-| Secret                    | Keys                               | Used by                                                |
-| ------------------------- | ---------------------------------- | ------------------------------------------------------ |
-| `nexus-admin`             | `admin-username`, `admin-password` | bootstrap sidecar, provisioning Job                    |
-| `nexus-upstream-creds`    | Docker Hub and GHCR username/token | proxy repos (avoids anonymous rate limits)             |
-| `nexus-secrets-key`       | `secrets.json`                     | Nexus secret encryption key (`NEXUS_SECRETS_KEY_FILE`) |
-| `nexus-workspace-clients` | `puller-password`                  | `workspace-puller` user                                |
+| Secret                 | Keys                               | Used by                                                |
+| ---------------------- | ---------------------------------- | ------------------------------------------------------ |
+| `nexus-admin`          | `admin-username`, `admin-password` | bootstrap sidecar, provisioning Job                    |
+| `nexus-upstream-creds` | Docker Hub and GHCR username/token | proxy repos (avoids anonymous rate limits)             |
+| `nexus-secrets-key`    | `secrets.json`                     | Nexus secret encryption key (`NEXUS_SECRETS_KEY_FILE`) |
 
-`coder-workspaces/coder-workspaces/app/coder-workspace-nexus-clients.sops.yaml` holds the matching client-side auth for workspaces and must be updated whenever `puller-password` changes.
+### Workspace users
+
+Workspace passwords are ESO-generated (`sl_` prefix) into `nexus-clients` by `app/clients-eso.yaml`, one key per user:
+
+| User               | Role                                       | Used by                                        |
+| ------------------ | ------------------------------------------ | ---------------------------------------------- |
+| `workspace-puller` | `nx-anonymous` (read-only)                 | podman in workspaces (`auth.json`)             |
+| `envbuilder-cache` | `nx-anonymous` + `envbuilder-cache-writer` | envbuilder/kaniko (pulls + layer-cache pushes) |
+
+`coder-workspaces/coder-workspaces/app/nexus-clients-eso.yaml` reads `nexus-clients` through a SecretStore and templates both client configs into `coder-workspace-nexus-clients`. Never delete `nexus-clients` itself: both users would get new passwords at once.
 
 ## Operations
 
@@ -40,8 +48,8 @@ Consequence: the user in `nexus-admin` is **not** `admin`, and changing `nexus-a
 
 ### Provisioning Job
 
-`nexus-provision-repos` (`app/provision.sh`) upserts every repo, the cleanup policy and tasks (see [Cleanup](#cleanup)), the `anonymous-extras` role (`nx-metrics-all`, `nx-healthcheck-read`, so vmagent can scrape anonymously), and the `workspace-puller` user. It is GET-merge-PUT safe and re-runs whenever `provision.sh` changes (hashed ConfigMap + `kustomize.toolkit.fluxcd.io/force: "Enabled"`). It
-also resets `workspace-puller`'s password to `puller-password` on every run.
+`nexus-provision-repos` (`app/provision.sh`) upserts every repo, the cleanup policy and tasks (see [Cleanup](#cleanup)), the `anonymous-extras` role (`nx-metrics-all`, `nx-healthcheck-read`, so vmagent can scrape anonymously), the `envbuilder-cache-writer` role and the workspace users. It is GET-merge-PUT safe and re-runs whenever `provision.sh` changes (hashed ConfigMap +
+`kustomize.toolkit.fluxcd.io/force: "Enabled"`). It also resets each workspace user's password from `nexus-clients` on every run.
 
 ### Cleanup
 
@@ -60,9 +68,11 @@ To re-run without a script change, delete the Job and reconcile the `nexus` Kust
 
 In that order: the provisioning Job reads `admin-password` on every run and 401s if it is stale.
 
-### Rotating the workspace puller password
+### Rotating a workspace user password
 
-Update `puller-password` in `nexus-workspace-clients` and the auth in `coder-workspace-nexus-clients` together. The provisioning Job applies the new password on its next run, so change `provision.sh` or re-run the Job. Running workspaces keep the old auth until restarted: templates mount `auth.json` with `subPath`, and `subPath` mounts never receive Secret updates.
+1. `kubectl -n nexus-system delete externalsecret nexus-client-<user>` (`workspace-puller` or `envbuilder-cache`). Flux recreates it and ESO writes a new key into `nexus-clients`; the other user's key is untouched.
+2. Re-run the provisioning Job (see [Cleanup](#cleanup)) so Nexus gets the new password.
+3. `coder-workspace-nexus-clients` follows within 5 minutes. Running workspaces keep the old auth until restarted: templates mount `auth.json` with `subPath` and read the envbuilder config at pod start.
 
 ## Troubleshooting
 
@@ -81,10 +91,10 @@ Update `puller-password` in `nexus-workspace-clients` and the auth in `coder-wor
    - **Cause**: Two repos claim the same `httpPort`.
    - **Fix**: Only `docker-group` (8082) and `envbuilder-cache` (8083) may set one in `provision.sh`.
 
-4. **Workspace image pulls fail with 401 from `:8082`**
+4. **Workspace pulls bypass Nexus, or envbuilder cache pushes fail with 401**
 
-   - **Cause**: `coder-workspace-nexus-clients` and `puller-password` are out of step.
-   - **Fix**: Re-align them and re-run the provisioning Job.
+   - **Cause**: Nexus has not been given the current `nexus-clients` password (the Job has not run since it changed), or the workspace started before it changed. Podman treats Nexus as a mirror, so a 401 silently falls back to the upstream registry (visible as upstream rate limits, not errors).
+   - **Fix**: Re-run the provisioning Job, then restart the workspace.
 
 ## References
 

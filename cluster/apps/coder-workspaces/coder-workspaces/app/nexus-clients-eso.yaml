@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nexus-secret-reader
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/secretstore_v1.json
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: nexus-secret-store
+spec:
+  provider:
+    kubernetes:
+      remoteNamespace: nexus-system
+      server:
+        url: "https://kubernetes.default.svc"
+        caProvider:
+          type: ConfigMap
+          name: kube-root-ca.crt
+          key: ca.crt
+      auth:
+        serviceAccount:
+          name: nexus-secret-reader
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# Podman logs in as the read-only puller; envbuilder also pushes the layer cache, so it gets the cache writer
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: coder-workspace-nexus-clients
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: SecretStore
+    name: nexus-secret-store
+  target:
+    name: coder-workspace-nexus-clients
+    creationPolicy: Owner
+    template:
+      data:
+        auth.json: >-
+          {{- $a := dict "auth" (printf "workspace-puller:%s" .puller | b64enc) -}}
+          {{- dict "auths" (dict "nexus.nexus-system.svc.cluster.local:8082" $a "nexus.nexus-system.svc.cluster.local:8083" $a) | toJson -}}
+        ENVBUILDER_DOCKER_CONFIG_BASE64: >-
+          {{- $a := dict "auth" (printf "envbuilder-cache:%s" .envbuilder | b64enc) -}}
+          {{- dict "auths" (dict "nexus.nexus-system.svc.cluster.local:8082" $a "nexus.nexus-system.svc.cluster.local:8083" $a) | toJson | b64enc -}}
+  data:
+    - secretKey: puller
+      remoteRef:
+        key: nexus-clients
+        property: workspace-puller
+    - secretKey: envbuilder
+      remoteRef:
+        key: nexus-clients
+        property: envbuilder-cache

@@ -55,7 +55,6 @@ locals {
   # Keyed on owner/repo, not workspace name, so new workspaces reuse layers from earlier builds.
   cache_key = replace(lower(one(regex("([^/:]+/[^/:]+?)(?:\\.git)?/?$", split("#", local.repo_url)[0]))), "/[^a-z0-9._/-]/", "-")
 
-  # Environment variables passed into the envbuilder container.
   envbuilder_env = {
     "CODER_AGENT_TOKEN" : coder_agent.main.token,
     "CODER_AGENT_URL" : data.coder_workspace.me.access_url,
@@ -539,14 +538,23 @@ resource "kubernetes_pod_v1" "main" {
         }
       }
 
-      # All keys in coder-workspace-env-common are injected as environment variables
+      # Explicit env beats env_from, so this wins over any stale key in coder-workspace-env-common
+      env {
+        name = "ENVBUILDER_DOCKER_CONFIG_BASE64"
+        value_from {
+          secret_key_ref {
+            name = "coder-workspace-nexus-clients"
+            key  = "ENVBUILDER_DOCKER_CONFIG_BASE64"
+          }
+        }
+      }
+
       env_from {
         secret_ref {
           name = "coder-workspace-env-common"
         }
       }
 
-      # All keys in coder-workspace-env-xfg are injected as environment variables
       env_from {
         secret_ref {
           name = "coder-workspace-env-xfg"

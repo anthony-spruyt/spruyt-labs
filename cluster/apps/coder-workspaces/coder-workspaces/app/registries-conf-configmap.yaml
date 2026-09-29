@@ -1,13 +1,6 @@
 ---
-# Podman registries.conf drop-in: route container pulls through Nexus
-# pull-through proxies. Mounted into workspace pods at
-# /etc/containers/registries.conf.d/99-nexus-mirror.conf.
-#
-# Nexus docker connectors serve OCI v2 at host root (no /repository/ prefix).
-# Port 8082 = docker-group (aggregates docker-hub, ghcr, quay, mcr, k8s).
-# insecure=true since Nexus listens HTTP inside the cluster.
-#
-# Ref: https://github.com/anthony-spruyt/spruyt-labs/issues/976
+# Mirrors, not location rewrites: podman falls back to the upstream registry when Nexus fails.
+# docker-group (8082) serves OCI v2 at host root and aggregates every upstream; plain HTTP in-cluster. Ref #976.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -16,26 +9,31 @@ metadata:
 data:
   99-nexus-mirror.conf: |
     [[registry]]
-    prefix = "docker.io"
+    location = "docker.io"
+    [[registry.mirror]]
     location = "nexus.nexus-system.svc.cluster.local:8082"
     insecure = true
 
     [[registry]]
-    prefix = "ghcr.io"
+    location = "ghcr.io"
+    [[registry.mirror]]
     location = "nexus.nexus-system.svc.cluster.local:8082"
     insecure = true
 
     [[registry]]
-    prefix = "quay.io"
+    location = "quay.io"
+    [[registry.mirror]]
     location = "nexus.nexus-system.svc.cluster.local:8082"
     insecure = true
 
     [[registry]]
-    prefix = "mcr.microsoft.com"
+    location = "mcr.microsoft.com"
+    [[registry.mirror]]
     location = "nexus.nexus-system.svc.cluster.local:8082"
     insecure = true
 
     [[registry]]
-    prefix = "registry.k8s.io"
+    location = "registry.k8s.io"
+    [[registry.mirror]]
     location = "nexus.nexus-system.svc.cluster.local:8082"
     insecure = true

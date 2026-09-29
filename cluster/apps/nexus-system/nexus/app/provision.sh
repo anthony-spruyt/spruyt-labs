@@ -220,50 +220,40 @@ curl -sfS -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d '{
   "status":"active","roles":["nx-anonymous","anonymous-extras"]
 }' "$${API}/security/users/anonymous"
 
-# Ensure anonymous access is globally enabled
 curl -sf -X PUT -H "Content-Type: application/json" -u "$${AUTH}" \
   -d '{"enabled":true,"userId":"anonymous","realmName":"NexusAuthorizingRealm"}' \
   "$${API}/security/anonymous"
 
-# --- envbuilder-cache push: allow admin pushes (follow-up: dedicated user) ---
-# No extra privilege work needed — admin role already has full write access.
-
-# --- workspace-puller user: read-only creds for coder workspace podman pulls ---
-# docker-group forceBasicAuth=true rejects anonymous access, so workspaces
-# need a real user. nx-anonymous is the built-in read-only role (repo view/
-# read/browse) — sufficient for pulling from docker-group. Password comes
-# from a SOPS secret, plumbed through the Job via WORKSPACE_PULLER_PASSWORD.
-# Ref #976.
-echo "Upserting workspace-puller user..."
-# Users API: GET /security/users?userId=<id> returns a list (200 even if empty).
-# Use the body to detect existence.
-existing=$(curl -sS -u "$${AUTH}" "$${API}/security/users?userId=workspace-puller" || echo '[]')
-if printf '%s' "$${existing}" | grep -q '"userId"[[:space:]]*:[[:space:]]*"workspace-puller"'; then
-  echo "  workspace-puller exists, updating + rotating password"
-  # PUT body matches ApiUser (no password field — rotation uses change-password).
-  curl -sfS -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d '{
-    "userId":"workspace-puller","firstName":"Workspace","lastName":"Puller",
-    "emailAddress":"workspace-puller@example.org","source":"default",
-    "status":"active","roles":["nx-anonymous"]
-  }' "$${API}/security/users/workspace-puller"
-  curl -sfS -X PUT -H "Content-Type: text/plain" -u "$${AUTH}" \
-    --data-binary "$${WORKSPACE_PULLER_PASSWORD}" \
-    "$${API}/security/users/workspace-puller/change-password"
+# --- workspace users: docker-group forceBasicAuth=true rejects anonymous, so workspaces need real users ---
+# Passwords are ESO-generated in the nexus-clients secret (clients-eso.yaml). Ref #976, #3226.
+echo "Upserting envbuilder-cache-writer role..."
+ROLE_BODY='{"id":"envbuilder-cache-writer","name":"Envbuilder Cache Writer","description":"Push to envbuilder-cache only","privileges":["nx-repository-view-docker-envbuilder-cache-browse","nx-repository-view-docker-envbuilder-cache-read","nx-repository-view-docker-envbuilder-cache-add","nx-repository-view-docker-envbuilder-cache-edit"],"roles":[]}'
+code=$(curl -sS -o /dev/null -w '%{http_code}' -u "$${AUTH}" "$${API}/security/roles/envbuilder-cache-writer" || echo 000)
+if [ "$${code}" = "200" ]; then
+  check "$(curl -sS -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d "$${ROLE_BODY}" "$${API}/security/roles/envbuilder-cache-writer")"
 else
-  echo "  creating workspace-puller"
-  # POST body matches ApiCreateUser (requires password). Use a placeholder
-  # here and set the real password via /change-password below — avoids
-  # breaking the JSON when the password contains quotes or backslashes.
-  curl -sfS -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d '{
-    "userId":"workspace-puller","firstName":"Workspace","lastName":"Puller",
-    "emailAddress":"workspace-puller@example.org","source":"default",
-    "status":"active","password":"placeholder-will-be-rotated",
-    "roles":["nx-anonymous"]
-  }' "$${API}/security/users"
-  curl -sfS -X PUT -H "Content-Type: text/plain" -u "$${AUTH}" \
-    --data-binary "$${WORKSPACE_PULLER_PASSWORD}" \
-    "$${API}/security/users/workspace-puller/change-password"
+  check "$(curl -sS -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d "$${ROLE_BODY}" "$${API}/security/roles")"
 fi
+
+# GET /security/users?userId= returns 200 with a list even when empty, so match on the body.
+# The password is set via change-password (text/plain), so it never needs JSON escaping.
+upsert_user() {
+  id="$1" roles="$2" password="$3"
+  body='{"userId":"'"$${id}"'","firstName":"'"$${id}"'","lastName":"Workspace","emailAddress":"'"$${id}"'@example.org","source":"default","status":"active","roles":'"$${roles}"'}'
+  existing=$(curl -sS -u "$${AUTH}" "$${API}/security/users?userId=$${id}" || echo '[]')
+  if printf '%s' "$${existing}" | grep -q '"userId"[[:space:]]*:[[:space:]]*"'"$${id}"'"'; then
+    echo "  [user $${id}] exists, updating"
+    check "$(curl -sS -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -u "$${AUTH}" -d "$${body}" "$${API}/security/users/$${id}")"
+  else
+    echo "  [user $${id}] creating"
+    check "$(curl -sS -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d "{\"password\":\"placeholder-will-be-rotated\",$${body#\{}" "$${API}/security/users")"
+  fi
+  check "$(curl -sS -w '\n%{http_code}' -X PUT -H "Content-Type: text/plain" -u "$${AUTH}" --data-binary "$${password}" "$${API}/security/users/$${id}/change-password")"
+}
+
+echo "Upserting workspace users..."
+upsert_user workspace-puller '["nx-anonymous"]' "$${WORKSPACE_PULLER_PASSWORD}"
+upsert_user envbuilder-cache '["nx-anonymous","envbuilder-cache-writer"]' "$${ENVBUILDER_CACHE_PASSWORD}"
 
 # --- scheduled tasks that turn cleanup soft-deletes into freed disk ---
 # The daily 01:00 "Cleanup service" task is built in; these two are not.

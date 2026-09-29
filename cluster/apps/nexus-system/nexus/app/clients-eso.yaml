@@ -1,0 +1,55 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/generators.external-secrets.io/password_v1alpha1.json
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: nexus-client-password
+spec:
+  length: 64
+  digits: 6
+  symbols: 0
+  noUpper: false
+  allowRepeat: true
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# One ExternalSecret per user: deleting one regenerates only that key
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: nexus-client-workspace-puller
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: nexus-clients
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        workspace-puller: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: nexus-client-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: nexus-client-envbuilder-cache
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: nexus-clients
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        envbuilder-cache: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: nexus-client-password

@@ -17,6 +17,7 @@ spec:
     - name: github-token-rotation
     - name: kyverno-policies
     - name: n8n-mcp-server
+    - name: nexus
   prune: true
   timeout: 5m
   wait: true
