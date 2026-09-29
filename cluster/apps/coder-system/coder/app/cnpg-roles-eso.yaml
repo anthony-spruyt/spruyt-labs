@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/generators.external-secrets.io/password_v1alpha1.json
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: coder-cnpg-password
+spec:
+  length: 64
+  digits: 6
+  symbols: 0
+  noUpper: false
+  allowRepeat: true
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# Replaces the CNPG-generated <cluster>-app secret via bootstrap.initdb.secret; CNPG applies its password to the owner role
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: coder-cnpg-owner
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: coder-cnpg-owner
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      type: kubernetes.io/basic-auth
+      metadata:
+        labels:
+          cnpg.io/reload: "true"
+      data:
+        username: coder
+        password: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: coder-cnpg-password

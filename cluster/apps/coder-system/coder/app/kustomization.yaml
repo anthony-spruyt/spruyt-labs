@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./aws-secret-store.yaml
   - ./aws-external-secret.yaml
+  - ./cnpg-roles-eso.yaml
   - ./coder-cnpg-cluster.yaml
   - ./coder-cnpg-object-stores.yaml
   - ./coder-cnpg-scheduled-backups.yaml

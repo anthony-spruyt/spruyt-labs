@@ -62,6 +62,16 @@ All templates route container pulls and the envbuilder layer cache through [Nexu
 
 Apt only goes through Nexus if the workspace repo opts in: `devcontainer.json` passes `build.args.NEXUS_URL: ${localEnv:NEXUS_URL}` and the Dockerfile rewrites `sources.list` to `apt-ubuntu-proxy` (#988; see this repo's `.devcontainer/`). Devcontainer features that add their own apt sources (github-cli, nodesource, hashicorp, PPAs) still fetch upstream directly.
 
+### Database credentials
+
+The `coder` Postgres login is ESO-generated (`sl_` prefix) into `coder-cnpg-owner` by `app/cnpg-roles-eso.yaml`; nothing is in SOPS and superuser access is off. `bootstrap.initdb.secret` points CNPG at it, so CNPG no longer generates `coder-cnpg-cluster-app`.
+
+`CODER_PG_CONNECTION_URL` interpolates `CODER_PG_PASSWORD`. Keep the `CODER_` prefix: provisionerd strips `CODER_*` variables from Terraform's environment, but not `PG*` ones.
+
+The database is deliberately not a db-mcp source: it holds OAuth tokens, agent tokens and user secrets that a read-only role could still pull into an agent's context. Use `kubectl cnpg psql coder-cnpg-cluster -n coder-system`.
+
+To rotate, delete both the Secret and the ExternalSecret (`kubectl -n coder-system delete secret,externalsecret coder-cnpg-owner`). Flux recreates the ExternalSecret with a new password and CNPG applies it. Then `kubectl -n coder-system rollout restart deploy/coder` - Reloader ignores a recreated Secret. Running workspaces are not affected.
+
 ## Troubleshooting
 
 1. **Workspace pod stuck Pending**

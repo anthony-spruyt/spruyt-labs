@@ -5,11 +5,14 @@ coder:
   env:
     - name: CODER_ACCESS_URL
       value: "https://code.${EXTERNAL_DOMAIN}"
-    - name: CODER_PG_CONNECTION_URL
+    # CODER_ prefix matters: provisionerd strips CODER_* (not PG*) from Terraform's env
+    - name: CODER_PG_PASSWORD
       valueFrom:
         secretKeyRef:
-          name: coder-cnpg-cluster-app
-          key: uri
+          name: coder-cnpg-owner
+          key: password
+    - name: CODER_PG_CONNECTION_URL
+      value: "postgres://coder:$(CODER_PG_PASSWORD)@coder-cnpg-cluster-rw.coder-system:5432/coder"
     - name: CODER_OIDC_ISSUER_URL
       value: "https://auth.${EXTERNAL_DOMAIN}/application/o/coder/"
     - name: CODER_OIDC_CLIENT_ID

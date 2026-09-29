@@ -30,6 +30,8 @@ Neither server authenticates callers. The boundary is three layers:
 
 DBHub's `readonly = true` is defence in depth only; it cannot stop a privileged role, which is why the role itself must be read-only.
 
+Read-only still means readable: whatever a source holds can land in an agent's context and the LLM provider's logs. Databases that store credentials (`coder`: OAuth and agent tokens; `authentik`: sessions and provider secrets) are deliberately not sources. `pg_read_all_data` cannot exclude tables.
+
 ### Credentials - one copy per password
 
 Each database owns its `mcp` password; nothing is stored in SOPS for this app.
