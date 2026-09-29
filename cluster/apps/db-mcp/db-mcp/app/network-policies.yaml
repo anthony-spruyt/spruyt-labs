@@ -20,6 +20,8 @@ spec:
               protocol: TCP
             - port: "8001"
               protocol: TCP
+            - port: "8002"
+              protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 apiVersion: cilium.io/v2
@@ -54,6 +56,26 @@ spec:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: agent-worker-system
             k8s:app.kubernetes.io/instance: agent-valkey
+            k8s:app.kubernetes.io/name: valkey
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-valkey-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: db-mcp
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: valkey-system
+            k8s:app.kubernetes.io/instance: valkey
             k8s:app.kubernetes.io/name: valkey
       toPorts:
         - ports:

@@ -10,10 +10,11 @@ LiteLLM's built-in catalog entries for Postgres and Redis are not usable: the Li
 
 ### Endpoints
 
-| LiteLLM server | URL                                 | Backs                  |
-| -------------- | ----------------------------------- | ---------------------- |
-| `dbhub`        | `http://db-mcp.db-mcp.svc:8080/mcp` | Postgres: `n8n`        |
-| `agent-valkey` | `http://db-mcp.db-mcp.svc:8001/mcp` | Valkey: `agent-valkey` |
+| LiteLLM server | URL                                 | Backs                          |
+| -------------- | ----------------------------------- | ------------------------------ |
+| `postgres`     | `http://db-mcp.db-mcp.svc:8080/mcp` | Postgres: `n8n`                |
+| `valkey-agent` | `http://db-mcp.db-mcp.svc:8001/mcp` | Valkey: `agent-valkey`         |
+| `valkey`       | `http://db-mcp.db-mcp.svc:8002/mcp` | Valkey: `valkey-system/valkey` |
 
 Registration is manual in the LiteLLM UI, like every MCP server behind LiteLLM - see [litellm README](../../litellm/README.md#mcp-servers). Restrict each server to its read tools with LiteLLM's tool allowlist.
 
@@ -31,19 +32,20 @@ DBHub's `readonly = true` is defence in depth only; it cannot stop a privileged 
 
 Each database owns its `mcp` password; nothing is stored in SOPS for this app.
 
-| Source       | Login                                                 | Generated into (owner ns)           | Synced to `db-mcp`    |
-| ------------ | ----------------------------------------------------- | ----------------------------------- | --------------------- |
-| n8n Postgres | CNPG managed role `mcp`, member of `pg_read_all_data` | `n8n-cnpg-mcp` (`n8n-system`)       | `db-mcp-n8n`          |
-| agent-valkey | ACL user `mcp`, `+@read` only                         | `mcp` key in `agent-valkey-secrets` | `db-mcp-agent-valkey` |
+| Source       | Login                                                 | Generated into (owner ns)         | Synced to `db-mcp`    |
+| ------------ | ----------------------------------------------------- | --------------------------------- | --------------------- |
+| n8n Postgres | CNPG managed role `mcp`, member of `pg_read_all_data` | `n8n-cnpg-mcp` (`n8n-system`)     | `db-mcp-n8n`          |
+| agent-valkey | ACL user `mcp`, `+@read` only                         | `mcp` key in `agent-valkey-users` | `db-mcp-agent-valkey` |
+| valkey       | ACL user `mcp`, `+@read` only                         | `mcp` key in `valkey-users`       | `db-mcp-valkey`       |
 
 Passwords come from an ESO `Password` generator with `refreshPolicy: CreatedOnce`, so they are generated once and not refreshed on a timer. The template adds the `sl_` prefix (64 alphanumerics after it), so the LiteLLM secret-masking middleware recognises them as ours.
 
 To rotate:
 
 - **Postgres**: delete both the `n8n-cnpg-mcp` Secret and the `n8n-cnpg-mcp` ExternalSecret; Flux recreates the ExternalSecret, which generates a new password, and CNPG applies it to the role.
-- **Valkey**: delete the `agent-valkey-mcp` ExternalSecret; Flux recreates it and a new `mcp` key is merged.
+- **Valkey**: delete the `<instance>-user-mcp` ExternalSecret; Flux recreates it and a new `mcp` key is written.
 
-Valkey only reads passwords at startup, so `agent-valkey` has Reloader auto mode on and restarts whenever `agent-valkey-secrets` changes. That includes a SOPS edit, which can make ESO re-sync and write a new `mcp` password. `db-mcp` restarts on its side too, when its synced copy changes (within 5 minutes).
+Valkey only reads passwords at startup, so each Valkey has Reloader auto mode on and restarts when its users secret changes. `db-mcp` restarts on its side too, when its synced copy changes (within 5 minutes).
 
 ### Adding a database
 
@@ -55,7 +57,7 @@ Postgres (same pattern as n8n):
 
 Valkey (same pattern as agent-valkey):
 
-1. In the Valkey app: an `mcp` user in `auth.aclUsers`, the `mcp-user-eso.yaml` generator merging the `mcp` key into its users secret, and a CNP allowing ingress from `db-mcp`.
+1. In the Valkey app: an `<instance>-user-mcp` ExternalSecret in `users-eso.yaml`, an `mcp` user in `auth.aclUsers` (in a later push than the ExternalSecret), a RoleBinding subject in `secret-reader-rbac.yaml` and a CNP allowing ingress from `db-mcp`.
 2. Here: SecretStore + ExternalSecret, egress CNP, a new `redis-<instance>` container on the next port, the port on the Service and on both LiteLLM CNPs.
 3. Register the new port as its own MCP server in LiteLLM.
 
@@ -63,8 +65,8 @@ Valkey (same pattern as agent-valkey):
 
 1. **Valkey pod stuck in init after adding the `mcp` user**
 
-   - **Cause**: the chart's init script exits when any `aclUsers` entry has no password key, and ESO had not merged the `mcp` key yet.
-   - **Fix**: check the `agent-valkey-mcp` ExternalSecret is `Ready`; the pod recovers on its own once the key exists. When adding a new Valkey, land the ESO generator in a push before the `aclUsers` entry to avoid the window entirely.
+   - **Cause**: the chart's init script exits when any `aclUsers` entry has no password key, and ESO had not written the `mcp` key yet.
+   - **Fix**: check the `<instance>-user-mcp` ExternalSecret is `Ready`; the pod recovers on its own once the key exists. Land the ExternalSecret in a push before the `aclUsers` entry to avoid the window entirely.
 
 2. **DBHub 403 "Host ... is not allowed" / Redis MCP 421**
 

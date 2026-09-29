@@ -12,7 +12,10 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
+    - name: agent-valkey
     - name: authentik
+    - name: external-secrets
+    - name: litellm-valkey
     - name: valkey
   prune: true
   timeout: 5m

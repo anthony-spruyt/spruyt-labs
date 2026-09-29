@@ -15,6 +15,7 @@ spec:
     - name: external-secrets
     - name: n8n
     - name: agent-valkey
+    - name: valkey
   prune: true
   timeout: 5m
   wait: true

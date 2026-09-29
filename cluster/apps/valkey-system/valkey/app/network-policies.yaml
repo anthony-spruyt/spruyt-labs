@@ -61,3 +61,23 @@ spec:
         - ports:
             - port: "9121"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-db-mcp-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: valkey
+      app.kubernetes.io/name: valkey
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: db-mcp
+            k8s:app.kubernetes.io/name: db-mcp
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP

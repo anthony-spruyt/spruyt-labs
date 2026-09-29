@@ -4,9 +4,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./release.yaml
-  - ./valkey-secrets.sops.yaml
-  - ./mcp-user-eso.yaml
   - ./users-eso.yaml
+  - ./secret-reader-rbac.yaml
   - ./vpa.yaml
   - ./network-policies.yaml
 configMapGenerator:

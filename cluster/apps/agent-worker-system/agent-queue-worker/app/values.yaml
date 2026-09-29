@@ -41,7 +41,7 @@ controllers:
           VALKEY_PASSWORD:
             valueFrom:
               secretKeyRef:
-                name: agent-valkey-secrets
+                name: agent-valkey-users
                 key: agentqueueworker
         envFrom:
           - secretRef:
@@ -95,7 +95,7 @@ controllers:
           VALKEY_PASSWORD:
             valueFrom:
               secretKeyRef:
-                name: agent-valkey-secrets
+                name: agent-valkey-users
                 key: agentqueueworker
           WORKER_AUTH_SECRET:
             valueFrom:

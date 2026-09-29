@@ -66,7 +66,7 @@ serviceAccount:
 persistence:
   config:
     type: secret
-    name: redisinsight-secrets
+    name: redisinsight-config
     advancedMounts:
       redisinsight:
         app:

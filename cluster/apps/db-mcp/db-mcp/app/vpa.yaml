@@ -27,3 +27,10 @@ spec:
           memory: 1Mi
         maxAllowed:
           memory: 256Mi
+      - containerName: redis-valkey
+        controlledValues: "RequestsOnly"
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 256Mi

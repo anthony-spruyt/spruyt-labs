@@ -21,7 +21,7 @@ securityContext:
   runAsUser: 1000
 auth:
   enabled: true
-  usersExistingSecret: agent-valkey-secrets
+  usersExistingSecret: agent-valkey-users
   # https://valkey.io/topics/acl/
   aclUsers:
     default:

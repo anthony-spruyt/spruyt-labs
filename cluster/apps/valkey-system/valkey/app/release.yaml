@@ -34,7 +34,7 @@ spec:
                           - name: REDIS_PASSWORD
                             valueFrom:
                               secretKeyRef:
-                                name: valkey-secrets
+                                name: valkey-users
                                 key: metrics
   valuesFrom:
     - kind: ConfigMap
