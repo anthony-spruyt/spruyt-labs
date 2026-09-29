@@ -26,7 +26,7 @@ class MiddlewarePipeline(CustomLogger):
             except Exception as exc:  # noqa: BLE001 - middleware should not break proxy traffic
                 if not self.fail_open:
                     raise
-                self._log_warning("%s pre-call failed open: %s", middleware, exc)
+                self._log_warning("%s pre-call failed open: %s", middleware, type(exc).__name__)
                 continue
 
             if isinstance(result, (Exception, str)):
@@ -41,6 +41,69 @@ class MiddlewarePipeline(CustomLogger):
                 )
         return data
 
+    async def async_post_call_success_hook(self, data: dict, user_api_key_dict, response):
+        for middleware in self.middlewares:
+            hook = getattr(middleware, "async_post_call_success_hook", None)
+            if hook is None:
+                continue
+
+            try:
+                result = hook(data=data, user_api_key_dict=user_api_key_dict, response=response)
+                if inspect.isawaitable(result):
+                    result = await result
+            except Exception as exc:  # noqa: BLE001 - middleware should not break proxy traffic
+                if not self.fail_open:
+                    raise
+                self._log_warning("%s post-call failed open: %s", middleware, type(exc).__name__)
+                continue
+
+            if result is not None:
+                response = result
+        return response
+
+    async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data: dict):
+        stream = response
+        for middleware in self.middlewares:
+            hook = getattr(middleware, "async_post_call_streaming_iterator_hook", None)
+            if hook is None:
+                continue
+
+            try:
+                stream = hook(
+                    user_api_key_dict=user_api_key_dict,
+                    response=stream,
+                    request_data=request_data,
+                )
+            except Exception as exc:  # noqa: BLE001 - middleware should not break proxy traffic
+                if not self.fail_open:
+                    raise
+                self._log_warning("%s streaming hook failed open: %s", middleware, type(exc).__name__)
+
+        async for chunk in stream:
+            yield chunk
+
+    async def async_post_call_failure_hook(
+        self, request_data: dict, original_exception, user_api_key_dict, traceback_str=None
+    ):
+        for middleware in self.middlewares:
+            hook = getattr(middleware, "async_post_call_failure_hook", None)
+            if hook is None:
+                continue
+
+            try:
+                result = hook(
+                    request_data=request_data,
+                    original_exception=original_exception,
+                    user_api_key_dict=user_api_key_dict,
+                    traceback_str=traceback_str,
+                )
+                if inspect.isawaitable(result):
+                    await result
+            except Exception as exc:  # noqa: BLE001 - failure hooks must never mask the original error
+                if not self.fail_open:
+                    raise
+                self._log_warning("%s failure hook failed open: %s", middleware, type(exc).__name__)
+
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
         for middleware in self.middlewares:
             hook = getattr(middleware, "async_log_success_event", None)
@@ -54,7 +117,7 @@ class MiddlewarePipeline(CustomLogger):
             except Exception as exc:  # noqa: BLE001 - success logging must never fail responses
                 if not self.fail_open:
                     raise
-                self._log_warning("%s success hook failed open: %s", middleware, exc)
+                self._log_warning("%s success hook failed open: %s", middleware, type(exc).__name__)
 
     @staticmethod
     def _log_warning(message: str, *args: Any) -> None:

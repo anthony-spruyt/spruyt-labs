@@ -144,3 +144,117 @@ async def test_success_hook_fail_open_does_not_skip_following_hooks(pipeline_mod
     await pipeline.async_log_success_event({}, {}, 0.0, 1.0)
 
     assert recorder.called is True
+
+
+class SuffixResponseMiddleware:
+    def __init__(self, suffix):
+        self.suffix = suffix
+
+    async def async_post_call_success_hook(self, data, user_api_key_dict, response):
+        return response + self.suffix
+
+
+class NoOpResponseMiddleware:
+    async def async_post_call_success_hook(self, data, user_api_key_dict, response):
+        return None
+
+
+class FailingResponseMiddleware:
+    async def async_post_call_success_hook(self, data, user_api_key_dict, response):
+        raise RuntimeError("boom")
+
+
+class UpperStreamMiddleware:
+    async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
+        async for chunk in response:
+            yield chunk.upper()
+
+
+class SuffixStreamMiddleware:
+    async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
+        async for chunk in response:
+            yield chunk + request_data["suffix"]
+
+
+class FailingStreamMiddleware:
+    def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
+        raise RuntimeError("boom")
+
+
+async def _stream(items):
+    for item in items:
+        yield item
+
+
+async def test_post_call_success_hooks_chain_in_order(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline((
+        SuffixResponseMiddleware("-a"),
+        NoOpResponseMiddleware(),
+        FailingResponseMiddleware(),
+        SuffixResponseMiddleware("-b"),
+    ))
+
+    out = await pipeline.async_post_call_success_hook({}, None, "resp")
+
+    assert out == "resp-a-b"
+
+
+async def test_post_call_success_hook_without_middlewares_returns_response(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline(())
+
+    assert await pipeline.async_post_call_success_hook({}, None, "resp") == "resp"
+
+
+async def test_streaming_iterator_hooks_chain_in_order(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline((
+        UpperStreamMiddleware(),
+        FailingStreamMiddleware(),
+        SuffixStreamMiddleware(),
+    ))
+
+    out = [c async for c in pipeline.async_post_call_streaming_iterator_hook(
+        None, _stream(["a", "b"]), {"suffix": "!"})]
+
+    assert out == ["A!", "B!"]
+
+
+async def test_streaming_iterator_without_middlewares_passes_through(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline(())
+    items = [object(), object()]
+
+    out = [c async for c in pipeline.async_post_call_streaming_iterator_hook(
+        None, _stream(items), {})]
+
+    assert out == items
+
+
+class FailureRecorderMiddleware:
+    def __init__(self):
+        self.seen = None
+
+    async def async_post_call_failure_hook(self, request_data, original_exception, user_api_key_dict, traceback_str=None):
+        self.seen = request_data
+
+
+class FailingFailureMiddleware:
+    async def async_post_call_failure_hook(self, request_data, original_exception, user_api_key_dict, traceback_str=None):
+        raise RuntimeError("boom")
+
+
+async def test_post_call_failure_hooks_are_delegated(pipeline_module):
+    recorder = FailureRecorderMiddleware()
+    pipeline = pipeline_module.MiddlewarePipeline((FailingFailureMiddleware(), recorder))
+
+    await pipeline.async_post_call_failure_hook({"id": 1}, RuntimeError("x"), None)
+
+    assert recorder.seen == {"id": 1}
+
+
+async def test_fail_open_warnings_log_exception_type_not_message(pipeline_module, fake_litellm):
+    pipeline = pipeline_module.MiddlewarePipeline((FailingResponseMiddleware(),))
+
+    await pipeline.async_post_call_success_hook({}, None, "resp")
+
+    args = fake_litellm.verbose_proxy_logger.warnings[-1][0]
+    assert "RuntimeError" in args
+    assert all("boom" not in str(a) for a in args)

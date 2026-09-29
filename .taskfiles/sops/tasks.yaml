@@ -17,3 +17,14 @@ tasks:
     desc: Decrypt sops files
     cmds:
       - bash {{ .decryptScript }}
+
+  gen-key:
+    desc: "Print a new sl_ secret, masked by LiteLLM (usage: task sops:gen-key [length=64], min 32)"
+    silent: true
+    vars:
+      length: '{{ .length | default "64" }}'
+    preconditions:
+      - sh: '[ "{{ .length }}" -ge 32 ] 2>/dev/null'
+        msg: "length must be a number >= 32 (total, including sl_)"
+    cmds:
+      - python3 -c "import secrets, string; a = string.ascii_letters + string.digits; print('sl_' + ''.join(secrets.choice(a) for _ in range({{ .length }} - 3)))"

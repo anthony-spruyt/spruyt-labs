@@ -44,8 +44,6 @@ def production_import_shape(monkeypatch):
 
 _CHATGPT_DISABLED = pytest.mark.skip(
     reason="chatgpt middleware not in registry.DEFAULT_MIDDLEWARE_SPECS")
-_MIDDLEWARE_DISABLED = pytest.mark.skip(
-    reason="registry.DEFAULT_MIDDLEWARE_SPECS is empty — pipeline loads nothing")
 
 
 def test_production_dotted_imports_resolve(production_import_shape):
@@ -54,6 +52,7 @@ def test_production_dotted_imports_resolve(production_import_shape):
         "custom_callbacks.middleware.pipeline",
         "custom_callbacks.middleware.registry",
         "custom_callbacks.middleware.pipeline_plugin",
+        "custom_callbacks.middleware.secret_masking",
     ]
 
     for module in modules:
@@ -63,13 +62,18 @@ def test_production_dotted_imports_resolve(production_import_shape):
         importlib.import_module(module)
 
 
-@_MIDDLEWARE_DISABLED
-def test_production_pipeline_loads_registry_middlewares(production_import_shape):
-    sys.modules.pop("custom_callbacks.middleware.pipeline_plugin", None)
+def test_production_pipeline_loads_secret_masking(production_import_shape):
+    for module in [
+        "custom_callbacks.middleware.secret_masking",
+        "custom_callbacks.middleware.registry",
+        "custom_callbacks.middleware.pipeline_plugin",
+    ]:
+        sys.modules.pop(module, None)
 
     plugin = importlib.import_module("custom_callbacks.middleware.pipeline_plugin")
+    masking = importlib.import_module("custom_callbacks.middleware.secret_masking")
 
-    assert plugin.pipeline_middleware.middlewares
+    assert masking.secret_masking in plugin.pipeline_middleware.middlewares
 
 
 class _FakeResponse:

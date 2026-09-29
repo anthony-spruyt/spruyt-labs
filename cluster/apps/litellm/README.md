@@ -59,8 +59,21 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 
 ### Proxy-side plugins
 
-`litellm/app/plugins/` is mounted into the pod as ConfigMap subPath files under `/app/custom_callbacks/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. `DEFAULT_MIDDLEWARE_SPECS` is currently empty, so the `hindsight` and `chatgpt` middlewares
-are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content).
+`litellm/app/plugins/` is mounted into the pod as ConfigMap subPath files under `/app/custom_callbacks/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` is in `DEFAULT_MIDDLEWARE_SPECS`, so the `hindsight` and `chatgpt`
+middlewares are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content).
+
+### Secret masking
+
+`middleware/secret_masking.py` is always on for `/v1/messages` and `/v1/chat/completions`. Credentials with a known prefix (GitHub, Google, Anthropic, OpenAI, AWS, LiteLLM `sk-`, PEM private keys and others in `_PATTERNS`) are swapped for a fake with the same prefix, length and character classes before the request leaves the proxy. Fakes in the reply, including streamed text and tool-call
+arguments, are swapped back, so the model provider never sees the real value but client tools still get it.
+
+- Fakes are an HMAC of the real value keyed from `LITELLM_SALT_KEY`, so the same secret gets the same fake across turns and replicas and prompt caching still hits. Rotating the salt changes every fake and busts those caches once.
+- Secrets we generate ourselves (DB passwords, webhook secrets, service-to-service tokens) should use the `sl_` prefix plus letters and digits only, at least 32 characters in total, so they are caught too. Generate one with `task sops:gen-key` (64 by default; `length=32` for apps that cap password length). LiteLLM virtual keys must start with `sk-`, which is already caught.
+- Only prefixed formats are caught. Bare high-entropy strings (hashes, UUIDs, unprefixed passwords) pass through on purpose, to avoid mangling commit SHAs and similar.
+- Thinking blocks and base64 sources are never touched: thinking signatures would break.
+- The map from fake to real lives in pod memory for the length of one call. If a stream fails over to the other replica mid-flight, that reply keeps the fakes.
+- It fails open. A bug logs a warning and the traffic flows unmasked rather than failing.
+- It protects the model provider only. LiteLLM captures the request for its own logging (OTEL traces) before the hook runs, so treat those as holding real values.
 
 When adding a file to a plugin, also add it to the plugin's ConfigMap generator and its `advancedMounts` list in `values.yaml`. Run the plugin unit tests with `task test:litellm-middleware`.
 

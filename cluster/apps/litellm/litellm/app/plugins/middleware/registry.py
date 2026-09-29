@@ -13,7 +13,14 @@ class MiddlewareSpec:
     required: bool = True
 
 
-DEFAULT_MIDDLEWARE_SPECS: tuple[MiddlewareSpec, ...] = ()
+DEFAULT_MIDDLEWARE_SPECS: tuple[MiddlewareSpec, ...] = (
+    MiddlewareSpec(
+        "secret-masking",
+        "custom_callbacks.middleware.secret_masking",
+        "secret_masking",
+        required=False,
+    ),
+)
 
 
 def load_middlewares(specs: Iterable[MiddlewareSpec], logger: Any = None) -> tuple[Any, ...]:
