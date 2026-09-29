@@ -1,5 +1,0 @@
-talos/clusterconfig
-*.sops.*
-.gitattributes
-.gitleaksignore
-LICENSE
