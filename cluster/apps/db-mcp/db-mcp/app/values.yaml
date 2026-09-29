@@ -33,11 +33,6 @@ controllers:
           - --allowed-hosts
           - db-mcp.db-mcp.svc
         env:
-          PG_N8N_PASSWORD:
-            valueFrom:
-              secretKeyRef:
-                name: db-mcp-n8n
-                key: password
           PG_TEMPORAL_PASSWORD:
             valueFrom:
               secretKeyRef:
@@ -163,29 +158,6 @@ configMaps:
     data:
       # $${VAR} survives Flux substitution as ${VAR}; DBHub resolves it from env at load time
       dbhub.toml: |
-        [[sources]]
-        id = "n8n"
-        description = "n8n workflow engine database (CNPG, read-only role)"
-        type = "postgres"
-        host = "n8n-cnpg-cluster-ro.n8n-system.svc"
-        port = 5432
-        database = "n8n"
-        user = "mcp"
-        password = "$${PG_N8N_PASSWORD}"
-        sslmode = "require"
-        lazy = true
-        pool_max_connections = 2
-
-        [[tools]]
-        name = "execute_sql"
-        source = "n8n"
-        readonly = true
-        max_rows = 1000
-
-        [[tools]]
-        name = "search_objects"
-        source = "n8n"
-
         [[sources]]
         id = "temporal"
         description = "Temporal persistence database - executions, history, task queues (CNPG, read-only role)"

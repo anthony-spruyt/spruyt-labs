@@ -10,13 +10,13 @@ LiteLLM's built-in catalog entries for Postgres and Redis are not usable: the Li
 
 ### Endpoints
 
-| LiteLLM server | URL                                 | Backs                                              |
-| -------------- | ----------------------------------- | -------------------------------------------------- |
-| `postgres`     | `http://db-mcp.db-mcp.svc:8080/mcp` | Postgres: `n8n`, `temporal`, `temporal_visibility` |
-| `valkey-agent` | `http://db-mcp.db-mcp.svc:8001/mcp` | Valkey: `agent-valkey`                             |
-| `valkeyshared` | `http://db-mcp.db-mcp.svc:8002/mcp` | Valkey: `valkey-system/valkey`                     |
+| LiteLLM server | URL                                 | Backs                                       |
+| -------------- | ----------------------------------- | ------------------------------------------- |
+| `postgres`     | `http://db-mcp.db-mcp.svc:8080/mcp` | Postgres: `temporal`, `temporal_visibility` |
+| `valkey-agent` | `http://db-mcp.db-mcp.svc:8001/mcp` | Valkey: `agent-valkey`                      |
+| `valkeyshared` | `http://db-mcp.db-mcp.svc:8002/mcp` | Valkey: `valkey-system/valkey`              |
 
-With more than one source, DBHub suffixes each tool with the source id (`execute_sql_n8n`, `search_objects_temporal`); enable new ones in the LiteLLM allowlist when a source is added.
+With more than one source, DBHub suffixes each tool with the source id (`execute_sql_temporal`, `search_objects_temporal_visibility`); enable new ones in the LiteLLM allowlist when a source is added.
 
 Registration is manual in the LiteLLM UI, like every MCP server behind LiteLLM - see [litellm README](../../litellm/README.md#mcp-servers). Restrict each server to its read tools with LiteLLM's tool allowlist.
 
@@ -30,7 +30,7 @@ Neither server authenticates callers. The boundary is three layers:
 
 DBHub's `readonly = true` is defence in depth only; it cannot stop a privileged role, which is why the role itself must be read-only.
 
-Read-only still means readable: whatever a source holds can land in an agent's context and the LLM provider's logs. Databases that store credentials (`coder`: OAuth and agent tokens; `authentik`: sessions and provider secrets) are deliberately not sources. `pg_read_all_data` cannot exclude tables.
+Read-only still means readable: whatever a source holds can land in an agent's context and the LLM provider's logs. Databases that store credentials (`coder`: OAuth and agent tokens; `authentik`: sessions and provider secrets; `n8n`: plaintext API keys and execution payloads) are deliberately not sources. `pg_read_all_data` cannot exclude tables.
 
 ### Credentials - one copy per password
 
@@ -38,7 +38,6 @@ Each database owns its `mcp` password; nothing is stored in SOPS for this app.
 
 | Source                             | Login                                                 | Generated into (owner ns)               | Synced to `db-mcp`    |
 | ---------------------------------- | ----------------------------------------------------- | --------------------------------------- | --------------------- |
-| n8n Postgres                       | CNPG managed role `mcp`, member of `pg_read_all_data` | `n8n-cnpg-mcp` (`n8n-system`)           | `db-mcp-n8n`          |
 | temporal Postgres (both databases) | CNPG managed role `mcp`, member of `pg_read_all_data` | `temporal-cnpg-mcp` (`temporal-system`) | `db-mcp-temporal`     |
 | agent-valkey                       | ACL user `mcp`, `+@read` only                         | `mcp` key in `agent-valkey-users`       | `db-mcp-agent-valkey` |
 | valkey                             | ACL user `mcp`, `+@read` only                         | `mcp` key in `valkey-users`             | `db-mcp-valkey`       |
@@ -54,7 +53,7 @@ Valkey only reads passwords at startup, so each Valkey has Reloader auto mode on
 
 ### Adding a database
 
-Postgres (same pattern as n8n):
+Postgres (same pattern as temporal):
 
 1. In the owning app: `Password` generator + `ExternalSecret` (basic-auth, `cnpg.io/reload` label), a `managed.roles` entry `mcp` in `pg_read_all_data`, a Role/RoleBinding letting `db-mcp`'s reader ServiceAccount read that one secret, and a CNP allowing ingress from `db-mcp`.
 2. Here: ServiceAccount + `SecretStore` + `ExternalSecret` in `secret-stores.yaml`, an egress CNP, a `[[sources]]` + `[[tools]]` block in `dbhub.toml` and the password env var on the `dbhub` container.
@@ -81,7 +80,7 @@ Valkey (same pattern as agent-valkey):
 3. **`password authentication failed for user "mcp"`**
 
    - **Cause**: CNPG had not applied the role password yet, or the generated secret was recreated after the role was set.
-   - **Fix**: check the Cluster's managed roles status with `kubectl cnpg status n8n-cnpg-cluster -n n8n-system`.
+   - **Fix**: check the Cluster's managed roles status with `kubectl cnpg status <cluster> -n <namespace>`.
 
 ## References
 

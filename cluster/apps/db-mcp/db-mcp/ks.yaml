@@ -13,7 +13,6 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: external-secrets
-    - name: n8n
     - name: agent-valkey
     - name: valkey
     - name: temporal

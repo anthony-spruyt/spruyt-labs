@@ -14,7 +14,6 @@ resources:
   - ./n8n-secrets.sops.yaml
   - ./n8n-runner-secrets.sops.yaml
   - ./n8n-cnpg-object-stores.yaml
-  - ./mcp-role-eso.yaml
   - ./n8n-cnpg-cluster.yaml
   - ./n8n-cnpg-poolers.yaml
   - ./n8n-cnpg-scheduled-backups.yaml

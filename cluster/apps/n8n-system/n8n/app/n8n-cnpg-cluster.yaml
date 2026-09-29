@@ -40,14 +40,7 @@ spec:
   managed:
     roles:
       - name: mcp
-        comment: Read-only role for db-mcp
-        login: true
-        ensure: present
-        connectionLimit: 5
-        inRoles:
-          - pg_read_all_data
-        passwordSecret:
-          name: n8n-cnpg-mcp
+        ensure: absent
   monitoring:
     enablePodMonitor: true
   plugins:
