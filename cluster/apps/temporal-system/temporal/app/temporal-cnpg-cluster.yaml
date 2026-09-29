@@ -20,6 +20,8 @@ spec:
     initdb:
       database: temporal
       owner: temporal
+      secret:
+        name: temporal-cnpg-owner
   managed:
     roles:
       - name: temporal
@@ -27,6 +29,15 @@ spec:
         connectionLimit: -1
         ensure: present
         inherit: true
+      - name: mcp
+        comment: Read-only role for db-mcp
+        login: true
+        ensure: present
+        connectionLimit: 5
+        inRoles:
+          - pg_read_all_data
+        passwordSecret:
+          name: temporal-cnpg-mcp
   postgresql:
     parameters:
       # 4 server pods x 2 stores x maxConns 10 (values.yaml) already needs 80 of the default 100.

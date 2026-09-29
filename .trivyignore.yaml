@@ -61,6 +61,7 @@ misconfigurations:
       - cluster/apps/cnpg-system/plugin-barman-cloud/app/secret-reader-rbac.yaml
       - cluster/apps/hindsight/hindsight/app/cnpg-password-rbac.yaml
       - cluster/apps/n8n-system/n8n/app/mcp-role-eso.yaml
+      - cluster/apps/temporal-system/temporal/app/cnpg-roles-eso.yaml
       - cluster/apps/agent-worker-system/agent-valkey/app/secret-reader-rbac.yaml
       - cluster/apps/litellm/litellm-valkey/app/secret-reader-rbac.yaml
       - cluster/flux/meta/image-pull-secrets-rbac.yaml

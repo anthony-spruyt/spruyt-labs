@@ -7,6 +7,8 @@ server:
     tag: 1.32.0@sha256:c3e752127759616bb1615e0f9ba0e21635aeb5fdeb922de4f371c350955f46ae
   priorityClassName: standard
   versionCheckDisabled: true
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
   metrics:
     serviceMonitor:
       enabled: true
@@ -46,7 +48,7 @@ server:
             connectAddr: temporal-cnpg-cluster-rw.temporal-system.svc:5432
             connectProtocol: tcp
             user: temporal
-            existingSecret: temporal-cnpg-cluster-app
+            existingSecret: temporal-cnpg-owner
             secretKey: password
             maxConns: 10
             maxIdleConns: 10
@@ -66,7 +68,7 @@ server:
             connectAddr: temporal-cnpg-cluster-rw.temporal-system.svc:5432
             connectProtocol: tcp
             user: temporal
-            existingSecret: temporal-cnpg-cluster-app
+            existingSecret: temporal-cnpg-owner
             secretKey: password
             maxConns: 10
             maxIdleConns: 10
@@ -129,6 +131,8 @@ admintools:
     repository: temporalio/admin-tools
     tag: 1.32.0@sha256:a9f84fb9a374b2374fe2e67c8efc0468ff3f1c66c8a0b14597ec86e349e62bca
   priorityClassName: standard
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
   additionalVolumes:
     - name: postgres-ca
       secret:

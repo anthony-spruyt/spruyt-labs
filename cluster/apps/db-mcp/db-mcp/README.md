@@ -10,11 +10,13 @@ LiteLLM's built-in catalog entries for Postgres and Redis are not usable: the Li
 
 ### Endpoints
 
-| LiteLLM server | URL                                 | Backs                          |
-| -------------- | ----------------------------------- | ------------------------------ |
-| `postgres`     | `http://db-mcp.db-mcp.svc:8080/mcp` | Postgres: `n8n`                |
-| `valkey-agent` | `http://db-mcp.db-mcp.svc:8001/mcp` | Valkey: `agent-valkey`         |
-| `valkey`       | `http://db-mcp.db-mcp.svc:8002/mcp` | Valkey: `valkey-system/valkey` |
+| LiteLLM server | URL                                 | Backs                                              |
+| -------------- | ----------------------------------- | -------------------------------------------------- |
+| `postgres`     | `http://db-mcp.db-mcp.svc:8080/mcp` | Postgres: `n8n`, `temporal`, `temporal_visibility` |
+| `valkey-agent` | `http://db-mcp.db-mcp.svc:8001/mcp` | Valkey: `agent-valkey`                             |
+| `valkeyshared` | `http://db-mcp.db-mcp.svc:8002/mcp` | Valkey: `valkey-system/valkey`                     |
+
+With more than one source, DBHub suffixes each tool with the source id (`execute_sql_n8n`, `search_objects_temporal`); enable new ones in the LiteLLM allowlist when a source is added.
 
 Registration is manual in the LiteLLM UI, like every MCP server behind LiteLLM - see [litellm README](../../litellm/README.md#mcp-servers). Restrict each server to its read tools with LiteLLM's tool allowlist.
 
@@ -32,17 +34,18 @@ DBHub's `readonly = true` is defence in depth only; it cannot stop a privileged 
 
 Each database owns its `mcp` password; nothing is stored in SOPS for this app.
 
-| Source       | Login                                                 | Generated into (owner ns)         | Synced to `db-mcp`    |
-| ------------ | ----------------------------------------------------- | --------------------------------- | --------------------- |
-| n8n Postgres | CNPG managed role `mcp`, member of `pg_read_all_data` | `n8n-cnpg-mcp` (`n8n-system`)     | `db-mcp-n8n`          |
-| agent-valkey | ACL user `mcp`, `+@read` only                         | `mcp` key in `agent-valkey-users` | `db-mcp-agent-valkey` |
-| valkey       | ACL user `mcp`, `+@read` only                         | `mcp` key in `valkey-users`       | `db-mcp-valkey`       |
+| Source                             | Login                                                 | Generated into (owner ns)               | Synced to `db-mcp`    |
+| ---------------------------------- | ----------------------------------------------------- | --------------------------------------- | --------------------- |
+| n8n Postgres                       | CNPG managed role `mcp`, member of `pg_read_all_data` | `n8n-cnpg-mcp` (`n8n-system`)           | `db-mcp-n8n`          |
+| temporal Postgres (both databases) | CNPG managed role `mcp`, member of `pg_read_all_data` | `temporal-cnpg-mcp` (`temporal-system`) | `db-mcp-temporal`     |
+| agent-valkey                       | ACL user `mcp`, `+@read` only                         | `mcp` key in `agent-valkey-users`       | `db-mcp-agent-valkey` |
+| valkey                             | ACL user `mcp`, `+@read` only                         | `mcp` key in `valkey-users`             | `db-mcp-valkey`       |
 
 Passwords come from an ESO `Password` generator with `refreshPolicy: CreatedOnce`, so they are generated once and not refreshed on a timer. The template adds the `sl_` prefix (64 alphanumerics after it), so the LiteLLM secret-masking middleware recognises them as ours.
 
 To rotate:
 
-- **Postgres**: delete both the `n8n-cnpg-mcp` Secret and the `n8n-cnpg-mcp` ExternalSecret; Flux recreates the ExternalSecret, which generates a new password, and CNPG applies it to the role.
+- **Postgres**: delete both the `<cluster>-mcp` Secret and ExternalSecret (they share a name); Flux recreates the ExternalSecret, which generates a new password, and CNPG applies it to the role.
 - **Valkey**: delete the `<instance>-user-mcp` ExternalSecret; Flux recreates it and a new `mcp` key is written.
 
 Valkey only reads passwords at startup, so each Valkey has Reloader auto mode on and restarts when its users secret changes. `db-mcp` restarts on its side too, when its synced copy changes (within 5 minutes).
@@ -53,7 +56,7 @@ Postgres (same pattern as n8n):
 
 1. In the owning app: `Password` generator + `ExternalSecret` (basic-auth, `cnpg.io/reload` label), a `managed.roles` entry `mcp` in `pg_read_all_data`, a Role/RoleBinding letting `db-mcp`'s reader ServiceAccount read that one secret, and a CNP allowing ingress from `db-mcp`.
 2. Here: ServiceAccount + `SecretStore` + `ExternalSecret` in `secret-stores.yaml`, an egress CNP, a `[[sources]]` + `[[tools]]` block in `dbhub.toml` and the password env var on the `dbhub` container.
-3. No LiteLLM change - DBHub exposes the new source on the existing server.
+3. In LiteLLM, enable the new source's `execute_sql_<id>` and `search_objects_<id>` tools on the `postgres` server.
 
 Valkey (same pattern as agent-valkey):
 

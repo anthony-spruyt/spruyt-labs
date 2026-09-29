@@ -23,6 +23,20 @@ The chart does not create databases (`createDatabase: false`). Helm hooks do not
 
 `max_connections` is raised to 200 on the cluster because four server pods × two stores × `maxConns` 10 already consume 80 of the default 100. Recalculate if you add replicas or raise `maxConns`.
 
+### Credentials
+
+Both Postgres logins are ESO-generated (`sl_` prefix) in `app/cnpg-roles-eso.yaml`; nothing is in SOPS.
+
+| Role       | Secret                | Used by                                           |
+| ---------- | --------------------- | ------------------------------------------------- |
+| `temporal` | `temporal-cnpg-owner` | Temporal server and schema Job (`existingSecret`) |
+| `mcp`      | `temporal-cnpg-mcp`   | db-mcp, read-only (`pg_read_all_data`)            |
+
+`bootstrap.initdb.secret` points CNPG at `temporal-cnpg-owner`, so CNPG no longer generates `temporal-cnpg-cluster-app`. Superuser access is off.
+
+To rotate a login, delete both its Secret and its ExternalSecret (`kubectl -n temporal-system delete secret,externalsecret temporal-cnpg-owner`). Flux recreates the ExternalSecret, which generates a new password; CNPG applies it to the role. Then restart the server pods yourself (`kubectl -n temporal-system rollout restart deploy -l app.kubernetes.io/instance=temporal`) - Reloader ignores a
+recreated Secret, so without this the pods keep the old password (brief outage).
+
 ### Connecting a client
 
 In-cluster: `temporal-frontend.temporal-system.svc:7233` (gRPC) or `:7243` (HTTP API). The frontend has **no authentication**; the CNP is the only boundary. A new client needs its own egress rule to 7233 and an entry in `allow-temporal-frontend-clients-ingress` in `app/network-policies.yaml`. Never expose the frontend through Traefik or the tunnel.
@@ -48,7 +62,7 @@ Temporal has no webhook receiver. External callers (GitHub etc.) hit an intake s
 
 2. **Schema Job init containers restart repeatedly with TLS or auth errors**
 
-   - **Fix**: Check `temporal-cnpg-cluster-app` and `temporal-cnpg-cluster-ca` exist and the CNPG cluster is Ready. The Job retries on its own once the database is up.
+   - **Fix**: Check `temporal-cnpg-owner` and `temporal-cnpg-cluster-ca` exist and the CNPG cluster is Ready. The Job retries on its own once the database is up.
 
 3. **`CiliumPolicyDrops` for `temporal-system` after a node drain or Talos upgrade**
 

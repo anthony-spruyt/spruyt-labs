@@ -16,6 +16,7 @@ spec:
     - name: n8n
     - name: agent-valkey
     - name: valkey
+    - name: temporal
   prune: true
   timeout: 5m
   wait: true

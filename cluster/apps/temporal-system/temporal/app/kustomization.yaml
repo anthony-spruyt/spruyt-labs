@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./aws-secret-store.yaml
   - ./aws-barman-eso.yaml
+  - ./cnpg-roles-eso.yaml
   - ./temporal-cnpg-object-stores.yaml
   - ./temporal-cnpg-cluster.yaml
   - ./temporal-cnpg-database.yaml
