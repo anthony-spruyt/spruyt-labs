@@ -37,6 +37,17 @@ spec:
   imageName: "ghcr.io/cloudnative-pg/postgresql:18@sha256:899d3ed526b659d77935dde0e6bf2d69dbbf17d3d8c6486ca8cfd04bd3c18533"
   instances: 2
   enablePDB: false
+  managed:
+    roles:
+      - name: mcp
+        comment: Read-only role for db-mcp
+        login: true
+        ensure: present
+        connectionLimit: 5
+        inRoles:
+          - pg_read_all_data
+        passwordSecret:
+          name: n8n-cnpg-mcp
   monitoring:
     enablePodMonitor: true
   plugins:

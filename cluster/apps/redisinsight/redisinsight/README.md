@@ -27,6 +27,8 @@ All four must change together:
 3. An egress CNP in `app/network-policies.yaml`.
 4. A connection entry in `config.json` inside `app/redisinsight-secrets.sops.yaml`, loaded at startup via `RI_PRE_SETUP_DATABASES_PATH`.
 
+For agent (MCP) access to a Valkey instance, see [db-mcp](../../db-mcp/db-mcp/README.md#adding-a-database).
+
 ### Service name
 
 The Service is suffixed `-svc` on purpose. A Service named `redisinsight` makes Kubernetes inject `REDISINSIGHT_HOST`/`REDISINSIGHT_PORT`, which collide with the app's own env vars.

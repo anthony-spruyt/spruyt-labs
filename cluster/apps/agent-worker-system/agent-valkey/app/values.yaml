@@ -3,6 +3,8 @@
 # Default values: https://github.com/valkey-io/valkey-helm/blob/main/valkey/values.yaml
 # Documentation: https://github.com/valkey-io/valkey-helm/blob/main/valkey/README.md
 priorityClassName: standard
+workloadAnnotations:
+  reloader.stakater.com/auto: "true"
 podSecurityContext:
   fsGroup: 1000
   runAsUser: 1000
@@ -28,6 +30,8 @@ auth:
       permissions: "~* &* +@all"
     redisinsight:
       permissions: "~* &* +@all"
+    mcp:
+      permissions: "~* &* -@all +@read +info +ping +hello +client|setinfo"
     metrics:
       permissions: "~* &* +@read +@connection +info +client +config|get +slowlog +latency +memory +cluster|info +cluster|slots +cluster|nodes"
 deploymentStrategy: Recreate

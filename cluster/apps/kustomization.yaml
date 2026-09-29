@@ -51,6 +51,7 @@ resources:
   - ./claude-agents-write
   - ./agent-worker-system
   - ./brave-search-mcp
+  - ./db-mcp
   - ./n8n-mcp
   - ./unifi-mcp
   - ./unifi-system

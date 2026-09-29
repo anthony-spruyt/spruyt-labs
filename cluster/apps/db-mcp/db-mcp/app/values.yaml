@@ -1,0 +1,167 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+controllers:
+  db-mcp:
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      dbhub:
+        image:
+          repository: docker.io/bytebase/dbhub
+          tag: 1.4.0@sha256:0b59507c5cef0a30eec6408e1a1713a4b7cc24c7f950bdea705a07451070e1cc
+          pullPolicy: IfNotPresent
+        args:
+          - --transport
+          - http
+          - --port
+          - "8080"
+          - --config
+          - /config/dbhub.toml
+          - --allowed-hosts
+          - db-mcp.db-mcp.svc
+        env:
+          PG_N8N_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: db-mcp-n8n
+                key: password
+        securityContext: &securityContext
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        probes:
+          liveness: &dbhubProbe
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness: *dbhubProbe
+      # mcp-redis only speaks stdio and binds to one server - one container per Valkey instance
+      redis-agent-valkey:
+        image:
+          repository: docker.io/mcp/redis
+          tag: latest@sha256:e886a7e9990a084a20d46adcea8e7c89d539271f1b453ffabdce4c3f96f27fa0
+          pullPolicy: IfNotPresent
+        command:
+          - /app/.venv/bin/python
+          - /config/serve.py
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          PYTHONPATH: /app
+          MCP_PORT: "8001"
+          MCP_ALLOWED_HOSTS: "db-mcp.db-mcp.svc:*"
+          REDIS_HOST: agent-valkey.agent-worker-system.svc
+          REDIS_PORT: "6379"
+          REDIS_USERNAME: mcp
+          REDIS_PWD:
+            valueFrom:
+              secretKeyRef:
+                name: db-mcp-agent-valkey
+                key: password
+        securityContext: *securityContext
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        probes:
+          liveness: &redisAgentValkeyProbe
+            enabled: true
+            custom: true
+            spec:
+              tcpSocket:
+                port: 8001
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness: *redisAgentValkeyProbe
+
+service:
+  app:
+    controller: db-mcp
+    ports:
+      dbhub:
+        port: 8080
+      redis-agent-valkey:
+        port: 8001
+
+configMaps:
+  config:
+    data:
+      # $${VAR} survives Flux substitution as ${VAR}; DBHub resolves it from env at load time
+      dbhub.toml: |
+        [[sources]]
+        id = "n8n"
+        description = "n8n workflow engine database (CNPG, read-only role)"
+        type = "postgres"
+        host = "n8n-cnpg-cluster-ro.n8n-system.svc"
+        port = 5432
+        database = "n8n"
+        user = "mcp"
+        password = "$${PG_N8N_PASSWORD}"
+        sslmode = "require"
+        lazy = true
+        pool_max_connections = 2
+
+        [[tools]]
+        name = "execute_sql"
+        source = "n8n"
+        readonly = true
+        max_rows = 1000
+
+        [[tools]]
+        name = "search_objects"
+        source = "n8n"
+      serve.py: |
+        import os
+
+        from mcp.server.transport_security import TransportSecuritySettings
+        from src.common.server import mcp
+
+        mcp.settings.host = "0.0.0.0"
+        mcp.settings.port = int(os.environ["MCP_PORT"])
+        mcp.settings.stateless_http = True
+        mcp.settings.transport_security = TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=os.environ["MCP_ALLOWED_HOSTS"].split(","),
+        )
+        mcp.run(transport="streamable-http")
+
+persistence:
+  config:
+    type: configMap
+    identifier: config
+    globalMounts:
+      - path: /config
+        readOnly: true
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
