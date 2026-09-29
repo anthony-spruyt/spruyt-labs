@@ -30,6 +30,8 @@ The Grafana `Dashboard1` datasource, iframe embedding and the official ceph-mixi
 
 Grafana logs in only through Authentik (`disable_login_form`), with roles mapped from the `Grafana Admins` / `Grafana Editors` groups. The OAuth client comes from Authentik via ExternalSecret and is rotated weekly; see the [authentik README](../../authentik-system/authentik/README.md) (Grafana is the reference example there).
 
+The local `admin` password is ESO-generated into `grafana-admin` by `app/grafana-admin-eso.yaml`; only the dashboard and datasource sidecars use it. Grafana has no persistence and resets it on every start, so to rotate, `kubectl -n observability delete secret,externalsecret grafana-admin` and restart the Grafana deployment.
+
 ### etcd scraping
 
 The etcd target selects the `kube-controller-manager` pods to discover control-plane IPs (etcd runs on the same nodes) and scrapes port 2383, the HTTP metrics listener Talos v1.14 split out from gRPC. Client certs come from [victoria-metrics-secret-writer](../victoria-metrics-secret-writer/README.md).

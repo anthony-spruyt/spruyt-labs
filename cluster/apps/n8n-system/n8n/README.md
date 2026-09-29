@@ -46,6 +46,10 @@ The database is deliberately not a db-mcp source: it holds plaintext n8n API key
 
 To rotate, delete both the Secret and the ExternalSecret (`kubectl -n n8n-system delete secret,externalsecret n8n-cnpg-owner`). Flux recreates the ExternalSecret with a new password and CNPG applies it. Then `kubectl -n n8n-system rollout restart deploy -l app.kubernetes.io/name=n8n` - Reloader ignores a recreated Secret.
 
+### Task runner token
+
+`N8N_RUNNERS_AUTH_TOKEN` is ESO-generated into `n8n-runner-auth` by `app/runner-auth-eso.yaml`. Only the n8n pods and their runner sidecars use it. To rotate, `kubectl -n n8n-system delete secret,externalsecret n8n-runner-auth`, then `kubectl -n n8n-system rollout restart deploy -l app.kubernetes.io/name=n8n`.
+
 ## Troubleshooting
 
 1. **SSO login returns "User not found. Please have an admin invite this user first."**

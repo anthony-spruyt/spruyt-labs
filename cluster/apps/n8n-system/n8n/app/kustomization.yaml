@@ -12,7 +12,7 @@ resources:
   - ./valkey-secret-store.yaml
   - ./valkey-external-secret.yaml
   - ./n8n-secrets.sops.yaml
-  - ./n8n-runner-secrets.sops.yaml
+  - ./runner-auth-eso.yaml
   - ./n8n-cnpg-object-stores.yaml
   - ./cnpg-roles-eso.yaml
   - ./n8n-cnpg-cluster.yaml

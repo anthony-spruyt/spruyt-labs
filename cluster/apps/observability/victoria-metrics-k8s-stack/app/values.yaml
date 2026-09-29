@@ -149,7 +149,7 @@ vmalert:
 
 vmagent:
   # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
-  # Memory increased to 512Mi - OOMKilled at 256Mi during service discovery
+  # OOMKilled at 256Mi during service discovery
   spec:
     priorityClassName: high-priority
     affinity:
@@ -180,32 +180,6 @@ vmagent:
       promscrape.dropOriginalLabels: "false"
       promscrape.disableCompression: "true"
       promscrape.maxScrapeSize: "256MB"
-    # inlineScrapeConfig: |
-    #   - job_name: 'kubernetes-pods'
-    #     kubernetes_sd_configs:
-    #       - role: pod
-    #     relabel_configs:
-    #       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-    #         action: keep
-    #         regex: true
-    #       - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-    #         action: replace
-    #         regex: '([^:]+)(?::\d+)?;(\d+)'
-    #         replacement: '${1}:${2}'
-    #         target_label: __address__
-    #   - job_name: 'kubernetes-endpoints'
-    #     scrape_interval: 30s
-    #     kubernetes_sd_configs:
-    #       - role: endpoints
-    #     relabel_configs:
-    #       - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-    #         action: keep
-    #         regex: true
-    #       - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-    #         action: replace
-    #         target_label: __address__
-    #         regex: '(.+)(?::\d+);(\d+)'
-    #         replacement: '$1:$2'
 # -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
 grafana:
   enabled: true
@@ -213,7 +187,7 @@ grafana:
   deploymentStrategy:
     type: Recreate
   podAnnotations:
-    secret.reloader.stakater.com/reload: "grafana-secrets,grafana-oauth-credentials"
+    secret.reloader.stakater.com/reload: "grafana-admin,grafana-oauth-credentials"
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -249,7 +223,7 @@ grafana:
     - victoriametrics-metrics-datasource
     - victoriametrics-logs-datasource
   admin:
-    existingSecret: grafana-secrets
+    existingSecret: grafana-admin
     userKey: admin-user
     passwordKey: admin-password
   # https://github.com/grafana/grafana/blob/main/conf/defaults.ini

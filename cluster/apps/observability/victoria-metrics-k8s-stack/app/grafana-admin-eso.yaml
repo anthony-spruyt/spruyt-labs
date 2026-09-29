@@ -1,0 +1,34 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/generators.external-secrets.io/password_v1alpha1.json
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: grafana-admin-password
+spec:
+  length: 64
+  digits: 6
+  symbols: 0
+  noUpper: false
+  allowRepeat: true
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: grafana-admin
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: grafana-admin
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      data:
+        admin-user: admin
+        admin-password: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: grafana-admin-password

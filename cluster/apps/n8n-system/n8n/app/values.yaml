@@ -103,7 +103,7 @@ main:
     N8N_RUNNERS_AUTH_TOKEN:
       valueFrom:
         secretKeyRef:
-          name: n8n-runner-secrets
+          name: n8n-runner-auth
           key: N8N_RUNNERS_AUTH_TOKEN
     N8N_RUNNERS_TASK_TIMEOUT:
       value: "60"
@@ -188,7 +188,7 @@ main:
     - name: tmp
       emptyDir: {}
   deploymentAnnotations: &deploymentAnnotations
-    secret.reloader.stakater.com/reload: "n8n-cnpg-owner,n8n-secrets,n8n-runner-secrets"
+    secret.reloader.stakater.com/reload: "n8n-cnpg-owner,n8n-secrets,n8n-runner-auth"
     # Static name + subPath mount, so pods never pick up edits without a roll.
     # Excludes n8n-prompts: directory mount, kubelet updates it live (see #1131)
     configmap.reloader.stakater.com/reload: "n8n-hooks"

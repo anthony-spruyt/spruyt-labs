@@ -3,7 +3,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./grafana-secrets.sops.yaml
+  - ./grafana-admin-eso.yaml
   - ./authentik-secret-store.yaml
   - ./grafana-oauth-external-secret.yaml
   - ./oauth-rotation-rbac.yaml
@@ -157,13 +157,6 @@ configMapGenerator:
         grafana_dashboard: "1"
   # NOTE: ceph-official-node-exporter.json excluded - uses same UID (rYdddlPWk) as
   # VM stack's node-exporter-full dashboard. Ceph Dashboard iframes work with VM version.
-  # - name: grafana-dashboard-ceph-official-node-exporter
-  #   namespace: observability
-  #   files:
-  #     - dashboards/ceph-official-node-exporter.json
-  #   options:
-  #     labels:
-  #       grafana_dashboard: "1"
   - name: grafana-dashboard-ceph-official-rgw-s3
     namespace: observability
     files:
@@ -178,7 +171,6 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
-  # Node temperature monitoring dashboard
   - name: grafana-dashboard-node-temperature
     namespace: observability
     files:
@@ -186,7 +178,6 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
-  # n8n workflow automation dashboard
   - name: grafana-dashboard-n8n
     namespace: observability
     files:
@@ -194,7 +185,6 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
-  # Cilium network policy drops dashboard
   - name: grafana-dashboard-cilium-policy-drops
     namespace: observability
     files:
@@ -202,7 +192,6 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
-  # LiteLLM proxy dashboard
   - name: grafana-dashboard-litellm-proxy
     namespace: observability
     files:
@@ -210,7 +199,6 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
-  # Claude Code telemetry dashboard
   - name: grafana-dashboard-claude-code-telemetry
     namespace: observability
     files:
@@ -218,7 +206,6 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
-  # UniFi network telemetry dashboard (UnPoller)
   - name: grafana-dashboard-unifi-network
     namespace: observability
     files:
