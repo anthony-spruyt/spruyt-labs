@@ -159,6 +159,10 @@ A CNPG `Cluster` only honours `bootstrap` when it is created. Restoring means cr
      bootstrap:
        recovery:
          source: origin
+         database: <db>
+         owner: <owner>
+         secret:
+           name: <app>-cnpg-owner
          # Optional point-in-time target:
          # recoveryTarget:
          #   targetTime: "<YYYY-MM-DD HH:MM:SS.00000+TZ>"
@@ -170,6 +174,8 @@ A CNPG `Cluster` only honours `bootstrap` when it is created. Restoring means cr
              barmanObjectName: <app>-cnpg-aws-object-store
              serverName: <app>-cnpg-cluster
    ```
+
+   Keep `database`, `owner` and `secret` the same as the cluster's `initdb` block. The backup holds the owner password from when it was taken; `secret` makes CNPG reset it to the current ESO-generated one, so the app can still log in.
 
    Comment out the `spec.plugins` WAL-archiver entry while restoring. The restored cluster would otherwise archive into the same `serverName` path it is reading from, and the plugin refuses a non-empty archive.
 

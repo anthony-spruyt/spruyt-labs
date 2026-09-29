@@ -1,5 +1,4 @@
 ---
-# #yaml-language-server: $schema=TODO
 # Documentation: https://github.com/8gears/n8n-helm-chart/blob/main/README.md
 # Default values: https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
 # Configure n8n via env vars -> https://docs.n8n.io/hosting/configuration/environment-variables
@@ -23,26 +22,17 @@ main:
     DB_TYPE:
       value: postgresdb
     DB_POSTGRESDB_DATABASE:
-      valueFrom:
-        secretKeyRef:
-          name: n8n-cnpg-cluster-app
-          key: dbname
+      value: n8n
     DB_POSTGRESDB_HOST:
       value: n8n-cnpg-cluster-pooler-rw.n8n-system.svc
     DB_POSTGRESDB_PORT:
-      valueFrom:
-        secretKeyRef:
-          name: n8n-cnpg-cluster-app
-          key: port
+      value: "5432"
     DB_POSTGRESDB_USER:
-      valueFrom:
-        secretKeyRef:
-          name: n8n-cnpg-cluster-app
-          key: user
+      value: n8n
     DB_POSTGRESDB_PASSWORD:
       valueFrom:
         secretKeyRef:
-          name: n8n-cnpg-cluster-app
+          name: n8n-cnpg-owner
           key: password
     DB_POSTGRESDB_POOL_SIZE:
       value: "5"
@@ -198,7 +188,7 @@ main:
     - name: tmp
       emptyDir: {}
   deploymentAnnotations: &deploymentAnnotations
-    secret.reloader.stakater.com/reload: "n8n-cnpg-cluster-app,n8n-secrets,n8n-runner-secrets"
+    secret.reloader.stakater.com/reload: "n8n-cnpg-owner,n8n-secrets,n8n-runner-secrets"
     # Static name + subPath mount, so pods never pick up edits without a roll.
     # Excludes n8n-prompts: directory mount, kubelet updates it live (see #1131)
     configmap.reloader.stakater.com/reload: "n8n-hooks"
