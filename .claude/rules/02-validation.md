@@ -49,6 +49,7 @@ The authorization covers the agents defined in `.claude/agents/`, under their do
 - If a cluster-validator is already running, **wait for it to complete** before launching another
 - If iterating with quick fixes (push → fix → push → fix), **skip intermediate validators** and only validate after changes stabilize
 - One validator per deployment — stacking wastes tokens and clutters issue comments
+- Other terminals can't see your subagents. cluster-validator uses `.claude/scripts/cluster-validator-lock.sh` to share one run across sessions, so launching it is safe even if another terminal already has one running. Check `.claude/scripts/cluster-validator-lock.sh status` to see who holds it
 
 ## Validation Flow
 
