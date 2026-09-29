@@ -97,7 +97,7 @@ Generate credentials:
 
 ```bash
 openssl rand -hex 32  # client_id
-openssl rand -hex 32  # client_secret
+openssl rand -hex 32  # client_secret (the rotation job replaces it with sl_ + 64 alphanumerics)
 ```
 
 Create `app/authentik-<app>-oauth.sops.yaml`:
@@ -354,7 +354,6 @@ openssl rand -hex 32  # OAUTH_ROTATION_API_TOKEN
 Add a call to the `rotate_oauth` function (includes ExternalSecret sync):
 
 ```bash
-# Rotate <App> credentials (client_secret only)
 rotate_oauth "<App>" "authentik-<app>-oauth" "<APP>_OAUTH_CLIENT_SECRET" "<app>-oauth-credentials" "<app-namespace>"
 ```
 

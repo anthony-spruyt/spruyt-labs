@@ -28,7 +28,6 @@ spec:
                 - |
                   set -e
 
-                  # Configuration
                   AUTHENTIK_URL="http://authentik-server.authentik-system"
 
                   # Rotate client_secret only (client_id stays stable)
@@ -42,7 +41,7 @@ spec:
                     echo "=== Rotating OAuth client_secret for $${PROVIDER_NAME} ==="
 
                     echo "Generating new client_secret..."
-                    NEW_CLIENT_SECRET=$$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+                    NEW_CLIENT_SECRET="sl_$$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)"
 
                     echo "Finding Authentik OAuth2 provider ID for $${PROVIDER_NAME}..."
                     PROVIDER_RESPONSE=$$(curl -sf \
@@ -80,19 +79,14 @@ spec:
                     echo "=== $${PROVIDER_NAME} rotation completed ==="
                   }
 
-                  # Rotate Grafana OAuth
                   rotate_oauth "Grafana" "authentik-grafana-oauth" "GRAFANA_OAUTH_CLIENT_SECRET" "grafana-oauth-credentials" "observability"
 
-                  # Rotate Vaultwarden OAuth
                   rotate_oauth "Vaultwarden" "authentik-vaultwarden-oauth" "VAULTWARDEN_OAUTH_CLIENT_SECRET" "vaultwarden-oauth-credentials" "vaultwarden"
 
-                  # Rotate Headlamp OAuth
                   rotate_oauth "Headlamp" "authentik-headlamp-oauth" "HEADLAMP_OIDC_CLIENT_SECRET" "headlamp-oauth-credentials" "headlamp-system"
 
-                  # Rotate Coder OAuth
                   rotate_oauth "Coder" "authentik-coder-oauth" "CODER_OIDC_CLIENT_SECRET" "coder-oauth-credentials" "coder-system"
 
-                  # Rotate LiteLLM OAuth
                   rotate_oauth "LiteLLM" "authentik-litellm-oauth" "LITELLM_OAUTH_CLIENT_SECRET" "litellm-oauth-credentials" "litellm"
 
                   echo "All OAuth secret rotations completed successfully!"
