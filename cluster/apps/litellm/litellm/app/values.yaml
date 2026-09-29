@@ -551,6 +551,9 @@ configMaps:
           - model_name: "anthropic/claude-sonnet-5"
             litellm_params:
               model: "anthropic/claude-sonnet-5"
+          - model_name: "anthropic/claude-sonnet-5-5"
+            litellm_params:
+              model: "anthropic/claude-sonnet-5-5"
           - model_name: "anthropic/claude-haiku-4-5"
             litellm_params:
               model: "anthropic/claude-haiku-4-5"
@@ -571,12 +574,12 @@ configMaps:
           - model_name: "jev-router"
             litellm_params:
               model: "auto_router/complexity_router"
-              complexity_router_default_model: "anthropic/claude-sonnet-5"
+              complexity_router_default_model: "anthropic/claude-sonnet-5-5"
               complexity_router_config:
                 tiers:
                   # Not Haiku 4.5 - Claude Code sends Claude 5 features to unknown models and Haiku 400s
-                  SIMPLE: "anthropic/claude-sonnet-5"
-                  MEDIUM: "anthropic/claude-sonnet-5"
+                  SIMPLE: "anthropic/claude-sonnet-5-5"
+                  MEDIUM: "anthropic/claude-sonnet-5-5"
                   COMPLEX: "anthropic/claude-opus-5-5"
                   REASONING: "anthropic/claude-fable-5-1"
                 classifier_type: jev
@@ -591,6 +594,7 @@ configMaps:
             "claude-haiku-4-5": "anthropic/claude-haiku-4-5"
             "claude-haiku-4-5-20251001": "anthropic/claude-haiku-4-5"
             "claude-sonnet-5": "anthropic/claude-sonnet-5"
+            "claude-sonnet-5-5": "anthropic/claude-sonnet-5-5"
             "claude-opus-5": "anthropic/claude-opus-5"
             "claude-opus-5-5": "anthropic/claude-opus-5-5"
             "claude-fable-5": "anthropic/claude-fable-5"
