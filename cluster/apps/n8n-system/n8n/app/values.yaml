@@ -6,7 +6,7 @@ image:
   repository: n8nio/n8n
   pullPolicy: IfNotPresent
   # renovate: datasource=custom.n8n-stable depName=n8nio/n8n
-  tag: "2.38.7"
+  tag: "2.40.5"
 main:
   terminationGracePeriodSeconds: 90
   config:
