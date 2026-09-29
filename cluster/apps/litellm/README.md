@@ -28,6 +28,14 @@ Create one virtual key per consumer in the admin UI (`https://litellm.${EXTERNAL
 Agent pods get `LITELLM_API_KEY`, `ANTHROPIC_CUSTOM_HEADERS` and `ANTHROPIC_BASE_URL` injected by `cluster/apps/kyverno/policies/app/inject-claude-agent-config.yaml`, not by their own manifests. `ANTHROPIC_CUSTOM_HEADERS` uses `$(LITELLM_API_KEY)`, so it must stay listed after it, and the policy writes it as `\\$(LITELLM_API_KEY)` so Kyverno doesn't try to substitute it. The subscription login is
 set per credential in n8n (`claudeCodeK8s*` credentials, "Claude OAuth Credentials" field).
 
+### Database credentials
+
+The `litellm` Postgres login is ESO-generated (`sl_` prefix) into `litellm-cnpg-owner` by `litellm/app/cnpg-roles-eso.yaml`; nothing is in SOPS and superuser access is off. `bootstrap.initdb.secret` points CNPG at it, so CNPG no longer generates `litellm-cnpg-cluster-app`. `DATABASE_URL` interpolates `LITELLM_DB_PASSWORD` (`dependsOn` orders it first).
+
+The database is deliberately not a db-mcp source: it holds virtual keys, stored provider credentials and MCP server tokens. Use `kubectl cnpg psql litellm-cnpg-cluster -n litellm -- -d litellm`.
+
+To rotate, delete both the Secret and the ExternalSecret (`kubectl -n litellm delete secret,externalsecret litellm-cnpg-owner`). Flux recreates the ExternalSecret with a new password and CNPG applies it. Then `kubectl -n litellm rollout restart deploy/litellm` - Reloader ignores a recreated Secret, and agents routed through LiteLLM lose it until the restart.
+
 ### SSO
 
 Built-in OIDC SSO (not an Authentik outpost), from `authentik-system/authentik/app/blueprints/litellm-sso.yaml`. The blueprint's `litellm_role` scope mapping returns `proxy_admin` for members of `LiteLLM Admins` and `internal_user` for everyone else in `LiteLLM Users`; LiteLLM reads it through `GENERIC_USER_ROLE_ATTRIBUTE`. Change admin access by changing group membership in the blueprint, not in

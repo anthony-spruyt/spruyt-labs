@@ -1,0 +1,97 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/generators.external-secrets.io/password_v1alpha1.json
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: litellm-valkey-password
+spec:
+  length: 64
+  digits: 6
+  symbols: 0
+  noUpper: false
+  allowRepeat: true
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# One ExternalSecret per user: deleting one regenerates only that key
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: litellm-valkey-user-default
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: litellm-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        default: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: litellm-valkey-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: litellm-valkey-user-litellm
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: litellm-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        litellm: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: litellm-valkey-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: litellm-valkey-user-redisinsight
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: litellm-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        redisinsight: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: litellm-valkey-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: litellm-valkey-user-metrics
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: litellm-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        metrics: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: litellm-valkey-password

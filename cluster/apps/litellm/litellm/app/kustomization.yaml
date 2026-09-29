@@ -9,6 +9,7 @@ resources:
   - ./litellm-oauth-external-secret.yaml
   - ./litellm-secrets.sops.yaml
   - ./litellm-cnpg-object-stores.yaml
+  - ./cnpg-roles-eso.yaml
   - ./litellm-cnpg-cluster.yaml
   - ./litellm-cnpg-scheduled-backups.yaml
   - ./network-policies.yaml
