@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./release.yaml
   - ./valkey-secrets.sops.yaml
+  - ./mcp-user-eso.yaml
   - ./vpa.yaml
   - ./network-policies.yaml
 configMapGenerator:
