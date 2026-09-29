@@ -36,6 +36,12 @@ The database is deliberately not a db-mcp source: it holds virtual keys, stored 
 
 To rotate, delete both the Secret and the ExternalSecret (`kubectl -n litellm delete secret,externalsecret litellm-cnpg-owner`). Flux recreates the ExternalSecret with a new password and CNPG applies it. Then `kubectl -n litellm rollout restart deploy/litellm` - Reloader ignores a recreated Secret, and agents routed through LiteLLM lose it until the restart.
 
+### Valkey credentials
+
+`litellm-valkey` ACL passwords live in `litellm-valkey-users`, which only ESO writes: `litellm-valkey/app/users-eso.yaml` has one `sl_`-prefixed `CreatedOnce` ExternalSecret per user. Nothing is in SOPS. Valkey has Reloader auto mode, so it restarts when that secret changes; the LiteLLM pods restart too because `REDIS_PASSWORD` reads it.
+
+To rotate one user, delete its ExternalSecret (`kubectl -n litellm delete externalsecret litellm-valkey-user-<user>`). Never delete the `litellm-valkey-users` secret itself - every user would get a new password at once.
+
 ### SSO
 
 Built-in OIDC SSO (not an Authentik outpost), from `authentik-system/authentik/app/blueprints/litellm-sso.yaml`. The blueprint's `litellm_role` scope mapping returns `proxy_admin` for members of `LiteLLM Admins` and `internal_user` for everyone else in `LiteLLM Users`; LiteLLM reads it through `GENERIC_USER_ROLE_ATTRIBUTE`. Change admin access by changing group membership in the blueprint, not in

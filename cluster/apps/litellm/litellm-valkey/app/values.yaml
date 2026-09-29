@@ -3,6 +3,8 @@
 # Default values: https://github.com/valkey-io/valkey-helm/blob/main/valkey/values.yaml
 # Documentation: https://github.com/valkey-io/valkey-helm/blob/main/valkey/README.md
 priorityClassName: high-priority
+workloadAnnotations:
+  reloader.stakater.com/auto: "true"
 podSecurityContext:
   fsGroup: 1000
   runAsUser: 1000
@@ -19,7 +21,7 @@ securityContext:
   runAsUser: 1000
 auth:
   enabled: true
-  usersExistingSecret: litellm-valkey-secrets
+  usersExistingSecret: litellm-valkey-users
   # https://valkey.io/topics/acl/
   aclUsers:
     default:

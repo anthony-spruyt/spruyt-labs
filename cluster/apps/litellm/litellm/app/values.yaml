@@ -110,7 +110,7 @@ controllers:
           REDIS_PASSWORD:
             valueFrom:
               secretKeyRef:
-                name: litellm-valkey-secrets
+                name: litellm-valkey-users
                 key: litellm
         envFrom:
           - secretRef:

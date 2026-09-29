@@ -137,5 +137,5 @@ spec:
           kind: SecretStore
           name: litellm-valkey-secret-store
       remoteRef:
-        key: litellm-valkey-secrets
+        key: litellm-valkey-users
         property: redisinsight
