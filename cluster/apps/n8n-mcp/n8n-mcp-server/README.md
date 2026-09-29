@@ -8,6 +8,7 @@ Gives agents n8n node documentation, template search, workflow validation and wo
 
 - An n8n API key (created in n8n under Settings > n8n API) stored as `N8N_API_KEY` in `app/n8n-mcp-secrets.sops.yaml`. Workflow-management tools fail without it; documentation tools still work.
 - `AUTH_TOKEN` in the same secret. n8n-mcp requires it in HTTP mode and validates it on every call (it cannot be disabled), so LiteLLM's registration for this server must send it as a bearer token.
+- `N8N_MCP_ACCESS_TOKEN` in the same secret: the key from n8n under Settings > Instance-level MCP (MCP status Enabled). It is separate from `N8N_API_KEY` and unlocks the tools that go through n8n's own MCP server (running workflows without a webhook trigger, agents, data table columns, native version history, `n8n_explore_node_resources`). Those tools only see workflows marked "Available in MCP".
 
 ## Operations
 

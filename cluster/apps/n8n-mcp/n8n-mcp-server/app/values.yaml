@@ -60,6 +60,11 @@ controllers:
               secretKeyRef:
                 name: n8n-mcp-secrets
                 key: N8N_API_KEY
+          - name: N8N_MCP_ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: n8n-mcp-secrets
+                key: N8N_MCP_ACCESS_TOKEN
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
