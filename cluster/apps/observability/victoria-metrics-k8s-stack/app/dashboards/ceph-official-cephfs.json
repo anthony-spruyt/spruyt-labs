@@ -63,7 +63,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -122,7 +122,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "count(ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"})",
           "format": "time_series",
@@ -141,7 +141,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -200,7 +200,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"})",
           "format": "time_series",
@@ -219,7 +219,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -278,7 +278,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_pool_rd_bytes{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}[$__rate_interval]))",
           "format": "time_series",
@@ -296,7 +296,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -355,7 +355,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"$datapool\"})",
           "format": "time_series",
@@ -374,7 +374,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -433,7 +433,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_pool_rd_bytes{cluster=~\"$cluster\", pool_id=~\"$datapool\"}[$__rate_interval]))",
           "format": "time_series",
@@ -451,7 +451,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -510,7 +510,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_mds_server_handle_client_request{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"}))",
           "format": "time_series",
@@ -529,7 +529,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -588,7 +588,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(ceph_mds_sessions_session_count{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"}))",
           "format": "time_series",
@@ -607,7 +607,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -666,7 +666,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(ceph_mds_inodes{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"}))",
           "format": "time_series",
@@ -685,7 +685,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -744,7 +744,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_pool_wr_bytes{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}[$__rate_interval]))",
           "format": "time_series",
@@ -762,7 +762,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -821,7 +821,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_pool_wr_bytes{cluster=~\"$cluster\", pool_id=~\"$datapool\"}[$__rate_interval]))",
           "format": "time_series",
@@ -838,7 +838,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -905,7 +905,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "(1 - (sum(ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}) / (sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}) + sum(ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"})))) * 100",
           "format": "time_series",
@@ -924,7 +924,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -983,7 +983,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_pool_rd{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}[$__rate_interval]))",
           "format": "time_series",
@@ -1000,7 +1000,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1067,7 +1067,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "(1 - (sum(ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"$datapool\"}) / (sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"$datapool\"}) + sum(ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"$datapool\"})))) * 100",
           "format": "time_series",
@@ -1086,7 +1086,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1145,7 +1145,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_pool_rd{cluster=~\"$cluster\", pool_id=~\"$datapool\"}[$__rate_interval]))",
           "format": "time_series",
@@ -1163,7 +1163,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1222,7 +1222,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_mds_forward{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"}))",
           "format": "time_series",
@@ -1241,7 +1241,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1312,7 +1312,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(increase(ceph_mds_reply_latency_sum{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})) / sum(increase(ceph_mds_reply_latency_count{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"}))",
           "format": "time_series",
@@ -1332,7 +1332,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1391,7 +1391,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(ceph_mds_caps{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"}))",
           "format": "time_series",
@@ -1410,7 +1410,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1469,7 +1469,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_pool_wr{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}[$__rate_interval]))",
           "format": "time_series",
@@ -1488,7 +1488,7 @@
       "colors": null,
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1547,7 +1547,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum(rate(ceph_pool_wr{cluster=~\"$cluster\", pool_id=~\"$datapool\"}[$__rate_interval]))",
           "format": "time_series",
@@ -1584,7 +1584,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1672,7 +1672,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "rate(ceph_mds_server_handle_client_request{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
           "format": "time_series",
@@ -1688,7 +1688,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1764,7 +1764,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "rate(ceph_mds_forward{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
           "format": "time_series",
@@ -1779,7 +1779,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1855,7 +1855,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "rate(ceph_mds_server_handle_slave_request{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
           "format": "time_series",
@@ -1870,7 +1870,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1946,7 +1946,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "ceph_mds_sessions_session_count{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
           "format": "time_series",
@@ -1961,7 +1961,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -2037,7 +2037,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum by (ceph_daemon) (increase(ceph_mds_reply_latency_sum{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})) / sum by (ceph_daemon) (increase(ceph_mds_reply_latency_count{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"}))",
           "format": "time_series",
@@ -2052,7 +2052,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -2167,7 +2167,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -2243,7 +2243,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "rate(ceph_mds_log_evadd{cluster=~\"$cluster\"}[$__rate_interval]) * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
           "format": "time_series",
@@ -2258,7 +2258,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -2334,7 +2334,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "ceph_mds_log_ev{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
           "format": "time_series",
@@ -2349,7 +2349,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -2425,7 +2425,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "ceph_mds_log_seg{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
           "format": "time_series",
@@ -2508,7 +2508,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -2585,7 +2585,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "ceph_mds_mem_ino{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
               "format": "time_series",
@@ -2600,7 +2600,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -2677,7 +2677,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "ceph_mds_exported_inodes{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
               "format": "time_series",
@@ -2692,7 +2692,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -2769,7 +2769,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "ceph_mds_imported_inodes{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
               "format": "time_series",
@@ -2784,7 +2784,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -2861,7 +2861,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "ceph_mds_mem_dn{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
               "format": "time_series",
@@ -2876,7 +2876,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -2953,7 +2953,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "ceph_mds_caps{cluster=~\"$cluster\"} * on(ceph_daemon) (ceph_fs_metadata{cluster=~\"$cluster\", name=~\"$name\"} * on(fs_id) group_left(ceph_daemon) ceph_mds_metadata{cluster=~\"$cluster\"})",
               "format": "time_series",
@@ -2988,7 +2988,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -3117,7 +3117,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"^$mdatapool$\"})",
               "format": "time_series",
@@ -3132,7 +3132,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"^$mdatapool$\"})",
               "format": "time_series",
@@ -3146,7 +3146,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"^$mdatapool$\"}) + sum(ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"^$mdatapool$\"})",
               "format": "time_series",
@@ -3160,7 +3160,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_raw_bytes_used{cluster=~\"$cluster\", pool_id=~\"^$mdatapool$\"})",
               "format": "time_series",
@@ -3178,7 +3178,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -3256,7 +3256,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_objects{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"})",
               "format": "time_series",
@@ -3269,7 +3269,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_dirty{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"})",
               "format": "time_series",
@@ -3282,7 +3282,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_quota_objects{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"})",
               "format": "time_series",
@@ -3298,7 +3298,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -3361,7 +3361,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}) / sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"} + ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"})",
               "format": "time_series",
@@ -3379,7 +3379,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -3462,7 +3462,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(rate(ceph_pool_rd{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}[$__rate_interval]))",
               "format": "time_series",
@@ -3475,7 +3475,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(rate(ceph_pool_wr{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}[$__rate_interval]))",
               "format": "time_series",
@@ -3492,7 +3492,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -3575,7 +3575,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(rate(ceph_pool_rd_bytes{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}[$__rate_interval]))",
               "format": "time_series",
@@ -3588,7 +3588,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(rate(ceph_pool_wr_bytes{cluster=~\"$cluster\", pool_id=~\"$mdatapool\"}[$__rate_interval]))",
               "format": "time_series",
@@ -3625,7 +3625,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -3754,7 +3754,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"^$datapool$\"})",
               "format": "time_series",
@@ -3769,7 +3769,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"^$datapool$\"})",
               "format": "time_series",
@@ -3783,7 +3783,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"^$datapool$\"}) + sum(ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"^$mdatapool$\"})",
               "format": "time_series",
@@ -3797,7 +3797,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_raw_bytes_used{cluster=~\"$cluster\", pool_id=~\"^$datapool$\"})",
               "format": "time_series",
@@ -3815,7 +3815,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -3893,7 +3893,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_objects{cluster=~\"$cluster\", pool_id=~\"$datapool\"})",
               "format": "time_series",
@@ -3906,7 +3906,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_dirty{cluster=~\"$cluster\", pool_id=~\"$datapool\"})",
               "format": "time_series",
@@ -3919,7 +3919,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_quota_objects{cluster=~\"$cluster\", pool_id=~\"$datapool\"})",
               "format": "time_series",
@@ -3935,7 +3935,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -3998,7 +3998,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"$datapool\"}) / sum(ceph_pool_bytes_used{cluster=~\"$cluster\", pool_id=~\"$datapool\"} + ceph_pool_max_avail{cluster=~\"$cluster\", pool_id=~\"$datapool\"})",
               "format": "time_series",
@@ -4016,7 +4016,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -4099,7 +4099,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(rate(ceph_pool_rd{cluster=~\"$cluster\", pool_id=~\"$datapool\"}[$__rate_interval]))",
               "format": "time_series",
@@ -4112,7 +4112,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(rate(ceph_pool_wr{cluster=~\"$cluster\", pool_id=~\"$datapool\"}[$__rate_interval]))",
               "format": "time_series",
@@ -4129,7 +4129,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "description": "",
           "fieldConfig": {
@@ -4212,7 +4212,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(rate(ceph_pool_rd_bytes{cluster=~\"$cluster\", pool_id=~\"$datapool\"}[$__rate_interval]))",
               "format": "time_series",
@@ -4225,7 +4225,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${datasource}"
+                "uid": "$${datasource}"
               },
               "expr": "sum(rate(ceph_pool_wr_bytes{cluster=~\"$cluster\", pool_id=~\"$datapool\"}[$__rate_interval]))",
               "format": "time_series",
@@ -4307,7 +4307,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$${datasource}"
         },
         "hide": 0,
         "includeAll": true,
@@ -4344,7 +4344,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$${datasource}"
         },
         "hide": 2,
         "includeAll": true,
@@ -4381,7 +4381,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$${datasource}"
         },
         "hide": 2,
         "includeAll": true,

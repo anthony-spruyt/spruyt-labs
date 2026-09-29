@@ -25,7 +25,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Rate of CPU thermal throttle events. Only Intel CPUs expose this metric (AMD k10temp does not). Any value above 0 indicates the CPU is throttling due to overheating.",
       "fieldConfig": {
@@ -118,7 +118,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum by (instance) (irate(node_cpu_package_throttles_total[2m]))",
           "legendFormat": "{{ instance }}",
@@ -131,7 +131,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "5-minute average of CPU thermal throttle events. Provides historical context and trend visibility.",
       "fieldConfig": {
@@ -224,7 +224,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "sum by (instance) (rate(node_cpu_package_throttles_total[5m]))",
           "legendFormat": "{{ instance }}",
@@ -252,7 +252,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "CPU temperature sensors (AMD k10temp / Intel coretemp)",
       "fieldConfig": {
@@ -375,7 +375,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=~\"$instance\", chip=~\"pci0000:00_.*|platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
@@ -384,7 +384,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=~\"$instance\", chip=~\"pci0000:00_.*|platform_coretemp_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
@@ -397,7 +397,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "NVMe drive temperatures with critical thresholds",
       "fieldConfig": {
@@ -520,7 +520,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=~\"$instance\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
@@ -529,7 +529,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=~\"$instance\", chip=~\"nvme_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
@@ -542,7 +542,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Motherboard sensor temperatures (NCT6775 and similar SuperIO chips). Only present on nodes with supported hardware.",
       "fieldConfig": {
@@ -665,7 +665,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_celsius{instance=~\"$instance\", chip=~\"platform_nct6775_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }}",
@@ -674,7 +674,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "$${datasource}"
           },
           "expr": "max by (chip_name, sensor) (node_hwmon_temp_crit_celsius{instance=~\"$instance\", chip=~\"platform_nct6775_.*\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=~\"$instance\"})",
           "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
@@ -720,7 +720,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$${datasource}"
         },
         "definition": "label_values(node_hwmon_temp_celsius, instance)",
         "hide": 0,

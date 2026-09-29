@@ -32,7 +32,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -64,7 +64,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_active_workflow_count{instance=~\"$instance\"}",
           "legendFormat": "Active",
           "refId": "A"
@@ -74,7 +74,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -106,7 +106,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_production_executions{instance=~\"$instance\"}",
           "legendFormat": "Total",
           "refId": "A"
@@ -116,7 +116,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -148,7 +148,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_workflows{instance=~\"$instance\"}",
           "legendFormat": "Workflows",
           "refId": "A"
@@ -158,7 +158,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -190,7 +190,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_enabled_users{instance=~\"$instance\"}",
           "legendFormat": "Enabled",
           "refId": "A"
@@ -200,7 +200,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -232,7 +232,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_credentials{instance=~\"$instance\"}",
           "legendFormat": "Credentials",
           "refId": "A"
@@ -242,7 +242,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -277,7 +277,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_instance_role_leader{instance=~\"$instance\"}",
           "legendFormat": "Leader",
           "refId": "A"
@@ -294,7 +294,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Rate of workflow executions per second by status",
       "fieldConfig": {
@@ -350,7 +350,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum by (status) (rate(n8n_workflow_execution_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{ status }}",
           "refId": "A"
@@ -360,7 +360,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Workflow execution rate by workflow ID",
       "fieldConfig": {
@@ -407,13 +407,13 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum by (workflow_id) (rate(n8n_workflow_execution_duration_seconds_count{instance=~\"$instance\", status=\"error\"}[$__rate_interval]))",
           "legendFormat": "wf-{{ workflow_id }} (error)",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum by (workflow_id) (rate(n8n_workflow_execution_duration_seconds_count{instance=~\"$instance\", status=\"success\"}[$__rate_interval]))",
           "legendFormat": "wf-{{ workflow_id }} (success)",
           "refId": "B"
@@ -423,7 +423,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "p50, p95, p99 workflow execution duration",
       "fieldConfig": {
@@ -470,19 +470,19 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "histogram_quantile(0.50, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "histogram_quantile(0.95, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "histogram_quantile(0.99, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "refId": "C"
@@ -492,7 +492,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "p95 execution duration per workflow",
       "fieldConfig": {
@@ -539,7 +539,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "histogram_quantile(0.95, sum by (le, workflow_id) (rate(n8n_workflow_execution_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "wf-{{ workflow_id }}",
           "refId": "A"
@@ -556,7 +556,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Jobs waiting in queue and actively being processed",
       "fieldConfig": {
@@ -612,13 +612,13 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_scaling_mode_queue_jobs_waiting{instance=~\"$instance\"}",
           "legendFormat": "Waiting",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_scaling_mode_queue_jobs_active{instance=~\"$instance\"}",
           "legendFormat": "Active",
           "refId": "B"
@@ -628,7 +628,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Rate of completed and failed jobs",
       "fieldConfig": {
@@ -684,13 +684,13 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "rate(n8n_scaling_mode_queue_jobs_completed{instance=~\"$instance\"}[$__rate_interval])",
           "legendFormat": "Completed",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "rate(n8n_scaling_mode_queue_jobs_failed{instance=~\"$instance\"}[$__rate_interval])",
           "legendFormat": "Failed",
           "refId": "B"
@@ -707,7 +707,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Cache hit/miss/update rates",
       "fieldConfig": {
@@ -767,19 +767,19 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(rate(n8n_cache_hits_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "Hits",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(rate(n8n_cache_misses_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "Misses",
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(rate(n8n_cache_updates_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "Updates",
           "refId": "C"
@@ -789,7 +789,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Cache hit ratio: hits / (hits + misses)",
       "fieldConfig": {
@@ -827,7 +827,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(rate(n8n_cache_hits_total{instance=~\"$instance\"}[$__rate_interval])) / (sum(rate(n8n_cache_hits_total{instance=~\"$instance\"}[$__rate_interval])) + sum(rate(n8n_cache_misses_total{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "Hit Ratio",
           "refId": "A"
@@ -844,7 +844,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "HTTP request rate by status code",
       "fieldConfig": {
@@ -891,7 +891,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum by (status_code) (rate(n8n_http_request_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{ status_code }}",
           "refId": "A"
@@ -901,7 +901,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "HTTP request duration p50/p95/p99",
       "fieldConfig": {
@@ -948,19 +948,19 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "histogram_quantile(0.50, sum by (le) (rate(n8n_http_request_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "histogram_quantile(0.95, sum by (le) (rate(n8n_http_request_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "histogram_quantile(0.99, sum by (le) (rate(n8n_http_request_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "refId": "C"
@@ -977,7 +977,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Node.js heap memory usage",
       "fieldConfig": {
@@ -1024,13 +1024,13 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_nodejs_heap_size_used_bytes{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }} used",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_nodejs_heap_size_total_bytes{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }} total",
           "refId": "B"
@@ -1040,7 +1040,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Process RSS and PSS memory",
       "fieldConfig": {
@@ -1087,13 +1087,13 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_process_resident_memory_bytes{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }} RSS",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_process_pss_bytes{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }} PSS",
           "refId": "B"
@@ -1103,7 +1103,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "CPU seconds consumed per second",
       "fieldConfig": {
@@ -1150,7 +1150,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "rate(n8n_process_cpu_seconds_total{instance=~\"$instance\"}[$__rate_interval])",
           "legendFormat": "{{ instance }}",
           "refId": "A"
@@ -1160,7 +1160,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "$${datasource}"
       },
       "description": "Node.js event loop lag",
       "fieldConfig": {
@@ -1207,7 +1207,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "n8n_nodejs_eventloop_lag_seconds{instance=~\"$instance\"}",
           "legendFormat": "{{ instance }}",
           "refId": "A"
@@ -1242,7 +1242,7 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$${datasource}"
         },
         "definition": "label_values(n8n_version_info, instance)",
         "hide": 0,

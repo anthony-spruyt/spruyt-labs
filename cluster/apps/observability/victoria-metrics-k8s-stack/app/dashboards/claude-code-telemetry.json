@@ -30,7 +30,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "$${datasource}" },
       "description": "Total Claude Code cost (USD) over the dashboard time range",
       "fieldConfig": {
         "defaults": {
@@ -65,7 +65,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(sum_over_time(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[$__range]))",
           "legendFormat": "Total Cost",
           "refId": "A"
@@ -73,7 +73,7 @@
       ]
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "$${datasource}" },
       "description": "Total Claude Code sessions started over the dashboard time range",
       "fieldConfig": {
         "defaults": {
@@ -104,7 +104,7 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(sum_over_time(claude_code_session_count_total{agent_namespace=~\"$namespace\"}[$__range])) by (agent_namespace)",
           "legendFormat": "{{agent_namespace}}",
           "refId": "A"
@@ -112,7 +112,7 @@
       ]
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "$${datasource}" },
       "description": "Cache read tokens / (input + cache read tokens). Higher = better cache reuse.",
       "fieldConfig": {
         "defaults": {
@@ -148,7 +148,7 @@
       "type": "gauge",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(sum_over_time(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])) / (sum(sum_over_time(claude_code_token_usage_tokens_total{type=\"input\",agent_namespace=~\"$namespace\"}[$__range])) + sum(sum_over_time(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])))",
           "legendFormat": "Hit Rate",
           "refId": "A"
@@ -156,7 +156,7 @@
       ]
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "$${datasource}" },
       "description": "Total lines of code added and removed over the dashboard time range",
       "fieldConfig": {
         "defaults": {
@@ -196,13 +196,13 @@
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(sum_over_time(claude_code_lines_of_code_count_total{type=\"added\",agent_namespace=~\"$namespace\"}[$__range]))",
           "legendFormat": "Added",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(sum_over_time(claude_code_lines_of_code_count_total{type=\"removed\",agent_namespace=~\"$namespace\"}[$__range]))",
           "legendFormat": "Removed",
           "refId": "B"
@@ -217,7 +217,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "$${datasource}" },
       "description": "Cost over time by agent namespace",
       "fieldConfig": {
         "defaults": {
@@ -263,7 +263,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(sum_over_time(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[$__interval])) by (agent_namespace)",
           "legendFormat": "{{agent_namespace}}",
           "refId": "A"
@@ -271,7 +271,7 @@
       ]
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "$${datasource}" },
       "description": "Lines of code added/removed over time by type",
       "fieldConfig": {
         "defaults": {
@@ -326,7 +326,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(sum_over_time(claude_code_lines_of_code_count_total{agent_namespace=~\"$namespace\"}[$__interval])) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
@@ -341,7 +341,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "$${datasource}" },
       "description": "Token usage broken down by type (input, output, cacheRead, cacheCreation)",
       "fieldConfig": {
         "defaults": {
@@ -387,7 +387,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": { "type": "prometheus", "uid": "$${datasource}" },
           "expr": "sum(sum_over_time(claude_code_token_usage_tokens_total{agent_namespace=~\"$namespace\"}[$__interval])) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
@@ -402,7 +402,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
+      "datasource": { "type": "victoriametrics-logs-datasource", "uid": "$${ds_logs}" },
       "description": "Tool call duration percentiles per tool over the dashboard time range",
       "fieldConfig": {
         "defaults": {
@@ -434,8 +434,8 @@
       "type": "table",
       "targets": [
         {
-          "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"agent.namespace\":~\"${namespace:regex}\" AND \"event.name\":tool_result | stats by (tool_name) count() as calls, quantile(0.5, duration_ms) as p50, quantile(0.95, duration_ms) as p95 | sort by (calls) desc",
+          "datasource": { "type": "victoriametrics-logs-datasource", "uid": "$${ds_logs}" },
+          "expr": "\"agent.namespace\":~\"$${namespace:regex}\" AND \"event.name\":tool_result | stats by (tool_name) count() as calls, quantile(0.5, duration_ms) as p50, quantile(0.95, duration_ms) as p95 | sort by (calls) desc",
           "refId": "A"
         }
       ],
@@ -475,7 +475,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
+      "datasource": { "type": "victoriametrics-logs-datasource", "uid": "$${ds_logs}" },
       "description": "Recent failed tool invocations",
       "fieldConfig": {
         "defaults": {
@@ -517,14 +517,14 @@
       ],
       "targets": [
         {
-          "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"agent.namespace\":~\"${namespace:regex}\" AND \"event.name\":tool_result AND success:false | fields _time, \"agent.namespace\", tool_name, error",
+          "datasource": { "type": "victoriametrics-logs-datasource", "uid": "$${ds_logs}" },
+          "expr": "\"agent.namespace\":~\"$${namespace:regex}\" AND \"event.name\":tool_result AND success:false | fields _time, \"agent.namespace\", tool_name, error",
           "refId": "A"
         }
       ]
     },
     {
-      "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
+      "datasource": { "type": "victoriametrics-logs-datasource", "uid": "$${ds_logs}" },
       "description": "Recent Claude API errors",
       "fieldConfig": {
         "defaults": {
@@ -566,8 +566,8 @@
       ],
       "targets": [
         {
-          "datasource": { "type": "victoriametrics-logs-datasource", "uid": "${ds_logs}" },
-          "expr": "\"agent.namespace\":~\"${namespace:regex}\" AND \"event.name\":api_error | fields _time, \"agent.namespace\", error, model",
+          "datasource": { "type": "victoriametrics-logs-datasource", "uid": "$${ds_logs}" },
+          "expr": "\"agent.namespace\":~\"$${namespace:regex}\" AND \"event.name\":api_error | fields _time, \"agent.namespace\", error, model",
           "refId": "A"
         }
       ]
@@ -580,7 +580,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
+      "datasource": { "type": "jaeger", "uid": "$${ds_traces}" },
       "description": "Recent Claude agent traces from VictoriaTraces (Jaeger Query API). Click traceID for waterfall in Explore.",
       "fieldConfig": {
         "defaults": {
@@ -606,7 +606,7 @@
       "type": "table",
       "targets": [
         {
-          "datasource": { "type": "jaeger", "uid": "${ds_traces}" },
+          "datasource": { "type": "jaeger", "uid": "$${ds_traces}" },
           "queryType": "search",
           "service": "claude-code",
           "limit": 20,
@@ -672,7 +672,7 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$${datasource}"
         },
         "definition": "label_values(claude_code_session_count_total, agent_namespace)",
         "hide": 0,

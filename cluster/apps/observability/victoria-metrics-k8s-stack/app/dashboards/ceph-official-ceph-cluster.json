@@ -1316,7 +1316,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "$${datasource}"
         },
         "definition": "label_values(ceph_health_status, cluster)",
         "hide": 0,
