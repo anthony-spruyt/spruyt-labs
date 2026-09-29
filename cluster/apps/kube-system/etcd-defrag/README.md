@@ -6,7 +6,7 @@ Weekly CronJob that defragments etcd on each control-plane node through the Talo
 
 ## Prerequisites
 
-- `kubernetesTalosAPIAccess` enabled for `kube-system` with the `os:operator` role in `talos/patches/control-plane/08-enable-talos-api-access.yaml`.
+- `KubeTalosAPIAccessConfig` allowing the `os:operator` role for `kube-system`, in `talos/patches/control-plane/08-enable-talos-api-access.yaml`.
 - Talos then materialises the `talos.dev/v1alpha1` `ServiceAccount` in `app/serviceaccount.yaml` as the `etcd-defrag-talos-secrets` Secret the job mounts. Without the patch the Secret never appears and the pod stays in `ContainerCreating`.
 
 ## Operations

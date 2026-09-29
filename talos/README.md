@@ -28,11 +28,13 @@ Procedures live in the runbooks:
 
 topf builds each node's machine config by merging patches in three passes - `all/`, then the node's role directory, then `node/<hostname>/` - and within each directory in lexicographic filename order. That is why every patch carries a numeric prefix.
 
-**The order is load-bearing, so do not renumber files to tidy them up.** Talos concatenates list entries across patches unless the field is tagged `merge:"replace"` in its config machinery (`podSubnets` and `serviceSubnets` are; `machine.udev.rules` is not), and `talosctl` diffs machine config textually. Reordering `machine.udev.rules` changes nothing semantically but still registers as a config
-change, and a udev reorder alone turns a reboot-free apply into a reboot.
+**The order is load-bearing, so do not renumber files to tidy them up.** Talos concatenates list entries across patches unless the field is tagged `merge:"replace"` in its config machinery (`podSubnets` and `serviceSubnets` are; `UdevRulesConfig` `rules` is not), and `talosctl` diffs machine config textually. Reordering udev rules changes nothing semantically but still shows up as drift in
+`task talos:diff` on every affected node.
 
-`patches/shared/` is outside the three merge passes - topf never reads it directly. **A patch that applies to every node belongs in `all/`.** Use `shared/` only when merging first would break ordering, and symlink it from each role directory at the position that preserves that ordering. Today that is one file: the disk scheduler udev rule, which has to land partway down `machine.udev.rules` rather
-than at the top.
+`patches/shared/` is outside the three merge passes - topf never reads it directly. **A patch that applies to every node belongs in `all/`.** Use `shared/` only when merging first would break ordering, and symlink it from each role directory at the position that preserves that ordering. Today that is one file: the disk scheduler udev rule, which has to land partway down the merged
+`UdevRulesConfig` rules list rather than at the top.
+
+`UdevRulesConfig` has no `name`, so topf merges every patch's document into one per node, in patch order. Once that document exists Talos ignores `machine.udev` without a validation error, so add udev rules only as `UdevRulesConfig`.
 
 Two patch formats are in use:
 

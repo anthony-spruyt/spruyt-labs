@@ -1,4 +1,5 @@
-machine:
-  udev:
-    rules:
-      - ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
+---
+apiVersion: v1alpha1
+kind: UdevRulesConfig
+rules:
+  - ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"

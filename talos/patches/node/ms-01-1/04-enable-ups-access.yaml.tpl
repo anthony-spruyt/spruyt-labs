@@ -8,9 +8,9 @@ kind: KubeNodeConfig
 labels:
   ups.spruyt-labs.io/connected: "true"
 ---
-machine:
-  udev:
-    rules:
-      - SUBSYSTEM=="usb", ATTR{idVendor}=="0764", MODE="0666"
-      - KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0666"
-      - KERNEL=="hiddev*", SUBSYSTEM=="usbmisc", MODE="0666"
+apiVersion: v1alpha1
+kind: UdevRulesConfig
+rules:
+  - SUBSYSTEM=="usb", ATTR{idVendor}=="0764", MODE="0666"
+  - KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0666"
+  - KERNEL=="hiddev*", SUBSYSTEM=="usbmisc", MODE="0666"

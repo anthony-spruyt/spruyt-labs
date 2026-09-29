@@ -33,7 +33,7 @@ Talos config is **not** reconciled by Flux. A merged change does nothing until s
    task talos:diff
    ```
 
-   The diff says whether each node needs a reboot. Reordering list entries (for example `machine.udev.rules`) shows up as a change and can force a reboot.
+   The diff lists every changed document. Talos applies all changes without a reboot, but some (kernel module parameters, `.cluster.etcd`, environment variables) only take effect after a manual [reboot](#reboot-or-power-off-a-node). Reordering list entries (for example the `UdevRulesConfig` rules) still shows up as a change.
 
 2. Merge the change to `main`, then apply. `topf` asks for confirmation and applies control planes one at a time. Limit it to one node with `NODE`:
 

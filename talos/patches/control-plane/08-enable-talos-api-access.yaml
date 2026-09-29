@@ -1,10 +1,9 @@
-machine:
-  features:
-    kubernetesTalosAPIAccess:
-      enabled: true
-      allowedRoles:
-        - os:operator
-      allowedKubernetesNamespaces:
-        - coder-workspaces
-        - kube-system
-        - nut-system
+---
+apiVersion: v1alpha1
+kind: KubeTalosAPIAccessConfig
+allowedRoles:
+  - os:operator
+allowedKubernetesNamespaces:
+  - coder-workspaces
+  - kube-system
+  - nut-system

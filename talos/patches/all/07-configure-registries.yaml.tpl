@@ -1,11 +1,12 @@
-machine:
-  registries:
-    config:
-      ghcr.io:
-        auth:
-          username: {{ .Data.ghUsername }}
-          password: {{ .Data.ghToken }}
-      registry-1.docker.io:
-        auth:
-          username: {{ .Data.dockerUsername }}
-          password: {{ .Data.dockerToken }}
+---
+apiVersion: v1alpha1
+kind: RegistryAuthConfig
+name: ghcr.io
+username: {{ .Data.ghUsername }}
+password: {{ .Data.ghToken }}
+---
+apiVersion: v1alpha1
+kind: RegistryAuthConfig
+name: registry-1.docker.io
+username: {{ .Data.dockerUsername }}
+password: {{ .Data.dockerToken }}

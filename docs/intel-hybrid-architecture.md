@@ -37,9 +37,10 @@ This ensures network, USB, and other IRQs are handled by P-cores for lower laten
 Enables Hardware P-state dynamic boosting for P-core turbo:
 
 ```yaml
-machine:
-  sysfs:
-    devices.system.cpu.intel_pstate.hwp_dynamic_boost: 1
+apiVersion: v1alpha1
+kind: SysfsConfig
+params:
+  devices.system.cpu.intel_pstate.hwp_dynamic_boost: "1"
 ```
 
 ## IRQ Handling Details
