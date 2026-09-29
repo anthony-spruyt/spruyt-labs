@@ -7,7 +7,6 @@ metadata:
 stringData:
     ANTHROPIC_BASE_URL: ENC[AES256_GCM,data:DLUMqlpl5cJo64yHUmQpotWHEuAjtBPdZDwySONCNoVNrN4BNDQfI6ZXCgaX,iv:hV1bUFxsStvFDNyh3wF5FnYAzGsW34r+2xK/RKW4NFY=,tag:VI4BQFjiLBkSzP3KeId4rw==,type:str]
     ANTHROPIC_CUSTOM_HEADERS: ENC[AES256_GCM,data:GlyPtWpAPhplNsDTtw4bkFQLF52bwXvXdDW93Z2fbbz7BY1ZRQ7plQNuRyLVI+5MFX43,iv:Xy2lDZXn9EQWs8RK7rgDmvIXnNeSawYJc28mCk/jY/o=,tag:m5faYM0npowguTZzW8yQYQ==,type:str]
-    ENVBUILDER_DOCKER_CONFIG_BASE64: ENC[AES256_GCM,data:Iia/j4Z+vt4sz+XM7xQ7ZmXNsHgmsHbB5YQ2xn0v/hZBWd1tjZp1h7QFbZLGyk9S2J6TB1FTk2S7Ly4kVyWN4/4iGweQZCGRM9fy219lEyzfKB3BviSBXnYSZEKlNvTfYqG+lv0q4Pow1tETLSzqDiqZsMxqy71FZX+OobCIlp8dbyTyhGdS8Z+ExJIPtEgDLDWwIqBhqYX8i2yA7Ultmg29eCoF8ME1U62by5HcNgjMs53OeofEmEduH2qJHzJ3j3X66/mY94ffSJ36q245mBwPQWsApyZwfWLS6Q92xXcVnDl2S1IYEq7EitZZytFd9AFBNIxhQxjJIhVQVdhDtfZzoTIGsgP5cZoHjNPoZbiG5OLgtKMB4He5Pr3YQ+3WknQ9lC8sBH2DptYpwgKbhWZmwP7wI2sKe9JKB2GsYG2RiZGMSwGBgT4iUWaH1wwtqHHrP8doKTR8PcQran6BkKp+FnXcK5To7WyEs1IJqGrQwRBfW3o4iBVFyUpLRn/ZayxcL91QK0vhUoKZtqBb+qE0grmO87FUhRsyCoEZnfdc1Rnp,iv:Hfho8QRGHmYp9rtBtfQfWtyvPBf5Tmmo0BD7imodyjk=,tag:lueJiMFQpCkdXaldwIgWQw==,type:str]
     EXTERNAL_DOMAIN: ENC[AES256_GCM,data:2Jl7hKMLnFUa3Q==,iv:9qTs12kpkqWjBqI7mC4+yf9frxRrQhACNJvnv23GyrQ=,tag:n4VsxfLvcb5i4Q9twbHXog==,type:str]
     LITELLM_API_KEY: ENC[AES256_GCM,data:Cvk2nVeCBnqksbxQCGinfmL4rdQeZFcM3Q==,iv:Rl5TacCXhn2NN5ZxXIUNT5/FkaHw/RbqLv9/uW35UOA=,tag:4tuxSWkFKuJzegHCPhSzFg==,type:str]
 sops:
@@ -22,6 +21,6 @@ sops:
             -----END AGE ENCRYPTED FILE-----
           recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-09-27T07:52:04Z"
-    mac: ENC[AES256_GCM,data:Jkv6C4DYks3Nmi7P1Akf7t8hy7nQ/++EqbXcdWfZmYxyfA+tc95BOFdaztXcoazsGTNULLoiAX/lmpCADIJbdmUuiehrcAJlQF+aL+XE+Bb3fn0npP4Rw4QlsfsDXMBzWMCIOi89uqqcNn0SGv7Qkw6eZkv7kBdVAy/8kzlgOzI=,iv:nM4kQsITj1yn6VqrGDMTNlOuCNMGnMcuci3rLs9kDuM=,tag:TV7NTmmDlfQEmQaYMP3wAg==,type:str]
+    lastmodified: "2026-09-29T13:10:39Z"
+    mac: ENC[AES256_GCM,data:Idn3uRRqLkf147e35MI3O6isQ958sexWd5MCYti/EfBXaDq96xQM6g/9yFYEv7ypQW9zOYpfz9Ca7fhKStYkhsvSRc6TGGR/HlMTXSfjc8I320gHpCsDwX7FE4D+Jfhaa+C6yOqImHVr+wEKEJACJUZAXtidzDpSYBoYdvKTEFI=,iv:5hmvOlwpl2M0+YMlNqsDlQlEIZAcyxkvwH2jtkKNcjs=,tag:UbYJ86VryIy7DtVm8uW2pQ==,type:str]
     version: 3.13.3
