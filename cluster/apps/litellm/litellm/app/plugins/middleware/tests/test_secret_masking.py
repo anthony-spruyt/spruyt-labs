@@ -513,3 +513,26 @@ async def test_failed_call_drops_mapping(mw):
         request_data=data, original_exception=RuntimeError("x"), user_api_key_dict=None)
 
     assert mw.pending_calls() == 0
+
+
+async def test_stream_restore_error_fails_open(mw, mod, monkeypatch, fake_litellm):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    head = {"type": "content_block_delta", "index": 0,
+            "delta": {"type": "text_delta", "text": "key " + fake[:10]}}
+    process = mod._StreamRestorer.process
+
+    def flaky(self, chunk):
+        if chunk == "boom":
+            raise RuntimeError("restore bug")
+        return process(self, chunk)
+
+    monkeypatch.setattr(mod._StreamRestorer, "process", flaky)
+
+    out = await _collect(mw, [head, "boom", "after"], data)
+
+    assert out[0]["delta"]["text"] == "key "
+    assert out[1]["delta"]["text"] == fake[:10]
+    assert out[2:] == ["boom", "after"]
+    assert fake_litellm.verbose_proxy_logger.warnings
+    assert mw.pending_calls() == 0
