@@ -69,5 +69,7 @@
         "tim-koehler.helm-intellisense"
       ]
     }
-  }
+  },
+  "waitFor": "postStartCommand",
+  "postStartCommand": "bash -lc \"cd ${containerWorkspaceFolder} && bash .devcontainer/update-claude-plugins.sh\""
 }
