@@ -65,22 +65,26 @@ class MiddlewarePipeline(CustomLogger):
         stream = response
         for middleware in self.middlewares:
             hook = getattr(middleware, "async_post_call_streaming_iterator_hook", None)
-            if hook is None:
-                continue
-
-            try:
-                stream = hook(
-                    user_api_key_dict=user_api_key_dict,
-                    response=stream,
-                    request_data=request_data,
-                )
-            except Exception as exc:  # noqa: BLE001 - middleware should not break proxy traffic
-                if not self.fail_open:
-                    raise
-                self._log_warning("%s streaming hook failed open: %s", middleware, type(exc).__name__)
+            if hook is not None:
+                stream = self._guarded_stream(middleware, hook, stream, user_api_key_dict, request_data)
 
         async for chunk in stream:
             yield chunk
+
+    async def _guarded_stream(self, middleware, hook, upstream, user_api_key_dict, request_data):
+        source = _TrackedStream(upstream)
+        try:
+            async for chunk in hook(user_api_key_dict=user_api_key_dict, response=source, request_data=request_data):
+                source.unsent.clear()
+                yield chunk
+        except Exception as exc:  # noqa: BLE001 - middleware should not break proxy traffic
+            if source.failed or not self.fail_open:
+                raise
+            self._log_warning("%s streaming hook failed open: %s", middleware, type(exc).__name__)
+            for chunk in source.unsent:
+                yield chunk
+            async for chunk in source:
+                yield chunk
 
     async def async_post_call_failure_hook(
         self, request_data: dict, original_exception, user_api_key_dict, traceback_str=None
@@ -125,3 +129,31 @@ class MiddlewarePipeline(CustomLogger):
             verbose_proxy_logger.warning(message, *args)
         except Exception:  # noqa: BLE001 - logging should never affect request handling
             return
+
+
+class _TrackedStream:
+    """Remembers chunks pulled since the middleware last yielded, so fail-open can replay them."""
+
+    def __init__(self, upstream: Any) -> None:
+        self._it = upstream.__aiter__()
+        self.unsent: list = []
+        self.failed = False
+        self.done = False
+
+    def __aiter__(self) -> "_TrackedStream":
+        return self
+
+    async def __anext__(self) -> Any:
+        # An exhausted CustomStreamWrapper re-runs its end-of-stream logging if polled again.
+        if self.done:
+            raise StopAsyncIteration
+        try:
+            chunk = await self._it.__anext__()
+        except StopAsyncIteration:
+            self.done = True
+            raise
+        except Exception:
+            self.failed = True
+            raise
+        self.unsent.append(chunk)
+        return chunk

@@ -536,3 +536,200 @@ async def test_stream_restore_error_fails_open(mw, mod, monkeypatch, fake_litell
     assert out[2:] == ["boom", "after"]
     assert fake_litellm.verbose_proxy_logger.warnings
     assert mw.pending_calls() == 0
+
+
+async def test_stream_end_with_truncated_utf8_fails_open(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    head = _sse({"type": "content_block_delta", "index": 0,
+                 "delta": {"type": "text_delta", "text": "key " + fake[:10]}}).encode()
+    tail = b"event: x\ndata: \xe2\x82"
+
+    out = await _collect(mw, [head, tail], data)
+
+    raw = b"".join(out)
+    assert raw.endswith(tail)
+    assert _joined(_parse_sse([raw[:-len(tail)].decode()])) == "key " + fake[:10]
+    assert mw.pending_calls() == 0
+
+
+async def test_sse_fail_open_does_not_drop_or_duplicate_bytes(mw, mod, monkeypatch):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    texts = ["key " + fake[:10], " middle", " boom", " end"]
+    raw = [_sse({"type": "content_block_delta", "index": 0,
+                 "delta": {"type": "text_delta", "text": t}}) for t in texts]
+    half = len(raw[1]) // 2
+    chunks = [(raw[0] + raw[1][:half]).encode(), (raw[1][half:] + raw[2]).encode(), raw[3].encode()]
+    real_events = mod._StreamRestorer._events
+
+    def flaky(self, event):
+        if event.get("delta", {}).get("text") == " boom":
+            raise RuntimeError("restore bug")
+        return real_events(self, event)
+
+    monkeypatch.setattr(mod._StreamRestorer, "_events", flaky)
+
+    out = await _collect(mw, chunks, data)
+
+    assert _joined(_parse_sse(out)) == "".join(texts)
+
+
+async def test_chat_stream_end_flush_does_not_repeat_last_delta(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+
+    out = await _collect(mw, [_chat_chunk(content="key "), _chat_chunk(content=fake[:10])], data)
+
+    text = "".join(c.choices[0].delta.content or "" for c in out if c.choices)
+    assert text == "key " + fake[:10]
+
+
+async def test_chat_stream_end_flush_after_usage_chunk(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    usage = SimpleNamespace(choices=[], usage={"total_tokens": 3})
+
+    out = await _collect(mw, [_chat_chunk(content="key " + fake[:10]), usage], data)
+
+    text = "".join(c.choices[0].delta.content or "" for c in out if c.choices)
+    assert text == "key " + fake[:10]
+    assert sum(1 for c in out if getattr(c, "usage", None)) == 1
+
+
+async def test_chat_finish_chunk_keeps_its_own_tool_call_deltas(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    first = _chat_chunk(args='{"a": "')
+    last = _chat_chunk(args=fake[:10], finish="tool_calls")
+    last.choices[0].delta.tool_calls.append(
+        SimpleNamespace(index=1, id="t2", function=SimpleNamespace(name="other", arguments='{"b": 1}')))
+
+    out = await _collect(mw, [first, last], data)
+
+    args = {}
+    for c in out:
+        for tc in c.choices[0].delta.tool_calls or []:
+            args[tc.index] = args.get(tc.index, "") + tc.function.arguments
+    assert args == {0: '{"a": "' + fake[:10], 1: '{"b": 1}'}
+
+
+async def test_does_not_touch_data_urls_or_input_audio(mw):
+    blob = "iVBORw0KGgo/" + GOOGLE + "+rest=="
+    image = {"type": "image_url", "image_url": {"url": "data:image/png;base64," + blob}}
+    audio = {"type": "input_audio", "input_audio": {"data": blob, "format": "wav"}}
+    file_ = {"type": "file", "file": {"file_data": "data:application/pdf;base64," + blob}}
+    data = {
+        "litellm_call_id": "call-1",
+        "messages": [{"role": "user", "content": [image, audio, file_, {"type": "text", "text": GH_PAT}]}],
+    }
+
+    out = await mw.async_pre_call_hook(None, None, data, "acompletion")
+
+    content = out["messages"][0]["content"]
+    assert content[:3] == [image, audio, file_]
+    assert content[3]["text"] != GH_PAT
+
+
+async def test_concurrent_calls_sharing_an_id_both_restore(mw):
+    first = await _mask(mw, GH_PAT, "shared")
+    second = await _mask(mw, GH_PAT_2, "shared")
+    fake1, fake2 = _user_text(first), _user_text(second)
+
+    out1 = await mw.async_post_call_success_hook(
+        data=first, user_api_key_dict=None, response={"content": [{"type": "text", "text": fake1}]})
+    out2 = await mw.async_post_call_success_hook(
+        data=second, user_api_key_dict=None, response={"content": [{"type": "text", "text": fake2}]})
+
+    assert out1["content"][0]["text"] == GH_PAT
+    assert out2["content"][0]["text"] == GH_PAT_2
+    assert mw.pending_calls() == 0
+
+
+def test_missing_salt_logs_warning(mod, monkeypatch, fake_litellm):
+    monkeypatch.delenv("LITELLM_SALT_KEY", raising=False)
+
+    mod._key_from_env()
+
+    assert any("LITELLM_SALT_KEY" in w[0][0] for w in fake_litellm.verbose_proxy_logger.warnings)
+
+
+async def test_data_prefixed_text_is_still_masked(mw):
+    data = await _mask(mw, "data:\n  GITHUB_TOKEN: " + GH_PAT)
+
+    assert GH_PAT not in _user_text(data)
+
+
+async def test_unmasked_call_sharing_an_id_does_not_release_the_other(mw):
+    first = await _mask(mw, GH_PAT, "shared")
+    second = await _mask(mw, "no secrets here", "shared")
+    fake = _user_text(first)
+
+    await mw.async_post_call_success_hook(data=second, user_api_key_dict=None, response={"t": "hi"})
+    out = await mw.async_post_call_success_hook(
+        data=first, user_api_key_dict=None, response={"content": [{"type": "text", "text": fake}]})
+
+    assert out["content"][0]["text"] == GH_PAT
+    assert mw.pending_calls() == 0
+
+
+async def test_unmasked_call_first_sharing_an_id_does_not_release_the_other(mw):
+    second = await _mask(mw, "no secrets here", "shared")
+    first = await _mask(mw, GH_PAT, "shared")
+    fake = _user_text(first)
+
+    await mw.async_post_call_success_hook(data=second, user_api_key_dict=None, response={"t": "hi"})
+    out = await mw.async_post_call_success_hook(
+        data=first, user_api_key_dict=None, response={"content": [{"type": "text", "text": fake}]})
+
+    assert out["content"][0]["text"] == GH_PAT
+    assert mw.pending_calls() == 0
+
+
+async def test_stream_error_then_failure_hook_releases_once(mw):
+    first = await _mask(mw, GH_PAT, "shared")
+    second = await _mask(mw, GH_PAT_2, "shared")
+    fake = _user_text(first)
+
+    async def broken():
+        yield {"type": "message_start"}
+        raise ValueError("provider down")
+
+    with pytest.raises(ValueError):
+        async for _ in mw.async_post_call_streaming_iterator_hook(response=broken(), request_data=second):
+            pass
+    await mw.async_post_call_failure_hook(request_data=second)
+    out = await mw.async_post_call_success_hook(
+        data=first, user_api_key_dict=None, response={"content": [{"type": "text", "text": fake}]})
+
+    assert out["content"][0]["text"] == GH_PAT
+    assert mw.pending_calls() == 0
+
+
+async def test_chat_stream_end_flush_keeps_each_choice(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+
+    def chunk(index, content):
+        delta = SimpleNamespace(content=content, tool_calls=None)
+        return SimpleNamespace(choices=[SimpleNamespace(index=index, delta=delta, finish_reason=None)])
+
+    out = await _collect(mw, [chunk(1, "b " + fake[:10]), chunk(0, "a")], data)
+
+    text = {}
+    for c in out:
+        for ch in c.choices:
+            text[ch.index] = text.get(ch.index, "") + (ch.delta.content or "")
+    assert text == {0: "a", 1: "b " + fake[:10]}
+
+
+async def test_failure_hook_releases_after_litellm_drops_the_logging_obj(mw):
+    request = _request(GH_PAT)
+    request["litellm_logging_obj"] = object()
+    request["proxy_server_request"] = {}
+    data = await mw.async_pre_call_hook(None, None, request, "anthropic_messages")
+    data.pop("litellm_logging_obj")
+
+    await mw.async_post_call_failure_hook(request_data=data)
+
+    assert mw.pending_calls() == 0

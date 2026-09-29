@@ -56,11 +56,12 @@ def _compile_patterns() -> re.Pattern:
 
 
 _SECRET_RE = _compile_patterns()
-_OPAQUE_BLOCK_TYPES = frozenset({"thinking", "redacted_thinking", "base64"})
+_OPAQUE_BLOCK_TYPES = frozenset({"thinking", "redacted_thinking", "base64", "input_audio"})
 _MASKED_FIELDS = ("system", "messages")
 _SUPPORTED_CALL_TYPES = frozenset({"anthropic_messages", "acompletion", "completion"})
 _STREAM_DELTA_FIELDS = {"text_delta": "text", "input_json_delta": "partial_json"}
 _HEX_BODY = frozenset("0123456789abcdef")
+_DATA_URL_RE = re.compile(r"data:[^\s,]*;base64,")
 
 
 def _looks_random(body: str) -> bool:
@@ -74,8 +75,15 @@ def _json_escape(value: str) -> str:
 class _CallState:
     def __init__(self) -> None:
         self.created = time.monotonic()
+        self.holders: set[int] = set()
         self.fakes: dict[str, str] = {}
         self._pattern: Optional[re.Pattern] = None
+
+    def merge(self, other: "_CallState") -> None:
+        self.fakes.update(other.fakes)
+        self.holders |= other.holders
+        self._pattern = None
+        self.created = time.monotonic()
 
     def pattern(self) -> re.Pattern:
         if self._pattern is None:
@@ -147,19 +155,28 @@ class SecretMaskingMiddleware:
 
         data.update(masked)
         self._prune()
-        self._calls[call_id] = state
+        state.holders.add(_holder(data))
+        # Clients can set the call id (x-litellm-call-id), so in-flight calls may share one.
+        existing = self._calls.get(call_id)
+        if existing is None:
+            self._calls[call_id] = state
+        else:
+            existing.merge(state)
+            self._calls.move_to_end(call_id)
         return data
 
     async def async_post_call_success_hook(self, data: dict, response, **_):  # NOSONAR
-        state = self._calls.pop((data or {}).get("litellm_call_id"), None)
+        call_id = (data or {}).get("litellm_call_id")
+        state = self._calls.get(call_id)
         if state is None:
             return None
+        self._release(call_id, data)
         if isinstance(response, dict):
             return _restore_value(response, state)
         return _restore_chat_response(response, state)
 
     async def async_post_call_failure_hook(self, request_data: dict, **_) -> None:  # NOSONAR
-        self._calls.pop((request_data or {}).get("litellm_call_id"), None)
+        self._release((request_data or {}).get("litellm_call_id"), request_data)
 
     async def async_post_call_streaming_iterator_hook(self, response, request_data: dict, **_):
         call_id = (request_data or {}).get("litellm_call_id")
@@ -169,7 +186,17 @@ class SecretMaskingMiddleware:
             async for chunk in stream:
                 yield chunk
         finally:
-            self._calls.pop(call_id, None)
+            if state is not None:
+                self._release(call_id, request_data)
+
+    def _release(self, call_id: Any, data: Any) -> None:
+        # Idempotent per request: LiteLLM can run both the stream and failure hooks for one call.
+        state = self._calls.get(call_id)
+        if state is None:
+            return
+        state.holders.discard(_holder(data))
+        if not state.holders:
+            del self._calls[call_id]
 
     def _prune(self) -> None:
         cutoff = time.monotonic() - self._ttl
@@ -181,7 +208,7 @@ class SecretMaskingMiddleware:
 
     def _mask_value(self, value: Any, state: _CallState) -> Any:
         if isinstance(value, str):
-            return self._mask_text(value, state)
+            return value if _DATA_URL_RE.match(value) else self._mask_text(value, state)
         if isinstance(value, list):
             out = [self._mask_value(item, state) for item in value]
             return out if any(a is not b for a, b in zip(out, value)) else value
@@ -194,7 +221,7 @@ class SecretMaskingMiddleware:
 
     def _mask_text(self, text: str, state: _CallState) -> str:
         def replace(match: re.Match) -> str:
-            i = next(n for n in range(len(_PATTERNS)) if match.group(f"p{n}") is not None)
+            i = int(match.lastgroup[1:])
             prefix = match.group(f"p{i}")
             body = match.group(f"b{i}")
             suffix = match.group(f"s{i}") if _PATTERNS[i][2] else ""
@@ -257,23 +284,31 @@ class SecretMaskingMiddleware:
             counter += 1
 
 
+def _holder(data: Any) -> int:
+    data = data or {}
+    # Not litellm_logging_obj: post_call_failure_hook pops it before callbacks run.
+    return id(data.get("proxy_server_request") or data)
+
+
 async def _restore_stream(response, restorer: _StreamRestorer):
     async for chunk in response:
         try:
             out = restorer.process(chunk)
         except Exception as exc:  # noqa: BLE001 - a restore bug must not kill the stream
             _log_warning("secret masking stream restore failed open: %s", type(exc).__name__)
-            out = None
-        if out is None:
-            for pending in restorer.finish():
-                yield pending
-            yield chunk
+            for item in restorer.fail_open(chunk):
+                yield item
             break
         for item in out:
             yield item
     else:
-        for pending in restorer.finish():
-            yield pending
+        try:
+            out = restorer.finish()
+        except Exception as exc:  # noqa: BLE001 - a restore bug must not kill the stream
+            _log_warning("secret masking stream finish failed open: %s", type(exc).__name__)
+            out = restorer.fail_open(None)
+        for item in out:
+            yield item
         return
     async for rest in response:
         yield rest
@@ -319,9 +354,17 @@ class _StreamRestorer:
         self.mode: Optional[str] = None
         self.decoder = codecs.getincrementaldecoder("utf-8")()
         self.last_chat_chunk: Any = None
+        self.chat_choices: dict[int, Any] = {}
+        self.delta_cls: Any = None
         self.tool_templates: dict[tuple, Any] = {}
+        self._checkpoint: tuple = ("", b"", {})
 
     def process(self, chunk: Any) -> list:
+        out = self._process(chunk)
+        self._checkpoint = (self.sse_buffer, self.decoder.getstate()[0], dict(self.hold.held))
+        return out
+
+    def _process(self, chunk: Any) -> list:
         if isinstance(chunk, (bytes, bytearray)):
             self.mode = "bytes"
             return self._sse(self.decoder.decode(bytes(chunk)))
@@ -336,18 +379,35 @@ class _StreamRestorer:
         return [chunk]
 
     def finish(self) -> list:
-        pending = self._flush_all_events()
-        if self.mode == "dict":
-            return pending
         if self.mode in ("bytes", "str"):
-            text = self.sse_buffer + self.decoder.decode(b"", final=True) + self._format(pending)
-            self.sse_buffer = ""
-            if not text:
-                return []
-            return [text.encode() if self.mode == "bytes" else text]
-        if self.last_chat_chunk is not None and self.hold.held:
-            return [self._chat_flush(copy.deepcopy(self.last_chat_chunk))]
-        return []
+            return self._sse_tail(b"" if self.mode == "bytes" else "")
+        if self.mode == "dict":
+            return self._flush_all_events()
+        return self._chat_tail()
+
+    def fail_open(self, chunk: Any) -> list:
+        """Rewinds to the last good chunk and passes everything not yet sent through raw."""
+        sse_buffer, undecoded, held = self._checkpoint
+        self.sse_buffer = sse_buffer
+        self.decoder.reset()
+        self.hold.held = held
+        if self.mode in ("bytes", "str"):
+            raw = undecoded + bytes(chunk or b"") if self.mode == "bytes" else (chunk or "")
+            return self._sse_tail(raw)
+        try:
+            flushed = self._flush_all_events() if self.mode == "dict" else self._chat_tail()
+        except Exception:  # noqa: BLE001 - held text is lost rather than the whole stream
+            flushed = []
+        return flushed if chunk is None else [*flushed, chunk]
+
+    def _sse_tail(self, raw: Any) -> list:
+        if self.mode == "bytes" and not raw:
+            raw = self.decoder.getstate()[0]
+        # sse_buffer starts on an event boundary, so flushed events go before it.
+        text = self._format(self._flush_all_events()) + self.sse_buffer
+        self.sse_buffer = ""
+        out = text.encode() + raw if self.mode == "bytes" else text + raw
+        return [out] if out else []
 
     def _sse(self, text: str) -> list:
         self.sse_buffer += text.replace("\r\n", "\n")
@@ -409,11 +469,13 @@ class _StreamRestorer:
         }
 
     def _chat(self, chunk: Any) -> Any:
-        self.last_chat_chunk = chunk
         out = chunk
         for n, choice in enumerate(chunk.choices):
+            self.last_chat_chunk = chunk
+            self.chat_choices[choice.index] = choice
             delta = getattr(choice, "delta", None)
             if delta is not None:
+                self.delta_cls = self.delta_cls or type(delta)
                 out = self._chat_choice(chunk, out, n, choice, delta)
         return out
 
@@ -442,22 +504,35 @@ class _StreamRestorer:
     def _holds_for(self, choice_index: int) -> bool:
         return any(isinstance(k, tuple) and k[1] == choice_index for k in self.hold.held)
 
-    def _chat_flush(self, chunk: Any) -> Any:
+    def _chat_tail(self) -> list:
+        if self.last_chat_chunk is None or not self.hold.held:
+            return []
+        chunk = copy.deepcopy(self.last_chat_chunk)
+        if getattr(chunk, "usage", None) is not None:
+            chunk.usage = None
+        held = sorted({k[1] for k in self.hold.held if isinstance(k, tuple)})
+        chunk.choices = [copy.deepcopy(self.chat_choices[i]) for i in held]
         for choice in chunk.choices:
             choice.finish_reason = None
+            choice.delta = self.delta_cls()
             self._chat_flush_choice(choice)
-        return chunk
+        return [chunk]
 
     def _chat_flush_choice(self, choice: Any) -> None:
         tail = self.hold.flush(("content", choice.index))
         if tail:
             choice.delta.content = (getattr(choice.delta, "content", None) or "") + tail
-        calls = []
+        calls = list(getattr(choice.delta, "tool_calls", None) or ())
+        by_index = {getattr(c, "index", None): c for c in calls}
         for key in [k for k in self.hold.held if isinstance(k, tuple) and k[0] == "tool" and k[1] == choice.index]:
+            tail = self.hold.flush(key)
+            if key[2] in by_index:
+                by_index[key[2]].function.arguments += tail
+                continue
             call = copy.deepcopy(self.tool_templates[key])
             call.id = None
             call.function.name = None
-            call.function.arguments = self.hold.flush(key)
+            call.function.arguments = tail
             calls.append(call)
         if calls:
             choice.delta.tool_calls = calls
@@ -488,6 +563,7 @@ def _log_warning(message: str, *args: Any) -> None:
 def _key_from_env() -> bytes:
     salt = os.environ.get("LITELLM_SALT_KEY")
     if not salt:
+        _log_warning("LITELLM_SALT_KEY is not set; secret masking fakes will differ per replica")
         return os.urandom(32)
     return hmac.new(salt.encode(), b"litellm-secret-masking", hashlib.sha256).digest()
 

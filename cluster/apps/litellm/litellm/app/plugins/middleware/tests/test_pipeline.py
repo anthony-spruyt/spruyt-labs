@@ -258,3 +258,85 @@ async def test_fail_open_warnings_log_exception_type_not_message(pipeline_module
     args = fake_litellm.verbose_proxy_logger.warnings[-1][0]
     assert "RuntimeError" in args
     assert all("boom" not in str(a) for a in args)
+
+
+class MidStreamFailingMiddleware:
+    async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
+        async for chunk in response:
+            if chunk == "b":
+                raise RuntimeError("boom")
+            yield chunk.upper()
+
+
+class PassThroughStreamMiddleware:
+    async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
+        async for chunk in response:
+            yield chunk
+
+
+async def _failing_upstream(items, error):
+    for item in items:
+        yield item
+    raise error
+
+
+async def test_streaming_hook_error_mid_stream_fails_open(pipeline_module, fake_litellm):
+    pipeline = pipeline_module.MiddlewarePipeline((MidStreamFailingMiddleware(),))
+
+    out = [c async for c in pipeline.async_post_call_streaming_iterator_hook(
+        None, _stream(["a", "b", "c"]), {})]
+
+    assert out == ["A", "b", "c"]
+    assert "RuntimeError" in fake_litellm.verbose_proxy_logger.warnings[-1][0]
+
+
+async def test_streaming_hook_error_mid_stream_can_fail_closed(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline((MidStreamFailingMiddleware(),), fail_open=False)
+
+    with pytest.raises(RuntimeError):
+        [c async for c in pipeline.async_post_call_streaming_iterator_hook(
+            None, _stream(["a", "b"]), {})]
+
+
+async def test_streaming_hook_does_not_swallow_upstream_errors(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline((PassThroughStreamMiddleware(),))
+
+    out = []
+    with pytest.raises(ValueError):
+        async for c in pipeline.async_post_call_streaming_iterator_hook(
+                None, _failing_upstream(["a"], ValueError("provider down")), {}):
+            out.append(c)
+
+    assert out == ["a"]
+
+
+class FailAtEndMiddleware:
+    async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
+        async for chunk in response:
+            yield chunk
+        raise RuntimeError("boom")
+
+
+class CountingStream:
+    def __init__(self, items):
+        self.items = list(items)
+        self.polls_after_end = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self.items:
+            return self.items.pop(0)
+        self.polls_after_end += 1
+        raise StopAsyncIteration
+
+
+async def test_fail_open_does_not_poll_an_exhausted_upstream_again(pipeline_module):
+    upstream = CountingStream(["a", "b"])
+    pipeline = pipeline_module.MiddlewarePipeline((FailAtEndMiddleware(),))
+
+    out = [c async for c in pipeline.async_post_call_streaming_iterator_hook(None, upstream, {})]
+
+    assert out == ["a", "b"]
+    assert upstream.polls_after_end == 1
