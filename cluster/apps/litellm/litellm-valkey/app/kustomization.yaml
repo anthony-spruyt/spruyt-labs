@@ -3,7 +3,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./valkey-secrets.sops.yaml
   - ./users-eso.yaml
   - ./secret-reader-rbac.yaml
   - ./release.yaml
