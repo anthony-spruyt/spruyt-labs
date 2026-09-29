@@ -66,7 +66,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[$__range]))",
+          "expr": "sum(sum_over_time(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[$__range]))",
           "legendFormat": "Total Cost",
           "refId": "A"
         }
@@ -105,7 +105,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_session_count_total{agent_namespace=~\"$namespace\"}[$__range])) by (agent_namespace)",
+          "expr": "sum(sum_over_time(claude_code_session_count_total{agent_namespace=~\"$namespace\"}[$__range])) by (agent_namespace)",
           "legendFormat": "{{agent_namespace}}",
           "refId": "A"
         }
@@ -149,7 +149,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])) / (sum(increase(claude_code_token_usage_tokens_total{type=\"input\",agent_namespace=~\"$namespace\"}[$__range])) + sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])))",
+          "expr": "sum(sum_over_time(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])) / (sum(sum_over_time(claude_code_token_usage_tokens_total{type=\"input\",agent_namespace=~\"$namespace\"}[$__range])) + sum(sum_over_time(claude_code_token_usage_tokens_total{type=\"cacheRead\",agent_namespace=~\"$namespace\"}[$__range])))",
           "legendFormat": "Hit Rate",
           "refId": "A"
         }
@@ -197,13 +197,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_lines_of_code_count_total{type=\"added\",agent_namespace=~\"$namespace\"}[$__range]))",
+          "expr": "sum(sum_over_time(claude_code_lines_of_code_count_total{type=\"added\",agent_namespace=~\"$namespace\"}[$__range]))",
           "legendFormat": "Added",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_lines_of_code_count_total{type=\"removed\",agent_namespace=~\"$namespace\"}[$__range]))",
+          "expr": "sum(sum_over_time(claude_code_lines_of_code_count_total{type=\"removed\",agent_namespace=~\"$namespace\"}[$__range]))",
           "legendFormat": "Removed",
           "refId": "B"
         }
@@ -264,7 +264,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[$__interval])) by (agent_namespace)",
+          "expr": "sum(sum_over_time(claude_code_cost_usage_USD_total{agent_namespace=~\"$namespace\"}[$__interval])) by (agent_namespace)",
           "legendFormat": "{{agent_namespace}}",
           "refId": "A"
         }
@@ -327,7 +327,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_lines_of_code_count_total{agent_namespace=~\"$namespace\"}[$__interval])) by (type)",
+          "expr": "sum(sum_over_time(claude_code_lines_of_code_count_total{agent_namespace=~\"$namespace\"}[$__interval])) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
         }
@@ -388,7 +388,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(claude_code_token_usage_tokens_total{agent_namespace=~\"$namespace\"}[$__interval])) by (type)",
+          "expr": "sum(sum_over_time(claude_code_token_usage_tokens_total{agent_namespace=~\"$namespace\"}[$__interval])) by (type)",
           "legendFormat": "{{type}}",
           "refId": "A"
         }
