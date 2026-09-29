@@ -6,6 +6,7 @@ resources:
   - ./release.yaml
   - ./valkey-secrets.sops.yaml
   - ./mcp-user-eso.yaml
+  - ./users-eso.yaml
   - ./vpa.yaml
   - ./network-policies.yaml
 configMapGenerator:

@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./secret-reader-rbac.yaml
   - ./valkey-secrets.sops.yaml
+  - ./users-eso.yaml
   - ./release.yaml
   - ./network-policies.yaml
   - ./vpa.yaml

@@ -1,0 +1,118 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/generators.external-secrets.io/password_v1alpha1.json
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: agent-valkey-password
+spec:
+  length: 64
+  digits: 6
+  symbols: 0
+  noUpper: false
+  allowRepeat: true
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# One ExternalSecret per user: deleting one regenerates only that key
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: agent-valkey-user-default
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: agent-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        default: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: agent-valkey-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: agent-valkey-user-agentqueueworker
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: agent-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        agentqueueworker: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: agent-valkey-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: agent-valkey-user-redisinsight
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: agent-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        redisinsight: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: agent-valkey-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: agent-valkey-user-mcp
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: agent-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        mcp: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: agent-valkey-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: agent-valkey-user-metrics
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: agent-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        metrics: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: agent-valkey-password
