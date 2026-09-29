@@ -32,6 +32,9 @@ controllers:
             value: "true"
           - name: RI_PRE_SETUP_DATABASES_PATH
             value: /usr/src/app/config.json
+          # No PVC, so the EULA would reset each restart; pre-setup databases stay hidden until it is accepted
+          - name: RI_ACCEPT_TERMS_AND_CONDITIONS
+            value: "true"
         resources:
           requests:
             cpu: 10m
@@ -40,11 +43,10 @@ controllers:
             memory: 512Mi
         securityContext:
           allowPrivilegeEscalation: false
-          # readOnlyRootFilesystem: true # SQLITE_CANTOPEN: unable to open database file
+          # No readOnlyRootFilesystem - SQLite fails with SQLITE_CANTOPEN
           capabilities:
             drop:
               - ALL
-        # Probes: HTTP on RedisInsight API
         probes:
           liveness: &probes
             enabled: true
@@ -76,9 +78,7 @@ persistence:
 
 service:
   app:
-    # name should not be 'redisinsight'  since the service creates environment variables
-    # that conflicts with redisinsight application's environment variables:
-    # `REDISINSIGHT_HOST` and `REDISINSIGHT_PORT`
+    # A Service named redisinsight injects REDISINSIGHT_HOST/PORT env vars that clash with the app's own
     suffix: svc
     controller: redisinsight
     ports:
