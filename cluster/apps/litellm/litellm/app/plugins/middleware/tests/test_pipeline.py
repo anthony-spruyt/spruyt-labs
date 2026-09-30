@@ -308,6 +308,11 @@ async def _failing_upstream(items, error):
     raise error
 
 
+async def _drain_into(stream, out):
+    async for chunk in stream:
+        out.append(chunk)
+
+
 async def test_streaming_hook_error_before_first_output_fails_open(pipeline_module, fake_litellm):
     pipeline = pipeline_module.MiddlewarePipeline((MidStreamFailingMiddleware(),))
 
@@ -321,19 +326,21 @@ async def test_streaming_hook_error_before_first_output_fails_open(pipeline_modu
 async def test_streaming_hook_error_mid_stream_can_fail_closed(pipeline_module):
     pipeline = pipeline_module.MiddlewarePipeline((MidStreamFailingMiddleware(),), fail_open=False)
 
+    stream = pipeline.async_post_call_streaming_iterator_hook(None, _stream(["a", "b"]), {})
+
     with pytest.raises(RuntimeError):
-        [c async for c in pipeline.async_post_call_streaming_iterator_hook(
-            None, _stream(["a", "b"]), {})]
+        await _drain_into(stream, [])
 
 
 async def test_streaming_hook_does_not_swallow_upstream_errors(pipeline_module):
     pipeline = pipeline_module.MiddlewarePipeline((PassThroughStreamMiddleware(),))
 
+    stream = pipeline.async_post_call_streaming_iterator_hook(
+        None, _failing_upstream(["a"], ValueError("provider down")), {})
     out = []
+
     with pytest.raises(ValueError):
-        async for c in pipeline.async_post_call_streaming_iterator_hook(
-                None, _failing_upstream(["a"], ValueError("provider down")), {}):
-            out.append(c)
+        await _drain_into(stream, out)
 
     assert out == ["a"]
 
@@ -388,11 +395,12 @@ class SseBufferingMiddleware:
 async def test_streaming_hook_error_after_output_fails_closed_instead_of_dropping_buffered_data(pipeline_module):
     pipeline = pipeline_module.MiddlewarePipeline((SseBufferingMiddleware(),))
 
+    stream = pipeline.async_post_call_streaming_iterator_hook(
+        None, _stream(["data: 1\n\ndata: 2", "\n\nfail\n\n", "data: 3\n\n"]), {})
     out = []
+
     with pytest.raises(RuntimeError, match="boom"):
-        async for c in pipeline.async_post_call_streaming_iterator_hook(
-                None, _stream(["data: 1\n\ndata: 2", "\n\nfail\n\n", "data: 3\n\n"]), {}):
-            out.append(c)
+        await _drain_into(stream, out)
 
     assert out == ["data: 1\n\n"]
 
@@ -434,8 +442,10 @@ async def test_wants_stream_error_fails_open_by_still_applying_the_middleware(pi
 async def test_wants_stream_error_can_fail_closed(pipeline_module):
     pipeline = pipeline_module.MiddlewarePipeline((BrokenWantsUpperStreamMiddleware(),), fail_open=False)
 
+    upstream = _stream(["a"])
+
     with pytest.raises(RuntimeError, match="boom"):
-        pipeline.async_post_call_streaming_iterator_hook(None, _stream(["a"]), {})
+        pipeline.async_post_call_streaming_iterator_hook(None, upstream, {})
 
 
 class CleanupRecordingMiddleware:

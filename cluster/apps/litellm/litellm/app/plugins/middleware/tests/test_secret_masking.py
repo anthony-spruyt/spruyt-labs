@@ -531,6 +531,11 @@ async def _agen(items):
         yield item
 
 
+async def _drain(stream):
+    async for _ in stream:
+        pass
+
+
 async def _collect(mw, chunks, data):
     return [c async for c in mw.async_post_call_streaming_iterator_hook(
         user_api_key_dict=None, response=_agen(chunks), request_data=data)]
@@ -1060,9 +1065,10 @@ async def test_stream_error_then_failure_hook_releases_once(mw):
         yield {"type": "message_start"}
         raise ValueError("provider down")
 
+    stream = mw.async_post_call_streaming_iterator_hook(response=broken(), request_data=second)
+
     with pytest.raises(ValueError):
-        async for _ in mw.async_post_call_streaming_iterator_hook(response=broken(), request_data=second):
-            pass
+        await _drain(stream)
     await mw.async_post_call_failure_hook(request_data=second)
     out = await mw.async_post_call_success_hook(
         data=first, user_api_key_dict=None, response={"content": [{"type": "text", "text": fake}]})
@@ -1325,7 +1331,8 @@ async def test_masks_and_restores_compact_responses(mw):
     out = await mw.async_pre_call_hook(None, None, data, "acompact_responses")
 
     dumped = json.dumps(out)
-    assert GH_PAT not in dumped and GOOGLE not in dumped
+    assert GH_PAT not in dumped
+    assert GOOGLE not in dumped
     fake = out["input"][0]["content"][0]["text"]
     response = SimpleNamespace(id="r", output=[{"type": "message", "content": [{"type": "output_text", "text": fake}]}])
     restored = await mw.async_post_call_success_hook(data=out, user_api_key_dict=None, response=response)
