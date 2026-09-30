@@ -18,8 +18,10 @@ from typing import Any, Callable, Optional
 
 try:
     from .pipeline import MiddlewarePipeline
+    from .shared_fakes import SharedFakes, shared_from_env
 except ImportError:
     from pipeline import MiddlewarePipeline
+    from shared_fakes import SharedFakes, shared_from_env
 
 
 _URLSAFE_20 = r"[A-Za-z0-9_\-]{20,}"
@@ -179,16 +181,19 @@ class _KnownFakes(_FakeMap):
 
 
 class _CallState(_FakeMap):
-    def __init__(self, known: Optional[_KnownFakes] = None) -> None:
+    def __init__(self, known: Optional[_KnownFakes] = None, scope: Any = None) -> None:
         super().__init__()
         self.created = time.monotonic()
         self.holders: set[int] = set()
         self.known = known
+        self.scope = scope
+        self.remote: Any = None
 
     def merge(self, other: "_CallState") -> None:
         self.fakes.update(other.fakes)
         self.holders |= other.holders
         self.known = self.known or other.known
+        self.remote = self.remote or other.remote
         self.changed()
         self.created = time.monotonic()
 
@@ -237,8 +242,10 @@ class SecretMaskingMiddleware:
         clean_cache_size: int = 4096,
         clean_cache_min_len: int = 4096,
         max_known_fakes: int = 2000,
+        shared: Optional[SharedFakes] = None,
     ) -> None:
         self._key = key
+        self._shared = shared
         self._ttl = ttl_seconds
         self._max_calls = max_calls
         self._calls: OrderedDict[str, _CallState] = OrderedDict()
@@ -274,7 +281,7 @@ class SecretMaskingMiddleware:
             return data
 
         scope = _scope(user_api_key_dict)
-        state = _CallState(self._known.get(scope))
+        state = _CallState(self._known.get(scope), scope)
         masked = {}
         for field in fields:
             if field in data:
@@ -286,7 +293,14 @@ class SecretMaskingMiddleware:
             data.update(masked)
             self._remember(scope, state.fakes)
             state.known = self._known.get(scope)
-        if call_type in _NO_REPLY_HOOKS or state.known is None:
+            if self._shared is not None:
+                self._shared.put(scope, state.fakes)
+        if call_type in _NO_REPLY_HOOKS:
+            return data
+        if self._shared is not None:
+            # Read now, while the provider works, so the reply hook rarely waits on Valkey.
+            state.remote = self._shared.fetch(scope)
+        if state.known is None and state.remote is None:
             return data
 
         state.holders.add(_holder(data))
@@ -307,6 +321,7 @@ class SecretMaskingMiddleware:
         if state is None:
             return None
         self._release(call_id, data)
+        await self._load_remote(state)
         if isinstance(response, dict) and "candidates" not in response:
             return _map_strings(response, state.restore)
         return _restore_slots(response, state, _response_texts)
@@ -317,13 +332,26 @@ class SecretMaskingMiddleware:
     async def async_post_call_streaming_iterator_hook(self, response, request_data: dict, **_):
         call_id = (request_data or {}).get("litellm_call_id")
         state = self._calls.get(call_id)
-        stream = response if state is None else _restore_stream(response, _StreamRestorer(state))
+        stream = response
         try:
+            if state is not None:
+                await self._load_remote(state)
+                if state.fakes or state.known is not None:
+                    stream = _restore_stream(response, _StreamRestorer(state))
             async for chunk in stream:
                 yield chunk
         finally:
             if state is not None:
                 self._release(call_id, request_data)
+
+    async def _load_remote(self, state: _CallState) -> None:
+        task, state.remote = state.remote, None
+        if task is None:
+            return
+        fakes = await self._shared.result(task)
+        if fakes:
+            self._remember(state.scope, fakes)
+            state.known = self._known.get(state.scope)
 
     def _release(self, call_id: Any, data: Any) -> None:
         # Idempotent per request: LiteLLM can run both the stream and failure hooks for one call.
@@ -1032,6 +1060,6 @@ def install_token_count_masking(middleware: SecretMaskingMiddleware, proxy_serve
     proxy_server._try_provider_token_count = masked
 
 
-secret_masking = SecretMaskingMiddleware(key=_key_from_env())
+secret_masking = SecretMaskingMiddleware(key=_key_from_env(), shared=shared_from_env())
 # Callbacks load from inside proxy_server's startup, so the module is already imported.
 install_token_count_masking(secret_masking, sys.modules.get("litellm.proxy.proxy_server"))
