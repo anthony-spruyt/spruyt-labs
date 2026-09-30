@@ -52,6 +52,7 @@ def test_production_dotted_imports_resolve(production_import_shape):
         "custom_callbacks.middleware.pipeline",
         "custom_callbacks.middleware.registry",
         "custom_callbacks.middleware.pipeline_plugin",
+        "custom_callbacks.middleware.shared_fakes",
         "custom_callbacks.middleware.secret_masking",
     ]
 

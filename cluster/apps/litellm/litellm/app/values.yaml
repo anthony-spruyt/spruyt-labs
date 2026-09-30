@@ -732,6 +732,9 @@ persistence:
           - path: /app/custom_callbacks/middleware/secret_masking.py
             subPath: secret_masking.py
             readOnly: true
+          - path: /app/custom_callbacks/middleware/shared_fakes.py
+            subPath: shared_fakes.py
+            readOnly: true
   chatgpt-auth-data:
     type: persistentVolumeClaim
     existingClaim: chatgpt-auth-data
