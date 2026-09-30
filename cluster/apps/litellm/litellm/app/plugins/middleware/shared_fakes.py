@@ -109,14 +109,10 @@ class SharedFakes:
             _log_warning("secret masking shared map unavailable, using local only: %s", type(exc).__name__)
         self._down_until = time.monotonic() + self._backoff
 
-    async def _run(self, op: Callable[[Any], Any], timeout: float) -> tuple[bool, Any]:
-        try:
-            if self._client is None:
-                self._client = self._factory()
-            return True, await asyncio.wait_for(op(self._client), timeout)
-        except Exception as exc:  # noqa: BLE001 - Valkey down must never fail a request
-            self._fail(exc)
-            return False, None
+    def _connection(self) -> Any:
+        if self._client is None:
+            self._client = self._factory()
+        return self._client
 
     async def _flush(self) -> None:
         try:
@@ -126,10 +122,12 @@ class SharedFakes:
                 args: list[Any] = []
                 for field, (fake, real) in entries.items():
                     args += [field, self._seal(key, field, fake, real)]
-                ok, _ = await self._run(
-                    lambda c: c.execute_command("HSETEX", key, "EX", self._ttl, "FIELDS", len(entries), *args),
-                    self._write_timeout)
-                if not ok:
+                try:
+                    async with asyncio.timeout(self._write_timeout):
+                        await self._connection().execute_command(
+                            "HSETEX", key, "EX", self._ttl, "FIELDS", len(entries), *args)
+                except Exception as exc:  # noqa: BLE001 - Valkey down must never fail a request
+                    self._fail(exc)
                     break
                 now = time.monotonic()
                 for field in entries:
@@ -143,8 +141,11 @@ class SharedFakes:
 
     async def _fetch(self, sid: str) -> dict[str, str]:
         key = self._key(sid)
-        ok, raw = await self._run(lambda c: c.hgetall(key), self._timeout)
-        if not ok or not raw:
+        try:
+            async with asyncio.timeout(self._timeout):
+                raw = await self._connection().hgetall(key)
+        except Exception as exc:  # noqa: BLE001 - Valkey down must never fail a request
+            self._fail(exc)
             return {}
         out = {}
         for field, value in raw.items():
@@ -169,7 +170,7 @@ class SharedFakes:
         nonce, sealed = value[1:1 + _NONCE_LEN], value[1 + _NONCE_LEN:]
         try:
             fake, real = json.loads(self._aead.decrypt(nonce, sealed, _aad(key, field)))
-        except Exception:  # noqa: BLE001 - a foreign, stale-salt or tampered entry is skipped
+        except Exception:  # noqa: BLE001 - entries from another salt or tampered with are skipped
             return None
         if not isinstance(fake, str) or not isinstance(real, str):
             return None
