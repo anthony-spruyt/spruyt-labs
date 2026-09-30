@@ -1124,3 +1124,478 @@ async def test_failure_hook_releases_after_litellm_drops_the_logging_obj(mw):
     await mw.async_post_call_failure_hook(request_data=data)
 
     assert mw.pending_calls() == 0
+
+
+async def test_stream_joins_multi_line_sse_data(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    event = {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "key " + fake}}
+    lines = json.dumps(event, indent=1).split("\n")
+    block = "event: content_block_delta\n" + "\n".join("data: " + line for line in lines) + "\n\n"
+
+    out = await _collect(mw, [block.encode()], data)
+
+    assert fake not in b"".join(out).decode()
+    assert _joined(_parse_sse(out)) == "key " + GH_PAT
+
+
+async def test_chat_stream_flushes_held_text_before_usage_chunk(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    usage = SimpleNamespace(choices=[], usage={"total_tokens": 3})
+
+    out = await _collect(mw, [_chat_chunk(content="key " + fake[:10]), usage], data)
+
+    assert out[-1] is usage
+    assert "".join(c.choices[0].delta.content or "" for c in out if c.choices) == "key " + fake[:10]
+
+
+class _CountingPattern:
+    def __init__(self, pattern):
+        self.pattern = pattern
+        self.scanned = []
+
+    def sub(self, repl, text):
+        self.scanned.append(text)
+        return self.pattern.sub(repl, text)
+
+
+@pytest.fixture
+def scans(mod, monkeypatch):
+    counting = _CountingPattern(mod._SECRET_RE)
+    monkeypatch.setattr(mod, "_SECRET_RE", counting)
+    return counting.scanned
+
+
+async def test_large_clean_text_is_scanned_once(mw, scans):
+    history = "lorem ipsum dolor " * 1000
+
+    for call_id in ("call-1", "call-2", "call-3"):
+        await _mask(mw, history, call_id)
+
+    assert scans.count(history) == 1
+
+
+async def test_large_text_with_secret_is_masked_every_time(mw):
+    history = "lorem ipsum dolor " * 1000 + GH_PAT
+
+    for call_id in ("call-1", "call-2"):
+        assert GH_PAT not in _user_text(await _mask(mw, history, call_id))
+
+
+async def test_small_text_is_not_cached(mw, scans):
+    for call_id in ("call-1", "call-2"):
+        await _mask(mw, "short clean text", call_id)
+
+    assert scans.count("short clean text") == 2
+
+
+async def test_clean_text_cache_is_bounded(mod, scans):
+    mw = mod.SecretMaskingMiddleware(key=b"k", clean_cache_size=3)
+    texts = [f"clean {i} " * 1000 for i in range(5)]
+
+    for i, text in enumerate(texts):
+        await _mask(mw, text, f"call-{i}")
+    await _mask(mw, texts[0], "again")
+
+    assert scans.count(texts[0]) == 2
+
+
+async def _finish(mw, data, text="ok"):
+    await mw.async_post_call_success_hook(
+        data=data, user_api_key_dict=None, response={"content": [{"type": "text", "text": text}]})
+
+
+async def _earlier_fake(mw, secret=GH_PAT, call_id="turn-1", user=None):
+    data = await mw.async_pre_call_hook(user, None, _request(secret, call_id), "anthropic_messages")
+    fake = _user_text(data)
+    await mw.async_post_call_success_hook(data=data, user_api_key_dict=user, response={"t": "ok"})
+    return fake
+
+
+async def test_stale_fake_from_earlier_turn_is_restored(mw):
+    fake = await _earlier_fake(mw)
+    data = await _mask(mw, "continue", "turn-2")
+
+    out = await mw.async_post_call_success_hook(
+        data=data, user_api_key_dict=None, response={"content": [{"type": "text", "text": f"use {fake}"}]})
+
+    assert mw.pending_calls() == 0
+    assert out["content"][0]["text"] == f"use {GH_PAT}"
+
+
+async def test_stale_fake_is_restored_alongside_this_calls_fakes(mw):
+    old = await _earlier_fake(mw)
+    data = await _mask(mw, GH_PAT_2, "turn-2")
+    new = _user_text(data)
+
+    out = await mw.async_post_call_success_hook(
+        data=data, user_api_key_dict=None, response={"content": [{"type": "text", "text": f"{old} {new}"}]})
+
+    assert out["content"][0]["text"] == f"{GH_PAT} {GH_PAT_2}"
+
+
+async def test_stale_fake_is_restored_in_stream(mw):
+    fake = await _earlier_fake(mw)
+    data = await _mask(mw, "continue", "turn-2")
+
+    out = await _collect(mw, _text_stream_events(_split(f"x {fake} y", 4)), data)
+
+    assert _joined(out) == f"x {GH_PAT} y"
+
+
+async def test_stale_fake_is_not_restored_for_another_key(mw):
+    fake = await _earlier_fake(mw, user=SimpleNamespace(api_key="hash-a"))
+    other = SimpleNamespace(api_key="hash-b")
+    data = await mw.async_pre_call_hook(other, None, _request("continue", "turn-2"), "anthropic_messages")
+
+    out = await mw.async_post_call_success_hook(
+        data=data, user_api_key_dict=other, response={"content": [{"type": "text", "text": fake}]})
+
+    assert out is None or out["content"][0]["text"] == fake
+
+
+async def test_stale_fakes_expire(mod, monkeypatch):
+    now = [1000.0]
+    monkeypatch.setattr(mod.time, "monotonic", lambda: now[0])
+    mw = mod.SecretMaskingMiddleware(key=b"k", ttl_seconds=60)
+    fake = await _earlier_fake(mw)
+    now[0] += 61
+    data = await _mask(mw, "continue", "turn-2")
+
+    out = await mw.async_post_call_success_hook(
+        data=data, user_api_key_dict=None, response={"content": [{"type": "text", "text": fake}]})
+
+    assert out is None or out["content"][0]["text"] == fake
+    assert not mw.wants_stream(data)
+
+
+async def test_stale_fakes_are_capped(mod):
+    mw = mod.SecretMaskingMiddleware(key=b"k", max_known_fakes=1)
+    first = await _earlier_fake(mw, GH_PAT, "turn-1")
+    await _earlier_fake(mw, GH_PAT_2, "turn-2")
+    data = await _mask(mw, "continue", "turn-3")
+
+    out = await mw.async_post_call_success_hook(
+        data=data, user_api_key_dict=None, response={"content": [{"type": "text", "text": first}]})
+
+    assert out is None or out["content"][0]["text"] == first
+
+
+async def test_own_fakes_restore_even_when_evicted_from_the_global_map(mod):
+    mw = mod.SecretMaskingMiddleware(key=b"k", max_known_fakes=1)
+    data = await _mask(mw, f"{GH_PAT} {GH_PAT_2}")
+    a, b = _user_text(data).split()
+
+    out = await mw.async_post_call_success_hook(
+        data=data, user_api_key_dict=None, response={"content": [{"type": "text", "text": f"{a} {b}"}]})
+
+    assert out["content"][0]["text"] == f"{GH_PAT} {GH_PAT_2}"
+
+
+async def test_wants_stream(mw):
+    clean = await _mask(mw, "nothing here", "clean")
+    assert not mw.wants_stream(clean)
+
+    masked = await _mask(mw, GH_PAT, "masked")
+    assert mw.wants_stream(masked)
+
+    await _finish(mw, masked)
+    assert mw.wants_stream(await _mask(mw, "nothing here", "later"))
+
+
+async def test_stream_with_many_known_fakes_stays_fast(mod):
+    mw = mod.SecretMaskingMiddleware(key=b"k")
+    secrets = [GH_PAT[:-6] + f"{i:06d}" for i in range(1500)]
+    await _earlier_fake(mw, " ".join(secrets))
+    data = await _mask(mw, "continue", "turn-2")
+    deltas = _split("plain streamed words and some ghp_ looking text " * 400, 3)
+
+    start = time.monotonic()
+    out = await _collect(mw, _text_stream_events(deltas), data)
+
+    assert time.monotonic() - start < 0.3
+    assert _joined(out) == "".join(deltas)
+
+
+async def test_masks_and_restores_compact_responses(mw):
+    data = {"litellm_call_id": "call-1", "instructions": f"env {GH_PAT}",
+            "input": [{"type": "message", "role": "user", "content": [{"type": "input_text", "text": GOOGLE}]}]}
+
+    out = await mw.async_pre_call_hook(None, None, data, "acompact_responses")
+
+    dumped = json.dumps(out)
+    assert GH_PAT not in dumped and GOOGLE not in dumped
+    fake = out["input"][0]["content"][0]["text"]
+    response = SimpleNamespace(id="r", output=[{"type": "message", "content": [{"type": "output_text", "text": fake}]}])
+    restored = await mw.async_post_call_success_hook(data=out, user_api_key_dict=None, response=response)
+    assert restored.output[0]["content"][0]["text"] == GOOGLE
+
+
+def _ws_frame(text):
+    return json.dumps({"type": "response.create", "model": "gpt-x", "instructions": f"env {text}",
+                       "input": [{"type": "message", "role": "user",
+                                  "content": [{"type": "input_text", "text": text},
+                                              {"type": "input_image", "image_url": "https://x.test/a?sig=" + text}]}]})
+
+
+async def test_masks_responses_websocket_first_frame(mw):
+    data = {"litellm_call_id": "call-1", "model": "gpt-x", "websocket": object(), "first_message": _ws_frame(GH_PAT)}
+
+    out = await mw.async_pre_call_hook(None, None, data, "_aresponses_websocket")
+
+    frame = json.loads(out["first_message"])
+    assert GH_PAT not in frame["instructions"]
+    assert frame["input"][0]["content"][0]["text"] != GH_PAT
+    assert frame["input"][0]["content"][1]["image_url"].endswith(GH_PAT)
+    assert frame["model"] == "gpt-x"
+
+
+async def test_websocket_frame_that_is_not_json_is_left_alone(mw):
+    data = {"litellm_call_id": "call-1", "first_message": "not json " + GH_PAT}
+
+    out = await mw.async_pre_call_hook(None, None, data, "_aresponses_websocket")
+
+    assert out["first_message"] == "not json " + GH_PAT
+
+
+def _gemini_request():
+    return {
+        "litellm_call_id": "call-1",
+        "systemInstruction": {"parts": [{"text": f"env {GH_PAT}"}]},
+        "config": {"system_instruction": {"parts": [{"text": GOOGLE}]}, "temperature": 0.2},
+        "contents": [
+            {"role": "user", "parts": [
+                {"text": f"key {SL_KEY}"},
+                {"inlineData": {"mimeType": "image/png", "data": "iVBOR/" + GOOGLE + "+x"}},
+                {"fileData": {"mimeType": "application/pdf", "fileUri": "https://x.test/f?sig=" + GH_PAT}},
+            ]},
+            {"role": "model", "parts": [
+                {"text": f"saw {GH_PAT_2}", "thought": True},
+                {"functionCall": {"name": "sh", "args": {"cmd": f"echo {GH_PAT_2}"}}, "thoughtSignature": "c2ln"},
+            ]},
+            {"role": "user", "parts": [{"functionResponse": {"name": "sh", "response": {"out": GH_PAT_2}}}]},
+        ],
+    }
+
+
+@pytest.mark.parametrize("call_type", ["agenerate_content", "agenerate_content_stream"])
+async def test_masks_google_generate_content(mw, call_type):
+    original = _gemini_request()
+
+    out = await mw.async_pre_call_hook(None, None, copy.deepcopy(original), call_type)
+
+    assert GH_PAT not in json.dumps(out["systemInstruction"])
+    assert GOOGLE not in json.dumps(out["config"]["system_instruction"])
+    user, model, tool = out["contents"]
+    assert SL_KEY not in user["parts"][0]["text"]
+    assert user["parts"][1:] == original["contents"][0]["parts"][1:]
+    assert model["parts"][0] == original["contents"][1]["parts"][0]
+    assert GH_PAT_2 not in json.dumps(model["parts"][1]["functionCall"])
+    assert model["parts"][1]["thoughtSignature"] == "c2ln"
+    assert GH_PAT_2 not in json.dumps(tool)
+
+
+async def test_gemini_dict_response_leaves_thought_parts_alone(mw):
+    data = await mw.async_pre_call_hook(None, None, _gemini_request(), "agenerate_content")
+    fake = _gemini_fake(data)
+    response = {"candidates": [{"content": {"role": "model", "parts": [
+        {"text": fake, "thought": True}, {"text": f"use {fake}"}]}}]}
+
+    out = await mw.async_post_call_success_hook(data=data, user_api_key_dict=None, response=response)
+
+    parts = out["candidates"][0]["content"]["parts"]
+    assert parts[0]["text"] == fake
+    assert parts[1]["text"] == f"use {SL_KEY}"
+
+
+async def test_many_known_fakes_keep_calls_cheap(mod):
+    mw = mod.SecretMaskingMiddleware(key=b"k")
+    await _earlier_fake(mw, " ".join(GH_PAT[:-6] + f"{i:06d}" for i in range(2000)))
+    reply = {"content": [{"type": "text", "text": "ordinary reply text ghp_ sk- " * 400}]}
+
+    start = time.monotonic()
+    for i in range(20):
+        data = await _mask(mw, GH_PAT_2[:-6] + f"{i:06d}", f"turn-{i}")
+        await mw.async_post_call_success_hook(data=data, user_api_key_dict=None, response=reply)
+
+    assert time.monotonic() - start < 0.3
+
+
+async def test_gemini_opaque_keys_do_not_leak_into_other_formats(mw):
+    tool_input = {"thought": True, "note": GH_PAT, "inlineData": GOOGLE, "thoughtSignature": SL_KEY}
+    data = {"litellm_call_id": "call-1", "messages": [{"role": "assistant", "content": [
+        {"type": "tool_use", "id": "t1", "name": "sh", "input": tool_input}]}]}
+
+    out = await mw.async_pre_call_hook(None, None, data, "anthropic_messages")
+
+    dumped = json.dumps(out)
+    for secret in (GH_PAT, GOOGLE, SL_KEY):
+        assert secret not in dumped
+
+
+async def test_gemini_function_args_with_opaque_key_names_are_masked(mw):
+    data = {"litellm_call_id": "call-1", "contents": [{"role": "model", "parts": [
+        {"functionCall": {"name": "sh", "args": {"thought": True, "inlineData": GH_PAT}}}]}]}
+
+    out = await mw.async_pre_call_hook(None, None, data, "agenerate_content")
+
+    assert GH_PAT not in json.dumps(out)
+
+
+def _gemini_fake(mw_out):
+    fake = mw_out["contents"][0]["parts"][0]["text"].split()[1]
+    assert fake != SL_KEY
+    return fake
+
+
+async def test_restores_google_generate_content_response(mw):
+    data = await mw.async_pre_call_hook(None, None, _gemini_request(), "agenerate_content")
+    fake = _gemini_fake(data)
+    part = SimpleNamespace(text=f"use {fake}", thought=None, function_call=None)
+    call = {"functionCall": {"name": "sh", "args": {"cmd": fake, "n": 1}}}
+    thought = {"text": fake, "thought": True}
+    response = SimpleNamespace(candidates=[SimpleNamespace(index=0, content=SimpleNamespace(
+        role="model", parts=[part, call, thought]))])
+
+    out = await mw.async_post_call_success_hook(data=data, user_api_key_dict=None, response=response)
+
+    parts = out.candidates[0].content.parts
+    assert parts[0].text == f"use {SL_KEY}"
+    assert parts[1]["functionCall"]["args"] == {"cmd": SL_KEY, "n": 1}
+    assert parts[2]["text"] == fake
+    assert part.text == f"use {fake}"
+
+
+def _gemini_sse(text=None, finish=None, call=None):
+    parts = []
+    if text is not None:
+        parts.append({"text": text})
+    if call is not None:
+        parts.append({"functionCall": call})
+    candidate = {"content": {"role": "model", "parts": parts}, "index": 0}
+    if finish:
+        candidate["finishReason"] = finish
+    return "data: " + json.dumps({"candidates": [candidate]}) + "\r\n\r\n"
+
+
+def _gemini_parse(chunks):
+    events = _parse_sse(chunks)
+    text = "".join(p.get("text", "") for e in events for c in e.get("candidates", [])
+                   for p in c["content"]["parts"])
+    calls = [p["functionCall"] for e in events for c in e.get("candidates", []) for p in c["content"]["parts"]
+             if "functionCall" in p]
+    return events, text, calls
+
+
+async def test_stream_restores_google_generate_content(mw):
+    data = await mw.async_pre_call_hook(None, None, _gemini_request(), "agenerate_content_stream")
+    fake = _gemini_fake(data)
+    pieces = _split(f"key {fake} done", 5)
+    raw = [_gemini_sse(p) for p in pieces]
+    raw.append(_gemini_sse(call={"name": "sh", "args": {"cmd": fake}}, finish="STOP"))
+
+    out = await _collect(mw, [r.encode() for r in raw], data)
+
+    events, text, calls = _gemini_parse(out)
+    assert text == f"key {SL_KEY} done"
+    assert calls == [{"name": "sh", "args": {"cmd": SL_KEY}}]
+    assert events[-1]["candidates"][0]["finishReason"] == "STOP"
+    assert b"event:" not in b"".join(out)
+
+
+async def test_google_stream_end_flushes_held_text(mw):
+    data = await mw.async_pre_call_hook(None, None, _gemini_request(), "agenerate_content_stream")
+    fake = _gemini_fake(data)
+
+    out = await _collect(mw, [_gemini_sse("key ").encode(), _gemini_sse(fake[:10]).encode()], data)
+
+    assert _gemini_parse(out)[1] == "key " + fake[:10]
+
+
+def _proxy_server_with_counter():
+    proxy_server = types.ModuleType("litellm.proxy.proxy_server")
+    proxy_server.sent = []
+
+    async def _try_provider_token_count(**kwargs):
+        proxy_server.sent.append(kwargs)
+        return "count"
+
+    proxy_server._try_provider_token_count = _try_provider_token_count
+    return proxy_server
+
+
+async def test_provider_token_count_is_masked(mw, mod):
+    proxy_server = _proxy_server_with_counter()
+    mod.install_token_count_masking(mw, proxy_server)
+
+    result = await proxy_server._try_provider_token_count(
+        provider_counter=None, custom_llm_provider="anthropic", model_to_use="m",
+        messages=[{"role": "user", "content": [{"type": "text", "text": GH_PAT}]}],
+        contents=[{"role": "user", "parts": [{"text": GOOGLE}]}],
+        deployment={"litellm_params": {"api_key": "provider-key"}}, request_model="m",
+        tools=[{"name": "t", "description": f"uses {SL_KEY}"}], system=f"env {GH_PAT_2}")
+
+    assert result == "count"
+    sent = proxy_server.sent[0]
+    dumped = json.dumps({k: sent[k] for k in ("messages", "contents", "tools", "system")})
+    for secret in (GH_PAT, GOOGLE, SL_KEY, GH_PAT_2):
+        assert secret not in dumped
+    assert sent["deployment"] == {"litellm_params": {"api_key": "provider-key"}}
+    assert mw.pending_calls() == 0
+
+
+async def test_provider_token_count_masking_is_installed_once(mw, mod):
+    proxy_server = _proxy_server_with_counter()
+    mod.install_token_count_masking(mw, proxy_server)
+    mod.install_token_count_masking(mw, proxy_server)
+
+    await proxy_server._try_provider_token_count(messages=[{"role": "user", "content": GH_PAT}])
+
+    assert len(proxy_server.sent) == 1
+
+
+async def test_provider_token_count_falls_back_to_local_when_masking_fails(mw, mod, monkeypatch):
+    proxy_server = _proxy_server_with_counter()
+    mod.install_token_count_masking(mw, proxy_server)
+
+    def broken(*_):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr(mod, "_map_strings", broken)
+
+    result = await proxy_server._try_provider_token_count(messages=[{"role": "user", "content": GH_PAT}])
+
+    assert result is None
+    assert proxy_server.sent == []
+
+
+async def test_provider_token_count_with_positional_args_counts_locally(mw, mod):
+    proxy_server = _proxy_server_with_counter()
+    mod.install_token_count_masking(mw, proxy_server)
+
+    assert await proxy_server._try_provider_token_count(None, "anthropic") is None
+    assert proxy_server.sent == []
+
+
+async def test_google_stream_flushes_into_candidate_with_null_content(mw):
+    data = await mw.async_pre_call_hook(None, None, _gemini_request(), "agenerate_content_stream")
+    fake = _gemini_fake(data)
+    done = "data: " + json.dumps({"candidates": [{"index": 0, "content": None, "finishReason": "STOP"}]}) + "\n\n"
+
+    out = await _collect(mw, [_gemini_sse("key " + fake[:10]).encode(), done.encode()], data)
+
+    events, text, _ = _gemini_parse(out)
+    assert text == "key " + fake[:10]
+    assert events[-1]["candidates"][0]["finishReason"] == "STOP"
+
+
+def test_token_count_masking_warns_when_litellm_moved_it(mw, mod, fake_litellm):
+    mod.install_token_count_masking(mw, types.ModuleType("litellm.proxy.proxy_server"))
+
+    assert any("token count" in w[0][0] for w in fake_litellm.verbose_proxy_logger.warnings)
+
+
+@pytest.mark.parametrize("request_data", [None, {}, [], "x", {"litellm_call_id": ["unhashable"]}])
+def test_wants_stream_never_raises(mw, request_data):
+    assert mw.wants_stream(request_data) is False

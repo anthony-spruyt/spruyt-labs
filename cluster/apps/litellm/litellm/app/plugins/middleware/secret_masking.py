@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import bisect
 import codecs
 import copy
 import hashlib
@@ -10,6 +11,7 @@ import json
 import os
 import re
 import string
+import sys
 import time
 from collections import OrderedDict
 from typing import Any, Callable, Optional
@@ -75,15 +77,27 @@ _OPAQUE_FIELDS = {
     "input_file": ("file_url", "file_data"),
     "url": ("url",),
 }
+# Gemini parts carry no "type", so their binary payloads and signatures are recognised by key.
+_GEMINI_OPAQUE_PART_KEYS = frozenset(
+    {"inlineData", "inline_data", "fileData", "file_data", "thoughtSignature", "thought_signature"})
+_GEMINI_SYSTEM_KEYS = ("systemInstruction", "system_instruction")
+_GEMINI_FIELDS = ("contents", *_GEMINI_SYSTEM_KEYS, "config")
 _MASKED_FIELDS = {
     "anthropic_messages": ("system", "messages"),
     "acompletion": ("messages",),
     "completion": ("messages",),
     "aresponses": ("instructions", "input"),
     "responses": ("instructions", "input"),
+    "acompact_responses": ("instructions", "input"),
     "atext_completion": ("prompt",),
     "text_completion": ("prompt",),
+    "agenerate_content": _GEMINI_FIELDS,
+    "agenerate_content_stream": _GEMINI_FIELDS,
+    "_aresponses_websocket": ("first_message",),
 }
+# LiteLLM runs no post-call hook for websocket replies, so there is nothing to release the call state.
+_NO_REPLY_HOOKS = frozenset({"_aresponses_websocket"})
+_TOKEN_COUNT_FIELDS = frozenset({"messages", "contents", "tools", "system"})
 _STREAM_DELTA_FIELDS = {"text_delta": "text", "input_json_delta": "partial_json"}
 # Responses API: delta event -> (done event, field on the done event holding the full text).
 _RESPONSES_DELTAS = {
@@ -107,41 +121,92 @@ def _json_escape(value: str) -> str:
     return json.dumps(value)[1:-1]
 
 
-class _CallState:
+_NEVER = re.compile(r"(?!)")
+
+
+class _FakeMap:
     def __init__(self) -> None:
-        self.created = time.monotonic()
-        self.holders: set[int] = set()
         self.fakes: dict[str, str] = {}
         self._pattern: Optional[re.Pattern] = None
+        self._sorted: Optional[list[str]] = None
+        self._firsts: frozenset[str] = frozenset()
+        self._longest = 0
 
-    def merge(self, other: "_CallState") -> None:
-        self.fakes.update(other.fakes)
-        self.holders |= other.holders
+    def changed(self) -> None:
         self._pattern = None
-        self.created = time.monotonic()
+        self._sorted = None
 
     def pattern(self) -> re.Pattern:
         if self._pattern is None:
             keys = sorted(self.fakes, key=len, reverse=True)
-            self._pattern = re.compile("|".join(re.escape(k) for k in keys))
+            self._pattern = re.compile("|".join(re.escape(k) for k in keys)) if keys else _NEVER
         return self._pattern
+
+    def held_suffix_len(self, text: str) -> int:
+        """Length of the longest tail of text that is a proper prefix of a fake."""
+        if self._sorted is None:
+            self._sorted = sorted(self.fakes)
+            self._firsts = frozenset(k[0] for k in self._sorted)
+            self._longest = max(map(len, self._sorted), default=0)
+        keys = self._sorted
+        for i in range(max(0, len(text) - self._longest + 1), len(text)):
+            if text[i] not in self._firsts:
+                continue
+            tail = text[i:]
+            j = bisect.bisect_right(keys, tail)
+            if j < len(keys) and keys[j].startswith(tail):
+                return len(text) - i
+        return 0
+
+    def search(self, text: str) -> bool:
+        return self.pattern().search(text) is not None
+
+    def sub(self, text: str) -> str:
+        return self.pattern().sub(lambda m: self.fakes[m.group(0)], text)
+
+
+class _KnownFakes(_FakeMap):
+    """Fakes one API key was sent recently, so a later turn that echoes one still gets the real value."""
+
+    # Fakes keep their secret's shape, so the fixed secret regex finds them and no per-change recompile is needed.
+    def search(self, text: str) -> bool:
+        return bool(self.fakes) and any(m.group(0) in self.fakes for m in _SECRET_RE.finditer(text))
+
+    def sub(self, text: str) -> str:
+        if not self.fakes:
+            return text
+        return _SECRET_RE.sub(lambda m: self.fakes.get(m.group(0), m.group(0)), text)
+
+
+class _CallState(_FakeMap):
+    def __init__(self, known: Optional[_KnownFakes] = None) -> None:
+        super().__init__()
+        self.created = time.monotonic()
+        self.holders: set[int] = set()
+        self.known = known
+
+    def merge(self, other: "_CallState") -> None:
+        self.fakes.update(other.fakes)
+        self.holders |= other.holders
+        self.known = self.known or other.known
+        self.changed()
+        self.created = time.monotonic()
+
+    def _maps(self) -> tuple[_FakeMap, ...]:
+        return (self,) if self.known is None else (self, self.known)
+
+    def contains(self, text: str) -> bool:
+        return any(_FakeMap.search(self, text) if m is self else m.search(text) for m in self._maps())
 
     def restore(self, text: str) -> str:
         if not text:
             return text
-        return self.pattern().sub(lambda m: self.fakes[m.group(0)], text)
+        for fake_map in self._maps():
+            text = _FakeMap.sub(self, text) if fake_map is self else fake_map.sub(text)
+        return text
 
     def held_suffix_len(self, text: str) -> int:
-        best = 0
-        for fake in self.fakes:
-            start = max(0, len(text) - len(fake) + 1)
-            i = text.find(fake[0], start)
-            while i != -1:
-                if fake.startswith(text[i:]):
-                    best = max(best, len(text) - i)
-                    break
-                i = text.find(fake[0], i + 1)
-        return best
+        return max(_FakeMap.held_suffix_len(m, text) for m in self._maps())
 
 
 class _Holdback:
@@ -164,34 +229,66 @@ class _Holdback:
 
 
 class SecretMaskingMiddleware:
-    def __init__(self, key: bytes, ttl_seconds: float = 3600.0, max_calls: int = 10000) -> None:
+    def __init__(
+        self,
+        key: bytes,
+        ttl_seconds: float = 3600.0,
+        max_calls: int = 10000,
+        clean_cache_size: int = 4096,
+        clean_cache_min_len: int = 4096,
+        max_known_fakes: int = 2000,
+    ) -> None:
         self._key = key
         self._ttl = ttl_seconds
         self._max_calls = max_calls
         self._calls: OrderedDict[str, _CallState] = OrderedDict()
+        self._clean: OrderedDict[bytes, None] = OrderedDict()
+        self._clean_size = clean_cache_size
+        self._clean_min_len = clean_cache_min_len
+        self._max_known = max_known_fakes
+        self._known: dict[Any, _KnownFakes] = {}
+        self._known_seen: OrderedDict[tuple, float] = OrderedDict()
 
     def pending_calls(self) -> int:
         return len(self._calls)
 
+    def mask_token_count(self, kwargs: dict) -> dict:
+        state = _CallState()
+        return {
+            k: _map_strings(v, lambda text: self._mask_text(text, state)) if k in _TOKEN_COUNT_FIELDS else v
+            for k, v in kwargs.items()
+        }
+
+    def wants_stream(self, request_data: dict) -> bool:
+        try:
+            return self._calls.get(request_data.get("litellm_call_id")) is not None
+        except Exception:  # noqa: BLE001 - a stream decision must never raise
+            return False
+
     # async_* names mirror LiteLLM's CustomLogger hooks; callers await them.
-    async def async_pre_call_hook(self, _user_api_key_dict, _cache, data: dict, call_type: str):  # NOSONAR
+    async def async_pre_call_hook(self, user_api_key_dict, _cache, data: dict, call_type: str):  # NOSONAR
         self._prune()
         call_id = data.get("litellm_call_id")
         fields = _MASKED_FIELDS.get(call_type)
         if not fields or not call_id:
             return data
 
-        state = _CallState()
+        scope = _scope(user_api_key_dict)
+        state = _CallState(self._known.get(scope))
         masked = {}
         for field in fields:
             if field in data:
-                value = _map_strings(data[field], lambda text: self._mask_text(text, state))
+                mask = _FIELD_MAPPERS.get(field, _map_strings)
+                value = mask(data[field], lambda text: self._mask_text(text, state))
                 if value is not data[field]:
                     masked[field] = value
-        if not state.fakes:
+        if state.fakes:
+            data.update(masked)
+            self._remember(scope, state.fakes)
+            state.known = self._known.get(scope)
+        if call_type in _NO_REPLY_HOOKS or state.known is None:
             return data
 
-        data.update(masked)
         state.holders.add(_holder(data))
         # Clients can set the call id (x-litellm-call-id), so in-flight calls may share one.
         existing = self._calls.get(call_id)
@@ -210,7 +307,7 @@ class SecretMaskingMiddleware:
         if state is None:
             return None
         self._release(call_id, data)
-        if isinstance(response, dict):
+        if isinstance(response, dict) and "candidates" not in response:
             return _map_strings(response, state.restore)
         return _restore_slots(response, state, _response_texts)
 
@@ -244,8 +341,46 @@ class SecretMaskingMiddleware:
             if oldest.created >= cutoff:
                 break
             self._calls.popitem(last=False)
+        while self._known_seen and next(iter(self._known_seen.values())) < cutoff:
+            self._forget(*self._known_seen.popitem(last=False)[0])
+
+    def _remember(self, scope: Any, fakes: dict[str, str]) -> None:
+        known = self._known.setdefault(scope, _KnownFakes())
+        now = time.monotonic()
+        for fake, real in fakes.items():
+            entry = (scope, fake)
+            if entry not in self._known_seen:
+                known.fakes[fake] = real
+                known.changed()
+            self._known_seen[entry] = now
+            self._known_seen.move_to_end(entry)
+        while len(self._known_seen) > self._max_known:
+            self._forget(*self._known_seen.popitem(last=False)[0])
+
+    def _forget(self, scope: Any, fake: str) -> None:
+        known = self._known.get(scope)
+        if known is None:
+            return
+        known.fakes.pop(fake, None)
+        known.changed()
+        if not known.fakes:
+            del self._known[scope]
 
     def _mask_text(self, text: str, state: _CallState) -> str:
+        if len(text) < self._clean_min_len:
+            return self._scan(text, state)
+        digest = hashlib.blake2b(text.encode("utf-8", "surrogatepass"), digest_size=16).digest()
+        if digest in self._clean:
+            self._clean.move_to_end(digest)
+            return text
+        out = self._scan(text, state)
+        if out is text:
+            self._clean[digest] = None
+            if len(self._clean) > self._clean_size:
+                self._clean.popitem(last=False)
+        return out
+
+    def _scan(self, text: str, state: _CallState) -> str:
         def replace(match: re.Match) -> str:
             i = int(match.lastgroup[1:])
             prefix = match.group(f"p{i}")
@@ -310,6 +445,12 @@ class SecretMaskingMiddleware:
             counter += 1
 
 
+def _scope(user_api_key_dict: Any) -> Any:
+    # Per virtual key, so a reply on one key can never restore a secret another key sent.
+    scope = getattr(user_api_key_dict, "api_key", None)
+    return scope if isinstance(scope, str) else None
+
+
 def _holder(data: Any) -> int:
     data = data or {}
     # Not litellm_logging_obj: post_call_failure_hook pops it before callbacks run.
@@ -352,15 +493,68 @@ def _map_strings(value: Any, fn: Callable[[str], str]) -> Any:
         if kind in _OPAQUE_BLOCK_TYPES:
             return value
         kept = _OPAQUE_FIELDS.get(kind, ())
-        out = {k: v if k in kept else _map_strings(v, fn) for k, v in value.items()}
-        return out if any(out[k] is not value[k] for k in value) else value
+        return _map_dict(value, lambda k, v: v if k in kept else _map_strings(v, fn))
     return value
+
+
+def _map_dict(value: dict, fn: Callable[[Any, Any], Any]) -> dict:
+    out = {k: fn(k, v) for k, v in value.items()}
+    return out if any(out[k] is not value[k] for k in value) else value
+
+
+def _map_gemini_content(value: Any, fn: Callable[[str], str]) -> Any:
+    if isinstance(value, list):
+        out = [_map_gemini_content(item, fn) for item in value]
+        return out if any(a is not b for a, b in zip(out, value)) else value
+    if isinstance(value, dict) and isinstance(value.get("parts"), list):
+        return _map_dict(value, lambda k, v: _map_gemini_parts(v, fn) if k == "parts" else v)
+    return _map_strings(value, fn)
+
+
+def _map_gemini_parts(parts: list, fn: Callable[[str], str]) -> list:
+    out = [_map_gemini_part(part, fn) for part in parts]
+    return out if any(a is not b for a, b in zip(out, parts)) else parts
+
+
+def _map_gemini_part(part: Any, fn: Callable[[str], str]) -> Any:
+    if not isinstance(part, dict):
+        return _map_strings(part, fn)
+    if part.get("thought") is True:
+        return part
+    return _map_dict(part, lambda k, v: v if k in _GEMINI_OPAQUE_PART_KEYS else _map_strings(v, fn))
+
+
+def _map_gemini_config(config: Any, fn: Callable[[str], str]) -> Any:
+    if not isinstance(config, dict):
+        return config
+    return _map_dict(config, lambda k, v: _map_gemini_content(v, fn) if k in _GEMINI_SYSTEM_KEYS else v)
+
+
+def _mask_json_frame(frame: Any, fn: Callable[[str], str]) -> Any:
+    if not isinstance(frame, str):
+        return frame
+    try:
+        event = json.loads(frame)
+    except ValueError:
+        return frame
+    if not isinstance(event, dict):
+        return frame
+    out = {k: _map_strings(v, fn) if k in ("instructions", "input", "response") else v for k, v in event.items()}
+    return json.dumps(out) if any(out[k] is not event[k] for k in event) else frame
+
+
+_FIELD_MAPPERS = {
+    "contents": _map_gemini_content,
+    "systemInstruction": _map_gemini_content,
+    "system_instruction": _map_gemini_content,
+    "config": _map_gemini_config,
+    "first_message": _mask_json_frame,
+}
 
 
 def _restore_slots(obj: Any, state: _CallState, walk: Callable[[Any], Any]) -> Any:
     """Returns a restored deep copy of obj, or None when no slot yielded by walk holds a fake."""
-    pattern = state.pattern()
-    if not any(pattern.search(text) for _, _, text in walk(obj)):
+    if not any(state.contains(text) for _, _, text in walk(obj)):
         return None
     restored = copy.deepcopy(obj)
     for owner, key, text in walk(restored):
@@ -378,6 +572,28 @@ def _response_texts(response: Any):
             yield from _slots(_get(call, "function"), "arguments")
     for item in _get(response, "output") or ():
         yield from _item_texts(item)
+    for candidate in _get(response, "candidates") or ():
+        for part in _get(_get(candidate, "content"), "parts") or ():
+            yield from _gemini_part_texts(part)
+
+
+def _gemini_part_texts(part: Any):
+    if _get(part, "thought") is True:
+        return
+    yield from _slots(part, "text")
+    call = _get(part, "functionCall") or _get(part, "function_call")
+    args = _get(call, "args")
+    if isinstance(args, dict):
+        yield from _json_slots(args)
+
+
+def _json_slots(value: Any):
+    items = value.items() if isinstance(value, dict) else enumerate(value)
+    for key, child in items:
+        if isinstance(child, str):
+            yield value, key, child
+        elif isinstance(child, (dict, list)):
+            yield from _json_slots(child)
 
 
 def _item_texts(item: Any):
@@ -432,8 +648,8 @@ def _kind(owner: Any) -> str:
     return kind if isinstance(kind, str) else ""
 
 
-def _set(owner: Any, key: str, value: str) -> None:
-    if isinstance(owner, dict):
+def _set(owner: Any, key: Any, value: str) -> None:
+    if isinstance(owner, (dict, list)):
         owner[key] = value
     else:
         setattr(owner, key, value)
@@ -471,7 +687,10 @@ class _StreamRestorer:
         if _is_responses_event(chunk):
             self.mode = "responses"
             return self._responses_event(chunk)
-        if getattr(chunk, "choices", None) is not None:
+        choices = getattr(chunk, "choices", None)
+        if choices is not None:
+            if not choices:
+                return [*self._chat_tail(), chunk]
             return [self._chat(chunk)]
         return [chunk]
 
@@ -533,12 +752,15 @@ class _StreamRestorer:
     @staticmethod
     def _format(events: list) -> str:
         return "".join(
-            f"event: {e.get('type', 'message')}\ndata: {json.dumps(e)}\n\n" for e in events
+            (f"event: {e['type']}\n" if isinstance(e.get("type"), str) else "") + f"data: {json.dumps(e)}\n\n"
+            for e in events
         )
 
     def _events(self, event: dict) -> list:
         if _is_responses_event(event):
             return self._responses_event(event)
+        if isinstance(event.get("candidates"), list):
+            return self._gemini_event(event)
         kind = _kind(event)
         index = event.get("index")
         if kind == "content_block_delta" and isinstance(index, int):
@@ -562,7 +784,48 @@ class _StreamRestorer:
     def _flush_all_events(self) -> list:
         # Copy the keys first; _flush_event pops from hold.held.
         indices = [k for k in self.hold.held if isinstance(k, int)]
-        return [*(self._flush_event(i) for i in indices), *self._flush_responses()]
+        gemini = [k[1] for k in self.hold.held if isinstance(k, tuple) and k[0] == "gemini"]
+        return [
+            *(self._flush_event(i) for i in indices),
+            *self._flush_responses(),
+            *({"candidates": [{"index": c, "content": {"role": "model", "parts": [{"text": self.hold.flush(("gemini", c))}]}}]}
+              for c in gemini),
+        ]
+
+    def _gemini_event(self, event: dict) -> list:
+        restored = copy.deepcopy(event)
+        changed = False
+        for n, candidate in enumerate(restored["candidates"]):
+            if not isinstance(candidate, dict):
+                continue
+            key = ("gemini", candidate.get("index", n))
+            parts = [p for p in _get(candidate.get("content"), "parts") or () if isinstance(p, dict)]
+            last_text = None
+            for part in parts:
+                if part.get("thought") is True:
+                    continue
+                if isinstance(part.get("text"), str):
+                    text = self.hold.feed(key, part["text"])
+                    changed |= text != part["text"]
+                    part["text"] = text
+                    last_text = part
+                for owner, slot, value in _gemini_part_texts({k: v for k, v in part.items() if k != "text"}):
+                    real = self.hold.state.restore(value)
+                    if real != value:
+                        _set(owner, slot, real)
+                        changed = True
+            if candidate.get("finishReason") and key in self.hold.held:
+                tail = self.hold.flush(key)
+                if last_text is None:
+                    if not isinstance(candidate.get("content"), dict):
+                        candidate["content"] = {"role": "model"}
+                    if not isinstance(candidate["content"].get("parts"), list):
+                        candidate["content"]["parts"] = []
+                    candidate["content"]["parts"].insert(0, {"text": tail})
+                else:
+                    last_text["text"] += tail
+                changed = True
+        return [restored] if changed else [event]
 
     def _responses_event(self, event: Any) -> list:
         kind = _kind(event)
@@ -713,14 +976,14 @@ def _own(chunk: Any, out: Any) -> Any:
 
 
 def _parse_sse_data(block: str) -> Optional[dict]:
-    for line in block.split("\n"):
-        if line.startswith("data:"):
-            try:
-                event = json.loads(line[5:].strip())
-            except ValueError:
-                return None
-            return event if isinstance(event, dict) else None
-    return None
+    lines = [line[5:] for line in block.split("\n") if line.startswith("data:")]
+    if not lines:
+        return None
+    try:
+        event = json.loads("\n".join(line[1:] if line.startswith(" ") else line for line in lines))
+    except ValueError:
+        return None
+    return event if isinstance(event, dict) else None
 
 
 def _key_from_env() -> bytes:
@@ -731,4 +994,29 @@ def _key_from_env() -> bytes:
     return hmac.new(salt.encode(), b"litellm-secret-masking", hashlib.sha256).digest()
 
 
+def install_token_count_masking(middleware: SecretMaskingMiddleware, proxy_server: Any) -> None:
+    """Masks the body /v1/messages/count_tokens and friends send to the provider; they skip every proxy hook."""
+    original = getattr(proxy_server, "_try_provider_token_count", None)
+    if original is None:
+        _log_warning("secret masking: LiteLLM has no _try_provider_token_count; provider token count calls go unmasked")
+        return
+    if getattr(original, "_secret_masking", False):
+        return
+
+    async def masked(*args, **kwargs):
+        try:
+            if args:
+                raise TypeError("positional arguments cannot be masked")
+            kwargs = middleware.mask_token_count(kwargs)
+        except Exception as exc:  # noqa: BLE001 - None makes LiteLLM count locally instead
+            _log_warning("secret masking token count failed closed: %s", type(exc).__name__)
+            return None
+        return await original(**kwargs)
+
+    masked._secret_masking = True
+    proxy_server._try_provider_token_count = masked
+
+
 secret_masking = SecretMaskingMiddleware(key=_key_from_env())
+# Callbacks load from inside proxy_server's startup, so the module is already imported.
+install_token_count_masking(secret_masking, sys.modules.get("litellm.proxy.proxy_server"))

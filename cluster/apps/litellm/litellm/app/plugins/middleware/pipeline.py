@@ -61,20 +61,33 @@ class MiddlewarePipeline(CustomLogger):
                 response = result
         return response
 
-    async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data: dict):
+    # Plain def, not a generator: LiteLLM only iterates the result, so an untouched stream can be handed back as-is.
+    def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data: dict):
         stream = response
         for middleware in self.middlewares:
             hook = getattr(middleware, "async_post_call_streaming_iterator_hook", None)
-            if hook is not None:
+            if hook is not None and self._wants_stream(middleware, request_data):
                 stream = self._guarded_stream(middleware, hook, stream, user_api_key_dict, request_data)
+        return stream
 
-        async for chunk in stream:
-            yield chunk
+    def _wants_stream(self, middleware, request_data: dict) -> bool:
+        wants = getattr(middleware, "wants_stream", None)
+        if wants is None:
+            return True
+        try:
+            return bool(wants(request_data))
+        except Exception as exc:  # noqa: BLE001 - an unanswerable opt-out keeps the middleware on the stream
+            if not self.fail_open:
+                raise
+            self._log_warning("%s wants_stream failed open: %s", middleware, type(exc).__name__)
+            return True
 
     async def _guarded_stream(self, middleware, hook, upstream, user_api_key_dict, request_data):
         source = _TrackedStream(upstream)
+        inner = None
         try:
-            async for chunk in hook(user_api_key_dict=user_api_key_dict, response=source, request_data=request_data):
+            inner = hook(user_api_key_dict=user_api_key_dict, response=source, request_data=request_data)
+            async for chunk in inner:
                 source.pulled = None
                 yield chunk
         except Exception as exc:  # noqa: BLE001 - middleware should not break proxy traffic
@@ -87,10 +100,25 @@ class MiddlewarePipeline(CustomLogger):
                 yield chunk
             async for chunk in source:
                 yield chunk
+        finally:
+            try:
+                await self._aclose(middleware, inner)
+            finally:
+                await self._aclose(middleware, upstream)
+
+    async def _aclose(self, middleware, stream) -> None:
+        aclose = getattr(stream, "aclose", None)
+        if aclose is None:
+            return
+        try:
+            await aclose()
+        except Exception as exc:  # noqa: BLE001 - cleanup must not mask the stream's own outcome
+            self._log_warning("%s stream close failed: %s", middleware, type(exc).__name__)
 
     async def async_post_call_failure_hook(
         self, request_data: dict, original_exception, user_api_key_dict, traceback_str=None
     ):
+        transformed = None
         for middleware in self.middlewares:
             hook = getattr(middleware, "async_post_call_failure_hook", None)
             if hook is None:
@@ -104,11 +132,16 @@ class MiddlewarePipeline(CustomLogger):
                     traceback_str=traceback_str,
                 )
                 if inspect.isawaitable(result):
-                    await result
+                    result = await result
             except Exception as exc:  # noqa: BLE001 - failure hooks must never mask the original error
                 if not self.fail_open:
                     raise
                 self._log_warning("%s failure hook failed open: %s", middleware, type(exc).__name__)
+                continue
+
+            if transformed is None:
+                transformed = result
+        return transformed
 
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
         for middleware in self.middlewares:
