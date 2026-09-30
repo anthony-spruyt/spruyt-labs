@@ -58,3 +58,9 @@ def test_secret_masking_is_required(registry_module):
     spec = next(s for s in registry_module.DEFAULT_MIDDLEWARE_SPECS if s.name == "secret-masking")
 
     assert spec.required
+
+
+def test_ratelimit_headers_is_optional(registry_module):
+    spec = next(s for s in registry_module.DEFAULT_MIDDLEWARE_SPECS if s.name == "ratelimit-headers")
+
+    assert not spec.required

@@ -1,4 +1,5 @@
 import importlib
+import inspect
 import os
 import sys
 import types
@@ -226,6 +227,62 @@ async def test_streaming_iterator_without_middlewares_passes_through(pipeline_mo
         None, _stream(items), {})]
 
     assert out == items
+
+
+class StaticHeadersMiddleware:
+    def __init__(self, headers):
+        self.headers = headers
+        self.seen = None
+
+    async def async_post_call_response_headers_hook(
+        self, data, user_api_key_dict, response, request_headers=None, litellm_call_info=None
+    ):
+        self.seen = (data, response, request_headers, litellm_call_info)
+        return self.headers
+
+
+class FailingHeadersMiddleware:
+    async def async_post_call_response_headers_hook(self, **kwargs):
+        raise RuntimeError("boom")
+
+
+async def test_response_headers_hooks_merge_in_order_and_fail_open(pipeline_module):
+    first = StaticHeadersMiddleware({"a": "1", "b": "1"})
+    last = StaticHeadersMiddleware({"b": "2"})
+    pipeline = pipeline_module.MiddlewarePipeline((
+        first, FailingHeadersMiddleware(), StaticHeadersMiddleware(None), last))
+
+    out = await pipeline.async_post_call_response_headers_hook(
+        {"id": 1}, None, "resp", request_headers={"h": "v"}, litellm_call_info={"i": 1})
+
+    assert out == {"a": "1", "b": "2"}
+    assert last.seen == ({"id": 1}, "resp", {"h": "v"}, {"i": 1})
+
+
+async def test_response_headers_hook_returns_none_when_no_middleware_adds_headers(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline((StaticHeadersMiddleware(None),))
+
+    assert await pipeline.async_post_call_response_headers_hook({}, None, "resp") is None
+
+
+async def test_response_headers_hook_can_fail_closed(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline((FailingHeadersMiddleware(),), fail_open=False)
+
+    with pytest.raises(RuntimeError):
+        await pipeline.async_post_call_response_headers_hook({}, None, "resp")
+
+
+def test_response_headers_hook_is_defined_on_the_pipeline_class_itself(pipeline_module):
+    # LiteLLM only runs this hook when the leaf class's __dict__ defines it.
+    assert "async_post_call_response_headers_hook" in pipeline_module.MiddlewarePipeline.__dict__
+
+
+def test_response_headers_hook_accepts_litellm_call_info(pipeline_module):
+    # LiteLLM only passes litellm_call_info when the signature names it.
+    params = inspect.signature(
+        pipeline_module.MiddlewarePipeline.async_post_call_response_headers_hook).parameters
+
+    assert "litellm_call_info" in params
 
 
 class FailureRecorderMiddleware:

@@ -727,6 +727,9 @@ persistence:
           - path: /app/custom_callbacks/middleware/pipeline_plugin.py
             subPath: pipeline_plugin.py
             readOnly: true
+          - path: /app/custom_callbacks/middleware/ratelimit_headers.py
+            subPath: ratelimit_headers.py
+            readOnly: true
           - path: /app/custom_callbacks/middleware/registry.py
             subPath: registry.py
             readOnly: true

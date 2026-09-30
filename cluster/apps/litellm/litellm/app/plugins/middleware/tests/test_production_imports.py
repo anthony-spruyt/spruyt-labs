@@ -54,6 +54,7 @@ def test_production_dotted_imports_resolve(production_import_shape):
         "custom_callbacks.middleware.pipeline_plugin",
         "custom_callbacks.middleware.shared_fakes",
         "custom_callbacks.middleware.secret_masking",
+        "custom_callbacks.middleware.ratelimit_headers",
     ]
 
     for module in modules:
@@ -75,6 +76,20 @@ def test_production_pipeline_loads_secret_masking(production_import_shape):
     masking = importlib.import_module("custom_callbacks.middleware.secret_masking")
 
     assert masking.secret_masking in plugin.pipeline_middleware.middlewares
+
+
+def test_production_pipeline_loads_ratelimit_headers(production_import_shape):
+    for module in [
+        "custom_callbacks.middleware.ratelimit_headers",
+        "custom_callbacks.middleware.registry",
+        "custom_callbacks.middleware.pipeline_plugin",
+    ]:
+        sys.modules.pop(module, None)
+
+    plugin = importlib.import_module("custom_callbacks.middleware.pipeline_plugin")
+    restorer = importlib.import_module("custom_callbacks.middleware.ratelimit_headers")
+
+    assert restorer.ratelimit_headers in plugin.pipeline_middleware.middlewares
 
 
 class _FakeResponse:

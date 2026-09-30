@@ -73,8 +73,18 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 
 ### Proxy-side plugins
 
-`litellm/app/plugins/` is mounted into the pod as ConfigMap subPath files under `/app/custom_callbacks/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` is in `DEFAULT_MIDDLEWARE_SPECS`, so the `hindsight` and `chatgpt`
-middlewares are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content).
+`litellm/app/plugins/` is mounted into the pod as ConfigMap subPath files under `/app/custom_callbacks/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` and `ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`, so the
+`hindsight` and `chatgpt` middlewares are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content).
+
+### Rate-limit headers
+
+LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and has no setting to turn that off, so Claude Code never sees `anthropic-ratelimit-unified-*` and its status line gets `rate_limits: null`. `middleware/ratelimit_headers.py` adds un-prefixed copies of that header family only, from `async_post_call_response_headers_hook`, and leaves the prefixed ones in place.
+
+- Streamed replies: read from `response._hidden_params["additional_headers"]`. Non-streamed replies: the proxy pops `_hidden_params` from dict responses before the hook runs, so the raw upstream headers are read from `data["litellm_logging_obj"].model_call_details["httpx_response"]`.
+- LiteLLM only calls the hook if the callback's own class defines it (a leaf `__dict__` check), so `MiddlewarePipeline` must define `async_post_call_response_headers_hook` itself, not inherit it.
+- Not covered: error replies (429s) and the opt-in `LITELLM_RUST` `/v1/messages` path, which sets neither header source.
+- It is optional in `registry.py`: an import failure logs a warning and the proxy serves without it.
+- Remove it once LiteLLM forwards `anthropic-ratelimit-unified-*` unprefixed or adds a setting to do so.
 
 ### Secret masking
 
