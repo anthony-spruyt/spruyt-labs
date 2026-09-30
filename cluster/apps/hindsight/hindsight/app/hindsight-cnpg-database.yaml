@@ -12,4 +12,4 @@ spec:
   extensions:
     - name: vector
       # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/pgvector extractVersion=^(?<version>\d+\.\d+\.\d+)-18-trixie$
-      version: "0.8.2"
+      version: "0.8.6"
