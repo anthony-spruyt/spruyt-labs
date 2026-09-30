@@ -121,7 +121,7 @@ def _json_escape(value: str) -> str:
     return json.dumps(value)[1:-1]
 
 
-_NEVER = re.compile(r"(?!)")
+_NEVER = re.compile(r"\b\B")
 
 
 class _FakeMap:
@@ -587,6 +587,17 @@ def _gemini_part_texts(part: Any):
         yield from _json_slots(args)
 
 
+def _gemini_append_tail(candidate: dict, last_text: Optional[dict], tail: str) -> None:
+    if last_text is not None:
+        last_text["text"] += tail
+        return
+    if not isinstance(candidate.get("content"), dict):
+        candidate["content"] = {"role": "model"}
+    if not isinstance(candidate["content"].get("parts"), list):
+        candidate["content"]["parts"] = []
+    candidate["content"]["parts"].insert(0, {"text": tail})
+
+
 def _json_slots(value: Any):
     items = value.items() if isinstance(value, dict) else enumerate(value)
     for key, child in items:
@@ -796,36 +807,40 @@ class _StreamRestorer:
         restored = copy.deepcopy(event)
         changed = False
         for n, candidate in enumerate(restored["candidates"]):
-            if not isinstance(candidate, dict):
-                continue
-            key = ("gemini", candidate.get("index", n))
-            parts = [p for p in _get(candidate.get("content"), "parts") or () if isinstance(p, dict)]
-            last_text = None
-            for part in parts:
-                if part.get("thought") is True:
-                    continue
-                if isinstance(part.get("text"), str):
-                    text = self.hold.feed(key, part["text"])
-                    changed |= text != part["text"]
-                    part["text"] = text
-                    last_text = part
-                for owner, slot, value in _gemini_part_texts({k: v for k, v in part.items() if k != "text"}):
-                    real = self.hold.state.restore(value)
-                    if real != value:
-                        _set(owner, slot, real)
-                        changed = True
-            if candidate.get("finishReason") and key in self.hold.held:
-                tail = self.hold.flush(key)
-                if last_text is None:
-                    if not isinstance(candidate.get("content"), dict):
-                        candidate["content"] = {"role": "model"}
-                    if not isinstance(candidate["content"].get("parts"), list):
-                        candidate["content"]["parts"] = []
-                    candidate["content"]["parts"].insert(0, {"text": tail})
-                else:
-                    last_text["text"] += tail
-                changed = True
+            if isinstance(candidate, dict):
+                changed |= self._gemini_candidate(candidate, ("gemini", candidate.get("index", n)))
         return [restored] if changed else [event]
+
+    def _gemini_candidate(self, candidate: dict, key: tuple) -> bool:
+        parts = [p for p in _get(candidate.get("content"), "parts") or () if isinstance(p, dict)]
+        changed = False
+        last_text = None
+        for part in parts:
+            if part.get("thought") is True:
+                continue
+            if isinstance(part.get("text"), str):
+                changed |= self._gemini_feed_text(key, part)
+                last_text = part
+            changed |= self._gemini_restore_part(part)
+        if candidate.get("finishReason") and key in self.hold.held:
+            _gemini_append_tail(candidate, last_text, self.hold.flush(key))
+            changed = True
+        return changed
+
+    def _gemini_feed_text(self, key: tuple, part: dict) -> bool:
+        text = self.hold.feed(key, part["text"])
+        changed = text != part["text"]
+        part["text"] = text
+        return changed
+
+    def _gemini_restore_part(self, part: dict) -> bool:
+        changed = False
+        for owner, slot, value in _gemini_part_texts({k: v for k, v in part.items() if k != "text"}):
+            real = self.hold.state.restore(value)
+            if real != value:
+                _set(owner, slot, real)
+                changed = True
+        return changed
 
     def _responses_event(self, event: Any) -> list:
         kind = _kind(event)
