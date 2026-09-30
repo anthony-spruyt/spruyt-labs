@@ -14,6 +14,15 @@ spec:
     - websecure
   routes:
     - kind: Rule
+      match: Host(`litellm.${EXTERNAL_DOMAIN}`) && HeaderRegexp(`Upgrade`, `(?i)websocket`)
+      priority: 1000
+      middlewares:
+        - name: deny-all
+      services:
+        - name: litellm
+          namespace: litellm
+          port: 4000
+    - kind: Rule
       match: Host(`litellm.${EXTERNAL_DOMAIN}`)
       services:
         - name: litellm
