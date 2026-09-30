@@ -15,6 +15,8 @@ The IngressRoute/Certificate pattern and DNS annotations are in [`.claude/rules/
 
 Middlewares must live in the route's namespace because `allowCrossNamespace: false`; that is why each directory patches its own copy of `lan-ip-whitelist`, `compress` and friends. SSO wiring (`authentik-forward-auth`, `https-proto-header`) is covered in the [authentik README](../../authentik-system/authentik/README.md).
 
+To block part of a host, add a higher-`priority` route matching it with the `deny-all` middleware (403). The route still needs a real `services` entry, which never gets called. Example: WebSocket upgrades in `ingress/litellm/`.
+
 ### Local plugin: traefik-api-key-auth
 
 `app/plugins/traefik-api-key-auth/` is vendored source for [LinkPhoenix/traefik-api-key-auth](https://github.com/LinkPhoenix/traefik-api-key-auth), loaded as a local plugin from a ConfigMap. It is vendored because the upstream module is not in the Traefik plugin catalog, so a remote plugin reference fails to download and every route using it returns 404. The local copy also adds a passthrough mode
