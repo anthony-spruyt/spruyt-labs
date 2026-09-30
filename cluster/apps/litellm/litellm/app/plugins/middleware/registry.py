@@ -16,6 +16,9 @@ class MiddlewareSpec:
 DEFAULT_MIDDLEWARE_SPECS: tuple[MiddlewareSpec, ...] = (
     # Required: a rollout with a broken module stalls on readiness instead of serving unmasked.
     MiddlewareSpec("secret-masking", "custom_callbacks.middleware.secret_masking", "secret_masking"),
+    MiddlewareSpec(
+        "ratelimit-headers", "custom_callbacks.middleware.ratelimit_headers", "ratelimit_headers", required=False
+    ),
 )
 
 

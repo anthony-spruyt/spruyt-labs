@@ -115,6 +115,35 @@ class MiddlewarePipeline(CustomLogger):
         except Exception as exc:  # noqa: BLE001 - cleanup must not mask the stream's own outcome
             self._log_warning("%s stream close failed: %s", middleware, type(exc).__name__)
 
+    async def async_post_call_response_headers_hook(
+        self, data: dict, user_api_key_dict, response, request_headers=None, litellm_call_info=None
+    ):
+        merged: dict = {}
+        for middleware in self.middlewares:
+            hook = getattr(middleware, "async_post_call_response_headers_hook", None)
+            if hook is None:
+                continue
+
+            try:
+                result = hook(
+                    data=data,
+                    user_api_key_dict=user_api_key_dict,
+                    response=response,
+                    request_headers=request_headers,
+                    litellm_call_info=litellm_call_info,
+                )
+                if inspect.isawaitable(result):
+                    result = await result
+            except Exception as exc:  # noqa: BLE001 - header hooks must not break proxy traffic
+                if not self.fail_open:
+                    raise
+                self._log_warning("%s response headers hook failed open: %s", middleware, type(exc).__name__)
+                continue
+
+            if result:
+                merged.update(result)
+        return merged or None
+
     async def async_post_call_failure_hook(
         self, request_data: dict, original_exception, user_api_key_dict, traceback_str=None
     ):
