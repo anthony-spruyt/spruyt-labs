@@ -52,3 +52,9 @@ def test_load_middlewares_raises_for_failed_required_specs(registry_module):
 
     with pytest.raises(RuntimeError, match="required missing middleware"):
         registry_module.load_middlewares(specs)
+
+
+def test_secret_masking_is_required(registry_module):
+    spec = next(s for s in registry_module.DEFAULT_MIDDLEWARE_SPECS if s.name == "secret-masking")
+
+    assert spec.required

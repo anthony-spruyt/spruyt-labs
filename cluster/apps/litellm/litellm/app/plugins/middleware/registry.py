@@ -13,7 +13,10 @@ class MiddlewareSpec:
     required: bool = True
 
 
-DEFAULT_MIDDLEWARE_SPECS: tuple[MiddlewareSpec, ...] = ()
+DEFAULT_MIDDLEWARE_SPECS: tuple[MiddlewareSpec, ...] = (
+    # Required: a rollout with a broken module stalls on readiness instead of serving unmasked.
+    MiddlewareSpec("secret-masking", "custom_callbacks.middleware.secret_masking", "secret_masking"),
+)
 
 
 def load_middlewares(specs: Iterable[MiddlewareSpec], logger: Any = None) -> tuple[Any, ...]:

@@ -729,6 +729,9 @@ persistence:
           - path: /app/custom_callbacks/middleware/registry.py
             subPath: registry.py
             readOnly: true
+          - path: /app/custom_callbacks/middleware/secret_masking.py
+            subPath: secret_masking.py
+            readOnly: true
   chatgpt-auth-data:
     type: persistentVolumeClaim
     existingClaim: chatgpt-auth-data
