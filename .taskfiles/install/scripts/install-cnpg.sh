@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=cloudnative-pg/cloudnative-pg datasource=github-releases
-VERSION="v1.30.0"
+VERSION="v1.30.1"
 
 ARCH=$(uname -m)
 case "$ARCH" in
