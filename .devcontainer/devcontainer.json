@@ -36,17 +36,17 @@
       "version": "1.27.1"
     },
     "ghcr.io/devcontainers/features/terraform": {
-      "version": "1.16.3"
+      "version": "1.16.4"
     },
     "ghcr.io/devcontainers-extra/features/renovate-cli": {
-      "version": "44.105.0"
+      "version": "44.108.2"
     },
     "ghcr.io/devcontainers-extra/features/sops": {
       "version": "3.13.3"
     },
     "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
       "jqVersion": "1.8.1",
-      "yqVersion": "4.53.6",
+      "yqVersion": "4.54.1",
       "gojqVersion": "0.12.19"
     }
   },
