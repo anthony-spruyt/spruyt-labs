@@ -508,6 +508,7 @@ configMaps:
           cache: true
           cache_params:
             type: redis
+            ttl: 3600
           callbacks:
             - otel
             - prometheus

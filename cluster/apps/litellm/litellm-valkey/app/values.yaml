@@ -38,7 +38,8 @@ valkeyConfig: |
   appendfsync everysec
   no-appendfsync-on-rewrite yes
   maxmemory 128mb
-  maxmemory-policy noeviction
+  # Only TTL'd keys (response cache) are evictable; untimed keys (spend buffer) are kept
+  maxmemory-policy volatile-lru
 dataStorage:
   enabled: true
   className: rbd-fast-delete
