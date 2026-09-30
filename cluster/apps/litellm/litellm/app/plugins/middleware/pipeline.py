@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 
 from litellm._logging import verbose_proxy_logger
 from litellm.integrations.custom_logger import CustomLogger
@@ -75,13 +75,15 @@ class MiddlewarePipeline(CustomLogger):
         source = _TrackedStream(upstream)
         try:
             async for chunk in hook(user_api_key_dict=user_api_key_dict, response=source, request_data=request_data):
-                source.unsent.clear()
+                source.pulled = None
                 yield chunk
         except Exception as exc:  # noqa: BLE001 - middleware should not break proxy traffic
-            if source.failed or not self.fail_open:
+            # After its first yield a middleware may hold buffered data, so replay would corrupt the stream.
+            if source.failed or source.pulled is None or not self.fail_open:
                 raise
             self._log_warning("%s streaming hook failed open: %s", middleware, type(exc).__name__)
-            for chunk in source.unsent:
+            pulled, source.pulled = source.pulled, None
+            for chunk in pulled:
                 yield chunk
             async for chunk in source:
                 yield chunk
@@ -132,11 +134,11 @@ class MiddlewarePipeline(CustomLogger):
 
 
 class _TrackedStream:
-    """Remembers chunks pulled since the middleware last yielded, so fail-open can replay them."""
+    """Remembers chunks pulled before the middleware first yields, so fail-open can replay them."""
 
     def __init__(self, upstream: Any) -> None:
         self._it = upstream.__aiter__()
-        self.unsent: list = []
+        self.pulled: Optional[list] = []
         self.failed = False
         self.done = False
 
@@ -155,5 +157,6 @@ class _TrackedStream:
         except Exception:
             self.failed = True
             raise
-        self.unsent.append(chunk)
+        if self.pulled is not None:
+            self.pulled.append(chunk)
         return chunk

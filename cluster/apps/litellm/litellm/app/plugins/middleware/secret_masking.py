@@ -12,9 +12,12 @@ import re
 import string
 import time
 from collections import OrderedDict
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
-from litellm._logging import verbose_proxy_logger
+try:
+    from .pipeline import MiddlewarePipeline
+except ImportError:
+    from pipeline import MiddlewarePipeline
 
 
 _URLSAFE_20 = r"[A-Za-z0-9_\-]{20,}"
@@ -41,7 +44,11 @@ _PATTERNS: tuple[tuple[str, str, Optional[str]], ...] = (
     (r"tskey-[a-z]+-", r"[A-Za-z0-9\-]{20,}", None),
     (r"AGE-SECRET-KEY-1", r"[0-9A-Z]{58}", None),
     (r"eyJ", r"[A-Za-z0-9_\-]{10,}\.eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}", None),
-    (r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"(?:(?!-----BEGIN )[\s\S]){16,16384}?", r"-----END [A-Z ]*PRIVATE KEY-----"),
+    (
+        r"-----BEGIN [A-Z ]*PRIVATE KEY(?: BLOCK)?-----",
+        r"(?:(?!-----BEGIN )[\s\S]){16,16384}?",
+        r"-----END [A-Z ]*PRIVATE KEY(?: BLOCK)?-----",
+    ),
 )
 
 
@@ -52,14 +59,42 @@ def _compile_patterns() -> re.Pattern:
         if suffix:
             part += f"(?P<s{i}>{suffix})"
         parts.append(part)
-    return re.compile(r"(?<![A-Za-z0-9_])(?:" + "|".join(parts) + ")")
+    # A JSON escape like \n ends in a letter, so it is allowed as a boundary.
+    boundary = r"(?:(?<![A-Za-z0-9_])|(?<=\\[nrtbf])|(?<=\\u[0-9A-Fa-f]{4}))"
+    return re.compile(boundary + "(?:" + "|".join(parts) + ")")
 
 
 _SECRET_RE = _compile_patterns()
-_OPAQUE_BLOCK_TYPES = frozenset({"thinking", "redacted_thinking", "base64", "input_audio"})
-_MASKED_FIELDS = ("system", "messages")
-_SUPPORTED_CALL_TYPES = frozenset({"anthropic_messages", "acompletion", "completion"})
+_log_warning = MiddlewarePipeline._log_warning
+_OPAQUE_BLOCK_TYPES = frozenset({"thinking", "redacted_thinking", "reasoning", "base64", "input_audio"})
+# Only the media-source fields: presigned URLs carry credentials, and rewriting them breaks the fetch.
+_OPAQUE_FIELDS = {
+    "image_url": ("image_url",),
+    "file": ("file",),
+    "input_image": ("image_url",),
+    "input_file": ("file_url", "file_data"),
+    "url": ("url",),
+}
+_MASKED_FIELDS = {
+    "anthropic_messages": ("system", "messages"),
+    "acompletion": ("messages",),
+    "completion": ("messages",),
+    "aresponses": ("instructions", "input"),
+    "responses": ("instructions", "input"),
+    "atext_completion": ("prompt",),
+    "text_completion": ("prompt",),
+}
 _STREAM_DELTA_FIELDS = {"text_delta": "text", "input_json_delta": "partial_json"}
+# Responses API: delta event -> (done event, field on the done event holding the full text).
+_RESPONSES_DELTAS = {
+    "response.output_text.delta": ("response.output_text.done", "text"),
+    "response.refusal.delta": ("response.refusal.done", "refusal"),
+    "response.function_call_arguments.delta": ("response.function_call_arguments.done", "arguments"),
+    "response.custom_tool_call_input.delta": ("response.custom_tool_call_input.done", "input"),
+}
+_RESPONSES_DONE = {done: (delta, field) for delta, (done, field) in _RESPONSES_DELTAS.items()}
+_RESPONSES_TERMINAL = frozenset({"response.completed", "response.incomplete", "response.failed"})
+_RESPONSES_TEXT_PARTS = frozenset({"output_text", "refusal"})
 _HEX_BODY = frozenset("0123456789abcdef")
 _DATA_URL_RE = re.compile(r"data:[^\s,]*;base64,")
 
@@ -129,9 +164,10 @@ class _Holdback:
 
 
 class SecretMaskingMiddleware:
-    def __init__(self, key: bytes, ttl_seconds: float = 3600.0) -> None:
+    def __init__(self, key: bytes, ttl_seconds: float = 3600.0, max_calls: int = 10000) -> None:
         self._key = key
         self._ttl = ttl_seconds
+        self._max_calls = max_calls
         self._calls: OrderedDict[str, _CallState] = OrderedDict()
 
     def pending_calls(self) -> int:
@@ -139,22 +175,23 @@ class SecretMaskingMiddleware:
 
     # async_* names mirror LiteLLM's CustomLogger hooks; callers await them.
     async def async_pre_call_hook(self, _user_api_key_dict, _cache, data: dict, call_type: str):  # NOSONAR
+        self._prune()
         call_id = data.get("litellm_call_id")
-        if call_type not in _SUPPORTED_CALL_TYPES or not call_id:
+        fields = _MASKED_FIELDS.get(call_type)
+        if not fields or not call_id:
             return data
 
         state = _CallState()
         masked = {}
-        for field in _MASKED_FIELDS:
+        for field in fields:
             if field in data:
-                value = self._mask_value(data[field], state)
+                value = _map_strings(data[field], lambda text: self._mask_text(text, state))
                 if value is not data[field]:
                     masked[field] = value
         if not state.fakes:
             return data
 
         data.update(masked)
-        self._prune()
         state.holders.add(_holder(data))
         # Clients can set the call id (x-litellm-call-id), so in-flight calls may share one.
         existing = self._calls.get(call_id)
@@ -163,6 +200,8 @@ class SecretMaskingMiddleware:
         else:
             existing.merge(state)
             self._calls.move_to_end(call_id)
+        while len(self._calls) > self._max_calls:
+            self._calls.popitem(last=False)
         return data
 
     async def async_post_call_success_hook(self, data: dict, response, **_):  # NOSONAR
@@ -172,8 +211,8 @@ class SecretMaskingMiddleware:
             return None
         self._release(call_id, data)
         if isinstance(response, dict):
-            return _restore_value(response, state)
-        return _restore_chat_response(response, state)
+            return _map_strings(response, state.restore)
+        return _restore_slots(response, state, _response_texts)
 
     async def async_post_call_failure_hook(self, request_data: dict, **_) -> None:  # NOSONAR
         self._release((request_data or {}).get("litellm_call_id"), request_data)
@@ -205,19 +244,6 @@ class SecretMaskingMiddleware:
             if oldest.created >= cutoff:
                 break
             self._calls.popitem(last=False)
-
-    def _mask_value(self, value: Any, state: _CallState) -> Any:
-        if isinstance(value, str):
-            return value if _DATA_URL_RE.match(value) else self._mask_text(value, state)
-        if isinstance(value, list):
-            out = [self._mask_value(item, state) for item in value]
-            return out if any(a is not b for a, b in zip(out, value)) else value
-        if isinstance(value, dict):
-            if value.get("type") in _OPAQUE_BLOCK_TYPES:
-                return value
-            out = {k: self._mask_value(v, state) for k, v in value.items()}
-            return out if any(out[k] is not value[k] for k in value) else value
-        return value
 
     def _mask_text(self, text: str, state: _CallState) -> str:
         def replace(match: re.Match) -> str:
@@ -314,36 +340,103 @@ async def _restore_stream(response, restorer: _StreamRestorer):
         yield rest
 
 
-def _restore_value(value: Any, state: _CallState) -> Any:
+def _map_strings(value: Any, fn: Callable[[str], str]) -> Any:
+    """Applies fn to every string outside opaque blocks, sharing unchanged subtrees with the input."""
     if isinstance(value, str):
-        return state.restore(value)
+        return value if _DATA_URL_RE.match(value) else fn(value)
     if isinstance(value, list):
-        out = [_restore_value(item, state) for item in value]
-        return out if any(a is not b and a != b for a, b in zip(out, value)) else value
+        out = [_map_strings(item, fn) for item in value]
+        return out if any(a is not b for a, b in zip(out, value)) else value
     if isinstance(value, dict):
-        if value.get("type") in _OPAQUE_BLOCK_TYPES:
+        kind = _kind(value)
+        if kind in _OPAQUE_BLOCK_TYPES:
             return value
-        out = {k: _restore_value(v, state) for k, v in value.items()}
-        return out if any(out[k] != value[k] for k in value) else value
+        kept = _OPAQUE_FIELDS.get(kind, ())
+        out = {k: v if k in kept else _map_strings(v, fn) for k, v in value.items()}
+        return out if any(out[k] is not value[k] for k in value) else value
     return value
 
 
-def _restore_chat_response(response: Any, state: _CallState) -> Any:
-    choices = getattr(response, "choices", None)
-    if not choices:
+def _restore_slots(obj: Any, state: _CallState, walk: Callable[[Any], Any]) -> Any:
+    """Returns a restored deep copy of obj, or None when no slot yielded by walk holds a fake."""
+    pattern = state.pattern()
+    if not any(pattern.search(text) for _, _, text in walk(obj)):
         return None
-    restored = copy.deepcopy(response)
-    for choice in restored.choices:
-        message = getattr(choice, "message", None)
-        if message is None:
-            continue
-        if isinstance(getattr(message, "content", None), str):
-            message.content = state.restore(message.content)
-        for call in getattr(message, "tool_calls", None) or ():
-            function = getattr(call, "function", None)
-            if function is not None and isinstance(function.arguments, str):
-                function.arguments = state.restore(function.arguments)
+    restored = copy.deepcopy(obj)
+    for owner, key, text in walk(restored):
+        _set(owner, key, state.restore(text))
     return restored
+
+
+def _response_texts(response: Any):
+    """Yields (owner, key, text) for every model-written string in a chat, text or Responses API reply."""
+    for choice in _get(response, "choices") or ():
+        yield from _slots(choice, "text")
+        message = _get(choice, "message")
+        yield from _slots(message, "content")
+        for call in _get(message, "tool_calls") or ():
+            yield from _slots(_get(call, "function"), "arguments")
+    for item in _get(response, "output") or ():
+        yield from _item_texts(item)
+
+
+def _item_texts(item: Any):
+    kind = _kind(item)
+    if kind == "message":
+        for part in _get(item, "content") or ():
+            yield from _part_texts(part)
+    elif kind == "function_call":
+        yield from _slots(item, "arguments")
+    elif kind == "custom_tool_call":
+        yield from _slots(item, "input")
+
+
+def _part_texts(part: Any):
+    if _kind(part) in _RESPONSES_TEXT_PARTS:
+        yield from _slots(part, "text", "refusal")
+
+
+def _event_texts(event: Any):
+    done = _RESPONSES_DONE.get(_kind(event))
+    if done is not None:
+        yield from _slots(event, done[1])
+    response = _get(event, "response")
+    if response is not None:
+        yield from _response_texts(response)
+    item = _get(event, "item")
+    if item is not None:
+        yield from _item_texts(item)
+    part = _get(event, "part")
+    if part is not None:
+        yield from _part_texts(part)
+
+
+def _slots(owner: Any, *keys: str):
+    for key in keys:
+        value = _get(owner, key)
+        if isinstance(value, str):
+            yield owner, key, value
+
+
+def _get(owner: Any, key: str) -> Any:
+    if owner is None:
+        return None
+    if isinstance(owner, dict):
+        return owner.get(key)
+    return getattr(owner, key, None)
+
+
+def _kind(owner: Any) -> str:
+    # JSON schemas in tool input use "type": [..] or {..}; those are unhashable.
+    kind = _get(owner, "type")
+    return kind if isinstance(kind, str) else ""
+
+
+def _set(owner: Any, key: str, value: str) -> None:
+    if isinstance(owner, dict):
+        owner[key] = value
+    else:
+        setattr(owner, key, value)
 
 
 class _StreamRestorer:
@@ -357,6 +450,7 @@ class _StreamRestorer:
         self.chat_choices: dict[int, Any] = {}
         self.delta_cls: Any = None
         self.tool_templates: dict[tuple, Any] = {}
+        self.responses_templates: dict[tuple, Any] = {}
         self._checkpoint: tuple = ("", b"", {})
 
     def process(self, chunk: Any) -> list:
@@ -374,6 +468,9 @@ class _StreamRestorer:
         if isinstance(chunk, dict):
             self.mode = "dict"
             return self._events(chunk)
+        if _is_responses_event(chunk):
+            self.mode = "responses"
+            return self._responses_event(chunk)
         if getattr(chunk, "choices", None) is not None:
             return [self._chat(chunk)]
         return [chunk]
@@ -381,8 +478,13 @@ class _StreamRestorer:
     def finish(self) -> list:
         if self.mode in ("bytes", "str"):
             return self._sse_tail(b"" if self.mode == "bytes" else "")
+        return self._flush_tail()
+
+    def _flush_tail(self) -> list:
         if self.mode == "dict":
             return self._flush_all_events()
+        if self.mode == "responses":
+            return self._flush_responses()
         return self._chat_tail()
 
     def fail_open(self, chunk: Any) -> list:
@@ -395,7 +497,7 @@ class _StreamRestorer:
             raw = undecoded + bytes(chunk or b"") if self.mode == "bytes" else (chunk or "")
             return self._sse_tail(raw)
         try:
-            flushed = self._flush_all_events() if self.mode == "dict" else self._chat_tail()
+            flushed = self._flush_tail()
         except Exception:  # noqa: BLE001 - held text is lost rather than the whole stream
             flushed = []
         return flushed if chunk is None else [*flushed, chunk]
@@ -435,11 +537,13 @@ class _StreamRestorer:
         )
 
     def _events(self, event: dict) -> list:
-        kind = event.get("type")
+        if _is_responses_event(event):
+            return self._responses_event(event)
+        kind = _kind(event)
         index = event.get("index")
         if kind == "content_block_delta" and isinstance(index, int):
             delta = event.get("delta") or {}
-            field = _STREAM_DELTA_FIELDS.get(delta.get("type"))
+            field = _STREAM_DELTA_FIELDS.get(_kind(delta))
             if field is None or not isinstance(delta.get(field), str):
                 return [event]
             self.delta_types[index] = delta["type"]
@@ -458,7 +562,34 @@ class _StreamRestorer:
     def _flush_all_events(self) -> list:
         # Copy the keys first; _flush_event pops from hold.held.
         indices = [k for k in self.hold.held if isinstance(k, int)]
-        return [self._flush_event(i) for i in indices]
+        return [*(self._flush_event(i) for i in indices), *self._flush_responses()]
+
+    def _responses_event(self, event: Any) -> list:
+        kind = _kind(event)
+        if kind in _RESPONSES_DELTAS:
+            delta = _get(event, "delta")
+            if not isinstance(delta, str):
+                return [event]
+            key = _responses_key(event, kind)
+            self.responses_templates[key] = event
+            text = self.hold.feed(key, delta)
+            return [event] if text == delta else [_with(event, delta=text)]
+        flushed = []
+        if kind in _RESPONSES_DONE:
+            key = _responses_key(event, _RESPONSES_DONE[kind][0])
+            if key in self.hold.held:
+                flushed.append(self._flush_responses_key(key))
+        elif kind in _RESPONSES_TERMINAL:
+            flushed = self._flush_responses()
+        restored = _restore_slots(event, self.hold.state, _event_texts)
+        return [*flushed, event if restored is None else restored]
+
+    def _flush_responses(self) -> list:
+        keys = [k for k in self.hold.held if isinstance(k, tuple) and k[0] == "responses"]
+        return [self._flush_responses_key(k) for k in keys]
+
+    def _flush_responses_key(self, key: tuple) -> Any:
+        return _with(self.responses_templates[key], delta=self.hold.flush(key))
 
     def _flush_event(self, index: int) -> dict:
         delta_type = self.delta_types.get(index, "text_delta")
@@ -477,6 +608,20 @@ class _StreamRestorer:
             if delta is not None:
                 self.delta_cls = self.delta_cls or type(delta)
                 out = self._chat_choice(chunk, out, n, choice, delta)
+            else:
+                out = self._text_choice(chunk, out, n, choice)
+        return out
+
+    def _text_choice(self, chunk: Any, out: Any, n: int, choice: Any) -> Any:
+        content = getattr(choice, "text", None)
+        if isinstance(content, str):
+            text = self.hold.feed(("text", choice.index), content)
+            if text != content:
+                out = _own(chunk, out)
+                out.choices[n].text = text
+        if getattr(choice, "finish_reason", None) and self._holds_for(choice.index):
+            out = _own(chunk, out)
+            self._chat_flush_choice(out.choices[n])
         return out
 
     def _chat_choice(self, chunk: Any, out: Any, n: int, choice: Any, delta: Any) -> Any:
@@ -514,11 +659,19 @@ class _StreamRestorer:
         chunk.choices = [copy.deepcopy(self.chat_choices[i]) for i in held]
         for choice in chunk.choices:
             choice.finish_reason = None
-            choice.delta = self.delta_cls()
+            if getattr(choice, "delta", None) is None:
+                choice.text = None
+            else:
+                choice.delta = self.delta_cls()
             self._chat_flush_choice(choice)
         return [chunk]
 
     def _chat_flush_choice(self, choice: Any) -> None:
+        if getattr(choice, "delta", None) is None:
+            tail = self.hold.flush(("text", choice.index))
+            if tail:
+                choice.text = (getattr(choice, "text", None) or "") + tail
+            return
         tail = self.hold.flush(("content", choice.index))
         if tail:
             choice.delta.content = (getattr(choice.delta, "content", None) or "") + tail
@@ -538,6 +691,23 @@ class _StreamRestorer:
             choice.delta.tool_calls = calls
 
 
+def _is_responses_event(event: Any) -> bool:
+    return _kind(event).startswith("response.")
+
+
+def _responses_key(event: Any, delta_kind: str) -> tuple:
+    return ("responses", delta_kind, _get(event, "item_id"), _get(event, "output_index"), _get(event, "content_index"))
+
+
+def _with(event: Any, **fields: Any) -> Any:
+    if isinstance(event, dict):
+        return {**event, **fields}
+    out = copy.copy(event)
+    for key, value in fields.items():
+        setattr(out, key, value)
+    return out
+
+
 def _own(chunk: Any, out: Any) -> Any:
     return copy.deepcopy(chunk) if out is chunk else out
 
@@ -551,13 +721,6 @@ def _parse_sse_data(block: str) -> Optional[dict]:
                 return None
             return event if isinstance(event, dict) else None
     return None
-
-
-def _log_warning(message: str, *args: Any) -> None:
-    try:
-        verbose_proxy_logger.warning(message, *args)
-    except Exception:  # noqa: BLE001 - logging should never affect request handling
-        return
 
 
 def _key_from_env() -> bytes:

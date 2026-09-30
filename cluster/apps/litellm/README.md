@@ -64,15 +64,15 @@ middlewares are inert even though their files are still mounted. To enable one, 
 
 ### Secret masking
 
-`middleware/secret_masking.py` is always on for `/v1/messages` and `/v1/chat/completions`. Credentials with a known prefix (GitHub, Google, Anthropic, OpenAI, AWS, LiteLLM `sk-`, PEM private keys and others in `_PATTERNS`) are swapped for a fake with the same prefix, length and character classes before the request leaves the proxy. Fakes in the reply, including streamed text and tool-call
-arguments, are swapped back, so the model provider never sees the real value but client tools still get it.
+`middleware/secret_masking.py` is always on for `/v1/messages`, `/v1/chat/completions`, `/v1/responses` and `/v1/completions`. Credentials with a known prefix (GitHub, Google, Anthropic, OpenAI, AWS, LiteLLM `sk-`, PEM private keys and others in `_PATTERNS`) are swapped for a fake with the same prefix, length and character classes before the request leaves the proxy. Fakes in the reply, including
+streamed text and tool-call arguments, are swapped back, so the model provider never sees the real value but client tools still get it.
 
 - Fakes are an HMAC of the real value keyed from `LITELLM_SALT_KEY`, so the same secret gets the same fake across turns and replicas and prompt caching still hits. Rotating the salt changes every fake and busts those caches once. If the salt is missing, each pod logs a warning and uses a random key, so fakes differ per replica.
 - Secrets we generate ourselves (DB passwords, webhook secrets, service-to-service tokens) should use the `sl_` prefix plus letters and digits only, at least 32 characters in total, so they are caught too. Generate one with `task sops:gen-key` (64 by default; `length=32` for apps that cap password length). LiteLLM virtual keys must start with `sk-`, which is already caught.
 - Only prefixed formats are caught. Bare high-entropy strings (hashes, UUIDs, unprefixed passwords) pass through on purpose, to avoid mangling commit SHAs and similar.
-- Thinking blocks, base64 sources, `data:` URLs and `input_audio` are never touched: thinking signatures would break and binary payloads would be corrupted.
+- Thinking and reasoning blocks, base64 sources, `data:` URLs, `input_audio` and remote image/file URLs are never touched: thinking signatures would break, binary payloads would be corrupted, and presigned URLs would stop working.
 - The map from fake to real lives in pod memory for the length of one call. If a stream fails over to the other replica mid-flight, that reply keeps the fakes.
-- It fails open. A bug logs a warning and the traffic flows unmasked rather than failing. Mid-stream, the rest of the stream passes through raw, so the client may see fakes from that point on.
+- It fails open. A bug logs a warning and the traffic flows unmasked rather than failing. Mid-stream, the rest of the stream passes through raw, so the client may see fakes from that point on. If an error escapes a streaming middleware after it has sent output, the pipeline ends the stream with an error instead, because replaying would drop or duplicate buffered data.
 - It protects the model provider only. LiteLLM captures the request for its own logging (OTEL traces) before the hook runs, so treat those as holding real values.
 
 When adding a file to a plugin, also add it to the plugin's ConfigMap generator and its `advancedMounts` list in `values.yaml`. Run the plugin unit tests with `task test:litellm-middleware`.

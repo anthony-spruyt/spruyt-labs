@@ -262,10 +262,13 @@ async def test_fail_open_warnings_log_exception_type_not_message(pipeline_module
 
 class MidStreamFailingMiddleware:
     async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
+        buffered = []
         async for chunk in response:
             if chunk == "b":
                 raise RuntimeError("boom")
-            yield chunk.upper()
+            buffered.append(chunk.upper())
+        for chunk in buffered:
+            yield chunk
 
 
 class PassThroughStreamMiddleware:
@@ -280,13 +283,13 @@ async def _failing_upstream(items, error):
     raise error
 
 
-async def test_streaming_hook_error_mid_stream_fails_open(pipeline_module, fake_litellm):
+async def test_streaming_hook_error_before_first_output_fails_open(pipeline_module, fake_litellm):
     pipeline = pipeline_module.MiddlewarePipeline((MidStreamFailingMiddleware(),))
 
     out = [c async for c in pipeline.async_post_call_streaming_iterator_hook(
         None, _stream(["a", "b", "c"]), {})]
 
-    assert out == ["A", "b", "c"]
+    assert out == ["a", "b", "c"]
     assert "RuntimeError" in fake_litellm.verbose_proxy_logger.warnings[-1][0]
 
 
@@ -312,9 +315,10 @@ async def test_streaming_hook_does_not_swallow_upstream_errors(pipeline_module):
 
 class FailAtEndMiddleware:
     async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
-        async for chunk in response:
-            yield chunk
+        async for _ in response:
+            pass
         raise RuntimeError("boom")
+        yield
 
 
 class CountingStream:
@@ -340,3 +344,29 @@ async def test_fail_open_does_not_poll_an_exhausted_upstream_again(pipeline_modu
 
     assert out == ["a", "b"]
     assert upstream.polls_after_end == 1
+
+
+class SseBufferingMiddleware:
+    async def async_post_call_streaming_iterator_hook(self, user_api_key_dict, response, request_data):
+        buffer = ""
+        async for chunk in response:
+            if "fail" in chunk:
+                raise RuntimeError("boom")
+            buffer += chunk
+            *events, buffer = buffer.split("\n\n")
+            for event in events:
+                yield event + "\n\n"
+        if buffer:
+            yield buffer
+
+
+async def test_streaming_hook_error_after_output_fails_closed_instead_of_dropping_buffered_data(pipeline_module):
+    pipeline = pipeline_module.MiddlewarePipeline((SseBufferingMiddleware(),))
+
+    out = []
+    with pytest.raises(RuntimeError, match="boom"):
+        async for c in pipeline.async_post_call_streaming_iterator_hook(
+                None, _stream(["data: 1\n\ndata: 2", "\n\nfail\n\n", "data: 3\n\n"]), {}):
+            out.append(c)
+
+    assert out == ["data: 1\n\n"]

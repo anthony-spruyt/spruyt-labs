@@ -31,6 +31,8 @@ PEM = PEM_BEGIN + "\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7\n" + P
 def fake_litellm(monkeypatch):
     litellm = types.ModuleType("litellm")
     logging = types.ModuleType("litellm._logging")
+    custom_logger = types.ModuleType("litellm.integrations.custom_logger")
+    custom_logger.CustomLogger = type("CustomLogger", (), {})
 
     class Logger:
         def __init__(self):
@@ -42,12 +44,15 @@ def fake_litellm(monkeypatch):
     logging.verbose_proxy_logger = Logger()
     monkeypatch.setitem(sys.modules, "litellm", litellm)
     monkeypatch.setitem(sys.modules, "litellm._logging", logging)
+    monkeypatch.setitem(sys.modules, "litellm.integrations", types.ModuleType("litellm.integrations"))
+    monkeypatch.setitem(sys.modules, "litellm.integrations.custom_logger", custom_logger)
     return logging
 
 
 @pytest.fixture
 def mod():
     sys.modules.pop("secret_masking", None)
+    sys.modules.pop("pipeline", None)
     return importlib.import_module("secret_masking")
 
 
@@ -137,8 +142,22 @@ async def test_masks_pem_body_and_keeps_armour(mw):
     assert _classes(fake) == _classes(PEM)
 
 
-async def test_many_unterminated_pem_headers_mask_quickly(mw):
-    line = PEM_BEGIN
+async def test_masks_pgp_private_key_block(mw):
+    begin = "-----BEGIN PGP " + "PRIVATE KEY BLOCK-----"
+    end = "-----END PGP " + "PRIVATE KEY BLOCK-----"
+    body = "\n\nlQOYBF7xQ2kBCADc9Qm4Zp1Rv8TnK3sW6yH0jL5aB2cD7eF9gI1kM3oP5qS\n=Ab3C\n"
+    key = begin + body + end
+
+    fake = _user_text(await _mask(mw, key))
+
+    assert fake != key
+    assert fake.startswith(begin)
+    assert fake.endswith(end)
+    assert _classes(fake) == _classes(key)
+
+
+@pytest.mark.parametrize("line", [PEM_BEGIN, "-----BEGIN PGP " + "PRIVATE KEY BLOCK-----"], ids=["pem", "pgp"])
+async def test_many_unterminated_pem_headers_mask_quickly(mw, line):
     text = "\n".join(f"file{i}.pem:1:{line}" for i in range(5000))
 
     start = time.monotonic()
@@ -188,6 +207,26 @@ async def test_ignores_sl_key_shorter_than_minimum(mw):
 async def test_ignores_sl_identifiers_that_are_not_keys(mw):
     text = "call sl_parse_config() or sl_Xk9fQ2 or my_sl_Xk9fQ2mW7pL4rT8vN3bH6jD1sZ5cY0gA2eU7iO4w"
 
+    assert _user_text(await _mask(mw, text)) == text
+
+
+@pytest.mark.parametrize("escape", ["\\n", "\\t", "\\r", "\\b", "\\f", "\\u00a0"])
+async def test_masks_secret_after_json_escape(mw, escape):
+    text = '{"c": "line1' + escape + GH_PAT + '"}'
+
+    assert GH_PAT not in _user_text(await _mask(mw, text))
+
+
+async def test_masks_pem_after_json_newline_escape(mw):
+    text = json.dumps({"cert": "cert\n" + PEM})
+
+    out = _user_text(await _mask(mw, text))
+
+    assert "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7" not in out
+
+
+@pytest.mark.parametrize("text", ["n" + GH_PAT, "u00a0" + GH_PAT], ids=["n", "u00a0"])
+async def test_escape_letters_without_backslash_still_guard(mw, text):
     assert _user_text(await _mask(mw, text)) == text
 
 
@@ -257,6 +296,65 @@ async def test_masks_chat_completions_messages(mw):
     assert "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7" not in dumped
 
 
+@pytest.mark.parametrize("call_type", ["aresponses", "responses"])
+async def test_masks_responses_input_and_instructions(mw, call_type):
+    data = {
+        "litellm_call_id": "call-1",
+        "instructions": f"env: {GH_PAT}",
+        "input": [
+            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": GOOGLE}]},
+            {"type": "function_call", "call_id": "c1", "name": "sh", "arguments": json.dumps({"k": SL_KEY})},
+            {"type": "function_call_output", "call_id": "c1", "output": f"token={GH_PAT_2}"},
+        ],
+    }
+
+    out = await mw.async_pre_call_hook(None, None, data, call_type)
+
+    dumped = json.dumps(out)
+    for secret in (GH_PAT, GOOGLE, SL_KEY, GH_PAT_2):
+        assert secret not in dumped
+
+
+async def test_does_not_touch_responses_media_urls_or_reasoning(mw):
+    image = {"type": "input_image", "image_url": "https://x.test/a.png?sig=" + GH_PAT, "detail": "auto"}
+    file_ = {"type": "input_file", "file_url": "https://x.test/a.pdf?sig=" + GH_PAT,
+             "file_data": "https://x.test/b.pdf?sig=" + GH_PAT}
+    reasoning = {"type": "reasoning", "summary": [{"type": "summary_text", "text": GH_PAT}],
+                 "encrypted_content": "gAAAA/" + GOOGLE}
+    data = {
+        "litellm_call_id": "call-1",
+        "input": [
+            copy.deepcopy(reasoning),
+            {"type": "message", "role": "user",
+             "content": [copy.deepcopy(image), copy.deepcopy(file_), {"type": "input_text", "text": GH_PAT}]},
+        ],
+    }
+
+    out = await mw.async_pre_call_hook(None, None, data, "aresponses")
+
+    assert out["input"][0] == reasoning
+    assert out["input"][1]["content"][:2] == [image, file_]
+    assert out["input"][1]["content"][2]["text"] != GH_PAT
+
+
+async def test_masks_responses_string_input(mw):
+    data = {"litellm_call_id": "call-1", "input": f"use {GH_PAT}"}
+
+    out = await mw.async_pre_call_hook(None, None, data, "aresponses")
+
+    assert GH_PAT not in out["input"]
+
+
+@pytest.mark.parametrize("call_type", ["atext_completion", "text_completion"])
+@pytest.mark.parametrize("prompt", [f"use {GH_PAT}", [f"use {GH_PAT}", "other"]], ids=["str", "list"])
+async def test_masks_text_completion_prompt(mw, call_type, prompt):
+    data = {"litellm_call_id": "call-1", "prompt": prompt}
+
+    out = await mw.async_pre_call_hook(None, None, data, call_type)
+
+    assert GH_PAT not in json.dumps(out)
+
+
 async def test_does_not_touch_thinking_or_base64_blocks(mw):
     thinking = {"type": "thinking", "thinking": f"saw {GH_PAT}", "signature": "sig"}
     image = {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": GH_PAT}}
@@ -323,6 +421,74 @@ async def test_restores_chat_response_object(mw):
     assert out.choices[0].message.content == f"ok {GH_PAT}"
     assert json.loads(out.choices[0].message.tool_calls[0].function.arguments) == {"cmd": GH_PAT}
     assert response.choices[0].message.content == f"ok {fake}"
+
+
+async def test_restores_text_completion_response(mw):
+    data = await _mask(mw, f"use {GH_PAT}")
+    fake = _user_text(data).split()[1]
+    response = SimpleNamespace(choices=[SimpleNamespace(index=0, text=f"ok {fake}", finish_reason="stop")])
+
+    out = await mw.async_post_call_success_hook(data=data, user_api_key_dict=None, response=response)
+
+    assert out.choices[0].text == f"ok {GH_PAT}"
+    assert response.choices[0].text == f"ok {fake}"
+
+
+def _responses_output(fake):
+    return [
+        {"type": "reasoning", "summary": [{"type": "summary_text", "text": fake}]},
+        SimpleNamespace(type="message", role="assistant", content=[
+            SimpleNamespace(type="output_text", text=f"ok {fake}", annotations=[]),
+            {"type": "refusal", "refusal": f"no {fake}"},
+        ]),
+        SimpleNamespace(type="function_call", call_id="c1", name="sh", arguments=json.dumps({"cmd": fake})),
+        {"type": "custom_tool_call", "call_id": "c2", "name": "patch", "input": f"echo {fake}"},
+    ]
+
+
+async def test_restores_responses_api_response(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    response = SimpleNamespace(id="resp_1", output=_responses_output(fake))
+
+    out = await mw.async_post_call_success_hook(data=data, user_api_key_dict=None, response=response)
+
+    assert out.output[0]["summary"][0]["text"] == fake
+    assert out.output[1].content[0].text == f"ok {GH_PAT}"
+    assert out.output[1].content[1]["refusal"] == f"no {GH_PAT}"
+    assert json.loads(out.output[2].arguments) == {"cmd": GH_PAT}
+    assert out.output[3]["input"] == f"echo {GH_PAT}"
+    assert response.output[1].content[0].text == f"ok {fake}"
+
+
+async def test_restores_responses_api_response_with_non_string_part_type(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    output = [{"type": "message", "content": [{"type": ["x"]}, {"type": "output_text", "text": fake}]}]
+
+    out = await mw.async_post_call_success_hook(
+        data=data, user_api_key_dict=None, response=SimpleNamespace(id="r", output=output))
+
+    assert out.output[0]["content"][1]["text"] == GH_PAT
+
+
+async def test_chat_response_without_fakes_is_not_copied(mw, mod, monkeypatch):
+    data = await _mask(mw, f"use {GH_PAT}")
+    message = SimpleNamespace(
+        content="nothing here",
+        tool_calls=[SimpleNamespace(function=SimpleNamespace(name="sh", arguments='{"a": 1}'))],
+    )
+    response = SimpleNamespace(choices=[SimpleNamespace(message=message)])
+
+    def no_copy(_):
+        raise AssertionError("deepcopy")
+
+    monkeypatch.setattr(mod.copy, "deepcopy", no_copy)
+
+    out = await mw.async_post_call_success_hook(data=data, user_api_key_dict=None, response=response)
+
+    assert out is None or out is response
+    assert mw.pending_calls() == 0
 
 
 async def test_restores_json_escaped_multiline_fake(mw):
@@ -446,6 +612,17 @@ async def test_stream_restores_dict_events(mw):
     assert _joined(out) == f"x {GH_PAT} y"
 
 
+async def test_stream_tolerates_non_string_delta_type(mw, fake_litellm):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    odd = {"type": "content_block_delta", "index": 0, "delta": {"type": ["x"]}}
+
+    out = await _collect(mw, [odd, *_text_stream_events(_split(fake, 4))], data)
+
+    assert _joined(out) == GH_PAT
+    assert not [w for w in fake_litellm.verbose_proxy_logger.warnings if "failed open" in w[0][0]]
+
+
 async def test_stream_without_mapping_passes_chunks_through(mw):
     chunks = [b"event: ping\ndata: {}\n\n", "anything"]
 
@@ -490,6 +667,131 @@ async def test_stream_restores_chat_tool_call_arguments(mw):
     assert json.loads(args) == {"cmd": GH_PAT}
 
 
+def _text_chunk(text=None, finish=None, index=0):
+    return SimpleNamespace(choices=[SimpleNamespace(index=index, text=text, finish_reason=finish)])
+
+
+async def test_stream_restores_text_completion_chunks(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    pieces = _split(f"key {fake} then gh", 4)
+    chunks = [_text_chunk(p) for p in pieces] + [_text_chunk(finish="stop")]
+
+    out = await _collect(mw, chunks, data)
+
+    assert "".join(c.choices[0].text or "" for c in out) == f"key {GH_PAT} then gh"
+    assert chunks[1].choices[0].text == pieces[1]
+
+
+async def test_text_completion_stream_end_flushes_held_text(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+
+    out = await _collect(mw, [_text_chunk("key "), _text_chunk(fake[:10])], data)
+
+    assert "".join(c.choices[0].text or "" for c in out) == "key " + fake[:10]
+
+
+def _resp_event(kind, **fields):
+    return SimpleNamespace(type=kind, **fields)
+
+
+def _resp_text_events(fake, text):
+    pieces = _split(text, 4)
+    message = SimpleNamespace(type="message", role="assistant", content=[
+        SimpleNamespace(type="output_text", text=text, annotations=[])])
+    return [
+        _resp_event("response.created", response=SimpleNamespace(id="r1", output=[])),
+        *[_resp_event("response.output_text.delta", item_id="m1", output_index=0, content_index=0, delta=p)
+          for p in pieces],
+        _resp_event("response.output_text.done", item_id="m1", output_index=0, content_index=0, text=text),
+        _resp_event("response.content_part.done", item_id="m1", output_index=0, content_index=0,
+                    part=SimpleNamespace(type="output_text", text=text, annotations=[])),
+        _resp_event("response.output_item.done", output_index=0, item=message),
+        _resp_event("response.completed", response=SimpleNamespace(id="r1", output=[copy.deepcopy(message)])),
+    ]
+
+
+def _resp_deltas(out, kind="response.output_text.delta"):
+    return "".join(_get_field(e, "delta") for e in out if _get_field(e, "type") == kind)
+
+
+def _get_field(obj, key):
+    return obj.get(key) if isinstance(obj, dict) else getattr(obj, key, None)
+
+
+async def test_stream_restores_responses_api_events(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    events = _resp_text_events(fake, f"key {fake} then gh")
+
+    out = await _collect(mw, events, data)
+
+    real = f"key {GH_PAT} then gh"
+    by_type = {e.type: e for e in out}
+    assert _resp_deltas(out) == real
+    assert by_type["response.output_text.done"].text == real
+    assert by_type["response.content_part.done"].part.text == real
+    assert by_type["response.output_item.done"].item.content[0].text == real
+    assert by_type["response.completed"].response.output[0].content[0].text == real
+    assert [e.type for e in out][-4:] == [e.type for e in events][-4:]
+    assert events[-1].response.output[0].content[0].text == f"key {fake} then gh"
+
+
+async def test_stream_restores_responses_function_call_arguments(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    args = json.dumps({"cmd": fake})
+    events = [
+        *[_resp_event("response.function_call_arguments.delta", item_id="f1", output_index=1, delta=p)
+          for p in _split(args, 5)],
+        _resp_event("response.function_call_arguments.done", item_id="f1", output_index=1, arguments=args),
+    ]
+
+    out = await _collect(mw, events, data)
+
+    assert json.loads(_resp_deltas(out, "response.function_call_arguments.delta")) == {"cmd": GH_PAT}
+    assert json.loads(out[-1].arguments) == {"cmd": GH_PAT}
+
+
+async def test_stream_restores_responses_sse_bytes(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    text = f"key {fake} then gh"
+    events = [{"type": "response.output_text.delta", "item_id": "m1", "output_index": 0,
+               "content_index": 0, "delta": p} for p in _split(text, 3)]
+    events.append({"type": "response.output_text.done", "item_id": "m1", "output_index": 0,
+                   "content_index": 0, "text": text})
+    raw = "".join(_sse(e) for e in events)
+
+    out = await _collect(mw, [c.encode() for c in _split(raw, 17)], data)
+
+    parsed = _parse_sse(out)
+    assert _resp_deltas(parsed) == f"key {GH_PAT} then gh"
+    assert parsed[-1]["text"] == f"key {GH_PAT} then gh"
+
+
+async def test_responses_stream_end_flushes_held_text(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    events = [_resp_event("response.output_text.delta", item_id="m1", output_index=0, content_index=0, delta=d)
+              for d in ("key ", fake[:10])]
+
+    out = await _collect(mw, events, data)
+
+    assert _resp_deltas(out) == "key " + fake[:10]
+
+
+async def test_stream_leaves_responses_reasoning_alone(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    event = _resp_event("response.reasoning_summary_text.delta", item_id="r1", output_index=0, delta=fake)
+
+    out = await _collect(mw, [event], data)
+
+    assert out == [event]
+
+
 async def test_mapping_expires(mod, monkeypatch):
     now = [1000.0]
     monkeypatch.setattr(mod.time, "monotonic", lambda: now[0])
@@ -500,6 +802,27 @@ async def test_mapping_expires(mod, monkeypatch):
     await _mask(mw, GH_PAT, "new")
 
     assert mw.pending_calls() == 1
+
+
+async def test_unmasked_request_still_prunes_expired_mappings(mod, monkeypatch):
+    now = [1000.0]
+    monkeypatch.setattr(mod.time, "monotonic", lambda: now[0])
+    mw = mod.SecretMaskingMiddleware(key=b"k", ttl_seconds=60)
+
+    await _mask(mw, GH_PAT, "old")
+    now[0] += 61
+    await _mask(mw, "nothing secret", "new")
+
+    assert mw.pending_calls() == 0
+
+
+async def test_pending_calls_are_capped(mod):
+    mw = mod.SecretMaskingMiddleware(key=b"k", max_calls=3)
+
+    for i in range(5):
+        await _mask(mw, GH_PAT, f"call-{i}")
+
+    assert mw.pending_calls() == 3
 
 
 def test_production_instance_is_exposed(mod):
@@ -631,6 +954,44 @@ async def test_does_not_touch_data_urls_or_input_audio(mw):
     assert content[3]["text"] != GH_PAT
 
 
+AWS_TEMP = "AS" + "IA" + "QW3ERT5YU7IO9PAS"
+PRESIGNED = ("https://bucket.s3.amazonaws.com/cat.png?X-Amz-Algorithm=AWS4-HMAC-SHA256"
+             "&X-Amz-Credential=" + AWS_TEMP + "%2F20260930%2Fus-east-1%2Fs3%2Faws4_request")
+
+
+async def test_does_not_touch_remote_media_urls(mw):
+    blocks = [
+        {"type": "image_url", "image_url": {"url": PRESIGNED, "detail": "high"}},
+        {"type": "image_url", "image_url": PRESIGNED},
+        {"type": "file", "file": {"file_id": PRESIGNED}},
+        {"type": "image", "source": {"type": "url", "url": PRESIGNED}},
+        {"type": "document", "source": {"type": "url", "url": PRESIGNED}},
+    ]
+    data = {
+        "litellm_call_id": "call-1",
+        "messages": [{"role": "user", "content": [*copy.deepcopy(blocks), {"type": "text", "text": GH_PAT}]}],
+    }
+
+    out = await mw.async_pre_call_hook(None, None, data, "acompletion")
+
+    content = out["messages"][0]["content"]
+    assert content[:-1] == blocks
+    assert content[-1]["text"] != GH_PAT
+
+
+async def test_restore_does_not_touch_remote_media_urls(mw):
+    data = await _mask(mw, AWS_TEMP)
+    fake = _user_text(data)
+    url = PRESIGNED.replace(AWS_TEMP, fake)
+    response = {"content": [{"type": "image", "source": {"type": "url", "url": url}},
+                            {"type": "text", "text": fake}]}
+
+    out = await mw.async_post_call_success_hook(data=data, user_api_key_dict=None, response=response)
+
+    assert out["content"][0]["source"]["url"] == url
+    assert out["content"][1]["text"] == AWS_TEMP
+
+
 async def test_concurrent_calls_sharing_an_id_both_restore(mw):
     first = await _mask(mw, GH_PAT, "shared")
     second = await _mask(mw, GH_PAT_2, "shared")
@@ -644,6 +1005,10 @@ async def test_concurrent_calls_sharing_an_id_both_restore(mw):
     assert out1["content"][0]["text"] == GH_PAT
     assert out2["content"][0]["text"] == GH_PAT_2
     assert mw.pending_calls() == 0
+
+
+def test_warnings_use_the_pipeline_logger(mod):
+    assert mod._log_warning is sys.modules["pipeline"].MiddlewarePipeline._log_warning
 
 
 def test_missing_salt_logs_warning(mod, monkeypatch, fake_litellm):
@@ -721,6 +1086,32 @@ async def test_chat_stream_end_flush_keeps_each_choice(mw):
         for ch in c.choices:
             text[ch.index] = text.get(ch.index, "") + (ch.delta.content or "")
     assert text == {0: "a", 1: "b " + fake[:10]}
+
+
+async def test_masks_request_with_non_string_type_fields(mw):
+    schema = {"type": "object", "properties": {"x": {"type": ["string", "null"]}}}
+    data = {
+        "litellm_call_id": "call-1",
+        "messages": [
+            {"role": "assistant", "content": [
+                {"type": "tool_use", "id": "t1", "name": "sh", "input": {"schema": schema, "t": {"type": {}}}}]},
+            {"role": "user", "content": [{"type": "text", "text": GH_PAT}]},
+        ],
+    }
+
+    out = await mw.async_pre_call_hook(None, None, data, "anthropic_messages")
+
+    assert GH_PAT not in json.dumps(out)
+
+
+async def test_restores_response_with_non_string_type_fields(mw):
+    data = await _mask(mw, GH_PAT)
+    fake = _user_text(data)
+    response = {"content": [{"type": "tool_use", "input": {"type": ["string", "null"], "v": fake}}]}
+
+    out = await mw.async_post_call_success_hook(data=data, user_api_key_dict=None, response=response)
+
+    assert out["content"][0]["input"]["v"] == GH_PAT
 
 
 async def test_failure_hook_releases_after_litellm_drops_the_logging_obj(mw):
