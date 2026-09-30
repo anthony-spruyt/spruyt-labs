@@ -61,11 +61,8 @@ locals {
     "ENVBUILDER_GIT_URL" : local.repo_url,
     "ENVBUILDER_INIT_SCRIPT" : coder_agent.main.init_script,
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
-    # Cache pushes hit the envbuilder-cache hosted repo on its own connector (8083).
-    # Pulls/mirror go through the docker-group connector (8082).
-    # URL has NO /repository/ segment — Nexus docker connectors serve OCI v2 at host-root.
+    # No /repository/ segment: Nexus docker connectors serve OCI v2 at host root.
     "ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/${local.cache_key}",
-    "KANIKO_REGISTRY_MIRROR" : "nexus.nexus-system.svc.cluster.local:8082",
     "ENVBUILDER_INSECURE" : "true",
     "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
     # Substituted into devcontainer.json build.args.NEXUS_URL via

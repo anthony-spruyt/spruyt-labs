@@ -57,11 +57,15 @@ ENABLE_TOOL_SEARCH=true
 EXTERNAL_DOMAIN=<external-domain>
 GH_TOKEN=<github-pat>
 LITELLM_API_KEY=<litellm-api-key>
+NEXUS_DOCKER_PASSWORD=<nexus-local-dev-password>
 NEXUS_DOCKER_URL=https://nexus-docker.lan.<external-domain>
+NEXUS_DOCKER_USERNAME=local-dev
 OPENAI_API_KEY=<litellm-api-key>
 SAFE_CHAIN_LOGGING=silent
 SSH_AUTH_SOCK=/ssh-agent
 ```
+
+The Nexus password is the `local-dev` key of the `nexus-clients` secret in `nexus-system`. `devcontainer-common` uses `NEXUS_DOCKER_*` to point podman at Nexus as a registry mirror and log in. Without the login, Nexus rejects every pull and podman falls back to upstream, so nothing is cached. Being a mirror, it also falls back when Nexus is down.
 
 The `.env.spruyt-labs` file must contain:
 
@@ -151,7 +155,7 @@ The Coder template uses [envbuilder](https://github.com/coder/envbuilder) to bui
 - **Same toolchain** as local devcontainer — identical base image, features, and setup scripts
 - **Secrets via Kubernetes volumes** — SSH signing key, talosconfig, SOPS age key, Terraform credentials (no `~/.secrets/` needed)
 - **Git commit signing** — automatic via mounted SSH key at `/etc/coder/ssh-keys/id_ed25519`
-- **Nexus proxy** — apt and container pulls route through in-cluster Nexus for caching
+- **Nexus proxy** — apt, podman pulls and the envbuilder layer cache route through in-cluster Nexus (envbuilder's base-image pull does not; see the [Coder README](cluster/apps/coder-system/coder/README.md#nexus-routing))
 - **OTel telemetry** — Claude Code traces, metrics and logs ship to the in-cluster Victoria stack
 
 ### Accessing the Workspace

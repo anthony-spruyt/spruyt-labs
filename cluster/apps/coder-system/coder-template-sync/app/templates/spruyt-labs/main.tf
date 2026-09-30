@@ -58,7 +58,6 @@ locals {
     "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
     # No /repository/ segment: Nexus docker connectors serve OCI v2 at host root.
     "ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/${local.cache_key}",
-    "KANIKO_REGISTRY_MIRROR" : "nexus.nexus-system.svc.cluster.local:8082",
     "ENVBUILDER_INSECURE" : "true",
     "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
     # Read by devcontainer.json build.args to route Ubuntu apt through Nexus. Ref #988.

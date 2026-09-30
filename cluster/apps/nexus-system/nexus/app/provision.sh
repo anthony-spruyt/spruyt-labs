@@ -224,8 +224,8 @@ curl -sf -X PUT -H "Content-Type: application/json" -u "$${AUTH}" \
   -d '{"enabled":true,"userId":"anonymous","realmName":"NexusAuthorizingRealm"}' \
   "$${API}/security/anonymous"
 
-# --- workspace users: docker-group forceBasicAuth=true rejects anonymous, so workspaces need real users ---
-# Passwords are ESO-generated in the nexus-clients secret (clients-eso.yaml). Ref #976, #3226.
+# --- client users: docker-group forceBasicAuth=true rejects anonymous, so docker clients need real users ---
+# Passwords are ESO-generated in the nexus-clients secret (clients-eso.yaml). Ref #976, #3226, #3228.
 echo "Upserting envbuilder-cache-writer role..."
 ROLE_BODY='{"id":"envbuilder-cache-writer","name":"Envbuilder Cache Writer","description":"Push to envbuilder-cache only","privileges":["nx-repository-view-docker-envbuilder-cache-browse","nx-repository-view-docker-envbuilder-cache-read","nx-repository-view-docker-envbuilder-cache-add","nx-repository-view-docker-envbuilder-cache-edit"],"roles":[]}'
 code=$(curl -sS -o /dev/null -w '%{http_code}' -u "$${AUTH}" "$${API}/security/roles/envbuilder-cache-writer" || echo 000)
@@ -239,7 +239,7 @@ fi
 # The password is set via change-password (text/plain), so it never needs JSON escaping.
 upsert_user() {
   id="$1" roles="$2" password="$3"
-  body='{"userId":"'"$${id}"'","firstName":"'"$${id}"'","lastName":"Workspace","emailAddress":"'"$${id}"'@example.org","source":"default","status":"active","roles":'"$${roles}"'}'
+  body='{"userId":"'"$${id}"'","firstName":"'"$${id}"'","lastName":"Client","emailAddress":"'"$${id}"'@example.org","source":"default","status":"active","roles":'"$${roles}"'}'
   existing=$(curl -sS -u "$${AUTH}" "$${API}/security/users?userId=$${id}" || echo '[]')
   if printf '%s' "$${existing}" | grep -q '"userId"[[:space:]]*:[[:space:]]*"'"$${id}"'"'; then
     echo "  [user $${id}] exists, updating"
@@ -251,9 +251,10 @@ upsert_user() {
   check "$(curl -sS -w '\n%{http_code}' -X PUT -H "Content-Type: text/plain" -u "$${AUTH}" --data-binary "$${password}" "$${API}/security/users/$${id}/change-password")"
 }
 
-echo "Upserting workspace users..."
+echo "Upserting client users..."
 upsert_user workspace-puller '["nx-anonymous"]' "$${WORKSPACE_PULLER_PASSWORD}"
 upsert_user envbuilder-cache '["nx-anonymous","envbuilder-cache-writer"]' "$${ENVBUILDER_CACHE_PASSWORD}"
+upsert_user local-dev '["nx-anonymous"]' "$${LOCAL_DEV_PASSWORD}"
 
 # --- scheduled tasks that turn cleanup soft-deletes into freed disk ---
 # The daily 01:00 "Cleanup service" task is built in; these two are not.

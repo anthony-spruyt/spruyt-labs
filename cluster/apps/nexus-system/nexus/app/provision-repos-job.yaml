@@ -53,6 +53,8 @@ spec:
               valueFrom: {secretKeyRef: {name: nexus-clients, key: workspace-puller}}
             - name: ENVBUILDER_CACHE_PASSWORD
               valueFrom: {secretKeyRef: {name: nexus-clients, key: envbuilder-cache}}
+            - name: LOCAL_DEV_PASSWORD
+              valueFrom: {secretKeyRef: {name: nexus-clients, key: local-dev}}
           command: ["/bin/sh", "/scripts/provision.sh"]
           volumeMounts:
             - {name: script, mountPath: /scripts, readOnly: true}

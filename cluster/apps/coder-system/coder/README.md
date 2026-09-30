@@ -58,7 +58,8 @@ The three `main.tf` files are near-copies: beyond this table they differ only in
 
 ### Nexus routing
 
-All templates route container pulls and the envbuilder layer cache through [Nexus](../../nexus-system/nexus/README.md), authenticated with `coder-workspace-nexus-clients`. The layer cache is keyed on the repo (`envbuilder-cache/<owner>/<repo>`), so a new workspace reuses layers from earlier builds of the same repo. The endpoints and the reasons behind them are commented inline in each `main.tf`.
+All templates route podman pulls and the envbuilder layer cache through [Nexus](../../nexus-system/nexus/README.md), authenticated with `coder-workspace-nexus-clients`. envbuilder's base-image pulls do not go through Nexus: the only mirror setting it reads, `KANIKO_REGISTRY_MIRROR`, never reaches kaniko's pull code (envbuilder skips the kaniko CLI that turns it into a registry map). Revisit when
+[coder/envbuilder#511](https://github.com/coder/envbuilder/pull/511) (`KANIKO_REGISTRY_MAP`) ships. The layer cache is keyed on the repo (`envbuilder-cache/<owner>/<repo>`), so a new workspace reuses layers from earlier builds of the same repo. The endpoints and the reasons behind them are commented inline in each `main.tf`.
 
 Apt only goes through Nexus if the workspace repo opts in: `devcontainer.json` passes `build.args.NEXUS_URL: ${localEnv:NEXUS_URL}` and the Dockerfile rewrites `sources.list` to `apt-ubuntu-proxy` (#988; see this repo's `.devcontainer/`). Devcontainer features that add their own apt sources (github-cli, nodesource, hashicorp, PPAs) still fetch upstream directly.
 
