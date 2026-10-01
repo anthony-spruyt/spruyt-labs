@@ -408,10 +408,19 @@ resource "coder_script" "code_server" {
     dc="${local.workspace_folder}/.devcontainer/devcontainer.json"
     if [ -f "$dc" ] && command -v jq &>/dev/null; then
       mkdir -p ~/.vscode-server/extensions
+      vsix_dir=$(mktemp -d)
       for ext in $(jq -r '.customizations.vscode.extensions[]? // empty' "$dc" 2>/dev/null); do
-        code-server --install-extension "$ext" &>/dev/null || true
-        code-server --extensions-dir ~/.vscode-server/extensions --install-extension "$ext" &>/dev/null || true
+        src="$ext"
+        # code-server resolves IDs against Open VSX; Marketplace-only extensions need the VSIX.
+        if ! code-server --install-extension "$ext" &>/dev/null; then
+          src="$vsix_dir/$ext.vsix"
+          curl -fsSL --compressed --max-time 60 -o "$src" \
+            "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/$${ext%%.*}/vsextensions/$${ext#*.}/latest/vspackage" &&
+            code-server --install-extension "$src" &>/dev/null || true
+        fi
+        code-server --extensions-dir ~/.vscode-server/extensions --install-extension "$src" &>/dev/null || true
       done
+      rm -rf "$vsix_dir"
     fi
 
     exec code-server --auth none --port 13337 --host 127.0.0.1 "${local.workspace_folder}"
