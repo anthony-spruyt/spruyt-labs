@@ -80,18 +80,18 @@ Explicitly set or inherited from the global default. Includes, among others: age
 
 Can tolerate preemption.
 
-| Namespace        | Workload                              | Rationale            |
-| ---------------- | ------------------------------------- | -------------------- |
-| brave-search-mcp | brave-search-mcp                      | Agent tooling        |
-| foundryvtt       | foundryvtt                            | Gaming (D&D)         |
-| headlamp-system  | headlamp                              | Kubernetes dashboard |
-| minecraft        | crafty-controller, bedrock-connect    | Gaming servers       |
-| n8n-mcp          | n8n-mcp-server                        | Agent tooling        |
-| observability    | mcp-victorialogs, mcp-victoriametrics | Agent tooling        |
-| redisinsight     | redisinsight                          | Redis GUI            |
-| unifi-mcp        | unifi-network-mcp                     | Agent tooling        |
-| unifi-system     | unpoller                              | UniFi metrics        |
-| whoami           | whoami                                | Test/debug service   |
+| Namespace        | Workload                                                  | Rationale            |
+| ---------------- | --------------------------------------------------------- | -------------------- |
+| brave-search-mcp | brave-search-mcp                                          | Agent tooling        |
+| foundryvtt       | foundryvtt                                                | Gaming (D&D)         |
+| headlamp-system  | headlamp                                                  | Kubernetes dashboard |
+| minecraft        | crafty-controller, bedrock-connect                        | Gaming servers       |
+| n8n-mcp          | n8n-mcp-server                                            | Agent tooling        |
+| observability    | mcp-victorialogs, mcp-victoriametrics, mcp-victoriatraces | Agent tooling        |
+| redisinsight     | redisinsight                                              | Redis GUI            |
+| unifi-mcp        | unifi-network-mcp                                         | Agent tooling        |
+| unifi-system     | unpoller                                                  | UniFi metrics        |
+| whoami           | whoami                                                    | Test/debug service   |
 
 ### best-effort
 

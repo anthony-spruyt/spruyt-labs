@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mcp-victoriatraces-allow-victoriatraces-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-victoriatraces
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vt-single
+            k8s:app.kubernetes.io/component: server
+      toPorts:
+        - ports:
+            - port: "10428"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mcp-victoriatraces-allow-litellm-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-victoriatraces
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

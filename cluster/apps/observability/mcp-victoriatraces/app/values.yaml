@@ -1,0 +1,70 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+  securityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  mcp-victoriatraces:
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: ghcr.io/victoriametrics-community/mcp-victoriatraces
+          tag: v1.5.0@sha256:72b3227c03856048e0adcbf5d247e3ae0b6cf8ab1bc27df6fe10ed0cacdcd07c
+          pullPolicy: IfNotPresent
+        env:
+          - name: VT_INSTANCE_ENTRYPOINT
+            value: "http://victoria-traces-single-vt-single-server.observability.svc.cluster.local:10428"
+          - name: MCP_SERVER_MODE
+            value: "http"
+          - name: MCP_LISTEN_ADDR
+            value: ":8080"
+        resources:
+          requests:
+            cpu: 25m
+            memory: 128Mi
+          limits:
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health/liveness
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health/readiness
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+service:
+  app:
+    controller: mcp-victoriatraces
+    ports:
+      http:
+        port: 8080
