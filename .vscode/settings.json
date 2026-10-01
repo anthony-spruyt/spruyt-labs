@@ -22,6 +22,7 @@
   "explorer.sortOrder": "type",
   "editor.tabSize": 2,
   "chat.agent.enabled": false,
+  "workbench.colorTheme": "Forest Ash Sumi Moon",
   "[terraform]": {
     "editor.defaultFormatter": "hashicorp.terraform"
   }
