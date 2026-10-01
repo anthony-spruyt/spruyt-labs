@@ -2,8 +2,8 @@
 
 ## Overview
 
-Single gateway for every LLM call and most MCP traffic in the cluster: Claude agent pods, Coder workspaces, n8n and dev containers all point `ANTHROPIC_BASE_URL` at it. It exposes Anthropic-compatible (`/v1/messages`) and OpenAI-compatible (`/v1/chat/completions`) APIs plus an MCP gateway at `/mcp`. `litellm-valkey` is its dedicated cache and router-state store; `litellm/app/plugins/` holds
-proxy-side Python callbacks.
+Single gateway for every LLM call and most MCP traffic in the cluster: Claude agent pods, Coder workspaces, n8n and dev containers all point `ANTHROPIC_BASE_URL` at it. It exposes Anthropic-compatible (`/v1/messages`) and OpenAI-compatible (`/v1/chat/completions`) APIs plus an MCP gateway at `/mcp`. `litellm-valkey` is its dedicated cache and router-state store; `litellm/app/plugins/middleware/`
+holds proxy-side Python middleware.
 
 ## Prerequisites
 
@@ -73,14 +73,13 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 
 ### Proxy-side plugins
 
-`litellm/app/plugins/` is mounted into the pod as ConfigMap subPath files under `/app/custom_callbacks/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` and `ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`, so the
-`hindsight` and `chatgpt` middlewares are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content).
-
-When adding a file to a plugin, also add it to the plugin's ConfigMap generator and its `advancedMounts` list in `values.yaml`. Run the plugin unit tests with `task test:litellm-middleware`.
+`litellm/app/plugins/middleware/` is mounted into the pod from the `litellm-middleware-plugin` ConfigMap as subPath files under `/app/custom_callbacks/middleware/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` and
+`ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`, so `middleware/hindsight/` and `middleware/chatgpt/` are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content). Run the unit tests with
+`task test:litellm-middleware`.
 
 ### Adding a middleware
 
-The top of `middleware/` holds only the shared pipeline core. Every middleware gets its own sub-folder:
+Every proxy-side callback is a middleware run by the pipeline; nothing else goes in `plugins/`. The top of `middleware/` holds only the shared pipeline core, and every middleware gets its own sub-folder:
 
 ```text
 middleware/
@@ -94,6 +93,8 @@ middleware/
 ```
 
 - `<name>` is the snake_case form of the registry name (`secret-masking` → `secret_masking/`). Nothing specific to one middleware goes at the top level, including its tests.
+- One `pyproject.toml` and `uv.lock` for all of `middleware/`. Add test-only deps there; runtime deps must already ship in the LiteLLM image.
+- ConfigMap keys are flat, so file names must be unique across all middlewares.
 - Import the core with `from ..pipeline import ...` and helpers with `from .<helper> import ...`. No flat-import fallbacks.
 - Tests put `plugins/` on `sys.path` and import `middleware.<name>.<name>`, the same package shape as in the pod.
 - Register it in `registry.py` as `custom_callbacks.middleware.<name>.<name>`. Use `required=True` only when serving without it is unsafe.

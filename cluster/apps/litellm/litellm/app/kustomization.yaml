@@ -23,14 +23,6 @@ configMapGenerator:
     namespace: litellm
     files:
       - values.yaml
-  - name: litellm-chatgpt-plugin
-    namespace: litellm
-    options:
-      disableNameSuffixHash: true
-    files:
-      - __init__.py=plugins/chatgpt/__init__.py
-      - chatgpt_plugin.py=plugins/chatgpt/chatgpt_plugin.py
-      - litellm_patch.py=plugins/chatgpt/litellm_patch.py
   - name: litellm-middleware-plugin
     namespace: litellm
     options:
@@ -41,18 +33,11 @@ configMapGenerator:
       - pipeline.py=plugins/middleware/pipeline.py
       - pipeline_plugin.py=plugins/middleware/pipeline_plugin.py
       - registry.py=plugins/middleware/registry.py
+      - chatgpt.py=plugins/middleware/chatgpt/chatgpt.py
+      - litellm_patch.py=plugins/middleware/chatgpt/litellm_patch.py
+      - hindsight.py=plugins/middleware/hindsight/hindsight.py
       - ratelimit_headers.py=plugins/middleware/ratelimit_headers/ratelimit_headers.py
       - secret_masking.py=plugins/middleware/secret_masking/secret_masking.py
       - shared_fakes.py=plugins/middleware/secret_masking/shared_fakes.py
-  - name: litellm-hindsight-plugin
-    namespace: litellm
-    options:
-      disableNameSuffixHash: true
-    files:
-      # ConfigMap keys must be flat (no '/'); nesting is recreated via subPath
-      # mounts in values.yaml. The empty __init__.py is reused for both the
-      # custom_callbacks and hindsight package markers.
-      - __init__.py=plugins/hindsight/__init__.py
-      - hindsight_plugin.py=plugins/hindsight/hindsight_plugin.py
 configurations:
   - ./kustomizeconfig.yaml

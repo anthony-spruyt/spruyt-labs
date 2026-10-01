@@ -7,16 +7,16 @@ import pytest
 
 
 _HERE = os.path.dirname(__file__)
-_PLUGIN_DIR = os.path.dirname(_HERE)
-if _PLUGIN_DIR not in sys.path:
-    sys.path.insert(0, _PLUGIN_DIR)
+_PLUGINS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+if _PLUGINS_DIR not in sys.path:
+    sys.path.insert(0, _PLUGINS_DIR)
 
 
 @pytest.fixture
 def plugin():
-    if "chatgpt_plugin" in sys.modules:
-        return importlib.reload(sys.modules["chatgpt_plugin"])
-    return importlib.import_module("chatgpt_plugin")
+    if "middleware.chatgpt.chatgpt" in sys.modules:
+        return importlib.reload(sys.modules["middleware.chatgpt.chatgpt"])
+    return importlib.import_module("middleware.chatgpt.chatgpt")
 
 
 async def test_anthropic_system_moves_to_developer(plugin):
@@ -96,8 +96,8 @@ async def test_configured_alias_to_gpt55_gets_retry_count(monkeypatch, tmp_path)
         ],
     }))
     monkeypatch.setenv("CHATGPT_CONFIG_PATH", str(config_path))
-    sys.modules.pop("chatgpt_plugin", None)
-    plugin = importlib.import_module("chatgpt_plugin")
+    sys.modules.pop("middleware.chatgpt.chatgpt", None)
+    plugin = importlib.import_module("middleware.chatgpt.chatgpt")
 
     out = await plugin.chatgpt_middleware.async_pre_call_hook(
         None,
@@ -152,8 +152,8 @@ async def test_configured_alias_to_chatgpt_is_renamed(monkeypatch, tmp_path):
         ],
     }))
     monkeypatch.setenv("CHATGPT_CONFIG_PATH", str(config_path))
-    sys.modules.pop("chatgpt_plugin", None)
-    plugin = importlib.import_module("chatgpt_plugin")
+    sys.modules.pop("middleware.chatgpt.chatgpt", None)
+    plugin = importlib.import_module("middleware.chatgpt.chatgpt")
     data = {
         "model": "claude-sonnet-4-6",
         "system": "alias system",

@@ -3,10 +3,7 @@ import os
 from functools import lru_cache
 from typing import Any
 
-try:
-    from .litellm_patch import install_litellm_patches
-except ImportError:
-    from litellm_patch import install_litellm_patches
+from .litellm_patch import install_litellm_patches
 
 
 install_litellm_patches()

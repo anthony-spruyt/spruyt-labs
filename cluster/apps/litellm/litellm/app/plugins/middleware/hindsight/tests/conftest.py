@@ -1,10 +1,4 @@
-"""Shared fixtures for the Hindsight LiteLLM plugin tests.
-
-The plugin module is imported as a top-level ``hindsight_plugin`` module from the
-parent directory so the tests are decoupled from the production dotted import
-path (``custom_callbacks.hindsight.hindsight_plugin``). The module body is
-identical either way.
-"""
+"""Shared fixtures for the Hindsight middleware tests."""
 
 import importlib
 import os
@@ -16,9 +10,9 @@ import httpx
 import pytest
 
 _HERE = os.path.dirname(__file__)
-_PLUGIN_DIR = os.path.dirname(_HERE)
-if _PLUGIN_DIR not in sys.path:
-    sys.path.insert(0, _PLUGIN_DIR)
+_PLUGINS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+if _PLUGINS_DIR not in sys.path:
+    sys.path.insert(0, _PLUGINS_DIR)
 
 
 @pytest.fixture(autouse=True)
@@ -109,10 +103,10 @@ def plugin(monkeypatch):
     monkeypatch.setenv("HINDSIGHT_INJECT", "true")
     monkeypatch.setenv("HINDSIGHT_RETAIN", "true")
     monkeypatch.delenv("HINDSIGHT_BASE_URL", raising=False)
-    if "hindsight_plugin" in sys.modules:
-        mod = importlib.reload(sys.modules["hindsight_plugin"])
+    if "middleware.hindsight.hindsight" in sys.modules:
+        mod = importlib.reload(sys.modules["middleware.hindsight.hindsight"])
     else:
-        mod = importlib.import_module("hindsight_plugin")
+        mod = importlib.import_module("middleware.hindsight.hindsight")
     return mod
 
 

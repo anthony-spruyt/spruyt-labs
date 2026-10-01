@@ -26,11 +26,11 @@ The layout rules live in `cluster/apps/litellm/README.md` under "Adding a middle
 1. **Issue.** Find or create the GitHub issue.
 2. **Hook check.** Confirm `MiddlewarePipeline` in `pipeline.py` already delegates the LiteLLM hook you need. If not, add it there first, with its own test in `plugins/middleware/tests/test_pipeline.py`. LiteLLM only calls hooks the callback class defines itself, so the pipeline must define the method, not inherit it.
 3. **Red.** Create `plugins/middleware/<name>/tests/test_<name>.py`. Copy the `sys.path` and fake-`litellm` setup from `secret_masking/tests/test_secret_masking.py`; import `middleware.<name>.<name>`. Run it and watch it fail.
-4. **Green.** Create `<name>/__init__.py` (empty) and `<name>/<name>.py` ending in a module-level instance (`<name> = <Name>Middleware()`). Helpers used only by this middleware go in `<name>/`.
+4. **Green.** Create `<name>/__init__.py` (empty) and `<name>/<name>.py` ending in a module-level instance (`<name> = <Name>Middleware()`). Helpers used only by this middleware go in `<name>/`. No per-middleware `pyproject.toml`; test-only deps go in `plugins/middleware/pyproject.toml` (then `uv lock`).
 5. **Register.** Add a `MiddlewareSpec` to `DEFAULT_MIDDLEWARE_SPECS` in `registry.py` pointing at `custom_callbacks.middleware.<name>.<name>`. Order matters: specs run top to bottom. Default to `required=False`. Add a registry test asserting the spec and its `required` value.
 6. **Production import.** Add the dotted module to `test_production_dotted_imports_resolve` and add a test that it lands in `pipeline_plugin.pipeline_middleware.middlewares`.
 7. **Wire into the pod.** For every file in `<name>/` except tests:
-   - `kustomization.yaml`: `<file>=plugins/middleware/<name>/<file>` under `litellm-middleware-plugin`. ConfigMap keys are flat, so two files with the same basename collide; rename one.
+   - `kustomization.yaml`: `<file>=plugins/middleware/<name>/<file>` under `litellm-middleware-plugin`. ConfigMap keys are flat, so two files with the same basename collide; rename one. Never add a second plugin ConfigMap.
    - `values.yaml`: add `/app/custom_callbacks/middleware/<name>` to the init container `mkdir`, and add a subPath mount per file plus `/app/custom_callbacks/middleware/<name>/__init__.py` (subPath `__init__.py`).
 8. **Test paths.** Add `<name>/tests` to `testpaths` in `plugins/middleware/pyproject.toml`, `middleware/<name>/tests` to `plugins/pytest.ini`, and the full path to `sonar.tests` in `.sonarcloud.properties`.
 9. **Verify.**

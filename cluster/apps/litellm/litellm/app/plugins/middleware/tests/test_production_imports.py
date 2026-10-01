@@ -48,13 +48,14 @@ _CHATGPT_DISABLED = pytest.mark.skip(
 
 def test_production_dotted_imports_resolve(production_import_shape):
     modules = [
-        "custom_callbacks.hindsight.hindsight_plugin",
+        "custom_callbacks.middleware.hindsight.hindsight",
         "custom_callbacks.middleware.pipeline",
         "custom_callbacks.middleware.registry",
         "custom_callbacks.middleware.pipeline_plugin",
         "custom_callbacks.middleware.secret_masking.shared_fakes",
         "custom_callbacks.middleware.secret_masking.secret_masking",
         "custom_callbacks.middleware.ratelimit_headers.ratelimit_headers",
+        "custom_callbacks.middleware.chatgpt.chatgpt",
     ]
 
     for module in modules:
@@ -119,8 +120,8 @@ async def test_production_pipeline_runs_hindsight_then_chatgpt(
     monkeypatch, production_import_shape,
 ):
     for module in [
-        "custom_callbacks.chatgpt.chatgpt_plugin",
-        "custom_callbacks.hindsight.hindsight_plugin",
+        "custom_callbacks.middleware.chatgpt.chatgpt",
+        "custom_callbacks.middleware.hindsight.hindsight",
         "custom_callbacks.middleware.pipeline",
         "custom_callbacks.middleware.registry",
         "custom_callbacks.middleware.pipeline_plugin",

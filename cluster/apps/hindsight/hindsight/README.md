@@ -17,7 +17,7 @@ Every item is required; skipping one leaves it broken in a non-obvious way.
 3. `ks.yaml`: restore `wait: true`. It is `false` only because a hibernated cluster never reports Ready and `traefik-ingress` depends on this Kustomization.
 4. `app/values.yaml`: scale api, worker and controlPlane back up. Bring the api to 1 first so only one node cold-pulls the ~1.4 GB image; Spegel fans it out before you go to 2. Re-enable the PDBs only once replicas are above 1.
 5. LiteLLM: re-register the `hindsight-model` and `hindsight-embedding` aliases in `config.yaml`. They were removed (#3025), so the api and worker will get 400s from LiteLLM without them.
-6. LiteLLM: add a `MiddlewareSpec(name="hindsight", module="custom_callbacks.hindsight.hindsight_plugin", attribute="hindsight_middleware")` to `DEFAULT_MIDDLEWARE_SPECS` in `middleware/registry.py`. Keep it before `chatgpt` — Hindsight injects into the Anthropic `system` field and the ChatGPT middleware then translates the final system content.
+6. LiteLLM: add a `MiddlewareSpec(name="hindsight", module="custom_callbacks.middleware.hindsight.hindsight", attribute="hindsight_middleware")` to `DEFAULT_MIDDLEWARE_SPECS` in `middleware/registry.py`. Keep it before `chatgpt` — Hindsight injects into the Anthropic `system` field and the ChatGPT middleware then translates the final system content.
 7. Check that `HINDSIGHT_API_CONSOLIDATION_LLM_MODEL` in `values.yaml` still names a model LiteLLM serves; it was not updated when older Claude models were retired.
 
 ### Bank selection
@@ -37,7 +37,7 @@ The value is sanitized to `[A-Za-z0-9-]`. For Claude Code, add `x-hindsight-bank
 - Memory is injected as the **last** Anthropic `system` block so the cached prompt prefix is preserved. Watch prompt-cache metrics after changing injection.
 - Recall runs inline and slows as the bank grows (2.4-3.5s at ~30 facts), which exceeds the plugin's 3s default; `HINDSIGHT_TIMEOUT_S` is raised to 30 on the LiteLLM container for that reason.
 - Each exchange is retained as one item whose `content` is a JSON conversation array. That shape is what makes `HINDSIGHT_API_RETAIN_STRUCTURED_CHUNK_SIZE` (8192) apply; a bare string is split at the 3000-char default and fragments memories.
-- Other plugin env vars and their defaults are at the top of `HindsightMiddleware.__init__` in `litellm/litellm/app/plugins/hindsight/hindsight_plugin.py`.
+- Other plugin env vars and their defaults are at the top of `HindsightMiddleware.__init__` in `litellm/litellm/app/plugins/middleware/hindsight/hindsight.py`.
 
 ### Extraction tuning
 
