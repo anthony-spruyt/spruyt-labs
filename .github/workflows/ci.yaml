@@ -35,6 +35,7 @@ jobs:
       agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
       bull-board: "${{ steps.filter.outputs.bull-board }}"
       traefik-plugin: "${{ steps.filter.outputs.traefik-plugin }}"
+      litellm-middleware: "${{ steps.filter.outputs.litellm-middleware }}"
       bats: "${{ steps.filter.outputs.bats }}"
     steps:
       - name: Harden Runner
@@ -84,6 +85,12 @@ jobs:
               - 'ts/agent-queue-worker/bull-board/**'
             traefik-plugin:
               - 'cluster/apps/traefik/traefik/app/plugins/traefik-api-key-auth/**'
+            litellm-middleware:
+              - 'cluster/apps/litellm/litellm/app/plugins/**'
+              # The integration tests read the image, mounts and callbacks from these.
+              - 'cluster/apps/litellm/litellm/app/values.yaml'
+              - 'cluster/apps/litellm/litellm/app/kustomization.yaml'
+              - '.github/workflows/_litellm-middleware-test.yaml'
             bats:
               - '**/*.bats'
               - 'cluster/apps/claude-agents-shared/**'
@@ -116,6 +123,10 @@ jobs:
     uses: "./.github/workflows/_go-test.yaml"
     with:
       workdir: "cluster/apps/traefik/traefik/app/plugins/traefik-api-key-auth"
+  litellm-middleware:
+    needs: "changes"
+    if: "needs.changes.outputs.litellm-middleware == 'true'"
+    uses: "./.github/workflows/_litellm-middleware-test.yaml"
   shutdown-orchestrator:
     needs:
       - "lint"
@@ -208,6 +219,7 @@ jobs:
       - "agent-queue-worker"
       - "bull-board"
       - "traefik-plugin"
+      - "litellm-middleware"
       - "bats-test"
     if: "always()"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_summary.yaml@main"

@@ -74,8 +74,15 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 ### Proxy-side plugins
 
 `litellm/app/plugins/middleware/` is mounted into the pod from the `litellm-middleware-plugin` ConfigMap as subPath files under `/app/custom_callbacks/middleware/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` and
-`ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`, so `middleware/hindsight/` and `middleware/chatgpt/` are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content). Run the unit tests with
-`task test:litellm-middleware`.
+`ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`, so `middleware/hindsight/` and `middleware/chatgpt/` are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content).
+
+### Middleware tests
+
+- **Unit** (`task test:litellm-middleware`): each middleware against a stubbed `litellm`. Fast, but blind to LiteLLM changing hook names, signatures or call order.
+- **Integration** (`task test:litellm-middleware-integration`, needs a container runtime): `middleware/integration/` boots the LiteLLM image pinned in `values.yaml`, with the plugin files mounted at the paths `values.yaml` and `kustomization.yaml` give them, and a fake Anthropic upstream inside the same container. Tests send real requests and check what reached the upstream and what came back. A
+  missing mount or ConfigMap entry fails here before it fails in the pod. Set `LITELLM_IT_SHOW_LOGS=1` to print the proxy log.
+- The `litellm-middleware` CI job runs both on changes to `plugins/`, `values.yaml` or `kustomization.yaml`, so a Renovate bump of the LiteLLM image is tested against the middleware before merge.
+- `count_tokens` ignores `api_base` and always calls `api.anthropic.com`, so its integration test calls the wrapped `_try_provider_token_count` inside the container instead of going through HTTP.
 
 ### Adding a middleware
 
@@ -101,6 +108,7 @@ middleware/
 - Wire every file into the pod: a ConfigMap generator entry in `kustomization.yaml`; the `/app/custom_callbacks/middleware/<name>` directory in the init container's `mkdir`; a subPath mount in `values.yaml` for each file, plus the shared empty `__init__.py`.
 - Add `<name>/tests` to `testpaths` in `middleware/pyproject.toml` and `plugins/pytest.ini`, and to `sonar.tests` in `.sonarcloud.properties`.
 - Add the module to `tests/test_production_imports.py` so the in-pod import path is tested.
+- Add a test to `integration/test_proxy.py` that sends a real request and checks the effect the middleware has on it.
 - Give it a `###` section in this README if anything about it is non-obvious.
 
 ### Rate-limit headers

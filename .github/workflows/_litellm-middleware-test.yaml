@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/github-workflow.json
+name: "LiteLLM Middleware Tests"
+on:
+  workflow_call:
+permissions:
+  contents: "read"
+jobs:
+  test:
+    name: "Test"
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        working-directory: "cluster/apps/litellm/litellm/app/plugins/middleware"
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+        with:
+          # The tests execute code from the ref; nothing here writes to the repo.
+          persist-credentials: false
+      - name: "Setup uv"
+        uses: "astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7" # v10.2.0
+        with:
+          cache-dependency-glob: "cluster/apps/litellm/litellm/app/plugins/middleware/uv.lock"
+      - name: "Unit tests"
+        run: uv run --extra dev --frozen --no-build pytest
+      - name: "Integration tests"
+        run: uv run --extra dev --frozen --no-build pytest integration
