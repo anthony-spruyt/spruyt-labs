@@ -301,7 +301,6 @@ controllers:
           pullPolicy: IfNotPresent
         env:
           LISTEN_PORT: "8000"
-          # Multi-scanner pipeline loaded from the mounted ConfigMap.
           # Per-scanner thresholds live in scanners.yml, not the THRESHOLD env.
           CONFIG_FILE: "/config/scanners.yml"
           # Resolve the model entirely from the HF_HOME cache PVC. Without this
@@ -540,27 +539,35 @@ configMaps:
           # --------------------------------------------------------------------------
           # Anthropic: Subscription
           # --------------------------------------------------------------------------
+          # stream_timeout is the per-read idle limit - a stalled upstream otherwise holds the stream 600s
           - model_name: "anthropic/claude-fable-5"
             litellm_params:
               model: "anthropic/claude-fable-5"
+              stream_timeout: 120
           - model_name: "anthropic/claude-fable-5-1"
             litellm_params:
               model: "anthropic/claude-fable-5-1"
+              stream_timeout: 120
           - model_name: "anthropic/claude-opus-5"
             litellm_params:
               model: "anthropic/claude-opus-5"
+              stream_timeout: 120
           - model_name: "anthropic/claude-opus-5-5"
             litellm_params:
               model: "anthropic/claude-opus-5-5"
+              stream_timeout: 120
           - model_name: "anthropic/claude-sonnet-5"
             litellm_params:
               model: "anthropic/claude-sonnet-5"
+              stream_timeout: 120
           - model_name: "anthropic/claude-sonnet-5-5"
             litellm_params:
               model: "anthropic/claude-sonnet-5-5"
+              stream_timeout: 120
           - model_name: "anthropic/claude-haiku-4-5"
             litellm_params:
               model: "anthropic/claude-haiku-4-5"
+              stream_timeout: 120
           # --------------------------------------------------------------------------
           # OpenAI: PAYG
           # --------------------------------------------------------------------------
@@ -662,7 +669,7 @@ persistence:
             subPath: scanners.yml
             readOnly: true
   # HF_HOME for llm-guard. Weights are pulled from the Hub on first load and
-  # reused from here afterwards, so a restart no longer re-downloads the model.
+  # reused from here afterwards, so restarts skip the download.
   llm-guard-hf-cache:
     type: persistentVolumeClaim
     existingClaim: llm-guard-hf-cache
