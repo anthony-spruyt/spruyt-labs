@@ -76,6 +76,32 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 `litellm/app/plugins/` is mounted into the pod as ConfigMap subPath files under `/app/custom_callbacks/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` and `ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`, so the
 `hindsight` and `chatgpt` middlewares are inert even though their files are still mounted. To enable one, add a `MiddlewareSpec` for it; order matters (Hindsight before ChatGPT, because Hindsight injects into Anthropic `system` and ChatGPT then translates the final system content).
 
+When adding a file to a plugin, also add it to the plugin's ConfigMap generator and its `advancedMounts` list in `values.yaml`. Run the plugin unit tests with `task test:litellm-middleware`.
+
+### Adding a middleware
+
+The top of `middleware/` holds only the shared pipeline core. Every middleware gets its own sub-folder:
+
+```text
+middleware/
+  base.py  pipeline.py  pipeline_plugin.py  registry.py
+  tests/                  core tests only
+  <name>/
+    __init__.py           empty
+    <name>.py             module-level instance that registry.py loads
+    <helper>.py           used by this middleware only
+    tests/test_<name>.py
+```
+
+- `<name>` is the snake_case form of the registry name (`secret-masking` → `secret_masking/`). Nothing specific to one middleware goes at the top level, including its tests.
+- Import the core with `from ..pipeline import ...` and helpers with `from .<helper> import ...`. No flat-import fallbacks.
+- Tests put `plugins/` on `sys.path` and import `middleware.<name>.<name>`, the same package shape as in the pod.
+- Register it in `registry.py` as `custom_callbacks.middleware.<name>.<name>`. Use `required=True` only when serving without it is unsafe.
+- Wire every file into the pod: a ConfigMap generator entry in `kustomization.yaml`; the `/app/custom_callbacks/middleware/<name>` directory in the init container's `mkdir`; a subPath mount in `values.yaml` for each file, plus the shared empty `__init__.py`.
+- Add `<name>/tests` to `testpaths` in `middleware/pyproject.toml` and `plugins/pytest.ini`, and to `sonar.tests` in `.sonarcloud.properties`.
+- Add the module to `tests/test_production_imports.py` so the in-pod import path is tested.
+- Give it a `###` section in this README if anything about it is non-obvious.
+
 ### Rate-limit headers
 
 LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and has no setting to turn that off, so Claude Code never sees `anthropic-ratelimit-unified-*` and its status line gets `rate_limits: null`. `middleware/ratelimit_headers/` adds un-prefixed copies of that header family only, from `async_post_call_response_headers_hook`, and leaves the prefixed ones in place.
@@ -105,8 +131,6 @@ LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and ha
 - The module is `required` in `registry.py`: if it fails to import, LiteLLM fails to start rather than serving unmasked, so a broken rollout crash-loops the new pod while the old pods keep serving.
 - Once loaded, it fails open. A bug logs a warning and the traffic flows unmasked rather than failing. Mid-stream, the rest of the stream passes through raw, so the client may see fakes from that point on. If an error escapes a streaming middleware after it has sent output, the pipeline ends the stream with an error instead, because replaying would drop or duplicate buffered data.
 - It protects the model provider only. LiteLLM captures the request for its own logging (OTEL traces) before the hook runs, so treat those as holding real values.
-
-When adding a file to a plugin, also add it to the plugin's ConfigMap generator and its `advancedMounts` list in `values.yaml`. Run the plugin unit tests with `task test:litellm-middleware`.
 
 ### Guardrails
 
