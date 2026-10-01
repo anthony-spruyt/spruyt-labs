@@ -13,6 +13,7 @@ Two paths to a working dev environment — both produce identical toolchains.
 
 - [VS Code](https://code.visualstudio.com/) with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine
+- SSH key registered to `spruyt-labs-bot` (see [SSH Key and Git Identity](#ssh-key-and-git-identity))
 - SSH agent with keys loaded (see [SSH Agent Setup](#ssh-agent-setup))
 - Host directories (see below)
 
@@ -43,6 +44,14 @@ touch ~/.secrets/.env.common ~/.secrets/.env.spruyt-labs ~/.secrets/.gitignore \
   ~/.secrets/age.key ~/.secrets/bgp-65000.conf ~/.secrets/kubeconfig ~/.secrets/talosconfig
 chmod 700 ~/.secrets
 chmod 600 ~/.secrets/.env.common ~/.secrets/.env.spruyt-labs
+```
+
+After copying in the real files, lock them down again — a copy can reset permissions, and SSH refuses a world-readable private key:
+
+```bash
+chmod 600 ~/.secrets/age.key ~/.secrets/kubeconfig ~/.secrets/talosconfig ~/.secrets/bgp-65000.conf
+chmod 700 ~/.secrets/.terraform.d
+chmod 600 ~/.secrets/.terraform.d/* ~/.secrets/flux-gitops-key
 ```
 
 The `.env.common` file must contain:
@@ -102,6 +111,37 @@ OTEL_RESOURCE_ATTRIBUTES=agent.namespace=devcontainers
 
 Per-signal endpoints share the one `otel.lan.<external-domain>` host but use distinct `/v1/{traces,metrics,logs}` paths, which Traefik rewrites to the Victoria-native paths. Unlike in-cluster workloads — which point each signal at a different backend pod DNS — every signal here hits the same ingress.
 
+### SSH Key and Git Identity
+
+Local devcontainers commit as `spruyt-labs-bot`, the same identity as Coder workspaces and the Claude agents, so the owner can approve its PRs with their own account. Run these on the host; VS Code copies `~/.gitconfig` into the container.
+
+In a private browser window, sign in to GitHub as `spruyt-labs-bot`. Then generate and upload the key as an authentication key (choose `SSH` → `Generate a new SSH key`):
+
+```bash
+sudo apt install gh
+gh auth login
+```
+
+`gh` only registers authentication keys. Add the same key as a signing key so commits show as Verified:
+
+```bash
+gh auth refresh -h github.com -s admin:ssh_signing_key
+gh ssh-key add ~/.ssh/id_ed25519.pub --type signing --title "<host-name>-signing"
+```
+
+Set the commit identity and signing:
+
+```bash
+git config --global user.name spruyt-labs-bot
+git config --global user.email spruyt-labs-bot@users.noreply.github.com
+git config --global gpg.format ssh
+git config --global user.signingkey "key::$(cat ~/.ssh/id_ed25519.pub)"
+git config --global commit.gpgsign true
+git config --global tag.gpgsign true
+```
+
+Verify: `ssh -T git@github.com` prints `Hi spruyt-labs-bot!`. Delete keys for retired hosts from the bot's GitHub settings.
+
 ### SSH Agent Setup
 
 The `initialize.sh` script runs on your host before container creation and creates a stable symlink at `~/.ssh/agent.sock`. This handles SSH agent forwarding automatically — the container mounts that fixed path.
@@ -109,13 +149,14 @@ The `initialize.sh` script runs on your host before container creation and creat
 **Linux/WSL** — requires `keychain`:
 
 ```bash
+sudo apt update
 sudo apt install keychain
 ```
 
-Add to `~/.bashrc` or `~/.zshrc`:
+Load the agent on every shell:
 
 ```bash
-eval "$(keychain --eval --agents ssh id_ed25519)"
+echo 'eval "$(keychain --eval --agents ssh id_ed25519)"' >> ~/.bashrc
 ```
 
 **macOS:**
