@@ -8,15 +8,15 @@ import pytest
 
 
 _HERE = os.path.dirname(__file__)
-_PLUGIN_DIR = os.path.dirname(_HERE)
-if _PLUGIN_DIR not in sys.path:
-    sys.path.insert(0, _PLUGIN_DIR)
+_PLUGINS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+if _PLUGINS_DIR not in sys.path:
+    sys.path.insert(0, _PLUGINS_DIR)
 
 
 @pytest.fixture
 def module():
-    sys.modules.pop("ratelimit_headers", None)
-    return importlib.import_module("ratelimit_headers")
+    sys.modules.pop("middleware.ratelimit_headers.ratelimit_headers", None)
+    return importlib.import_module("middleware.ratelimit_headers.ratelimit_headers")
 
 
 class StreamingResponse:

@@ -16,12 +16,8 @@ import time
 from collections import OrderedDict
 from typing import Any, Callable, Optional
 
-try:
-    from .pipeline import MiddlewarePipeline
-    from .shared_fakes import SharedFakes, shared_from_env
-except ImportError:
-    from pipeline import MiddlewarePipeline
-    from shared_fakes import SharedFakes, shared_from_env
+from ..pipeline import MiddlewarePipeline
+from .shared_fakes import SharedFakes, shared_from_env
 
 
 _URLSAFE_20 = r"[A-Za-z0-9_\-]{20,}"

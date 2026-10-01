@@ -11,9 +11,9 @@ import pytest
 
 
 _HERE = os.path.dirname(__file__)
-_PLUGIN_DIR = os.path.dirname(_HERE)
-if _PLUGIN_DIR not in sys.path:
-    sys.path.insert(0, _PLUGIN_DIR)
+_PLUGINS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+if _PLUGINS_DIR not in sys.path:
+    sys.path.insert(0, _PLUGINS_DIR)
 
 
 # Built by concatenation so secret scanners don't flag the fixtures.
@@ -51,9 +51,9 @@ def fake_litellm(monkeypatch):
 
 @pytest.fixture
 def mod():
-    sys.modules.pop("secret_masking", None)
-    sys.modules.pop("pipeline", None)
-    return importlib.import_module("secret_masking")
+    sys.modules.pop("middleware.secret_masking.secret_masking", None)
+    sys.modules.pop("middleware.pipeline", None)
+    return importlib.import_module("middleware.secret_masking.secret_masking")
 
 
 @pytest.fixture
@@ -1013,7 +1013,7 @@ async def test_concurrent_calls_sharing_an_id_both_restore(mw):
 
 
 def test_warnings_use_the_pipeline_logger(mod):
-    assert mod._log_warning is sys.modules["pipeline"].MiddlewarePipeline._log_warning
+    assert mod._log_warning is sys.modules["middleware.pipeline"].MiddlewarePipeline._log_warning
 
 
 def test_missing_salt_logs_warning(mod, monkeypatch, fake_litellm):

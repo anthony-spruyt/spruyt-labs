@@ -15,4 +15,4 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["tests", "secret_masking/tests", "ratelimit_headers/tests"]

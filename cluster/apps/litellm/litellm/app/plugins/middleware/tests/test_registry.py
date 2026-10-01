@@ -7,7 +7,7 @@ import pytest
 
 
 _HERE = os.path.dirname(__file__)
-_PLUGIN_DIR = os.path.dirname(os.path.dirname(_HERE))
+_PLUGIN_DIR = os.path.dirname(_HERE)
 if _PLUGIN_DIR not in sys.path:
     sys.path.insert(0, _PLUGIN_DIR)
 
@@ -58,6 +58,15 @@ def test_secret_masking_is_required(registry_module):
     spec = next(s for s in registry_module.DEFAULT_MIDDLEWARE_SPECS if s.name == "secret-masking")
 
     assert spec.required
+
+
+def test_default_specs_point_at_per_middleware_packages(registry_module):
+    modules = {s.name: s.module for s in registry_module.DEFAULT_MIDDLEWARE_SPECS}
+
+    assert modules == {
+        "secret-masking": "custom_callbacks.middleware.secret_masking.secret_masking",
+        "ratelimit-headers": "custom_callbacks.middleware.ratelimit_headers.ratelimit_headers",
+    }
 
 
 def test_ratelimit_headers_is_optional(registry_module):

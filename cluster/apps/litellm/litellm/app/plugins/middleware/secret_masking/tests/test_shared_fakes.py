@@ -9,9 +9,9 @@ import pytest
 
 
 _HERE = os.path.dirname(__file__)
-_PLUGIN_DIR = os.path.dirname(_HERE)
-if _PLUGIN_DIR not in sys.path:
-    sys.path.insert(0, _PLUGIN_DIR)
+_PLUGINS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+if _PLUGINS_DIR not in sys.path:
+    sys.path.insert(0, _PLUGINS_DIR)
 
 
 # Built by concatenation so secret scanners don't flag the fixtures.
@@ -44,14 +44,18 @@ def fake_litellm(monkeypatch):
 
 @pytest.fixture
 def sf():
-    for name in ("shared_fakes", "secret_masking", "pipeline"):
+    for name in (
+        "middleware.secret_masking.shared_fakes",
+        "middleware.secret_masking.secret_masking",
+        "middleware.pipeline",
+    ):
         sys.modules.pop(name, None)
-    return importlib.import_module("shared_fakes")
+    return importlib.import_module("middleware.secret_masking.shared_fakes")
 
 
 @pytest.fixture
 def sm(sf):
-    return importlib.import_module("secret_masking")
+    return importlib.import_module("middleware.secret_masking.secret_masking")
 
 
 class FakeValkey:

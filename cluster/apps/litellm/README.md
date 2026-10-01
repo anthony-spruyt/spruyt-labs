@@ -78,7 +78,7 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 
 ### Rate-limit headers
 
-LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and has no setting to turn that off, so Claude Code never sees `anthropic-ratelimit-unified-*` and its status line gets `rate_limits: null`. `middleware/ratelimit_headers.py` adds un-prefixed copies of that header family only, from `async_post_call_response_headers_hook`, and leaves the prefixed ones in place.
+LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and has no setting to turn that off, so Claude Code never sees `anthropic-ratelimit-unified-*` and its status line gets `rate_limits: null`. `middleware/ratelimit_headers/` adds un-prefixed copies of that header family only, from `async_post_call_response_headers_hook`, and leaves the prefixed ones in place.
 
 - Streamed replies: read from `response._hidden_params["additional_headers"]`. Non-streamed replies: the proxy pops `_hidden_params` from dict responses before the hook runs, so the raw upstream headers are read from `data["litellm_logging_obj"].model_call_details["httpx_response"]`.
 - LiteLLM only calls the hook if the callback's own class defines it (a leaf `__dict__` check), so `MiddlewarePipeline` must define `async_post_call_response_headers_hook` itself, not inherit it.
@@ -88,14 +88,14 @@ LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and ha
 
 ### Secret masking
 
-`middleware/secret_masking.py` is always on for `/v1/messages`, `/v1/chat/completions`, `/v1/responses`, `/v1/responses/compact`, `/v1/completions` and Gemini `generateContent`/`streamGenerateContent`, and for the body that `count_tokens`/`input_tokens` forward to the provider. Credentials with a known prefix (GitHub, Google, Anthropic, OpenAI, AWS, LiteLLM `sk-`, PEM private keys and others in
+`middleware/secret_masking/` is always on for `/v1/messages`, `/v1/chat/completions`, `/v1/responses`, `/v1/responses/compact`, `/v1/completions` and Gemini `generateContent`/`streamGenerateContent`, and for the body that `count_tokens`/`input_tokens` forward to the provider. Credentials with a known prefix (GitHub, Google, Anthropic, OpenAI, AWS, LiteLLM `sk-`, PEM private keys and others in
 `_PATTERNS`) are swapped for a fake with the same prefix, length and character classes before the request leaves the proxy. Fakes in the reply, including streamed text and tool-call arguments, are swapped back, so the model provider never sees the real value but client tools still get it.
 
 - Fakes are an HMAC of the real value keyed from `LITELLM_SALT_KEY`, so the same secret gets the same fake across turns and replicas and prompt caching still hits. Rotating the salt changes every fake and busts those caches once. If the salt is missing, each pod logs a warning and uses a random key, so fakes differ per replica.
 - Secrets we generate ourselves (DB passwords, webhook secrets, service-to-service tokens) should use the `sl_` prefix plus letters and digits only, at least 32 characters in total, so they are caught too. Generate one with `task sops:gen-key` (64 by default; `length=32` for apps that cap password length). LiteLLM virtual keys must start with `sk-`, which is already caught.
 - Only prefixed formats are caught. Bare high-entropy strings (hashes, UUIDs, unprefixed passwords) pass through on purpose, to avoid mangling commit SHAs and similar.
 - Thinking and reasoning blocks, base64 sources, `data:` URLs, `input_audio` and remote image/file URLs are never touched: thinking signatures would break, binary payloads would be corrupted, and presigned URLs would stop working.
-- The map from fake to real is kept per virtual key for an hour, so a fake the model echoes from an earlier turn (`previous_response_id`, compaction) is still swapped back, whichever replica serves it. Each pod keeps its own map in memory (capped at 2000 fakes) and `middleware/shared_fakes.py` shares it through `litellm-valkey`:
+- The map from fake to real is kept per virtual key for an hour, so a fake the model echoes from an earlier turn (`previous_response_id`, compaction) is still swapped back, whichever replica serves it. Each pod keeps its own map in memory (capped at 2000 fakes) and `middleware/secret_masking/shared_fakes.py` shares it through `litellm-valkey`:
   - Entries live in one hash per virtual key under `litellm:secret-masking:v1:`, with a per-field 1h TTL (`HSETEX`, Valkey 9+). The key name and field names are HMACs of the virtual key and the fake; the value is AES-GCM encrypted with a key derived from `LITELLM_SALT_KEY` via HKDF, bound to its key and field. Nothing readable is stored, but the ciphertext does sit in the AOF on the PVC for up to
     an hour.
   - Writes are queued and sent in the background. The read starts at pre-call and runs while the provider works; the reply only waits for it (at most 0.5s) if it has not finished.

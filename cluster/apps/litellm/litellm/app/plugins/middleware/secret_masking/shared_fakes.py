@@ -11,10 +11,7 @@ import time
 from collections import OrderedDict
 from typing import Any, Callable, Optional
 
-try:
-    from .pipeline import MiddlewarePipeline
-except ImportError:
-    from pipeline import MiddlewarePipeline
+from ..pipeline import MiddlewarePipeline
 
 
 _log_warning = MiddlewarePipeline._log_warning

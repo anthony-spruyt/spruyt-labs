@@ -41,7 +41,7 @@ controllers:
           - sh
           - -c
           - |
-            mkdir -p /app/custom_callbacks/hindsight /app/custom_callbacks/chatgpt /app/custom_callbacks/middleware
+            mkdir -p /app/custom_callbacks/hindsight /app/custom_callbacks/chatgpt /app/custom_callbacks/middleware/secret_masking /app/custom_callbacks/middleware/ratelimit_headers
             touch /app/custom_callbacks/__init__.py
         securityContext:
           allowPrivilegeEscalation: false
@@ -727,16 +727,22 @@ persistence:
           - path: /app/custom_callbacks/middleware/pipeline_plugin.py
             subPath: pipeline_plugin.py
             readOnly: true
-          - path: /app/custom_callbacks/middleware/ratelimit_headers.py
+          - path: /app/custom_callbacks/middleware/ratelimit_headers/__init__.py
+            subPath: __init__.py
+            readOnly: true
+          - path: /app/custom_callbacks/middleware/ratelimit_headers/ratelimit_headers.py
             subPath: ratelimit_headers.py
             readOnly: true
           - path: /app/custom_callbacks/middleware/registry.py
             subPath: registry.py
             readOnly: true
-          - path: /app/custom_callbacks/middleware/secret_masking.py
+          - path: /app/custom_callbacks/middleware/secret_masking/__init__.py
+            subPath: __init__.py
+            readOnly: true
+          - path: /app/custom_callbacks/middleware/secret_masking/secret_masking.py
             subPath: secret_masking.py
             readOnly: true
-          - path: /app/custom_callbacks/middleware/shared_fakes.py
+          - path: /app/custom_callbacks/middleware/secret_masking/shared_fakes.py
             subPath: shared_fakes.py
             readOnly: true
   chatgpt-auth-data:
