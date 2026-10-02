@@ -4,9 +4,9 @@ kind: KubeAPIServerConfig
 resources:
   requests:
     cpu: 1000m
-    memory: 2Gi
+    memory: 3Gi
   limits:
-    memory: 4Gi
+    memory: 6Gi
 ---
 apiVersion: v1alpha1
 kind: KubeControllerManagerConfig
