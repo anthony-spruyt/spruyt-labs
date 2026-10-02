@@ -3,20 +3,20 @@
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: kata-tap-qdisc-fix
+  name: coredns
 spec:
   targetRef:
     apiVersion: apps/v1
-    kind: DaemonSet
-    name: kata-tap-qdisc-fix
+    kind: Deployment
+    name: coredns
   updatePolicy:
     updateMode: "Initial"
   resourcePolicy:
     containerPolicies:
-      - containerName: app
+      - containerName: coredns
         controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m
           memory: 1Mi
         maxAllowed:
-          memory: 64Mi
+          memory: 170Mi

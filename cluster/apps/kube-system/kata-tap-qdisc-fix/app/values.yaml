@@ -50,7 +50,7 @@ controllers:
             cpu: 5m
             memory: 16Mi
           limits:
-            memory: 32Mi
+            memory: 64Mi
         securityContext:
           # privileged:true required to unmask /proc/<pid>/ns/net, which the
           # daemon must stat for every cloud-hypervisor process. procMount:

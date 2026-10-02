@@ -139,7 +139,7 @@ vmalert:
     # vmalert is lightweight (~110m CPU) - no anti-affinity needed
     resources:
       limits:
-        memory: 128Mi
+        memory: 192Mi
       requests:
         cpu: 110m
         memory: 80Mi
