@@ -1,6 +1,6 @@
 # Breaking Changes Lookup
 
-Research priority per CLAUDE.md rules: Context7 → GitHub → WebFetch → WebSearch.
+Research order follows `.claude/rules/research.md`; the steps below apply it to Kubernetes.
 
 ## Research Steps
 

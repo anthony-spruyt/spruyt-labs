@@ -1,6 +1,6 @@
 ---
 name: unifi-os-upgrade
-description: Upgrades, restarts, rolls back, and troubleshoots the containerised UniFi OS Server running on the Raspberry Pi (ssh alias `unifi`). Use when the user asks to "upgrade UniFi", "update UniFi OS", "bump the UOS image", mentions a lemker/unifi-os-server release tag, or asks what version the UniFi controller is on. Not for UniFi devices (APs/switches) — those update from the UniFi UI. Not for anything in the Talos cluster.
+description: Upgrades, restarts, rolls back, and troubleshoots the containerised UniFi OS Server running on the Raspberry Pi (ssh alias `unifi`). Use when the user asks to upgrade UniFi OS or bump the UOS image, mentions a lemker/unifi-os-server release tag, or asks what version the UniFi controller is on. Not for UniFi devices (APs/switches) — those update from the UniFi UI. Not for anything in the Talos cluster.
 argument-hint: [target-tag]
 ---
 
@@ -26,7 +26,7 @@ Two conventions used below:
 | Inform URL         | `http://<PI_IP>:8080/inform` — **never change this**        |
 | Backups            | `/home/aspruyt/uos-migration-backups/` on the workstation   |
 
-Host inventory, port and data layout, hardening, all three rollback paths, and the host's quirks are already established in `references/host-facts.md` — read it, do not re-discover any of it.
+Host inventory, port and data layout, hardening, all three rollback paths, and the host's quirks are recorded in `references/host-facts.md`. Read it before probing the host; re-check a fact on the host only when what you see disagrees with it.
 
 ### Resolving `<PI_IP>`
 

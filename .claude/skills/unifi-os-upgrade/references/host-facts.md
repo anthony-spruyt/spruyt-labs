@@ -1,6 +1,6 @@
 # UniFi OS Server — host facts
 
-Reference for the `unifi-os-upgrade` skill. Host: `ssh unifi`. Treat this as established — do not re-discover it.
+Reference for the `unifi-os-upgrade` skill. Host: `ssh unifi`. Start from these facts; re-check one on the host only when the host disagrees with it.
 
 **No addresses are recorded here.** This is a public repo. Reach the host via the `ssh unifi` alias and prefer `localhost` from inside it; discover an address at runtime only when you need to hand the user a browser URL.
 

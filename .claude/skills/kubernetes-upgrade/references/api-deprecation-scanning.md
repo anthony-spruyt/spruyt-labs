@@ -6,14 +6,14 @@
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
 | **Metrics** (run first)            | `kubectl get --raw /metrics 2>/dev/null \| grep apiserver_requested_deprecated_apis \| grep 'removed_release="<minor>"'` | Dynamic usage from all clients                        |
 | **Direct query** (per removed API) | `kubectl get <resource>.<api-group> --all-namespaces 2>/dev/null`                                                        | Currently existing resources                          |
-| **Manifest scan**                  | Grep tool: `pattern: "apiVersion: <group>/<version>"` in `cluster/*.yaml`                                                | Static definitions (misses Helm templates, operators) |
+| **Manifest scan**                  | `grep -rn --include='*.yaml' 'apiVersion: <group>/<version>' cluster/`                                                   | Static definitions (misses Helm templates, operators) |
 
 ## Procedure
 
-1. Identify removed APIs from Phase 1 breaking changes research
+1. Identify removed APIs from the Phase 3 breaking changes research
 2. Run metrics method — fastest, covers dynamic usage
 3. Run direct query for each identified removed API
-4. Run manifest scan via Grep tool
+4. Run the manifest scan
 5. Compile results: namespace, resource name, kind, current API version
 
 ## Remediation

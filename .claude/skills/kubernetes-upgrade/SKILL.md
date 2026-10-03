@@ -1,6 +1,6 @@
 ---
 name: kubernetes-upgrade
-description: Use when the user asks to "upgrade Kubernetes", "upgrade k8s", "update Kubernetes version", "bump Kubernetes version", mentions a target version like "upgrade to 1.35.1", or when Renovate updates kubernetesVersion in topf.yaml. Not for Talos OS upgrades (use talos-upgrade agent).
+description: Use when the user asks to upgrade or bump the Kubernetes (k8s) version, with or without a target such as 1.35.1, or when Renovate updates kubernetesVersion in topf.yaml. Not for Talos OS upgrades (use talos-upgrade agent).
 argument-hint: <target-version>
 ---
 
@@ -135,9 +135,8 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 ### Phase 12: Update Files & Report
 
 1. Update `kubernetesVersion` in `talos/topf.yaml`
-2. Search for **all** old version references:
-   - Grep tool: search `<old-version>` (no `v` prefix) in `talos/*.yaml`, `talos/*.md`, `docs/*.md`, `cluster/*.yaml`, `.github/workflows/*.yaml`, `.taskfiles/**/*.sh`
-   - **Grep may miss hookify-blocked files.** Fallback: `grep -r "v<old-version>" cluster/ --include="*.yaml" -l 2>/dev/null`. Files found only by bash need `sed -i` instead of Edit tool.
+2. Search for **all** old version references. Search without the `v` prefix so both `v1.x.y` and `1.x.y` forms match:
+   - `grep -rln --include='*.yaml' --include='*.md' --include='*.sh' -F '<old-version>' talos/ docs/ cluster/ .github/workflows/ .taskfiles/`
 3. Common locations: `talos/topf.yaml`, `.github/workflows/_kubeconform.yaml` (`KUBERNETES_VERSION`), `.taskfiles/install/scripts/install-kubectl.sh` (`VERSION`)
 4. Update all references; verify zero remain
 5. Present final report: version change, node status, health results, files changed

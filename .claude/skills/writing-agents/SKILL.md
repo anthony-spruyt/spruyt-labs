@@ -29,7 +29,7 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 
 **Write in third person** — the description is injected into the system prompt by the routing system.
 
-**Content pattern:** Brief capability statement (1 clause), then triggering conditions. Do NOT expand the capability statement into a workflow summary — Claude follows the description shortcut instead of reading the full system prompt body. Keep "what" to a single clause, put process details in the body.
+**Content pattern:** Brief capability statement (1 clause), then triggering conditions. Don't expand the capability statement into a workflow summary: the description rides in every parent request and is all the parent sees when deciding to delegate, while the body loads only when the agent runs. Keep "what" to a single clause, put process details in the body.
 
 **Include:**
 
@@ -61,41 +61,43 @@ Not every agent needs all sections. Small focused agents may only need Persona, 
 
 ## Creation Workflow
 
-Use sub-agents for each phase, same as optimization. Fresh context prevents drift.
+Write the agent in the main session. Use one fresh-context sub-agent for review, so the reviewer isn't anchored on drafting choices.
 
-### Phase 1: Create (sub-agent)
+### Phase 1: Create
 
-Dispatch a creation sub-agent. Provide it with: the agent requirements, this skill, existing agents (for pattern reference), and all inherited context files (CLAUDE.md, `.claude/rules/*`). The sub-agent follows these steps:
+Read the agent requirements, this skill, existing agents (for pattern reference), and all inherited context files (CLAUDE.md, `.claude/rules/*`). Then:
 
 01. **Discover patterns** — Read 2-3 existing agents in `.claude/agents/` for local conventions
 02. **Define persona** — Expert identity with domain expertise, 1-2 sentences
-03. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, 1-2 examples with `<commentary>`, "When to use" and "When NOT to use" sections). Choose model and tools (least privilege — see `references/anthropic-best-practices.md` Section 9)
+03. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, 1-2 examples with `<commentary>`, "When to use" and "When NOT to use" sections). Choose model, effort, and tools (model and effort — `references/project-patterns.md` Section 2; least privilege — `references/anthropic-best-practices.md` Section 9)
 04. **Structure system prompt** — Follow section order from System Prompt Structure above. Include output format template and handoff protocol
 05. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
 06. **Scope-limit** — If testing shows over-reach, add "Only make changes directly requested." (see `references/anthropic-best-practices.md` Section 4)
-07. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, use strong language (e.g., "stop immediately with BLOCKED"). Add "stop on error" for sequential workflows
-08. **Calibrate emphasis** — Same rules as Optimization Phase 1 step 4. Safety gates keep strong language; operational preferences use normal language
+07. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, state the stop unconditionally with its reason and a named end state (e.g., "stop and return BLOCKED: <reason>"). Add "stop on error" for sequential workflows
+08. **Calibrate emphasis** — Same rules as Optimization Phase 1 step 4
 09. **Avoid inherited duplication** — Read CLAUDE.md and `.claude/rules/*`. Do not duplicate content. Use single-line references (e.g., "Follow inherited secret handling rules")
-10. **Size check** — Target under 300 lines / 2,000 words. Run `wc -l` and `wc -w` to verify
+10. **Size check** — Run `wc -l` and `wc -w`. Past ~300 lines / 2,000 words, re-test each section against `references/anthropic-best-practices.md` Section 1; length alone is not a reason to cut
 
-### Phase 2: Validate (two parallel sub-agents)
+### Phase 2: Review (one sub-agent)
 
-Same as Optimization Phase 2, but the effectiveness review checks completeness rather than comparing to an original:
+Dispatch one fresh sub-agent with the new file, this skill, and the inherited context files. It checks:
 
-- **Structural review**: Same checks as optimization — frontmatter fields, description under 1024 chars, no workflow summary, examples have `<commentary>`, max 2 examples, emphasis calibrated, output format and handoff protocol present. Return PASS/FAIL with specific issues and exact fixes.
-- **Completeness review**: All System Prompt Structure sections present (at minimum: Persona, Workflow, Rules, Output Format). No inherited context duplicated. No Opus-known explanations. Domain-specific commands have non-obvious flags where needed. Return COMPLETE/INCOMPLETE with specific gaps.
+- **Structure**: frontmatter fields, description under 1024 chars, no workflow summary, examples have `<commentary>`, max 2 examples, emphasis calibrated, output format and handoff protocol present.
+- **Completeness**: All System Prompt Structure sections present (at minimum: Persona, Workflow, Rules, Output Format). No inherited context duplicated. No explanations of what the model already knows. Domain-specific commands have non-obvious flags where needed.
 
-### Phase 3: Fix loop
+It returns PASS/FAIL with specific issues and exact fixes.
 
-If either validator returns FAIL/INCOMPLETE: dispatch a fix sub-agent with the specific issues and exact fixes. Then re-run Phase 2. Repeat until both validators return PASS + COMPLETE.
+### Phase 3: Fix
+
+Apply the fixes in the main session. Re-run Phase 2 only when a fix changed behavior (workflow, gates, tools), not for wording.
 
 ## Optimization Workflow
 
-Use sub-agents for each phase. Fresh context prevents sunk cost bias and keeps each step focused.
+Optimize in the main session. Use one fresh-context sub-agent for review, so the reviewer has no sunk cost in the cuts.
 
-### Phase 1: Optimize (sub-agent)
+### Phase 1: Optimize
 
-Dispatch an optimization sub-agent. Provide it with: the agent file path, this skill, and all inherited context files (CLAUDE.md, `.claude/rules/*`). The sub-agent follows these steps:
+Read the agent file, this skill, and all inherited context files (CLAUDE.md, `.claude/rules/*`). Then:
 
 1. **Measure** — Count lines (`wc -l`) and words (`wc -w`). Identify largest sections
 2. **Fix description field** — Must comply with the Description Field section of this skill:
@@ -105,21 +107,23 @@ Dispatch an optimization sub-agent. Provide it with: the agent file path, this s
    - Max 2 `<example>` blocks
    - Must have "When to use" and "When NOT to use" sections
 3. **Remove inherited context** — Read CLAUDE.md and every `.claude/rules/` file. Search the agent for duplicated content. Common: secret handling, git staging, research priority, domain substitution. Replace with single-line references (e.g., "Follow inherited secret handling rules")
-4. **Calibrate emphasis** — Soften CRITICAL/MUST/NEVER/FORBIDDEN/MANDATORY (see `references/anthropic-best-practices.md` Section 3). Remove explanations Opus knows (Section 12). **Safety gates** (hard stops preventing data loss, secret exposure, skipping required inputs) keep strong language. **Operational preferences** (tool choice, workflow ordering, style) use normal language — no bold, no
+4. **Calibrate emphasis** — Soften CRITICAL/MUST/NEVER/FORBIDDEN/MANDATORY (see `references/anthropic-best-practices.md` Section 3). Remove explanations the model already knows (Section 12). **Safety gates** (hard stops preventing data loss, secret exposure, skipping required inputs) stay unconditional, stated plainly with their reason. **Operational preferences** (tool choice, workflow ordering, style) use normal language — no bold, no
    CRITICAL, no blockquote emphasis
-5. **Cut aggressively** — Remove Opus-known content, inherited context, verbose examples. Agents are single files; do not extract. **Keep:** domain-specific commands with non-obvious flags, exact commit/git commands in self-improvement, behavioral anchors preventing shallow execution
+5. **Cut what fails the test** — Remove what the model already knows, inherited context, and verbose examples (`references/anthropic-best-practices.md` Section 1). Agents are single files; do not extract. **Keep:** domain-specific commands with non-obvious flags, exact commit/git commands in self-improvement, behavioral anchors preventing shallow execution
 6. **Verify frontmatter** — All original fields must survive (`name`, `description`, `model`, `memory`, `tools`). Missing `tools` silently grants all tools
 
-### Phase 2: Validate (two parallel sub-agents)
+### Phase 2: Review (one sub-agent)
 
-Dispatch two fresh sub-agents (no shared context with the optimizer). Both read: the optimized file, the original (via `git show <pre-optimization-ref>:<path>`), inherited context files, and this skill. Run in parallel:
+Dispatch one fresh sub-agent (no shared context with the optimizer). It reads the optimized file, the original (via `git show <pre-optimization-ref>:<path>`), inherited context files, and this skill, and checks:
 
-- **Structural review**: Frontmatter fields survived. Description under 1024 chars, no workflow summary, examples have `<commentary>`, max 2 examples. System prompt sections present. Emphasis calibrated (strong only on safety gates). Output format and handoff protocol present. Return PASS/FAIL with specific issues and exact fixes.
-- **Effectiveness review**: Compare for lost domain-specific knowledge not in inherited context and that Opus wouldn't know. All workflow steps still represented. Domain commands with non-obvious flags preserved. Classify cuts as SAFE/RISKY/LOST. Return EFFECTIVE/DEGRADED/BROKEN.
+- **Structure**: Frontmatter fields survived. Description under 1024 chars, no workflow summary, examples have `<commentary>`, max 2 examples. System prompt sections present. Emphasis calibrated (safety gates unconditional with reasons). Output format and handoff protocol present.
+- **Effectiveness**: Lost domain-specific knowledge not in inherited context and that the model wouldn't know. All workflow steps still represented. Domain commands with non-obvious flags preserved. Each cut classified SAFE/RISKY/LOST.
 
-### Phase 3: Fix loop
+It returns PASS/FAIL plus EFFECTIVE/DEGRADED/BROKEN, with specific issues and exact fixes.
 
-If either validator returns FAIL/DEGRADED: dispatch a fix sub-agent with the specific issues and exact fixes. Then re-run Phase 2. Repeat until both validators return PASS + EFFECTIVE.
+### Phase 3: Fix
+
+Apply the fixes in the main session. Re-run Phase 2 only when a fix restored or changed behavior, not for wording.
 
 ## Common Mistakes
 
@@ -127,7 +131,7 @@ If either validator returns FAIL/DEGRADED: dispatch a fix sub-agent with the spe
 | -------------------------------- | ------------------------------------------------------------------- |
 | Workflow summary in description  | Brief capability + triggering conditions only. Put workflow in body |
 | CRITICAL/MANDATORY/NEVER overuse | Normal language. Current models overtrigger on aggressive emphasis |
-| 500+ line system prompt          | Cut aggressively — remove what Opus knows. Target < 300 lines       |
+| Padding in a long system prompt  | Remove what the model already knows; keep facts and reasons          |
 | No output format specified       | Add structured output template                                      |
 | No examples in description       | Add 1-2 `<example>` blocks with context/user/assistant/commentary   |
 | See full list                    | `references/common-mistakes.md`                                     |

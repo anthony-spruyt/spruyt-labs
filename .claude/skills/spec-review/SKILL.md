@@ -29,5 +29,5 @@ You are reviewing the spec at `$spec`.
 
 ## Rules
 
-- **NEVER append review notes, summaries, or review round logs to the spec file.** The spec is the design document — not a review journal. Findings go in conversation output only.
+- Findings go in the conversation, not the spec. Don't append review notes, summaries, or review round logs to the spec file: it is the design document, not a review journal.
 - Only edit the spec to fix actual issues identified in findings (incorrect claims, missing sections, design gaps). Each edit should improve the spec's content, not add meta-commentary about the review process.

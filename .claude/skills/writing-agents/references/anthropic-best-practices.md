@@ -15,14 +15,14 @@ Reference material from official Anthropic documentation. Each principle include
 09. [Tool Scoping](#9-tool-scoping)
 10. [Feedback Loops](#10-feedback-loops)
 11. [Stop on Error](#11-stop-on-error)
-12. [Don't Over-Explain to Opus](#12-dont-over-explain-to-opus)
+12. [Don't Over-Explain](#12-dont-over-explain)
 13. [Don't Duplicate Inherited Context](#13-dont-duplicate-inherited-context)
 
 ______________________________________________________________________
 
 ## 1. Token Efficiency
 
-Context is finite. Every token competes with conversation history, other skills, and the actual request. "Context rot" degrades recall as token count grows — this is a performance gradient, not a cliff. Challenge each section: "Does this justify its token cost?" Start minimal, add only when testing reveals gaps.
+Context is finite. Every token competes with conversation history, other skills, and the actual request. "Context rot" degrades recall as token count grows — this is a performance gradient, not a cliff. Challenge each line with one question: could the model already know this? Cut restatements of default behavior and workarounds for failures the current model doesn't have. Minimal is not short: environment facts, the reasons behind rules, the quality bar, and non-obvious commands are what only the author knows, and an agent missing them falls back on generic defaults.
 
 Source: https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
 
@@ -34,7 +34,7 @@ Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/b
 
 ## 3. Emphasis Calibration
 
-Current Claude models follow system prompts closely; emphasis written to fix undertriggering causes overtriggering. Replace "CRITICAL: You MUST use this tool when..." with "Use this tool when...". Keep strong language for safety gates only.
+Current Claude models follow system prompts closely; emphasis written to fix undertriggering causes overtriggering. Replace "CRITICAL: You MUST use this tool when..." with "Use this tool when...". For safety gates, make the stop unconditional and give the reason; the reason and a named end state hold the gate, not capitals or bold.
 
 Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices
 
@@ -58,9 +58,9 @@ Source: https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engine
 
 ## 7. Progressive Disclosure
 
-Main file as overview pointing to detailed materials loaded on demand. Keep main body under 500 lines. Reference files one level deep only (no nested references). Include table of contents in files over 100 lines. Only metadata (name, description) is pre-loaded; SKILL.md loads when triggered; reference files load on demand.
+Claude Code loads every agent's `description` into each parent request and loads the body only when the agent runs. Keep routing text in the description and everything else in the body. Agents are single files; when an agent needs depth that already lives in the repo (a component README, a runbook), point it at that file instead of copying the content in.
 
-Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
+Source: https://code.claude.com/docs/en/sub-agents
 
 ## 8. Subagent Design
 
@@ -70,7 +70,7 @@ Sources: https://claude.com/blog/building-agents-with-the-claude-agent-sdk, http
 
 ## 9. Tool Scoping
 
-Least privilege. Restrict to essential tools. Read-only agents should not have Write/Edit. Operational agents need Bash. Analysis agents need Read/Grep/Glob. Tools are prominent in Claude's context window, making them the primary actions Claude considers — be conscious about which tools you expose.
+Least privilege. Restrict to essential tools. Read-only agents should not have Write/Edit. Operational agents need Bash. Analysis agents need Read, plus Bash for search: this harness has no Grep or Glob tool, so list only tools that exist here. Tools are prominent in Claude's context window, making them the primary actions Claude considers — be conscious about which tools you expose.
 
 Source: https://claude.com/blog/building-agents-with-the-claude-agent-sdk
 
@@ -86,14 +86,14 @@ For sequential multi-step workflows, add explicit termination conditions at each
 
 Source: Observed pattern in project agents (qa-validator, etcd-maintenance, cluster-validator)
 
-## 12. Don't Over-Explain to Opus
+## 12. Don't Over-Explain
 
-Claude Opus already knows Kubernetes, YAML, Git, common tools, and standard libraries. Remove explanations of concepts Opus understands. Focus on project-specific context it can't infer. Only add context Claude doesn't already have. Challenge each piece: "Can I assume Claude knows this?"
+The models agents run on (`opus`, `sonnet`) already know Kubernetes, YAML, Git, common tools, and standard libraries. Remove explanations of concepts the model understands. Focus on project-specific context it can't infer. Only add context Claude doesn't already have. Challenge each piece: "Can I assume Claude knows this?"
 
 Source: https://platform.claude.com/docs/en/docs/agents-and-tools/agent-skills/best-practices
 
 ## 13. Don't Duplicate Inherited Context
 
-Agents inherit CLAUDE.md and project rules automatically. Don't repeat secret handling rules, git conventions, or workflow constraints already in rules files. Reference them if needed ("follow inherited rules for X"), don't copy them. Once a tool executes deep in history, the raw output doesn't need to persist — discard intermediate outputs once their purpose is served.
+Agents inherit CLAUDE.md and project rules automatically. Don't repeat secret handling rules, git conventions, or workflow constraints already in rules files. Reference them if needed ("follow inherited rules for X"), don't copy them.
 
 Source: https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents

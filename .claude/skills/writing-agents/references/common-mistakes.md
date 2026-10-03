@@ -4,15 +4,15 @@
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Workflow summary in description                         | Brief capability + triggering conditions only. Put workflow in body                                                                |
 | CRITICAL/MANDATORY/NEVER overuse                        | Normal language. Current models overtrigger on aggressive emphasis                                                                 |
-| Explaining Kubernetes/YAML/Git basics                   | Remove. Opus knows these                                                                                                           |
+| Explaining Kubernetes/YAML/Git basics                   | Remove. The model knows these                                                                                                      |
 | Copying CLAUDE.md secret rules                          | Remove. Agent inherits project rules                                                                                               |
-| 500+ line system prompt                                 | Cut aggressively — remove what Opus knows, inherited context. Target < 300 lines                                                   |
+| Padding in a long system prompt                         | Remove what the model already knows and inherited context; keep environment facts and reasons                                      |
 | All tools inherited                                     | Restrict to what's needed (least privilege)                                                                                        |
 | No output format specified                              | Add structured output template                                                                                                     |
 | No examples in description                              | Add 1-2 `<example>` blocks with context/user/assistant/commentary                                                                  |
 | Magic commands without explanation                      | Add brief comment explaining why (right altitude)                                                                                  |
 | No self-improvement for high-touch agents               | Add memory pattern if agent runs frequently                                                                                        |
-| Vague scope enabling unnecessary subagent spawning      | Add "Only make changes directly requested." Prefer Grep/Read over subagents for lookups                                            |
+| Vague scope enabling unnecessary subagent spawning      | Add "Only make changes directly requested." Prefer a direct Bash search or Read over subagents for lookups                         |
 | Multi-goal agent                                        | Split into focused agents. One clear goal, input, output per agent                                                                 |
 | No confirmation gates for destructive actions           | Add explicit guidance on which actions need user confirmation                                                                      |
 | Independent checks run sequentially                     | Mark parallel groups: "Run in parallel: [list]. After those pass: [list]" (see `references/anthropic-best-practices.md` Section 6) |
