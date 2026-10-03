@@ -4,7 +4,8 @@
 instance:
   # -- Distribution https://fluxcd.control-plane.io/operator/fluxinstance/#distribution-configuration
   distribution: # @schema required: true
-    version: "2.7.2" # @schema required: true
+    # renovate: depName=fluxcd/flux2 datasource=github-releases
+    version: "2.9.6" # @schema required: true
     registry: "ghcr.io/fluxcd" # @schema required: true
     artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests:latest"
     artifactPullSecret: ""
@@ -48,6 +49,9 @@ instance:
           - op: add
             path: /spec/template/spec/containers/0/args/-
             value: --sops-age-secret=sops-age
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --feature-gates=StrictPostBuildSubstitutions=false
         target:
           kind: Deployment
           name: kustomize-controller
@@ -121,7 +125,7 @@ instance:
       - patch: |
           - op: add
             path: /spec/template/spec/containers/0/args/-
-            value: --feature-gates=DisableChartDigestTracking=true
+            value: --feature-gates=DisableChartDigestTracking=true,UseHelm3Defaults=true
         target:
           kind: Deployment
           name: helm-controller

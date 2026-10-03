@@ -21,6 +21,11 @@ Two secrets in `flux-system` are created by hand at bootstrap and are not in Git
 
 `talos/helmfile/flux.yaml.gotmpl` installs flux-operator and flux-instance with the same `values.yaml` files as these HelmReleases, and reads the chart URL and tag from the OCIRepositories in `cluster/flux/meta/repositories/oci/`, so a fresh cluster comes up with the same versions and settings that Renovate keeps current.
 
+### Flux version
+
+The chart tag (flux-operator / flux-instance, `v0.x`) and the Flux distribution (`instance.distribution.version`, `v2.x`) are separate dependencies with separate Renovate PRs. Renovate only sees the distribution through the `# renovate:` annotation in `app/values.yaml`; without it the cluster sat on 2.7.2 for 11 months (#3315). The Flux CLI install script reads the same value, so the CLI follows
+the cluster.
+
 ### Rotate the deploy key
 
 The private key lives only on the host (`~/.secrets/flux-gitops-key`, `.pub` beside it) and in the `flux-gitops-key` Secret. Its public half is the repository deploy key whose title starts with `flux-gitops`. Flux only reads, so the key must not have write access. Add keys in the GitHub UI, not with `gh repo deploy-key add`: keys added by `gh` are deleted when its token is revoked.
@@ -52,6 +57,8 @@ The private key lives only on the host (`~/.secrets/flux-gitops-key`, `.pub` bes
 
 - **Namespace label**: flux-operator owns the `flux-system` Namespace and overwrites labels from `namespace.yaml`, so `descheduler.kubernetes.io/exclude` is added through a kustomize patch here instead.
 - **Controller tuning**: concurrency, in-memory kustomize builds, Helm OOM watch and anti-affinity are all patches in `app/values.yaml`. helm-controller concurrency is deliberately lower than the others to cap CPU spikes (#233).
+- **`UseHelm3Defaults` feature gate**: Flux 2.8 moved helm-controller to Helm v4. The gate keeps the Helm 3 defaults: legacy health checks instead of kstatus, client-side apply for new installs, and post-renderers off hooks. Remove it once HelmReleases have been checked against those changes (#3315).
+- **`StrictPostBuildSubstitutions=false` feature gate**: from Flux 2.9 a Kustomization fails on any `${VAR}` with no value and no default. Several manifests contain literal `${...}` (Traefik regex captures, Kyverno policies, Rook values, comments) that Flux has always blanked. Remove the gate once those are escaped as `$${...}` or given values (#3315).
 
 ### Cross-namespace access to `sops-age`
 
