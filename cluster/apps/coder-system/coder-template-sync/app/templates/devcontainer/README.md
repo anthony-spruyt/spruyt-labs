@@ -12,7 +12,7 @@ The repository needs:
 - A `vscode` remote user (UID 1000) with passwordless `sudo`. Home is mounted at `/home/vscode`, and startup uses `sudo` to mount the container disk. Without it startup stops before commit signing is configured.
 - `jq` and `curl` in the image, for `customizations.vscode.extensions` in VS Code Web and for `git verify-commit` (the startup step that builds `~/.config/git/allowed_signers`).
 - For apt through the Nexus cache: `"build": { "args": { "NEXUS_URL": "${localEnv:NEXUS_URL}" } }` in `devcontainer.json`, plus `ARG NEXUS_URL` and a `sources.list` rewrite in the Dockerfile. Copy the [spruyt-labs Dockerfile](https://github.com/anthony-spruyt/spruyt-labs/blob/main/.devcontainer/Dockerfile). Without it apt goes to the internet directly.
-- To pull the base image through Nexus: `ARG BASE_REGISTRY=ghcr.io` and `FROM ${BASE_REGISTRY}/...` in the Dockerfile, plus `"BASE_REGISTRY": "${localEnv:BASE_REGISTRY:ghcr.io}"` in `build.args`. envbuilder ignores registry mirrors, so without it the base image downloads straight from the registry.
+- To pull the base image through Nexus: `ARG BASE_REGISTRY=docker.io` and `FROM ${BASE_REGISTRY}/...` in the Dockerfile, plus `"BASE_REGISTRY": "${localEnv:BASE_REGISTRY:docker.io}"` in `build.args`. envbuilder ignores registry mirrors, so without it the base image downloads straight from the registry.
 
 ## What to expect
 
