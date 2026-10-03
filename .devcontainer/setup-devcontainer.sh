@@ -4,8 +4,7 @@ set -euo pipefail
 # Repo-specific devcontainer setup.
 # Called by post-create.sh after safe-chain, pre-commit, and claude-cli are installed.
 
-# Install taskfile runner
-curl -sSfL https://raw.githubusercontent.com/go-task/task/main/install-task.sh | sudo sh -s -- -b /usr/local/bin
+bash "$(dirname "${BASH_SOURCE[0]}")/../.taskfiles/install/scripts/install-task.sh"
 
 echo "Installing repo-specific tools via taskfile..."
 

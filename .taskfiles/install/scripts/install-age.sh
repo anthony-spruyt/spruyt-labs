@@ -1,54 +1,30 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "🔍 Checking OS and package manager..."
+# renovate: depName=FiloSottile/age datasource=github-releases
+VERSION="v1.3.2"
 
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-  if command -v apt &>/dev/null; then
-    echo "📦 Using apt (Debian/Ubuntu)"
-    sudo apt update
-    if dpkg -s age &>/dev/null; then
-      echo "🔄 Updating age..."
-      sudo apt install --only-upgrade -y age
-    else
-      echo "🆕 Installing age..."
-      sudo apt install -y age
-    fi
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed age "${VERSION}" "$(age --version 2>/dev/null)"
 
-  elif command -v dnf &>/dev/null; then
-    echo "📦 Using dnf (Fedora/RHEL)"
-    sudo dnf check-update || true
-    sudo dnf install -y age # dnf handles upgrades automatically
-
-  elif command -v pacman &>/dev/null; then
-    echo "📦 Using pacman (Arch)"
-    sudo pacman -Sy --noconfirm age # pacman also upgrades if installed
-
-  else
-    echo "❌ No supported package manager found! Install age manually."
-    exit 1
-  fi
-
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-  echo "🍎 macOS detected"
-  if ! command -v brew &>/dev/null; then
-    echo "❌ Homebrew is required but not found. Please install Homebrew first."
-    exit 1
-  fi
-  if brew list age &>/dev/null; then
-    echo "🔄 Upgrading age..."
-    brew upgrade age || echo "✅ Already up to date."
-  else
-    echo "🆕 Installing age..."
-    brew install age
-  fi
-
-else
-  echo "❌ Unsupported OS. Please install age manually:"
-  echo "👉 https://github.com/FiloSottile/age#installation"
+ARCH=$(uname -m)
+case "$ARCH" in
+x86_64) ARCH="amd64" ;;
+aarch64) ARCH="arm64" ;;
+*)
+  echo "Unsupported architecture: $ARCH"
   exit 1
-fi
+  ;;
+esac
 
-echo "✅ Installed versions:"
-age --version
-age-keygen --version
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+# age publishes sigsum proofs, not checksums
+TARBALL="age-${VERSION}-linux-${ARCH}.tar.gz"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/FiloSottile/age/releases/download/${VERSION}/${TARBALL}"
+tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
+sudo install -o root -g root -m 0755 "$TMPDIR/age/age" "$TMPDIR/age/age-keygen" /usr/local/bin/
+
+echo "✅ age ${VERSION} installed successfully."

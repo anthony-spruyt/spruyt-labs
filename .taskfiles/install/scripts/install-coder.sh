@@ -1,13 +1,31 @@
 #!/bin/bash
 set -euo pipefail
 
-curl --proto '=https' --tlsv1.2 -Lf https://coder.com/install.sh | sh
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-# ✅ Verify installation
-if command -v coder &>/dev/null; then
-  echo "✅ Coder CLI is ready: $(coder version)"
-else
-  echo "❌ Coder CLI installation failed. Please check the install script or install manually:"
-  echo "👉 https://coder.com/docs/install"
+VERSION="$(yq -e '.spec.chart.spec.version' "${REPO_ROOT}/cluster/apps/coder-system/coder/app/release.yaml")"
+skip_if_installed coder "${VERSION}" "$(coder version 2>/dev/null | awk '/^Coder /{print $2}' | cut -d+ -f1)"
+
+ARCH=$(uname -m)
+case "$ARCH" in
+x86_64) ARCH="amd64" ;;
+aarch64) ARCH="arm64" ;;
+*)
+  echo "Unsupported architecture: $ARCH"
   exit 1
-fi
+  ;;
+esac
+
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+TARBALL="coder_${VERSION}_linux_${ARCH}.tar.gz"
+CHECKSUMS="coder_${VERSION}_checksums.txt"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$TARBALL" "https://github.com/coder/coder/releases/download/v${VERSION}/${TARBALL}"
+curl --proto '=https' --tlsv1.2 -Lo "$TMPDIR/$CHECKSUMS" "https://github.com/coder/coder/releases/download/v${VERSION}/${CHECKSUMS}"
+(cd "$TMPDIR" && grep "  ${TARBALL}$" "$CHECKSUMS" | sha256sum --check)
+tar -xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
+sudo install -o root -g root -m 0755 "$TMPDIR/coder" /usr/local/bin/coder
+
+echo "✅ Coder CLI ${VERSION} installed successfully."

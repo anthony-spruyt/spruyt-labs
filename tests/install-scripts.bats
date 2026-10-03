@@ -2,15 +2,17 @@
 #
 # Pinned install scripts skip the download when that exact version is installed. Ref #3266
 
-SCRIPTS="${BATS_TEST_DIRNAME}/../.taskfiles/install/scripts"
+REPO_ROOT="${BATS_TEST_DIRNAME}/.."
+SCRIPTS="${REPO_ROOT}/.taskfiles/install/scripts"
 
 setup() {
   BIN="$(mktemp -d)"
+  ln -s "$(command -v yq)" "${BIN}/yq"
   # Installers reach the network through these, so a skip never prints CALLED.
   printf '#!/bin/bash\necho CURL_CALLED\nexit 1\n' >"${BIN}/curl"
   printf '#!/bin/bash\nexit 0\n' >"${BIN}/sudo"
   printf '#!/bin/bash\necho GO_INSTALL_CALLED\n' >"${BIN}/go"
-  chmod +x "${BIN}"/*
+  chmod +x "${BIN}"/curl "${BIN}"/sudo "${BIN}"/go
   # /usr/local/bin and the node/go toolchains are left out so real tools never answer.
   export PATH="${BIN}:/usr/bin:/bin"
 }
@@ -176,4 +178,49 @@ expect_install() {
   expect_skip cclsp
   printf '#!/bin/bash\nif [ "$1" = ls ]; then echo "└── cclsp@0.0.1"; else echo NPM_INSTALL_CALLED; fi\n' >"${BIN}/npm"
   expect_install cclsp
+}
+
+@test "age skips only at the pinned version" {
+  local v
+  v="$(pinned age)"
+  stub age "${v#v}"
+  expect_skip age
+  stub age "0.0.1"
+  expect_install age
+}
+
+@test "task skips only at the pinned version" {
+  local v
+  v="$(pinned task)"
+  stub task "${v#v}"
+  expect_skip task
+  stub task "0.0.1"
+  expect_install task
+}
+
+@test "talosctl follows the cluster talosVersion" {
+  local v
+  v="$(yq -e '.talosVersion' "${REPO_ROOT}/talos/topf.yaml")"
+  stub talosctl "Client:\nTalos ${v}"
+  expect_skip talosctl
+  stub talosctl "Client:\nTalos v0.0.1"
+  expect_install talosctl
+}
+
+@test "flux follows the cluster Flux distribution version" {
+  local v
+  v="$(yq -e '.instance.distribution.version' "${REPO_ROOT}/cluster/apps/flux-system/flux-instance/app/values.yaml")"
+  stub flux "flux version ${v}"
+  expect_skip flux
+  stub flux "flux version 0.0.1"
+  expect_install flux
+}
+
+@test "coder follows the cluster Coder chart version" {
+  local v
+  v="$(yq -e '.spec.chart.spec.version' "${REPO_ROOT}/cluster/apps/coder-system/coder/app/release.yaml")"
+  stub coder "Coder v${v}+3a24816 Tue Sep 22 20:32:11 UTC 2026"
+  expect_skip coder
+  stub coder "Coder v0.0.1+3a24816 Tue Sep 22 20:32:11 UTC 2026"
+  expect_install coder
 }

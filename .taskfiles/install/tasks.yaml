@@ -87,9 +87,9 @@ tasks:
     cmds:
       - bash {{ .installScriptsDir }}/install-velero.sh
   task:
-    desc: Updates Task (go-task) to the latest version
+    desc: Installs Task (go-task)
     cmds:
-      - bash {{ .installScriptsDir }}/update-task.sh
+      - bash {{ .installScriptsDir }}/install-task.sh
   coder-cli:
     desc: Installs the Coder CLI
     cmds:

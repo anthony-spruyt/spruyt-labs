@@ -9,3 +9,6 @@ skip_if_installed() {
     exit 0
   fi
 }
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+export REPO_ROOT
