@@ -20,6 +20,7 @@ testpaths = [
     "tests",
     "chatgpt/tests",
     "hindsight/tests",
+    "mcp_tool_routing/tests",
     "ratelimit_headers/tests",
     "secret_masking/tests",
 ]

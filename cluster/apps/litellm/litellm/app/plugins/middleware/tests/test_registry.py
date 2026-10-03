@@ -66,10 +66,17 @@ def test_default_specs_point_at_per_middleware_packages(registry_module):
     assert modules == {
         "secret-masking": "custom_callbacks.middleware.secret_masking.secret_masking",
         "ratelimit-headers": "custom_callbacks.middleware.ratelimit_headers.ratelimit_headers",
+        "mcp-tool-routing": "custom_callbacks.middleware.mcp_tool_routing.mcp_tool_routing",
     }
 
 
 def test_ratelimit_headers_is_optional(registry_module):
     spec = next(s for s in registry_module.DEFAULT_MIDDLEWARE_SPECS if s.name == "ratelimit-headers")
+
+    assert not spec.required
+
+
+def test_mcp_tool_routing_is_optional(registry_module):
+    spec = next(s for s in registry_module.DEFAULT_MIDDLEWARE_SPECS if s.name == "mcp-tool-routing")
 
     assert not spec.required

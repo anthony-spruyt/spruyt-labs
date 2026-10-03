@@ -21,6 +21,8 @@ import pod_layout  # noqa: E402
 MASTER_KEY = "it-master-key"
 MODEL = "claude-it"
 STARTUP_TIMEOUT_S = 240
+MCP_SERVER = "itmcp"
+MCP_PORT = 8098
 
 
 def _runner() -> list[str]:
@@ -47,6 +49,8 @@ def _config(callbacks: tuple[str, ...]) -> str:
         }],
         "litellm_settings": {"callbacks": list(callbacks)},
         "general_settings": {"master_key": MASTER_KEY},
+        # Down at startup so the proxy's tool mapping stays cold, like a DB-loaded server after a restart.
+        "mcp_servers": {MCP_SERVER: {"url": f"http://127.0.0.1:{MCP_PORT}/mcp", "transport": "http"}},
     })
 
 
@@ -62,7 +66,8 @@ def proxy(layout, tmp_path_factory):
     callbacks_dir.mkdir()
     pod_layout.stage(layout, callbacks_dir)
     (work / "config.yaml").write_text(_config(layout.callbacks))
-    (work / "fake_upstream.py").write_bytes((Path(__file__).parent / "fake_upstream.py").read_bytes())
+    for fake in ("fake_upstream.py", "fake_mcp.py"):
+        (work / fake).write_bytes((Path(__file__).parent / fake).read_bytes())
     for path in [work, *work.rglob("*")]:
         path.chmod(0o755 if path.is_dir() else 0o644)
 
@@ -78,6 +83,7 @@ def proxy(layout, tmp_path_factory):
             "-v", f"{callbacks_dir}:{pod_layout.CALLBACKS_ROOT}:ro",
             "-v", f"{work / 'config.yaml'}:/app/config.yaml:ro",
             "-v", f"{work / 'fake_upstream.py'}:/it/fake_upstream.py:ro",
+            "-v", f"{work / 'fake_mcp.py'}:/it/fake_mcp.py:ro",
             "--entrypoint", "sh",
             layout.image,
             "-c", "python /it/fake_upstream.py & exec litellm --config /app/config.yaml --port 4000",
@@ -127,6 +133,14 @@ class Proxy:
         out = subprocess.run([_cli(), "exec", self.name, "python", "-c", code], capture_output=True, text=True)
         assert out.returncode == 0, out.stderr
         return out.stdout
+
+    def start_fake_mcp(self) -> None:
+        subprocess.run([_cli(), "exec", "-d", self.name, "python", "/it/fake_mcp.py"], check=True)
+        deadline = time.monotonic() + 30
+        probe = f"import socket; socket.create_connection(('127.0.0.1', {MCP_PORT}), 1)"
+        while subprocess.run([_cli(), "exec", self.name, "python", "-c", probe], capture_output=True).returncode:
+            assert time.monotonic() < deadline, "fake MCP server did not start"
+            time.sleep(1)
 
     def upstream_received(self) -> list[dict]:
         # The fake upstream only listens inside the container.
