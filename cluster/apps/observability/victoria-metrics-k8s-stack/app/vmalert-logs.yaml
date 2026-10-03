@@ -1,0 +1,31 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmalert_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAlert
+metadata:
+  name: victoria-logs
+  namespace: observability
+spec:
+  priorityClassName: high-priority
+  datasource:
+    url: http://victoria-logs-single-server.observability.svc.cluster.local.:9428
+  notifiers:
+    - url: http://vmalertmanager-victoria-metrics-k8s-stack-0.vmalertmanager-victoria-metrics-k8s-stack.observability.svc.cluster.local.:9093
+  remoteWrite:
+    url: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local.:8428/api/v1/write
+  remoteRead:
+    url: http://vmsingle-victoria-metrics-k8s-stack.observability.svc.cluster.local.:8428
+  evaluationInterval: 1m
+  ruleNamespaceSelector: {}
+  ruleSelector:
+    matchLabels:
+      vmalert.spruyt-labs/datasource: victorialogs
+  resources:
+    limits:
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
+  extraArgs:
+    external.url: https://grafana.lan.${EXTERNAL_DOMAIN}
+    remoteWrite.disablePathAppend: "true"

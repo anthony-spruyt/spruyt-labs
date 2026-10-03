@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: technitium-memory
+  namespace: observability
+spec:
+  groups:
+    - name: technitium-memory-alerts
+      rules:
+        # .NET caps its GC heap at 75% of the limit, so 70% is the last warning before OutOfMemoryException
+        - alert: TechnitiumMemoryNearHeapLimit
+          expr: |
+            max by (namespace, pod, container) (
+              container_memory_working_set_bytes{namespace="technitium", container="technitium"}
+            )
+            / on (namespace, pod, container)
+            max by (namespace, pod, container) (
+              kube_pod_container_resource_limits{namespace="technitium", container="technitium", resource="memory"}
+            )
+            > 0.7
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }} at {{ $value | humanizePercentage }} of its memory limit"
+            description: >-
+              Technitium pod {{ $labels.pod }} has used over 70% of its memory
+              limit for 15m. .NET throws OutOfMemoryException at 75%, so a
+              block list reload may crash it. Raise limits.memory and the VPA
+              maxAllowed in both Technitium instances.

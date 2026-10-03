@@ -1,0 +1,34 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: container-out-of-memory-exception
+  namespace: observability
+  labels:
+    vmalert.spruyt-labs/datasource: victorialogs
+spec:
+  groups:
+    - name: container-out-of-memory-exception-alerts
+      type: vlogs
+      interval: 5m
+      rules:
+        # .NET throws and exits 139 at its heap cap (75% of the limit), so ContainerOOMKilled never fires
+        # Excluded namespaces echo this expr verbatim (vmalert query errors, webhook/apply rejections)
+        - alert: ContainerOutOfMemoryException
+          expr: >-
+            "System.OutOfMemoryException"
+            -kubernetes.pod_namespace:in(observability, flux-system, kube-system)
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod, kubernetes.container_name as container
+            | stats by (namespace, pod, container) count() as oom_logs
+          for: 0m
+          keep_firing_for: 30m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} logged System.OutOfMemoryException"
+            description: >-
+              Container {{ $labels.container }} in pod {{ $labels.pod }}
+              (namespace {{ $labels.namespace }}) logged {{ $value }}
+              System.OutOfMemoryException lines in the last 5m. .NET apps
+              crash on this below the container memory limit; raise the limit.

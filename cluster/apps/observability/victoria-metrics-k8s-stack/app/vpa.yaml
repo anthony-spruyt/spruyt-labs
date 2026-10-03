@@ -48,6 +48,28 @@ spec:
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
+  name: vmalert-victoria-logs
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vmalert-victoria-logs
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: vmalert
+        controlledValues: "RequestsOnly"
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          memory: 128Mi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
   name: vmalertmanager-victoria-metrics-k8s-stack
 spec:
   targetRef:

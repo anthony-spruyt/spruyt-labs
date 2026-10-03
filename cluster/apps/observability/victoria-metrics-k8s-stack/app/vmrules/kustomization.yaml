@@ -14,5 +14,7 @@ resources:
   - ./node-memory-saturation.yaml
   - ./container-oomkilled.yaml
   - ./container-restarts.yaml
+  - ./container-out-of-memory-exception.yaml
+  - ./technitium-memory.yaml
   - ./unifi.yaml
   - ./thunderbolt-ring-errors.yaml

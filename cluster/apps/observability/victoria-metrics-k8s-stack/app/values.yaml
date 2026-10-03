@@ -136,6 +136,14 @@ vmalert:
   # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
   spec:
     priorityClassName: high-priority
+    # LogsQL rules belong to the victoria-logs VMAlert; MetricsQL can't parse them
+    ruleNamespaceSelector: {}
+    ruleSelector:
+      matchExpressions:
+        - key: vmalert.spruyt-labs/datasource
+          operator: NotIn
+          values:
+            - victorialogs
     # vmalert is lightweight (~110m CPU) - no anti-affinity needed
     resources:
       limits:

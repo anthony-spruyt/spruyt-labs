@@ -12,6 +12,7 @@ resources:
   - ./vm-service-scrapes.yaml
   - ./vm-node-scrapes.yaml
   - ./vmrules
+  - ./vmalert-logs.yaml
   - ./release.yaml
   - ./vpa.yaml
   - ./network-policies.yaml

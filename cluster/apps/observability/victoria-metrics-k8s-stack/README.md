@@ -15,6 +15,7 @@ VMSingle, vmagent, vmalert, Alertmanager and Grafana for the whole cluster. The 
 ### Adding rules and dashboards
 
 - Rules: a `VMRule` file in `app/vmrules/`, listed in `app/vmrules/kustomization.yaml`.
+- LogsQL rules (VictoriaLogs): same, plus group `type: vlogs` and the label `vmalert.spruyt-labs/datasource: victorialogs`. The label routes the rule to the `victoria-logs` VMAlert (`app/vmalert-logs.yaml`) and keeps it out of the chart's vmalert, which would fail parsing LogsQL as MetricsQL. vlogs rules append `_time: <group interval>` themselves, so leave the time filter out of `expr`.
 - Dashboards: a JSON file in `app/dashboards/` plus a `configMapGenerator` entry with the `grafana_dashboard: "1"` label in `app/kustomization.yaml`. The Grafana sidecar picks it up; dashboards are not persisted in Grafana.
 
 ### Overridden defaults
