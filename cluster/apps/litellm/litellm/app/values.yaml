@@ -549,19 +549,20 @@ configMaps:
             litellm_params:
               model: "anthropic/claude-fable-5-1"
               stream_timeout: 120
-          - model_name: "anthropic/claude-opus-5"
-            litellm_params:
-              model: "anthropic/claude-opus-5"
-              stream_timeout: 120
           - model_name: "anthropic/claude-opus-5-5"
             litellm_params:
               model: "anthropic/claude-opus-5-5"
               stream_timeout: 120
-          - model_name: "anthropic/claude-sonnet-5"
-            litellm_params:
-              model: "anthropic/claude-sonnet-5"
-              stream_timeout: 120
           - model_name: "anthropic/claude-sonnet-5-5"
+            litellm_params:
+              model: "anthropic/claude-sonnet-5-5"
+              stream_timeout: 120
+          # Catch-alls for Opus/Sonnet names clients can't change - only reached when no alias or exact name matches
+          - model_name: "*claude*opus*"
+            litellm_params:
+              model: "anthropic/claude-opus-5-5"
+              stream_timeout: 120
+          - model_name: "*claude*sonnet*"
             litellm_params:
               model: "anthropic/claude-sonnet-5-5"
               stream_timeout: 120
@@ -605,9 +606,11 @@ configMaps:
           model_group_alias:
             "claude-haiku-4-5": "anthropic/claude-haiku-4-5"
             "claude-haiku-4-5-20251001": "anthropic/claude-haiku-4-5"
-            "claude-sonnet-5": "anthropic/claude-sonnet-5"
+            "claude-sonnet-5": "anthropic/claude-sonnet-5-5"
+            "anthropic/claude-sonnet-5": "anthropic/claude-sonnet-5-5"
             "claude-sonnet-5-5": "anthropic/claude-sonnet-5-5"
-            "claude-opus-5": "anthropic/claude-opus-5"
+            "claude-opus-5": "anthropic/claude-opus-5-5"
+            "anthropic/claude-opus-5": "anthropic/claude-opus-5-5"
             "claude-opus-5-5": "anthropic/claude-opus-5-5"
             "claude-fable-5": "anthropic/claude-fable-5"
             "claude-fable-5-1": "anthropic/claude-fable-5-1"

@@ -64,7 +64,8 @@ Claude groups deliberately have no `router_settings.fallbacks` — a 429 surface
 
 Omit cost params for models LiteLLM already prices in its bundled `model_prices_and_context_window.json` (all current Claude models). Only set `input_cost_per_token` / `output_cost_per_token` for models absent from that registry, such as OpenRouter entries.
 
-Only live models are registered. Retired names are deliberately left unmapped so they fail fast with a clear error rather than silently routing somewhere unintended.
+Only live models are registered. Retired Opus and Sonnet names are not rejected, because some clients can't change the model they send. `model_group_alias` maps the known ones to the 5.5 groups, and the `*claude*opus*` / `*claude*sonnet*` catch-all deployments send any other name containing those substrings to Opus 5.5 / Sonnet 5.5. That includes other providers' names such as
+`openrouter/anthropic/claude-opus-4.1`. LiteLLM tries aliases, then exact `model_name`s, then wildcards, so a newly registered model is never shadowed by a catch-all. Matching is case-sensitive. Other retired names, such as Haiku 3.x, stay unmapped and fail fast.
 
 ### MCP servers
 
