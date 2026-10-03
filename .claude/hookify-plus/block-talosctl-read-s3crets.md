@@ -2,8 +2,13 @@
 name: block-talosctl-read-s3crets
 enabled: true
 event: bash
-pattern: talosctl\s+.*\bread\b.*(cri\.toml|/system/state/config\.yaml)
 action: block
+mask_data: true
+conditions:
+  - field: command
+    operator: command_match
+    pattern: '^talosctl\b.*\s(?:read|cat|copy|cp)\s(?:.*\s)?\S*(?:cri\.toml|/system/state/config\.yaml)'
+    fallback: 'talosctl\s+.*\b(?:read|cat|copy|cp)\b.*(cri\.toml|/system/state/config\.yaml)'
 ---
 
 **BLOCKED: this node file contains plaintext credentials**

@@ -2,8 +2,13 @@
 name: block-individual-linters
 enabled: true
 event: bash
-pattern: (^|[;&|]\s*)(yamllint|shellcheck|markdownlint|actionlint|tflint|gitleaks|secretlint|trivy|lychee)\b
 action: block
+mask_data: true
+conditions:
+  - field: command
+    operator: command_match
+    pattern: '^(?:npx\s+(?:-\S+\s+)*|bunx\s+|uvx\s+|pipx\s+run\s+|pnpm\s+(?:dlx|exec)\s+|yarn\s+(?:dlx\s+)?)?(yamllint|shellcheck|markdownlint|actionlint|tflint|gitleaks|secretlint|trivy|lychee)\b'
+    fallback: '(^|[;&|]\s*)(yamllint|shellcheck|markdownlint|actionlint|tflint|gitleaks|secretlint|trivy|lychee)\b'
 ---
 
 **BLOCKED: Individual linter commands are not allowed**

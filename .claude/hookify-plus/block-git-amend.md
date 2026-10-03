@@ -2,8 +2,13 @@
 name: block-git-amend
 enabled: true
 event: bash
-pattern: --amend
 action: block
+mask_data: true
+conditions:
+  - field: command
+    operator: command_match
+    pattern: '^git\b.*\scommit\b.*\s--amend\b'
+    fallback: '--amend'
 ---
 
 **BLOCKED: git commit --amend is not allowed**

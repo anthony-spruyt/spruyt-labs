@@ -2,8 +2,13 @@
 name: block-kubectl-describe-secrets
 enabled: true
 event: bash
-pattern: kubectl\s+describe\s+secrets?
 action: block
+mask_data: true
+conditions:
+  - field: command
+    operator: command_match
+    pattern: '^kubectl\b.*\sdescribe\s(?:.*\s)?(?:[\w.-]+,)*secrets?(?:\.[\w.]+)?(?:,[\w.-]+)*(?:/\S*)?(?=\s|$)'
+    fallback: 'kubectl\s+(?:.*\s)?describe\s+(?:.*\s)?secrets?\b'
 ---
 
 🚫 **Blocked: kubectl describe secret**

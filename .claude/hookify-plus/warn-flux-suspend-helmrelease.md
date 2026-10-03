@@ -2,9 +2,14 @@
 name: warn-flux-stuck
 enabled: true
 event: bash
-pattern: (flux\s+(suspend|resume)\s+helmrelease|flux\s+reconcile\s+kustomization|flux\s+reconcile\s+helmrelease)
 action: warn
 warn_once: true
+mask_data: true
+conditions:
+  - field: command
+    operator: command_match
+    pattern: '^flux\s(?!.*\s(?:-h|--help)(?:\s|$))(?:.*\s)?(?:(?:suspend|resume)\s+(?:.*\s)?(?:helmrelease|hr)|reconcile\s+(?:.*\s)?(?:kustomization|ks|helmrelease|hr))(?:\s|$)'
+    fallback: '(flux\s+(suspend|resume)\s+helmrelease|flux\s+reconcile\s+kustomization|flux\s+reconcile\s+helmrelease)'
 ---
 
 **WARNING: flux suspend/resume and reconcile do NOT fix stuck HelmReleases**

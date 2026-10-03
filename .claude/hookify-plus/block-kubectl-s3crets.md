@@ -2,13 +2,18 @@
 name: block-kubectl-secrets
 enabled: true
 event: bash
-pattern: kubectl\s+get\s+secrets?\s+.*(-o\s+(yaml|json|jsonpath|go-template)|--output[=\s]+(yaml|json|jsonpath|go-template))
 action: block
+mask_data: true
+conditions:
+  - field: command
+    operator: command_match
+    pattern: '^kubectl\b(?=.*\sget\s)(?=.*\s(?:[\w.-]+,)*secrets?(?:\.[\w.]+)?(?:,[\w.-]+)*(?:/\S*)?(?=\s|$))(?=.*[\s''](?:(?:-o\s*=?\s*|--output[=\s]\s*)''?(?:yaml|json|jsonpath|go-template|template|custom-columns)|--template[=\s]))'
+    fallback: 'kubectl\b(?=.*\sget\s)(?=.*\ssecrets?\b)(?=.*\s(?:(?:-o\s*=?\s*|--output[=\s]\s*)(?:yaml|json|jsonpath|go-template|template|custom-columns)|--template[=\s]))'
 ---
 
 🚫 **Blocked: kubectl get secret with output format**
 
-**What was blocked:** `kubectl get secret -o yaml/json/jsonpath/go-template` or `--output yaml/json/jsonpath/go-template`
+**What was blocked:** `kubectl get secret` with `-o`/`--output` `yaml`, `json`, `jsonpath`, `go-template` or `custom-columns`, or with `--template`
 
 **Why:** These commands output base64-encoded secrets to stdout, which could:
 

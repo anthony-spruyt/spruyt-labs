@@ -2,8 +2,13 @@
 name: block-kubectl-exec-secrets
 enabled: true
 event: bash
-pattern: kubectl\s+exec.*--\s+(cat\s+.*(secret|token|password|credential|\.pem|\.key|/var/run/secrets)|env\b|printenv)
 action: block
+mask_data: true
+conditions:
+  - field: command
+    operator: command_match
+    pattern: '^kubectl\b.*\sexec\s.*\s--\s(?:.*[\s''"])?(?:(?:cat|head|tail|less|more|strings|xxd|od|base64)\s.*(?:secret|token|password|credential|\.pem|\.key\b)|env(?=\s*(?:$|[|;&>)''"]))|printenv\b)'
+    fallback: 'kubectl\b.*\sexec\s.*\s--\s(?:.*[\s''"])?(?:(?:cat|head|tail|less|more|strings|xxd|od|base64)\s.*(?:secret|token|password|credential|\.pem|\.key\b)|env(?=\s*(?:$|[|;&>)''"]))|printenv\b)'
 ---
 
 🚫 **Blocked: kubectl exec reading secrets**

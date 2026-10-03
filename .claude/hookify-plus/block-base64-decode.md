@@ -2,8 +2,13 @@
 name: block-base64-decode
 enabled: true
 event: bash
-pattern: base64\s+(-d|--decode|-D)
 action: block
+mask_data: true
+conditions:
+  - field: command
+    operator: command_match
+    pattern: '(?:^|\s)base64\b[^|;&]*\s(?:-[a-zA-Z]*[dD][a-zA-Z]*|--decode)(?=\s|$)'
+    fallback: 'base64\s+(-d|--decode|-D)'
 ---
 
 🚫 **Blocked: Base64 decoding**
