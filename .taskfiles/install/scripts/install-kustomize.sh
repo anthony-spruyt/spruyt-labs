@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=kubernetes-sigs/kustomize datasource=github-releases versioning=regex:^kustomize/v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)$
 VERSION="v5.8.0"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed kustomize "${VERSION}" "$(kustomize version 2>/dev/null)"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="amd64" ;;

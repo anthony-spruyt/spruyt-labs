@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=helm/helm datasource=github-releases
 VERSION="v4.3.0"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed helm "${VERSION}" "$(helm version --template '{{.Version}}' 2>/dev/null)"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="amd64" ;;

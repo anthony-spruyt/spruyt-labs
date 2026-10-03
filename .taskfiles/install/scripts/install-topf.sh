@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=postfinance/topf datasource=github-releases
 VERSION="v0.6.0"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed topf "${VERSION}" "$(topf --version 2>/dev/null | awk '{print $3}')"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="amd64" ;;

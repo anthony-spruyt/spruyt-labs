@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=astral-sh/uv datasource=github-releases
 VERSION="0.12.19"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed uv "${VERSION}" "$(uv --version 2>/dev/null | awk '{print $2}')"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="x86_64" ;;

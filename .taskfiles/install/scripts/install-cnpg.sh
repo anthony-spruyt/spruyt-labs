@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=cloudnative-pg/cloudnative-pg datasource=github-releases
 VERSION="v1.30.1"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed kubectl-cnpg "${VERSION}" "$(kubectl-cnpg version 2>/dev/null | sed -n 's/.*{Version:\([^ ]*\).*/\1/p')"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="x86_64" ;;

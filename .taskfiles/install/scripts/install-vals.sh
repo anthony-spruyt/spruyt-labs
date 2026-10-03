@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=helmfile/vals datasource=github-releases
 VERSION="v0.47.0"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed vals "${VERSION}" "$(vals version 2>/dev/null | awk '/^Version:/{print $2}')"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="amd64" ;;

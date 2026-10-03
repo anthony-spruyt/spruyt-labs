@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=falcosecurity/falcoctl datasource=github-releases
 VERSION="v0.14.2"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed falcoctl "${VERSION}" "$(falcoctl version 2>/dev/null | awk '/^Client Version:/{print $3}')"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="amd64" ;;

@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=vmware-tanzu/velero datasource=github-releases
 VERSION="v1.18.3"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed velero "${VERSION}" "$(velero version --client-only 2>/dev/null | awk '/Version:/{print $2}')"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="amd64" ;;

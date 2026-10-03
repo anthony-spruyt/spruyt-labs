@@ -4,6 +4,10 @@ set -euo pipefail
 # renovate: depName=cilium/hubble datasource=github-releases
 VERSION="v1.19.4"
 
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+skip_if_installed hubble "${VERSION}" "$(hubble version 2>/dev/null | awk '{print $2}' | cut -d@ -f1)"
+
 ARCH=$(uname -m)
 case "$ARCH" in
 x86_64) ARCH="amd64" ;;
