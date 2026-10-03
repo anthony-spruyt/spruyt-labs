@@ -19,7 +19,7 @@ spec:
         images:
           # renovate: datasource=custom.n8n-stable depName=n8nio/runners
           - name: n8nio/runners
-            newTag: "2.40.5"
+            newTag: "2.41.3"
         patches:
           - target:
               kind: Deployment
