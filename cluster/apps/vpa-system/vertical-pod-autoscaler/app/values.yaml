@@ -34,7 +34,9 @@ recommender:
     - --container-name-label=container
     - --pod-namespace-label=namespace
     - --pod-name-label=pod
-    - --metric-for-pod-labels=kube_pod_labels{job="kube-state-metrics"}[8d]
+    # Subquery returns one recent sample per pod instead of every raw sample across the 14d window.
+    - --metric-for-pod-labels=last_over_time(kube_pod_labels{job="kube-state-metrics"}[14d])[1m:1m]
+    - --pod-label-prefix=label_
   podDisruptionBudget:
     enabled: false
   resources:

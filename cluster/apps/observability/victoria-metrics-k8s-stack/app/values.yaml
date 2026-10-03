@@ -273,14 +273,12 @@ prometheus-node-exporter:
   extraArgs:
     - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+|run/containerd/.+)($|/)
     - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|erofs|sysfs|tracefs|tmpfs|rootfs)$
-  # VMServiceScrape configuration for Talos-specific filtering
   vmScrape:
     enabled: true
     spec:
       endpoints:
         - port: metrics
           metricRelabelConfigs:
-            # Drop kubelet pod mountpoints
             - action: drop
               source_labels: [mountpoint]
               regex: "/var/lib/kubelet/pods.+"
@@ -294,6 +292,9 @@ prometheus-node-exporter:
 kube-state-metrics:
   enabled: true
   priorityClassName: high-priority
+  # VPA recommender reads kube_pod_labels to match history from deleted pods to a VPA.
+  metricLabelsAllowlist:
+    - pods=[*]
   rbac:
     extraRules:
       - apiGroups: ["csiaddons.openshift.io"]
@@ -332,6 +333,12 @@ kube-state-metrics:
     requests:
       cpu: 20m
       memory: 128Mi
+
+kubelet:
+  vmScrapes:
+    # Duplicates container CPU/memory series from /metrics/cadvisor; the VPA recommender discards the second copy.
+    resources:
+      enabled: false
 
 # Drop high-cardinality apiserver histogram buckets that aren't used by alerts
 # Keeps: apiserver_request_sli_duration_seconds_bucket (used by SLI alerts)
