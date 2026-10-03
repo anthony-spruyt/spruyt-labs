@@ -46,6 +46,9 @@ locals {
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
 
+  # renovate: datasource=npm depName=happy
+  happy_version = "1.2.5"
+
   workspace_folder = "/workspaces/${one(regex("([^/:]+?)(?:\\.git)?/?$", local.repo_url))}"
   # Keyed on owner/repo, not workspace name, so new workspaces reuse layers from earlier builds.
   cache_key = replace(lower(one(regex("([^/:]+/[^/:]+?)(?:\\.git)?/?$", split("#", local.repo_url)[0]))), "/[^a-z0-9._/-]/", "-")
@@ -458,6 +461,67 @@ resource "coder_app" "code_server" {
     interval  = 5
     threshold = 6
   }
+}
+
+resource "coder_script" "tmux" {
+  agent_id           = coder_agent.main.id
+  display_name       = "tmux"
+  icon               = "/icon/terminal.svg"
+  run_on_start       = true
+  start_blocks_login = false
+  log_path           = "/tmp/tmux-setup.log"
+  script             = <<-EOT
+    #!/bin/bash
+    set -e
+    command -v jq >/dev/null || { echo "jq not found, skipping tmux terminal profile"; exit 0; }
+    if ! command -v tmux &>/dev/null; then
+      sudo apt-get update -qq
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq tmux
+    fi
+    printf 'set -g mouse on\nset -g history-limit 50000\n' | sudo tee /etc/tmux.conf >/dev/null
+
+    # Reattach an orphaned session first, so terminals left behind by a closed VS Code come back.
+    mkdir -p /home/vscode/.local/bin
+    cat > /home/vscode/.local/bin/tmux-term <<'TMUXEOF'
+    #!/bin/sh
+    command -v tmux >/dev/null 2>&1 || exec bash -l
+    s=$(tmux list-sessions -F '#{session_attached} #{session_name}' 2>/dev/null | awk '$1 == 0 { print $2; exit }')
+    [ -n "$s" ] && exec tmux attach-session -t "$s"
+    exec tmux new-session
+    TMUXEOF
+    chmod +x /home/vscode/.local/bin/tmux-term
+
+    for f in /home/vscode/.vscode-server/data/Machine/settings.json /home/vscode/.local/share/code-server/Machine/settings.json; do
+      mkdir -p "$(dirname "$f")"
+      [ -s "$f" ] || echo '{}' >"$f"
+      jq '."terminal.integrated.profiles.linux".tmux = {"path": "/home/vscode/.local/bin/tmux-term"} | ."terminal.integrated.defaultProfile.linux" = "tmux"' "$f" >"$f.tmp"
+      mv "$f.tmp" "$f"
+    done
+  EOT
+}
+
+resource "coder_script" "happy" {
+  agent_id           = coder_agent.main.id
+  display_name       = "Happy"
+  icon               = "/emojis/1f4f1.png"
+  run_on_start       = true
+  start_blocks_login = false
+  log_path           = "/tmp/happy-setup.log"
+  script             = <<-EOT
+    #!/bin/bash
+    set -e
+    command -v npm >/dev/null || { echo "npm not found, skipping Happy"; exit 0; }
+    # Scripts skip ~/.bashrc, which is what puts the safe-chain npm shim on PATH.
+    npm=/home/vscode/.safe-chain/shims/npm
+    [ -x "$npm" ] || npm=npm
+    "$npm" ls -g --depth=0 "happy@${local.happy_version}" &>/dev/null ||
+      "$npm" install -g --no-fund --no-audit "happy@${local.happy_version}"
+
+    # Unpaired, the daemon would block on an interactive QR login; the first `happy` run pairs it.
+    if [ -f /home/vscode/.happy/access.key ]; then
+      happy daemon start
+    fi
+  EOT
 }
 
 resource "kubernetes_pod_v1" "main" {

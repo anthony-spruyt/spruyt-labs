@@ -14,6 +14,20 @@
       ],
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": [
+        "Annotated Terraform version string (datasource first). Ref #3305"
+      ],
+      "managerFilePatterns": [
+        "/(^|/)cluster/.+\\.tf$/"
+      ],
+      // currentValue excludes ":" so image refs stay with the repo-operator Terraform Docker managers.
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\n\\s*\\w+\\s*=\\s*\"(?<currentValue>[^\"/:@\\s]+)\""
+      ],
+      "versioningTemplate": "semver"
     }
   ],
   "packageRules": [

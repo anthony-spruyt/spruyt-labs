@@ -20,6 +20,9 @@ Workspace for working on the spruyt-labs repo against the live cluster. Unlike `
 - **Apt through Nexus needs repo support.** The template only sets `NEXUS_URL`. The repo's [devcontainer.json](https://github.com/anthony-spruyt/spruyt-labs/blob/main/.devcontainer/devcontainer.json) passes it as a build arg and its [Dockerfile](https://github.com/anthony-spruyt/spruyt-labs/blob/main/.devcontainer/Dockerfile) rewrites `sources.list`. Drop either and apt goes direct to Ubuntu.
 - **Persistence:** `/workspaces`, `/home/vscode` and podman storage survive restarts. Everything else is rebuilt from the devcontainer on each start.
 - **Claude Code:** starts in `bypassPermissions` mode from managed settings. Telemetry, including prompts and tool content, goes to the cluster's VictoriaMetrics/Logs/Traces.
+- **Terminals survive VS Code closing.** VS Code terminals (desktop and Web) open inside tmux through `~/.local/bin/tmux-term`. Closing VS Code leaves the tmux session running, and the next terminal you open rejoins a detached one. VS Code binds `Ctrl+B` to the sidebar, so the tmux prefix key doesn't reach tmux; mouse mode is on for scrolling and pane focus.
+- **Phone and browser control with [Happy](https://github.com/slopus/happy).** Run `happy` in place of `claude`. The first run in a workspace shows a QR code; scan it in the Happy app to pair. `~/.happy` is on the home volume, so pairing survives restarts, and the Happy daemon starts with the workspace so the app can open new sessions. Sessions use the same LiteLLM env as `claude`. Traffic relays
+  through Happy's public server, end-to-end encrypted ([#3305](https://github.com/anthony-spruyt/spruyt-labs/issues/3305)). A paired device can run Claude and shell commands with this workspace's credentials, so unpair lost phones from the Happy app.
 
 ## Troubleshooting
 
