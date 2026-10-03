@@ -22,8 +22,6 @@ controllers:
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
-      # annotations:
-      #   backup.velero.io/backup-volumes: config
       labels:
         role: dns-primary
       affinity:
@@ -77,8 +75,7 @@ controllers:
             cpu: 220m
             memory: 600Mi
           limits:
-            memory: 2Gi
-        # Probes: TCP socket on DNS port 53 for health checking
+            memory: 4Gi
         probes:
           readiness:
             enabled: true
@@ -102,7 +99,6 @@ controllers:
             exec:
               command: ["sh", "-c", "sleep 5"]
 service:
-  # TCP service - DNS, DoT, DoH, web UI
   tcp:
     controller: *name
     type: LoadBalancer
@@ -135,7 +131,6 @@ service:
     ipFamilyPolicy: SingleStack
     ipFamilies:
       - IPv4
-  # UDP service - DNS, DoQ, HTTP/3
   udp:
     controller: *name
     type: LoadBalancer

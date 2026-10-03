@@ -39,6 +39,8 @@ Zones reach the secondary by zone transfer (catalog zone, AXFR/IXFR incl. XFR-ov
 1. **SSO button missing** - SSO was never enabled in the UI on that instance; env vars alone do not enable it on an existing PVC.
 2. **SSO fails with invalid client** - the secret was rotated in Authentik but not re-entered in the Technitium UI.
 3. **SSO redirect error** - the redirect URI must match exactly, including port `53443`.
+4. **Pod exits 139 with `System.OutOfMemoryException` in the logs (not OOMKilled)** - .NET caps the GC heap at 75% of the container memory limit, so large block lists (e.g. hagezi NRD, millions of domains) exhaust the heap during a reload, when the old and new lists are both in memory, before the kernel OOM killer acts. Raise `limits.memory` in both instances' `app/values.yaml` and `maxAllowed` in
+   both `app/vpa.yaml` together.
 
 ## References
 
