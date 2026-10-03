@@ -16,6 +16,8 @@ Run these on their triggers without waiting to be asked:
 - **qa-validator** - before committing edited files, unless a skip condition below applies. Validates syntax, standards, and docs.
 - **cluster-validator** - after changes that affect `cluster/` reach `main`: when you push or merge a PR, or when the user says "pushed", "merged", or "deployed".
 
+Pass the linked issue number to both: qa-validator returns BLOCKED without one, and each posts its report as a comment on that issue.
+
 > **Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → it's a cluster resource → run both validators
 
 ## Skip Conditions
@@ -42,10 +44,10 @@ Run these on their triggers without waiting to be asked:
 
 ## Concurrency Rules
 
-> **NEVER run a second validator while one is already running.**
+> Run one cluster-validator at a time.
 
 - If a cluster-validator is already running, **wait for it to complete** before launching another
-- If iterating with quick fixes (push → fix → push → fix), **skip intermediate validators** and only validate after changes stabilize
+- If iterating with quick fixes (push → fix → push → fix), **skip intermediate cluster-validators** and only validate after changes stabilize; qa-validator still runs before each commit
 - One validator per deployment — stacking wastes tokens and clutters issue comments
 
 ## Validation Flow
@@ -57,6 +59,6 @@ Run these on their triggers without waiting to be asked:
 4. If APPROVED → commit
 5. After push, run cluster-validator if the change affects Flux-managed resources and none is already running
 6. If ROLLBACK → revert commit → push → re-run cluster-validator
-7. If ROLL-FORWARD → apply fix → commit → push → re-run cluster-validator
-   (skip validator on intermediate pushes, validate after final fix)
+7. If ROLL-FORWARD → apply fix → qa-validator → commit → push → re-run cluster-validator
+   (qa-validator runs on every fix commit; skip cluster-validator on intermediate pushes and validate after the final fix)
 ```

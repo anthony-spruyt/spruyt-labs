@@ -20,7 +20,7 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 
 1. **No secrets output** - Never display credentials or env var values
 2. **Declarative only** - No manual kubectl patches for config changes; use Flux, Terraform, Talos configs. Operational commands (restart, scale, drain) via kubectl are permitted.
-3. **Trunk-based** - Commit straight to `main` and push without asking. Open a PR only for large, risky work. Mergify exists only to auto-merge bot PRs (Renovate etc.) and is not a merge gate; merge PRs directly with `gh pr merge` and ignore its approval check.
+3. **Trunk-based** - Commit straight to `main` and push without asking. Open a PR only for large, risky work. Mergify exists only to auto-merge bot PRs (Renovate etc.) and is not a merge gate; merge PRs directly with `gh pr merge --squash` (squash is the only merge method the repo allows) and ignore its approval check.
 4. **No git amend** - Always new commits
 5. **No SOPS decrypt** - Never decrypt secrets via CLI
 6. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution

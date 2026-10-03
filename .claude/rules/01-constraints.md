@@ -32,7 +32,7 @@ Never put IPs, CIDRs, or network details in issues, commits, or PRs. Use generic
 - `kubectl get secret <name> -o yaml|json|jsonpath|--output=<any>`
 - `sops -d <file>`
 - `echo "$SECRET"`, `printenv VAR`, `env | grep`
-- Reading `*.sops.yaml` or `talos/clusterconfig/*`
+- Reading `talos/clusterconfig/*` (plaintext Talos secrets)
 
 **kubectl exec — NEVER cat/read:**
 
@@ -66,15 +66,14 @@ Data loss is permanent and cascading.
 
 ### Safe alternatives
 
-| Instead of            | Do                                           |
-| --------------------- | -------------------------------------------- |
-| Reading secret values | `kubectl get secret <name>` (existence only) |
-| Counting secret keys  | `-o json \| jq '.data \| keys'`              |
-| Verifying secret data | `-o json \| jq '.data \| length'`            |
-| Debugging auth        | Check pod logs, not secret contents          |
+| Instead of            | Do                                                               |
+| --------------------- | ---------------------------------------------------------------- |
+| Reading secret values | `kubectl get secret <name>` (existence, and key count in `DATA`) |
+| Listing secret keys   | Read the `*.sops.yaml` key names, or the manifests that consume it (`secretKeyRef`, `envFrom`) |
+| Debugging auth        | Check pod logs, not secret contents                              |
 
 ### SOPS
 
 - Never decrypt via CLI
 - User edits manually with `sops <file>`
-- Read encrypted file for key names only
+- Reading an encrypted `*.sops.yaml` is fine for key names and structure; values stay ciphertext and are never decrypted or echoed

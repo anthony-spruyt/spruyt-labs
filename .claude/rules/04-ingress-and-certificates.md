@@ -11,7 +11,7 @@ paths: [cluster/apps/traefik/**]
 
 ## IngressRoute Pattern
 
-Path: `cluster/apps/traefik/traefik/ingress/<workload>/ingress-routes.yaml`
+Path: `cluster/apps/traefik/traefik/ingress/<namespace>/ingress-routes.yaml` (one directory per namespace, each with its own `kustomization.yaml`)
 
 ```yaml
 apiVersion: traefik.io/v1alpha1
@@ -34,7 +34,7 @@ spec:
     secretName: <workload>-${EXTERNAL_DOMAIN/./-}-tls
 ```
 
-Add to `cluster/apps/traefik/traefik/ingress/kustomization.yaml`.
+List the file in that directory's `kustomization.yaml`; a new directory also goes in `cluster/apps/traefik/traefik/ingress/kustomization.yaml`.
 
 ### DNS annotations
 
@@ -47,7 +47,7 @@ Both annotations are required for external-dns to create a record:
 
 Without `target`, external-dns generates zero endpoints and logs `All records are already up to date` — no error. Check `external_dns_source_endpoints_total` to confirm it sees anything at all.
 
-The `external-dns.alpha.kubernetes.io/` prefix is dead as of v0.22.0. Keys are matched exactly with no fallback, so `alpha` annotations are silently ignored. Override the prefix with `--annotation-prefix` if it ever needs to change.
+Use the `external-dns.kubernetes.io/` prefix. Keys are matched exactly with no fallback, so `external-dns.alpha.kubernetes.io/` annotations are silently ignored. Override the prefix with `--annotation-prefix` if it ever needs to change.
 
 To opt a route out entirely, set `external-dns.kubernetes.io/controller: none` and drop the other two annotations — used for split-DNS names that resolve publicly via Cloudflare (`auth`). Any value other than `dns-controller` excludes the object at index time, before hostnames are read.
 
