@@ -35,7 +35,20 @@ recommender:
     - --pod-namespace-label=namespace
     - --pod-name-label=pod
     # Subquery returns one recent sample per pod instead of every raw sample across the 14d window.
-    - --metric-for-pod-labels=last_over_time(kube_pod_labels{job="kube-state-metrics"}[14d])[1m:1m]
+    # label_move restores the selector keys KSM sanitized; add a pair when a VPA target selects on a new dotted/dashed key.
+    - >-
+      --metric-for-pod-labels=label_move(last_over_time(kube_pod_labels{job="kube-state-metrics"}[14d]),
+      "label_app_kubernetes_io_name", "label_app.kubernetes.io/name",
+      "label_app_kubernetes_io_instance", "label_app.kubernetes.io/instance",
+      "label_app_kubernetes_io_component", "label_app.kubernetes.io/component",
+      "label_app_kubernetes_io_controller", "label_app.kubernetes.io/controller",
+      "label_app_kubernetes_io_part_of", "label_app.kubernetes.io/part-of",
+      "label_app_kubernetes_io_type", "label_app.kubernetes.io/type",
+      "label_kubernetes_io_hostname", "label_kubernetes.io/hostname",
+      "label_managed_by", "label_managed-by",
+      "label_ceph_osd_id", "label_ceph-osd-id",
+      "label_io_cilium_app", "label_io.cilium/app",
+      "label_control_plane", "label_control-plane")[1m:1m]
     - --pod-label-prefix=label_
   podDisruptionBudget:
     enabled: false

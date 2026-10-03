@@ -6,8 +6,9 @@ Sizes workload requests from observed usage. Every VPA object in the repo uses `
 
 The recommender loads 14 days of history from VictoriaMetrics at startup (`--storage=prometheus`) and takes live samples from metrics-server, so recommendations survive recommender restarts without a warm-up period.
 
-History for pods that no longer exist is matched to a VPA through `kube_pod_labels`. This depends on `kube-state-metrics.metricLabelsAllowlist: [pods=[*]]` in victoria-metrics-k8s-stack and `--pod-label-prefix=label_` here. kube-state-metrics sanitizes label keys (`app.kubernetes.io/name` becomes `app_kubernetes_io_name`) and VPA cannot reverse that, so deleted-pod history only reaches VPAs whose
-target selector uses plain keys such as `app`. The kubelet `/metrics/resource` scrape is disabled because its container CPU/memory series duplicate `/metrics/cadvisor`, and the recommender discards the second copy as out-of-order samples.
+History for pods that no longer exist is matched to a VPA through `kube_pod_labels`. This depends on `kube-state-metrics.metricLabelsAllowlist: [pods=[*]]` in victoria-metrics-k8s-stack and `--pod-label-prefix=label_` here. kube-state-metrics sanitizes label keys (`app.kubernetes.io/name` becomes `app_kubernetes_io_name`), so the `--metric-for-pod-labels` query uses MetricsQL `label_move` to
+restore the keys VPA target selectors use. A target that selects on a dotted or dashed key missing from that list silently loses deleted-pod history; add a pair for it. This needs VPA's `prometheus/common` to accept UTF-8 label names (default since v0.62). The kubelet `/metrics/resource` scrape is disabled because its container CPU/memory series duplicate `/metrics/cadvisor`, and the recommender
+discards the second copy as out-of-order samples.
 
 ## Operations
 
