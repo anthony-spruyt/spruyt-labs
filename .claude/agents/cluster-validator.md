@@ -191,7 +191,7 @@ _stream:{kubernetes.pod_namespace="<namespace>"} _time:15m (error OR panic OR fa
 
 ### Step 4: Functionality
 
-Check endpoints, ingress routes, certificates, and network policies as relevant.
+Check endpoints, ingress routes, certificates, and network policies as relevant. Check `mcp__litellm__victoriametrics-alerts` for alerts firing in the affected namespaces; a firing alert is evidence even when pods report Ready.
 
 ## CronJob Validation
 
@@ -300,6 +300,6 @@ flux resume kustomization <name>
 1. **Never close issues** — only post comments
 2. Follow inherited secret handling rules
 3. Always run actual commands to verify; never assume success
-4. **Wait for full reconciliation wave** — run the wait loop (5 attempts × 60s) before classifying ANY results. Never report a verdict based on a single snapshot
+4. Run the reconciliation wait loop (5 attempts × 60s) before classifying results; a single snapshot is not a verdict
 5. Verify dependency chains end-to-end
 6. Follow inherited research priority (Context7 -> GitHub -> WebFetch -> WebSearch)

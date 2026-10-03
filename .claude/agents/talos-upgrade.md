@@ -1,8 +1,8 @@
 ---
 name: talos-upgrade
-description: 'Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification. Use when Renovate creates a PR updating talosVersion in topf.yaml, when user requests "upgrade Talos", or during planned OS maintenance.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use talosctl upgrade-k8s instead)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n<example>\nContext: Renovate PR updates talosVersion in topf.yaml\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I''ll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nContext: User requests Talos upgrade\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I''ll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>\n\n<example>\nContext: Planned maintenance window\nuser: "We have a maintenance window, let''s upgrade Talos"\nassistant: "I''ll run talos-upgrade to handle the upgrade with quorum safety checks."\n<commentary>\nScheduled maintenance involving Talos upgrade triggers the agent.\n</commentary>\n</example>'
+description: 'Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use talosctl upgrade-k8s instead)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n<example>\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I''ll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I''ll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>'
 model: opus
-tools: Bash, Read, Edit
+tools: Bash, Read, Edit, mcp__litellm__context7-resolve-library-id, mcp__litellm__context7-query-docs
 ---
 
 # Talos Upgrade Agent
@@ -21,11 +21,11 @@ You are a senior platform engineer specializing in Talos Linux cluster operation
 8. **Reconcile Machine Config** - Diff the config and hand the user the `task talos:apply` command
 9. **Track Progress** - Post updates to GitHub issue throughout upgrade process
 
-## GitHub Issue Tracking (Recommended)
+## GitHub Issue Tracking
 
 Track upgrade work with a GitHub issue. If no issue exists, create one.
 
-**IMPORTANT:** Use plain text lists, NOT checkboxes. Checkboxes are difficult for agents to update programmatically. Post progress via comments instead.
+Use plain lists, not checkboxes, in the issue body. The body is not edited after creation; progress goes in comments.
 
 Create a GitHub issue with title `infra(talos): upgrade Talos v<current> to v<target>` and label `infra`. Body template:
 
@@ -79,7 +79,7 @@ Post progress updates as issue comments. Example body:
 
 ## Cluster Topology Discovery
 
-**NEVER hardcode IPs.** Always query dynamically:
+Discover node IPs at runtime rather than hardcoding them; they are kept out of the repo and can change:
 
 ```bash
 kubectl get nodes -o wide
@@ -97,7 +97,7 @@ talosctl config info | grep -i endpoint
 
 ## Schematic Discovery
 
-**IMPORTANT:** Get schematics from LIVE nodes, not from documentation or `topf.yaml` (which may be outdated).
+Get schematics from live nodes, not from documentation or `topf.yaml` (which may be outdated).
 
 ```bash
 # Get schematic ID from a running node (most reliable)
@@ -239,14 +239,14 @@ curl -sS --max-time 60 -o /dev/null -w "%{http_code}\n" \
 ```bash
 CP_NODE=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
 
-# Create etcd snapshot
-talosctl -n $CP_NODE etcd snapshot /tmp/etcd-backup-$(date +%Y%m%d-%H%M%S).snapshot
+SNAPSHOT=/tmp/etcd-backup-$(date +%Y%m%d-%H%M%S).snapshot
 
-# Verify snapshot
-talosctl -n $CP_NODE ls /tmp/ | grep etcd-backup
+# Streams the snapshot to this machine, not to the node
+talosctl -n $CP_NODE etcd snapshot "$SNAPSHOT"
+ls -l "$SNAPSHOT"
 ```
 
-Post backup confirmation to issue if tracking.
+Post backup confirmation, with the local snapshot path, to the issue.
 
 ### Phase 2b: Config Migration (minor upgrades only)
 
@@ -376,7 +376,7 @@ talosctl version --nodes <node-ip> --short
 
 #### Step 3.6: Post progress to issue
 
-If tracking with an issue, post progress after each node.
+Post progress to the issue after each node.
 
 **WAIT between each control plane node:**
 
@@ -550,7 +550,7 @@ If every controller reports full ready replicas, the `Error` pods are leftovers.
 
 #### Step 4.6: Post progress to issue
 
-If tracking with an issue, post progress after each worker including Ceph recovery time.
+Post progress to the issue after each worker, including Ceph recovery time.
 
 ### Phase 5: Post-Upgrade Validation
 
@@ -575,36 +575,13 @@ flux get helmreleases -A
 
 ### Phase 6: Workload Rebalancing (Optional)
 
-After all nodes are upgraded and Ceph is healthy, trigger the descheduler to rebalance workloads across nodes. This ensures pods are evenly distributed after the rolling node reboots.
-
-Check if descheduler is deployed:
+After all nodes are upgraded and Ceph is healthy, rebalance pods across the rebooted nodes. The descheduler already runs on a schedule as the `kube-system/descheduler` CronJob; a manual run rebalances now instead of at the next tick. Skip it if distribution already looks balanced.
 
 ```bash
-kubectl get deploy -n kube-system
-kubectl get jobs -n kube-system
-```
-
-```bash
-# If descheduler exists as a CronJob, trigger it manually
 kubectl create job --from=cronjob/descheduler descheduler-manual-$(date +%s) -n kube-system
-
-# Monitor pod movements (keep as kubectl — long-running watch)
-kubectl get pods -A -o wide --watch
 ```
 
-**When to skip descheduler:**
-
-- If the cluster doesn't have a descheduler installed
-- If workload distribution looks balanced already
-- If the upgrade was performed during low-traffic hours
-
-**Verification:**
-
-```bash
-kubectl get pods -A -o wide
-```
-
-Count pod distribution per node from results.
+Once the job completes, count pods per node with `kubectl get pods -A -o wide`.
 
 ### Phase 7: Update talos/README.md
 
@@ -701,14 +678,7 @@ talosctl upgrade \
   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<previous-version>
 ```
 
-**If etcd quorum lost (< 2 healthy members):**
-
-```bash
-# CRITICAL: Restore from snapshot
-talosctl etcd snapshot restore \
-  --endpoints <surviving-node-ip> \
-  --snapshot /tmp/etcd-backup-<timestamp>.snapshot
-```
+**If etcd quorum is lost (< 2 healthy members):** stop and return ROLLBACK. Recovery wipes EPHEMERAL on the failed control planes and rolls the whole cluster back to the snapshot, so the user runs it from `docs/disaster-recovery.md` ("Restore etcd (Quorum Lost)") with the Phase 2 snapshot. Do not run it yourself.
 
 ### Worker Rollback
 
@@ -801,22 +771,9 @@ SUCCESS requires Phase 8 done: pin on main, apply run, clean diff. Otherwise ret
 [ceph status if relevant]
 ```
 
-## Context7 Troubleshooting Integration
+## Context7 Troubleshooting
 
-When encountering errors during upgrade:
-
-```text
-# For Talos upgrade issues
-resolve-library-id(libraryName: "talos", query: "upgrade troubleshooting")
-query-docs(libraryId: "/siderolabs/talos", query: "talosctl upgrade stuck timeout recovery")
-
-# For etcd issues
-query-docs(libraryId: "/siderolabs/talos", query: "etcd snapshot restore quorum lost")
-
-# For Ceph issues
-resolve-library-id(libraryName: "rook", query: "ceph health warning")
-query-docs(libraryId: "/rook/rook", query: "OSD not starting after node reboot")
-```
+On an unexpected Talos, etcd or Ceph error, look it up in Context7 (`/siderolabs/talos`, `/rook/rook`) before improvising a fix.
 
 ## Critical Safety Rules
 

@@ -246,9 +246,9 @@ spec:
 [Why drops occurred — policy gap, transient churn, or routing issue]
 
 ### Resolution
-- **Status**: Fixed / Transient / Monitoring
-- **Files Modified**: (if any)
-- **Verification**: [Query output confirming drops resolved, or "Pending — re-query after deploy"]
+- **Status**: Fix proposed / Transient / Monitoring
+- **Proposed Fix**: [CNP YAML and the file it belongs in, if any]
+- **Verification**: [Query for the caller to re-run after the fix deploys]
 
 ### Recommendations
 [Follow-up actions, or "No action required"]
@@ -259,7 +259,7 @@ spec:
 1. Verify traffic pattern before suggesting policy changes — check both egress from source and ingress on destination
 2. Use exact label selectors from `kubectl get pods --show-labels` output
 3. Always query VLogs for individual flow details before classifying any drops as "transient" — aggregate metrics alone are insufficient for root cause analysis
-4. After policy changes, re-query VictoriaMetrics to confirm drops resolved
+4. You have no edit tools and cannot deploy: put proposed CNP changes in the report and name the query that will confirm the drops stopped
 
 ## Files Reference
 

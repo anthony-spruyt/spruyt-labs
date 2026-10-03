@@ -70,7 +70,7 @@ IF every diff is cosmetic (no runtime behavior change possible) → trivial
 ELSE → full
 ```
 
-Classify based on semantic risk of the diff, not file count. When in doubt, it's `full`. Pragmatic ≠ lazy.
+Classify based on semantic risk of the diff, not file count. When in doubt, it's `full`.
 
 ## Change-Type Detection
 
@@ -306,5 +306,4 @@ The calling agent applies fixes and re-invokes qa-validator until APPROVED. Do n
 4. Use Context7 (`resolve-library-id` -> `query-docs`) for config verification (full scope)
 5. List ALL issues found, categorize by severity (CRITICAL/WARNING/INFO)
 6. If unsure about a pattern, check existing apps in `cluster/apps/`
-7. For ambiguous architectural decisions, ask user for clarification before approving
-8. Be pragmatic — 10 minutes of validation for a one-line version bump is waste, not thoroughness
+7. If approval hinges on an ambiguous architectural decision, put it in the report as a question for the caller to take to the user; you can't ask the user mid-run
