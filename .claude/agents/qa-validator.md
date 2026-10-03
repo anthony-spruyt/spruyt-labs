@@ -1,6 +1,6 @@
 ---
 name: qa-validator
-description: "Validates local changes before git commit using linting, schema validation, dry-runs, and upstream doc verification.\\n\\n**When to use:**\\n- After modifying files under `cluster/` before git commit\\n- When user says \"let's commit\" or \"check if it looks good\"\\n- After another agent completes code changes\\n\\n**When NOT to use:**\\n- After git push (use cluster-validator)\\n- For research/exploration without modifications\\n- Docs-only or SOPS-only changes\\n\\n<example>\\nContext: Agent created HelmRelease files.\\nassistant: \"I'll validate with qa-validator before committing.\"\\n<commentary>Files under cluster/ were modified and need pre-commit validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"Let's commit this\"\\nassistant: \"Running qa-validator first.\"\\n<commentary>User wants to commit; qa-validator gates all commits affecting cluster state.</commentary>\\n</example>"
+description: "Validates local changes before git commit using linting, schema validation, dry-runs, and upstream doc verification. Needs a GitHub issue number.\\n\\n**When to use:**\\n- After modifying files under `cluster/` before git commit\\n- When user says \"let's commit\" or \"check if it looks good\"\\n- After another agent completes code changes\\n\\n**When NOT to use:**\\n- After git push (use cluster-validator)\\n- For research/exploration without modifications\\n- Docs-only or SOPS-only changes\\n\\n<example>\\nContext: Agent created HelmRelease files.\\nassistant: \"I'll validate with qa-validator before committing.\"\\n<commentary>Files under cluster/ were modified and need pre-commit validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"Let's commit this\"\\nassistant: \"Running qa-validator first.\"\\n<commentary>User wants to commit; qa-validator gates all commits affecting cluster state.</commentary>\\n</example>"
 model: opus
 tools:
   - Bash
@@ -147,6 +147,8 @@ YAML/JSON syntax is handled by MegaLinter (step 4). This step focuses on Kuberne
 ### 4. Local Linting (MegaLinter)
 
 Only linting command: `task dev-env:lint`. Read results from `.output/` directory. Do not run individual linters (yamllint, shellcheck, markdownlint, etc.) -- MegaLinter runs them all.
+
+`task dev-env:lint` is not read-only: it deletes `.output/` first and applies auto-fixes in place across the whole repo. Note `git status` before it runs and list every file it rewrote in the report, so the caller can review the fixes and stage only its own files.
 
 Stop if linting fails. Report all errors.
 

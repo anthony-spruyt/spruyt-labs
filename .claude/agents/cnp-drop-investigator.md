@@ -87,6 +87,7 @@ kubectl get pods -n <namespace>
 | ------------------------- | ---------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `POLICY_DENIED`           | No matching allow rule | Always investigate — query VLogs for flow details | Add egress/ingress CNP                                                           |
 | `STALE_OR_UNROUTABLE_IP`  | Pod IP changed/gone    | \<10/h normal churn, >50/h check for crash loops  | `kubectl get pods -n <ns> --sort-by='.status.containerStatuses[0].restartCount'` |
+| `SERVICE_BACKEND_NOT_FOUND` | Service has no ready backends | Report total; name the source namespace if sustained | Not a CNP gap. Check the target Service's EndpointSlices |
 | `VLAN_FILTERED`           | L2 neighbor noise      | Report total, don't investigate                   | Ignore — noisy L2 neighbors on bare metal                                        |
 | `TTL_EXCEEDED`            | Hop limit reached      | Report total, don't investigate                   | Ignore — traceroute or mDNS probe noise                                          |
 | `UNSUPPORTED_L3_PROTOCOL` | Protocol not handled   | Report total, don't investigate                   | Ignore — ICMPv6 on IPv4-only cluster                                             |
@@ -224,7 +225,7 @@ spec:
 | ----------- | ------------- | ------------------------------------------ |
 | app-system  | null          | Add `toEntities: world` with correct ports |
 | app-system  | valkey-system | Add egress to valkey on port 6379          |
-| app-system  | cnpg-cluster  | Add egress to CNPG on port 5432            |
+| app-system  | app-system    | Add egress to the `<app>-cnpg-cluster` pods on port 5432 |
 | cnpg-system | null          | Add world egress on port 443 (S3 backups)  |
 
 ## Output Format

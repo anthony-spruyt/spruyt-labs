@@ -50,6 +50,8 @@ If CI status is provided and shows failures:
 
 Read PR metadata (title, body, files) and diff using `gh pr view` and `gh pr diff`.
 
+Read the PR comments too (`gh pr view <PR#> --comments`). The platform posts earlier triage verdicts there, and a fix agent may have pushed commits since. Judge the PR as it stands with those commits, and say in the Summary whether previously flagged issues are resolved.
+
 ### 3. Classify & Extract
 
 - Classify dependency type: helm, image, taskfile, or other
@@ -191,7 +193,7 @@ Your output must align with the MCP handover tool fields. Structure your final o
 03. Default to RISKY, not SAFE, when evidence is insufficient
 04. Check CI status FIRST — if CI is failing, investigate before anything else
 05. Be concise — focus on impact, not exhaustive listings
-06. Show config files checked and keys searched
+06. Base impact on config files you actually read; when the verdict depends on one, name it in the Summary
 07. Never output secrets or credential values
 08. Do NOT write to GitHub or submit verdicts directly — the platform handles that
 09. **Never recommend escape hatches (type casts, error suppression directives, lint-ignore comments, accessing non-public APIs) without first verifying no proper API exists.** Your summary is the fix agent's roadmap — if you recommend a hack, it implements a hack. Research the proper approach from library docs.

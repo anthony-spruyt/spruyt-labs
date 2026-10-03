@@ -1,6 +1,6 @@
 ---
 name: cluster-validator
-description: "Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\\n\\n**When to use:**\\n- After user pushes to main branch\\n- When user says \"pushed\", \"merged\", or \"deployed\"\\n- After Claude merges a PR affecting `cluster/`\\n\\n**When NOT to use:**\\n- Before git commit (use qa-validator)\\n- For feature branches (Flux only watches main)\\n- When a cluster-validator is ALREADY RUNNING — wait for it to complete first\\n- During rapid fix iterations (push→fix→push) — skip intermediate pushes, validate after final fix\\n\\n<example>\\nuser: \"Just pushed the redis deployment\"\\nassistant: \"I'll validate the deployment with cluster-validator.\"\\n<commentary>User pushed to main, triggering Flux reconciliation that needs validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"ok merge the PR\"\\nassistant: [merges PR] \"PR merged. Running cluster-validator to verify deployment.\"\\n<commentary>Claude merged a PR affecting cluster resources, needs post-deploy validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"pushed another fix\"\\nassistant: \"Cluster-validator still running from previous push. Will skip this one and validate after things stabilize.\"\\n<commentary>Never stack validators — one at a time, skip intermediate pushes.</commentary>\\n</example>"
+description: "Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\\n\\n**When to use:**\\n- After user pushes to main branch\\n- When user says \"pushed\", \"merged\", or \"deployed\"\\n- After Claude merges a PR affecting `cluster/`\\n\\n**When NOT to use:**\\n- Before git commit (use qa-validator)\\n- For feature branches (Flux only watches main)\\n- When a cluster-validator is ALREADY RUNNING — wait for it to complete first\\n- During rapid fix iterations (push→fix→push) — skip intermediate pushes, validate after final fix\\n\\n<example>\\nuser: \"Just pushed the redis deployment\"\\nassistant: \"I'll validate the deployment with cluster-validator.\"\\n<commentary>User pushed to main, triggering Flux reconciliation that needs validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"ok merge the PR\"\\nassistant: [merges PR] \"PR merged. Running cluster-validator to verify deployment.\"\\n<commentary>Claude merged a PR affecting cluster resources, needs post-deploy validation.</commentary>\\n</example>"
 model: sonnet
 tools:
   - Bash
@@ -85,7 +85,7 @@ Run independent checks simultaneously using multiple tool calls per message.
 
 - `kubectl get pods -n <namespace>`
 - `kubectl get events -n <namespace> --sort-by='.lastTimestamp'`
-- `kubectl get endpoints -n <namespace>`
+- `kubectl get endpointslices -n <namespace>`
 
 **Group 3** (if issues detected):
 
@@ -200,8 +200,8 @@ For `cronjob-workload` changes, create and run a test job even if the caller say
 CronJobs don't trigger new pods on reconciliation — only the template updates. You must manually test.
 
 ```bash
-# 1. Detect CronJob workloads
-kubectl get jobs -n <namespace>
+# 1. Find the CronJob name
+kubectl get cronjobs -n <namespace>
 
 # 2. Trigger test job (do NOT rely on last completed job — it ran the previous version)
 kubectl create job <app>-validate-$(date +%s) --from=cronjob/<app> -n <namespace>

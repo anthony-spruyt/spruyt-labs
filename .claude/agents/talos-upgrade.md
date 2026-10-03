@@ -1,6 +1,6 @@
 ---
 name: talos-upgrade
-description: 'Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use talosctl upgrade-k8s instead)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n<example>\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I''ll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I''ll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>'
+description: 'Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use the kubernetes-upgrade skill)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)\n\n<example>\nuser: "Can you handle the Talos upgrade from PR #263?"\nassistant: "I''ll run the talos-upgrade agent to safely upgrade all nodes."\n<commentary>\nRenovate PR changing talosVersion triggers upgrade orchestration.\n</commentary>\n</example>\n\n<example>\nuser: "Upgrade Talos to v1.12.1"\nassistant: "I''ll use the talos-upgrade agent to orchestrate the upgrade safely."\n<commentary>\nExplicit upgrade request triggers the agent.\n</commentary>\n</example>'
 model: opus
 tools: Bash, Read, Edit, mcp__litellm__context7-resolve-library-id, mcp__litellm__context7-query-docs
 ---
@@ -16,7 +16,7 @@ You are a senior platform engineer specializing in Talos Linux cluster operation
 3. **Validate Prerequisites** - Verify cluster health, etcd quorum, Ceph status, and backups
 4. **Enforce Sequential Ordering** - Control plane first (one at a time), then workers (one at a time)
 5. **Preserve Quorum** - Never compromise etcd quorum (3 CP nodes = need 2 healthy minimum)
-6. **Protect Ceph** - Wait for HEALTH_OK between each worker upgrade
+6. **Protect Ceph** - Wait for Ceph ready (see Step 4.1) between each worker upgrade
 7. **Update Documentation** - Update `talos/README.md` on main after successful upgrade
 8. **Reconcile Machine Config** - Diff the config and hand the user the `task talos:apply` command
 9. **Track Progress** - Post updates to GitHub issue throughout upgrade process
@@ -168,12 +168,12 @@ Extract: new config documents emitted by default, v1alpha1 fields deprecated or 
 
 ```bash
 # Parallel Group 1 - Cluster health
-# IMPORTANT: talosctl health requires single-node targeting (it discovers the cluster from that node)
+# talosctl health takes a single node; it discovers the cluster from there
 talosctl health -n <any-cp-node-ip>
 kubectl get nodes -o wide
 
 # Parallel Group 2 - etcd and storage
-# IMPORTANT: Target only CP nodes to avoid "Unimplemented" warnings from workers
+# CP nodes only; workers answer etcd calls with "Unimplemented"
 talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
@@ -193,7 +193,7 @@ Any PDB with `disruptionsAllowed: 0` will block a drain-based upgrade. Classify 
 | ----------------------------------------------- | --------------------------------------------- | ----------------------------- |
 | `*-cnpg-cluster-primary`, `minAvailable: 1`     | Primary-role PDB, **permanently** unevictable | Use `--drain=false` (Phase 4) |
 | `rook-ceph-osd-host-<node>`                     | Rook's own drain protection, normal           | Expected, not a blocker       |
-| `rook-ceph-mon-pdb` showing `CURRENT < DESIRED` | A mon is already down                         | STOP, investigate first       |
+| `rook-ceph-mon-pdb` at `ALLOWED 0`              | A mon is already down                         | STOP, investigate first       |
 
 Every CNPG cluster in this repo sets `enablePDB: false`, so the operator creates no PDB and drains proceed normally. Expect the survey above to return no CNPG entries. If one appears, that setting has been removed from the manifest — the operator's primary-role PDB targets only the primary pod, so `disruptionsAllowed` is `0` regardless of instance count. Do not try to "fix" it during the upgrade
 (it is a declarative change needing its own PR) — use `--drain=false` and note it as follow-up work.
@@ -203,7 +203,7 @@ Every CNPG cluster in this repo sets `enablePDB: false`, so the operator creates
 - [ ] All nodes report Ready in kubectl
 - [ ] talosctl health passes
 - [ ] etcd has 3 healthy members with consistent terms
-- [ ] Ceph reports HEALTH_OK (not HEALTH_WARN or HEALTH_ERR)
+- [ ] Ceph ready (see Step 4.1)
 - [ ] All Flux kustomizations are Ready
 - [ ] No pending HelmRelease upgrades/failures
 - [ ] PDBs surveyed and worker drain strategy chosen
@@ -318,7 +318,7 @@ SCHEMATIC=$(talosctl get extensions -n "${CP_IP}" 2>/dev/null | grep schematic |
 
 ```bash
 # Verify etcd quorum before proceeding
-# IMPORTANT: Target only CP nodes to avoid "Unimplemented" warnings from workers
+# CP nodes only; workers answer etcd calls with "Unimplemented"
 talosctl etcd status -n <cp-ip-1>,<cp-ip-2>,<cp-ip-3>
 # Must show 3 healthy members
 ```
@@ -347,7 +347,7 @@ talosctl upgrade \
 
 ```bash
 # Wait for node to become Ready (timeout: 5 minutes)
-NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.address=="<node-ip>")])].metadata.name}')
+NODE_NAME=$(kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.addresses[?(@.type=="InternalIP")].address}{"\n"}{end}' | awk -v ip="<node-ip>" '$2==ip {print $1}')
 kubectl wait --for=condition=Ready node/$NODE_NAME --timeout=300s
 
 # Verify Talos API is responsive
@@ -393,26 +393,26 @@ For EACH worker node:
 #### Step 4.1: Pre-node Ceph check (BLOCKING)
 
 ```bash
-# MUST be HEALTH_OK before proceeding
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
-
-# Check OSD status
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd tree
 ```
 
-**BLOCK if Ceph is not HEALTH_OK:**
+**Ceph ready** means all OSDs up and in, all PGs `active+clean`, mons in quorum, and health is either `HEALTH_OK` or `HEALTH_WARN` whose only checks are `OSD_SLOW_PING_TIME_BACK` / `OSD_SLOW_PING_TIME_FRONT` (stale reboot heartbeats, see Step 4.5). Any other warning, or any `HEALTH_ERR`, is not ready.
+
+**BLOCK if Ceph is not ready:**
 
 ```text
 ## WORKER UPGRADE BLOCKED
 
 ### Reason
-Ceph is not HEALTH_OK - cannot proceed with worker upgrade.
+Ceph is not ready - cannot proceed with worker upgrade.
 
 ### Current Ceph Status
-[ceph status output]
+[ceph status and ceph health detail output]
 
 ### Required Action
-Wait for Ceph to recover to HEALTH_OK before upgrading next worker.
+Wait for Ceph to be ready before upgrading next worker.
 This may take 5-30 minutes depending on rebalancing.
 
 ### Command to Monitor
@@ -494,10 +494,9 @@ talosctl health -n <node-ip>
 #### Step 4.5: Wait for Ceph recovery (CRITICAL)
 
 ```bash
-# Poll Ceph status until HEALTH_OK (timeout: 30 minutes)
-# This is the BLOCKING step - do not proceed until HEALTH_OK
+# Poll until Ceph is ready as defined in Step 4.1 (timeout: 30 minutes)
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
-# Look for: "health: HEALTH_OK"
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 ```
 
 **Ceph recovery timeline expectations:**
@@ -539,7 +538,7 @@ Prefer waiting over restarting. Restarting the OSD triggers another round of pee
 
 After a node reboot you will see pods in `Error` state from the previous boot. These are **stale pod objects**, not real failures — Kubernetes garbage collects them within a few minutes.
 
-Do not panic and do not delete them manually. Verify via controllers rather than pod phase:
+Leave them for garbage collection rather than deleting them, and judge health from controllers rather than pod phase:
 
 ```bash
 kubectl get deploy -A -o json | jq -r '.items[] | select((.status.readyReplicas // 0) < (.spec.replicas // 0)) | "\(.metadata.namespace)/\(.metadata.name) \(.status.readyReplicas // 0)/\(.spec.replicas)"'
@@ -779,7 +778,7 @@ On an unexpected Talos, etcd or Ceph error, look it up in Context7 (`/siderolabs
 
 01. **NEVER upgrade multiple control plane nodes simultaneously**
 02. **ALWAYS verify etcd quorum (3 healthy) after each control plane upgrade**
-03. **ALWAYS wait for Ceph HEALTH_OK between worker upgrades**
+03. **ALWAYS wait for Ceph ready (Step 4.1) between worker upgrades**
 04. **ALWAYS create etcd backup before control plane upgrades**
 05. **NEVER hardcode IPs** - query dynamically from cluster
 06. **NEVER force upgrades** - if stuck, investigate rather than force
