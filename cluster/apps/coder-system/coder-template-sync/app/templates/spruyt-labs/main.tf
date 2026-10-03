@@ -423,7 +423,7 @@ resource "coder_script" "code_server" {
     #!/bin/bash
     set -e
     if ! command -v code-server &>/dev/null; then
-      curl -fsSL https://code-server.dev/install.sh | sh
+      curl -fsSL https://code-server.dev/install.sh | flock /tmp/coder-dpkg.lock sh
     fi
 
     dc="${local.workspace_folder}/.devcontainer/devcontainer.json"
@@ -477,8 +477,12 @@ resource "coder_script" "tmux" {
     set -e
     command -v jq >/dev/null || { echo "jq not found, skipping tmux terminal profile"; exit 0; }
     if ! command -v tmux &>/dev/null; then
-      sudo apt-get update -qq
-      sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq tmux
+      # Shared with the code-server script: a second concurrent dpkg run fails on its lock.
+      (
+        flock 9
+        sudo apt-get update -qq
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq tmux
+      ) 9>/tmp/coder-dpkg.lock
     fi
     printf 'set -g mouse on\nset -g history-limit 50000\n' | sudo tee /etc/tmux.conf >/dev/null
 
