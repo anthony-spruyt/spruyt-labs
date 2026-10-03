@@ -73,6 +73,8 @@ locals {
     # lookup in the envbuilder process). Routes base-layer Ubuntu archive
     # apt traffic through the in-cluster Nexus apt-ubuntu-proxy. Ref #988.
     "NEXUS_URL" : "http://nexus.nexus-system.svc.cluster.local:8081",
+    # Read by devcontainer.json build.args as the FROM registry; envbuilder ignores mirrors. Ref #3229.
+    "BASE_REGISTRY" : "nexus.nexus-system.svc.cluster.local:8082",
     # Skip kaniko remount of secret volumes during build — mount(2) EPERMs
     # inside Kata+PSA=baseline (no CAP_SYS_ADMIN). Secrets are still
     # accessible at runtime via the k8s volume mounts themselves.

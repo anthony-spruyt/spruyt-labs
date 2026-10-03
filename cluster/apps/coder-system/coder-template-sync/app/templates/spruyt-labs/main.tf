@@ -65,6 +65,8 @@ locals {
     "ENVBUILDER_WORKSPACE_FOLDER" : local.workspace_folder,
     # Read by devcontainer.json build.args to route Ubuntu apt through Nexus. Ref #988.
     "NEXUS_URL" : "http://nexus.nexus-system.svc.cluster.local:8081",
+    # Read by devcontainer.json build.args as the FROM registry; envbuilder ignores mirrors. Ref #3229.
+    "BASE_REGISTRY" : "nexus.nexus-system.svc.cluster.local:8082",
     # kaniko remounting secret volumes EPERMs under Kata (no CAP_SYS_ADMIN).
     "ENVBUILDER_IGNORE_PATHS" : "/etc/coder,/var/run",
     "ENVBUILDER_GIT_SSH_PRIVATE_KEY_PATH" : "/etc/coder/ssh-keys/id_ed25519",
