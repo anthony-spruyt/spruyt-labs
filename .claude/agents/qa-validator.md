@@ -146,7 +146,9 @@ YAML/JSON syntax is handled by MegaLinter (step 4). This step focuses on Kuberne
 
 ### 4. Local Linting (MegaLinter)
 
-Only linting command: `task dev-env:lint`. Read results from `.output/` directory. Do not run individual linters (yamllint, shellcheck, markdownlint, etc.) -- MegaLinter runs them all.
+First run `pre-commit run --files <in-scope files>`, then run it again: the first pass applies the auto-fixers (mdformat, shfmt, terraform fmt, whitespace) and exits non-zero when it rewrites anything. Only failures left on the second pass count. List the rewritten files in the report as fixes applied, never as blockers.
+
+Then the only linting command: `task dev-env:lint`. Read results from `.output/` directory. Do not run individual linters (yamllint, shellcheck, markdownlint, etc.) -- MegaLinter runs them all.
 
 `task dev-env:lint` is not read-only: it deletes `.output/` first and applies auto-fixes in place across the whole repo. Note `git status` before it runs and list every file it rewrote in the report, so the caller can review the fixes and stage only its own files.
 
@@ -294,7 +296,7 @@ The calling agent applies fixes and re-invokes qa-validator until APPROVED. Do n
 
 **Full scope — also BLOCKED if:**
 
-- Linting or dry-run fails
+- Linting or dry-run fails after auto-fixes are applied. Something a fixer already corrected is never a blocker.
 - Schema errors
 - Missing required files (namespace.yaml, kustomization.yaml)
 - Config contradicts upstream docs, uses deprecated options, or has invalid values
