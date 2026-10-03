@@ -1,12 +1,12 @@
 ---
-paths: [.github/renovate.json5]
+paths: [.github/renovate.json5, .github/renovate-overrides.json5]
 ---
 
 # Renovate Configuration
 
 Config is centralized in [`anthony-spruyt/repo-operator`](https://github.com/anthony-spruyt/repo-operator) (`.github/renovate/`). This repo's `.github/renovate.json5` only extends presets from there — no local config directory.
 
-Repo-specific overrides (extra `ignorePaths`, `packageRules`) go in `.github/renovate.json5`. Cross-repo changes go in `repo-operator`.
+Repo-specific overrides (extra `ignorePaths`, `packageRules`) go in `.github/renovate-overrides.json5`, which `renovate.json5` extends as a `local>` preset. Cross-repo changes go in `repo-operator`.
 
 ## Helm Registries
 
@@ -25,10 +25,10 @@ After push: trigger via Dependency Dashboard issue, check [Mend logs](https://de
 
 ## Troubleshooting
 
-| Issue                             | Solution                                     |
-| --------------------------------- | -------------------------------------------- |
-| Dependencies not detected         | Check fileMatch in repo-operator managers    |
-| Grouping not working              | Check matchPackagePatterns in repo-operator  |
-| `Failed to look up custom.*`      | Check transform template or URL issues       |
-| `Response has failed validation`  | JSONata output format wrong                  |
-| `Expected array, received object` | Use `$map()` for array outputs in transforms |
+| Issue                             | Solution                                            |
+| --------------------------------- | --------------------------------------------------- |
+| Dependencies not detected         | Check managerFilePatterns in repo-operator managers |
+| Grouping not working              | Check matchPackageNames in repo-operator groups     |
+| `Failed to look up custom.*`      | Check transform template or URL issues              |
+| `Response has failed validation`  | JSONata output format wrong                         |
+| `Expected array, received object` | Use `$map()` for array outputs in transforms        |

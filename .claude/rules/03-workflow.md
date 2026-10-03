@@ -23,28 +23,6 @@ Read templates from `.github/ISSUE_TEMPLATE/` to get title prefix, labels, and r
 | Docs    | `docs.yml`            | `documentation` | `docs(scope):`  |
 | Infra   | `infra.yml`           | `infra`         | `infra(scope):` |
 
-### Required Fields
-
-| Type    | Required Fields                                                                                     |
-| ------- | --------------------------------------------------------------------------------------------------- |
-| Feature | Summary, Motivation, Acceptance Criteria, Affected Area                                             |
-| Bug     | Description, Expected Behavior, Actual Behavior, Steps to Reproduce, Affected Area                  |
-| Chore   | Summary, Motivation, Chore Type, Affected Area                                                      |
-| Docs    | Summary, Motivation, Documentation Type, Affected Area                                              |
-| Infra   | Summary, Motivation, Infrastructure Type, Affected Area, Planned Changes, Rollback Plan, Risk Level |
-
-### Affected Area Options
-
-- Apps (cluster/apps/)
-- Flux/GitOps (cluster/flux/)
-- Infrastructure (Talos, networking, storage)
-- Monitoring/Observability
-- Security (network policies, auth)
-- Tooling (.taskfiles/, scripts)
-- Documentation
-- CI/CD (.github/)
-- Other
-
 ### Additional Labels
 
 - `blocked` - Waiting on upstream fix or external dependency

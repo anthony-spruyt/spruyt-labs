@@ -2,10 +2,10 @@
 
 ## Work Requirements
 
-All work requires a linked GitHub issue. No exceptions.
+Every change you commit needs a linked GitHub issue; read-only work (questions, investigations, reports) does not.
 
 1. Check/create issue before starting work
-2. Reference in commits: `Closes #123` or `Ref #123`
+2. Reference in commits with `Ref #123`. Closing keywords in commits don't close issues in this repo, so close it yourself with `gh issue close` after validation and never tell the user an issue will auto-close
 
 ## Multi-Agent Environment
 

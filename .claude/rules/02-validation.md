@@ -9,14 +9,12 @@ already authorizes.
 
 The authorization covers the agents defined in `.claude/agents/`, under their documented triggers only. The skip conditions and concurrency rules below still apply.
 
-## Validation Agents (MANDATORY)
+## Validation Agents
 
-> **Use these agents automatically - do NOT wait for user to request them.**
+Run these on their triggers without waiting to be asked:
 
-| Agent                 | When to Use                                                 | Trigger                                                                                                   |
-| --------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **qa-validator**      | Before ANY git commit that modifies files                   | After editing files (validates syntax, standards, docs)                                                   |
-| **cluster-validator** | After changes are pushed/merged to main that affect cluster | When user says "pushed", "merged", or "deployed" OR when Claude merges a PR AND changes affect `cluster/` |
+- **qa-validator** - before committing edited files, unless a skip condition below applies. Validates syntax, standards, and docs.
+- **cluster-validator** - after changes that affect `cluster/` reach `main`: when you push or merge a PR, or when the user says "pushed", "merged", or "deployed".
 
 > **Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → it's a cluster resource → run both validators
 
@@ -54,10 +52,10 @@ The authorization covers the agents defined in `.claude/agents/`, under their do
 
 ```text
 1. Make code changes
-2. ALWAYS run qa-validator (before commit)
+2. Run qa-validator before commit, unless a skip condition applies
 3. If BLOCKED → apply fixes → re-run qa-validator
 4. If APPROVED → commit
-5. ALWAYS run cluster-validator (after push) — ONLY if none already running
+5. After push, run cluster-validator if the change affects Flux-managed resources and none is already running
 6. If ROLLBACK → revert commit → push → re-run cluster-validator
 7. If ROLL-FORWARD → apply fix → commit → push → re-run cluster-validator
    (skip validator on intermediate pushes, validate after final fix)
