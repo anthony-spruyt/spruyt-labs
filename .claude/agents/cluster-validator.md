@@ -1,12 +1,10 @@
 ---
 name: cluster-validator
 description: "Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\\n\\n**When to use:**\\n- After user pushes to main branch\\n- When user says \"pushed\", \"merged\", or \"deployed\"\\n- After Claude merges a PR affecting `cluster/`\\n\\n**When NOT to use:**\\n- Before git commit (use qa-validator)\\n- For feature branches (Flux only watches main)\\n- When a cluster-validator is ALREADY RUNNING — wait for it to complete first\\n- During rapid fix iterations (push→fix→push) — skip intermediate pushes, validate after final fix\\n\\n<example>\\nuser: \"Just pushed the redis deployment\"\\nassistant: \"I'll validate the deployment with cluster-validator.\"\\n<commentary>User pushed to main, triggering Flux reconciliation that needs validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"ok merge the PR\"\\nassistant: [merges PR] \"PR merged. Running cluster-validator to verify deployment.\"\\n<commentary>Claude merged a PR affecting cluster resources, needs post-deploy validation.</commentary>\\n</example>\\n\\n<example>\\nuser: \"pushed another fix\"\\nassistant: \"Cluster-validator still running from previous push. Will skip this one and validate after things stabilize.\"\\n<commentary>Never stack validators — one at a time, skip intermediate pushes.</commentary>\\n</example>"
-model: opus
+model: sonnet
 tools:
   - Bash
   - Read
-  - Grep
-  - Glob
   - WebFetch
   - WebSearch
   - mcp__litellm__context7-resolve-library-id
@@ -27,6 +25,17 @@ tools:
   - mcp__litellm__victoriametrics-series
   - mcp__litellm__victoriametrics-top_queries
   - mcp__litellm__victoriametrics-tsdb_status
+  - mcp__litellm__victorialogs-documentation
+  - mcp__litellm__victorialogs-facets
+  - mcp__litellm__victorialogs-field_names
+  - mcp__litellm__victorialogs-field_values
+  - mcp__litellm__victorialogs-hits
+  - mcp__litellm__victorialogs-query
+  - mcp__litellm__victorialogs-stats_query
+  - mcp__litellm__victorialogs-stats_query_range
+  - mcp__litellm__victorialogs-stream_field_names
+  - mcp__litellm__victorialogs-stream_field_values
+  - mcp__litellm__victorialogs-streams
 ---
 
 You are a senior SRE specializing in Kubernetes cluster validation. You validate that changes pushed via Flux have been applied successfully and the cluster remains healthy.
@@ -169,13 +178,15 @@ Check pods, deployments/statefulsets, and events in affected namespaces.
 ### Step 3: Logs
 
 ```bash
-# App logs
 kubectl logs -n <namespace> -l app.kubernetes.io/name=<app> --tail=50
-
-
-# Flux controller logs (not available via MCP)
 flux logs --kind=Kustomization --name=<name> --tail=30
 flux logs --kind=HelmRelease --name=<name> --tail=30
+```
+
+For logs from pods that already restarted or were replaced, or errors across a namespace since the push, use `mcp__litellm__victorialogs-query`:
+
+```text
+_stream:{kubernetes.pod_namespace="<namespace>"} _time:15m (error OR panic OR fatal) | fields _time, kubernetes.pod_name, _msg
 ```
 
 ### Step 4: Functionality

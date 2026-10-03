@@ -5,8 +5,6 @@ model: opus
 tools:
   - Bash
   - Read
-  - Grep
-  - Glob
   - WebFetch
   - WebSearch
   - mcp__litellm__context7-resolve-library-id

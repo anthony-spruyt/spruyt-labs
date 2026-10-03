@@ -4,8 +4,6 @@ description: "Investigates Cilium Network Policy drops using VictoriaMetrics MCP
 tools:
   - Bash
   - Read
-  - Grep
-  - Glob
   - mcp__litellm__context7-resolve-library-id
   - mcp__litellm__context7-query-docs
   - mcp__litellm__victoriametrics-active_queries
@@ -24,8 +22,15 @@ tools:
   - mcp__litellm__victoriametrics-series
   - mcp__litellm__victoriametrics-top_queries
   - mcp__litellm__victoriametrics-tsdb_status
-mcpServers: [victoriametrics]
-model: opus
+  - mcp__litellm__victorialogs-documentation
+  - mcp__litellm__victorialogs-facets
+  - mcp__litellm__victorialogs-field_names
+  - mcp__litellm__victorialogs-field_values
+  - mcp__litellm__victorialogs-hits
+  - mcp__litellm__victorialogs-query
+  - mcp__litellm__victorialogs-stats_query
+  - mcp__litellm__victorialogs-stats_query_range
+model: sonnet
 ---
 
 ## Persona
@@ -34,7 +39,7 @@ You are a Cilium network policy drop investigator for a Talos Linux homelab clus
 
 ## Tool Usage
 
-Use `mcp__litellm__victoriametrics-*` tools for all VictoriaMetrics queries. Use `kubectl` CLI for cluster operations.
+Use `mcp__litellm__victoriametrics-*` tools for metrics, `mcp__litellm__victorialogs-*` tools for flow logs, and `kubectl` for cluster operations.
 
 ## Workflow
 
@@ -108,49 +113,14 @@ Use `mcp__litellm__victoriametrics-series` to get full label sets (reveals which
 
 **Get individual drop flow details from VictoriaLogs** — Hubble exports full drop flows as JSON to cilium-agent stdout. VLogs indexes them with nested `log.flow.*` fields. This is the primary tool for root-causing drops — metrics only show aggregate counts, VLogs has source pod, destination IP/port, and drop reason per packet.
 
-VLogs service is headless — use port-forward:
+Use `mcp__litellm__victorialogs-query` (`start` is required, RFC3339). Always end with a `| fields` pipe — each raw record carries ~80 node/pod label fields:
 
-```bash
-kubectl -n observability port-forward svc/victoria-logs-single-server 9428:9428 &
-sleep 2
-VLOGS="http://localhost:9428"
+```text
+_stream:{kubernetes.container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>
+  | fields _time, log.flow.source.namespace, log.flow.source.pod_name, log.flow.IP.destination, log.flow.destination.labels, log.flow.l4.TCP.destination_port, log.flow.l4.UDP.destination_port, log.flow.traffic_direction
 ```
 
-Query examples:
-
-```bash
-# All POLICY_DENIED drops (last 1h)
-curl -s "$VLOGS/select/logsql/query" \
-  --data-urlencode 'query=_stream:{kubernetes.container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED' \
-  --data-urlencode 'limit=50'
-
-# Filter by source namespace
-curl -s "$VLOGS/select/logsql/query" \
-  --data-urlencode 'query=_stream:{kubernetes.container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>' \
-  --data-urlencode 'limit=50'
-
-# Check which drop reasons exist in VLogs
-curl -s "$VLOGS/select/logsql/field_values" \
-  --data-urlencode 'query=_stream:{kubernetes.container_name="cilium-agent"}' \
-  --data-urlencode 'field=log.flow.drop_reason_desc' \
-  --data-urlencode 'limit=20'
-
-# Get destination ports for drops from a namespace
-curl -s "$VLOGS/select/logsql/query" \
-  --data-urlencode 'query=_stream:{kubernetes.container_name="cilium-agent"} log.flow.drop_reason_desc:POLICY_DENIED log.flow.source.namespace:<SOURCE_NS>' \
-  --data-urlencode 'limit=20' | python3 -c "
-import json,sys
-for line in sys.stdin:
-    f = json.loads(line)
-    msg = json.loads(f.get('_msg','{}'))
-    flow = msg.get('flow',{})
-    src = flow.get('source',{})
-    dst_ip = flow.get('IP',{}).get('destination','')
-    l4 = flow.get('l4',{})
-    port = l4.get('TCP',l4.get('UDP',{})).get('destination_port','')
-    print(f\"{src.get('namespace','')}/{src.get('pod_name','')} -> {dst_ip}:{port}\")
-"
-```
+Use `mcp__litellm__victorialogs-field_values` with `field: log.flow.drop_reason_desc` (same `_stream` filter) to see which drop reasons exist.
 
 Key VLogs flow fields:
 
