@@ -13,5 +13,6 @@ resources:
   - ./csi-reclaim-space.yaml
   - ./node-memory-saturation.yaml
   - ./container-oomkilled.yaml
+  - ./container-restarts.yaml
   - ./unifi.yaml
   - ./thunderbolt-ring-errors.yaml

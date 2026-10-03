@@ -1,0 +1,35 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: container-restarts
+  namespace: observability
+spec:
+  groups:
+    - name: container-restart-alerts
+      rules:
+        - alert: ContainerRestartsRecurring
+          # Not increase(): VM seeds new series from 0, so a kube-state-metrics restart reads lifetime totals as new
+          expr: |
+            (
+              max by (namespace, pod, container) (
+                increase_prometheus(kube_pod_container_status_restarts_total[24h])
+              ) >= 2
+            )
+            unless on (namespace, pod, container)
+            (
+              max by (namespace, pod, container) (
+                kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}
+              ) == 1
+            )
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} restarted {{ printf \"%.0f\" $value }}x in 24h"
+            description: >-
+              Container {{ $labels.container }} in pod {{ $labels.pod }}
+              (namespace {{ $labels.namespace }}) restarted
+              {{ printf "%.0f" $value }} times in the last 24h.
+              Check the previous container's logs and last terminated reason.
