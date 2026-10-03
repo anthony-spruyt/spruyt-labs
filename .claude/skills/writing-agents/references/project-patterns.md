@@ -72,9 +72,8 @@ Agents never chain directly to each other. Results flow through skills or the ma
 **Structure:** All well-formed descriptions follow this pattern:
 
 1. Brief capability statement (1 sentence)
-2. Triggering conditions ("Use when...")
-3. Anti-conditions ("When NOT to use")
-4. 1-2 `<example>` blocks with `<commentary>`
+2. Triggering conditions ("When to use"), as categories of intent
+3. Anti-conditions ("When NOT to use"), naming the alternative
 
 **Template:**
 
@@ -82,21 +81,12 @@ Agents never chain directly to each other. Results flow through skills or the ma
 <Brief capability statement — what the agent does, one sentence.>
 
 **When to use:**
-- <Triggering condition 1>
-- <Triggering condition 2>
+- <Category of request or event that should trigger this agent>
+- <Category 2>
 
 **When NOT to use:**
-- <Anti-condition 1>
+- <Anti-condition> (use <alternative> instead)
 - <Anti-condition 2>
-
-<example>
-Context: <Situation that should trigger this agent.>
-user: "<Representative user message>"
-assistant: "<How the assistant should respond>"
-<commentary>
-<Why this triggers the agent.>
-</commentary>
-</example>
 ```
 
-**Anti-pattern:** Flat prose description without structured when/not-to sections or examples. Harder for the routing system to match.
+**Anti-patterns:** Flat prose with no when/not-to sections, which hides the agent's boundaries from the parent. Sample user/assistant dialogue, which is loaded into every parent request and anchors routing to the phrasings it shows.

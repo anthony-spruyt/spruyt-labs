@@ -15,16 +15,16 @@ For each architectural area in the spec, identify gaps, risks, incorrect assumpt
 - **Kubernetes deployment** — resource sizing, pod lifecycle, namespace/CNP/RBAC alignment with existing cluster config
 - **Phase sequencing** — dependency ordering, what's deferred that shouldn't be, what's premature
 
-## Critical requirement: verify against live cluster state
+## Verify against live cluster state
 
-Do NOT assume the spec's claims about existing infrastructure are correct. Actively verify:
+The spec's claims about existing infrastructure may not match what is deployed, so check each one:
 
 - Find and read actual deployed manifests in `cluster/apps/` for any component the spec references
 - Check existing namespace config (CNPs, RBAC, Kyverno policies) mentioned in the spec
 - Verify current deployment configs and capabilities of referenced services
 - Check network policies relevant to inter-component communication
 
-Use Context7 for library/framework docs. Use codebase search to find actual deployed manifests. Never guess what's deployed — read the manifests.
+Use Context7 for library/framework docs. Where a finding depends on what is deployed, cite the manifest you read.
 
 ## Before flagging a finding
 

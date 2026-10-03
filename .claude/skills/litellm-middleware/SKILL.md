@@ -44,7 +44,7 @@ The layout rules live in `cluster/apps/litellm/README.md` under "Adding a middle
    ```
 
 11. **Docs.** If anything is non-obvious (an upstream workaround, a removal condition, a failure mode), add a `###` section to `cluster/apps/litellm/README.md`.
-12. **Ship.** qa-validator, commit, push, then cluster-validator. After rollout, check the litellm pod logs for `failed to load <name> middleware`.
+12. **Ship.** qa-validator, commit, push, then cluster-validator. After rollout, check the litellm pod logs for `failed to load <registry-name> middleware` (the kebab-case registry name, not `<name>`).
 
 ## Gotchas
 

@@ -53,7 +53,7 @@ curl -s "https://api.github.com/repos/lemker/unifi-os-server/releases?per_page=1
   python3 -c "import json,sys; [print(r['tag_name'], r['prerelease'], r['published_at']) for r in json.load(sys.stdin)]"
 ```
 
-Pick the latest release with `prerelease=False`. **Never** use `latest` or any `-ea` tag.
+Pick the latest release with `prerelease=False`. Do not use `latest` or any `-ea` tag: `latest` is not a pinned tag, and `-ea` tags are early-access builds.
 
 Confirm the tag has an arm64 build before pulling:
 

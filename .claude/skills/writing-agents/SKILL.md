@@ -14,7 +14,7 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 | Task                   | Reference                                          |
 | ---------------------- | -------------------------------------------------- |
 | Frontmatter fields     | `references/agent-frontmatter.md`                  |
-| Description examples   | `references/project-patterns.md` Section 6         |
+| Description template   | `references/project-patterns.md` Section 6         |
 | Model selection        | `references/project-patterns.md` Section 2         |
 | Size targets           | `references/project-patterns.md` Section 3         |
 | Output format patterns | `references/project-patterns.md` Section 4         |
@@ -33,11 +33,12 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 
 **Include:**
 
-- "Use when..." / "When to use" conditions
-- "When NOT to use" anti-conditions
-- 1-2 `<example>` blocks with `<commentary>` explaining why it triggers
+- "When to use" conditions, written as categories of intent rather than sample phrasings
+- "When NOT to use" boundaries, naming the agent or command to use instead
 
-See `references/project-patterns.md` Section 6 for working examples.
+Leave `<example>` dialogue out of the description. The parent reads it on every request as routing signal, and sample exchanges anchor delegation to the phrasings they show; the intent categories carry the same signal. Worked examples the agent itself needs go in the body.
+
+See `references/project-patterns.md` Section 6 for the template.
 
 ## System Prompt Structure
 
@@ -50,7 +51,7 @@ Canonical section order for this project:
 5. **Workflow Steps** — The main process
 6. **Output Format** — Structured template (verdict header, evidence, next steps)
 7. **Handoff Protocol** — How results return to caller
-8. **Critical Rules** — Numbered constraints
+8. **Rules** — Constraints the model would otherwise get wrong, each with its reason
 9. **Self-Improvement** — If the agent uses `memory`
 
 Not every agent needs all sections. Small focused agents may only need Persona, Workflow, Rules, and Output Format.
@@ -69,7 +70,7 @@ Read the agent requirements, this skill, existing agents (for pattern reference)
 
 01. **Discover patterns** — Read 2-3 existing agents in `.claude/agents/` for local conventions
 02. **Define persona** — Expert identity with domain expertise, 1-2 sentences
-03. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, 1-2 examples with `<commentary>`, "When to use" and "When NOT to use" sections). Choose model, effort, and tools (model and effort — `references/project-patterns.md` Section 2; least privilege — `references/anthropic-best-practices.md` Section 9)
+03. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, no `<example>` dialogue, "When to use" and "When NOT to use" sections). Choose model, effort, and tools (model and effort — `references/project-patterns.md` Section 2; least privilege — `references/anthropic-best-practices.md` Section 9)
 04. **Structure system prompt** — Follow section order from System Prompt Structure above. Include output format template and handoff protocol
 05. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
 06. **Scope-limit** — If testing shows over-reach, add "Only make changes directly requested." (see `references/anthropic-best-practices.md` Section 4)
@@ -82,8 +83,8 @@ Read the agent requirements, this skill, existing agents (for pattern reference)
 
 Dispatch one fresh sub-agent with the new file, this skill, and the inherited context files. It checks:
 
-- **Structure**: frontmatter fields, description under 1024 chars, no workflow summary, examples have `<commentary>`, max 2 examples, emphasis calibrated, output format and handoff protocol present.
-- **Completeness**: All System Prompt Structure sections present (at minimum: Persona, Workflow, Rules, Output Format). No inherited context duplicated. No explanations of what the model already knows. Domain-specific commands have non-obvious flags where needed.
+- **Structure**: frontmatter fields, description under 1024 chars, no workflow summary, no `<example>` dialogue, emphasis calibrated, output format and handoff protocol present.
+- **Completeness**: The System Prompt Structure sections this agent needs are present (at minimum: Persona, Workflow, Rules, Output Format). No inherited context duplicated. No explanations of what the model already knows. Domain-specific commands have non-obvious flags where needed.
 
 It returns PASS/FAIL with specific issues and exact fixes.
 
@@ -101,10 +102,9 @@ Read the agent file, this skill, and all inherited context files (CLAUDE.md, `.c
 
 1. **Measure** — Count lines (`wc -l`) and words (`wc -w`). Identify largest sections
 2. **Fix description field** — Must comply with the Description Field section of this skill:
-   - Under 1024 chars (measure and verify). If over: trim to 1-2 examples, remove workflow summaries, shorten dialogue
+   - Under 1024 chars (measure and verify). If over: remove workflow summaries and fold near-synonymous triggers into one category
    - No workflow summary (lines like "Handoff flow: X → Y → Z"). Only capability + triggering conditions
-   - Every `<example>` must contain `<commentary>` explaining why it triggers. Add if missing
-   - Max 2 `<example>` blocks
+   - No `<example>` dialogue. Move any trigger an example carried that the conditions don't already cover into "When to use" or "When NOT to use", then delete the example
    - Must have "When to use" and "When NOT to use" sections
 3. **Remove inherited context** — Read CLAUDE.md and every `.claude/rules/` file. Search the agent for duplicated content. Common: secret handling, git staging, research priority, domain substitution. Replace with single-line references (e.g., "Follow inherited secret handling rules")
 4. **Calibrate emphasis** — Soften CRITICAL/MUST/NEVER/FORBIDDEN/MANDATORY (see `references/anthropic-best-practices.md` Section 3). Remove explanations the model already knows (Section 12). **Safety gates** (hard stops preventing data loss, secret exposure, skipping required inputs) stay unconditional, stated plainly with their reason. **Operational preferences** (tool choice, workflow ordering, style) use normal language — no bold, no
@@ -116,7 +116,7 @@ Read the agent file, this skill, and all inherited context files (CLAUDE.md, `.c
 
 Dispatch one fresh sub-agent (no shared context with the optimizer). It reads the optimized file, the original (via `git show <pre-optimization-ref>:<path>`), inherited context files, and this skill, and checks:
 
-- **Structure**: Frontmatter fields survived. Description under 1024 chars, no workflow summary, examples have `<commentary>`, max 2 examples. System prompt sections present. Emphasis calibrated (safety gates unconditional with reasons). Output format and handoff protocol present.
+- **Structure**: Frontmatter fields survived. Description under 1024 chars, no workflow summary, no `<example>` dialogue. System prompt sections present. Emphasis calibrated (safety gates unconditional with reasons). Output format and handoff protocol present.
 - **Effectiveness**: Lost domain-specific knowledge not in inherited context and that the model wouldn't know. All workflow steps still represented. Domain commands with non-obvious flags preserved. Each cut classified SAFE/RISKY/LOST.
 
 It returns PASS/FAIL plus EFFECTIVE/DEGRADED/BROKEN, with specific issues and exact fixes.
@@ -133,5 +133,5 @@ Apply the fixes in the main session. Re-run Phase 2 only when a fix restored or 
 | CRITICAL/MANDATORY/NEVER overuse | Normal language. Current models overtrigger on aggressive emphasis |
 | Padding in a long system prompt  | Remove what the model already knows; keep facts and reasons          |
 | No output format specified       | Add structured output template                                      |
-| No examples in description       | Add 1-2 `<example>` blocks with context/user/assistant/commentary   |
+| Example dialogue in description  | Replace with intent categories under "When to use" / "When NOT to use" |
 | See full list                    | `references/common-mistakes.md`                                     |
