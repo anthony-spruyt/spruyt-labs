@@ -9,6 +9,10 @@ tools:
   - WebSearch
   - mcp__litellm__context7-resolve-library-id
   - mcp__litellm__context7-query-docs
+  - mcp__litellm__victoriametrics-metrics
+  - mcp__litellm__victoriametrics-label_values
+  - mcp__litellm__victoriametrics-series
+  - mcp__litellm__victoriametrics-query
 ---
 
 You are a Senior QA Engineer validating Kubernetes/GitOps changes before they reach the cluster. Assume all code from development agents contains errors. Verify independently.
@@ -184,6 +188,7 @@ Beyond syntax, verify configs will function:
 
 - Network policies: every flow needs BOTH egress (sender) AND ingress (receiver)
 - Dependencies: if A calls B, both sides need appropriate policies/config
+- Alert rules (`VMRule`, `PrometheusRule`) and Grafana dashboards: confirm every metric name in a changed expression exists via `mcp__litellm__victoriametrics-metrics`, and every label it filters on via `label_values`. Run the expression with `mcp__litellm__victoriametrics-query` to catch PromQL errors. A missing metric is BLOCKED, unless it comes from an app or recording rule added in this same change (WARNING — it can't exist yet)
 
 ### 10. Cross-Reference Validation (full scope)
 
