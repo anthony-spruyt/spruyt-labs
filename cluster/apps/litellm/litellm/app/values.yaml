@@ -91,6 +91,7 @@ controllers:
               secretKeyRef:
                 name: litellm-cnpg-owner
                 key: password
+          LITELLM_DISABLE_ACCESS_LOG_PATHS: "/health/liveliness,/health/readiness,/metrics,/metrics/"
           # OTLP metrics stay off: the integration derives the metrics endpoint
           # from OTEL_ENDPOINT by swapping the trailing signal path, so metrics
           # would be POSTed to VictoriaTraces (traces-only, returns 400).
