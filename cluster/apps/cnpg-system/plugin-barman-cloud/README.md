@@ -19,7 +19,7 @@ Four pieces, across two namespaces:
 3. **ObjectStore + plugin** - an `ObjectStore` in the app, referenced from the `Cluster` under `plugins: [{name: barman-cloud.cloudnative-pg.io, parameters.barmanObjectName: ...}]`.
 4. **Network** - add an ingress rule on port 9090 for the new cluster's pods to `app/network-policies.yaml` here, and a matching egress CNP in the app namespace.
 
-Sync the credentials into a **dedicated** secret rather than merging them into the app's main secret. Several charts `envFrom` their main secret into every pod, which would leak the AWS keys as environment variables (the reason `hindsight` and `temporal` use separate `*-cnpg-aws-secrets`).
+Sync the credentials into a **dedicated** secret rather than merging them into the app's main secret. Several charts `envFrom` their main secret into every pod, which would leak the AWS keys as environment variables (the reason `temporal` uses a separate `*-cnpg-aws-secrets`).
 
 ### Rotating the AWS key
 

@@ -59,7 +59,6 @@ misconfigurations:
       - cluster/apps/agent-worker-system/agent-queue-worker/app/secret-reader-rbac.yaml
       - cluster/apps/valkey-system/valkey/app/secret-reader-rbac.yaml
       - cluster/apps/cnpg-system/plugin-barman-cloud/app/secret-reader-rbac.yaml
-      - cluster/apps/hindsight/hindsight/app/cnpg-password-rbac.yaml
       - cluster/apps/temporal-system/temporal/app/cnpg-roles-eso.yaml
       - cluster/apps/agent-worker-system/agent-valkey/app/secret-reader-rbac.yaml
       - cluster/apps/litellm/litellm-valkey/app/secret-reader-rbac.yaml
@@ -520,11 +519,3 @@ misconfigurations:
     paths:
       - cluster/apps/coder-system/coder-template-sync/app/templates/devcontainer/main.tf
       - cluster/apps/coder-workspaces/**
-
-  # ==============================================================================
-  # Hindsight consolidate CronJob - nightly memory consolidation
-  # ==============================================================================
-  # alpine/k8s is a trusted Docker Hub image for kubectl operations
-  - id: AVD-KSV-0125
-    paths:
-      - cluster/apps/hindsight/hindsight/app/consolidate-cronjob.yaml

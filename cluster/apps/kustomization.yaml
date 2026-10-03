@@ -56,7 +56,6 @@ resources:
   - ./unifi-mcp
   - ./unifi-system
   - ./vpa-system
-  - ./hindsight
   - ./temporal-system
   # - ./snmp
   # - ./smtp

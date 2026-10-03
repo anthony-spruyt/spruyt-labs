@@ -39,7 +39,7 @@ async def test_anthropic_system_blocks_move_to_single_developer_message(plugin):
         "model": "chatgpt/gpt-5.5",
         "system": [
             {"type": "text", "text": "cached prefix"},
-            {"type": "text", "text": "<hindsight-memory>\nfact\n</hindsight-memory>"},
+            {"type": "text", "text": "<memory-block>\nfact\n</memory-block>"},
         ],
         "messages": [{"role": "user", "content": "hello"}],
     }
@@ -50,7 +50,7 @@ async def test_anthropic_system_blocks_move_to_single_developer_message(plugin):
     assert "system" not in out
     assert out["messages"][0]["role"] == "developer"
     assert "cached prefix" in out["messages"][0]["content"]
-    assert "<hindsight-memory>" in out["messages"][0]["content"]
+    assert "<memory-block>" in out["messages"][0]["content"]
 
 
 async def test_system_roles_are_renamed_for_chatgpt_only(plugin):

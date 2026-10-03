@@ -84,15 +84,6 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
-    # CNPG clusters in hindsight
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: hindsight
-            k8s:cnpg.io/cluster: hindsight-cnpg-cluster
-      toPorts:
-        - ports:
-            - port: "8000"
-              protocol: TCP
     # CNPG clusters in temporal-system
     - toEndpoints:
         - matchLabels:

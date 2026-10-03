@@ -2,7 +2,7 @@
 
 ## Overview
 
-Cluster-wide operator for every app database (authentik, n8n, coder, temporal, hindsight, litellm). Backups go through the Barman Cloud plugin; see [plugin-barman-cloud](../plugin-barman-cloud/README.md) for the S3 wiring.
+Cluster-wide operator for every app database (authentik, n8n, coder, temporal, litellm). Backups go through the Barman Cloud plugin; see [plugin-barman-cloud](../plugin-barman-cloud/README.md) for the S3 wiring.
 
 ## kubectl cnpg Plugin
 
@@ -24,7 +24,7 @@ kubectl cnpg backup <cluster-name> -n <namespace>
 
 ## Operations
 
-A cluster hibernated with the `cnpg.io/hibernation: "on"` annotation never reports Ready, so its Flux Kustomization needs `wait: false` while hibernated (see `hindsight`).
+A cluster hibernated with the `cnpg.io/hibernation: "on"` annotation never reports Ready, so its Flux Kustomization needs `wait: false` while hibernated.
 
 ## References
 

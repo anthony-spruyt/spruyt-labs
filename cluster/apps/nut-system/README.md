@@ -63,7 +63,7 @@ the UPS's reported runtime (`network_ups_tools_battery_runtime`) stays above it 
 
 On startup the orchestrator checks for leftover shutdown state (Ceph deployments at 0 replicas, or any CNPG cluster with `cnpg.io/hibernation: "on"`) and runs recovery: wait for the tools pod, scale MON -> MGR -> OSD -> MDS -> operator back to 1, wait for `HEALTH_OK`, unset `noout`, clear CNPG hibernation, uncordon workers.
 
-> The CNPG check does not distinguish a cluster hibernated on purpose. `hindsight-cnpg-cluster` is hibernated in Git, so every orchestrator restart "recovers" it by clearing the annotation, and Flux sets it back on the next reconcile.
+> The CNPG check does not distinguish a cluster hibernated on purpose. If one is hibernated in Git, every orchestrator restart "recovers" it by clearing the annotation, and Flux sets it back on the next reconcile.
 
 ### Manual recovery
 

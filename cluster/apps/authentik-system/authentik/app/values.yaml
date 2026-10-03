@@ -172,8 +172,6 @@ global:
             path: technitium-sso.yaml
           - key: litellm-sso.yaml
             path: litellm-sso.yaml
-          - key: hindsight-sso.yaml
-            path: hindsight-sso.yaml
           - key: temporal-sso.yaml
             path: temporal-sso.yaml
 
