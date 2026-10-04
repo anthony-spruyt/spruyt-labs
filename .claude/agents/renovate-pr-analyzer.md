@@ -142,6 +142,8 @@ A breaking change only matters if it affects what we actually use.
 | HIGH_IMPACT    | We use the affected config/feature — will break |
 | UNKNOWN_IMPACT | Cannot determine if we use the affected feature |
 
+4. For security fixes, judge exposure from every layer that gates access, not one app setting: Authentik blueprints in `cluster/apps/authentik-system/authentik/app/blueprints/` (group/policy bindings), CiliumNetworkPolicies, and ingress routes. A flag like `ALLOW_SIGNUP: true` can look open while a group binding upstream restricts who reaches it. Name the files you checked; if you didn't check them, call exposure unverified.
+
 ### 9. Determine Verdict
 
 **SAFE** (ALL must be true):
