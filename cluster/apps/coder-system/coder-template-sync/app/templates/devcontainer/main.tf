@@ -459,7 +459,6 @@ resource "coder_script" "tmux" {
   script             = <<-EOT
     #!/bin/bash
     set -e
-    command -v jq >/dev/null || { echo "jq not found, skipping tmux terminal profile"; exit 0; }
     if ! command -v tmux &>/dev/null; then
       # Shared with the code-server script: a second concurrent dpkg run fails on its lock.
       (
@@ -469,6 +468,8 @@ resource "coder_script" "tmux" {
       ) 9>/tmp/coder-dpkg.lock
     fi
     printf 'set -g mouse on\nset -g history-limit 50000\n' | sudo tee /etc/tmux.conf >/dev/null
+    # The happy script waits on this, so its tmux server starts with the config above.
+    touch /tmp/coder-tmux-ready
 
     # Reattach an orphaned session first, so terminals left behind by a closed VS Code come back.
     mkdir -p /home/vscode/.local/bin
@@ -481,6 +482,7 @@ resource "coder_script" "tmux" {
     TMUXEOF
     chmod +x /home/vscode/.local/bin/tmux-term
 
+    command -v jq >/dev/null || { echo "jq not found, skipping tmux terminal profile"; exit 0; }
     for f in /home/vscode/.vscode-server/data/Machine/settings.json /home/vscode/.local/share/code-server/Machine/settings.json; do
       mkdir -p "$(dirname "$f")"
       [ -s "$f" ] || echo '{}' >"$f"
@@ -522,9 +524,8 @@ resource "coder_script" "happy" {
     [ -f /home/vscode/.happy/access.key ] || exit 0
     happy daemon start
 
-    # The tmux script installs tmux in parallel.
-    for _ in $(seq 60); do command -v tmux >/dev/null && break; sleep 5; done
-    command -v tmux >/dev/null || { echo "tmux not found, not starting a Happy session"; exit 0; }
+    for _ in $(seq 180); do [ -f /tmp/coder-tmux-ready ] && break; sleep 5; done
+    [ -f /tmp/coder-tmux-ready ] || { echo "tmux not ready after 15 minutes, not starting a Happy session"; exit 0; }
     # Own socket: a default server started here would hand this script's env to every VS Code terminal.
     if ! tmux -L happy has-session -t happy 2>/dev/null; then
       tmux -L happy new-session -d -s happy -c "${local.workspace_folder}"
