@@ -16,8 +16,8 @@ Registers the `kata` RuntimeClass so pods can opt into VM-level isolation (used 
 
 - Each Kata VM boots with `default_memory` (1024 MiB) on top of the container limits. `overhead.podFixed` adds that, plus 512 MiB headroom, to the pod's requests and cgroup limit, so the scheduler counts it and the host doesn't OOM-kill the VM when the guest fills its RAM. Keep the two in step. The guest used ~383 MiB outside the container on the heaviest template (#3323); re-measure before going
   lower. With `sandbox_cgroup_only=false` the VMM and virtiofsd run in the unconstrained `/kata_overhead` cgroup, outside this accounting.
-- `reclaim_guest_freed_memory = true` adds a balloon with free page reporting, so memory the guest frees goes back to the host. Guest page cache is not free memory, so it stays until the pod stops, capped by the container limit. Plan for every Kata pod to hold up to `limit + overhead` of host memory, and expect `kubectl top` (guest view) to show far less. Host `node_memory_Shmem_bytes` shows the
-  real cost (#3322).
+- `reclaim_guest_freed_memory = true` adds a balloon with free page reporting, so memory the guest frees goes back to the host. The guest only reports free blocks of `page_reporting_order` or larger; the default 2 MiB missed most free memory after a MegaLinter run because it was fragmented, so `kernel_params` sets order 4 (64 KiB). Measured at runtime after a manual compaction, that took the VM's
+  host hold from ~7.2 to ~5.1 GiB, ~8.4 GiB before compaction (#3323). Guest page cache is not free memory, so it stays until the pod stops, capped by the container limit. Plan for every Kata pod to hold up to `limit + overhead` of host memory, and expect `kubectl top` (guest view) to show far less. Host `node_memory_Shmem_bytes` shows the real cost (#3322).
 - Kata settings only apply to new sandboxes. Running workspaces keep their old size and overhead until restarted.
 
 ## Operations

@@ -146,7 +146,7 @@ Renovate bumps `talosVersion` in `talos/topf.yaml`. Upgrade the nodes first, the
         <(talosctl -n <worker-ip> read /etc/kata-containers/configuration.toml | grep -vE '^\s*(#|$)')
    ```
 
-   **Good:** the only differences are `default_memory` and `reclaim_guest_freed_memory`. Anything else: copy the new lines into the patch before the next worker.
+   **Good:** the only differences are `kernel_params` (our added `page_reporting.page_reporting_order=4`), `default_memory` and `reclaim_guest_freed_memory`. Anything else: copy the new lines into the patch before the next worker.
 
 6. Merge the `talosVersion` bump (and update the schematic table in [talos/README.md](../talos/README.md)), then bring the machine config in line:
 
