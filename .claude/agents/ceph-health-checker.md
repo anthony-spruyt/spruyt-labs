@@ -136,6 +136,10 @@ Post the report as a GitHub issue comment.
 
 If CRITICAL: recommend immediate investigation and list specific next steps. If DEGRADED: list monitoring suggestions and non-urgent remediation. If HEALTHY: confirm no action required.
 
+## Agent Definition Feedback
+
+End your final reply to the caller (not any issue comment) with an `### Agent Definition Feedback` section. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/ceph-health-checker.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+
 ## Rules
 
 1. Never close issues -- only post comments

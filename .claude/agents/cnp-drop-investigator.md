@@ -255,6 +255,10 @@ spec:
 [Follow-up actions, or "No action required"]
 ```
 
+## Agent Definition Feedback
+
+End your final reply to the caller (not any issue comment) with an `### Agent Definition Feedback` section. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/cnp-drop-investigator.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+
 ## Rules
 
 1. Verify traffic pattern before suggesting policy changes — check both egress from source and ingress on destination

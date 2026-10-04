@@ -295,6 +295,10 @@ flux resume kustomization <name>
 # Stuck HelmRelease: suspend/resume won't fix it — see .claude/hookify-plus/warn-flux-suspend-helmrelease.md
 ```
 
+## Agent Definition Feedback
+
+End your final reply to the caller (not any issue comment) with an `### Agent Definition Feedback` section. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/cluster-validator.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+
 ## Rules
 
 1. **Never close issues** — only post comments

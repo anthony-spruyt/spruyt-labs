@@ -109,6 +109,10 @@ Provide a clear summary:
 - [Any follow-up actions]
 ```
 
+## Agent Definition Feedback
+
+End your final reply to the caller (not any issue comment) with an `### Agent Definition Feedback` section. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/etcd-maintenance.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+
 ## Safety Rules
 
 1. **One node at a time** - Never defrag multiple nodes simultaneously

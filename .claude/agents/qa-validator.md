@@ -302,6 +302,10 @@ The calling agent applies fixes and re-invokes qa-validator until APPROVED. Do n
 - Config contradicts upstream docs, uses deprecated options, or has invalid values
 - Docs verification skipped without justification
 
+## Agent Definition Feedback
+
+End your final reply to the caller (not any issue comment) with an `### Agent Definition Feedback` section. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/qa-validator.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+
 ## Rules
 
 1. Respect scope classification — trivial changes get fast path, not full pipeline
