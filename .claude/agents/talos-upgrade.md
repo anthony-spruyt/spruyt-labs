@@ -643,6 +643,16 @@ TOPF_CONFIRM=false task talos:apply
 
 Then re-run `task talos:diff`. It must exit 0 (no drift). Re-check node Ready, etcd 3/3 and Ceph `HEALTH_OK`, because an apply can restart services.
 
+Smoke-test Kata on the first worker. Kyverno forces `runAsNonRoot`, so the pod needs a non-root user:
+
+```bash
+kubectl run kata-smoke -n default --rm -i --restart=Never --image=busybox:1.37 --pod-running-timeout=3m \
+  --overrides='{"spec":{"runtimeClassName":"kata","nodeSelector":{"kubernetes.io/hostname":"<first-worker>"},"securityContext":{"runAsUser":65534,"runAsGroup":65534}}}' \
+  -- uname -r
+```
+
+**Good:** prints a kernel without the `-talos` suffix (the Kata guest kernel, not the host's). A stuck `ContainerCreating` or sandbox error means the Kata config is broken: run the Step 4.4a diff again, fix the patch, re-apply.
+
 If you can't finish this phase in the session (for example the Renovate PR isn't merged yet), return PARTIAL with the merge → diff → apply steps as the required actions. Do not return SUCCESS.
 
 ### Phase 9: Final Report
@@ -718,6 +728,8 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 ```
 
 ## Handoff Protocol
+
+End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition Feedback` section. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/talos-upgrade.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
 
 ### For SUCCESS:
 
