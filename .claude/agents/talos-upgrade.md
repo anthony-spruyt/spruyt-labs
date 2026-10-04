@@ -500,9 +500,9 @@ diff <(talosctl -n <node-ip> read /usr/local/share/kata-containers/configuration
      <(talosctl -n <node-ip> read /etc/kata-containers/configuration.toml | grep -vE '^\s*(#|$)')
 ```
 
-**Good:** the only differences are `kernel_params` (our added `page_reporting.page_reporting_order=4`), `default_memory` and `reclaim_guest_freed_memory`. Anything else: fix the patch yourself and carry on with the next worker.
+**Good:** the only differences are `kernel_params` (our added `page_reporting.page_reporting_order=4 sysctl.vm.compaction_proactiveness=50`), `default_memory` and `reclaim_guest_freed_memory`. Anything else: fix the patch yourself and carry on with the next worker.
 
-1. Replace the patch's `contents` with the new extension file, keeping `page_reporting.page_reporting_order=4` appended to `kernel_params`, `default_memory = 1024`, `reclaim_guest_freed_memory = true` and the patch's comments.
+1. Replace the patch's `contents` with the new extension file, keeping `page_reporting.page_reporting_order=4 sysctl.vm.compaction_proactiveness=50` appended to `kernel_params`, `default_memory = 1024`, `reclaim_guest_freed_memory = true` and the patch's comments.
 2. Do not apply it now (rule 10). The Phase 8 apply ships it; until then Kata pods may fail to start on upgraded workers.
 3. Leave it uncommitted and list it under "Uncommitted" in the handoff, so the caller runs qa-validator and commits it.
 

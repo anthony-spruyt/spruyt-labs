@@ -15,8 +15,8 @@ contents: |
   disable_guest_selinux=true
   enable_annotations = ["enable_iommu", "virtio_fs_extra_args", "kernel_params"]
   valid_hypervisor_paths = ["/usr/local/bin/cloud-hypervisor"]
-  # Default reporting order 9 (2 MiB) misses most fragmented free memory after builds
-  kernel_params = "cgroup_no_v1=all systemd.unified_cgroup_hierarchy=1 page_reporting.page_reporting_order=4"
+  # Defaults leave free guest memory too fragmented to report after builds
+  kernel_params = "cgroup_no_v1=all systemd.unified_cgroup_hierarchy=1 page_reporting.page_reporting_order=4 sysctl.vm.compaction_proactiveness=50"
   default_vcpus = 1
   default_maxvcpus = 0
   # Keep in step with overhead.podFixed in the kata RuntimeClass
