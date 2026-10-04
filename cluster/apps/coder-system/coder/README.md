@@ -54,7 +54,7 @@ Every workspace commits and runs `gh` as `spruyt-labs-bot`, the same identity as
 
 The spruyt-labs Talos config comes from the Talos `ServiceAccount` `coder-workspace-talos` (role `os:operator`, short-lived and auto-renewed), not a static admin config (#3188).
 
-The three `main.tf` files are near-copies: beyond this table they differ only in the `repo` default and, for `spruyt-labs`, parameter order, a higher memory request, and the startup steps that build the kubeconfig, link the Terraform credentials and wrap `talosctl`. A fix to shared behaviour must be applied to all three.
+The three `main.tf` files are near-copies: beyond this table they differ only in the `repo` default and, for `spruyt-labs`, parameter order and the startup steps that build the kubeconfig, link the Terraform credentials and wrap `talosctl`. A fix to shared behaviour must be applied to all three.
 
 ### Nexus routing
 
