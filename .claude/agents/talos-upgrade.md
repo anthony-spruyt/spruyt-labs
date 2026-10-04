@@ -491,6 +491,17 @@ kubectl wait --for=condition=Ready node/<hostname> --timeout=300s
 talosctl health -n <node-ip>
 ```
 
+#### Step 4.4a: Kata config copy check (first worker only)
+
+`talos/patches/worker/13-tune-kata-memory.yaml` replaces the kata-containers extension's config with a full copy, so a path or option the new extension changed breaks every Kata pod. After the first worker is back:
+
+```bash
+diff <(talosctl -n <node-ip> read /usr/local/share/kata-containers/configuration.toml | grep -vE '^\s*(#|$)') \
+     <(talosctl -n <node-ip> read /etc/kata-containers/configuration.toml | grep -vE '^\s*(#|$)')
+```
+
+**Good:** the only differences are `default_memory` and `reclaim_guest_freed_memory`. Anything else: stop before the next worker and report the diff. The user updates the patch and applies it.
+
 #### Step 4.5: Wait for Ceph recovery (CRITICAL)
 
 ```bash
