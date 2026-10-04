@@ -9,6 +9,11 @@ kind: RuntimeClass
 metadata:
   name: kata
 handler: kata
+# Guest gets Kata default_memory (2048 MiB) on top of the container limit; keep in step.
+overhead:
+  podFixed:
+    cpu: 250m
+    memory: 2560Mi
 scheduling:
   nodeSelector:
     kata.spruyt-labs/ready: "true"
