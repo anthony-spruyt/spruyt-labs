@@ -1,0 +1,53 @@
+---
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: kata-containers/configuration.toml
+mode: 0o644
+# Full copy of the extension's /usr/local/share/kata-containers/configuration.toml;
+# re-diff it on every kata-containers extension bump.
+contents: |
+  [hypervisor.clh]
+  path = "/usr/local/bin/cloud-hypervisor"
+  kernel = "/usr/local/share/kata-containers/vmlinux.container"
+  image = "/usr/local/share/kata-containers/kata-containers.img"
+  rootfs_type="ext4"
+  disable_selinux=false
+  disable_guest_selinux=true
+  enable_annotations = ["enable_iommu", "virtio_fs_extra_args", "kernel_params"]
+  valid_hypervisor_paths = ["/usr/local/bin/cloud-hypervisor"]
+  kernel_params = "cgroup_no_v1=all systemd.unified_cgroup_hierarchy=1"
+  default_vcpus = 1
+  default_maxvcpus = 0
+  # Keep in step with overhead.podFixed in the kata RuntimeClass
+  default_memory = 1024
+  default_maxmemory = 0
+  reclaim_guest_freed_memory = true
+  shared_fs = "virtio-fs"
+  virtio_fs_daemon = "/usr/local/libexec/virtiofsd"
+  valid_virtio_fs_daemon_paths = ["/usr/local/libexec/virtiofsd"]
+  virtio_fs_cache_size = 0
+  virtio_fs_queue_size = 1024
+  virtio_fs_extra_args = ["--thread-pool-size=1", "--announce-submounts"]
+  virtio_fs_cache = "auto"
+  block_device_driver = "virtio-blk"
+  [agent.kata]
+  dial_timeout = 45
+  [runtime]
+  internetworking_model="tcfilter"
+  disable_guest_seccomp=true
+  sandbox_cgroup_only=false
+  static_sandbox_resource_mgmt=false
+  sandbox_bind_mounts=[]
+  vfio_mode="guest-kernel"
+  disable_guest_empty_dir=false
+  experimental=[]
+  create_container_timeout = 60
+  dan_conf = "/run/kata-containers/dans"
+---
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+# Renders as 20-kata-memory.part, merged after the extension's 10-kata-containers.part
+name: kata-memory
+content: |
+  [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata.options]
+    ConfigPath = "/etc/kata-containers/configuration.toml"

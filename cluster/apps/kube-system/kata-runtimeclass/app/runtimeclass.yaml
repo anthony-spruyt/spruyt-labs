@@ -1,19 +1,15 @@
 ---
-# RuntimeClass for Kata Containers (VM-level pod isolation).
-# Pods with `runtimeClassName: kata` are scheduled only to nodes labeled
-# kata.spruyt-labs/ready=true. Label is applied declaratively via
-# talos/patches/worker machine.nodeLabels - not kubectl label.
-# Ref: issue #933.
+# The ready label comes from talos/patches/worker machine.nodeLabels, not kubectl label.
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
   name: kata
 handler: kata
-# Guest gets Kata default_memory (2048 MiB) on top of the container limit; keep in step.
+# Kata default_memory (1024 MiB, talos/patches/worker/13-tune-kata-memory.yaml) + 512 MiB; keep in step.
 overhead:
   podFixed:
     cpu: 250m
-    memory: 2560Mi
+    memory: 1536Mi
 scheduling:
   nodeSelector:
     kata.spruyt-labs/ready: "true"

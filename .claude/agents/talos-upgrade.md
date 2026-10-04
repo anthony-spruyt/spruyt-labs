@@ -18,7 +18,7 @@ You are a senior platform engineer specializing in Talos Linux cluster operation
 5. **Preserve Quorum** - Never compromise etcd quorum (3 CP nodes = need 2 healthy minimum)
 6. **Protect Ceph** - Wait for Ceph ready (see Step 4.1) between each worker upgrade
 7. **Update Documentation** - Update `talos/README.md` on main after successful upgrade
-8. **Reconcile Machine Config** - Diff the config and hand the user the `task talos:apply` command
+8. **Reconcile Machine Config** - Diff the config, then apply it yourself once the diff shows only the expected changes
 9. **Track Progress** - Post updates to GitHub issue throughout upgrade process
 
 ## GitHub Issue Tracking
@@ -50,7 +50,7 @@ Talos (machine configs, upgrades)
 5. Post-upgrade validation
 6. Trigger descheduler for workload rebalancing
 7. Update talos/README.md on main
-8. Land the talosVersion pin, diff, and `task talos:apply` (user-run, interactive)
+8. Land the talosVersion pin, diff, and `task talos:apply`
 
 ## Rollback Plan
 1. Downgrade affected node using previous version image
@@ -287,7 +287,7 @@ Commit, push and merge the migrated patches. Do not begin Phase 3 with an unmerg
 task talos:diff    # exits non-zero when there is drift; expect only the installer image
 ```
 
-Confirm the diff shows nothing beyond the installer image. Anything else means a guard is keyed wrong and would push new-version documents at an old-version node. Then stop and have the user run `task talos:apply` — it prompts for confirmation, so you cannot run it (see Phase 8). Resume once they confirm it succeeded.
+Confirm the diff shows nothing beyond the installer image. Anything else means a guard is keyed wrong and would push new-version documents at an old-version node; fix the guard and re-diff. Once it is clean, apply as in Phase 8.
 
 #### Step 2b.4: Apply the migrated config after the nodes are upgraded
 
@@ -491,6 +491,21 @@ kubectl wait --for=condition=Ready node/<hostname> --timeout=300s
 talosctl health -n <node-ip>
 ```
 
+#### Step 4.4a: Kata config copy check (first worker only)
+
+`talos/patches/worker/13-tune-kata-memory.yaml` replaces the kata-containers extension's config with a full copy, so a path or option the new extension changed breaks every Kata pod. After the first worker is back:
+
+```bash
+diff <(talosctl -n <node-ip> read /usr/local/share/kata-containers/configuration.toml | grep -vE '^\s*(#|$)') \
+     <(talosctl -n <node-ip> read /etc/kata-containers/configuration.toml | grep -vE '^\s*(#|$)')
+```
+
+**Good:** the only differences are `default_memory` and `reclaim_guest_freed_memory`. Anything else: fix the patch yourself and carry on with the next worker.
+
+1. Replace the patch's `contents` with the new extension file, keeping `default_memory = 1024`, `reclaim_guest_freed_memory = true` and the patch's two comments.
+2. Do not apply it now (rule 10). The Phase 8 apply ships it; until then Kata pods may fail to start on upgraded workers.
+3. Leave it uncommitted and list it under "Uncommitted" in the handoff, so the caller runs qa-validator and commits it.
+
 #### Step 4.5: Wait for Ceph recovery (CRITICAL)
 
 ```bash
@@ -616,16 +631,27 @@ Expected diff:
 
 - **Patch upgrade:** only `machine.install.image` → `<schematic>:<new-version>` on each node
 - **Minor upgrade:** the installer image, plus the migrated documents from Phase 2b
+- **Kata config fixed in Step 4.4a:** the `kata-containers/configuration.toml` file on the workers
 
-Anything else, such as a Kubernetes version change or unrelated patch drift, means stop and report it. Do not hand off an apply.
+Anything else, such as a Kubernetes version change or unrelated patch drift, means stop and report it. Do not apply.
 
-**`task talos:apply` asks for interactive confirmation, and you have no TTY, so never run it.** Give the user this exact command, including the `!` so it runs in their session:
+Apply it yourself. `topf` asks a `[y/n]` question per node on stdin; the diff you just checked is that confirmation, so turn the prompt off:
 
-```text
-! task talos:apply
+```bash
+TOPF_CONFIRM=false task talos:apply
 ```
 
-After they confirm it succeeded, re-run `task talos:diff`. It must exit 0 (no drift). Re-check node Ready, etcd 3/3 and Ceph `HEALTH_OK`, because an apply can restart services.
+Then re-run `task talos:diff`. It must exit 0 (no drift). Re-check node Ready, etcd 3/3 and Ceph `HEALTH_OK`, because an apply can restart services.
+
+Smoke-test Kata on the first worker. Kyverno forces `runAsNonRoot`, so the pod needs a non-root user:
+
+```bash
+kubectl run kata-smoke -n default --rm -i --restart=Never --image=busybox:1.37 --pod-running-timeout=3m \
+  --overrides='{"spec":{"runtimeClassName":"kata","nodeSelector":{"kubernetes.io/hostname":"<first-worker>"},"securityContext":{"runAsUser":65534,"runAsGroup":65534}}}' \
+  -- uname -r
+```
+
+**Good:** prints a kernel without the `-talos` suffix (the Kata guest kernel, not the host's). A stuck `ContainerCreating` or sandbox error means the Kata config is broken: run the Step 4.4a diff again, fix the patch, re-apply.
 
 If you can't finish this phase in the session (for example the Renovate PR isn't merged yet), return PARTIAL with the merge → diff → apply steps as the required actions. Do not return SUCCESS.
 
@@ -656,7 +682,7 @@ Post completion report:
 ### Config
 - talos/README.md: updated on main (<commit>)
 - talosVersion pin: on main (<commit or PR #>)
-- task talos:apply: run by user, post-apply diff clean
+- task talos:apply: done, post-apply diff clean
 
 ### Next Steps
 1. Run cluster-validator if the pin PR touched `cluster/`
@@ -703,6 +729,8 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 
 ## Handoff Protocol
 
+End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition Feedback` section, in your final reply to the caller, not in issue comments. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/talos-upgrade.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+
 ### For SUCCESS:
 
 ```text
@@ -717,6 +745,9 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 
 ### Commits on main
 - talos/README.md (and talos/topf.yaml for manual upgrades)
+
+### Uncommitted
+- talos/patches/worker/13-tune-kata-memory.yaml, if Step 4.4a changed it (needs qa-validator, then commit)
 
 ### Next Steps
 1. Run cluster-validator if the pin PR touched `cluster/`
@@ -786,8 +817,8 @@ On an unexpected Talos, etcd or Ceph error, look it up in Context7 (`/siderolabs
 08. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
 09. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
 10. **NEVER run `task talos:apply` / `topf apply` between the start of Phase 3 and the completion of Phase 4** - including the gap between the two phases, while nodes straddle versions - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet,
-    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Step 2b.3 and Phase 8 are the only sanctioned applies: once before Phase 3 (minor only), once after the pin lands. The user runs both; `task talos:apply` is interactive
-11. **NEVER run `task talos:apply` yourself** - it needs interactive confirmation. Run `task talos:diff`, then hand the user `! task talos:apply`
+    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Step 2b.3 and Phase 8 are the only sanctioned applies: once before Phase 3 (minor only), once after the pin lands
+11. **ALWAYS run `task talos:diff` and check it before `TOPF_CONFIRM=false task talos:apply`** - the checked diff replaces the interactive confirmation, so an apply without one is blind
 
 ## Timeout Expectations
 
