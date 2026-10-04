@@ -519,8 +519,16 @@ resource "coder_script" "happy" {
     fi
 
     # Unpaired, the daemon would block on an interactive QR login; the first `happy` run pairs it.
-    if [ -f /home/vscode/.happy/access.key ]; then
-      happy daemon start
+    [ -f /home/vscode/.happy/access.key ] || exit 0
+    happy daemon start
+
+    # The tmux script installs tmux in parallel.
+    for _ in $(seq 60); do command -v tmux >/dev/null && break; sleep 5; done
+    command -v tmux >/dev/null || { echo "tmux not found, not starting a Happy session"; exit 0; }
+    # Own socket: a default server started here would hand this script's env to every VS Code terminal.
+    if ! tmux -L happy has-session -t happy 2>/dev/null; then
+      tmux -L happy new-session -d -s happy -c "${local.workspace_folder}"
+      tmux -L happy send-keys -t happy happy Enter
     fi
   EOT
 }
