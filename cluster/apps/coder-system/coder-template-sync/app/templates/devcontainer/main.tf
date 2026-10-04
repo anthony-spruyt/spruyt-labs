@@ -507,6 +507,17 @@ resource "coder_script" "happy" {
     "$npm" ls -g --depth=0 "happy@${local.happy_version}" &>/dev/null ||
       "$npm" install -g --no-fund --no-audit "happy@${local.happy_version}"
 
+    # Happy reads only ~/.claude/settings.json (not project settings) and defaults to adding its co-author ad to commits.
+    settings=/home/vscode/.claude/settings.json
+    if command -v jq >/dev/null; then
+      mkdir -p "$(dirname "$settings")"
+      [ -s "$settings" ] || echo '{}' >"$settings"
+      jq '.includeCoAuthoredBy = false' "$settings" >"$settings.tmp" && mv "$settings.tmp" "$settings" ||
+        { rm -f "$settings.tmp"; echo "WARNING: could not set includeCoAuthoredBy in $settings"; }
+    else
+      echo "jq not found, Happy will add its co-author trailer to commits"
+    fi
+
     # Unpaired, the daemon would block on an interactive QR login; the first `happy` run pairs it.
     if [ -f /home/vscode/.happy/access.key ]; then
       happy daemon start
