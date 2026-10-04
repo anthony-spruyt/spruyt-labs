@@ -536,8 +536,17 @@ resource "coder_script" "happy" {
       echo "jq not found, Happy will add its co-author trailer to commits"
     fi
 
+    # A regular file is a pairing made in this workspace, so it wins over the template key.
+    key=/home/vscode/.happy/access.key
+    if [ -f /etc/coder/happy/access.key ] && { [ -L "$key" ] || [ ! -e "$key" ]; }; then
+      mkdir -p -m 700 /home/vscode/.happy
+      ln -sfn /etc/coder/happy/access.key "$key"
+    elif [ -L "$key" ] && [ ! -e "$key" ]; then
+      # Dangling once the template secret is gone; Happy would write a new pairing through it into the read-only mount.
+      rm -f "$key"
+    fi
     # Unpaired, the daemon would block on an interactive QR login; the first `happy` run pairs it.
-    [ -f /home/vscode/.happy/access.key ] || exit 0
+    [ -f "$key" ] || exit 0
     happy daemon start
 
     for _ in $(seq 180); do [ -f /tmp/coder-tmux-ready ] && break; sleep 5; done
@@ -694,6 +703,12 @@ resource "kubernetes_pod_v1" "main" {
       }
 
       volume_mount {
+        name       = "happy-key"
+        mount_path = "/etc/coder/happy"
+        read_only  = true
+      }
+
+      volume_mount {
         name       = "talosconfig"
         mount_path = "/etc/coder/talos"
         read_only  = true
@@ -787,6 +802,15 @@ resource "kubernetes_pod_v1" "main" {
           key  = "hosts.yml"
           path = "hosts.yml"
         }
+      }
+    }
+
+    volume {
+      name = "happy-key"
+      secret {
+        secret_name  = "coder-happy-spruyt-labs"
+        default_mode = "0400"
+        optional     = true
       }
     }
 
