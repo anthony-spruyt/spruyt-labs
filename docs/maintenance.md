@@ -139,6 +139,15 @@ Renovate bumps `talosVersion` in `talos/topf.yaml`. Upgrade the nodes first, the
 
    **Verify** before the next worker: node `Ready` on the new version, and `ceph status` back to `HEALTH_OK` (a few minutes). Do not move on while Ceph is degraded.
 
+   On the first ms-01, also check the Kata config copy still matches the upgraded extension. `talos/patches/worker/13-tune-kata-memory.yaml` replaces the extension's config file, so a changed path in a new extension breaks every Kata pod:
+
+   ```bash
+   diff <(talosctl -n <worker-ip> read /usr/local/share/kata-containers/configuration.toml | grep -vE '^\s*(#|$)') \
+        <(talosctl -n <worker-ip> read /etc/kata-containers/configuration.toml | grep -vE '^\s*(#|$)')
+   ```
+
+   **Good:** the only differences are `default_memory` and `reclaim_guest_freed_memory`. Anything else: copy the new lines into the patch before the next worker.
+
 6. Merge the `talosVersion` bump (and update the schematic table in [talos/README.md](../talos/README.md)), then bring the machine config in line:
 
    ```bash
