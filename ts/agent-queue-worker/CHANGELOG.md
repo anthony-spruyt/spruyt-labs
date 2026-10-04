@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.3.61](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.60...agent-queue-worker/v3.3.61) (2026-10-04)
+
+
+### Bug Fixes
+
+* **nut-system:** grant shutdown-orchestrator node patch and pod drain RBAC ([20556a8](https://github.com/anthony-spruyt/spruyt-labs/commit/20556a8f893965a36f04677ff78f299e3d2cf4e8)), closes [#3181](https://github.com/anthony-spruyt/spruyt-labs/issues/3181) [#3182](https://github.com/anthony-spruyt/spruyt-labs/issues/3182)
+
+
+### Dependencies
+
+* **deps:** update dependency @types/node to v24.19.0 ([#3279](https://github.com/anthony-spruyt/spruyt-labs/issues/3279)) ([789a3ba](https://github.com/anthony-spruyt/spruyt-labs/commit/789a3ba9138039fda2f090740ca95d4bca3aeff7))
+
 ## [3.3.60](https://github.com/anthony-spruyt/spruyt-labs/compare/agent-queue-worker/v3.3.59...agent-queue-worker/v3.3.60) (2026-09-27)
 
 
