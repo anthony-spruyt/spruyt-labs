@@ -39,6 +39,8 @@ Either way: do your analysis, then output a clear verdict with summary. Do NOT s
 
 ### 1. Check CI Status
 
+Ignore `renovate/stability-days` and any `Mergify` check when judging CI, whether pending or failing. They are merge gates, not tests; the user often triggers PRs before the release-age gate clears.
+
 If CI status is provided and shows failures:
 
 - Use `gh pr checks <PR#>` to identify which jobs failed

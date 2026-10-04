@@ -43,7 +43,7 @@ The feature ask lives here, not in the agent file, because the n8n orchestrator 
 
 **SAFE**
 
-1. Check CI: `gh pr checks <N>`. If checks are pending, wait with `gh pr checks <N> --watch`. If any fail, treat as not SAFE.
+1. Check CI: `gh pr checks <N>`. Ignore `renovate/stability-days` and `Mergify` checks; they never clear on early-triggered PRs and don't block a direct merge. If other checks are pending, re-check every minute until they finish (don't use `--watch`, it waits on the ignored checks too). If any other check fails, treat as not SAFE.
 2. If the PR has the `blocked` label, remove it: `gh pr edit <N> --remove-label blocked`
 3. Merge: `gh pr merge <N> --squash`. Ignore Mergify's approval check.
 4. If the PR touched `cluster/`, run `cluster-validator` (no issue number needed). Skip it if one is already running.
