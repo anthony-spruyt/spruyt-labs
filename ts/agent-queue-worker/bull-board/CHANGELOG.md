@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.40](https://github.com/anthony-spruyt/spruyt-labs/compare/bull-board/v0.2.39...bull-board/v0.2.40) (2026-10-04)
+
+
+### Dependencies
+
+* **deps:** update dependency @types/node to v24.19.0 ([#3279](https://github.com/anthony-spruyt/spruyt-labs/issues/3279)) ([789a3ba](https://github.com/anthony-spruyt/spruyt-labs/commit/789a3ba9138039fda2f090740ca95d4bca3aeff7))
+
 ## [0.2.39](https://github.com/anthony-spruyt/spruyt-labs/compare/bull-board/v0.2.38...bull-board/v0.2.39) (2026-09-27)
 
 
