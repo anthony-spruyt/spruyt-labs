@@ -729,7 +729,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 
 ## Handoff Protocol
 
-End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition Feedback` section. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/talos-upgrade.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition Feedback` section, in your final reply to the caller, not in issue comments. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/talos-upgrade.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
 
 ### For SUCCESS:
 
