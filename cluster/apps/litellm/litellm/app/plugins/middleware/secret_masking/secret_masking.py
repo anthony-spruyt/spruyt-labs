@@ -30,7 +30,9 @@ _PATTERNS: tuple[tuple[str, str, Optional[str]], ...] = (
     (r"sk-(?:proj|svcacct|admin)-", _URLSAFE_20, None),
     (r"sk-", _URLSAFE_20, None),
     (r"github_pat_", r"[A-Za-z0-9_]{22,}", None),
-    (r"gh[pousr]_", r"[A-Za-z0-9]{36,}", None),
+    # ghs_APPID_JWT: the dot-and-dash body must not swallow a sentence-ending period.
+    (r"ghs_", r"[A-Za-z0-9_.\-]{20,}(?<!\.)", None),
+    (r"gh[pour]_", r"[A-Za-z0-9]{36,}", None),
     (r"glpat-", _URLSAFE_20, None),
     (r"AIza", r"[A-Za-z0-9_\-]{35}(?![A-Za-z0-9_\-])", None),
     (r"GOCSPX-", r"[A-Za-z0-9_\-]{28}(?![A-Za-z0-9_\-])", None),

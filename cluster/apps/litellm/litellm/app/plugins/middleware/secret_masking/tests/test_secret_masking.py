@@ -19,6 +19,8 @@ if _PLUGINS_DIR not in sys.path:
 # Built by concatenation so secret scanners don't flag the fixtures.
 GH_PAT = "gh" + "p_" + "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE3fG5"
 GH_PAT_2 = "gh" + "p_" + "Zy8xW6vU4tS2rQ0pO8nM6lK4jI2hG0fE8dC6"
+GH_APP_TOKEN = "gh" + "s_" + "1234567_" + "eyJhbGciOiJSUzI1NiJ9" + "." + "eyJpc3MiOiIxMjM0NTY3In0" + "." + "aB3dE5gH7jK9-mN1pQ3sT5_vW7yZ9bC1"
+GH_APP_TOKEN_LEGACY = "gh" + "s_" + "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE3fG5"
 OAUTH = "sk-" + "ant-oat01-" + "Qw3rTy7uIo9pAs1dFg5hJk7lZx9cVb3nM1qW5eR7tY9uI1oP3aS5dF7gH9jK1lZ3"
 GOOGLE = "AI" + "za" + "SyA1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q"
 SL_KEY = "sl" + "_" + "Xk9fQ2mW7pL4rT8vN3bH6jD1sZ5cY0gA2eU7iO4wRt6yU8iP0aS2dF4gH6jK8lZ1"
@@ -95,6 +97,19 @@ async def test_masks_github_pat_with_same_shape_fake(mw):
     assert len(fake) == len(GH_PAT)
     assert _classes(fake) == _classes(GH_PAT)
     assert masked == f"token is {fake} ok"
+
+
+@pytest.mark.parametrize("token", [GH_APP_TOKEN, GH_APP_TOKEN_LEGACY], ids=["app_id_jwt", "legacy"])
+async def test_masks_github_app_installation_token_with_same_shape_fake(mw, token):
+    out = await _mask(mw, f"token is {token}. ok")
+
+    masked = _user_text(out)
+    fake = masked.split()[2].removesuffix(".")
+    assert token not in masked
+    assert fake.startswith("ghs_")
+    assert len(fake) == len(token)
+    assert _classes(fake) == _classes(token)
+    assert masked == f"token is {fake}. ok"
 
 
 async def test_same_secret_gets_same_fake_across_requests(mw):
