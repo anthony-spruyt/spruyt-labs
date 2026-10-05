@@ -1,7 +1,6 @@
-# yamllint disable
 apiVersion: v1
 data:
-    access.key: ENC[AES256_GCM,data:4JwIT61BrlCsg0wi614JcGl25poPZolBWHjHwDqhJD2PwxXN0CnKTTQ/NUzbxA9nydtZNeCl0CSHKpBLr7jFUI17dYi70LclPRf8rDb3gcb1xXTf2D27hv8sANDhESx2RPqMlaTbpTHT5rEi7kb622n3i6ymII0tiE4on6GVijHLWu/deqBEAhEDM4bgVYObtrEsQUT2bppGAhdWzABnwOL7MwbMhkHiC1hIwuQI1wlh5lejdD2dHgNavC36s9sAdbJEetXQ7XCiL4J6vy+PTnJ9OgLTcbVLiUkT/toCKqFzClMb+jiG/vrZJJoxhEBFwO35PbFEV39VCb57nb/z/BlqL7HM2DhWkECnOgkFrhTVWBeFzvbMRyOmPIfNjv7pWCX7iVHuc7Gp6iAxoiozNCdmK4XK/vm16OUXitlZo9X1ZWtLa8NbU2+aaghm8HyAUw0yQb5yeumuKjXCI74u5kWef1LkyyEKl5auYJJ6UAO4boWCqdOCIveDA2cf9I662GBwiRea2QTzaV4gv3QAMui7htOT9RRzhN/D9jusuPH82lZoUTL9YBEykl9Sxkd5yCISaNGKH2xQcCP5V5ImwS7yORCwt2r+9kevehmBNgve8laFt879vVzPTZdGiikgHjRLFDkCiesrPb/THNzAeceGNhUgn5BhKW42wZw/4jsgAtyzmGeq3bfZXbN8M3kWya/ugc22O50o1jjqQt+fIfGBlDWp2jvTRFmADW+l4AcXLKm3Ub7NUAHoXzhxEgywhmQw+Xp8/ynXbEqtYa7zxwiSO+5p3NzGXz07/ZwhnbB0FJSbT2C+w/MjBjqqRQ2Vxoe7jWkO11AzqZJlU9edlw+w2KP/6BPR29uIJmOCoY1Y4FTp1MrQjZlIRjc=,iv:kLUfNlK3ySR21+/zRndrPhP2V6yQ88hThjk7lrACTY0=,tag:yE6vsGHY0faH5ugXkZMqFA==,type:str]
+    access.key: ENC[AES256_GCM,data:rrgI3brz4Ko+kuQEMj3sPdZGspMKOgd80Dqts83EixkDsJMYTSxpv53UWz/VtA6XQYuDhfOQS9JSAHRSdtYxKQZjIKQ/GE4FP4oh4AA5Yjxgj3iBURjtA9Au46QmYaknPtK14dZUgpHNWF0wwqw3Jg1ClaYO9v5CNmgiM6l/h8lMNjoQpH+KiByuoYW5QY6bfoo5MW+Vj/JOeXwOneUWr90y2FdlywkpS0dOFrIrK9K0WdUWTMpE2XEuIO0fyMRHdUwU9JJntIi/tiR5IuCvePJaEbXmtA7YzWSe28Qk/hnAXvr+RDKVti8eWUe15rigte11r6eeqGQQXxCclmKza3I0SpS13N2Wi5cfOPUjYXENf8drxID3iLIYnK2irO+VV70KFDtCaSB7SeO5XsXlFE89dCVciI8rv1Ate2Ffuryu6sbc6b5iD2qsIX6p8ysvUv1MY3IEl8NzwSNFFQ98PYe3tCJ+2v/9inRsstvb5JOkBsTbOUDBWAUfsXg9BkNpGStAjiARNWgD2X84RIiSRWGI4RnIg3W/DP7jkp0PxztmDN0LmqImhYw9Tzp2l81OSAYI2JMwRZUJ/IDa/0d4+O6TSAIu/4JJC7rIHjhFDnCIKAf2bqN97ZQoO9pgdkM3RSMxywJ/604nYmtfUR7YKkRqgkGnZUAQlJEJgoDENinO7fLjHXVC/bauS/GG7QCmRaZ5Oi0jysNDkGmeMQDmpX+WS5h6Q0JYuyHb7DJf1Ev4+8cY6td2nLeL6f9rjX6pIMewTRZZM1xRkpsyk+nUtuEnwOuVErqufDR5O2Z+xZnMiPRYeQwc59V5nQ7qK48wB0vsIA+SGPlTWtw4tSipF3nQwZB+fHHSjcaZ4Z79lWgp18E/j28l7IAYfDg=,iv:6+/R86Pbw/Aq8q7oB66VmRjiWp0qmRXSjYuc2BDiIvg=,tag:WIlY502w1EdBBzSjKmURgA==,type:str]
 kind: Secret
 metadata:
     name: coder-happy-spruyt-labs
@@ -10,14 +9,14 @@ sops:
     age:
         - enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAzd0pjOU5yRDI1dDNYM3lt
-            bHdsUVhqclZzTjhWWTQ0YlUvcXhVY2JibVVRCldGQXFIejVtK3RVZEtaRmRLYk1m
-            RUdxZlBpZmNaSFlhejlYWUFqakFaSjQKLS0tIG4rYWdzSkZIWkg2SFNTcUcwTDNt
-            OUJJM1JjUytwNGdyYjZXdjQraTZwYncKOZtCd7i8jH5pQx4zfWhxbDAo0ijsKAOt
-            mG7E/lPAhb2CFLXbKST7i8K3paE2eTf2pv/GZDUgMngMoZmV08vhRA==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBxZVkvR291RVdYUTdIN3Zp
+            K2gzVll5ME9YWFJ5bmhuVVRrZU1objF6YjJVCm4xd1cybEhtL0dWYXdzUkx1TnRy
+            LzM2K2NxYTZDZjNibzJhc3VPejZOUnMKLS0tIGx1eCtZRXlkK1VGOXN4cm1icE5B
+            QXVsdUtDS3ZCckRMNk94TVFPNmJiR2cKC2CYlr8nT7DE2O2hCoJakvctboei3nmD
+            mvExo7vei/wvH308z5HiwBHwLTvHUWCEJB1jpLU7xcFpiPEXjjwMew==
             -----END AGE ENCRYPTED FILE-----
           recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-10-05T00:01:55Z"
-    mac: ENC[AES256_GCM,data:WMylwoUkVPp4SSfP00sro+KCTVZq3EZ1tju/sM+jYOJlF+8EW/5hbaMMYec9X6mCJ6agksp901L/HcoZrLUb5kQuPkeAAYU8wy2GK+pJp78N6JF5ODTfuYgUUOLBrCXScFk44SQRCpfyA191EMKXibQkxg1qU29yTkPaimNgvwc=,iv:PtqhLOcqwDgkEugjdYrbqXbdZHP3Zsg12YGglu1WVOw=,tag:RlcOB24eKrQcQN+NKNgR5g==,type:str]
+    lastmodified: "2026-10-05T04:22:18Z"
+    mac: ENC[AES256_GCM,data:yWfykjGBl38PPBwwze0KEpgJQ9jm2nA6XdKU2bG1GmttmV/TW4CTtT334BaRaDvjJTkawC+2weUY3WqXxHEJvCBSJUZKI6Y9M5Ja0joXBfMOo1k+Tgt7X9HGOpkxlmk4iaixxrNer7meNoIRb+zzRt7zmzqUZgUaSCMo3BZTXsE=,iv:iw1b1d2EEATkyDBdB6k0LVlKwuF1ADtqbOZKQPGG4A4=,tag:HTwRxOeXqhcN893J8LNfWA==,type:str]
     version: 3.13.3
