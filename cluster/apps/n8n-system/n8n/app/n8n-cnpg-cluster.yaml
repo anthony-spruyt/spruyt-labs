@@ -37,7 +37,7 @@ spec:
         barmanObjectName: n8n-cnpg-aws-object-store
   postgresql:
     parameters:
-      shared_buffers: 256MB # 25% of the memory defined under requests memory
+      shared_buffers: 256MB
   primaryUpdateMethod: switchover
   primaryUpdateStrategy: unsupervised
   resources:
@@ -46,7 +46,7 @@ spec:
       memory: 4Gi
     requests:
       cpu: 85m
-      memory: 1Gi # shared_buffers under parameters should be 25% of the memory defined here
+      memory: 640Mi
   storage:
     pvcTemplate:
       storageClassName: rbd-fast-delete
