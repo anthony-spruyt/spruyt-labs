@@ -109,29 +109,48 @@ Wait for reconciliation to finish before reporting a verdict. Dependency chains 
 | 180-300s        | Dependency chains settling           |
 | 300s+           | If not ready, likely a genuine issue |
 
-### Step 1: Wait for directly affected resource
+### Step 1: Wait for the new revision to reach the affected resource
+
+Ready=True alone passes before Flux has seen the push, so wait on the revision:
 
 ```bash
-kubectl wait --for=condition=Ready kustomization/<name> -n flux-system --timeout=180s
+git fetch -q origin
+CURRENT_REV=$(git rev-parse origin/main)
+kubectl wait gitrepository/flux-system -n flux-system --timeout=180s \
+  --for=jsonpath='{.status.artifact.revision}'="refs/heads/main@sha1:$CURRENT_REV"
+kubectl wait kustomization/<name> -n flux-system --timeout=300s \
+  --for=jsonpath='{.status.lastAppliedRevision}'="refs/heads/main@sha1:$CURRENT_REV"
+```
+
+If the GitRepository wait times out, re-fetch first: if `origin/main` moved, rerun with the newer sha; otherwise the webhook was missed, so use Flux Recovery below and retry. If the kustomization wait times out, classify it with Step 3. A kustomization sourced from another GitRepository (`kubectl get kustomization <name> -n flux-system -o jsonpath='{.spec.sourceRef.name}'`) never carries the main sha: wait for its `lastAppliedRevision` to equal that GitRepository's `.status.artifact.revision` instead.
+
+For `helm-release` changes, then wait on the release itself; `kubectl wait` holds until the HelmRelease's observedGeneration catches up, and many kustomizations here don't wait on their HelmReleases:
+
+```bash
+kubectl wait helmrelease/<name> -n <namespace> --for=condition=Ready --timeout=600s
 ```
 
 ### Step 2: Wait for full cluster to settle
 
 ```bash
-CURRENT_REV=$(git rev-parse --short origin/main)
-
 # Repeat up to 5 times with 60s between checks (5 min total)
 # flux output: NAMESPACE NAME REVISION SUSPENDED READY MESSAGE
 # Pattern matches Suspended=False AND Ready=False or Unknown (adjacent columns)
+# STALE: unsuspended flux-system-sourced kustomizations not yet applied at $CURRENT_REV
+# Re-set CURRENT_REV here: shell state doesn't persist, and an empty rev matches everything
+CURRENT_REV=$(git rev-parse origin/main)
 for attempt in 1 2 3 4 5; do
   NOT_READY=$(flux get kustomizations -A --no-header 2>/dev/null \
     | grep -E "False\s+(False|Unknown)" || true)
-  if [ -z "$NOT_READY" ]; then
-    echo "All kustomizations ready"
+  STALE=$(kubectl get kustomizations -A -o jsonpath='{range .items[?(@.spec.sourceRef.name=="flux-system")]}{.metadata.name}{" "}{.spec.suspend}{" "}{.status.lastAppliedRevision}{"\n"}{end}' \
+    | awk -v rev="$CURRENT_REV" '$2 != "true" && index($NF, rev) == 0' || true)
+  if [ -z "$NOT_READY" ] && [ -z "$STALE" ]; then
+    echo "All kustomizations ready at $CURRENT_REV"
     break
   fi
-  echo "Attempt $attempt/5: some kustomizations not ready..."
+  echo "Attempt $attempt/5: some kustomizations not ready or not at $CURRENT_REV..."
   echo "$NOT_READY"
+  echo "$STALE"
   if [ "$attempt" -lt 5 ]; then
     echo "Waiting 60s..."
     sleep 60
@@ -139,7 +158,7 @@ for attempt in 1 2 3 4 5; do
 done
 ```
 
-**If kustomizations are still not ready after 5 attempts, check each one individually before classifying.**
+**If kustomizations are still not ready after 5 attempts, check each one individually before classifying.** A STALE one that is Ready=True never picked up the push: annotate it per Flux Recovery and re-check; don't count it as validated.
 
 ### Step 3: Classify remaining non-ready Kustomizations
 
@@ -294,7 +313,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 
 ## Flux Recovery
 
-Flux webhooks reconcile on push. Use these only if the source revision is still stale after the Step 2 wait.
+Flux webhooks reconcile on push. Use these only if the Step 1 GitRepository wait times out, or a kustomization is still stale after the Step 2 wait.
 
 ```bash
 flux reconcile source git flux-system
