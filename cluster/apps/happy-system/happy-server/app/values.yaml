@@ -1,0 +1,78 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: standard
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  happy-server:
+    strategy: Recreate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      app:
+        image:
+          repository: ghcr.io/anthony-spruyt/happy-server
+          tag: 1.0.0@sha256:3fa8aa2a6e7f27829be31611d47b4a673f2f38e91224dbf1fb1629a65edb22a1
+          pullPolicy: IfNotPresent
+        env:
+          PUBLIC_URL: https://happy.${EXTERNAL_DOMAIN}
+          TZ: ${TIMEZONE}
+        envFrom:
+          - secretRef:
+              name: happy-server-master-secret
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 150m
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        probes:
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: &port 3005
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 60
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: *port
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+          readiness: *probes
+service:
+  app:
+    controller: happy-server
+    ports:
+      http:
+        port: *port
+persistence:
+  data:
+    existingClaim: happy-server-data
+    globalMounts:
+      - path: /data
+  tmp:
+    type: emptyDir

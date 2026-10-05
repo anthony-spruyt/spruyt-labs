@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app happy-server
+  namespace: flux-system
+spec:
+  targetNamespace: happy-system
+  path: ./cluster/apps/happy-system/happy-server/app
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: external-secrets
+  prune: true
+  timeout: 5m
+  wait: true

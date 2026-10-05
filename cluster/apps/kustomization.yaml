@@ -57,10 +57,4 @@ resources:
   - ./unifi-system
   - ./vpa-system
   - ./temporal-system
-  # - ./snmp
-  # - ./smtp
-  # - ./mysql
-  # - ./mariadb
-  # - ./mssql
-  # - ./rabbitmq
-  # - ./node-red
+  - ./happy-system

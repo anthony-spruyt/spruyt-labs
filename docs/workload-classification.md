@@ -73,8 +73,8 @@ Cluster works without these, but operating it is impaired.
 
 ### standard
 
-Explicitly set or inherited from the global default. Includes, among others: agent-worker-system, coder, n8n and its CNPG cluster and poolers, litellm (except its Valkey), temporal, nexus, qdrant, mosquitto, sungather, technitium-secondary, external-dns-technitium, csi-addons-controller-manager, snapshot-controller, hubble-relay, hubble-ui, vector and node-exporter, the Ceph auxiliaries
-(crashcollector, exporter, tools, rgw, rook-discover, ceph-csi-controller-manager), every Authentik outpost, and all other CronJobs.
+Explicitly set or inherited from the global default. Includes, among others: agent-worker-system, coder, happy-server, n8n and its CNPG cluster and poolers, litellm (except its Valkey), temporal, nexus, qdrant, mosquitto, sungather, technitium-secondary, external-dns-technitium, csi-addons-controller-manager, snapshot-controller, hubble-relay, hubble-ui, vector and node-exporter, the Ceph
+auxiliaries (crashcollector, exporter, tools, rgw, rook-discover, ceph-csi-controller-manager), every Authentik outpost, and all other CronJobs.
 
 ### low-priority
 

@@ -30,6 +30,7 @@ spec:
     - name: coder
     - name: crafty-controller
     - name: foundryvtt
+    - name: happy-server
     - name: headlamp
     - name: litellm
     - name: n8n

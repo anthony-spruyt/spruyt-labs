@@ -53,6 +53,8 @@ locals {
 
   # renovate: datasource=npm depName=happy
   happy_version = "1.2.5"
+  # Flux substitution is off for templates, so the domain comes from the access URL.
+  happy_server_url = replace(trimsuffix(data.coder_workspace.me.access_url, "/"), "://code.", "://happy.")
 
   workspace_folder = "/workspaces/${one(regex("([^/:]+?)(?:\\.git)?/?$", local.repo_url))}"
   # Keyed on owner/repo, not workspace name, so new workspaces reuse layers from earlier builds.
@@ -319,6 +321,8 @@ resource "coder_agent" "main" {
     GIT_COMMITTER_NAME  = local.git_author_name
     GIT_COMMITTER_EMAIL = local.git_author_email
     GIT_SSH_COMMAND     = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+    HAPPY_SERVER_URL    = local.happy_server_url
+    HAPPY_WEBAPP_URL    = local.happy_server_url
   }
 
   metadata {
@@ -601,8 +605,11 @@ resource "kubernetes_pod_v1" "main" {
 
     # Resolve access URL to Traefik LB internally (avoids Cloudflare hairpin)
     host_aliases {
-      ip        = local.traefik_lb_ip
-      hostnames = [replace(replace(data.coder_workspace.me.access_url, "https://", ""), "http://", "")]
+      ip = local.traefik_lb_ip
+      hostnames = [
+        replace(replace(data.coder_workspace.me.access_url, "https://", ""), "http://", ""),
+        replace(replace(local.happy_server_url, "https://", ""), "http://", ""),
+      ]
     }
 
     affinity {

@@ -48,6 +48,8 @@ locals {
 
   # renovate: datasource=npm depName=happy
   happy_version = "1.2.5"
+  # Flux substitution is off for templates, so the domain comes from the access URL.
+  happy_server_url = replace(trimsuffix(data.coder_workspace.me.access_url, "/"), "://code.", "://happy.")
 
   workspace_folder = "/workspaces/${one(regex("([^/:]+?)(?:\\.git)?/?$", local.repo_url))}"
   # Keyed on owner/repo, not workspace name, so new workspaces reuse layers from earlier builds.
@@ -348,6 +350,8 @@ resource "coder_agent" "main" {
     # Agent env, not envbuilder_env, keeps the owner's token out of the pod spec. Coder mints a new one each start.
     CODER_URL           = data.coder_workspace.me.access_url
     CODER_SESSION_TOKEN = data.coder_workspace_owner.me.session_token
+    HAPPY_SERVER_URL    = local.happy_server_url
+    HAPPY_WEBAPP_URL    = local.happy_server_url
   }
 
   metadata {
@@ -612,8 +616,11 @@ resource "kubernetes_pod_v1" "main" {
 
     # Avoids the Cloudflare hairpin for agent downloads.
     host_aliases {
-      ip        = local.traefik_lb_ip
-      hostnames = [replace(replace(data.coder_workspace.me.access_url, "https://", ""), "http://", "")]
+      ip = local.traefik_lb_ip
+      hostnames = [
+        replace(replace(data.coder_workspace.me.access_url, "https://", ""), "http://", ""),
+        replace(replace(local.happy_server_url, "https://", ""), "http://", ""),
+      ]
     }
 
     affinity {

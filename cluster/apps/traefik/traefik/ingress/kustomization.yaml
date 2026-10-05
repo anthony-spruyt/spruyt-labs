@@ -8,6 +8,7 @@ resources:
   - ./coder-system
   - ./flux-system
   - ./foundryvtt
+  - ./happy-system
   - ./headlamp-system
   - ./kube-system
   - ./litellm

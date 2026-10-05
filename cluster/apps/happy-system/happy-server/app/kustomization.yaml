@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./master-secret-eso.yaml
+  - ./persistent-volume-claims.yaml
+  - ./release.yaml
+  - ./network-policies.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: happy-server-values
+    namespace: happy-system
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml
