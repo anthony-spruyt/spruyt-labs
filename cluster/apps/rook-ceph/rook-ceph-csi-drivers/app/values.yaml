@@ -93,7 +93,8 @@ drivers:
         addons: {}
         logRotator: {}
   cephfs:
-    enabled: true
+    # Off while no CephFilesystem exists; see "CephFS (disabled)" in rook-ceph/README.md
+    enabled: false
     name: rook-ceph.cephfs.csi.ceph.com
     # Chart renders log into the Driver CR, blocking the driverSpecDefaults
     # fallback - the per-driver value must be restated. Ref #2711.

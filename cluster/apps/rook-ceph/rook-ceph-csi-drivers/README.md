@@ -8,7 +8,7 @@ Since Rook v1.20 the CSI drivers are managed by the standalone ceph-csi-operator
 
 ### Ownership split
 
-- **This chart owns**: `OperatorConfig/ceph-csi-operator-config`, `Driver/rook-ceph.rbd.csi.ceph.com`, `Driver/rook-ceph.cephfs.csi.ceph.com`.
+- **This chart owns**: `OperatorConfig/ceph-csi-operator-config`, `Driver/rook-ceph.rbd.csi.ceph.com`, and `Driver/rook-ceph.cephfs.csi.ceph.com` when `drivers.cephfs.enabled` is true (off while CephFS is disabled, see [rook-ceph/README.md](../README.md#cephfs-disabled)).
 - **Rook owns - do not template here**: `CephConnection/rook-ceph`. Rook creates it from the `CephCluster` and fills `readAffinity` from `cephClusterSpec.csi.readAffinity` in `rook-ceph-cluster`. The chart's `cephConnections` value is left empty; an entry would create a competing CR.
 
 ### Driver-name prefix

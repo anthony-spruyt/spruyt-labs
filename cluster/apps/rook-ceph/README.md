@@ -2,7 +2,7 @@
 
 ## Overview
 
-Rook-Ceph provides all persistent storage: RBD block (replicated and 2+1 erasure-coded, with encrypted variants), CephFS, and S3-compatible object storage via RGW. It runs on the three MS-01 workers, one encrypted NVMe OSD each, with replication over a dedicated Thunderbolt ring. Component READMEs:
+Rook-Ceph provides all persistent storage: RBD block (replicated and 2+1 erasure-coded, with encrypted variants) and S3-compatible object storage via RGW. CephFS is [disabled](#cephfs-disabled). It runs on the three MS-01 workers, one encrypted NVMe OSD each, with replication over a dedicated Thunderbolt ring. Component READMEs:
 
 - [rook-ceph-cluster](rook-ceph-cluster/README.md) - Thunderbolt ring network and its failure modes
 - [rook-ceph-csi-drivers](rook-ceph-csi-drivers/README.md) - ceph-csi-operator Driver CRs and their workarounds
@@ -149,6 +149,32 @@ Notes:
 - **`preservePoolsOnDelete: false`** - deleting a CephObjectStore deletes its pools and all data. Git is the only protection.
 - **Internal RGW users** - Rook creates `dashboard-admin` per realm for the Dashboard, and `rgw-admin-ops-user` when an ObjectBucketClaim or CephBucketNotification first appears. Do not delete them.
 - **Default realm** - the toolbox init container sets `fast` as the default realm/zonegroup/zone and configures each zone's `system_key`, which the Dashboard needs to show RGW status.
+
+## CephFS (disabled)
+
+CephFS ran from 2026-06 to 2026-10 for a single 8Mi RWX volume (LiteLLM's ChatGPT login cache), and was removed in #3323 because its MDS pair and CSI driver booked ~4 GiB of ms-01 memory. Use RBD unless a workload truly needs RWX.
+
+### Re-enabling
+
+Restore the files from the parent of the removal commit:
+
+```bash
+rm=$(git log -1 --diff-filter=D --format=%h -- cluster/apps/rook-ceph/rook-ceph-cluster/storage/filesystem/ceph-filesystem.yaml)
+git checkout "$rm^" -- cluster/apps/rook-ceph/rook-ceph-cluster/storage/filesystem
+```
+
+1. Add `- ./filesystem` back to `rook-ceph-cluster/storage/kustomization.yaml`. That creates CephFilesystem `fs` (1 active + 1 standby MDS), StorageClass `fs-fast` and VolumeSnapshotClass `rook-ceph-cephfs`.
+2. Set `drivers.cephfs.enabled: true` in `rook-ceph-csi-drivers/app/values.yaml`. The rest of that driver block (kernel client, `ms_mode: secure`, resources) was kept.
+3. **Verify:** `kubectl -n rook-ceph get cephfilesystem fs` is `Ready`, `ceph fs status` shows an active MDS, and a test RWX PVC on `fs-fast` binds and mounts.
+
+Kept in place, so nothing to restore: the csi-addons CNP port 9080 rule (#2213), the shutdown-orchestrator MDS scaling (selects `app=rook-ceph-mds`, a no-op without MDS; #2167), and the CephFS Grafana dashboard.
+
+### Gotchas from the first time
+
+- **Kernel mounter, not FUSE.** A ceph-fuse daemon that dies wedges the mount in D-state and blocks pod termination and node shutdown until reboot. Talos ships `CONFIG_CEPH_FS=y` (#2166).
+- **Pool name.** Rook prefixes data pools with the filesystem name, so data pool `fast` becomes `fs-fast`, which is what the StorageClass `pool` must say.
+- **CSI keys stay on `aes`** (see [CephX key rotation](#cephx-key-rotation-aes--aes256k)).
+- **`preserveFilesystemOnDelete: false`** - deleting the CephFilesystem deletes its pools and all data.
 
 ## Grafana Dashboard Integration
 
