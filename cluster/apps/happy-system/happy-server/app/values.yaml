@@ -76,3 +76,8 @@ persistence:
       - path: /data
   tmp:
     type: emptyDir
+  # Hides the webapp so / returns the banner the app's server check needs; drop once slopus/happy#501 is fixed.
+  webapp:
+    type: emptyDir
+    globalMounts:
+      - path: /usr/local/lib/node_modules/happy-server-self-host/webapp

@@ -16,6 +16,8 @@ Relay between the [Happy](https://github.com/slopus/happy) phone/web app and the
 The app hides the server setting while signed in to the default server. Log out (**Settings → Account → Logout**), tap the gear at the top right of the welcome screen, set the server URL to `https://happy.<external-domain>`, then create an account. This server has its own accounts: an account from the public server doesn't exist here, and every workspace must pair again (see
 [Happy template keys](../../coder-workspaces/coder-workspaces/README.md#happy-template-keys)).
 
+The app's server check wants `/` to return the plain-text banner, which the server only sends when it isn't serving its bundled webapp ([slopus/happy#501](https://github.com/slopus/happy/issues/501)). An `emptyDir` hides the webapp, so there is no web UI and the CLI's browser login goes nowhere: pair by QR. Drop the mount once the app checks `/health` instead.
+
 Workspaces get `HAPPY_SERVER_URL` from the Coder templates, which derive it from the Coder access URL (`code.` becomes `happy.`). A host alias sends it straight to Traefik instead of through Cloudflare.
 
 ### Master secret
