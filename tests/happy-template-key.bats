@@ -12,11 +12,21 @@ setup() {
   KEYS="${TREE}/cluster/apps/coder-workspaces/coder-workspaces/app"
 
   BIN="$(mktemp -d)"
-  cat >"${BIN}/npx" <<'EOF'
+  cat >"${BIN}/npm" <<'EOF'
 #!/bin/bash
-echo "npx $* server=${HAPPY_SERVER_URL} webapp=${HAPPY_WEBAPP_URL}" >>"${CALLS}"
-[ -n "${NPX_FAIL:-}" ] && exit 1
+echo "npm $*" >>"${CALLS}"
+while [ $# -gt 0 ]; do
+  [ "$1" = "--prefix" ] && prefix="$2"
+  shift
+done
+mkdir -p "${prefix}/node_modules/.bin"
+cat >"${prefix}/node_modules/.bin/happy" <<'INNER'
+#!/bin/bash
+echo "happy $* server=${HAPPY_SERVER_URL} webapp=${HAPPY_WEBAPP_URL}" >>"${CALLS}"
+[ -n "${HAPPY_FAIL:-}" ] && exit 1
 printf 'paired-key' >"${HAPPY_HOME_DIR}/access.key"
+INNER
+chmod +x "${prefix}/node_modules/.bin/happy"
 EOF
   cat >"${BIN}/kubectl" <<'EOF'
 #!/bin/bash
@@ -67,7 +77,13 @@ teardown() {
 
 @test "leaves the existing secret alone when pairing fails" {
   echo "old" >"${KEYS}/coder-happy-xfg.sops.yaml"
-  NPX_FAIL=1 run bash "${SCRIPT}" xfg
+  HAPPY_FAIL=1 run bash "${SCRIPT}" xfg
   [ "${status}" -ne 0 ]
   [ "$(cat "${KEYS}/coder-happy-xfg.sops.yaml")" = "old" ]
+}
+
+@test "installs a pinned happy without running lifecycle scripts" {
+  run bash "${SCRIPT}" xfg
+  [ "${status}" -eq 0 ]
+  grep -qE "^npm install --ignore-scripts .*happy@[0-9]+\.[0-9]+\.[0-9]+$" "${CALLS}"
 }
