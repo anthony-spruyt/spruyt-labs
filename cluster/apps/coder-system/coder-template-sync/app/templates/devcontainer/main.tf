@@ -538,7 +538,12 @@ resource "coder_script" "happy" {
     fi
     # Unpaired, the daemon would block on an interactive QR login; the first `happy` run pairs it.
     [ -f "$key" ] || exit 0
-    happy daemon start
+    # The phone app starts new sessions in ~; drop once https://github.com/slopus/happy/issues/1686 lands (#3354).
+    cat >/home/vscode/.happy/start-in-repo.cjs <<'JS'
+    const i = process.argv.indexOf("--started-by");
+    if (i > 0 && process.argv[i + 1] === "daemon" && process.cwd() === require("os").homedir()) try { process.chdir("${local.workspace_folder}"); } catch {}
+    JS
+    NODE_OPTIONS="--require=/home/vscode/.happy/start-in-repo.cjs" happy daemon start
 
     for _ in $(seq 180); do [ -f /tmp/coder-tmux-ready ] && break; sleep 5; done
     [ -f /tmp/coder-tmux-ready ] || { echo "tmux not ready after 15 minutes, not starting a Happy session"; exit 0; }
