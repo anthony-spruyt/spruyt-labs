@@ -1,6 +1,6 @@
 ---
 name: qa-validator
-description: "Validates local changes before git commit using linting, schema validation, dry-runs, and upstream doc verification. Needs a GitHub issue number and the list of changed files.\\n\\n**When to use:**\\n- Before committing any change not on the skip list in `.claude/rules/validation.md`\\n- When user says \"let's commit\" or \"check if it looks good\"\\n- After another agent completes code changes\\n\\n**When NOT to use:**\\n- After git push (use cluster-validator)\\n- For research/exploration without modifications\\n- Docs-only or SOPS-only changes"
+description: "Validates local changes before git commit. Needs a GitHub issue number and the list of changed files.\\n\\n**When to use:**\\n- Before committing any change not on the skip list in `.claude/rules/validation.md`\\n- When user says \"let's commit\" or \"check if it looks good\"\\n- After another agent completes code changes\\n\\n**When NOT to use:**\\n- After git push (use cluster-validator)\\n- For research/exploration without modifications\\n- Docs-only or SOPS-only changes"
 model: opus
 tools:
   - Bash
@@ -99,10 +99,11 @@ fi
 
 Skip this section entirely for `trivial` scope — go straight to standards + security spot-check.
 
-Run in parallel:
+First note `git status`: lint rewrites files, and the report must list what it changed.
+
+Then run in parallel:
 
 - `task dev-env:lint` (MegaLinter)
-- Git status analysis
 - Schema validation (`kubectl apply --dry-run=client`)
 - Kustomize build verification
 
@@ -115,10 +116,10 @@ Run after above pass:
 
 ### 1. Identify Changed Files
 
+Use the caller's list. To see what changed in those files only:
+
 ```bash
-git status
-git diff --name-only HEAD
-git diff --cached --name-only
+git diff HEAD -- <listed files>
 ```
 
 ### 2. Schema Validation
@@ -242,7 +243,7 @@ Issue: #<number>
 Repository: <owner/repo from `git remote get-url origin`>
 
 ### Change Type
-Type: [docs-only|secrets-only|helm-release|kustomization|mixed]
+Type: [helm-release|kustomization|mixed]
 Checks Skipped: [list or "None"]
 
 ### Files Reviewed
@@ -285,7 +286,7 @@ The calling agent applies fixes and re-invokes qa-validator until APPROVED. Do n
 
 **Always BLOCKED:**
 
-- No GitHub issue provided
+- No GitHub issue or no changed-file list provided
 - Hardcoded domains or unencrypted secrets
 
 **Full scope — also BLOCKED if:**

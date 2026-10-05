@@ -10,6 +10,8 @@ Document only what the manifests can't tell you. Anything readable from `ks.yaml
 `kustomization.yaml` (dependencies, names, namespaces, versions, priority class, resources) stays out of docs. Copies
 drift; manifests don't.
 
+Exception: `docs/workload-classification.md` is the tier register and lists every workload's tier.
+
 Worth writing down:
 
 - Why a non-default choice was made

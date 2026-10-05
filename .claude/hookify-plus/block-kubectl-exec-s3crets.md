@@ -25,7 +25,7 @@ conditions:
 - `kubectl exec ... env` - Environment variables (may contain secrets)
 - `kubectl exec ... printenv` - Environment variables
 
-**If you need this:** Ask the user to run the command manually or describe what information you need.
+**If you need this:** Use the safe alternatives in `.claude/rules/constraints.md`. If a value must be checked, ask the user to confirm it without pasting it.
 
 **Safe alternatives:**
 

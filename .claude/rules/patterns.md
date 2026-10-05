@@ -17,7 +17,7 @@ cluster/apps/<namespace>/
 │   │   ├── kustomizeconfig.yaml  # ConfigMap hash suffix (see below)
 │   │   ├── release.yaml        # HelmRelease
 │   │   ├── values.yaml         # Helm values
-│   │   ├── vpa.yaml            # VPA (recommendation-only)
+│   │   ├── vpa.yaml            # VPA (see VPA section)
 │   │   ├── network-policies.yaml # CiliumNetworkPolicies
 │   │   └── *-secrets.sops.yaml # Encrypted secrets
 │   └── <optional>/         # Optional dependent resources (e.g., rbac/, resources/)

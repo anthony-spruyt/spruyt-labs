@@ -154,7 +154,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 ## Commit Pattern
 
 ```text
-infra(k8s): upgrade Kubernetes to v<version>
+chore(k8s): upgrade Kubernetes to v<version>
 
 Ref #<issue-number>
 ```

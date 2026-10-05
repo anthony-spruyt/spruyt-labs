@@ -1,6 +1,6 @@
 ---
 name: ceph-health-checker
-description: "Checks Rook Ceph storage cluster health including OSDs, PGs, pools, and capacity. Reports HEALTHY/DEGRADED/CRITICAL verdict. Posts to a GitHub issue when given one.\\n\\n**When to use:**\\n- User asks about storage health, Ceph status, or disk usage\\n- After storage-related changes (Rook Ceph config, OSD changes, pool modifications), once cluster-validator has run\\n- Periodic storage health check\\n\\n**When NOT to use:**\\n- Ceph cluster bootstrap or initial setup\\n- Rook operator upgrades (use cluster-validator after push)\\n- Non-storage cluster health checks"
+description: "Checks Rook Ceph storage cluster health. Posts to a GitHub issue when given one.\\n\\n**When to use:**\\n- User asks about storage health, Ceph status, or disk usage\\n- After storage-related changes (Rook Ceph config, OSD changes, pool modifications), once cluster-validator has run\\n- Periodic storage health check\\n\\n**When NOT to use:**\\n- Ceph cluster bootstrap or initial setup\\n- Rook operator upgrades (use cluster-validator after push)\\n- Non-storage cluster health checks"
 model: opus
 tools:
   - Bash
@@ -37,7 +37,7 @@ An issue number is optional. With one, post the report there. Without one, retur
 kubectl -n rook-ceph get deploy/rook-ceph-tools
 ```
 
-If the toolbox deployment is missing or has no ready replicas, report BLOCKED and instruct the user to deploy it.
+If the toolbox deployment is missing or has no ready replicas, stop without a verdict and report that Ceph can't be checked until it runs.
 
 ### Step 2: Collect Health Data (Parallel)
 

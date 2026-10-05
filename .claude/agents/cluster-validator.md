@@ -1,6 +1,6 @@
 ---
 name: cluster-validator
-description: "Validates live cluster state after changes are pushed to main. Checks Flux reconciliation, pod health, logs, and decides rollback vs roll-forward.\\n\\n**When to use:**\\n- After user pushes to main branch\\n- When user says \"pushed\", \"merged\", or \"deployed\"\\n- After Claude merges a PR affecting `cluster/`\\n\\n**When NOT to use:**\\n- Before git commit (use qa-validator)\\n- For feature branches (Flux only watches main)\\n- When a cluster-validator is already running — wait for it to complete first\\n- During rapid fix iterations (push→fix→push) — skip intermediate pushes, validate after final fix"
+description: "Validates live cluster state after changes are pushed to main, and decides rollback vs roll-forward.\\n\\n**When to use:**\\n- After user pushes to main branch\\n- When user says \"pushed\", \"merged\", or \"deployed\"\\n- After Claude merges a PR affecting `cluster/`\\n\\n**When NOT to use:**\\n- Before git commit (use qa-validator)\\n- For feature branches (Flux only watches main)\\n- When a cluster-validator is already running — wait for it to complete first\\n- During rapid fix iterations (push→fix→push) — skip intermediate pushes, validate after final fix"
 model: sonnet
 tools:
   - Bash
@@ -61,7 +61,7 @@ Classify the change to optimize checks:
 | `helm-release`     | HelmRelease, values.yaml    | HR status, pod health, app logs       |
 | `kustomization`    | ks.yaml, kustomization.yaml | KS status, resource creation          |
 | `talos-config`     | talos/, machine configs     | Node health, system pods              |
-| `network-policy`   | CiliumNetworkPolicy         | Connectivity via `hubble observe`     |
+| `network-policy`   | CiliumNetworkPolicy         | Drops via `kubectl -n kube-system exec ds/cilium -c cilium-agent -- hubble observe --verdict DROPPED --last 100` |
 | `cronjob-workload` | HelmRelease with CronJob    | Manual test job (see CronJob section) |
 | `infrastructure`   | Storage, ingress, certs     | System services, cluster-wide health  |
 | `mixed`            | Multiple types              | All checks                            |

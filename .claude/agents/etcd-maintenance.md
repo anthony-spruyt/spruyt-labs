@@ -41,7 +41,7 @@ talosctl -n "$CP_NODES" etcd members
 
 | Metric   | Healthy | Warning  | Action             |
 | -------- | ------- | -------- | ------------------ |
-| In-Use % | >80%    | <70%    | Recommend defrag   |
+| In-Use % | ≥70%    | <70%    | Recommend defrag   |
 | DB Size  | <500MB | >1GB     | Investigate        |
 | Leader   | Stable  | Flapping | Investigate        |
 | Errors   | None    | Any      | Report immediately |

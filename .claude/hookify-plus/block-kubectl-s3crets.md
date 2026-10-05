@@ -21,6 +21,6 @@ conditions:
 - Be logged by shell recording
 - Be accidentally shared in screenshots
 
-**If you need this:** Ask the user to run the command manually.
+**If you need this:** Use the safe alternatives in `.claude/rules/constraints.md`. If a value must be checked, ask the user to confirm it without pasting it.
 
 **False positive?** Search for an existing issue, then open one: `gh issue create --repo anthony-spruyt/spruyt-labs --title "fix(hookify): false positive in block-kubectl-secrets" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
