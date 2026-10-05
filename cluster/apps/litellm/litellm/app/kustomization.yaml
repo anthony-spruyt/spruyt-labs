@@ -33,8 +33,6 @@ configMapGenerator:
       - pipeline.py=plugins/middleware/pipeline.py
       - pipeline_plugin.py=plugins/middleware/pipeline_plugin.py
       - registry.py=plugins/middleware/registry.py
-      - chatgpt.py=plugins/middleware/chatgpt/chatgpt.py
-      - litellm_patch.py=plugins/middleware/chatgpt/litellm_patch.py
       - ratelimit_headers.py=plugins/middleware/ratelimit_headers/ratelimit_headers.py
       - secret_masking.py=plugins/middleware/secret_masking/secret_masking.py
       - shared_fakes.py=plugins/middleware/secret_masking/shared_fakes.py

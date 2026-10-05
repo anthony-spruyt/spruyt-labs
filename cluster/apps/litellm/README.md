@@ -75,7 +75,7 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 ### Proxy-side plugins
 
 `litellm/app/plugins/middleware/` is mounted into the pod from the `litellm-middleware-plugin` ConfigMap as subPath files under `/app/custom_callbacks/middleware/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` and
-`ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`, so `middleware/chatgpt/` is inert even though its files are still mounted. To enable it, add a `MiddlewareSpec` for it.
+`ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`.
 
 ### Middleware tests
 

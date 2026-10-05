@@ -18,7 +18,6 @@ dev = [
 asyncio_mode = "auto"
 testpaths = [
     "tests",
-    "chatgpt/tests",
     "ratelimit_headers/tests",
     "secret_masking/tests",
 ]

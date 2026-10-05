@@ -49,7 +49,6 @@ def test_production_dotted_imports_resolve(production_import_shape):
         "custom_callbacks.middleware.secret_masking.shared_fakes",
         "custom_callbacks.middleware.secret_masking.secret_masking",
         "custom_callbacks.middleware.ratelimit_headers.ratelimit_headers",
-        "custom_callbacks.middleware.chatgpt.chatgpt",
     ]
 
     for module in modules:
