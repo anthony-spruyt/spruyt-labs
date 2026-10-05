@@ -57,7 +57,7 @@ external-dns manages A, AAAA and CNAME only. `HTTPS` (SVCB) records are outside 
 
 ## Certificate Pattern
 
-Path: Same directory as IngressRoute
+Path: the IngressRoute's directory for HTTP routes. Certificates for non-HTTP services (MQTT, DNS) live in the app's own `app/` directory.
 
 ```yaml
 apiVersion: cert-manager.io/v1

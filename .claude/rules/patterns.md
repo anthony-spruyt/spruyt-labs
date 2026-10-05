@@ -18,7 +18,7 @@ cluster/apps/<namespace>/
 │   │   ├── values.yaml         # Helm values
 │   │   ├── vpa.yaml            # VPA (recommendation-only)
 │   │   └── *-secrets.sops.yaml # Encrypted secrets
-│   └── <optional>/         # Optional dependent resources (e.g., ingress/)
+│   └── <optional>/         # Optional dependent resources (e.g., rbac/, resources/)
 ├── <app1>/                 # Multiple apps (e.g., operator + instance)
 │   ├── ks.yaml
 │   └── app/
@@ -29,7 +29,9 @@ cluster/apps/<namespace>/
 
 ## Multiple Kustomizations
 
-When an app has optional dependent resources (e.g., ingress routes), add multiple Kustomizations in the same `ks.yaml` with `dependsOn`. See existing `ks.yaml` files in `cluster/apps/` for examples.
+When an app has dependent resources that must apply after it (e.g., RBAC or CRs that need its CRDs), add multiple Kustomizations in the same `ks.yaml` with `dependsOn`. See existing `ks.yaml` files in `cluster/apps/` for examples.
+
+Ingress routes never go in the app directory; they live under `cluster/apps/traefik/traefik/ingress/<namespace>/` (see `ingress-and-certificates.md`).
 
 ## Variable Substitution
 

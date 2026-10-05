@@ -2,7 +2,7 @@
 
 ## Work Requirements
 
-A change needs a linked GitHub issue when a validator will run on it (see `validation.md`), because validators post their reports there. Large or risky work gets one too. Changes that skip qa-validator (docs-only, SOPS-only, `.claude/**`, `.taskfiles/**`) and read-only work do not; commit them with a clear message and no `Ref`.
+A change needs a linked GitHub issue when a validator will run on it (see `validation.md`), because validators post their reports there. Large or risky work gets one too. Changes on the qa-validator skip list in `validation.md`, and read-only work, do not; commit them with a clear message and no `Ref`.
 
 Closing keywords in commits don't close issues in this repo: close it yourself with `gh issue close`, and never tell the user an issue will auto-close.
 
@@ -68,11 +68,10 @@ Data loss is permanent and cascading.
 | Instead of            | Do                                                               |
 | --------------------- | ---------------------------------------------------------------- |
 | Reading secret values | `kubectl get secret <name>` (existence, and key count in `DATA`) |
-| Listing secret keys   | Read the `*.sops.yaml` key names, or the manifests that consume it (`secretKeyRef`, `envFrom`) |
+| Listing secret keys   | Read the manifests that consume it (`secretKeyRef`, `envFrom`)   |
 | Debugging auth        | Check pod logs, not secret contents                              |
 
 ### SOPS
 
-- Never decrypt via CLI
-- User edits manually with `sops <file>`
-- Reading an encrypted `*.sops.yaml` is fine for key names and structure; values stay ciphertext and are never decrypted or echoed
+- The user edits secrets manually with `sops <file>`
+- Settings deny reading `*.sops.*` files; get key names from the manifests that consume them, or ask the user

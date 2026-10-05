@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosctl`, Flux, or Kubernetes APIs.
+Talos Linux homelab GitOps repository on bare metal. No SSH to Talos nodes - use `talosctl`, Flux, or Kubernetes APIs.
 
 ## Architecture
 
@@ -23,8 +23,6 @@ Talos Linux homelab GitOps repository on bare metal. No SSH access - use `talosc
 3. **No git amend** - Always new commits
 4. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
 
-Secrets, SOPS, and git staging rules are in `.claude/rules/constraints.md`; subagent authorization is in `.claude/rules/validation.md`.
-
 ## Codebase
 
 | Path                       | Purpose                                      |
@@ -40,4 +38,4 @@ Secrets, SOPS, and git staging rules are in `.claude/rules/constraints.md`; suba
 
 ## Tool Usage
 
-Read and edit files with the `Read` and `Edit` tools rather than `cat`/`head`/`tail` or `sed -i`/`awk -i`; hooks warn on the shell forms. Search with `grep`, `rg`, or `find` through Bash. List environment variable keys with `env | cut -d= -f1`, never their values.
+Read and edit files with the `Read` and `Edit` tools rather than `cat`/`head`/`tail` or `sed -i`/`awk -i`; hooks warn on the shell forms. Search with `grep`, `rg`, or `find` through Bash.
