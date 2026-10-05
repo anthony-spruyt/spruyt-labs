@@ -542,6 +542,9 @@ resource "coder_script" "happy" {
 
     for _ in $(seq 180); do [ -f /tmp/coder-tmux-ready ] && break; sleep 5; done
     [ -f /tmp/coder-tmux-ready ] || { echo "tmux not ready after 15 minutes, not starting a Happy session"; exit 0; }
+    # Started while the server is down, Happy runs an offline session that the phone can't control even after it reconnects.
+    for _ in $(seq 180); do curl -fsS -o /dev/null --max-time 5 "${local.happy_server_url}/health" && break; sleep 5; done
+    curl -fsS -o /dev/null --max-time 5 "${local.happy_server_url}/health" || { echo "Happy server unreachable after 15 minutes, not starting a Happy session"; exit 0; }
     # Own socket: a default server started here would hand this script's env to every VS Code terminal.
     if ! tmux -L happy has-session -t happy 2>/dev/null; then
       tmux -L happy new-session -d -s happy -c "${local.workspace_folder}"
