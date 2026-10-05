@@ -75,6 +75,11 @@ Before triggering any runs, configure a Variable Set in Terraform Cloud:
 
    These are ephemeral and pushed as write-only values, so they never land in the workspace-factory state or plan. After changing one, bump `cloudflare_tfc_variables_version` in [variables.auto.tfvars](variables.auto.tfvars).
 
+### terraform-mcp Token
+
+`tfe_team_token.terraform_mcp` mints an **owners** team token (the free plan has no custom teams) for the in-cluster terraform-mcp server. The token value is stored in this workspace's state. Bumping `terraform_mcp_token_expired_at` replaces it, and the old token is revoked first, so terraform-mcp is down until its SOPS secret is rewritten. See
+[terraform-mcp README](../../../cluster/apps/terraform-mcp/terraform-mcp/README.md) for the rotation command.
+
 ### Triggering Runs
 
 Push any changes to the configured VCS branch (for example, `main`); Terraform Cloud will automatically queue runs for all configured workspaces.

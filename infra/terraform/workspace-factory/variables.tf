@@ -154,3 +154,8 @@ variable "cloudflare_tfc_variables_version" {
   type        = number
   description = "Bump after changing any cloudflare_* secret variable in Terraform Cloud so the new values are pushed to the Cloudflare workspace"
 }
+
+variable "terraform_mcp_token_expired_at" {
+  type        = string
+  description = "RFC3339 expiry of the terraform-mcp TFC team token; changing it mints a new token"
+}
