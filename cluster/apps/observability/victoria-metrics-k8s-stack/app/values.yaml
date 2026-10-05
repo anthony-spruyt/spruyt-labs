@@ -341,6 +341,20 @@ kube-state-metrics:
     requests:
       cpu: 20m
       memory: 128Mi
+  vmScrape:
+    spec:
+      endpoints:
+        - port: http
+          honorLabels: true
+          metricRelabelConfigs:
+            - action: labeldrop
+              regex: (uid|image_id)
+            # Workspace container_id joins the containerd Kata memory series to a pod.
+            - action: labeldrop
+              regex: container_id
+              if:
+                - '{__name__!="kube_pod_container_info"}'
+                - '{namespace!="coder-workspaces"}'
 
 kubelet:
   vmScrapes:

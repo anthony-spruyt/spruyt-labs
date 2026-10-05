@@ -16,10 +16,25 @@ Registers the `kata` RuntimeClass so pods can opt into VM-level isolation (used 
 
 - Each Kata VM boots with `default_memory` (1024 MiB) on top of the container limits. `overhead.podFixed` adds that, plus 512 MiB headroom, to the pod's requests and cgroup limit, so the scheduler counts it and the host doesn't OOM-kill the VM when the guest fills its RAM. Keep the two in step. The guest used ~383 MiB outside the container on the heaviest template (#3323); re-measure before going
   lower. With `sandbox_cgroup_only=false` the VMM and virtiofsd run in the unconstrained `/kata_overhead` cgroup, outside this accounting.
+
 - `reclaim_guest_freed_memory = true` adds a balloon with free page reporting, so memory the guest frees goes back to the host. The guest only reports free blocks of `page_reporting_order` or larger; the default 2 MiB missed most free memory after a MegaLinter run because it was fragmented, so `kernel_params` sets order 4 (64 KiB) and raises `vm.compaction_proactiveness` from 20 to 50 to merge the
   smaller free blocks in the background. After one MegaLinter run on ms-01-2, order 4 alone left the VM holding ~6.8 GiB of host memory; with proactive compaction ~5.2 GiB, against ~4.8 GiB guest used (#3323). Compaction costs some guest CPU. Guest page cache is not free memory, so it stays until the pod stops, capped by the container limit. Plan for every Kata pod to hold up to `limit + overhead`
   of host memory, and expect `kubectl top` (guest view) to show far less. Host `node_memory_Shmem_bytes` shows the real cost (#3322).
+
 - Kata settings only apply to new sandboxes. Running workspaces keep their old size and overhead until restarted.
+
+- cadvisor can't see inside the guest, so per-container memory comes from the containerd scrape (`job="containerd"`, `runtime="io.containerd.kata.v2"`), keyed by `container_id` only. `container_memory_anon_bytes` is what a smaller limit must fit; `file` is cache the guest drops under pressure, and a fast-rising `workingset_refault` (a counter, use `rate()`) means the limit is squeezing the cache.
+  Filter on `job="containerd"`: `container_memory_usage_bytes` shares its name with cadvisor. Each restart gets a new `container_id`, so join inside the range. Peak anon per workspace over 7 days:
+
+  ```promql
+  max by (pod) (
+    max_over_time((
+      container_memory_anon_bytes{job="containerd"}
+      * on (container_id) group_left (pod)
+      label_replace(kube_pod_container_info{namespace="coder-workspaces", container="dev"}, "container_id", "$1", "container_id", "containerd://(.+)")
+    )[7d:5m])
+  )
+  ```
 
 ## Operations
 

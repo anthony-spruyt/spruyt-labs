@@ -25,5 +25,11 @@ spec:
     # every restart, and carries containerd's own namespace label (k8s.io, system) into
     # the cluster-wide namespace label set.
     - action: drop
-      sourceLabels: [__name__]
-      regex: container_.*
+      if: '{__name__=~"container_.*", runtime!="io.containerd.kata.v2"}'
+    # Kata guests are invisible to cadvisor; this is the only source of workspace anon vs cache.
+    # Join to pods via kube_pod_container_info, see kube-system/kata-runtimeclass README.
+    - action: drop
+      if: '{__name__=~"container_.*", __name__!~"container_memory_(anon|file|shmem|kernel_stack|slab_unreclaimable|usage|usage_limit|workingset_refault|pgmajfault)_bytes"}'
+    - action: labeldrop
+      regex: namespace
+      if: '{__name__=~"container_memory_.*"}'
