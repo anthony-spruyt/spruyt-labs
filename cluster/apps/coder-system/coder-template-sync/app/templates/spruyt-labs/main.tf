@@ -548,6 +548,40 @@ resource "coder_script" "happy" {
       echo "jq not found, Happy will add its co-author trailer and Claude will show first-run screens"
     fi
 
+    mkdir -p /home/vscode/.local/bin
+    cat >/home/vscode/.local/bin/happy-here <<'SH'
+    #!/bin/bash
+    # The daemon runs phone-started sessions without a terminal; drop once slopus/happy#1846 lets it spawn them in tmux (#3358).
+    set -euo pipefail
+    if [ "$${1:-}" = --check ]; then
+      n=$(pgrep -cf -- '--started-by daemon' || true)
+      [ "$n" -gt 0 ] && echo "📱 $n phone-started Happy session(s). Run happy-here to move one into this terminal."
+      exit 0
+    fi
+    mapfile -t sessions < <(happy daemon list | sed -n '/^\[/,$p' | jq -r '.[] | select(.startedBy == "daemon") | "\(.happySessionId) \(.pid)"')
+    [ $${#sessions[@]} -gt 0 ] || { echo "No phone-started Happy sessions on this workspace."; exit 0; }
+    pick=$${sessions[0]}
+    if [ $${#sessions[@]} -gt 1 ]; then
+      labels=()
+      for s in "$${sessions[@]}"; do
+        labels+=("$(readlink "/proc/$${s#* }/cwd" || echo "?"), running $(ps -o etime= -p "$${s#* }" | tr -d ' ')")
+      done
+      PS3="Session to move here: "
+      select choice in "$${labels[@]}"; do [ -n "$choice" ] && pick=$${sessions[REPLY - 1]} && break; done
+      [ -n "$${choice:-}" ] || exit 1
+    fi
+    id=$${pick% *} pid=$${pick#* }
+    # Stopping kills a reply still in progress; resume picks the conversation up from the last finished turn.
+    out=$(happy daemon stop-session "$id")
+    [ "$out" = "Session stopped" ] || { echo "Could not stop the daemon's copy: $out" >&2; exit 1; }
+    for _ in $(seq 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
+    if kill -0 "$pid" 2>/dev/null; then echo "Session $id is still running in the daemon; not resuming a second copy." >&2; exit 1; fi
+    exec happy resume "$id"
+    SH
+    chmod +x /home/vscode/.local/bin/happy-here
+    grep -qs happy-here /home/vscode/.bashrc ||
+      echo '[ -t 1 ] && [ -x ~/.local/bin/happy-here ] && ~/.local/bin/happy-here --check' >>/home/vscode/.bashrc
+
     # A regular file is a pairing made in this workspace, so it wins over the template key.
     key=/home/vscode/.happy/access.key
     if [ -f /etc/coder/happy/access.key ] && { [ -L "$key" ] || [ ! -e "$key" ]; }; then
