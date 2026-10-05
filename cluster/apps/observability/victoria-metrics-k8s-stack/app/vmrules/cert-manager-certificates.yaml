@@ -1,6 +1,5 @@
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
-# Alerting rules for cert-manager certificate health
 # Requires VMServiceScrape for cert-manager controller metrics (certmanager_*)
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMRule
@@ -11,7 +10,6 @@ spec:
   groups:
     - name: cert-manager-certificates
       rules:
-        # Alert when a certificate has been in non-Ready state for more than 15 minutes
         - alert: CertificateNotReady
           expr: |
             max by (name, namespace) (
@@ -26,9 +24,7 @@ spec:
               cert-manager Certificate {{ $labels.namespace }}/{{ $labels.name }} has been in a
               non-Ready state for more than 15 minutes. Check certificate requests and orders.
 
-        # Alert when a certificate is past its renewal time and still not renewed.
-        # A fixed "expires in less than N days" threshold false-fires for the entire
-        # lifetime of any certificate issued for less than N days.
+        # Not a fixed "expires in < N days" threshold - that false-fires on certs issued for < N days
         - alert: CertificateRenewalOverdue
           expr: |
             (time() - certmanager_certificate_renewal_timestamp_seconds) > 0
@@ -44,10 +40,12 @@ spec:
               renewal time {{ $value | humanizeDuration }} ago and has not been reissued.
               Renewal is likely failing. Check certificate requests and orders.
 
-        # Alert when a certificate has expired
+        # Expiry is 0 until first issuance; CertificateNotReady covers that window
         - alert: CertificateExpired
           expr: |
             (certmanager_certificate_expiration_timestamp_seconds - time()) < 0
+            and
+            certmanager_certificate_expiration_timestamp_seconds > 0
           for: 5m
           labels:
             severity: critical
