@@ -30,3 +30,8 @@ rm -rf "$h"
 ```
 
 Running workspaces pick up a rotated key through the symlink. A workspace paired by hand keeps its own key. Rotating doesn't revoke the old pairing's token.
+
+### Claude subscription token
+
+`coder-workspace-env-common` carries `CLAUDE_CODE_OAUTH_TOKEN`, so Claude in every workspace uses the subscription through the LiteLLM passthrough without a login per rebuild ([#3344](https://github.com/anthony-spruyt/spruyt-labs/issues/3344)). The token from `claude setup-token` lasts a year. To rotate it, run `claude setup-token`, then `sops set` the new value into
+`stringData.CLAUDE_CODE_OAUTH_TOKEN` of that file, and restart workspaces.
