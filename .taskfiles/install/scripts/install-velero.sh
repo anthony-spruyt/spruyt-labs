@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=vmware-tanzu/velero datasource=github-releases
-VERSION="v1.18.3"
+VERSION="v1.18.4"
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
