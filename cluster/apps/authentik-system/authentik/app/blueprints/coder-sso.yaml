@@ -45,12 +45,13 @@ entries:
           [slug, "default-provider-invalidation-flow"],
         ]
       client_type: confidential
+      # Reuse the refresh token until 7 days are left; Coder refreshes without a lock, so concurrent refreshes would revoke each other.
+      refresh_token_threshold: days=7
       redirect_uris:
         - url: https://code.${EXTERNAL_DOMAIN}/api/v2/users/oidc/callback
           matching_mode: strict
       client_id: !Env CODER_OIDC_CLIENT_ID
       client_secret: !Env CODER_OIDC_CLIENT_SECRET
-      # RS256 signing for OIDC token validation
       signing_key:
         !Find [
           authentik_crypto.certificatekeypair,
@@ -65,7 +66,10 @@ entries:
             authentik_core.propertymapping,
             [name, "authentik default OAuth Mapping: OpenID 'profile'"],
           ]
-        # Use custom email mapping that sets email_verified: true
+        - !Find [
+            authentik_core.propertymapping,
+            [name, "authentik default OAuth Mapping: OpenID 'offline_access'"],
+          ]
         - !KeyOf coder_email_mapping
 
   - id: coder_application

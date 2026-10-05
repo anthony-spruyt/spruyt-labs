@@ -345,6 +345,9 @@ resource "coder_agent" "main" {
     GIT_SSH_COMMAND     = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
     TALOSCONFIG         = "/etc/coder/talos/config"
     SOPS_AGE_KEY_FILE   = "/etc/coder/sops/age.key"
+    # Agent env, not envbuilder_env, keeps the owner's token out of the pod spec. Coder mints a new one each start.
+    CODER_URL           = data.coder_workspace.me.access_url
+    CODER_SESSION_TOKEN = data.coder_workspace_owner.me.session_token
   }
 
   metadata {

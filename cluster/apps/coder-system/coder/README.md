@@ -6,6 +6,11 @@ Browser and SSH dev workspaces for humans and AI coding agents, provisioned as K
 
 ## Operations
 
+### OIDC refresh tokens
+
+Coder checks the owner's OIDC link on every request made with a key of login type `oidc`, and workspace session tokens are that type. Without a refresh token the link, and every such key, dies 1h after the last web login. So Coder requests `offline_access` and the Authentik provider in `authentik-system/authentik/app/blueprints/coder-sso.yaml` maps it
+([#3346](https://github.com/anthony-spruyt/spruyt-labs/issues/3346)). A user only gets a refresh token after signing in again once the scope is in place. Keys from `coder login` are type `password` and skip the check.
+
 ### Release channel: stable only
 
 Coder ships two channels from the same Helm repository. Mainline is cut from `main` on the first Tuesday of each month; stable is the previous mainline, promoted after roughly a month in the field.

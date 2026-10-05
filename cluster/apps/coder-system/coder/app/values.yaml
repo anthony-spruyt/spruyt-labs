@@ -28,7 +28,8 @@ coder:
     - name: CODER_OIDC_SIGN_IN_TEXT
       value: "Sign in with Authentik"
     - name: CODER_OIDC_SCOPES
-      value: "openid,profile,email"
+      # offline_access: without a refresh token, OIDC-type Coder keys (workspace session tokens included) die 1h after web login.
+      value: "openid,profile,email,offline_access"
     - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
       value: "false"
     # AI Gateway defaults to enabled since v2.34.0 — keep it off, no providers configured
