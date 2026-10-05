@@ -42,6 +42,13 @@ resource "cloudflare_ruleset" "firewall_custom" {
       action      = "block"
       enabled     = true
     },
+    {
+      ref         = "happy-block-internet-signup"
+      description = "Happy - block account creation and pairing requests"
+      expression  = "(http.host eq \"happy.${var.zone_name}\" and lower(url_decode(http.request.uri.path)) contains \"/auth\" and not http.request.uri.path in {\"/v1/auth/response\" \"/v1/auth/account/response\" \"/v1/auth/request/status\"})"
+      action      = "block"
+      enabled     = true
+    },
   ]
 }
 

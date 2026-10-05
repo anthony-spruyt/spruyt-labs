@@ -13,8 +13,8 @@ Relay between the [Happy](https://github.com/slopus/happy) phone/web app and the
 
 ### Pointing the app at this server
 
-The app hides the server setting while signed in to the default server. Log out (**Settings → Account → Logout**), tap the gear at the top right of the welcome screen, set the server URL to `https://happy.<external-domain>`, then create an account. This server has its own accounts: an account from the public server doesn't exist here, and every workspace must pair again (see
-[Happy template keys](../../coder-workspaces/coder-workspaces/README.md#happy-template-keys)).
+The app hides the server setting while signed in to the default server. Log out (**Settings → Account → Logout**), tap the gear at the top right of the welcome screen, set the server URL to `https://happy.<external-domain>`, then create an account on home Wi-Fi (see [Signup](#signup)). This server has its own accounts: an account from the public server doesn't exist here, and every workspace must
+pair again (see [Happy template keys](../../coder-workspaces/coder-workspaces/README.md#happy-template-keys)).
 
 The app's server check wants `/` to return the plain-text banner, which the server only sends when it isn't serving its bundled webapp ([slopus/happy#501](https://github.com/slopus/happy/issues/501)). An `emptyDir` hides the webapp, so there is no web UI and the CLI's browser login goes nowhere: pair by QR. Drop the mount once the app checks `/health` instead.
 
@@ -26,7 +26,10 @@ Workspaces get `HAPPY_SERVER_URL` from the Coder templates, which derive it from
 
 ### Signup
 
-Signup is open to anyone who can reach the URL. Cloudflare's firewall rules limit that to Australian IPs and block bots.
+The server has no signup switch: `POST /v1/auth` creates an account for any new key, and also logs in. A Cloudflare rule in [`rulesets.tf`](../../../../infra/terraform/cloudflare/rulesets.tf) blocks every `/auth` path from the internet except the two token-checked approval endpoints and the read-only `/v1/auth/request/status`, so approving a workspace QR still works on mobile data. Tokens never
+expire, so a signed-in phone only needs `/v1/auth` again to restore an account.
+
+LAN DNS points the host's IPv4 at Traefik, so creating an account, restoring one, or adding a device works on home Wi-Fi only, with Private DNS or iCloud Private Relay off. The LAN AAAA answers are Cloudflare's, so this relies on the home network having no IPv6. Workspaces reach Traefik through their host alias and are unaffected.
 
 ## Troubleshooting
 

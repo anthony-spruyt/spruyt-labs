@@ -19,7 +19,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Push notifications go through Expo's push API.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
