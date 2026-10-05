@@ -89,6 +89,7 @@ Can tolerate preemption.
 | n8n-mcp          | n8n-mcp-server                                            | Agent tooling        |
 | observability    | mcp-victorialogs, mcp-victoriametrics, mcp-victoriatraces | Agent tooling        |
 | redisinsight     | redisinsight                                              | Redis GUI            |
+| terraform-mcp    | terraform-mcp                                             | Agent tooling        |
 | unifi-mcp        | unifi-network-mcp                                         | Agent tooling        |
 | unifi-system     | unpoller                                                  | UniFi metrics        |
 | whoami           | whoami                                                    | Test/debug service   |

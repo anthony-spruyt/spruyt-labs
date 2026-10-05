@@ -53,6 +53,7 @@ resources:
   - ./brave-search-mcp
   - ./db-mcp
   - ./n8n-mcp
+  - ./terraform-mcp
   - ./unifi-mcp
   - ./unifi-system
   - ./vpa-system
