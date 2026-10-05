@@ -57,7 +57,6 @@ The private key lives only on the host (`~/.secrets/flux-gitops-key`, `.pub` bes
 
 - **Namespace label**: flux-operator owns the `flux-system` Namespace and overwrites labels from `namespace.yaml`, so `descheduler.kubernetes.io/exclude` is added through a kustomize patch here instead.
 - **Controller tuning**: concurrency, in-memory kustomize builds, Helm OOM watch and anti-affinity are all patches in `app/values.yaml`. helm-controller concurrency is deliberately lower than the others to cap CPU spikes (#233).
-- **`UseHelm3Defaults` feature gate**: Flux 2.8 moved helm-controller to Helm v4. The gate keeps the Helm 3 defaults: legacy health checks instead of kstatus, client-side apply for new installs, and post-renderers off hooks. Remove it once HelmReleases have been checked against those changes (#3315).
 
 ### Cross-namespace access to `sops-age`
 

@@ -122,7 +122,7 @@ instance:
       - patch: |
           - op: add
             path: /spec/template/spec/containers/0/args/-
-            value: --feature-gates=DisableChartDigestTracking=true,UseHelm3Defaults=true
+            value: --feature-gates=DisableChartDigestTracking=true
         target:
           kind: Deployment
           name: helm-controller
