@@ -208,7 +208,7 @@ See [infra/README.md](../infra/README.md) for the workspaces.
 
 ## Renovate
 
-Renovate config is centralised in `anthony-spruyt/repo-operator`. Repo overrides and testing are in [.claude/rules/06-renovate.md](../.claude/rules/06-renovate.md).
+Renovate config is centralised in `anthony-spruyt/repo-operator`. Repo overrides and testing are in [.claude/rules/renovate.md](../.claude/rules/renovate.md).
 
 ## Diagnostics
 

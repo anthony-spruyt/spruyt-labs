@@ -4,7 +4,7 @@
 
 ### Lifecycle
 
-For changes that need an issue (see `01-constraints.md`):
+For changes that need an issue (see `constraints.md`):
 
 1. Search for existing issue by keywords
 2. Create issue if needed using template fields

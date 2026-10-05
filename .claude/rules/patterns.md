@@ -106,7 +106,7 @@ This transforms `valuesFrom.name: <app>-values` to `valuesFrom.name: <app>-value
 
 READMEs are optional. If your change adds knowledge the manifests can't show (workaround, manual step, external
 prerequisite, cross-component wiring, credential rotation), create or update the app's `README.md` in the same commit
-using `docs/templates/readme_template.md`. See `.claude/rules/05-documentation.md`.
+using `docs/templates/readme_template.md`. See `.claude/rules/documentation.md`.
 
 ## Renovate Annotations
 

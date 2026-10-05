@@ -10,7 +10,7 @@ Writes A records for cluster hostnames into Technitium over RFC2136 (TSIG-authen
 
 ## Operations
 
-The IngressRoute annotations it needs, the dead `alpha` prefix, and how to opt a route out are in [`.claude/rules/04-ingress-and-certificates.md`](../../../../.claude/rules/04-ingress-and-certificates.md#dns-annotations). The one opted-out route today is `auth` in `traefik/ingress/authentik-system/`: it must resolve through Cloudflare, and an internal record breaks SSO.
+The IngressRoute annotations it needs, the dead `alpha` prefix, and how to opt a route out are in [`.claude/rules/ingress-and-certificates.md`](../../../../.claude/rules/ingress-and-certificates.md#dns-annotations). The one opted-out route today is `auth` in `traefik/ingress/authentik-system/`: it must resolve through Cloudflare, and an internal record breaks SSO.
 
 What stays manual in the Technitium UI:
 

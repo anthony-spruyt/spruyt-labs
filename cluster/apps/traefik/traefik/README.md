@@ -8,7 +8,7 @@ Single ingress controller for LAN (`*.lan.${EXTERNAL_DOMAIN}`) and public traffi
 
 ### Adding a route
 
-The IngressRoute/Certificate pattern and DNS annotations are in [`.claude/rules/04-ingress-and-certificates.md`](../../../../.claude/rules/04-ingress-and-certificates.md). Beyond that:
+The IngressRoute/Certificate pattern and DNS annotations are in [`.claude/rules/ingress-and-certificates.md`](../../../../.claude/rules/ingress-and-certificates.md). Beyond that:
 
 - `ingress/<namespace>/` holds one kustomization per target namespace, pulling the shared middlewares from `ingress/base/` and patching their namespace. Copy an existing directory (`whoami` is the smallest).
 - Add the app's Kustomization to `traefik-ingress`'s `dependsOn` in `ks.yaml`, otherwise the route can reconcile before its backend Service exists.

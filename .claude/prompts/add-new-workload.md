@@ -11,7 +11,7 @@ ______________________________________________________________________
 > **All work requires a linked GitHub issue. No exceptions.**
 
 1. Search for existing issue for `<workload-name>`
-2. If not, create using `feature_request.yml` template (see `.claude/rules/03-workflow.md`)
+2. If not, create using `feature_request.yml` template (see `.claude/rules/workflow.md`)
 3. Track the issue number for all subsequent steps
 
 ______________________________________________________________________
@@ -98,7 +98,7 @@ cluster/apps/<namespace>/
         ├── kustomization.yaml  # Kustomize config
         ├── release.yaml        # HelmRelease
         ├── values.yaml         # Helm values
-        ├── vpa.yaml            # Required - see .claude/rules/07-patterns.md
+        ├── vpa.yaml            # Required - see .claude/rules/patterns.md
         ├── kustomizeconfig.yaml
         └── [optional files]    # secrets, network policies, etc.
 ```
@@ -285,7 +285,7 @@ nameReference:
 
 Use template from [docs/templates/readme_template.md](../../docs/templates/readme_template.md).
 
-Required sections are listed in `.claude/rules/05-documentation.md`.
+Required sections are listed in `.claude/rules/documentation.md`.
 
 ______________________________________________________________________
 
@@ -409,7 +409,7 @@ Before considering the task complete:
 - [ ] Flux Kustomization with dependsOn
 - [ ] HelmRelease pointing to chart
 - [ ] values.yaml with priorityClassName and resources
-- [ ] vpa.yaml per `.claude/rules/07-patterns.md`
+- [ ] vpa.yaml per `.claude/rules/patterns.md`
 - [ ] YAML schemas added where available (validated HTTP 200)
 - [ ] README.md following template
 - [ ] Added to cluster/apps/kustomization.yaml
@@ -423,7 +423,7 @@ ______________________________________________________________________
 
 - [docs/workload-classification.md](../../docs/workload-classification.md) - Priority tiers and CPU limits
 - [docs/templates/readme_template.md](../../docs/templates/readme_template.md) - README template
-- [.claude/rules/05-documentation.md](../rules/05-documentation.md) - Documentation standards
+- [.claude/rules/documentation.md](../rules/documentation.md) - Documentation standards
 - [cluster/flux/meta/priority-classes.yaml](../../cluster/flux/meta/priority-classes.yaml) - Priority class definitions
 
 ### Common YAML Schema URLs
