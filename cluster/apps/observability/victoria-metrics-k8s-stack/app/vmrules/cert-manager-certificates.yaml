@@ -1,6 +1,7 @@
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
 # Requires VMServiceScrape for cert-manager controller metrics (certmanager_*)
+# That scrape puts the Certificate's namespace in exported_namespace; label_replace moves it back
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMRule
 metadata:
@@ -13,7 +14,10 @@ spec:
         - alert: CertificateNotReady
           expr: |
             max by (name, namespace) (
-              certmanager_certificate_ready_status{condition="False"} == 1
+              label_replace(
+                certmanager_certificate_ready_status{condition="False"} == 1,
+                "namespace", "$1", "exported_namespace", "(.+)"
+              )
             )
           for: 15m
           labels:
@@ -27,9 +31,14 @@ spec:
         # Not a fixed "expires in < N days" threshold - that false-fires on certs issued for < N days
         - alert: CertificateRenewalOverdue
           expr: |
-            (time() - certmanager_certificate_renewal_timestamp_seconds) > 0
-            and
-            (certmanager_certificate_expiration_timestamp_seconds - time()) > 0
+            max by (name, namespace) (
+              label_replace(
+                (time() - certmanager_certificate_renewal_timestamp_seconds) > 0
+                and
+                (certmanager_certificate_expiration_timestamp_seconds - time()) > 0,
+                "namespace", "$1", "exported_namespace", "(.+)"
+              )
+            )
           for: 1h
           labels:
             severity: warning
@@ -43,9 +52,14 @@ spec:
         # Expiry is 0 until first issuance; CertificateNotReady covers that window
         - alert: CertificateExpired
           expr: |
-            (certmanager_certificate_expiration_timestamp_seconds - time()) < 0
-            and
-            certmanager_certificate_expiration_timestamp_seconds > 0
+            max by (name, namespace) (
+              label_replace(
+                (certmanager_certificate_expiration_timestamp_seconds - time()) < 0
+                and
+                certmanager_certificate_expiration_timestamp_seconds > 0,
+                "namespace", "$1", "exported_namespace", "(.+)"
+              )
+            )
           for: 5m
           labels:
             severity: critical
