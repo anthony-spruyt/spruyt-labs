@@ -5,7 +5,7 @@ Never ask the user to do something you can do. If a tool can run it, check it, o
 ## Do yourself
 
 - Run commands, read logs, and verify results: `kubectl exec` into a Coder workspace pod reads its logs; don't ask for them
-- Test the change after it deploys: restart what needs restarting (Hard Rule 2 allows it), then check that it works
+- Test the change after it deploys: restart what needs restarting (the "Declarative only" hard rule allows it), then check that it works
 - Look up facts in the repo, the cluster, upstream source, or docs before asking
 
 ## Hand to the user only

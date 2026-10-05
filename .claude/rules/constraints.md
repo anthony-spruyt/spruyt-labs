@@ -4,8 +4,7 @@
 
 A change needs a linked GitHub issue when a validator will run on it (see `validation.md`), because validators post their reports there. Large or risky work gets one too. Changes that skip qa-validator (docs-only, SOPS-only, `.claude/**`, `.taskfiles/**`) and read-only work do not; commit them with a clear message and no `Ref`.
 
-1. Check/create issue before starting work that needs one
-2. Reference in commits with `Ref #123`. Closing keywords in commits don't close issues in this repo, so close it yourself with `gh issue close` after validation and never tell the user an issue will auto-close
+Closing keywords in commits don't close issues in this repo: close it yourself with `gh issue close`, and never tell the user an issue will auto-close.
 
 ## Multi-Agent Environment
 

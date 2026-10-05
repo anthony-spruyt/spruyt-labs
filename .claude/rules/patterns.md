@@ -1,5 +1,5 @@
 ---
-paths: [cluster/apps/**/ks.yaml, cluster/apps/**/kustomization.yaml, cluster/apps/**/release.yaml, cluster/apps/**/values.yaml, cluster/apps/**/vpa.yaml, cluster/apps/**/*.sops.yaml, cluster/apps/**/namespace.yaml]
+paths: [cluster/**/*.yaml]
 ---
 
 # Cluster Patterns
