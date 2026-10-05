@@ -147,7 +147,8 @@ controllers:
               - ALL
   presidio-analyzer:
     type: deployment
-    replicas: 1
+    # Parked: guardrail unused (false positives); see Guardrails in README.md
+    replicas: 0
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
@@ -213,7 +214,8 @@ controllers:
               - ALL
   presidio-anonymizer:
     type: deployment
-    replicas: 1
+    # Parked: guardrail unused (false positives); see Guardrails in README.md
+    replicas: 0
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
@@ -276,7 +278,8 @@ controllers:
               - ALL
   llm-guard:
     type: deployment
-    replicas: 1
+    # Parked: guardrail unused (false positives); see Guardrails in README.md
+    replicas: 0
     annotations:
       reloader.stakater.com/auto: "true"
     pod:

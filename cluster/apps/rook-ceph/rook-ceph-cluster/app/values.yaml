@@ -98,6 +98,8 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
     osd: critical-infrastructure
     mgr: critical-infrastructure
   mgr:
+    # One mgr: it is off the IO/backfill path, and Rook restarts it within minutes if it dies
+    count: 1
     config:
       mgr/crash/warn_recent_interval: "7200" # 2h
     # Only modules Rook actually applies from this spec belong here (Ref #2561).

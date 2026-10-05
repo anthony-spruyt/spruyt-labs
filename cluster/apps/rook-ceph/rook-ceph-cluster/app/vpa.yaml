@@ -20,49 +20,6 @@ spec:
           memory: 1Mi
         maxAllowed:
           memory: 6Gi
-      - containerName: watch-active
-        controlledValues: "RequestsOnly"
-        minAllowed:
-          cpu: 1m
-          memory: 1Mi
-        maxAllowed:
-          memory: 100Mi
-      - containerName: log-collector
-        controlledValues: "RequestsOnly"
-        minAllowed:
-          cpu: 1m
-          memory: 1Mi
-        maxAllowed:
-          memory: 1Gi
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: rook-ceph-mgr-b
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: rook-ceph-mgr-b
-  updatePolicy:
-    updateMode: "Off"
-  resourcePolicy:
-    containerPolicies:
-      - containerName: mgr
-        controlledValues: "RequestsOnly"
-        minAllowed:
-          cpu: 1m
-          memory: 1Mi
-        maxAllowed:
-          memory: 6Gi
-      - containerName: watch-active
-        controlledValues: "RequestsOnly"
-        minAllowed:
-          cpu: 1m
-          memory: 1Mi
-        maxAllowed:
-          memory: 100Mi
       - containerName: log-collector
         controlledValues: "RequestsOnly"
         minAllowed:

@@ -148,6 +148,9 @@ LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and ha
 
 `pii-protection` (Presidio sidecars), `prompt-injection` (llm-guard sidecar) and `jev-compaction` (TypeSafe, external) are all `default_on: false`: a caller must opt in per request or per key. `jev-compaction` sends tool output to an external service, so keep it opt-in.
 
+The Presidio and llm-guard Deployments are parked at `replicas: 0` (#3323): nothing opts in, and their false-positive rate makes them unusable for Claude traffic on a global toggle. Config, VPAs, network policies and the `llm-guard-hf-cache` PVC are kept, so set `replicas: 1` on all three controllers in `values.yaml` to bring them back. While parked, a request that does opt in to `pii-protection`
+or `prompt-injection` fails rather than skipping the check: neither sets `unreachable_fallback: fail_open`.
+
 llm-guard runs with `HF_HUB_OFFLINE=1` and loads its model from the `llm-guard-hf-cache` PVC. This is fail-closed on purpose: if that PVC is ever lost or empty, the pod can never become ready. Recovery is to remove `HF_HUB_OFFLINE` from `values.yaml`, let one pod download the model, then restore it (Ref #2592).
 
 ### Known issues
