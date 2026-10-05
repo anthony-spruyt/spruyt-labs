@@ -89,8 +89,8 @@ TALOSCONFIG=/home/vscode/.secrets/talosconfig
 
 #### OpenTelemetry (optional)
 
-To ship dev container telemetry to the cluster via the `otel.lan.<external-domain>` OTLP ingress, add these to `.env.common`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env.common` does not. The API key comes from the `traefik-api-keys` secret. Substitute the real domain and key inline — `.env.common` does
-not expand `${VAR}` references.
+To ship dev container telemetry to the cluster via the `otel.lan.<external-domain>` OTLP ingress, add these to `.env.common`. Kept out of `devcontainer.json` `containerEnv` on purpose — those values leak into container metadata (`docker inspect`) and logs; `.env.common` does not. The API key is the `OTEL_API_KEY` field of the ESO-generated `traefik-otel-api-key` secret in the `traefik` namespace:
+`sl_` plus 64 alphanumeric characters (rotation is in the [Traefik README](cluster/apps/traefik/traefik/README.md)). Keep every `OTEL_EXPORTER_OTLP_HEADERS` value URL-safe: Go tools such as `terraform` print the raw header to the terminal when it fails to URL-unescape. Substitute the real domain and key inline — `.env.common` does not expand `${VAR}` references.
 
 ```bash
 CLAUDE_CODE_ENABLE_TELEMETRY=1

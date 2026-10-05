@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/generators.external-secrets.io/password_v1alpha1.json
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: traefik-otel-api-key-password
+spec:
+  length: 64
+  digits: 6
+  symbols: 0
+  noUpper: false
+  allowRepeat: true
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: traefik-otel-api-key
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: traefik-otel-api-key
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      data:
+        OTEL_API_KEY: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: traefik-otel-api-key-password
