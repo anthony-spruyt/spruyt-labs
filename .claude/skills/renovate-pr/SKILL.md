@@ -1,9 +1,7 @@
 ---
 name: renovate-pr
 description: >
-  Triage one Renovate PR end to end. Runs the renovate-pr-analyzer subagent, merges the PR
-  when the verdict is SAFE or labels it `blocked` otherwise, and reports new upstream
-  features worth adopting. Use when the user passes a PR number such as #3337 and asks to
+  Triage one Renovate PR, then merge it or label it `blocked`. Use when the user passes a PR number such as #3337 and asks to
   triage, check, or merge a Renovate/dependency PR.
 argument-hint: <pr-number>
 arguments: [pr]
@@ -55,7 +53,7 @@ The feature ask lives here, not in the agent file, because the n8n orchestrator 
 1. Add the label: `gh pr edit <N> --add-label blocked`
 2. Comment on the PR with the analyzer's verdict, summary, and breaking changes:
    `gh pr comment <N> --body-file -`
-3. Do not merge. For FIXABLE, offer to apply the fix the summary describes.
+3. Do not merge. For FIXABLE, offer to fix it: issue from `.github/ISSUE_TEMPLATE/chore.yml`, fix on the PR branch, qa-validator, push, then re-run this skill.
 
 ## 4. Report to the user
 

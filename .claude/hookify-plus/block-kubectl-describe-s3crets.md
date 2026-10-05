@@ -22,4 +22,4 @@ conditions:
 - List secret names: `kubectl get secrets`
 - Check one secret exists and its key count: `kubectl get secret <name>`
 
-**False positive?** Open an issue: `gh issue create --repo anthony-spruyt/spruyt-labs --title "False positive: block-kubectl-describe-secrets" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
+**False positive?** Search for an existing issue, then open one: `gh issue create --repo anthony-spruyt/spruyt-labs --title "fix(hookify): false positive in block-kubectl-describe-secrets" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.

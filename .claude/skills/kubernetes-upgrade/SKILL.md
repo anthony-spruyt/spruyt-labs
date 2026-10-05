@@ -125,7 +125,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 
    - **Before each restart:** `ceph status` must show HEALTH_OK (HEALTH_WARN acceptable only for expected warnings)
    - Roll one pod at a time, wait for Ready + Ceph health between each
-   - Order: tools → crashcollectors → exporters → rgw → mgr-b → mgr-a → mons (one at a time)
+   - Order: tools → crashcollectors → exporters → rgw → mgr(s) → mons (one at a time)
    - **STOP if Ceph goes HEALTH_ERR** — investigate before continuing
 
 4. **Skip:** Pods where stat failed (subPath mounts) — these read at pod start and don't use the `..data` symlink mechanism
@@ -140,6 +140,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 3. Land the version change:
    - **Started from a Renovate PR:** it already bumps the files Renovate tracks. If step 1 found other references, update them on the PR branch, run qa-validator with the issue number, and push. Then `gh pr merge <N> --squash`
    - **Otherwise:** update every reference, run qa-validator with the issue number, then commit and push
+   - Either way, run cluster-validator if a changed file is under `cluster/`
 4. Verify zero old references remain on `main` and `task talos:diff` exits 0, then close the issue
 5. Present final report: version change, node status, health results, files changed
 

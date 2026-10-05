@@ -23,4 +23,4 @@ conditions:
 
 **If you need this:** Ask the user to run the command manually.
 
-**False positive?** Open an issue: `gh issue create --repo anthony-spruyt/spruyt-labs --title "False positive: block-kubectl-secrets" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
+**False positive?** Search for an existing issue, then open one: `gh issue create --repo anthony-spruyt/spruyt-labs --title "fix(hookify): false positive in block-kubectl-secrets" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.

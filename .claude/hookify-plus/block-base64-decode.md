@@ -22,4 +22,4 @@ conditions:
 - Kubernetes secrets: check existence with `kubectl get secret <name>`, get key names from the manifests that consume it, and debug auth from pod logs
 - Other encoded strings: ask the user to decode it if it isn't sensitive
 
-**False positive?** Open an issue: `gh issue create --repo anthony-spruyt/spruyt-labs --title "False positive: block-base64-decode" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
+**False positive?** Search for an existing issue, then open one: `gh issue create --repo anthony-spruyt/spruyt-labs --title "fix(hookify): false positive in block-base64-decode" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.

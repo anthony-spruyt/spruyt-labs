@@ -75,3 +75,4 @@ Data loss is permanent and cascading.
 
 - The user edits secrets manually with `sops <file>`
 - Settings deny reading `*.sops.*` files; get key names from the manifests that consume them, or ask the user
+- Hooks block any shell command that names a `*.sops.*` file, `git add` included. Stage one by its directory (`git add <dir>/`) once `git status` shows every change there is yours

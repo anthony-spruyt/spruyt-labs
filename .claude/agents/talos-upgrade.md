@@ -259,8 +259,7 @@ Post backup confirmation, with the local snapshot path, to the issue.
 
 Skip entirely for patch upgrades. For a minor upgrade the machine config has to be migrated before any node is touched, because a new Talos minor introduces config documents that the old `v1alpha1` fields collide with.
 
-**Render and apply do not use the same version contract.** `task talos:render` generates against `talosVersion` in `topf.yaml`. `task talos:apply` asks each node for its **running** version and generates against that contract. During an upgrade window the two disagree, so a clean render is not evidence that an apply will succeed. Gate patches on the node's version with a `semverCompare` guard (see
-`talos/patches/control-plane/16-configure-node-labels.yaml.tpl`) so one patch set serves both contracts.
+**Render and apply do not use the same version contract.** `task talos:render` generates against `talosVersion` in `topf.yaml`. `task talos:apply` asks each node for its **running** version and generates against that contract. During an upgrade window the two disagree, so a clean render is not evidence that an apply will succeed. Gate patches on the node's version with a guard such as `{{- if semverCompare ">=X.Y.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}`, so one patch set serves both contracts.
 
 #### Step 2b.1: Render against the target contract
 
@@ -272,7 +271,7 @@ task talos:render
 
 A render failure here names the patch and the path that broke. Fix it before continuing.
 
-Restore `talosVersion` afterwards — the pin moves in Phase 8, not now. `topf render` also rewrites `talos/talenv.sops.yaml` and `talos/talsecret.sops.yaml` as a side effect; revert both.
+Restore `talosVersion` afterwards — the pin moves in Phase 8, not now. `topf render` also rewrites the two SOPS files in `talos/` as a side effect; revert them without naming them, since hooks block that: `git diff --name-only -- talos | grep -F '.sops.' | xargs -r git checkout --`.
 
 #### Step 2b.2: Validate against the target contract
 
