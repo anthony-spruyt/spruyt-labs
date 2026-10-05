@@ -1,6 +1,6 @@
 ---
 name: cnp-drop-investigator
-description: "Investigates Cilium Network Policy drops and finds the root cause.\n\n**When to use:**\n- Dropped traffic, blocked connections, or policy enforcement issues\n- User mentions \"CNP\", \"policy drops\", \"Hubble drops\", or connectivity problems\n- User asks for recent drop data or drop metrics\n- After deploying new policies to verify no unintended drops\n\n**When NOT to use:**\n- General networking (DNS, Cilium agent, BGP)\n- CNP authoring without drop evidence"
+description: "Investigates Cilium Network Policy drops and finds the root cause.\n\n**When to use:**\n- Dropped traffic, blocked connections, or policy enforcement issues\n- User mentions \"CNP\", \"policy drops\", \"Hubble drops\", or connectivity problems\n- User asks for recent drop data or drop metrics\n- cluster-validator reports drops, or connectivity fails after a CNP change\n\n**When NOT to use:**\n- General networking (DNS, Cilium agent, BGP)\n- CNP authoring without drop evidence"
 tools:
   - Bash
   - Read

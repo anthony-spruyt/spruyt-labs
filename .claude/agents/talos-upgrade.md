@@ -287,14 +287,13 @@ Every node must validate. A conflict error names both the v1alpha1 path and the 
 
 Do not begin Phase 3 with an unmerged migration — a node that reboots into the new version generates against the new contract and needs the migrated patches already on main. The patches need qa-validator before they commit, and you can't run it. Return PARTIAL with them under "Uncommitted" and the required action "run qa-validator, commit, push, then resume at Step 2b.3". No node has changed yet, so the pause is safe.
 
-**The new documents cannot be applied yet, and that is expected.** `apply` generates against each node's running version, so while every node is still on the old release the guards take their old-version branch and `topf apply` emits the *old* config form. The migrated documents only reach a node after that node is running the new version. An apply at this point changes nothing but
-`machine.install.image`, which is the upgrade target pointer:
+**The new documents cannot be applied yet, and that is expected.** `apply` generates against each node's running version, so while every node is still on the old release the guards take their old-version branch and `topf apply` emits the *old* config form. The migrated documents only reach a node after that node is running the new version. With the pin still on the old version, the diff should be empty:
 
 ```bash
-task talos:diff    # exits non-zero when there is drift; expect only the installer image
+task talos:diff
 ```
 
-Confirm the diff shows nothing beyond the installer image. Anything else means a guard is keyed wrong and would push new-version documents at an old-version node; fix the guard and re-diff. Once it is clean, apply as in Phase 8.
+Any drift means a guard is keyed wrong and would push new-version documents at an old-version node; fix the guard and re-diff. There is nothing to apply here.
 
 #### Step 2b.4: Apply the migrated config after the nodes are upgraded
 
@@ -820,7 +819,7 @@ On an unexpected Talos, etcd or Ceph error, look it up in Context7 (`/siderolabs
 8. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
 9. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
 10. **NEVER run `task talos:apply` / `topf apply` between the start of Phase 3 and the completion of Phase 4** - including the gap between the two phases, while nodes straddle versions - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet,
-    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Step 2b.3 and Phase 8 are the only sanctioned applies: once before Phase 3 (minor only), once after the pin lands
+    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Phase 8, after the pin lands, is the only sanctioned apply
 11. **ALWAYS run `task talos:diff` and check it before `TOPF_CONFIRM=false task talos:apply`** - the checked diff replaces the interactive confirmation, so an apply without one is blind
 
 ## Timeout Expectations

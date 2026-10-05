@@ -4,17 +4,17 @@ Talos Linux homelab GitOps repository on bare metal. No SSH to Talos nodes - use
 
 ## Architecture
 
-| Layer         | Technology                  | Purpose                                |
-| ------------- | --------------------------- | -------------------------------------- |
-| OS            | Talos Linux                 | Immutable, API-driven Kubernetes OS    |
-| GitOps        | FluxCD                      | Reconciles `cluster/` to cluster state |
-| CNI           | Cilium                      | Networking, network policies, BGP      |
-| Ingress       | Traefik + Cloudflare Tunnel | Routing, no direct public ingress      |
-| Storage       | Rook Ceph                   | Block and object storage               |
-| Backup        | Velero + S3                 | Disaster recovery                      |
-| Cache         | Valkey                      | Redis-compatible in-memory store       |
-| Observability | VictoriaMetrics + Grafana   | Metrics, dashboards                    |
-| Secrets       | SOPS/Age                    | Encrypted at rest in Git               |
+| Layer         | Technology                             | Purpose                                |
+| ------------- | -------------------------------------- | -------------------------------------- |
+| OS            | Talos Linux                            | Immutable, API-driven Kubernetes OS    |
+| GitOps        | FluxCD                                 | Reconciles `cluster/` to cluster state |
+| CNI           | Cilium                                 | Networking, network policies, BGP      |
+| Ingress       | Traefik + Cloudflare Tunnel            | Routing, no direct public ingress      |
+| Storage       | Rook Ceph                              | Block and object storage               |
+| Backup        | Velero + S3                            | Disaster recovery                      |
+| Cache         | Valkey                                 | Redis-compatible in-memory store       |
+| Observability | Victoria Metrics/Logs/Traces + Grafana | Metrics, logs, traces, dashboards      |
+| Secrets       | SOPS/Age                               | Encrypted at rest in Git               |
 
 ## Hard Rules
 
