@@ -52,7 +52,7 @@ Canonical section order for this project:
 6. **Output Format** — Structured template (verdict header, evidence, next steps)
 7. **Handoff Protocol** — How results return to caller
 8. **Rules** — Constraints the model would otherwise get wrong, each with its reason
-9. **Self-Improvement** — If the agent uses `memory`
+9. **Agent Definition Feedback** — The agent ends its final reply to the caller with an `### Agent Definition Feedback` section: where the prompt was wrong or missing a step, and the change it suggests to its own file. Suggest only; never self-edit. Copy the wording from an existing agent. Don't use `memory`: settings disable auto memory
 
 Not every agent needs all sections. Small focused agents may only need Persona, Workflow, Rules, and Output Format.
 
@@ -109,8 +109,8 @@ Read the agent file, this skill, and all inherited context files (CLAUDE.md, `.c
 3. **Remove inherited context** — Read CLAUDE.md and every `.claude/rules/` file. Search the agent for duplicated content. Common: secret handling, git staging, research priority, domain substitution. Replace with single-line references (e.g., "Follow inherited secret handling rules")
 4. **Calibrate emphasis** — Soften CRITICAL/MUST/NEVER/FORBIDDEN/MANDATORY (see `references/anthropic-best-practices.md` Section 3). Remove explanations the model already knows (Section 12). **Safety gates** (hard stops preventing data loss, secret exposure, skipping required inputs) stay unconditional, stated plainly with their reason. **Operational preferences** (tool choice, workflow ordering, style) use normal language — no bold, no
    CRITICAL, no blockquote emphasis
-5. **Cut what fails the test** — Remove what the model already knows, inherited context, and verbose examples (`references/anthropic-best-practices.md` Section 1). Agents are single files; do not extract. **Keep:** domain-specific commands with non-obvious flags, exact commit/git commands in self-improvement, behavioral anchors preventing shallow execution
-6. **Verify frontmatter** — All original fields must survive (`name`, `description`, `model`, `memory`, `tools`). Missing `tools` silently grants all tools
+5. **Cut what fails the test** — Remove what the model already knows, inherited context, and verbose examples (`references/anthropic-best-practices.md` Section 1). Agents are single files; do not extract. **Keep:** domain-specific commands with non-obvious flags, exact commit/git commands, behavioral anchors preventing shallow execution
+6. **Verify frontmatter** — All original fields must survive (`name`, `description`, `model`, `effort`, `tools`). Missing `tools` silently grants all tools
 
 ### Phase 2: Review (one sub-agent)
 

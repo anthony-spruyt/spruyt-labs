@@ -11,7 +11,7 @@
 | No output format specified                              | Add structured output template                                                                                                     |
 | Example dialogue in description                         | Replace with intent categories under "When to use" / "When NOT to use"                                                             |
 | Magic commands without explanation                      | Add brief comment explaining why (right altitude)                                                                                  |
-| No self-improvement for high-touch agents               | Add memory pattern if agent runs frequently                                                                                        |
+| No feedback on the agent's own prompt                   | Add an `## Agent Definition Feedback` section (see SKILL.md System Prompt Structure item 9)                                        |
 | Agent spawns subagents for lookups                      | Say when not to delegate: lookups a direct Bash search or Read can answer stay in the agent (`references/anthropic-best-practices.md` Section 8) |
 | Multi-goal agent                                        | Split into focused agents. One clear goal, input, output per agent                                                                 |
 | No confirmation gates for destructive actions           | Add explicit guidance on which actions need user confirmation                                                                      |

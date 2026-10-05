@@ -189,21 +189,6 @@ Bind-mounted data in `/srv/uos/` survives `compose down` — only the container 
 - **Do not add Watchtower or any unattended auto-updater.** Unattended pulls on a network controller are how you discover a bad release at 3am.
 - Application updates (Network, InnerSpace, Protect) are **separate** from the container image and are applied from the UI: Settings → Control Plane → Updates.
 
-## Old patterns
-
-<details>
-<summary>Native (pre-container) install as a last-resort fallback</summary>
-
-Before the migration, UniFi OS ran natively under rootless podman. That install may still be on disk, stopped and disabled. Check before assuming:
-
-```bash
-ssh unifi 'systemctl is-enabled uosserver.service; ls -la /usr/local/bin/uosserver'
-```
-
-If present, it is a last-resort fallback only. It requires `compose down` first because both stacks bind the same ports, and its podman runs rootless as user `uosserver`, so `sudo podman ps` as root shows nothing. Full procedure is in the reference.
-
-</details>
-
 ## Additional Resources
 
 - [`${CLAUDE_SKILL_DIR}/references/host-facts.md`](references/host-facts.md) — host inventory, ports, data layout, rollback paths, hardening, and the host's quirks.

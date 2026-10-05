@@ -55,7 +55,8 @@ Pattern: `<name>-secrets.sops.yaml` or `<name>.sops.yaml`
 Check the chart's upstream `values.yaml` for the pinned chart version before editing Helm values (Context7, or WebFetch raw.githubusercontent.com) — key paths differ between charts and versions.
 
 - Every container gets `priorityClassName` and `resources`. CPU limit = request × the tier multiplier in `docs/workload-classification.md`; no CPU limit for `critical-infrastructure`.
-- HelmRelease sets `interval: 4h` and leaves out `timeout`, `install`, `upgrade`, and `rollback`: Kyverno injects them (`cluster/apps/kyverno/policies/app/helmrelease-defaults.yaml`).
+- HelmRelease sets `interval: 4h` and leaves out `timeout`, `install`, `upgrade`, and `rollback`: Kyverno injects them (`cluster/apps/kyverno/policies/app/helmrelease-defaults.yaml`). Set `timeout` only when the chart needs longer than 10m, with a comment saying why.
+- `# #yaml-language-server: $schema=TODO` at the top of `values.yaml` is a deliberate placeholder for a chart with no schema yet, not commented-out code; keep it.
 
 ## VPA (Vertical Pod Autoscaler)
 

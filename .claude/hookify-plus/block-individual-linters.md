@@ -15,7 +15,7 @@ conditions:
 
 You attempted to run an individual linter directly. This is forbidden.
 
-**Use MegaLinter instead:**
+**Use MegaLinter instead.** Before a commit, run the qa-validator agent, which runs it for you. For a standalone lint run:
 
 ```bash
 task dev-env:lint

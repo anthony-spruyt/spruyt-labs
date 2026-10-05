@@ -11,30 +11,36 @@ paths: [cluster/apps/traefik/**, cluster/apps/external-dns/**]
 
 ## IngressRoute Pattern
 
-Path: `cluster/apps/traefik/traefik/ingress/<namespace>/ingress-routes.yaml` (one directory per namespace, each with its own `kustomization.yaml`)
+Path: `cluster/apps/traefik/traefik/ingress/<namespace>/`, holding `ingress-routes.yaml`, `certificates.yaml`, and `kustomization.yaml`. Copy `ingress/temporal-system/` as the reference.
 
 ```yaml
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: <workload>
+  name: ingress-routes-lan-https # or ingress-routes-wan-https
   namespace: <namespace>
   annotations:
-    external-dns.kubernetes.io/hostname: <workload>.${EXTERNAL_DOMAIN}
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    external-dns.kubernetes.io/hostname: <workload>.lan.${EXTERNAL_DOMAIN}
     external-dns.kubernetes.io/target: ${TRAEFIK_IP4}
 spec:
   entryPoints: [websecure]
   routes:
-    - match: Host(`<workload>.${EXTERNAL_DOMAIN}`)
-      kind: Rule
+    - kind: Rule
+      match: Host(`<workload>.lan.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: lan-ip-whitelist
+        - name: compress
       services:
         - name: <service>
           port: <port>
   tls:
-    secretName: <workload>-${EXTERNAL_DOMAIN/./-}-tls
+    secretName: <workload>-lan-${EXTERNAL_DOMAIN/./-}-tls
 ```
 
-List the file in that directory's `kustomization.yaml`. A new directory also goes in `cluster/apps/traefik/traefik/ingress/kustomization.yaml`, and its app goes in `dependsOn` in `cluster/apps/traefik/traefik/ks.yaml`.
+LAN routes always carry the `lan-ip-whitelist` middleware. Middlewares come from `ingress/base/`: list each one used in the namespace `kustomization.yaml` and patch its `metadata.namespace` to the target namespace, as the reference does.
+
+List the route and certificate files in that directory's `kustomization.yaml`. A new directory also goes in `cluster/apps/traefik/traefik/ingress/kustomization.yaml`, and its app goes in `dependsOn` in `cluster/apps/traefik/traefik/ks.yaml`.
 
 ### DNS annotations
 
@@ -57,19 +63,19 @@ external-dns manages A, AAAA and CNAME only. `HTTPS` (SVCB) records are outside 
 
 ## Certificate Pattern
 
-Path: same directory as the IngressRoute
+Path: `certificates.yaml` next to the IngressRoute. `secretName` must match the route's `tls.secretName`.
 
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: <workload>
+  name: "<workload>-lan-${EXTERNAL_DOMAIN/./-}"
   namespace: <namespace>
 spec:
-  secretName: <workload>-${EXTERNAL_DOMAIN/./-}-tls
+  secretName: "<workload>-lan-${EXTERNAL_DOMAIN/./-}-tls"
   issuerRef:
     name: ${CLUSTER_ISSUER}
     kind: ClusterIssuer
   dnsNames:
-    - <workload>.${EXTERNAL_DOMAIN}
+    - "<workload>.lan.${EXTERNAL_DOMAIN}"
 ```

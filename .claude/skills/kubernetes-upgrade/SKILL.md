@@ -134,11 +134,13 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 
 ### Phase 12: Update Files & Report
 
-1. Update `kubernetesVersion` in `talos/topf.yaml`
-2. Search for **all** old version references. Search without the `v` prefix so both `v1.x.y` and `1.x.y` forms match:
+1. Search for **all** old version references. Search without the `v` prefix so both `v1.x.y` and `1.x.y` forms match:
    - `grep -rln --include='*.yaml' --include='*.md' --include='*.sh' -F '<old-version>' talos/ docs/ cluster/ .github/workflows/ .taskfiles/`
-3. Common locations: `talos/topf.yaml`, `.github/workflows/_kubeconform.yaml` (`KUBERNETES_VERSION`), `.taskfiles/install/scripts/install-kubectl.sh` (`VERSION`)
-4. Update all references; verify zero remain
+2. Common locations: `talos/topf.yaml` (`kubernetesVersion`), `.github/workflows/_kubeconform.yaml` (`KUBERNETES_VERSION`), `.taskfiles/install/scripts/install-kubectl.sh` (`VERSION`)
+3. Land the version change:
+   - **Started from a Renovate PR:** it already bumps the files Renovate tracks. Add any other references from step 1 to the PR branch, then `gh pr merge <N> --squash`
+   - **Otherwise:** update every reference, run qa-validator with the issue number, then commit and push
+4. Verify zero old references remain on `main`, then close the issue
 5. Present final report: version change, node status, health results, files changed
 
 ## Rollback
