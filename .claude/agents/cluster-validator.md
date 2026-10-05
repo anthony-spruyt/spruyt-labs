@@ -143,20 +143,22 @@ done
 
 ### Step 3: Classify remaining non-ready Kustomizations
 
+`flux get` shows `lastAppliedRevision`, which stays on the old revision when the new one fails to build, apply, or pass health checks. Read `lastAttemptedRevision` too:
+
 ```bash
-# For each non-ready kustomization, check its revision:
-flux get kustomization <name> -n flux-system
-# Compare REVISION column against $CURRENT_REV
+kubectl get kustomization <name> -n flux-system \
+  -o jsonpath='{.status.lastAttemptedRevision}{" "}{.status.lastAppliedRevision}{"\n"}{.status.conditions[?(@.type=="Ready")].message}{"\n"}'
 ```
 
-| Condition                                  | Classification              | Action                                                                                              |
-| ------------------------------------------ | --------------------------- | --------------------------------------------------------------------------------------------------- |
-| Revision matches $CURRENT_REV, Ready=False/Unknown | Still reconciling           | Wait another 60s; if still failing after 5 min total, treat as issue from this change               |
-| Revision is OLD, Ready=Unknown             | Still fetching new revision | Wait another 60s; kustomizations show old revision + Unknown while actively reconciling the new one |
-| Revision is OLD, Ready=False               | Pre-existing issue          | Report as pre-existing, not caused by this change                                                   |
-| Suspended=True                             | Intentionally suspended     | Ignore                                                                                              |
+| Condition                                                                                                         | Classification              | Action                                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Suspended=True                                                                                                    | Intentionally suspended     | Ignore                                                                                                                                      |
+| Ready=Unknown                                                                                                     | Still reconciling           | Wait another 60s; if still Unknown after 5 min total, treat as issue from this change                                                       |
+| Ready=False, message `dependency '<ns>/<name>' is not ready` or `dependency '<ns>/<name>' revision is not up to date` | Queued behind a dependency  | Wait out the loop, then follow the named dependency down the chain to the first one not queued; this one takes that root's classification |
+| Ready=False, any other message (including `dependency '<ns>/<name>' not found`), lastAttemptedRevision contains $CURRENT_REV | Failing on the new revision | Treat as issue from this change, unless kustomize-controller logs from before the push show the same error; then report as pre-existing    |
+| Ready=False, any other message, lastAttemptedRevision is OLD                                                      | Pre-existing issue          | Report as pre-existing, not caused by this change                                                                                           |
 
-**Never label a kustomization as "pre-existing" if it has Ready=Unknown.** Unknown means actively reconciling — wait for it to settle before classifying.
+A queued kustomization is never classified on its own. If its root is failing on $CURRENT_REV, the whole chain is an issue from this change.
 
 Run the full wait loop before classifying anything. A resource is either ready or not — don't explain a not-ready one as "resolving during the validation window".
 
@@ -176,15 +178,17 @@ After the initial check, follow the Full Cluster Reconciliation Wait above befor
 
 ### Step 2: Resource Status
 
-Check pods, deployments/statefulsets, and events in affected namespaces.
+Check pods, deployments/statefulsets, and events in affected namespaces. Note the pod names that belong to each workload's current ReplicaSet or revision; Step 3 reads their logs.
 
 ### Step 3: Logs
 
 ```bash
-kubectl logs -n <namespace> -l app.kubernetes.io/name=<app> --tail=50
+kubectl logs -n <namespace> <pod> --tail=50
 flux logs --kind=Kustomization --name=<name> --tail=30
 flux logs --kind=HelmRelease --name=<name> --tail=30
 ```
+
+Use the pod names from Step 2, not `-l app.kubernetes.io/name=<app>`: charts share that label across components (velero's matches its node-agent pods), and it also catches completed job pods.
 
 For logs from pods that already restarted or were replaced, or errors across a namespace since the push, use `mcp__litellm__victorialogs-query`:
 
