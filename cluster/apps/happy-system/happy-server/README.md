@@ -13,7 +13,8 @@ Relay between the [Happy](https://github.com/slopus/happy) phone/web app and the
 
 ### Pointing the app at this server
 
-In the Happy app, open **Server Configuration** and set the server URL to `https://happy.<external-domain>`, then sign out and back in. This server has its own accounts: an account from the public server doesn't exist here, and every workspace must pair again (see [Happy template keys](../../coder-workspaces/coder-workspaces/README.md#happy-template-keys)).
+The app hides the server setting while signed in to the default server. Log out (**Settings → Account → Logout**), tap the gear at the top right of the welcome screen, set the server URL to `https://happy.<external-domain>`, then create an account. This server has its own accounts: an account from the public server doesn't exist here, and every workspace must pair again (see
+[Happy template keys](../../coder-workspaces/coder-workspaces/README.md#happy-template-keys)).
 
 Workspaces get `HAPPY_SERVER_URL` from the Coder templates, which derive it from the Coder access URL (`code.` becomes `happy.`). A host alias sends it straight to Traefik instead of through Cloudflare.
 
@@ -34,3 +35,4 @@ Signup is open to anyone who can reach the URL. Cloudflare's firewall rules limi
 ## References
 
 - [Happy server self-hosting](https://github.com/slopus/happy/tree/main/packages/happy-server)
+- [App server screen](<https://github.com/slopus/happy/blob/main/packages/happy-app/sources/app/(app)/server.tsx>)
