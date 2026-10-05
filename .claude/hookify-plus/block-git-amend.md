@@ -25,7 +25,6 @@ This repository follows a "no amend" policy (see CLAUDE.md Hard Rules).
 
 1. Create a new commit with the fix/addition
 2. If you made an error in the previous commit message, create a new commit that references it
-3. Let the user squash commits during PR merge if desired
 
 **Example:**
 

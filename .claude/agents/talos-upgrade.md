@@ -1,6 +1,6 @@
 ---
 name: talos-upgrade
-description: 'Orchestrates Talos OS upgrades with quorum safety, sequential node ordering, and Ceph health verification.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use the kubernetes-upgrade skill)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)'
+description: 'Upgrades Talos OS across the cluster, one node at a time.\n\n**When to use:**\n- Renovate PR updates talosVersion in topf.yaml\n- User requests Talos OS upgrade across cluster\n- Planned maintenance requires node upgrades\n- Post-incident recovery requiring node rebuild to newer version\n\n**When NOT to use:**\n- Kubernetes-only upgrades (use the kubernetes-upgrade skill)\n- Configuration changes without version bump\n- Single node troubleshooting (use talosctl directly)'
 model: opus
 tools: Bash, Read, Edit, mcp__litellm__context7-resolve-library-id, mcp__litellm__context7-query-docs
 ---
@@ -39,8 +39,8 @@ Upgrade Talos Linux across all cluster nodes.
 ## Infrastructure Type
 Talos (machine configs, upgrades)
 
-## Affected Area
-- Infrastructure (Talos, networking, storage)
+## Affected Nodes
+All control plane and worker nodes
 
 ## Planned Changes
 1. Pre-upgrade validation (etcd backup, cluster health)
@@ -57,8 +57,15 @@ Talos (machine configs, upgrades)
 2. If etcd corrupted, restore from snapshot
 3. If Ceph degraded, wait for recovery before next action
 
+## Validation Steps
+- etcd 3/3 healthy, all nodes Ready on v<target>, Ceph HEALTH_OK
+- `task talos:diff` clean after apply
+
 ## Risk Level
 High (node reboot, potential data impact)
+
+## Related Issues/PRs
+<Renovate PR, if any>
 ```
 
 ### Progress Tracking via Comments
@@ -162,7 +169,7 @@ Extract: new config documents emitted by default, v1alpha1 fields deprecated or 
 
 4. Verify the target Talos release supports the pinned Kubernetes version. `talos/topf.yaml` pins `kubernetesVersion` independently of `talosVersion`, and a minor Talos release can drop support for an older kubelet. Compare the pin against the release notes' component list and its supported-versions range. Stop if the pin falls outside it.
 
-### Phase 1: Pre-Upgrade Validation (CRITICAL)
+### Phase 1: Pre-Upgrade Validation
 
 **Run ALL checks. BLOCK if any fail.**
 
@@ -234,7 +241,7 @@ curl -sS --max-time 60 -o /dev/null -w "%{http_code}\n" \
 
 ### Phase 2: etcd Backup
 
-**MANDATORY before any control plane upgrade:**
+Take this before any control plane upgrade:
 
 ```bash
 CP_NODE=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
@@ -258,8 +265,7 @@ Skip entirely for patch upgrades. For a minor upgrade the machine config has to 
 #### Step 2b.1: Render against the target contract
 
 ```bash
-sed -i 's/^talosVersion: .*/talosVersion: <target-version>/' talos/topf.yaml
-task talos:render
+task talos:render    # after setting talosVersion: <target-version> in talos/topf.yaml with Edit
 ```
 
 A render failure here names the patch and the path that broke. Fix it before continuing.
@@ -297,7 +303,7 @@ Once this apply is healthy the old-version template branches are dead code. Remo
 
 ### Phase 3: Control Plane Upgrades (Sequential)
 
-**STRICT SEQUENTIAL ORDER. One node at a time.**
+One node at a time: two down at once loses etcd quorum.
 
 For EACH control plane node:
 
@@ -343,7 +349,7 @@ talosctl upgrade \
 | 2nd CP node         | 1st CP node (already upgraded) |
 | 3rd CP node         | 1st CP node (already upgraded) |
 
-#### Step 3.4: Wait for node recovery (CRITICAL)
+#### Step 3.4: Wait for node recovery
 
 ```bash
 # Wait for node to become Ready (timeout: 5 minutes)
@@ -386,7 +392,7 @@ Post progress to the issue after each node.
 
 ### Phase 4: Worker Upgrades (Sequential with Ceph Safety)
 
-**STRICT SEQUENTIAL ORDER. One node at a time. WAIT FOR CEPH BETWEEN EACH.**
+One node at a time, and wait for Ceph between each: two workers down at once can leave PGs without a replica.
 
 For EACH worker node:
 
@@ -504,9 +510,9 @@ diff <(talosctl -n <node-ip> read /usr/local/share/kata-containers/configuration
 
 1. Replace the patch's `contents` with the new extension file, keeping `page_reporting.page_reporting_order=4 sysctl.vm.compaction_proactiveness=50` appended to `kernel_params`, `default_memory = 1024`, `reclaim_guest_freed_memory = true` and the patch's comments.
 2. Do not apply it now (rule 10). The Phase 8 apply ships it; until then Kata pods may fail to start on upgraded workers.
-3. Leave it uncommitted and list it under "Uncommitted" in the handoff, so the caller runs qa-validator and commits it.
+3. Leave it uncommitted. Before Phase 8, return PARTIAL with it under "Uncommitted" and the required action "run qa-validator, commit, push, then resume at Phase 8": the apply ships the working tree, and nodes must not run config that isn't on main.
 
-#### Step 4.5: Wait for Ceph recovery (CRITICAL)
+#### Step 4.5: Wait for Ceph recovery
 
 ```bash
 # Poll until Ceph is ready as defined in Step 4.1 (timeout: 30 minutes)
@@ -745,9 +751,6 @@ End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition F
 
 ### Commits on main
 - talos/README.md
-
-### Uncommitted
-- talos/patches/worker/13-tune-kata-memory.yaml, if Step 4.4a changed it (needs qa-validator, then commit)
 
 ### Next Steps
 1. Run cluster-validator if the pin PR touched `cluster/`

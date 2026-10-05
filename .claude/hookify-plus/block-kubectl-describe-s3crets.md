@@ -15,13 +15,7 @@ conditions:
 
 **What was blocked:** `kubectl describe secret`
 
-**Why:** This command outputs secret data (base64-encoded values) to stdout, which could:
-
-- Appear in terminal history
-- Be logged by shell recording
-- Be accidentally shared in screenshots
-
-**If you need this:** Ask the user to run the command manually.
+**Why:** It lists every key name and size. Get key names from the manifests that consume the secret (`secretKeyRef`, `envFrom`) instead.
 
 **Safe alternatives:**
 

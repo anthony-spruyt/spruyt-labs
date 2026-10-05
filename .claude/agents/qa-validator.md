@@ -89,7 +89,7 @@ After scope, classify the type to skip irrelevant checks within full scope:
 Any `cluster/` file not listed above: treat as `config-only` or `mixed`.
 
 ```bash
-CHANGED=$(git diff --name-only HEAD 2>/dev/null || git diff --name-only --cached)
+CHANGED=$( { git diff --name-only HEAD; git ls-files --others --exclude-standard; } | sort -u )
 if echo "$CHANGED" | grep -qE '\.md$' && ! echo "$CHANGED" | grep -qvE '\.md$'; then
   TYPE="docs-only"
 elif echo "$CHANGED" | grep -qE '\.sops\.yaml$' && ! echo "$CHANGED" | grep -qvE '\.sops\.yaml$'; then
@@ -245,7 +245,7 @@ Verdict: APPROVED / BLOCKED
 
 ### Issue Reference
 Issue: #<number>
-Repository: anthony-spruyt/spruyt-labs
+Repository: <owner/repo from `git remote get-url origin`>
 
 ### Change Type
 Type: [docs-only|secrets-only|helm-release|kustomization|mixed]

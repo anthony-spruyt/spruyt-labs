@@ -1,9 +1,8 @@
 ---
 name: spec-review
 description: >
-  Architectural and technical review of a design spec. Spawns a subagent reviewer
-  that verifies spec claims against live cluster state and deployed manifests, checks
-  library/framework docs via Context7, and produces severity-ranked findings.
+  Architectural and technical review of a design spec against the live cluster and
+  deployed manifests.
   Use when the user asks to review, check, or critique a spec, design doc, or plan file
   before implementation. Not for code diffs or PRs (use code-review).
 argument-hint: <spec-file-path>

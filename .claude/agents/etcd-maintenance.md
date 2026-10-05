@@ -2,7 +2,7 @@
 name: etcd-maintenance
 description: "Performs etcd health checks, log analysis for slow operations, and defragmentation.\\n\\n**When to use:**\\n- User asks about etcd health, status, or performance\\n- User requests etcd defrag or maintenance\\n- User mentions slow etcd, slow API responses, or cluster latency\\n- Monthly maintenance check\\n\\n**When NOT to use:**\\n- etcd member removal/addition (use talosctl directly)\\n- etcd disaster recovery (manual intervention required)\\n- Cluster bootstrap issues"
 model: opus
-tools: Bash
+tools: Bash, Read
 ---
 
 # etcd Maintenance Agent

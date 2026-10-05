@@ -99,7 +99,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph crash ls-new
 
 ### Issue Reference
 Issue: #<number>
-Repository: anthony-spruyt/spruyt-labs
+Repository: <owner/repo from `git remote get-url origin`>
 
 ### Verdict: [HEALTHY / DEGRADED / CRITICAL]
 

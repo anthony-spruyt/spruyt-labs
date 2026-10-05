@@ -17,15 +17,9 @@ conditions:
 
 **Why:** Base64 decoding is often used to extract encoded secrets, tokens, or credentials.
 
-**If you need the decoded value:**
+**Instead:**
 
-1. Ask the user: "Can you decode this base64 string and share the result if it's not sensitive?"
-2. Provide the encoded string for them to decode
-3. User can share the result or decline if it contains secrets
-
-**Common scenarios:**
-
-- Kubernetes secrets: Ask user to run `kubectl get secret X -o jsonpath='{.data.Y}' | base64 -d`
-- Config values: Ask user to decode and share non-sensitive portions
+- Kubernetes secrets: check existence with `kubectl get secret <name>`, get key names from the manifests that consume it, and debug auth from pod logs
+- Other encoded strings: ask the user to decode it if it isn't sensitive
 
 **False positive?** Open an issue: `gh issue create --repo anthony-spruyt/spruyt-labs --title "False positive: block-base64-decode" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.

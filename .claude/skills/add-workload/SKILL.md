@@ -1,8 +1,7 @@
 ---
 name: add-workload
 description: >
-  Deploy a new Helm-based workload to the cluster end to end: issue, chart research, Flux and
-  Kustomize manifests, priority tier, VPA, network policies, ingress, docs, and validation. Use
+  Deploy a new Helm-based workload to the cluster end to end. Use
   when the user asks to add, deploy, or install a new app, service, or Helm chart in the
   cluster. Not for upgrading or reconfiguring an app that already exists.
 argument-hint: <app-name>

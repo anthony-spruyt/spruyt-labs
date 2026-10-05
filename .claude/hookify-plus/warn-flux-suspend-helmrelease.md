@@ -25,5 +25,4 @@ conditions:
 1. Check status: `flux get kustomization <name> -n flux-system` and `flux get helmrelease <name> -n <namespace>`
 2. If kustomization stuck at stale revision: force reconcile with `kubectl -n flux-system annotate kustomization/<name> reconcile.fluxcd.io/requestedAt="$(date -u +%Y-%m-%dT%H:%M:%SZ)" --overwrite`
 3. If HelmRelease failed on existing release: `helm rollback <release> <last-good-revision> -n <namespace>`
-4. If HelmRelease failed on first install: `flux delete kustomization <name> -n flux-system` (Flux recreates on next reconciliation)
-5. **NEVER** delete kustomizations for stateful/critical infra (rook-ceph, volsync, cnpg, flux-system) — ask user first
+4. If HelmRelease failed on first install: ask the user before `flux delete kustomization <name> -n flux-system`. Kustomizations prune, so deleting one deletes everything it owns, PVCs and databases included

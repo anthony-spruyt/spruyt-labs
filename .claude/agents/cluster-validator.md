@@ -66,12 +66,12 @@ Classify the change to optimize checks:
 | `infrastructure`   | Storage, ingress, certs     | System services, cluster-wide health  |
 | `mixed`            | Multiple types              | All checks                            |
 
-Read the change from `origin/main`. A `gh pr merge` leaves local `main` behind it.
+Read the change from `origin/main`; a `gh pr merge` leaves local `main` behind it. The caller may pass a base sha: the last validated revision, so a fix loop with skipped validators is checked as one range. Without one, the base is `origin/main~1`.
 
 ```bash
 git fetch origin main
-git log --oneline -3 origin/main
-git diff origin/main~1 origin/main --name-only
+git log --oneline <base>..origin/main
+git diff <base> origin/main --name-only
 ```
 
 ## Parallel Execution
@@ -247,7 +247,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 ### Root Cause
 [what went wrong]
 ### Rollback Instructions
-1. Revert: `git pull --ff-only && git revert <validated-sha>`
+1. Revert: `git pull --ff-only && git revert --no-edit <sha>...` with this change's commits from `<base>..origin/main`, newest first; leave other sessions' commits alone
 2. Push the revert
 3. Re-invoke cluster-validator to confirm
 ### Investigation Hints
@@ -294,11 +294,10 @@ Flux webhooks reconcile on push. Use these only if the source revision is still 
 
 ```bash
 flux reconcile source git flux-system
-flux reconcile kustomization <name> --with-source
-flux suspend kustomization <name>
-flux resume kustomization <name>
-# Stuck HelmRelease: suspend/resume won't fix it — see .claude/hookify-plus/warn-flux-suspend-helmrelease.md
+kubectl -n flux-system annotate kustomization/<name> reconcile.fluxcd.io/requestedAt="$(date -u +%Y-%m-%dT%H:%M:%SZ)" --overwrite
 ```
+
+A stuck HelmRelease needs a rollback, not a reconcile: see `.claude/hookify-plus/warn-flux-suspend-helmrelease.md`.
 
 ## Agent Definition Feedback
 

@@ -15,7 +15,7 @@ Run these on their triggers without waiting to be asked:
 - **qa-validator** - before committing edited files, unless a skip condition below applies. Validates syntax, standards, and docs.
 - **cluster-validator** - after changes that affect `cluster/` reach `main`: when you push or merge a PR, or when the user says "pushed", "merged", or "deployed".
 
-Pass the linked issue number to both: each posts its report as a comment on that issue. qa-validator returns BLOCKED without one; cluster-validator runs without one (Renovate merges have none).
+Pass the linked issue number to both: each posts its report as a comment on that issue. qa-validator returns BLOCKED without one; cluster-validator runs without one (Renovate merges have none). Also pass cluster-validator the last validated `origin/main` sha, so commits pushed while validators were skipped are checked too.
 
 > **Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → it's a cluster resource → run both validators
 
@@ -34,12 +34,7 @@ Pass the linked issue number to both: each posts its report as a comment on that
 - SOPS-only changes
 - Agent/tooling config (`.claude/**`, `.taskfiles/**`)
 
-**qa-validator uses fast path (trivial scope) for:**
-
-- Cosmetic changes with zero semantic risk (typos, comments, formatting)
-- Scope based on semantic risk of diff, not file count
-- No MegaLinter, no dry-run, no Context7 — just diff review + standards + security
-- Everything else gets full validation
+qa-validator picks its own scope (fast path for cosmetic diffs, full validation otherwise).
 
 ## Concurrency Rules
 
@@ -56,11 +51,11 @@ Pass the linked issue number to both: each posts its report as a comment on that
 2. Run qa-validator before commit, unless a skip condition applies
 3. If BLOCKED → apply fixes → re-run qa-validator
 4. If APPROVED → commit
-5. After push, run cluster-validator if the change affects Flux-managed resources and none is already running
+5. After push, run cluster-validator if the change affects Flux-managed resources; if one is already running, wait for it first
 6. If ROLLBACK → revert commit → push → re-run cluster-validator
 7. If ROLL-FORWARD → apply fix → qa-validator → commit → push → re-run cluster-validator
    (qa-validator runs on every fix commit; skip cluster-validator on intermediate pushes and validate after the final fix)
 ```
 
 - qa-validator runs MegaLinter, so don't also run `task dev-env:lint`
-- Flux webhooks reconcile on push; don't run `flux reconcile` by hand
+- Flux webhooks reconcile on push; don't run `flux reconcile` by hand. cluster-validator handles a missed webhook
