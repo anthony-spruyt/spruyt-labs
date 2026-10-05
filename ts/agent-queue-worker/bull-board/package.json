@@ -13,7 +13,7 @@
   "dependencies": {
     "@bull-board/api": "^8.0.0",
     "@bull-board/express": "^8.0.0",
-    "bullmq": "^5.52.0",
+    "bullmq": "^6.0.0",
     "express": "^5.0.0"
   },
   "devDependencies": {
