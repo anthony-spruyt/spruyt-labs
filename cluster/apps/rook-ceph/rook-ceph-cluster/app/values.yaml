@@ -9,7 +9,6 @@ cephImage:
   tag: v20.2.4@sha256:6bb1c8a42fbc0bf87938946990b65174466997bc11c31eb5a323225a779fd8f9
 
 toolbox:
-  # -- Enable Ceph debugging pod deployment. See [toolbox](https://github.com/rook/rook/blob/master/Documentation/Troubleshooting/ceph-toolbox.md)
   # IMPORTANT: Must stay enabled - SSO config sidecar is patched onto this deployment via postRenderers in release.yaml
   enabled: true
   resources:
@@ -19,14 +18,9 @@ toolbox:
       cpu: 25m
       memory: 64Mi
 monitoring:
-  # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.
-  # Monitoring requires Prometheus to be pre-installed
   enabled: true
-  # -- Whether to disable the metrics reported by Ceph. If false, the prometheus mgr module and Ceph exporter are enabled
   metricsDisabled: false
-  # -- Whether to create the Prometheus rules for Ceph alerts
   createPrometheusRules: true
-  # -- Edit Prometheus rules for Ceph alerts
   # Disable CephNodeDiskspaceWarning - replaced with Talos-safe version in observability vmrules/
   # Scope Ceph "nodes" group alerts to worker/Ceph nodes only (Ref #1241)
   prometheusRuleOverrides:
@@ -68,20 +62,9 @@ monitoring:
           ) >= 10
         )
         and on(instance) node_uname_info{nodename=~"ms-01-.*"}
-  # -- The namespace in which to create the prometheus rules, if different from the rook cluster namespace.
-  # If you have multiple rook-ceph clusters in the same k8s cluster, choose the same namespace (ideally, namespace with prometheus
-  # deployed) to set rulesNamespaceOverride for all the clusters. Otherwise, you will get duplicate alerts with multiple alert definitions.
   rulesNamespaceOverride:
-  # Monitoring settings for external clusters:
-  # externalMgrEndpoints: <list of endpoints>
-  # externalMgrPrometheusPort: <port>
-  # Scrape interval for prometheus
-  # interval: 10s
-  # allow adding custom labels and annotations to the prometheus rule
   prometheusRule:
-    # -- Labels applied to PrometheusRule
     labels: {}
-    # -- Annotations applied to PrometheusRule
     annotations: {}
 cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-cluster-crd.html
   cephConfig:
@@ -93,6 +76,9 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
       # never mark anyone down and writes to the affected PGs block indefinitely
       # instead of peering on the surviving two replicas (Ref #2781).
       mon_osd_min_down_reporters: "1"
+    mgr:
+      # 2h: the 2-week default holds HEALTH_WARN on RECENT_CRASH long after a crash is handled
+      mgr/crash/warn_recent_interval: "7200"
   priorityClassNames:
     mon: critical-infrastructure
     osd: critical-infrastructure
@@ -100,8 +86,6 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
   mgr:
     # One mgr: it is off the IO/backfill path, and Rook restarts it within minutes if it dies
     count: 1
-    config:
-      mgr/crash/warn_recent_interval: "7200" # 2h
     # Only modules Rook actually applies from this spec belong here (Ref #2561).
     # "prometheus" was removed: it is a "well known" module Rook configures from the
     # monitoring/dashboard settings, and listing it aborts configureMgrModules with
@@ -122,12 +106,7 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
       enabled: true
   dashboard:
     enabled: true
-    # serve the dashboard under a subpath (useful when you are accessing the dashboard via a reverse proxy)
-    # urlPrefix: /ceph-dashboard
-    # serve the dashboard at the given port.
     port: 8443
-    # Serve the dashboard using SSL (if using ingress to expose the dashboard and `ssl: true` you need to set
-    # the corresponding "backend protocol" annotation(s) for your ingress controller of choice)
     # NOTE: SSL must be enabled for SAML SSO to work correctly - python-saml validates the request protocol
     ssl: true
     # Prometheus endpoint for dashboard metrics (VictoriaMetrics is Prometheus-compatible)
@@ -259,29 +238,3 @@ cephClusterSpec: # TODO: Migrate to CRD https://rook.io/docs/rook/v1.9/ceph-clus
 cephBlockPools: []
 cephFileSystems: []
 cephObjectStores: []
-# -- A list of CephFileSystem configurations to deploy
-# @default -- See [below](#ceph-file-systems)
-#cephFileSystems:
-#  - name: ceph-filesystem
-#    # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Shared-Filesystem/ceph-filesystem-crd.md#filesystem-settings for available configuration
-#    spec:
-#      metadataServer:
-#        resources:
-#          limits:
-#            memory: 4Gi
-#          requests:
-#            cpu: 35m
-#            memory: 64Mi
-## -- A list of CephObjectStore configurations to deploy
-## @default -- See [below](#ceph-object-stores)
-#cephObjectStores:
-#  - name: ceph-objectstore
-#    # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Object-Storage/ceph-object-store-crd.md#object-store-settings for available configuration
-#    spec:
-#      gateway:
-#        resources:
-#          limits:
-#            memory: 2Gi
-#          requests:
-#            cpu: 20m
-#            memory: 64Mi
