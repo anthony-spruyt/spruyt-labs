@@ -458,6 +458,8 @@ configMaps:
           store_model_in_db: true
           supported_db_objects:
             - mcp
+          trusted_proxy_ranges:
+            - "${CLUSTER_POD_CIDR_IP4}"
           use_redis_transaction_buffer: true
           use_x_forwarded_for: true
           user_api_key_cache_ttl: 300
