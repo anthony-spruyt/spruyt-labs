@@ -264,8 +264,10 @@ Skip entirely for patch upgrades. For a minor upgrade the machine config has to 
 
 #### Step 2b.1: Render against the target contract
 
+Set `talosVersion: <target-version>` in `talos/topf.yaml`, then:
+
 ```bash
-task talos:render    # after setting talosVersion: <target-version> in talos/topf.yaml with Edit
+task talos:render
 ```
 
 A render failure here names the patch and the path that broke. Fix it before continuing.
