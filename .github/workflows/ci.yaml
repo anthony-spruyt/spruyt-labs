@@ -100,6 +100,8 @@ jobs:
               - 'cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml'
               # Scripts asserted by tests/install-scripts.bats
               - '.taskfiles/install/scripts/**'
+              # Script asserted by tests/happy-template-key.bats
+              - '.taskfiles/happy/scripts/**'
   lint:
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@main"
     secrets: "inherit"

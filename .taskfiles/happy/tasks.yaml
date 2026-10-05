@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  rotateTemplateKeyScript: "{{ .ROOT_DIR }}/.taskfiles/happy/scripts/rotate-template-key.sh"
+
+tasks:
+  rotate-template-keys:
+    desc: "Pair Coder template Happy keys by QR and write their SOPS secrets (usage: task happy:rotate-template-keys [template=xfg])"
+    interactive: true
+    vars:
+      templates: '{{ .template | default "spruyt-labs xfg devcontainer" }}'
+    cmds:
+      - for: { var: templates }
+        cmd: bash {{ .rotateTemplateKeyScript }} {{ .ITEM }}

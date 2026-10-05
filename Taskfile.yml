@@ -11,6 +11,7 @@ includes:
   cilium: .taskfiles/cilium/tasks.yaml
   dev-env: .taskfiles/dev-env/tasks.yaml
   flux: .taskfiles/flux/tasks.yaml
+  happy: .taskfiles/happy/tasks.yaml
   install: .taskfiles/install/tasks.yaml
   kubectl: .taskfiles/kubectl/tasks.yaml
   pre-commit: .taskfiles/pre-commit/tasks.yaml
