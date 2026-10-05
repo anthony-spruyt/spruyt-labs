@@ -7,6 +7,9 @@ resources:
   - ./coder-workspace-env-spruyt-labs.sops.yaml
   - ./coder-workspace-env-xfg.sops.yaml
   - ./coder-terraform-credentials.sops.yaml
+  - ./coder-happy-spruyt-labs.sops.yaml
+  - ./coder-happy-xfg.sops.yaml
+  - ./coder-happy-devcontainer.sops.yaml
   - ./nexus-clients-eso.yaml
   - ./sops-age-secret-store.yaml
   - ./sops-age-externalsecret.yaml

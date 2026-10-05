@@ -1,0 +1,23 @@
+# yamllint disable
+apiVersion: v1
+data:
+    access.key: ENC[AES256_GCM,data:2Pu0xkYYEdQWGpHkj6lgPDYFpqyvfUvIlrApHSMlXzMW1/EFJEavZwPIcWRRNJkMQiVMsT7wSb8NW5X6BegCu34LkAcCqk2RZfdIn9ZhQF1sqiMlyhHYQF7T2DLoHnx+6mgMSOsRxH32oTylkd+myN2/Ci8bFER/LlWRuVp1J4A2Tpf/qb1F4bkO83Zm+YLvngiOkRGWsTng8u4WuSAuKL1CW4RJ7jssU672I26J9VEiuhs2T5w/FmNASeOtxVtGeSJ8RyYFI9G4zirRS2foB4rMM76cE3AHSPacDC75oi+BAnXJEjFySQ7OsCAYul3k1rvWLz5ebywXtkRtbywvhbrfwJyoymnKaxehuBg3MpU1RDx4bUlpPHAofcVkpkw/YQT5XPNGtsy6uHiCRAXWSLv08foPBeKrItwaLxSfMxfSGEa2FZlTeiYdx5Y2ze7qJI8+LqznoI6A4xdppMjYub2bilmusBjoL5NhqQbQuYpUm+GVvlp1TP2z5fgN0r+5/ufj4W+YBaXpacYOUJFgYtu4Er8f+YQZ9rbAax+Dn429qapATapOKfLkmx/qeJ6e8hNYQi/WTKFbmUoO87AXin/iqEAl1Y6FOelkbbioqtnW/6OSg1ddbokuJ30AaGBDG33XEp6+r5tcTCvZ6bOf4u+rRPZCdLycyM4K8Gv3sLAFOj9pRtQ6C7euLP89BHkklPrTwezSeNbSf1GOZQVxDYvqA+VT8vZduVUqiIz9GXwXKxuTJLW1mbj6Zc+ZAQLIWlaPeTgixBBHX6JKEGHJethpaIqu9c+zfB/IkGjwc+kTQFSeB/N3tth6hq6wglWPQ5anaw2AzXfYeAekp4vzihVK1783E03ixtV+9z8ZuGgIORn/jG+fJ1aNuNs=,iv:aE5V8b+xWg/izlzeVuuBUud1GgYvxeYqUfv6a5lxQIo=,tag:XqwNzy4nIau++ZFC3zbzyQ==,type:str]
+kind: Secret
+metadata:
+    name: coder-happy-xfg
+    namespace: coder-workspaces
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBvTytqWjBwZW00cEJPaXRM
+            R1BtazdHVWE0NXJ4eTRnTTZMRnRNOWg3QmlnCmtzYjZ6WExPcXkyMnRqZWJmc0F5
+            S3RlT2VlQU5FczJFL1RWQWpOclpaWXMKLS0tIFRjL1RSM3JUZUgya2NsSnBzNVZO
+            bGx2UlhqQmkxd2FQTnM4b0JOZzV4TTAK0IbJXlAR7A9KJH0jSFmTPja+cGlqJV3w
+            nEnDxGL6TbWfBcEFkl6/KaViYqkHLbuNC7qq+ofTy3yrjPg2nk/v+g==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-10-05T00:02:45Z"
+    mac: ENC[AES256_GCM,data:dGpSc/xSfnnLCRAqKy+geE6SyQz4w3Ob5zpRRrkoOShvKZ13v/W/feWIeBMuWYQYtWm3u/SQkXpztMDwB5Xx8/RSF7jA1LCkrky1nEoyG8Fee7nqaIqiLGJSg9FgWBS4A4KyoRIks1B22z9kYWhpO86hHx68Z6jHdvuXWV+aXZ4=,iv:PxVFIymWt+F0x92onDz/fVQR917SrNrRa1mXG6I0ctM=,tag:SCLfeDqUwfEhY3WLa993pQ==,type:str]
+    version: 3.13.3

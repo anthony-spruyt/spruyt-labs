@@ -1,0 +1,23 @@
+# yamllint disable
+apiVersion: v1
+data:
+    access.key: ENC[AES256_GCM,data:OiZdcTghFZPjXw6N+15t2iorV6YKQOxhqZlEERVeW1mwu52sLuBuPy1Sh/xfbbr/q661+N5JWhxIExm/aYg5S+rgArOzaM/R0H5pejQ88owzPp3LD648Kjs8bNdw7Or+cbjZ8L9dZc4+9gLqOK1T/xrSdv5NYgsj336D6vdlvI4G/xdxcwKmgMzSr0El05evatNEzphgFXx4rzNM2AIqDNCuRgeVK+UnrQZUTXA7ZtSJ/PmNrFEJ7EoH2Mwf8PFi/XTzFZsvUQc09DepR/a+i1pmZePaI2z6/NSN22rpnwkJ0jI3lpMMp9WX+jF+0+xwANjySxl5O0/ro5/YaBYsMEG8b//1J5cLL4SRghAO6x+z7OtJsItdP2p1OgsXeEQPvW48/Yg6l4y83T0wbiQEGATgQHjKhrN2VxCsie/bUD0tsheWSpd7fwMInHI0s63HoFr/KomaI4IyrMmT3zinX6gvx08GzlKBXAL4h7+ezj4BNgIYerSKe09cj9qRn7et/a6wGCIb/kyqiDGFkW019inWI36vEDBst9fiYhPMGCbrq2OYHP6387JnrZ2b7UmCaAiMT7J4efMEk6O//Y04zXY6u6H+uA+cQxBog7EkO+jkNUV6gSXmLQYAA+hkivtr2OBZ9YoLrzTF1lbY9QHfsq2X4zprS12dEhemfgbc8iwSL8wtkoRN7LRBUagll2K502zdGDsiCfE9pLUgsaDaBCZovHURSznEMBo+bY4jzCBWWBc8xlwckeI9AzHRiGxV6gs2qdhjTZ57N2j+Kqg+z0oqOehCJ2cewktSH9EY/H8hZyqPU+N03nUVf/HoYiyq69UbrtGhBJqPOEvXWVLdRptF3HedbbsnqHdj4QvkJIJIGE6JMaDm3ydo58k=,iv:fOMgwX2PW4XxmS2m7p4WnKcKsjCM9OWyAhKTbBLvVeQ=,tag:h9kIeVc0Vm0WwcByvf5KCA==,type:str]
+kind: Secret
+metadata:
+    name: coder-happy-devcontainer
+    namespace: coder-workspaces
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBmTDhGeUxDSFpYazcrOHFU
+            aC84elRwSWp6dkYxSThiTVQ4SXJoSDg5aWlZCjN2MmRaaUZxQm5aanJlRi9heURG
+            WS9CUWJseHZhOVBKRS9wOWZtYXZiNFEKLS0tIGFWQ1EvWC9rUWVsWGtkTllzdmJy
+            U3lFbGxWdCtnUG9rSExIazlwclVkTm8Kum4rRNNz/GKXK87bept/eTl3sTDzaIkS
+            goC8sGPLuvSoDGP1sw5LYMdt2OfRmrTPQklKyndaZFieqULjFNBJww==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1lt4xakktwyjvsqe6e09ca8f7nsljua3lynd7d9lzcs39fyqt8ggq87glw5
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-10-05T00:02:28Z"
+    mac: ENC[AES256_GCM,data:130qFqx8HuhLJ6ZcQIUVqe8hkL8DrPSvKV6NvlVM5iwppddfNp0zQzwBWDnG/i4hNFFPQnmrUzqVtRh+rVwJTvVUqQWJtjMQ/c2Yf6LR4r19TRnDa80Ywh4u++F2TUnhu17eTtM7717/BSwSCf9aUb9YJgAp1v3/NHIW2cJNOVs=,iv:HKHXePOyP8SmBIpYxFQ369vCogl1elai3KKQhdLPI5k=,tag:xYUL7XiQ4s8MUYbWTGhUmg==,type:str]
+    version: 3.13.3
