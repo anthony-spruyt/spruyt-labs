@@ -612,6 +612,8 @@ resource "kubernetes_pod_v1" "main" {
     # VM boundary around AI-agent-generated code. Ref #933.
     runtime_class_name               = "kata"
     termination_grace_period_seconds = 300
+    # Happy names the machine after the hostname, so the app shows the workspace rather than the pod id.
+    hostname = lower(data.coder_workspace.me.name)
 
     node_selector = {
       "kata.spruyt-labs/ready" = "true"
