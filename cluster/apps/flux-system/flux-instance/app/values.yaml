@@ -49,9 +49,6 @@ instance:
           - op: add
             path: /spec/template/spec/containers/0/args/-
             value: --sops-age-secret=sops-age
-          - op: add
-            path: /spec/template/spec/containers/0/args/-
-            value: --feature-gates=StrictPostBuildSubstitutions=false
         target:
           kind: Deployment
           name: kustomize-controller

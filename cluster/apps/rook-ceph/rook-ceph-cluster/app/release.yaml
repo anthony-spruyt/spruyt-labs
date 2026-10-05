@@ -15,7 +15,6 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: rook-ceph-cluster-values
-  # Patch toolbox deployment to add SSO and RGW config init container
   # Note: Flux postRenderers require inline patches, external files not supported
   # IMPORTANT: Changes to init container logic require deleting the toolbox pod to take effect:
   #   kubectl delete pod -n rook-ceph -l app=rook-ceph-tools
@@ -90,15 +89,14 @@ spec:
                         # Create SAML admin user if not exists (Ceph Dashboard requires pre-created users)
                         # Uses --force-password to bypass password strength validation
                         # Password read from mounted secret file to avoid logging
-                        if ! ceph dashboard ac-user-show "${SAML_ADMIN_EMAIL}" 2>/dev/null; then
-                          echo "Creating SAML admin user: ${SAML_ADMIN_EMAIL}"
-                          ceph dashboard ac-user-create "${SAML_ADMIN_EMAIL}" --force-password -i /var/run/secrets/dashboard/password administrator
+                        if ! ceph dashboard ac-user-show "$${SAML_ADMIN_EMAIL}" 2>/dev/null; then
+                          echo "Creating SAML admin user: $${SAML_ADMIN_EMAIL}"
+                          ceph dashboard ac-user-create "$${SAML_ADMIN_EMAIL}" --force-password -i /var/run/secrets/dashboard/password administrator
                           echo "SAML admin user created"
                         else
                           echo "SAML admin user already exists"
                         fi
 
-                        # Configure SAML SSO if not already enabled
                         if ceph dashboard sso status 2>/dev/null | grep -q "SAML2 is enabled"; then
                           echo "SAML SSO already configured"
                         else

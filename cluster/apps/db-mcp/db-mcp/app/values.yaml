@@ -156,7 +156,7 @@ service:
 configMaps:
   config:
     data:
-      # $${VAR} survives Flux substitution as ${VAR}; DBHub resolves it from env at load time
+      # Write env references as $${VAR} so Flux leaves them for DBHub to resolve at load time
       dbhub.toml: |
         [[sources]]
         id = "temporal"

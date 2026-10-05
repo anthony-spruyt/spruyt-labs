@@ -1,10 +1,5 @@
 #!/bin/sh
-# cluster/apps/nexus-system/nexus/app/provision.sh
-#
-# NOTE: Variable expansions are written as $${VAR} so Flux's envsubst leaves
-# them literal (${VAR}) for the shell to expand at runtime. shellcheck sees
-# the raw source and flags $${...} as PID-plus-brace — safe to ignore.
-#
+# Expansions are written $${VAR} so Flux leaves them for the shell; shellcheck flags that, hence the disables.
 # shellcheck disable=SC2193,SC2195,SC2157
 set -eu
 

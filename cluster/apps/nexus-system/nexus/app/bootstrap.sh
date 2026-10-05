@@ -1,14 +1,5 @@
 #!/bin/sh
-# cluster/apps/nexus-system/nexus/app/bootstrap.sh
-#
-# Bootstrap sidecar for Nexus: on first boot with a fresh PVC, Nexus writes
-# a random password to /nexus-data/admin.password. This script waits for it,
-# creates the desired admin user (NEXUS_USER/NEXUS_PASSWORD from secret) with
-# nx-admin role, disables the built-in "admin" user, and leaves a marker so
-# subsequent restarts no-op.
-#
-# NOTE: $${VAR} = envsubst-escaped so Flux leaves it literal ${VAR} for sh.
-#
+# Expansions are written $${VAR} so Flux leaves them for the shell; shellcheck flags that, hence the disables.
 # shellcheck disable=SC2193,SC2195
 set -eu
 
