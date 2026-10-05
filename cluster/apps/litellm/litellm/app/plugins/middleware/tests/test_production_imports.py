@@ -49,7 +49,6 @@ def test_production_dotted_imports_resolve(production_import_shape):
         "custom_callbacks.middleware.secret_masking.shared_fakes",
         "custom_callbacks.middleware.secret_masking.secret_masking",
         "custom_callbacks.middleware.ratelimit_headers.ratelimit_headers",
-        "custom_callbacks.middleware.mcp_tool_routing.mcp_tool_routing",
         "custom_callbacks.middleware.chatgpt.chatgpt",
     ]
 
@@ -86,17 +85,3 @@ def test_production_pipeline_loads_ratelimit_headers(production_import_shape):
     restorer = importlib.import_module("custom_callbacks.middleware.ratelimit_headers.ratelimit_headers")
 
     assert restorer.ratelimit_headers in plugin.pipeline_middleware.middlewares
-
-
-def test_production_pipeline_loads_mcp_tool_routing(production_import_shape):
-    for module in [
-        "custom_callbacks.middleware.mcp_tool_routing.mcp_tool_routing",
-        "custom_callbacks.middleware.registry",
-        "custom_callbacks.middleware.pipeline_plugin",
-    ]:
-        sys.modules.pop(module, None)
-
-    plugin = importlib.import_module("custom_callbacks.middleware.pipeline_plugin")
-    routing = importlib.import_module("custom_callbacks.middleware.mcp_tool_routing.mcp_tool_routing")
-
-    assert routing.mcp_tool_routing in plugin.pipeline_middleware.middlewares

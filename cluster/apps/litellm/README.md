@@ -74,8 +74,8 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 
 ### Proxy-side plugins
 
-`litellm/app/plugins/middleware/` is mounted into the pod from the `litellm-middleware-plugin` ConfigMap as subPath files under `/app/custom_callbacks/middleware/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking`,
-`ratelimit-headers` and `mcp-tool-routing` are in `DEFAULT_MIDDLEWARE_SPECS`, so `middleware/chatgpt/` is inert even though its files are still mounted. To enable it, add a `MiddlewareSpec` for it.
+`litellm/app/plugins/middleware/` is mounted into the pod from the `litellm-middleware-plugin` ConfigMap as subPath files under `/app/custom_callbacks/middleware/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` and
+`ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`, so `middleware/chatgpt/` is inert even though its files are still mounted. To enable it, add a `MiddlewareSpec` for it.
 
 ### Middleware tests
 
@@ -121,18 +121,6 @@ LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and ha
 - Not covered: error replies (429s) and the opt-in `LITELLM_RUST` `/v1/messages` path, which sets neither header source.
 - It is optional in `registry.py`: an import failure logs a warning and the proxy serves without it.
 - Remove it once LiteLLM forwards `anthropic-ratelimit-unified-*` unprefixed or adds a setting to do so.
-
-### MCP tool routing
-
-LiteLLM routes an MCP `tools/call` with a per-process map from tool name to server, filled only when that worker lists the server's tools. Servers loaded from the database never fill it at startup, and the map is not shared between replicas or through Valkey. So after every pod restart or rollout, long-lived clients (in-cluster Claude agents, Claude Code sessions) got
-`404: Tool '<name>' not found` until they reconnected and re-listed on that same pod (Ref #3306).
-
-- `middleware/mcp_tool_routing/` wraps LiteLLM's `execute_mcp_tool`. If the map does not yet know the requested tool on the server the call is addressed to, it lists that server's tools with the caller's auth headers, then lets the call run. A tool the map already knows adds no work. A call to a tool the server does not have lists again each time, as upstream does.
-- Calls that wait on the same server's listing share it, even when it fails, so a hung upstream costs one listing timeout, not one per waiting call. The next call after a failure tries again.
-- Only servers the caller is allowed to use are listed. Any error while warming, including a failed listing, logs a warning and the call runs anyway and returns LiteLLM's own error.
-- It defines no pipeline hooks; importing the module installs the patch. If a LiteLLM internal it relies on is gone after an upgrade, it logs `MCP tool routing patch not installed` and leaves LiteLLM untouched. It is optional in `registry.py`, so an import failure also only logs a warning.
-- The integration test reproduces the bug with an MCP server that is down while the proxy starts.
-- Remove it once a LiteLLM release includes `_list_tools_before_first_call` (`litellm/proxy/_experimental/mcp_server/operations.py`, on upstream main but not in v1.103.2). Tracked in [BerriAI/litellm#44373](https://github.com/BerriAI/litellm/issues/44373) and #3306.
 
 ### Secret masking
 

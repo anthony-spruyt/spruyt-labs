@@ -41,7 +41,7 @@ controllers:
           - sh
           - -c
           - |
-            mkdir -p /app/custom_callbacks/middleware/chatgpt /app/custom_callbacks/middleware/mcp_tool_routing /app/custom_callbacks/middleware/ratelimit_headers /app/custom_callbacks/middleware/secret_masking
+            mkdir -p /app/custom_callbacks/middleware/chatgpt /app/custom_callbacks/middleware/ratelimit_headers /app/custom_callbacks/middleware/secret_masking
             touch /app/custom_callbacks/__init__.py
         securityContext:
           allowPrivilegeEscalation: false
@@ -715,12 +715,6 @@ persistence:
             readOnly: true
           - path: /app/custom_callbacks/middleware/chatgpt/litellm_patch.py
             subPath: litellm_patch.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/mcp_tool_routing/__init__.py
-            subPath: __init__.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/mcp_tool_routing/mcp_tool_routing.py
-            subPath: mcp_tool_routing.py
             readOnly: true
           - path: /app/custom_callbacks/middleware/ratelimit_headers/__init__.py
             subPath: __init__.py

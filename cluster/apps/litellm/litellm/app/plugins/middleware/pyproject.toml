@@ -19,7 +19,6 @@ asyncio_mode = "auto"
 testpaths = [
     "tests",
     "chatgpt/tests",
-    "mcp_tool_routing/tests",
     "ratelimit_headers/tests",
     "secret_masking/tests",
 ]

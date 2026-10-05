@@ -22,12 +22,6 @@ DEFAULT_MIDDLEWARE_SPECS: tuple[MiddlewareSpec, ...] = (
         "ratelimit_headers",
         required=False,
     ),
-    MiddlewareSpec(
-        "mcp-tool-routing",
-        "custom_callbacks.middleware.mcp_tool_routing.mcp_tool_routing",
-        "mcp_tool_routing",
-        required=False,
-    ),
 )
 
 
