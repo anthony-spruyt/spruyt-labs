@@ -1,6 +1,6 @@
 ---
 name: renovate-pr-analyzer
-description: "Analyzes a Renovate PR for breaking changes, deprecations, and upstream issues. Returns a structured verdict (SAFE/FIXABLE/RISKY/BREAKING).\n\n**When to use:**\n- Called as subagent by platform triage orchestrator (n8n dispatch)\n- Called directly for local dependency analysis\n\n**When NOT to use:**\n- For non-Renovate PRs\n- For manual dependency updates (analyze manually instead)\n- User asks to triage or merge a Renovate PR (use the renovate-pr skill)"
+description: "Analyzes a Renovate PR for breaking changes, deprecations, and upstream issues. Returns a structured verdict (SAFE/FIXABLE/RISKY/BREAKING).\n\n**When to use:**\n- Called by the platform triage orchestrator (n8n dispatch)\n- Called by the renovate-pr skill, which then merges or labels the PR\n\n**When NOT to use:**\n- For non-Renovate PRs\n- For manual dependency updates (analyze manually instead)\n- Straight from a user request about a Renovate PR: load the renovate-pr skill, which runs this agent"
 model: opus
 tools:
   - Bash
