@@ -42,13 +42,13 @@ drivers:
             memory: 1Gi
           requests:
             cpu: 250m
-            memory: 512Mi
+            memory: 192Mi
         registrar:
           limits:
             memory: 256Mi
           requests:
             cpu: 50m
-            memory: 128Mi
+            memory: 32Mi
         liveness: {}
         addons: {}
         logRotator: {}
@@ -59,21 +59,39 @@ drivers:
       deploymentStrategy:
         type: Recreate
       resources:
+        attacher:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 96Mi
         provisioner:
+          limits:
+            memory: 256Mi
           requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 96Mi
         resizer:
+          limits:
+            memory: 256Mi
           requests:
             cpu: 100m
+            memory: 96Mi
+        snapshotter:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 96Mi
+        plugin:
+          limits:
+            memory: 1Gi
+          requests:
             memory: 128Mi
-        attacher: {}
-        snapshotter: {}
         omapGenerator: {}
         liveness: {}
         addons: {}
         logRotator: {}
-        plugin: {}
   cephfs:
     enabled: true
     name: rook-ceph.cephfs.csi.ceph.com
@@ -94,13 +112,13 @@ drivers:
             memory: 1Gi
           requests:
             cpu: 250m
-            memory: 512Mi
+            memory: 192Mi
         registrar:
           limits:
             memory: 256Mi
           requests:
             cpu: 50m
-            memory: 128Mi
+            memory: 32Mi
         liveness: {}
         addons: {}
         logRotator: {}
@@ -116,31 +134,31 @@ drivers:
             memory: 256Mi
           requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 96Mi
         provisioner:
           limits:
             memory: 256Mi
           requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 96Mi
         resizer:
           limits:
             memory: 256Mi
           requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 96Mi
         snapshotter:
           limits:
             memory: 256Mi
           requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 96Mi
         plugin:
           limits:
             memory: 1Gi
           requests:
             cpu: 250m
-            memory: 512Mi
+            memory: 128Mi
         omapGenerator: {}
         liveness: {}
         addons: {}
