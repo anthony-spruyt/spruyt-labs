@@ -41,14 +41,14 @@ def _free_port() -> int:
         return s.getsockname()[1]
 
 
-def _config(callbacks: tuple[str, ...]) -> str:
+def _config(layout: pod_layout.PodLayout) -> str:
     return yaml.safe_dump({
         "model_list": [{
             "model_name": MODEL,
             "litellm_params": {"model": f"anthropic/{MODEL}", "api_base": "http://127.0.0.1:8099", "api_key": "it"},
         }],
-        "litellm_settings": {"callbacks": list(callbacks)},
-        "general_settings": {"master_key": MASTER_KEY},
+        "litellm_settings": {"callbacks": list(layout.callbacks)},
+        "general_settings": {**layout.general_settings, "master_key": MASTER_KEY},
         # Down at startup so the proxy's tool mapping stays cold, like a DB-loaded server after a restart.
         "mcp_servers": {MCP_SERVER: {"url": f"http://127.0.0.1:{MCP_PORT}/mcp", "transport": "http"}},
     })
@@ -65,7 +65,7 @@ def proxy(layout, tmp_path_factory):
     callbacks_dir = work / "custom_callbacks"
     callbacks_dir.mkdir()
     pod_layout.stage(layout, callbacks_dir)
-    (work / "config.yaml").write_text(_config(layout.callbacks))
+    (work / "config.yaml").write_text(_config(layout))
     for fake in ("fake_upstream.py", "fake_mcp.py"):
         (work / fake).write_bytes((Path(__file__).parent / fake).read_bytes())
     for path in [work, *work.rglob("*")]:
@@ -78,7 +78,8 @@ def proxy(layout, tmp_path_factory):
     with log_path.open("w") as log:
         proc = subprocess.Popen([
             *_runner(), "--name", name,
-            "-p", f"127.0.0.1:{port}:4000",
+            # Same port both sides: WSL devcontainer podman runs host-network and ignores the mapping.
+            "-p", f"127.0.0.1:{port}:{port}",
             "-e", f"PYTHONPATH={layout.pythonpath}",
             "-v", f"{callbacks_dir}:{pod_layout.CALLBACKS_ROOT}:ro",
             "-v", f"{work / 'config.yaml'}:/app/config.yaml:ro",
@@ -86,7 +87,7 @@ def proxy(layout, tmp_path_factory):
             "-v", f"{work / 'fake_mcp.py'}:/it/fake_mcp.py:ro",
             "--entrypoint", "sh",
             layout.image,
-            "-c", "python /it/fake_upstream.py & exec litellm --config /app/config.yaml --port 4000",
+            "-c", f"python /it/fake_upstream.py & exec litellm --config /app/config.yaml --port {port}",
         ], stdout=log, stderr=subprocess.STDOUT)
 
     proxy = Proxy(f"http://127.0.0.1:{port}", name, log_path)

@@ -104,6 +104,17 @@ def test_ratelimit_headers_reach_client(proxy, stream):
     assert resp.headers.get("anthropic-ratelimit-unified-5h-utilization") == "0.42"
 
 
+@pytest.mark.parametrize("path", ["/v1/chat/completions", "/v1/messages"])
+def test_error_body_carries_call_id(proxy, path):
+    resp = proxy.client.post(path, json={
+        "model": "no-such-model", "max_tokens": 64, "messages": [{"role": "user", "content": "hi"}]})
+
+    assert resp.status_code >= 400, resp.text
+    call_id = resp.headers.get("x-litellm-call-id")
+    assert call_id, resp.headers
+    assert resp.json()["error"].get("litellm_call_id") == call_id, resp.text
+
+
 def test_mcp_tool_call_routes_on_a_cold_tool_mapping(proxy):
     proxy.start_fake_mcp()
 
