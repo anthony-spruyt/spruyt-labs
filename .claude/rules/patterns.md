@@ -14,9 +14,11 @@ cluster/apps/<namespace>/
 │   ├── ks.yaml
 │   ├── app/
 │   │   ├── kustomization.yaml
+│   │   ├── kustomizeconfig.yaml  # ConfigMap hash suffix (see below)
 │   │   ├── release.yaml        # HelmRelease
 │   │   ├── values.yaml         # Helm values
 │   │   ├── vpa.yaml            # VPA (recommendation-only)
+│   │   ├── network-policies.yaml # CiliumNetworkPolicies
 │   │   └── *-secrets.sops.yaml # Encrypted secrets
 │   └── <optional>/         # Optional dependent resources (e.g., rbac/, resources/)
 ├── <app1>/                 # Multiple apps (e.g., operator + instance)
@@ -31,7 +33,7 @@ cluster/apps/<namespace>/
 
 When an app has dependent resources that must apply after it (e.g., RBAC or CRs that need its CRDs), add multiple Kustomizations in the same `ks.yaml` with `dependsOn`. See existing `ks.yaml` files in `cluster/apps/` for examples.
 
-Ingress routes never go in the app directory; they live under `cluster/apps/traefik/traefik/ingress/<namespace>/` (see `ingress-and-certificates.md`).
+Ingress routes never go in the app directory; they live under `cluster/apps/traefik/traefik/ingress/<namespace>/` (see `ingress-and-certificates.md`). Certificates for non-HTTP services (MQTT, DNS) are the exception and live in the app's `app/` directory.
 
 ## Variable Substitution
 
@@ -51,6 +53,9 @@ Pattern: `<name>-secrets.sops.yaml` or `<name>.sops.yaml`
 ## Helm Values
 
 Check the chart's upstream `values.yaml` for the pinned chart version before editing Helm values (Context7, or WebFetch raw.githubusercontent.com) — key paths differ between charts and versions.
+
+- Every container gets `priorityClassName` and `resources`. CPU limit = request × the tier multiplier in `docs/workload-classification.md`; no CPU limit for `critical-infrastructure`.
+- HelmRelease sets `interval: 4h` and leaves out `timeout`, `install`, `upgrade`, and `rollback`: Kyverno injects them (`cluster/apps/kyverno/policies/app/helmrelease-defaults.yaml`).
 
 ## VPA (Vertical Pod Autoscaler)
 
@@ -78,7 +83,7 @@ Only core infrastructure namespaces should be excluded — workload namespaces r
 
 ## HelmRelease with ConfigMapGenerator
 
-When using `configMapGenerator` for HelmRelease values, add `kustomizeconfig.yaml` to handle the hash suffix:
+Every HelmRelease takes its values from a ConfigMap generated from `values.yaml`, with `kustomizeconfig.yaml` handling the hash suffix:
 
 ```yaml
 # kustomizeconfig.yaml

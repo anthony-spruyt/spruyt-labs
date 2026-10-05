@@ -8,6 +8,8 @@ argument-hint: [target-tag]
 
 UniFi OS runs as a single Docker container on a Raspberry Pi 4B, **outside** the Talos cluster. Flux does not manage it. Upgrades are `compose down / pull / up -d` against a pinned image tag.
 
+Preflight: run `ssh -G unifi | grep -q '^hostname unifi$' && echo "no alias"`. If it prints `no alias`, or `/home/aspruyt/uos-migration-backups/` is missing, stop: this skill runs from the operator's workstation, not a devcontainer or Coder workspace.
+
 Two conventions used below:
 
 - **[HUMAN]** marks a step this skill cannot perform itself. Stop there and ask the user to do it.

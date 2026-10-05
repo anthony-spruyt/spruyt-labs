@@ -34,7 +34,7 @@ spec:
     secretName: <workload>-${EXTERNAL_DOMAIN/./-}-tls
 ```
 
-List the file in that directory's `kustomization.yaml`; a new directory also goes in `cluster/apps/traefik/traefik/ingress/kustomization.yaml`.
+List the file in that directory's `kustomization.yaml`. A new directory also goes in `cluster/apps/traefik/traefik/ingress/kustomization.yaml`, and its app goes in `dependsOn` in `cluster/apps/traefik/traefik/ks.yaml`.
 
 ### DNS annotations
 
@@ -57,7 +57,7 @@ external-dns manages A, AAAA and CNAME only. `HTTPS` (SVCB) records are outside 
 
 ## Certificate Pattern
 
-Path: the IngressRoute's directory for HTTP routes. Certificates for non-HTTP services (MQTT, DNS) live in the app's own `app/` directory.
+Path: same directory as the IngressRoute
 
 ```yaml
 apiVersion: cert-manager.io/v1

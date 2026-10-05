@@ -21,6 +21,8 @@ gh pr view <N> --json number,title,author,state,labels,headRefName,files
 
 Stop and tell the user if the PR is not open, or is not from Renovate (author `app/renovate` or branch `renovate/*`).
 
+If the PR touches `talos/topf.yaml`, stop and hand off: a `kubernetesVersion` bump goes to the `kubernetes-upgrade` skill, a `talosVersion` bump to the `talos-upgrade` agent. Flux doesn't apply that file, so merging it alone records a version the nodes aren't running.
+
 ## 2. Run the analyzer
 
 Spawn the `renovate-pr-analyzer` subagent. Get the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`. Prompt:

@@ -42,17 +42,15 @@ Mirror a recent app with the same needs instead of writing manifests from memory
 | Need                                           | Reference                                 |
 | ---------------------------------------------- | ----------------------------------------- |
 | Chart from a HelmRepository, CNPG, ESO, ingress | `cluster/apps/temporal-system/temporal/`  |
-| app-template (image only)                       | `cluster/apps/cloudflare-system/cloudflared/` |
+| app-template (image only)                       | `cluster/apps/observability/mcp-victoriatraces/` |
 
 ## 5. Write the files
 
 - **Chart source** (new only): `cluster/flux/meta/repositories/helm/` or `oci/`, listed in that directory's `kustomization.yaml`.
 - **Namespace** (new only): `namespace.yaml` with PSA `restricted` unless the workload can't run restricted, the namespace `kustomization.yaml`, and `./<namespace>` in `cluster/apps/kustomization.yaml`.
-- **App**: `ks.yaml` and `app/` with `kustomization.yaml`, `kustomizeconfig.yaml`, `release.yaml`, `values.yaml`, `vpa.yaml`, plus `network-policies.yaml`, secrets, and database manifests as needed.
-- **values.yaml**: `priorityClassName` and `resources` on every container. CPU limit is request × the tier multiplier in `docs/workload-classification.md`; no CPU limit for `critical-infrastructure`.
-- **HelmRelease**: set `interval: 4h`. Leave out `timeout`, `install`, `upgrade`, and `rollback`; Kyverno injects them (`cluster/apps/kyverno/policies/app/helmrelease-defaults.yaml`).
-- **Network policies**: CiliumNetworkPolicies in `app/network-policies.yaml`, shaped like the reference app's. Allow only the ingress and egress the app needs.
-- **Ingress**: goes under `cluster/apps/traefik/traefik/ingress/<namespace>/`, never in the app directory. Add the directory to `ingress/kustomization.yaml` and the app to `dependsOn` in `cluster/apps/traefik/traefik/ks.yaml`.
+- **App**: `ks.yaml` and `app/` per the App Structure and Helm Values sections of `patterns.md`, plus secrets and database manifests as needed.
+- **Network policies**: shape `app/network-policies.yaml` like the reference app's. Allow only the ingress and egress the app needs.
+- **Ingress**: follow `ingress-and-certificates.md`, including the traefik `ks.yaml` `dependsOn`.
 - **Docs**: add the workload to its tier table in `docs/workload-classification.md`. Write a README only when there is something non-obvious to say.
 
 ## 6. Validate and ship
