@@ -514,10 +514,10 @@ resource "coder_script" "happy" {
       [ -s "$settings" ] || echo '{}' >"$settings"
       jq '.includeCoAuthoredBy = false' "$settings" >"$settings.tmp" && mv "$settings.tmp" "$settings" ||
         { rm -f "$settings.tmp"; echo "WARNING: could not set includeCoAuthoredBy in $settings"; }
-      # Auth comes from env, so Claude's first-run theme and login screens would only block the session.
+      # Auth comes from env, so Claude's first-run, login and folder-trust screens would only block the session.
       state=/home/vscode/.claude.json
       [ -s "$state" ] || (umask 077; echo '{}' >"$state")
-      jq '.hasCompletedOnboarding = true' "$state" >"$state.tmp" && chmod 600 "$state.tmp" && mv "$state.tmp" "$state" ||
+      jq --arg d "${local.workspace_folder}" '.hasCompletedOnboarding = true | .projects[$d].hasTrustDialogAccepted = true' "$state" >"$state.tmp" && chmod 600 "$state.tmp" && mv "$state.tmp" "$state" ||
         { rm -f "$state.tmp"; echo "WARNING: could not mark Claude onboarding done in $state"; }
     else
       echo "jq not found, Happy will add its co-author trailer and Claude will show first-run screens"
