@@ -15,7 +15,7 @@ Run these on their triggers without waiting to be asked:
 - **qa-validator** - before committing edited files, unless a skip condition below applies. Validates syntax, standards, and docs.
 - **cluster-validator** - after changes that affect `cluster/` reach `main`: when you push or merge a PR, or when the user says "pushed", "merged", or "deployed".
 
-Pass the linked issue number to both: each posts its report as a comment on that issue. Also pass qa-validator the files you changed; it validates only those. qa-validator returns BLOCKED without one; cluster-validator runs without one (Renovate merges have none). Also pass cluster-validator the last validated `origin/main` sha, so commits pushed while validators were skipped are checked too.
+Pass the linked issue number to both: each posts its report as a comment on that issue. Also pass qa-validator the files you changed; it validates only those. qa-validator returns BLOCKED without both; cluster-validator runs without one (Renovate merges have none). Also pass cluster-validator the last validated `origin/main` sha, so commits pushed while validators were skipped are checked too.
 
 > **Rule of thumb:** If it's in `cluster/` and gets deployed via Flux → it's a cluster resource → run both validators
 

@@ -39,9 +39,9 @@ Omitting `model` (or setting `inherit`) runs the agent on the main session's mod
 
 | Category                         | Lines   | Words     |
 | -------------------------------- | ------- | --------- |
-| Small                            | 100-150 | \<800     |
+| Small                            | 100-150 | <800     |
 | Medium                           | 150-300 | 800-1,500 |
-| Large (review for padding)       | 500+    | 2,800+    |
+| Large (review for padding)       | 300+    | 2,000+    |
 
 **Size is a signal, not a target.** A long agent is worth reviewing, but cut a line only because it fails the test in `anthropic-best-practices.md` Section 1 (the model already knows it, it duplicates inherited context from CLAUDE.md/rules, or it is a verbose example), never to hit a line count. Agents are single `.md` files; do not extract content to separate files.
 

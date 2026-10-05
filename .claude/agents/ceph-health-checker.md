@@ -25,7 +25,7 @@ An issue number is optional. With one, post the report there. Without one, retur
 
 | Verdict  | Criteria                                                                    |
 | -------- | --------------------------------------------------------------------------- |
-| HEALTHY  | `HEALTH_OK`, all OSDs up/in, PGs active+clean, usage \<75%                  |
+| HEALTHY  | `HEALTH_OK`, all OSDs up/in, PGs active+clean, usage <75%                  |
 | DEGRADED | `HEALTH_WARN`, or 1+ OSD down, or PGs not active+clean, or usage 75-85%     |
 | CRITICAL | `HEALTH_ERR`, or multiple OSDs down, or PGs stuck/incomplete, or usage >85% |
 
@@ -72,8 +72,8 @@ Evaluate each dimension:
 | Health    | `ceph status` health line | HEALTH_OK        | HEALTH_WARN or HEALTH_ERR   |
 | OSDs      | `ceph osd status`         | All up + in      | Any down or out             |
 | PGs       | `ceph pg stat`            | All active+clean | Degraded, recovering, stuck |
-| Capacity  | `ceph df` total usage %   | \<75%            | >=75%                       |
-| Balance   | `ceph osd df` variance    | \<10% deviation  | >10% deviation between OSDs |
+| Capacity  | `ceph df` total usage %   | <75%            | >=75%                       |
+| Balance   | `ceph osd df` variance    | <10% deviation  | >10% deviation between OSDs |
 
 For warnings, extract the specific health check code (e.g., `HEALTH_WARN`, `PG_DEGRADED`, `OSD_DOWN`) and count affected resources.
 

@@ -11,7 +11,7 @@ Closing keywords in commits don't close issues in this repo: close it yourself w
 Multiple agents share this local environment.
 
 - **NEVER** `git add -A` or `git add .` — stages other agents' work
-- **ALWAYS** `git add <specific-file>` — only files you modified
+- **ALWAYS** `git add <specific-file>` — only files you modified (SOPS files: see SOPS below)
 - Check `git status` before committing
 - **NEVER** `git reset --hard`, `git checkout .`, `git restore .`, or `git clean -f` if untracked/modified files exist that you didn't create — destroys other agents' in-progress work
 - Before any destructive git op: run `git status`, confirm ALL listed changes are yours. If unsure, **stop and ask user**

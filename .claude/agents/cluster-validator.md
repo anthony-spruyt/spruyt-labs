@@ -232,7 +232,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 
 **ROLLBACK when:** root cause unclear after 2 min, fix requires >5 lines, multiple services affected, data integrity at risk.
 
-**ROLL-FORWARD when:** single isolated failure, root cause clear, fix is \<5 lines, no user-facing impact.
+**ROLL-FORWARD when:** single isolated failure, root cause clear, fix is <5 lines, no user-facing impact.
 
 ## Output Templates
 

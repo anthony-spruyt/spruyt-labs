@@ -86,7 +86,7 @@ kubectl get pods -n <namespace>
 | Reason                    | Meaning                | Severity Guidance                                 | Action                                                                           |
 | ------------------------- | ---------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `POLICY_DENIED`           | No matching allow rule | Always investigate — query VLogs for flow details | Add egress/ingress CNP                                                           |
-| `STALE_OR_UNROUTABLE_IP`  | Pod IP changed/gone    | \<10/h normal churn, >50/h check for crash loops  | `kubectl get pods -n <ns> --sort-by='.status.containerStatuses[0].restartCount'` |
+| `STALE_OR_UNROUTABLE_IP`  | Pod IP changed/gone    | <10/h normal churn, >50/h check for crash loops  | `kubectl get pods -n <ns> --sort-by='.status.containerStatuses[0].restartCount'` |
 | `SERVICE_BACKEND_NOT_FOUND` | Service has no ready backends | Report total; name the source namespace if sustained | Not a CNP gap. Check the target Service's EndpointSlices |
 | `VLAN_FILTERED`           | L2 neighbor noise      | Report total, don't investigate                   | Ignore — noisy L2 neighbors on bare metal                                        |
 | `TTL_EXCEEDED`            | Hop limit reached      | Report total, don't investigate                   | Ignore — traceroute or mDNS probe noise                                          |

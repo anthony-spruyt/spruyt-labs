@@ -41,8 +41,8 @@ talosctl -n "$CP_NODES" etcd members
 
 | Metric   | Healthy | Warning  | Action             |
 | -------- | ------- | -------- | ------------------ |
-| In-Use % | >80%    | \<70%    | Recommend defrag   |
-| DB Size  | \<500MB | >1GB     | Investigate        |
+| In-Use % | >80%    | <70%    | Recommend defrag   |
+| DB Size  | <500MB | >1GB     | Investigate        |
 | Leader   | Stable  | Flapping | Investigate        |
 | Errors   | None    | Any      | Report immediately |
 
@@ -55,7 +55,7 @@ talosctl -n <node-ip> logs etcd 2>&1 | grep -iE '"level":"warn"|slow|took too lo
 
 **Slow operation thresholds:**
 
-- Expected: \<100ms
+- Expected: <100ms
 - Warning: 100-500ms (report count)
 - Critical: >500ms (investigate cause)
 
@@ -124,7 +124,7 @@ End your final reply to the caller (not any issue comment) with an `### Agent De
 
 | Symptom                     | Likely Cause                 | Action                                     |
 | --------------------------- | ---------------------------- | ------------------------------------------ |
-| Low in-use % (\<70%)        | Fragmentation                | Run defrag                                 |
+| Low in-use % (<70%)        | Fragmentation                | Run defrag                                 |
 | Slow operations on one node | Slow disk                    | Check disk I/O, consider hardware          |
 | Leader on slow node         | Suboptimal                   | Recommend `talosctl -n <leader-ip> etcd forfeit-leadership`; run it only when asked |
 | High DB size (>500MB)       | Too many resources/revisions | Check compaction settings                  |

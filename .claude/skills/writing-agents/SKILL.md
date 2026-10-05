@@ -68,15 +68,15 @@ Write the agent in the main session. Use one fresh-context sub-agent for review,
 
 Read the agent requirements, this skill, existing agents (for pattern reference), and all inherited context files (CLAUDE.md, `.claude/rules/*`). Then:
 
-01. **Discover patterns** — Read 2-3 existing agents in `.claude/agents/` for local conventions
-02. **Define persona** — Expert identity with domain expertise, 1-2 sentences
-03. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, no `<example>` dialogue, "When to use" and "When NOT to use" sections). Choose model, effort, and tools (model and effort — `references/project-patterns.md` Section 2; least privilege — `references/anthropic-best-practices.md` Section 9)
-04. **Structure system prompt** — Follow section order from System Prompt Structure above. Include output format template and handoff protocol
-05. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
-06. **Scope-limit** — If testing shows over-reach, add "Only make changes directly requested." (see `references/anthropic-best-practices.md` Section 4)
-07. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, state the stop unconditionally with its reason and a named end state (e.g., "stop and return BLOCKED: <reason>"). Add "stop on error" for sequential workflows
-08. **Calibrate emphasis** — Same rules as Optimization Phase 1 step 4
-09. **Avoid inherited duplication** — Read CLAUDE.md and `.claude/rules/*`. Do not duplicate content. Use single-line references (e.g., "Follow inherited secret handling rules")
+1. **Discover patterns** — Read 2-3 existing agents in `.claude/agents/` for local conventions
+2. **Define persona** — Expert identity with domain expertise, 1-2 sentences
+3. **Write frontmatter** — Description complying with the Description Field section of this skill (under 1024 chars, no workflow summary, no `<example>` dialogue, "When to use" and "When NOT to use" sections). Choose model, effort, and tools (model and effort — `references/project-patterns.md` Section 2; least privilege — `references/anthropic-best-practices.md` Section 9)
+4. **Structure system prompt** — Follow section order from System Prompt Structure above. Include output format template and handoff protocol
+5. **Calibrate freedom** — High freedom for judgment calls, low freedom for exact commands (see `references/anthropic-best-practices.md` Section 2)
+6. **Scope-limit** — If testing shows over-reach, add "Only make changes directly requested." (see `references/anthropic-best-practices.md` Section 4)
+7. **Safety gates** — Identify destructive or externally-visible operations. Add confirmation gates for irreversible actions. For hard-stop gates, state the stop unconditionally with its reason and a named end state (e.g., "stop and return BLOCKED: <reason>"). Add "stop on error" for sequential workflows
+8. **Calibrate emphasis** — Same rules as Optimization Phase 1 step 4
+9. **Avoid inherited duplication** — Read CLAUDE.md and `.claude/rules/*`. Do not duplicate content. Use single-line references (e.g., "Follow inherited secret handling rules")
 10. **Size check** — Run `wc -l` and `wc -w`. Past ~300 lines / 2,000 words, re-test each section against `references/anthropic-best-practices.md` Section 1; length alone is not a reason to cut
 
 ### Phase 2: Review (one sub-agent)

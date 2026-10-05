@@ -3,7 +3,7 @@
     "deny": [
       "Read(./talos/clusterconfig/**)",
       "Read(./talos/output/**)",
-      "Read(/tmp/topf-*/**)"
+      "Read(//tmp/topf-*/**)"
     ]
   },
   "enabledPlugins": {

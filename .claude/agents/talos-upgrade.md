@@ -447,8 +447,7 @@ talosctl upgrade \
   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<target-version>
 ```
 
-**When to add `--drain=false`:** only if the Phase 1 survey found a PDB stuck at `disruptionsAllowed: 0`. `talosctl upgrade` defaults to `--drain=true`, which cordons the node and evicts pods via the eviction API before rebooting. A CNPG cluster without `enablePDB: false` gets an operator-managed primary-role PodDisruptionBudget with `minAvailable: 1` that targets only the primary pod, so
-`disruptionsAllowed` is `0` regardless of instance count and the primary is **structurally unevictable**.
+**When to add `--drain=false`:** only if the Phase 1 survey found a PDB stuck at `disruptionsAllowed: 0`. `talosctl upgrade` defaults to `--drain=true`, which cordons the node and evicts pods via the eviction API before rebooting; a PDB at `0` blocks that eviction (the CNPG case is explained in Phase 1).
 
 The drain then always hits its timeout and the upgrade aborts. This failure mode is worse than useless — it is actively destructive:
 
@@ -592,7 +591,7 @@ flux get kustomizations -A
 flux get helmreleases -A
 ```
 
-**Ceph heartbeat cleanup:** `OSD_SLOW_PING_TIME_BACK` and `OSD_SLOW_PING_TIME_FRONT` are common after rolling reboots and do self-clear. Follow the Phase 4 stale heartbeat instructions: poll the millisecond value, and only restart the OSD if it is flat across several minutes rather than decreasing.
+**Ceph heartbeat cleanup:** follow the Step 4.5 stale heartbeat instructions.
 
 ### Phase 6: Workload Rebalancing (Optional)
 
@@ -811,15 +810,15 @@ On an unexpected Talos, etcd or Ceph error, look it up in Context7 (`/siderolabs
 
 ## Critical Safety Rules
 
-01. **NEVER upgrade multiple control plane nodes simultaneously**
-02. **ALWAYS verify etcd quorum (3 healthy) after each control plane upgrade**
-03. **ALWAYS wait for Ceph ready (Step 4.1) between worker upgrades**
-04. **ALWAYS create etcd backup before control plane upgrades**
-05. **NEVER hardcode IPs** - query dynamically from cluster
-06. **NEVER force upgrades** - if stuck, investigate rather than force
-07. **NEVER skip health checks** - even for "quick" upgrades
-08. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
-09. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
+1. **NEVER upgrade multiple control plane nodes simultaneously**
+2. **ALWAYS verify etcd quorum (3 healthy) after each control plane upgrade**
+3. **ALWAYS wait for Ceph ready (Step 4.1) between worker upgrades**
+4. **ALWAYS create etcd backup before control plane upgrades**
+5. **NEVER hardcode IPs** - query dynamically from cluster
+6. **NEVER force upgrades** - if stuck, investigate rather than force
+7. **NEVER skip health checks** - even for "quick" upgrades
+8. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
+9. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
 10. **NEVER run `task talos:apply` / `topf apply` between the start of Phase 3 and the completion of Phase 4** - including the gap between the two phases, while nodes straddle versions - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet,
     that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Step 2b.3 and Phase 8 are the only sanctioned applies: once before Phase 3 (minor only), once after the pin lands
 11. **ALWAYS run `task talos:diff` and check it before `TOPF_CONFIRM=false task talos:apply`** - the checked diff replaces the interactive confirmation, so an apply without one is blind

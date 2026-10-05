@@ -27,7 +27,7 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 
 ### Phase 2: Create GitHub Issue
 
-Create a GitHub issue using the `infra` template so SRE agents see maintenance context. Include:
+Find or create the issue per the GitHub rule (search first), using the `infra` template so SRE agents see maintenance context. Include:
 
 - Title: `infra(k8s): upgrade Kubernetes to v<version>`
 - Label: `infra`
@@ -138,8 +138,8 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
    - `grep -rln --include='*.yaml' --include='*.md' --include='*.sh' -F '<old-version>' talos/ docs/ cluster/ .github/workflows/ .taskfiles/`
 2. Common locations: `talos/topf.yaml` (`kubernetesVersion`), `.github/workflows/_kubeconform.yaml` (`KUBERNETES_VERSION`), `.taskfiles/install/scripts/install-kubectl.sh` (`VERSION`)
 3. Land the version change:
-   - **Started from a Renovate PR:** it already bumps the files Renovate tracks. If step 1 found other references, update them on the PR branch, run qa-validator with the issue number, and push. Then `gh pr merge <N> --squash`
-   - **Otherwise:** update every reference, run qa-validator with the issue number, then commit and push
+   - **Started from a Renovate PR:** it already bumps the files Renovate tracks. If step 1 found other references, update them on the PR branch, run qa-validator with the issue number and changed files, and push. Then `gh pr merge <N> --squash`
+   - **Otherwise:** update every reference, run qa-validator with the issue number and changed files, then commit and push
    - Either way, run cluster-validator if a changed file is under `cluster/`
 4. Verify zero old references remain on `main` and `task talos:diff` exits 0, then close the issue
 5. Present final report: version change, node status, health results, files changed
