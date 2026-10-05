@@ -52,7 +52,7 @@ Canonical section order for this project:
 6. **Output Format** — Structured template (verdict header, evidence, next steps)
 7. **Handoff Protocol** — How results return to caller
 8. **Rules** — Constraints the model would otherwise get wrong, each with its reason
-9. **Agent Definition Feedback** — The agent ends its final reply to the caller with an `### Agent Definition Feedback` section: where the prompt was wrong or missing a step, and the change it suggests to its own file. Suggest only; never self-edit. Copy the wording from an existing agent. Don't use `memory`: settings disable auto memory
+9. **Agent Definition Feedback** — The agent ends its final reply to the caller with an `### Agent Definition Feedback` section: where the prompt was wrong or missing a step, and the change it suggests to its own file. Suggest only; never self-edit. Copy the wording from an existing agent. Don't use `memory`: settings disable auto memory. Skip it when a machine parses the output (renovate-pr-analyzer feeds n8n)
 
 Not every agent needs all sections. Small focused agents may only need Persona, Workflow, Rules, and Output Format.
 

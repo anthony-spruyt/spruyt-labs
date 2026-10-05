@@ -25,7 +25,7 @@ You are a senior platform engineer specializing in Talos Linux cluster operation
 
 Track upgrade work with a GitHub issue. If no issue exists, create one.
 
-Use plain lists, not checkboxes, in the issue body. The body is not edited after creation; progress goes in comments.
+Use plain lists, not checkboxes, in the issue body: checkboxes are hard to edit reliably. Post per-node progress as comments, and edit the body when the plan changes.
 
 Create a GitHub issue with title `infra(talos): upgrade Talos v<current> to v<target>` and label `infra`. Body template:
 
@@ -278,7 +278,7 @@ Every node must validate. A conflict error names both the v1alpha1 path and the 
 
 #### Step 2b.3: Land the migration on main before upgrading
 
-Commit, push and merge the migrated patches. Do not begin Phase 3 with an unmerged migration — a node that reboots into the new version generates against the new contract and needs the migrated patches already on main.
+Do not begin Phase 3 with an unmerged migration — a node that reboots into the new version generates against the new contract and needs the migrated patches already on main. The patches need qa-validator before they commit, and you can't run it. Return PARTIAL with them under "Uncommitted" and the required action "run qa-validator, commit, push, then resume at Step 2b.3". No node has changed yet, so the pause is safe.
 
 **The new documents cannot be applied yet, and that is expected.** `apply` generates against each node's running version, so while every node is still on the old release the guards take their old-version branch and `topf apply` emits the *old* config form. The migrated documents only reach a node after that node is running the new version. An apply at this point changes nothing but
 `machine.install.image`, which is the upgrade target pointer:
@@ -617,8 +617,8 @@ Once the job completes, count pods per node with `kubectl get pods -A -o wide`.
 
 **The pin must be on main first.** `apply` renders `machine.install.image` from `talosVersion` in `talos/topf.yaml`. If you apply before the pin moves, every node goes back to the old installer image.
 
-- **Renovate PR:** tell the user to merge it. Do not merge it yourself.
-- **Manual request:** set `talosVersion` in `talos/topf.yaml`, then commit and push it to main with the README change.
+- **Renovate PR:** merge it with `gh pr merge <N> --squash`.
+- **Manual request:** set `talosVersion` in `talos/topf.yaml` and leave it uncommitted; it needs qa-validator. Return PARTIAL with the required action "run qa-validator, commit and push the pin, then resume at Phase 8".
 
 Once the pin is on main and pulled locally, run the dry run. It's non-interactive and safe:
 
@@ -653,7 +653,7 @@ kubectl run kata-smoke -n default --rm -i --restart=Never --image=busybox:1.37 -
 
 **Good:** prints a kernel without the `-talos` suffix (the Kata guest kernel, not the host's). A stuck `ContainerCreating` or sandbox error means the Kata config is broken: run the Step 4.4a diff again, fix the patch, re-apply.
 
-If you can't finish this phase in the session (for example the Renovate PR isn't merged yet), return PARTIAL with the merge → diff → apply steps as the required actions. Do not return SUCCESS.
+If you can't finish this phase in the session (for example the pin isn't on main yet), return PARTIAL with the land-pin → diff → apply steps as the required actions. Do not return SUCCESS.
 
 ### Phase 9: Final Report
 
@@ -744,7 +744,7 @@ End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition F
 - Machine config: applied, `task talos:diff` clean
 
 ### Commits on main
-- talos/README.md (and talos/topf.yaml for manual upgrades)
+- talos/README.md
 
 ### Uncommitted
 - talos/patches/worker/13-tune-kata-memory.yaml, if Step 4.4a changed it (needs qa-validator, then commit)

@@ -182,7 +182,7 @@ If Context7 lacks the library, follow inherited research priority (GitHub, WebFe
 ### 8. Security Review
 
 - No plaintext secrets (passwords, tokens, keys in values)
-- SOPS files contain `sops:` metadata block
+- SOPS files contain the `sops:` metadata block: `grep -q '^sops:' <file>` (settings deny reading `*.sops.*`)
 - No sensitive data in commit messages
 - Follow inherited secret handling rules
 

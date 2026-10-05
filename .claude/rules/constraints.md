@@ -31,7 +31,7 @@ Never put IPs, CIDRs, or network details in issues, commits, or PRs. Use generic
 - `kubectl get secret <name> -o yaml|json|jsonpath|--output=<any>`
 - `sops -d <file>`
 - `echo "$SECRET"`, `printenv VAR`, `env | grep`
-- Reading `talos/clusterconfig/*` (plaintext Talos secrets)
+- Printing or reading `talos/clusterconfig/*` (plaintext Talos secrets); passing the path to `talosctl validate` is fine
 
 **kubectl exec — NEVER cat/read:**
 

@@ -66,9 +66,12 @@ Classify the change to optimize checks:
 | `infrastructure`   | Storage, ingress, certs     | System services, cluster-wide health  |
 | `mixed`            | Multiple types              | All checks                            |
 
+Read the change from `origin/main`. A `gh pr merge` leaves local `main` behind it.
+
 ```bash
-git log --oneline -3
-git diff HEAD~1 --name-only
+git fetch origin main
+git log --oneline -3 origin/main
+git diff origin/main~1 origin/main --name-only
 ```
 
 ## Parallel Execution
@@ -115,7 +118,7 @@ kubectl wait --for=condition=Ready kustomization/<name> -n flux-system --timeout
 ### Step 2: Wait for full cluster to settle
 
 ```bash
-CURRENT_REV=$(git rev-parse --short HEAD)
+CURRENT_REV=$(git rev-parse --short origin/main)
 
 # Repeat up to 5 times with 60s between checks (5 min total)
 # flux output: NAMESPACE NAME REVISION SUSPENDED READY MESSAGE
@@ -148,7 +151,7 @@ flux get kustomization <name> -n flux-system
 
 | Condition                                  | Classification              | Action                                                                                              |
 | ------------------------------------------ | --------------------------- | --------------------------------------------------------------------------------------------------- |
-| Revision matches HEAD, Ready=False/Unknown | Still reconciling           | Wait another 60s; if still failing after 5 min total, treat as issue from this change               |
+| Revision matches $CURRENT_REV, Ready=False/Unknown | Still reconciling           | Wait another 60s; if still failing after 5 min total, treat as issue from this change               |
 | Revision is OLD, Ready=Unknown             | Still fetching new revision | Wait another 60s; kustomizations show old revision + Unknown while actively reconciling the new one |
 | Revision is OLD, Ready=False               | Pre-existing issue          | Report as pre-existing, not caused by this change                                                   |
 | Suspended=True                             | Intentionally suspended     | Ignore                                                                                              |
@@ -244,7 +247,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 ### Root Cause
 [what went wrong]
 ### Rollback Instructions
-1. Revert: `git revert HEAD`
+1. Revert: `git pull --ff-only && git revert <validated-sha>`
 2. Push the revert
 3. Re-invoke cluster-validator to confirm
 ### Investigation Hints
@@ -286,6 +289,8 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 - **Never fabricate context.** Only report what you observed in actual command output. Do not speculate about what "might have" happened.
 
 ## Flux Recovery
+
+Flux webhooks reconcile on push. Use these only if the source revision is still stale after the Step 2 wait.
 
 ```bash
 flux reconcile source git flux-system

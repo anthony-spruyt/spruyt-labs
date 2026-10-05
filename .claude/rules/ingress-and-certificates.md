@@ -1,5 +1,5 @@
 ---
-paths: [cluster/apps/traefik/**, cluster/apps/external-dns/**]
+paths: [cluster/apps/traefik/**, cluster/apps/external-dns/**, cluster/apps/*/*/app/certificate*.yaml]
 ---
 
 # Ingress and Certificates
