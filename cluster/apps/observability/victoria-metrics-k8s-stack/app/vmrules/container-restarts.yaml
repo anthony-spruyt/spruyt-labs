@@ -17,10 +17,10 @@ spec:
                 increase_prometheus(kube_pod_container_status_restarts_total[24h])
               ) >= 2
             )
-            unless on (namespace, pod, container)
+            and on (namespace, pod, container)
             (
               max by (namespace, pod, container) (
-                kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}
+                kube_pod_container_status_last_terminated_reason{reason=~"Error|ContainerCannotRun|StartError"}
               ) == 1
             )
           for: 0m
