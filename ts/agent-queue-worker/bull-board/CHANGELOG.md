@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/anthony-spruyt/spruyt-labs/compare/bull-board/v0.2.40...bull-board/v1.0.0) (2026-10-06)
+
+
+### Bug Fixes
+
+* **bull-board:** refresh lockfile within semver ranges ([6c77b91](https://github.com/anthony-spruyt/spruyt-labs/commit/6c77b91f69380456a4121555721418dff222dbd3)), closes [#3363](https://github.com/anthony-spruyt/spruyt-labs/issues/3363)
+
 ## [0.2.40](https://github.com/anthony-spruyt/spruyt-labs/compare/bull-board/v0.2.39...bull-board/v0.2.40) (2026-10-04)
 
 
