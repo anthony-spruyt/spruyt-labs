@@ -30,8 +30,7 @@
       "release-type": "node",
       "component": "bull-board",
       "tag-separator": "/",
-      "include-component-in-tag": true,
-      "release-as": "1.0.0"
+      "include-component-in-tag": true
     }
   }
 }
