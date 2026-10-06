@@ -34,8 +34,6 @@ The commit type on `main` decides the bump:
 | `feat!:` or a `BREAKING CHANGE:` footer         | major |
 | anything else (`fix`, `chore`, `ci`, `docs`, …) | patch |
 
-`bull-board` is pre-1.0, so a breaking change bumps the minor rather than the major until it reaches 1.0.0.
-
 To force a specific version, add a footer to the commit:
 
 ```text
