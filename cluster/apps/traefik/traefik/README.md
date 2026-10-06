@@ -19,8 +19,10 @@ To block part of a host, add a higher-`priority` route matching it with the `den
 
 ### Local plugin: traefik-api-key-auth
 
-`app/plugins/traefik-api-key-auth/` is vendored source for [LinkPhoenix/traefik-api-key-auth](https://github.com/LinkPhoenix/traefik-api-key-auth), loaded as a local plugin from a ConfigMap. It is vendored because the upstream module is not in the Traefik plugin catalog, so a remote plugin reference fails to download and every route using it returns 404. The local copy also adds a passthrough mode
-(`forwardBearerHeader` with no `keys`) that translates `X-API-KEY` into `Authorization: Bearer` for backends that validate the token themselves. It has its own Go tests, run in CI.
+The plugin source lives in [anthony-spruyt/traefik-api-key-auth](https://github.com/anthony-spruyt/traefik-api-key-auth), our fork of LinkPhoenix's plugin with a passthrough mode (`forwardBearerHeader` with no `keys`) that translates `X-API-KEY` into `Authorization: Bearer` for backends that validate the token themselves. It ships as a source-only OCI image, mounted as an image volume under
+`/plugins-local` and loaded as a local plugin, so Traefik downloads nothing at startup. The `localPlugins` key, `traefik-api-key-auth`, must match the `plugin:` key in every Middleware.
+
+If the plugin fails to load, Traefik still starts (`abortOnPluginFailure` is off) but drops every Middleware that uses it, and routes referencing those Middlewares return 404. Check the Traefik logs for `Plugins are disabled because an error has occurred`.
 
 Current consumer: `api-key-auth-otel` on the `otel.lan` OTLP route in `ingress/observability/`, keyed from `OTEL_API_KEY` in the ESO-generated `traefik-otel-api-key` secret (`app/otel-api-key-eso.yaml`). The key is `sl_` plus alphanumerics so LiteLLM secret masking catches it if it ever lands in a prompt. To rotate it, delete both the Secret and the ExternalSecret
 (`kubectl -n traefik delete secret,externalsecret traefik-otel-api-key`); Flux recreates the ExternalSecret with a new key. Then `kubectl -n traefik rollout restart deploy/traefik`, since nothing rolls Traefik on its own. Then update `OTEL_EXPORTER_OTLP_HEADERS` on every devcontainer host (see `DEVELOPMENT.md`). In-cluster senders go straight to backend pod DNS and don't use the key.

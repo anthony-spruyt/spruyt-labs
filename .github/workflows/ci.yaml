@@ -32,7 +32,6 @@ jobs:
       shutdown-orchestrator: "${{ steps.filter.outputs.shutdown-orchestrator }}"
       agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
       bull-board: "${{ steps.filter.outputs.bull-board }}"
-      traefik-plugin: "${{ steps.filter.outputs.traefik-plugin }}"
       bats: "${{ steps.filter.outputs.bats }}"
     steps:
       - name: Harden Runner
@@ -76,8 +75,6 @@ jobs:
               - '!ts/agent-queue-worker/bull-board/**'
             bull-board:
               - 'ts/agent-queue-worker/bull-board/**'
-            traefik-plugin:
-              - 'cluster/apps/traefik/traefik/app/plugins/traefik-api-key-auth/**'
             bats:
               - '**/*.bats'
               - 'cluster/apps/claude-agents-shared/**'
@@ -108,12 +105,6 @@ jobs:
     needs: "changes"
     if: "needs.changes.outputs.terraform == 'true'"
     uses: "./.github/workflows/_terraform-validate.yaml"
-  traefik-plugin:
-    needs: "changes"
-    if: "needs.changes.outputs.traefik-plugin == 'true'"
-    uses: "./.github/workflows/_go-test.yaml"
-    with:
-      workdir: "cluster/apps/traefik/traefik/app/plugins/traefik-api-key-auth"
   shutdown-orchestrator:
     needs:
       - "lint"
@@ -171,7 +162,6 @@ jobs:
       - "shutdown-orchestrator"
       - "agent-queue-worker"
       - "bull-board"
-      - "traefik-plugin"
       - "bats-test"
     if: "always()"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_summary.yaml@main"

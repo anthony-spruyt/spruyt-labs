@@ -79,13 +79,14 @@ tlsStore:
 deployment:
   additionalVolumes:
     - name: traefik-api-key-auth-plugin
-      configMap:
-        name: traefik-api-key-auth-plugin
+      image:
+        reference: ghcr.io/anthony-spruyt/traefik-api-key-auth:1.0.0@sha256:1e020f5a35f77ab55a27b72596010f961be935b70e4099f44f2a6ee6e5c9461a
+        pullPolicy: IfNotPresent
 experimental:
   localPlugins:
     traefik-api-key-auth:
-      moduleName: "github.com/linkphoenix/traefik-api-key-auth"
-      mountPath: /plugins-local/src/github.com/linkphoenix/traefik-api-key-auth
+      moduleName: "github.com/anthony-spruyt/traefik-api-key-auth"
+      mountPath: /plugins-local/src/github.com/anthony-spruyt/traefik-api-key-auth
       type: localPath
       volumeName: traefik-api-key-auth-plugin
 env:
