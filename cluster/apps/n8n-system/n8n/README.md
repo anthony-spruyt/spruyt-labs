@@ -24,7 +24,7 @@ For users with MFA enabled in n8n, disable it (`n8n mfa:disable --email=<email>`
 ### Agent platform wiring
 
 - **Prompts**: `app/prompts/*.md` become the `n8n-prompts` ConfigMap, mounted as a directory so edits reach running pods without a restart (the Dispatcher workflow reads them at run time).
-- **Agent MCP endpoint**: a `mcp-header-proxy` sidecar is added to the webhook deployment by a postRenderer in `app/release.yaml` and exposed as port 8080 on the `n8n-webhook` Service. Agent pods call `n8n-webhook.n8n-system.svc:8080/mcp/agent-platform`.
+- **Agent MCP endpoint**: a [`mcp-header-proxy`](https://github.com/anthony-spruyt/mcp-header-proxy) sidecar is added to the webhook deployment by a postRenderer in `app/release.yaml` and exposed as port 8080 on the `n8n-webhook` Service. Agent pods call `n8n-webhook.n8n-system.svc:8080/mcp/agent-platform`.
 - **Workflows** (Dispatcher, callbacks, MCP Server, SRE schedule) live only in the n8n database; they are not in Git, so they are backed up only as part of the n8n database.
 - **Credentials** for the Claude Code node (one K8s credential per agent namespace, including the Claude subscription login) also live only in n8n.
 

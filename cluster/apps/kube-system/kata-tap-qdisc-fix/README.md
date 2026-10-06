@@ -3,7 +3,7 @@
 ## Overview
 
 Workaround DaemonSet without which Kata pods have no network at all. Kernel 6.18+ gives `tap` devices the `fq` qdisc, whose horizon check silently drops the Cilium-timestamped reply packets that Kata mirrors into the VM. The daemon swaps the root qdisc on every `tap*_kata` interface to `pfifo_fast`. Root cause and packet traces: [#951](https://github.com/anthony-spruyt/spruyt-labs/issues/951).
-Source, env vars and the dry-run canary procedure: [`cmd/kata-tap-qdisc-fix/README.md`](../../../../cmd/kata-tap-qdisc-fix/README.md).
+Source, env vars and the dry-run canary procedure: [anthony-spruyt/kata-tap-qdisc-fix](https://github.com/anthony-spruyt/kata-tap-qdisc-fix).
 
 ## Operations
 

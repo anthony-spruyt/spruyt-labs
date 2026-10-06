@@ -7,12 +7,12 @@ Every container image in this repository is released by [release-please](https:/
 | Service               | Path                               | Image                                          |
 | --------------------- | ---------------------------------- | ---------------------------------------------- |
 | shutdown-orchestrator | `cmd/shutdown-orchestrator`        | `ghcr.io/anthony-spruyt/shutdown-orchestrator` |
-| kata-tap-qdisc-fix    | `cmd/kata-tap-qdisc-fix`           | `ghcr.io/anthony-spruyt/kata-tap-qdisc-fix`    |
-| mcp-header-proxy      | `cmd/mcp-header-proxy`             | `ghcr.io/anthony-spruyt/mcp-header-proxy`      |
 | agent-queue-worker    | `ts/agent-queue-worker`            | `ghcr.io/anthony-spruyt/agent-queue-worker`    |
 | bull-board            | `ts/agent-queue-worker/bull-board` | `ghcr.io/anthony-spruyt/bull-board`            |
 
 `bull-board` lives inside `ts/agent-queue-worker` but is released independently; its directory is excluded from the worker's paths so a bull-board change does not bump the worker.
+
+[`kata-tap-qdisc-fix`](https://github.com/anthony-spruyt/kata-tap-qdisc-fix) and [`mcp-header-proxy`](https://github.com/anthony-spruyt/mcp-header-proxy) are deployed here but built and released from their own repositories, under the same image names.
 
 ## How a release happens
 
@@ -34,7 +34,7 @@ The commit type on `main` decides the bump:
 | `feat!:` or a `BREAKING CHANGE:` footer         | major |
 | anything else (`fix`, `chore`, `ci`, `docs`, …) | patch |
 
-`kata-tap-qdisc-fix`, `mcp-header-proxy` and `bull-board` are pre-1.0, so a breaking change bumps the minor rather than the major until they reach 1.0.0.
+`bull-board` is pre-1.0, so a breaking change bumps the minor rather than the major until it reaches 1.0.0.
 
 To force a specific version, add a footer to the commit:
 

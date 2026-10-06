@@ -5,11 +5,11 @@ on:
   workflow_call:
     inputs:
       image:
-        description: "Image name (e.g., mcp-header-proxy)"
+        description: "Image name (e.g., shutdown-orchestrator)"
         required: true
         type: "string"
       workdir:
-        description: "Build context path (e.g., cmd/mcp-header-proxy)"
+        description: "Build context path (e.g., cmd/shutdown-orchestrator)"
         required: true
         type: "string"
       language:
@@ -22,12 +22,12 @@ on:
         type: "boolean"
         default: false
       version:
-        description: "Version to publish, without a leading v (e.g., 0.0.9). Required when push is true."
+        description: "Version to publish, without a leading v (e.g., 1.1.24). Required when push is true."
         required: false
         type: "string"
         default: ""
       tag-name:
-        description: "Git tag release-please created (e.g., mcp-header-proxy/v0.0.9). Required when push is true."
+        description: "Git tag release-please created (e.g., shutdown-orchestrator/v1.1.24). Required when push is true."
         required: false
         type: "string"
         default: ""

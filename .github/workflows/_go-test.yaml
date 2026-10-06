@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       workdir:
-        description: "Module directory (e.g., cmd/mcp-header-proxy)"
+        description: "Module directory (e.g., cmd/shutdown-orchestrator)"
         required: true
         type: "string"
       ref:

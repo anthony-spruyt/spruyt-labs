@@ -49,7 +49,7 @@ Each overlay's `claude-mcp-config.yaml` defines two servers:
 | `agentplatform` | `n8n-webhook.n8n-system.svc:8080/mcp/...`    | `AGENT_PLATFORM_MCP_AUTH_TOKEN` from `mcp-credentials`, plus job/session IDs |
 | `litellm`       | `litellm.litellm.svc.cluster.local:4000/mcp` | LiteLLM virtual key from `litellm-credentials`                               |
 
-Every other MCP server (e.g. Brave Search, VictoriaMetrics, n8n-mcp, UniFi) is reached through the LiteLLM MCP gateway and registered in LiteLLM, not here. Port 8080 on `n8n-webhook` is the `mcp-header-proxy` sidecar added by a postRenderer in `n8n-system/n8n/app/release.yaml`.
+Every other MCP server (e.g. Brave Search, VictoriaMetrics, n8n-mcp, UniFi) is reached through the LiteLLM MCP gateway and registered in LiteLLM, not here. Port 8080 on `n8n-webhook` is the [`mcp-header-proxy`](https://github.com/anthony-spruyt/mcp-header-proxy) sidecar added by a postRenderer in `n8n-system/n8n/app/release.yaml`.
 
 `$${VAR}` in the MCP config is Flux's escape for a literal `${VAR}`; Claude Code expands it from the pod environment at runtime.
 

@@ -1,4 +1,0 @@
-*_test.go
-.dockerignore
-Dockerfile
-kata-tap-qdisc-fix

@@ -10,8 +10,6 @@ on:
         type: "choice"
         options:
           - "shutdown-orchestrator"
-          - "kata-tap-qdisc-fix"
-          - "mcp-header-proxy"
           - "agent-queue-worker"
           - "bull-board"
       version:
@@ -48,8 +46,6 @@ jobs:
         run: |
           case "$SERVICE" in
             shutdown-orchestrator) WORKDIR="cmd/shutdown-orchestrator"; LANGUAGE="go" ;;
-            kata-tap-qdisc-fix)    WORKDIR="cmd/kata-tap-qdisc-fix";    LANGUAGE="go" ;;
-            mcp-header-proxy)      WORKDIR="cmd/mcp-header-proxy";      LANGUAGE="go" ;;
             agent-queue-worker)    WORKDIR="ts/agent-queue-worker";     LANGUAGE="node" ;;
             bull-board)            WORKDIR="ts/agent-queue-worker/bull-board"; LANGUAGE="node" ;;
             *) echo "::error::Unknown service $SERVICE"; exit 1 ;;

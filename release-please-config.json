@@ -13,25 +13,11 @@
     { "type": "ci", "section": "Continuous Integration", "hidden": false }
   ],
   "packages": {
-    "cmd/mcp-header-proxy": {
-      "release-type": "simple",
-      "component": "mcp-header-proxy",
-      "tag-separator": "/",
-      "include-component-in-tag": true,
-      "bump-minor-pre-major": true
-    },
     "cmd/shutdown-orchestrator": {
       "release-type": "simple",
       "component": "shutdown-orchestrator",
       "tag-separator": "/",
       "include-component-in-tag": true
-    },
-    "cmd/kata-tap-qdisc-fix": {
-      "release-type": "simple",
-      "component": "kata-tap-qdisc-fix",
-      "tag-separator": "/",
-      "include-component-in-tag": true,
-      "bump-minor-pre-major": true
     },
     "ts/agent-queue-worker": {
       "release-type": "node",

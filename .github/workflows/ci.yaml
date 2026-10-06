@@ -30,8 +30,6 @@ jobs:
       kyverno: "${{ steps.filter.outputs.kyverno }}"
       terraform: "${{ steps.filter.outputs.terraform }}"
       shutdown-orchestrator: "${{ steps.filter.outputs.shutdown-orchestrator }}"
-      kata-tap-qdisc-fix: "${{ steps.filter.outputs.kata-tap-qdisc-fix }}"
-      mcp-header-proxy: "${{ steps.filter.outputs.mcp-header-proxy }}"
       agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
       bull-board: "${{ steps.filter.outputs.bull-board }}"
       traefik-plugin: "${{ steps.filter.outputs.traefik-plugin }}"
@@ -74,10 +72,6 @@ jobs:
               - 'infra/terraform/**'
             shutdown-orchestrator:
               - 'cmd/shutdown-orchestrator/**'
-            kata-tap-qdisc-fix:
-              - 'cmd/kata-tap-qdisc-fix/**'
-            mcp-header-proxy:
-              - 'cmd/mcp-header-proxy/**'
             agent-queue-worker:
               - 'ts/agent-queue-worker/**'
               - '!ts/agent-queue-worker/bull-board/**'
@@ -147,38 +141,6 @@ jobs:
       workdir: "cmd/shutdown-orchestrator"
       language: "go"
     secrets: "inherit"
-  kata-tap-qdisc-fix:
-    needs:
-      - "lint"
-      - "changes"
-    if: "needs.changes.outputs.kata-tap-qdisc-fix == 'true'"
-    permissions:
-      contents: "write"
-      packages: "write"
-      id-token: "write"
-      attestations: "write"
-    uses: "./.github/workflows/_build-image.yaml"
-    with:
-      image: "kata-tap-qdisc-fix"
-      workdir: "cmd/kata-tap-qdisc-fix"
-      language: "go"
-    secrets: "inherit"
-  mcp-header-proxy:
-    needs:
-      - "lint"
-      - "changes"
-    if: "needs.changes.outputs.mcp-header-proxy == 'true'"
-    permissions:
-      contents: "write"
-      packages: "write"
-      id-token: "write"
-      attestations: "write"
-    uses: "./.github/workflows/_build-image.yaml"
-    with:
-      image: "mcp-header-proxy"
-      workdir: "cmd/mcp-header-proxy"
-      language: "go"
-    secrets: "inherit"
   agent-queue-worker:
     needs:
       - "lint"
@@ -218,8 +180,6 @@ jobs:
       - "kyverno-test"
       - "terraform-validate"
       - "shutdown-orchestrator"
-      - "kata-tap-qdisc-fix"
-      - "mcp-header-proxy"
       - "agent-queue-worker"
       - "bull-board"
       - "traefik-plugin"

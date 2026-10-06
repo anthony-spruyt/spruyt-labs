@@ -77,14 +77,14 @@
       "sourceDirectory": "ts/agent-queue-worker/bull-board"
     },
     {
-      "description": "Point own image changelogs at their release-please package directory. Ref #2684",
+      "description": "Fetch mcp-header-proxy release notes from its own repo. Ref #3274",
       "matchDatasources": [
         "docker"
       ],
       "matchPackageNames": [
         "ghcr.io/anthony-spruyt/mcp-header-proxy"
       ],
-      "sourceDirectory": "cmd/mcp-header-proxy"
+      "sourceUrl": "https://github.com/anthony-spruyt/mcp-header-proxy"
     },
     {
       "description": "Point own image changelogs at their release-please package directory. Ref #2684",
@@ -97,14 +97,14 @@
       "sourceDirectory": "cmd/shutdown-orchestrator"
     },
     {
-      "description": "Point own image changelogs at their release-please package directory. Ref #2684",
+      "description": "Fetch kata-tap-qdisc-fix release notes from its own repo. Ref #3273",
       "matchDatasources": [
         "docker"
       ],
       "matchPackageNames": [
         "ghcr.io/anthony-spruyt/kata-tap-qdisc-fix"
       ],
-      "sourceDirectory": "cmd/kata-tap-qdisc-fix"
+      "sourceUrl": "https://github.com/anthony-spruyt/kata-tap-qdisc-fix"
     },
     {
       "description": "The VPA bootstrap CRD seed must not get ahead of the chart appVersion",

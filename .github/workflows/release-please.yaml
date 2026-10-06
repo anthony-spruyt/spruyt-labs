@@ -17,15 +17,9 @@ jobs:
       contents: "write"
       pull-requests: "write"
     outputs:
-      mcp-header-proxy-released: "${{ steps.release.outputs['cmd/mcp-header-proxy--release_created'] }}"
-      mcp-header-proxy-version: "${{ steps.release.outputs['cmd/mcp-header-proxy--version'] }}"
-      mcp-header-proxy-tag: "${{ steps.release.outputs['cmd/mcp-header-proxy--tag_name'] }}"
       shutdown-orchestrator-released: "${{ steps.release.outputs['cmd/shutdown-orchestrator--release_created'] }}"
       shutdown-orchestrator-version: "${{ steps.release.outputs['cmd/shutdown-orchestrator--version'] }}"
       shutdown-orchestrator-tag: "${{ steps.release.outputs['cmd/shutdown-orchestrator--tag_name'] }}"
-      kata-tap-qdisc-fix-released: "${{ steps.release.outputs['cmd/kata-tap-qdisc-fix--release_created'] }}"
-      kata-tap-qdisc-fix-version: "${{ steps.release.outputs['cmd/kata-tap-qdisc-fix--version'] }}"
-      kata-tap-qdisc-fix-tag: "${{ steps.release.outputs['cmd/kata-tap-qdisc-fix--tag_name'] }}"
       agent-queue-worker-released: "${{ steps.release.outputs['ts/agent-queue-worker--release_created'] }}"
       agent-queue-worker-version: "${{ steps.release.outputs['ts/agent-queue-worker--version'] }}"
       agent-queue-worker-tag: "${{ steps.release.outputs['ts/agent-queue-worker--tag_name'] }}"
@@ -52,24 +46,6 @@ jobs:
           token: "${{ steps.app-token.outputs.token }}"
           config-file: "release-please-config.json"
           manifest-file: ".release-please-manifest.json"
-  mcp-header-proxy:
-    name: "mcp-header-proxy"
-    needs: "release-please"
-    if: "needs.release-please.outputs.mcp-header-proxy-released == 'true'"
-    permissions:
-      contents: "write"
-      packages: "write"
-      id-token: "write"
-      attestations: "write"
-    uses: "./.github/workflows/_build-image.yaml"
-    with:
-      image: "mcp-header-proxy"
-      workdir: "cmd/mcp-header-proxy"
-      language: "go"
-      push: true
-      version: "${{ needs.release-please.outputs.mcp-header-proxy-version }}"
-      tag-name: "${{ needs.release-please.outputs.mcp-header-proxy-tag }}"
-    secrets: "inherit"
   shutdown-orchestrator:
     name: "shutdown-orchestrator"
     needs: "release-please"
@@ -87,24 +63,6 @@ jobs:
       push: true
       version: "${{ needs.release-please.outputs.shutdown-orchestrator-version }}"
       tag-name: "${{ needs.release-please.outputs.shutdown-orchestrator-tag }}"
-    secrets: "inherit"
-  kata-tap-qdisc-fix:
-    name: "kata-tap-qdisc-fix"
-    needs: "release-please"
-    if: "needs.release-please.outputs.kata-tap-qdisc-fix-released == 'true'"
-    permissions:
-      contents: "write"
-      packages: "write"
-      id-token: "write"
-      attestations: "write"
-    uses: "./.github/workflows/_build-image.yaml"
-    with:
-      image: "kata-tap-qdisc-fix"
-      workdir: "cmd/kata-tap-qdisc-fix"
-      language: "go"
-      push: true
-      version: "${{ needs.release-please.outputs.kata-tap-qdisc-fix-version }}"
-      tag-name: "${{ needs.release-please.outputs.kata-tap-qdisc-fix-tag }}"
     secrets: "inherit"
   agent-queue-worker:
     name: "agent-queue-worker"
