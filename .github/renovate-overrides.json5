@@ -1,5 +1,16 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "customDatasources": {
+    // Echoes currentValue with an empty digest: custom datasources return null from
+    // getDigest, so without it every PR warns "Could not determine new digest".
+    "litellm-middleware-tested": {
+      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/anthony-spruyt/litellm-middleware/main/litellm-image.yaml",
+      "format": "yaml",
+      "transformTemplates": [
+        "( $m := $match(image, /^ghcr\\.io\\/berriai\\/litellm-non_root:([^@\\s]+)@(sha256:[a-f0-9]{64})$/); $tested := { \"version\": $m.groups[0], \"digest\": $m.groups[1] }; { \"releases\": $m.groups[0] = \"{{{currentValue}}}\" ? [$tested] : [$tested, { \"version\": \"{{{currentValue}}}\", \"digest\": \"\" }], \"sourceUrl\": \"https://github.com/BerriAI/litellm\" } )"
+      ]
+    }
+  },
   "customManagers": [
     {
       "customType": "regex",
@@ -31,6 +42,29 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "LiteLLM follows the middleware repo's tested pin, never the registry. Ref #3272",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/berriai/litellm-non_root"
+      ],
+      "enabled": false
+    },
+    {
+      // No release timestamps here, so the default 7-day age would hold every update
+      // forever; the middleware repo's bump PR already waited it out.
+      "description": "Take the middleware-tested LiteLLM as soon as it lands on the middleware repo's main. Ref #3272",
+      "matchDatasources": [
+        "custom.litellm-middleware-tested"
+      ],
+      "minimumReleaseAge": "0 days",
+      "commitMessageTopic": "container image {{depName}}",
+      "addLabels": [
+        "renovate/image"
+      ]
+    },
     {
       "description": "Disable kubernetes manager for runner sidecar (version managed via kustomize images transformer)",
       "matchManagers": [

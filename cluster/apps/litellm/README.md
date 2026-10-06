@@ -77,7 +77,9 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 The middleware package ships as the `ghcr.io/anthony-spruyt/litellm-middleware` image, mounted read-only as a Kubernetes `image` volume at `/opt/litellm-middleware`, which is on `PYTHONPATH`. The kubelet pulls it, so the pod needs no egress for it. `litellm_middleware.pipeline_plugin.pipeline_middleware` is the single callback in `config.yaml`. Code, tests, the middleware list and how each
 middleware works live in the [middleware repo](https://github.com/anthony-spruyt/litellm-middleware#readme).
 
-- The middleware imports LiteLLM internals that change between releases. The repo's integration tests run against the LiteLLM image pinned in `tests/integration/litellm.yaml`, which must match the image in `values.yaml`. Bump that pin and release the middleware before (or with) a LiteLLM bump here; this repo no longer tests the pair.
+- The middleware imports LiteLLM internals that change between releases, so the cluster runs only a LiteLLM the middleware repo's CI has passed. Renovate here doesn't read the registry for the LiteLLM image. The `custom.litellm-middleware-tested` datasource in `.github/renovate-overrides.json5` reads the tag and digest from `litellm-image.yaml` on the middleware repo's `main`. That pin moves only
+  when the middleware repo merges a Renovate bump PR, and that PR runs the integration suite against the new LiteLLM. Upgrade by merging the bump there; the matching PR opens here on the next Renovate run. If the new version needs a middleware fix, release that fix and deploy it here first. If that file moves or changes shape, the lookup fails and LiteLLM bumps stop (the dashboard shows the lookup
+  failure); they are never untested.
 - After a rollout, check the LiteLLM logs for `failed to load <name> middleware` (an optional middleware is missing) or a startup crash (a required one failed to import).
 
 ### Rate-limit headers

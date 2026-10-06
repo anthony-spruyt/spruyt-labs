@@ -34,7 +34,8 @@ controllers:
       litellm:
         image:
           repository: ghcr.io/berriai/litellm-non_root
-          tag: v1.104.0@sha256:37066242e6b8327fdd627682a66a9ae2a599553b4d5a84c905c6d8b9eb35c01e
+          # renovate: datasource=custom.litellm-middleware-tested depName=ghcr.io/berriai/litellm-non_root
+          tag: "v1.104.0@sha256:37066242e6b8327fdd627682a66a9ae2a599553b4d5a84c905c6d8b9eb35c01e"
           pullPolicy: IfNotPresent
         args:
           - "--config"
