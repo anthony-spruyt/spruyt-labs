@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=postfinance/topf datasource=github-releases
-VERSION="v0.6.0"
+VERSION="v0.6.1"
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
