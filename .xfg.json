@@ -34,6 +34,7 @@
         ".gitleaks.toml",
         ".hadolint.yaml",
         ".jsonlintrc",
+        ".lint-config.sh",
         ".lycheeignore",
         ".markdownlint.json",
         ".markdownlintignore",
@@ -54,7 +55,6 @@
         ".yamllint.yml",
         "biome.json",
         "LICENSE",
-        "lint-config.sh",
         "lint.sh",
         "trivy-mega-linter.yaml"
       ]
