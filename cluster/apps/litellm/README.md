@@ -78,8 +78,8 @@ The middleware package ships as the `ghcr.io/anthony-spruyt/litellm-middleware` 
 middleware works live in the [middleware repo](https://github.com/anthony-spruyt/litellm-middleware#readme).
 
 - The middleware imports LiteLLM internals that change between releases, so the cluster runs only a LiteLLM the middleware repo's CI has passed. Renovate here doesn't read the registry for the LiteLLM image. The `custom.litellm-middleware-tested` datasource in `.github/renovate-overrides.json5` reads the tag and digest from `litellm-image.yaml` on the middleware repo's `main`. That pin moves only
-  when the middleware repo merges a Renovate bump PR, and that PR runs the integration suite against the new LiteLLM. Upgrade by merging the bump there; the matching PR opens here on the next Renovate run. If the new version needs a middleware fix, release that fix and deploy it here first. If that file moves or changes shape, the lookup fails and LiteLLM bumps stop (the dashboard shows the lookup
-  failure); they are never untested.
+  when the middleware repo merges a Renovate bump PR, and that PR runs the integration suite against the new LiteLLM. Upgrade by merging the bump there; the matching PR opens here on the next Renovate run. If the new version needs a middleware fix, release that fix first; Renovate groups the LiteLLM and middleware image bumps under `litellm`, so they land in one PR when both are pending.
+  `tests/litellm-middleware-contract.bats` checks the callback, mount path and `PYTHONPATH` here against the deployed middleware release. If `litellm-image.yaml` moves or changes shape, the lookup fails and LiteLLM bumps stop (the dashboard shows the lookup failure); they are never untested.
 - After a rollout, check the LiteLLM logs for `failed to load <name> middleware` (an optional middleware is missing) or a startup crash (a required one failed to import).
 
 ### Rate-limit headers

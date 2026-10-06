@@ -77,13 +77,8 @@
       "enabled": false
     },
     {
-      // 2.39.x is missing the worker-side MCP toolkit fix that 2.38.7 carries
-      // as a backport (upstream #38069 landed on master only in 2.40.0), so the
-      // whole line is a functional downgrade under EXECUTIONS_MODE=queue:
-      // StructuredToolkit tools throw "did not return a valid Tool" on workers
-      // and MCP connections leak. Verified absent in job-processor.ts at 2.39.0
-      // through 2.39.10, present at 2.38.7 and 2.40.0. Drop this once the pin
-      // is on 2.40.x. Ref #3075
+      // 2.39.x lacks the worker MCP toolkit fix (upstream #38069) that 2.38.7 backports and 2.40.0 ships.
+      // Drop once the pin is on 2.40.x. Ref #3075
       "description": "Skip the n8n 2.39.x line (missing worker MCP toolkit fix)",
       "matchDatasources": [
         "custom.n8n-stable"
@@ -151,9 +146,7 @@
       "dependencyDashboardApproval": true
     },
     {
-      // The Talos extra-manifest URL and the Flux GitRepository tag pin the same
-      // upstream release through different managers. Split PRs would let the CRDs
-      // Talos applies drift from the ones Flux reconciles. Ref #2778
+      // Talos and Flux pin the same Gateway API release through different managers; split PRs let their CRDs drift. Ref #2778
       "description": "Bump the Gateway API extra manifest and the Flux GitRepository tag in one PR; CRDs follow Cilium's supported version, so bumps need review",
       "matchDatasources": [
         "github-tags"
@@ -161,9 +154,7 @@
       "matchPackageNames": [
         "kubernetes-sigs/gateway-api"
       ],
-      // Do not add a group.branchTopic carrying newVersion: the regex manager
-      // renders 1.6.2 while the Flux manager renders v1.6.2, which would split
-      // the group back into two PRs.
+      // No group.branchTopic with newVersion: the regex manager renders 1.6.2 and Flux v1.6.2, splitting the group.
       "groupName": "gateway-api",
       "dependencyDashboardApproval": true
     },
@@ -178,9 +169,7 @@
       "groupName": "pgvector"
     },
     {
-      // Server image, dev-env CLI and AWS plugin are bumped together when
-      // their updates land together; grouping coalesces concurrently pending
-      // updates, it does not enforce the compatibility matrix. Ref #3081
+      // Grouping only coalesces updates pending at once; it does not enforce velero's compatibility matrix. Ref #3081
       "description": "Bump the velero server image, CLI installer pin and AWS plugin in one PR",
       "matchPackageNames": [
         "docker.io/velero/velero",
@@ -201,6 +190,20 @@
         "docker.io/library/busybox"
       ],
       "groupName": "busybox"
+    },
+    {
+      // litellm-middleware#14 releases a compat fix before moving the pin; if that bump is still open, the LiteLLM one joins it. Ref #3399
+      "description": "Bump LiteLLM and the litellm-middleware image in one PR",
+      "matchDatasources": [
+        "custom.litellm-middleware-tested",
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/berriai/litellm-non_root",
+        "ghcr.io/anthony-spruyt/litellm-middleware"
+      ],
+      "groupName": "litellm",
+      "separateMajorMinor": false
     }
   ]
 }
