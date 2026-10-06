@@ -30,25 +30,6 @@ controllers:
               topologyKey: kubernetes.io/hostname
     annotations:
       reloader.stakater.com/auto: "true"
-      configmap.reloader.stakater.com/reload: "litellm-middleware-plugin"
-    initContainers:
-      prepare-custom-callbacks:
-        image:
-          repository: busybox
-          tag: "1.38.0@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e"
-          pullPolicy: IfNotPresent
-        command:
-          - sh
-          - -c
-          - |
-            mkdir -p /app/custom_callbacks/middleware/ratelimit_headers /app/custom_callbacks/middleware/secret_masking
-            touch /app/custom_callbacks/__init__.py
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-              - ALL
     containers:
       litellm:
         image:
@@ -98,7 +79,7 @@ controllers:
           PRESIDIO_ANALYZER_API_BASE: "http://litellm-presidio-analyzer.litellm.svc.cluster.local:3000"
           PRESIDIO_ANONYMIZER_API_BASE: "http://litellm-presidio-anonymizer.litellm.svc.cluster.local:3000"
           PROXY_BASE_URL: "https://litellm.${EXTERNAL_DOMAIN}"
-          PYTHONPATH: "/app:/app/custom_callbacks"
+          PYTHONPATH: "/app:/opt/litellm-middleware"
           REDIS_HOST: litellm-valkey.litellm.svc
           REDIS_PORT: "6379"
           REDIS_USERNAME: litellm
@@ -513,7 +494,7 @@ configMaps:
             - otel
             - prometheus
             - websearch_interception
-            - custom_callbacks.middleware.pipeline_plugin.pipeline_middleware
+            - litellm_middleware.pipeline_plugin.pipeline_middleware
           drop_params: true
           websearch_interception_params:
             enabled_providers:
@@ -681,51 +662,14 @@ persistence:
       llm-guard:
         llm-guard:
           - path: /app/.cache/huggingface
-  custom-callbacks-workdir:
-    type: emptyDir
-    advancedMounts:
-      litellm:
-        prepare-custom-callbacks:
-          - path: /app/custom_callbacks
-        litellm:
-          - path: /app/custom_callbacks
-  # Proxy-side callback plugins. ConfigMap keys are flat (no '/'), so the
-  # custom_callbacks/* package tree is created by the init container above and
-  # populated through subPath mounts. The /app entry on PYTHONPATH resolves the
-  # custom_callbacks.* dotted imports.
-  middleware-plugin:
-    type: configMap
-    name: litellm-middleware-plugin
+  litellm-middleware:
+    type: image
+    image:
+      repository: ghcr.io/anthony-spruyt/litellm-middleware
+      tag: 1.0.0@sha256:0e401622d9f29f0b7ee2ebe23ba04b527c1cd97ee72dacc937c3274a1500bd2b
+    pullPolicy: IfNotPresent
     advancedMounts:
       litellm:
         litellm:
-          - path: /app/custom_callbacks/middleware/__init__.py
-            subPath: __init__.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/base.py
-            subPath: base.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/pipeline.py
-            subPath: pipeline.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/pipeline_plugin.py
-            subPath: pipeline_plugin.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/ratelimit_headers/__init__.py
-            subPath: __init__.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/ratelimit_headers/ratelimit_headers.py
-            subPath: ratelimit_headers.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/registry.py
-            subPath: registry.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/secret_masking/__init__.py
-            subPath: __init__.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/secret_masking/secret_masking.py
-            subPath: secret_masking.py
-            readOnly: true
-          - path: /app/custom_callbacks/middleware/secret_masking/shared_fakes.py
-            subPath: shared_fakes.py
+          - path: /opt/litellm-middleware
             readOnly: true

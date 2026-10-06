@@ -2,8 +2,8 @@
 
 ## Overview
 
-Single gateway for every LLM call and most MCP traffic in the cluster: Claude agent pods, Coder workspaces, n8n and dev containers all point `ANTHROPIC_BASE_URL` at it. It exposes Anthropic-compatible (`/v1/messages`) and OpenAI-compatible (`/v1/chat/completions`) APIs plus an MCP gateway at `/mcp`. `litellm-valkey` is its dedicated cache and router-state store; `litellm/app/plugins/middleware/`
-holds proxy-side Python middleware.
+Single gateway for every LLM call and most MCP traffic in the cluster: Claude agent pods, Coder workspaces, n8n and dev containers all point `ANTHROPIC_BASE_URL` at it. It exposes Anthropic-compatible (`/v1/messages`) and OpenAI-compatible (`/v1/chat/completions`) APIs plus an MCP gateway at `/mcp`. `litellm-valkey` is its dedicated cache and router-state store. Proxy-side Python middleware comes
+from [`anthony-spruyt/litellm-middleware`](https://github.com/anthony-spruyt/litellm-middleware).
 
 ## Prerequisites
 
@@ -72,75 +72,35 @@ Only live models are registered. Retired Opus and Sonnet names are not rejected,
 MCP servers are registered through the LiteLLM UI and persisted in Postgres (the one DB object type allowed above), not in `config.yaml`. On a rebuild they must be re-added by hand; see [unifi-network-mcp](../unifi-mcp/unifi-network-mcp/README.md#litellm-registration-is-manual) for the reasoning. For each in-cluster MCP server, LiteLLM needs an egress CNP in `litellm/app/network-policies.yaml` and
 the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the repo root holds a single `litellm` entry; every downstream server is fanned out through it.
 
-### Proxy-side plugins
+### Proxy middleware
 
-`litellm/app/plugins/middleware/` is mounted into the pod from the `litellm-middleware-plugin` ConfigMap as subPath files under `/app/custom_callbacks/middleware/`, with an init container creating the package directories. `middleware/pipeline_plugin.py` is the single callback registered in `config.yaml`; it runs the middlewares listed in `middleware/registry.py`. Only `secret-masking` and
-`ratelimit-headers` are in `DEFAULT_MIDDLEWARE_SPECS`.
+The middleware package ships as the `ghcr.io/anthony-spruyt/litellm-middleware` image, mounted read-only as a Kubernetes `image` volume at `/opt/litellm-middleware`, which is on `PYTHONPATH`. The kubelet pulls it, so the pod needs no egress for it. `litellm_middleware.pipeline_plugin.pipeline_middleware` is the single callback in `config.yaml`. Code, tests, the middleware list and how each
+middleware works live in the [middleware repo](https://github.com/anthony-spruyt/litellm-middleware#readme).
 
-### Middleware tests
-
-- **Unit** (`task test:litellm-middleware`): each middleware against a stubbed `litellm`. Fast, but blind to LiteLLM changing hook names, signatures or call order.
-- **Integration** (`task test:litellm-middleware-integration`, needs a container runtime): `middleware/integration/` boots the LiteLLM image pinned in `values.yaml`, with the plugin files mounted at the paths `values.yaml` and `kustomization.yaml` give them, and a fake Anthropic upstream inside the same container. Tests send real requests and check what reached the upstream and what came back. A
-  missing mount or ConfigMap entry fails here before it fails in the pod. Set `LITELLM_IT_SHOW_LOGS=1` to print the proxy log.
-- The test proxy copies a production `general_settings` key only if it is listed in `MIRRORED_GENERAL_SETTINGS` in `integration/pod_layout.py`; add a key there to test it end to end.
-- In the WSL devcontainer `agent-run` cannot start containers, so run `LITELLM_IT_RUNNER="docker run --rm" task test:litellm-middleware-integration`.
-- The `litellm-middleware` CI job runs both on changes to `plugins/`, `values.yaml` or `kustomization.yaml`, so a Renovate bump of the LiteLLM image is tested against the middleware before merge.
-- `count_tokens` ignores `api_base` and always calls `api.anthropic.com`, so its integration test calls the wrapped `_try_provider_token_count` inside the container instead of going through HTTP.
-
-### Adding a middleware
-
-Every proxy-side callback is a middleware run by the pipeline; nothing else goes in `plugins/`. The top of `middleware/` holds only the shared pipeline core, and every middleware gets its own sub-folder:
-
-```text
-middleware/
-  base.py  pipeline.py  pipeline_plugin.py  registry.py
-  tests/                  core tests only
-  <name>/
-    __init__.py           empty
-    <name>.py             module-level instance that registry.py loads
-    <helper>.py           used by this middleware only
-    tests/test_<name>.py
-```
-
-- `<name>` is the snake_case form of the registry name (`secret-masking` → `secret_masking/`). Nothing specific to one middleware goes at the top level, including its tests.
-- One `pyproject.toml` and `uv.lock` for all of `middleware/`. Add test-only deps there; runtime deps must already ship in the LiteLLM image.
-- ConfigMap keys are flat, so file names must be unique across all middlewares.
-- Import the core with `from ..pipeline import ...` and helpers with `from .<helper> import ...`. No flat-import fallbacks.
-- Tests put `plugins/` on `sys.path` and import `middleware.<name>.<name>`, the same package shape as in the pod.
-- Register it in `registry.py` as `custom_callbacks.middleware.<name>.<name>`. Use `required=True` only when serving without it is unsafe.
-- Wire every file into the pod: a ConfigMap generator entry in `kustomization.yaml`; the `/app/custom_callbacks/middleware/<name>` directory in the init container's `mkdir`; a subPath mount in `values.yaml` for each file, plus the shared empty `__init__.py`.
-- Add `<name>/tests` to `testpaths` in `middleware/pyproject.toml` and `plugins/pytest.ini`, and to `sonar.tests` in `.sonarcloud.properties`.
-- Add the module to `tests/test_production_imports.py` so the in-pod import path is tested.
-- Add a test to `integration/test_proxy.py` that sends a real request and checks the effect the middleware has on it.
-- Give it a `###` section in this README if anything about it is non-obvious.
+- The middleware imports LiteLLM internals that change between releases. The repo's integration tests run against the LiteLLM image pinned in `tests/integration/litellm.yaml`, which must match the image in `values.yaml`. Bump that pin and release the middleware before (or with) a LiteLLM bump here; this repo no longer tests the pair.
+- After a rollout, check the LiteLLM logs for `failed to load <name> middleware` (an optional middleware is missing) or a startup crash (a required one failed to import).
 
 ### Rate-limit headers
 
-LiteLLM renames every non-OpenAI upstream header to `llm_provider-<name>` and has no setting to turn that off, so Claude Code never sees `anthropic-ratelimit-unified-*` and its status line gets `rate_limits: null`. `middleware/ratelimit_headers/` adds un-prefixed copies of that header family only, from `async_post_call_response_headers_hook`, and leaves the prefixed ones in place.
-
-- Streamed replies: read from `response._hidden_params["additional_headers"]`. Non-streamed replies: the proxy pops `_hidden_params` from dict responses before the hook runs, so the raw upstream headers are read from `data["litellm_logging_obj"].model_call_details["httpx_response"]`.
-- LiteLLM only calls the hook if the callback's own class defines it (a leaf `__dict__` check), so `MiddlewarePipeline` must define `async_post_call_response_headers_hook` itself, not inherit it.
-- Not covered: error replies (429s) and the opt-in `LITELLM_RUST` `/v1/messages` path, which sets neither header source.
-- It is optional in `registry.py`: an import failure logs a warning and the proxy serves without it.
-- Remove it once LiteLLM forwards `anthropic-ratelimit-unified-*` unprefixed or adds a setting to do so.
+`ratelimit-headers` restores Anthropic's `anthropic-ratelimit-unified-*` response headers, which LiteLLM renames to `llm_provider-*`, so Claude Code's status line gets `rate_limits`. It is optional: if it fails to import, the proxy serves without it. Remove it once LiteLLM forwards those headers unprefixed or adds a setting to do so.
 
 ### Secret masking
 
-`middleware/secret_masking/` is always on for `/v1/messages`, `/v1/chat/completions`, `/v1/responses`, `/v1/responses/compact`, `/v1/completions` and Gemini `generateContent`/`streamGenerateContent`, and for the body that `count_tokens`/`input_tokens` forward to the provider. Credentials with a known prefix (GitHub, Google, Anthropic, OpenAI, AWS, LiteLLM `sk-`, PEM private keys and others in
-`_PATTERNS`) are swapped for a fake with the same prefix, length and character classes before the request leaves the proxy. Fakes in the reply, including streamed text and tool-call arguments, are swapped back, so the model provider never sees the real value but client tools still get it.
+`secret-masking` is always on for `/v1/messages`, `/v1/chat/completions`, `/v1/responses`, `/v1/responses/compact`, `/v1/completions` and Gemini `generateContent`/`streamGenerateContent`, and for the body that `count_tokens`/`input_tokens` forward to the provider. Credentials with a known prefix (GitHub, Google, Anthropic, OpenAI, AWS, LiteLLM `sk-`, PEM private keys and others in `_PATTERNS`) are
+swapped for a fake with the same prefix, length and character classes before the request leaves the proxy. Fakes in the reply, including streamed text and tool-call arguments, are swapped back, so the model provider never sees the real value but client tools still get it.
 
 - Fakes are an HMAC of the real value keyed from `LITELLM_SALT_KEY`, so the same secret gets the same fake across turns and replicas and prompt caching still hits. Rotating the salt changes every fake and busts those caches once. If the salt is missing, each pod logs a warning and uses a random key, so fakes differ per replica.
 - Secrets we generate ourselves (DB passwords, webhook secrets, service-to-service tokens) should use the `sl_` prefix plus letters and digits only, at least 32 characters in total, so they are caught too. Generate one with `task sops:gen-key` (64 by default; `length=32` for apps that cap password length). LiteLLM virtual keys must start with `sk-`, which is already caught.
 - Only prefixed formats are caught. Bare high-entropy strings (hashes, UUIDs, unprefixed passwords) pass through on purpose, to avoid mangling commit SHAs and similar.
 - Thinking and reasoning blocks, base64 sources, `data:` URLs, `input_audio` and remote image/file URLs are never touched: thinking signatures would break, binary payloads would be corrupted, and presigned URLs would stop working.
-- The map from fake to real is kept per virtual key for an hour, so a fake the model echoes from an earlier turn (`previous_response_id`, compaction) is still swapped back, whichever replica serves it. Each pod keeps its own map in memory (capped at 2000 fakes) and `middleware/secret_masking/shared_fakes.py` shares it through `litellm-valkey`:
+- The map from fake to real is kept per virtual key for an hour, so a fake the model echoes from an earlier turn (`previous_response_id`, compaction) is still swapped back, whichever replica serves it. Each pod keeps its own map in memory (capped at 2000 fakes) and shares it through `litellm-valkey`:
   - Entries live in one hash per virtual key under `litellm:secret-masking:v1:`, with a per-field 1h TTL (`HSETEX`, Valkey 9+). The key name and field names are HMACs of the virtual key and the fake; the value is AES-GCM encrypted with a key derived from `LITELLM_SALT_KEY` via HKDF, bound to its key and field. Nothing readable is stored, but the ciphertext does sit in the AOF on the PVC for up to
     an hour.
   - Writes are queued and sent in the background. The read starts at pre-call and runs while the provider works; the reply only waits for it (at most 0.5s) if it has not finished.
   - It is best effort. If Valkey is down or slow, the pod logs the exception type once, stops trying for 15s and restores from its own memory only. Rotating the salt makes old entries unreadable; they are skipped and expire.
 - WebSocket traffic is not covered. In Responses WebSocket mode only the first `response.create` frame goes through the hooks, and the other sockets (`/openai/*` passthrough, which can also carry Responses, realtime, `/anthropic/ws`) are not on the list above. So the Traefik route blocks every WebSocket upgrade on the `litellm` host with a 403, and Responses clients (Codex) fall back to HTTP
   streaming, which is masked. In-cluster callers that use the `litellm` service directly bypass Traefik and are not blocked. Remove the block once LiteLLM can disable Responses WebSocket mode ([BerriAI/litellm#40591](https://github.com/BerriAI/litellm/issues/40591)) or hooks every frame.
-- The module is `required` in `registry.py`: if it fails to import, LiteLLM fails to start rather than serving unmasked, so a broken rollout crash-loops the new pod while the old pods keep serving.
+- It is a required middleware: if it fails to import, LiteLLM fails to start rather than serving unmasked, so a broken rollout crash-loops the new pod while the old pods keep serving.
 - Once loaded, it fails open. A bug logs a warning and the traffic flows unmasked rather than failing. Mid-stream, the rest of the stream passes through raw, so the client may see fakes from that point on. If an error escapes a streaming middleware after it has sent output, the pipeline ends the stream with an error instead, because replaying would drop or duplicate buffered data.
 - It protects the model provider only. LiteLLM captures the request for its own logging (OTEL traces) before the hook runs, so treat those as holding real values.
 

@@ -54,7 +54,7 @@ tags = ["ip-leakage"]
   ]
 
 # --- Generated Secrets ---
-# Must match cluster/apps/litellm/litellm/app/plugins/middleware/secret_masking/secret_masking.py and `task sops:gen-key`.
+# Must match _PATTERNS in anthony-spruyt/litellm-middleware secret_masking.py and `task sops:gen-key`.
 
 [[rules]]
 id = "spruyt-labs-secret"
