@@ -15,7 +15,6 @@ server:
   # tool_result/api_request events; aging the two together preserves audit trail.
   retentionPeriod: "14d"
 
-  # -- Spread replicas across nodes
   topologySpreadConstraints:
     - maxSkew: 1
       topologyKey: kubernetes.io/hostname
@@ -51,7 +50,7 @@ server:
 
   resources:
     limits:
-      memory: 896Mi
+      memory: 1536Mi
     requests:
       cpu: 80m
-      memory: 256Mi
+      memory: 512Mi
