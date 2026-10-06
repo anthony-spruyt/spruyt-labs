@@ -70,11 +70,14 @@ jobs:
               - 'infra/terraform/**'
             shutdown-orchestrator:
               - 'cmd/shutdown-orchestrator/**'
+              - '.github/workflows/_build-image.yaml'
             agent-queue-worker:
               - 'ts/agent-queue-worker/**'
+              - '.github/workflows/_build-image.yaml'
               - '!ts/agent-queue-worker/bull-board/**'
             bull-board:
               - 'ts/agent-queue-worker/bull-board/**'
+              - '.github/workflows/_build-image.yaml'
             bats:
               - '**/*.bats'
               - 'cluster/apps/claude-agents-shared/**'
@@ -88,7 +91,6 @@ jobs:
               - '.taskfiles/happy/scripts/**'
   lint:
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@main"
-    secrets: "inherit"
   kubeconform:
     needs: "changes"
     if: "needs.changes.outputs.cluster == 'true'"
@@ -120,7 +122,6 @@ jobs:
       image: "shutdown-orchestrator"
       workdir: "cmd/shutdown-orchestrator"
       language: "go"
-    secrets: "inherit"
   agent-queue-worker:
     needs:
       - "lint"
@@ -136,7 +137,6 @@ jobs:
       image: "agent-queue-worker"
       workdir: "ts/agent-queue-worker"
       language: "node"
-    secrets: "inherit"
   bull-board:
     needs:
       - "lint"
@@ -152,7 +152,6 @@ jobs:
       image: "bull-board"
       workdir: "ts/agent-queue-worker/bull-board"
       language: "node"
-    secrets: "inherit"
   summary:
     needs:
       - "lint"

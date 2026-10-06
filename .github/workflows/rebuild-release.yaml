@@ -69,6 +69,12 @@ jobs:
             exit 1
           fi
 
+          # The build tests and builds the checked-out ref, so the run itself must start from the tag.
+          if [ "$GITHUB_REF" != "refs/tags/${TAG}" ]; then
+            echo "::error::Run this workflow from the tag, not ${GITHUB_REF}: gh workflow run rebuild-release.yaml --ref ${TAG} -f service=${SERVICE} -f version=${VERSION}"
+            exit 1
+          fi
+
           if ! DRAFT=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null); then
             echo "::error::No release found for ${TAG}."
             exit 1
@@ -103,4 +109,3 @@ jobs:
       push: true
       version: "${{ inputs.version }}"
       tag-name: "${{ needs.resolve.outputs.tag }}"
-    secrets: "inherit"
