@@ -89,6 +89,8 @@ jobs:
               - '.taskfiles/install/scripts/**'
               # Script asserted by tests/happy-template-key.bats
               - '.taskfiles/happy/scripts/**'
+              # Values (and the middleware image tag in them) asserted by tests/litellm-middleware-contract.bats
+              - 'cluster/apps/litellm/litellm/app/values.yaml'
   lint:
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@main"
   kubeconform:
