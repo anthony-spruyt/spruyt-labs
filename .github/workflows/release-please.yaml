@@ -63,7 +63,6 @@ jobs:
       push: true
       version: "${{ needs.release-please.outputs.shutdown-orchestrator-version }}"
       tag-name: "${{ needs.release-please.outputs.shutdown-orchestrator-tag }}"
-    secrets: "inherit"
   agent-queue-worker:
     name: "agent-queue-worker"
     needs: "release-please"
@@ -81,7 +80,6 @@ jobs:
       push: true
       version: "${{ needs.release-please.outputs.agent-queue-worker-version }}"
       tag-name: "${{ needs.release-please.outputs.agent-queue-worker-tag }}"
-    secrets: "inherit"
   bull-board:
     name: "bull-board"
     needs: "release-please"
@@ -99,4 +97,3 @@ jobs:
       push: true
       version: "${{ needs.release-please.outputs.bull-board-version }}"
       tag-name: "${{ needs.release-please.outputs.bull-board-tag }}"
-    secrets: "inherit"
