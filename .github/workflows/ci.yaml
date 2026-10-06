@@ -13,18 +13,15 @@ concurrency:
   group: "${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}"
   cancel-in-progress: "${{ github.event_name == 'pull_request' }}"
 permissions:
-  actions: "write"
-  contents: "write"
-  packages: "write"
-  pull-requests: "write"
-  security-events: "write"
-  statuses: "write"
-  id-token: "write"
-  attestations: "write"
+  contents: "read"
 jobs:
   changes:
     name: "Detect changes"
     runs-on: "ubuntu-latest"
+    permissions:
+      actions: "read"
+      contents: "read"
+      pull-requests: "read"
     outputs:
       cluster: "${{ steps.filter.outputs.cluster }}"
       kyverno: "${{ steps.filter.outputs.kyverno }}"
@@ -90,6 +87,10 @@ jobs:
               # Script asserted by tests/happy-template-key.bats
               - '.taskfiles/happy/scripts/**'
   lint:
+    permissions:
+      actions: "write"
+      contents: "read"
+      security-events: "write"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@main"
   kubeconform:
     needs: "changes"
@@ -113,10 +114,7 @@ jobs:
       - "changes"
     if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
     permissions:
-      contents: "write"
-      packages: "write"
-      id-token: "write"
-      attestations: "write"
+      contents: "read"
     uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "shutdown-orchestrator"
@@ -128,10 +126,7 @@ jobs:
       - "changes"
     if: "needs.changes.outputs.agent-queue-worker == 'true'"
     permissions:
-      contents: "write"
-      packages: "write"
-      id-token: "write"
-      attestations: "write"
+      contents: "read"
     uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "agent-queue-worker"
@@ -143,10 +138,7 @@ jobs:
       - "changes"
     if: "needs.changes.outputs.bull-board == 'true'"
     permissions:
-      contents: "write"
-      packages: "write"
-      id-token: "write"
-      attestations: "write"
+      contents: "read"
     uses: "./.github/workflows/_build-image.yaml"
     with:
       image: "bull-board"
@@ -163,4 +155,7 @@ jobs:
       - "bull-board"
       - "bats-test"
     if: "always()"
+    permissions:
+      actions: "read"
+      contents: "read"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_summary.yaml@main"

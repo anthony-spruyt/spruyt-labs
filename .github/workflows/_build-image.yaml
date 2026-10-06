@@ -33,8 +33,8 @@ on:
         default: ""
     outputs:
       digest:
-        description: "Image digest"
-        value: "${{ jobs.build.outputs.digest }}"
+        description: "Image digest (empty unless push is true)"
+        value: "${{ jobs.publish.outputs.digest }}"
 concurrency:
   group: "build-${{ inputs.image }}-${{ inputs.version || github.ref }}"
   cancel-in-progress: false
@@ -83,21 +83,45 @@ jobs:
     with:
       workdir: "${{ inputs.workdir }}"
   build:
-    name: "${{ inputs.push && 'Build and publish' || 'Build' }}"
+    name: "Build"
     needs:
       - "test-node"
       - "test-go"
     # Exactly one test job runs; a skipped need makes the implicit success() false.
     if: |
-      !cancelled() &&
+      !cancelled() && !inputs.push &&
       (needs.test-node.result == 'success' || needs.test-node.result == 'skipped') &&
       (needs.test-go.result == 'success' || needs.test-go.result == 'skipped')
     runs-on: "ubuntu-latest"
     permissions:
-      contents: "write"
-      packages: "write"
-      id-token: "write"
-      attestations: "write"
+      contents: "read"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+        with:
+          persist-credentials: false
+      - name: "Build image"
+        uses: "anthony-spruyt/repo-operator/.github/actions/build-image@main"
+        with:
+          image: "${{ inputs.image }}"
+          context: "${{ inputs.workdir }}"
+          version: "${{ inputs.version }}"
+          go-mod: "${{ inputs.language == 'go' && format('{0}/go.mod', inputs.workdir) || '' }}"
+  publish:
+    name: "Build and publish"
+    needs:
+      - "test-node"
+      - "test-go"
+    if: |
+      !cancelled() && inputs.push &&
+      (needs.test-node.result == 'success' || needs.test-node.result == 'skipped') &&
+      (needs.test-go.result == 'success' || needs.test-go.result == 'skipped')
+    runs-on: "ubuntu-latest"
+    # No permissions block: requesting write here fails read-only PR callers at startup, even though the job is skipped.
     outputs:
       digest: "${{ steps.build.outputs.digest }}"
     steps:
@@ -111,7 +135,6 @@ jobs:
           persist-credentials: false
       # The test jobs check out the run's commit, so the tag must be that commit for the tests to cover the image.
       - name: "Verify the tag is the commit being built"
-        if: "inputs.push"
         env:
           GH_TOKEN: "${{ github.token }}"
           GH_REPO: "${{ github.repository }}"
@@ -128,18 +151,17 @@ jobs:
             echo "::error::Tag ${TAG_NAME} is ${TAG_SHA}, but this run checked out ${HEAD_SHA}. Run Rebuild Release from the tag."
             exit 1
           fi
-      - name: "Build image"
+      - name: "Build and push image"
         id: "build"
         uses: "anthony-spruyt/repo-operator/.github/actions/build-image@main"
         with:
           image: "${{ inputs.image }}"
           context: "${{ inputs.workdir }}"
-          push: "${{ inputs.push }}"
+          push: "true"
           version: "${{ inputs.version }}"
           go-mod: "${{ inputs.language == 'go' && format('{0}/go.mod', inputs.workdir) || '' }}"
       # Must stay last: on failure the release stays a draft, so a published release always has an image.
       - name: "Publish release"
-        if: "inputs.push"
         uses: "anthony-spruyt/repo-operator/.github/actions/publish-release@main"
         with:
           tag: "${{ inputs.tag-name }}"
