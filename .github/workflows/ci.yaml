@@ -90,7 +90,7 @@ jobs:
               - 'cluster/apps/litellm/litellm/app/values.yaml'
   lint:
     permissions:
-      actions: "write"
+      actions: "read"
       contents: "read"
       security-events: "write"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@5cbe1a184d32fd631420e30e20b46a85b5aa244f" # main
