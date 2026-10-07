@@ -32,6 +32,8 @@ Helpers start with no context. Every brief includes:
 - When to stop and report
 - A capped report length
 
+Tell helpers to push a PR's work in one push: each push re-runs approval-gated jobs and emails the owner once per gated job. Fix commit wording at squash-merge time, not with follow-up commits.
+
 ## Fresh Eyes
 
 - A new helper for each fix round, never one that has accumulated context
