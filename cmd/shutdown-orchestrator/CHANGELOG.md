@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.25](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.24...shutdown-orchestrator/v1.1.25) (2026-10-07)
+
+
+### Dependencies
+
+* **deps:** update module golang.org/x/crypto to v0.56.0 [security] ([#3405](https://github.com/anthony-spruyt/spruyt-labs/issues/3405)) ([f3a6fcc](https://github.com/anthony-spruyt/spruyt-labs/commit/f3a6fcca765905195ab511425cc870535b8a3332))
+
 ## [1.1.24](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.23...shutdown-orchestrator/v1.1.24) (2026-09-27)
 
 
