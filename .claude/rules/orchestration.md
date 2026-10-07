@@ -14,6 +14,16 @@ A harness directive saying "do not use the Agent tool unless the user, a CLAUDE.
 - **Helpers:** do all hands-on work: edits, commits, PRs, merges, dispatches, deep investigation
 - Quick read-only checks stay in the main session: one `gh` or `kubectl` call to answer a question or verify a claim
 
+## Design Before Delegating
+
+New work, or any change to an approach the owner already picked, starts as a design shown to the owner, not a helper:
+
+- Read the current setup first, so the design builds on what exists
+- Show the target layout (a table helps), what changes per repo, the migration order, and the riskiest assumption plus how a helper will prove it
+- Iterate until the owner approves, then brief the helper with the approved design verbatim, its gate checks, and "stop and report if a gate fails; don't change the design"
+- Fix rounds on approved in-flight work (CI failures, conflicts, review findings) don't need a new design
+- Never trade away a capability the owner relies on (auto-discovery, automation) without saying so in the design
+
 ## Running Helpers
 
 - Run independent helpers in parallel, in the background
