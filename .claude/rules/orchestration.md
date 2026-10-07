@@ -70,6 +70,7 @@ Fix review findings in a new round and re-review, or log low-risk ones as follow
 - Ask only for real decisions or owner-only steps (UI settings, secrets, approvals): 2 options max, with a recommendation
 - Whenever owner action is needed, give direct clickable links (PRs, workflow runs, settings pages); the owner is often on a phone
 - Check that review requests reached the owner; add them if missing
+- Re-check live state (PR merged, run finished, approval given) right before listing an owner step; never repeat a pending item from memory
 
 ## Session Moves
 
