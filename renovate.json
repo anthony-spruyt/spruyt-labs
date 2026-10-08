@@ -11,6 +11,7 @@
     "github>anthony-spruyt/repo-operator//.github/renovate/custom-datasources.json5",
     "github>anthony-spruyt/repo-operator//.github/renovate/disabled.json5",
     "github>anthony-spruyt/repo-operator//.github/renovate/xfg-managed.json5",
-    "local>anthony-spruyt/spruyt-labs//.github/renovate-overrides.json5"
-  ]
+    "local>anthony-spruyt/spruyt-labs//renovate-overrides.json5"
+  ],
+  "forkProcessing": "enabled"
 }

@@ -26,8 +26,6 @@
         ".devcontainer/setup-devcontainer.sh",
         ".editorconfig",
         ".github/actionlint.yaml",
-        ".github/renovate-overrides.json5",
-        ".github/renovate.json5",
         ".github/workflows/ci.yaml",
         ".github/workflows/trivy-scan.yaml",
         ".gitignore",
@@ -54,6 +52,8 @@
         "biome.json",
         "LICENSE",
         "lint.sh",
+        "renovate-overrides.json5",
+        "renovate.json",
         "trivy-mega-linter.yaml"
       ]
     }
