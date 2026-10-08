@@ -1,12 +1,12 @@
 ---
-paths: [.github/renovate.json5, .github/renovate-overrides.json5]
+paths: [renovate.json, renovate-overrides.json5]
 ---
 
 # Renovate Configuration
 
-Config is centralized in [`anthony-spruyt/repo-operator`](https://github.com/anthony-spruyt/repo-operator) (`.github/renovate/`). This repo's `.github/renovate.json5` only extends presets from there — no local config directory.
+Config is centralized in [`anthony-spruyt/repo-operator`](https://github.com/anthony-spruyt/repo-operator) (`.github/renovate/`). This repo's root `renovate.json` only extends presets from there and is synced by repo-operator; don't edit it.
 
-Repo-specific overrides (extra `ignorePaths`, `packageRules`) go in `.github/renovate-overrides.json5`, which `renovate.json5` extends as a `local>` preset. Cross-repo changes go in `repo-operator`.
+Repo-specific overrides (extra `ignorePaths`, `packageRules`) go in root `renovate-overrides.json5`, which `renovate.json` extends as a `local>` preset. repo-operator creates that file once; after that it is owned here. Cross-repo changes go in `repo-operator`.
 
 ## Helm Registries
 
@@ -15,7 +15,7 @@ Renovate auto-detects Helm registry URLs from `HelmRepository` resources in `clu
 ## Testing
 
 ```bash
-renovate-config-validator --strict .github/renovate.json5
+renovate-config-validator --strict renovate.json renovate-overrides.json5
 task dev-env:renovate-dry-run
 ```
 

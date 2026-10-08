@@ -46,7 +46,7 @@ assert_paired() {
 }
 
 # gateway-api shares no version string with its consumer and is gated on
-# dashboard approval in .github/renovate-overrides.json5 instead.
+# dashboard approval in renovate-overrides.json5 instead.
 @test "every GitRepository CRD source is accounted for" {
   local expected="csi-addons-gitrepo external-snapshotter-gitrepo gateway-api-gitrepo"
   local found
