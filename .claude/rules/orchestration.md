@@ -48,7 +48,7 @@ Tell helpers to push a PR's work in one push: each push re-runs approval-gated j
 
 - A new helper for each fix round, never one that has accumulated context
 - A fresh, skeptical reviewer for every PR and every fix round, never the author
-- Security-sensitive changes get an attacker-minded review brief. The repos are solo-maintainer and personal-use: the threats are fork and outsider PRs and prompt-injected or compromised AI agents and their bots; the owner's account and deterministic apps (Renovate, release bot, Mergify) are trusted
+- Security-sensitive changes get an attacker-minded review brief. The repos are solo-maintainer and personal-use: the threats are fork and outsider PRs and prompt-injected or compromised AI agents and their bots; the owner's account and deterministic, non-AI apps (Renovate, release bot, Mergify, GitHub Actions and the like) are trusted
 
 ## Definition of Ready
 
