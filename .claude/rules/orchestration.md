@@ -48,7 +48,7 @@ Tell helpers to push a PR's work in one push: each push re-runs approval-gated j
 
 - A new helper for each fix round, never one that has accumulated context
 - A fresh, skeptical reviewer for every PR and every fix round, never the author
-- Security-sensitive changes get an attacker-minded review brief
+- Security-sensitive changes get an attacker-minded review brief. The repos are solo-maintainer and personal-use: the threat is fork and outsider PRs, while the owner and the owner's bots are trusted, so insider bypasses aren't findings
 
 ## Definition of Ready
 
