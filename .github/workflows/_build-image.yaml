@@ -79,7 +79,7 @@ jobs:
     if: "inputs.language == 'go'"
     permissions:
       contents: "read"
-    uses: "anthony-spruyt/repo-operator/.github/workflows/_go-test.yaml@5cbe1a184d32fd631420e30e20b46a85b5aa244f" # main
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_go-test.yaml@7bf816527b748801f0ac22002211ecdd00c2f64c" # main
     with:
       workdir: "${{ inputs.workdir }}"
   build:
@@ -105,7 +105,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Build image"
-        uses: "anthony-spruyt/repo-operator/.github/actions/build-image@5cbe1a184d32fd631420e30e20b46a85b5aa244f" # main
+        uses: "anthony-spruyt/repo-operator/.github/actions/build-image@7bf816527b748801f0ac22002211ecdd00c2f64c" # main
         with:
           image: "${{ inputs.image }}"
           context: "${{ inputs.workdir }}"
@@ -153,7 +153,7 @@ jobs:
           fi
       - name: "Build and push image"
         id: "build"
-        uses: "anthony-spruyt/repo-operator/.github/actions/build-image@5cbe1a184d32fd631420e30e20b46a85b5aa244f" # main
+        uses: "anthony-spruyt/repo-operator/.github/actions/build-image@7bf816527b748801f0ac22002211ecdd00c2f64c" # main
         with:
           image: "${{ inputs.image }}"
           context: "${{ inputs.workdir }}"
@@ -162,7 +162,7 @@ jobs:
           go-mod: "${{ inputs.language == 'go' && format('{0}/go.mod', inputs.workdir) || '' }}"
       # Must stay last: on failure the release stays a draft, so a published release always has an image.
       - name: "Publish release"
-        uses: "anthony-spruyt/repo-operator/.github/actions/publish-release@5cbe1a184d32fd631420e30e20b46a85b5aa244f" # main
+        uses: "anthony-spruyt/repo-operator/.github/actions/publish-release@7bf816527b748801f0ac22002211ecdd00c2f64c" # main
         with:
           tag: "${{ inputs.tag-name }}"
           image-ref: "${{ steps.build.outputs.image-ref }}"
