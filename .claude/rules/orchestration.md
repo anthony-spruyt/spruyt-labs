@@ -41,6 +41,7 @@ Helpers start with no context. Every brief includes:
 - What not to touch
 - When to stop and report
 - A capped report length
+- The Definition of Ready gates below, for builders and reviewers alike; both must report the PR's SonarCloud new-issue count
 
 Tell helpers to push a PR's work in one push: each push re-runs approval-gated jobs and emails the owner once per gated job. Fix commit wording at squash-merge time, not with follow-up commits.
 
@@ -56,7 +57,7 @@ Before asking the owner to approve, or before merging:
 
 - A fresh review returned READY
 - Owner review comments and threads checked
-- CI green, CodeQL clean, SonarCloud 0 new issues
+- CI green, CodeQL clean, SonarCloud 0 new issues: query the PR's issues (Sonar MCP), not the check, which passes with new issues
 
 Fix review findings in a new round and re-review, or log low-risk ones as follow-ups in the issue body.
 
