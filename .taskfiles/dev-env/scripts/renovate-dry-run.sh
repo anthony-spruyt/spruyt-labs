@@ -1,22 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Runs Renovate in dry-run mode against local files.
-#
-# Problem: renovate.json5 uses github> presets from repo-operator that resolve
-# from the default branch via API, not local files. This script fetches those
-# remote presets and merges them with local overrides into a temporary config.
+# Renovate resolves github> presets from the remote default branch, so inline
+# them with the local overrides to dry-run against the working tree.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-MAIN_CONFIG="$REPO_ROOT/.github/renovate.json5"
-RENOVATE_DIR="$REPO_ROOT/.github/renovate"
+MAIN_CONFIG="$REPO_ROOT/renovate.json"
 MERGED_CONFIG="$(mktemp)"
 PRESET_TMPDIR="$(mktemp -d)"
 
 trap 'rm -f "$MERGED_CONFIG"; rm -rf "$PRESET_TMPDIR"' EXIT
 
-# Resolve GitHub token
 TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 if [[ -z "$TOKEN" ]] && command -v gh &>/dev/null; then
   TOKEN="$(gh auth token 2>/dev/null || true)"
@@ -26,41 +21,35 @@ if [[ -z "$TOKEN" ]]; then
   exit 1
 fi
 
-# Check renovate is installed
 if ! command -v renovate &>/dev/null; then
   echo "ERROR: renovate CLI not found. Install with: npm install -g renovate" >&2
   exit 1
 fi
 
-# Check python3 + json5 are available
 if ! python3 -c "import json5" 2>/dev/null; then
   echo "Installing json5 Python package..." >&2
   pip install -q json5
 fi
 
-# Fetch remote github> presets and merge everything into one config
-python3 - "$MAIN_CONFIG" "$RENOVATE_DIR" "$MERGED_CONFIG" "$PRESET_TMPDIR" "$TOKEN" "$REPO_ROOT" <<'PYEOF'
-import json, json5, glob, sys, os, urllib.request, base64
+python3 - "$MAIN_CONFIG" "$MERGED_CONFIG" "$PRESET_TMPDIR" "$TOKEN" "$REPO_ROOT" <<'PYEOF'
+import json, json5, sys, os, urllib.request, base64
 
-main_config, local_preset_dir, output, tmpdir, token, repo_root = sys.argv[1:7]
+main_config, output, tmpdir, token, repo_root = sys.argv[1:6]
 
 with open(main_config) as f:
     config = json5.loads(f.read())
 
-# Separate github> and local> presets from built-in presets
 github_presets = [e for e in config.get('extends', []) if e.startswith('github>')]
 local_presets = [e for e in config.get('extends', []) if e.startswith('local>')]
 config['extends'] = [e for e in config.get('extends', []) if not e.startswith(('github>', 'local>'))]
 
 def fetch_github_preset(preset_ref, token):
     """Fetch a github>owner/repo//.path preset file via GitHub API."""
-    # Parse: github>owner/repo//.path
     ref = preset_ref.removeprefix('github>')
     if '//' in ref:
         repo_part, path_part = ref.split('//', 1)
     else:
         return None
-    # GitHub API: repos/{owner}/{repo}/contents/{path}
     url = f"https://api.github.com/repos/{repo_part}/contents/{path_part}"
     req = urllib.request.Request(url, headers={
         'Authorization': f'token {token}',
@@ -87,27 +76,17 @@ def merge_preset(config, preset):
         else:
             config[key] = val
 
-# Fetch and merge remote github> presets
 fetched = 0
 for preset_ref in github_presets:
     print(f"  Fetching {preset_ref}...", file=sys.stderr)
     preset = fetch_github_preset(preset_ref, token)
     if preset:
-        # Recursively strip any nested github> extends (don't follow chains)
+        # Nested extends are dropped, not followed
         preset.pop('extends', None)
         merge_preset(config, preset)
         fetched += 1
 
-# Merge local preset overrides from .github/renovate/ dir (if any exist)
 local_count = 0
-if os.path.isdir(local_preset_dir):
-    for path in sorted(glob.glob(os.path.join(local_preset_dir, '**', '*.json5'), recursive=True)):
-        with open(path) as f:
-            preset = json5.loads(f.read())
-        merge_preset(config, preset)
-        local_count += 1
-
-# Resolve local> extends (e.g., local>owner/repo//.github/renovate-overrides)
 for local_ref in local_presets:
     raw_path = local_ref.removeprefix('local>')
     rel_path = raw_path.split('//', 1)[1] if '//' in raw_path else raw_path
@@ -130,7 +109,7 @@ PYEOF
 echo "Running Renovate dry-run with merged local config..."
 echo ""
 
-# Temporarily swap config files
+# The local platform reads renovate.json from disk, so swap in the merged config
 BACKUP="$MAIN_CONFIG.dryrun-backup"
 cp "$MAIN_CONFIG" "$BACKUP"
 cp "$MERGED_CONFIG" "$MAIN_CONFIG"
