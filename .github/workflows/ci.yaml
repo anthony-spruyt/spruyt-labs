@@ -9,155 +9,38 @@ on:
   push:
     branches:
       - "main"
-concurrency:
-  group: "${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}"
-  cancel-in-progress: "${{ github.event_name == 'pull_request' }}"
-permissions:
-  contents: "read"
+permissions: {}
 jobs:
-  changes:
-    name: "Detect changes"
-    runs-on: "ubuntu-latest"
-    permissions:
-      actions: "read"
-      contents: "read"
-      pull-requests: "read"
-    outputs:
-      cluster: "${{ steps.filter.outputs.cluster }}"
-      kyverno: "${{ steps.filter.outputs.kyverno }}"
-      terraform: "${{ steps.filter.outputs.terraform }}"
-      shutdown-orchestrator: "${{ steps.filter.outputs.shutdown-orchestrator }}"
-      agent-queue-worker: "${{ steps.filter.outputs.agent-queue-worker }}"
-      bull-board: "${{ steps.filter.outputs.bull-board }}"
-      bats: "${{ steps.filter.outputs.bats }}"
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-      - name: "Checkout"
-        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
-        with:
-          fetch-depth: 0
-      - name: "Find last successful CI commit"
-        if: "github.event_name == 'push'"
-        id: "last-success"
-        env:
-          GH_TOKEN: "${{ github.token }}"
-          WORKFLOW: "CI"
-        run: |
-          SHA=$(gh run list --workflow "$WORKFLOW" --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // empty')
-          if [ -n "$SHA" ] && git cat-file -e "$SHA" 2>/dev/null; then
-            echo "base=$SHA" >> "$GITHUB_OUTPUT"
-          else
-            echo "base=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
-          fi
-      - name: "Path filter"
-        uses: "dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d" # v4
-        id: "filter"
-        with:
-          base: "${{ steps.last-success.outputs.base }}"
-          predicate-quantifier: "some-with-excludes"
-          filters: |
-            cluster:
-              - 'cluster/**/*.yaml'
-            kyverno:
-              - 'cluster/apps/kyverno/**'
-            terraform:
-              - 'infra/terraform/**'
-            shutdown-orchestrator:
-              - 'cmd/shutdown-orchestrator/**'
-              - '.github/workflows/_build-image.yaml'
-            agent-queue-worker:
-              - 'ts/agent-queue-worker/**'
-              - '.github/workflows/_build-image.yaml'
-              - '!ts/agent-queue-worker/bull-board/**'
-            bull-board:
-              - 'ts/agent-queue-worker/bull-board/**'
-              - '.github/workflows/_build-image.yaml'
-            bats:
-              - '**/*.bats'
-              - 'cluster/apps/claude-agents-shared/**'
-              # Sources asserted by tests/crd-controller-sync.bats
-              - 'cluster/flux/meta/repositories/git/**'
-              - 'cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml'
-              - 'cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml'
-              # Scripts asserted by tests/install-scripts.bats
-              - '.taskfiles/install/scripts/**'
-              # Script asserted by tests/happy-template-key.bats
-              - '.taskfiles/happy/scripts/**'
-              # Values (and the middleware image tag in them) asserted by tests/litellm-middleware-contract.bats
-              - 'cluster/apps/litellm/litellm/app/values.yaml'
   lint:
     permissions:
       actions: "read"
       contents: "read"
       security-events: "write"
-    uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@7bf816527b748801f0ac22002211ecdd00c2f64c" # main
-  kubeconform:
-    needs: "changes"
-    if: "needs.changes.outputs.cluster == 'true'"
-    uses: "./.github/workflows/_kubeconform.yaml"
-  kyverno-test:
-    needs: "changes"
-    if: "needs.changes.outputs.kyverno == 'true'"
-    uses: "./.github/workflows/_kyverno-test.yaml"
-  bats-test:
-    needs: "changes"
-    if: "needs.changes.outputs.bats == 'true'"
-    uses: "./.github/workflows/_bats-test.yaml"
-  terraform-validate:
-    needs: "changes"
-    if: "needs.changes.outputs.terraform == 'true'"
-    uses: "./.github/workflows/_terraform-validate.yaml"
-  shutdown-orchestrator:
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_lint.yaml@f08d5279c60ec8f1ab8d611aedc2dca995a99ab6"
+  repo:
     needs:
       - "lint"
-      - "changes"
-    if: "needs.changes.outputs.shutdown-orchestrator == 'true'"
     permissions:
       contents: "read"
-    uses: "./.github/workflows/_build-image.yaml"
-    with:
-      image: "shutdown-orchestrator"
-      workdir: "cmd/shutdown-orchestrator"
-      language: "go"
-  agent-queue-worker:
+      actions: "read"
+      pull-requests: "read"
+    uses: "./.github/workflows/ci-repo.yaml"
+    secrets: "inherit"
+  image:
     needs:
       - "lint"
-      - "changes"
-    if: "needs.changes.outputs.agent-queue-worker == 'true'"
+      - "repo"
+    if: "!cancelled() && needs.lint.result == 'success' && (needs.repo.result == 'success' || needs.repo.result == 'skipped')"
     permissions:
       contents: "read"
-    uses: "./.github/workflows/_build-image.yaml"
-    with:
-      image: "agent-queue-worker"
-      workdir: "ts/agent-queue-worker"
-      language: "node"
-  bull-board:
-    needs:
-      - "lint"
-      - "changes"
-    if: "needs.changes.outputs.bull-board == 'true'"
-    permissions:
-      contents: "read"
-    uses: "./.github/workflows/_build-image.yaml"
-    with:
-      image: "bull-board"
-      workdir: "ts/agent-queue-worker/bull-board"
-      language: "node"
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_images.yaml@f08d5279c60ec8f1ab8d611aedc2dca995a99ab6"
   summary:
     needs:
       - "lint"
-      - "kubeconform"
-      - "kyverno-test"
-      - "terraform-validate"
-      - "shutdown-orchestrator"
-      - "agent-queue-worker"
-      - "bull-board"
-      - "bats-test"
+      - "repo"
+      - "image"
     if: "always()"
     permissions:
       actions: "read"
       contents: "read"
-    uses: "anthony-spruyt/repo-operator/.github/workflows/_summary.yaml@7bf816527b748801f0ac22002211ecdd00c2f64c" # main
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_summary.yaml@f08d5279c60ec8f1ab8d611aedc2dca995a99ab6"
