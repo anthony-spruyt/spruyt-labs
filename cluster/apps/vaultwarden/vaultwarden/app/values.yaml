@@ -34,6 +34,7 @@ controllers:
           SIGNUPS_ALLOWED: "false"
           SIGNUPS_VERIFY: "true"
           EMAIL_CHANGE_ALLOWED: "false"
+          PASSWORD_HINTS_ALLOWED: "false"
           ORG_EVENTS_ENABLED: "true"
           EVENTS_DAYS_RETAIN: "365"
           TRASH_AUTO_DELETE_DAYS: "30"
