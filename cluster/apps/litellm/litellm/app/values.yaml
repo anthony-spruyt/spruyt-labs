@@ -35,7 +35,7 @@ controllers:
         image:
           repository: ghcr.io/berriai/litellm-non_root
           # renovate: datasource=custom.litellm-middleware-tested depName=ghcr.io/berriai/litellm-non_root
-          tag: "v1.104.0@sha256:37066242e6b8327fdd627682a66a9ae2a599553b4d5a84c905c6d8b9eb35c01e"
+          tag: "v1.104.2@sha256:e8dee87e7ddbf9abc174e8a7b180a690d5265cc4827458d22c5ff5e108170027"
           pullPolicy: IfNotPresent
         args:
           - "--config"
@@ -667,7 +667,7 @@ persistence:
     type: image
     image:
       repository: ghcr.io/anthony-spruyt/litellm-middleware
-      tag: 1.0.0@sha256:0e401622d9f29f0b7ee2ebe23ba04b527c1cd97ee72dacc937c3274a1500bd2b
+      tag: 1.0.1@sha256:192e72959213d3ba5ec2e88d8a1c77c97de6b3519f4ce43e0e37ea76543d4f7a
     pullPolicy: IfNotPresent
     advancedMounts:
       litellm:
