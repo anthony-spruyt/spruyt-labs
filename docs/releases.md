@@ -1,6 +1,6 @@
 # Releases
 
-Every container image in this repository is released by [release-please](https://github.com/googleapis/release-please). You never choose a version or push a tag by hand. The one manual entry point is `Rebuild Release`, which only recovers a release that has already been tagged.
+Every container image in this repository is released by [release-please](https://github.com/googleapis/release-please). You never choose a version or push a tag by hand.
 
 ## Services
 
@@ -22,7 +22,7 @@ Every container image in this repository is released by [release-please](https:/
 4. In the same run, the build job for that service tests the tag and pushes the image to GHCR with a provenance attestation.
 5. The image reference and digest are appended to the release notes and the release is published.
 
-The draft is only published after the image is pushed, so a published release always has an image behind it. If the build fails the release stays a draft and the tag points at code that may have no image — see the troubleshooting section rather than cutting a new version.
+The draft is only published after the image is pushed, so a published release always has an image behind it. If the build fails the release stays a draft and the tag points at code that may have no image — see the troubleshooting section.
 
 ## Choosing the version
 
@@ -46,14 +46,13 @@ The `image` job in `ci.yaml` runs the same tests and Docker build for any change
 
 ## Configuration
 
-| File                                     | Purpose                                                                              |
-| ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| `release-please-config.json`             | Package list, release types, changelog sections                                      |
-| `.release-please-manifest.json`          | Current version of each package — source of truth                                    |
-| `.github/workflows/release-please.yaml`  | Calls repo-operator's `_release-please.yaml`: release pull requests, then builds     |
-| `.github/workflows/rebuild-release.yaml` | Calls repo-operator's `_rebuild-release.yaml` for a tag whose image never got pushed |
+| File                                    | Purpose                                                                          |
+| --------------------------------------- | -------------------------------------------------------------------------------- |
+| `release-please-config.json`            | Package list, release types, changelog sections                                  |
+| `.release-please-manifest.json`         | Current version of each package — source of truth                                |
+| `.github/workflows/release-please.yaml` | Calls repo-operator's `_release-please.yaml`: release pull requests, then builds |
 
-Both workflows are synced from repo-operator; change them there, not here.
+The workflow is synced from repo-operator; change it there, not here.
 
 ## Troubleshooting
 
@@ -61,12 +60,10 @@ Both workflows are synced from repo-operator; change them there, not here.
 
 **The release pull request is not merging.** Like any other pull request, it needs a collaborator's approval, `summary / Check Results` to pass, and no `blocked` label. Mergify merges it once all three hold.
 
-**A tag exists with no image.** The build failed after the tag was created, so the release is still a draft. If the cause was transient or in repo-operator's shared actions, fix it and run the `Rebuild Release` workflow from the tag with that image and version. Do not delete the tag. A rebuild uses the tagged tree, so if the tagged code or workflow is itself broken, fix it on `main` and let
-release-please cut the next version instead.
+**A tag exists with no image.** The build failed after the tag was created, so the release is still a draft. If the cause was transient or in repo-operator's shared workflows, fix it and re-run the release run's failed jobs. A re-run builds the same commit as the original run.
 
 ```bash
-gh workflow run rebuild-release.yaml --ref shutdown-orchestrator/v1.2.3 -f image=shutdown-orchestrator -f version=1.2.3
+gh run rerun <run-id> --failed
 ```
 
-The workflow refuses to run unless it was started from the tag, the tag exists, the release is still a draft, and no newer version of that service has been published — the last check stops a rebuild from moving `latest` and `{major}.{minor}` backwards. It does not check the registry: the image is pushed before the release is published, so a draft release can still have an image behind it, and
-rebuilding overwrites that tag.
+If the tag points at a different commit than the run (for example, after a cancelled run), or the tagged code is itself broken, fix it on `main`, let release-please cut the next version, then delete the leftover draft. A full re-run does not help: release-please does not report the release as created a second time, so the build is skipped.
