@@ -30,19 +30,17 @@ controllers:
         env:
           TZ: ${TIMEZONE}
           DOMAIN: https://vaultwarden.${EXTERNAL_DOMAIN}
-          ENABLE_WEBSOCKET: "true"
           PUSH_ENABLED: "true"
-          PUSH_RELAY_URI: https://push.bitwarden.com
-          PUSH_IDENTITY_URI: https://identity.bitwarden.com
           SIGNUPS_ALLOWED: "false"
           SIGNUPS_VERIFY: "true"
           EMAIL_CHANGE_ALLOWED: "false"
           ORG_EVENTS_ENABLED: "true"
+          EVENTS_DAYS_RETAIN: "365"
+          TRASH_AUTO_DELETE_DAYS: "30"
           SSO_ENABLED: "true"
           SSO_ONLY: "true"
           SSO_SIGNUPS_MATCH_EMAIL: "true"
           SSO_SCOPES: openid email profile offline_access
-          SSO_PKCE: "true"
           SSO_AUTHORITY: https://auth.${EXTERNAL_DOMAIN}/application/o/vaultwarden/
         envFrom:
           - secretRef:

@@ -11,8 +11,8 @@ Household Bitwarden-compatible password manager, exposed publicly through the Cl
 
 ## Operations
 
-- SSO client ID and secret come from `authentik-system` through the `vaultwarden-oauth-credentials` ExternalSecret and are rotated by the shared Authentik rotation job. Non-secret settings (domain, signups, SSO, push relay) are plain `env:` in `app/values.yaml`; only credentials stay in `vaultwarden-secrets` (SOPS). Changes made in the `/admin` panel are saved to `/data/config.json` and override
-  these env values.
+- SSO client ID and secret come from `authentik-system` through the `vaultwarden-oauth-credentials` ExternalSecret and are rotated by the shared Authentik rotation job. Non-secret settings (domain, signups, SSO, push toggle, trash and event retention) are plain `env:` in `app/values.yaml`; only credentials stay in `vaultwarden-secrets` (SOPS). Changes made in the `/admin` panel are saved to
+  `/data/config.json` and override these env values.
 - Data is on the `vaultwarden-data-v2` PVC, labelled `velero.io/backup-volumes: "true"`. The Velero volume policy (`velero/velero/resources/volume-policy.yaml`) snapshots only labelled PVCs and skips everything else, so a replacement PVC without the label silently drops the vault from backups.
 
 ## References
