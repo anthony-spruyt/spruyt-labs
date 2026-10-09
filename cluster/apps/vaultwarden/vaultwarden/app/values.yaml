@@ -26,7 +26,7 @@ controllers:
             drop: [ALL]
         image:
           repository: vaultwarden/server
-          tag: 1.37.2-alpine@sha256:d16a304c2476fd787634ddde2c00be8fdfa1a72539438c626ece3686b5b88ab4
+          tag: 1.37.4-alpine@sha256:19ea2b669945d842dadc3d500f2d6a795866a003330f59a47b9634658bae98bb
         env:
           TZ: ${TIMEZONE}
           DOMAIN: https://vaultwarden.${EXTERNAL_DOMAIN}
@@ -42,6 +42,8 @@ controllers:
           SSO_SIGNUPS_MATCH_EMAIL: "true"
           SSO_SCOPES: openid email profile offline_access
           SSO_AUTHORITY: https://auth.${EXTERNAL_DOMAIN}/application/o/vaultwarden/
+          IP_HEADER: X-Forwarded-For
+          IP_HEADER_TRUSTED_PROXIES: ${CLUSTER_POD_CIDR_IP4}
         envFrom:
           - secretRef:
               name: vaultwarden-secrets
