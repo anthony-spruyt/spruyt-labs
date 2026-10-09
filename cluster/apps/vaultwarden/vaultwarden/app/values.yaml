@@ -29,12 +29,26 @@ controllers:
           tag: 1.37.2-alpine@sha256:d16a304c2476fd787634ddde2c00be8fdfa1a72539438c626ece3686b5b88ab4
         env:
           TZ: ${TIMEZONE}
+          DOMAIN: https://vaultwarden.${EXTERNAL_DOMAIN}
+          ENABLE_WEBSOCKET: "true"
+          PUSH_ENABLED: "true"
+          PUSH_RELAY_URI: https://push.bitwarden.com
+          PUSH_IDENTITY_URI: https://identity.bitwarden.com
+          SIGNUPS_ALLOWED: "false"
+          SIGNUPS_VERIFY: "true"
+          EMAIL_CHANGE_ALLOWED: "false"
+          ORG_EVENTS_ENABLED: "true"
+          SSO_ENABLED: "true"
+          SSO_ONLY: "true"
+          SSO_SIGNUPS_MATCH_EMAIL: "true"
+          SSO_SCOPES: openid email profile offline_access
+          SSO_PKCE: "true"
+          SSO_AUTHORITY: https://auth.${EXTERNAL_DOMAIN}/application/o/vaultwarden/
         envFrom:
           - secretRef:
               name: vaultwarden-secrets
           - secretRef:
               name: vaultwarden-oauth-credentials
-        # Probes: HTTP /alive endpoint for Vaultwarden health
         probes:
           liveness: &probes
             enabled: true
