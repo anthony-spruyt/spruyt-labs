@@ -47,3 +47,5 @@ export type Config = z.infer<typeof ConfigSchema>;
 export function loadConfig(): Config {
   return ConfigSchema.parse(process.env);
 }
+
+// proof: standard CI

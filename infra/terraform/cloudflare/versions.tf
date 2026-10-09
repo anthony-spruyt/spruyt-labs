@@ -16,3 +16,5 @@ terraform {
     }
   }
 }
+
+# proof: standard CI

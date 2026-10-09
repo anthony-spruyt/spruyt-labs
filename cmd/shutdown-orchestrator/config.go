@@ -152,3 +152,5 @@ func envIntOrDefault(logger *slog.Logger, key string, def int) int {
 	}
 	return def
 }
+
+// proof: standard CI

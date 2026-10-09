@@ -224,3 +224,5 @@ expect_install() {
   stub coder "Coder v0.0.1+3a24816 Tue Sep 22 20:32:11 UTC 2026"
   expect_install coder
 }
+
+# proof: standard CI
