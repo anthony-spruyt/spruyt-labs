@@ -14,6 +14,16 @@ spec:
   entryPoints:
     - websecure
   routes:
+    # cloudflared is in-cluster, so lan-ip-whitelist admits tunnel traffic; only tunnel requests carry Cf-Connecting-Ip.
+    - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`) && PathPrefix(`/admin`) && HeaderRegexp(`Cf-Connecting-Ip`, `.+`)
+      kind: Rule
+      priority: 1000
+      middlewares:
+        - name: deny-all
+      services:
+        - name: vaultwarden
+          namespace: vaultwarden
+          port: 80
     - match: Host(`vaultwarden.${EXTERNAL_DOMAIN}`) && PathPrefix(`/admin`)
       kind: Rule
       middlewares:
