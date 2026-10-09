@@ -42,17 +42,18 @@ Release-As: 2.0.0
 
 ## Pull request checks
 
-`ci.yaml` runs the same tests and Docker build for any changed service, but never pushes an image or creates a tag. Only `release-please.yaml` publishes.
+The `image` job in `ci.yaml` runs the same tests and Docker build for any changed service through repo-operator's shared `_images.yaml`, but never pushes an image or creates a tag. Only `release-please.yaml` publishes.
 
 ## Configuration
 
-| File                                     | Purpose                                                                             |
-| ---------------------------------------- | ----------------------------------------------------------------------------------- |
-| `release-please-config.json`             | Package list, release types, changelog sections                                     |
-| `.release-please-manifest.json`          | Current version of each package — source of truth                                   |
-| `.github/workflows/release-please.yaml`  | Opens release pull requests, dispatches builds                                      |
-| `.github/workflows/_build-image.yaml`    | Tests, then builds with repo-operator's `build-image` and `publish-release` actions |
-| `.github/workflows/rebuild-release.yaml` | Rebuilds a tagged release whose image never got pushed                              |
+| File                                     | Purpose                                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| `release-please-config.json`             | Package list, release types, changelog sections                                      |
+| `.release-please-manifest.json`          | Current version of each package — source of truth                                    |
+| `.github/workflows/release-please.yaml`  | Calls repo-operator's `_release-please.yaml`: release pull requests, then builds     |
+| `.github/workflows/rebuild-release.yaml` | Calls repo-operator's `_rebuild-release.yaml` for a tag whose image never got pushed |
+
+Both workflows are synced from repo-operator; change them there, not here.
 
 ## Troubleshooting
 
@@ -60,10 +61,11 @@ Release-As: 2.0.0
 
 **The release pull request is not merging.** Like any other pull request, it needs a collaborator's approval, `summary / Check Results` to pass, and no `blocked` label. Mergify merges it once all three hold.
 
-**A tag exists with no image.** The build failed after the tag was created, so the release is still a draft. If the cause was transient or in repo-operator's shared actions, fix it and run the `Rebuild Release` workflow from the tag with that service and version. Do not delete the tag. A rebuild uses the tagged tree, so if the tagged code or workflow is itself broken, fix it on `main` and let release-please cut the next version instead.
+**A tag exists with no image.** The build failed after the tag was created, so the release is still a draft. If the cause was transient or in repo-operator's shared actions, fix it and run the `Rebuild Release` workflow from the tag with that image and version. Do not delete the tag. A rebuild uses the tagged tree, so if the tagged code or workflow is itself broken, fix it on `main` and let
+release-please cut the next version instead.
 
 ```bash
-gh workflow run rebuild-release.yaml --ref shutdown-orchestrator/v1.2.3 -f service=shutdown-orchestrator -f version=1.2.3
+gh workflow run rebuild-release.yaml --ref shutdown-orchestrator/v1.2.3 -f image=shutdown-orchestrator -f version=1.2.3
 ```
 
 The workflow refuses to run unless it was started from the tag, the tag exists, the release is still a draft, and no newer version of that service has been published — the last check stops a rebuild from moving `latest` and `{major}.{minor}` backwards. It does not check the registry: the image is pushed before the release is published, so a draft release can still have an image behind it, and

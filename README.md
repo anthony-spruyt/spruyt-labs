@@ -54,7 +54,7 @@ For the development environment, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## CI/CD
 
-- **CI** (`.github/workflows/ci.yaml`) – runs on pull requests and pushes to `main`, only for the areas that changed: MegaLinter, kubeconform, Kyverno policy tests, bats, Terraform validate, Go tests, and Docker builds for the services in `cmd/` and `ts/`.
+- **CI** (`.github/workflows/ci.yaml`, synced from repo-operator) – runs on pull requests and pushes to `main`: MegaLinter, then the repo's own checks in `ci-repo.yaml` (kubeconform, Kyverno policy tests, bats and Terraform validate, each only when its area changed), then repo-operator's shared image job, which tests and builds the changed services in `cmd/` and `ts/`.
 - **Trivy** – daily filesystem and image scan.
 - **Releases** – release-please publishes container images; see [docs/releases.md](docs/releases.md).
 - **Renovate** – automated dependency updates.

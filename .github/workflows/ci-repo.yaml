@@ -67,26 +67,206 @@ jobs:
               # Values (and the middleware image tag in them) asserted by tests/litellm-middleware-contract.bats
               - 'cluster/apps/litellm/litellm/app/values.yaml'
   kubeconform:
+    name: "kubeconform"
     needs: "changes"
     if: "needs.changes.outputs.cluster == 'true'"
+    runs-on: "ubuntu-latest"
     permissions:
       contents: "read"
-    uses: "./.github/workflows/_kubeconform.yaml"
+    env:
+      # renovate: datasource=github-releases depName=kubernetes/kubernetes
+      KUBERNETES_VERSION: "1.36.4"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+      - name: "Setup kubeconform"
+        uses: "bmuschko/setup-kubeconform@e5d264ec1eafe2314e750c429a9da7639dd5a003" # v1
+      - name: "Validate cluster manifests"
+        run: |
+          find cluster -name '*.yaml' -type f \
+            ! -name '*sops*' \
+            ! -name 'namespace.yaml' \
+            ! -name 'values.yaml' \
+            ! -name 'kustomizeconfig.yaml' \
+            ! -path '*/flux-system/*' \
+            ! -path '*/blueprints/*' \
+            -print0 | xargs -0 kubeconform \
+              -summary \
+              -skip CustomResourceDefinition \
+              -ignore-missing-schemas \
+              -kubernetes-version "$KUBERNETES_VERSION" \
+              -output json
   kyverno-test:
+    name: "kyverno-test"
     needs: "changes"
     if: "needs.changes.outputs.kyverno == 'true'"
+    runs-on: "ubuntu-latest"
     permissions:
       contents: "read"
-    uses: "./.github/workflows/_kyverno-test.yaml"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+      - name: "Install Kyverno CLI"
+        uses: "kyverno/action-install-cli@fcee92fca5c883169ef9927acf543e0b5fc58289" # v0.2.0
+      - name: "Create test resources"
+        run: |
+          mkdir -p /tmp/kyverno-test
+
+          # Basic pod for testing mutate policies
+          printf '%s\n' \
+            'apiVersion: v1' \
+            'kind: Pod' \
+            'metadata:' \
+            '  name: test-pod' \
+            '  namespace: default' \
+            'spec:' \
+            '  containers:' \
+            '    - name: app' \
+            '      image: nginx:latest' \
+            > /tmp/kyverno-test/pod.yaml
+
+          # Deployment for testing autogen rules
+          printf '%s\n' \
+            'apiVersion: apps/v1' \
+            'kind: Deployment' \
+            'metadata:' \
+            '  name: test-deployment' \
+            '  namespace: default' \
+            'spec:' \
+            '  replicas: 1' \
+            '  selector:' \
+            '    matchLabels:' \
+            '      app: test' \
+            '  template:' \
+            '    metadata:' \
+            '      labels:' \
+            '        app: test' \
+            '    spec:' \
+            '      containers:' \
+            '        - name: app' \
+            '          image: nginx:latest' \
+            > /tmp/kyverno-test/deployment.yaml
+
+          # StatefulSet for testing topology spread policy
+          printf '%s\n' \
+            'apiVersion: apps/v1' \
+            'kind: StatefulSet' \
+            'metadata:' \
+            '  name: test-statefulset' \
+            '  namespace: default' \
+            'spec:' \
+            '  serviceName: test' \
+            '  replicas: 1' \
+            '  selector:' \
+            '    matchLabels:' \
+            '      app: test-sts' \
+            '  template:' \
+            '    metadata:' \
+            '      labels:' \
+            '        app: test-sts' \
+            '    spec:' \
+            '      containers:' \
+            '        - name: app' \
+            '          image: nginx:latest' \
+            > /tmp/kyverno-test/statefulset.yaml
+
+          # Namespace for testing generate policy
+          printf '%s\n' \
+            'apiVersion: v1' \
+            'kind: Namespace' \
+            'metadata:' \
+            '  name: test-namespace' \
+            > /tmp/kyverno-test/namespace.yaml
+      - name: "Test policies against sample resources"
+        run: |
+          echo "=== Collecting Kyverno policies ==="
+          policy_files=()
+          while IFS= read -r -d '' file; do
+            if grep -q 'kind: ClusterPolicy\|kind: Policy' "$file" 2>/dev/null; then
+              echo "Found policy: $file"
+              policy_files+=("$file")
+            fi
+          done < <(find cluster/apps/kyverno -name '*.yaml' -type f \
+            ! -name 'kustomization.yaml' \
+            ! -name 'ks.yaml' \
+            ! -name 'namespace.yaml' \
+            -print0)
+
+          if [ ${#policy_files[@]} -eq 0 ]; then
+            echo "No policies found to test"
+            exit 0
+          fi
+
+          echo "=== Testing policies with kyverno apply ==="
+          kyverno apply "${policy_files[@]}" \
+            --resource /tmp/kyverno-test/pod.yaml \
+            --resource /tmp/kyverno-test/deployment.yaml \
+            --resource /tmp/kyverno-test/statefulset.yaml \
+            --resource /tmp/kyverno-test/namespace.yaml
+
+          echo "=== All policy tests passed ==="
   bats-test:
+    name: "bats-test"
     needs: "changes"
     if: "needs.changes.outputs.bats == 'true'"
+    runs-on: "ubuntu-latest"
     permissions:
       contents: "read"
-    uses: "./.github/workflows/_bats-test.yaml"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+      - name: "Install bats"
+        run: "sudo apt-get update && sudo apt-get install -y bats"
+      - name: "Run bats tests"
+        run: |
+          mapfile -t suites < <(git ls-files '*.bats')
+          if [ "${#suites[@]}" -eq 0 ]; then
+            echo "no .bats files found" >&2
+            exit 1
+          fi
+          printf 'running %d suite(s)\n' "${#suites[@]}"
+          bats "${suites[@]}"
   terraform-validate:
+    name: "terraform-validate"
     needs: "changes"
     if: "needs.changes.outputs.terraform == 'true'"
+    runs-on: "ubuntu-latest"
     permissions:
       contents: "read"
-    uses: "./.github/workflows/_terraform-validate.yaml"
+    strategy:
+      matrix:
+        module:
+          - "infra/terraform/workspace-factory"
+          - "infra/terraform/workspace-factory/modules/cloudflare-workspace"
+          - "infra/terraform/cloudflare"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: "Checkout repo"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+      - name: "Setup Terraform"
+        uses: "hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e" # v4
+        with:
+          terraform_version: "v1.16.4"
+      - name: "Terraform Format Check"
+        run: "terraform fmt -check -recursive"
+        working-directory: "${{ matrix.module }}"
+      - name: "Terraform Init"
+        run: "terraform init -backend=false"
+        working-directory: "${{ matrix.module }}"
+      - name: "Terraform Validate"
+        run: "terraform validate"
+        working-directory: "${{ matrix.module }}"

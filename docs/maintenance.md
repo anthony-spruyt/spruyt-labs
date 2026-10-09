@@ -176,7 +176,7 @@ Renovate bumps `kubernetesVersion` in `talos/topf.yaml`. Talos upgrades the cont
 
 4. Kubelet restarts can leave secret volumes in already-running pods frozen at their old contents. Restart Deployments that mount rotated secrets. Restart Ceph pods one at a time, waiting for `HEALTH_OK` between each.
 
-5. Update the version in the other places that pin it, then merge: `talos/topf.yaml`, `.github/workflows/_kubeconform.yaml` and `.taskfiles/install/scripts/install-kubectl.sh`.
+5. Update the version in the other places that pin it, then merge: `talos/topf.yaml`, `.github/workflows/ci-repo.yaml` (`KUBERNETES_VERSION`) and `.taskfiles/install/scripts/install-kubectl.sh`.
 
 ## etcd
 
