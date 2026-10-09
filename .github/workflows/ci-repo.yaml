@@ -6,9 +6,87 @@ on:
   workflow_call: {}
 permissions: {}
 jobs:
-  no-repo-jobs:
-    name: "No repo jobs yet"
-    if: "github.event_name == 'never'"
+  changes:
+    name: "Detect changes"
     runs-on: "ubuntu-latest"
+    permissions:
+      actions: "read"
+      contents: "read"
+      pull-requests: "read"
+    outputs:
+      cluster: "${{ steps.filter.outputs.cluster }}"
+      kyverno: "${{ steps.filter.outputs.kyverno }}"
+      terraform: "${{ steps.filter.outputs.terraform }}"
+      bats: "${{ steps.filter.outputs.bats }}"
     steps:
-      - run: "true"
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
+        with:
+          fetch-depth: 0
+      - name: "Find last successful CI commit"
+        if: "github.event_name == 'push'"
+        id: "last-success"
+        env:
+          GH_TOKEN: "${{ github.token }}"
+          WORKFLOW: "CI"
+        run: |
+          SHA=$(gh run list --workflow "$WORKFLOW" --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // empty')
+          if [ -n "$SHA" ] && git cat-file -e "$SHA" 2>/dev/null; then
+            echo "base=$SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: "Path filter"
+        uses: "dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d" # v4
+        id: "filter"
+        with:
+          base: "${{ steps.last-success.outputs.base }}"
+          predicate-quantifier: "some-with-excludes"
+          filters: |
+            cluster:
+              - 'cluster/**/*.yaml'
+            kyverno:
+              - 'cluster/apps/kyverno/**'
+            terraform:
+              - 'infra/terraform/**'
+            bats:
+              - '**/*.bats'
+              - 'cluster/apps/claude-agents-shared/**'
+              # Sources asserted by tests/crd-controller-sync.bats
+              - 'cluster/flux/meta/repositories/git/**'
+              - 'cluster/apps/csi-addons-system/csi-addons-controller-manager/app/setup-controller.yaml'
+              - 'cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml'
+              # Scripts asserted by tests/install-scripts.bats
+              - '.taskfiles/install/scripts/**'
+              # Script asserted by tests/happy-template-key.bats
+              - '.taskfiles/happy/scripts/**'
+              # Values (and the middleware image tag in them) asserted by tests/litellm-middleware-contract.bats
+              - 'cluster/apps/litellm/litellm/app/values.yaml'
+  kubeconform:
+    needs: "changes"
+    if: "needs.changes.outputs.cluster == 'true'"
+    permissions:
+      contents: "read"
+    uses: "./.github/workflows/_kubeconform.yaml"
+  kyverno-test:
+    needs: "changes"
+    if: "needs.changes.outputs.kyverno == 'true'"
+    permissions:
+      contents: "read"
+    uses: "./.github/workflows/_kyverno-test.yaml"
+  bats-test:
+    needs: "changes"
+    if: "needs.changes.outputs.bats == 'true'"
+    permissions:
+      contents: "read"
+    uses: "./.github/workflows/_bats-test.yaml"
+  terraform-validate:
+    needs: "changes"
+    if: "needs.changes.outputs.terraform == 'true'"
+    permissions:
+      contents: "read"
+    uses: "./.github/workflows/_terraform-validate.yaml"
