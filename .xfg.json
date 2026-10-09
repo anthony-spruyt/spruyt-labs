@@ -29,7 +29,6 @@
         ".github/workflows/ci-repo.yaml",
         ".github/workflows/ci.yaml",
         ".github/workflows/container-retention.yaml",
-        ".github/workflows/rebuild-release.yaml",
         ".github/workflows/release-please.yaml",
         ".github/workflows/trivy-scan.yaml",
         ".gitignore",
