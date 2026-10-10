@@ -18,5 +18,5 @@ jobs:
       packages: "write"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_container-retention.yaml@cb40ddc2ff6cd9f0441cd59406c849c68f6bd464"
     with:
-      packages: "shutdown-orchestrator"
+      packages: "shutdown-orchestrator,agent-queue-worker,bull-board"
       dry-run: "${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}"
