@@ -20,6 +20,7 @@ conditions:
 **Instead:**
 
 - Kubernetes secrets: confirm a change from its effects (Flux Kustomization Ready, ExternalSecret `SecretSynced`, consuming pods rolled with healthy logs), get key names from the manifests that consume it, and debug auth from pod logs. `kubectl get secret <name>` works only where RBAC allows; Coder workspaces can't read secrets
+- Files from GitHub: `gh api -H "Accept: application/vnd.github.raw" repos/<owner>/<repo>/contents/<path>` returns plain text, so nothing needs decoding
 - Other encoded strings: ask the user to decode it if it isn't sensitive
 
 **False positive?** Search for an existing issue, then open one: `gh issue create --repo anthony-spruyt/spruyt-labs --title "fix(hookify): false positive in block-base64-decode" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
