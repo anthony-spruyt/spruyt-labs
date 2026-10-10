@@ -22,15 +22,15 @@ Registration is manual in the LiteLLM UI, like every MCP server behind LiteLLM -
 
 ### Security model
 
-Neither server authenticates callers. The boundary is three layers:
+Access is controlled in three layers:
 
 1. `allow-litellm-ingress` CNP - only LiteLLM reaches the pod.
 2. A read-only database login per source (below) - writes fail at the database.
 3. The LiteLLM tool allowlist per server.
 
-DBHub's `readonly = true` is defence in depth only; it cannot stop a privileged role, which is why the role itself must be read-only.
+DBHub's `readonly = true` is defence in depth; the role itself must be read-only.
 
-Read-only still means readable: whatever a source holds can land in an agent's context and the LLM provider's logs. Databases that store credentials (`coder`: OAuth and agent tokens; `authentik`: sessions and provider secrets; `n8n`: plaintext API keys and execution payloads) are deliberately not sources. `pg_read_all_data` cannot exclude tables.
+Read-only still means readable: whatever a source holds can land in an agent's context and the LLM provider's logs. Databases that store credentials (`coder`, `authentik`, `n8n`) are deliberately not sources. `pg_read_all_data` cannot exclude tables.
 
 ### Credentials - one copy per password
 

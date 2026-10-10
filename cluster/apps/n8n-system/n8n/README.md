@@ -42,7 +42,7 @@ The tradeoff is real, so know what it costs. `maxStalledCount` is hardcoded to `
 
 The `n8n` Postgres login is ESO-generated (`sl_` prefix) into `n8n-cnpg-owner` by `app/cnpg-roles-eso.yaml`; nothing is in SOPS and superuser access is off. `bootstrap.initdb.secret` points CNPG at it, so CNPG no longer generates `n8n-cnpg-cluster-app`. n8n connects through the `-pooler-rw` PgBouncer, which looks passwords up in Postgres (`auth_query`), so the pooler needs no change on rotation.
 
-The database is deliberately not a db-mcp source: it holds plaintext n8n API keys and full execution payloads. Use the n8n MCP server, or `kubectl cnpg psql n8n-cnpg-cluster -n n8n-system -- -d n8n`.
+The database is deliberately not a db-mcp source, since it stores credentials. Use the n8n MCP server, or `kubectl cnpg psql n8n-cnpg-cluster -n n8n-system -- -d n8n`.
 
 To rotate, delete both the Secret and the ExternalSecret (`kubectl -n n8n-system delete secret,externalsecret n8n-cnpg-owner`). Flux recreates the ExternalSecret with a new password and CNPG applies it. Then `kubectl -n n8n-system rollout restart deploy -l app.kubernetes.io/name=n8n` - Reloader ignores a recreated Secret.
 

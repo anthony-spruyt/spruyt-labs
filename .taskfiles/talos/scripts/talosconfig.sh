@@ -1,10 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# `topf talosconfig` prints the config to stdout. Capture it straight to clusterconfig/ -
-# gitignored, and denied to AI agents - instead of letting client certs land in a terminal
-# scrollback. --redact=false is belt and braces: this command writes with fmt.Println and
-# bypasses the masking writer, so redaction does not apply to it today.
+# Capture to gitignored, agent-denied clusterconfig/ so client certs never reach scrollback.
+# --redact=false keeps the captured config complete if topf ever redacts this command.
 TALOSCONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)/talos/clusterconfig/talosconfig"
 
 umask 077

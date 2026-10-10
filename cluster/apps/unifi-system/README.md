@@ -109,7 +109,7 @@ AP retry rate has no alert yet by design. Observed values swung 3.4%-18.4% on on
 
 ## Security
 
-`/metrics` is **unauthenticated** — UnPoller offers no option otherwise — and it exposes every client name, MAC address and IP on the network. The `CiliumNetworkPolicy` in `unpoller/app/network-policies.yaml` is the only boundary:
+Access to `/metrics` is limited by the `CiliumNetworkPolicy` in `unpoller/app/network-policies.yaml`:
 
 - **Egress**: `${UNIFI_IP4}/32:11443` only
 - **Ingress**: `vmagent` in `observability` on `9130` only

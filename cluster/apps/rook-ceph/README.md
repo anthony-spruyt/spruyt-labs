@@ -63,11 +63,10 @@ Current state:
 | ---------------------------------------------------- | --------- | --------------------------------------- |
 | Daemons (`mon`, `mgr`, `osd`, `mds`, `rgw`, `crash`) | `aes256k` | `keyRotationPolicy: KeyGeneration`      |
 | `client.rbd-mirror-peer`                             | `aes256k` | No mirroring configured, safe to rotate |
-| CSI clients (`csi-rbd-*`, `csi-cephfs-*`)            | `aes`     | Pinned - see kernel gate below          |
+| CSI clients (`csi-rbd-*`, `csi-cephfs-*`)            | `aes`     | Move to `aes256k` with kernel 7.0       |
 
-**Why CSI stays on `aes`:** upstream kernel support for `aes256k` begins in Linux 7.0. The nodes run kernel 6.18.x and this cluster uses the _kernel_ mounter for both RBD and CephFS, so rotating CSI keys to `aes256k` would strand every kernel-mounted PVC (#2558). Do not set `allowedCiphers: [aes256k]` either - it would reject the still-`aes` CSI keys.
-
-Because of that, `AUTH_INSECURE_CLIENT_KEY_TYPE`, `AUTH_INSECURE_KEYS_ALLOWED` and `AUTH_INSECURE_KEYS_CREATABLE` remain and are muted declaratively via `healthCheck.muteHealthWarning` (Rook re-applies the mute on reconcile; `ceph health mute` has a TTL and would silently lapse).
+**CSI keys move to `aes256k` with Linux 7.0.** This cluster uses the _kernel_ mounter for both RBD and CephFS, and kernel support for `aes256k` begins in 7.0, so rotate CSI keys and set `allowedCiphers: [aes256k]` only after the node kernel upgrade (#2558).
+Until then the matching `AUTH_INSECURE_*` warnings are muted declaratively via `healthCheck.muteHealthWarning` (Rook re-applies the mute on reconcile; `ceph health mute` has a TTL).
 
 **Why `daemon.keyType` stays unset:** Rook's default preferred cipher is already `aes256k`, so pinning `daemon.keyType` buys nothing - and it makes Rook pass `--mon-auth-emergency-allowed-ciphers=aes,aes256k` to the mons, which raises a permanent `AUTH_EMERGENCY_CIPHERS_SET` warning. Upstream treats that field as a bootstrap/recovery workaround only.
 

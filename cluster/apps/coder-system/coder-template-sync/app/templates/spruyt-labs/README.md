@@ -12,11 +12,11 @@ Workspace for working on the spruyt-labs repo against the live cluster. Unlike `
   back in.
 - **gh and git:** you work as `spruyt-labs-bot`, the same identity as the write-tier Claude agents. `~/.config/gh/hosts.yml` is a symlink to the write-tier GitHub App token, rotated every 30 minutes. Commits are signed with the bot's SSH key. `git verify-commit` checks against `~/.config/git/allowed_signers`, built at startup from the bot's GitHub signing keys; run `git-allowed-signers` to refresh
   it if a check says `No principal matched`. In repos that require PR approval, approve the bot's PRs with your own account.
-- **sops:** `SOPS_AGE_KEY_FILE` points at the cluster's age key, which decrypts every SOPS file in the repo.
+- **sops:** `SOPS_AGE_KEY_FILE` points at the cluster's age key.
 
 ## Operations
 
-- **Point it only at trusted repos.** The `Repository URL` parameter is editable, but whatever repo it builds runs with the credentials above.
+- **Use it only for trusted repos.** The `Repository URL` parameter is editable; keep it on repos you trust.
 - **SSH repo URL is enforced.** Git auth uses the bot SSH key through `GIT_SSH_COMMAND`. HTTPS remotes never call it, so clone works anonymously but the first push fails with `Permission denied (publickey)` ([#984](https://github.com/anthony-spruyt/spruyt-labs/issues/984)).
 - **Credentials rotate in place.** The bot SSH key rotates daily and the GitHub token every 30 minutes. Both reach a running workspace within a couple of minutes, no restart needed ([#3189](https://github.com/anthony-spruyt/spruyt-labs/issues/3189)). Do not `gh auth login`: it replaces the symlink with a file that never rotates.
 - **Apt through Nexus needs repo support.** The template only sets `NEXUS_URL`. The repo's [devcontainer.json](https://github.com/anthony-spruyt/spruyt-labs/blob/main/.devcontainer/devcontainer.json) passes it as a build arg and its [Dockerfile](https://github.com/anthony-spruyt/spruyt-labs/blob/main/.devcontainer/Dockerfile) rewrites `sources.list`. Drop either and apt goes direct to Ubuntu.

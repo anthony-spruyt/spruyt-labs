@@ -2,7 +2,7 @@
 
 ## Overview
 
-Web search for agents, exposed as an MCP server behind the LiteLLM MCP gateway. The server itself has no caller authentication; only the `litellm` namespace can reach it, and its only egress is `api.search.brave.com`.
+Web search for agents, exposed as an MCP server behind the LiteLLM MCP gateway. Callers are limited to the `litellm` namespace by CNP, and its only egress is `api.search.brave.com`.
 
 ## Prerequisites
 

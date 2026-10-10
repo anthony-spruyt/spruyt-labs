@@ -2,7 +2,7 @@
 
 ## Overview
 
-RBAC that lets Authentik deploy its proxy outpost into `kube-system`, putting Hubble UI (which has no auth of its own) behind Authentik forward-auth. The rest of the wiring lives elsewhere:
+RBAC that lets Authentik deploy its proxy outpost into `kube-system`, putting Hubble UI behind Authentik forward-auth. The rest of the wiring lives elsewhere:
 
 | Piece                            | Location                                                    |
 | -------------------------------- | ----------------------------------------------------------- |

@@ -60,4 +60,4 @@ The private key lives only on the host (`~/.secrets/flux-gitops-key`, `.pub` bes
 
 ### Cross-namespace access to `sops-age`
 
-`app/sops-age-reader-rbac.yaml` lets the `sops-age-reader` ServiceAccount in `coder-workspaces` read the Age key, so ESO can sync it into spruyt-labs Coder workspaces. Anything holding that SA can decrypt every secret in the repo; do not widen the binding.
+`app/sops-age-reader-rbac.yaml` lets the `sops-age-reader` ServiceAccount in `coder-workspaces` read the Age key, so ESO can sync it into spruyt-labs Coder workspaces. Keep the binding limited to `sops-age-reader`.

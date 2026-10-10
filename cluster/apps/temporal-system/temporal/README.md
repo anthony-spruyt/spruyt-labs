@@ -39,7 +39,7 @@ recreated Secret, so without this the pods keep the old password (brief outage).
 
 ### Connecting a client
 
-In-cluster: `temporal-frontend.temporal-system.svc:7233` (gRPC) or `:7243` (HTTP API). The frontend has **no authentication**; the CNP is the only boundary. A new client needs its own egress rule to 7233 and an entry in `allow-temporal-frontend-clients-ingress` in `app/network-policies.yaml`. Never expose the frontend through Traefik or the tunnel.
+In-cluster: `temporal-frontend.temporal-system.svc:7233` (gRPC) or `:7243` (HTTP API). Access is limited to listed clients by `allow-temporal-frontend-clients-ingress` in `app/network-policies.yaml`. A new client needs its own egress rule to 7233 and an entry there. Never expose the frontend through Traefik or the tunnel.
 
 ### Namespaces
 

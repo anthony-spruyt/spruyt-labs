@@ -100,10 +100,8 @@ swapped for a fake with the same prefix, length and character classes before the
     an hour.
   - Writes are queued and sent in the background. The read starts at pre-call and runs while the provider works; the reply only waits for it (at most 0.5s) if it has not finished.
   - It is best effort. If Valkey is down or slow, the pod logs the exception type once, stops trying for 15s and restores from its own memory only. Rotating the salt makes old entries unreadable; they are skipped and expire.
-- WebSocket traffic is not covered. In Responses WebSocket mode only the first `response.create` frame goes through the hooks, and the other sockets (`/openai/*` passthrough, which can also carry Responses, realtime, `/anthropic/ws`) are not on the list above. So the Traefik route blocks every WebSocket upgrade on the `litellm` host with a 403, and Responses clients (Codex) fall back to HTTP
-  streaming, which is masked. In-cluster callers that use the `litellm` service directly bypass Traefik and are not blocked. Remove the block once LiteLLM can disable Responses WebSocket mode ([BerriAI/litellm#40591](https://github.com/BerriAI/litellm/issues/40591)) or hooks every frame.
-- It is a required middleware: if it fails to import, LiteLLM fails to start rather than serving unmasked, so a broken rollout crash-loops the new pod while the old pods keep serving.
-- Once loaded, it fails open. A bug logs a warning and the traffic flows unmasked rather than failing. Mid-stream, the rest of the stream passes through raw, so the client may see fakes from that point on. If an error escapes a streaming middleware after it has sent output, the pipeline ends the stream with an error instead, because replaying would drop or duplicate buffered data.
+- WebSocket upgrades on the `litellm` host are denied at Traefik with a 403; Responses clients (Codex) fall back to HTTP streaming. Revisit the block once [BerriAI/litellm#40591](https://github.com/BerriAI/litellm/issues/40591) is resolved.
+- It is a required middleware: if it fails to import, LiteLLM fails to start, so a broken rollout crash-loops the new pod while the old pods keep serving.
 - It protects the model provider only. LiteLLM captures the request for its own logging (OTEL traces) before the hook runs, so treat those as holding real values.
 
 ### Guardrails

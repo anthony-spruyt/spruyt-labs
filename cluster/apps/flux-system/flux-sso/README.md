@@ -2,7 +2,7 @@
 
 ## Overview
 
-Lets Authentik deploy its proxy outpost into `flux-system` so the flux-operator web UI (no auth of its own) sits behind Authentik forward-auth. Blueprint: `authentik-system/authentik/app/blueprints/flux-sso.yaml`; route: `traefik/traefik/ingress/flux-system/`. The procedure is the proxy-provider flow in the [authentik README](../../authentik-system/authentik/README.md).
+Lets Authentik deploy its proxy outpost into `flux-system` so the flux-operator web UI sits behind Authentik forward-auth. Blueprint: `authentik-system/authentik/app/blueprints/flux-sso.yaml`; route: `traefik/traefik/ingress/flux-system/`. The procedure is the proxy-provider flow in the [authentik README](../../authentik-system/authentik/README.md).
 
 ## Operations
 

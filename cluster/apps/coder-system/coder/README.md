@@ -45,17 +45,17 @@ Rotated Secrets reach running workspaces within a couple of minutes: the Kata ag
 
 ### What each template gets
 
-| Template       | ServiceAccount                           | Credentials beyond the shared set                                                   |
-| -------------- | ---------------------------------------- | ----------------------------------------------------------------------------------- |
-| `spruyt-labs`  | `coder-workspace-ops` (cluster-wide ops) | Talos `os:operator` config, Terraform credentials, SOPS age key, project env        |
-| `devcontainer` | `coder-workspace` (no API access)        | none                                                                                |
-| `xfg`          | `coder-workspace` (no API access)        | `coder-workspace-env-xfg` (Azure DevOps and GitLab tokens, reach any repo it opens) |
+| Template       | ServiceAccount                           | Secrets beyond the shared set                                  |
+| -------------- | ---------------------------------------- | -------------------------------------------------------------- |
+| `spruyt-labs`  | `coder-workspace-ops` (cluster-wide ops) | operator tooling config (see the template README), project env |
+| `devcontainer` | `coder-workspace` (no API access)        | none                                                           |
+| `xfg`          | `coder-workspace` (no API access)        | `coder-workspace-env-xfg`                                      |
 
 The shared set, in every template: `coder-workspace-env-common`, the `spruyt-labs-bot` SSH key and write-tier GitHub App token, Nexus pull auth, and Claude managed settings. Project env Secrets come after common in `env_from`, so their keys override common ones with the same name.
 
 Every workspace commits and runs `gh` as `spruyt-labs-bot`, the same identity as the write-tier Claude agents. In repos that require PR approval, the owner approves its PRs with their own account.
 
-`coder-workspace-ops` is a scoped-down cluster-admin (no Secrets, no RBAC/webhook/CRD writes); its ClusterRole is in `coder-workspaces/coder-workspaces/app/rbac.yaml`. The SOPS age key is pulled from `flux-system` by an ExternalSecret, so a `spruyt-labs` workspace can decrypt every SOPS file in the repo.
+`coder-workspace-ops` is a scoped-down cluster-admin (no Secrets, no RBAC/webhook/CRD writes); its ClusterRole is in `coder-workspaces/coder-workspaces/app/rbac.yaml`. The SOPS age key is synced from `flux-system` by an ExternalSecret.
 
 The spruyt-labs Talos config comes from the Talos `ServiceAccount` `coder-workspace-talos` (role `os:operator`, short-lived and auto-renewed), not a static admin config (#3188).
 

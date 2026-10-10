@@ -7,7 +7,7 @@ Relay between the [Happy](https://github.com/slopus/happy) phone/web app and the
 
 ## Prerequisites
 
-- Public hostname `happy` in `local.tunnel_routes` of [`infra/terraform/cloudflare/tunnel.tf`](../../../../infra/terraform/cloudflare/tunnel.tf). The app talks to the server directly, so the route has no Authentik forward auth.
+- Public hostname `happy` in `local.tunnel_routes` of [`infra/terraform/cloudflare/tunnel.tf`](../../../../infra/terraform/cloudflare/tunnel.tf). The app signs in with the server's own accounts, not through Authentik.
 
 ## Operations
 
@@ -26,10 +26,10 @@ Workspaces get `HAPPY_SERVER_URL` from the Coder templates, which derive it from
 
 ### Signup
 
-The server has no signup switch: `POST /v1/auth` creates an account for any new key, and also logs in. A Cloudflare rule in [`rulesets.tf`](../../../../infra/terraform/cloudflare/rulesets.tf) blocks every `/auth` path from the internet except the two token-checked approval endpoints and the read-only `/v1/auth/request/status`, so approving a workspace QR still works on mobile data. Tokens never
-expire, so a signed-in phone only needs `/v1/auth` again to restore an account.
+`POST /v1/auth` both creates accounts and logs in. A Cloudflare rule in [`rulesets.tf`](../../../../infra/terraform/cloudflare/rulesets.tf) limits `/auth` paths from the internet to the token-checked approval endpoints and the read-only `/v1/auth/request/status`, so approving a workspace QR works on mobile data. A signed-in phone needs `/v1/auth` again only to
+restore an account.
 
-LAN DNS points the host's IPv4 at Traefik, so creating an account, restoring one, or adding a device works on home Wi-Fi only, with Private DNS or iCloud Private Relay off. The LAN AAAA answers are Cloudflare's, so this relies on the home network having no IPv6. Workspaces reach Traefik through their host alias and are unaffected.
+LAN DNS points the host at Traefik, so creating an account, restoring one, or adding a device works on home Wi-Fi only, with Private DNS or iCloud Private Relay off. Workspaces reach Traefik through their host alias and are unaffected.
 
 ## Troubleshooting
 

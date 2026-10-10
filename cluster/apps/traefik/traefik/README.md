@@ -31,8 +31,7 @@ Current consumer: `api-key-auth-otel` on the `otel.lan` OTLP route in `ingress/o
 
 - `aliasHeadersStrategy: delete` on every entry point mitigates GHSA-rf44-j88r-hh8c, where clients spoof ForwardAuth identity headers (`X-authentik-*`) with underscore/dot aliases. Keep it on any new entry point.
 - `forwardedHeaders.trustedIPs` trusts only the pod CIDR (cloudflared), so `X-Forwarded-*` from LAN clients are discarded.
-- `lan-ip-whitelist` alone does not keep a public hostname's path LAN-only: cloudflared runs in-cluster, so tunnel traffic arrives from an allowed pod IP. Add a `deny-all` route for that path that also matches `` HeaderRegexp(`Cf-Connecting-Ip`, `.+`) ``, a header only tunnel requests carry. Example: the admin path in `ingress/vaultwarden/`. This only works when LAN DNS resolves the host to
-  Traefik; `auth` resolves through Cloudflare on the LAN too (#1856), so the header can't tell LAN from internet there.
+- LAN-only paths on a public hostname pair `lan-ip-whitelist` with a `deny-all` route for that path matching `` HeaderRegexp(`Cf-Connecting-Ip`, `.+`) ``, a header only tunnel requests carry. Example: the admin path in `ingress/vaultwarden/`. The host must resolve to Traefik on LAN DNS.
 
 ### Other wiring
 

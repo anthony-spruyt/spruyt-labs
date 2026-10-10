@@ -2,7 +2,7 @@
 
 ## Overview
 
-MCP server giving agents read and write access to the UniFi Network controller (clients, devices, networks, firewall policies, events), brokered through LiteLLM. It has no inbound authentication, so the network policy is its only security boundary — read Operations before changing anything.
+MCP server giving agents read and write access to the UniFi Network controller (clients, devices, networks, firewall policies, events), brokered through LiteLLM. Callers are limited to LiteLLM by CNP — read Operations before changing anything.
 
 ## Prerequisites
 
@@ -18,46 +18,17 @@ MCP server giving agents read and write access to the UniFi Network controller (
 - UniFi OS Server publishes the UI on host `11443` mapped to container `443`; host `443` is deliberately unused, so `UNIFI_NETWORK_PORT` and the egress CNP must both say `11443`.
 - No IngressRoute and no Cloudflare Tunnel route, by design (see next section).
 
-### No inbound authentication — the CiliumNetworkPolicy is the only boundary
+### Access control
 
-> **Do not relax `allow-litellm-ingress`, and do not add an IngressRoute or Cloudflare Tunnel route to this app.** Anything that can reach port 3000 gets full read *and write* control of the UniFi controller with no credential at all.
+> **Keep `allow-litellm-ingress` as is, and do not add an IngressRoute or Cloudflare Tunnel route to this app.**
 
-This is a **gap in the upstream server**, not a missing setting on our side. Verified against image `0.32.6`: an MCP `initialize` + `tools/list` over plain HTTP with no token, no key and no `Authorization` header returns `HTTP 200`.
-
-The FastMCP SDK underneath *does* support authentication (token verifiers, OAuth providers). This project never wires one up. The single HTTP entry point is `run_http()` in `packages/unifi-mcp-shared/src/unifi_mcp_shared/transport.py`, which calls:
-
-```python
-await server.run_streamable_http_async(
-    host=host,
-    port=port,
-    transport_security=getattr(server, "transport_security", None),
-)
-```
-
-Three arguments — no `auth=`, no `token_verifier=`, no middleware hook. There is no environment variable to enable one; `UNIFI_MCP_*`, `UNIFI_POLICY_*` and `UNIFI_NETWORK_*` contain nothing of the kind. Upstream states it directly: *"MCP HTTP has no built-in caller authentication"* and *"An allowed hostname does not replace authentication."*
-
-What the adjacent settings actually do — none of them authenticate a caller:
-
-| Setting                   | Purpose                                  | Authenticates caller?                |
-| ------------------------- | ---------------------------------------- | ------------------------------------ |
-| `UNIFI_MCP_ALLOWED_HOSTS` | `Host` header check (anti-DNS-rebinding) | No — the header is caller-controlled |
-| `UNIFI_NETWORK_PASSWORD`  | Login **to the UniFi controller**        | No — outbound credential             |
-| `UNIFI_POLICY_*`          | Gates mutating tools (all enabled here)  | No — and currently limits nothing    |
-
-Caller identity is enforced one layer up: agents authenticate to **LiteLLM** with a LiteLLM key, and LiteLLM makes the unauthenticated in-cluster call on their behalf. Note this differs from `n8n-mcp-server` in this repo, which *does* support a real bearer token via `AUTH_TOKEN` — do not assume a matching variable exists here.
+Callers are limited to LiteLLM by CNP. Agents authenticate to LiteLLM with a LiteLLM key, and LiteLLM calls the server on their behalf.
 
 Two upstream alternatives were considered and rejected: `apps/api` (a separate REST product with API keys — not MCP, wrong shape for the LiteLLM gateway) and Ubiquiti Cloud Relay (routes network data through Ubiquiti's cloud).
 
-#### When upgrading: check whether upstream added auth
+#### When upgrading
 
-**On every version bump, check whether upstream has added inbound authentication — and if so, wire it up and tighten this deployment.** Renovate will not flag this; it is a capability gain, not a breaking change, so it will pass silently in a routine image-tag PR.
-
-How to check on a new tag:
-
-1. Re-read `run_http()` in `packages/unifi-mcp-shared/src/unifi_mcp_shared/transport.py`. If `run_streamable_http_async` gained an `auth=`, `token_verifier=` or middleware argument, support has landed.
-2. Grep the release notes and `apps/network/docs/transports.md` for `auth`, `bearer`, `token`.
-
-If it has landed: add the credential to `unifi-network-mcp-secrets`, set the corresponding env var in `values.yaml`, configure the matching header on the LiteLLM MCP server entry, and update this section. Keep the CNP as defence in depth — do not widen it just because auth now exists.
+Check the release notes and `apps/network/docs/transports.md` for new caller-authentication options; Renovate will not flag them. If one lands, add the credential to `unifi-network-mcp-secrets`, set the env var in `values.yaml`, configure the matching header on the LiteLLM MCP server entry, and keep the CNP unchanged.
 
 ### LiteLLM registration is manual
 
@@ -72,16 +43,14 @@ No client-side change is needed: `.mcp.json` holds a single `litellm` entry and 
 
 `UNIFI_POLICY_CREATE`, `UNIFI_POLICY_UPDATE` and `UNIFI_POLICY_DELETE` are all `true`. Every mutating tool in the catalog reaches the production controller — creating and deleting firewall policies, networks, WLANs and clients included.
 
-Combined with the absent inbound authentication described above, **anything that reaches port 3000 can reconfigure or wipe the network**, not merely read it. The CiliumNetworkPolicy carries that entire weight. Treat `allow-litellm-ingress` as a production security control.
-
-Mutations still require an explicit `confirm=true` argument — all 96 mutating tools default to `confirm=false` and return a preview instead. `UNIFI_TOOL_PERMISSION_MODE` is pinned to `confirm` for that reason. **Do not set it to `bypass`**: that auto-injects `confirm=true` into every mutating call, removing the last in-process guard before a live change.
+Mutations require an explicit `confirm=true` argument — all 96 mutating tools default to `confirm=false` and return a preview instead. `UNIFI_TOOL_PERMISSION_MODE` is pinned to `confirm` for that reason; keep it there.
 
 The controller is covered by weekly automated cloud backups, which is the recovery path for a destructive mistake. There is no undo on the controller side.
 
 Set any of the three policy variables to `false` to gate that verb off. Upstream also supports narrower `UNIFI_POLICY_<SERVER>_<CATEGORY>_<ACTION>` gates (most specific wins) if the blast radius ever needs cutting to a few categories rather than all 96 tools. Gates block execution at invocation time; they do **not** hide tools from the tool list, so an agent still sees every mutating tool either
 way.
 
-A **typo in a policy variable name fails open** — the gate silently does not apply. After changing any `UNIFI_POLICY_*` value, check the startup logs for `[policy] Unrecognized env var`.
+After changing any `UNIFI_POLICY_*` variable, check the startup logs for `[policy] Unrecognized env var`.
 
 ### Tool registration mode
 
