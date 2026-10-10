@@ -2,7 +2,8 @@
 
 ## Overview
 
-Pull-through cache for apt, container images, npm and PyPI, plus the envbuilder/kaniko layer cache, so Coder workspace builds, agent pre-commit runs and dev PCs don't hit upstream registries each time (#968). Nexus serves plain HTTP in-cluster; Traefik terminates TLS for LAN access at `nexus.lan.${EXTERNAL_DOMAIN}` (UI, apt, npm, PyPI) and `nexus-docker.lan.${EXTERNAL_DOMAIN}` (docker-group).
+Pull-through cache for apt, container images, npm, PyPI and NuGet, plus the envbuilder/kaniko layer cache, so Coder workspace builds, agent pre-commit runs and dev PCs don't hit upstream registries each time (#968). Nexus serves plain HTTP in-cluster; Traefik terminates TLS for LAN access at `nexus.lan.${EXTERNAL_DOMAIN}` (UI, apt, npm, PyPI, NuGet) and `nexus-docker.lan.${EXTERNAL_DOMAIN}`
+(docker-group).
 
 > **Scope:** Only workspaces, agents and dev PCs use Nexus. Cluster image pulls (kubelet, Spegel, Flux OCIRepositories) stay on direct upstream paths — Nexus being down must never block bootstrap or Flux reconciliation.
 
@@ -34,11 +35,16 @@ Docker client passwords are ESO-generated (`sl_` prefix) into `nexus-clients` by
 
 | Port   | Repo               | Purpose                                                                      |
 | ------ | ------------------ | ---------------------------------------------------------------------------- |
-| `8081` | all non-docker     | UI, REST API, apt/npm/PyPI proxies, metrics                                  |
+| `8081` | all non-docker     | UI, REST API, apt, npm, PyPI and NuGet proxies, metrics                      |
 | `8082` | `docker-group`     | OCI v2 at host root; aggregates Docker Hub, GHCR, Quay, MCR, registry.k8s.io |
 | `8083` | `envbuilder-cache` | Hosted docker repo for the kaniko layer cache                                |
 
 Docker connectors serve at the host root with no `/repository/` prefix. `docker-group` uses `forceBasicAuth`, so anonymous pulls get a 401 after the bearer realm is advertised — clients must log in as one of the client users above. Every client uses Nexus as a mirror, so a 401 or an outage falls back to the upstream registry instead of failing the pull.
+
+### NuGet sources must use the HTTPS host
+
+`nuget-proxy` (nuget.org v3) is consumed as `https://nexus.lan.${EXTERNAL_DOMAIN}/repository/nuget-proxy/index.json`, set in a user-level NuGet config by the Coder workspace template and the devcontainer setup, never in a committed `nuget.config`. Nexus builds the URLs inside `index.json` from the request (Traefik's `X-Forwarded-Proto`), so through Traefik they are `https://`; .NET 9+ rejects
+plain-HTTP sources with `NU1302`. The in-cluster address (`http://nexus.nexus-system.svc:8081`) advertises `http://` URLs and fails that check, so in-cluster .NET clients need the HTTPS host or `allowInsecureConnections`. GitHub-hosted CI restores from nuget.org directly.
 
 ### First boot: admin bootstrap
 

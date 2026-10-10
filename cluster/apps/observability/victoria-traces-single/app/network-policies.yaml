@@ -1,6 +1,5 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Claude agents for OTLP trace ingest on port 10428
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -35,7 +34,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Traefik for OTLP trace ingest on port 10428
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -55,7 +53,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from n8n for OTLP trace ingest on port 10428
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -75,7 +72,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Falcosidekick for OTLP trace ingest on port 10428
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -95,7 +91,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from LiteLLM for OTLP trace ingest on port 10428
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -115,7 +110,33 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow Grafana to query traces via Jaeger API on port 10428
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-agent-platform-traces-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vt-single
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-platform
+          matchExpressions:
+            - key: k8s:app.kubernetes.io/name
+              operator: In
+              values:
+                - agent-platform-web
+                - agent-platform-worker
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-platform-agents
+            k8s:managed-by: agent-platform
+      toPorts:
+        - ports:
+            - port: "10428"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

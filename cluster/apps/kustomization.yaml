@@ -57,4 +57,5 @@ resources:
   - ./unifi-system
   - ./vpa-system
   - ./temporal-system
+  - ./agent-platform
   - ./happy-system

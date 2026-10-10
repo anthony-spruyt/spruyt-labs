@@ -20,7 +20,6 @@ spec:
             - {port: "8081", protocol: TCP}
             - {port: "8082", protocol: TCP}
             - {port: "8083", protocol: TCP}
-    # Traefik pods (for external ingress)
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: traefik
@@ -30,14 +29,12 @@ spec:
             - {port: "8081", protocol: TCP}
             - {port: "8082", protocol: TCP}
             - {port: "8083", protocol: TCP}
-    # vmagent metrics scrape
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: observability
             k8s:app.kubernetes.io/name: vmagent
       toPorts:
         - ports: [{port: "8081", protocol: TCP}]
-    # Provisioning Job in-namespace
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: nexus-system
@@ -52,6 +49,12 @@ spec:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: claude-agents-write
             k8s:managed-by: n8n-claude-code
+      toPorts:
+        - ports: [{port: "8081", protocol: TCP}]
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-platform-agents
+            k8s:managed-by: agent-platform
       toPorts:
         - ports: [{port: "8081", protocol: TCP}]
   egress:

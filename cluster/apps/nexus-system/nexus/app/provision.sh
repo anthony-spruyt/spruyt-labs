@@ -119,6 +119,15 @@ upsert pypi/proxy pypi-proxy '{
   "negativeCache":{"enabled":true,"timeToLive":1440},
   "httpClient":{"blocked":false,"autoBlock":true}}'
 
+# --- nuget proxy (.NET restores from workspaces and dev PCs, issue #3467) ---
+upsert nuget/proxy nuget-proxy '{
+  "name":"nuget-proxy","online":true,
+  "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
+  "proxy":{"remoteUrl":"https://api.nuget.org/v3/index.json","contentMaxAge":1440,"metadataMaxAge":1440},
+  "negativeCache":{"enabled":true,"timeToLive":1440},
+  "httpClient":{"blocked":false,"autoBlock":true},
+  "nugetProxy":{"nugetVersion":"V3","queryCacheItemMaxAge":3600}}'
+
 # --- docker proxies ---
 upsert docker/proxy docker-hub-proxy '{
   "name":"docker-hub-proxy","online":true,

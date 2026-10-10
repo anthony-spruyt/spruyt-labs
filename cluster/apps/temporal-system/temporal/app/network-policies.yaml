@@ -124,6 +124,14 @@ spec:
                 - web
                 - admintools
                 - database
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-platform
+          matchExpressions:
+            - key: k8s:app.kubernetes.io/name
+              operator: In
+              values:
+                - agent-platform-web
+                - agent-platform-worker
       toPorts:
         - ports:
             - port: "7233"

@@ -13,6 +13,6 @@ Trace backend for Claude agents, Coder workspaces, n8n, LiteLLM, Traefik and Fal
 
 ### Adding a producer
 
-Ingress is allowlisted per producer in `app/network-policies.yaml`. Agent pods are matched on `managed-by: n8n-claude-code` in each `claude-agents-*` namespace, so a new agent namespace needs its own entry.
+Ingress is allowlisted per producer in `app/network-policies.yaml`. Agent pods are matched on `managed-by: n8n-claude-code` in each `claude-agents-*` namespace, so a new agent namespace needs its own entry. agent-platform web/worker and its agent pods (`managed-by: agent-platform` in `agent-platform-agents`) have their own entry, `allow-agent-platform-traces-ingress`.
 
 Grafana reads traces through the Jaeger-compatible API at `/select/jaeger` (datasource in the k8s-stack values).

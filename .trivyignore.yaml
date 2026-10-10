@@ -91,6 +91,14 @@ misconfigurations:
       - cluster/apps/nut-system/shutdown-orchestrator/rbac-rook-ceph/rbac.yaml
       - cluster/apps/nut-system/shutdown-orchestrator/app/rbac.yaml
 
+  # agent-platform worker creates/deletes agent pods and per-run token Secrets in agent-platform-agents (no get/list on Secrets)
+  - id: AVD-KSV-0048
+    paths:
+      - cluster/apps/agent-platform/agent-platform/agents/rbac.yaml
+  - id: AVD-KSV-0113
+    paths:
+      - cluster/apps/agent-platform/agent-platform/agents/rbac.yaml
+
   # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)
   - id: AVD-KSV-0013
     paths:

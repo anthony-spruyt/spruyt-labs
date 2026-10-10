@@ -46,6 +46,7 @@ cleanupController:
             - pods
           verbs:
             - delete
+            - get
             - list
             - watch
   resources:
