@@ -286,11 +286,6 @@ controllers:
           CONFIG_FILE: "/config/scanners.yml"
           # Load the model from the HF cache PVC only; remove to refill an empty cache (see README)
           HF_HUB_OFFLINE: "1"
-          HF_TOKEN:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: HF_TOKEN
         probes:
           startup:
             enabled: true
