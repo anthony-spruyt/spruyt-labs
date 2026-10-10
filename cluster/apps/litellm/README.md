@@ -9,7 +9,6 @@ from [`anthony-spruyt/litellm-middleware`](https://github.com/anthony-spruyt/lit
 
 - Authentik OAuth provider, secret and rotation wiring — see [authentik README](../authentik-system/authentik/README.md#oauth-credential-rotation).
 - Provider API keys in `litellm/app/litellm-secrets.sops.yaml`, referenced from `config.yaml` as `os.environ/<NAME>`. Anthropic models set no `api_key`; they are subscription passthrough (below).
-- `HF_TOKEN` in the same secret, for the llm-guard model download.
 - `TOOL_GUARD_TEAM_IDS` in the same secret: the comma-separated LiteLLM team IDs whose requests the tool-guard middleware enforces.
 
 ## Operations
@@ -125,7 +124,8 @@ or `prompt-injection` fails rather than skipping the check: neither sets `unreac
 once it has loaded. Verdicts are cached by content hash in `litellm-valkey` under `llm-tool-guard:` through the `llm-tool-guard` ACL user, so a result gets the same verdict on every turn. Only LiteLLM pods (and vmagent, for metrics) can reach the scanner, and it reaches `litellm-valkey` and has HTTPS egress for Hugging Face model downloads. It runs with `HF_HUB_OFFLINE`, so it loads the model from
 the `llm-tool-guard-hf-cache` PVC. If the PVC is replaced, remove `HF_HUB_OFFLINE` from `values.yaml` to re-download the model, then restore it. Metrics (`llm_tool_guard_*`) are scraped from `/metrics`, and the `LLMToolGuardUnavailable` alert fires when no pod is ready.
 
-llm-guard runs with `HF_HUB_OFFLINE=1` and loads its model from the `llm-guard-hf-cache` PVC. This is fail-closed on purpose: if that PVC is ever lost or empty, the pod can never become ready. Recovery is to remove `HF_HUB_OFFLINE` from `values.yaml`, let one pod download the model, then restore it (Ref #2592).
+`prompt-injection` uses `Horizon-Labs/prompt-injection-guard-base` (ungated), scanning in overlapping 2048-token windows with a 512-token overlap. Inputs over `max_windows` (about 200k tokens) are blocked. llm-guard runs with `HF_HUB_OFFLINE=1` and loads the model from the `llm-guard-hf-cache` PVC. To refill an empty cache, remove `HF_HUB_OFFLINE` from `values.yaml`, let one pod download the
+model, then restore it (Ref #2592, #3464).
 
 ### Known issues
 

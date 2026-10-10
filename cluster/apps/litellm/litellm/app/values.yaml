@@ -262,7 +262,7 @@ controllers:
   llm-guard:
     type: deployment
     # Parked: guardrail unused (false positives); see Guardrails in README.md
-    replicas: 1
+    replicas: 0
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
@@ -284,6 +284,8 @@ controllers:
           LISTEN_PORT: "8000"
           # Per-scanner thresholds live in scanners.yml, not the THRESHOLD env.
           CONFIG_FILE: "/config/scanners.yml"
+          # Load the model from the HF cache PVC only; remove to refill an empty cache (see README)
+          HF_HUB_OFFLINE: "1"
           HF_TOKEN:
             valueFrom:
               secretKeyRef:
@@ -299,9 +301,7 @@ controllers:
                 port: 8000
               periodSeconds: 10
               timeoutSeconds: 5
-              # 300s window sized for the cold case: the first pod to run after
-              # the HF cache PVC is empty pulls the rogue-security model over
-              # egress before loading it. Warm starts read from the PVC instead.
+              # 300s window covers the cold case: a pod with an empty HF cache PVC downloads the model first
               failureThreshold: 30
           liveness:
             enabled: true
@@ -737,8 +737,7 @@ persistence:
           - path: /config/scanners.yml
             subPath: scanners.yml
             readOnly: true
-  # HF_HOME for llm-guard. Weights are pulled from the Hub on first load and
-  # reused from here afterwards, so restarts skip the download.
+  # HF_HOME for llm-guard; loaded offline, refill by removing HF_HUB_OFFLINE (see README)
   llm-guard-hf-cache:
     type: persistentVolumeClaim
     existingClaim: llm-guard-hf-cache

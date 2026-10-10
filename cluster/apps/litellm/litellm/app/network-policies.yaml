@@ -274,7 +274,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# world:443 egress pulls the gated rogue-security model from HuggingFace at runtime
+# world:443 egress downloads the model from HuggingFace when the cache is refilled
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
