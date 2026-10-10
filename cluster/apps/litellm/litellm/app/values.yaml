@@ -358,6 +358,11 @@ controllers:
           pullPolicy: IfNotPresent
         env:
           HF_HUB_OFFLINE: "1"
+          HF_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: HF_TOKEN
           VALKEY_URL: "redis://litellm-valkey.litellm.svc:6379"
           VALKEY_USERNAME: llm-tool-guard
           VALKEY_PASSWORD:

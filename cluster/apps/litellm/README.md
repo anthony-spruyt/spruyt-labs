@@ -10,6 +10,7 @@ from [`anthony-spruyt/litellm-middleware`](https://github.com/anthony-spruyt/lit
 - Authentik OAuth provider, secret and rotation wiring — see [authentik README](../authentik-system/authentik/README.md#oauth-credential-rotation).
 - Provider API keys in `litellm/app/litellm-secrets.sops.yaml`, referenced from `config.yaml` as `os.environ/<NAME>`. Anthropic models set no `api_key`; they are subscription passthrough (below).
 - `TOOL_GUARD_TEAM_IDS` in the same secret: the comma-separated LiteLLM team IDs whose requests the tool-guard middleware enforces.
+- `HF_TOKEN` in `litellm-secrets`, for the llm-guard and llm-tool-guard model downloads.
 
 ## Operations
 
@@ -122,7 +123,7 @@ or `prompt-injection` fails rather than skipping the check: neither sets `unreac
 
 `llm-tool-guard` is the scanner behind the `tool-guard` middleware (see Proxy middleware), a separate Deployment from llm-guard and not a LiteLLM guardrail. It serves `POST /v1/scan` on port 8080 and scores tool-result text with `Horizon-Labs/prompt-injection-guard-base` in overlapping token windows. The model loads from the `llm-tool-guard-hf-cache` PVC at `HF_HOME`, and the pod becomes ready
 once it has loaded. Verdicts are cached by content hash in `litellm-valkey` under `llm-tool-guard:` through the `llm-tool-guard` ACL user, so a result gets the same verdict on every turn. Only LiteLLM pods (and vmagent, for metrics) can reach the scanner, and it reaches `litellm-valkey` and has HTTPS egress for Hugging Face model downloads. It runs with `HF_HUB_OFFLINE`, so it loads the model from
-the `llm-tool-guard-hf-cache` PVC. If the PVC is replaced, remove `HF_HUB_OFFLINE` from `values.yaml` to re-download the model, then restore it. Metrics (`llm_tool_guard_*`) are scraped from `/metrics`, and the `LLMToolGuardUnavailable` alert fires when no pod is ready.
+the `llm-tool-guard-hf-cache` PVC. If the PVC is replaced, remove `HF_HUB_OFFLINE` from `values.yaml` to re-download the model (the download uses `HF_TOKEN` from `litellm-secrets`), then restore it. Metrics (`llm_tool_guard_*`) are scraped from `/metrics`, and the `LLMToolGuardUnavailable` alert fires when no pod is ready.
 
 `prompt-injection` uses `Horizon-Labs/prompt-injection-guard-base` (ungated), scanning in overlapping 2048-token windows with a 512-token overlap. Inputs over `max_windows` (about 200k tokens) are blocked. llm-guard runs with `HF_HUB_OFFLINE=1` and loads the model from the `llm-guard-hf-cache` PVC. To refill an empty cache, remove `HF_HUB_OFFLINE` from `values.yaml`, let one pod download the model
 (the download uses `HF_TOKEN` from `litellm-secrets`), then restore it (Ref #2592, #3464).
