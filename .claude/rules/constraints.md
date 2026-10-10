@@ -65,12 +65,12 @@ Data loss is permanent and cascading.
 
 ### Safe alternatives
 
-| Instead of                 | Do                                                                                                                                                                                                           |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Confirming a secret change | Check its effects: Flux Kustomization Ready at the commit (SOPS), `kubectl get externalsecret <name>` shows `SecretSynced` (ESO), consuming pods rolled (Reloader) and their logs show the new setting works |
-| Checking a secret directly | `kubectl get secret <name>` (existence, key count in `DATA`) works only where RBAC allows; Coder workspaces can't read secrets                                                                               |
-| Listing secret keys        | Read the manifests that consume it (`secretKeyRef`, `envFrom`)                                                                                                                                               |
-| Debugging auth             | Check pod logs, not secret contents                                                                                                                                                                          |
+| Instead of               | Do                                                                                                                                                                                                                                |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reading secret values    | Check its effects: Flux Kustomization Ready at the commit (SOPS), `kubectl get externalsecret <name>` shows `SecretSynced` (ESO), consuming pods rolled (Reloader, or a manual restart) and their logs show the new setting works |
+| Checking a secret exists | `kubectl get secret <name>` only where RBAC allows (existence, key count in `DATA`); Coder workspaces can't read secrets                                                                                                          |
+| Listing secret keys      | Read the manifests that consume it (`secretKeyRef`, `envFrom`)                                                                                                                                                                    |
+| Debugging auth           | Check pod logs, not secret contents                                                                                                                                                                                               |
 
 ### SOPS
 

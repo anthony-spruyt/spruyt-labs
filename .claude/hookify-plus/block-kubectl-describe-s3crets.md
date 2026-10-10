@@ -19,7 +19,7 @@ conditions:
 
 **Safe alternatives:**
 
-- Confirm a secret change from its effects: the Flux Kustomization is Ready at the commit (SOPS), `kubectl get externalsecret <name>` shows `SecretSynced` (ESO), and the consuming pods rolled (Reloader) with logs showing the new setting works
+- Confirm a secret change from its effects: the Flux Kustomization is Ready at the commit (SOPS), `kubectl get externalsecret <name>` shows `SecretSynced` (ESO), and the consuming pods rolled (Reloader, or a manual restart) with logs showing the new setting works
 - `kubectl get secrets` and `kubectl get secret <name>` list names and key counts only where RBAC allows; Coder workspaces can't read secrets
 
 **False positive?** Search for an existing issue, then open one: `gh issue create --repo anthony-spruyt/spruyt-labs --title "fix(hookify): false positive in block-kubectl-describe-secrets" --label bug` and describe the blocked command in the body using `--body-file` to avoid re-triggering hooks.
