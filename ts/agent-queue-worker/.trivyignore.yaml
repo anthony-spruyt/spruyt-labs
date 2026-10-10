@@ -1,5 +1,0 @@
----
-# Image-specific Trivy ignores for agent-queue-worker
-# Keep image CVEs here (not in global .trivyignore.yaml) for per-image audit/cleanup.
-
-vulnerabilities: null

@@ -13,7 +13,6 @@ LiteLLM's built-in catalog entries for Postgres and Redis are not usable: the Li
 | LiteLLM server | URL                                 | Backs                                       |
 | -------------- | ----------------------------------- | ------------------------------------------- |
 | `postgres`     | `http://db-mcp.db-mcp.svc:8080/mcp` | Postgres: `temporal`, `temporal_visibility` |
-| `valkey-agent` | `http://db-mcp.db-mcp.svc:8001/mcp` | Valkey: `agent-valkey`                      |
 | `valkeyshared` | `http://db-mcp.db-mcp.svc:8002/mcp` | Valkey: `valkey-system/valkey`              |
 
 With more than one source, DBHub suffixes each tool with the source id (`execute_sql_temporal`, `search_objects_temporal_visibility`); enable new ones in the LiteLLM allowlist when a source is added.
@@ -36,11 +35,10 @@ Read-only still means readable: whatever a source holds can land in an agent's c
 
 Each database owns its `mcp` password; nothing is stored in SOPS for this app.
 
-| Source                             | Login                                                 | Generated into (owner ns)               | Synced to `db-mcp`    |
-| ---------------------------------- | ----------------------------------------------------- | --------------------------------------- | --------------------- |
-| temporal Postgres (both databases) | CNPG managed role `mcp`, member of `pg_read_all_data` | `temporal-cnpg-mcp` (`temporal-system`) | `db-mcp-temporal`     |
-| agent-valkey                       | ACL user `mcp`, `+@read` only                         | `mcp` key in `agent-valkey-users`       | `db-mcp-agent-valkey` |
-| valkey                             | ACL user `mcp`, `+@read` only                         | `mcp` key in `valkey-users`             | `db-mcp-valkey`       |
+| Source                             | Login                                                 | Generated into (owner ns)               | Synced to `db-mcp` |
+| ---------------------------------- | ----------------------------------------------------- | --------------------------------------- | ------------------ |
+| temporal Postgres (both databases) | CNPG managed role `mcp`, member of `pg_read_all_data` | `temporal-cnpg-mcp` (`temporal-system`) | `db-mcp-temporal`  |
+| valkey                             | ACL user `mcp`, `+@read` only                         | `mcp` key in `valkey-users`             | `db-mcp-valkey`    |
 
 Passwords come from an ESO `Password` generator with `refreshPolicy: CreatedOnce`, so they are generated once and not refreshed on a timer. The template adds the `sl_` prefix (64 alphanumerics after it), so the LiteLLM secret-masking middleware recognises them as ours.
 
@@ -59,7 +57,7 @@ Postgres (same pattern as temporal):
 2. Here: ServiceAccount + `SecretStore` + `ExternalSecret` in `secret-stores.yaml`, an egress CNP, a `[[sources]]` + `[[tools]]` block in `dbhub.toml` and the password env var on the `dbhub` container.
 3. In LiteLLM, enable the new source's `execute_sql_<id>` and `search_objects_<id>` tools on the `postgres` server.
 
-Valkey (same pattern as agent-valkey):
+Valkey (same pattern as the `valkey` source):
 
 1. In the Valkey app: an `<instance>-user-mcp` ExternalSecret in `users-eso.yaml`, an `mcp` user in `auth.aclUsers` (in a later push than the ExternalSecret), a RoleBinding subject in `secret-reader-rbac.yaml` and a CNP allowing ingress from `db-mcp`.
 2. Here: SecretStore + ExternalSecret, egress CNP, a new `redis-<instance>` container on the next port, the port on the Service and on both LiteLLM CNPs.

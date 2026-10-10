@@ -2,7 +2,7 @@
 
 ## Overview
 
-Durable, retryable workflow engine intended to take over job orchestration for the agent platform from n8n dispatch and BullMQ (#3045). Deployed from the official Temporal chart against its own CNPG cluster. No workloads use it yet.
+Durable, retryable workflow engine intended to take over job orchestration for the agent platform from n8n dispatch (#3045). Deployed from the official Temporal chart against its own CNPG cluster. No workloads use it yet.
 
 ## Prerequisites
 

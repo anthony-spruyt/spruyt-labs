@@ -33,7 +33,6 @@ Talos Linux homelab GitOps repository on bare metal. No SSH to Talos nodes - use
 | `talos/`                   | Talos machine configs                        |
 | `infra/terraform/`         | Cloud infra (AWS backups, Cloudflare, TFC)   |
 | `cmd/`                     | Go services (containers deployed to cluster) |
-| `ts/`                      | TypeScript services (agent-queue-worker)     |
 | `.taskfiles/`              | Automation (`task --list`)                   |
 | `docs/`                    | Human runbooks (bootstrap, DR, maintenance)  |
 

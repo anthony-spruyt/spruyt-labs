@@ -12,13 +12,12 @@ LAN-only UI for inspecting the cluster's Valkey instances, behind Authentik forw
 
 Each Valkey instance has a dedicated `redisinsight` ACL user. Permissions differ per instance:
 
-| Instance         | Namespace             | ACL                  |
-| ---------------- | --------------------- | -------------------- |
-| `valkey`         | `valkey-system`       | read-only (`+@read`) |
-| `agent-valkey`   | `agent-worker-system` | full (`+@all`)       |
-| `litellm-valkey` | `litellm`             | full (`+@all`)       |
+| Instance         | Namespace       | ACL                  |
+| ---------------- | --------------- | -------------------- |
+| `valkey`         | `valkey-system` | read-only (`+@read`) |
+| `litellm-valkey` | `litellm`       | full (`+@all`)       |
 
-The full-access ACLs on `agent-valkey` and `litellm-valkey` mean RedisInsight can delete keys there, e.g. corrupted BullMQ jobs (see the [agent-queue-worker README](../../agent-worker-system/agent-queue-worker/README.md#troubleshooting)).
+The full-access ACL on `litellm-valkey` means RedisInsight can delete keys there.
 
 ### Adding an instance
 

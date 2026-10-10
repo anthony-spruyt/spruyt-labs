@@ -2,8 +2,7 @@
 
 ## Overview
 
-Workflow engine and the control plane for the agent platform: it receives GitHub and Alertmanager webhooks, queues jobs through [agent-queue-worker](../../agent-worker-system/agent-queue-worker/README.md), and spawns Claude Code agent pods in the `claude-agents-*` namespaces ([claude-agents-shared](../../claude-agents-shared/README.md)). Runs in queue mode with separate main, worker and webhook
-deployments.
+Workflow engine and the control plane for the agent platform: it receives GitHub and Alertmanager webhooks and spawns Claude Code agent pods in the `claude-agents-*` namespaces ([claude-agents-shared](../../claude-agents-shared/README.md)). Runs in queue mode with separate main, worker and webhook deployments.
 
 ## Operations
 

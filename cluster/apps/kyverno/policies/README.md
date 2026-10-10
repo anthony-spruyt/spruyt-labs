@@ -20,7 +20,7 @@ Injects credentials, MCP config, settings profiles, plugin bootstrap and repo cl
 ### set-agent-deadline
 
 Paired with `validate-agent-deadline`. `set-agent-deadline` sets `activeDeadlineSeconds` on pods labelled `managed-by: n8n-claude-code` from their `agent-timeout` annotation, falling back to 3h when it is missing. `validate-agent-deadline` (Enforce) rejects any agent pod that still has no deadline, so a mutation failure blocks the pod rather than letting it run forever. Pods labelled
-`app: claude-code-persistent` are excluded from both. Per-role timeouts are set by the worker; see [agent-queue-worker](../../agent-worker-system/agent-queue-worker/README.md#timeouts).
+`app: claude-code-persistent` are excluded from both. n8n's Claude Code node writes the `agent-timeout` annotation from the `timeout_seconds` its caller sends.
 
 ### cleanup-agent-pods
 

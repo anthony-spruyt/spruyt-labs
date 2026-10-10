@@ -1,17 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oxsecurity/megalinter/main/megalinter/descriptors/schemas/megalinter-configuration.jsonschema.json
-# Project-specific MegaLinter configuration
-# Extends the base config from repo-operator
-# Add custom linters or overrides below
 EXTENDS: .mega-linter-base.yml
 # Append additional linters to base config (don't replace)
 CONFIG_PROPERTIES_TO_APPEND:
   - ENABLE_LINTERS
   - ADDITIONAL_EXCLUDED_DIRECTORIES
-# Add project-specific linters below:
 ENABLE_LINTERS:
   - GO_GOLANGCI_LINT
   - TERRAFORM_TFLINT
-  - TYPESCRIPT_BIOME
 FILTER_REGEX_EXCLUDE: '(CLAUDE\.md$)|\.sops\.|.*/mcp\.json$|\.taskfiles/talos/scripts/'
 # golangci-lint has no chdir flag and the one Go module is not at the root; the image's Go predates go.mod and its GOPATH is root-owned.
 GO_GOLANGCI_LINT_CLI_EXECUTABLE:

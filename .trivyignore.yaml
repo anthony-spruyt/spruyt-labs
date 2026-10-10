@@ -3,7 +3,7 @@
 # https://trivy.dev/latest/docs/configuration/filtering
 #
 # IMAGE CVEs DO NOT BELONG HERE. Put them in per-image trivyignore files:
-#   <workdir>/.trivyignore.yaml (e.g., ts/agent-queue-worker/.trivyignore.yaml)
+#   <workdir>/.trivyignore.yaml (e.g., cmd/<service>/.trivyignore.yaml)
 # Per-image files are easier to audit, track ownership, and clean up when fixes land.
 
 misconfigurations:
@@ -56,11 +56,9 @@ misconfigurations:
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/role.yaml
       - cluster/apps/n8n-mcp/n8n-mcp-server/app/mcp-api-keys-reader-rbac.yaml
       - cluster/apps/n8n-system/n8n/app/github-rotation-rbac.yaml
-      - cluster/apps/agent-worker-system/agent-queue-worker/app/secret-reader-rbac.yaml
       - cluster/apps/valkey-system/valkey/app/secret-reader-rbac.yaml
       - cluster/apps/cnpg-system/plugin-barman-cloud/app/secret-reader-rbac.yaml
       - cluster/apps/temporal-system/temporal/app/cnpg-roles-eso.yaml
-      - cluster/apps/agent-worker-system/agent-valkey/app/secret-reader-rbac.yaml
       - cluster/apps/litellm/litellm-valkey/app/secret-reader-rbac.yaml
       - cluster/apps/nexus-system/nexus/app/secret-reader-rbac.yaml
       - cluster/flux/meta/image-pull-secrets-rbac.yaml

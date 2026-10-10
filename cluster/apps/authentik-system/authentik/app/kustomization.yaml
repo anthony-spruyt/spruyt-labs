@@ -16,8 +16,7 @@ resources:
   - ./external-secrets-rbac.yaml
   - ./cnpg-roles-eso.yaml
   - ./authentik-cnpg-cluster.yaml
-  # Dont need pooling yet, if pooling is needed when load increase can look at enabling.
-  # - ./authentik-cnpg-poolers.yaml
+  # authentik-cnpg-poolers.yaml stays unlisted until load needs pooling
   - ./authentik-cnpg-scheduled-backups.yaml
   - ./release.yaml
   - ./oauth-secret-rotation
@@ -43,7 +42,6 @@ configMapGenerator:
       - blueprints/hubble-sso.yaml
       - blueprints/redisinsight-sso.yaml
       - blueprints/flux-sso.yaml
-      - blueprints/bull-board-sso.yaml
       - blueprints/technitium-sso.yaml
       - blueprints/litellm-sso.yaml
       - blueprints/temporal-sso.yaml

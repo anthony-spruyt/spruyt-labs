@@ -80,7 +80,7 @@ If a recommendation hits a boundary, adjust `minAllowed`/`maxAllowed` and rechec
 
 To exclude a namespace from descheduler eviction, label it `descheduler.kubernetes.io/exclude: "true"` in its `namespace.yaml`. `DefaultEvictor.namespaceLabelSelector` skips any namespace carrying that label; no descheduler config change is needed.
 
-Exclude only core infrastructure namespaces and namespaces whose pods run long jobs an eviction would kill (`agent-worker-system`). Other workload namespaces rely on priority classes to control eviction order.
+Exclude only core infrastructure namespaces and namespaces whose pods run long jobs an eviction would kill. Other workload namespaces rely on priority classes to control eviction order.
 
 ## HelmRelease with ConfigMapGenerator
 

@@ -49,7 +49,6 @@ resources:
   - ./claude-agents-spruyt-labs-sre
   - ./claude-agents-spruyt-labs-write
   - ./claude-agents-write
-  - ./agent-worker-system
   - ./brave-search-mcp
   - ./db-mcp
   - ./n8n-mcp

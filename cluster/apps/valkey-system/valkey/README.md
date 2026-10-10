@@ -2,7 +2,7 @@
 
 ## Overview
 
-Shared Valkey instance backing the n8n BullMQ queue, with read access for RedisInsight. `agent-worker-system` and `litellm` run their own separate Valkey releases; they do not use this one.
+Shared Valkey instance backing the n8n BullMQ queue, with read access for RedisInsight. `litellm` runs its own separate Valkey release; it does not use this one.
 
 ## Operations
 

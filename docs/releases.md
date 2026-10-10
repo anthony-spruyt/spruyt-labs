@@ -4,13 +4,9 @@ Every container image in this repository is released by [release-please](https:/
 
 ## Services
 
-| Service               | Path                               | Image                                          |
-| --------------------- | ---------------------------------- | ---------------------------------------------- |
-| shutdown-orchestrator | `cmd/shutdown-orchestrator`        | `ghcr.io/anthony-spruyt/shutdown-orchestrator` |
-| agent-queue-worker    | `ts/agent-queue-worker`            | `ghcr.io/anthony-spruyt/agent-queue-worker`    |
-| bull-board            | `ts/agent-queue-worker/bull-board` | `ghcr.io/anthony-spruyt/bull-board`            |
-
-`bull-board` lives inside `ts/agent-queue-worker` but is released independently; its directory is excluded from the worker's paths so a bull-board change does not bump the worker.
+| Service               | Path                        | Image                                          |
+| --------------------- | --------------------------- | ---------------------------------------------- |
+| shutdown-orchestrator | `cmd/shutdown-orchestrator` | `ghcr.io/anthony-spruyt/shutdown-orchestrator` |
 
 [`kata-tap-qdisc-fix`](https://github.com/anthony-spruyt/kata-tap-qdisc-fix) and [`mcp-header-proxy`](https://github.com/anthony-spruyt/mcp-header-proxy) are deployed here but built and released from their own repositories, under the same image names.
 
@@ -60,7 +56,8 @@ The workflow is synced from repo-operator; change it there, not here.
 
 **The release pull request is not merging.** Like any other pull request, it needs a collaborator's approval, `summary / Check Results` to pass, and no `blocked` label. Mergify merges it once all three hold.
 
-**A tag exists with no image.** The build failed after the tag was created, so the release is still a draft. If the cause is outside the commit and outside the pinned shared workflows (a registry outage, a flaky test, a missing or expired secret), fix it and re-run the release run's failed jobs. A re-run uses the same commit and the same pinned `_release-please.yaml`, so it builds what the original run built.
+**A tag exists with no image.** The build failed after the tag was created, so the release is still a draft. If the cause is outside the commit and outside the pinned shared workflows (a registry outage, a flaky test, a missing or expired secret), fix it and re-run the release run's failed jobs. A re-run uses the same commit and the same pinned `_release-please.yaml`, so it builds what the
+original run built.
 
 ```bash
 gh run rerun <run-id> --failed

@@ -63,45 +63,6 @@ controllers:
               failureThreshold: 3
           readiness: *dbhubProbe
       # mcp-redis only speaks stdio and binds to one server - one container per Valkey instance
-      redis-agent-valkey:
-        image:
-          repository: docker.io/mcp/redis
-          tag: latest@sha256:e886a7e9990a084a20d46adcea8e7c89d539271f1b453ffabdce4c3f96f27fa0
-          pullPolicy: IfNotPresent
-        command:
-          - /app/.venv/bin/python
-          - /config/serve.py
-        env:
-          PYTHONDONTWRITEBYTECODE: "1"
-          PYTHONPATH: /app
-          MCP_PORT: "8001"
-          MCP_ALLOWED_HOSTS: "db-mcp.db-mcp.svc:*"
-          REDIS_HOST: agent-valkey.agent-worker-system.svc
-          REDIS_PORT: "6379"
-          REDIS_USERNAME: mcp
-          REDIS_PWD:
-            valueFrom:
-              secretKeyRef:
-                name: db-mcp-agent-valkey
-                key: password
-        securityContext: *securityContext
-        resources:
-          requests:
-            cpu: 10m
-            memory: 64Mi
-          limits:
-            memory: 256Mi
-        probes:
-          liveness: &redisAgentValkeyProbe
-            enabled: true
-            custom: true
-            spec:
-              tcpSocket:
-                port: 8001
-              periodSeconds: 30
-              timeoutSeconds: 5
-              failureThreshold: 3
-          readiness: *redisAgentValkeyProbe
       redis-valkey:
         image:
           repository: docker.io/mcp/redis
@@ -148,8 +109,6 @@ service:
     ports:
       dbhub:
         port: 8080
-      redis-agent-valkey:
-        port: 8001
       redis-valkey:
         port: 8002
 

@@ -1,5 +1,3 @@
 {
-  "cmd/shutdown-orchestrator": "1.1.25",
-  "ts/agent-queue-worker": "3.3.62",
-  "ts/agent-queue-worker/bull-board": "1.0.0"
+  "cmd/shutdown-orchestrator": "1.1.25"
 }

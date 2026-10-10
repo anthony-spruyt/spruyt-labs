@@ -9,12 +9,6 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: agent-valkey-secret-reader
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
-apiVersion: v1
-kind: ServiceAccount
-metadata:
   name: litellm-valkey-secret-reader
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/secretstore_v1.json
@@ -35,25 +29,6 @@ spec:
       auth:
         serviceAccount:
           name: valkey-secret-reader
----
-# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/secretstore_v1.json
-apiVersion: external-secrets.io/v1
-kind: SecretStore
-metadata:
-  name: agent-valkey-secret-store
-spec:
-  provider:
-    kubernetes:
-      remoteNamespace: agent-worker-system
-      server:
-        url: "https://kubernetes.default.svc"
-        caProvider:
-          type: ConfigMap
-          name: kube-root-ca.crt
-          key: ca.crt
-      auth:
-        serviceAccount:
-          name: agent-valkey-secret-reader
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/secretstore_v1.json
 apiVersion: external-secrets.io/v1
@@ -98,14 +73,6 @@ spec:
               "password": {{ .valkey | toJson }}
             },
             {
-              "id": "71f36dcb-3a2c-4755-aa71-89b73516c5d3",
-              "name": "agent-valkey.agent-worker-system.svc:6379",
-              "host": "agent-valkey.agent-worker-system.svc",
-              "port": 6379,
-              "username": "redisinsight",
-              "password": {{ .agentValkey | toJson }}
-            },
-            {
               "id": "a4e70cce-d641-48de-8fc1-88293e2c17c8",
               "name": "litellm-valkey.litellm.svc:6379",
               "host": "litellm-valkey.litellm.svc",
@@ -122,14 +89,6 @@ spec:
           name: valkey-secret-store
       remoteRef:
         key: valkey-users
-        property: redisinsight
-    - secretKey: agentValkey
-      sourceRef:
-        storeRef:
-          kind: SecretStore
-          name: agent-valkey-secret-store
-      remoteRef:
-        key: agent-valkey-users
         property: redisinsight
     - secretKey: litellmValkey
       sourceRef:

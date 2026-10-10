@@ -18,19 +18,6 @@
       "component": "shutdown-orchestrator",
       "tag-separator": "/",
       "include-component-in-tag": true
-    },
-    "ts/agent-queue-worker": {
-      "release-type": "node",
-      "component": "agent-queue-worker",
-      "tag-separator": "/",
-      "include-component-in-tag": true,
-      "exclude-paths": ["ts/agent-queue-worker/bull-board"]
-    },
-    "ts/agent-queue-worker/bull-board": {
-      "release-type": "node",
-      "component": "bull-board",
-      "tag-separator": "/",
-      "include-component-in-tag": true
     }
   }
 }

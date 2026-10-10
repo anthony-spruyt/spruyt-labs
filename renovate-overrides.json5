@@ -86,26 +86,6 @@
       "allowedVersions": "!/^2\\.39\\./"
     },
     {
-      "description": "Point own image changelogs at their release-please package directory",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "ghcr.io/anthony-spruyt/agent-queue-worker"
-      ],
-      "sourceDirectory": "ts/agent-queue-worker"
-    },
-    {
-      "description": "Point own image changelogs at their release-please package directory. Ref #2684",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "ghcr.io/anthony-spruyt/bull-board"
-      ],
-      "sourceDirectory": "ts/agent-queue-worker/bull-board"
-    },
-    {
       "description": "Fetch mcp-header-proxy release notes from its own repo. Ref #3274",
       "matchDatasources": [
         "docker"

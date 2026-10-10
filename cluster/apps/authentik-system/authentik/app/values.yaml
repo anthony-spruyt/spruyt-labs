@@ -164,8 +164,6 @@ global:
             path: redisinsight-sso.yaml
           - key: flux-sso.yaml
             path: flux-sso.yaml
-          - key: bull-board-sso.yaml
-            path: bull-board-sso.yaml
           - key: coder-sso.yaml
             path: coder-sso.yaml
           - key: technitium-sso.yaml

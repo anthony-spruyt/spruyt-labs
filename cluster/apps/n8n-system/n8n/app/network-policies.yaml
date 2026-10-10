@@ -1,6 +1,5 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Traefik
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -21,7 +20,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Alertmanager (observability namespace)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -42,7 +40,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -96,7 +93,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to CNPG PostgreSQL
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -117,7 +113,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to Valkey (Redis)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -138,7 +133,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to Qdrant
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -180,7 +174,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to VictoriaTraces for OTLP trace export
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -222,7 +215,6 @@ spec:
 # Authentik Outpost Policies (deployed by Authentik to this namespace)
 # =============================================================================
 # DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
-# Allow Traefik to reach authentik outpost for forward auth
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -244,7 +236,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow outpost egress to authentik server
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -266,7 +257,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow outpost egress to kube-api
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -284,7 +274,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -304,7 +293,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow world HTTPS for OAuth/OIDC flows and certificate validation
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -327,7 +315,6 @@ spec:
 # CNPG PostgreSQL Cluster Policies
 # =============================================================================
 # DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
-# Allow ingress from n8n app for database connections
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -347,7 +334,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow S3 backup uploads via Barman cloud plugin
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -366,7 +352,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -386,7 +371,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow CNPG operator access for cluster management
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -407,7 +391,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow kube-api egress for cluster coordination
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -426,7 +409,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to Barman cloud plugin for backup operations
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -447,7 +429,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow internal cluster communication for replication and status
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -482,7 +463,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow metrics scraping from vmagent for PgBouncer pooler
 # Data plane (port 5432) already covered by allow-cnpg-n8n-ingress and allow-cnpg-internal-cluster
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -540,7 +520,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from Coder workspace pods
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -562,7 +541,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from n8n-mcp-server (MCP API access)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -583,77 +561,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from agent-queue-worker for dispatch webhook
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-agent-worker-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: n8n
-      app.kubernetes.io/name: n8n
-      app.kubernetes.io/type: webhook
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: agent-worker-system
-            k8s:app.kubernetes.io/instance: agent-queue-worker
-            k8s:app.kubernetes.io/name: agent-queue-worker
-      toPorts:
-        - ports:
-            - port: "5678"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from agent-queue-worker for health checks (master pod)
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-agent-worker-health-ingress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: n8n
-      app.kubernetes.io/name: n8n
-      app.kubernetes.io/type: master
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: agent-worker-system
-            k8s:app.kubernetes.io/instance: agent-queue-worker
-            k8s:app.kubernetes.io/name: agent-queue-worker
-      toPorts:
-        - ports:
-            - port: "5678"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to agent-queue-worker for job callbacks (/jobs/:id/done, /jobs/:id/fail)
-# Selects all n8n pod types — queue mode offloads executions to worker pods,
-# so callbacks can originate from either webhook or worker pod types
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-agent-worker-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: n8n
-      app.kubernetes.io/name: n8n
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: agent-worker-system
-            k8s:app.kubernetes.io/instance: agent-queue-worker
-            k8s:app.kubernetes.io/name: agent-queue-worker
-      toPorts:
-        - ports:
-            - port: "3000"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to LiteLLM proxy for LLM API access
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

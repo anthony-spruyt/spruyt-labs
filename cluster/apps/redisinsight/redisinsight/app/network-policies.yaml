@@ -1,8 +1,5 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# CiliumNetworkPolicy for redisinsight
-# Redis GUI tool with authentik forward auth (traefik proxies to app after outpost auth)
-# Allow traefik ingress to authentik outpost
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -25,7 +22,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow traefik ingress to redisinsight app (forward auth mode - traefik proxies to app)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -46,7 +42,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow outpost egress to authentik server for authentication
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -128,7 +123,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow redisinsight app world HTTPS egress
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -147,7 +141,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow redisinsight app egress to valkey for viewing data
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -168,31 +161,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow redisinsight app egress to agent valkey for viewing data
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-redisinsight-agent-valkey-egress
-  namespace: redisinsight
-spec:
-  endpointSelector:
-    matchLabels:
-      k8s:io.kubernetes.pod.namespace: redisinsight
-      k8s:app.kubernetes.io/instance: redisinsight
-      k8s:app.kubernetes.io/name: redisinsight
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: agent-worker-system
-            k8s:app.kubernetes.io/instance: agent-valkey
-            k8s:app.kubernetes.io/name: valkey
-      toPorts:
-        - ports:
-            - port: "6379"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow redisinsight app egress to litellm valkey for viewing data
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -216,7 +184,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow metrics scraping from vmagent
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
