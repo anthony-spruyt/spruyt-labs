@@ -10,6 +10,7 @@ from [`anthony-spruyt/litellm-middleware`](https://github.com/anthony-spruyt/lit
 - Authentik OAuth provider, secret and rotation wiring — see [authentik README](../authentik-system/authentik/README.md#oauth-credential-rotation).
 - Provider API keys in `litellm/app/litellm-secrets.sops.yaml`, referenced from `config.yaml` as `os.environ/<NAME>`. Anthropic models set no `api_key`; they are subscription passthrough (below).
 - `HF_TOKEN` in the same secret, for the llm-guard model download.
+- `TOOL_GUARD_TEAM_IDS` in the same secret: the comma-separated LiteLLM team IDs whose requests the tool-guard middleware enforces.
 
 ## Operations
 
@@ -39,6 +40,8 @@ To rotate, delete both the Secret and the ExternalSecret (`kubectl -n litellm de
 ### Valkey credentials
 
 `litellm-valkey` ACL passwords live in `litellm-valkey-users`, which only ESO writes: `litellm-valkey/app/users-eso.yaml` has one `sl_`-prefixed `CreatedOnce` ExternalSecret per user. Nothing is in SOPS. Valkey has Reloader auto mode, so it restarts when that secret changes; the LiteLLM pods restart too because `REDIS_PASSWORD` reads it.
+
+The `llm-tool-guard` user's password reaches the scanner through `VALKEY_PASSWORD`; its ACL is in `litellm-valkey/app/values.yaml`.
 
 To rotate one user, delete its ExternalSecret (`kubectl -n litellm delete externalsecret litellm-valkey-user-<user>`). Never delete the `litellm-valkey-users` secret itself - every user would get a new password at once.
 
@@ -80,6 +83,8 @@ middleware works live in the [middleware repo](https://github.com/anthony-spruyt
 - The middleware imports LiteLLM internals that change between releases, so the cluster runs only a LiteLLM the middleware repo's CI has passed. Renovate here doesn't read the registry for the LiteLLM image. The `custom.litellm-middleware-tested` datasource in `renovate-overrides.json5` reads the tag and digest from `litellm-image.yaml` on the middleware repo's `main`. That pin moves only when the
   middleware repo merges a Renovate bump PR, and that PR runs the integration suite against the new LiteLLM. Upgrade by merging the bump there; the matching PR opens here on the next Renovate run. If the new version needs a middleware fix, release that fix first; Renovate groups the LiteLLM and middleware image bumps under `litellm`, so they land in one PR when both are pending.
   `tests/litellm-middleware-contract.bats` checks the callback, mount path and `PYTHONPATH` here against the deployed middleware release. If `litellm-image.yaml` moves or changes shape, the lookup fails and LiteLLM bumps stop (the dashboard shows the lookup failure); they are never untested.
+- `tool-guard` sends each new tool result to the `llm-tool-guard` scanner (`TOOL_GUARD_URL`) and wraps those it flags, or could not check, in an `<untrusted-tool-output>` marker with verdict `suspected-prompt-injection` or `unchecked`, which tells the model to treat the text as data. It rewrites only the text, in place in the original request, so fields such as `cache_control` and `is_error` are
+  preserved. It applies to the teams listed in `TOOL_GUARD_TEAM_IDS` in `litellm-secrets`; those teams can use only the endpoints the [middleware README](https://github.com/anthony-spruyt/litellm-middleware#tool-guard) lists for enforced keys, and get a client error on any other.
 - After a rollout, check the LiteLLM logs for `failed to load <name> middleware` (an optional middleware is missing) or a startup crash (a required one failed to import).
 
 ### Rate-limit headers
@@ -93,16 +98,12 @@ swapped for a fake with the same prefix, length and character classes before the
 
 - Fakes are an HMAC of the real value keyed from `LITELLM_SALT_KEY`, so the same secret gets the same fake across turns and replicas and prompt caching still hits. Rotating the salt changes every fake and busts those caches once. If the salt is missing, each pod logs a warning and uses a random key, so fakes differ per replica.
 - Secrets we generate ourselves (DB passwords, webhook secrets, service-to-service tokens) should use the `sl_` prefix plus letters and digits only, at least 32 characters in total, so they are caught too. Generate one with `task sops:gen-key` (64 by default; `length=32` for apps that cap password length). LiteLLM virtual keys must start with `sk-`, which is already caught.
-- Only prefixed formats are caught. Bare high-entropy strings (hashes, UUIDs, unprefixed passwords) pass through on purpose, to avoid mangling commit SHAs and similar.
-- Thinking and reasoning blocks, base64 sources, `data:` URLs, `input_audio` and remote image/file URLs are never touched: thinking signatures would break, binary payloads would be corrupted, and presigned URLs would stop working.
 - The map from fake to real is kept per virtual key for an hour, so a fake the model echoes from an earlier turn (`previous_response_id`, compaction) is still swapped back, whichever replica serves it. Each pod keeps its own map in memory (capped at 2000 fakes) and shares it through `litellm-valkey`:
-  - Entries live in one hash per virtual key under `litellm:secret-masking:v1:`, with a per-field 1h TTL (`HSETEX`, Valkey 9+). The key name and field names are HMACs of the virtual key and the fake; the value is AES-GCM encrypted with a key derived from `LITELLM_SALT_KEY` via HKDF, bound to its key and field. Nothing readable is stored, but the ciphertext does sit in the AOF on the PVC for up to
-    an hour.
+  - Entries live in one hash per virtual key under `litellm:secret-masking:v1:`, with a per-field 1h TTL (`HSETEX`, Valkey 9+). The key name and field names are HMACs of the virtual key and the fake; the value is AES-GCM encrypted with a key derived from `LITELLM_SALT_KEY` via HKDF, bound to its key and field. Only ciphertext is stored, and each entry expires after an hour.
   - Writes are queued and sent in the background. The read starts at pre-call and runs while the provider works; the reply only waits for it (at most 0.5s) if it has not finished.
   - It is best effort. If Valkey is down or slow, the pod logs the exception type once, stops trying for 15s and restores from its own memory only. Rotating the salt makes old entries unreadable; they are skipped and expire.
 - WebSocket upgrades on the `litellm` host are denied at Traefik with a 403; Responses clients (Codex) fall back to HTTP streaming. Revisit the block once [BerriAI/litellm#40591](https://github.com/BerriAI/litellm/issues/40591) is resolved.
 - It is a required middleware: if it fails to import, LiteLLM fails to start, so a broken rollout crash-loops the new pod while the old pods keep serving.
-- It protects the model provider only. LiteLLM captures the request for its own logging (OTEL traces) before the hook runs, so treat those as holding real values.
 
 ### Guardrails
 
@@ -110,6 +111,10 @@ swapped for a fake with the same prefix, length and character classes before the
 
 The Presidio and llm-guard Deployments are parked at `replicas: 0` (#3323): nothing opts in, and their false-positive rate makes them unusable for Claude traffic on a global toggle. Config, VPAs, network policies and the `llm-guard-hf-cache` PVC are kept, so set `replicas: 1` on all three controllers in `values.yaml` to bring them back. While parked, a request that does opt in to `pii-protection`
 or `prompt-injection` fails rather than skipping the check: neither sets `unreachable_fallback: fail_open`.
+
+`llm-tool-guard` is the scanner behind the `tool-guard` middleware (see Proxy middleware), a separate Deployment from llm-guard and not a LiteLLM guardrail. It serves `POST /v1/scan` on port 8080 and scores tool-result text with `Horizon-Labs/prompt-injection-guard-base` in overlapping token windows. The model loads from the `llm-tool-guard-hf-cache` PVC at `HF_HOME`, and the pod becomes ready
+once it has loaded. Verdicts are cached by content hash in `litellm-valkey` under `llm-tool-guard:` through the `llm-tool-guard` ACL user, so a result gets the same verdict on every turn. Only LiteLLM pods (and vmagent, for metrics) can reach the scanner, and it reaches `litellm-valkey` and Hugging Face. Metrics (`llm_tool_guard_*`) are scraped from `/metrics`, and the `LLMToolGuardUnavailable`
+alert fires when no pod is ready.
 
 llm-guard runs with `HF_HUB_OFFLINE=1` and loads its model from the `llm-guard-hf-cache` PVC. This is fail-closed on purpose: if that PVC is ever lost or empty, the pod can never become ready. Recovery is to remove `HF_HUB_OFFLINE` from `values.yaml`, let one pod download the model, then restore it (Ref #2592).
 

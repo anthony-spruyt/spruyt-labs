@@ -95,3 +95,24 @@ spec:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
           name: litellm-valkey-password
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: litellm-valkey-user-llm-tool-guard
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: litellm-valkey-users
+    creationPolicy: CreateOrMerge
+    deletionPolicy: Retain
+    template:
+      data:
+        llm-tool-guard: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: litellm-valkey-password

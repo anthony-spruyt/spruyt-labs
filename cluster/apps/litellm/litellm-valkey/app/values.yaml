@@ -28,6 +28,8 @@ auth:
       permissions: "~* &* -@all"
     litellm:
       permissions: "~* &* +@all"
+    llm-tool-guard:
+      permissions: "~llm-tool-guard:* -@all +mget +set +client|setinfo"
     redisinsight:
       permissions: "~* &* +@all"
     metrics:

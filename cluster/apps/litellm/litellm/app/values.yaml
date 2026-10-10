@@ -89,6 +89,7 @@ controllers:
               secretKeyRef:
                 name: litellm-valkey-users
                 key: litellm
+          TOOL_GUARD_URL: "http://litellm-llm-tool-guard.litellm.svc.cluster.local:8080"
         envFrom:
           - secretRef:
               name: litellm-secrets
@@ -344,6 +345,80 @@ controllers:
           capabilities:
             drop:
               - ALL
+  llm-tool-guard:
+    type: deployment
+    replicas: 1
+    strategy: Recreate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+    containers:
+      llm-tool-guard:
+        image:
+          repository: ghcr.io/anthony-spruyt/llm-tool-guard
+          tag: "1.1.0@sha256:af953406835f12aaf9c5478fe620b3f62c84f99482506979d738b5bc65aa5928"
+          pullPolicy: IfNotPresent
+        env:
+          VALKEY_URL: "redis://litellm-valkey.litellm.svc:6379"
+          VALKEY_USERNAME: llm-tool-guard
+          VALKEY_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-valkey-users
+                key: llm-tool-guard
+        probes:
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              periodSeconds: 10
+              timeoutSeconds: 5
+              # 600s window sized for the cold case: the first pod to run after
+              # the HF cache PVC is empty downloads the model before loading it.
+              failureThreshold: 60
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /readyz
+                port: 8080
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2Gi
+          limits:
+            memory: 3Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
 
 service:
   litellm:
@@ -369,6 +444,12 @@ service:
     ports:
       http:
         port: 8000
+        protocol: TCP
+  llm-tool-guard:
+    controller: llm-tool-guard
+    ports:
+      http:
+        port: 8080
         protocol: TCP
 
 configMaps:
@@ -668,11 +749,18 @@ persistence:
       llm-guard:
         llm-guard:
           - path: /app/.cache/huggingface
+  llm-tool-guard-hf-cache:
+    type: persistentVolumeClaim
+    existingClaim: llm-tool-guard-hf-cache
+    advancedMounts:
+      llm-tool-guard:
+        llm-tool-guard:
+          - path: /app/.cache/huggingface
   litellm-middleware:
     type: image
     image:
       repository: ghcr.io/anthony-spruyt/litellm-middleware
-      tag: 1.0.1@sha256:192e72959213d3ba5ec2e88d8a1c77c97de6b3519f4ce43e0e37ea76543d4f7a
+      tag: 1.1.0@sha256:df0efbdc6609cc6988fcac051dd5aabe6959b2d4ac041ab4d552261cb25ff7c5
     pullPolicy: IfNotPresent
     advancedMounts:
       litellm:

@@ -22,3 +22,18 @@ spec:
   resources:
     requests:
       storage: 5Gi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/persistentvolumeclaim.json
+# HF_HOME cache for llm-tool-guard; delete reclaim, since it refills from the Hub
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-tool-guard-hf-cache
+  namespace: litellm
+spec:
+  storageClassName: rbd-fast-delete
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

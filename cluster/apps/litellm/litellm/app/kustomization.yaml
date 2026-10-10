@@ -17,6 +17,7 @@ resources:
   - ./persistent-volume-claims.yaml
   - ./release.yaml
   - ./vm-service-scrape.yaml
+  - ./vmrule.yaml
   - ./vpa.yaml
 configMapGenerator:
   - name: litellm-values

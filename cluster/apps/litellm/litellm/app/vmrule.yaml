@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: litellm-llm-tool-guard
+spec:
+  groups:
+    - name: litellm-llm-tool-guard
+      rules:
+        - alert: LLMToolGuardUnavailable
+          expr: absent(llm_tool_guard_ready{namespace="litellm"} == 1)
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "llm-tool-guard is not ready"
+            description: "No llm-tool-guard pod has reported a loaded model for 10 minutes."
