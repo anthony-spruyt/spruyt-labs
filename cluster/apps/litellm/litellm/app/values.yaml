@@ -598,6 +598,12 @@ configMaps:
               api_key: os.environ/OPENROUTER_API_KEY
               input_cost_per_token: 0.000002
               output_cost_per_token: 0.000006
+          - model_name: "openrouter/anthropic/claude-haiku-5.5"
+            litellm_params:
+              model: "openrouter/anthropic/claude-haiku-5.5"
+              api_key: os.environ/OPENROUTER_API_KEY
+              input_cost_per_token: 0.0000001
+              output_cost_per_token: 0.0000005
           # --------------------------------------------------------------------------
           # Anthropic: Subscription
           # --------------------------------------------------------------------------

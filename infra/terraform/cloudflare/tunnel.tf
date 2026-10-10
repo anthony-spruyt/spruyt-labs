@@ -29,6 +29,11 @@ locals {
       origin_request = { http2_origin = true, origin_server_name = "happy.${var.zone_name}" }
     },
     {
+      subdomain      = "litellm"
+      service        = local.traefik_service
+      origin_request = { http2_origin = true, origin_server_name = "litellm.${var.zone_name}" }
+    },
+    {
       subdomain      = "n8n"
       service        = local.traefik_service
       origin_request = { http2_origin = true, origin_server_name = "n8n.${var.zone_name}" }
@@ -83,6 +88,12 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
     )
   }
 
+  # The litellm host must be protected before the tunnel serves it.
+  depends_on = [
+    cloudflare_zero_trust_access_application.litellm,
+    cloudflare_ruleset.firewall_custom,
+  ]
+
   lifecycle {
     prevent_destroy = true
   }
@@ -98,4 +109,9 @@ resource "cloudflare_dns_record" "tunnel" {
   content = "${cloudflare_zero_trust_tunnel_cloudflared.this.id}.cfargotunnel.com"
   proxied = true
   ttl     = 1
+
+  depends_on = [
+    cloudflare_zero_trust_access_application.litellm,
+    cloudflare_ruleset.firewall_custom,
+  ]
 }

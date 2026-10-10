@@ -21,6 +21,14 @@ locals {
     "/api/v3/admin/system/",
     "/api/v3/admin/file/",
   ]
+
+  litellm_host = "litellm.${var.zone_name}"
+  litellm_ci_paths = [
+    "/v1/messages",
+    "/v1/messages/count_tokens",
+    "/v1/chat/completions",
+    "/health/liveliness",
+  ]
 }
 
 resource "cloudflare_ruleset" "firewall_custom" {
@@ -33,7 +41,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
     {
       ref         = "aa33d28c23da43398c537f031a25a261"
       description = "Allow GitHub Webhooks"
-      expression  = "(ip.src in {192.30.252.0/22 185.199.108.0/22 140.82.112.0/20 143.55.64.0/20}) and lower(http.host) ne \"auth.${var.zone_name}\""
+      expression  = "(ip.src in {9.234.106.48/28 9.234.98.160/28 9.234.98.176/28 192.30.252.0/22 185.199.108.0/22 140.82.112.0/20 143.55.64.0/20 2a0a:a440::/29 2606:50c0::/32}) and lower(http.host) ne \"auth.${var.zone_name}\" and lower(http.host) ne \"${local.litellm_host}\""
       action      = "skip"
       action_parameters = {
         ruleset  = "current"
@@ -47,10 +55,14 @@ resource "cloudflare_ruleset" "firewall_custom" {
     },
     {
       ref         = "a2f6b0f5d2254d04a8665581a8dd234b"
-      description = "Block non-AU traffic and bots"
-      expression  = "(ip.src.country ne \"AU\") or (cf.client.bot)"
-      action      = "block"
-      enabled     = true
+      description = "Block non-AU traffic, bots, and non-API LiteLLM paths"
+      expression = format(
+        "(ip.src.country ne \"AU\" and lower(http.host) ne \"%[1]s\") or (cf.client.bot) or (lower(http.host) eq \"%[1]s\" and not lower(url_decode(http.request.uri.path)) in {%[2]s})",
+        local.litellm_host,
+        join(" ", [for path in local.litellm_ci_paths : format("\"%s\"", path)]),
+      )
+      action  = "block"
+      enabled = true
     },
     {
       # This ref links the rule to the dashboard's AI Crawl Control page.
