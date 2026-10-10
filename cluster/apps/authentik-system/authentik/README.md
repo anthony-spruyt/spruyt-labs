@@ -6,6 +6,8 @@ Single sign-on for every web UI in the cluster. All providers, applications and 
 
 Paths below starting with `app/` are relative to this directory; other paths are relative to `cluster/apps/`.
 
+Admin UI and admin API paths on the public host are limited by a Cloudflare WAF rule in `infra/terraform/cloudflare/rulesets.tf`.
+
 ## Database Credentials
 
 The `authentik` Postgres login is ESO-generated (`sl_` prefix) into `authentik-cnpg-owner` by `app/cnpg-roles-eso.yaml`; nothing is in SOPS and superuser access is off. `bootstrap.initdb.secret` points CNPG at it, so CNPG no longer generates `authentik-cnpg-cluster-app`.

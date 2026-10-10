@@ -15,6 +15,8 @@ The repo is public, so the account ID, zone name, and domain-identifying DNS tok
 | `rulesets.tf`      | Custom firewall rules, rate limiting, cache rules                                           |
 | `zone-settings.tf` | Security and TLS zone settings                                                              |
 
+Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare WAF rule (`rulesets.tf`).
+
 ## What is not managed
 
 - **Email Routing** MX and DKIM records (read-only, owned by Email Routing) and routing rules (contain personal addresses). Manage in the dashboard.
@@ -31,7 +33,10 @@ Set on the `workspace-factory` TFC workspace, which copies them to this workspac
 | `cloudflare_api_token`        | `CLOUDFLARE_API_TOKEN`  | env, sensitive                |
 | `cloudflare_account_id`       | `cloudflare_account_id` | sensitive                     |
 | `cloudflare_zone_name`        | `zone_name`             | sensitive                     |
+| `cloudflare_home_ip`          | `home_ip`               | sensitive                     |
 | `cloudflare_dns_verification` | `dns_verification`      | sensitive HCL map, keys below |
+
+When the home IP changes, update `cloudflare_home_ip` on workspace-factory, bump `cloudflare_tfc_variables_version`, then run the workspace-factory apply followed by the `cloudflare` apply.
 
 `dns_verification` keys: `brevo_code`, `google_site`, `microsoft`, `twilio`, `dmarc_cloudflare_rua`, `nabu_casa_remote_ui_id`. Values are the token parts only (no `brevo-code:` / `MS=` prefixes, no `@dmarc-reports.cloudflare.net` suffix).
 

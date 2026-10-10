@@ -1,3 +1,28 @@
+locals {
+  authentik_path = "lower(url_decode(http.request.uri.path))"
+  authentik_admin_prefixes = [
+    "/if/admin",
+    "/api/v3/crypto/",
+    "/api/v3/lifecycle/",
+    "/api/v3/managed/",
+    "/api/v3/oauth2/",
+    "/api/v3/propertymappings/",
+    "/api/v3/providers/",
+    "/api/v3/rbac/",
+    "/api/v3/reports/",
+    "/api/v3/ssf/",
+    "/api/v3/policies/",
+    "/api/v3/tasks/",
+    "/api/v3/tenants/",
+    "/api/v3/schema/",
+    "/api/v3/authenticators/admin/",
+    "/api/v3/admin/apps/",
+    "/api/v3/admin/models/",
+    "/api/v3/admin/system/",
+    "/api/v3/admin/file/",
+  ]
+}
+
 resource "cloudflare_ruleset" "firewall_custom" {
   zone_id = local.zone_id
   name    = "default"
@@ -8,7 +33,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
     {
       ref         = "aa33d28c23da43398c537f031a25a261"
       description = "Allow GitHub Webhooks"
-      expression  = "(ip.src in {192.30.252.0/22 185.199.108.0/22 140.82.112.0/20 143.55.64.0/20})"
+      expression  = "(ip.src in {192.30.252.0/22 185.199.108.0/22 140.82.112.0/20 143.55.64.0/20}) and lower(http.host) ne \"auth.${var.zone_name}\""
       action      = "skip"
       action_parameters = {
         ruleset  = "current"
@@ -22,15 +47,8 @@ resource "cloudflare_ruleset" "firewall_custom" {
     },
     {
       ref         = "a2f6b0f5d2254d04a8665581a8dd234b"
-      description = "Allow Australia Only"
-      expression  = "(ip.src.country ne \"AU\")"
-      action      = "block"
-      enabled     = true
-    },
-    {
-      ref         = "f77da3210fe8432992c9148f64589d43"
-      description = "Block bots"
-      expression  = "(cf.client.bot)"
+      description = "Block non-AU traffic and bots"
+      expression  = "(ip.src.country ne \"AU\") or (cf.client.bot)"
       action      = "block"
       enabled     = true
     },
@@ -48,6 +66,19 @@ resource "cloudflare_ruleset" "firewall_custom" {
       expression  = "(http.host eq \"happy.${var.zone_name}\" and lower(url_decode(http.request.uri.path)) contains \"/auth\" and not http.request.uri.path in {\"/v1/auth/response\" \"/v1/auth/account/response\" \"/v1/auth/request/status\"})"
       action      = "block"
       enabled     = true
+    },
+    {
+      ref         = "authentik-admin-home-only"
+      description = "Authentik - admin paths from home only"
+      expression = format(
+        "(lower(http.host) eq \"auth.%s\" and not ip.src in {%s} and (%s in {\"/api/v3\" \"/api/v3/\"} or %s))",
+        var.zone_name,
+        var.home_ip,
+        local.authentik_path,
+        join(" or ", [for prefix in local.authentik_admin_prefixes : format("starts_with(%s, \"%s\")", local.authentik_path, prefix)]),
+      )
+      action  = "block"
+      enabled = true
     },
   ]
 }
