@@ -34,10 +34,10 @@ New work, or any change to an approach the owner already picked, starts as a des
 
 ## Helper Types
 
-| Work                                              | Agent          | Model  |
-| ------------------------------------------------- | -------------- | ------ |
-| Reviews, re-reviews, attacker-minded reviews      | `pr-reviewer`  | opus   |
-| Builds, fix rounds, rework, removals              | `pr-builder`   | sonnet |
+| Work                                                                          | Agent          | Model  |
+| ----------------------------------------------------------------------------- | -------------- | ------ |
+| Reviews, re-reviews, attacker-minded reviews                                  | `pr-reviewer`  | opus   |
+| Builds, fix rounds, rework, removals                                          | `pr-builder`   | sonnet |
 | One-off status checks, logs, claim checks, merges, pushes of reviewed commits | `chore-runner` | haiku  |
 
 - Plain `general-purpose` helpers run on Sonnet by default
