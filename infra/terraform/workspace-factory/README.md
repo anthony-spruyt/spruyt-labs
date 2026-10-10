@@ -71,6 +71,7 @@ Before triggering any runs, configure a Variable Set in Terraform Cloud:
    - `cloudflare_api_token`
    - `cloudflare_account_id`
    - `cloudflare_zone_name`
+   - `cloudflare_home_ip`
    - `cloudflare_dns_verification` (HCL map)
 
    These are ephemeral and pushed as write-only values, so they never land in the workspace-factory state or plan. After changing one, bump `cloudflare_tfc_variables_version` in [variables.auto.tfvars](variables.auto.tfvars).

@@ -21,5 +21,5 @@ external_secrets_aws_tfc_trigger_pattern   = "infra/terraform/aws/external-secre
 cloudflare_tfc_workspace_name              = "cloudflare"
 cloudflare_tfc_working_directory           = "infra/terraform/cloudflare"
 cloudflare_tfc_trigger_pattern             = "infra/terraform/cloudflare/**"
-cloudflare_tfc_variables_version           = 1
+cloudflare_tfc_variables_version           = 2
 terraform_mcp_token_expired_at             = "2027-10-05T00:00:00Z"

@@ -71,6 +71,13 @@ variable "cloudflare_zone_name" {
   description = "Cloudflare zone (apex domain) name"
 }
 
+variable "cloudflare_home_ip" {
+  type        = string
+  sensitive   = true
+  ephemeral   = true
+  description = "Home public IP allowed to reach Authentik admin paths"
+}
+
 variable "cloudflare_dns_verification" {
   type        = map(string)
   sensitive   = true

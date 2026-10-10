@@ -50,6 +50,16 @@ resource "tfe_variable" "zone_name" {
   description      = "Cloudflare zone (apex domain) name."
 }
 
+resource "tfe_variable" "home_ip" {
+  workspace_id     = tfe_workspace.my_workspace.id
+  key              = "home_ip"
+  value_wo         = var.cloudflare_home_ip
+  value_wo_version = var.tfc_variables_version
+  category         = "terraform"
+  sensitive        = true
+  description      = "Home public IP allowed to reach Authentik admin paths."
+}
+
 resource "tfe_variable" "dns_verification" {
   workspace_id     = tfe_workspace.my_workspace.id
   key              = "dns_verification"

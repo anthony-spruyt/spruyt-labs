@@ -12,6 +12,7 @@ module "cloudflare" {
   cloudflare_api_token                    = var.cloudflare_api_token
   cloudflare_account_id                   = var.cloudflare_account_id
   cloudflare_zone_name                    = var.cloudflare_zone_name
+  cloudflare_home_ip                      = var.cloudflare_home_ip
   cloudflare_dns_verification             = var.cloudflare_dns_verification
   tfc_variables_version                   = var.cloudflare_tfc_variables_version
 }

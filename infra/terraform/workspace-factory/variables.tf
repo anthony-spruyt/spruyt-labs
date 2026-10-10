@@ -143,6 +143,13 @@ variable "cloudflare_zone_name" {
   description = "Cloudflare zone (apex domain) name (set in Terraform Cloud, not in git)"
 }
 
+variable "cloudflare_home_ip" {
+  type        = string
+  sensitive   = true
+  ephemeral   = true
+  description = "Home public IP allowed to reach Authentik admin paths (set in Terraform Cloud, not in git)"
+}
+
 variable "cloudflare_dns_verification" {
   type        = map(string)
   sensitive   = true
