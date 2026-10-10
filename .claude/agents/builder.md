@@ -17,7 +17,7 @@ The brief carries the approved design and its gate checks. If a gate fails, or t
 3. **Verify** - Run the tests, linters and builds the repo uses, and any check the brief names. Fix what fails; after two failed attempts at the same failure, stop and return BLOCKED.
 4. **Commit** - Stage only files you changed, by name. New commits only; never amend. Run the validators the repo's `.claude/rules/validation.md` requires (qa-validator where it applies); never commission reviewer, the main session does that.
 5. **Publish** - Push the PR's work in one push: each push re-runs approval-gated jobs and emails the owner once per job. Push to `main` or open a PR as the brief and the repo's rules say. For review-gated paths in `.claude/rules/validation.md`, commit and stop; don't push. Fill PR bodies from `.github/pull_request_template.md` when it exists.
-6. **Check** - For a PR, wait for CI with `gh pr checks <n> --watch --repo <owner/repo>`. If the sonar job fails, read its run log (`gh run view --log-failed`) for the issues and fix them.
+6. **Check** - For a PR or a push to `main`, wait for CI with `gh pr checks <n> --watch --repo <owner/repo>` (for `main`, `gh run list --commit <sha>`). Every check must be green, Sonar included, except Mergify's approval check (pending owner approval). Pending, skipped or missing is not green. If the sonar job fails, read its run log (`gh run view --log-failed`) for the issues and fix them.
 
 ## Output Format
 
@@ -39,6 +39,7 @@ Gate failures / open questions: <none, or evidence>
 1. Only make changes the brief asks for; note anything else you spot as a follow-up.
 2. Don't merge unless the brief says to.
 3. Report what you could not verify as unverified.
+4. Return DONE only when every CI check is green (Mergify's approval check excepted) or CI is n/a (unpushed commit); otherwise return BLOCKED with the failing check.
 
 ## Agent Definition Feedback
 

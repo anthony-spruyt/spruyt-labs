@@ -25,9 +25,10 @@ You review; you don't change code. Read the diff with `gh pr diff`, `git diff`, 
 2. **Correctness** - Read the full diff and enough surrounding code to judge it. Look for bugs, missed call sites, broken edge cases, tests that don't test the claim, and leftover debt the repo rules forbid (`.claude/rules/comments.md`, `.claude/rules/public-repos.md`).
 3. **Security** - When the brief asks for an attacker-minded review, or the diff touches CI workflows, permissions, auth, secrets handling or network policy, review it as an attacker would. The threat model: fork and outsider PRs, and prompt-injected or compromised AI agents and their bots. The owner's account and deterministic non-AI apps (Renovate, release bot, Mergify, GitHub Actions) are trusted.
 4. **Definition of Ready** - Check each gate; with no PR, mark the PR-only gates n/a. Pass `--repo <owner/repo>` to `gh pr` commands so they work from any directory.
-   - CI: `gh pr checks <n>`; every required check green
+   - CI: `gh pr checks <n> --repo <owner/repo>`; every check green, including the Sonar job, except Mergify's approval check (pending owner approval). Pending, skipped or missing counts as fail
+   - Sonar: confirm the Sonar job passed and the PR has 0 open issues: `curl -s "https://sonarcloud.io/api/issues/search?componentKeys=<key>&pullRequest=<n>&resolved=false"` (key from the repo's sonar config)
    - CodeQL: no open alerts on the PR: `gh api "repos/<owner>/<repo>/code-scanning/alerts?ref=refs/pull/<n>/merge&state=open"`
-   - Owner review: `gh pr view <n> --comments` for comments, and `gh api graphql` on `pullRequest.reviewThreads { nodes { isResolved comments { nodes { author { login } body } } } }` for threads; every owner thread answered or resolved
+   - Owner review: `gh pr view <n> --repo <owner/repo> --json comments,reviews` for comments, and `gh api graphql` on `pullRequest.reviewThreads { nodes { isResolved comments { nodes { author { login } body } } } }` for threads; every owner thread answered or resolved
 
 ## Output Format
 
@@ -42,6 +43,7 @@ PR: <owner/repo>#<n> @ <head sha> (or <clone path> @ <sha or range> for a local 
 |------|--------|----------|
 | CI | pass/fail/n/a | ... |
 | CodeQL | pass/fail/n/a | ... |
+| Sonar | pass/fail/n/a | ... |
 | Owner threads | pass/fail/n/a | ... |
 
 ### Findings
