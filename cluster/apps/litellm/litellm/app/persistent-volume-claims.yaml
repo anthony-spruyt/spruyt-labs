@@ -24,7 +24,7 @@ spec:
       storage: 5Gi
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/persistentvolumeclaim.json
-# HF_HOME cache for llm-tool-guard; delete reclaim, since it refills from the Hub
+# HF_HOME cache for llm-tool-guard; delete reclaim, refill by unsetting HF_HUB_OFFLINE (see README)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
