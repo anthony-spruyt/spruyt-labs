@@ -138,7 +138,7 @@ If CRITICAL: recommend immediate investigation and list specific next steps. If 
 
 ## Agent Definition Feedback
 
-End your final reply to the caller (not any issue comment) with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/ceph-health-checker.md>`, `- [rules] <what happened> → <change to CLAUDE.md or .claude/rules/<file>>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` if it would recur under any reasonable brief and comes from this agent file; `[rules]` if it comes from `CLAUDE.md`, `.claude/rules/` or a hook; otherwise `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+End your final reply to the caller (not any issue comment) with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/ceph-health-checker.md>`, `- [rules] <what happened> → <change to CLAUDE.md, .claude/rules/<file> or the hook>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` if it would recur under any reasonable brief and comes from this agent file; `[rules]` if it comes from `CLAUDE.md`, `.claude/rules/` or a hook; otherwise `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
 
 ## Rules
 

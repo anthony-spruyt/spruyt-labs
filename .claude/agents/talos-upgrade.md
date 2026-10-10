@@ -734,7 +734,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 
 ## Handoff Protocol
 
-End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition Feedback` section, in your final reply to the caller, not in issue comments. List each problem as `- [definition] <what happened> → <change to .claude/agents/talos-upgrade.md>`, `- [rules] <what happened> → <change to CLAUDE.md or .claude/rules/<file>>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` if it would recur under any reasonable brief and comes from this agent file; `[rules]` if it comes from `CLAUDE.md`, `.claude/rules/` or a hook; otherwise `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition Feedback` section, in your final reply to the caller, not in issue comments. List each problem as `- [definition] <what happened> → <change to .claude/agents/talos-upgrade.md>`, `- [rules] <what happened> → <change to CLAUDE.md, .claude/rules/<file> or the hook>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` if it would recur under any reasonable brief and comes from this agent file; `[rules]` if it comes from `CLAUDE.md`, `.claude/rules/` or a hook; otherwise `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
 
 ### For SUCCESS:
 

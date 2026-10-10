@@ -24,14 +24,16 @@ Pass the linked issue number to qa-validator and cluster-validator: each posts i
 
 **Skip cluster-validator for:**
 
-- Docs-only changes (`docs/**`, `*.md` outside `.claude/` and other than `CLAUDE.md`)
+- Docs-only changes (`docs/**`, `*.md` outside `.claude/`)
+- `CLAUDE.md`
 - Agent config changes (`.claude/**`)
 - GitHub config changes (`.github/**`)
 - Any change that doesn't affect Flux-managed resources
 
 **Skip qa-validator entirely for:**
 
-- Docs-only changes (`*.md` outside `.claude/` and other than `CLAUDE.md`)
+- Docs-only changes (`*.md` outside `.claude/`)
+- `CLAUDE.md`
 - SOPS-only changes
 - Agent/tooling config (`.claude/**`, `.taskfiles/**`)
 
