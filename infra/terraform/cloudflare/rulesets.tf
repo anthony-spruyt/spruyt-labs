@@ -29,6 +29,9 @@ locals {
     "/v1/chat/completions",
     "/health/liveliness",
   ]
+  litellm_ci_path_regex = "^/(v1/messages(/count_tokens)?|v1/chat/completions|health/liveliness)$"
+
+  github_webhook_hosts = ["flux-webhook.${var.zone_name}", "n8n.${var.zone_name}"]
 }
 
 resource "cloudflare_ruleset" "firewall_custom" {
@@ -41,8 +44,11 @@ resource "cloudflare_ruleset" "firewall_custom" {
     {
       ref         = "aa33d28c23da43398c537f031a25a261"
       description = "Allow GitHub Webhooks"
-      expression  = "(ip.src in {9.234.106.48/28 9.234.98.160/28 9.234.98.176/28 192.30.252.0/22 185.199.108.0/22 140.82.112.0/20 143.55.64.0/20 2a0a:a440::/29 2606:50c0::/32}) and lower(http.host) ne \"auth.${var.zone_name}\" and lower(http.host) ne \"${local.litellm_host}\""
-      action      = "skip"
+      expression = format(
+        "(ip.src in {9.234.106.48/28 9.234.98.160/28 9.234.98.176/28 192.30.252.0/22 185.199.108.0/22 140.82.112.0/20 143.55.64.0/20 2a0a:a440::/29 2606:50c0::/32}) and lower(http.host) in {%s}",
+        join(" ", [for host in local.github_webhook_hosts : format("\"%s\"", host)]),
+      )
+      action = "skip"
       action_parameters = {
         ruleset  = "current"
         phases   = ["http_ratelimit", "http_request_firewall_managed", "http_request_sbfm"]

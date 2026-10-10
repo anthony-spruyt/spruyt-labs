@@ -1,3 +1,11 @@
+data "cloudflare_zero_trust_organization" "this" {
+  account_id = var.cloudflare_account_id
+}
+
+locals {
+  access_team_name = trimsuffix(data.cloudflare_zero_trust_organization.this.auth_domain, ".cloudflareaccess.com")
+}
+
 resource "cloudflare_zero_trust_access_service_token" "litellm_ci" {
   account_id = var.cloudflare_account_id
   name       = "litellm-ci"
@@ -22,6 +30,8 @@ resource "cloudflare_zero_trust_access_application" "litellm" {
   type                 = "self_hosted"
   domain               = local.litellm_host
   app_launcher_visible = false
+
+  service_auth_401_redirect = true
 
   policies = [
     {

@@ -29,7 +29,9 @@ GitHub-hosted runners reach the `litellm` host through the tunnel. On the LAN th
 - `tunnel.tf`: the `litellm` ingress rule and CNAME `depends_on` the Access application and the firewall ruleset, so a failed create of either leaves the host unrouted. This also orders every other route change after them.
 - The `litellm_ci_access_client_id` and `litellm_ci_access_client_secret` (sensitive) outputs hold the `CF-Access-Client-Id` / `CF-Access-Client-Secret` values. Read them from the workspace outputs and store them as CI secrets; see the [LiteLLM README](../../../cluster/apps/litellm/README.md#external-access-for-ci).
 
-The "Allow GitHub Webhooks" rule skips the `auth` and `litellm` hosts, so their rules always apply, and lists GitHub's published `hooks` ranges (`gh api meta`). Refresh it when that list changes.
+`tunnel.tf` also gives the `litellm` route a path regex, so cloudflared answers 404 for any other path, and enables `origin_request.access` with the Access application's audience tag, so cloudflared itself rejects requests without a valid Access token. The team name comes from the `cloudflare_zero_trust_organization` data source.
+
+The "Allow GitHub Webhooks" rule applies only to the `flux-webhook` and `n8n` hosts (the Flux Receiver and the n8n GitHub webhook workflow), so every other host's rules always apply, and lists GitHub's published `hooks` ranges (`gh api meta`). Refresh it when that list changes.
 
 ## What is not managed
 
@@ -56,7 +58,7 @@ When the home IP changes, update `cloudflare_home_ip` on workspace-factory, bump
 
 ### API token permissions
 
-- Account: `Cloudflare Tunnel:Edit`, `Access: Apps and Policies:Edit`, `Access: Service Tokens:Edit`
+- Account: `Cloudflare Tunnel:Edit`, `Access: Apps and Policies:Edit`, `Access: Service Tokens:Edit`, `Access: Organizations, Identity Providers, and Groups:Read`
 - Zone: `Zone:Read`, `DNS:Edit`, `Zone Settings:Edit`, `Zone WAF:Edit`, `Cache Rules:Edit`
 
 ## Adding a tunnel route

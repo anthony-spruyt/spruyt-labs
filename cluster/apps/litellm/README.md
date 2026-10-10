@@ -72,8 +72,9 @@ Only live models are registered. Retired Opus, Sonnet and Haiku names are not re
 CI on GitHub-hosted runners calls the `litellm` host over the Cloudflare tunnel (`infra/terraform/cloudflare`, see its [README](../../../infra/terraform/cloudflare/README.md#litellm-external-access-for-ci)). On the LAN the host resolves straight to Traefik, so the UI, SSO and MCP work as before.
 
 - Only `/v1/messages`, `/v1/messages/count_tokens`, `/v1/chat/completions` and `/health/liveliness` pass from the internet. Unprefixed aliases such as `/chat/completions` do not.
+- cloudflared forwards only those paths and requires a valid Access token before a request reaches Traefik.
 - Every request carries the Access service token headers `CF-Access-Client-Id` and `CF-Access-Client-Secret`, plus the CI virtual key in `x-litellm-api-key: Bearer <key>` (see Virtual keys above).
-- The CI model is `openrouter/anthropic/claude-haiku-5.5`, an exact `model_name` through OpenRouter. It must stay exact: the `*claude*haiku*` catch-all would route the name to Anthropic subscription passthrough, which rejects a virtual key. Create the CI virtual key restricted to that model, with a budget.
+- The CI model is `openrouter/anthropic/claude-haiku-5.5`, an exact `model_name` through OpenRouter. It must stay exact: the `*claude*haiku*` catch-all would route the name to Anthropic subscription passthrough, which rejects a virtual key. Create the CI virtual key with no team, `object_permission: {"mcp_servers": ["no-mcp-servers"]}`, `models` limited to that model and a `max_budget`.
 
 ### MCP servers
 
