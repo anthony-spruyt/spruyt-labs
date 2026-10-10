@@ -14,7 +14,7 @@ permissions:
   attestations: "write"
 jobs:
   release:
-    uses: "anthony-spruyt/repo-operator/.github/workflows/_release-please.yaml@03ce087ec3006c13aa278b3d1b42e8f409cd6c43"
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_release-please.yaml@d3010e1b70d377fb8675053a21de1179964e2d55"
     with:
       language: "none"
       dockerhub-namespace: "aspruyt"
