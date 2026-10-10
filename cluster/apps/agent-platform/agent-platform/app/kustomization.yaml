@@ -5,3 +5,19 @@ kind: Kustomization
 resources:
   - ./rbac.yaml
   - ./network-policies.yaml
+  - ./worker-credentials.sops.yaml
+  - ./session-secret-eso.yaml
+  - ./release-web.yaml
+  - ./release-worker.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: agent-platform-web-values
+    namespace: agent-platform
+    files:
+      - values.yaml=values-web.yaml
+  - name: agent-platform-worker-values
+    namespace: agent-platform
+    files:
+      - values.yaml=values-worker.yaml
+configurations:
+  - ./kustomizeconfig.yaml

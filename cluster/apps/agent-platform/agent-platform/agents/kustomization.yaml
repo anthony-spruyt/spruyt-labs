@@ -6,3 +6,4 @@ resources:
   - ./rbac.yaml
   - ./network-policies.yaml
   - ./kyverno-policies.yaml
+  - ./agent-credentials.sops.yaml

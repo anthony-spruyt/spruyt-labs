@@ -2,8 +2,8 @@
 
 ## Overview
 
-Cluster side of the `anthony-spruyt/agent-platform` service, which replaces the n8n agent workflows (#3467). One image runs as two Deployments in `agent-platform`: `web` (Intake webhooks + AgentGateway MCP) and `worker` (Temporal workflows and activities). The worker starts short-lived Claude Code pods in `agent-platform-agents`. This directory holds the namespaces, RBAC, network policies and
-Kyverno guardrails; the Deployments, Services and VPA arrive with the spike (step 3 of #3467).
+Cluster side of the `anthony-spruyt/agent-platform` service, which replaces the n8n agent workflows (#3467). One image runs as two Deployments in `agent-platform`: `web` (Intake webhooks + AgentGateway MCP) and `worker` (Temporal workflows and activities). The worker starts short-lived Claude Code pods in `agent-platform-agents`. This directory holds the namespaces, RBAC, network policies, Kyverno
+guardrails, the two HelmReleases (bjw-s app-template) and their VPAs.
 
 The pod spec for agents (env, MCP config, settings, clone, deadline) is built in code by the worker, not injected by Kyverno. None of the n8n-era agent policies (`managed-by: n8n-claude-code`) apply to these pods.
 
@@ -16,6 +16,12 @@ The pod spec for agents (env, MCP config, settings, clone, deadline) is built in
 
 `agent-platform-agents` is excluded from the descheduler: evicting an agent pod kills its run.
 
+## Releases
+
+`web` and `worker` are two HelmReleases (`agent-platform-web`, `agent-platform-worker`) so `app.kubernetes.io/name` equals the release name, which the CiliumNetworkPolicy selectors match on. They share one image pin; Renovate bumps both through the `# renovate:` annotation above each `tag`. Chart-level settings are in `app/values-web.yaml` and `app/values-worker.yaml`.
+
+Only the worker mounts a ServiceAccount token. Both releases read `AgentGateway__SessionTokenKey` from the `agent-platform-session` Secret. The Temporal namespace moves from `default` to `agent-platform` in step 4 of #3467.
+
 ## Ports
 
 | Pod   | Port   | Purpose                   | Reached from                                        |
@@ -23,7 +29,7 @@ The pod spec for agents (env, MCP config, settings, clone, deadline) is built in
 | `web` | `8080` | Intake (webhooks, health) | Traefik; only webhook paths will be routed publicly |
 | `web` | `8081` | AgentGateway `/mcp`       | Agent pods only; never routed through Traefik       |
 
-The agent MCP config points at `http://agent-platform-web.agent-platform.svc.cluster.local:8081/mcp`, assuming the spike names the Service `agent-platform-web`. Keep the two ports on separate Service ports so a Traefik route can never expose `/mcp`.
+The Service `agent-platform-web` exposes `webhooks` (`8080`) and `mcp` (`8081`). The agent MCP config points at `http://agent-platform-web.agent-platform.svc.cluster.local:8081/mcp`. Keep the two ports on separate Service ports so a Traefik route can never expose `/mcp`. No IngressRoute or tunnel route exists yet.
 
 ## RBAC
 
@@ -61,19 +67,19 @@ Both live in `agents/kyverno-policies.yaml`:
 - `validate-agent-platform-pods` (ValidatingPolicy, `Deny`, on CREATE): every pod in `agent-platform-agents` must carry `managed-by: agent-platform`, and must set `activeDeadlineSeconds` between 1 and 3600. The per-run GitHub installation token expires after 1h, and the worker derives the deadline from its `expires_at`.
 - `cleanup-agent-platform-pods` (DeletingPolicy): every 15 minutes, deletes agent pods older than 2h in any phase, as a backstop for the worker's own delete.
 
-## Owner-only Secrets
+## Secrets
 
-Create these before the spike. Nothing references them yet; the spike adds them to the `kustomization.yaml` files and the pod specs. Create each with `sops <file>` as a `v1` `Secret` using `stringData`:
-
-| File                                                                            | Secret               | Namespace               | Keys                                             | Used by                                                    |
-| ------------------------------------------------------------------------------- | -------------------- | ----------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
-| `cluster/apps/agent-platform/agent-platform/agents/agent-credentials.sops.yaml` | `agent-credentials`  | `agent-platform-agents` | `claude-code-oauth-token`, `litellm-virtual-key` | Agent pods (`CLAUDE_CODE_OAUTH_TOKEN`, LiteLLM key header) |
-| `cluster/apps/agent-platform/agent-platform/app/worker-credentials.sops.yaml`   | `worker-credentials` | `agent-platform`        | `litellm-virtual-key`                            | Worker (Jev and other LiteLLM calls)                       |
+| Secret                   | Namespace               | Source                                      | Keys                                                                      | Used by                                                                   |
+| ------------------------ | ----------------------- | ------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `agent-credentials`      | `agent-platform-agents` | SOPS (`agents/agent-credentials.sops.yaml`) | `claude-code-oauth-token`, `litellm-key-read`, `litellm-key-cluster-read` | Agent pods, via `secretKeyRef` from the pod spec the worker builds        |
+| `worker-credentials`     | `agent-platform`        | SOPS (`app/worker-credentials.sops.yaml`)   | `litellm-virtual-key`                                                     | Worker (Jev and other LiteLLM calls); not mounted yet, wired in at step 5 |
+| `agent-platform-session` | `agent-platform`        | External Secrets `Password` generator       | `session-token-key`                                                       | Web and worker, as `AgentGateway__SessionTokenKey`                        |
 
 - `claude-code-oauth-token`: a long-lived subscription token from `claude setup-token`. A token separate from the Coder workspace's can be revoked on its own; usage still counts against the same subscription.
-- `litellm-virtual-key`: one LiteLLM virtual key per consumer (agents, worker), so spend and rate limits are tracked separately.
+- `litellm-key-read` and `litellm-key-cluster-read`: one LiteLLM virtual key per agent tier. `litellm-virtual-key` is the worker's own key, so spend and rate limits are tracked separately.
+- `agent-platform-session` is generated once (`CreatedOnce`, `Orphan`, immutable), so a deleted Secret stays deleted. To rotate it, delete both the Secret and the ExternalSecret, let Flux recreate them, then restart web and worker; Reloader does not fire on a recreated Secret.
 
-Rotation is the same `sops <file>` edit; agent pods pick up the new value on their next run, the worker on restart.
+Rotate the SOPS secrets with `sops <file>`; agent pods pick up the new value on their next run, the worker on restart.
 
 ## References
 

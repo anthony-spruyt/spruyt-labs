@@ -1,0 +1,104 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+global:
+  createDefaultServiceAccount: false
+defaultPodOptions:
+  priorityClassName: standard
+  automountServiceAccountToken: false
+  securityContext:
+    runAsUser: 1654
+    runAsGroup: 1654
+    fsGroup: 1654
+    fsGroupChangePolicy: OnRootMismatch
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+controllers:
+  agent-platform-web:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    serviceAccount:
+      name: agent-platform-web
+    containers:
+      app:
+        image:
+          repository: ghcr.io/anthony-spruyt/agent-platform
+          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
+          tag: "1.0.0@sha256:b1a80f159fcb47130086027451a8dcd48c0d1251966d2a8090efb219c1ac1430"
+          pullPolicy: IfNotPresent
+        env:
+          AgentPlatform__Role: Web
+          ASPNETCORE_HTTP_PORTS: "8080;8081"
+          AgentGateway__Port: "8081"
+          AgentGateway__SessionTokenKey:
+            valueFrom:
+              secretKeyRef:
+                name: agent-platform-session
+                key: session-token-key
+          Temporal__Address: temporal-frontend.temporal-system.svc:7233
+          Temporal__Namespace: default
+          OTEL_SERVICE_NAME: agent-platform-web
+          OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+          OTEL_EXPORTER_OTLP_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry
+          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry/v1/metrics
+          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: http://victoria-logs-single-server.observability.svc:9428/insert/opentelemetry/v1/logs
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://victoria-traces-single-vt-single-server.observability.svc:10428/insert/opentelemetry/v1/traces
+          TZ: ${TIMEZONE}
+        resources:
+          requests:
+            cpu: 25m
+            memory: 128Mi
+          limits:
+            cpu: 75m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        probes:
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /alive
+                port: 8080
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 36
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /alive
+                port: 8080
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 8080
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+service:
+  app:
+    controller: agent-platform-web
+    ports:
+      webhooks:
+        port: 8080
+      mcp:
+        port: 8081
+persistence:
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
