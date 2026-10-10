@@ -1,0 +1,24 @@
+# yamllint disable-file
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goauthentik/authentik/refs/heads/main/blueprints/schema.json
+---
+version: 1
+metadata:
+  name: Bull Board SSO Removal
+entries:
+  - model: authentik_outposts.outpost
+    state: absent
+    identifiers:
+      name: Bull Board Outpost
+  # Deleting the application cascades to its group policy binding
+  - model: authentik_core.application
+    state: absent
+    identifiers:
+      slug: bull-board
+  - model: authentik_providers_proxy.proxyprovider
+    state: absent
+    identifiers:
+      name: Bull Board
+  - model: authentik_core.group
+    state: absent
+    identifiers:
+      name: Bull Board Users

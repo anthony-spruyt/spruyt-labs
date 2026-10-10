@@ -45,5 +45,6 @@ configMapGenerator:
       - blueprints/technitium-sso.yaml
       - blueprints/litellm-sso.yaml
       - blueprints/temporal-sso.yaml
+      - blueprints/bull-board-sso-removal.yaml
 configurations:
   - ./kustomizeconfig.yaml
