@@ -8,7 +8,7 @@ terraform {
     kubernetes = {
       source = "hashicorp/kubernetes"
       # <3.x: v3 pod identity tracking trips "Unexpected Identity Change" on refresh, blocking recreate.
-      version = "~> 2.38"
+      version = "~> 3.0"
     }
     envbuilder = {
       source  = "coder/envbuilder"
