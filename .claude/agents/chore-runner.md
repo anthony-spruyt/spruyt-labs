@@ -33,4 +33,4 @@ Quote numbers, states and shas exactly as the tool returned them.
 
 ## Agent Definition Feedback
 
-End your final reply to the caller with an `### Agent Definition Feedback` section. List each place this prompt was wrong, missing a step, or made you work around it, as: what happened, what the prompt said, and the change you suggest to `.claude/agents/chore-runner.md`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+End your final reply to the caller with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/chore-runner.md>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` only if it would recur under any reasonable brief; if the brief asked for it or left it out, tag `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.

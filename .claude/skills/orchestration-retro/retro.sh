@@ -124,12 +124,23 @@ map(select($since == "" or .date >= $since)) as $runs
   "",
   "## Agent Definition Feedback",
   "",
-  ([$runs[] | select(.feedback != "")] | sort_by(.date) | reverse
-   | if length == 0 then "None."
-     else
-       map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.feedback | clip(300))")
-       | cap(15; "feedback entries") | .[]
-     end)
+  ([$runs[] | select(.feedback != "")] | sort_by(.date) | reverse) as $fb
+  | def items($t): [.feedback | scan("\\[\($t)\\].*?(?= - \\[(?:definition|brief)\\]|$)")];
+    def tagged($t): [$fb[] | . + {items: items($t)} | select(.items | length > 0)];
+    if ($fb | length) == 0 then "None."
+    else
+      "- [definition] items: \(tagged("definition") | map(.items | length) | add // 0)",
+        "- [brief] items: \(tagged("brief") | map(.items | length) | add // 0)",
+        "- Untagged entries: \([$fb[] | select(items("definition") + items("brief") | length == 0)] | length)",
+        "",
+        "### [definition]",
+        "",
+        (tagged("definition") | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.items | join(" ") | clip(300))") | cap(15; "[definition] entries") | .[] end),
+        "",
+        "### [brief]",
+        "",
+        (tagged("brief") | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.items | join(" ") | clip(300))") | cap(15; "[brief] entries") | .[] end)
+    end
 JQ
 
 runs_file="$(mktemp)"

@@ -14,6 +14,7 @@ Run these on their triggers without waiting to be asked:
 
 - **qa-validator** - before committing edited files, unless a skip condition below applies. Validates syntax, standards, and docs.
 - **cluster-validator** - after changes that affect `cluster/` reach `main`: when you push or merge a PR, or when the user says "pushed", "merged", or "deployed".
+- **pr-reviewer** - before pushing changes to agent, rule, skill, settings or hook files (the review-gated paths under Skip Conditions). A fresh reviewer reads the committed diff; push only on READY.
 
 Pass the linked issue number to both: each posts its report as a comment on that issue. Also pass qa-validator the files you changed; it validates only those. qa-validator returns BLOCKED without both; cluster-validator runs without one (Renovate merges have none). Also pass cluster-validator the last validated `origin/main` sha, so commits pushed while validators were skipped are checked too.
 
@@ -23,18 +24,20 @@ Pass the linked issue number to both: each posts its report as a comment on that
 
 **Skip cluster-validator for:**
 
-- Docs-only changes (`*.md`, `docs/**`)
+- Docs-only changes (`docs/**`, `*.md` outside `.claude/`)
 - Agent config changes (`.claude/**`)
 - GitHub config changes (`.github/**`)
 - Any change that doesn't affect Flux-managed resources
 
 **Skip qa-validator entirely for:**
 
-- Docs-only changes (`*.md`)
+- Docs-only changes (`*.md` outside `.claude/`)
 - SOPS-only changes
 - Agent/tooling config (`.claude/**`, `.taskfiles/**`)
 
 qa-validator picks its own scope (fast path for cosmetic diffs, full validation otherwise).
+
+**Review-gated paths:** `.claude/agents/`, `.claude/rules/`, `.claude/skills/`, `.claude/settings.json` and hook scripts (`.claude/hookify-plus/`, `.claude/*.sh`) change agent behaviour, so their markdown is never "docs-only". Both validators still skip them, but push only after a fresh `pr-reviewer` returns READY on the committed diff. Other `.claude/**` changes push without review.
 
 ## Concurrency Rules
 
