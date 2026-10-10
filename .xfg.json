@@ -57,7 +57,6 @@
         ".trivyignore.yaml",
         ".vscode/settings.json",
         ".yamllint.yml",
-        "biome.json",
         "LICENSE",
         "lint.sh",
         "renovate-overrides.json5",
