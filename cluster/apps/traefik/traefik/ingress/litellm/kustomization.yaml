@@ -4,12 +4,20 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../base/deny-all.yaml
+  - ../base/strip-cf-access-headers.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
 patches:
   - target:
       kind: Middleware
       name: deny-all
+    patch: |
+      - op: replace
+        path: /metadata/namespace
+        value: litellm
+  - target:
+      kind: Middleware
+      name: strip-cf-access-headers
     patch: |
       - op: replace
         path: /metadata/namespace

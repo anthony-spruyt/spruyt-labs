@@ -29,7 +29,7 @@ locals {
     "/v1/chat/completions",
     "/health/liveliness",
   ]
-  litellm_ci_path_regex = "^/(v1/messages(/count_tokens)?|v1/chat/completions|health/liveliness)$"
+  litellm_ci_path_regex = "^(${join("|", local.litellm_ci_paths)})$"
 
   github_webhook_hosts = ["flux-webhook.${var.zone_name}", "n8n.${var.zone_name}"]
 }

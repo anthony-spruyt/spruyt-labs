@@ -18,12 +18,15 @@ spec:
       priority: 1000
       middlewares:
         - name: deny-all
+        - name: strip-cf-access-headers
       services:
         - name: litellm
           namespace: litellm
           port: 4000
     - kind: Rule
       match: Host(`litellm.${EXTERNAL_DOMAIN}`)
+      middlewares:
+        - name: strip-cf-access-headers
       services:
         - name: litellm
           namespace: litellm

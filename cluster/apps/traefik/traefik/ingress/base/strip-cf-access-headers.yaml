@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/middleware_v1alpha1.json
+# Purpose: Removes the Cloudflare Access service token request headers before they reach the backend
+# An empty value deletes a request header in Traefik
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-cf-access-headers
+  namespace: placeholder
+spec:
+  headers:
+    customRequestHeaders:
+      Cf-Access-Client-Id: ""
+      Cf-Access-Client-Secret: ""

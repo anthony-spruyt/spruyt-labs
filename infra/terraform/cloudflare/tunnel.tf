@@ -35,7 +35,7 @@ locals {
       path      = local.litellm_ci_path_regex
       origin_request = {
         http2_origin       = true
-        origin_server_name = "litellm.${var.zone_name}"
+        origin_server_name = local.litellm_host
         access = {
           required  = true
           team_name = local.access_team_name
