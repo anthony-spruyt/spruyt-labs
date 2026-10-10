@@ -672,7 +672,7 @@ persistence:
     type: image
     image:
       repository: ghcr.io/anthony-spruyt/litellm-middleware
-      tag: 1.0.1@sha256:192e72959213d3ba5ec2e88d8a1c77c97de6b3519f4ce43e0e37ea76543d4f7a
+      tag: 1.1.0@sha256:df0efbdc6609cc6988fcac051dd5aabe6959b2d4ac041ab4d552261cb25ff7c5
     pullPolicy: IfNotPresent
     advancedMounts:
       litellm:
