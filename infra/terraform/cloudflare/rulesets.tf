@@ -21,6 +21,14 @@ locals {
     "/api/v3/admin/system/",
     "/api/v3/admin/file/",
   ]
+
+  litellm_host = "litellm.${var.zone_name}"
+  litellm_ci_paths = [
+    "/v1/messages",
+    "/v1/messages/count_tokens",
+    "/v1/chat/completions",
+    "/health/liveliness",
+  ]
 }
 
 resource "cloudflare_ruleset" "firewall_custom" {
@@ -33,7 +41,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
     {
       ref         = "aa33d28c23da43398c537f031a25a261"
       description = "Allow GitHub Webhooks"
-      expression  = "(ip.src in {192.30.252.0/22 185.199.108.0/22 140.82.112.0/20 143.55.64.0/20}) and lower(http.host) ne \"auth.${var.zone_name}\""
+      expression  = "(ip.src in {9.234.106.48/28 9.234.98.160/28 9.234.98.176/28 192.30.252.0/22 185.199.108.0/22 140.82.112.0/20 143.55.64.0/20 2a0a:a440::/29 2606:50c0::/32}) and lower(http.host) ne \"auth.${var.zone_name}\" and lower(http.host) ne \"${local.litellm_host}\""
       action      = "skip"
       action_parameters = {
         ruleset  = "current"
@@ -48,7 +56,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
     {
       ref         = "a2f6b0f5d2254d04a8665581a8dd234b"
       description = "Block non-AU traffic and bots"
-      expression  = "(ip.src.country ne \"AU\") or (cf.client.bot)"
+      expression  = "(ip.src.country ne \"AU\" and lower(http.host) ne \"${local.litellm_host}\") or (cf.client.bot)"
       action      = "block"
       enabled     = true
     },
@@ -76,6 +84,17 @@ resource "cloudflare_ruleset" "firewall_custom" {
         var.home_ip,
         local.authentik_path,
         join(" or ", [for prefix in local.authentik_admin_prefixes : format("starts_with(%s, \"%s\")", local.authentik_path, prefix)]),
+      )
+      action  = "block"
+      enabled = true
+    },
+    {
+      ref         = "litellm-model-api-only"
+      description = "LiteLLM - only model API paths from the internet"
+      expression = format(
+        "(lower(http.host) eq \"%s\" and not lower(url_decode(http.request.uri.path)) in {%s})",
+        local.litellm_host,
+        join(" ", [for path in local.litellm_ci_paths : format("\"%s\"", path)]),
       )
       action  = "block"
       enabled = true

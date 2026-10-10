@@ -11,11 +11,23 @@ The repo is public, so the account ID, zone name, and domain-identifying DNS tok
 | File               | Resources                                                                                   |
 | ------------------ | ------------------------------------------------------------------------------------------- |
 | `tunnel.tf`        | Tunnel `spruyt-labs-01`, its remote ingress config, and one proxied CNAME per route         |
+| `access.tf`        | Access application, policy and service token that gate the `litellm` host for CI            |
 | `dns.tf`           | Static DNS records (Brevo DKIM/verification, SPF, DMARC, site verification, Home Assistant) |
 | `rulesets.tf`      | Custom firewall rules, rate limiting, cache rules                                           |
 | `zone-settings.tf` | Security and TLS zone settings                                                              |
 
 Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare WAF rule (`rulesets.tf`).
+
+## LiteLLM external access for CI
+
+GitHub-hosted runners reach the `litellm` host through the tunnel. On the LAN the same hostname resolves straight to Traefik, so none of this applies there.
+
+- `rulesets.tf`: from the internet only `/v1/messages`, `/v1/messages/count_tokens`, `/v1/chat/completions` and `/health/liveliness` pass (lower-cased, URL-decoded exact match). The country condition of "Block non-AU traffic and bots" skips this host; the bot condition still applies.
+- `access.tf`: a self-hosted Access application on the host whose only policy allows the `litellm-ci` service token (`non_identity` decision). The token never expires; rotate it by bumping `client_secret_version` and setting `previous_client_secret_expires_at` on the token (the provider requires both).
+- `tunnel.tf`: the `litellm` ingress rule and CNAME `depends_on` the Access application and the firewall ruleset, so a failed create of either leaves the host unrouted. This also orders every other route change after them.
+- The `litellm_ci_access_client_id` and `litellm_ci_access_client_secret` (sensitive) outputs hold the `CF-Access-Client-Id` / `CF-Access-Client-Secret` values. Read them from the workspace outputs and store them as CI secrets; see the [LiteLLM README](../../../cluster/apps/litellm/README.md#external-access-for-ci).
+
+The "Allow GitHub Webhooks" rule skips the `auth` and `litellm` hosts, so their rules always apply, and lists GitHub's published `hooks` ranges (`gh api meta`). Refresh it when that list changes.
 
 ## What is not managed
 
@@ -42,7 +54,7 @@ When the home IP changes, update `cloudflare_home_ip` on workspace-factory, bump
 
 ### API token permissions
 
-- Account: `Cloudflare Tunnel:Edit`
+- Account: `Cloudflare Tunnel:Edit`, `Access: Apps and Policies:Edit`, `Access: Service Tokens:Edit`
 - Zone: `Zone:Read`, `DNS:Edit`, `Zone Settings:Edit`, `Zone WAF:Edit`, `Cache Rules:Edit`
 
 ## Adding a tunnel route

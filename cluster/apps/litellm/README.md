@@ -67,6 +67,14 @@ LiteLLM loads the upstream `main` `model_prices_and_context_window.json` at star
 Only live models are registered. Retired Opus, Sonnet and Haiku names are not rejected, because some clients can't change the model they send. `model_group_alias` maps the known ones (including the Haiku 4.5 names) to the 5.5 groups, and the `*claude*opus*` / `*claude*sonnet*` / `*claude*haiku*` catch-all deployments send any other name containing those substrings to Opus 5.5 / Sonnet 5.5 / Haiku
 5.5. That includes other providers' names such as `openrouter/anthropic/claude-opus-4.1`. LiteLLM tries aliases, then exact `model_name`s, then wildcards, so a newly registered model is never shadowed by a catch-all. Matching is case-sensitive.
 
+### External access for CI
+
+CI on GitHub-hosted runners calls the `litellm` host over the Cloudflare tunnel (`infra/terraform/cloudflare`, see its [README](../../../infra/terraform/cloudflare/README.md#litellm-external-access-for-ci)). On the LAN the host resolves straight to Traefik, so the UI, SSO and MCP work as before.
+
+- Only `/v1/messages`, `/v1/messages/count_tokens`, `/v1/chat/completions` and `/health/liveliness` pass from the internet. Unprefixed aliases such as `/chat/completions` do not.
+- Every request carries the Access service token headers `CF-Access-Client-Id` and `CF-Access-Client-Secret`, plus the CI virtual key in `x-litellm-api-key: Bearer <key>` (see Virtual keys above).
+- The CI model is `openrouter/anthropic/claude-haiku-5.5`, an exact `model_name` through OpenRouter. It must stay exact: the `*claude*haiku*` catch-all would route the name to Anthropic subscription passthrough, which rejects a virtual key. Create the CI virtual key restricted to that model, with a budget.
+
 ### MCP servers
 
 MCP servers are registered through the LiteLLM UI and persisted in Postgres (the one DB object type allowed above), not in `config.yaml`. On a rebuild they must be re-added by hand; see [unifi-network-mcp](../unifi-mcp/unifi-network-mcp/README.md#litellm-registration-is-manual) for the reasoning. For each in-cluster MCP server, LiteLLM needs an egress CNP in `litellm/app/network-policies.yaml` and
