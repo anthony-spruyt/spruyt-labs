@@ -1,7 +1,8 @@
 locals {
   traefik_service = "https://traefik.traefik.svc.cluster.local"
 
-  # Ingress is matched top-down. "@" is the zone apex.
+  # Ingress is matched top-down. "@" is the zone apex. An optional "path" is a
+  # regex; requests to the host that do not match fall through to the 404 rule.
   tunnel_routes = [
     {
       subdomain      = "auth"
@@ -27,6 +28,20 @@ locals {
       subdomain      = "happy"
       service        = local.traefik_service
       origin_request = { http2_origin = true, origin_server_name = "happy.${var.zone_name}" }
+    },
+    {
+      subdomain = "litellm"
+      service   = local.traefik_service
+      path      = local.litellm_ci_path_regex
+      origin_request = {
+        http2_origin       = true
+        origin_server_name = "litellm.${var.zone_name}"
+        access = {
+          required  = true
+          team_name = local.access_team_name
+          aud_tag   = [cloudflare_zero_trust_access_application.litellm.aud]
+        }
+      }
     },
     {
       subdomain      = "n8n"
@@ -75,6 +90,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
       [
         for r in local.tunnel_routes : {
           hostname       = local.tunnel_hostnames[r.subdomain]
+          path           = try(r.path, null)
           service        = r.service
           origin_request = r.origin_request
         }
@@ -82,6 +98,12 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
       [{ service = "http_status:404" }],
     )
   }
+
+  # The litellm host must be protected before the tunnel serves it.
+  depends_on = [
+    cloudflare_zero_trust_access_application.litellm,
+    cloudflare_ruleset.firewall_custom,
+  ]
 
   lifecycle {
     prevent_destroy = true
@@ -98,4 +120,9 @@ resource "cloudflare_dns_record" "tunnel" {
   content = "${cloudflare_zero_trust_tunnel_cloudflared.this.id}.cfargotunnel.com"
   proxied = true
   ttl     = 1
+
+  depends_on = [
+    cloudflare_zero_trust_access_application.litellm,
+    cloudflare_ruleset.firewall_custom,
+  ]
 }
