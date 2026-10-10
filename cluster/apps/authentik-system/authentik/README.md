@@ -315,6 +315,27 @@ else:
 "
 ```
 
+## Retiring an App
+
+Deleting a blueprint file only stops Authentik managing its objects; it does not delete them.
+
+1. Replace the old blueprint with `app/blueprints/<name>-removal.yaml`. Its entries use `state: absent` with the original `identifiers`, ordered dependents first (for example outpost, application, provider, group). Deleting the application also deletes its policy bindings. Example: commit `f338ceaf` (`bull-board-sso-removal.yaml`).
+
+2. Wire it in like any other blueprint: the `blueprints/` list in `app/kustomization.yaml` and the blueprint volume items in `app/values.yaml`. Remove the old blueprint's wiring in the same commit.
+
+3. After the rollout, check that the blueprint instance applied (see Blueprint Status and Force Reload). A new blueprint file may not be discovered until a worker restart, because the old worker can consume the startup discovery task. If the instance is missing, trigger discovery:
+
+   ```bash
+   kubectl exec -n authentik-system deploy/authentik-worker -- ak shell -c "
+   from authentik.blueprints.v1.tasks import blueprints_discovery
+   blueprints_discovery.send()
+   "
+   ```
+
+4. Confirm the objects are gone, in the Authentik UI or with an `ak shell` ORM query.
+
+5. Delete the removal blueprint and its wiring in a follow-up commit.
+
 ## OAuth Credential Rotation
 
 A CronJob (`app/oauth-secret-rotation/cronjob.yaml`) rotates each OAuth provider's `client_secret`. Only the secret is rotated - `client_id` remains stable (required for integrations like kube-apiserver OIDC).
