@@ -32,6 +32,17 @@ New work, or any change to an approach the owner already picked, starts as a des
 - Sequence helpers that touch the same repo
 - Audits are read-only and fan out by dimension (lost functionality, security, loose ends, quality gates, orphans). Fixes come after, grouped by repo so helpers don't collide on files
 
+## Helper Types
+
+| Work                                                    | Agent          | Model  |
+| ------------------------------------------------------- | -------------- | ------ |
+| Reviews, re-reviews, attacker-minded reviews            | `pr-reviewer`  | opus   |
+| Builds, fix rounds, rework, removals                    | `pr-builder`   | sonnet |
+| Status checks, logs, Sonar counts, claim checks, merges | `chore-runner` | haiku  |
+
+- Plain `general-purpose` helpers run on Sonnet by default
+- Pass `model: opus` only for deep investigation or design-heavy work
+
 ## Briefs
 
 Helpers start with no context. Every brief includes:
