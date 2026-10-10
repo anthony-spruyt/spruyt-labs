@@ -66,4 +66,11 @@ The workflow is synced from repo-operator; change it there, not here.
 gh run rerun <run-id> --failed
 ```
 
-If the tagged code is broken, the cause is in repo-operator's shared workflows (the fix lands once the caller pin moves), the tag points at a different commit than the run (for example, after a cancelled run), the run died before relabelling the release PR (the next run fails once on the duplicate release and starts no image job), or the run is past GitHub's 30-day re-run limit, fix it on `main` where needed, let release-please cut the next version, then delete the leftover draft. A full re-run does not help: release-please does not report the release as created a second time, so the build is skipped.
+A re-run cannot recover these cases. Fix the cause on `main` where needed, let release-please cut the next version, then delete the leftover draft:
+
+- **The tagged code is broken, or the cause is in repo-operator's shared workflows:** the fix lands once the caller pin moves.
+- **The tag points at a different commit than the run** (for example, after a cancelled run).
+- **The run died before relabelling the release PR:** the next run fails once on the duplicate release and starts no image job.
+- **The run is past GitHub's 30-day re-run limit.**
+
+A full re-run does not help: release-please does not report the release as created a second time, so the build is skipped.
