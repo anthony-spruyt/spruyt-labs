@@ -55,10 +55,14 @@ resource "cloudflare_ruleset" "firewall_custom" {
     },
     {
       ref         = "a2f6b0f5d2254d04a8665581a8dd234b"
-      description = "Block non-AU traffic and bots"
-      expression  = "(ip.src.country ne \"AU\" and lower(http.host) ne \"${local.litellm_host}\") or (cf.client.bot)"
-      action      = "block"
-      enabled     = true
+      description = "Block non-AU traffic, bots, and non-API LiteLLM paths"
+      expression = format(
+        "(ip.src.country ne \"AU\" and lower(http.host) ne \"%[1]s\") or (cf.client.bot) or (lower(http.host) eq \"%[1]s\" and not lower(url_decode(http.request.uri.path)) in {%[2]s})",
+        local.litellm_host,
+        join(" ", [for path in local.litellm_ci_paths : format("\"%s\"", path)]),
+      )
+      action  = "block"
+      enabled = true
     },
     {
       # This ref links the rule to the dashboard's AI Crawl Control page.
@@ -84,17 +88,6 @@ resource "cloudflare_ruleset" "firewall_custom" {
         var.home_ip,
         local.authentik_path,
         join(" or ", [for prefix in local.authentik_admin_prefixes : format("starts_with(%s, \"%s\")", local.authentik_path, prefix)]),
-      )
-      action  = "block"
-      enabled = true
-    },
-    {
-      ref         = "litellm-model-api-only"
-      description = "LiteLLM - only model API paths from the internet"
-      expression = format(
-        "(lower(http.host) eq \"%s\" and not lower(url_decode(http.request.uri.path)) in {%s})",
-        local.litellm_host,
-        join(" ", [for path in local.litellm_ci_paths : format("\"%s\"", path)]),
       )
       action  = "block"
       enabled = true

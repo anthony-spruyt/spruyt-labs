@@ -18,11 +18,13 @@ The repo is public, so the account ID, zone name, and domain-identifying DNS tok
 
 Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare WAF rule (`rulesets.tf`).
 
+The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get folded into existing rules.
+
 ## LiteLLM external access for CI
 
 GitHub-hosted runners reach the `litellm` host through the tunnel. On the LAN the same hostname resolves straight to Traefik, so none of this applies there.
 
-- `rulesets.tf`: from the internet only `/v1/messages`, `/v1/messages/count_tokens`, `/v1/chat/completions` and `/health/liveliness` pass (lower-cased, URL-decoded exact match). The country condition of "Block non-AU traffic and bots" skips this host; the bot condition still applies.
+- `rulesets.tf`: from the internet only `/v1/messages`, `/v1/messages/count_tokens`, `/v1/chat/completions` and `/health/liveliness` pass (lower-cased, URL-decoded exact match). This lives in the "Block non-AU traffic, bots, and non-API LiteLLM paths" rule, whose country condition skips this host; the bot condition still applies.
 - `access.tf`: a self-hosted Access application on the host whose only policy allows the `litellm-ci` service token (`non_identity` decision). The token never expires; rotate it by bumping `client_secret_version` and setting `previous_client_secret_expires_at` on the token (the provider requires both).
 - `tunnel.tf`: the `litellm` ingress rule and CNAME `depends_on` the Access application and the firewall ruleset, so a failed create of either leaves the host unrouted. This also orders every other route change after them.
 - The `litellm_ci_access_client_id` and `litellm_ci_access_client_secret` (sensitive) outputs hold the `CF-Access-Client-Id` / `CF-Access-Client-Secret` values. Read them from the workspace outputs and store them as CI secrets; see the [LiteLLM README](../../../cluster/apps/litellm/README.md#external-access-for-ci).
