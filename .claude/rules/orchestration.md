@@ -36,8 +36,8 @@ New work, or any change to an approach the owner already picked, starts as a des
 
 | Work                                                                          | Agent          | Model  |
 | ----------------------------------------------------------------------------- | -------------- | ------ |
-| Reviews, re-reviews, attacker-minded reviews                                  | `pr-reviewer`  | opus   |
-| Builds, fix rounds, rework, removals                                          | `pr-builder`   | sonnet |
+| Reviews, re-reviews, attacker-minded reviews                                  | `reviewer`     | opus   |
+| Builds, fix rounds, rework, removals                                          | `builder`      | sonnet |
 | One-off status checks, logs, claim checks, merges, pushes of reviewed commits | `chore-runner` | haiku  |
 
 - Plain `general-purpose` helpers run on Sonnet by default
@@ -53,6 +53,7 @@ Helpers start with no context. Every brief includes:
 - When to stop and report
 - A capped report length
 - The Definition of Ready gates below, for builders and reviewers alike
+
 Tell helpers to push a PR's work in one push: each push re-runs approval-gated jobs and emails the owner once per gated job. Fix commit wording at squash-merge time, not with follow-up commits.
 
 ## Fresh Eyes

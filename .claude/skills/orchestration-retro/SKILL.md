@@ -19,7 +19,7 @@ Use another `--since` date if the owner names a window. The script is read-only 
 
 ## 2. Read it
 
-- Routing: general-purpose helpers on Opus mean a brief should have named `pr-builder`, `pr-reviewer` or `chore-runner`, or a rule or agent description is unclear.
+- Routing: general-purpose helpers on Opus mean a brief should have named `builder`, `reviewer` or `chore-runner`, or a rule or agent description is unclear.
 - Rework: PRs with many runs point to briefs that missed something.
 - Feedback: `[definition]` and `[rules]` entries not yet applied to the agent file, `CLAUDE.md` or rules file; `[brief]` entries repeated across runs point to a gap in `orchestration.md`.
 

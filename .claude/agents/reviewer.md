@@ -1,6 +1,6 @@
 ---
-name: pr-reviewer
-description: "Gives a fresh, skeptical review of a PR or diff and returns READY or NOT READY against the Definition of Ready.\\n\\n**When to use:**\\n- Reviewing a PR or diff before the owner approves it or before a merge\\n- Re-reviewing after a fix round, as a reviewer that has not seen the earlier rounds\\n- Attacker-minded review of a security-sensitive change\\n\\n**When NOT to use:**\\n- Building, fixing, or reworking the change (use pr-builder)\\n- One-shot status checks or merges (use chore-runner)\\n- Pre-commit validation of cluster changes (use qa-validator)\\n- Reviewing a design spec (use the spec-review skill)"
+name: reviewer
+description: "Gives a fresh, skeptical review of a PR or diff and returns READY or NOT READY against the Definition of Ready.\\n\\n**When to use:**\\n- Reviewing a PR or diff before the owner approves it or before a merge\\n- Re-reviewing after a fix round, as a reviewer that has not seen the earlier rounds\\n- Attacker-minded review of a security-sensitive change\\n\\n**When NOT to use:**\\n- Building, fixing, or reworking the change (use builder)\\n- One-shot status checks or merges (use chore-runner)\\n- Pre-commit validation of cluster changes (use qa-validator)\\n- Reviewing a design spec (use the spec-review skill)"
 model: opus
 tools:
   - Bash
@@ -58,4 +58,4 @@ READY needs every gate passing (n/a only when no PR exists) and no BLOCKER or MA
 
 ## Agent Definition Feedback
 
-End your final reply to the caller with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/pr-reviewer.md>`, `- [rules] <what happened> → <change to CLAUDE.md, .claude/rules/<file> or the hook>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` if it would recur under any reasonable brief and comes from this agent file; `[rules]` if it comes from `CLAUDE.md`, `.claude/rules/` or a hook; otherwise `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+End your final reply to the caller with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/reviewer.md>`, `- [rules] <what happened> → <change to CLAUDE.md, .claude/rules/<file> or the hook>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` if it would recur under any reasonable brief and comes from this agent file; `[rules]` if it comes from `CLAUDE.md`, `.claude/rules/` or a hook; otherwise `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.

@@ -116,3 +116,17 @@ section() {
   run bash "${SCRIPT}" --since yesterday --projects-dir "${PROJECTS}"
   [ "${status}" -ne 0 ]
 }
+
+@test "treats the builder and reviewer agent names like the old pr-builder and pr-reviewer" {
+  tree="$(mktemp -d)"
+  cp -R "${PROJECTS}/." "${tree}/"
+  find "${tree}" -name '*.meta.json' -exec sed -i 's/"pr-builder"/"builder"/; s/"pr-reviewer"/"reviewer"/' {} +
+  run bash "${SCRIPT}" --projects-dir "${tree}"
+  rm -rf "${tree}"
+  [ "${status}" -eq 0 ]
+  verdicts="$(section "Review verdicts")"
+  [[ "${verdicts}" == *"- NOT READY: 1"* ]]
+  [[ "${verdicts}" == *"- READY: 1"* ]]
+  hot="$(section "Issues/PRs with 3 or more helper runs")"
+  [[ "${hot}" == *"#101"*"4 runs"* ]]
+}

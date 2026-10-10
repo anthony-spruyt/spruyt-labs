@@ -100,7 +100,7 @@ map(select($since == "" or .date >= $since)) as $runs
   "",
   "## Review verdicts",
   "",
-  ([$runs[] | select(.agent == "pr-reviewer")] as $rev
+  ([$runs[] | select(.agent | IN("reviewer", "pr-reviewer"))] as $rev
    | if ($rev | length) == 0 then "None."
      else
        "- READY: \($rev | map(select(.verdict == "READY")) | length)",
@@ -111,7 +111,7 @@ map(select($since == "" or .date >= $since)) as $runs
   "## Issues/PRs with 3 or more helper runs",
   "",
   ([$runs[]
-     | select(.agent | IN("general-purpose", "pr-builder", "pr-reviewer"))
+     | select(.agent | IN("general-purpose", "builder", "pr-builder", "reviewer", "pr-reviewer"))
      | . + {pr: (.desc | [scan("(?:#|\\bPR\\s*#?)([0-9]+)")] | first[0]?)}
      | select(.pr != null)]
    | group_by(.pr) | map(select(length >= 3)) | sort_by(-length)
