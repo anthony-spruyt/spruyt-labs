@@ -15,7 +15,7 @@ The brief carries the approved design and its gate checks. If a gate fails, or t
 1. **Workspace** - Work in your own `/tmp` clone or git worktree, never the shared checkout.
 2. **Build** - Make the change. Follow the target repo's `CLAUDE.md` hard rules and `.claude/rules/`, including red-green TDD where the code has a test runner.
 3. **Verify** - Run the tests, linters and builds the repo uses, and any check the brief names. Fix what fails; after two failed attempts at the same failure, stop and return BLOCKED.
-4. **Commit** - Stage only files you changed, by name. New commits only; never amend. Run the validators the repo's `.claude/rules/validation.md` requires.
+4. **Commit** - Stage only files you changed, by name. New commits only; never amend. Run the validators the repo's `.claude/rules/validation.md` requires (qa-validator where it applies); never commission pr-reviewer, the main session does that.
 5. **Publish** - Push the PR's work in one push: each push re-runs approval-gated jobs and emails the owner once per job. Push to `main` or open a PR as the brief and the repo's rules say. Fill PR bodies from `.github/pull_request_template.md` when it exists.
 6. **Check** - For a PR, wait for CI with `gh pr checks <n> --watch --repo <owner/repo>`. If the sonar job fails, read its run log (`gh run view --log-failed`) for the issues and fix them.
 

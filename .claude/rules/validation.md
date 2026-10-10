@@ -14,7 +14,7 @@ Run these on their triggers without waiting to be asked:
 
 - **qa-validator** - before committing edited files, unless a skip condition below applies. Validates syntax, standards, and docs.
 - **cluster-validator** - after changes that affect `cluster/` reach `main`: when you push or merge a PR, or when the user says "pushed", "merged", or "deployed".
-- **pr-reviewer** - before pushing changes to `CLAUDE.md` or agent, rule, skill, settings or hook files (the review-gated paths under Skip Conditions). A fresh reviewer reads the committed diff; push only on READY.
+- **pr-reviewer** - before pushing changes to `CLAUDE.md` or agent, rule, skill, settings or hook files (the review-gated paths under Skip Conditions). The main session commissions it, never the builder or author of the change (builders commit and stop). A fresh reviewer reads the committed diff; push only on READY.
 
 Pass the linked issue number to qa-validator and cluster-validator: each posts its report as a comment on that issue. Also pass qa-validator the files you changed; it validates only those. qa-validator returns BLOCKED without both; cluster-validator runs without one (Renovate merges have none). Also pass cluster-validator the last validated `origin/main` sha, so commits pushed while validators were skipped are checked too.
 
@@ -24,7 +24,7 @@ Pass the linked issue number to qa-validator and cluster-validator: each posts i
 
 **Skip cluster-validator for:**
 
-- Docs-only changes (`docs/**`, `*.md` outside `.claude/`)
+- Docs-only changes (`docs/**`, `*.md` outside `.claude/`, except `CLAUDE.md`)
 - `CLAUDE.md`
 - Agent config changes (`.claude/**`)
 - GitHub config changes (`.github/**`)
@@ -32,7 +32,7 @@ Pass the linked issue number to qa-validator and cluster-validator: each posts i
 
 **Skip qa-validator entirely for:**
 
-- Docs-only changes (`*.md` outside `.claude/`)
+- Docs-only changes (`*.md` outside `.claude/`, except `CLAUDE.md`)
 - `CLAUDE.md`
 - SOPS-only changes
 - Agent/tooling config (`.claude/**`, `.taskfiles/**`)

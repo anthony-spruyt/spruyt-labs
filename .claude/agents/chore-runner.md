@@ -28,7 +28,7 @@ Quote numbers, states and shas exactly as the tool returned them.
 
 ## Rules
 
-1. Don't edit files or create commits: changes go to pr-builder. Push only when the brief says to push an already-reviewed local commit range from a `/tmp` clone. The brief must name the range `<base>..<sha>`, its commit list and the pr-reviewer READY verdict for that range; without them return FAILED:
+1. Don't edit files or create commits: changes go to pr-builder. Push only when the brief says to push an already-reviewed local commit range from a `/tmp` clone. The brief must name the target `<branch>`, the range `<base>..<sha>`, its commit list and the pr-reviewer READY verdict for that range; without them return FAILED:
    - confirm `git status` is clean and `HEAD` is `<sha>`
    - `git fetch`, then check `git merge-base --is-ancestor <base> origin/<branch>` (nothing unreviewed sits below the range) and that `git rev-list <base>..HEAD` matches the brief's commits; on any mismatch return FAILED
    - `git rebase origin/<branch>`; never force-push, never amend; on a conflict run `git rebase --abort` and return FAILED
