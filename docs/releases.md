@@ -70,7 +70,7 @@ A re-run cannot recover these cases. Fix the cause on `main` where needed, let r
 
 - **The tagged code is broken, or the cause is in repo-operator's shared workflows:** the fix lands once the caller pin moves.
 - **The tag points at a different commit than the run** (for example, after a cancelled run).
-- **The run died before relabelling the release PR:** the next run fails once on the duplicate release and starts no image job.
+- **The run died before relabelling the release PR:** cut the next release, then delete every leftover draft release for that tag.
 - **The run is past GitHub's 30-day re-run limit.**
 
 A full re-run does not help: release-please does not report the release as created a second time, so the build is skipped.
