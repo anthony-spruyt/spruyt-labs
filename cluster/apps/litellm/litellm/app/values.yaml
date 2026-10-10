@@ -262,7 +262,7 @@ controllers:
   llm-guard:
     type: deployment
     # Parked: guardrail unused (false positives); see Guardrails in README.md
-    replicas: 0
+    replicas: 1
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
@@ -284,16 +284,6 @@ controllers:
           LISTEN_PORT: "8000"
           # Per-scanner thresholds live in scanners.yml, not the THRESHOLD env.
           CONFIG_FILE: "/config/scanners.yml"
-          # Resolve the model entirely from the HF_HOME cache PVC. Without this
-          # a warm start still makes metadata revalidation calls to the Hub, so
-          # a hung huggingface.co could stall readiness even though every byte
-          # of the model is already on local storage.
-          #
-          # Deliberately fail-closed: a pod starting against an EMPTY cache
-          # cannot populate it and will never become ready. If the cache PVC is
-          # ever lost, drop this var, let one pod repopulate, then restore it.
-          # Ref #2592
-          HF_HUB_OFFLINE: "1"
           HF_TOKEN:
             valueFrom:
               secretKeyRef:
@@ -495,11 +485,14 @@ configMaps:
         input_scanners:
           - type: PromptInjection
             params:
-              model: rogue-security/prompt-injection-jailbreak-sentinel-v2
-              injection_label: jailbreak
-              threshold: 0.97
-              match_type: full
-              model_max_length: 512
+              model: Horizon-Labs/prompt-injection-guard-base
+              injection_label: INJECTION
+              threshold: 0.9
+              match_type: sliding_window
+              model_max_length: 2048
+              window_overlap: 512
+              window_batch_size: 1
+              max_windows: 136
           - type: Regex
             params:
               patterns: ["Bearer [A-Za-z0-9-._~+/]+"]
