@@ -38,7 +38,7 @@ New work, or any change to an approach the owner already picked, starts as a des
 | ------------------------------------------------- | -------------- | ------ |
 | Reviews, re-reviews, attacker-minded reviews      | `pr-reviewer`  | opus   |
 | Builds, fix rounds, rework, removals              | `pr-builder`   | sonnet |
-| One-off status checks, logs, claim checks, merges | `chore-runner` | haiku  |
+| One-off status checks, logs, claim checks, merges, pushes of reviewed commits | `chore-runner` | haiku  |
 
 - Plain `general-purpose` helpers run on Sonnet by default
 - Pass `model: opus` only for deep investigation or design-heavy work
@@ -85,7 +85,7 @@ Fix review findings in a new round and re-review, or log low-risk ones as follow
 
 ## Improving This File
 
-- When a helper's `### Agent Definition Feedback` has `[definition]` items, show them to the owner with the suggested fix to that agent's file; change the file only once they approve
+- When a helper's `### Agent Definition Feedback` has `[definition]` or `[rules]` items, show them to the owner with the suggested fix to that agent file, `CLAUDE.md` or rules file; change the file only once they approve
 - `[brief]` items are gaps in your brief: fix your next briefs yourself without asking; if the same gap shows up twice, suggest a one-line change to this file
 - When the owner corrects how you orchestrate, or a helper round fails because your brief missed something, suggest a one-line change to this file; edit only once they approve
 - Run the `orchestration-retro` skill monthly or when the owner asks; it reviews session logs for routing misses, rework and non-None feedback

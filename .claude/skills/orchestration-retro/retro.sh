@@ -59,9 +59,9 @@ def text_of:
     feedback: (
       $reply | split("### Agent Definition Feedback")
       | if length > 1
-        then last | split("\n#")[0] | gsub("\\s+"; " ") | gsub("^ | $"; "")
+        then last | split("\n#")[0] | gsub("\\A\\s+|\\s+\\z"; "")
         else "" end
-      | if test("^none\\.?$"; "i") then "" else . end)
+      | if gsub("\\s+"; " ") | test("^none\\.?$"; "i") then "" else . end)
   }
 JQ
 
@@ -125,17 +125,29 @@ map(select($since == "" or .date >= $since)) as $runs
   "## Agent Definition Feedback",
   "",
   ([$runs[] | select(.feedback != "")] | sort_by(.date) | reverse) as $fb
-  | def items($t): [.feedback | scan("(?<![^\\s])- (\\[\($t)\\].*?)(?=\\s- \\[(?:definition|brief)\\]|$)") | .[0]];
+  | def items($t):
+    [.feedback | split("\n")[]]
+    | reduce .[] as $l ([];
+        if $l | test("^\\s*- \\[") then . + [$l | gsub("^\\s*- "; "")]
+        elif length > 0 then .[-1] += " " + ($l | gsub("^\\s+|\\s+$"; ""))
+        else . end)
+    | map(gsub("\\s+"; " ") | gsub("\\s+$"; "") | select(test("^\\[\($t)\\]")));
+    def untagged: items("definition") + items("rules") + items("brief") | length == 0;
     def tagged($t): [$fb[] | . + {items: items($t)} | select(.items | length > 0)];
     if ($fb | length) == 0 then "None."
     else
       "- [definition] items: \(tagged("definition") | map(.items | length) | add // 0)",
+        "- [rules] items: \(tagged("rules") | map(.items | length) | add // 0)",
         "- [brief] items: \(tagged("brief") | map(.items | length) | add // 0)",
-        "- Untagged entries: \([$fb[] | select(items("definition") + items("brief") | length == 0)] | length)",
+        "- Untagged entries: \([$fb[] | select(untagged)] | length)",
         "",
         "### [definition]",
         "",
         (tagged("definition") | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.items | join(" ") | clip(300))") | cap(15; "[definition] entries") | .[] end),
+        "",
+        "### [rules]",
+        "",
+        (tagged("rules") | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.items | join(" ") | clip(300))") | cap(15; "[rules] entries") | .[] end),
         "",
         "### [brief]",
         "",
@@ -143,7 +155,7 @@ map(select($since == "" or .date >= $since)) as $runs
         "",
         "### Untagged",
         "",
-        ([$fb[] | select(items("definition") + items("brief") | length == 0)] | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.feedback | clip(300))") | cap(15; "untagged entries") | .[] end)
+        ([$fb[] | select(untagged)] | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.feedback | gsub("\\s+"; " ") | clip(300))") | cap(15; "untagged entries") | .[] end)
     end
 JQ
 

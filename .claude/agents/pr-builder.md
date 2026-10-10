@@ -1,6 +1,6 @@
 ---
 name: pr-builder
-description: "Implements a briefed change and delivers it as a commit or PR.\\n\\n**When to use:**\\n- Building an approved design or feature\\n- Fix rounds on CI failures, conflicts, or review findings\\n- Rework, removals, and cleanups with a clear brief\\n\\n**When NOT to use:**\\n- Reviewing a PR or diff (use pr-reviewer)\\n- One-shot status checks, log reads, or merges (use chore-runner)\\n- Deep investigation or design work with no approved plan (use general-purpose with model opus)"
+description: "Implements a briefed change and delivers it as a commit or PR.\\n\\n**When to use:**\\n- Building an approved design or feature\\n- Fix rounds on CI failures, conflicts, or review findings\\n- Rework, removals, and cleanups with a clear brief\\n\\n**When NOT to use:**\\n- Reviewing a PR or diff (use pr-reviewer)\\n- One-shot status checks, log reads, merges, or pushing already-reviewed commits (use chore-runner)\\n- Deep investigation or design work with no approved plan (use general-purpose with model opus)"
 model: sonnet
 ---
 
@@ -42,4 +42,4 @@ Gate failures / open questions: <none, or evidence>
 
 ## Agent Definition Feedback
 
-End your final reply to the caller with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/pr-builder.md>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` only if it would recur under any reasonable brief; if the brief asked for it or left it out, tag `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+End your final reply to the caller with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/pr-builder.md>`, `- [rules] <what happened> → <change to CLAUDE.md or .claude/rules/<file>>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` if it would recur under any reasonable brief and comes from this agent file; `[rules]` if it comes from `CLAUDE.md`, `.claude/rules/` or a hook; otherwise `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.

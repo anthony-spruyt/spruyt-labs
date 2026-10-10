@@ -48,7 +48,7 @@ PR: <owner/repo>#<n> @ <head sha> (or <clone path> @ <sha or range> for a local 
 1. [BLOCKER/MAJOR/MINOR] file:line - problem - exact fix
 ```
 
-READY needs every gate passing or n/a and no BLOCKER or MAJOR finding. Follow `.claude/rules/public-repos.md` for anything you post publicly; report security findings only to the caller.
+READY needs every gate passing (n/a only when no PR exists) and no BLOCKER or MAJOR finding. Follow `.claude/rules/public-repos.md` for anything you post publicly; report security findings only to the caller.
 
 ## Rules
 
@@ -58,4 +58,4 @@ READY needs every gate passing or n/a and no BLOCKER or MAJOR finding. Follow `.
 
 ## Agent Definition Feedback
 
-End your final reply to the caller with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/pr-reviewer.md>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` only if it would recur under any reasonable brief; if the brief asked for it or left it out, tag `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
+End your final reply to the caller with an `### Agent Definition Feedback` section. List each problem as `- [definition] <what happened> → <change to .claude/agents/pr-reviewer.md>`, `- [rules] <what happened> → <change to CLAUDE.md or .claude/rules/<file>>` or `- [brief] <what happened> → <what the caller's brief should have said>`. Tag `[definition]` if it would recur under any reasonable brief and comes from this agent file; `[rules]` if it comes from `CLAUDE.md`, `.claude/rules/` or a hook; otherwise `[brief]`. Write `None` if nothing came up. Suggest only; never edit this file yourself.
