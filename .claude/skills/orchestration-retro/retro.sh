@@ -125,7 +125,7 @@ map(select($since == "" or .date >= $since)) as $runs
   "## Agent Definition Feedback",
   "",
   ([$runs[] | select(.feedback != "")] | sort_by(.date) | reverse) as $fb
-  | def items($t): [.feedback | scan("\\[\($t)\\].*?(?= - \\[(?:definition|brief)\\]|$)")];
+  | def items($t): [.feedback | scan("(?<![^\\s])- (\\[\($t)\\].*?)(?=\\s- \\[(?:definition|brief)\\]|$)") | .[0]];
     def tagged($t): [$fb[] | . + {items: items($t)} | select(.items | length > 0)];
     if ($fb | length) == 0 then "None."
     else
@@ -139,7 +139,11 @@ map(select($since == "" or .date >= $since)) as $runs
         "",
         "### [brief]",
         "",
-        (tagged("brief") | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.items | join(" ") | clip(300))") | cap(15; "[brief] entries") | .[] end)
+        (tagged("brief") | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.items | join(" ") | clip(300))") | cap(15; "[brief] entries") | .[] end),
+        "",
+        "### Untagged",
+        "",
+        ([$fb[] | select(items("definition") + items("brief") | length == 0)] | if length == 0 then "None." else map("- \(.agent) (\(.date), \(.desc | clip(80))): \(.feedback | clip(300))") | cap(15; "untagged entries") | .[] end)
     end
 JQ
 
