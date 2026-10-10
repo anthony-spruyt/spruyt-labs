@@ -62,10 +62,10 @@ Adding a Claude model takes two edits in `values.yaml`:
 
 Claude groups deliberately have no `router_settings.fallbacks` — a 429 surfaces to the client instead of silently switching provider.
 
-Omit cost params for models LiteLLM already prices in its bundled `model_prices_and_context_window.json` (all current Claude models). Only set `input_cost_per_token` / `output_cost_per_token` for models absent from that registry, such as OpenRouter entries.
+LiteLLM loads the upstream `main` `model_prices_and_context_window.json` at startup over the world HTTPS egress, falling back to the copy bundled in the image. Omit cost params for models that map prices (all current Claude models, including some the pinned image doesn't bundle yet). Only set `input_cost_per_token` / `output_cost_per_token` for models absent from it, such as OpenRouter entries.
 
-Only live models are registered. Retired Opus and Sonnet names are not rejected, because some clients can't change the model they send. `model_group_alias` maps the known ones to the 5.5 groups, and the `*claude*opus*` / `*claude*sonnet*` catch-all deployments send any other name containing those substrings to Opus 5.5 / Sonnet 5.5. That includes other providers' names such as
-`openrouter/anthropic/claude-opus-4.1`. LiteLLM tries aliases, then exact `model_name`s, then wildcards, so a newly registered model is never shadowed by a catch-all. Matching is case-sensitive. Other retired names, such as Haiku 3.x, stay unmapped and fail fast.
+Only live models are registered. Retired Opus, Sonnet and Haiku names are not rejected, because some clients can't change the model they send. `model_group_alias` maps the known ones (including the Haiku 4.5 names) to the 5.5 groups, and the `*claude*opus*` / `*claude*sonnet*` / `*claude*haiku*` catch-all deployments send any other name containing those substrings to Opus 5.5 / Sonnet 5.5 / Haiku
+5.5. That includes other providers' names such as `openrouter/anthropic/claude-opus-4.1`. LiteLLM tries aliases, then exact `model_name`s, then wildcards, so a newly registered model is never shadowed by a catch-all. Matching is case-sensitive.
 
 ### MCP servers
 
@@ -77,8 +77,8 @@ the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the
 The middleware package ships as the `ghcr.io/anthony-spruyt/litellm-middleware` image, mounted read-only as a Kubernetes `image` volume at `/opt/litellm-middleware`, which is on `PYTHONPATH`. The kubelet pulls it, so the pod needs no egress for it. `litellm_middleware.pipeline_plugin.pipeline_middleware` is the single callback in `config.yaml`. Code, tests, the middleware list and how each
 middleware works live in the [middleware repo](https://github.com/anthony-spruyt/litellm-middleware#readme).
 
-- The middleware imports LiteLLM internals that change between releases, so the cluster runs only a LiteLLM the middleware repo's CI has passed. Renovate here doesn't read the registry for the LiteLLM image. The `custom.litellm-middleware-tested` datasource in `renovate-overrides.json5` reads the tag and digest from `litellm-image.yaml` on the middleware repo's `main`. That pin moves only
-  when the middleware repo merges a Renovate bump PR, and that PR runs the integration suite against the new LiteLLM. Upgrade by merging the bump there; the matching PR opens here on the next Renovate run. If the new version needs a middleware fix, release that fix first; Renovate groups the LiteLLM and middleware image bumps under `litellm`, so they land in one PR when both are pending.
+- The middleware imports LiteLLM internals that change between releases, so the cluster runs only a LiteLLM the middleware repo's CI has passed. Renovate here doesn't read the registry for the LiteLLM image. The `custom.litellm-middleware-tested` datasource in `renovate-overrides.json5` reads the tag and digest from `litellm-image.yaml` on the middleware repo's `main`. That pin moves only when the
+  middleware repo merges a Renovate bump PR, and that PR runs the integration suite against the new LiteLLM. Upgrade by merging the bump there; the matching PR opens here on the next Renovate run. If the new version needs a middleware fix, release that fix first; Renovate groups the LiteLLM and middleware image bumps under `litellm`, so they land in one PR when both are pending.
   `tests/litellm-middleware-contract.bats` checks the callback, mount path and `PYTHONPATH` here against the deployed middleware release. If `litellm-image.yaml` moves or changes shape, the lookup fails and LiteLLM bumps stop (the dashboard shows the lookup failure); they are never untested.
 - After a rollout, check the LiteLLM logs for `failed to load <name> middleware` (an optional middleware is missing) or a startup crash (a required one failed to import).
 

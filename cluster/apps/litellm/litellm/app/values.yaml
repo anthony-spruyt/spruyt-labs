@@ -539,7 +539,11 @@ configMaps:
             litellm_params:
               model: "anthropic/claude-sonnet-5-5"
               stream_timeout: 120
-          # Catch-alls for Opus/Sonnet names clients can't change - only reached when no alias or exact name matches
+          - model_name: "anthropic/claude-haiku-5-5"
+            litellm_params:
+              model: "anthropic/claude-haiku-5-5"
+              stream_timeout: 120
+          # Catch-alls for Opus/Sonnet/Haiku names clients can't change - only reached when no alias or exact name matches
           - model_name: "*claude*opus*"
             litellm_params:
               model: "anthropic/claude-opus-5-5"
@@ -548,9 +552,9 @@ configMaps:
             litellm_params:
               model: "anthropic/claude-sonnet-5-5"
               stream_timeout: 120
-          - model_name: "anthropic/claude-haiku-4-5"
+          - model_name: "*claude*haiku*"
             litellm_params:
-              model: "anthropic/claude-haiku-4-5"
+              model: "anthropic/claude-haiku-5-5"
               stream_timeout: 120
           # --------------------------------------------------------------------------
           # OpenAI: PAYG
@@ -572,8 +576,7 @@ configMaps:
               complexity_router_default_model: "anthropic/claude-sonnet-5-5"
               complexity_router_config:
                 tiers:
-                  # Not Haiku 4.5 - Claude Code sends Claude 5 features to unknown models and Haiku 400s
-                  SIMPLE: "anthropic/claude-sonnet-5-5"
+                  SIMPLE: "anthropic/claude-haiku-5-5"
                   MEDIUM: "anthropic/claude-sonnet-5-5"
                   COMPLEX: "anthropic/claude-opus-5-5"
                   REASONING: "anthropic/claude-fable-5-1"
@@ -586,8 +589,10 @@ configMaps:
         router_settings:
           enable_weighted_failover: true
           model_group_alias:
-            "claude-haiku-4-5": "anthropic/claude-haiku-4-5"
-            "claude-haiku-4-5-20251001": "anthropic/claude-haiku-4-5"
+            "claude-haiku-4-5": "anthropic/claude-haiku-5-5"
+            "claude-haiku-4-5-20251001": "anthropic/claude-haiku-5-5"
+            "anthropic/claude-haiku-4-5": "anthropic/claude-haiku-5-5"
+            "claude-haiku-5-5": "anthropic/claude-haiku-5-5"
             "claude-sonnet-5": "anthropic/claude-sonnet-5-5"
             "anthropic/claude-sonnet-5": "anthropic/claude-sonnet-5-5"
             "claude-sonnet-5-5": "anthropic/claude-sonnet-5-5"
