@@ -367,6 +367,7 @@ controllers:
           tag: "1.1.0@sha256:af953406835f12aaf9c5478fe620b3f62c84f99482506979d738b5bc65aa5928"
           pullPolicy: IfNotPresent
         env:
+          HF_HUB_OFFLINE: "1"
           VALKEY_URL: "redis://litellm-valkey.litellm.svc:6379"
           VALKEY_USERNAME: llm-tool-guard
           VALKEY_PASSWORD:
@@ -384,9 +385,6 @@ controllers:
                 port: 8080
               periodSeconds: 10
               timeoutSeconds: 5
-              # 600s window sized for the cold case: the first pod to run after
-              # the HF cache PVC is empty downloads the model before loading it.
-              failureThreshold: 60
           liveness:
             enabled: true
             custom: true
