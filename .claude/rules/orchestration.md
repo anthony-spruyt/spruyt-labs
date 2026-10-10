@@ -34,11 +34,11 @@ New work, or any change to an approach the owner already picked, starts as a des
 
 ## Helper Types
 
-| Work                                                    | Agent          | Model  |
-| ------------------------------------------------------- | -------------- | ------ |
-| Reviews, re-reviews, attacker-minded reviews            | `pr-reviewer`  | opus   |
-| Builds, fix rounds, rework, removals                    | `pr-builder`   | sonnet |
-| Status checks, logs, Sonar counts, claim checks, merges | `chore-runner` | haiku  |
+| Work                                              | Agent          | Model  |
+| ------------------------------------------------- | -------------- | ------ |
+| Reviews, re-reviews, attacker-minded reviews      | `pr-reviewer`  | opus   |
+| Builds, fix rounds, rework, removals              | `pr-builder`   | sonnet |
+| One-off status checks, logs, claim checks, merges | `chore-runner` | haiku  |
 
 - Plain `general-purpose` helpers run on Sonnet by default
 - Pass `model: opus` only for deep investigation or design-heavy work
@@ -52,8 +52,7 @@ Helpers start with no context. Every brief includes:
 - What not to touch
 - When to stop and report
 - A capped report length
-- The Definition of Ready gates below, for builders and reviewers alike; both must report the PR's SonarCloud new-issue count
-
+- The Definition of Ready gates below, for builders and reviewers alike
 Tell helpers to push a PR's work in one push: each push re-runs approval-gated jobs and emails the owner once per gated job. Fix commit wording at squash-merge time, not with follow-up commits.
 
 ## Fresh Eyes
@@ -68,7 +67,7 @@ Before asking the owner to approve, or before merging:
 
 - A fresh review returned READY
 - Owner review comments and threads checked
-- CI green, CodeQL clean, SonarCloud 0 new issues: query the PR's issues (Sonar MCP), not the check, which passes with new issues
+- CI green (its sonar job fails on any new SonarCloud issue), CodeQL clean
 
 Fix review findings in a new round and re-review, or log low-risk ones as follow-ups in the issue body.
 
