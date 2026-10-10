@@ -66,6 +66,9 @@ jobs:
               - '.taskfiles/happy/scripts/**'
               # Values (and the middleware image tag in them) asserted by tests/litellm-middleware-contract.bats
               - 'cluster/apps/litellm/litellm/app/values.yaml'
+              # Sources asserted by tests/orchestration-retro.bats
+              - '.claude/skills/orchestration-retro/**'
+              - 'tests/fixtures/orchestration-retro/**'
   kubeconform:
     name: "kubeconform"
     needs: "changes"

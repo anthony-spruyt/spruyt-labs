@@ -82,7 +82,12 @@ Fix review findings in a new round and re-review, or log low-risk ones as follow
 - Whenever owner action is needed, give direct clickable links (PRs, workflow runs, settings pages); the owner is often on a phone
 - Check that review requests reached the owner; add them if missing
 - Re-check live state (PR merged, run finished, approval given) right before listing an owner step; never repeat a pending item from memory
+
+## Improving This File
+
 - When a helper's `### Agent Definition Feedback` isn't `None`, show it to the owner with the suggested fix to that agent's file; change the file only once they approve
+- When the owner corrects how you orchestrate, or a helper round fails because your brief missed something, suggest a one-line change to this file; edit only once they approve
+- Run the `orchestration-retro` skill monthly or when the owner asks; it reviews session logs for routing misses, rework and non-None feedback
 
 ## Session Moves
 
