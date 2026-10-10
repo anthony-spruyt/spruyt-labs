@@ -91,7 +91,7 @@ misconfigurations:
       - cluster/apps/nut-system/shutdown-orchestrator/rbac-rook-ceph/rbac.yaml
       - cluster/apps/nut-system/shutdown-orchestrator/app/rbac.yaml
 
-  # agent-platform worker creates/deletes agent pods and per-run token Secrets in agent-platform-agents (no get/list on Secrets)
+  # agent-platform worker creates/deletes agent pods and per-run token Secrets in agent-platform-agents
   - id: AVD-KSV-0048
     paths:
       - cluster/apps/agent-platform/agent-platform/agents/rbac.yaml
@@ -237,16 +237,14 @@ misconfigurations:
       - cluster/apps/kube-system/snapshot-controller/app/setup-snapshot-controller.yaml
 
   # ==============================================================================
-  # Headlamp OIDC user binding - intentional cluster-admin for single-user homelab
+  # Headlamp OIDC user binding for the cluster owner
   # ==============================================================================
   - id: AVD-KSV-0111
     paths:
       - cluster/apps/headlamp-system/headlamp/app/user-rbac.yaml
 
   # ==============================================================================
-  # Coder workspace RBAC - coder-workspace-ops is an intentionally broad admin
-  # ClusterRole scoped down from cluster-admin to least-privilege for homelab ops.
-  # All flagged permissions are required for workspace agents to manage cluster resources.
+  # Coder workspace RBAC - coder-workspace-ops grants the cluster operations workspace agents perform
   # ==============================================================================
   - id: AVD-KSV-0041
     paths:

@@ -27,14 +27,13 @@ The agent MCP config points at `http://agent-platform-web.agent-platform.svc.clu
 
 ## RBAC
 
-| ServiceAccount          | Namespace               | Access                                                                                                                                                                   |
-| ----------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `agent-platform-worker` | `agent-platform`        | Role `agent-pod-runner` in `agent-platform-agents`: pods create/get/list/watch/delete, `pods/log` get, secrets create/delete. No `pods/exec`, and no get/list on Secrets |
-| `agent-platform-web`    | `agent-platform`        | None; no token mounted                                                                                                                                                   |
-| `agent-runner`          | `agent-platform-agents` | None; no token mounted. SRE agents that need cluster read access get a separate ServiceAccount later                                                                     |
+| ServiceAccount          | Namespace               | Access                                                                                               |
+| ----------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| `agent-platform-worker` | `agent-platform`        | The worker manages agent pods and per-run Secrets in `agent-platform-agents`.                        |
+| `agent-platform-web`    | `agent-platform`        | None; no token mounted                                                                               |
+| `agent-runner`          | `agent-platform-agents` | None; no token mounted. SRE agents that need cluster read access get a separate ServiceAccount later |
 
-The worker can create pods that reference the agent Secrets by name without a direct `get` on them. Pod create plus `pods/log` still lets the worker surface any Secret in `agent-platform-agents` through a pod it builds, so those Secrets are only as safe as the worker. It creates the per-run GitHub token Secret after the pod, with an ownerReference to the pod so it is garbage-collected with it.
-Leave `blockOwnerDeletion` unset on that ownerReference: setting it needs `update` on `pods/finalizers`, which the Role does not grant.
+The worker creates the per-run GitHub token Secret after the pod, with an ownerReference to the pod so it is garbage-collected with it. Leave `blockOwnerDeletion` unset on that ownerReference: setting it needs `update` on `pods/finalizers`, which is outside the worker's Role.
 
 ## Network Policies
 
