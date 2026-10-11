@@ -39,7 +39,7 @@ Pass the linked issue number to qa-validator and cluster-validator: each posts i
 
 qa-validator picks its own scope (fast path for cosmetic diffs, full validation otherwise).
 
-**Review-gated paths:** `CLAUDE.md`, `.claude/agents/`, `.claude/rules/`, `.claude/skills/`, `.claude/settings.json` and hook scripts (`.claude/hookify-plus/`, `.claude/*.sh`) change agent behaviour (`CLAUDE.md` is loaded into every session), so their markdown is never "docs-only". Both validators still skip them, but push only after a fresh `reviewer` returns READY on the committed diff. Files listed in `.xfg.json` are synced from repo-operator, unless repo-operator's `src/groups.yaml` marks them `createOnly` (seeded once, then owned here): change synced files there, not here. Other `.claude/**` changes push without review.
+**Review-gated paths:** `CLAUDE.md`, `.claude/agents/`, `.claude/rules/`, `.claude/skills/`, `.claude/settings.json` and hook scripts (`.claude/hookify-plus/`, `.claude/*.sh`) change agent behaviour (`CLAUDE.md` is loaded into every session), so their markdown is never "docs-only". Both validators still skip them, but push only after a fresh `reviewer` returns READY on the committed diff. Files listed in `.xfg.json` are synced from repo-operator when `git log -- <file>` shows `repo-operator[bot]` committing to them repeatedly: change those there, not here. A single bot commit followed by local ones means `createOnly` (seeded once, owned here): edit it here. Other `.claude/**` changes push without review.
 
 ## Concurrency Rules
 
