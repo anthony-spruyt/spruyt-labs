@@ -36,7 +36,7 @@ spec:
             limits: {cpu: 30m, memory: 128Mi}
           env:
             - name: MODE
-              value: diff
+              value: enforce
             - name: LITELLM_URL
               value: "http://litellm.litellm.svc.cluster.local:4000"
             - name: LITELLM_MASTER_KEY
