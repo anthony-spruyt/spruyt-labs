@@ -43,7 +43,7 @@ In-cluster: `temporal-frontend.temporal-system.svc:7233` (gRPC) or `:7243` (HTTP
 
 ### Namespaces
 
-Temporal namespaces are declared under `server.config.namespaces.namespace` in `app/values.yaml` and created on the next Helm revision. Only `default` (3-day retention) exists.
+Temporal namespaces are declared under `server.config.namespaces.namespace` in `app/values.yaml` and created on the next Helm revision. `default` (3-day retention) and `agent-platform` (14-day retention) exist.
 
 ### External webhooks
 

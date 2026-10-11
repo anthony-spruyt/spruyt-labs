@@ -84,6 +84,8 @@ server:
       namespace:
         - name: default
           retention: 3d
+        - name: agent-platform
+          retention: 14d
   frontend:
     resources:
       requests:
