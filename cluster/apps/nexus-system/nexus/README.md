@@ -70,8 +70,36 @@ To re-run without a script change, delete the Job and reconcile the `nexus` Kust
 
 ### Admin password rotation
 
-1. Change the password via the API (`PUT /service/rest/v1/security/users/<admin-username>/change-password`).
-2. Update `admin-password` in `nexus-admin`.
+Needs the current password. Lost it? See Sonatype's [Reset the Admin Password](https://help.sonatype.com/en/reset-the-admin-password.html).
+
+1. Change the live password via the API (`PUT .../change-password` takes `Content-Type: text/plain`, body is the new password):
+
+   ```bash
+   read -rs -p "Current password: " OLD_PW; echo
+   read -rs -p "New password: " NEW_PW; echo
+   printf '%s' "$NEW_PW" | curl -sS -o /dev/null -w '%{http_code}\n' \
+     -u "<admin-username>:$OLD_PW" -X PUT -H 'Content-Type: text/plain' --data-binary @- \
+     "https://nexus.lan.${EXTERNAL_DOMAIN}/service/rest/v1/security/users/<admin-username>/change-password"
+   ```
+
+   `204` means changed; `401` means the current password is wrong.
+
+2. Set `admin-password` to the new password in `app/nexus-admin.sops.yaml` with `sops`, then commit and push. Reloader rolls the Nexus pod on the secret change, so wait for it. The bootstrap sidecar only uses the password on a fresh PVC, so nothing else needs touching.
+
+   ```bash
+   kubectl -n nexus-system rollout status statefulset/nexus
+   ```
+
+3. Verify by re-running the provisioning Job (see [Cleanup](#cleanup)):
+
+   ```bash
+   kubectl -n nexus-system delete job nexus-provision-repos --ignore-not-found
+   flux reconcile kustomization nexus -n flux-system --with-source
+   kubectl -n nexus-system get job nexus-provision-repos
+   kubectl -n nexus-system logs job/nexus-provision-repos | grep -c 401
+   ```
+
+   Good: the Job shows `Complete` with `1/1` and `grep -c` prints `0`.
 
 In that order: the provisioning Job reads `admin-password` on every run and 401s if it is stale.
 
