@@ -29,10 +29,11 @@ The worker pod runs a `migrate` initContainer (same image, `AgentPlatform__Role:
 
 | Pod   | Port   | Purpose                   | Reached from                                        |
 | ----- | ------ | ------------------------- | --------------------------------------------------- |
-| `web` | `8080` | Intake (webhooks, health) | Traefik; only webhook paths will be routed publicly |
+| `web` | `8080` | Intake (webhooks, health) | Traefik; only `/webhooks/github` is routed publicly |
 | `web` | `8081` | AgentGateway `/mcp`       | Agent pods only; never routed through Traefik       |
 
-The Service `agent-platform-web` exposes `webhooks` (`8080`) and `mcp` (`8081`). The agent MCP config points at `http://agent-platform-web.agent-platform.svc.cluster.local:8081/mcp`. Keep the two ports on separate Service ports so a Traefik route can never expose `/mcp`. No IngressRoute or tunnel route exists yet.
+The Service `agent-platform-web` exposes `webhooks` (`8080`) and `mcp` (`8081`). The agent MCP config points at `http://agent-platform-web.agent-platform.svc.cluster.local:8081/mcp`. Keep the two ports on separate Service ports so a Traefik route can never expose `/mcp`. The public host `hooks.${EXTERNAL_DOMAIN}` goes through the Cloudflare tunnel to Traefik (`ingress/agent-platform/`), which
+routes only the exact path `/webhooks/github` to port `8080`, with no SSO: Intake verifies the GitHub HMAC signature itself.
 
 ## RBAC
 

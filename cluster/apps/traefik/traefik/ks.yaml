@@ -27,6 +27,7 @@ spec:
   path: ./cluster/apps/traefik/traefik/ingress
   dependsOn:
     - name: traefik
+    - name: agent-platform-web
     - name: authentik
     - name: brave-search-mcp
     - name: coder

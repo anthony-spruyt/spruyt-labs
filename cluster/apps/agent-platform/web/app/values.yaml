@@ -36,6 +36,11 @@ controllers:
               secretKeyRef:
                 name: agent-platform-session
                 key: session-token-key
+          GitHub__WebhookSecret:
+            valueFrom:
+              secretKeyRef:
+                name: web-credentials
+                key: github-webhook-secret
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
           Temporal__Namespace: agent-platform
           OTEL_SERVICE_NAME: agent-platform-web

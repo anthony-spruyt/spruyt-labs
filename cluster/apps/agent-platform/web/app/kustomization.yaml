@@ -6,6 +6,7 @@ resources:
   - ./rbac.yaml
   - ./network-policies.yaml
   - ./session-secret-eso.yaml
+  - ./web-credentials.sops.yaml
   - ./release.yaml
   - ./vpa.yaml
 configMapGenerator:

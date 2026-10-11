@@ -31,7 +31,7 @@ locals {
   ]
   litellm_ci_path_regex = "^(${join("|", local.litellm_ci_paths)})$"
 
-  github_webhook_hosts = ["flux-webhook.${var.zone_name}", "n8n.${var.zone_name}"]
+  github_webhook_hosts = ["flux-webhook.${var.zone_name}", "hooks.${var.zone_name}", "n8n.${var.zone_name}"]
 
   happy_signup_expression = "http.host eq \"happy.${var.zone_name}\" and lower(url_decode(http.request.uri.path)) contains \"/auth\" and not http.request.uri.path in {\"/v1/auth/response\" \"/v1/auth/account/response\" \"/v1/auth/request/status\"}"
 

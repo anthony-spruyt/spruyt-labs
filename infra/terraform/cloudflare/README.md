@@ -21,7 +21,7 @@ Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare W
 
 The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get folded into existing rules. The current five, in order:
 
-1. Allow GitHub Webhooks (skip rule for the `flux-webhook` and `n8n` hosts)
+1. Allow GitHub Webhooks (skip rule for the `flux-webhook`, `hooks` and `n8n` hosts)
 2. Block non-AU traffic, bots, and non-API LiteLLM paths
 3. AI Crawl Control - Block AI bots by User Agent (`[CF AI Audit]`, linked to the dashboard)
 4. Block Happy account creation and pairing, and Authentik admin paths outside home
@@ -40,7 +40,7 @@ GitHub-hosted runners reach the `litellm` host through the tunnel. On the LAN th
 
 `tunnel.tf` also gives the `litellm` route a path regex, so cloudflared answers 404 for any other path, and enables `origin_request.access` with the Access application's audience tag, so cloudflared itself rejects requests without a valid Access token. The team name comes from the `cloudflare_zero_trust_organization` data source.
 
-The "Allow GitHub Webhooks" rule applies only to the `flux-webhook` and `n8n` hosts (the Flux Receiver and the n8n GitHub webhook workflow), so every other host's rules always apply, and lists GitHub's published `hooks` ranges (`gh api meta`). Refresh it when that list changes.
+The "Allow GitHub Webhooks" rule applies only to the `flux-webhook`, `hooks` and `n8n` hosts (the Flux Receiver, the agent-platform Intake webhook and the n8n GitHub webhook workflow), so every other host's rules always apply, and lists GitHub's published `hooks` ranges (`gh api meta`). Refresh it when that list changes.
 
 ## What is not managed
 

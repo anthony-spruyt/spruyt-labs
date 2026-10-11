@@ -75,6 +75,12 @@ controllers:
               secretKeyRef:
                 name: agent-platform-rundata
                 key: ConnectionStrings__rundata
+          GitHub__AppId: "3233443"
+          GitHub__PrivateKey:
+            valueFrom:
+              secretKeyRef:
+                name: worker-credentials
+                key: github-app-private-key
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
           Temporal__Namespace: agent-platform
           OTEL_SERVICE_NAME: agent-platform-worker
