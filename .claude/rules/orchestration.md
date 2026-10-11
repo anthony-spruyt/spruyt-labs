@@ -19,7 +19,7 @@ Test: if the brief would be longer than the job, the main session does it itself
 | ----------------------------------------------------- | --------------------------------------------------------------------------------- |
 | It already has the inputs (body text, sha, PR number) | It waits or polls (CI, deploy, workflow run): `chore-runner`, in background       |
 | 1-3 commands                                          | Output is noisy (long logs, many curls, many pages): `chore-runner` returns facts |
-| No waiting                                            | Several independent jobs: parallel helpers                                        |
+| No waiting                                            | Several independent jobs that each wait or read noisy output: parallel helpers    |
 | Small output it would read anyway                     | File edits or commits: `builder`                                                  |
 |                                                       | Checking its own work: `reviewer`                                                 |
 |                                                       | Deep investigation: `general-purpose` with `model: opus`                          |
@@ -30,10 +30,10 @@ Helpers run these: waiting on CI after a push, reading failed CI logs, multi-rep
 
 ### Pushing reviewed commits
 
-Before pushing a local range a fresh reviewer returned READY on:
+Push from the builder's `/tmp` clone or worktree, never the shared checkout, and only with a fresh reviewer's READY for that exact `<base>..<sha>`. If any step fails, stop and tell the owner:
 
 1. `git status` is clean and `HEAD` is the reviewed sha
-2. `git fetch`, then `git merge-base --is-ancestor <base> origin/<branch>` (nothing unreviewed sits below the range)
+2. `git fetch`, then `git merge-base --is-ancestor <base> origin/<branch>` (nothing unreviewed sits below the range); on failure stop
 3. `git rev-list <base>..HEAD` matches the reviewed commits; on any mismatch stop
 4. `git rebase origin/<branch>`; on a conflict run `git rebase --abort` and stop
 5. `git push origin HEAD:<branch>`; never force-push, never amend
