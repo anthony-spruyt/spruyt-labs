@@ -10,14 +10,14 @@ The main session plans, decides and talks to the owner. If the brief would be lo
 | -------------------------------------------- | ------------------------------------- |
 | Edits, commits, fix rounds, rework           | `builder` (sonnet)                    |
 | Waiting or polling, noisy logs, batch sweeps | `chore-runner` (haiku), in background |
-| Reviews, re-reviews, attacker-minded reviews | `reviewer` (opus)                     |
+| Reviews, fix-checks, attacker-minded reviews | `reviewer` (opus)                     |
 | Deep investigation                           | `general-purpose` (opus)              |
 
-Push reviewed commits yourself from the builder's clone or worktree, never the shared checkout, with `/workspaces/spruyt-labs/.claude/scripts/push-reviewed.sh <base> <sha> <branch>`, only after a fresh READY for that exact range; if it stops, tell the owner. Give the range it prints to the CI wait and cluster-validator.
+Push reviewed commits yourself from the builder's clone or worktree, never the shared checkout, with `/workspaces/spruyt-labs/.claude/scripts/push-reviewed.sh <base> <sha> <branch>`, only once fresh reviews cover that exact range and the last round is READY (every full-review lens, then each fix-check); if it stops, tell the owner. Give the range it prints to the CI wait and cluster-validator.
 
 ## Design before delegating
 
-New work, or a change to an approach the owner picked, starts as a design shown to the owner: current setup (check existing controls first), target layout, per-repo changes, migration order, and the riskiest assumption with how a helper will prove it. Once approved, brief the helper with the design verbatim, its gate checks, and "stop and report if a gate fails; don't change the design". Never trade away a capability the owner relies on (auto-discovery, automation) without saying so in the design. Fix rounds need no new design. Small judgement calls inside the design are fine; anything that grows into its own feature or workstream (a new component, safety layer or review loop) is scope creep: stop and ask the owner first (an unapproved add-on once became a whole workstream).
+New work, or a change to an approach the owner picked, starts as a design shown to the owner: current setup (check existing controls first), target layout, per-repo changes, migration order, and the riskiest assumption with how a helper will prove it. Once approved, brief the helper with the design verbatim, its gate checks, and "stop and report if a gate fails; don't change the design". Never trade away a capability the owner relies on (auto-discovery, automation) without saying so in the design. Write the design of large or risky work to a file and run `spec-review` on it before showing the owner: a design flaw found in code review costs fix rounds. Fix rounds need no new design. Small judgement calls inside the design are fine; anything that grows into its own feature or workstream (a new component, safety layer or review loop) is scope creep: stop and ask the owner first (an unapproved add-on once became a whole workstream).
 
 ## Running helpers
 
@@ -33,7 +33,16 @@ New work, or a change to an approach the owner picked, starts as a design shown 
 
 Every PR and fix round gets a fresh reviewer, never the author (bot PRs below excepted). Security-sensitive changes get an attacker-minded brief. Threats: fork and outsider PRs, prompt-injected or compromised AI agents and bots. Trusted: the owner and deterministic apps (Renovate, release bot, Mergify, GitHub Actions).
 
-Definition of Ready, before approving, asking the owner to approve, or merging: a fresh READY, owner comments and threads checked, CI green including Sonar, CodeQL clean. Fix review findings in a new round.
+Review wide once, then check only the fixes (fresh reviewers each re-reviewing everything find new nits forever):
+
+1. **Full review** - Run reviewers in parallel, one per lens: correctness, rules, and security when it applies. A diff under about 50 lines gets one reviewer with no lens. Merge their findings into one deduplicated list.
+2. **Fix round** - One builder fixes every BLOCKER and MAJOR, plus the plainly correct MINORs, in one commit. MINORs alone never start a round.
+3. **Fix-check** - A fresh reviewer in fix-check mode gets the list and the fix range, and looks only there.
+4. **Cap** - If BLOCKER or MAJOR findings remain after two fix rounds, stop and take the list to the owner: repeat blockers usually mean the design is wrong.
+
+Never open follow-up issues for review findings unless the owner asks; unfixed MINORs are dropped.
+
+Definition of Ready, before approving, asking the owner to approve, or merging: READY from every full-review lens or, after a fix round, from the latest fix-check, owner comments and threads checked, CI green including Sonar, CodeQL clean.
 
 ## Owner
 

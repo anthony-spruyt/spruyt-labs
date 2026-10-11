@@ -15,13 +15,13 @@ Report to the owner only; never post it to GitHub.
 .claude/skills/orchestration-retro/retro.sh --since "$(date -d '30 days ago' +%F)"
 ```
 
-Use another `--since` date if the owner names a window. The script is read-only and prints helper counts and output tokens per agent type and model, general-purpose helpers that ran on Opus, review verdicts, PRs with 3 or more helper runs, and non-None `### Agent Definition Feedback`, with `[definition]`, `[rules]` and `[brief]` items counted and listed separately.
+Use another `--since` date if the owner names a window. The script is read-only and prints helper counts and output tokens per agent type and model, general-purpose helpers that ran on Opus, review verdicts, fix rounds per PR (fix-check reviews), and non-None `### Agent Definition Feedback`, with `[definition]`, `[rules]` and `[brief]` items counted and listed separately.
 
 ## 2. Read it
 
 - Routing: general-purpose helpers on Opus mean a brief should have named `builder`, `reviewer` or `chore-runner`, or a rule or agent description is unclear.
 - Over-delegation: many `chore-runner` runs with a low output-token total (under ~1k per run, total divided by runs in the agent table), or `[brief]` feedback from `chore-runner` saying the job was trivial, means short jobs are being handed off against the `orchestration.md` Routing section.
-- Rework: PRs with many runs point to briefs that missed something.
+- Rework: a PR with a fix round means the full review or the builder's self-review missed something; two (at cap) point to a gap in the brief or design.
 - Feedback: `[definition]` and `[rules]` entries not yet applied to the agent file, `CLAUDE.md` or rules file; `[brief]` entries repeated across runs point to a gap in `orchestration.md`.
 
 ## 3. Propose changes
