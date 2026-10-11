@@ -521,6 +521,8 @@ configMaps:
           include_call_id_in_error_body: true
           mcp_trusted_proxy_ranges:
             - "${CLUSTER_POD_CIDR_IP4}"
+          # Pinned: keys get MCP access only by inheriting their team's grants
+          require_key_mcp_access_defined: false
           store_model_in_db: true
           supported_db_objects:
             - mcp
