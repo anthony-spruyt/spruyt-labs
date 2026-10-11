@@ -187,7 +187,7 @@ Coder provides browser-based (or VS Code Desktop) workspaces running as Kubernet
 4. Configure parameters:
    - **Repository URL** — SSH URL (default: `git@github.com:anthony-spruyt/spruyt-labs.git`)
    - **Git commit email** — GitHub noreply address for verified commits
-   - **Volume sizes** — `/workspaces` (default 20 GiB), `/home/vscode` (default 20 GiB)
+   - **Volume sizes** — `/workspaces` (default 30 GiB), `/home/vscode` (default 40 GiB), image cache `/var/lib/containers` (default 60 GiB). Each can be increased later from the workspace settings, never decreased.
 
 ### How It Works
 

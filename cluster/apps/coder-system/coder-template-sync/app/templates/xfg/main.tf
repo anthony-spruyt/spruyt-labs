@@ -126,14 +126,15 @@ data "coder_parameter" "repo" {
 data "coder_parameter" "workspaces_volume_size" {
   name         = "workspaces_volume_size"
   display_name = "Workspaces volume size (GiB)"
-  description  = "Size of the /workspaces persistent volume."
-  default      = "20"
+  description  = "Size of the /workspaces persistent volume. Can only be increased."
+  default      = "30"
   type         = "number"
   icon         = "/emojis/1f4be.png"
-  mutable      = false
+  mutable      = true
   validation {
-    min = 5
-    max = 200
+    min       = 5
+    max       = 200
+    monotonic = "increasing"
   }
   order = 3
 }
@@ -141,16 +142,33 @@ data "coder_parameter" "workspaces_volume_size" {
 data "coder_parameter" "home_volume_size" {
   name         = "home_volume_size"
   display_name = "Home volume size (GiB)"
-  description  = "Size of the /home/vscode persistent volume."
-  default      = "20"
+  description  = "Size of the /home/vscode persistent volume. Can only be increased."
+  default      = "40"
   type         = "number"
   icon         = "/emojis/1f4be.png"
-  mutable      = false
+  mutable      = true
   validation {
-    min = 1
-    max = 50
+    min       = 1
+    max       = 100
+    monotonic = "increasing"
   }
   order = 4
+}
+
+data "coder_parameter" "containers_volume_size" {
+  name         = "containers_volume_size"
+  display_name = "Image cache volume size (GiB)"
+  description  = "Size of the volume backing /var/lib/containers (Podman images). Can only be increased."
+  default      = "60"
+  type         = "number"
+  icon         = "/emojis/1f4be.png"
+  mutable      = true
+  validation {
+    min       = 40
+    max       = 200
+    monotonic = "increasing"
+  }
+  order = 5
 }
 
 data "coder_parameter" "fallback_image" {
@@ -159,7 +177,7 @@ data "coder_parameter" "fallback_image" {
   description  = "Image used if the devcontainer build fails."
   default      = "codercom/enterprise-base:ubuntu"
   mutable      = true
-  order        = 5
+  order        = 6
 }
 
 data "coder_parameter" "devcontainer_builder" {
@@ -169,7 +187,7 @@ data "coder_parameter" "devcontainer_builder" {
   # renovate: datasource=docker depName=ghcr.io/coder/envbuilder
   default = "ghcr.io/coder/envbuilder:1.3.0@sha256:b34ade2fb90a8536df76e7a15c6dd8c6352d0ae835a187b13467fa0c8a71e280"
   mutable = true
-  order   = 6
+  order   = 7
 }
 
 # ---------------------------------------------------------------------------
@@ -231,7 +249,7 @@ resource "kubernetes_persistent_volume_claim_v1" "containers" {
     volume_mode        = "Block"
     resources {
       requests = {
-        storage = "40Gi"
+        storage = "${data.coder_parameter.containers_volume_size.value}Gi"
       }
     }
   }
@@ -286,7 +304,9 @@ resource "coder_agent" "main" {
         sudo mkfs.ext4 -q -L containers /dev/containers-disk
       fi
       sudo mkdir -p /var/lib/containers
-      sudo mount -o noatime /dev/containers-disk /var/lib/containers || true
+      if sudo mount -o noatime /dev/containers-disk /var/lib/containers; then
+        sudo resize2fs /dev/containers-disk >/dev/null 2>&1 || true
+      fi
     fi
 
     git config --global gpg.format ssh
@@ -491,6 +511,24 @@ resource "coder_script" "tmux" {
       jq '."terminal.integrated.profiles.linux".tmux = {"path": "/home/vscode/.local/bin/tmux-term"} | ."terminal.integrated.defaultProfile.linux" = "tmux"' "$f" >"$f.tmp"
       mv "$f.tmp" "$f"
     done
+  EOT
+}
+
+resource "coder_script" "image_prune" {
+  agent_id     = coder_agent.main.id
+  display_name = "Image prune"
+  icon         = "/icon/docker.svg"
+  cron         = "0 0 * * * *"
+  log_path     = "/tmp/image-prune.log"
+  script       = <<-EOT
+    #!/bin/bash
+    set -e
+    command -v podman >/dev/null || exit 0
+    mountpoint -q /var/lib/containers || exit 0
+    used=$(df --output=pcent /var/lib/containers | tail -n1 | tr -dc '0-9')
+    [ "$${used:-0}" -gt 70 ] || exit 0
+    echo "Image cache at $${used}%, pruning unused images older than 24h"
+    sudo -n podman image prune -a -f --filter until=24h
   EOT
 }
 
