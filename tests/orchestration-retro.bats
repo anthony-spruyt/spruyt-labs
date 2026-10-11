@@ -36,14 +36,14 @@ section() {
   run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
   [ "${status}" -eq 0 ]
   verdicts="$(section "Review verdicts")"
-  [[ "${verdicts}" == *"- NOT READY: 3"* ]]
-  [[ "${verdicts}" == *"- READY: 9"* ]]
+  [[ "${verdicts}" == *"- NOT READY: 4"* ]]
+  [[ "${verdicts}" == *"- READY: 10"* ]]
 }
 
 @test "reads the report a reviewer hands back through the SubagentHandback tool" {
   run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
   [ "${status}" -eq 0 ]
-  [[ "$(section "Review verdicts")" == *"- NOT READY: 3"* ]]
+  [[ "$(section "Review verdicts")" == *"- NOT READY: 4"* ]]
   [[ "$(section "PRs with fix rounds")" == *"- demo/repo#301: 1 fix round"$'\n'* ]]
   feedback="$(section "Agent Definition Feedback")"
   [[ "${feedback}" == *"- [brief] items: 1"* ]]
@@ -61,7 +61,7 @@ section() {
   run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
   [ "${status}" -eq 0 ]
   rounds="$(section "PRs with fix rounds" | grep '^- ')"
-  expected=$'- demo/repo#201: 2 fix rounds (at cap)\n- #205: 1 fix round\n- demo/repo#202: 1 fix round\n- demo/repo#301: 1 fix round\n- demo/repo#302: 1 fix round\n- other/repo#201: 1 fix round\n- Fix-checks with no PR number: 1'
+  expected=$'- demo/repo#201: 2 fix rounds (at cap)\n- demo/repo#4500: 2 fix rounds (at cap)\n- demo/repo#202: 1 fix round\n- #205: 1 fix round\n- other/repo#207: 1 fix round\n- demo/repo#301: 1 fix round\n- demo/repo#302: 1 fix round\n- Fix-checks with no PR number: 1'
   [ "${rounds}" == "${expected}" ]
 }
 
@@ -71,12 +71,12 @@ section() {
   [[ "$(section "PRs with fix rounds")" == *"- demo/repo#302: 1 fix round"$'\n'* ]]
 }
 
-@test "keeps the same PR number in two repos apart" {
+@test "counts a fix-check reviewed before the push and one after it as the same PR" {
   run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
   [ "${status}" -eq 0 ]
   rounds="$(section "PRs with fix rounds")"
-  [[ "${rounds}" == *"- demo/repo#201: 2 fix rounds (at cap)"* ]]
-  [[ "${rounds}" == *"- other/repo#201: 1 fix round"$'\n'* ]]
+  [ "$(printf '%s\n' "${rounds}" | grep -c '4500')" -eq 1 ]
+  [[ "${rounds}" == *"- demo/repo#4500: 2 fix rounds (at cap)"$'\n'* ]]
 }
 
 @test "falls back to the description number, shown as a bare #n" {
@@ -185,8 +185,8 @@ section() {
   rm -rf "${tree}"
   [ "${status}" -eq 0 ]
   verdicts="$(section "Review verdicts")"
-  [[ "${verdicts}" == *"- NOT READY: 3"* ]]
-  [[ "${verdicts}" == *"- READY: 9"* ]]
+  [[ "${verdicts}" == *"- NOT READY: 4"* ]]
+  [[ "${verdicts}" == *"- READY: 10"* ]]
   rounds="$(section "PRs with fix rounds")"
   [[ "${rounds}" == *"- demo/repo#201: 2 fix rounds (at cap)"* ]]
   [[ "${rounds}" == *"- demo/repo#202: 1 fix round"$'\n'* ]]

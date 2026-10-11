@@ -63,7 +63,7 @@ def text_of:
       if $reply | test("(^|\\n)Mode:\\s*fix-check") then "fix-check"
       elif $reply | test("(^|\\n)Mode:\\s*full") then "full"
       else "none" end),
-    prline: ($reply | [scan("PR:\\s*([^\\s#]+)#([0-9]+)")] | first),
+    prline: ($reply | [scan("(?:^|\\n)PR:[^\\n]*?([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([0-9]+)")] | first),
     feedback: (
       $reply | split("### Agent Definition Feedback")
       | if length > 1
@@ -77,11 +77,13 @@ read -r -d '' report <<'JQ' || true
 def clip($n): if length > $n then .[0:$n] + "..." else . end;
 def cap($n; $label):
   if length > $n then .[0:$n] + ["- ... and \(length - $n) more \($label)"] else . end;
-def prkey:
-  if .prline != null then "\(.prline[0])#\(.prline[1])"
-  else (.desc | [scan("(?:#|\\bPR\\s*#?)([0-9]+)")] | first[0]?) as $n
-    | if $n == null then null else "#\($n)" end
-  end;
+def prnum:
+  if .prline != null then .prline[1]
+  else .desc | [scan("(?:#|\\bPR\\s*#?)([0-9]+)")] | first[0]?
+  end
+  | if . == null then null else tonumber end;
+def prlabel:
+  ([.[].repo | select(. != null)] | sort | first) as $r | "\($r // "")#\(.[0].pr)";
 
 map(select($since == "" or .date >= $since)) as $runs
 | "# Orchestration retro",
@@ -125,13 +127,13 @@ map(select($since == "" or .date >= $since)) as $runs
   "",
   ([$runs[]
      | select((.agent | IN("reviewer", "pr-reviewer")) and .mode == "fix-check")
-     | . + {pr: prkey}] as $fix
+     | . + {pr: prnum, repo: .prline[0]}] as $fix
    | ([$fix[] | select(.pr == null)] | length) as $nonum
    | ([$fix[] | select(.pr != null)] | group_by(.pr) | sort_by(-length)) as $groups
    | (if ($groups | length) == 0 then "None."
       else
         $groups
-        | map("- \(.[0].pr): \(length) fix round" + (if length == 1 then "" else "s" end) + (if length >= 2 then " (at cap)" else "" end))
+        | map("- \(prlabel): \(length) fix round" + (if length == 1 then "" else "s" end) + (if length >= 2 then " (at cap)" else "" end))
         | cap(15; "PRs") | .[]
       end),
      (if $nonum > 0 then "- Fix-checks with no PR number: \($nonum)" else empty end)),
