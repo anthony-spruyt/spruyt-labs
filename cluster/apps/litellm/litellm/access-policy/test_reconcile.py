@@ -21,7 +21,6 @@ OTHER_TEAM_ID = "22222222-2222-2222-2222-222222222222"
 GROUP_ID = "33333333-3333-3333-3333-333333333333"
 SERVER_A = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 SERVER_B = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-KEY_TOKEN = "hashed-token-value"
 KEY_ALIAS = "agent-key"
 TEAM_ALIAS = "agents"
 GROUP_NAME = "dev"
@@ -33,7 +32,6 @@ def policy_doc():
     return {
         "teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS}],
         "access_groups": [{"name": GROUP_NAME, "mcp_server_ids": [SERVER_A], "team_ids": [TEAM_ID]}],
-        "keys": [{"key_alias": KEY_ALIAS, "object_permission": {"mcp_servers": [SERVER_A], "mcp_tool_permissions": {SERVER_A: TOOLS}}}],
     }
 
 
@@ -52,13 +50,6 @@ class FakeApi:
                 "assigned_keys": [],
             }
         ]
-        self.keys = [
-            {
-                "key_alias": KEY_ALIAS,
-                "token": KEY_TOKEN,
-                "object_permission": {**EMPTY_PERMISSION, "mcp_servers": [SERVER_A], "mcp_tool_permissions": {SERVER_A: list(reversed(TOOLS))}},
-            }
-        ]
         self.calls = []
 
     def request(self, method, path, body=None):
@@ -71,8 +62,6 @@ class FakeApi:
             return {"team_info": next(t for t in self.teams if t["team_id"] == wanted)}
         if method == "GET" and base == "/v1/access_group":
             return self.groups
-        if method == "GET" and base == "/key/list":
-            return {"keys": self.keys, "total_count": len(self.keys), "current_page": 1, "total_pages": 1}
         return {}
 
     def writes(self):
@@ -107,14 +96,14 @@ class ParsePolicyTest(unittest.TestCase):
         policy = reconcile.parse_policy(policy_doc())
         self.assertEqual([t.team_id for t in policy.teams], [TEAM_ID])
         self.assertEqual(policy.groups[0].description, "")
-        self.assertEqual(policy.keys[0].object_permission["mcp_tool_permissions"][SERVER_A], sorted(TOOLS))
 
     def test_unknown_section_field_and_duplicates_are_rejected(self):
         bad_docs = [
             {"surprise": []},
             {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "surprise": 1}]},
             {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS}, {"team_id": TEAM_ID, "team_alias": "other"}]},
-            {"keys": [{"key_alias": KEY_ALIAS}, {"key_alias": KEY_ALIAS}]},
+            {"keys": [{"key_alias": KEY_ALIAS}]},
+            {"access_groups": [{"name": GROUP_NAME, "key_aliases": [KEY_ALIAS]}]},
             {"access_groups": [{"description": "no name"}]},
         ]
         for doc in bad_docs:
@@ -134,69 +123,35 @@ class DiffModeTest(unittest.TestCase):
     def test_differences_are_listed_per_object_and_nothing_is_written(self):
         api = FakeApi()
         api.groups[0]["access_mcp_server_ids"] = [SERVER_B]
-        api.keys[0]["object_permission"] = dict(EMPTY_PERMISSION)
         doc = policy_doc()
         doc["teams"].append({"team_id": OTHER_TEAM_ID, "team_alias": "new-team"})
         code, lines = run_policy(api, doc, "diff")
         self.assertEqual(code, 0)
-        self.assertEqual(lines[-1], "changes: 3")
+        self.assertEqual(lines[-1], "changes: 2")
         text = "\n".join(lines)
         self.assertIn("team new-team (" + OTHER_TEAM_ID + "): CREATE", text)
         self.assertIn(f"access group {GROUP_NAME}: UPDATE", text)
         self.assertIn(f'mcp_server_ids: live=["{SERVER_B}"] desired=["{SERVER_A}"]', text)
-        self.assertIn(f"key {KEY_ALIAS}: UPDATE", text)
         self.assertEqual(api.writes(), [])
 
     def test_unmanaged_objects_are_ignored(self):
         api = FakeApi()
         api.teams.append({"team_id": OTHER_TEAM_ID, "team_alias": "n8n", "object_permission": {"mcp_servers": [SERVER_B]}})
         api.groups.append({**api.groups[0], "access_group_id": "g2", "access_group_name": "n8n-dev"})
-        api.keys.append({"key_alias": "n8n", "token": "other-token", "object_permission": {"mcp_servers": [SERVER_B]}})
         code, lines = run_policy(api, policy_doc(), "diff")
         self.assertEqual((code, lines[-1]), (0, "changes: 0"))
 
-    def test_group_membership_compares_team_ids_and_key_aliases(self):
+    def test_group_membership_compares_team_ids(self):
         api = FakeApi()
         api.groups[0]["assigned_team_ids"] = [TEAM_ID, OTHER_TEAM_ID]
-        api.groups[0]["assigned_keys"] = [{"id": KEY_TOKEN, "name": KEY_ALIAS}]
         _, lines = run_policy(api, policy_doc(), "diff")
-        text = "\n".join(lines)
-        self.assertIn("team_ids: live=", text)
-        self.assertIn(f'key_aliases: live=["{KEY_ALIAS}"] desired=[]', text)
-
-    def test_missing_key_alias_fails_after_reporting(self):
-        api = FakeApi()
-        api.keys = []
-        code, lines = run_policy(api, policy_doc(), "diff")
-        self.assertEqual(code, 1)
-        self.assertIn(f"key {KEY_ALIAS}: key alias missing; keys are never created here", lines)
-        self.assertEqual(lines[-1], "changes: 0")
-
-    def test_duplicate_live_key_alias_fails(self):
-        api = FakeApi()
-        api.keys.append(dict(api.keys[0]))
-        code, lines = run_policy(api, policy_doc(), "diff")
-        self.assertEqual(code, 1)
-        self.assertIn(f"key {KEY_ALIAS}: key alias ambiguous; keys are never created here", lines)
-
-    def test_group_with_alias_less_key_is_a_shape_error(self):
-        api = FakeApi()
-        api.groups[0]["assigned_keys"] = [{"id": KEY_TOKEN, "name": None}]
-        with self.assertRaises(reconcile.ShapeError):
-            run_policy(api, policy_doc(), "diff")
+        self.assertIn("team_ids: live=", "\n".join(lines))
 
     def test_unexpected_team_list_shape_is_an_error(self):
         api = FakeApi()
         api.request = lambda method, path, body=None: {"teams": []} if path.startswith("/team/list") else {}
         with self.assertRaises(reconcile.ShapeError):
             run_policy(api, policy_doc(), "diff")
-
-    def test_keys_are_read_across_pages(self):
-        api = FakeApi()
-        pages = {1: {"keys": [], "total_pages": 2}, 2: {"keys": api.keys, "total_pages": 2}}
-        api.request = lambda method, path, body=None: pages[int(path.split("page=")[1])]
-        found = reconcile.fetch_keys(api)
-        self.assertEqual(list(found), [KEY_ALIAS])
 
 
 class EnforceTest(unittest.TestCase):
@@ -242,10 +197,10 @@ class EnforceTest(unittest.TestCase):
             [("PUT", f"/v1/access_group/{GROUP_ID}", {"access_mcp_server_ids": [SERVER_A], "assigned_team_ids": [TEAM_ID]})],
         )
 
-    def test_group_create_resolves_key_aliases_to_tokens(self):
+    def test_group_create_sends_its_managed_fields(self):
         api = FakeApi()
         doc = policy_doc()
-        doc["access_groups"].append({"name": "keyed", "description": "d", "mcp_server_ids": [SERVER_B], "key_aliases": [KEY_ALIAS]})
+        doc["access_groups"].append({"name": "extra", "description": "d", "mcp_server_ids": [SERVER_B]})
         run_policy(api, doc, "enforce")
         self.assertEqual(
             api.writes(),
@@ -254,58 +209,31 @@ class EnforceTest(unittest.TestCase):
                     "POST",
                     "/v1/access_group",
                     {
-                        "access_group_name": "keyed",
+                        "access_group_name": "extra",
                         "description": "d",
                         "access_model_names": [],
                         "access_mcp_server_ids": [SERVER_B],
                         "access_agent_ids": [],
                         "assigned_team_ids": [],
-                        "assigned_key_ids": [KEY_TOKEN],
                     },
                 )
             ],
         )
 
-    def test_key_update_targets_the_alias_and_sends_only_permission(self):
-        api = FakeApi()
-        api.keys[0]["object_permission"] = {**EMPTY_PERMISSION, "mcp_servers": [SERVER_A]}
-        run_policy(api, policy_doc(), "enforce")
-        self.assertEqual(
-            api.writes(),
-            [("POST", "/key/update", {"key_alias": KEY_ALIAS, "object_permission": {"mcp_tool_permissions": {SERVER_A: sorted(TOOLS)}}})],
-        )
-
-    def test_writes_apply_teams_then_groups_then_keys(self):
+    def test_writes_apply_teams_then_groups(self):
         api = FakeApi()
         api.teams[0]["team_alias"] = "old"
         api.groups[0]["access_mcp_server_ids"] = []
-        api.keys[0]["object_permission"] = dict(EMPTY_PERMISSION)
         run_policy(api, policy_doc(), "enforce")
-        self.assertEqual([c[1].split("/")[1] for c in api.writes()], ["team", "v1", "key"])
+        self.assertEqual([c[1].split("/")[1] for c in api.writes()], ["team", "v1"])
 
     def test_nothing_is_ever_deleted(self):
         api = FakeApi()
         api.teams.append({"team_id": OTHER_TEAM_ID, "team_alias": "extra", "object_permission": {}})
         api.groups.append({**api.groups[0], "access_group_id": "g2", "access_group_name": "extra"})
-        api.keys.append({"key_alias": "extra", "token": "t2", "object_permission": {"mcp_servers": [SERVER_B]}})
         run_policy(api, policy_doc(), "enforce")
         self.assertEqual(api.writes(), [])
         self.assertNotIn("DELETE", {c[0] for c in api.calls})
-
-    def test_missing_key_alias_blocks_every_write(self):
-        api = FakeApi()
-        api.keys = []
-        api.teams[0]["team_alias"] = "old"
-        code, _ = run_policy(api, policy_doc(), "enforce")
-        self.assertEqual(code, 1)
-        self.assertEqual(api.writes(), [])
-
-    def test_output_never_contains_key_tokens(self):
-        api = FakeApi()
-        doc = policy_doc()
-        doc["access_groups"].append({"name": "keyed", "key_aliases": [KEY_ALIAS]})
-        _, lines = run_policy(api, doc, "enforce")
-        self.assertNotIn(KEY_TOKEN, "\n".join(lines))
 
 
 class ApiTest(unittest.TestCase):
@@ -383,7 +311,7 @@ class CommittedPolicyTest(unittest.TestCase):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access-policy.yml")
         with open(path, encoding="utf-8") as handle:
             policy = reconcile.parse_policy(yaml.safe_load(handle))
-        self.assertTrue(policy.teams and policy.groups and policy.keys)
+        self.assertTrue(policy.teams and policy.groups)
 
 
 if __name__ == "__main__":

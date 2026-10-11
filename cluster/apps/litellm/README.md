@@ -84,7 +84,7 @@ CI on GitHub-hosted runners calls the `litellm` host over the Cloudflare tunnel 
 
 MCP servers are declared under `mcp_servers:` in `config.yaml` (`litellm/app/values.yaml`, `configMaps.litellm-config`). Only `n8n` is still registered through the LiteLLM UI and persisted in Postgres, which is why `mcp` stays in `supported_db_objects`. Config-defined servers show in the UI as read-only; edit `values.yaml` instead.
 
-Each entry pins `server_id` and `alias`. Teams, keys and access groups grant tools by server id, and tool names carry the alias as a prefix, so changing either breaks those grants and renames the tools. A DB row with the same `server_id` shadows the config entry, so delete the row once the entry is live.
+Each entry pins `server_id` and `alias`. Teams and access groups grant tools by server id, and tool names carry the alias as a prefix, so changing either breaks those grants and renames the tools. A DB row with the same `server_id` shadows the config entry, so delete the row once the entry is live.
 
 Tokens are `authentication_token: os.environ/MCP_<NAME>_TOKEN`, read once at startup from `litellm-secrets` (SOPS, mounted with `envFrom`). Add the key with `sops`; Reloader restarts the pods when the Secret changes.
 
@@ -93,7 +93,7 @@ To add a server:
 1. Add an entry to `mcp_servers` with a fresh UUID `server_id`, `alias` equal to the key, `url`, `transport`, `auth_type`, `allowed_tools` and `available_on_public_internet: false`.
 2. For a bearer-token server, add `MCP_<NAME>_TOKEN` to `litellm-secrets`.
 3. Add an egress CNP in `litellm/app/network-policies.yaml` and, for an in-cluster server, an ingress CNP from the `litellm` namespace.
-4. Grant the server to teams, access groups or keys in `litellm/access-policy/access-policy.yml` (see Access policy).
+4. Grant the server to teams or access groups in `litellm/access-policy/access-policy.yml` (see Access policy).
 
 `.mcp.json` in the repo root holds a single `litellm` entry; every downstream server is fanned out through it.
 
@@ -101,18 +101,17 @@ To add a server:
 
 Who may use which MCP server and tool is declared in `litellm/access-policy/access-policy.yml` and applied by the `litellm-access-policy` Job, which calls the admin API with the master key from `litellm-secrets`. The file holds:
 
-| Section         | Matched by  | Managed fields                                                                                           |
-| --------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
-| `teams`         | `team_id`   | `team_alias`, `object_permission`                                                                        |
-| `access_groups` | `name`      | `description`, `models`, `mcp_server_ids`, `agent_ids`, `team_ids`, `key_aliases` (unified access group) |
-| `keys`          | `key_alias` | `object_permission` only                                                                                 |
+| Section         | Matched by | Managed fields                                                                            |
+| --------------- | ---------- | ----------------------------------------------------------------------------------------- |
+| `teams`         | `team_id`  | `team_alias`, `object_permission`                                                         |
+| `access_groups` | `name`     | `description`, `models`, `mcp_server_ids`, `agent_ids`, `team_ids` (unified access group) |
 
-- Keys, users, team budgets and members, models and the `n8n` MCP server stay in the LiteLLM UI/DB. Keys are never created here; a `key_alias` that doesn't exist, or exists twice, fails the Job. The Job never deletes anything, so objects missing from the file are left alone.
-- A listed object is compared on its managed fields only, and an omitted list field means empty: a grant that exists live but not in the file is a diff. Access groups match by `name` because LiteLLM generates their ids. Group membership is declared on the group (`team_ids`, `key_aliases`), not on the team.
+- MCP access is granted on teams and access groups only; a key inherits its team's grants, so keys carry no MCP limits of their own. Keys, users, team budgets and members, models and the `n8n` MCP server stay in the LiteLLM UI/DB. The Job never deletes anything, so objects missing from the file are left alone.
+- A listed object is compared on its managed fields only, and an omitted list field means empty: a grant that exists live but not in the file is a diff. Access groups match by `name` because LiteLLM generates their ids. Group membership is declared on the group (`team_ids`), not on the team.
 - To change policy, edit `access-policy.yml` and push. The ConfigMap name carries a content hash, so the Job spec changes, Flux recreates the Job (`kustomize.toolkit.fluxcd.io/force`) and it runs against the new file. After `ttlSecondsAfterFinished` the Job is removed and Flux recreates it at its next 4h reconcile, so it also runs periodically.
-- `MODE` in `job.yaml` is `enforce`: the Job creates missing teams and groups with the file's ids and names, then updates only the differing managed fields (teams, then groups, then keys), and ends with `changes: N`. Read it with `kubectl -n litellm logs job/litellm-access-policy`; `changes: 0` means the file already matches live state.
+- `MODE` in `job.yaml` is `enforce`: the Job creates missing teams and groups with the file's ids and names, then updates only the differing managed fields (teams, then groups), and ends with `changes: N`. Read it with `kubectl -n litellm logs job/litellm-access-policy`; `changes: 0` means the file already matches live state.
 - To preview a change without applying it, set `MODE` to `diff` in `job.yaml` for that push: the Job then only logs one block per object and applies nothing. Set it back to `enforce` afterwards.
-- LiteLLM merges an `object_permission` update field by field, so the Job sends an empty value (`[]`, `{}`) to clear a field. It logs aliases, ids and permission fields only, never key material.
+- LiteLLM merges an `object_permission` update field by field, so the Job sends an empty value (`[]`, `{}`) to clear a field. It logs aliases, ids and permission fields only, never credentials.
 - Unit tests for the script run in CI through `tests/litellm-access-policy.bats`.
 
 ### Proxy middleware

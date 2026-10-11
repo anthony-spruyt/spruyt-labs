@@ -27,12 +27,10 @@ PERMISSION_FIELDS = (*LIST_FIELDS, TOOL_MAP_FIELD, FLAG_FIELD)
 PERMISSION_KEY = "object_permission"
 TEAM_ID = "team_id"
 TEAM_ALIAS = "team_alias"
-KEY_ALIAS = "key_alias"
 
 SECTIONS = {
     "teams": {TEAM_ID, TEAM_ALIAS, PERMISSION_KEY},
-    "access_groups": {"name", "description", "models", "mcp_server_ids", "agent_ids", "team_ids", "key_aliases"},
-    "keys": {KEY_ALIAS, PERMISSION_KEY},
+    "access_groups": {"name", "description", "models", "mcp_server_ids", "agent_ids", "team_ids"},
 }
 GROUP_API_FIELDS = {
     "description": "description",
@@ -41,10 +39,8 @@ GROUP_API_FIELDS = {
     "agent_ids": "access_agent_ids",
     "team_ids": "assigned_team_ids",
 }
-KEY_PAGE_SIZE = 100
 SECRET_PATTERN = re.compile(r"sk-[A-Za-z0-9_-]+")
 APPLY_ACTIONS = ("create", "update")
-UNUSABLE_KEY_ACTIONS = ("missing", "ambiguous")
 
 
 class PolicyError(Exception):
@@ -74,22 +70,13 @@ class Group:
     mcp_server_ids: list
     agent_ids: list
     team_ids: list
-    key_aliases: list
     group_id: str | None = field(default=None, compare=False)
-
-
-@dataclass(frozen=True)
-class KeyPolicy:
-    key_alias: str
-    object_permission: dict
-    token: str | None = field(default=None, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
 class Policy:
     teams: list
     groups: list
-    keys: list
 
 
 @dataclass
@@ -148,11 +135,6 @@ def _policy_group(entry):
     return Group(name=entry["name"], description=entry.get("description") or "", **lists)
 
 
-def _policy_key(entry):
-    _require(entry.get(KEY_ALIAS), "keys: key_alias is required", PolicyError)
-    return KeyPolicy(entry[KEY_ALIAS], normalize_permission(entry.get(PERMISSION_KEY), PolicyError))
-
-
 def _unique(values, name):
     _require(len(values) == len(set(values)), f"{name}: duplicate entries", PolicyError)
 
@@ -164,12 +146,10 @@ def parse_policy(doc):
     policy = Policy(
         teams=[_policy_team(e) for e in _section(doc, "teams")],
         groups=[_policy_group(e) for e in _section(doc, "access_groups")],
-        keys=[_policy_key(e) for e in _section(doc, "keys")],
     )
     _unique([t.team_id for t in policy.teams], "teams.team_id")
     _unique([t.team_alias for t in policy.teams], "teams.team_alias")
     _unique([g.name for g in policy.groups], "access_groups.name")
-    _unique([k.key_alias for k in policy.keys], "keys.key_alias")
     return policy
 
 
@@ -209,14 +189,8 @@ def live_team(team_id, info):
 def live_group(raw):
     _require(isinstance(raw, dict) and raw.get("access_group_id") and raw.get("access_group_name"), "access_group: unexpected shape")
     name = raw["access_group_name"]
-    assigned = raw.get("assigned_keys") or []
-    _require(all(isinstance(k, dict) and k.get("name") for k in assigned), f"access_group {name}: assigned key without an alias")
     lists = {attr: _string_list(raw.get(api_name) or [], f"access_group {name}.{api_name}") for attr, api_name in GROUP_API_FIELDS.items() if attr != "description"}
-    return Group(name=name, description=raw.get("description") or "", key_aliases=sorted({k["name"] for k in assigned}), group_id=raw["access_group_id"], **lists)
-
-
-def live_key(raw):
-    return KeyPolicy(raw[KEY_ALIAS], normalize_permission(raw.get(PERMISSION_KEY)), raw.get("token"))
+    return Group(name=name, description=raw.get("description") or "", group_id=raw["access_group_id"], **lists)
 
 
 def fetch_teams(api, wanted_ids):
@@ -230,23 +204,6 @@ def fetch_groups(api):
     groups = api.request("GET", "/v1/access_group")
     _require(isinstance(groups, list), "access_group: expected a list")
     return {g.name: g for g in (live_group(raw) for raw in groups)}
-
-
-def fetch_keys(api):
-    out = {}
-    page = 1
-    while True:
-        resp = api.request("GET", f"/key/list?return_full_object=true&size={KEY_PAGE_SIZE}&page={page}")
-        _require(isinstance(resp, dict) and isinstance(resp.get("keys"), list), "key/list: unexpected shape")
-        for raw in resp["keys"]:
-            _require(isinstance(raw, dict), "key/list: unexpected shape")
-            if raw.get(KEY_ALIAS):
-                out.setdefault(raw[KEY_ALIAS], []).append(live_key(raw))
-        total_pages = resp.get("total_pages")
-        _require(isinstance(total_pages, int), "key/list: missing total_pages")
-        if page >= total_pages:
-            return out
-        page += 1
 
 
 def differing(live, desired):
@@ -279,18 +236,6 @@ def plan_groups(policy, live):
     return [_compare(f"access group {g.name}", live.get(g.name), g) for g in policy.groups]
 
 
-def plan_keys(policy, live):
-    changes = []
-    for key in policy.keys:
-        matches = live.get(key.key_alias, [])
-        label = f"key {key.key_alias}"
-        if len(matches) == 1:
-            changes.append(_compare(label, matches[0], key))
-        else:
-            changes.append(Change(label, key, "ambiguous" if matches else "missing"))
-    return changes
-
-
 def team_request(change):
     desired = change.desired
     if change.action == "create":
@@ -307,35 +252,17 @@ def team_request(change):
     return "POST", "/team/update", body
 
 
-def group_request(change, key_tokens):
+def group_request(change):
     desired = change.desired
     creating = change.action == "create"
     names = [f.name for f in fields(desired) if f.compare] if creating else [name for name, _, _ in change.diffs]
     body = {"access_group_name": desired.name} if creating else {}
     for name in names:
-        if name == "key_aliases":
-            body["assigned_key_ids"] = [key_tokens[alias] for alias in desired.key_aliases]
-        elif name != "name":
+        if name != "name":
             body[GROUP_API_FIELDS[name]] = getattr(desired, name)
     if creating:
         return "POST", "/v1/access_group", body
     return "PUT", f"/v1/access_group/{urllib.parse.quote(change.live.group_id, safe='')}", body
-
-
-def key_request(change):
-    desired = change.desired
-    payload = permission_payload(change.live.object_permission, desired.object_permission)
-    return "POST", "/key/update", {KEY_ALIAS: desired.key_alias, PERMISSION_KEY: payload}
-
-
-def key_tokens_for(policy, live_keys):
-    tokens = {}
-    for group in policy.groups:
-        for alias in group.key_aliases:
-            matches = live_keys.get(alias, [])
-            _require(len(matches) == 1 and matches[0].token, f"access group {group.name}: key alias {alias} not found exactly once")
-            tokens[alias] = matches[0].token
-    return tokens
 
 
 def report(changes, out):
@@ -356,21 +283,14 @@ def apply_changes(api, changes, build_request, out):
 def run(api, policy, mode, out=print):
     teams = plan_teams(policy, fetch_teams(api, {t.team_id for t in policy.teams}))
     groups = plan_groups(policy, fetch_groups(api))
-    live_keys = fetch_keys(api)
-    keys = plan_keys(policy, live_keys)
-    everything = [*teams, *groups, *keys]
+    everything = [*teams, *groups]
     report(everything, out)
-    unusable = [c for c in keys if c.action in UNUSABLE_KEY_ACTIONS]
-    for change in unusable:
-        out(f"{change.label}: key alias {change.action}; keys are never created here")
-    if mode == "enforce" and not unusable:
-        tokens = key_tokens_for(policy, live_keys)
+    if mode == "enforce":
         apply_changes(api, teams, team_request, out)
-        apply_changes(api, groups, lambda c: group_request(c, tokens), out)
-        apply_changes(api, keys, key_request, out)
-    out(f"managed: teams={len(teams)} access_groups={len(groups)} keys={len(keys)}")
+        apply_changes(api, groups, group_request, out)
+    out(f"managed: teams={len(teams)} access_groups={len(groups)}")
     out(f"changes: {sum(1 for c in everything if c.action in APPLY_ACTIONS)}")
-    return 1 if unusable else 0
+    return 0
 
 
 def main(environ=None):
