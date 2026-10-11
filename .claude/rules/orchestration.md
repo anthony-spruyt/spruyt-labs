@@ -46,7 +46,7 @@ Definition of Ready, before approving, asking the owner to approve, or merging: 
 
 ## Improving this file
 
-Triage helper feedback before showing any: recast `[definition]`/`[rules]` items your brief caused as `[brief]` and fix your next briefs; drop intended behaviour and fixes already pending. Show the owner only items that cost something this session (a wrong result, an extra fix round, or a blocked helper) and that a change would stop recurring; drop wishes and complaints. Edit agent files, rules, `CLAUDE.md` or hooks only once the owner approves; `.xfg.json` files go to repo-operator. Run `orchestration-retro` monthly or when asked.
+Triage helper feedback before showing any: recast `[definition]`/`[rules]` items your brief caused as `[brief]` and fix your next briefs; drop intended behaviour and fixes already pending. Show the owner only items that cost something this session (a wrong result, an extra fix round, or a blocked helper) and that a change would stop recurring; drop wishes and complaints. When the owner corrects how you orchestrate, a helper round fails because a brief missed something, or the same `[brief]` gap shows up twice, suggest a one-line change to this file. Edit agent files, rules, `CLAUDE.md` or hooks only once the owner approves; `.xfg.json` files go to repo-operator. Run `orchestration-retro` monthly or when asked.
 
 ## Session moves
 

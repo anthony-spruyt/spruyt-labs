@@ -84,7 +84,7 @@ ci() {
 
 @test "a PR whose checks all pass or skip is green" {
   fixture pr-checks.json '[{"name":"build","bucket":"pass"},{"name":"lint","bucket":"skipping"}]'
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 0 ]
   [ "$(first_line)" = "green" ]
 }
@@ -92,13 +92,13 @@ ci() {
 @test "a pending or failing Mergify Merge Protections check is ignored" {
   fixture pr-checks.json '[{"name":"build","bucket":"pass"},{"name":"Mergify Merge Protections","bucket":"pending"}]'
   fixture pr-checks.rc 8
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 0 ]
   [ "$(first_line)" = "green" ]
 
   fixture pr-checks.json '[{"name":"build","bucket":"pass"},{"name":"Mergify Merge Protections","bucket":"fail"}]'
   fixture pr-checks.rc 1
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 0 ]
   [ "$(first_line)" = "green" ]
 }
@@ -106,7 +106,7 @@ ci() {
 @test "a failing check makes the PR failed and names the check" {
   fixture pr-checks.json '[{"name":"build","bucket":"pass"},{"name":"unit tests","bucket":"fail"}]'
   fixture pr-checks.rc 1
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 1 ]
   [ "$(first_line)" = "failed" ]
   [[ "${output}" == *"unit tests"* ]]
@@ -116,7 +116,7 @@ ci() {
 @test "a cancelled check counts as failed" {
   fixture pr-checks.json '[{"name":"build","bucket":"cancel"}]'
   fixture pr-checks.rc 1
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 1 ]
   [ "$(first_line)" = "failed" ]
 }
@@ -124,7 +124,7 @@ ci() {
 @test "a pending check makes the PR pending and names the check" {
   fixture pr-checks.json '[{"name":"build","bucket":"pass"},{"name":"e2e","bucket":"pending"}]'
   fixture pr-checks.rc 8
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 2 ]
   [ "$(first_line)" = "pending" ]
   [[ "${output}" == *"e2e"* ]]
@@ -133,25 +133,25 @@ ci() {
 @test "a failure outranks a pending check" {
   fixture pr-checks.json '[{"name":"e2e","bucket":"pending"},{"name":"lint","bucket":"fail"}]'
   fixture pr-checks.rc 8
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 1 ]
   [ "$(first_line)" = "failed" ]
 }
 
 @test "only Mergify checks, an empty listing and 'no checks reported' are all not-started" {
   fixture pr-checks.json '[{"name":"Mergify Merge Protections","bucket":"pending"},{"name":"Mergify Merge Queue","bucket":"skipping"}]'
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 3 ]
   [ "$(first_line)" = "not-started" ]
 
   fixture pr-checks.json '[]'
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 3 ]
 
   fixture pr-checks.nojson 1
   fixture pr-checks.err "no checks reported on the 'feature' branch"
   fixture pr-checks.rc 1
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 3 ]
   [ "$(first_line)" = "not-started" ]
 }
@@ -160,7 +160,7 @@ ci() {
   fixture pr-checks.nojson 1
   fixture pr-checks.err "GraphQL: Could not resolve to a PullRequest with the number of 7."
   fixture pr-checks.rc 1
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 4 ]
   [ "$(first_line)" = "error" ]
   [[ "${output}" == *"Could not resolve"* ]]
@@ -168,14 +168,14 @@ ci() {
   rm "${FIX}/pr-checks.err"
   fixture pr-checks.err "HTTP 401: Bad credentials"
   fixture pr-checks.rc 4
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 4 ]
 }
 
 @test "a workflow run waiting for approval returns pending even with no checks listed" {
   fixture pr-checks.json '[]'
   fixture runs.json '[{"name":"CI","status":"waiting","conclusion":""}]'
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 2 ]
   [ "$(first_line)" = "pending" ]
   [[ "${output}" == *"CI"*"needs approval"* ]]
@@ -221,6 +221,7 @@ ci() {
   ci --repo o/r --pr 7
   [ "${status}" -eq 1 ]
   [[ "${output}" == *"sonar"*"3"* ]]
+  [[ "${output}" == *"issues/search?componentKeys=o_r&pullRequest=7&resolved=false"* ]]
 }
 
 @test "open CodeQL alerts on the PR merge ref fail the PR" {
@@ -233,6 +234,32 @@ ci() {
   [[ "${output}" == *"codeql"*"2"* ]]
 }
 
+@test "every curl call has a 20 second time limit" {
+  fixture pr-checks.json '[{"name":"build","bucket":"pass"}]'
+  pr_ok
+  ci --repo o/r --pr 7
+  [ "$(wc -l <"${BIN}/curl.log")" -eq 2 ]
+  [ -z "$(grep -v -e '--max-time 20' "${BIN}/curl.log" || true)" ]
+}
+
+@test "--no-sonar keeps the CodeQL gate and --no-codeql keeps the Sonar gate" {
+  fixture pr-checks.json '[{"name":"build","bucket":"pass"}]'
+  pr_ok
+  fixture alerts.json '[{"number":1}]'
+  ci --repo o/r --pr 7 --no-sonar
+  [ "${status}" -eq 1 ]
+  [[ "${output}" == *"codeql"* ]]
+  [ ! -s "${BIN}/curl.log" ]
+
+  : >"${BIN}/gh.log"
+  fixture sonar-gate.json '{"projectStatus":{"status":"ERROR"}}'
+  ci --repo o/r --pr 7 --no-codeql
+  [ "${status}" -eq 1 ]
+  [[ "${output}" == *"sonar"* ]]
+  [[ "${output}" != *"codeql"* ]]
+  [ -z "$(grep code-scanning "${BIN}/gh.log" || true)" ]
+}
+
 @test "--sonar-key replaces the default project key" {
   fixture pr-checks.json '[{"name":"build","bucket":"pass"}]'
   pr_ok
@@ -241,7 +268,7 @@ ci() {
   [[ "$(sed -n 1p "${BIN}/curl.log")" == *"projectKey=custom_key"* ]]
 }
 
-@test "Sonar and CodeQL are not consulted while checks are pending or with --checks-only" {
+@test "Sonar and CodeQL are not consulted while checks are pending or with both skipped" {
   fixture pr-checks.json '[{"name":"e2e","bucket":"pending"}]'
   fixture pr-checks.rc 8
   ci --repo o/r --pr 7
@@ -251,7 +278,7 @@ ci() {
 
   fixture pr-checks.json '[{"name":"build","bucket":"pass"}]'
   fixture pr-checks.rc 0
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 0 ]
   [ ! -s "${BIN}/curl.log" ]
 }
@@ -350,7 +377,7 @@ sha_green() {
   fixture pr-checks.1.json '[{"name":"e2e","bucket":"pending"}]'
   fixture pr-checks.2.json '[{"name":"e2e","bucket":"pending"}]'
   fixture pr-checks.3.json '[{"name":"e2e","bucket":"pass"}]'
-  ci --repo o/r --pr 7 --checks-only --wait
+  ci --repo o/r --pr 7 --no-sonar --no-codeql --wait
   [ "${status}" -eq 0 ]
   [ "$(first_line)" = "green" ]
   [ "$(cat "${BIN}/sleep.log")" = "$(printf '60\n60')" ]
@@ -358,7 +385,7 @@ sha_green() {
 
 @test "--wait gives up after --timeout minutes and returns the last status" {
   fixture pr-checks.json '[{"name":"e2e","bucket":"pending"}]'
-  ci --repo o/r --pr 7 --checks-only --wait --timeout 3
+  ci --repo o/r --pr 7 --no-sonar --no-codeql --wait --timeout 3
   [ "${status}" -eq 2 ]
   [ "$(first_line)" = "pending" ]
   [ "$(wc -l <"${BIN}/sleep.log")" -eq 3 ]
@@ -366,14 +393,14 @@ sha_green() {
 
 @test "--wait defaults to an 8 minute timeout" {
   fixture pr-checks.json '[{"name":"e2e","bucket":"pending"}]'
-  ci --repo o/r --pr 7 --checks-only --wait
+  ci --repo o/r --pr 7 --no-sonar --no-codeql --wait
   [ "${status}" -eq 2 ]
   [ "$(wc -l <"${BIN}/sleep.log")" -eq 8 ]
 }
 
 @test "--wait keeps polling while CI has not started and then reports not-started" {
   fixture pr-checks.json '[]'
-  ci --repo o/r --pr 7 --checks-only --wait --timeout 2
+  ci --repo o/r --pr 7 --no-sonar --no-codeql --wait --timeout 2
   [ "${status}" -eq 3 ]
   [ "$(first_line)" = "not-started" ]
   [ "$(wc -l <"${BIN}/sleep.log")" -eq 2 ]
@@ -381,7 +408,7 @@ sha_green() {
 
 @test "--wait returns a failure at once" {
   fixture pr-checks.json '[{"name":"lint","bucket":"fail"}]'
-  ci --repo o/r --pr 7 --checks-only --wait
+  ci --repo o/r --pr 7 --no-sonar --no-codeql --wait
   [ "${status}" -eq 1 ]
   [ ! -s "${BIN}/sleep.log" ]
 }
@@ -389,7 +416,7 @@ sha_green() {
 @test "--wait returns at once when a run is waiting for approval" {
   fixture pr-checks.json '[{"name":"lint","bucket":"pending"}]'
   fixture runs.json '[{"name":"CI","status":"waiting","conclusion":""}]'
-  ci --repo o/r --pr 7 --checks-only --wait
+  ci --repo o/r --pr 7 --no-sonar --no-codeql --wait
   [ "${status}" -eq 2 ]
   [[ "${output}" == *"needs approval"* ]]
   [ ! -s "${BIN}/sleep.log" ]
@@ -397,7 +424,7 @@ sha_green() {
 
 @test "without --wait a pending PR returns at once" {
   fixture pr-checks.json '[{"name":"e2e","bucket":"pending"}]'
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 2 ]
   [ ! -s "${BIN}/sleep.log" ]
 }
@@ -410,15 +437,30 @@ sha_green() {
   [[ "${output}" == *error* ]]
 
   fixture pr-checks.json '[{"name":"build","bucket":"pass"}]'
-  ci --repo o/r --pr 7 --checks-only
+  ci --repo o/r --pr 7 --no-sonar --no-codeql
   [ "${status}" -eq 4 ]
   [[ "${output}" == *error* ]]
+}
+
+@test "non-JSON output from gh with exit 0 is an error, never not-started" {
+  sha_green
+  fixture runs.json 'oops'
+  ci --repo o/r --sha "${SHA}"
+  [ "${status}" -eq 4 ]
+  [ "$(first_line)" = "error" ]
+
+  sha_green
+  fixture status.json 'oops'
+  ci --repo o/r --sha "${SHA}"
+  [ "${status}" -eq 4 ]
+  [ "$(first_line)" = "error" ]
 }
 
 @test "--help documents the statuses and exit codes" {
   ci --help
   [ "${status}" -eq 0 ]
   [[ "${output}" == *"0 green, 1 failed, 2 pending, 3 not-started, 4 error"* ]]
+  [[ "${output}" == *"--no-sonar"* && "${output}" == *"--no-codeql"* ]]
 }
 
 @test "bad arguments are an error" {

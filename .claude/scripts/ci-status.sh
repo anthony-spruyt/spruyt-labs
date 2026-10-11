@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Reduces the CI of a PR or a commit to one word: green, pending, failed or not-started.
-# Exit codes: 0 green, 1 failed, 2 pending, 3 not-started, 4 error (bad arguments or a failing command).
 set -eEuo pipefail
 trap 'printf "error\nunexpected failure near line %s\n" "${LINENO}"; exit 4' ERR
 
@@ -10,13 +9,14 @@ readonly INTERVAL=60
 usage() {
   cat <<'EOF'
 usage: ci-status.sh --repo <owner/repo> (--pr <n> | --sha <full-sha>) [--wait [--timeout <min>]]
-                    [--sonar-key <key>] [--checks-only]
+                    [--sonar-key <key>] [--no-sonar] [--no-codeql]
 
 Prints green, pending, failed, not-started or error on the first line, then the checks behind it.
 Exit codes: 0 green, 1 failed, 2 pending, 3 not-started, 4 error.
 --wait polls every 60s for --timeout minutes (default 8) and returns at once on green, failed,
 or a run that needs approval. A PR also needs its Sonar gate and CodeQL clean: --sonar-key sets
-the project key (default <owner>_<repo>), --checks-only skips both. Mergify Merge Protections is ignored.
+the project key (default <owner>_<repo>), --no-sonar and --no-codeql skip one each. Mergify Merge
+Protections is ignored.
 EOF
 }
 
@@ -25,7 +25,7 @@ die() {
   exit 4
 }
 
-repo="" pr="" sha="" wait=0 timeout=8 sonar_key="" checks_only=0
+repo="" pr="" sha="" wait=0 timeout=8 sonar_key="" no_sonar=0 no_codeql=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
   --repo)
@@ -52,8 +52,12 @@ while [[ $# -gt 0 ]]; do
     sonar_key="${2:-}"
     shift 2
     ;;
-  --checks-only)
-    checks_only=1
+  --no-sonar)
+    no_sonar=1
+    shift
+    ;;
+  --no-codeql)
+    no_codeql=1
     shift
     ;;
   -h | --help)
@@ -92,8 +96,9 @@ add() {
 }
 
 record_runs() {
-  local runs="$1" lines
-  if [[ "$(jq 'length' <<<"${runs}")" -eq 0 ]]; then
+  local runs="$1" lines count
+  count=$(jq 'length' <<<"${runs}")
+  if [[ "${count}" -eq 0 ]]; then
     not_started=1
     return
   fi
@@ -107,10 +112,11 @@ record_runs() {
 fetch_runs() {
   runs_json=$(gh run list --commit "$1" --repo "${repo}" --limit 100 --json name,status,conclusion) ||
     die "gh run list failed for $1"
+  jq -e . >/dev/null 2>&1 <<<"${runs_json}" || die "gh run list gave no JSON for $1"
 }
 
 check_pr() {
-  local out rc=0 errfile msg head waiting
+  local out rc=0 errfile msg head waiting count
   errfile=$(mktemp)
   out=$(gh pr checks "${pr}" --repo "${repo}" --json name,bucket 2>"${errfile}") || rc=$?
   msg=$(<"${errfile}")
@@ -126,7 +132,8 @@ check_pr() {
   fi
 
   out=$(jq --arg ig "${IGNORED_CHECK}" '[.[] | select(.name != $ig)]' <<<"${out}")
-  [[ "$(jq '[.[] | select(.name | startswith("Mergify") | not)] | length' <<<"${out}")" -gt 0 ]] || not_started=1
+  count=$(jq '[.[] | select(.name | startswith("Mergify") | not)] | length' <<<"${out}")
+  [[ "${count}" -gt 0 ]] || not_started=1
   add failed "$(jq -r '.[] | select(.bucket | IN("pass", "skipping", "pending") | not) | "\(.name): \(.bucket)"' <<<"${out}")"
   add pending "$(jq -r '.[] | select(.bucket == "pending") | "\(.name): pending"' <<<"${out}")"
 
@@ -139,35 +146,40 @@ check_pr() {
   fi
 }
 
-check_pr_scans() {
-  local gate total alerts
-  gate=$(curl -sS "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${sonar_key}&pullRequest=${pr}" |
+check_sonar() {
+  local gate total issues_url="https://sonarcloud.io/api/issues/search?componentKeys=${sonar_key}&pullRequest=${pr}&resolved=false"
+  gate=$(curl -sS --max-time 20 "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${sonar_key}&pullRequest=${pr}" |
     jq -r '.projectStatus.status // "null"')
   if [[ "${gate}" == "null" ]]; then
-    die "no Sonar quality gate for key ${sonar_key} on PR ${pr}: pass the right --sonar-key, or --checks-only"
+    die "no Sonar quality gate for key ${sonar_key} on PR ${pr}: pass the right --sonar-key, or --no-sonar"
   elif [[ "${gate}" != "OK" ]]; then
     failed+=("sonar: quality gate ${gate}")
   else
-    total=$(curl -sS "https://sonarcloud.io/api/issues/search?componentKeys=${sonar_key}&pullRequest=${pr}&resolved=false" |
+    total=$(curl -sS --max-time 20 "${issues_url}" |
       jq -r '.total // "null"')
     [[ "${total}" != "null" ]] || die "Sonar issue search returned no total for key ${sonar_key}"
-    [[ "${total}" -eq 0 ]] || failed+=("sonar: ${total} open issues")
+    [[ "${total}" -eq 0 ]] || failed+=("sonar: ${total} open issues: ${issues_url}")
   fi
+}
 
+check_codeql() {
+  local alerts
   alerts=$(gh api "repos/${repo}/code-scanning/alerts?ref=refs/pull/${pr}/merge&state=open" | jq 'length') ||
     die "CodeQL alerts query failed"
   [[ "${alerts}" -eq 0 ]] || failed+=("codeql: ${alerts} open alerts")
 }
 
 check_sha() {
-  local runs statuses
+  local runs statuses count
   runs=$(gh api --paginate "repos/${repo}/commits/${sha}/check-runs?per_page=100" | jq -s --arg ig "${IGNORED_CHECK}" \
     '[.[].check_runs[] | select(.name != $ig)]') || die "check-runs query failed"
-  [[ "$(jq 'length' <<<"${runs}")" -gt 0 ]] || not_started=1
+  count=$(jq 'length' <<<"${runs}")
+  [[ "${count}" -gt 0 ]] || not_started=1
   add pending "$(jq -r '.[] | select(.status != "completed") | "\(.name): \(.status)"' <<<"${runs}")"
   add failed "$(jq -r '.[] | select(.status == "completed" and (.conclusion | IN("success", "skipped", "neutral") | not)) | "\(.name): \(.conclusion)"' <<<"${runs}")"
 
   statuses=$(gh api "repos/${repo}/commits/${sha}/status") || die "commit status query failed"
+  jq -e . >/dev/null 2>&1 <<<"${statuses}" || die "commit status query gave no JSON"
   add failed "$(jq -r '.statuses[] | select(.state | IN("failure", "error")) | "\(.context): \(.state)"' <<<"${statuses}")"
   add pending "$(jq -r '.statuses[] | select(.state == "pending") | "\(.context): pending"' <<<"${statuses}")"
 
@@ -179,8 +191,9 @@ evaluate() {
   failed=() pending=() not_started=0 approval=0
   if [[ -n "${pr}" ]]; then
     check_pr
-    if [[ ${#failed[@]} -eq 0 && ${#pending[@]} -eq 0 && "${not_started}" -eq 0 && "${checks_only}" -eq 0 ]]; then
-      check_pr_scans
+    if [[ ${#failed[@]} -eq 0 && ${#pending[@]} -eq 0 && "${not_started}" -eq 0 ]]; then
+      [[ "${no_sonar}" -eq 1 ]] || check_sonar
+      [[ "${no_codeql}" -eq 1 ]] || check_codeql
     fi
   else
     check_sha
