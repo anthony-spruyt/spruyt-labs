@@ -8,7 +8,7 @@ from [`anthony-spruyt/litellm-middleware`](https://github.com/anthony-spruyt/lit
 ## Prerequisites
 
 - Authentik OAuth provider, secret and rotation wiring — see [authentik README](../authentik-system/authentik/README.md#oauth-credential-rotation).
-- Provider API keys in `litellm/app/litellm-secrets.sops.yaml`, referenced from `config.yaml` as `os.environ/<NAME>`. Anthropic models set no `api_key`; they are subscription passthrough (below).
+- Provider API keys in `litellm/app/litellm-secrets.sops.yaml`, referenced from `config.yaml` as `os.environ/<NAME>`. The `anthropic/*` models set no `api_key`; they are subscription passthrough (below). The `anthropic-api/*` fallback models set `api_key: os.environ/ANTHROPIC_API_KEY`.
 - `TOOL_GUARD_TEAM_IDS` in the same secret: the comma-separated LiteLLM team IDs whose requests the tool-guard middleware enforces.
 - `HF_TOKEN` in `litellm-secrets`, for the llm-guard and llm-tool-guard model downloads.
 - The Brave search tool's `BRAVE_API_KEY` comes from `litellm-brave`, not `litellm-secrets`. `litellm/app/brave-secret-store.yaml` copies it from `brave-search-secrets` in `brave-search-mcp` into `litellm-brave` every 5m through ESO, and the container reads it from there. Rotate it in that one SOPS file; see the [brave-search-mcp README](../brave-search-mcp/brave-search-mcp/README.md).
@@ -57,14 +57,20 @@ Models are declared in `config.yaml`, embedded in `litellm/app/values.yaml` unde
 
 `store_model_in_db: true` is set, but `supported_db_objects` is scoped to `mcp`, so the DB persists **MCP objects only**. `config.yaml` is authoritative for models. Widening `supported_db_objects` would make DB-stored models shadow the declared ones — don't, without revisiting this.
 
-Adding a Claude model takes two edits in `values.yaml`:
+Adding a Claude model takes five edits in `values.yaml`:
 
-| Key                                 | Entry                                  | Why                                              |
-| ----------------------------------- | -------------------------------------- | ------------------------------------------------ |
-| `model_list`                        | `anthropic/<model>` pointing at itself | Registers the deployment                         |
-| `router_settings.model_group_alias` | `<model>` → `anthropic/<model>`        | Lets clients send the bare name Claude Code uses |
+| Key                                 | Entry                                                                  | Why                                                                          |
+| ----------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `model_list`                        | `anthropic/<model>` pointing at itself                                 | Registers the subscription deployment                                        |
+| `model_list`                        | `anthropic-api/<model>` with `api_key: os.environ/ANTHROPIC_API_KEY`   | Registers the API-key deployment used as fallback                            |
+| `router_settings.model_group_alias` | `<model>` → `anthropic/<model>`                                        | Lets clients send the bare name Claude Code uses                             |
+| `router_settings.fallbacks`         | `anthropic/<model>` → `["anthropic-api/<model>"]`                      | Retries on the API key when a subscription call fails                        |
+| `router_settings.fallbacks`         | each alias other than the bare `<model>` → `["anthropic-api/<model>"]` | LiteLLM looks up fallbacks by the name the client sent, not the alias target |
 
-Claude groups deliberately have no `router_settings.fallbacks` — a 429 surfaces to the client instead of silently switching provider.
+When a subscription call fails (for example a 429 at the weekly limit), the router retries it on the matching `anthropic-api/<model>` deployment. The `fallback-auth` middleware (see Proxy middleware) removes the client's own login credentials from that retry, so the call uses `ANTHROPIC_API_KEY`. LiteLLM sets no budget on these deployments; the Anthropic API account has a fixed monthly credit and
+no card, so spend stops there.
+
+The `*claude*opus*` / `*claude*sonnet*` / `*claude*haiku*` catch-all deployments (below) have no fallback entry.
 
 LiteLLM loads the upstream `main` `model_prices_and_context_window.json` at startup over the world HTTPS egress, falling back to the copy bundled in the image. Omit cost params for models that map prices (all current Claude models, including some the pinned image doesn't bundle yet). Only set `input_cost_per_token` / `output_cost_per_token` for models absent from it, such as OpenRouter entries.
 
@@ -124,6 +130,7 @@ middleware works live in the [middleware repo](https://github.com/anthony-spruyt
   `tests/litellm-middleware-contract.bats` checks the callback, mount path and `PYTHONPATH` here against the deployed middleware release. If `litellm-image.yaml` moves or changes shape, the lookup fails and LiteLLM bumps stop (the dashboard shows the lookup failure); they are never untested.
 - `tool-guard` sends each new tool result to the `llm-tool-guard` scanner (`TOOL_GUARD_URL`) and wraps those it flags, or could not check, in an `<untrusted-tool-output>` marker with verdict `suspected-prompt-injection` or `unchecked`, which tells the model to treat the text as data. It rewrites only the text, in place in the original request, so fields such as `cache_control` and `is_error` are
   preserved. It applies to the teams listed in `TOOL_GUARD_TEAM_IDS` in `litellm-secrets`; those teams can use only the endpoints the [middleware README](https://github.com/anthony-spruyt/litellm-middleware#tool-guard) lists for enforced keys, and get a client error on any other.
+- `fallback-auth` is an optional middleware. For a call routed to an `anthropic-api/*` deployment it removes the client's `Authorization`, `x-api-key` and `oauth-*` beta tokens, so the deployment's `ANTHROPIC_API_KEY` is used. Without it, LiteLLM sends the forwarded subscription login to Anthropic instead of the key.
 - After a rollout, check the LiteLLM logs for `failed to load <name> middleware` (an optional middleware is missing) or a startup crash (a required one failed to import).
 
 ### Rate-limit headers

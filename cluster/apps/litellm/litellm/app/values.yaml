@@ -988,6 +988,34 @@ configMaps:
               model: "anthropic/claude-haiku-5-5"
               stream_timeout: 120
           # --------------------------------------------------------------------------
+          # Anthropic: API key (fallback when the subscription is exhausted)
+          # --------------------------------------------------------------------------
+          - model_name: "anthropic-api/claude-fable-5"
+            litellm_params:
+              model: "anthropic/claude-fable-5"
+              api_key: os.environ/ANTHROPIC_API_KEY
+              stream_timeout: 120
+          - model_name: "anthropic-api/claude-fable-5-1"
+            litellm_params:
+              model: "anthropic/claude-fable-5-1"
+              api_key: os.environ/ANTHROPIC_API_KEY
+              stream_timeout: 120
+          - model_name: "anthropic-api/claude-opus-5-5"
+            litellm_params:
+              model: "anthropic/claude-opus-5-5"
+              api_key: os.environ/ANTHROPIC_API_KEY
+              stream_timeout: 120
+          - model_name: "anthropic-api/claude-sonnet-5-5"
+            litellm_params:
+              model: "anthropic/claude-sonnet-5-5"
+              api_key: os.environ/ANTHROPIC_API_KEY
+              stream_timeout: 120
+          - model_name: "anthropic-api/claude-haiku-5-5"
+            litellm_params:
+              model: "anthropic/claude-haiku-5-5"
+              api_key: os.environ/ANTHROPIC_API_KEY
+              stream_timeout: 120
+          # --------------------------------------------------------------------------
           # OpenAI: PAYG
           # --------------------------------------------------------------------------
           - model_name: "openai/gpt-4o-mini"
@@ -1019,6 +1047,19 @@ configMaps:
                 classification_mode: user_turn
         router_settings:
           enable_weighted_failover: true
+          fallbacks:
+            - "anthropic/claude-fable-5": ["anthropic-api/claude-fable-5"]
+            - "anthropic/claude-fable-5-1": ["anthropic-api/claude-fable-5-1"]
+            - "anthropic/claude-opus-5-5": ["anthropic-api/claude-opus-5-5"]
+            - "anthropic/claude-sonnet-5-5": ["anthropic-api/claude-sonnet-5-5"]
+            - "anthropic/claude-haiku-5-5": ["anthropic-api/claude-haiku-5-5"]
+            - "claude-opus-5": ["anthropic-api/claude-opus-5-5"]
+            - "anthropic/claude-opus-5": ["anthropic-api/claude-opus-5-5"]
+            - "claude-sonnet-5": ["anthropic-api/claude-sonnet-5-5"]
+            - "anthropic/claude-sonnet-5": ["anthropic-api/claude-sonnet-5-5"]
+            - "claude-haiku-4-5": ["anthropic-api/claude-haiku-5-5"]
+            - "claude-haiku-4-5-20251001": ["anthropic-api/claude-haiku-5-5"]
+            - "anthropic/claude-haiku-4-5": ["anthropic-api/claude-haiku-5-5"]
           model_group_alias:
             "claude-haiku-4-5": "anthropic/claude-haiku-5-5"
             "claude-haiku-4-5-20251001": "anthropic/claude-haiku-5-5"
@@ -1109,7 +1150,7 @@ persistence:
     type: image
     image:
       repository: ghcr.io/anthony-spruyt/litellm-middleware
-      tag: 1.1.0@sha256:df0efbdc6609cc6988fcac051dd5aabe6959b2d4ac041ab4d552261cb25ff7c5
+      tag: 1.2.0@sha256:7d1e5b47071bd182ea3acbf37cd96fc155b89d8bdd5fafab7f544cd8b090d02a
     pullPolicy: IfNotPresent
     advancedMounts:
       litellm:
