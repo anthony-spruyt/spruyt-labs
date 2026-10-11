@@ -11,6 +11,7 @@ from [`anthony-spruyt/litellm-middleware`](https://github.com/anthony-spruyt/lit
 - Provider API keys in `litellm/app/litellm-secrets.sops.yaml`, referenced from `config.yaml` as `os.environ/<NAME>`. Anthropic models set no `api_key`; they are subscription passthrough (below).
 - `TOOL_GUARD_TEAM_IDS` in the same secret: the comma-separated LiteLLM team IDs whose requests the tool-guard middleware enforces.
 - `HF_TOKEN` in `litellm-secrets`, for the llm-guard and llm-tool-guard model downloads.
+- The Brave search tool's `BRAVE_API_KEY` comes from `litellm-brave`, not `litellm-secrets`. `litellm/app/brave-secret-store.yaml` copies it from `brave-search-secrets` in `brave-search-mcp` into `litellm-brave` every 5m through ESO, and the container reads it from there. Rotate it in that one SOPS file; see the [brave-search-mcp README](../brave-search-mcp/brave-search-mcp/README.md).
 
 ## Operations
 

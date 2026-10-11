@@ -44,6 +44,11 @@ controllers:
           - "4000"
         env:
           AUTO_REDIRECT_UI_LOGIN_TO_SSO: "true"
+          BRAVE_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: litellm-brave
+                key: BRAVE_API_KEY
           DATABASE_URL:
             value: "postgresql://litellm:$(LITELLM_DB_PASSWORD)@litellm-cnpg-cluster-rw.litellm:5432/litellm"
             dependsOn: LITELLM_DB_PASSWORD

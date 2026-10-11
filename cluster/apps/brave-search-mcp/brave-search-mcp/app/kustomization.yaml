@@ -6,6 +6,7 @@ resources:
   - ./brave-search-secrets.sops.yaml
   - ./release.yaml
   - ./network-policies.yaml
+  - ./secret-reader-rbac.yaml
   - ./vpa.yaml
 configMapGenerator:
   - name: brave-search-mcp-values

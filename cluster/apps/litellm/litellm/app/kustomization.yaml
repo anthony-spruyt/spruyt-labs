@@ -6,6 +6,7 @@ resources:
   - ./aws-secret-store.yaml
   - ./aws-external-secret.yaml
   - ./authentik-secret-store.yaml
+  - ./brave-secret-store.yaml
   - ./litellm-oauth-external-secret.yaml
   - ./litellm-secrets.sops.yaml
   - ./litellm-cnpg-object-stores.yaml

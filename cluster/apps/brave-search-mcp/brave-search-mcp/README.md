@@ -6,11 +6,13 @@ Web search for agents, exposed as an MCP server behind the LiteLLM MCP gateway. 
 
 ## Prerequisites
 
-- Brave Search API subscription; key in `app/brave-search-secrets.sops.yaml` (`BRAVE_API_KEY`). LiteLLM's own `brave-search` search tool reads a separate `BRAVE_API_KEY` from `litellm-secrets`; when rotating the Brave key, check both.
+- Brave Search API subscription; key in `app/brave-search-secrets.sops.yaml` (`BRAVE_API_KEY`), the only copy.
 
 ## Operations
 
 - Declared as `mcp_servers.bravesearch` in the LiteLLM `config.yaml`, pointing at `http://brave-search-mcp.brave-search-mcp.svc:8000/mcp`. See [litellm README](../../litellm/README.md#mcp-servers).
+- LiteLLM's own `brave-search` search tool uses a copy of the key: `litellm/app/brave-secret-store.yaml` pulls it into `litellm-brave` every 5m through ESO. `app/secret-reader-rbac.yaml` lets only the `litellm` reader ServiceAccount read `brave-search-secrets`, nothing else.
+- To rotate, update `brave-search-secrets.sops.yaml` only. Reloader restarts this server when the Secret changes, and LiteLLM restarts once ESO has copied the new value (up to 5m).
 - Some tools (e.g. video search) need a higher Brave plan tier; on a lower tier they return errors rather than being hidden.
 
 ## References
