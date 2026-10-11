@@ -847,16 +847,10 @@ configMaps:
               - hget
               - hgetall
               - hexists
-              - set_vector_in_hash
               - get_vector_from_hash
               - json_get
-              - lpush
-              - rpush
-              - lpop
-              - rpop
               - lrange
               - llen
-              - lrem
               - type
               - scan_keys
               - scan_all_keys
@@ -865,17 +859,13 @@ configMaps:
               - get_indexes
               - get_index_info
               - get_indexed_keys_number
-              - create_vector_index_hash
               - vector_search_hash
               - hybrid_search
               - dbsize
               - info
-              - client_list
               - smembers
               - zrange
               - xrange
-              - xreadgroup
-              - xack
               - get
             allow_all_keys: false
             available_on_public_internet: false
