@@ -30,6 +30,7 @@ New work, or any change to an approach the owner already picked, starts as a des
 - Never duplicate a running helper's work; steer it with `SendMessage` instead of spawning a second
 - Each helper works in its own `/tmp` clone or git worktree, never the shared checkout, and stages only its own files
 - Sequence helpers that touch the same repo
+- When a helper flags a pre-existing CI failure, tell the owner and start a separate fix round straight away; the owner's standing answer is "fix it"
 - Audits are read-only and fan out by dimension (lost functionality, security, loose ends, quality gates, orphans). Fixes come after, grouped by repo so helpers don't collide on files
 
 ## Helper Types
