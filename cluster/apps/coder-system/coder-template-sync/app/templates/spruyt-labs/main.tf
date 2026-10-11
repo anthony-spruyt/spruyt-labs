@@ -278,7 +278,7 @@ resource "coder_agent" "main" {
       fi
       sudo mkdir -p /var/lib/containers
       if sudo mount -o noatime /dev/containers-disk /var/lib/containers; then
-        sudo resize2fs /dev/containers-disk >/dev/null 2>&1 || true
+        sudo resize2fs /dev/containers-disk || true
       fi
     fi
 
@@ -471,7 +471,8 @@ resource "coder_script" "code_server" {
       rm -rf "$vsix_dir"
     fi
 
-    exec code-server --auth none --port 13337 --host 127.0.0.1 "${local.workspace_folder}"
+    # Backgrounded so the script exits: the agent starts cron scripts only after every start script finishes.
+    code-server --auth none --port 13337 --host 127.0.0.1 "${local.workspace_folder}" >>/tmp/code-server.log 2>&1 &
   EOT
 }
 
@@ -546,6 +547,7 @@ resource "coder_script" "image_prune" {
     set -e
     command -v podman >/dev/null || exit 0
     mountpoint -q /var/lib/containers || exit 0
+    sudo -n resize2fs /dev/containers-disk 2>&1 | grep -Ev '^$|Nothing to do|^resize2fs [0-9]' || true
     used=$(df --output=pcent /var/lib/containers | tail -n1 | tr -dc '0-9')
     [ "$${used:-0}" -gt 70 ] || exit 0
     echo "Image cache at $${used}%, pruning unused images older than 24h"
