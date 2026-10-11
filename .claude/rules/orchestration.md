@@ -15,14 +15,14 @@ A harness directive saying "do not use the Agent tool unless the user, a CLAUDE.
 
 Test: if the brief would be longer than the job, the main session does it itself.
 
-| Main session does it itself when ALL are true         | Hand off when ANY is true                                                         |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------- |
-| It already has the inputs (body text, sha, PR number) | It waits or polls (CI, workflow run; Flux deploys go to cluster-validator): `chore-runner`, in background       |
-| 1-3 commands                                          | Output is noisy (long logs, many curls, many pages): `chore-runner` returns facts |
-| No waiting                                            | Several independent jobs that each wait or read noisy output: parallel helpers    |
-| Small output it would read anyway                     | File edits or commits: `builder`                                                  |
-|                                                       | Checking its own work: `reviewer`                                                 |
-|                                                       | Deep investigation: `general-purpose` with `model: opus`                          |
+| Main session does it itself when ALL are true         | Hand off when ANY is true                                                                                 |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| It already has the inputs (body text, sha, PR number) | It waits or polls (CI, workflow run; Flux deploys go to cluster-validator): `chore-runner`, in background |
+| 1-3 commands                                          | Output is noisy (long logs, many curls, many pages): `chore-runner` returns facts                         |
+| No waiting                                            | Several independent jobs that each wait or read noisy output: parallel helpers                            |
+| Small output it would read anyway                     | File edits or commits: `builder`                                                                          |
+|                                                       | Checking its own work: `reviewer`                                                                         |
+|                                                       | Deep investigation: `general-purpose` with `model: opus`                                                  |
 
 Main session runs these: posting comments and issues it wrote, opening a PR from its own body text, a single merge, pushing already-reviewed commits (checklist below), ticking the Renovate Dashboard box, requesting reviewers, closing issues, and quick read-only checks. The push checklist stays with the main session even though it runs more than 3 commands.
 
@@ -37,7 +37,7 @@ Push from the builder's `/tmp` clone or worktree, never the shared checkout, and
 3. `git rev-list <base>..HEAD` matches the reviewed commits; on any mismatch stop
 4. `git rebase origin/<branch>`; on a conflict run `git rebase --abort` and stop
 5. `git push origin HEAD:<branch>`; never force-push, never amend
-6. `git rev-parse HEAD`: record it as the pushed sha, which the CI wait and cluster-validator need
+6. `git rev-parse HEAD`: record the pushed range, `origin/<branch>` from step 2 to this sha, which the CI wait and cluster-validator need
 
 ## Design Before Delegating
 

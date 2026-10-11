@@ -20,7 +20,7 @@ Green means every check concludes `success`, `skipped` or `neutral`, except `Mer
 
 - PR: poll `gh pr checks <n> --repo <owner/repo>` without `--watch` (it never exits while Mergify pends), and keep polling until nothing but `Mergify Merge Protections` is pending. Exit 8 means pending, 1 with a listing means a failure, including Mergify's own, so read the listing. `no checks reported`, an empty listing, or only Mergify checks means CI hasn't started: keep waiting.
 - `main`: poll `gh api "repos/<owner>/<repo>/commits/<full-sha>/check-runs?per_page=100"` plus `gh api repos/<owner>/<repo>/commits/<full-sha>/status` (`state` must not be `failure`/`error`; `pending` means wait unless `total_count` is 0). Also check `gh run list --commit <full-sha> --repo <owner/repo>`: no runs, or any run not `completed`, means CI isn't done: wait. If no runs appear within 10 minutes, return FAILED: CI unverified (no runs).
-- If anything is still pending after 60 minutes, or a run is `waiting` (needs approval), return FAILED: CI still pending, and list the pending checks.
+- Record `date +%s` before the first poll, sleep 60s between polls, and compare against the start time. If anything is still pending or not started after 60 minutes (a PR whose workflows are all path-filtered shows only Mergify), or a run is `waiting` (needs approval), return FAILED: CI still pending, and list the pending checks.
 - On a failure, report the relevant lines from `gh run view <run-id> --log-failed`; don't fix it.
 
 ## Output Format
