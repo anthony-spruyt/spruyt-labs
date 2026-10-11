@@ -47,10 +47,10 @@ controllers:
           TZ: ${TIMEZONE}
         resources:
           requests:
-            cpu: 25m
+            cpu: 50m
             memory: 128Mi
           limits:
-            cpu: 75m
+            cpu: 150m
             memory: 256Mi
         securityContext:
           allowPrivilegeEscalation: false

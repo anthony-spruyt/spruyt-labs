@@ -94,10 +94,10 @@ misconfigurations:
   # agent-platform worker creates/deletes agent pods and per-run token Secrets in agent-platform-agents
   - id: AVD-KSV-0048
     paths:
-      - cluster/apps/agent-platform/agent-platform/agents/rbac.yaml
+      - cluster/apps/agent-platform/agents/app/rbac.yaml
   - id: AVD-KSV-0113
     paths:
-      - cluster/apps/agent-platform/agent-platform/agents/rbac.yaml
+      - cluster/apps/agent-platform/agents/app/rbac.yaml
 
   # bitnami/kubectl only publishes :latest tag (versioned tags require premium registry)
   - id: AVD-KSV-0013

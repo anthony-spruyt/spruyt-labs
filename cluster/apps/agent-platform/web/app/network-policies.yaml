@@ -42,32 +42,11 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-worker-kube-api-egress
+  name: allow-web-temporal-frontend-egress
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: agent-platform-worker
-  egress:
-    - toEntities:
-        - kube-apiserver
-      toPorts:
-        - ports:
-            - port: "6443"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-temporal-frontend-egress
-spec:
-  endpointSelector:
-    matchExpressions:
-      - key: app.kubernetes.io/name
-        operator: In
-        values:
-          - agent-platform-web
-          - agent-platform-worker
+      app.kubernetes.io/name: agent-platform-web
   egress:
     - toEndpoints:
         - matchLabels:
@@ -84,51 +63,11 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-worker-litellm-egress
+  name: allow-web-otel-egress
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: agent-platform-worker
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: litellm
-            k8s:app.kubernetes.io/name: litellm
-      toPorts:
-        - ports:
-            - port: "4000"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-worker-world-https-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: agent-platform-worker
-  egress:
-    - toEntities:
-        - world
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-otel-egress
-spec:
-  endpointSelector:
-    matchExpressions:
-      - key: app.kubernetes.io/name
-        operator: In
-        values:
-          - agent-platform-web
-          - agent-platform-worker
+      app.kubernetes.io/name: agent-platform-web
   egress:
     - toEndpoints:
         - matchLabels:

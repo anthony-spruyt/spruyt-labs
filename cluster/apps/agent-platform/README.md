@@ -18,7 +18,8 @@ The pod spec for agents (env, MCP config, settings, clone, deadline) is built in
 
 ## Releases
 
-`web` and `worker` are two HelmReleases (`agent-platform-web`, `agent-platform-worker`) so `app.kubernetes.io/name` equals the release name, which the CiliumNetworkPolicy selectors match on. They share one image pin; Renovate bumps both through the `# renovate:` annotation above each `tag`. Chart-level settings are in `app/values-web.yaml` and `app/values-worker.yaml`.
+`web` and `worker` are two HelmReleases (`agent-platform-web`, `agent-platform-worker`) so `app.kubernetes.io/name` equals the release name, which the CiliumNetworkPolicy selectors match on. They share one image pin; Renovate bumps both through the `# renovate:` annotation above each `tag`. Each has its own folder and Flux Kustomization (`agent-platform-web`, `agent-platform-worker`); chart-level
+settings are in `web/app/values.yaml` and `worker/app/values.yaml`. The worker depends on the web Kustomization for the `agent-platform-session` Secret.
 
 Only the worker mounts a ServiceAccount token. Both releases read `AgentGateway__SessionTokenKey` from the `agent-platform-session` Secret. The Temporal namespace moves from `default` to `agent-platform` in step 4 of #3467.
 
@@ -62,18 +63,18 @@ Policies in `agent-platform-agents` select every pod in the namespace, and agent
 
 ## Kyverno Guardrails
 
-Both live in `agents/kyverno-policies.yaml`:
+Both live in `agents/app/kyverno-policies.yaml`:
 
 - `validate-agent-platform-pods` (ValidatingPolicy, `Deny`, on CREATE): every pod in `agent-platform-agents` must carry `managed-by: agent-platform`, and must set `activeDeadlineSeconds` between 1 and 3600. The per-run GitHub installation token expires after 1h, and the worker derives the deadline from its `expires_at`.
 - `cleanup-agent-platform-pods` (DeletingPolicy): every 15 minutes, deletes agent pods older than 2h in any phase, as a backstop for the worker's own delete.
 
 ## Secrets
 
-| Secret                   | Namespace               | Source                                      | Keys                                                                      | Used by                                                                   |
-| ------------------------ | ----------------------- | ------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `agent-credentials`      | `agent-platform-agents` | SOPS (`agents/agent-credentials.sops.yaml`) | `claude-code-oauth-token`, `litellm-key-read`, `litellm-key-cluster-read` | Agent pods, via `secretKeyRef` from the pod spec the worker builds        |
-| `worker-credentials`     | `agent-platform`        | SOPS (`app/worker-credentials.sops.yaml`)   | `litellm-virtual-key`                                                     | Worker (Jev and other LiteLLM calls); not mounted yet, wired in at step 5 |
-| `agent-platform-session` | `agent-platform`        | External Secrets `Password` generator       | `session-token-key`                                                       | Web and worker, as `AgentGateway__SessionTokenKey`                        |
+| Secret                   | Namespace               | Source                                           | Keys                                                                      | Used by                                                                   |
+| ------------------------ | ----------------------- | ------------------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `agent-credentials`      | `agent-platform-agents` | SOPS (`agents/app/agent-credentials.sops.yaml`)  | `claude-code-oauth-token`, `litellm-key-read`, `litellm-key-cluster-read` | Agent pods, via `secretKeyRef` from the pod spec the worker builds        |
+| `worker-credentials`     | `agent-platform`        | SOPS (`worker/app/worker-credentials.sops.yaml`) | `litellm-virtual-key`                                                     | Worker (Jev and other LiteLLM calls); not mounted yet, wired in at step 5 |
+| `agent-platform-session` | `agent-platform`        | External Secrets `Password` generator            | `session-token-key`                                                       | Web and worker, as `AgentGateway__SessionTokenKey`                        |
 
 - `claude-code-oauth-token`: a long-lived subscription token from `claude setup-token`. A token separate from the Coder workspace's can be revoked on its own; usage still counts against the same subscription.
 - `litellm-key-read` and `litellm-key-cluster-read`: one LiteLLM virtual key per agent tier. `litellm-virtual-key` is the worker's own key, so spend and rate limits are tracked separately.
