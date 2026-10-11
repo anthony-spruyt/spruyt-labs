@@ -32,6 +32,32 @@ locals {
   litellm_ci_path_regex = "^(${join("|", local.litellm_ci_paths)})$"
 
   github_webhook_hosts = ["flux-webhook.${var.zone_name}", "n8n.${var.zone_name}"]
+
+  happy_signup_expression = "http.host eq \"happy.${var.zone_name}\" and lower(url_decode(http.request.uri.path)) contains \"/auth\" and not http.request.uri.path in {\"/v1/auth/response\" \"/v1/auth/account/response\" \"/v1/auth/request/status\"}"
+
+  authentik_admin_expression = format(
+    "lower(http.host) eq \"auth.%s\" and not ip.src in {%s} and (%s in {\"/api/v3\" \"/api/v3/\"} or %s)",
+    var.zone_name,
+    var.home_ip,
+    local.authentik_path,
+    join(" or ", [for prefix in local.authentik_admin_prefixes : format("starts_with(%s, \"%s\")", local.authentik_path, prefix)]),
+  )
+
+  challenged_asns = [
+    8075,
+    16509,
+    14618,
+    15169,
+    396982,
+    14061,
+    24940,
+    16276,
+    63949,
+    31898,
+    20473,
+    45102,
+    132203,
+  ]
 }
 
 resource "cloudflare_ruleset" "firewall_custom" {
@@ -79,23 +105,21 @@ resource "cloudflare_ruleset" "firewall_custom" {
       enabled     = true
     },
     {
-      ref         = "happy-block-internet-signup"
-      description = "Happy - block account creation and pairing requests"
-      expression  = "(http.host eq \"happy.${var.zone_name}\" and lower(url_decode(http.request.uri.path)) contains \"/auth\" and not http.request.uri.path in {\"/v1/auth/response\" \"/v1/auth/account/response\" \"/v1/auth/request/status\"})"
+      ref         = "block-happy-signup-authentik-admin"
+      description = "Block Happy account creation and pairing, and Authentik admin paths outside home"
+      expression  = format("(%s) or (%s)", local.happy_signup_expression, local.authentik_admin_expression)
       action      = "block"
       enabled     = true
     },
     {
-      ref         = "authentik-admin-home-only"
-      description = "Authentik - admin paths from home only"
+      ref         = "challenge-cloud-asns"
+      description = "Managed challenge for cloud and hosting networks"
       expression = format(
-        "(lower(http.host) eq \"auth.%s\" and not ip.src in {%s} and (%s in {\"/api/v3\" \"/api/v3/\"} or %s))",
-        var.zone_name,
-        var.home_ip,
-        local.authentik_path,
-        join(" or ", [for prefix in local.authentik_admin_prefixes : format("starts_with(%s, \"%s\")", local.authentik_path, prefix)]),
+        "(ip.src.asnum in {%s}) and (lower(http.host) ne \"%s\")",
+        join(" ", local.challenged_asns),
+        local.litellm_host,
       )
-      action  = "block"
+      action  = "managed_challenge"
       enabled = true
     },
   ]
