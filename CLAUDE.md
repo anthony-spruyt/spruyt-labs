@@ -38,4 +38,4 @@ Talos Linux homelab GitOps repository on bare metal. No SSH to Talos nodes - use
 
 ## Tool Usage
 
-Read and edit files with the `Read` and `Edit` tools rather than `cat`/`head`/`tail` or `sed -i`/`awk -i`; hooks warn on the shell forms. Search with `grep`, `rg`, or `find` through Bash.
+Read and edit files with the `Read` and `Edit` tools rather than `cat`/`head`/`tail` or `sed -i`/`awk -i`; hooks warn on the shell forms. For a quick lookup, search with `grep`, `rg`, or `find` through Bash; for a broad search across many files, use the Explore agent.
