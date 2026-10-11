@@ -80,7 +80,8 @@ Fix review findings in a new round and re-review, or log low-risk ones as follow
 
 ## Owner
 
-- Ask only for real decisions or owner-only steps (UI settings, secrets, approvals): 2 options max, with a recommendation
+- Ask only for real decisions or owner-only steps (UI settings, secrets, approvals of PRs your helpers opened): 2 options max, with a recommendation
+- Approve PRs that you and your helpers didn't open (release bot, Renovate, other bots) yourself; ask the owner only for PRs your helpers opened
 - Whenever owner action is needed, give direct clickable links (PRs, workflow runs, settings pages); the owner is often on a phone
 - Check that review requests reached the owner; add them if missing
 - Re-check live state (PR merged, run finished, approval given) right before listing an owner step; never repeat a pending item from memory
