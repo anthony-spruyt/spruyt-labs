@@ -8,17 +8,26 @@ The repo is public, so the account ID, zone name, and domain-identifying DNS tok
 
 ## What is managed
 
-| File               | Resources                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------- |
-| `tunnel.tf`        | Tunnel `spruyt-labs-01`, its remote ingress config, and one proxied CNAME per route         |
-| `access.tf`        | Access application, policy and service token that gate the `litellm` host for CI            |
-| `dns.tf`           | Static DNS records (Brevo DKIM/verification, SPF, DMARC, site verification, Home Assistant) |
-| `rulesets.tf`      | Custom firewall rules, rate limiting, cache rules                                           |
-| `zone-settings.tf` | Security and TLS zone settings                                                              |
+| File                | Resources                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| `tunnel.tf`         | Tunnel `spruyt-labs-01`, its remote ingress config, and one proxied CNAME per route         |
+| `access.tf`         | Access application, policy and service token that gate the `litellm` host for CI            |
+| `dns.tf`            | Static DNS records (Brevo DKIM/verification, SPF, DMARC, site verification, Home Assistant) |
+| `rulesets.tf`       | Custom firewall rules, rate limiting, cache rules                                           |
+| `zone-settings.tf`  | Security and TLS zone settings                                                              |
+| `bot-management.tf` | Zone bot settings (Bot Fight Mode off, AI crawler and robots.txt settings)                  |
 
 Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare WAF rule (`rulesets.tf`).
 
-The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get folded into existing rules.
+The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get folded into existing rules. The current five, in order:
+
+1. Allow GitHub Webhooks (skip rule for the `flux-webhook` and `n8n` hosts)
+2. Block non-AU traffic, bots, and non-API LiteLLM paths
+3. AI Crawl Control - Block AI bots by User Agent (`[CF AI Audit]`, linked to the dashboard)
+4. Block Happy account creation and pairing, and Authentik admin paths outside home
+5. Managed challenge for the cloud and hosting ASNs in `local.challenged_asns`, on every host except `litellm`
+
+Bot settings are managed in `bot-management.tf`, with Bot Fight Mode disabled. The `litellm` host is covered by the path allowlist and the Access service token below.
 
 ## LiteLLM external access for CI
 
@@ -59,7 +68,7 @@ When the home IP changes, update `cloudflare_home_ip` on workspace-factory, bump
 ### API token permissions
 
 - Account: `Cloudflare Tunnel:Edit`, `Access: Apps and Policies:Edit`, `Access: Service Tokens:Edit`, `Access: Organizations, Identity Providers, and Groups:Read`
-- Zone: `Zone:Read`, `DNS:Edit`, `Zone Settings:Edit`, `Zone WAF:Edit`, `Cache Rules:Edit`
+- Zone: `Zone:Read`, `DNS:Edit`, `Zone Settings:Edit`, `Zone WAF:Edit`, `Cache Rules:Edit`, `Bot Management:Edit`
 
 ## Adding a tunnel route
 
