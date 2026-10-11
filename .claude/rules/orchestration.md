@@ -33,11 +33,11 @@ Helpers run these: waiting on CI after a push, reading failed CI logs, multi-rep
 Push from the builder's `/tmp` clone or worktree, never the shared checkout, and only with a fresh reviewer's READY for that exact `<base>..<sha>`. `<branch>` is the remote branch the commits go to (usually `main`), not the clone's local branch name. If any step fails, stop and tell the owner:
 
 1. `git status` is clean and `HEAD` is the reviewed sha
-2. `git fetch`, then `git merge-base --is-ancestor <base> origin/<branch>` (nothing unreviewed sits below the range); on failure stop
+2. `git fetch`, record `git rev-parse origin/<branch>` as the pre-push tip, then `git merge-base --is-ancestor <base> origin/<branch>` (nothing unreviewed sits below the range); on failure stop
 3. `git rev-list <base>..HEAD` matches the reviewed commits; on any mismatch stop
 4. `git rebase origin/<branch>`; on a conflict run `git rebase --abort` and stop
 5. `git push origin HEAD:<branch>`; never force-push, never amend
-6. `git rev-parse HEAD`: record the pushed range, `origin/<branch>` from step 2 to this sha, which the CI wait and cluster-validator need
+6. `git rev-parse HEAD`: record the pushed range, `<pre-push tip from step 2>..<this sha>`, which the CI wait and cluster-validator need
 
 ## Design Before Delegating
 
