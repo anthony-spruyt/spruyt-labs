@@ -33,7 +33,7 @@ New work, or a change to an approach the owner picked, starts as a design shown 
 
 Every PR and fix round gets a fresh reviewer, never the author (bot PRs below excepted). Security-sensitive changes get an attacker-minded brief. Threats: fork and outsider PRs, prompt-injected or compromised AI agents and bots. Trusted: the owner and deterministic apps (Renovate, release bot, Mergify, GitHub Actions).
 
-Definition of Ready, before approving, asking the owner to approve, or merging: a fresh READY, owner comments and threads checked, CI green including Sonar, CodeQL clean. Fix review findings in a new round, or log low-risk ones as follow-ups in the issue body.
+Definition of Ready, before approving, asking the owner to approve, or merging: a fresh READY, owner comments and threads checked, CI green including Sonar, CodeQL clean. Fix review findings in a new round.
 
 ## Owner
 
