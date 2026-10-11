@@ -39,7 +39,7 @@ Pass the linked issue number to qa-validator and cluster-validator: each posts i
 
 qa-validator picks its own scope (fast path for cosmetic diffs, full validation otherwise).
 
-**Review-gated paths:** `CLAUDE.md`, `.claude/agents/`, `.claude/rules/`, `.claude/skills/`, `.claude/settings.json` and hook scripts (`.claude/hookify-plus/`, `.claude/*.sh`) change agent behaviour (`CLAUDE.md` is loaded into every session), so their markdown is never "docs-only". Both validators still skip them, but push only after a fresh `reviewer` returns READY on the committed diff. Files that repo-operator's generated `.github/renovate/xfg-managed.json5` lists for this repo are overwritten on every sync: change them in repo-operator. Other `.xfg.json` files are `createOnly`: edit them here. Other `.claude/**` changes push without review.
+**Review-gated paths:** `CLAUDE.md`, `.claude/agents/`, `.claude/rules/`, `.claude/skills/`, `.claude/settings.json`, `.claude/scripts/` and hook scripts (`.claude/hookify-plus/`, `.claude/*.sh`) change agent behaviour (`CLAUDE.md` is loaded into every session), so their markdown is never "docs-only". Both validators still skip them, but push only after a fresh `reviewer` returns READY on the committed diff. Files that repo-operator's generated `.github/renovate/xfg-managed.json5` lists for this repo are overwritten on every sync: change them in repo-operator. Other `.xfg.json` files are `createOnly`: edit them here. Other `.claude/**` changes push without review.
 
 ## Concurrency Rules
 
