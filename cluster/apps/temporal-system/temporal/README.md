@@ -28,11 +28,11 @@ The chart does not create databases (`createDatabase: false`). Helm hooks do not
 
 All three Postgres logins are ESO-generated (`sl_` prefix) in `app/cnpg-roles-eso.yaml`; nothing is in SOPS.
 
-| Role             | Secret                         | Used by                                                     |
-| ---------------- | ------------------------------ | ----------------------------------------------------------- |
-| `temporal`       | `temporal-cnpg-owner`          | Temporal server and schema Job (`existingSecret`)           |
-| `mcp`            | `temporal-cnpg-mcp`            | db-mcp, read-only (`pg_read_all_data`)                      |
-| `agent_platform` | `temporal-cnpg-agent-platform` | agent-platform worker run-data store (`connectionLimit` 15) |
+| Role             | Secret                         | Used by                                                      |
+| ---------------- | ------------------------------ | ------------------------------------------------------------ |
+| `temporal`       | `temporal-cnpg-owner`          | Temporal server and schema Job (`existingSecret`)            |
+| `mcp`            | `temporal-cnpg-mcp`            | db-mcp, read-only (`pg_read_all_data`, `connectionLimit` 12) |
+| `agent_platform` | `temporal-cnpg-agent-platform` | agent-platform worker run-data store (`connectionLimit` 15)  |
 
 `bootstrap.initdb.secret` points CNPG at `temporal-cnpg-owner`, so CNPG no longer generates `temporal-cnpg-cluster-app`. Superuser access is off.
 

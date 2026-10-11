@@ -83,7 +83,7 @@ Both live in `agents/app/kyverno-policies.yaml`:
 - `agent-platform-session` is generated once (`CreatedOnce`, `Orphan`, immutable), so a deleted Secret stays deleted. To rotate it, delete both the Secret and the ExternalSecret, let Flux recreate them, then restart web and worker; Reloader does not fire on a recreated Secret.
 
 `agent-platform-rundata` is built by `worker/app/run-data-eso.yaml` from two `temporal-system` secrets: the `agent_platform` role password (`temporal-cnpg-agent-platform`) and a CA copy holding only `ca.crt` (`temporal-cnpg-ca-public`). It refreshes every 5m. The connection string uses `SSL Mode=VerifyFull` and expects the `ca.crt` key mounted at `/etc/agent-platform/rundata-ca/ca.crt`. The
-database is `agent_platform` on the Temporal CNPG cluster; see `temporal-system/temporal/README.md`.
+database is `agent_platform` on the Temporal CNPG cluster; see `temporal-system/temporal/README.md`. Agents inspect it read-only through the `agent_platform` source in `db-mcp`.
 
 Rotate the SOPS secrets with `sops <file>`; agent pods pick up the new value on their next run, the worker on restart.
 

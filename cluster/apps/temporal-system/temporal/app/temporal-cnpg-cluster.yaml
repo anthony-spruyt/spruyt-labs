@@ -33,7 +33,7 @@ spec:
         comment: Read-only role for db-mcp
         login: true
         ensure: present
-        connectionLimit: 5
+        connectionLimit: 12
         inRoles:
           - pg_read_all_data
         passwordSecret:

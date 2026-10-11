@@ -162,6 +162,29 @@ configMaps:
         [[tools]]
         name = "search_objects"
         source = "temporal_visibility"
+
+        [[sources]]
+        id = "agent_platform"
+        description = "agent-platform run data - runs, steps, prompts (CNPG, read-only role)"
+        type = "postgres"
+        host = "temporal-cnpg-cluster-ro.temporal-system.svc"
+        port = 5432
+        database = "agent_platform"
+        user = "mcp"
+        password = "$${PG_TEMPORAL_PASSWORD}"
+        sslmode = "require"
+        lazy = true
+        pool_max_connections = 2
+
+        [[tools]]
+        name = "execute_sql"
+        source = "agent_platform"
+        readonly = true
+        max_rows = 1000
+
+        [[tools]]
+        name = "search_objects"
+        source = "agent_platform"
       serve.py: |
         import os
 
