@@ -14,7 +14,7 @@ usage: ci-status.sh --repo <owner/repo> (--pr <n> | --sha <full-sha>) [--wait [-
 
 Prints green, pending, failed, not-started or error on the first line, then the checks behind it.
 Exit codes: 0 green, 1 failed, 2 pending, 3 not-started, 4 error.
---wait polls every 60s for --timeout minutes (default 9) and returns at once on green, failed,
+--wait polls every 60s for --timeout minutes (default 8) and returns at once on green, failed,
 or a run that needs approval. A PR also needs its Sonar gate and CodeQL clean: --sonar-key sets
 the project key (default <owner>_<repo>), --checks-only skips both. Mergify Merge Protections is ignored.
 EOF
@@ -25,7 +25,7 @@ die() {
   exit 4
 }
 
-repo="" pr="" sha="" wait=0 timeout=9 sonar_key="" checks_only=0
+repo="" pr="" sha="" wait=0 timeout=8 sonar_key="" checks_only=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
   --repo)

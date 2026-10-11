@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# push-reviewed.sh pushes exactly the commits a reviewer approved, or stops without pushing. Ref #3490
+# push-reviewed.sh pushes exactly the commits a reviewer approved, or stops without pushing.
 
 REPO_ROOT="${BATS_TEST_DIRNAME}/.."
 SCRIPT="${REPO_ROOT}/.claude/scripts/push-reviewed.sh"
@@ -132,6 +132,31 @@ push_reviewed() {
   [ ! -d "${TMP}/work/.git/rebase-merge" ]
   [ "$(git rev-parse HEAD)" = "${reviewed}" ]
   [ "$(origin_head)" = "${upstream}" ]
+}
+
+@test "fetches the named branch in a single-branch clone that does not track it" {
+  git -C "${TMP}/work" push -q origin "${BASE}:refs/heads/side"
+  git clone -q --single-branch -b side "${TMP}/origin.git" "${TMP}/single" 2>/dev/null
+  cd "${TMP}/single"
+  git checkout -q -b feature
+  commit "${TMP}/single" a.txt a "reviewed"
+  reviewed="$(git rev-parse HEAD)"
+  push_reviewed "${BASE}" "${reviewed}" main
+  [ "${status}" -eq 0 ]
+  [ "$(origin_head)" = "${reviewed}" ]
+}
+
+@test "still reports a rebase that fails before it starts" {
+  commit "${TMP}/other" o.txt o "someone else"
+  git -C "${TMP}/other" push -q origin HEAD:main
+  commit "${TMP}/work" a.txt a "reviewed"
+  reviewed="$(git rev-parse HEAD)"
+  printf '#!/bin/sh\nexit 1\n' >"${TMP}/work/.git/hooks/pre-rebase"
+  chmod +x "${TMP}/work/.git/hooks/pre-rebase"
+  push_reviewed "${BASE}" "${reviewed}" main
+  [ "${status}" -ne 0 ]
+  [[ "${output}" == *"nothing pushed"* ]]
+  [ "$(origin_head)" = "$(git -C "${TMP}/other" rev-parse HEAD)" ]
 }
 
 @test "never force-pushes when the remote moves between the rebase and the push" {

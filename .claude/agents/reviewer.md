@@ -20,8 +20,8 @@ The brief names the target: a repo and PR number, a diff range, or a local commi
 1. **Correctness** - Read the full diff (`gh pr diff`, `git diff`, `git -C <clone> show`) against the PR body or commit message, linked issue and brief, plus surrounding code. Look for bugs, missed call sites, broken edge cases, tests that don't test the claim, and debt the repo rules forbid (`.claude/rules/`). Run tests in a `/tmp` clone.
 2. **Security** - When the brief asks, or the diff touches CI workflows, permissions, auth, secrets or network policy, review as an attacker would. Threats: fork and outsider PRs, and prompt-injected or compromised AI agents and bots. The owner and deterministic apps (Renovate, release bot, Mergify, GitHub Actions) are trusted.
 3. **Definition of Ready** - Check each gate:
-   - CI, CodeQL and Sonar: `/workspaces/spruyt-labs/.claude/scripts/ci-status.sh --repo <owner/repo> (--pr <n> | --sha <full-sha>)` (`--help` lists flags and exit codes). Only exit 0 is green; on a commit, not-started means CI unverified. Sonar is n/a on `main`.
-   - Owner threads: `gh pr view --json comments,reviews` and `reviewThreads` via `gh api graphql`; each owner thread answered or resolved.
+   - CI, CodeQL and Sonar: `/workspaces/spruyt-labs/.claude/scripts/ci-status.sh --repo <owner/repo> (--pr <n> | --sha <full-sha>)` (`--help` lists flags and exit codes; add `--checks-only` for a repo without Sonar or CodeQL, which otherwise exits 4). Only exit 0 is green; on a commit, not-started means CI unverified. Sonar is n/a on `main`.
+   - Owner threads: `gh pr view <n> --repo <owner/repo> --json comments,reviews` and `reviewThreads` via `gh api graphql`; each owner thread answered or resolved.
 
 ## Output Format
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# ci-status.sh reduces a PR's or a commit's CI to one word and an exit code. Ref #3490
+# ci-status.sh reduces a PR's or a commit's CI to one word and an exit code.
 
 REPO_ROOT="${BATS_TEST_DIRNAME}/.."
 SCRIPT="${REPO_ROOT}/.claude/scripts/ci-status.sh"
@@ -364,11 +364,11 @@ sha_green() {
   [ "$(wc -l <"${BIN}/sleep.log")" -eq 3 ]
 }
 
-@test "--wait defaults to a 9 minute timeout" {
+@test "--wait defaults to an 8 minute timeout" {
   fixture pr-checks.json '[{"name":"e2e","bucket":"pending"}]'
   ci --repo o/r --pr 7 --checks-only --wait
   [ "${status}" -eq 2 ]
-  [ "$(wc -l <"${BIN}/sleep.log")" -eq 9 ]
+  [ "$(wc -l <"${BIN}/sleep.log")" -eq 8 ]
 }
 
 @test "--wait keeps polling while CI has not started and then reports not-started" {

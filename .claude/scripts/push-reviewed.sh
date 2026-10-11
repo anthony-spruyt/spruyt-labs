@@ -17,7 +17,7 @@ sha=$(git rev-parse --verify --quiet "${sha}^{commit}") || fail "sha ${2} is not
 [[ -z "$(git status --porcelain)" ]] || fail "working tree is not clean"
 [[ "$(git rev-parse HEAD)" == "${sha}" ]] || fail "HEAD is not the reviewed sha ${sha}"
 
-git fetch --quiet origin "${branch}" || fail "cannot fetch origin ${branch}"
+git fetch --quiet origin "+refs/heads/${branch}:refs/remotes/origin/${branch}" || fail "cannot fetch origin ${branch}"
 pre_push=$(git rev-parse --verify --quiet "origin/${branch}") || fail "origin/${branch} not found"
 git merge-base --is-ancestor "${base}" "${pre_push}" ||
   fail "base ${base} is not on origin/${branch}: unreviewed commits sit below the range"
@@ -26,7 +26,7 @@ git merge-base --is-ancestor "${base}" "${sha}" || fail "base ${base} is not an 
 [[ -n "$(git rev-list "${base}..${sha}")" ]] || fail "no commits between ${base} and ${sha}"
 
 if ! git rebase --quiet "${pre_push}" >/dev/null 2>&1; then
-  git rebase --abort
+  git rebase --abort 2>/dev/null || true
   fail "rebase onto origin/${branch} conflicts: nothing pushed"
 fi
 
