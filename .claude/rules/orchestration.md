@@ -17,7 +17,7 @@ Test: if the brief would be longer than the job, the main session does it itself
 
 | Main session does it itself when ALL are true         | Hand off when ANY is true                                                         |
 | ----------------------------------------------------- | --------------------------------------------------------------------------------- |
-| It already has the inputs (body text, sha, PR number) | It waits or polls (CI, deploy, workflow run): `chore-runner`, in background       |
+| It already has the inputs (body text, sha, PR number) | It waits or polls (CI, workflow run; Flux deploys go to cluster-validator): `chore-runner`, in background       |
 | 1-3 commands                                          | Output is noisy (long logs, many curls, many pages): `chore-runner` returns facts |
 | No waiting                                            | Several independent jobs that each wait or read noisy output: parallel helpers    |
 | Small output it would read anyway                     | File edits or commits: `builder`                                                  |
@@ -30,7 +30,7 @@ Helpers run these: waiting on CI after a push, reading failed CI logs, multi-rep
 
 ### Pushing reviewed commits
 
-Push from the builder's `/tmp` clone or worktree, never the shared checkout, and only with a fresh reviewer's READY for that exact `<base>..<sha>`. `<branch>` is the branch the builder targeted. If any step fails, stop and tell the owner:
+Push from the builder's `/tmp` clone or worktree, never the shared checkout, and only with a fresh reviewer's READY for that exact `<base>..<sha>`. `<branch>` is the remote branch the commits go to (usually `main`), not the clone's local branch name. If any step fails, stop and tell the owner:
 
 1. `git status` is clean and `HEAD` is the reviewed sha
 2. `git fetch`, then `git merge-base --is-ancestor <base> origin/<branch>` (nothing unreviewed sits below the range); on failure stop
