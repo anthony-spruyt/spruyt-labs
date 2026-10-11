@@ -39,7 +39,10 @@ fi
 read -r -d '' extract <<'JQ' || true
 def text_of:
   if (.message.content | type) == "array"
-  then [.message.content[] | select(.type == "text") | .text] | join("\n")
+  then [.message.content[]
+        | if .type == "text" then .text
+          elif .type == "tool_use" and .name == "SubagentHandback" then (.input.message | strings)
+          else empty end] | join("\n")
   else "" end;
 [inputs | fromjson? | select(type == "object")] as $lines
 | [$lines[] | select(.type == "assistant" and (.message.model // "<synthetic>") != "<synthetic>")] as $assistant
@@ -57,9 +60,10 @@ def text_of:
       elif $reply | test("\\bREADY\\b") then "READY"
       else "none" end),
     mode: (
-      if $reply | test("Mode:\\s*fix-check") then "fix-check"
-      elif $reply | test("Mode:\\s*full") then "full"
+      if $reply | test("(^|\\n)Mode:\\s*fix-check") then "fix-check"
+      elif $reply | test("(^|\\n)Mode:\\s*full") then "full"
       else "none" end),
+    prline: ($reply | [scan("PR:\\s*([^\\s#]+)#([0-9]+)")] | first),
     feedback: (
       $reply | split("### Agent Definition Feedback")
       | if length > 1
@@ -73,6 +77,11 @@ read -r -d '' report <<'JQ' || true
 def clip($n): if length > $n then .[0:$n] + "..." else . end;
 def cap($n; $label):
   if length > $n then .[0:$n] + ["- ... and \(length - $n) more \($label)"] else . end;
+def prkey:
+  if .prline != null then "\(.prline[0])#\(.prline[1])"
+  else (.desc | [scan("(?:#|\\bPR\\s*#?)([0-9]+)")] | first[0]?) as $n
+    | if $n == null then null else "#\($n)" end
+  end;
 
 map(select($since == "" or .date >= $since)) as $runs
 | "# Orchestration retro",
@@ -116,14 +125,16 @@ map(select($since == "" or .date >= $since)) as $runs
   "",
   ([$runs[]
      | select((.agent | IN("reviewer", "pr-reviewer")) and .mode == "fix-check")
-     | . + {pr: (.desc | [scan("(?:#|\\bPR\\s*#?)([0-9]+)")] | first[0]?)}
-     | select(.pr != null)]
-   | group_by(.pr) | sort_by(-length)
-   | if length == 0 then "None."
-     else
-       map("- #\(.[0].pr): \(length) fix rounds" + (if length >= 2 then " (at cap)" else "" end))
-       | cap(15; "PRs") | .[]
-     end),
+     | . + {pr: prkey}] as $fix
+   | ([$fix[] | select(.pr == null)] | length) as $nonum
+   | ([$fix[] | select(.pr != null)] | group_by(.pr) | sort_by(-length)) as $groups
+   | (if ($groups | length) == 0 then "None."
+      else
+        $groups
+        | map("- \(.[0].pr): \(length) fix round" + (if length == 1 then "" else "s" end) + (if length >= 2 then " (at cap)" else "" end))
+        | cap(15; "PRs") | .[]
+      end),
+     (if $nonum > 0 then "- Fix-checks with no PR number: \($nonum)" else empty end)),
   "",
   "## Agent Definition Feedback",
   "",

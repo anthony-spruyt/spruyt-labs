@@ -36,15 +36,75 @@ section() {
   run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
   [ "${status}" -eq 0 ]
   verdicts="$(section "Review verdicts")"
-  [[ "${verdicts}" == *"- NOT READY: 2"* ]]
-  [[ "${verdicts}" == *"- READY: 4"* ]]
+  [[ "${verdicts}" == *"- NOT READY: 3"* ]]
+  [[ "${verdicts}" == *"- READY: 9"* ]]
+}
+
+@test "reads the report a reviewer hands back through the SubagentHandback tool" {
+  run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
+  [ "${status}" -eq 0 ]
+  [[ "$(section "Review verdicts")" == *"- NOT READY: 3"* ]]
+  [[ "$(section "PRs with fix rounds")" == *"- demo/repo#301: 1 fix round"$'\n'* ]]
+  feedback="$(section "Agent Definition Feedback")"
+  [[ "${feedback}" == *"- [brief] items: 1"* ]]
+  [[ "${feedback}" == *"Name the repo in the fix-check brief"* ]]
+}
+
+@test "does not read the input of any tool other than SubagentHandback" {
+  run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
+  [ "${status}" -eq 0 ]
+  [[ "${output}" != *SENTINEL_OTHER_TOOL_MESSAGE* ]]
+  [[ "$(section "Agent Definition Feedback")" != *chore-runner* ]]
 }
 
 @test "lists PRs by fix-check reviews, flags two as at cap, and skips full-mode reviews" {
   run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
   [ "${status}" -eq 0 ]
-  rounds="$(section "PRs with fix rounds" | grep '^- #')"
-  [ "${rounds}" == $'- #201: 2 fix rounds (at cap)\n- #202: 1 fix rounds' ]
+  rounds="$(section "PRs with fix rounds" | grep '^- ')"
+  expected=$'- demo/repo#201: 2 fix rounds (at cap)\n- #205: 1 fix round\n- demo/repo#202: 1 fix round\n- demo/repo#301: 1 fix round\n- demo/repo#302: 1 fix round\n- other/repo#201: 1 fix round\n- Fix-checks with no PR number: 1'
+  [ "${rounds}" == "${expected}" ]
+}
+
+@test "takes the PR from the reviewer's PR line when the description has no number" {
+  run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
+  [ "${status}" -eq 0 ]
+  [[ "$(section "PRs with fix rounds")" == *"- demo/repo#302: 1 fix round"$'\n'* ]]
+}
+
+@test "keeps the same PR number in two repos apart" {
+  run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
+  [ "${status}" -eq 0 ]
+  rounds="$(section "PRs with fix rounds")"
+  [[ "${rounds}" == *"- demo/repo#201: 2 fix rounds (at cap)"* ]]
+  [[ "${rounds}" == *"- other/repo#201: 1 fix round"$'\n'* ]]
+}
+
+@test "falls back to the description number, shown as a bare #n" {
+  run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
+  [ "${status}" -eq 0 ]
+  [[ "$(section "PRs with fix rounds")" == *"- #205: 1 fix round"$'\n'* ]]
+}
+
+@test "counts fix-checks with no PR number anywhere" {
+  run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
+  [ "${status}" -eq 0 ]
+  [[ "$(section "PRs with fix rounds")" == *"- Fix-checks with no PR number: 1"* ]]
+}
+
+@test "does not print the no-number line when every fix-check has a PR" {
+  tree="$(mktemp -d)"
+  cp -R "${PROJECTS}/." "${tree}/"
+  rm "${tree}"/-demo-repo/sess-4/subagents/agent-nopr.*
+  run bash "${SCRIPT}" --projects-dir "${tree}"
+  rm -rf "${tree}"
+  [ "${status}" -eq 0 ]
+  [[ "$(section "PRs with fix rounds")" != *"no PR number"* ]]
+}
+
+@test "a full-mode reply that mentions Mode: fix-check mid-line is not a fix-check" {
+  run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
+  [ "${status}" -eq 0 ]
+  [[ "$(section "PRs with fix rounds")" != *"#206"* ]]
 }
 
 @test "shows non-None agent definition feedback with its agent type" {
@@ -125,8 +185,9 @@ section() {
   rm -rf "${tree}"
   [ "${status}" -eq 0 ]
   verdicts="$(section "Review verdicts")"
-  [[ "${verdicts}" == *"- NOT READY: 2"* ]]
-  [[ "${verdicts}" == *"- READY: 4"* ]]
-  rounds="$(section "PRs with fix rounds" | grep '^- #')"
-  [ "${rounds}" == $'- #201: 2 fix rounds (at cap)\n- #202: 1 fix rounds' ]
+  [[ "${verdicts}" == *"- NOT READY: 3"* ]]
+  [[ "${verdicts}" == *"- READY: 9"* ]]
+  rounds="$(section "PRs with fix rounds")"
+  [[ "${rounds}" == *"- demo/repo#201: 2 fix rounds (at cap)"* ]]
+  [[ "${rounds}" == *"- demo/repo#202: 1 fix round"$'\n'* ]]
 }
