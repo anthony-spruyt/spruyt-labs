@@ -1,3 +1,4 @@
 @@||foundryvtt.store^
 @@||spruyt.xyz^
 @@||html-load.com^
+@@||temporal.download^
