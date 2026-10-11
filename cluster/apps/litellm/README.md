@@ -33,7 +33,7 @@ set per credential in n8n (`claudeCodeK8s*` credentials, "Claude OAuth Credentia
 
 The `litellm` Postgres login is ESO-generated (`sl_` prefix) into `litellm-cnpg-owner` by `litellm/app/cnpg-roles-eso.yaml`; nothing is in SOPS and superuser access is off. `bootstrap.initdb.secret` points CNPG at it, so CNPG no longer generates `litellm-cnpg-cluster-app`. `DATABASE_URL` interpolates `LITELLM_DB_PASSWORD` (`dependsOn` orders it first).
 
-The database is deliberately not a db-mcp source: it holds virtual keys, stored provider credentials and MCP server tokens. Use `kubectl cnpg psql litellm-cnpg-cluster -n litellm -- -d litellm`.
+The database is deliberately not a db-mcp source: it holds virtual keys, stored provider credentials and the UI-managed MCP server's token. Use `kubectl cnpg psql litellm-cnpg-cluster -n litellm -- -d litellm`.
 
 To rotate, delete both the Secret and the ExternalSecret (`kubectl -n litellm delete secret,externalsecret litellm-cnpg-owner`). Flux recreates the ExternalSecret with a new password and CNPG applies it. Then `kubectl -n litellm rollout restart deploy/litellm` - Reloader ignores a recreated Secret, and agents routed through LiteLLM lose it until the restart.
 
@@ -81,8 +81,20 @@ CI on GitHub-hosted runners calls the `litellm` host over the Cloudflare tunnel 
 
 ### MCP servers
 
-MCP servers are registered through the LiteLLM UI and persisted in Postgres (the one DB object type allowed above), not in `config.yaml`. On a rebuild they must be re-added by hand; see [unifi-network-mcp](../unifi-mcp/unifi-network-mcp/README.md#litellm-registration-is-manual) for the reasoning. For each in-cluster MCP server, LiteLLM needs an egress CNP in `litellm/app/network-policies.yaml` and
-the server needs an ingress CNP from the `litellm` namespace. `.mcp.json` in the repo root holds a single `litellm` entry; every downstream server is fanned out through it.
+MCP servers are declared under `mcp_servers:` in `config.yaml` (`litellm/app/values.yaml`, `configMaps.litellm-config`). Only `n8n` is still registered through the LiteLLM UI and persisted in Postgres, which is why `mcp` stays in `supported_db_objects`. Config-defined servers show in the UI as read-only; edit `values.yaml` instead.
+
+Each entry pins `server_id` and `alias`. Teams, keys and access groups grant tools by server id, and tool names carry the alias as a prefix, so changing either breaks those grants and renames the tools. A DB row with the same `server_id` shadows the config entry, so delete the row once the entry is live.
+
+Tokens are `authentication_token: os.environ/MCP_<NAME>_TOKEN`, read once at startup from `litellm-secrets` (SOPS, mounted with `envFrom`). Add the key with `sops`; Reloader restarts the pods when the Secret changes.
+
+To add a server:
+
+1. Add an entry to `mcp_servers` with a fresh UUID `server_id`, `alias` equal to the key, `url`, `transport`, `auth_type`, `allowed_tools` and `available_on_public_internet: false`.
+2. For a bearer-token server, add `MCP_<NAME>_TOKEN` to `litellm-secrets`.
+3. Add an egress CNP in `litellm/app/network-policies.yaml` and, for an in-cluster server, an ingress CNP from the `litellm` namespace.
+4. Grant the server to teams or keys.
+
+`.mcp.json` in the repo root holds a single `litellm` entry; every downstream server is fanned out through it.
 
 ### Proxy middleware
 

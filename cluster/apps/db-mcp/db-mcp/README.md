@@ -15,9 +15,9 @@ LiteLLM's built-in catalog entries for Postgres and Redis are not usable: the Li
 | `postgres`     | `http://db-mcp.db-mcp.svc:8080/mcp` | Postgres: `temporal`, `temporal_visibility`, `agent_platform` |
 | `valkeyshared` | `http://db-mcp.db-mcp.svc:8002/mcp` | Valkey: `valkey-system/valkey`                                |
 
-With more than one source, DBHub suffixes each tool with the source id (`execute_sql_temporal`, `search_objects_temporal_visibility`); enable new ones in the LiteLLM allowlist when a source is added.
+With more than one source, DBHub suffixes each tool with the source id (`execute_sql_temporal`, `search_objects_temporal_visibility`); add new ones to `allowed_tools` in the LiteLLM `config.yaml` when a source is added.
 
-Registration is manual in the LiteLLM UI, like every MCP server behind LiteLLM - see [litellm README](../../litellm/README.md#mcp-servers). Restrict each server to its read tools with LiteLLM's tool allowlist.
+Both are declared in the LiteLLM `config.yaml` (`mcp_servers.postgres` and `mcp_servers.valkeyshared`) - see [litellm README](../../litellm/README.md#mcp-servers). Restrict each server to its read tools with LiteLLM's tool allowlist.
 
 ### Security model
 
@@ -55,13 +55,13 @@ Postgres (same pattern as temporal):
 
 1. In the owning app: `Password` generator + `ExternalSecret` (basic-auth, `cnpg.io/reload` label), a `managed.roles` entry `mcp` in `pg_read_all_data`, a Role/RoleBinding letting `db-mcp`'s reader ServiceAccount read that one secret, and a CNP allowing ingress from `db-mcp`.
 2. Here: ServiceAccount + `SecretStore` + `ExternalSecret` in `secret-stores.yaml`, an egress CNP, a `[[sources]]` + `[[tools]]` block in `dbhub.toml` and the password env var on the `dbhub` container.
-3. In LiteLLM, enable the new source's `execute_sql_<id>` and `search_objects_<id>` tools on the `postgres` server.
+3. In the LiteLLM `config.yaml`, add the new source's `execute_sql_<id>` and `search_objects_<id>` tools to `mcp_servers.postgres.allowed_tools`.
 
 Valkey (same pattern as the `valkey` source):
 
 1. In the Valkey app: an `<instance>-user-mcp` ExternalSecret in `users-eso.yaml`, an `mcp` user in `auth.aclUsers` (in a later push than the ExternalSecret), a RoleBinding subject in `secret-reader-rbac.yaml` and a CNP allowing ingress from `db-mcp`.
 2. Here: SecretStore + ExternalSecret, egress CNP, a new `redis-<instance>` container on the next port, the port on the Service and on both LiteLLM CNPs.
-3. Register the new port as its own MCP server in LiteLLM.
+3. Declare the new port as its own entry under `mcp_servers` in the LiteLLM `config.yaml`.
 
 ## Troubleshooting
 

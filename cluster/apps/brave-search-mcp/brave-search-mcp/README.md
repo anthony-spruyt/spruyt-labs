@@ -10,7 +10,7 @@ Web search for agents, exposed as an MCP server behind the LiteLLM MCP gateway. 
 
 ## Operations
 
-- Registered in LiteLLM through the UI at `http://brave-search-mcp.brave-search-mcp.svc:8000/mcp`; the registration lives in LiteLLM's database, not Git. See [litellm README](../../litellm/README.md#mcp-servers).
+- Declared as `mcp_servers.bravesearch` in the LiteLLM `config.yaml`, pointing at `http://brave-search-mcp.brave-search-mcp.svc:8000/mcp`. See [litellm README](../../litellm/README.md#mcp-servers).
 - Some tools (e.g. video search) need a higher Brave plan tier; on a lower tier they return errors rather than being hidden.
 
 ## References

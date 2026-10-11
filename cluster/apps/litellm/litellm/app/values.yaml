@@ -580,6 +580,365 @@ configMaps:
               - hosted_vllm
               - openai
             search_tool_name: brave-search
+        mcp_servers:
+          bravesearch:
+            server_id: 68db2756-13cb-4cf0-a172-666438cd28c4
+            alias: bravesearch
+            description: "An MCP server implementation that integrates the Brave Search API, providing comprehensive search capabilities including web search, local business search, place search, image search, video search, news search, LLM context, and AI-powered summarization. This project supports both STDIO and HTTP transports, with STDIO as the default mode."
+            url: http://brave-search-mcp.brave-search-mcp.svc:8000/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - brave_web_search
+            allow_all_keys: false
+            available_on_public_internet: false
+          cloudflare:
+            server_id: a59f88c6-6525-432e-b285-01e0faf4966c
+            alias: cloudflare
+            description: "Manage Cloudflare Workers, KV, R2, D1, and more"
+            url: https://mcp.cloudflare.com/mcp
+            transport: http
+            auth_type: bearer_token
+            authentication_token: os.environ/MCP_CLOUDFLARE_TOKEN
+            allowed_tools:
+              - search
+              - execute
+            allow_all_keys: false
+            available_on_public_internet: false
+          context7:
+            server_id: 6a477489-a343-4aef-83bb-c6afb4c0b4c5
+            alias: context7
+            description: "Context7 brings up-to-date, version-specific documentation and code examples directly into your AI coding assistant. That means no more outdated code or hallucinated APIs."
+            url: https://mcp.context7.com/mcp
+            transport: http
+            auth_type: bearer_token
+            authentication_token: os.environ/MCP_CONTEXT7_TOKEN
+            allowed_tools:
+              - resolve-library-id
+              - query-docs
+            allow_all_keys: false
+            available_on_public_internet: false
+          github:
+            server_id: 0f2767c6-8c8e-4c78-a5f3-7e11f709228d
+            alias: github
+            description: "Manage repos, issues, PRs, and workflows through natural language"
+            url: https://api.githubcopilot.com/mcp/
+            transport: http
+            auth_type: bearer_token
+            authentication_token: os.environ/MCP_GITHUB_TOKEN
+            allowed_tools:
+              - add_comment_to_pending_review
+              - add_issue_comment
+              - add_reply_to_pull_request_comment
+              - create_branch
+              - create_or_update_file
+              - create_pull_request
+              - create_repository
+              - delete_file
+              - fork_repository
+              - get_commit
+              - get_file_contents
+              - get_label
+              - get_latest_release
+              - get_me
+              - get_release_by_tag
+              - get_tag
+              - get_team_members
+              - get_teams
+              - issue_read
+              - issue_write
+              - list_branches
+              - list_commits
+              - list_issue_types
+              - list_issues
+              - list_pull_requests
+              - list_releases
+              - list_repository_collaborators
+              - list_tags
+              - merge_pull_request
+              - pull_request_read
+              - pull_request_review_write
+              - push_files
+              - request_copilot_review
+              - run_secret_scanning
+              - search_code
+              - search_commits
+              - search_issues
+              - search_pull_requests
+              - search_repositories
+              - search_users
+              - sub_issue_write
+              - update_pull_request
+              - update_pull_request_branch
+            allow_all_keys: false
+            available_on_public_internet: false
+          homeassistant:
+            server_id: 7d9f00a2-cc7f-479c-bb58-5976bf57518b
+            alias: homeassistant
+            url: http://${HOME_ASSISTANT_IP4}:8123/api/mcp
+            transport: http
+            auth_type: bearer_token
+            authentication_token: os.environ/MCP_HOMEASSISTANT_TOKEN
+            allowed_tools:
+              - assist_satellite__HassBroadcast
+              - climate__HassClimateSetTemperature
+              - homeassistant__GetLiveContext
+              - intent__HassTurnOn
+              - intent__HassTurnOff
+              - intent__HassSetPosition
+              - intent__HassStopMoving
+              - intent__HassCancelAllTimers
+              - light__HassLightSet
+              - llm__GetDateTime
+              - media_player__HassMediaUnpause
+              - media_player__HassMediaPause
+              - media_player__HassMediaNext
+              - media_player__HassMediaPrevious
+              - media_player__HassSetVolume
+              - media_player__HassSetVolumeRelative
+              - media_player__HassMediaPlayerMute
+              - media_player__HassMediaPlayerUnmute
+              - script__alexa_speak
+              - script__reboot_chromance
+              - calendar__get_events
+            allow_all_keys: false
+            available_on_public_internet: false
+          microsoft_learn:
+            server_id: c48a701f-dae1-4225-a899-91839efc0eb2
+            alias: microsoft_learn
+            description: "https://learn.microsoft.com/en-us/training/support/mcp"
+            url: https://learn.microsoft.com/api/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - microsoft_docs_search
+              - microsoft_code_sample_search
+              - microsoft_docs_fetch
+            allow_all_keys: false
+            available_on_public_internet: false
+          postgres:
+            server_id: a9b58b0c-4242-42ab-b223-90e155f6d199
+            alias: postgres
+            description: "Read-only SQL on cluster Postgres databases"
+            url: http://db-mcp.db-mcp.svc:8080/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - execute_sql_temporal
+              - search_objects_temporal
+              - execute_sql_temporal_visibility
+              - search_objects_temporal_visibility
+              - execute_sql_agent_platform
+              - search_objects_agent_platform
+            allow_all_keys: false
+            available_on_public_internet: false
+          sonar:
+            server_id: 71147f4d-3a8a-46ec-9728-87e0268fecfd
+            alias: sonar
+            description: "The SonarQube MCP Server is a Model Context Protocol (MCP) server that connects your AI coding agent to SonarQube's code quality and security data."
+            url: https://api.sonarcloud.io/mcp
+            transport: http
+            auth_type: bearer_token
+            authentication_token: os.environ/MCP_SONAR_TOKEN
+            static_headers:
+              SONARQUBE_ORG: anthony-spruyt
+            allowed_tools:
+              - change_sonar_issue_status
+              - search_my_sonarqube_projects
+              - search_sonar_issues_in_projects
+              - search_security_hotspots
+              - show_security_hotspot
+              - change_security_hotspot_status
+              - get_project_quality_gate_status
+              - show_rule
+              - list_quality_gates
+              - get_component_measures
+              - search_files_by_coverage
+              - get_file_coverage_details
+              - search_metrics
+              - get_duplications
+              - search_duplicated_files
+              - list_pull_requests
+              - list_branches
+              - search_dependency_risks
+              - start_agentic_readiness_assessment
+              - get_agentic_readiness_assessment
+              - list_agentic_readiness_assessments
+            allow_all_keys: false
+            available_on_public_internet: false
+          terraform:
+            server_id: 996283b0-9d78-4ef3-8193-8df14dac106b
+            alias: terraform
+            description: "The Terraform MCP Server is a Model Context Protocol (MCP) server that integrates seamlessly with Terraform Registry and HCP Terraform APIs, enabling advanced automation and interaction capabilities for Infrastructure as Code (IaC) development."
+            url: http://terraform-mcp.terraform-mcp.svc:8080/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - action_run
+              - get_apply_details
+              - get_apply_logs
+              - get_latest_module_version
+              - get_latest_provider_version
+              - get_module_details
+              - get_plan_details
+              - get_plan_logs
+              - get_policy_details
+              - get_private_module_details
+              - get_private_provider_details
+              - get_project
+              - get_provider_capabilities
+              - get_provider_details
+              - get_run_comments
+              - get_run_details
+              - get_sentinel_mock
+              - get_stack_details
+              - get_state_version
+              - get_team
+              - get_token_permissions
+              - get_workspace_details
+              - list_runs
+              - list_stacks
+              - list_state_versions
+              - list_teams
+              - list_terraform_orgs
+              - list_terraform_projects
+              - list_variable_sets
+              - list_workspace_policy_sets
+              - list_workspace_variables
+              - list_workspaces
+              - read_workspace_tags
+              - search_modules
+              - search_policies
+              - search_private_modules
+              - search_private_providers
+              - search_providers
+              - whoami
+            allow_all_keys: false
+            available_on_public_internet: false
+          unifi:
+            server_id: 974d01c6-7846-4422-97c6-da13dc0263a2
+            alias: unifi
+            description: "MCP servers for the UniFi suite of applications, Network, Protect, Access, and Drive"
+            url: http://unifi-network-mcp.unifi-mcp.svc:3000/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - unifi_get_support_bundle
+              - unifi_tool_index
+              - unifi_execute
+              - unifi_batch
+              - unifi_batch_status
+              - unifi_load_tools
+            allow_all_keys: false
+            available_on_public_internet: false
+          valkeyshared:
+            server_id: f2dfff85-9783-448c-bc56-7e4f29912989
+            alias: valkeyshared
+            description: "Read-only access to the shared Valkey (valkey-system), which backs the n8n BullMQ job queue. Use it to inspect n8n queue keys and jobs."
+            url: http://db-mcp.db-mcp.svc:8002/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - hget
+              - hgetall
+              - hexists
+              - set_vector_in_hash
+              - get_vector_from_hash
+              - json_get
+              - lpush
+              - rpush
+              - lpop
+              - rpop
+              - lrange
+              - llen
+              - lrem
+              - type
+              - scan_keys
+              - scan_all_keys
+              - search_redis_documents
+              - read_messages
+              - get_indexes
+              - get_index_info
+              - get_indexed_keys_number
+              - create_vector_index_hash
+              - vector_search_hash
+              - hybrid_search
+              - dbsize
+              - info
+              - client_list
+              - smembers
+              - zrange
+              - xrange
+              - xreadgroup
+              - xack
+              - get
+            allow_all_keys: false
+            available_on_public_internet: false
+          victorialogs:
+            server_id: 6e0aa5df-23e6-4303-8007-53c7921e5572
+            alias: victorialogs
+            description: "The implementation of Model Context Protocol (MCP) server for VictoriaLogs.  This provides access to your VictoriaLogs instance and seamless integration with VictoriaLogs APIs and documentation. It can give you a comprehensive interface for logs, observability, and debugging tasks related to your VictoriaLogs instances, enable advanced automation and interaction capabilities for engineers and tools."
+            url: http://mcp-victorialogs.observability.svc:8080/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - documentation
+              - facets
+              - field_names
+              - field_values
+              - flags
+              - hits
+              - query
+              - stats_query
+              - stats_query_range
+              - stream_field_names
+              - stream_field_values
+              - stream_ids
+              - streams
+            allow_all_keys: false
+            available_on_public_internet: false
+          victoriametrics:
+            server_id: 3a8d42da-4fa5-4b54-aff1-b661d3e89dff
+            alias: victoriametrics
+            description: "The implementation of Model Context Protocol (MCP) server for VictoriaMetrics.  This provides access to your VictoriaMetrics instance and seamless integration with VictoriaMetrics APIs and documentation. It can give you a comprehensive interface for monitoring, observability, and debugging tasks related to your VictoriaMetrics instances, enable advanced automation and interaction capabilities for engineers and tools."
+            url: http://mcp-victoriametrics.observability.svc:8080/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - active_queries
+              - alerts
+              - documentation
+              - explain_query
+              - label_values
+              - labels
+              - metric_statistics
+              - metrics
+              - metrics_metadata
+              - prettify_query
+              - query
+              - query_range
+              - rules
+              - series
+              - top_queries
+              - tsdb_status
+            allow_all_keys: false
+            available_on_public_internet: false
+          victoriatraces:
+            server_id: 6bcaf2e8-3ae0-41c4-818d-fb27161f1508
+            alias: victoriatraces
+            description: "Query VictoriaTraces spans, services and traces"
+            url: http://mcp-victoriatraces.observability.svc:8080/mcp
+            transport: http
+            auth_type: none
+            allowed_tools:
+              - dependencies
+              - documentation
+              - service_operations
+              - services
+              - trace
+              - traces
+            allow_all_keys: false
+            available_on_public_internet: false
         model_list:
           # --------------------------------------------------------------------------
           # Openrouter: PAYG

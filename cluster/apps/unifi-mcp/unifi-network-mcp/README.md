@@ -30,12 +30,11 @@ Two upstream alternatives were considered and rejected: `apps/api` (a separate R
 
 Check the release notes and `apps/network/docs/transports.md` for new caller-authentication options; Renovate will not flag them. If one lands, add the credential to `unifi-network-mcp-secrets`, set the env var in `values.yaml`, configure the matching header on the LiteLLM MCP server entry, and keep the CNP unchanged.
 
-### LiteLLM registration is manual
+### LiteLLM registration
 
-MCP servers are registered through the **LiteLLM UI**, not `config.yaml`. This deviates from the repo's declarative-only rule. YAML-side MCP config was unreliable when the other MCP servers were added; LiteLLM runs with `store_model_in_db: true` and `supported_db_objects: [mcp]`, so UI registration persists in Postgres. The same applies to every MCP server behind LiteLLM (Brave Search, n8n-mcp,
-the Victoria MCP servers).
+The server is declared under `mcp_servers.unifi` in the LiteLLM `config.yaml` (`cluster/apps/litellm/litellm/app/values.yaml`), so a cluster rebuild restores it. Only `n8n` is still UI-managed, and LiteLLM's [README](../../litellm/README.md#mcp-servers) covers how to add a server.
 
-**On a cluster rebuild this registration does not come back on its own** — re-add the server in the LiteLLM UI pointing at `http://unifi-network-mcp.unifi-mcp.svc:3000/mcp`.
+Keep the entry's `server_id` and `alias`: grants reference the id and the `unifi-` tool prefix comes from the alias.
 
 No client-side change is needed: `.mcp.json` holds a single `litellm` entry and every downstream MCP server is fanned out through it.
 

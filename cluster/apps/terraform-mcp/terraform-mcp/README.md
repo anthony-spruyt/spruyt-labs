@@ -10,7 +10,7 @@ Gives agents read access to TFC workspaces, runs and plan/apply logs, and lets t
 
 ## Operations
 
-- Registered in the LiteLLM UI at `http://terraform-mcp.terraform-mcp.svc:8080/mcp`; see [litellm README](../../litellm/README.md#mcp-servers). `ENABLE_TF_OPERATIONS=true` and `--toolsets=all` expose every tool, including deletes and `force_unlock_workspace`. Restrict tools per key or team with LiteLLM access groups, not in this pod.
+- Declared as `mcp_servers.terraform` in the LiteLLM `config.yaml`, pointing at `http://terraform-mcp.terraform-mcp.svc:8080/mcp`; see [litellm README](../../litellm/README.md#mcp-servers). `ENABLE_TF_OPERATIONS=true` and `--toolsets=all` expose every tool, including deletes and `force_unlock_workspace`. Restrict tools per key or team with LiteLLM access groups, not in this pod.
 
 - **Token rotation** (also needed before it expires): bump `terraform_mcp_token_expired_at` in `infra/terraform/workspace-factory/variables.auto.tfvars`, push, and apply the `workspace-factory` run. Then rewrite the secret from the repo root without printing the token:
 
