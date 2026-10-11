@@ -22,7 +22,7 @@ Three databases on one CNPG cluster. The first two are owned by the `temporal` r
 
 The chart does not create databases (`createDatabase: false`). Helm hooks do not run under Flux, so schema migrations and namespace creation run as plain Jobs on every Helm revision. Connections use TLS with host verification against the CNPG CA (the `-rw` service name is in the operator-issued cert SANs).
 
-`max_connections` is raised to 200 on the cluster because four server pods × two stores × `maxConns` 10 already consume 80 of the default 100. Recalculate if you add replicas or raise `maxConns`.
+`max_connections` is raised to 200 on the cluster because four server pods × two stores × `maxConns` 10 already consume 80 of the default 100. The role limits add at most 12 (`mcp`) and 25 (`agent_platform`) on top, so the worst case stays near 120. Recalculate if you add replicas, raise `maxConns`, or raise a role `connectionLimit`.
 
 ### Credentials
 
@@ -32,7 +32,7 @@ All three Postgres logins are ESO-generated (`sl_` prefix) in `app/cnpg-roles-es
 | ---------------- | ------------------------------ | ------------------------------------------------------------ |
 | `temporal`       | `temporal-cnpg-owner`          | Temporal server and schema Job (`existingSecret`)            |
 | `mcp`            | `temporal-cnpg-mcp`            | db-mcp, read-only (`pg_read_all_data`, `connectionLimit` 12) |
-| `agent_platform` | `temporal-cnpg-agent-platform` | agent-platform worker run-data store (`connectionLimit` 15)  |
+| `agent_platform` | `temporal-cnpg-agent-platform` | agent-platform worker run-data store (`connectionLimit` 25)  |
 
 `bootstrap.initdb.secret` points CNPG at `temporal-cnpg-owner`, so CNPG no longer generates `temporal-cnpg-cluster-app`. Superuser access is off.
 

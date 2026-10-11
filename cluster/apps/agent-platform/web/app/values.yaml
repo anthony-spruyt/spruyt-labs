@@ -25,7 +25,7 @@ controllers:
         image:
           repository: ghcr.io/anthony-spruyt/agent-platform
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
-          tag: "1.1.0@sha256:ee7ada717f08b5a9bbcd81b2174e892e6a1a7e082b9ccbc8af951e4c236e88c1"
+          tag: "1.2.0@sha256:e6bed371cb10dfa6e26bf2e9bbba751064578264c0405fe101706e3418019758"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Web
@@ -37,7 +37,7 @@ controllers:
                 name: agent-platform-session
                 key: session-token-key
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
-          Temporal__Namespace: default
+          Temporal__Namespace: agent-platform
           OTEL_SERVICE_NAME: agent-platform-web
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry

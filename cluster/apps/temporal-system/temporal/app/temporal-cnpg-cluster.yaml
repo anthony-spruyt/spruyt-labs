@@ -42,7 +42,7 @@ spec:
         comment: Run-data store for agent-platform
         login: true
         ensure: present
-        connectionLimit: 15
+        connectionLimit: 25
         inherit: true
         passwordSecret:
           name: temporal-cnpg-agent-platform

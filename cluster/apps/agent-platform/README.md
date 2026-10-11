@@ -21,7 +21,9 @@ The pod spec for agents (env, MCP config, settings, clone, deadline) is built in
 `web` and `worker` are two HelmReleases (`agent-platform-web`, `agent-platform-worker`) so `app.kubernetes.io/name` equals the release name, which the CiliumNetworkPolicy selectors match on. They share one image pin; Renovate bumps both through the `# renovate:` annotation above each `tag`. Each has its own folder and Flux Kustomization (`agent-platform-web`, `agent-platform-worker`); chart-level
 settings are in `web/app/values.yaml` and `worker/app/values.yaml`. The worker depends on the web Kustomization for the `agent-platform-session` Secret, and on `temporal` for the run-data role, Role and CA copy.
 
-Only the worker mounts a ServiceAccount token. Both releases read `AgentGateway__SessionTokenKey` from the `agent-platform-session` Secret. The Temporal namespace moves from `default` to `agent-platform` in step 4 of #3467.
+Only the worker mounts a ServiceAccount token. Both releases read `AgentGateway__SessionTokenKey` from the `agent-platform-session` Secret. Both use the Temporal namespace `agent-platform`.
+
+The worker pod runs a `migrate` initContainer (same image, `AgentPlatform__Role: Migrate`) that applies the run-data EF Core migrations before the worker starts; the web pod has no database access.
 
 ## Ports
 
@@ -76,7 +78,7 @@ Both live in `agents/app/kyverno-policies.yaml`:
 | `agent-credentials`      | `agent-platform-agents` | SOPS (`agents/app/agent-credentials.sops.yaml`)  | `claude-code-oauth-token`, `litellm-key-read`, `litellm-key-cluster-read` | Agent pods, via `secretKeyRef` from the pod spec the worker builds        |
 | `worker-credentials`     | `agent-platform`        | SOPS (`worker/app/worker-credentials.sops.yaml`) | `litellm-virtual-key`                                                     | Worker (Jev and other LiteLLM calls); not mounted yet, wired in at step 5 |
 | `agent-platform-session` | `agent-platform`        | External Secrets `Password` generator            | `session-token-key`                                                       | Web and worker, as `AgentGateway__SessionTokenKey`                        |
-| `agent-platform-rundata` | `agent-platform`        | External Secrets, copied from `temporal-system`  | `ConnectionStrings__rundata`, `ca.crt`                                    | Worker run-data connection; not mounted yet, wired in at step 5           |
+| `agent-platform-rundata` | `agent-platform`        | External Secrets, copied from `temporal-system`  | `ConnectionStrings__rundata`, `ca.crt`                                    | Worker and its `migrate` initContainer (run-data connection and `ca.crt`) |
 
 - `claude-code-oauth-token`: a long-lived subscription token from `claude setup-token`. A token separate from the Coder workspace's can be revoked on its own; usage still counts against the same subscription.
 - `litellm-key-read` and `litellm-key-cluster-read`: one LiteLLM virtual key per agent tier. `litellm-virtual-key` is the worker's own key, so spend and rate limits are tracked separately.
