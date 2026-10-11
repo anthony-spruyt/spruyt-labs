@@ -14,6 +14,7 @@ Patterns and workflows for writing effective, token-efficient agent system promp
 | Task                   | Reference                                          |
 | ---------------------- | -------------------------------------------------- |
 | Frontmatter fields     | `references/agent-frontmatter.md`                  |
+| Override built-in      | `references/agent-frontmatter.md`, last section    |
 | Description template   | `references/project-patterns.md` Section 6         |
 | Model selection        | `references/project-patterns.md` Section 2         |
 | Size targets           | `references/project-patterns.md` Section 3         |

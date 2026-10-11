@@ -20,5 +20,14 @@
 | `initialPrompt`   | string                                                                        | Optional. First user turn when the agent runs as the main session (`--agent`)                                                                                                                                                                                    |
 | `omitClaudeMd`    | boolean                                                                       | Optional. `true` starts the agent without the user, project, and local CLAUDE.md files, project rules included. Only for agents that take everything from the delegation prompt; this project's agents rely on inherited rules |
 | `experimental`    | map                                                                           | Optional. `cacheTtl: 5m` or `1h` sets this agent's prompt-cache lifetime                                                                                                                                                                                         |
+| `autoCompactWindow` | not documented here | Optional. Accepted by the schema; semantics undocumented here |
 
 Field names are camelCase and must match exactly: Claude Code silently ignores a field it doesn't recognize.
+
+## Overriding built-in agents
+
+- A project agent file whose `name` matches a built-in (`Explore`, `Plan`) replaces it entirely: prompt, model, tools and description. To change only the model, copy the built-in's prompt and settings and change `model`. `.claude/agents/Explore.md` is the example.
+- Built-in Explore and Plan use `model: inherit` (the main session's model, capped at opus) and `omitClaudeMd: true`.
+- `CLAUDE_CODE_SUBAGENT_MODEL` doesn't change Explore. `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` does, but it forces every subagent, including opus-pinned ones such as reviewer.
+- Built-in prompts live in the Claude Code binary (`readlink -f "$(which claude)"`), about 250 MB: don't `cat` or `strings` it. Search its bytes with `python3 -I`; the second hit of the prompt's first sentence holds the JS template with its `${...}` placeholders, and `agentType:"<Name>"` gives the definition.
+- Agent files load at session start; a file added mid-session didn't load. Test a new or changed agent in a new session. Headless `claude -p` has no credentials inside subagents here.
