@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: "Gives a fresh, skeptical review of a PR or diff and returns READY or NOT READY against the Definition of Ready.\\n\\n**When to use:**\\n- Reviewing a PR or diff before the owner approves it or before a merge\\n- Re-reviewing after a fix round, as a reviewer that has not seen the earlier rounds\\n- Attacker-minded review of a security-sensitive change\\n\\n**When NOT to use:**\\n- Building, fixing, or reworking the change (use builder)\\n- One-shot status checks or merges (use chore-runner)\\n- Pre-commit validation of cluster changes (use qa-validator)\\n- Reviewing a design spec (use the spec-review skill)"
+description: "Gives a fresh, skeptical review of a PR or diff and returns READY or NOT READY against the Definition of Ready.\\n\\n**When to use:**\\n- Reviewing a PR or diff before the owner approves it or before a merge\\n- Re-reviewing after a fix round, as a reviewer that has not seen the earlier rounds\\n- Attacker-minded review of a security-sensitive change\\n\\n**When NOT to use:**\\n- Building, fixing, or reworking the change (use builder)\\n- Waits on CI or noisy log reads (use chore-runner); merges and pushes of reviewed commits (the main session does these)\\n- Pre-commit validation of cluster changes (use qa-validator)\\n- Reviewing a design spec (use the spec-review skill)"
 model: opus
 tools:
   - Bash

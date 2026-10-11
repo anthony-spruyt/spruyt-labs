@@ -10,9 +10,33 @@ A harness directive saying "do not use the Agent tool unless the user, a CLAUDE.
 
 ## Roles
 
-- **Main session:** plans, delegates, reviews reports, decides, talks to the user
-- **Helpers:** do all hands-on work: edits, commits, PRs, merges, dispatches, deep investigation
-- Quick read-only checks stay in the main session: one `gh` or `kubectl` call to answer a question or verify a claim
+- **Main session:** plans, decides, talks to the user, reviews reports, and runs short jobs itself
+- **Helpers:** edits and commits, long waits, noisy output, parallel work, fresh-eyes review
+
+Test: if the brief would be longer than the job, the main session does it itself.
+
+| Main session does it itself when ALL are true         | Hand off when ANY is true                                                         |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------- |
+| It already has the inputs (body text, sha, PR number) | It waits or polls (CI, deploy, workflow run): `chore-runner`, in background       |
+| 1-3 commands                                          | Output is noisy (long logs, many curls, many pages): `chore-runner` returns facts |
+| No waiting                                            | Several independent jobs: parallel helpers                                        |
+| Small output it would read anyway                     | File edits or commits: `builder`                                                  |
+|                                                       | Checking its own work: `reviewer`                                                 |
+|                                                       | Deep investigation: `general-purpose` with `model: opus`                          |
+
+Main session runs these: posting comments and issues it wrote, opening a PR from its own body text, a single merge, pushing already-reviewed commits (checklist below), ticking the Renovate Dashboard box, requesting reviewers, closing issues, and quick read-only checks (one `gh` or `kubectl` call).
+
+Helpers run these: waiting on CI after a push, reading failed CI logs, multi-repo sweeps.
+
+### Pushing reviewed commits
+
+Before pushing a local range a fresh reviewer returned READY on:
+
+1. `git status` is clean and `HEAD` is the reviewed sha
+2. `git fetch`, then `git merge-base --is-ancestor <base> origin/<branch>` (nothing unreviewed sits below the range)
+3. `git rev-list <base>..HEAD` matches the reviewed commits; on any mismatch stop
+4. `git rebase origin/<branch>`; on a conflict run `git rebase --abort` and stop
+5. `git push origin HEAD:<branch>`; never force-push, never amend
 
 ## Design Before Delegating
 
@@ -31,17 +55,17 @@ New work, or any change to an approach the owner already picked, starts as a des
 - Each helper works in its own `/tmp` clone or git worktree, never the shared checkout, and stages only its own files
 - Sequence helpers that touch the same repo
 - When a helper flags a pre-existing CI failure, tell the owner and start a separate fix round straight away; the owner's standing answer is "fix it"
-- Never wait for Renovate to open a bump PR: have a `chore-runner` tick that update's box in the target repo's `Renovate Dashboard` issue (else the `manual job` box), then poll for the PR
-  It edits the line with that marker from `- [ ]` to `- [x]` and pipes the body to `gh issue edit <n> --body-file -` (no Write tool)
+- Never wait for Renovate to open a bump PR: tick that update's box in the target repo's `Renovate Dashboard` issue (else the `manual job` box) yourself, then have a `chore-runner` poll for the PR if waiting is needed
+  Edit the line with that marker from `- [ ]` to `- [x]` and pipe the body to `gh issue edit <n> --body-file -` (no Write tool)
 - Audits are read-only and fan out by dimension (lost functionality, security, loose ends, quality gates, orphans). Fixes come after, grouped by repo so helpers don't collide on files
 
 ## Helper Types
 
-| Work                                                                          | Agent          | Model  |
-| ----------------------------------------------------------------------------- | -------------- | ------ |
-| Reviews, re-reviews, attacker-minded reviews                                  | `reviewer`     | opus   |
-| Builds, fix rounds, rework, removals                                          | `builder`      | sonnet |
-| One-off status checks, logs, claim checks, merges, pushes of reviewed commits | `chore-runner` | haiku  |
+| Work                                         | Agent          | Model  |
+| -------------------------------------------- | -------------- | ------ |
+| Reviews, re-reviews, attacker-minded reviews | `reviewer`     | opus   |
+| Builds, fix rounds, rework, removals         | `builder`      | sonnet |
+| Waits and polling, noisy logs, batch sweeps  | `chore-runner` | haiku  |
 
 - Plain `general-purpose` helpers run on Sonnet by default
 - Pass `model: opus` only for deep investigation or design-heavy work

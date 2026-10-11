@@ -1,6 +1,6 @@
 ---
 name: builder
-description: "Implements a briefed change and delivers it as a commit or PR.\\n\\n**When to use:**\\n- Building an approved design or feature\\n- Fix rounds on CI failures, conflicts, or review findings\\n- Rework, removals, and cleanups with a clear brief\\n\\n**When NOT to use:**\\n- Reviewing a PR or diff (use reviewer)\\n- One-shot status checks, log reads, merges, or pushing already-reviewed commits (use chore-runner)\\n- Deep investigation or design work with no approved plan (use general-purpose with model opus)"
+description: "Implements a briefed change and delivers it as a commit or PR.\\n\\n**When to use:**\\n- Building an approved design or feature\\n- Fix rounds on CI failures, conflicts, or review findings\\n- Rework, removals, and cleanups with a clear brief\\n\\n**When NOT to use:**\\n- Reviewing a PR or diff (use reviewer)\\n- Waits on CI, noisy log reads, or batch sweeps (use chore-runner); merges and pushing already-reviewed commits (the main session does these)\\n- Deep investigation or design work with no approved plan (use general-purpose with model opus)"
 model: sonnet
 ---
 
