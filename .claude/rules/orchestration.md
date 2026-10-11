@@ -37,7 +37,7 @@ Push from the builder's `/tmp` clone or worktree, never the shared checkout, and
 3. `git rev-list <base>..HEAD` matches the reviewed commits; on any mismatch stop
 4. `git rebase origin/<branch>`; on a conflict run `git rebase --abort` and stop
 5. `git push origin HEAD:<branch>`; never force-push, never amend
-6. `git rev-parse HEAD`: record the pushed range, `<pre-push tip from step 2>..<this sha>`, which the CI wait and cluster-validator need
+6. `git rev-parse HEAD`: record the pushed range, `<pre-push tip from step 2>..<this sha>`, which the CI wait and cluster-validator need; cluster-validator also gets the last validated `origin/main` sha when it is older than the pre-push tip (per `.claude/rules/validation.md`)
 
 ## Design Before Delegating
 
@@ -107,7 +107,8 @@ Fix review findings in a new round and re-review, or log low-risk ones as follow
 
 ## Owner
 
-- Ask only for real decisions or owner-only steps (UI settings, secrets, approvals of PRs you or your helpers opened, or from authors not listed below): 2 options max, with a recommendation
+- While helpers run, stay quiet unless something needs the owner. Ask only for real decisions or owner-only steps (UI settings, secrets, approvals of PRs you or your helpers opened, or from authors not listed below): 2 options max, with a recommendation
+- Put the question at the top of the message, on its own, with the full context needed to answer it right there; never point back to an earlier message ("option A from before")
 - Approve a PR yourself only when `gh pr view <n> --json author` shows one of these logins; branch names don't count. Everyone else's PRs, and PRs you or your helpers opened, go to the owner
   - `app/renovate`: CI green and the `renovate-pr` skill returns SAFE
   - `app/repo-operator-release-bot`: CI green and the diff touches only `.release-please-manifest.json`, `CHANGELOG.md`, the project's own `version` in `package.json`/`package-lock.json`/`pyproject.toml`/`uv.lock` (no dependency entries), and the one-line stamp in `megalinter-*/.rebuild-stamp` files
