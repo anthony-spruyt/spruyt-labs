@@ -15,7 +15,7 @@ The repo is public, so the account ID, zone name, and domain-identifying DNS tok
 | `dns.tf`            | Static DNS records (Brevo DKIM/verification, SPF, DMARC, site verification, Home Assistant) |
 | `rulesets.tf`       | Custom firewall rules, rate limiting, cache rules                                           |
 | `zone-settings.tf`  | Security and TLS zone settings                                                              |
-| `bot-management.tf` | Bot Fight Mode off (the other bot settings are set in the dashboard)                        |
+| `bot-management.tf` | Bot Fight Mode off and managed robots.txt on (other bot settings are set in the dashboard)  |
 
 Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare WAF rule (`rulesets.tf`).
 
@@ -27,7 +27,7 @@ The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get 
 4. Block Happy account creation and pairing, and Authentik admin paths outside home
 5. Managed challenge for the cloud and hosting ASNs in `local.challenged_asns`. The `litellm` host is gated by Cloudflare Access (see the LiteLLM section below)
 
-Only Bot Fight Mode (disabled) is managed in `bot-management.tf`; the other bot settings are set in the dashboard. The `litellm` host is covered by the path allowlist and the Access service token below.
+Terraform manages Bot Fight Mode (disabled) and managed robots.txt (enabled) in `bot-management.tf`; the other bot settings are set in the dashboard. The `litellm` host is covered by the path allowlist and the Access service token below.
 
 ## LiteLLM external access for CI
 
