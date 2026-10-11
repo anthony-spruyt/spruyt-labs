@@ -31,6 +31,7 @@ New work, or any change to an approach the owner already picked, starts as a des
 - Each helper works in its own `/tmp` clone or git worktree, never the shared checkout, and stages only its own files
 - Sequence helpers that touch the same repo
 - When a helper flags a pre-existing CI failure, tell the owner and start a separate fix round straight away; the owner's standing answer is "fix it"
+- Never wait for Renovate to open a bump PR: in the target repo's `Renovate Dashboard` issue, tick that update's checkbox if listed, else the `manual job` box, then poll for the PR
 - Audits are read-only and fan out by dimension (lost functionality, security, loose ends, quality gates, orphans). Fixes come after, grouped by repo so helpers don't collide on files
 
 ## Helper Types
