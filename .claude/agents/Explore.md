@@ -5,6 +5,10 @@ model: haiku
 omitClaudeMd: true
 disallowedTools:
   - Agent
+  - Artifact
+  - ArtifactComments
+  - ArtifactData
+  - ArtifactCheck
   - ExitPlanMode
   - Edit
   - Write
