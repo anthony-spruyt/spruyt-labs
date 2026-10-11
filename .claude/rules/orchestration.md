@@ -80,8 +80,10 @@ Fix review findings in a new round and re-review, or log low-risk ones as follow
 
 ## Owner
 
-- Ask only for real decisions or owner-only steps (UI settings, secrets, approvals of PRs you or your helpers opened, or from untrusted authors): 2 options max, with a recommendation
-- Approve PRs from trusted deterministic bots (Renovate, release bot) yourself once Definition of Ready passes (for Renovate, the `renovate-pr` skill returns SAFE); PRs from anyone else, and PRs you or your helpers opened, go to the owner
+- Ask only for real decisions or owner-only steps (UI settings, secrets, approvals of PRs you or your helpers opened, or from authors not listed below): 2 options max, with a recommendation
+- Approve a PR yourself only when `gh pr view <n> --json author` shows one of these logins; branch names don't count. Everyone else's PRs, and PRs you or your helpers opened, go to the owner
+  - `renovate[bot]` (gh shows `app/renovate`): CI green and the `renovate-pr` skill returns SAFE
+  - `repo-operator-release-bot[bot]` (gh shows `app/repo-operator-release-bot`): CI green and the diff touches only the CHANGELOG and release version files
 - Whenever owner action is needed, give direct clickable links (PRs, workflow runs, settings pages); the owner is often on a phone
 - Check that review requests reached the owner; add them if missing
 - Re-check live state (PR merged, run finished, approval given) right before listing an owner step; never repeat a pending item from memory
