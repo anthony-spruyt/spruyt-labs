@@ -12,12 +12,13 @@ Durable, retryable workflow engine intended to take over job orchestration for t
 
 ### Database layout
 
-Two databases on one CNPG cluster, both owned by the `temporal` role:
+Three databases on one CNPG cluster. The first two are owned by the `temporal` role:
 
-| Database              | Store      | Created by                        |
-| --------------------- | ---------- | --------------------------------- |
-| `temporal`            | default    | `bootstrap.initdb` on the Cluster |
-| `temporal_visibility` | visibility | `Database` CRD                    |
+| Database              | Store      | Created by                             |
+| --------------------- | ---------- | -------------------------------------- |
+| `temporal`            | default    | `bootstrap.initdb` on the Cluster      |
+| `temporal_visibility` | visibility | `Database` CRD                         |
+| `agent_platform`      | none       | `Database` CRD, owner `agent_platform` |
 
 The chart does not create databases (`createDatabase: false`). Helm hooks do not run under Flux, so schema migrations and namespace creation run as plain Jobs on every Helm revision. Connections use TLS with host verification against the CNPG CA (the `-rw` service name is in the operator-issued cert SANs).
 
@@ -25,14 +26,18 @@ The chart does not create databases (`createDatabase: false`). Helm hooks do not
 
 ### Credentials
 
-Both Postgres logins are ESO-generated (`sl_` prefix) in `app/cnpg-roles-eso.yaml`; nothing is in SOPS.
+All three Postgres logins are ESO-generated (`sl_` prefix) in `app/cnpg-roles-eso.yaml`; nothing is in SOPS.
 
-| Role       | Secret                | Used by                                           |
-| ---------- | --------------------- | ------------------------------------------------- |
-| `temporal` | `temporal-cnpg-owner` | Temporal server and schema Job (`existingSecret`) |
-| `mcp`      | `temporal-cnpg-mcp`   | db-mcp, read-only (`pg_read_all_data`)            |
+| Role             | Secret                         | Used by                                                     |
+| ---------------- | ------------------------------ | ----------------------------------------------------------- |
+| `temporal`       | `temporal-cnpg-owner`          | Temporal server and schema Job (`existingSecret`)           |
+| `mcp`            | `temporal-cnpg-mcp`            | db-mcp, read-only (`pg_read_all_data`)                      |
+| `agent_platform` | `temporal-cnpg-agent-platform` | agent-platform worker run-data store (`connectionLimit` 15) |
 
 `bootstrap.initdb.secret` points CNPG at `temporal-cnpg-owner`, so CNPG no longer generates `temporal-cnpg-cluster-app`. Superuser access is off.
+
+The `agent_platform` login reaches `agent-platform` through the `agent-platform-secret-reader` Role, which is limited to `temporal-cnpg-agent-platform` and `temporal-cnpg-ca-public`. The latter is a copy of `temporal-cnpg-cluster-ca` holding only `ca.crt` (the operator CA secret also holds the CA private key), refreshed hourly by `temporal-ca-reader`. The only client allowed to reach the database
+from `agent-platform` is the worker, via `allow-temporal-cnpg-agent-platform-ingress`.
 
 To rotate a login, delete both its Secret and its ExternalSecret (`kubectl -n temporal-system delete secret,externalsecret temporal-cnpg-owner`). Flux recreates the ExternalSecret, which generates a new password; CNPG applies it to the role. Then restart the server pods yourself (`kubectl -n temporal-system rollout restart deploy -l app.kubernetes.io/instance=temporal`) - Reloader ignores a
 recreated Secret, so without this the pods keep the old password (brief outage).

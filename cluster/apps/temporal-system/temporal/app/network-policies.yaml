@@ -483,3 +483,22 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-temporal-cnpg-agent-platform-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: temporal-cnpg-cluster
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-platform
+            k8s:app.kubernetes.io/name: agent-platform-worker
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

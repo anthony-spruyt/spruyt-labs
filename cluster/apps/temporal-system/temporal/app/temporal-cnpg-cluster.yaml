@@ -38,6 +38,14 @@ spec:
           - pg_read_all_data
         passwordSecret:
           name: temporal-cnpg-mcp
+      - name: agent_platform
+        comment: Run-data store for agent-platform
+        login: true
+        ensure: present
+        connectionLimit: 15
+        inherit: true
+        passwordSecret:
+          name: temporal-cnpg-agent-platform
   postgresql:
     parameters:
       # 4 server pods x 2 stores x maxConns 10 (values.yaml) already needs 80 of the default 100.

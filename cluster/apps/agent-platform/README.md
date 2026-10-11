@@ -19,7 +19,7 @@ The pod spec for agents (env, MCP config, settings, clone, deadline) is built in
 ## Releases
 
 `web` and `worker` are two HelmReleases (`agent-platform-web`, `agent-platform-worker`) so `app.kubernetes.io/name` equals the release name, which the CiliumNetworkPolicy selectors match on. They share one image pin; Renovate bumps both through the `# renovate:` annotation above each `tag`. Each has its own folder and Flux Kustomization (`agent-platform-web`, `agent-platform-worker`); chart-level
-settings are in `web/app/values.yaml` and `worker/app/values.yaml`. The worker depends on the web Kustomization for the `agent-platform-session` Secret.
+settings are in `web/app/values.yaml` and `worker/app/values.yaml`. The worker depends on the web Kustomization for the `agent-platform-session` Secret, and on `temporal` for the run-data role, Role and CA copy.
 
 Only the worker mounts a ServiceAccount token. Both releases read `AgentGateway__SessionTokenKey` from the `agent-platform-session` Secret. The Temporal namespace moves from `default` to `agent-platform` in step 4 of #3467.
 
@@ -50,6 +50,7 @@ DNS is allowed cluster-wide by `allow-kube-dns-egress`. Everything else is allow
 | ------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | worker              | kube-apiserver `6443`                                        | n/a                                                                                                                                                  |
 | web, worker         | Temporal frontend `7233`                                     | `temporal-system/temporal` `allow-temporal-frontend-clients-ingress`                                                                                 |
+| worker              | Temporal CNPG cluster `5432` (run-data database)             | `temporal-system/temporal` `allow-temporal-cnpg-agent-platform-ingress`                                                                              |
 | worker              | LiteLLM `4000`                                               | `litellm/litellm` `allow-agent-platform-ingress`                                                                                                     |
 | worker              | world `443` (GitHub, Discord)                                | n/a                                                                                                                                                  |
 | web, worker, agents | vmsingle `8428`, VictoriaLogs `9428`, VictoriaTraces `10428` | VictoriaTraces: `observability/victoria-traces-single` `allow-agent-platform-traces-ingress`; vmsingle and VictoriaLogs accept any in-cluster source |
@@ -59,7 +60,7 @@ DNS is allowed cluster-wide by `allow-kube-dns-egress`. Everything else is allow
 | agents              | Nexus `8081` (npm/PyPI/NuGet)                                | `nexus-system/nexus` `nexus-default`                                                                                                                 |
 | Traefik             | web `8080`                                                   | `allow-web-traefik-ingress` (this app)                                                                                                               |
 
-Policies in `agent-platform-agents` select every pod in the namespace, and agent pods accept no ingress. vmagent scrape rules and the run-data database (step 4) are added when those exist.
+Policies in `agent-platform-agents` select every pod in the namespace, and agent pods accept no ingress. vmagent scrape rules are added when those exist.
 
 ## Kyverno Guardrails
 
@@ -75,10 +76,14 @@ Both live in `agents/app/kyverno-policies.yaml`:
 | `agent-credentials`      | `agent-platform-agents` | SOPS (`agents/app/agent-credentials.sops.yaml`)  | `claude-code-oauth-token`, `litellm-key-read`, `litellm-key-cluster-read` | Agent pods, via `secretKeyRef` from the pod spec the worker builds        |
 | `worker-credentials`     | `agent-platform`        | SOPS (`worker/app/worker-credentials.sops.yaml`) | `litellm-virtual-key`                                                     | Worker (Jev and other LiteLLM calls); not mounted yet, wired in at step 5 |
 | `agent-platform-session` | `agent-platform`        | External Secrets `Password` generator            | `session-token-key`                                                       | Web and worker, as `AgentGateway__SessionTokenKey`                        |
+| `agent-platform-rundata` | `agent-platform`        | External Secrets, copied from `temporal-system`  | `ConnectionStrings__rundata`, `ca.crt`                                    | Worker run-data connection; not mounted yet, wired in at step 5           |
 
 - `claude-code-oauth-token`: a long-lived subscription token from `claude setup-token`. A token separate from the Coder workspace's can be revoked on its own; usage still counts against the same subscription.
 - `litellm-key-read` and `litellm-key-cluster-read`: one LiteLLM virtual key per agent tier. `litellm-virtual-key` is the worker's own key, so spend and rate limits are tracked separately.
 - `agent-platform-session` is generated once (`CreatedOnce`, `Orphan`, immutable), so a deleted Secret stays deleted. To rotate it, delete both the Secret and the ExternalSecret, let Flux recreate them, then restart web and worker; Reloader does not fire on a recreated Secret.
+
+`agent-platform-rundata` is built by `worker/app/run-data-eso.yaml` from two `temporal-system` secrets: the `agent_platform` role password (`temporal-cnpg-agent-platform`) and a CA copy holding only `ca.crt` (`temporal-cnpg-ca-public`). It refreshes every 5m. The connection string uses `SSL Mode=VerifyFull` and expects the `ca.crt` key mounted at `/etc/agent-platform/rundata-ca/ca.crt`. The
+database is `agent_platform` on the Temporal CNPG cluster; see `temporal-system/temporal/README.md`.
 
 Rotate the SOPS secrets with `sops <file>`; agent pods pick up the new value on their next run, the worker on restart.
 

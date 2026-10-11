@@ -14,6 +14,7 @@ spec:
   dependsOn:
     - name: external-secrets
     - name: agent-platform-web
+    - name: temporal
   prune: true
   timeout: 5m
   wait: true

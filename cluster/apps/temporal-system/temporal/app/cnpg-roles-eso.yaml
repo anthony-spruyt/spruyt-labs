@@ -68,6 +68,105 @@ spec:
           kind: Password
           name: temporal-cnpg-password
 ---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: temporal-cnpg-agent-platform
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: temporal-cnpg-agent-platform
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      type: kubernetes.io/basic-auth
+      metadata:
+        labels:
+          cnpg.io/reload: "true"
+      data:
+        username: agent_platform
+        password: "sl_{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: temporal-cnpg-password
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/serviceaccount-v1.json
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: temporal-ca-reader
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/role-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: temporal-ca-reader
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["temporal-cnpg-cluster-ca"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["selfsubjectrulesreviews"]
+    verbs: ["create"]
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/rolebinding-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: temporal-ca-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: temporal-ca-reader
+subjects:
+  - kind: ServiceAccount
+    name: temporal-ca-reader
+    namespace: temporal-system
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/secretstore_v1.json
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: temporal-ca-secret-store
+spec:
+  provider:
+    kubernetes:
+      remoteNamespace: temporal-system
+      server:
+        url: "https://kubernetes.default.svc"
+        caProvider:
+          type: ConfigMap
+          name: kube-root-ca.crt
+          key: ca.crt
+      auth:
+        serviceAccount:
+          name: temporal-ca-reader
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# The operator CA secret also holds the CA private key; clients get this copy with ca.crt only
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: temporal-cnpg-ca-public
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: temporal-ca-secret-store
+  target:
+    name: temporal-cnpg-ca-public
+    creationPolicy: Owner
+  data:
+    - secretKey: ca.crt
+      remoteRef:
+        key: temporal-cnpg-cluster-ca
+        property: ca.crt
+---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/role-rbac-v1.json
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -95,3 +194,31 @@ subjects:
   - kind: ServiceAccount
     name: temporal-secret-reader
     namespace: db-mcp
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/role-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: agent-platform-secret-reader
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["temporal-cnpg-agent-platform", "temporal-cnpg-ca-public"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["selfsubjectrulesreviews"]
+    verbs: ["create"]
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/rolebinding-rbac-v1.json
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: agent-platform-secret-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: agent-platform-secret-reader
+subjects:
+  - kind: ServiceAccount
+    name: temporal-secret-reader
+    namespace: agent-platform

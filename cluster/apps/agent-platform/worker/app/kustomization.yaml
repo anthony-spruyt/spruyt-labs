@@ -6,6 +6,7 @@ resources:
   - ./rbac.yaml
   - ./network-policies.yaml
   - ./worker-credentials.sops.yaml
+  - ./run-data-eso.yaml
   - ./release.yaml
   - ./vpa.yaml
 configMapGenerator:
