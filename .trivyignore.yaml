@@ -353,6 +353,14 @@ misconfigurations:
       - cluster/apps/nexus-system/nexus/app/provision-repos-job.yaml
 
   # ==============================================================================
+  # LiteLLM access-policy reconcile Job
+  # ==============================================================================
+  # alpine/k8s is a trusted Docker Hub image (ships python3 and PyYAML)
+  - id: AVD-KSV-0125
+    paths:
+      - cluster/apps/litellm/litellm/access-policy/job.yaml
+
+  # ==============================================================================
   # Bot SSH Key Rotation - CronJob and RBAC
   # ==============================================================================
   # Own ghcr.io image (trivy flags non-standard registries)

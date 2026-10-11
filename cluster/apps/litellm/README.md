@@ -92,9 +92,27 @@ To add a server:
 1. Add an entry to `mcp_servers` with a fresh UUID `server_id`, `alias` equal to the key, `url`, `transport`, `auth_type`, `allowed_tools` and `available_on_public_internet: false`.
 2. For a bearer-token server, add `MCP_<NAME>_TOKEN` to `litellm-secrets`.
 3. Add an egress CNP in `litellm/app/network-policies.yaml` and, for an in-cluster server, an ingress CNP from the `litellm` namespace.
-4. Grant the server to teams or keys.
+4. Grant the server to teams, access groups or keys in `litellm/access-policy/access-policy.yml` (see Access policy).
 
 `.mcp.json` in the repo root holds a single `litellm` entry; every downstream server is fanned out through it.
+
+### Access policy
+
+Who may use which MCP server and tool is declared in `litellm/access-policy/access-policy.yml` and applied by the `litellm-access-policy` Job, which calls the admin API with the master key from `litellm-secrets`. The file holds:
+
+| Section         | Matched by  | Managed fields                                                                                           |
+| --------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| `teams`         | `team_id`   | `team_alias`, `object_permission`                                                                        |
+| `access_groups` | `name`      | `description`, `models`, `mcp_server_ids`, `agent_ids`, `team_ids`, `key_aliases` (unified access group) |
+| `keys`          | `key_alias` | `object_permission` only                                                                                 |
+
+- Keys, users, team budgets and members, models and the `n8n` MCP server stay in the LiteLLM UI/DB. Keys are never created here; a `key_alias` that doesn't exist, or exists twice, fails the Job. The Job never deletes anything, so objects missing from the file are left alone.
+- A listed object is compared on its managed fields only, and an omitted list field means empty: a grant that exists live but not in the file is a diff. Access groups match by `name` because LiteLLM generates their ids. Group membership is declared on the group (`team_ids`, `key_aliases`), not on the team.
+- To change policy, edit `access-policy.yml` and push. The ConfigMap name carries a content hash, so the Job spec changes, Flux recreates the Job (`kustomize.toolkit.fluxcd.io/force`) and it runs against the new file. After `ttlSecondsAfterFinished` the Job is removed and Flux recreates it at its next 4h reconcile, so it also runs periodically.
+- `MODE` in `job.yaml` is `diff` or `enforce`. In `diff` the Job only logs one block per object and ends with `changes: N`; read it with `kubectl -n litellm logs job/litellm-access-policy`. `changes: 0` means the file matches live state. In `enforce` it creates missing teams and groups with the file's ids and names, and updates only the differing managed fields (teams first, then groups, then
+  keys).
+- LiteLLM merges an `object_permission` update field by field, so the Job sends an empty value (`[]`, `{}`) to clear a field. It logs aliases, ids and permission fields only, never key material.
+- Unit tests for the script run in CI through `tests/litellm-access-policy.bats`.
 
 ### Proxy middleware
 

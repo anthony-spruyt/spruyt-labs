@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# DNS egress is handled by CiliumClusterwideNetworkPolicy allow-kube-dns-egress
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-access-policy-litellm-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: litellm-access-policy
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/instance: litellm
+            k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: litellm
+      toPorts:
+        - ports:
+            - port: "4000"
+              protocol: TCP

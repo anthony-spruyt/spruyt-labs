@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./job.yaml
+  - ./network-policies.yaml
+configMapGenerator:
+  - name: litellm-access-policy
+    namespace: litellm
+    files:
+      - access-policy.yml
+  - name: litellm-access-policy-script
+    namespace: litellm
+    files:
+      - reconcile.py

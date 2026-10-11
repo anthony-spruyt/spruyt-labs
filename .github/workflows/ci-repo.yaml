@@ -66,6 +66,8 @@ jobs:
               - '.taskfiles/happy/scripts/**'
               # Values (and the middleware image tag in them) asserted by tests/litellm-middleware-contract.bats
               - 'cluster/apps/litellm/litellm/app/values.yaml'
+              # Script and policy asserted by tests/litellm-access-policy.bats
+              - 'cluster/apps/litellm/litellm/access-policy/**'
               # Sources asserted by tests/orchestration-retro.bats
               - '.claude/skills/orchestration-retro/**'
               - 'tests/fixtures/orchestration-retro/**'
@@ -230,7 +232,7 @@ jobs:
           egress-policy: audit
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7
       - name: "Install bats"
-        run: "sudo apt-get update && sudo apt-get install -y bats"
+        run: "sudo apt-get update && sudo apt-get install -y bats python3-yaml"
       - name: "Run bats tests"
         run: |
           mapfile -t suites < <(git ls-files '*.bats')
