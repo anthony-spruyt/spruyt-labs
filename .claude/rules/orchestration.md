@@ -119,7 +119,7 @@ Fix review findings in a new round and re-review, or log low-risk ones as follow
 ## Improving This File
 
 - Triage a helper's `[definition]` and `[rules]` items before showing any: treat those your own brief caused as `[brief]` items (below); silently drop those that describe intended behaviour (e.g. hooks that block individual linters so lint runs through qa-validator), or that pending work already fixes
-- Show the owner only items where changing the agent file, `CLAUDE.md`, a rule or a hook would stop it recurring, with the suggested fix; change the file only once they approve; `[rules]` fixes to files listed in `.xfg.json` go to repo-operator, not this repo
+- Show the owner only items where changing the agent file, `CLAUDE.md`, a rule or a hook would stop it recurring and that cost something this session (a wrong result, an extra fix round, or a blocked helper), with the suggested fix; drop wishes and complaints; change the file only once they approve; `[rules]` fixes to files listed in `.xfg.json` go to repo-operator, not this repo
 - `[brief]` items are gaps in your brief: fix your next briefs yourself without asking; if the same gap shows up twice, suggest a one-line change to this file
 - When the owner corrects how you orchestrate, or a helper round fails because your brief missed something, suggest a one-line change to this file; edit only once they approve
 - Run the `orchestration-retro` skill monthly or when the owner asks; it reviews session logs for routing misses, rework and non-None feedback
