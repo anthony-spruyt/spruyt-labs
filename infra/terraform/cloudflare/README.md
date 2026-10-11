@@ -25,7 +25,7 @@ The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get 
 2. Block non-AU traffic, bots, and non-API LiteLLM paths
 3. AI Crawl Control - Block AI bots by User Agent (`[CF AI Audit]`, linked to the dashboard)
 4. Block Happy account creation and pairing, and Authentik admin paths outside home
-5. Managed challenge for the cloud and hosting ASNs in `local.challenged_asns`, on every host except `litellm`
+5. Managed challenge for the cloud and hosting ASNs in `local.challenged_asns`. The `litellm` host is gated by Cloudflare Access (see the LiteLLM section below)
 
 Bot settings are managed in `bot-management.tf`, with Bot Fight Mode disabled. The `litellm` host is covered by the path allowlist and the Access service token below.
 

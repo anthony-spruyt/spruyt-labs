@@ -113,7 +113,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
     },
     {
       ref         = "challenge-cloud-asns"
-      description = "Managed challenge for cloud and hosting networks, except the LiteLLM host"
+      description = "Managed challenge for cloud and hosting networks"
       expression = format(
         "(ip.src.asnum in {%s}) and (lower(http.host) ne \"%s\")",
         join(" ", local.challenged_asns),
