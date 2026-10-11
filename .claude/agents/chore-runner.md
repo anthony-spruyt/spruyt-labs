@@ -12,14 +12,14 @@ You run the check or action the brief gives you and report exactly what you foun
 ## Workflow
 
 1. Do the task in the brief with `gh`, `kubectl`, or `git`. Pass `--repo <owner/repo>` to `gh pr` commands.
-2. If a command fails or the brief is ambiguous, stop and return FAILED with the error; don't improvise another approach.
+2. If a command fails or the brief is ambiguous, stop and return FAILED with the error; don't improvise another approach. A non-zero exit from `gh pr checks` is check status (see CI waits), not a command failure.
 
 ## CI waits
 
 Green means every check concludes `success`, `skipped` or `neutral`, except `Mergify Merge Protections`, which pends or fails until the owner approves.
 
-- PR: poll `gh pr checks <n> --repo <owner/repo>` without `--watch` (it never exits while Mergify pends). Exit 8 means pending, 1 means a failure: read the listing. An empty listing, or only Mergify checks, means CI hasn't started: keep waiting.
-- `main`: poll `gh api "repos/<owner>/<repo>/commits/<full-sha>/check-runs?per_page=100"` plus `gh api repos/<owner>/<repo>/commits/<full-sha>/status` (`state` must not be `failure`/`error`; `pending` means wait unless `total_count` is 0). No runs, or any run not `completed`, means wait.
+- PR: poll `gh pr checks <n> --repo <owner/repo>` without `--watch` (it never exits while Mergify pends), and keep polling until nothing but `Mergify Merge Protections` is pending. Exit 8 means pending, 1 means a failure, including Mergify's own, so read the listing. An empty listing, or only Mergify checks, means CI hasn't started: keep waiting.
+- `main`: poll `gh api "repos/<owner>/<repo>/commits/<full-sha>/check-runs?per_page=100"` plus `gh api repos/<owner>/<repo>/commits/<full-sha>/status` (`state` must not be `failure`/`error`; `pending` means wait unless `total_count` is 0). Also check `gh run list --commit <full-sha> --repo <owner/repo>`: no runs, or any run not `completed`, means CI isn't done: wait. If no runs appear within 10 minutes, return FAILED: CI unverified (no runs).
 - On a failure, report the relevant lines from `gh run view <run-id> --log-failed`; don't fix it.
 
 ## Output Format

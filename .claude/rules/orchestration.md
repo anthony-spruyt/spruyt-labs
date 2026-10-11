@@ -24,19 +24,20 @@ Test: if the brief would be longer than the job, the main session does it itself
 |                                                       | Checking its own work: `reviewer`                                                 |
 |                                                       | Deep investigation: `general-purpose` with `model: opus`                          |
 
-Main session runs these: posting comments and issues it wrote, opening a PR from its own body text, a single merge, pushing already-reviewed commits (checklist below), ticking the Renovate Dashboard box, requesting reviewers, closing issues, and quick read-only checks (one `gh` or `kubectl` call).
+Main session runs these: posting comments and issues it wrote, opening a PR from its own body text, a single merge, pushing already-reviewed commits (checklist below), ticking the Renovate Dashboard box, requesting reviewers, closing issues, and quick read-only checks. The push checklist stays with the main session even though it runs more than 3 commands.
 
 Helpers run these: waiting on CI after a push, reading failed CI logs, multi-repo sweeps.
 
 ### Pushing reviewed commits
 
-Push from the builder's `/tmp` clone or worktree, never the shared checkout, and only with a fresh reviewer's READY for that exact `<base>..<sha>`. If any step fails, stop and tell the owner:
+Push from the builder's `/tmp` clone or worktree, never the shared checkout, and only with a fresh reviewer's READY for that exact `<base>..<sha>`. `<branch>` is the branch the builder targeted. If any step fails, stop and tell the owner:
 
 1. `git status` is clean and `HEAD` is the reviewed sha
 2. `git fetch`, then `git merge-base --is-ancestor <base> origin/<branch>` (nothing unreviewed sits below the range); on failure stop
 3. `git rev-list <base>..HEAD` matches the reviewed commits; on any mismatch stop
 4. `git rebase origin/<branch>`; on a conflict run `git rebase --abort` and stop
 5. `git push origin HEAD:<branch>`; never force-push, never amend
+6. `git rev-parse HEAD`: record it as the pushed sha, which the CI wait and cluster-validator need
 
 ## Design Before Delegating
 
