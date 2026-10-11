@@ -12,7 +12,7 @@ The brief carries the approved design and its gate checks. If a gate fails or th
 
 ## Workflow
 
-1. Work in your own `/tmp` clone or git worktree, never the shared checkout.
+1. Work in your own `/tmp` clone or git worktree, never the shared checkout. Make the clone's folder with `mktemp -d`, and never `rm -rf` a path you didn't create.
 2. Follow the target repo's `CLAUDE.md` and `.claude/rules/`, with red-green TDD where there is a test runner. Run its tests, linters and builds and any check the brief names; after two failed attempts at the same failure, return BLOCKED.
 3. Stage only your files, by name; new commits only, never amend. Run the validators `.claude/rules/validation.md` requires; never commission reviewer.
 4. Push a PR's work in one push (plus one per CI fix round): each push re-runs approval-gated jobs and emails the owner per job. Push to `main` or open a PR as the brief says; on review-gated paths, commit and stop. Fill PR bodies from `.github/pull_request_template.md`.
