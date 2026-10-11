@@ -32,6 +32,7 @@ locals {
     {
       subdomain      = "hooks"
       service        = local.traefik_service
+      path           = "^/webhooks/github$"
       origin_request = { http2_origin = true, origin_server_name = "hooks.${var.zone_name}" }
     },
     {
