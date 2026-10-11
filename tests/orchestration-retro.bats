@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# The orchestration retro reports helper routing, review verdicts, rework and non-None feedback from session logs. Ref #3474
+# The orchestration retro reports helper routing, review verdicts, review-fix rounds per PR and non-None feedback from session logs. Ref #3474
 
 REPO_ROOT="${BATS_TEST_DIRNAME}/.."
 SCRIPT="${REPO_ROOT}/.claude/skills/orchestration-retro/retro.sh"
@@ -36,16 +36,15 @@ section() {
   run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
   [ "${status}" -eq 0 ]
   verdicts="$(section "Review verdicts")"
-  [[ "${verdicts}" == *"- NOT READY: 1"* ]]
-  [[ "${verdicts}" == *"- READY: 1"* ]]
+  [[ "${verdicts}" == *"- NOT READY: 2"* ]]
+  [[ "${verdicts}" == *"- READY: 4"* ]]
 }
 
-@test "lists PRs with three or more helper runs and skips the rest" {
+@test "lists PRs by fix-check reviews, flags two as at cap, and skips full-mode reviews" {
   run bash "${SCRIPT}" --projects-dir "${PROJECTS}"
   [ "${status}" -eq 0 ]
-  hot="$(section "Issues/PRs with 3 or more helper runs")"
-  [[ "${hot}" == *"#101"*"4 runs"* ]]
-  [[ "${hot}" != *"#102"* ]]
+  rounds="$(section "PRs with fix rounds" | grep '^- #')"
+  [ "${rounds}" == $'- #201: 2 fix rounds (at cap)\n- #202: 1 fix rounds' ]
 }
 
 @test "shows non-None agent definition feedback with its agent type" {
@@ -96,9 +95,10 @@ section() {
   [[ "${output}" == *"## Helper runs by agent type and model"* ]]
   [[ "${output}" == *"## Routing misses"* ]]
   [[ "${output}" == *"## Review verdicts"* ]]
-  [[ "${output}" == *"## Issues/PRs with 3 or more helper runs"* ]]
+  [[ "${output}" == *"## PRs with fix rounds"* ]]
   [[ "${output}" == *"## Agent Definition Feedback"* ]]
   [[ "${output}" == *"No helper runs"* ]]
+  [ "$(section "PRs with fix rounds" | grep -v '^$')" == "None." ]
 }
 
 @test "never prints tool inputs or tool results" {
@@ -125,8 +125,8 @@ section() {
   rm -rf "${tree}"
   [ "${status}" -eq 0 ]
   verdicts="$(section "Review verdicts")"
-  [[ "${verdicts}" == *"- NOT READY: 1"* ]]
-  [[ "${verdicts}" == *"- READY: 1"* ]]
-  hot="$(section "Issues/PRs with 3 or more helper runs")"
-  [[ "${hot}" == *"#101"*"4 runs"* ]]
+  [[ "${verdicts}" == *"- NOT READY: 2"* ]]
+  [[ "${verdicts}" == *"- READY: 4"* ]]
+  rounds="$(section "PRs with fix rounds" | grep '^- #')"
+  [ "${rounds}" == $'- #201: 2 fix rounds (at cap)\n- #202: 1 fix rounds' ]
 }

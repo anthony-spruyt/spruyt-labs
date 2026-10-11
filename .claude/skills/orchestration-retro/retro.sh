@@ -56,6 +56,10 @@ def text_of:
       elif $reply | test("NOT READY") then "NOT READY"
       elif $reply | test("\\bREADY\\b") then "READY"
       else "none" end),
+    mode: (
+      if $reply | test("Mode:\\s*fix-check") then "fix-check"
+      elif $reply | test("Mode:\\s*full") then "full"
+      else "none" end),
     feedback: (
       $reply | split("### Agent Definition Feedback")
       | if length > 1
@@ -108,17 +112,16 @@ map(select($since == "" or .date >= $since)) as $runs
        "- No verdict found: \($rev | map(select(.verdict == "none")) | length)"
      end),
   "",
-  "## Issues/PRs with 3 or more helper runs",
+  "## PRs with fix rounds",
   "",
   ([$runs[]
-     | select(.agent | IN("general-purpose", "builder", "pr-builder", "reviewer", "pr-reviewer"))
+     | select((.agent | IN("reviewer", "pr-reviewer")) and .mode == "fix-check")
      | . + {pr: (.desc | [scan("(?:#|\\bPR\\s*#?)([0-9]+)")] | first[0]?)}
      | select(.pr != null)]
-   | group_by(.pr) | map(select(length >= 3)) | sort_by(-length)
+   | group_by(.pr) | sort_by(-length)
    | if length == 0 then "None."
      else
-       map("- #\(.[0].pr): \(length) runs ("
-         + (group_by(.agent) | map("\(.[0].agent) \(length)") | join(", ")) + ")")
+       map("- #\(.[0].pr): \(length) fix rounds" + (if length >= 2 then " (at cap)" else "" end))
        | cap(15; "PRs") | .[]
      end),
   "",
