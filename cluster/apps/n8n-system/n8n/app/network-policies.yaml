@@ -133,28 +133,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-qdrant-egress
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/instance: n8n
-      app.kubernetes.io/name: n8n
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: qdrant-system
-            k8s:app.kubernetes.io/name: qdrant
-      toPorts:
-        - ports:
-            - port: "6333"
-              protocol: TCP
-            - port: "6334"
-              protocol: TCP
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow egress to kube-apiserver for spawning Claude agent pods
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

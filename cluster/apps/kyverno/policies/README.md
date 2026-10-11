@@ -28,8 +28,8 @@ Hourly `ClusterCleanupPolicy` removing `Succeeded`/`Failed` agent pods that n8n 
 
 ### add-pss-restricted-defaults
 
-Adds seccomp, `runAsNonRoot`, `allowPrivilegeEscalation: false` and `drop: [ALL]` to new pods where unset. Namespaces running legitimately privileged workloads are excluded in the manifest. A pod that needs root or capabilities in a non-excluded namespace must set those fields explicitly; the anchors leave explicit values alone. Other policies layer on top of this one - `qdrant-allow-init-root`
-(in `qdrant-system`) and `restrict-privileged-to-coder-workspace-sa` (in `coder-workspaces`) live with their apps, not here.
+Adds seccomp, `runAsNonRoot`, `allowPrivilegeEscalation: false` and `drop: [ALL]` to new pods where unset. Namespaces running legitimately privileged workloads are excluded in the manifest. A pod that needs root or capabilities in a non-excluded namespace must set those fields explicitly; the anchors leave explicit values alone. Other policies layer on top of this one;
+`restrict-privileged-to-coder-workspace-sa` (in `coder-workspaces`) lives with its app, not here.
 
 ### add-default-topology-spread
 

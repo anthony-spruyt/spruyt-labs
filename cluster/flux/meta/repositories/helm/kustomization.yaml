@@ -16,7 +16,6 @@ resources:
   - ./metrics-server-charts.yaml
   - ./minecraft-server-charts.yaml
   - ./postfinance-charts.yaml
-  - ./qdrant-charts.yaml
   - ./stakater-charts.yaml
   - ./temporal-charts.yaml
   - ./traefik-charts.yaml

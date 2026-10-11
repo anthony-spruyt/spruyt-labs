@@ -30,7 +30,6 @@ resources:
   - ./velero
   - ./cnpg-system
   - ./valkey-system
-  - ./qdrant-system
   - ./n8n-system
   - ./nexus-system
   - ./redisinsight
