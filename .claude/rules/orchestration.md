@@ -65,7 +65,7 @@ Tell helpers to push a PR's work in one push: each push re-runs approval-gated j
 
 ## Definition of Ready
 
-Before asking the owner to approve, or before merging:
+Before approving, asking the owner to approve, or merging:
 
 - A fresh review returned READY
 - Owner review comments and threads checked
@@ -80,8 +80,8 @@ Fix review findings in a new round and re-review, or log low-risk ones as follow
 
 ## Owner
 
-- Ask only for real decisions or owner-only steps (UI settings, secrets, approvals of PRs your helpers opened): 2 options max, with a recommendation
-- Approve PRs that you and your helpers didn't open (release bot, Renovate, other bots) yourself; ask the owner only for PRs your helpers opened
+- Ask only for real decisions or owner-only steps (UI settings, secrets, approvals of PRs you or your helpers opened, or from untrusted authors): 2 options max, with a recommendation
+- Approve PRs from trusted deterministic bots (Renovate, release bot) yourself once Definition of Ready passes (for Renovate, the `renovate-pr` skill returns SAFE); PRs from anyone else, and PRs you or your helpers opened, go to the owner
 - Whenever owner action is needed, give direct clickable links (PRs, workflow runs, settings pages); the owner is often on a phone
 - Check that review requests reached the owner; add them if missing
 - Re-check live state (PR merged, run finished, approval given) right before listing an owner step; never repeat a pending item from memory
