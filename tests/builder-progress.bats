@@ -182,3 +182,24 @@ context() {
   hook "${AGENT}"
   [[ "$(context)" == *"${NOTES}"* ]]
 }
+
+@test "parallel calls after one compaction inject exactly once" {
+  hook "${AGENT}"
+  printf 'GOAL: ship the thing\n' >"${NOTES}"
+  compact
+  payload="$(input "${AGENT}")"
+  for i in 1 2 3 4 5 6; do
+    bash "${SCRIPT}" <<<"${payload}" >"${TMP}/out.${i}" &
+  done
+  wait
+  [ "$(cat "${TMP}"/out.* | grep -c additionalContext)" -eq 1 ]
+}
+
+@test "parallel first calls inject exactly once" {
+  payload="$(input "${AGENT}")"
+  for i in 1 2 3 4 5 6; do
+    bash "${SCRIPT}" <<<"${payload}" >"${TMP}/out.${i}" &
+  done
+  wait
+  [ "$(cat "${TMP}"/out.* | grep -c additionalContext)" -eq 1 ]
+}
