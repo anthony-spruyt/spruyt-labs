@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: agent-platform-renovate-triage
+spec:
+  groups:
+    - name: agent-platform-renovate-triage
+      rules:
+        - alert: RenovateTriageWorkflowFailed
+          # Temporal server metrics: namespace label is exported_namespace, with underscores
+          expr: |
+            sum by (workflowType) (
+              increase_pure({__name__=~"workflow_failed|workflow_timeout", exported_namespace="agent_platform", workflowType="RenovateTriageWorkflow"}[15m])
+            ) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "RenovateTriage workflow run failed"
+            description: "A RenovateTriageWorkflow run in the agent-platform Temporal namespace failed or timed out in the last 15 minutes. Inspect it in the Temporal UI."
+        - alert: RenovateTriageActivityFailing
+          expr: |
+            sum by (activityType) (
+              increase_pure({__name__=~"activity_task_fail|activity_task_timeout",exported_namespace="agent_platform", workflowType="RenovateTriageWorkflow"}[15m])
+            ) >= 5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "RenovateTriage activity {{ $labels.activityType }} keeps failing"
+            description: "Activity {{ $labels.activityType }} of RenovateTriageWorkflow failed or timed out on 5 or more attempts in 15 minutes."

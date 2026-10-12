@@ -8,6 +8,7 @@ resources:
   - ./worker-credentials.sops.yaml
   - ./run-data-eso.yaml
   - ./release.yaml
+  - ./vmrule.yaml
   - ./vpa.yaml
 configMapGenerator:
   - name: agent-platform-worker-values

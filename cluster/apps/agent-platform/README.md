@@ -90,6 +90,11 @@ database is `agent_platform` on the Temporal CNPG cluster; see `temporal-system/
 
 Rotate the SOPS secrets with `sops <file>`; agent pods pick up the new value on their next run, the worker on restart.
 
+## Alerts
+
+`worker/app/vmrule.yaml` alerts on failed RenovateTriage runs from the Temporal server metrics: `RenovateTriageWorkflowFailed` (a `RenovateTriageWorkflow` run failed or timed out) and `RenovateTriageActivityFailing` (an activity failed or timed out on 5 or more attempts in 15m; retries that later succeed stay below that). The metrics carry `exported_namespace="agent_platform"` and
+`workflowType`/`activityType` labels.
+
 ## References
 
 - [#3467](https://github.com/anthony-spruyt/spruyt-labs/issues/3467) - migration plan and step order
