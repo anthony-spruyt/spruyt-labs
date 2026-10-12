@@ -354,12 +354,13 @@ misconfigurations:
       - cluster/apps/nexus-system/nexus/app/provision-repos-job.yaml
 
   # ==============================================================================
-  # LiteLLM access-policy reconcile Job
+  # LiteLLM access-policy reconcile Job and MCP tool drift CronJob
   # ==============================================================================
   # alpine/k8s is a trusted Docker Hub image (ships python3 and PyYAML)
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/litellm/litellm/access-policy/job.yaml
+      - cluster/apps/litellm/litellm/mcp-tool-drift/cronjob.yaml
 
   # ==============================================================================
   # Bot SSH Key Rotation - CronJob and RBAC

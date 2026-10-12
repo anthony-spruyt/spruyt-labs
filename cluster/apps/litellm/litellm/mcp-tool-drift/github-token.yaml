@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: github-bot-credentials
+  namespace: litellm
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: SecretStore
+    name: github-secret-store
+  target:
+    name: litellm-github-credentials
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: github-token
+      remoteRef:
+        key: github-bot-credentials
+        property: write-access-token

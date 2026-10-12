@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/autoscaling.k8s.io/verticalpodautoscaler_v1.json
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: litellm-mcp-tool-drift
+  namespace: litellm
+spec:
+  targetRef:
+    apiVersion: batch/v1
+    kind: CronJob
+    name: litellm-mcp-tool-drift
+  updatePolicy:
+    updateMode: "Initial"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: drift
+        controlledValues: "RequestsOnly"
+        minAllowed:
+          cpu: 1m
+          memory: 1Mi
+        maxAllowed:
+          cpu: 100m
+          memory: 128Mi

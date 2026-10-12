@@ -120,6 +120,16 @@ Who may use which MCP server and tool is declared in `litellm/access-policy/acce
 - LiteLLM merges an `object_permission` update field by field, so the Job sends an empty value (`[]`, `{}`) to clear a field. It logs aliases, ids and permission fields only, never credentials.
 - Unit tests for the script run in CI through `tests/litellm-access-policy.bats`.
 
+### MCP tool drift
+
+The `litellm-mcp-tool-drift` CronJob (`litellm/mcp-tool-drift/`, daily) compares each server in `mcp_servers` with what the server offers now. It reads the rendered `litellm-litellm-config` ConfigMap, asks `/mcp-rest/tools/list?include_disabled_tools=true` for the raw tool names, and flags names in neither `allowed_tools` nor `disallowed_tools` (new) and listed names the server no longer offers
+(stale).
+
+- `MODE` in `cronjob.yaml` is `report`: one log line per server with the upstream, allowed and disallowed counts and the sorted new and stale names (`kubectl -n litellm logs job/<latest job>`). A server that fails to list is logged and the Job exits non-zero after the others finish.
+- `MODE: enforce` keeps one open `mcp-tool-drift` issue per drifting server in `anthony-spruyt/spruyt-labs`, titled `chore(litellm): MCP tool drift on <server>`. It creates, edits when the body changes, and comments and closes once the drift is gone. It never edits `allowed_tools` or `disallowed_tools`.
+- The GitHub App token reaches the Job as `litellm-github-credentials` through the `github-token-rotation` consumer wiring (`mcp-tool-drift/github-token.yaml`). Report mode does not use it.
+- Unit tests run in CI through `tests/litellm-mcp-tool-drift.bats`.
+
 ### Proxy middleware
 
 The middleware package ships as the `ghcr.io/anthony-spruyt/litellm-middleware` image, mounted read-only as a Kubernetes `image` volume at `/opt/litellm-middleware`, which is on `PYTHONPATH`. The kubelet pulls it, so the pod needs no egress for it. `litellm_middleware.pipeline_plugin.pipeline_middleware` is the single callback in `config.yaml`. Code, tests, the middleware list and how each

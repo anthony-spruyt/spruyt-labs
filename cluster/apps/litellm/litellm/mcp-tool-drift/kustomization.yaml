@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./cronjob.yaml
+  - ./network-policies.yaml
+  - ./vpa.yaml
+  - ./github-secret-store.yaml
+  - ./github-token.yaml
+  - ./github-rotation-rbac.yaml
+configMapGenerator:
+  - name: litellm-mcp-tool-drift-script
+    namespace: litellm
+    files:
+      - drift.py
