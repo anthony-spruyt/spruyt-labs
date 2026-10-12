@@ -338,6 +338,7 @@ misconfigurations:
   - id: AVD-KSV-0113
     paths:
       - cluster/apps/github-system/github-token-rotation/app/reader-role.yaml
+      - cluster/apps/github-system/github-token-rotation/app/reader-role-litellm.yaml
       - cluster/apps/github-system/github-token-rotation/app/reader-role-binding-n8n.yaml
       - cluster/apps/github-system/github-token-rotation/app/role.yaml
       - cluster/apps/traefik/traefik/app/mcp-api-keys-reader-rbac.yaml

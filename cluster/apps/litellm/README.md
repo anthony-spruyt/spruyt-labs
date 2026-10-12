@@ -127,7 +127,9 @@ The `litellm-mcp-tool-drift` CronJob (`litellm/mcp-tool-drift/`, daily) compares
 
 - `MODE` in `cronjob.yaml` is `report`: one log line per server with the upstream, allowed and disallowed counts and the sorted new and stale names (`kubectl -n litellm logs job/<latest job>`). A server that fails to list is logged and the Job exits non-zero after the others finish.
 - `MODE: enforce` keeps one open `mcp-tool-drift` issue per drifting server in `anthony-spruyt/spruyt-labs`, titled `chore(litellm): MCP tool drift on <server>`. It creates, edits when the body changes, and comments and closes once the drift is gone. It never edits `allowed_tools` or `disallowed_tools`.
-- The GitHub App token reaches the Job as `litellm-github-credentials` through the `github-token-rotation` consumer wiring (`mcp-tool-drift/github-token.yaml`). Report mode does not use it.
+- The GitHub App token is synced into `litellm-github-credentials` through the `github-token-rotation` consumer wiring (`mcp-tool-drift/github-token.yaml`), which has its own narrow `github-token-reader-litellm` Role. The CronJob does not mount it yet: `enforce` needs both the `MODE: enforce` setting and a `GITHUB_TOKEN` env var sourced from that secret.
+- Only names made of letters, digits and `_ . - /` (up to 128 characters) are listed in an issue, at most 100 per section followed by an "and N more" line. The Job log shows the count of names left out.
+- Removing the `mcp-tool-drift` label from an issue makes the Job open a new one. Issues for a server removed from `mcp_servers` are not closed by the Job: close them by hand.
 - Unit tests run in CI through `tests/litellm-mcp-tool-drift.bats`.
 
 ### Proxy middleware

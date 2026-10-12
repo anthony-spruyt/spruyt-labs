@@ -24,7 +24,7 @@ from the App private key - so a failed run heals on the next one.
 ### Adding a consumer namespace
 
 1. In the consumer: a `SecretStore` pointing at `github-system` and an `ExternalSecret` for `github-bot-credentials` (see `claude-agents-shared/base/github-secret-store.yaml`).
-2. Here: a `reader-role-binding-<ns>.yaml` binding the consumer's reader ServiceAccount to the `reader-role`.
+2. Here: a `reader-role-binding-<ns>.yaml` binding the consumer's reader ServiceAccount to the `reader-role` (`litellm` has its own `reader-role-litellm.yaml`, limited to `github-bot-credentials`).
 3. Add the namespace to the `force_sync_consumers` loop in `app/cronjob.yaml`, and grant this job's ServiceAccount `get, patch` on the ExternalSecret in that namespace (see `n8n-system/n8n/app/github-rotation-rbac.yaml`). Without step 3 the consumer still converges, but only on its own `refreshInterval`.
 
 ### Rotating an App private key

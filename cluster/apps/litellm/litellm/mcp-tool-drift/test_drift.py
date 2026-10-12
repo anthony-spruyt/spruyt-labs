@@ -202,6 +202,53 @@ class LiteLLMClientTest(unittest.TestCase):
                     with self.assertRaises(drift.ApiError):
                         self.client().list_tools(SERVER_ID)
 
+    def test_timeout_while_reading_is_a_failure(self):
+        handle = self.response({})
+        handle.read.side_effect = TimeoutError("timed out")
+        with mock.patch("urllib.request.urlopen", return_value=handle):
+            with self.assertRaises(drift.ApiError) as raised:
+                self.client().list_tools(SERVER_ID)
+        self.assertIn("timed out", str(raised.exception))
+
+    def test_connection_reset_is_a_failure_without_the_key(self):
+        with mock.patch("urllib.request.urlopen", side_effect=ConnectionResetError(f"reset {MASTER_KEY}")):
+            with self.assertRaises(drift.ApiError) as raised:
+                self.client().list_tools(SERVER_ID)
+        self.assertNotIn(MASTER_KEY, str(raised.exception))
+
+    def test_litellm_nested_detail_message_is_reported(self):
+        body = json.dumps({"detail": {"error": "server_not_found", "message": "No such server"}}).encode()
+        error = urllib.error.HTTPError("http://x", 404, "nf", {}, io.BytesIO(body))
+        with mock.patch("urllib.request.urlopen", side_effect=error):
+            with self.assertRaises(drift.ApiError) as raised:
+                self.client().list_tools(SERVER_ID)
+        self.assertEqual(str(raised.exception), "HTTP 404: No such server")
+
+    def test_litellm_nested_detail_error_is_the_fallback(self):
+        body = json.dumps({"detail": {"error": "server_not_found"}}).encode()
+        error = urllib.error.HTTPError("http://x", 404, "nf", {}, io.BytesIO(body))
+        with mock.patch("urllib.request.urlopen", side_effect=error):
+            with self.assertRaises(drift.ApiError) as raised:
+                self.client().list_tools(SERVER_ID)
+        self.assertEqual(str(raised.exception), "HTTP 404: server_not_found")
+
+    def test_litellm_string_detail_is_reported(self):
+        body = json.dumps({"detail": "Not authenticated"}).encode()
+        error = urllib.error.HTTPError("http://x", 401, "na", {}, io.BytesIO(body))
+        with mock.patch("urllib.request.urlopen", side_effect=error):
+            with self.assertRaises(drift.ApiError) as raised:
+                self.client().list_tools(SERVER_ID)
+        self.assertEqual(str(raised.exception), "HTTP 401: Not authenticated")
+
+    def test_detail_is_redacted_and_truncated(self):
+        body = json.dumps({"detail": {"message": MASTER_KEY + "y" * 500}}).encode()
+        error = urllib.error.HTTPError("http://x", 400, "bad", {}, io.BytesIO(body))
+        with mock.patch("urllib.request.urlopen", side_effect=error):
+            with self.assertRaises(drift.ApiError) as raised:
+                self.client().list_tools(SERVER_ID)
+        self.assertNotIn(MASTER_KEY, str(raised.exception))
+        self.assertLessEqual(len(str(raised.exception)), len("HTTP 400: ") + drift.DETAIL_LIMIT)
+
     def test_invalid_json_is_a_failure(self):
         handle = self.response({})
         handle.read.return_value = b"<html>"
@@ -236,6 +283,48 @@ class RenderBodyTest(unittest.TestCase):
 
     def test_is_deterministic(self):
         self.assertEqual(drift.render_body("alpha", ["n"], ["s"]), drift.render_body("alpha", ["n"], ["s"]))
+
+    def test_names_outside_the_safe_charset_are_left_out(self):
+        bad = ["a`b", "line\nbreak", "@octocat", "trail\n", "sp ace", "", "x" * 129, "<b>"]
+        body = drift.render_body("alpha", ["good_tool-1.x/y"] + bad, ["stale"] + bad)
+        self.assertIn("- `good_tool-1.x/y`", body)
+        self.assertIn("- `stale`", body)
+        for name in bad:
+            if name.strip():
+                self.assertNotIn(name, body)
+        self.assertNotIn("@", body)
+
+    def test_longest_allowed_name_is_kept(self):
+        name = "x" * 128
+        self.assertIn(f"- `{name}`", drift.render_body("alpha", [name], []))
+
+    def test_only_unsupported_names_gives_a_note_and_no_list(self):
+        body = drift.render_body("alpha", ["@octocat"], [])
+        self.assertNotIn("@octocat", body)
+        self.assertNotIn("- `", body)
+        self.assertNotIn("## New tools", body)
+        self.assertIn("1 name with unsupported characters is not listed; see the job log.", body)
+
+    def test_note_counts_unsupported_names_across_sections(self):
+        body = drift.render_body("alpha", ["ok", "@a"], ["b`c", "d e"])
+        self.assertIn("3 names with unsupported characters are not listed; see the job log.", body)
+
+    def test_each_section_is_capped_with_an_and_more_line(self):
+        names = [f"tool_{i:04d}" for i in range(250)]
+        body = drift.render_body("alpha", names, names[:101])
+        self.assertEqual(body.count("- `tool_"), 200)
+        self.assertIn("- `tool_0099`", body)
+        self.assertNotIn("- `tool_0100`", body)
+        self.assertIn("- and 150 more", body)
+        self.assertIn("- and 1 more", body)
+
+    def test_a_very_long_list_stays_far_below_the_github_body_limit(self):
+        names = [("n%d" % i).ljust(128, "x") for i in range(5000)]
+        body = drift.render_body("alpha", names, names)
+        self.assertLess(len(body), 30000)
+
+    def test_count_of_unsupported_names(self):
+        self.assertEqual(drift.unsupported_count(["ok", "a`b", "@x"], ["bad\n", "fine"]), 3)
 
 
 class SyncIssueTest(unittest.TestCase):
@@ -292,9 +381,10 @@ class GitHubClientTest(unittest.TestCase):
         return drift.GitHub("owner/repo", "ghs_token", label="mcp-tool-drift")
 
     def test_find_issue_filters_label_state_and_skips_pull_requests(self):
+        bot = {"type": "Bot"}
         pages = [
-            [{"number": 1, "title": "other"}, {"number": 2, "title": TITLE, "pull_request": {}}],
-            [{"number": 3, "title": TITLE, "body": "b"}],
+            [{"number": 1, "title": "other", "user": bot}, {"number": 2, "title": TITLE, "pull_request": {}, "user": bot}],
+            [{"number": 3, "title": TITLE, "body": "b", "user": bot}],
         ]
         client = self.client()
         with mock.patch.object(client, "request", side_effect=[(200, p) for p in pages]) as request:
@@ -307,6 +397,19 @@ class GitHubClientTest(unittest.TestCase):
         self.assertIn("state=open", first[1])
         self.assertIn("page=1", first[1])
         self.assertIn("page=2", request.call_args_list[1].args[1])
+
+    def test_find_issue_ignores_issues_not_authored_by_a_bot(self):
+        issues = [
+            {"number": 1, "title": TITLE, "user": {"type": "User"}},
+            {"number": 2, "title": TITLE, "user": None},
+            {"number": 3, "title": TITLE},
+            {"number": 4, "title": TITLE, "user": {"type": "Bot"}},
+        ]
+        client = self.client()
+        with mock.patch.object(client, "request", return_value=(200, issues)):
+            self.assertEqual(client.find_issue(TITLE)["number"], 4)
+        with mock.patch.object(client, "request", return_value=(200, issues[:3])):
+            self.assertIsNone(client.find_issue(TITLE))
 
     def test_ensure_label_creates_when_missing(self):
         client = self.client()
@@ -328,18 +431,25 @@ class GitHubClientTest(unittest.TestCase):
             client.create_issue(TITLE, "body")
         self.assertEqual(
             request.call_args.args,
-            ("POST", "/repos/owner/repo/issues", {"title": TITLE, "body": "body", "labels": ["mcp-tool-drift"]}),
+            ("POST", "/repos/owner/repo/issues", {"title": TITLE, "body": "body", "labels": ["mcp-tool-drift", "chore"]}),
         )
 
-    def test_comment_and_close(self):
+    def test_comment_and_close_closes_first_then_comments(self):
         client = self.client()
         with mock.patch.object(client, "request", return_value=(200, {})) as request:
             client.comment_and_close(7, "done")
-        self.assertEqual(request.call_args_list[0].args, ("POST", "/repos/owner/repo/issues/7/comments", {"body": "done"}))
         self.assertEqual(
-            request.call_args_list[1].args,
+            request.call_args_list[0].args,
             ("PATCH", "/repos/owner/repo/issues/7", {"state": "closed", "state_reason": "completed"}),
         )
+        self.assertEqual(request.call_args_list[1].args, ("POST", "/repos/owner/repo/issues/7/comments", {"body": "done"}))
+
+    def test_failed_close_posts_no_comment(self):
+        client = self.client()
+        with mock.patch.object(client, "request", side_effect=drift.ApiError("HTTP 500")) as request:
+            with self.assertRaises(drift.ApiError):
+                client.comment_and_close(7, "done")
+        self.assertEqual(request.call_count, 1)
 
     def test_request_sends_token_and_raises_on_unexpected_status(self):
         client = self.client()
@@ -428,6 +538,37 @@ class RunTest(unittest.TestCase):
         self.run_drift(self.servers(), litellm, github, mode="enforce")
         self.assertEqual(github.calls[0], ("ensure_label",))
         self.assertEqual(sum(1 for c in github.calls if c[0] == "ensure_label"), 1)
+
+    def test_one_server_timing_out_does_not_stop_the_others(self):
+        class Flaky(FakeLiteLLM):
+            def list_tools(self, server_id):
+                if server_id == SERVER_ID:
+                    return drift.LiteLLM.list_tools(drift.LiteLLM("http://x", MASTER_KEY), server_id)
+                return super().list_tools(server_id)
+
+        handle = mock.MagicMock()
+        handle.__enter__.return_value = handle
+        handle.read.side_effect = TimeoutError("timed out")
+        with mock.patch("urllib.request.urlopen", return_value=handle):
+            code, output = self.run_drift(self.servers(), Flaky({OTHER_ID: ["x"]}))
+        self.assertEqual(code, 1)
+        self.assertIn("alpha: FAILED request failed: timed out", output)
+        self.assertIn("beta: upstream=1", output)
+
+    def test_unsupported_names_are_logged_as_a_count_only(self):
+        litellm = FakeLiteLLM({SERVER_ID: ["a", "bad`name", "@mention"], OTHER_ID: ["x"]})
+        github = FakeGitHub()
+        code, output = self.run_drift(self.servers(), litellm, github, mode="enforce")
+        self.assertIn("alpha: 2 names with unsupported characters left out of the issue", output)
+        self.assertNotIn("beta: 0", output)
+        create = [c for c in github.calls if c[0] == "create_issue"][0]
+        self.assertNotIn("bad`name", create[2])
+        self.assertNotIn("@mention", create[2])
+
+    def test_single_unsupported_name_is_logged_in_the_singular(self):
+        litellm = FakeLiteLLM({SERVER_ID: ["a", "@mention"], OTHER_ID: ["x"]})
+        _, output = self.run_drift(self.servers(), litellm)
+        self.assertIn("alpha: 1 name with unsupported characters left out of the issue", output)
 
     def test_github_failure_fails_that_server_only(self):
         github = FakeGitHub()

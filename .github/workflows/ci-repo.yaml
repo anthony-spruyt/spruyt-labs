@@ -64,7 +64,7 @@ jobs:
               - '.taskfiles/install/scripts/**'
               # Script asserted by tests/happy-template-key.bats
               - '.taskfiles/happy/scripts/**'
-              # Values (and the middleware image tag in them) asserted by tests/litellm-middleware-contract.bats
+              # Values (and the middleware image tag in them) asserted by tests/litellm-middleware-contract.bats and tests/litellm-mcp-tool-drift.bats
               - 'cluster/apps/litellm/litellm/app/values.yaml'
               # Script and policy asserted by tests/litellm-access-policy.bats
               - 'cluster/apps/litellm/litellm/access-policy/**'

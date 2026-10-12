@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.parse
@@ -18,6 +19,9 @@ DEFAULT_CONFIG_FILE = "/litellm-config/config.yaml"
 LITELLM_TIMEOUT = 60
 GITHUB_TIMEOUT = 30
 DETAIL_LIMIT = 200
+ISSUE_LABELS_EXTRA = ("chore",)
+TOOL_NAME = re.compile(r"[A-Za-z0-9_.\-/]{1,128}")
+SECTION_LIMIT = 100
 
 
 class ConfigError(Exception):
@@ -89,6 +93,8 @@ def fetch(request, timeout, allow=(), secrets=()):
             raise ApiError(f"HTTP {status}{_detail(raw, secrets)}") from None
     except urllib.error.URLError as error:
         raise ApiError(redact(f"request failed: {error.reason}", secrets)) from None
+    except OSError as error:
+        raise ApiError(redact(f"request failed: {error}", secrets)) from None
     try:
         return status, json.loads(raw) if raw else {}
     except ValueError:
@@ -99,12 +105,21 @@ def fetch(request, timeout, allow=(), secrets=()):
 
 def _detail(raw, secrets):
     try:
-        message = json.loads(raw).get("message")
-    except (ValueError, AttributeError):
+        payload = json.loads(raw)
+    except ValueError:
         return ""
-    if not isinstance(message, str) or not message:
+    if not isinstance(payload, dict):
         return ""
-    return ": " + redact(message, secrets)[:DETAIL_LIMIT]
+    detail = payload.get("detail")
+    candidates = [payload.get("message")]
+    if isinstance(detail, dict):
+        candidates += [detail.get("message"), detail.get("error")]
+    else:
+        candidates.append(detail)
+    for message in candidates:
+        if isinstance(message, str) and message:
+            return ": " + redact(message, secrets)[:DETAIL_LIMIT]
+    return ""
 
 
 class LiteLLM:
@@ -180,42 +195,65 @@ class GitHub:
             if not isinstance(issues, list):
                 raise ApiError("unexpected issues response")
             for issue in issues:
-                if "pull_request" not in issue and issue.get("title") == title:
+                author = (issue.get("user") or {}).get("type")
+                if "pull_request" not in issue and author == "Bot" and issue.get("title") == title:
                     return issue
             if len(issues) < PAGE_SIZE:
                 return None
             page += 1
 
     def create_issue(self, title, body):
-        self.request("POST", f"/repos/{self.repo}/issues", {"title": title, "body": body, "labels": [self.label]})
+        labels = [self.label, *ISSUE_LABELS_EXTRA]
+        self.request("POST", f"/repos/{self.repo}/issues", {"title": title, "body": body, "labels": labels})
 
     def update_issue_body(self, number, body):
         self.request("PATCH", f"/repos/{self.repo}/issues/{number}", {"body": body})
 
     def comment_and_close(self, number, comment):
-        self.request("POST", f"/repos/{self.repo}/issues/{number}/comments", {"body": comment})
         self.request("PATCH", f"/repos/{self.repo}/issues/{number}", {"state": "closed", "state_reason": "completed"})
+        self.request("POST", f"/repos/{self.repo}/issues/{number}/comments", {"body": comment})
 
 
 def issue_title(server):
     return f"chore(litellm): MCP tool drift on {server}"
 
 
+def _supported(names):
+    return [name for name in names if TOOL_NAME.fullmatch(name)]
+
+
+def unsupported_count(*groups):
+    return sum(len(group) - len(_supported(group)) for group in groups)
+
+
+def _names(count):
+    return f"{count} name" if count == 1 else f"{count} names"
+
+
 def _bullets(names):
-    return "\n".join(f"- `{name}`" for name in names)
+    lines = [f"- `{name}`" for name in names[:SECTION_LIMIT]]
+    if len(names) > SECTION_LIMIT:
+        lines.append(f"- and {len(names) - SECTION_LIMIT} more")
+    return "\n".join(lines)
 
 
 def render_body(server, new, stale):
     sections = []
-    if new:
+    shown_new, shown_stale = _supported(new), _supported(stale)
+    if shown_new:
         sections.append(
-            "## New tools\n\nOffered upstream, but in neither `allowed_tools` nor `disallowed_tools`:\n\n" + _bullets(new)
+            "## New tools\n\nOffered upstream, but in neither `allowed_tools` nor `disallowed_tools`:\n\n"
+            + _bullets(shown_new)
         )
-    if stale:
+    if shown_stale:
         sections.append(
             "## Stale entries\n\nListed in `allowed_tools` or `disallowed_tools`, but no longer offered upstream:\n\n"
-            + _bullets(stale)
+            + _bullets(shown_stale)
         )
+    omitted = unsupported_count(new, stale)
+    if omitted:
+        verb = "is" if omitted == 1 else "are"
+        sections.append(f"{_names(omitted)} with unsupported characters {verb} not listed; see the job log.")
     sections.append(
         "Add a new tool to `allowed_tools` to enable it or to `disallowed_tools` to hide it on purpose, and delete "
         f"stale entries; both lists are under `mcp_servers.{server}` in `{VALUES_PATH}`."
@@ -265,6 +303,9 @@ def run(servers, litellm, mode, github=None, out=print):
             f"{server.name}: upstream={len(upstream)} allowed={len(server.allowed)} "
             f"disallowed={len(server.disallowed)} new={json.dumps(new)} stale={json.dumps(stale)}"
         )
+        omitted = unsupported_count(new, stale)
+        if omitted:
+            out(f"{server.name}: {_names(omitted)} with unsupported characters left out of the issue")
         if mode != "enforce":
             continue
         try:
@@ -283,7 +324,7 @@ def mode_from(environ):
 
 
 def load_servers(path):
-    import yaml  # PyYAML ships in the Job image
+    import yaml
 
     try:
         with open(path, encoding="utf-8") as handle:

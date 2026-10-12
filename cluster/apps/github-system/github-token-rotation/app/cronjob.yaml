@@ -69,12 +69,10 @@ spec:
 
                   MAX_RETRIES=3
 
-                  # Base64url encode (no padding, URL-safe)
                   b64url() {
                     openssl base64 -A | tr '+/' '-_' | tr -d '='
                   }
 
-                  # Generate a JWT for a GitHub App
                   generate_jwt() {
                     APP_ID="$$1"
                     KEY_FILE="$$2"
@@ -92,7 +90,6 @@ spec:
                     printf '%s.%s.%s' "$$HEADER" "$$PAYLOAD" "$$SIGNATURE"
                   }
 
-                  # Mint an installation access token and update the source secret
                   mint_token() {
                     PREFIX="$$1"
                     APP_ID="$$2"
@@ -128,10 +125,8 @@ spec:
 
                     echo "Token minted, updating source secret..."
 
-                    # Build hosts.yml for gh CLI
                     HOSTS_YML=$$(printf 'github.com:\n  oauth_token: %s\n  user: spruyt-labs-bot\n' "$${TOKEN}")
 
-                    # Build .git-credentials for git CLI
                     GIT_CREDS=$$(printf 'https://x-access-token:%s@github.com\n' "$${TOKEN}")
 
                     # Build patch JSON with jq (handles newlines/special chars)
@@ -144,7 +139,6 @@ spec:
                       --arg gc_key "$${PREFIX}-git-credentials" \
                       '{stringData: {($$at_key): $$token, ($$hy_key): $$hosts, ($$gc_key): $$creds}}')
 
-                    # Atomic patch with retry
                     ATTEMPT=0
                     while [ $$ATTEMPT -lt $$MAX_RETRIES ]; do
                       ATTEMPT=$$((ATTEMPT + 1))
@@ -167,7 +161,6 @@ spec:
                     echo "=== $${PREFIX} installation token minted ==="
                   }
 
-                  # Force-sync ExternalSecrets in consumer namespaces.
                   # Best-effort: source secret already updated above; ExternalSecrets
                   # will refresh on their own refreshInterval if force-sync fails
                   # (e.g. external-secrets-webhook rolling restart = no endpoints).
@@ -210,12 +203,10 @@ spec:
                   echo "$${WRITE_PRIVATE_KEY}" > /tmp/write-key.pem
                   echo "$${READ_PRIVATE_KEY}" > /tmp/read-key.pem
 
-                  # Main
                   mint_token "write" "$${WRITE_APP_ID}" "$${WRITE_INSTALLATION_ID}" /tmp/write-key.pem
                   mint_token "read" "$${READ_APP_ID}" "$${READ_INSTALLATION_ID}" /tmp/read-key.pem
                   force_sync_consumers
 
-                  # Clean up key files
                   rm -f /tmp/write-key.pem /tmp/read-key.pem
 
                   echo "All token rotations completed successfully!"

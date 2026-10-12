@@ -18,6 +18,7 @@ resources:
   - ./reader-role-binding-claude-agents-spruyt-labs-write.yaml
   - ./reader-role-binding-claude-agents-write.yaml
   - ./reader-role-binding-coder-workspaces.yaml
+  - ./reader-role-litellm.yaml
   - ./reader-role-binding-litellm.yaml
   - ./reader-role-binding-n8n.yaml
   - ./vmrule.yaml
