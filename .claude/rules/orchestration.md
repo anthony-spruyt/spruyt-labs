@@ -12,7 +12,7 @@ The main session plans, decides and talks to the owner. If the brief would be lo
 | Waiting or polling, noisy logs, batch sweeps | `chore-runner` (haiku), in background |
 | Reviews, fix-checks, attacker-minded reviews | `reviewer` (opus)                     |
 | Deep investigation                           | `general-purpose` (opus)              |
-| Broad read-only search across files or repos | `Explore`                             |
+| Broad read-only search across files or repos | `Explore` (haiku)                     |
 
 Push reviewed commits yourself from the builder's `workspace.sh` clone, never the shared checkout, with `push-reviewed.sh <base> <sha> <branch>`, only once fresh reviews cover that exact range and the last round is READY (every full-review lens, then each fix-check); if it stops, tell the owner. Give the range it prints to the CI wait and cluster-validator.
 
