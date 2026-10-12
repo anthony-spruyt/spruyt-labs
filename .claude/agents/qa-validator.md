@@ -91,12 +91,11 @@ For `tooling`, mark the Kubernetes checks SKIPPED, run the matching suite (`bats
 
 ```bash
 CHANGED="<the files the caller listed, one per line>"
-# command grep: Claude Code's grep wrapper returns 1 for -qv even when a line is selected
-if ! echo "$CHANGED" | command grep -qvE '\.(sh|bats)$|^(\.claude|\.github|tests)/'; then
+if ! echo "$CHANGED" | grep -qvE '\.(sh|bats)$|^(\.claude|\.github|tests)/'; then
   TYPE="tooling"
-elif echo "$CHANGED" | command grep -qE 'release\.yaml|values\.yaml'; then
+elif echo "$CHANGED" | grep -qE 'release\.yaml|values\.yaml'; then
   TYPE="helm-release"
-elif ! echo "$CHANGED" | command grep -qvE '(^|/)(ks|kustomization|namespace)\.yaml$'; then
+elif ! echo "$CHANGED" | grep -qvE '(^|/)(ks|kustomization|namespace)\.yaml$'; then
   TYPE="kustomization"
 else
   TYPE="mixed"
