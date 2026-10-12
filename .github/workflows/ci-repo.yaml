@@ -73,6 +73,8 @@ jobs:
               # Sources asserted by tests/orchestration-retro.bats
               - '.claude/skills/orchestration-retro/**'
               - 'tests/fixtures/orchestration-retro/**'
+              # Scripts asserted by tests/push-reviewed.bats, tests/ci-status.bats, tests/workspace.bats and tests/builder-progress.bats
+              - '.claude/scripts/**'
   kubeconform:
     name: "kubeconform"
     needs: "changes"
