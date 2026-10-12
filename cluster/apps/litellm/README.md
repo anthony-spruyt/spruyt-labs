@@ -96,7 +96,7 @@ Tokens are `authentication_token: os.environ/MCP_<NAME>_TOKEN`, read once at sta
 
 To add a server:
 
-1. Add an entry to `mcp_servers` with a fresh UUID `server_id`, `alias` equal to the key, `url`, `transport`, `auth_type`, `allowed_tools` and `available_on_public_internet: false`.
+1. Add an entry to `mcp_servers` with a fresh UUID `server_id`, `alias` equal to the key, `url`, `transport`, `auth_type`, `allowed_tools`, `disallowed_tools` (every other tool the server offers, or the drift Job opens an issue) and `available_on_public_internet: false`.
 2. For a bearer-token server, add `MCP_<NAME>_TOKEN` to `litellm-secrets`.
 3. Add an egress CNP in `litellm/app/network-policies.yaml` and, for an in-cluster server, an ingress CNP from the `litellm` namespace.
 4. Grant the server to teams or access groups in `litellm/access-policy/access-policy.yml` (see Access policy).
@@ -125,9 +125,9 @@ Who may use which MCP server and tool is declared in `litellm/access-policy/acce
 The `litellm-mcp-tool-drift` CronJob (`litellm/mcp-tool-drift/`, daily) compares each server in `mcp_servers` with what the server offers now. It reads the rendered `litellm-litellm-config` ConfigMap, asks `/mcp-rest/tools/list?include_disabled_tools=true` for the raw tool names, and flags names in neither `allowed_tools` nor `disallowed_tools` (new) and listed names the server no longer offers
 (stale).
 
-- `MODE` in `cronjob.yaml` is `report`: one log line per server with the upstream, allowed and disallowed counts and the sorted new and stale names (`kubectl -n litellm logs job/<latest job>`). A server that fails to list is logged and the Job exits non-zero after the others finish.
+- `MODE` in `cronjob.yaml` is `enforce`. In `report` mode it only logs; either mode logs one line per server with the upstream, allowed and disallowed counts and the sorted new and stale names (`kubectl -n litellm logs job/<latest job>`). A server that fails to list is logged and the Job exits non-zero after the others finish.
 - `MODE: enforce` keeps one open `mcp-tool-drift` issue per drifting server in `anthony-spruyt/spruyt-labs`, titled `chore(litellm): MCP tool drift on <server>`. It creates, edits when the body changes, and comments and closes once the drift is gone. It never edits `allowed_tools` or `disallowed_tools`.
-- The GitHub App token is synced into `litellm-github-credentials` through the `github-token-rotation` consumer wiring (`mcp-tool-drift/github-token.yaml`), which has its own narrow `github-token-reader-litellm` Role. The CronJob does not mount it yet: `enforce` needs both the `MODE: enforce` setting and a `GITHUB_TOKEN` env var sourced from that secret.
+- The GitHub App token is synced into `litellm-github-credentials` through the `github-token-rotation` consumer wiring (`mcp-tool-drift/github-token.yaml`), which has its own narrow `github-token-reader-litellm` Role. The CronJob reads it as `GITHUB_TOKEN`, which `enforce` requires.
 - Only names made of letters, digits and `_ . - /` (up to 128 characters) are listed in an issue, at most 100 per section followed by an "and N more" line. The Job log shows the count of names left out.
 - Removing the `mcp-tool-drift` label from an issue makes the Job open a new one. Issues for a server removed from `mcp_servers` are not closed by the Job: close them by hand.
 - Unit tests run in CI through `tests/litellm-mcp-tool-drift.bats`.

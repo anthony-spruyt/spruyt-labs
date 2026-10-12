@@ -597,6 +597,14 @@ configMaps:
             auth_type: none
             allowed_tools:
               - brave_web_search
+            disallowed_tools:
+              - brave_image_search
+              - brave_llm_context
+              - brave_local_search
+              - brave_news_search
+              - brave_place_search
+              - brave_summarizer
+              - brave_video_search
             allow_all_keys: false
             available_on_public_internet: false
           cloudflare:
@@ -610,6 +618,9 @@ configMaps:
             allowed_tools:
               - search
               - execute
+            disallowed_tools:
+              - docs
+              - whoami
             allow_all_keys: false
             available_on_public_internet: false
           context7:
@@ -677,6 +688,10 @@ configMaps:
               - sub_issue_write
               - update_pull_request
               - update_pull_request_branch
+            disallowed_tools:
+              - list_issue_fields
+              - ui_get
+              - update_issue_comment
             allow_all_keys: false
             available_on_public_internet: false
           homeassistant:
@@ -820,6 +835,29 @@ configMaps:
               - search_private_providers
               - search_providers
               - whoami
+            disallowed_tools:
+              - add_team_member
+              - attach_policy_set_to_workspaces
+              - attach_variable_set_to_workspaces
+              - create_no_code_workspace
+              - create_project
+              - create_run
+              - create_team
+              - create_variable_in_variable_set
+              - create_variable_set
+              - create_workspace
+              - create_workspace_tags
+              - create_workspace_variable
+              - delete_project
+              - delete_team
+              - delete_variable_in_variable_set
+              - delete_workspace_safely
+              - detach_variable_set_from_workspaces
+              - force_unlock_workspace
+              - get_plan_json_output
+              - grant_team_access
+              - update_workspace
+              - update_workspace_variable
             allow_all_keys: false
             available_on_public_internet: false
           unifi:
@@ -836,6 +874,124 @@ configMaps:
               - unifi_batch
               - unifi_batch_status
               - unifi_load_tools
+            disallowed_tools:
+              - unifi_adopt_device
+              - unifi_archive_alarm
+              - unifi_archive_all_alarms
+              - unifi_authorize_guest
+              - unifi_block_client
+              - unifi_create_ap_group
+              - unifi_create_backup
+              - unifi_create_firewall_group
+              - unifi_create_firewall_policy
+              - unifi_create_firewall_zone
+              - unifi_create_network
+              - unifi_create_qos_rule
+              - unifi_create_simple_qos_rule
+              - unifi_create_traffic_route
+              - unifi_create_wlan
+              - unifi_delete_ap_group
+              - unifi_delete_backup
+              - unifi_delete_content_filter
+              - unifi_delete_firewall_group
+              - unifi_delete_firewall_policy
+              - unifi_delete_firewall_zone
+              - unifi_delete_network
+              - unifi_delete_wlan
+              - unifi_force_provision_device
+              - unifi_force_reconnect_client
+              - unifi_forget_client
+              - unifi_get_alerts
+              - unifi_get_anomalies
+              - unifi_get_ap_group_details
+              - unifi_get_autobackup_settings
+              - unifi_get_client_details
+              - unifi_get_client_dpi_traffic
+              - unifi_get_client_sessions
+              - unifi_get_client_stats
+              - unifi_get_client_wifi_details
+              - unifi_get_content_filter_details
+              - unifi_get_dashboard
+              - unifi_get_device_details
+              - unifi_get_device_radio
+              - unifi_get_device_stats
+              - unifi_get_dpi_stats
+              - unifi_get_event_types
+              - unifi_get_firewall_group_details
+              - unifi_get_firewall_policy_details
+              - unifi_get_firewall_policy_ordering
+              - unifi_get_gateway_settings
+              - unifi_get_gateway_stats
+              - unifi_get_ips_events
+              - unifi_get_mgmt_settings
+              - unifi_get_network_details
+              - unifi_get_network_health
+              - unifi_get_network_stats
+              - unifi_get_pdu_outlets
+              - unifi_get_qos_rule_details
+              - unifi_get_rf_scan_results
+              - unifi_get_site_dpi_traffic
+              - unifi_get_site_settings
+              - unifi_get_snmp_settings
+              - unifi_get_speedtest_results
+              - unifi_get_speedtest_status
+              - unifi_get_system_info
+              - unifi_get_top_clients
+              - unifi_get_traffic_route_details
+              - unifi_get_wlan_details
+              - unifi_list_alarms
+              - unifi_list_ap_groups
+              - unifi_list_available_channels
+              - unifi_list_backups
+              - unifi_list_blocked_clients
+              - unifi_list_clients
+              - unifi_list_content_filters
+              - unifi_list_devices
+              - unifi_list_events
+              - unifi_list_firewall_groups
+              - unifi_list_firewall_policies
+              - unifi_list_firewall_zones
+              - unifi_list_legacy_firewall_rules
+              - unifi_list_networks
+              - unifi_list_qos_rules
+              - unifi_list_rogue_aps
+              - unifi_list_traffic_routes
+              - unifi_list_wlans
+              - unifi_locate_device
+              - unifi_lookup_by_ip
+              - unifi_reboot_device
+              - unifi_recent_events
+              - unifi_rename_client
+              - unifi_rename_device
+              - unifi_reorder_firewall_policies
+              - unifi_set_client_ip_settings
+              - unifi_set_device_led
+              - unifi_set_outlet_state
+              - unifi_set_site_leds
+              - unifi_subscribe_events
+              - unifi_toggle_device
+              - unifi_toggle_firewall_policy
+              - unifi_toggle_qos_rule_enabled
+              - unifi_toggle_traffic_route
+              - unifi_toggle_wlan
+              - unifi_trigger_rf_scan
+              - unifi_trigger_speedtest
+              - unifi_unauthorize_guest
+              - unifi_unblock_client
+              - unifi_update_ap_group
+              - unifi_update_autobackup_settings
+              - unifi_update_content_filter
+              - unifi_update_device_radio
+              - unifi_update_firewall_group
+              - unifi_update_firewall_policy
+              - unifi_update_firewall_zone
+              - unifi_update_gateway_settings
+              - unifi_update_network
+              - unifi_update_qos_rule
+              - unifi_update_snmp_settings
+              - unifi_update_traffic_route
+              - unifi_update_wlan
+              - unifi_upgrade_device
             allow_all_keys: false
             available_on_public_internet: false
           valkeyshared:
@@ -861,6 +1017,45 @@ configMaps:
               - zrange
               - xrange
               - get
+            disallowed_tools:
+              - client_list
+              - create_vector_index_hash
+              - delete
+              - expire
+              - get_index_info
+              - get_indexed_keys_number
+              - get_indexes
+              - hdel
+              - hset
+              - hybrid_search
+              - json_del
+              - json_get
+              - json_set
+              - lpop
+              - lpush
+              - lrem
+              - psubscribe
+              - publish
+              - read_messages
+              - rename
+              - rpop
+              - rpush
+              - sadd
+              - search_redis_documents
+              - set
+              - set_vector_in_hash
+              - srem
+              - subscribe
+              - unsubscribe
+              - vector_search_hash
+              - xack
+              - xadd
+              - xdel
+              - xgroup_create
+              - xgroup_destroy
+              - xreadgroup
+              - zadd
+              - zrem
             allow_all_keys: false
             available_on_public_internet: false
           victorialogs:

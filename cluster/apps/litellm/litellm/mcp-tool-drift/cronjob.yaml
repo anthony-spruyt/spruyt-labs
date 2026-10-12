@@ -39,11 +39,13 @@ spec:
                 limits: {cpu: 100m, memory: 128Mi}
               env:
                 - name: MODE
-                  value: report
+                  value: enforce
                 - name: LITELLM_URL
                   value: "http://litellm.litellm.svc.cluster.local:4000"
                 - name: LITELLM_MASTER_KEY
                   valueFrom: {secretKeyRef: {name: litellm-secrets, key: LITELLM_MASTER_KEY}}
+                - name: GITHUB_TOKEN
+                  valueFrom: {secretKeyRef: {name: litellm-github-credentials, key: github-token, optional: true}}
                 - name: CONFIG_FILE
                   value: /litellm-config/config.yaml
                 - name: PYTHONDONTWRITEBYTECODE
