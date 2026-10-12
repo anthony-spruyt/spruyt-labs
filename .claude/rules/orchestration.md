@@ -35,9 +35,9 @@ Every PR and fix round gets a fresh reviewer, never the author (bot PRs below ex
 
 Review wide once, then check only the fixes (fresh reviewers each re-reviewing everything find new nits forever):
 
-1. **Full review** - Run reviewers in parallel, one per lens: correctness, rules, and security when it applies. A diff under about 50 lines gets one reviewer with no lens. Merge their findings into one deduplicated list.
+1. **Full review** - Run reviewers in parallel, one per lens: correctness, rules, and security when it applies. A diff under about 50 lines gets one reviewer with no lens. Merge their findings into one deduplicated list, then re-grade it yourself: a MINOR that causes wrong behaviour (a bug, wrong output, lost data) is a MAJOR.
 2. **Fix round** - One builder fixes every BLOCKER and MAJOR, plus the plainly correct MINORs, in one commit. MINORs alone never start a round.
-3. **Fix-check** - A fresh reviewer in fix-check mode gets the list and the fix range, and looks only there.
+3. **Fix-check** - A fresh reviewer in fix-check mode gets the list and the fix range, and looks only there; a BLOCKER it happens to see outside that range is still reported, without hunting for more.
 4. **Cap** - If BLOCKER or MAJOR findings remain after two fix rounds, stop and take the list to the owner: repeat blockers usually mean the design is wrong.
 
 Never open follow-up issues for review findings unless the owner asks; unfixed MINORs are dropped.

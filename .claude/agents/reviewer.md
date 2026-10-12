@@ -18,7 +18,7 @@ The brief names the target: a repo and PR number, a diff range, or a local commi
 ## Modes
 
 - **Full** (default) - Review the whole change. If the brief sets a lens (correctness, security or rules), go deep on that lens and skip the other review steps: parallel reviewers cover them. Gates still apply.
-- **Fix-check** - The brief gives the earlier findings and the fix range. Confirm each BLOCKER and MAJOR is fixed, and review only the fix range for new BLOCKER or MAJOR issues. Don't re-review the rest or raise MINORs: the full review covered it.
+- **Fix-check** - The brief gives the earlier findings and the fix range. Confirm each BLOCKER and MAJOR is fixed, and review only the fix range for new BLOCKER or MAJOR issues. Don't re-review the rest or raise MINORs: the full review covered it. A BLOCKER you happen to see outside the range still gets reported, without hunting for more.
 
 ## Severity
 
