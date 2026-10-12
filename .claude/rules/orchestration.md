@@ -13,7 +13,7 @@ The main session plans, decides and talks to the owner. If the brief would be lo
 | Reviews, fix-checks, attacker-minded reviews | `reviewer` (opus)                     |
 | Deep investigation                           | `general-purpose` (opus)              |
 
-Push reviewed commits yourself from the builder's clone or worktree, never the shared checkout, with `/workspaces/spruyt-labs/.claude/scripts/push-reviewed.sh <base> <sha> <branch>`, only once fresh reviews cover that exact range and the last round is READY (every full-review lens, then each fix-check); if it stops, tell the owner. Give the range it prints to the CI wait and cluster-validator.
+Push reviewed commits yourself from the builder's `workspace.sh` clone, never the shared checkout, with `/workspaces/spruyt-labs/.claude/scripts/push-reviewed.sh <base> <sha> <branch>`, only once fresh reviews cover that exact range and the last round is READY (every full-review lens, then each fix-check); if it stops, tell the owner. Give the range it prints to the CI wait and cluster-validator.
 
 ## Design before delegating
 
@@ -21,7 +21,7 @@ New work, or a change to an approach the owner picked, starts as a design shown 
 
 ## Running helpers
 
-- Each helper uses its own `/tmp` clone or worktree, stages only its own files, and waits for other helpers on the same repo
+- Each helper works in its own clone from `.claude/scripts/workspace.sh <owner/repo> <task-name>`, the one way for every repo (no worktrees or hand-made clones); it stages only its own files, and waits for other helpers on the same repo
 - Steer a running helper with `SendMessage`, never duplicate it; use a new helper per fix round
 - A pre-existing CI failure a helper flags: tell the owner and start a separate fix round at once
 - Never wait for Renovate's bump PR: tick the update's box in the repo's `Renovate Dashboard` issue (else `manual job`), then have a `chore-runner` poll for it (edit the line from `- [ ]` to `- [x]` and pipe the body to `gh issue edit <n> --body-file -`; no Write tool)
