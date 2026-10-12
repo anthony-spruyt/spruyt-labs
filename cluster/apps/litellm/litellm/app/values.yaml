@@ -587,6 +587,7 @@ configMaps:
               - hosted_vllm
               - openai
             search_tool_name: brave-search
+        # Only allowed_tools gates calls; disallowed_tools records tools reviewed and skipped (README "MCP tool drift")
         mcp_servers:
           bravesearch:
             server_id: 68db2756-13cb-4cf0-a172-666438cd28c4

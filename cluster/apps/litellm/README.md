@@ -125,6 +125,15 @@ Who may use which MCP server and tool is declared in `litellm/access-policy/acce
 The `litellm-mcp-tool-drift` CronJob (`litellm/mcp-tool-drift/`, daily) compares each server in `mcp_servers` with what the server offers now. It reads the rendered `litellm-litellm-config` ConfigMap, asks `/mcp-rest/tools/list?include_disabled_tools=true` for the raw tool names, and flags names in neither `allowed_tools` nor `disallowed_tools` (new) and listed names the server no longer offers
 (stale).
 
+Each server has two lists, and every tool it offers belongs in exactly one:
+
+| List               | Meaning                       | Effect in LiteLLM                                                                                             |
+| ------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `allowed_tools`    | Enabled                       | The only list that decides what clients can call                                                              |
+| `disallowed_tools` | Reviewed and deliberately off | None while `allowed_tools` is set, since anything not allowed is already hidden; it records the decision only |
+
+To resolve a drift issue, edit `litellm/app/values.yaml`: put each new tool in `allowed_tools` to enable it or in `disallowed_tools` to keep it off, and delete each stale name from whichever list holds it. To enable a tool that was kept off, move it from `disallowed_tools` to `allowed_tools`. The Job closes the issue on its next run.
+
 - `MODE` in `cronjob.yaml` is `enforce`. In `report` mode it only logs; either mode logs one line per server with the upstream, allowed and disallowed counts and the sorted new and stale names (`kubectl -n litellm logs job/<latest job>`). A server that fails to list is logged and the Job exits non-zero after the others finish.
 - `MODE: enforce` keeps one open `mcp-tool-drift` issue per drifting server in `anthony-spruyt/spruyt-labs`, titled `chore(litellm): MCP tool drift on <server>`. It creates, edits when the body changes, and comments and closes once the drift is gone. It never edits `allowed_tools` or `disallowed_tools`.
 - The GitHub App token is synced into `litellm-github-credentials` through the `github-token-rotation` consumer wiring (`mcp-tool-drift/github-token.yaml`), which has its own narrow `github-token-reader-litellm` Role. The CronJob reads it as `GITHUB_TOKEN`, which `enforce` requires.
