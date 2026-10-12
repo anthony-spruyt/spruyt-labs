@@ -104,16 +104,19 @@ class ParseServersTest(unittest.TestCase):
             drift.parse_servers({"mcp_servers": {}})
 
     def test_missing_server_id_is_an_error(self):
+        doc = config_doc(alpha={"alias": "alpha"})
         with self.assertRaises(drift.ConfigError):
-            drift.parse_servers(config_doc(alpha={"alias": "alpha"}))
+            drift.parse_servers(doc)
 
     def test_non_list_tools_is_an_error(self):
+        doc = config_doc(alpha=server(allowed="query"))
         with self.assertRaises(drift.ConfigError):
-            drift.parse_servers(config_doc(alpha=server(allowed="query")))
+            drift.parse_servers(doc)
 
     def test_non_string_tool_is_an_error(self):
+        doc = config_doc(alpha=server(allowed=["a", 3]))
         with self.assertRaises(drift.ConfigError):
-            drift.parse_servers(config_doc(alpha=server(allowed=["a", 3])))
+            drift.parse_servers(doc)
 
     def test_non_mapping_server_is_an_error(self):
         with self.assertRaises(drift.ConfigError):
@@ -178,89 +181,101 @@ class LiteLLMClientTest(unittest.TestCase):
 
     def test_error_field_is_a_failure(self):
         payload = {"tools": [], "error": "server_unavailable", "message": "boom"}
+        client = self.client()
         with mock.patch("urllib.request.urlopen", return_value=self.response(payload)):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertIn("server_unavailable", str(raised.exception))
 
     def test_http_error_is_a_failure(self):
         error = urllib.error.HTTPError("http://x", 500, "boom", {}, io.BytesIO(b"{}"))
+        client = self.client()
         with mock.patch("urllib.request.urlopen", side_effect=error):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertIn("500", str(raised.exception))
 
     def test_connection_error_is_a_failure(self):
+        client = self.client()
         with mock.patch("urllib.request.urlopen", side_effect=urllib.error.URLError("refused")):
             with self.assertRaises(drift.ApiError):
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
 
     def test_malformed_tools_is_a_failure(self):
+        client = self.client()
         for payload in ({"tools": "x"}, {"tools": [{"nope": 1}]}, {}, ["a"]):
             with self.subTest(payload=payload):
                 with mock.patch("urllib.request.urlopen", return_value=self.response(payload)):
                     with self.assertRaises(drift.ApiError):
-                        self.client().list_tools(SERVER_ID)
+                        client.list_tools(SERVER_ID)
 
     def test_timeout_while_reading_is_a_failure(self):
         handle = self.response({})
         handle.read.side_effect = TimeoutError("timed out")
+        client = self.client()
         with mock.patch("urllib.request.urlopen", return_value=handle):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertIn("timed out", str(raised.exception))
 
     def test_connection_reset_is_a_failure_without_the_key(self):
+        client = self.client()
         with mock.patch("urllib.request.urlopen", side_effect=ConnectionResetError(f"reset {MASTER_KEY}")):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertNotIn(MASTER_KEY, str(raised.exception))
 
     def test_litellm_nested_detail_message_is_reported(self):
         body = json.dumps({"detail": {"error": "server_not_found", "message": "No such server"}}).encode()
         error = urllib.error.HTTPError("http://x", 404, "nf", {}, io.BytesIO(body))
+        client = self.client()
         with mock.patch("urllib.request.urlopen", side_effect=error):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertEqual(str(raised.exception), "HTTP 404: No such server")
 
     def test_litellm_nested_detail_error_is_the_fallback(self):
         body = json.dumps({"detail": {"error": "server_not_found"}}).encode()
         error = urllib.error.HTTPError("http://x", 404, "nf", {}, io.BytesIO(body))
+        client = self.client()
         with mock.patch("urllib.request.urlopen", side_effect=error):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertEqual(str(raised.exception), "HTTP 404: server_not_found")
 
     def test_litellm_string_detail_is_reported(self):
         body = json.dumps({"detail": "Not authenticated"}).encode()
         error = urllib.error.HTTPError("http://x", 401, "na", {}, io.BytesIO(body))
+        client = self.client()
         with mock.patch("urllib.request.urlopen", side_effect=error):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertEqual(str(raised.exception), "HTTP 401: Not authenticated")
 
     def test_detail_is_redacted_and_truncated(self):
         body = json.dumps({"detail": {"message": MASTER_KEY + "y" * 500}}).encode()
         error = urllib.error.HTTPError("http://x", 400, "bad", {}, io.BytesIO(body))
+        client = self.client()
         with mock.patch("urllib.request.urlopen", side_effect=error):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertNotIn(MASTER_KEY, str(raised.exception))
         self.assertLessEqual(len(str(raised.exception)), len("HTTP 400: ") + drift.DETAIL_LIMIT)
 
     def test_invalid_json_is_a_failure(self):
         handle = self.response({})
         handle.read.return_value = b"<html>"
+        client = self.client()
         with mock.patch("urllib.request.urlopen", return_value=handle):
             with self.assertRaises(drift.ApiError):
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
 
     def test_master_key_never_appears_in_errors(self):
         error = urllib.error.HTTPError("http://x", 401, MASTER_KEY, {}, io.BytesIO(MASTER_KEY.encode()))
+        client = self.client()
         with mock.patch("urllib.request.urlopen", side_effect=error):
             with self.assertRaises(drift.ApiError) as raised:
-                self.client().list_tools(SERVER_ID)
+                client.list_tools(SERVER_ID)
         self.assertNotIn(MASTER_KEY, str(raised.exception))
 
 
@@ -282,7 +297,9 @@ class RenderBodyTest(unittest.TestCase):
         self.assertNotIn("New tools", body)
 
     def test_is_deterministic(self):
-        self.assertEqual(drift.render_body("alpha", ["n"], ["s"]), drift.render_body("alpha", ["n"], ["s"]))
+        first = drift.render_body("alpha", ["n"], ["s"])
+        second = drift.render_body("alpha", ["n"], ["s"])
+        self.assertEqual(first, second)
 
     def test_names_outside_the_safe_charset_are_left_out(self):
         bad = ["a`b", "line\nbreak", "@octocat", "trail\n", "sp ace", "", "x" * 129, "<b>"]
@@ -612,9 +629,10 @@ class MainTest(unittest.TestCase):
         github = FakeGitHub()
         github.ensure_label = mock.Mock(side_effect=drift.ApiError("HTTP 403"))
         servers = drift.parse_servers(config_doc(alpha=server()))
+        litellm = FakeLiteLLM({SERVER_ID: ["a"]})
         with redirect_stdout(io.StringIO()):
             with self.assertRaises(drift.ApiError):
-                drift.run(servers, FakeLiteLLM({SERVER_ID: ["a"]}), "enforce", github)
+                drift.run(servers, litellm, "enforce", github)
         self.assertEqual(github.calls, [])
 
     def test_default_mode_is_report(self):
