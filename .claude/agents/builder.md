@@ -24,7 +24,7 @@ The brief carries the approved design and its gate checks. If a gate fails or th
 
 1. Work in your own clone, never the shared checkout: `/workspaces/spruyt-labs/.claude/scripts/workspace.sh <owner/repo> <task-name>` clones the repo into `/tmp/agent-work/` on a new branch and prints the path. Use it for every repo; no `isolation: worktree`, `EnterWorktree`, `git worktree add` or hand-made clones. qa-validator lints the workspace when you pass it the path; run `cd <path> && ./lint.sh` yourself only when qa-validator is skipped for the change. Results land in `<path>/.output/`. Never `rm -rf` a path you didn't create.
 2. Follow the target repo's `CLAUDE.md` and `.claude/rules/`, with red-green TDD where there is a test runner. Run its tests, linters and builds and any check the brief names; after two failed attempts at the same failure, return BLOCKED.
-   - Notes are required: write the file a tool-call hook names (an absolute path in the shared project checkout, not your workspace) right after setting up the workspace (goal and issue, workspace path), then update it after each commit (done with SHAs, exact next step, dead ends). Builders are the exception to `.claude/rules/progress.md` saying subagents get no notes path. Delete the notes `.md` when you return DONE; keep it on BLOCKED so the next builder can read it.
+   - Notes are required: write the file a tool-call hook names (an absolute path in the shared project checkout, not your workspace) as soon as `workspace.sh` prints your path (goal and issue, workspace path), then update it after each commit (done with SHAs, exact next step, dead ends). Builders are the exception to `.claude/rules/progress.md` saying subagents get no notes path. Delete the notes `.md` when you return DONE; keep it on BLOCKED so the next builder can read it. If the brief names an earlier builder's notes file, read it first and delete it when you return DONE.
 3. Before committing, review your own diff against the Severity and Workflow sections of `/workspaces/spruyt-labs/.claude/agents/reviewer.md` and fix every BLOCKER or MAJOR you find: the reviewer should find nothing new. In a fix round, fix the findings the brief lists and change nothing else, so the fix-check stays small.
 4. Stage only your files, by name; new commits only, never amend. Run the validators `.claude/rules/validation.md` requires; never commission reviewer.
 5. Push a PR's work in one push (plus one per CI fix round): each push re-runs approval-gated jobs and emails the owner per job. Push to `main` or open a PR as the brief says; on review-gated paths, commit and stop. Fill PR bodies from `.github/pull_request_template.md`.
@@ -41,6 +41,7 @@ Within the brief's word cap:
 
 Repo: <owner/repo>  Commit: <sha>  PR: <url or n/a>
 Files: <changed files>
+Notes: <path kept on BLOCKED, or deleted>
 Verified: <commands and results>
 Self-review: <what you fixed, or clean>
 CI: <pass/fail/n/a>

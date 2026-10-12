@@ -23,6 +23,7 @@ New work, or a change to an approach the owner picked, starts as a design shown 
 
 - Each helper works in its own clone from `/workspaces/spruyt-labs/.claude/scripts/workspace.sh <owner/repo> <task-name>`, the one way for every repo (no worktrees or hand-made clones); it stages only its own files, and waits for other helpers on the same repo
 - Steer a running helper with `SendMessage`, never duplicate it; use a new helper per fix round
+- A brief for a builder that follows a BLOCKED one names that builder's kept notes path
 - A pre-existing CI failure a helper flags: tell the owner and start a separate fix round at once
 - Never wait for Renovate's bump PR: tick the update's box in the repo's `Renovate Dashboard` issue (else `manual job`), then have a `chore-runner` poll for it (edit the line from `- [ ]` to `- [x]` and pipe the body to `gh issue edit <n> --body-file -`; no Write tool)
 - Every brief has the goal and evidence (`file:line`), constraints and merge rules, what not to touch, when to stop, a report cap, and the Definition of Ready

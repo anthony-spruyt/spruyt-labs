@@ -45,6 +45,14 @@ emit() {
   jq -n --arg c "$1" '{hookSpecificOutput: {hookEventName: "PreToolUse", additionalContext: $c}}'
 }
 
+# Hook context is capped at 10,000 characters
+notes_body() {
+  head -c 9000 "$notes"
+  if [[ "$(wc -c <"$notes")" -gt 9000 ]]; then
+    printf '\n\n[truncated - read the rest of %s]' "$notes"
+  fi
+}
+
 # Parallel calls race: one claims each count by exclusive create (mkdir is not atomic on virtiofs)
 claim() { (
   set -C
@@ -54,7 +62,11 @@ claim() { (
 if [[ ! -e "$state" ]]; then
   claim || exit 0
   printf '%s\n' "$count" >"$state" 2>/dev/null || exit 0
-  emit "Your progress notes file is $notes (none written yet). Write it now, right after setting up your workspace: goal and issue, workspace path. Update it after each commit: done with SHAs, exact next step, dead ends. The folder is gitignored."
+  if [[ -s "$notes" ]]; then
+    emit "Your progress notes already exist in $notes. Read them, check them against git log before acting, and keep them current after each commit."$'\n\n'"$(notes_body)"
+  else
+    emit "Your progress notes file is $notes (none written yet). Write it as soon as workspace.sh prints your path: goal and issue, workspace path. Update it after each commit: done with SHAs, exact next step, dead ends. The folder is gitignored."
+  fi
   exit 0
 fi
 
@@ -69,10 +81,5 @@ if [[ ! -s "$notes" ]]; then
   exit 0
 fi
 
-# Hook context is capped at 10,000 characters
-body=$(head -c 9000 "$notes")
-if [[ "$(wc -c <"$notes")" -gt 9000 ]]; then
-  body+=$'\n\n'"[truncated - read the rest of $notes]"
-fi
-emit "Your context was compacted. Your progress notes are in $notes. Check them against git log before acting on them."$'\n\n'"$body"
+emit "Your context was compacted. Your progress notes are in $notes. Check them against git log before acting on them."$'\n\n'"$(notes_body)"
 exit 0

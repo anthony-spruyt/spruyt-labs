@@ -98,10 +98,26 @@ context() {
   [[ "$(context)" == *"truncated"* ]]
 }
 
-@test "the first call does not include notes" {
+@test "the first call includes existing notes and does not say none are written" {
   printf 'OLD NOTES\n' >"${NOTES}"
   hook "${AGENT}"
-  [[ "$(context)" != *"OLD NOTES"* ]]
+  [[ "$(context)" == *"${NOTES}"* ]]
+  [[ "$(context)" == *"OLD NOTES"* ]]
+  [[ "$(context)" != *"none written yet"* ]]
+  [[ "$(context)" != *"Write it now"* ]]
+}
+
+@test "the first call cuts long existing notes at 9000 characters and flags the cut" {
+  head -c 12000 /dev/zero | tr '\0' 'n' >"${NOTES}"
+  hook "${AGENT}"
+  [ "${#output}" -lt 10000 ]
+  [[ "$(context)" == *"truncated"* ]]
+}
+
+@test "the first call with an empty notes file asks for them" {
+  : >"${NOTES}"
+  hook "${AGENT}"
+  [[ "$(context)" == *"none written yet"* ]]
 }
 
 @test "a transcript_path that is already the subagent file works" {
@@ -213,7 +229,7 @@ context() {
 @test "the first-call text makes notes required, not optional" {
   hook "${AGENT}"
   [[ "$(context)" != *"multi-step"* ]]
-  [[ "$(context)" == *"Write it now"* ]]
+  [[ "$(context)" == *"as soon as workspace.sh prints your path"* ]]
   [[ "$(context)" == *"after each commit"* ]]
 }
 
