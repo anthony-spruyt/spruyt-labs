@@ -82,7 +82,7 @@ After scope, classify the type to skip irrelevant checks within full scope:
 | --------------- | ----------------------------------------- | --------------------------------- |
 | `helm-release`  | `release.yaml`, `values.yaml`             | -                                 |
 | `kustomization` | `ks.yaml`, `kustomization.yaml`, `namespace.yaml` | Helm values verification    |
-| `tooling`       | `*.sh`, `*.bats`, `.claude/**`, `tests/**` | Kubernetes checks (dry-run, kustomize build) |
+| `tooling`       | `*.sh`, `*.bats`, `.claude/**`, `.github/**`, `tests/**` | Kubernetes checks (dry-run, kustomize build) |
 | `mixed`         | Multiple types                            | Run ALL checks                    |
 
 Anything else is `mixed`, including tooling files alongside `cluster/` files: the Kubernetes checks still run for the cluster files.
@@ -91,7 +91,7 @@ For `tooling`, mark the Kubernetes checks SKIPPED, run the matching suite (`bats
 
 ```bash
 CHANGED="<the files the caller listed, one per line>"
-if ! echo "$CHANGED" | grep -qvE '\.(sh|bats)$|^(\.claude|tests)/'; then
+if ! echo "$CHANGED" | grep -qvE '\.(sh|bats)$|^(\.claude|\.github|tests)/'; then
   TYPE="tooling"
 elif echo "$CHANGED" | grep -qE 'release\.yaml|values\.yaml'; then
   TYPE="helm-release"
