@@ -4,7 +4,7 @@ paths: [renovate.json, renovate-overrides.json5]
 
 # Renovate Configuration
 
-Config is centralized in [`anthony-spruyt/repo-operator`](https://github.com/anthony-spruyt/repo-operator) (`.github/renovate/`). This repo's root `renovate.json` only extends presets from there and is synced by repo-operator; don't edit it.
+Config is centralized in [`anthony-spruyt/repo-operator`](https://github.com/anthony-spruyt/repo-operator) (`.github/renovate/`). This repo's root `renovate.json` only extends presets from there.
 
 Repo-specific overrides (extra `ignorePaths`, `packageRules`) go in root `renovate-overrides.json5`, which `renovate.json` extends as a `local>` preset. repo-operator creates that file once; after that it is owned here. Cross-repo changes go in `repo-operator`.
 
