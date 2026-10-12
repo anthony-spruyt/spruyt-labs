@@ -81,6 +81,13 @@ controllers:
               secretKeyRef:
                 name: worker-credentials
                 key: github-app-private-key
+          LiteLlm__BaseUrl: http://litellm.litellm.svc:4000
+          LiteLlm__ApiKey:
+            valueFrom:
+              secretKeyRef:
+                name: worker-credentials
+                key: litellm-virtual-key
+          RenovateTriage__Mode: Shadow
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
           Temporal__Namespace: agent-platform
           OTEL_SERVICE_NAME: agent-platform-worker
