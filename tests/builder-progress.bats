@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 #
-# builder-progress.sh tells a builder where its notes are on its first tool call and after each compaction.
+# builder-progress.sh tells a builder where its notes are on its first tool call and after each compaction,
+# and in stop mode removes that builder's state and claim files.
 
 bats_require_minimum_version 1.5.0
 
@@ -34,6 +35,11 @@ hook() {
 
 compact() {
   printf '%s\n' '{"type":"system","subtype":"compact_boundary","content":"Conversation compacted"}' >>"${TRANSCRIPT}"
+}
+
+stop_hook() {
+  run --separate-stderr bash "${SCRIPT}" stop <<<"$(jq -n --arg a "$1" --arg t "${SESSION_FILE}" \
+    '{session_id: "sess1", transcript_path: $t, agent_id: $a, hook_event_name: "SubagentStop"}')"
 }
 
 context() {
@@ -202,4 +208,108 @@ context() {
   done
   wait
   [ "$(cat "${TMP}"/out.* | grep -c additionalContext)" -eq 1 ]
+}
+
+@test "the first-call text makes notes required, not optional" {
+  hook "${AGENT}"
+  [[ "$(context)" != *"multi-step"* ]]
+  [[ "$(context)" == *"Write it now"* ]]
+  [[ "$(context)" == *"after each commit"* ]]
+}
+
+@test "stop mode removes that agent's state and claim files and keeps its notes" {
+  hook "${AGENT}"
+  compact
+  hook "${AGENT}"
+  printf 'GOAL: keep me\n' >"${NOTES}"
+  dir="${CLAUDE_PROJECT_DIR}/.agent-progress"
+  [ -e "${dir}/builder-${AGENT}.state" ]
+  compgen -G "${dir}/builder-${AGENT}.claim-*" >/dev/null
+  stop_hook "${AGENT}"
+  [ "${status}" -eq 0 ]
+  [ -z "${output}" ]
+  [ ! -e "${dir}/builder-${AGENT}.state" ]
+  if compgen -G "${dir}/*.claim-*" >/dev/null; then return 1; fi
+  [ "$(cat "${NOTES}")" = "GOAL: keep me" ]
+}
+
+@test "stop mode leaves other agents' files alone" {
+  hook "${AGENT}"
+  hook other-agent
+  hook "${AGENT}-2"
+  dir="${CLAUDE_PROJECT_DIR}/.agent-progress"
+  stop_hook "${AGENT}"
+  [ -e "${dir}/builder-other-agent.state" ]
+  [ -e "${dir}/builder-other-agent.claim-0" ]
+  [ -e "${dir}/builder-${AGENT}-2.state" ]
+  [ -e "${dir}/builder-${AGENT}-2.claim-0" ]
+}
+
+@test "stop mode with a bad agent_id is a silent no-op" {
+  hook "${AGENT}"
+  dir="${CLAUDE_PROJECT_DIR}/.agent-progress"
+  for bad in "../x" "a/b" "a b" 'a$b' "a.b" "" "*"; do
+    stop_hook "${bad}"
+    [ "${status}" -eq 0 ]
+    [ -z "${output}" ]
+  done
+  [ -e "${dir}/builder-${AGENT}.state" ]
+  [ -e "${dir}/builder-${AGENT}.claim-0" ]
+}
+
+@test "stop mode with no agent_id or malformed stdin is a silent no-op" {
+  hook "${AGENT}"
+  run --separate-stderr bash "${SCRIPT}" stop <<<'{"session_id":"sess1"}'
+  [ "${status}" -eq 0 ]
+  [ -z "${output}" ]
+  run --separate-stderr bash "${SCRIPT}" stop <<<'not json'
+  [ "${status}" -eq 0 ]
+  [ -z "${output}" ]
+  [ -e "${CLAUDE_PROJECT_DIR}/.agent-progress/builder-${AGENT}.state" ]
+}
+
+@test "stop mode does not follow or delete a symlinked state file" {
+  dir="${CLAUDE_PROJECT_DIR}/.agent-progress"
+  printf 'x\n' >"${TMP}/target.state"
+  ln -s "${TMP}/target.state" "${dir}/builder-${AGENT}.state"
+  : >"${dir}/builder-${AGENT}.claim-0"
+  stop_hook "${AGENT}"
+  [ "${status}" -eq 0 ]
+  [ -z "${output}" ]
+  [ -L "${dir}/builder-${AGENT}.state" ]
+  [ -e "${dir}/builder-${AGENT}.claim-0" ]
+  [ "$(cat "${TMP}/target.state")" = "x" ]
+}
+
+@test "stop mode does not follow a symlinked claim file or folder" {
+  dir="${CLAUDE_PROJECT_DIR}/.agent-progress"
+  printf 'x\n' >"${TMP}/target.claim"
+  ln -s "${TMP}/target.claim" "${dir}/builder-${AGENT}.claim-0"
+  : >"${dir}/builder-${AGENT}.state"
+  stop_hook "${AGENT}"
+  [ -L "${dir}/builder-${AGENT}.claim-0" ]
+  [ -e "${TMP}/target.claim" ]
+
+  rm -rf "${dir}"
+  mkdir "${TMP}/elsewhere"
+  : >"${TMP}/elsewhere/builder-${AGENT}.state"
+  ln -s "${TMP}/elsewhere" "${dir}"
+  stop_hook "${AGENT}"
+  [ -e "${TMP}/elsewhere/builder-${AGENT}.state" ]
+}
+
+@test "stop mode without CLAUDE_PROJECT_DIR is silent" {
+  hook "${AGENT}"
+  dir="${CLAUDE_PROJECT_DIR}/.agent-progress"
+  unset CLAUDE_PROJECT_DIR
+  stop_hook "${AGENT}"
+  [ "${status}" -eq 0 ]
+  [ -z "${output}" ]
+  [ -e "${dir}/builder-${AGENT}.state" ]
+}
+
+@test "stop mode does not create the notes folder" {
+  rmdir "${CLAUDE_PROJECT_DIR}/.agent-progress"
+  stop_hook "${AGENT}"
+  [ ! -e "${CLAUDE_PROJECT_DIR}/.agent-progress" ]
 }

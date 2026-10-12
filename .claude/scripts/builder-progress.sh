@@ -15,6 +15,17 @@ dir="$project/.agent-progress"
 notes="$dir/builder-$agent_id.md"
 state="$dir/builder-$agent_id.state"
 [[ ! -L "$dir" && ! -L "$notes" && ! -L "$state" ]] || exit 0
+
+# stop mode (SubagentStop): drop this agent's bookkeeping, never its notes
+if [[ "${1:-}" == stop ]]; then
+  [[ -d "$dir" ]] || exit 0
+  [[ ! -L "$state" ]] && rm -f -- "$state"
+  for f in "$dir/builder-$agent_id".claim-*; do
+    [[ -f "$f" && ! -L "$f" ]] && rm -f -- "$f"
+  done
+  exit 0
+fi
+
 mkdir -p "$dir" 2>/dev/null || exit 0
 
 # The hook may be handed the session transcript or the subagent's own
@@ -43,7 +54,7 @@ claim() { (
 if [[ ! -e "$state" ]]; then
   claim || exit 0
   printf '%s\n' "$count" >"$state" 2>/dev/null || exit 0
-  emit "Your progress notes file is $notes (none written yet). For multi-step jobs, keep notes there; the folder is gitignored."
+  emit "Your progress notes file is $notes (none written yet). Write it now, right after setting up your workspace: goal and issue, workspace path. Update it after each commit: done with SHAs, exact next step, dead ends. The folder is gitignored."
   exit 0
 fi
 
