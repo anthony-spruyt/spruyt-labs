@@ -87,7 +87,7 @@ controllers:
               secretKeyRef:
                 name: worker-credentials
                 key: litellm-virtual-key
-          RenovateTriage__Mode: Shadow
+          RenovateTriage__Mode: Live
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
           Temporal__Namespace: agent-platform
           OTEL_SERVICE_NAME: agent-platform-worker
