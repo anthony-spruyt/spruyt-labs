@@ -15,5 +15,11 @@ configMapGenerator:
     namespace: agent-platform
     files:
       - values.yaml
+  - name: agent-platform-worker-prompts
+    namespace: agent-platform
+    files:
+      - prompts/renovate-triage.md
+    options:
+      disableNameSuffixHash: true
 configurations:
   - ./kustomizeconfig.yaml

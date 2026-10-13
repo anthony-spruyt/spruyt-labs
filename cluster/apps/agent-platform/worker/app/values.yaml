@@ -64,7 +64,10 @@ controllers:
         env:
           AgentPlatform__Role: Worker
           ASPNETCORE_HTTP_PORTS: "8080"
+          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/claude-agent-read
+          AgentPods__Image: "ghcr.io/anthony-spruyt/claude-agent-read:1.1.0@sha256:18bcca88120c6f3861cca4bbb80ee74fe5a73d34cc0dbecf358ba15dc8c1f3f2"
           AgentPods__MaxConcurrentActivities: "2"
+          AgentPrompts__Directory: /etc/agent-platform/prompts
           AgentGateway__SessionTokenKey:
             valueFrom:
               secretKeyRef:
@@ -164,4 +167,12 @@ persistence:
         app:
           - path: /etc/agent-platform/rundata-ca/ca.crt
             subPath: ca.crt
+            readOnly: true
+  prompts:
+    type: configMap
+    name: agent-platform-worker-prompts
+    advancedMounts:
+      agent-platform-worker:
+        app:
+          - path: /etc/agent-platform/prompts
             readOnly: true
