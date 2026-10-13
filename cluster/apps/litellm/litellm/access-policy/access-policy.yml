@@ -2,6 +2,8 @@
 # Desired LiteLLM access policy, applied by the reconcile Job. See cluster/apps/litellm/README.md.
 # Omitted list fields mean empty. MCP server ids are the pinned ids in the litellm config.yaml.
 teams:
+  - team_id: 4757b159-de6f-40b5-a526-1a0e8bd42580
+    team_alias: agent-platform-read
   - team_id: 1b35b13e-850a-4112-b1e1-c23d9a7e5994
     team_alias: claude-agents-read
   - team_id: 841a504a-c4da-46d3-b446-59a0e46ddfc4
@@ -58,6 +60,7 @@ access_groups:
       - 6a477489-a343-4aef-83bb-c6afb4c0b4c5  # context7
     team_ids:
       - 1b35b13e-850a-4112-b1e1-c23d9a7e5994  # claude-agents-read
+      - 4757b159-de6f-40b5-a526-1a0e8bd42580  # agent-platform-read
       - 841a504a-c4da-46d3-b446-59a0e46ddfc4  # claude-agents-spruyt-labs-read
       - c4af130f-bac5-4285-a812-b6f211198521  # claude-agents-spruyt-labs-sre
   - name: spruyt-labs-dba
