@@ -36,6 +36,7 @@ controllers:
               secretKeyRef:
                 name: agent-platform-session
                 key: session-token-key
+          GitHub__AppId: "3233443"
           GitHub__WebhookSecret:
             valueFrom:
               secretKeyRef:
