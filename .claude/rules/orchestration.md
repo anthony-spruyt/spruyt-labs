@@ -33,7 +33,7 @@ New work, or a change to an approach the owner picked, starts with the `intervie
 
 ## Review and readiness
 
-Every PR and fix round gets a fresh reviewer, never the author (bot PRs below excepted). Security-sensitive changes get an attacker-minded brief. Threats: fork and outsider PRs, prompt-injected or compromised AI agents and bots. Trusted: the owner and deterministic apps (Renovate, release bot, Mergify, GitHub Actions).
+Every PR and fix round gets a fresh reviewer, never the author (bot PRs below excepted). Security-sensitive changes get an attacker-minded brief. Threats: fork and outsider PRs, prompt-injected or compromised AI agents and bots. Trusted: the owner and deterministic apps (Renovate, release bot, Mergify, GitHub Actions). Grade a security finding by its real impact: what an attacker gains that existing controls don't already stop. Drop it if that's nothing.
 
 Review wide once, then check only the fixes (fresh reviewers each re-reviewing everything find new nits forever):
 
