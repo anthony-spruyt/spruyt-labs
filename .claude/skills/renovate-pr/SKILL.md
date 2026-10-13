@@ -21,6 +21,8 @@ Stop and tell the user if the PR is not open, or is not from Renovate (author `a
 
 If the PR touches `talos/topf.yaml`, stop and hand off: a `kubernetesVersion` bump goes to the `kubernetes-upgrade` skill, a `talosVersion` bump to the `talos-upgrade` agent. Flux doesn't apply that file, so merging it alone records a version the nodes aren't running.
 
+Then run `gh pr checks <N>`. If a check named `Agent triage` is not finished (pending, queued or in progress), stop: tell the user the agent platform is already triaging this PR, give the check's link, and do nothing else (no analyzer, no labels, no comment). A finished `Agent triage` check doesn't block; continue.
+
 ## 2. Run the analyzer
 
 Spawn the `renovate-pr-analyzer` subagent. Get the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`. Prompt:
@@ -41,12 +43,12 @@ The feature ask lives here, not in the agent file, because the agent platform's 
 
 ## 3. Act on the verdict
 
-First remove labels left by an earlier verdict. For each of `blocked` and `agent/needs-human-review` that the PR carries (from step 1): `gh pr edit <N> --remove-label <label>`. Then apply the new verdict's label, if it has one.
+Labels left by an earlier verdict stay until the skill merges the PR or adds a new label. SAFE (before the merge), BLOCKED and NEEDS_REVIEW (before adding theirs) first remove each of `blocked` and `agent/needs-human-review` that the PR carries (from step 1): `gh pr edit <N> --remove-label <label>`. FIXABLE leaves them as they are.
 
 **SAFE**
 
-1. Check CI: `gh pr checks <N>`. Ignore `renovate/stability-days` and `Mergify` checks; they never clear on early-triggered PRs and don't block a direct merge. If other checks are pending, re-check every minute until they finish (don't use `--watch`, it waits on the ignored checks too). If any other check fails, treat as not SAFE and follow the **NEEDS_REVIEW** steps (label and comment).
-2. Merge: `gh pr merge <N> --squash`. Ignore Mergify's approval check.
+1. Check CI: `gh pr checks <N>`. Ignore `renovate/stability-days` and `Mergify` checks; they never clear on early-triggered PRs and don't block a direct merge. Also ignore `Agent triage`; it isn't CI. If other checks are pending, re-check every minute until they finish (don't use `--watch`, it waits on the ignored checks too). If any other check fails, treat as not SAFE and follow the **NEEDS_REVIEW** steps (label and comment).
+2. Remove stale labels (above), then merge: `gh pr merge <N> --squash`. Ignore Mergify's approval check.
 3. If the PR touched `cluster/`, run `cluster-validator` (no issue number needed). If one is already running, wait for it to finish, then run.
 
 **FIXABLE**
