@@ -393,7 +393,7 @@ class CommittedPolicyTest(unittest.TestCase):
         with open(path, encoding="utf-8") as handle:
             policy = reconcile.parse_policy(yaml.safe_load(handle))
         team = next(t for t in policy.teams if t.team_alias == "agent-platform-read")
-        self.assertEqual(team.models, ["claude-opus-5-5", "claude-sonnet-5-5"])
+        self.assertEqual(team.models, ["claude-haiku-5-5", "claude-opus-5-5", "claude-sonnet-5-5"])
 
 
 if __name__ == "__main__":

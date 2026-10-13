@@ -6,6 +6,7 @@ teams:
   - team_id: 4757b159-de6f-40b5-a526-1a0e8bd42580
     team_alias: agent-platform-read
     models:
+      - claude-haiku-5-5
       - claude-opus-5-5
       - claude-sonnet-5-5
   - team_id: 1b35b13e-850a-4112-b1e1-c23d9a7e5994
