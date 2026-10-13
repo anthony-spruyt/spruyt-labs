@@ -364,6 +364,9 @@ spec:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: observability
             k8s:app.kubernetes.io/name: vmagent
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: agent-platform
+            k8s:app.kubernetes.io/name: agent-platform-worker
       toPorts:
         - ports:
             - port: "8080"

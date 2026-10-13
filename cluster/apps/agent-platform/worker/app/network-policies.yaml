@@ -60,6 +60,26 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
+  name: allow-worker-text-scanner-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: agent-platform-worker
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: litellm
+            k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: llm-tool-guard
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
   name: allow-worker-world-https-egress
 spec:
   endpointSelector:

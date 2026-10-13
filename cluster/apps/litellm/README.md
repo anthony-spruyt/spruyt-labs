@@ -86,7 +86,8 @@ CI on GitHub-hosted runners calls the `litellm` host over the Cloudflare tunnel 
 - Only `/v1/messages`, `/v1/messages/count_tokens`, `/v1/chat/completions` and `/health/liveliness` pass from the internet. Unprefixed aliases such as `/chat/completions` do not.
 - cloudflared forwards only those paths and requires a valid Access token before a request reaches Traefik.
 - Every request carries the Access service token headers `CF-Access-Client-Id` and `CF-Access-Client-Secret`, plus the CI virtual key in `x-litellm-api-key: Bearer <key>` (see Virtual keys above).
-- The CI model is `openrouter/anthropic/claude-haiku-5.5`, an exact `model_name` through OpenRouter. It must stay exact: the `*claude*haiku*` catch-all would route the name to Anthropic subscription passthrough, which rejects a virtual key. The CI virtual key belongs to team `github-ci` with `models: ["all-team-models"]` and `object_permission: {"mcp_servers": ["no-mcp-servers"]}`; the team's models and budget are set in `access-policy.yml` (see Access policy).
+- The CI model is `openrouter/anthropic/claude-haiku-5.5`, an exact `model_name` through OpenRouter. It must stay exact: the `*claude*haiku*` catch-all would route the name to Anthropic subscription passthrough, which rejects a virtual key. The CI virtual key belongs to team `github-ci` with `models: ["all-team-models"]` and `object_permission: {"mcp_servers": ["no-mcp-servers"]}`; the team's
+  models and budget are set in `access-policy.yml` (see Access policy).
 
 ### MCP servers
 
@@ -186,8 +187,8 @@ The Presidio and llm-guard Deployments are parked at `replicas: 0` (#3323): noth
 or `prompt-injection` fails rather than skipping the check: neither sets `unreachable_fallback: fail_open`.
 
 `llm-tool-guard` is the scanner behind the `tool-guard` middleware (see Proxy middleware), a separate Deployment from llm-guard and not a LiteLLM guardrail. It serves `POST /v1/scan` on port 8080 and scores tool-result text with `Horizon-Labs/prompt-injection-guard-base` in overlapping token windows. The model loads from the `llm-tool-guard-hf-cache` PVC at `HF_HOME`, and the pod becomes ready
-once it has loaded. Verdicts are cached by content hash in `litellm-valkey` under `llm-tool-guard:` through the `llm-tool-guard` ACL user, so a result gets the same verdict on every turn. Only LiteLLM pods (and vmagent, for metrics) can reach the scanner, and it reaches `litellm-valkey` and has HTTPS egress for Hugging Face model downloads. It runs with `HF_HUB_OFFLINE`, so it loads the model from
-the `llm-tool-guard-hf-cache` PVC. If the PVC is replaced, remove `HF_HUB_OFFLINE` from `values.yaml` to re-download the model (the download uses `HF_TOKEN` from `litellm-secrets`), then restore it. Metrics (`llm_tool_guard_*`) are scraped from `/metrics`, and the `LLMToolGuardUnavailable` alert fires when no pod is ready.
+once it has loaded. Verdicts are cached by content hash in `litellm-valkey` under `llm-tool-guard:` through the `llm-tool-guard` ACL user, so a result gets the same verdict on every turn. Only LiteLLM pods, the agent-platform worker (for text scans) and vmagent (for metrics) can reach the scanner, and it reaches `litellm-valkey` and has HTTPS egress for Hugging Face model downloads. It runs with
+`HF_HUB_OFFLINE`, so it loads the model from the `llm-tool-guard-hf-cache` PVC. If the PVC is replaced, remove `HF_HUB_OFFLINE` from `values.yaml` to re-download the model (the download uses `HF_TOKEN` from `litellm-secrets`), then restore it. Metrics (`llm_tool_guard_*`) are scraped from `/metrics`, and the `LLMToolGuardUnavailable` alert fires when no pod is ready.
 
 `prompt-injection` uses `Horizon-Labs/prompt-injection-guard-base` (ungated), scanning in overlapping 2048-token windows with a 512-token overlap. Inputs over `max_windows` (about 200k tokens) are blocked. llm-guard runs with `HF_HUB_OFFLINE=1` and loads the model from the `llm-guard-hf-cache` PVC. To refill an empty cache, remove `HF_HUB_OFFLINE` from `values.yaml`, let one pod download the model
 (the download uses `HF_TOKEN` from `litellm-secrets`), then restore it (Ref #2592, #3464).
