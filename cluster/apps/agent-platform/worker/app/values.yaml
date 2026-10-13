@@ -81,6 +81,12 @@ controllers:
               secretKeyRef:
                 name: worker-credentials
                 key: github-app-private-key
+          GitHub__ReadApp__AppId: "3233491"
+          GitHub__ReadApp__PrivateKey:
+            valueFrom:
+              secretKeyRef:
+                name: worker-credentials
+                key: github-read-app-private-key
           LiteLlm__BaseUrl: http://litellm.litellm.svc:4000
           LiteLlm__ApiKey:
             valueFrom:
