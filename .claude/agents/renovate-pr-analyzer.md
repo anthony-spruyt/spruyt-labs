@@ -39,14 +39,14 @@ Either way: do your analysis, then output a clear verdict with summary. Do NOT w
 
 ### 1. Check CI Status
 
-Ignore `renovate/stability-days` and any `Mergify` check when judging CI, whether pending or failing. They are merge gates, not tests; the user often triggers PRs before the release-age gate clears.
+Ignore `renovate/stability-days`, any `Mergify` check and the platform's own `Agent triage` check when judging CI, whether pending or failing. The first two are merge gates, not tests (the user often triggers PRs before the release-age gate clears); `Agent triage` is this run, still in progress.
 
-If CI status is provided and shows failures:
+Run `gh pr checks <PR#>` yourself, even when CI status is provided. If any check fails:
 
-- Use `gh pr checks <PR#>` to identify which jobs failed
+- Identify which jobs failed
 - Determine if failures are caused by this dependency update or pre-existing
 - If caused by this update → factor into verdict; red CI is never SAFE (FIXABLE at minimum)
-- If pre-existing/unrelated → continue analysis, note in summary
+- If pre-existing/unrelated → continue analysis, note in summary; the verdict is still not SAFE (CI gate)
 
 ### 2. Read PR Details
 
@@ -83,7 +83,7 @@ Search upstream GitHub for:
 
 1. Check the fix's target milestone or release label (e.g., `target/1.18.1`)
 2. Determine which app version the PR's chart/image actually ships (check `appVersion` in Chart.yaml or image tag)
-3. If the fix targets a version **newer** than what the PR ships → the fix is NOT included → flag as NEEDS_REVIEW
+3. If the fix targets a version **newer** than what the PR ships → the fix is NOT included → flag as BLOCKED
 4. Only consider a fix "shipped" if the target version includes the actual release containing the fix
 
 ### 6. Check Local Repo Issues
@@ -153,7 +153,7 @@ A breaking change only matters if it affects what we actually use.
 - No breaking changes, OR all have NO_IMPACT/LOW_IMPACT
 - No high-engagement bugs for target version
 - No local repo issues with `blocked` label referencing this dependency
-- CI is passing (or CI status is unknown/not provided)
+- CI passed, as read from `gh pr checks`
 
 **FIXABLE**: the update is wanted but needs a small change in this repository (list it in Fix), or CI fails because of a fixable break:
 
@@ -164,13 +164,13 @@ A breaking change only matters if it affects what we actually use.
 - Fundamental incompatibility with no viable fix path
 - Dependency dropped support for our platform/architecture
 - CI failing due to this update with no clear fix
+- Upstream critical bug or regression that cannot be fixed on our side
+- Upstream fix exists but is NOT included in the PR's target version (closed ≠ shipped)
 
 **NEEDS_REVIEW**: you cannot decide with the evidence available, or a human should look:
 
 - Cannot find upstream repo/changelog
 - Cannot determine impact scope
-- Upstream critical bug or regression that cannot be fixed on our side
-- Upstream fix exists but is NOT included in the PR's target version (closed ≠ shipped)
 - Local repo has `blocked` issue referencing this dependency
 - Default to NEEDS_REVIEW when evidence is insufficient — never assume SAFE
 
@@ -211,4 +211,4 @@ Structure your final output as:
 07. Never output secrets or credential values
 08. Do NOT write to GitHub; the caller acts on the verdict
 09. **Never recommend escape hatches (type casts, error suppression directives, lint-ignore comments, accessing non-public APIs) without first verifying no proper API exists.** Your Fix entries are the fix agent's roadmap — if you recommend a hack, it implements a hack. Research the proper approach from library docs.
-10. When FIXABLE, Fix names the API/pattern to use, not just "cast it" or "change the type" — don't add other sections, the caller parses the template fields only.
+10. When FIXABLE, Fix names the API/pattern to use, not just "cast it" or "change the type" — don't add other sections unless the caller asks, the caller parses the template fields only.

@@ -41,12 +41,13 @@ The feature ask lives here, not in the agent file, because the agent platform's 
 
 ## 3. Act on the verdict
 
+First remove labels left by an earlier verdict. For each of `blocked` and `agent/needs-human-review` that the PR carries (from step 1): `gh pr edit <N> --remove-label <label>`. Then apply the new verdict's label, if it has one.
+
 **SAFE**
 
-1. Check CI: `gh pr checks <N>`. Ignore `renovate/stability-days` and `Mergify` checks; they never clear on early-triggered PRs and don't block a direct merge. If other checks are pending, re-check every minute until they finish (don't use `--watch`, it waits on the ignored checks too). If any other check fails, treat as not SAFE.
-2. If the PR has the `blocked` label, remove it: `gh pr edit <N> --remove-label blocked`
-3. Merge: `gh pr merge <N> --squash`. Ignore Mergify's approval check.
-4. If the PR touched `cluster/`, run `cluster-validator` (no issue number needed). If one is already running, wait for it to finish, then run.
+1. Check CI: `gh pr checks <N>`. Ignore `renovate/stability-days` and `Mergify` checks; they never clear on early-triggered PRs and don't block a direct merge. If other checks are pending, re-check every minute until they finish (don't use `--watch`, it waits on the ignored checks too). If any other check fails, treat as not SAFE and follow the **NEEDS_REVIEW** steps (label and comment).
+2. Merge: `gh pr merge <N> --squash`. Ignore Mergify's approval check.
+3. If the PR touched `cluster/`, run `cluster-validator` (no issue number needed). If one is already running, wait for it to finish, then run.
 
 **FIXABLE**
 
