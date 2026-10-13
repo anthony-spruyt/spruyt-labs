@@ -30,16 +30,28 @@ TOOLS = ["query", "alerts"]
 EMPTY_PERMISSION = {"object_permission_id": "p1", "mcp_servers": [], "mcp_tool_permissions": {}, "mcp_tool_search_enabled": None, "skills": []}
 
 
+TEAM_ENTRY = {"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "models": [MODEL_A]}
+
+
 def policy_doc():
     return {
-        "teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS}],
+        "teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "models": [MODEL_A]}],
         "access_groups": [{"name": GROUP_NAME, "mcp_server_ids": [SERVER_A], "team_ids": [TEAM_ID]}],
     }
 
 
 class FakeApi:
     def __init__(self):
-        self.teams = [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "object_permission": dict(EMPTY_PERMISSION)}]
+        self.teams = [
+            {
+                "team_id": TEAM_ID,
+                "team_alias": TEAM_ALIAS,
+                "object_permission": dict(EMPTY_PERMISSION),
+                "models": [MODEL_A],
+                "max_budget": None,
+                "budget_duration": None,
+            }
+        ]
         self.groups = [
             {
                 "access_group_id": GROUP_ID,
@@ -102,8 +114,8 @@ class ParsePolicyTest(unittest.TestCase):
     def test_unknown_section_field_and_duplicates_are_rejected(self):
         bad_docs = [
             {"surprise": []},
-            {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "surprise": 1}]},
-            {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS}, {"team_id": TEAM_ID, "team_alias": "other"}]},
+            {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "models": [MODEL_A], "surprise": 1}]},
+            {"teams": [{**TEAM_ENTRY}, {**TEAM_ENTRY, "team_alias": "other"}]},
             {"keys": [{"key_alias": KEY_ALIAS}]},
             {"access_groups": [{"name": GROUP_NAME, "key_aliases": [KEY_ALIAS]}]},
             {"access_groups": [{"description": "no name"}]},
@@ -118,8 +130,10 @@ class TeamModelsPolicyTest(unittest.TestCase):
         doc = {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "models": [MODEL_B, MODEL_A, MODEL_A]}]}
         self.assertEqual(reconcile.parse_policy(doc).teams[0].models, [MODEL_A, MODEL_B])
 
-    def test_omitted_models_stay_unmanaged(self):
-        self.assertIsNone(reconcile.parse_policy(policy_doc()).teams[0].models)
+    def test_missing_models_are_rejected(self):
+        doc = {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS}]}
+        with self.assertRaisesRegex(reconcile.PolicyError, "models: required"):
+            reconcile.parse_policy(doc)
 
     def test_empty_or_malformed_models_are_rejected(self):
         for models in ([], None, "claude", [1]):
@@ -135,6 +149,44 @@ class TeamModelsPolicyTest(unittest.TestCase):
         self.assertEqual(reconcile.live_team(TEAM_ID, {"team_info": {"team_alias": TEAM_ALIAS}}).models, [])
 
 
+def budget_doc(**budget):
+    return {"teams": [{**TEAM_ENTRY, **budget}]}
+
+
+class TeamBudgetPolicyTest(unittest.TestCase):
+    def test_budget_is_parsed(self):
+        team = reconcile.parse_policy(budget_doc(max_budget=5, budget_duration="30d")).teams[0]
+        self.assertEqual((team.max_budget, team.budget_duration), (5, "30d"))
+
+    def test_absent_budget_means_none(self):
+        team = reconcile.parse_policy(budget_doc()).teams[0]
+        self.assertEqual((team.max_budget, team.budget_duration), (None, None))
+
+    def test_budget_needs_both_fields_or_neither(self):
+        for budget in ({"max_budget": 5}, {"budget_duration": "30d"}):
+            with self.subTest(budget=budget), self.assertRaises(reconcile.PolicyError):
+                reconcile.parse_policy(budget_doc(**budget))
+
+    def test_malformed_budget_is_rejected(self):
+        bad = [(0, "30d"), (-1, "30d"), ("5", "30d"), (True, "30d"), (float("nan"), "30d"), (float("inf"), "30d"), (5, ""), (5, 30), (5, None), (None, "30d")]
+        for max_budget, duration in bad:
+            with self.subTest(max_budget=max_budget, duration=duration), self.assertRaises(reconcile.PolicyError):
+                reconcile.parse_policy(budget_doc(max_budget=max_budget, budget_duration=duration))
+
+    def test_live_team_reads_budget_from_team_info(self):
+        info = {"team_info": {"team_alias": TEAM_ALIAS, "max_budget": 5.0, "budget_duration": "30d"}}
+        team = reconcile.live_team(TEAM_ID, info)
+        self.assertEqual((team.max_budget, team.budget_duration), (5.0, "30d"))
+
+    def test_live_team_without_budget_means_none(self):
+        team = reconcile.live_team(TEAM_ID, {"team_info": {"team_alias": TEAM_ALIAS}})
+        self.assertEqual((team.max_budget, team.budget_duration), (None, None))
+
+    def test_live_team_with_malformed_budget_is_a_shape_error(self):
+        with self.assertRaises(reconcile.ShapeError):
+            reconcile.live_team(TEAM_ID, {"team_info": {"team_alias": TEAM_ALIAS, "max_budget": "5"}})
+
+
 class DiffModeTest(unittest.TestCase):
     def test_matching_state_reports_zero_changes_and_writes_nothing(self):
         api = FakeApi()
@@ -148,7 +200,7 @@ class DiffModeTest(unittest.TestCase):
         api = FakeApi()
         api.groups[0]["access_mcp_server_ids"] = [SERVER_B]
         doc = policy_doc()
-        doc["teams"].append({"team_id": OTHER_TEAM_ID, "team_alias": "new-team"})
+        doc["teams"].append({"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "models": [MODEL_A]})
         code, lines = run_policy(api, doc, "diff")
         self.assertEqual(code, 0)
         self.assertEqual(lines[-1], "changes: 2")
@@ -177,12 +229,29 @@ class DiffModeTest(unittest.TestCase):
         doc["teams"][0]["models"] = [MODEL_A, MODEL_B]
         self.assertEqual(run_policy(api, doc, "diff")[1][-1], "changes: 0")
 
-    def test_omitted_models_leave_live_models_alone(self):
+    def test_budget_diff_shows_live_and_desired(self):
         api = FakeApi()
-        api.teams[0]["models"] = [MODEL_A]
-        code, lines = run_policy(api, policy_doc(), "enforce")
-        self.assertEqual((code, lines[-1]), (0, "changes: 0"))
+        doc = policy_doc()
+        doc["teams"][0].update(max_budget=5, budget_duration="30d")
+        _, lines = run_policy(api, doc, "diff")
+        text = "\n".join(lines)
+        self.assertEqual(lines[-1], "changes: 1")
+        self.assertIn("max_budget: live=null desired=5", text)
+        self.assertIn('budget_duration: live=null desired="30d"', text)
         self.assertEqual(api.writes(), [])
+
+    def test_matching_budget_is_no_change(self):
+        api = FakeApi()
+        api.teams[0].update(max_budget=5.0, budget_duration="30d")
+        doc = policy_doc()
+        doc["teams"][0].update(max_budget=5, budget_duration="30d")
+        self.assertEqual(run_policy(api, doc, "diff")[1][-1], "changes: 0")
+
+    def test_live_budget_missing_from_the_file_is_a_diff(self):
+        api = FakeApi()
+        api.teams[0].update(max_budget=5.0, budget_duration="30d")
+        text = "\n".join(run_policy(api, policy_doc(), "diff")[1])
+        self.assertIn("max_budget: live=5.0 desired=null", text)
 
     def test_unmanaged_objects_are_ignored(self):
         api = FakeApi()
@@ -214,11 +283,17 @@ class EnforceTest(unittest.TestCase):
     def test_missing_team_is_created_with_its_fixed_id(self):
         api = FakeApi()
         doc = policy_doc()
-        doc["teams"].append({"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "object_permission": {"mcp_servers": [SERVER_B]}})
+        doc["teams"].append({"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "models": [MODEL_A], "object_permission": {"mcp_servers": [SERVER_B]}})
         run_policy(api, doc, "enforce")
         self.assertEqual(
             api.writes(),
-            [("POST", "/team/new", {"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "object_permission": {"mcp_servers": [SERVER_B]}})],
+            [
+                (
+                    "POST",
+                    "/team/new",
+                    {"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "models": [MODEL_A], "object_permission": {"mcp_servers": [SERVER_B]}},
+                )
+            ],
         )
 
     def test_team_update_sends_only_changed_managed_fields_and_clears_emptied_ones(self):
@@ -237,7 +312,7 @@ class EnforceTest(unittest.TestCase):
             ],
         )
 
-    def test_team_create_sends_models_when_listed(self):
+    def test_team_create_sends_models(self):
         api = FakeApi()
         doc = policy_doc()
         doc["teams"].append({"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "models": [MODEL_B, MODEL_A]})
@@ -255,12 +330,42 @@ class EnforceTest(unittest.TestCase):
         run_policy(api, doc, "enforce")
         self.assertEqual(api.writes(), [("POST", "/team/update", {"team_id": TEAM_ID, "models": [MODEL_A]})])
 
-    def test_team_update_without_listed_models_never_sends_models(self):
+    def test_team_update_leaves_matching_models_out_of_the_body(self):
         api = FakeApi()
         api.teams[0]["team_alias"] = "old-alias"
-        api.teams[0]["models"] = [MODEL_A]
         run_policy(api, policy_doc(), "enforce")
         self.assertEqual(api.writes(), [("POST", "/team/update", {"team_id": TEAM_ID, "team_alias": TEAM_ALIAS})])
+
+    def test_team_create_sends_budget_only_when_set(self):
+        api = FakeApi()
+        doc = policy_doc()
+        doc["teams"].append({**TEAM_ENTRY, "team_id": OTHER_TEAM_ID, "team_alias": "new-team", "max_budget": 5, "budget_duration": "30d"})
+        run_policy(api, doc, "enforce")
+        self.assertEqual(
+            api.writes(),
+            [("POST", "/team/new", {"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "models": [MODEL_A], "max_budget": 5, "budget_duration": "30d"})],
+        )
+
+    def test_team_update_sets_budget(self):
+        api = FakeApi()
+        doc = policy_doc()
+        doc["teams"][0].update(max_budget=5, budget_duration="30d")
+        run_policy(api, doc, "enforce")
+        self.assertEqual(api.writes(), [("POST", "/team/update", {"team_id": TEAM_ID, "max_budget": 5, "budget_duration": "30d"})])
+
+    def test_team_update_clears_a_budget_absent_from_the_file_with_explicit_nulls(self):
+        api = FakeApi()
+        api.teams[0].update(max_budget=5.0, budget_duration="30d")
+        run_policy(api, policy_doc(), "enforce")
+        self.assertEqual(api.writes(), [("POST", "/team/update", {"team_id": TEAM_ID, "max_budget": None, "budget_duration": None})])
+
+    def test_team_update_sends_only_the_changed_budget_field(self):
+        api = FakeApi()
+        api.teams[0].update(max_budget=5.0, budget_duration="30d")
+        doc = policy_doc()
+        doc["teams"][0].update(max_budget=10, budget_duration="30d")
+        run_policy(api, doc, "enforce")
+        self.assertEqual(api.writes(), [("POST", "/team/update", {"team_id": TEAM_ID, "max_budget": 10})])
 
     def test_group_update_sends_only_changed_fields_to_its_id(self):
         api = FakeApi()
@@ -304,7 +409,7 @@ class EnforceTest(unittest.TestCase):
 
     def test_nothing_is_ever_deleted(self):
         api = FakeApi()
-        api.teams.append({"team_id": OTHER_TEAM_ID, "team_alias": "extra", "object_permission": {}})
+        api.teams.append({"team_id": OTHER_TEAM_ID, "team_alias": "extra", "object_permission": {}, "models": []})
         api.groups.append({**api.groups[0], "access_group_id": "g2", "access_group_name": "extra"})
         run_policy(api, policy_doc(), "enforce")
         self.assertEqual(api.writes(), [])
@@ -387,6 +492,7 @@ class CommittedPolicyTest(unittest.TestCase):
         with open(path, encoding="utf-8") as handle:
             policy = reconcile.parse_policy(yaml.safe_load(handle))
         self.assertTrue(policy.teams and policy.groups)
+        self.assertTrue(all(t.models for t in policy.teams))
 
     def test_agent_platform_read_is_limited_to_the_subscription_models(self):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access-policy.yml")
@@ -394,6 +500,14 @@ class CommittedPolicyTest(unittest.TestCase):
             policy = reconcile.parse_policy(yaml.safe_load(handle))
         team = next(t for t in policy.teams if t.team_alias == "agent-platform-read")
         self.assertEqual(team.models, ["claude-haiku-5-5", "claude-opus-5-5", "claude-sonnet-5-5"])
+        self.assertEqual((team.max_budget, team.budget_duration), (None, None))
+
+    def test_github_ci_has_a_budget(self):
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access-policy.yml")
+        with open(path, encoding="utf-8") as handle:
+            policy = reconcile.parse_policy(yaml.safe_load(handle))
+        team = next(t for t in policy.teams if t.team_alias == "github-ci")
+        self.assertEqual((team.max_budget, team.budget_duration), (5, "30d"))
 
 
 if __name__ == "__main__":

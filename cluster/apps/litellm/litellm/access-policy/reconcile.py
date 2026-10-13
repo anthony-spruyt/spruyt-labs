@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import math
 import os
 import re
 import sys
@@ -28,9 +29,11 @@ PERMISSION_KEY = "object_permission"
 TEAM_ID = "team_id"
 TEAM_ALIAS = "team_alias"
 TEAM_MODELS = "models"
+TEAM_BUDGET = "max_budget"
+TEAM_BUDGET_DURATION = "budget_duration"
 
 SECTIONS = {
-    "teams": {TEAM_ID, TEAM_ALIAS, PERMISSION_KEY, TEAM_MODELS},
+    "teams": {TEAM_ID, TEAM_ALIAS, PERMISSION_KEY, TEAM_MODELS, TEAM_BUDGET, TEAM_BUDGET_DURATION},
     "access_groups": {"name", "description", "models", "mcp_server_ids", "agent_ids", "team_ids"},
 }
 GROUP_API_FIELDS = {
@@ -61,7 +64,9 @@ class Team:
     team_id: str
     team_alias: str | None
     object_permission: dict
-    models: list | None = None
+    models: list
+    max_budget: float | None = None
+    budget_duration: str | None = None
 
 
 @dataclass(frozen=True)
@@ -93,6 +98,10 @@ class Change:
 def _require(condition, message, error=ShapeError):
     if not condition:
         raise error(message)
+
+
+def _is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def _string_list(value, where, error=ShapeError):
@@ -128,11 +137,16 @@ def _section(doc, name):
 
 def _policy_team(entry):
     _require(entry.get(TEAM_ID) and entry.get(TEAM_ALIAS), "teams: team_id and team_alias are required", PolicyError)
-    models = None
-    if TEAM_MODELS in entry:
-        models = _string_list(entry[TEAM_MODELS], f"teams.{entry[TEAM_ALIAS]}.{TEAM_MODELS}", PolicyError)
-        _require(models, f"teams.{entry[TEAM_ALIAS]}.{TEAM_MODELS}: must not be empty, an empty list allows every model; omit the key to leave models alone", PolicyError)
-    return Team(entry[TEAM_ID], entry[TEAM_ALIAS], normalize_permission(entry.get(PERMISSION_KEY), PolicyError), models)
+    where = f"teams.{entry[TEAM_ALIAS]}"
+    _require(TEAM_MODELS in entry, f"{where}.{TEAM_MODELS}: required", PolicyError)
+    models = _string_list(entry[TEAM_MODELS], f"{where}.{TEAM_MODELS}", PolicyError)
+    _require(models, f"{where}.{TEAM_MODELS}: must not be empty, an empty list allows every model", PolicyError)
+    budget, duration = entry.get(TEAM_BUDGET), entry.get(TEAM_BUDGET_DURATION)
+    _require((budget is None) == (duration is None), f"{where}: {TEAM_BUDGET} and {TEAM_BUDGET_DURATION} are set together or not at all", PolicyError)
+    if budget is not None:
+        _require(_is_number(budget) and math.isfinite(budget) and budget > 0, f"{where}.{TEAM_BUDGET}: expected a number above 0", PolicyError)
+        _require(isinstance(duration, str) and duration, f"{where}.{TEAM_BUDGET_DURATION}: expected a string such as 30d", PolicyError)
+    return Team(entry[TEAM_ID], entry[TEAM_ALIAS], normalize_permission(entry.get(PERMISSION_KEY), PolicyError), models, budget, duration)
 
 
 def _policy_group(entry):
@@ -190,7 +204,10 @@ def live_team(team_id, info):
     _require(isinstance(info, dict) and isinstance(info.get("team_info"), dict), "team/info: unexpected shape")
     team = info["team_info"]
     models = _string_list(team.get(TEAM_MODELS) or [], f"team/info {team_id}.{TEAM_MODELS}")
-    return Team(team_id, team.get(TEAM_ALIAS), normalize_permission(team.get(PERMISSION_KEY)), models)
+    budget, duration = team.get(TEAM_BUDGET), team.get(TEAM_BUDGET_DURATION)
+    _require(budget is None or _is_number(budget), f"team/info {team_id}.{TEAM_BUDGET}: expected a number")
+    _require(duration is None or isinstance(duration, str), f"team/info {team_id}.{TEAM_BUDGET_DURATION}: expected a string")
+    return Team(team_id, team.get(TEAM_ALIAS), normalize_permission(team.get(PERMISSION_KEY)), models, budget, duration)
 
 
 def live_group(raw):
@@ -215,8 +232,7 @@ def fetch_groups(api):
 
 def differing(live, desired):
     pairs = ((f.name, getattr(live, f.name), getattr(desired, f.name)) for f in fields(desired) if f.compare)
-    # A desired None is unmanaged and never differs
-    return [(name, was, want) for name, was, want in pairs if want is not None and was != want]
+    return [(name, was, want) for name, was, want in pairs if was != want]
 
 
 def empty_like(name):
@@ -250,8 +266,10 @@ def team_request(change):
         body = {TEAM_ID: desired.team_id, TEAM_ALIAS: desired.team_alias}
         if desired.object_permission:
             body[PERMISSION_KEY] = desired.object_permission
-        if desired.models is not None:
-            body[TEAM_MODELS] = desired.models
+        body[TEAM_MODELS] = desired.models
+        for name in (TEAM_BUDGET, TEAM_BUDGET_DURATION):
+            if getattr(desired, name) is not None:
+                body[name] = getattr(desired, name)
         return "POST", "/team/new", body
     changed = {name for name, _, _ in change.diffs}
     body = {TEAM_ID: desired.team_id}
@@ -261,6 +279,9 @@ def team_request(change):
         body[PERMISSION_KEY] = permission_payload(change.live.object_permission, desired.object_permission)
     if TEAM_MODELS in changed:
         body[TEAM_MODELS] = desired.models
+    for name in (TEAM_BUDGET, TEAM_BUDGET_DURATION):
+        if name in changed:
+            body[name] = getattr(desired, name)
     return "POST", "/team/update", body
 
 

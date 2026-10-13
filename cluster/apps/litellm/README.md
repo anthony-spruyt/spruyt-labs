@@ -72,6 +72,8 @@ no card, so spend stops there.
 
 The `*claude*opus*` / `*claude*sonnet*` / `*claude*haiku*` catch-all deployments (below) have no fallback entry.
 
+`general_settings.enforce_fallback_model_access: true` makes the router attempt a fallback only when the caller's key and team may call the fallback model. A team limited to explicit `models` lists the `anthropic-api/<model>` names it falls back to.
+
 LiteLLM loads the upstream `main` `model_prices_and_context_window.json` at startup over the world HTTPS egress, falling back to the copy bundled in the image. Omit cost params for models that map prices (all current Claude models, including some the pinned image doesn't bundle yet). Only set `input_cost_per_token` / `output_cost_per_token` for models absent from it, such as OpenRouter entries.
 
 Only live models are registered. Retired Opus, Sonnet and Haiku names are not rejected, because some clients can't change the model they send. `model_group_alias` maps the known ones (including the Haiku 4.5 names) to the 5.5 groups, and the `*claude*opus*` / `*claude*sonnet*` / `*claude*haiku*` catch-all deployments send any other name containing those substrings to Opus 5.5 / Sonnet 5.5 / Haiku
@@ -84,7 +86,7 @@ CI on GitHub-hosted runners calls the `litellm` host over the Cloudflare tunnel 
 - Only `/v1/messages`, `/v1/messages/count_tokens`, `/v1/chat/completions` and `/health/liveliness` pass from the internet. Unprefixed aliases such as `/chat/completions` do not.
 - cloudflared forwards only those paths and requires a valid Access token before a request reaches Traefik.
 - Every request carries the Access service token headers `CF-Access-Client-Id` and `CF-Access-Client-Secret`, plus the CI virtual key in `x-litellm-api-key: Bearer <key>` (see Virtual keys above).
-- The CI model is `openrouter/anthropic/claude-haiku-5.5`, an exact `model_name` through OpenRouter. It must stay exact: the `*claude*haiku*` catch-all would route the name to Anthropic subscription passthrough, which rejects a virtual key. Create the CI virtual key with no team, `object_permission: {"mcp_servers": ["no-mcp-servers"]}`, `models` limited to that model and a `max_budget`.
+- The CI model is `openrouter/anthropic/claude-haiku-5.5`, an exact `model_name` through OpenRouter. It must stay exact: the `*claude*haiku*` catch-all would route the name to Anthropic subscription passthrough, which rejects a virtual key. The CI virtual key belongs to team `github-ci` with `models: ["all-team-models"]` and `object_permission: {"mcp_servers": ["no-mcp-servers"]}`; the team's models and budget are set in `access-policy.yml` (see Access policy).
 
 ### MCP servers
 
@@ -105,16 +107,19 @@ To add a server:
 
 ### Access policy
 
-Who may use which MCP server and tool is declared in `litellm/access-policy/access-policy.yml` and applied by the `litellm-access-policy` Job, which calls the admin API with the master key from `litellm-secrets`. The file holds:
+Team settings (models, budget, MCP access) and access groups are declared in `litellm/access-policy/access-policy.yml` and applied by the `litellm-access-policy` Job, which calls the admin API with the master key from `litellm-secrets`. The file holds:
 
 | Section         | Matched by | Managed fields                                                                            |
 | --------------- | ---------- | ----------------------------------------------------------------------------------------- |
-| `teams`         | `team_id`  | `team_alias`, `object_permission`, `models` (only when listed)                            |
+| `teams`         | `team_id`  | `team_alias`, `object_permission`, `models`, `max_budget` and `budget_duration`           |
 | `access_groups` | `name`     | `description`, `models`, `mcp_server_ids`, `agent_ids`, `team_ids` (unified access group) |
 
-- MCP access is granted on teams and access groups only; a key inherits its team's grants, so keys carry no MCP limits of their own. Keys, users, team budgets and members, the model list and the `n8n` MCP server stay in the LiteLLM UI/DB. A team's `models` is managed when listed and left alone when omitted. The Job never deletes anything, so objects missing from the file are left alone.
-- A listed object is compared on its managed fields only, and an omitted list field means empty: a grant that exists live but not in the file is a diff. A team's `models` is the exception: an omitted `models` leaves the team's models untouched, and an empty list is rejected because an empty team list allows every model. A listed `models` is the exact set of model names the team may request,
-  matched against the requested name or its router alias target. Access groups match by `name` because LiteLLM generates their ids. Group membership is declared on the group (`team_ids`), not on the team.
+- Every team lists `models`, a non-empty list: the exact set of model names the team may request, matched against the requested name or its router alias target. An empty list would allow every model, so it is rejected. Use `all-proxy-models` for a team that may call everything.
+- `max_budget` (a number above 0) and `budget_duration` (such as `30d`) are set together or not at all. A team without them has no budget, and a budget set live but missing from the file is removed.
+- MCP access is granted on teams and access groups only; a key inherits its team's grants, so keys carry no MCP limits of their own.
+- Keys, users and team members, the model list and the `n8n` MCP server stay in the LiteLLM UI/DB.
+- A listed object is compared on its managed fields only, and an omitted list field means empty: a grant that exists live but not in the file is a diff. The Job never deletes anything, so objects missing from the file are left alone.
+- Access groups match by `name` because LiteLLM generates their ids. Group membership is declared on the group (`team_ids`), not on the team.
 - To change policy, edit `access-policy.yml` and push. The ConfigMap name carries a content hash, so the Job spec changes, Flux recreates the Job (`kustomize.toolkit.fluxcd.io/force`) and it runs against the new file. After `ttlSecondsAfterFinished` the Job is removed and Flux recreates it at its next 4h reconcile, so it also runs periodically.
 - `MODE` in `job.yaml` is `enforce`: the Job creates missing teams and groups with the file's ids and names, then updates only the differing managed fields (teams, then groups), and ends with `changes: N`. Read it with `kubectl -n litellm logs job/litellm-access-policy`; `changes: 0` means the file already matches live state.
 - To preview a change without applying it, set `MODE` to `diff` in `job.yaml` for that push: the Job then only logs one block per object and applies nothing. Set it back to `enforce` afterwards.

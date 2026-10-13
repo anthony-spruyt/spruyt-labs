@@ -1,6 +1,7 @@
 ---
 # Desired LiteLLM access policy, applied by the reconcile Job. See cluster/apps/litellm/README.md.
-# Omitted list fields mean empty, except a team's models: managed when listed, left alone when omitted.
+# Every team needs models. max_budget and budget_duration are set together, and omitting them means no budget.
+# Omitted list fields mean empty. Keys and users stay in the LiteLLM UI.
 # MCP server ids are the pinned ids in the litellm config.yaml.
 teams:
   - team_id: 4757b159-de6f-40b5-a526-1a0e8bd42580
@@ -11,30 +12,59 @@ teams:
       - claude-sonnet-5-5
   - team_id: 1b35b13e-850a-4112-b1e1-c23d9a7e5994
     team_alias: claude-agents-read
+    models:
+      - all-proxy-models
   - team_id: 841a504a-c4da-46d3-b446-59a0e46ddfc4
     team_alias: claude-agents-spruyt-labs-read
+    models:
+      - all-proxy-models
   - team_id: c4af130f-bac5-4285-a812-b6f211198521
     team_alias: claude-agents-spruyt-labs-sre
+    models:
+      - all-proxy-models
   - team_id: be16dd32-f9f0-4662-9e14-bc3e95e5d59b
     team_alias: claude-agents-spruyt-labs-write
+    models:
+      - all-proxy-models
   - team_id: e6adbaee-49ba-495a-8cd7-2f64add20109
     team_alias: claude-agents-write
+    models:
+      - all-proxy-models
   - team_id: 2c25f466-0ed4-4c71-afb7-a2dfed66f19f
     team_alias: coder-workspaces
+    models:
+      - all-proxy-models
   - team_id: 7b5d0841-52b7-453e-b111-ad2444aeb742
     team_alias: coder-workspaces-spruyt-labs
+    models:
+      - all-proxy-models
   - team_id: b3dc877b-8fdc-4faa-b337-cf7466b3e53f
     team_alias: github-ci
+    models:
+      - openai/gpt-4o-mini
+      - openrouter/anthropic/claude-haiku-5.5
+    max_budget: 5
+    budget_duration: 30d
   - team_id: a5da236b-dc2c-4fa9-8bd5-28e37e29e28e
     team_alias: local-dev-containers
+    models:
+      - all-proxy-models
   - team_id: 12871abf-c8e1-4fd8-b405-ed0ad22e82ac
     team_alias: local-dev-containers-chromance
+    models:
+      - all-proxy-models
   - team_id: f2d8cdd7-da47-404c-8a13-67a39114e5ad
     team_alias: local-dev-containers-spruyt-labs
+    models:
+      - all-proxy-models
   - team_id: bed806dc-0559-4d1d-b7b7-2b633a84be1f
     team_alias: n8n
+    models:
+      - all-proxy-models
   - team_id: 2425f9fe-0ee8-40e6-8c36-e2ff273c6aec
     team_alias: temporal
+    models:
+      - all-proxy-models
 access_groups:
   - name: dev
     mcp_server_ids:
