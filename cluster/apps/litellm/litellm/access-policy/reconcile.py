@@ -27,9 +27,10 @@ PERMISSION_FIELDS = (*LIST_FIELDS, TOOL_MAP_FIELD, FLAG_FIELD)
 PERMISSION_KEY = "object_permission"
 TEAM_ID = "team_id"
 TEAM_ALIAS = "team_alias"
+TEAM_MODELS = "models"
 
 SECTIONS = {
-    "teams": {TEAM_ID, TEAM_ALIAS, PERMISSION_KEY},
+    "teams": {TEAM_ID, TEAM_ALIAS, PERMISSION_KEY, TEAM_MODELS},
     "access_groups": {"name", "description", "models", "mcp_server_ids", "agent_ids", "team_ids"},
 }
 GROUP_API_FIELDS = {
@@ -60,6 +61,7 @@ class Team:
     team_id: str
     team_alias: str | None
     object_permission: dict
+    models: list | None = None
 
 
 @dataclass(frozen=True)
@@ -126,7 +128,11 @@ def _section(doc, name):
 
 def _policy_team(entry):
     _require(entry.get(TEAM_ID) and entry.get(TEAM_ALIAS), "teams: team_id and team_alias are required", PolicyError)
-    return Team(entry[TEAM_ID], entry[TEAM_ALIAS], normalize_permission(entry.get(PERMISSION_KEY), PolicyError))
+    models = None
+    if TEAM_MODELS in entry:
+        models = _string_list(entry[TEAM_MODELS], f"teams.{entry[TEAM_ALIAS]}.{TEAM_MODELS}", PolicyError)
+        _require(models, f"teams.{entry[TEAM_ALIAS]}.{TEAM_MODELS}: must not be empty, an empty list allows every model; omit the key to leave models alone", PolicyError)
+    return Team(entry[TEAM_ID], entry[TEAM_ALIAS], normalize_permission(entry.get(PERMISSION_KEY), PolicyError), models)
 
 
 def _policy_group(entry):
@@ -183,7 +189,8 @@ class Api:
 def live_team(team_id, info):
     _require(isinstance(info, dict) and isinstance(info.get("team_info"), dict), "team/info: unexpected shape")
     team = info["team_info"]
-    return Team(team_id, team.get(TEAM_ALIAS), normalize_permission(team.get(PERMISSION_KEY)))
+    models = _string_list(team.get(TEAM_MODELS) or [], f"team/info {team_id}.{TEAM_MODELS}")
+    return Team(team_id, team.get(TEAM_ALIAS), normalize_permission(team.get(PERMISSION_KEY)), models)
 
 
 def live_group(raw):
@@ -208,7 +215,8 @@ def fetch_groups(api):
 
 def differing(live, desired):
     pairs = ((f.name, getattr(live, f.name), getattr(desired, f.name)) for f in fields(desired) if f.compare)
-    return [(name, was, want) for name, was, want in pairs if was != want]
+    # A desired None is unmanaged and never differs
+    return [(name, was, want) for name, was, want in pairs if want is not None and was != want]
 
 
 def empty_like(name):
@@ -242,6 +250,8 @@ def team_request(change):
         body = {TEAM_ID: desired.team_id, TEAM_ALIAS: desired.team_alias}
         if desired.object_permission:
             body[PERMISSION_KEY] = desired.object_permission
+        if desired.models is not None:
+            body[TEAM_MODELS] = desired.models
         return "POST", "/team/new", body
     changed = {name for name, _, _ in change.diffs}
     body = {TEAM_ID: desired.team_id}
@@ -249,6 +259,8 @@ def team_request(change):
         body[TEAM_ALIAS] = desired.team_alias
     if PERMISSION_KEY in changed:
         body[PERMISSION_KEY] = permission_payload(change.live.object_permission, desired.object_permission)
+    if TEAM_MODELS in changed:
+        body[TEAM_MODELS] = desired.models
     return "POST", "/team/update", body
 
 

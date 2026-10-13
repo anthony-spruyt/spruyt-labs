@@ -24,6 +24,8 @@ SERVER_B = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 KEY_ALIAS = "agent-key"
 TEAM_ALIAS = "agents"
 GROUP_NAME = "dev"
+MODEL_A = "claude-opus-5-5"
+MODEL_B = "claude-sonnet-5-5"
 TOOLS = ["query", "alerts"]
 EMPTY_PERMISSION = {"object_permission_id": "p1", "mcp_servers": [], "mcp_tool_permissions": {}, "mcp_tool_search_enabled": None, "skills": []}
 
@@ -111,6 +113,28 @@ class ParsePolicyTest(unittest.TestCase):
                 reconcile.parse_policy(doc)
 
 
+class TeamModelsPolicyTest(unittest.TestCase):
+    def test_models_are_parsed_sorted_and_deduplicated(self):
+        doc = {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "models": [MODEL_B, MODEL_A, MODEL_A]}]}
+        self.assertEqual(reconcile.parse_policy(doc).teams[0].models, [MODEL_A, MODEL_B])
+
+    def test_omitted_models_stay_unmanaged(self):
+        self.assertIsNone(reconcile.parse_policy(policy_doc()).teams[0].models)
+
+    def test_empty_or_malformed_models_are_rejected(self):
+        for models in ([], None, "claude", [1]):
+            doc = {"teams": [{"team_id": TEAM_ID, "team_alias": TEAM_ALIAS, "models": models}]}
+            with self.subTest(models=models), self.assertRaises(reconcile.PolicyError):
+                reconcile.parse_policy(doc)
+
+    def test_live_team_reads_models_from_team_info(self):
+        info = {"team_info": {"team_alias": TEAM_ALIAS, "object_permission": None, "models": [MODEL_B, MODEL_A]}}
+        self.assertEqual(reconcile.live_team(TEAM_ID, info).models, [MODEL_A, MODEL_B])
+
+    def test_live_team_without_models_means_empty(self):
+        self.assertEqual(reconcile.live_team(TEAM_ID, {"team_info": {"team_alias": TEAM_ALIAS}}).models, [])
+
+
 class DiffModeTest(unittest.TestCase):
     def test_matching_state_reports_zero_changes_and_writes_nothing(self):
         api = FakeApi()
@@ -132,6 +156,32 @@ class DiffModeTest(unittest.TestCase):
         self.assertIn("team new-team (" + OTHER_TEAM_ID + "): CREATE", text)
         self.assertIn(f"access group {GROUP_NAME}: UPDATE", text)
         self.assertIn(f'mcp_server_ids: live=["{SERVER_B}"] desired=["{SERVER_A}"]', text)
+        self.assertEqual(api.writes(), [])
+
+    def test_team_models_diff_shows_live_and_desired(self):
+        api = FakeApi()
+        api.teams[0]["models"] = []
+        doc = policy_doc()
+        doc["teams"][0]["models"] = [MODEL_A]
+        code, lines = run_policy(api, doc, "diff")
+        text = "\n".join(lines)
+        self.assertEqual((code, lines[-1]), (0, "changes: 1"))
+        self.assertIn(f"team {TEAM_ALIAS} ({TEAM_ID}): UPDATE", text)
+        self.assertIn(f'models: live=[] desired=["{MODEL_A}"]', text)
+        self.assertEqual(api.writes(), [])
+
+    def test_team_models_matching_live_is_no_change(self):
+        api = FakeApi()
+        api.teams[0]["models"] = [MODEL_B, MODEL_A]
+        doc = policy_doc()
+        doc["teams"][0]["models"] = [MODEL_A, MODEL_B]
+        self.assertEqual(run_policy(api, doc, "diff")[1][-1], "changes: 0")
+
+    def test_omitted_models_leave_live_models_alone(self):
+        api = FakeApi()
+        api.teams[0]["models"] = [MODEL_A]
+        code, lines = run_policy(api, policy_doc(), "enforce")
+        self.assertEqual((code, lines[-1]), (0, "changes: 0"))
         self.assertEqual(api.writes(), [])
 
     def test_unmanaged_objects_are_ignored(self):
@@ -186,6 +236,31 @@ class EnforceTest(unittest.TestCase):
                 )
             ],
         )
+
+    def test_team_create_sends_models_when_listed(self):
+        api = FakeApi()
+        doc = policy_doc()
+        doc["teams"].append({"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "models": [MODEL_B, MODEL_A]})
+        run_policy(api, doc, "enforce")
+        self.assertEqual(
+            api.writes(),
+            [("POST", "/team/new", {"team_id": OTHER_TEAM_ID, "team_alias": "new-team", "models": [MODEL_A, MODEL_B]})],
+        )
+
+    def test_team_update_sends_models_alone_when_only_models_differ(self):
+        api = FakeApi()
+        api.teams[0]["models"] = [MODEL_A, "anthropic-api/claude-opus-5-5"]
+        doc = policy_doc()
+        doc["teams"][0]["models"] = [MODEL_A]
+        run_policy(api, doc, "enforce")
+        self.assertEqual(api.writes(), [("POST", "/team/update", {"team_id": TEAM_ID, "models": [MODEL_A]})])
+
+    def test_team_update_without_listed_models_never_sends_models(self):
+        api = FakeApi()
+        api.teams[0]["team_alias"] = "old-alias"
+        api.teams[0]["models"] = [MODEL_A]
+        run_policy(api, policy_doc(), "enforce")
+        self.assertEqual(api.writes(), [("POST", "/team/update", {"team_id": TEAM_ID, "team_alias": TEAM_ALIAS})])
 
     def test_group_update_sends_only_changed_fields_to_its_id(self):
         api = FakeApi()
@@ -312,6 +387,13 @@ class CommittedPolicyTest(unittest.TestCase):
         with open(path, encoding="utf-8") as handle:
             policy = reconcile.parse_policy(yaml.safe_load(handle))
         self.assertTrue(policy.teams and policy.groups)
+
+    def test_agent_platform_read_is_limited_to_the_subscription_models(self):
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access-policy.yml")
+        with open(path, encoding="utf-8") as handle:
+            policy = reconcile.parse_policy(yaml.safe_load(handle))
+        team = next(t for t in policy.teams if t.team_alias == "agent-platform-read")
+        self.assertEqual(team.models, ["claude-opus-5-5", "claude-sonnet-5-5"])
 
 
 if __name__ == "__main__":

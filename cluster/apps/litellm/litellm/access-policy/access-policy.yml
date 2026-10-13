@@ -1,9 +1,13 @@
 ---
 # Desired LiteLLM access policy, applied by the reconcile Job. See cluster/apps/litellm/README.md.
-# Omitted list fields mean empty. MCP server ids are the pinned ids in the litellm config.yaml.
+# Omitted list fields mean empty, except a team's models: managed when listed, left alone when omitted.
+# MCP server ids are the pinned ids in the litellm config.yaml.
 teams:
   - team_id: 4757b159-de6f-40b5-a526-1a0e8bd42580
     team_alias: agent-platform-read
+    models:
+      - claude-opus-5-5
+      - claude-sonnet-5-5
   - team_id: 1b35b13e-850a-4112-b1e1-c23d9a7e5994
     team_alias: claude-agents-read
   - team_id: 841a504a-c4da-46d3-b446-59a0e46ddfc4
