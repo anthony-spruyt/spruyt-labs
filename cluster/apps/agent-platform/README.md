@@ -63,7 +63,7 @@ DNS is allowed cluster-wide by `allow-kube-dns-egress`. Everything else is allow
 | agents              | Nexus `8081` (npm/PyPI/NuGet)                                | `nexus-system/nexus` `nexus-default`                                                                                                                 |
 | Traefik             | web `8080`                                                   | `allow-web-traefik-ingress` (this app)                                                                                                               |
 
-Policies in `agent-platform-agents` select every pod in the namespace, and agent pods accept no ingress. vmagent scrape rules are added when those exist.
+Policies in `agent-platform-agents` select every pod in the namespace, and agent pods accept no ingress. Agent pods send telemetry only as `POST` to the OTLP ingest path on each port (Cilium L7 rules in `allow-otel-egress`). vmagent scrape rules are added when those exist.
 
 ## Kyverno Guardrails
 

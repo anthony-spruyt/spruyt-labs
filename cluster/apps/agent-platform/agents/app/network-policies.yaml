@@ -76,6 +76,10 @@ spec:
         - ports:
             - port: "8428"
               protocol: TCP
+          rules:
+            http:
+              - method: POST
+                path: /opentelemetry/v1/metrics
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: observability
@@ -84,6 +88,10 @@ spec:
         - ports:
             - port: "9428"
               protocol: TCP
+          rules:
+            http:
+              - method: POST
+                path: /insert/opentelemetry/v1/logs
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: observability
@@ -92,6 +100,10 @@ spec:
         - ports:
             - port: "10428"
               protocol: TCP
+          rules:
+            http:
+              - method: POST
+                path: /insert/opentelemetry/v1/traces
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 apiVersion: cilium.io/v2
