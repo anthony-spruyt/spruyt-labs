@@ -37,7 +37,7 @@ it helps us, and the config file it would touch. Skip features we can't use. Wri
 if nothing qualifies.
 ```
 
-The feature ask lives here, not in the agent file, because the n8n orchestrator parses the agent's verdict template and must not see extra fields.
+The feature ask lives here, not in the agent file, because the agent platform's triage prompt reads the verdict template and must not see extra fields.
 
 ## 3. Act on the verdict
 
@@ -48,24 +48,34 @@ The feature ask lives here, not in the agent file, because the n8n orchestrator 
 3. Merge: `gh pr merge <N> --squash`. Ignore Mergify's approval check.
 4. If the PR touched `cluster/`, run `cluster-validator` (no issue number needed). If one is already running, wait for it to finish, then run.
 
-**FIXABLE, RISKY, or BREAKING**
+**FIXABLE**
+
+1. Comment on the PR with the analyzer's verdict, summary, fix, and reasons: `gh pr comment <N> --body-file -`
+2. Do not merge or label. Offer to fix it: issue from `.github/ISSUE_TEMPLATE/chore.yml`, fix on the PR branch, qa-validator, push, then re-run this skill.
+
+**BLOCKED**
 
 1. Add the label: `gh pr edit <N> --add-label blocked`
-2. Comment on the PR with the analyzer's verdict, summary, and breaking changes:
-   `gh pr comment <N> --body-file -`
-3. Do not merge. For FIXABLE, offer to fix it: issue from `.github/ISSUE_TEMPLATE/chore.yml`, fix on the PR branch, qa-validator, push, then re-run this skill.
+2. Comment on the PR with the analyzer's verdict, summary, and reasons: `gh pr comment <N> --body-file -`
+3. Do not merge.
+
+**NEEDS_REVIEW**
+
+1. Add the label: `gh pr edit <N> --add-label agent/needs-human-review`
+2. Comment on the PR with the analyzer's verdict, summary, and reasons: `gh pr comment <N> --body-file -`
+3. Do not merge.
 
 ## 4. Report to the user
 
 Keep it short:
 
 - Verdict and one-line reason
-- What you did: merged, or labelled `blocked`
+- What you did: merged, commented, or labelled `blocked` or `agent/needs-human-review`
 - cluster-validator result, if run
 - New features worth adopting, from the analyzer. If any, offer to open an `enhancement` issue per feature using `.github/ISSUE_TEMPLATE/feature_request.yml`. Do not open them without asking.
 
 ## Rules
 
 - Never merge on anything but SAFE with green CI.
-- Never close the PR, even on BREAKING. Leave that to the user.
+- Never close the PR, even on BLOCKED. Leave that to the user.
 - Never put IPs, CIDRs, or secrets in PR comments.
