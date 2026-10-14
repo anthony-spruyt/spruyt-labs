@@ -58,6 +58,9 @@ gatewayAPI:
   # Note that this will also enable appProtocol support, and services that wish to use HTTP/2 will need to indicate that via their appProtocol.
   enableAlpn: true
   enableAppProtocol: true # Enable Backend Protocol selection support (GEP-1911) for Gateway API via appProtocol.
+envoy:
+  rollOutPods: true # Envoy reads its bootstrap config (cluster options below) only at start.
+  maxRequestsPerConnection: 1 # Pooled upstream connections outlive short-lived client pods; their closing packets then drop as world.
 cgroup: # Configure cgroup related configuration
   autoMount:
     # Enable auto mount of cgroup2 filesystem. When autoMount is enabled, cgroup2 filesystem is mounted at cgroup.hostRoot path on the
