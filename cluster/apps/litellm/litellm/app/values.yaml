@@ -343,11 +343,16 @@ controllers:
               - ALL
   llm-tool-guard:
     type: deployment
-    replicas: 1
-    strategy: Recreate
+    replicas: 2
+    strategy: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
+      # Longest scan ~45 s + 20 s drain on SIGTERM + preStop sleep, with margin.
+      terminationGracePeriodSeconds: 120
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -356,12 +361,25 @@ controllers:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/controller: llm-tool-guard
+                topologyKey: kubernetes.io/hostname
     containers:
       llm-tool-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-tool-guard
           tag: "1.2.1@sha256:8821e319a456aa21189ae3e61c45a9a9a300f2f23dff9551709c90ceeae5332c"
           pullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 10
         env:
           HF_HUB_OFFLINE: "1"
           HF_TOKEN:
@@ -1337,13 +1355,24 @@ persistence:
       llm-guard:
         llm-guard:
           - path: /app/.cache/huggingface
-  llm-tool-guard-hf-cache:
-    type: persistentVolumeClaim
-    existingClaim: llm-tool-guard-hf-cache
+  llm-tool-guard-hf-home:
+    type: emptyDir
     advancedMounts:
       llm-tool-guard:
         llm-tool-guard:
           - path: /app/.cache/huggingface
+  # Model weights as a hub cache; to change the model revision, bump this image (container-images llm-tool-guard-model).
+  llm-tool-guard-model:
+    type: image
+    image:
+      repository: ghcr.io/anthony-spruyt/llm-tool-guard-model
+      tag: 1.0.0@sha256:f57fbef0d0cc57bbe661c07452575837dea3330e4164d9c90f234391102ab81a
+    pullPolicy: IfNotPresent
+    advancedMounts:
+      llm-tool-guard:
+        llm-tool-guard:
+          - path: /app/.cache/huggingface/hub
+            readOnly: true
   litellm-middleware:
     type: image
     image:

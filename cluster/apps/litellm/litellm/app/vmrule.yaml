@@ -16,3 +16,11 @@ spec:
           annotations:
             summary: "llm-tool-guard is not ready"
             description: "No llm-tool-guard pod has reported a loaded model for 10 minutes."
+        - alert: LLMToolGuardDegraded
+          expr: sum(llm_tool_guard_ready{namespace="litellm"} == 1) < 2
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "llm-tool-guard has fewer than 2 ready pods"
+            description: "Fewer than 2 llm-tool-guard pods have reported a loaded model for 15 minutes."
