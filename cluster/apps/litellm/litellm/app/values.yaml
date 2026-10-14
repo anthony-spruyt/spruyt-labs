@@ -369,6 +369,9 @@ controllers:
                 labelSelector:
                   matchLabels:
                     app.kubernetes.io/controller: llm-tool-guard
+                # Count only same-revision pods, else a rollout stacks both new pods on the node free of old ones
+                matchLabelKeys:
+                  - pod-template-hash
                 topologyKey: kubernetes.io/hostname
     containers:
       llm-tool-guard:
