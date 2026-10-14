@@ -96,6 +96,8 @@ Rotate the SOPS secrets with `sops <file>`; agent pods pick up the new value on 
 `worker/app/vmrule.yaml` alerts on failed RenovateTriage runs from the Temporal server metrics: `RenovateTriageWorkflowFailed` (a `RenovateTriageWorkflow` run failed or timed out) and `RenovateTriageActivityFailing` (an activity failed or timed out on 5 or more attempts in 15m; retries that later succeed stay below that). The metrics carry `exported_namespace="agent_platform"` and
 `workflowType`/`activityType` labels.
 
+It also alerts on two worker OTLP gauges (`service_name="agent-platform-worker"`, exported every 60s): `RenovateTriagePendingStuck` (`triage_pending_total` stayed above 0 for 24h) and `RenovateTriageClaudeCooldownStuck` (`claude_cooldown_active` stayed above 0 for 24h). Each needs more than 1300 samples in the window, so neither fires in the first ~22h after a fresh deploy.
+
 ## References
 
 - [#3467](https://github.com/anthony-spruyt/spruyt-labs/issues/3467) - migration plan and step order
