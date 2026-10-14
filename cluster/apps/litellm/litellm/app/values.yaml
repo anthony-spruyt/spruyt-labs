@@ -94,6 +94,7 @@ controllers:
               secretKeyRef:
                 name: litellm-valkey-users
                 key: litellm
+          TOOL_GUARD_TIMEOUT_SECONDS: "180"
           TOOL_GUARD_URL: "http://litellm-llm-tool-guard.litellm.svc.cluster.local:8080"
         envFrom:
           - secretRef:
