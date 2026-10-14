@@ -44,13 +44,14 @@ All control plane and worker nodes
 
 ## Planned Changes
 1. Pre-upgrade validation (etcd backup, cluster health)
-2. Config migration and `talosctl validate` (minor upgrades only)
-3. Upgrade control plane nodes (sequential)
-4. Upgrade worker nodes (sequential, Ceph health gates)
-5. Post-upgrade validation
-6. Trigger descheduler for workload rebalancing
-7. Update talos/README.md on main
-8. Land the talosVersion pin, diff, and `task talos:apply`
+2. Pre-flight drift check; apply pending `talos/` changes already on main (`task talos:diff`)
+3. Config migration and `talosctl validate` (minor upgrades only)
+4. Upgrade control plane nodes (sequential)
+5. Upgrade worker nodes (sequential, Ceph health gates)
+6. Post-upgrade validation
+7. Trigger descheduler for workload rebalancing
+8. Update talos/README.md on main
+9. Land the talosVersion pin, diff, and `task talos:apply`
 
 ## Rollback Plan
 1. Downgrade affected node using previous version image
@@ -215,6 +216,7 @@ Every CNPG cluster in this repo sets `enablePDB: false`, so the operator creates
 - [ ] No pending HelmRelease upgrades/failures
 - [ ] PDBs surveyed and worker drain strategy chosen
 - [ ] Target installer images verified to exist for BOTH schematics (see below)
+- [ ] No unapplied drift between `talos/` on main and the nodes, or it was applied (see pre-flight drift check)
 
 **Verify installer images before starting.** The Factory builds SecureBoot assets lazily, so the first request for a new version can take 60+ seconds and may appear to hang. Retry once before concluding the image is missing:
 
@@ -223,6 +225,29 @@ curl -sS --max-time 60 -o /dev/null -w "%{http_code}\n" \
   "https://factory.talos.dev/v2/metal-installer-secureboot/<schematic>/manifests/<target-version>"
 # Expect 200. A timeout on first call usually means the image is still being built - retry.
 ```
+
+**Pre-flight drift check (before any node changes):** Renovate bumps under `talos/` (for example extraManifests URLs) merge to main without reaching the nodes. Apply them now so Phase 8 shows only this upgrade's changes. Run on an up-to-date main checkout, before the pin is merged, so the running version equals `talosVersion` and no installer-image diff is expected:
+
+```bash
+git pull --ff-only
+task talos:diff
+```
+
+Exit 0 means no drift: continue. Otherwise the drift is **applyable** only if both hold:
+
+- Every changed line traces to a commit already on main under `talos/` (check `git log` on the changed patch files)
+- The dry run reports applying "without a reboot" for every node
+
+If applyable:
+
+```bash
+TOPF_CONFIRM=false task talos:apply
+task talos:diff    # must exit 0
+```
+
+Then re-check nodes Ready, etcd 3/3 and Ceph ready, and record what was applied (commit shas) in the upgrade issue.
+
+If not applyable (drift not explained by main's git history, a Kubernetes version change, or anything needing a reboot), report PRE-UPGRADE BLOCKED with the diff summary.
 
 **If ANY check fails, STOP and report:**
 
@@ -404,7 +429,9 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph health detail
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd tree
 ```
 
-**Ceph ready** means all OSDs up and in, all PGs `active+clean`, mons in quorum, and health is either `HEALTH_OK` or `HEALTH_WARN` whose only checks are `OSD_SLOW_PING_TIME_BACK` / `OSD_SLOW_PING_TIME_FRONT` (stale reboot heartbeats, see Step 4.5). Any other warning, or any `HEALTH_ERR`, is not ready.
+**Ceph ready** means all OSDs up and in, all PGs `active+clean`, mons in quorum, and health is either `HEALTH_OK` or `HEALTH_WARN` whose only checks are `OSD_SLOW_PING_TIME_BACK` / `OSD_SLOW_PING_TIME_FRONT` (stale reboot heartbeats, see Step 4.5) or `BLUESTORE_SLOW_OP_ALERT`. Any other warning, or any `HEALTH_ERR`, is not ready.
+
+`BLUESTORE_SLOW_OP_ALERT` stays raised for `bluestore_slow_ops_warn_lifetime` (24h default) after a single slow op and clears when the OSD restarts, so it is acceptable only while all OSDs are up/in and all PGs are `active+clean`. Note it in the progress comment. Live `SLOW_OPS` (slow requests) still blocks.
 
 **BLOCK if Ceph is not ready:**
 
@@ -638,7 +665,7 @@ Expected diff:
 - **Minor upgrade:** the installer image, plus the migrated documents from Phase 2b
 - **Kata config fixed in Step 4.4a:** the `kata-containers/configuration.toml` file on the workers
 
-Anything else, such as a Kubernetes version change or unrelated patch drift, means stop and report it. Do not apply.
+Pre-existing drift was already applied in Phase 1, so anything else, such as a Kubernetes version change or unrelated patch drift, means stop and report it. Do not apply.
 
 Apply it yourself. `topf` asks a `[y/n]` question per node on stdin; the diff you just checked is that confirmation, so turn the prompt off:
 
