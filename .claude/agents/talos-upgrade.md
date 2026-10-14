@@ -235,9 +235,10 @@ task talos:diff
 
 Exit 0 means no drift: continue. Exit 2 means drift; any other non-zero is an error to fix before going on.
 
-If `talosVersion` in `talos/topf.yaml` differs from the running Talos version, the pin already reached main (Renovate or Mergify merged it first). The `machine.install.image` / `installerImage` lines are then expected, not drift: skip the pre-flight apply, record any other drift (with the commits that explain it) in the upgrade issue, and leave it for Phase 8, which lists it as expected. Otherwise the running version equals `talosVersion`, no installer-image diff is expected, and the drift is **applyable** only if both hold:
+If `talosVersion` in `talos/topf.yaml` differs from the running Talos version, the pin already reached main (Renovate or Mergify merged it first). The `machine.install.image` / `installerImage` lines are then expected, not drift. Skip the pre-flight apply, but hold any other drift to the applyable test below: if it passes, record it (with the commits that explain it) in the upgrade issue and leave it for Phase 8, which lists it as expected; if not, report PRE-UPGRADE BLOCKED. Otherwise the running version equals `talosVersion`, no installer-image diff is expected, and the drift is **applyable** only if all hold:
 
 - Every changed line traces to a commit already on main under `talos/` (check `git log` on the changed patch files)
+- No Kubernetes version change (that goes through the kubernetes-upgrade skill)
 - The dry run reports applying "without a reboot" for every node
 
 If applyable:
@@ -666,7 +667,6 @@ Expected diff:
 - **Patch upgrade:** only `machine.install.image` → `<schematic>:<new-version>` on each node
 - **Minor upgrade:** the installer image, plus the migrated documents from Phase 2b
 - **Kata config fixed in Step 4.4a:** the `kata-containers/configuration.toml` file on the workers
-
 - **Pin merged before Phase 1:** the non-installer drift recorded in Phase 1, each line traced to a commit under `talos/` on main
 
 Pre-existing drift was already applied in Phase 1 (or recorded there, if the pin was already on main), so anything else, such as a Kubernetes version change or unrelated patch drift, means stop and report it. Do not apply.
