@@ -11,7 +11,8 @@ spec:
       rules:
         - alert: ContainerRestartsRecurring
           # Not increase(): VM seeds new series from 0, so a kube-state-metrics restart reads lifetime totals as new
-          # The 900s clause skips containers started within 15m of the pod; KubePodCrashLooping covers those
+          # The 900s clause skips containers started within 15m of the pod or node boot; KubePodCrashLooping covers those
+          # host_ip joins kube_pod_info to node-exporter's instance; no node boot series falls back to the pod start
           # last_over_time: KSM drops state_started while a container waits in CrashLoopBackOff
           expr: |
             (
@@ -30,7 +31,13 @@ spec:
               (
                 max by (namespace, pod, container) (last_over_time(kube_pod_container_state_started[1h]))
                 - on (namespace, pod) group_left
-                max by (namespace, pod) (kube_pod_start_time)
+                max by (namespace, pod) (
+                  max by (namespace, pod) (kube_pod_start_time)
+                  or
+                  max by (namespace, pod, host_ip) (kube_pod_info)
+                  * on (host_ip) group_left ()
+                  max by (host_ip) (label_replace(node_boot_time_seconds, "host_ip", "$1", "instance", "(.+):9100"))
+                )
               ) > 900
             )
           for: 0m
