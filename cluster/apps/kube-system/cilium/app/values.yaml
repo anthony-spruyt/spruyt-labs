@@ -99,6 +99,10 @@ hubble:
   enabled: true
   # Ring buffer for ~23s of flow history at ~2900 flows/s (max 65535, must be 2^n - 1)
   eventBufferCapacity: 65535
+  tls:
+    auto:
+      # Default "helm" reuses the existing Secrets on upgrade, so certs never renew; cronJob reissues them every 4 months
+      method: cronJob
   relay:
     enabled: true
     rollOutPods: true
