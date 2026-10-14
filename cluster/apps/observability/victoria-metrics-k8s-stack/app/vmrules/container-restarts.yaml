@@ -11,6 +11,8 @@ spec:
       rules:
         - alert: ContainerRestartsRecurring
           # Not increase(): VM seeds new series from 0, so a kube-state-metrics restart reads lifetime totals as new
+          # The 900s clause skips containers started within 15m of the pod; KubePodCrashLooping covers those
+          # last_over_time: KSM drops state_started while a container waits in CrashLoopBackOff
           expr: |
             (
               max by (namespace, pod, container) (
@@ -22,6 +24,14 @@ spec:
               max by (namespace, pod, container) (
                 kube_pod_container_status_last_terminated_reason{reason=~"Error|ContainerCannotRun|StartError"}
               ) == 1
+            )
+            and on (namespace, pod, container)
+            (
+              (
+                max by (namespace, pod, container) (last_over_time(kube_pod_container_state_started[1h]))
+                - on (namespace, pod) group_left
+                max by (namespace, pod) (kube_pod_start_time)
+              ) > 900
             )
           for: 0m
           labels:
