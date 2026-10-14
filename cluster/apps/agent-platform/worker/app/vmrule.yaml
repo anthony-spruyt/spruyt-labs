@@ -31,3 +31,24 @@ spec:
           annotations:
             summary: "RenovateTriage activity {{ $labels.activityType }} keeps failing"
             description: "Activity {{ $labels.activityType }} of RenovateTriageWorkflow failed or timed out on 5 or more attempts in 15 minutes."
+        - alert: RenovateTriagePendingStuck
+          # Gauges export every 60s; the sample count keeps a fresh deploy from firing before 24h of data exist
+          expr: |
+            min_over_time(triage_pending_total{service_name="agent-platform-worker"}[24h]) > 0
+            and count_over_time(triage_pending_total{service_name="agent-platform-worker"}[24h]) > 1300
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Renovate PRs have been queued for agent triage for over 24 hours"
+            description: "The pending queue (triage_pending_total) has not been empty for 24 hours. Check the Claude caps and cooldown, and the agent/needs-triage PRs."
+        - alert: RenovateTriageClaudeCooldownStuck
+          expr: |
+            min_over_time(claude_cooldown_active{service_name="agent-platform-worker"}[24h]) > 0
+            and count_over_time(claude_cooldown_active{service_name="agent-platform-worker"}[24h]) > 1300
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "A Claude cooldown has been active for over 24 hours"
+            description: "claude_cooldown_active has not dropped to 0 for 24 hours, so the Claude rung is not running. Check the claude_cooldowns table for the cause."

@@ -25,7 +25,7 @@ controllers:
         image:
           repository: ghcr.io/anthony-spruyt/agent-platform
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
-          tag: "1.9.1@sha256:e074cfe9280151c546d175a2199fc0e84aefea3594c55fdf1c279be60cf7a434"
+          tag: "1.10.0@sha256:6b56425d9d0722014315e9127b0e99256032e54bf15d39a53a3ba1cfecb07a7e"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Migrate
@@ -59,14 +59,15 @@ controllers:
         image:
           repository: ghcr.io/anthony-spruyt/agent-platform
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
-          tag: "1.9.1@sha256:e074cfe9280151c546d175a2199fc0e84aefea3594c55fdf1c279be60cf7a434"
+          tag: "1.10.0@sha256:6b56425d9d0722014315e9127b0e99256032e54bf15d39a53a3ba1cfecb07a7e"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Worker
           ASPNETCORE_HTTP_PORTS: "8080"
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/claude-agent-read
           AgentPods__Image: "ghcr.io/anthony-spruyt/claude-agent-read:1.1.1@sha256:880081f90d98b119f7d4cd1e567e669acc8facfe0540ac1b1971ce6ea0baab59"
-          AgentPods__MaxConcurrentActivities: "2"
+          AgentPods__MaxConcurrentActivities: "1"
+          AgentPods__Model: opus
           AgentPrompts__Directory: /etc/agent-platform/prompts
           AgentGateway__SessionTokenKey:
             valueFrom:
@@ -97,6 +98,9 @@ controllers:
                 name: worker-credentials
                 key: litellm-virtual-key
           RenovateTriage__Mode: Live
+          RenovateTriage__Claude__MaxPerHour: "2"
+          RenovateTriage__Claude__MaxPerDay: "8"
+          RenovateTriage__Claude__MaxPerPrPerDay: "2"
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
           Temporal__Namespace: agent-platform
           OTEL_SERVICE_NAME: agent-platform-worker
