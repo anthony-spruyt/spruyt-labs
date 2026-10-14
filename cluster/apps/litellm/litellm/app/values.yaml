@@ -369,6 +369,7 @@ controllers:
                 labelSelector:
                   matchLabels:
                     app.kubernetes.io/controller: llm-tool-guard
+                    app.kubernetes.io/instance: litellm
                 # Count only same-revision pods, else a rollout stacks both new pods on the node free of old ones
                 matchLabelKeys:
                   - pod-template-hash
@@ -385,11 +386,6 @@ controllers:
               seconds: 10
         env:
           HF_HUB_OFFLINE: "1"
-          HF_TOKEN:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: HF_TOKEN
           VALKEY_URL: "redis://litellm-valkey.litellm.svc:6379"
           VALKEY_USERNAME: llm-tool-guard
           VALKEY_PASSWORD:
@@ -1364,7 +1360,7 @@ persistence:
       llm-tool-guard:
         llm-tool-guard:
           - path: /app/.cache/huggingface
-  # Model weights as a hub cache; to change the model revision, bump this image (container-images llm-tool-guard-model).
+  # Hub-cache layout; revision pinned in container-images llm-tool-guard-model
   llm-tool-guard-model:
     type: image
     image:

@@ -345,7 +345,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# world:443 egress downloads the model from HuggingFace at runtime
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -379,12 +378,6 @@ spec:
       toPorts:
         - ports:
             - port: "6379"
-              protocol: TCP
-    - toEntities:
-        - world
-      toPorts:
-        - ports:
-            - port: "443"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
