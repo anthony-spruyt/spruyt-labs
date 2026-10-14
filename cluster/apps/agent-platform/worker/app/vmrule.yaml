@@ -52,3 +52,21 @@ spec:
           annotations:
             summary: "A Claude cooldown has been active for over 24 hours"
             description: "claude_cooldown_active has not dropped to 0 for 24 hours, so the Claude rung is not running. Check the claude_cooldowns table for the cause."
+        - alert: RenovateTriageSweeperStale
+          # Value 0 means no sweep has succeeded yet: fire only once it has stayed 0 for 2h of samples (a fresh deploy stays quiet)
+          expr: |
+            (
+              max without(telemetry_sdk_version) (sweeper_last_success_timestamp{service_name="agent-platform-worker"}) > 0
+              and time() - max without(telemetry_sdk_version) (sweeper_last_success_timestamp{service_name="agent-platform-worker"}) > 7200
+            )
+            or
+            (
+              max_over_time(max without(telemetry_sdk_version) (sweeper_last_success_timestamp{service_name="agent-platform-worker"})[2h:1m]) == 0
+              and count_over_time(max without(telemetry_sdk_version) (sweeper_last_success_timestamp{service_name="agent-platform-worker"})[2h:1m]) > 100
+            )
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "The Renovate triage sweeper has not completed a full sweep in over 2 hours"
+            description: "sweeper_last_success_timestamp is more than 2 hours old, or is still 0 after 2 hours. Check the renovate-triage-sweeper Schedule and its RenovateTriageSweeperWorkflow runs in the Temporal UI, and the worker logs."

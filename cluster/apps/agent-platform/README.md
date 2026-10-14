@@ -98,6 +98,8 @@ Rotate the SOPS secrets with `sops <file>`; agent pods pick up the new value on 
 
 It also alerts on two worker OTLP gauges (`service_name="agent-platform-worker"`, exported every 60s): `RenovateTriagePendingStuck` (`triage_pending_total` stayed above 0 for 24h) and `RenovateTriageClaudeCooldownStuck` (`claude_cooldown_active` stayed above 0 for 24h). Each needs more than 1300 samples in the window, so neither fires in the first ~22h after a fresh deploy.
 
+A third gauge alert, `RenovateTriageSweeperStale` (warning), fires when `sweeper_last_success_timestamp` (Unix seconds of the last sweep in which every step succeeded) is over 2h old. A value of 0 (no success yet) fires only after it has stayed 0 for 2h of samples, so a fresh deploy stays quiet. The sweep interval keeps its 30m default.
+
 ## References
 
 - [#3467](https://github.com/anthony-spruyt/spruyt-labs/issues/3467) - migration plan and step order
