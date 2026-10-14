@@ -39,6 +39,8 @@ controllers:
           - run
         env:
           NO_AUTOUPDATE: "true"
+          # Inverted flag: false normalizes the request path before ingress rule matching (default true skips it).
+          TUNNEL_DISABLE_PATH_NORMALIZATION: "false"
           TUNNEL_METRICS: 0.0.0.0:8080
           TUNNEL_ORIGIN_ENABLE_HTTP2: true
           TUNNEL_POST_QUANTUM: true
