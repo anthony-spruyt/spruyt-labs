@@ -95,6 +95,15 @@ prometheus:
   serviceMonitor:
     enabled: true
     trustCRDsExist: true
+certgen:
+  priorityClassName: standard
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 30m
+      memory: 128Mi
 hubble:
   enabled: true
   # Ring buffer for ~23s of flow history at ~2900 flows/s (max 65535, must be 2^n - 1)
