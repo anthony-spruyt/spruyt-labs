@@ -3,7 +3,7 @@ module github.com/anthony-spruyt/spruyt-labs/cmd/shutdown-orchestrator
 go 1.27.1
 
 require (
-	github.com/siderolabs/talos/pkg/machinery v1.14.1
+	github.com/siderolabs/talos/pkg/machinery v1.14.2
 	k8s.io/api v0.36.4
 	k8s.io/apimachinery v0.36.4
 	k8s.io/client-go v0.36.4
